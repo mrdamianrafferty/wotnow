@@ -16,7 +16,7 @@ code {
 .page-title {
   font-size: 2.4rem;
   font-weight: 800;
-  color: #1c2833;
+  color: #ffffff;
   margin: 0 1rem 1rem 1rem;
   line-height: 1.2;
 }
@@ -31,13 +31,13 @@ nav ul {
 
 nav ul li a {
   text-decoration: none;
-  color: #2c3e50;
+  color: #ffffff;
   font-weight: 500;
   transition: color 0.2s ease-in-out;
 }
 
 nav ul li a:hover {
-  color: #3498db;
+  color: #85c1e9;
 }
 
 .category-tabs {
@@ -89,6 +89,7 @@ nav ul li a:hover {
   margin: 0 1rem 1rem 1rem;
   font-weight: 600;
 }
+
 .category-tabs a {
   text-decoration: none;
   color: #2c3e50;
@@ -191,37 +192,27 @@ li {
   right: 12px;
   font-size: 1rem;
 }
-/* Weather Page Styles */
-.weather-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 1rem;
-}
 
-.weather-card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 1rem 1.5rem;
+
+/* Homepage card styles */
+.homepage-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 1.5rem;
   margin: 0.5rem;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
+  color: #fff;
 }
 
-.weather-card h2 {
-  margin: 0.5rem 0;
-  color: #2c3e50;
+.homepage-card h3 {
+  color: #fff;
 }
 
-.weather-card p {
-  margin: 0.25rem 0;
-  font-size: 1rem;
+.homepage-card li {
+  color: #fff;
 }
 
-.weather-card .temp {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #3498db;
+.homepage-card li::before {
+  font-family: 'weathericons';
 }

@@ -8,6 +8,11 @@ export interface ActivityType {
   poorConditions?: string[];
   goodConditions?: string[];
   perfectConditions?: string[];
+  indoorAlternative?: string;
+  /**
+   * In which months this activity is considered "in season" (1 = January, ..., 12 = December)
+   */
+  seasonalMonths?: number[];
 }
 
 export const activityTypes: ActivityType[] = [
@@ -18,9 +23,16 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Outdoor',
     weatherSensitive: true,
     tags: ['sport', 'cardio', 'exercise'],
-    poorConditions: ['temp<5', 'temp>30', 'wind_speed>10', 'rain>5', 'humidity>80'],
-    goodConditions: ['temp=10-15', 'wind_speed<5', 'clouds=25-75', 'humidity<60'],
-    perfectConditions: ['temp=10-15', 'wind_speed<3', 'clouds=50', 'humidity=40-50', 'visibility>10'],
+    poorConditions: ['temp<0', 'temp>30', 'wind_speed>15', 'rain>2', 'humidity>85'],
+    goodConditions: ['temp=10-20', 'wind_speed<8', 'clouds=20-80', 'humidity<65'],
+    perfectConditions: [
+      'temp=10-15',
+      'wind_speed<5',
+      'clouds=20-100',
+      'humidity=45-55',
+      'visibility>10',
+      'rain=0'
+    ],
   },
   {
     id: 'trail_running',
@@ -33,17 +45,17 @@ export const activityTypes: ActivityType[] = [
     goodConditions: ['temp=7-18', 'wind_speed<8', 'clouds=0-50', 'dry_conditions'],
     perfectConditions: ['temp=10-15', 'wind_speed<5', 'clear_sky', 'visibility>10', 'humidity<50'],
   },
-  {
-    id: 'road_cycling',
-    name: 'Road Cycling',
-    category: 'Sports',
-    secondaryCategory: 'Outdoor',
-    weatherSensitive: true,
-    tags: ['sport', 'cycling', 'cardio'],
-    poorConditions: ['temp<5', 'temp>35', 'wind_speed>15', 'rain>1', 'visibility<5'],
-    goodConditions: ['temp=15-27', 'wind_speed<10', 'clouds=0-25', 'humidity<60'],
-    perfectConditions: ['temp=18-24', 'wind_speed<5', 'clear_sky', 'humidity=40-50', 'tailwind'],
-  },
+{
+  id: 'road_cycling',
+  name: 'Road Cycling',
+  category: 'Sports',
+  secondaryCategory: 'Outdoor',
+  weatherSensitive: true,
+  tags: ['sport', 'cycling', 'cardio'],
+  poorConditions: ['temp<5', 'temp>28', 'rain>1', 'visibility<5'], // removed tailwind
+  goodConditions: ['temp=15-27', 'wind_speed<10', 'clouds=0-50', 'humidity<70'],
+  perfectConditions: ['temp=18-24', 'wind_speed<5', 'clouds=0-50', 'humidity=40-55'],
+},
   {
     id: 'mountain_biking',
     name: 'Mountain Biking',
@@ -53,7 +65,8 @@ export const activityTypes: ActivityType[] = [
     tags: ['sport', 'cycling', 'trail'],
     poorConditions: ['temp<0', 'temp>30', 'wind_speed>20', 'rain>3', 'wet_trail'],
     goodConditions: ['temp=13-24', 'wind_speed<12', 'clouds=25-75', 'dry_24h_ago'],
-    perfectConditions: ['temp=16-21', 'wind_speed<8', 'partly_cloudy', 'dry_48h_ago', 'visibility>10'],
+    perfectConditions: ['temp=15-22', 'wind_speed<8', 'partly_cloudy', 'dry_24h_ago', 'visibility>10', 'humidity<70'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'fly_fishing_freshwater',
@@ -62,9 +75,11 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Outdoor',
     weatherSensitive: true,
     tags: ['fishing', 'freshwater', 'technique'],
-    poorConditions: ['water_temp<7', 'water_temp>18', 'wind_speed>15', 'bright_sun', 'thunderstorm'],
-    goodConditions: ['water_temp=7-18', 'wind_speed<10', 'overcast', 'humidity>60'],
-    perfectConditions: ['water_temp=12-16', 'wind_speed<5', 'overcast', 'light_rain<1', 'hatching_conditions'],
+    poorConditions: ['water_temp<7', 'water_temp>18', 'wind_speed>15', 'bright_sun_wind<5', 'thunderstorm', 'rain>5'],
+    goodConditions: ['water_temp=7-18', 'wind_speed<10', 'overcast', 'light_rain<1'],
+    perfectConditions: ['water_temp=12-16', 'wind_speed<5', 'overcast', 'hatching_conditions'],
+    indoorAlternative: 'Tie some flies',
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9],
   },
   {
     id: 'gardening',
@@ -76,6 +91,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp<0', 'temp>35', 'wind_speed>20', 'heavy_rain>10', 'drought'],
     goodConditions: ['temp=15-27', 'wind_speed<10', 'light_rain', 'overcast'],
     perfectConditions: ['temp=18-24', 'wind_speed<5', 'light_rain_yesterday', 'soil_moist'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
   },
   {
     id: 'surfing',
@@ -87,6 +103,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['onshore_wind>20', 'rain>10', 'thunderstorm', 'water_temp<10'],
     goodConditions: ['offshore_wind=5-15', 'water_temp>16', 'swell_height=1-2'],
     perfectConditions: ['offshore_wind=8-12', 'clean_swell', 'water_temp>18', 'clear_sky', 'light_wind'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'hiking',
@@ -98,6 +115,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp<-5', 'temp>35', 'wind_speed>25', 'rain>10', 'visibility<1'],
     goodConditions: ['temp=10-21', 'wind_speed<15', 'clouds=50-75', 'humidity<70'],
     perfectConditions: ['temp=15-18', 'wind_speed<10', 'overcast', 'humidity=40-60', 'visibility>10'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'skiing',
@@ -109,6 +127,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp>2', 'wind_speed>30', 'rain>0', 'poor_visibility<100', 'ice_conditions'],
     goodConditions: ['temp=-7-2', 'wind_speed<20', 'fresh_snow', 'clouds=25-75'],
     perfectConditions: ['temp=-4-0', 'wind_speed<15', 'powder_snow', 'partly_cloudy', 'visibility>5'],
+    seasonalMonths: [12, 1, 2],
   },
   {
     id: 'birdwatching',
@@ -153,6 +172,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['wind_speed>20', 'rain>10', 'thunderstorm', 'high_waves'],
     goodConditions: ['wind_speed=5-15', 'temp=15-25', 'clouds=20-60'],
     perfectConditions: ['wind_speed<10', 'temp=18-22', 'clear_sky', 'calm_waters'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'rock_climbing',
@@ -164,6 +184,8 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>0', 'wet_rocks', 'temp<5', 'wind_speed>15'],
     goodConditions: ['temp=10-20', 'wind_speed<10', 'clouds=25-50'],
     perfectConditions: ['temp=15-18', 'wind_speed<5', 'clear_sky', 'dry_rocks'],
+    indoorAlternative: 'Indoor Climbing',
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'golf',
@@ -175,6 +197,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>5', 'wind_speed>20', 'temp<5', 'temp>30'],
     goodConditions: ['temp=15-25', 'wind_speed<15', 'clouds=10-50'],
     perfectConditions: ['temp=18-22', 'wind_speed<10', 'clear_sky', 'dry_ground'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'tennis',
@@ -186,6 +209,8 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>0', 'wind_speed>15', 'temp<10', 'temp>35'],
     goodConditions: ['temp=15-28', 'wind_speed<10', 'clouds=20-60'],
     perfectConditions: ['temp=20-25', 'wind_speed<5', 'clear_sky'],
+    indoorAlternative: 'Tennis (Indoor)',
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'beach_volleyball',
@@ -197,6 +222,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>0', 'wind_speed>20', 'temp<18', 'temp>35'],
     goodConditions: ['temp=20-30', 'wind_speed<15', 'clouds=10-50'],
     perfectConditions: ['temp=24-28', 'wind_speed<8', 'clear_sky'],
+    seasonalMonths: [6, 7, 8, 9,],
   },
   {
     id: 'horse_riding',
@@ -219,6 +245,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp>2', 'rain>0', 'wind_speed>20'],
     goodConditions: ['temp=-10-0', 'wind_speed<15', 'clear_sky'],
     perfectConditions: ['temp=-5-(-1)', 'wind_speed<10', 'clear_sky', 'fresh_ice'],
+    seasonalMonths: [12, 1, 2],
   },
   {
     id: 'cross_country_skiing',
@@ -230,6 +257,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp>2', 'rain>0', 'wind_speed>25'],
     goodConditions: ['temp=-10-0', 'wind_speed<20', 'fresh_snow'],
     perfectConditions: ['temp=-7-(-2)', 'wind_speed<10', 'powder_snow', 'clear_sky'],
+    seasonalMonths: [12, 1, 2],
   },
   {
     id: 'canoeing',
@@ -241,6 +269,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['wind_speed>20', 'rain>10', 'thunderstorm', 'high_waves'],
     goodConditions: ['wind_speed=5-15', 'temp=15-25', 'clouds=20-60'],
     perfectConditions: ['wind_speed<10', 'temp=18-22', 'clear_sky', 'calm_waters'],
+    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'picnicking',
@@ -252,6 +281,19 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>0', 'wind_speed>15', 'temp<10'],
     goodConditions: ['temp=15-25', 'wind_speed<10', 'clouds=10-50'],
     perfectConditions: ['temp=18-22', 'wind_speed<5', 'clear_sky'],
+    seasonalMonths: [5, 6, 7, 8, 9],
+  },
+  {
+    id: 'bbq',
+    name: 'BBQ',
+    category: 'Hobbies',
+    secondaryCategory: 'Outdoor',
+    weatherSensitive: true,
+    tags: ['leisure', 'family', 'relaxation'],
+    poorConditions: ['rain>0', 'wind_speed>15', 'temp<10'],
+    goodConditions: ['temp=15-25', 'wind_speed<10', 'clouds=10-50'],
+    perfectConditions: ['temp=18-22', 'wind_speed<5', 'clear_sky'],
+    seasonalMonths: [5, 6, 7, 8, 9],
   },
   {
     id: 'geocaching',
@@ -263,6 +305,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>5', 'wind_speed>20', 'temp<5'],
     goodConditions: ['temp=10-25', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=15-20', 'wind_speed<10', 'clear_sky'],
+    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'fishing_sea',
@@ -285,6 +328,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>10', 'wind_speed>20', 'temp<5'],
     goodConditions: ['temp=10-20', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=15-18', 'wind_speed<10', 'clear_sky', 'dry_ground'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'wild_swimming',
@@ -296,6 +340,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['water_temp<15', 'wind_speed>15', 'rain>5'],
     goodConditions: ['water_temp=16-22', 'wind_speed<10', 'clouds=20-50'],
     perfectConditions: ['water_temp=18-22', 'wind_speed<5', 'clear_sky'],
+     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'archery',
@@ -318,6 +363,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>10', 'wind_speed>20', 'temp<5'],
     goodConditions: ['temp=10-20', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=15-18', 'wind_speed<10', 'clear_sky'],
+    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'rock_hopping',
@@ -329,6 +375,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>0', 'wet_rocks', 'wind_speed>15'],
     goodConditions: ['temp=10-22', 'wind_speed<10', 'clouds=20-60'],
     perfectConditions: ['temp=15-20', 'wind_speed<5', 'clear_sky', 'dry_rocks'],
+    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'snorkeling',
@@ -340,6 +387,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['water_temp<20', 'wind_speed>15', 'rain>5'],
     goodConditions: ['water_temp=21-26', 'wind_speed<10', 'clouds=10-50'],
     perfectConditions: ['water_temp=24-26', 'wind_speed<5', 'clear_sky', 'calm_sea'],
+     seasonalMonths: [5, 6, 7, 8, 9, 10],
   },
   {
     id: 'stand_up_paddleboarding',
@@ -351,10 +399,11 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['wind_speed>15', 'rain>5', 'high_waves'],
     goodConditions: ['wind_speed=5-10', 'temp=18-25', 'clouds=10-40'],
     perfectConditions: ['wind_speed<5', 'temp=20-24', 'clear_sky', 'calm_waters'],
+    seasonalMonths: [5, 6, 7, 8, 9, 10],
   },
   {
     id: 'swimming',
-    name: 'Swimming',
+    name: 'Wild Swimming',
     category: 'Sports',
     secondaryCategory: 'Outdoor',
     weatherSensitive: true,
@@ -362,6 +411,8 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['water_temp<18', 'rain>5', 'wind_speed>15'],
     goodConditions: ['water_temp=19-25', 'wind_speed<10', 'clouds=10-50'],
     perfectConditions: ['water_temp=22-25', 'wind_speed<5', 'clear_sky'],
+    indoorAlternative: 'Indoor Swimming',
+    seasonalMonths: [5, 6, 7, 8, 9, 10],
   },
   {
     id: 'tennis_indoor',
@@ -370,6 +421,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['sport', 'racquet'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'gym_workout',
@@ -378,6 +431,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['exercise', 'fitness'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'yoga',
@@ -386,6 +441,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['exercise', 'relaxation', 'mindfulness'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'pilates',
@@ -394,6 +451,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['exercise', 'core', 'flexibility'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'indoor_climbing',
@@ -402,6 +461,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['sport', 'strength', 'adventure'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'squash',
@@ -410,6 +471,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['sport', 'racquet'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'badminton',
@@ -418,6 +481,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['sport', 'racquet'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'table_tennis',
@@ -426,6 +491,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['sport', 'racquet'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'indoor_swimming',
@@ -434,6 +501,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['water', 'exercise'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'dance',
@@ -442,6 +511,8 @@ export const activityTypes: ActivityType[] = [
     secondaryCategory: 'Indoor',
     weatherSensitive: false,
     tags: ['exercise', 'art', 'music'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
   },
   {
     id: 'urban_exploring',
@@ -453,6 +524,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>10', 'wind_speed>20', 'temp<5'],
     goodConditions: ['temp=10-20', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=15-18', 'wind_speed<10', 'clear_sky'],
+    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
     id: 'mushroom_hunting',
@@ -464,6 +536,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp<5', 'rain>15', 'wind_speed>20'],
     goodConditions: ['temp=10-18', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=12-16', 'wind_speed<10', 'light_rain_yesterday', 'overcast'],
+    seasonalMonths: [9, 10, 11],
   },
   {
     id: 'snowboarding',
@@ -475,6 +548,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp>2', 'wind_speed>30', 'rain>0', 'poor_visibility<100', 'ice_conditions'],
     goodConditions: ['temp=-7-2', 'wind_speed<20', 'fresh_snow', 'clouds=25-75'],
     perfectConditions: ['temp=-4-0', 'wind_speed<15', 'powder_snow', 'partly_cloudy', 'visibility>5'],
+    seasonalMonths: [12, 1, 2, 3],
   },
   {
     id: 'ice_fishing',
@@ -486,6 +560,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp>0', 'wind_speed>20', 'rain>0'],
     goodConditions: ['temp=-10-0', 'wind_speed<15', 'stable_ice'],
     perfectConditions: ['temp=-5-(-2)', 'wind_speed<10', 'clear_sky', 'fresh_ice'],
+    seasonalMonths: [12, 1, 2,],
   },
   {
     id: 'photography',
@@ -497,6 +572,7 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>10', 'wind_speed>20', 'temp<5'],
     goodConditions: ['temp=10-20', 'wind_speed<15', 'clouds=20-60'],
     perfectConditions: ['temp=15-18', 'wind_speed<10', 'golden_hour', 'clear_sky'],
+    indoorAlternative: 'Photography (Indoor Studio)',
   },
   {
     id: 'beekeeping',
@@ -508,6 +584,8 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['temp<10', 'rain>5', 'wind_speed>15'],
     goodConditions: ['temp=15-30', 'wind_speed<10', 'clouds=10-50'],
     perfectConditions: ['temp=18-25', 'wind_speed<5', 'clear_sky'],
+    indoorAlternative: 'Beekeeping Workshop or Reading',
+    seasonalMonths: [4, 5, 6, 7, 8, 9,],
   },
   {
     id: 'trail_hunting',
@@ -530,5 +608,106 @@ export const activityTypes: ActivityType[] = [
     poorConditions: ['rain>20', 'wind_speed>25', 'temp<5'],
     goodConditions: ['temp=10-25', 'wind_speed<15', 'clouds=10-50'],
     perfectConditions: ['temp=15-20', 'wind_speed<10', 'clear_sky', 'dry_ground'],
-  }
+    seasonalMonths: [6, 7, 8, 9],
+  },
+  {
+    id: 'knitting',
+    name: 'Knitting',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['craft', 'relaxation', 'hobby'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'tai_chi',
+    name: 'Tai Chi',
+    category: 'Sports',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['exercise', 'mindfulness', 'relaxation'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'martial_arts',
+    name: 'Martial Arts',
+    category: 'Sports',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['exercise', 'strength', 'discipline'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'meditation',
+    name: 'Meditation',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['mindfulness', 'relaxation', 'wellbeing'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'reading',
+    name: 'Reading',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['books', 'relaxation', 'learning'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'going_to_pub',
+    name: 'Going to the Pub',
+    category: 'Indoor',
+    secondaryCategory: 'Hobbies',
+    weatherSensitive: false,
+    tags: ['social', 'leisure', 'relaxation'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'painting',
+    name: 'Painting',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'diy',
+    name: 'DIY',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['craft', 'home', 'practical'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'crafts',
+    name: 'Crafts',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
+  {
+    id: 'playing_records',
+    name: 'Playing Records',
+    category: 'Hobbies',
+    secondaryCategory: 'Indoor',
+    weatherSensitive: false,
+    tags: ['music', 'relaxation', 'leisure'],
+    goodConditions: ['temp<=5', 'precipitation>=2', 'wind_speed>=20'],
+    perfectConditions: ['temp<=0', 'precipitation>=4', 'wind_speed>=30'],
+  },
 ];

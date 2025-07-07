@@ -104,64 +104,70 @@ const Weather: React.FC = () => {
   if (loading) return <div>Loading forecast...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
-  // Function to determine card class based on description and slot
-  const getCardClass = (description: string | null, slot: 'morning' | 'afternoon' | 'night') => {
-    if (slot === 'night') return 'card-night';
-    if (!description) return 'card-sunny';
+  // Function to get a simple weather icon emoji based on description
+  const getWeatherIcon = (description: string | null) => {
+    if (!description) return '☀️';
     const lower = description.toLowerCase();
-    if (lower.includes('rain') || lower.includes('shower')) return 'card-rain';
-    if (lower.includes('storm') || lower.includes('thunder')) return 'card-storm';
-    if (lower.includes('snow') || lower.includes('sleet') || lower.includes('flurr')) return 'card-snow';
-    if (lower.includes('clear') || lower.includes('sun')) return 'card-sunny';
-    return 'card-sunny';
+    if (lower.includes('rain') || lower.includes('shower')) return '🌧️';
+    if (lower.includes('storm') || lower.includes('thunder')) return '⛈️';
+    if (lower.includes('snow') || lower.includes('sleet') || lower.includes('flurr')) return '❄️';
+    if (lower.includes('clear') || lower.includes('sun')) return '☀️';
+    if (lower.includes('cloud')) return '☁️';
+    return '☀️';
+  };
+
+  // Function to capitalize first letter of each word for description
+  const capitalizeDescription = (desc: string | null) => {
+    if (!desc) return "N/A";
+    return desc.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   return (
     <div className="container">
       <h1>5-Day Forecast for {location.name}</h1>
-      {forecast.map(entry => (
-        <div key={entry.date}>
-          <h3>{new Date(entry.date).toLocaleDateString()}</h3>
-          <div className="grid-container">
-            {entry.morning.temp != null && (
-              <div className="grid-item">
-                <div className={`card ${getCardClass(entry.morning.description, 'morning')}`}>
-                  <div className="status">
-                    <p>🌅 Morning: {entry.morning.temp}°C</p>
-                    <p>💨 Wind: {entry.morning.wind} m/s</p>
-                    <p>☔ Precipitation: {entry.morning.precipitation ?? 0} mm</p>
-                    <p>{entry.morning.description}</p>
+      {forecast.map(entry => {
+        const dateObj = new Date(entry.date);
+        const today = new Date();
+        const tomorrow = new Date();
+        tomorrow.setDate(today.getDate() + 1);
+
+        const isToday = dateObj.toDateString() === today.toDateString();
+        const isTomorrow = dateObj.toDateString() === tomorrow.toDateString();
+
+        let label = dateObj.toLocaleDateString();
+        if (isToday) label = "Today";
+        else if (isTomorrow) label = "Tomorrow";
+        else label = dateObj.toLocaleDateString(undefined, { weekday: 'long' });
+
+        return (
+          <div key={entry.date}>
+            <h3>{label}</h3>
+            <div className="grid-container" style={{ display: 'flex', gap: '1rem' }}>
+              {['Morning', 'Afternoon', 'Evening'].map((timeLabel, idx) => {
+                const slot = idx === 0 ? entry.morning : idx === 1 ? entry.afternoon : entry.night;
+                return slot.temp != null && (
+                  <div className="grid-item" key={timeLabel} style={{ flex: 1 }}>
+                    <div className="weatherCard">
+                      <div className="timeOfDay">{timeLabel}</div>
+                      <div className="currentTemp">
+                        <span className="temp">{slot.temp}°</span>
+                        <span className="location">{capitalizeDescription(slot.description)}</span>
+                      </div>
+                      <div className="currentWeather">
+                        <span className="conditions">{getWeatherIcon(slot.description)}</span>
+                        <div className="info">
+                          <div className="rain">☔ {slot.precipitation ?? 0} mm</div>
+                          <div className="wind">💨 {slot.wind ?? 0} m/s</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
-            {entry.afternoon.temp != null && (
-              <div className="grid-item">
-                <div className={`card ${getCardClass(entry.afternoon.description, 'afternoon')}`}>
-                  <div className="status">
-                    <p>🌇 Afternoon: {entry.afternoon.temp}°C</p>
-                    <p>💨 Wind: {entry.afternoon.wind} m/s</p>
-                    <p>☔ Precipitation: {entry.afternoon.precipitation ?? 0} mm</p>
-                    <p>{entry.afternoon.description}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {entry.night.temp != null && (
-              <div className="grid-item">
-                <div className={`card ${getCardClass(entry.night.description, 'night')}`}>
-                  <div className="status">
-                    <p>🌃 Night: {entry.night.temp}°C</p>
-                    <p>💨 Wind: {entry.night.wind} m/s</p>
-                    <p>☔ Precipitation: {entry.night.precipitation ?? 0} mm</p>
-                    <p>{entry.night.description}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

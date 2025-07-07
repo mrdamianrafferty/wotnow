@@ -77,3 +77,5 @@ export const useUserPreferences = (): UserPreferencesContextType => {
   }
   return context;
 };
+
+export { UserPreferencesContext };
