@@ -36,9 +36,9 @@ const Interests: React.FC = () => {
   console.log('Full grouped object:', grouped);
 
   return (
-    <div>
-      <h1>Choose Your Interests</h1>
-      <div className="category-tabs">
+    <div className="interests-page">
+      <h1 className="page-title">Choose Your Interests</h1>
+      <div className="interests-category-tabs">
         {[
           'Outdoor',
           'Sports',
@@ -60,23 +60,27 @@ const Interests: React.FC = () => {
       </div>
       {grouped[selectedCategory] && (
         <div className="category-group">
-          <h2 className="category-heading">{selectedCategory}</h2>
-          <div className="cards-container">
-            {grouped[selectedCategory].map(activity => (
-              <div
-                key={activity.id}
-                className={`card ${interests.includes(activity.id) ? 'selected' : ''}`}
-                onClick={() => toggleInterest(activity.id, activity.name)}
-                role="button"
-                aria-pressed={interests.includes(activity.id)}
-              >
-                {activity.name}
-              </div>
+          <h2 className="interests-category-heading">{selectedCategory}</h2>
+          {/* Container styled as a responsive CSS grid */}
+          <div className="interests-cards-container interests-grid">
+            {grouped[selectedCategory]
+              .slice()
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(activity => (
+                <div
+                  key={activity.id}
+                  className={`interest-card ${interests.includes(activity.id) ? 'selected' : ''}`}
+                  onClick={() => toggleInterest(activity.id, activity.name)}
+                  role="button"
+                  aria-pressed={interests.includes(activity.id)}
+                >
+                  {activity.name}
+                </div>
             ))}
           </div>
         </div>
       )}
-      {toastMessage && <div className="toast">{toastMessage}</div>}
+      {toastMessage && <div className="interests-toast">{toastMessage}</div>}
     </div>
   );
 };

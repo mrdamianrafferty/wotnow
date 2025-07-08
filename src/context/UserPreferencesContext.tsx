@@ -26,6 +26,37 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     return stored ? JSON.parse(stored) : defaultPreferences;
   });
 
+  // Try to set location dynamically if missing
+  useEffect(() => {
+    if ((!preferences.location.lat || !preferences.location.lon) && typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setPreferences(prev => ({
+            ...prev,
+            location: {
+              name: 'Current Location',
+              lat: position.coords.latitude,
+              lon: position.coords.longitude,
+            },
+          }));
+        },
+        (err) => {
+          console.warn('Geolocation failed or denied', err);
+          setPreferences(prev => ({
+            ...prev,
+            location: {
+              name: 'Berlin, Germany',
+              lat: 52.52,
+              lon: 13.405,
+            },
+          }));
+        }
+      );
+    }
+  // Only run on mount and if lat/lon not set
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('preferences', JSON.stringify(preferences));
   }, [preferences]);

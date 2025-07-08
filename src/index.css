@@ -1,218 +1,288 @@
-html, body, #root {
-  height: 100%;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ========================================
+   WotNow - Main Stylesheet
+   Includes site-wide typography, navigation,
+   homepage cards, weather cards, and interests page styling
+   ======================================== */
+
+/* Fonts & Icons */
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,700);
+@import url(https://cdnjs.cloudflare.com/ajax/libs/weather-icons/1.2/css/weather-icons.min.css);
+
+/* Global */
+body {
+	background: linear-gradient(90deg, #7474BF 10%, #348AC7 90%);
+	font-family: 'Open Sans', sans-serif;
+	color: #fff;
+	line-height: 1.6;
+	font-size: 16px;
+	margin: 0;
+	padding: 0;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+h1, h2, h3, nav a {
+	color: #fff;
+	font-weight: 600;
+	margin: 0.5rem 0;
+}
+
+nav a {
+	text-decoration: none;
+	margin-right: 1rem;
+}
+
+.nav-list {
+	display: flex;
+	justify-content: center;
+	gap: 1.5rem;
+	list-style: none;
+	padding: 0;
+	margin: 1rem 0;
+}
+
+nav a:hover,
+nav a:focus {
+	text-decoration: underline;
+	outline: none;
+}
+
+/* Layout */
+.main-grid {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 20px;
+	padding: 20px;
+}
+
+/* ========================================
+   Card Components: Homepage & Weather Cards
+   ======================================== */
+
+/* Shared card styling */
+.homepage-card,
+.weatherCard {
+	position: relative;
+	display: flex;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+	border-radius: 16px;
+	background-color: rgba(255, 255, 255, 0.08);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.homepage-card {
+	flex: 1 1 300px;
+	max-width: 350px;
+	min-width: 250px;
+	padding: 1rem;
+	flex-direction: column;
+	height: auto; /* allow it to grow */
+}
+
+/* Homepage card conditions icon */
+.homepage-card .conditions {
+	font-family: weathericons;
+	font-size: 60px;
+	margin: 0 auto 0.5rem auto;
+	text-align: center;
+	display: block;
+}
+
+.homepage-card:hover,
+.homepage-card:focus-within,
+.weatherCard:hover {
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+	outline: none;
+}
+
+/* WeatherCard specific layout */
+.weatherCard {
+	width: 400px;
+	height: 200px;
+	margin: 20px auto;
+	border-radius: 24px;
+}
+
+/* WeatherCard internal elements */
+.weatherCard .timeOfDay {
+	position: absolute;
+	top: 8px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(0, 0, 0, 0.5);
+	color: #fff;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 14px;
+	font-weight: 600;
+	z-index: 1;
+}
+
+.currentTemp {
+	width: 220px;
+	height: 200px;
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	border-top-left-radius: 24px;
+	border-bottom-left-radius: 24px;
+}
+
+.currentTemp .temp {
+	font-size: 80px;
+	font-weight: 300;
+	margin: 0;
+}
+
+.currentTemp .location {
+	font-size: 30px;
+	font-weight: 700;
+	text-transform: uppercase;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-wrap: balance;
+	padding: 0 5px;
+}
+
+.currentWeather {
+	width: 180px;
+	height: 200px;
+	background: rgba(255, 255, 255, 0.12);
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	border-top-right-radius: 24px;
+	border-bottom-right-radius: 24px;
+}
+
+.currentWeather .conditions {
+	font-family: weathericons;
+	font-size: 80px;
+	margin: 0;
+}
+
+.info {
+	width: 180px;
+	height: 50px;
+	background: rgba(255, 255, 255, 0.15);
+	color: #fff;
+	font-weight: 700;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	border-bottom-right-radius: 24px;
+}
+
+.info .rain::before {
+	content: '\f04e';
+	font-family: weathericons;
+	margin-right: 5px;
+}
+
+.info .wind::before {
+	content: '\f050';
+	font-family: weathericons;
+	margin-right: 5px;
 }
 
 .page-title {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 1rem 1rem 1rem;
-  line-height: 1.2;
+	text-align: center;
+	font-size: 2rem;
+	font-weight: 700;
+	margin: 1rem 0;
 }
 
-nav ul {
-  list-style: none;
-  display: flex;
-  gap: 1rem;
-  padding: 0;
-  margin: 1rem 0 2rem 1rem;
+/* ========================================
+   Interests Page Styling
+   ======================================== */
+
+.interests-page {
+	padding: 1rem;
+	text-align: center;
 }
 
-nav ul li a {
-  text-decoration: none;
-  color: #ffffff;
-  font-weight: 500;
-  transition: color 0.2s ease-in-out;
+.interests-category-tabs {
+	display: flex;
+	justify-content: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	margin-bottom: 1.5rem;
 }
 
-nav ul li a:hover {
-  color: #85c1e9;
+.interests-category-tabs button {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	cursor: pointer;
+	transition: background 0.3s ease;
 }
 
-.category-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0 1rem 1rem;
+.interests-category-tabs button:hover,
+.interests-category-tabs button:focus {
+	background: rgba(255, 255, 255, 0.2);
+	outline: none;
 }
 
-.category-tabs button {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  padding: 0.4rem 1rem;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  display: inline-flex;
-  align-items: center;
+.interests-category-tabs .active {
+	background: rgba(255, 255, 255, 0.3);
+	font-weight: 700;
 }
 
-.category-tabs button:hover {
-  background: #f0f0f0;
-}
-
-.category-tabs button a {
-  text-decoration: none;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.category-tabs button:hover a {
-  color: #3498db;
-}
-
-.category-tabs button.active {
-  background: #3498db;
-  color: white;
-  border-color: #2980b9;
-  font-weight: 600;
-}
-
-.location-pill {
-  display: inline-block;
-  background: #ecf0f1;
-  padding: 0.3rem 0.6rem;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  margin: 0 1rem 1rem 1rem;
-  font-weight: 600;
-}
-
-.category-tabs a {
-  text-decoration: none;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.category-tabs a:hover {
-  color: #3498db;
-}
-
-.forecast-list {
-  list-style: none;
-  margin: 0.5rem 1rem;
-  padding: 0;
-}
-
-.forecast-list li {
-  margin: 0.2rem 0;
-}
-
-/* Card styles for forecast and interests */
-.card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  padding: 1.25rem;
-  margin: 0.5rem;
-  flex: 1 1 220px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-}
-
-.cards-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1rem;
-}
-
-/* Base typography */
-body {
-  background-color: #f8f9fa;
-  color: #2c3e50;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-h1, h2, h3 {
-  margin: 1rem;
-  color: #2c3e50;
-}
-
-ul {
-  padding-left: 1.5rem;
-}
-
-li {
-  margin-bottom: 0.3rem;
-}
-
-/* Interests grid */
 .interests-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.5rem;
-  margin: 1rem;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 20px;
+	justify-items: center;
+	padding: 1rem;
+	max-width: 1200px;
+	margin: 0 auto;
 }
 
-.interests-grid button {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 0.4rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.interests-grid button.selected {
-  background: #3498db;
-  color: white;
-  font-weight: 600;
-}
-
-.card.selected {
-  background: #3498db;
-  color: white;
-  font-weight: 600;
-  position: relative;
-}
-
-.card.selected::after {
-  content: "✅";
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 1rem;
-}
-
-
-/* Homepage card styles */
-.homepage-card {
+.interest-card {
+  width: 100%;
+  max-width: 180px;
   background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  padding: 1.5rem;
-  margin: 0.5rem;
-  color: #fff;
+  padding: 1rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
 }
 
-.homepage-card h3 {
-  color: #fff;
+.interest-card:hover {
+	transform: scale(1.05);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-.homepage-card li {
-  color: #fff;
+.interest-card.selected {
+	border: 2px solid #fff;
+	position: relative;
 }
 
-.homepage-card li::before {
-  font-family: 'weathericons';
+.interest-card.selected::after {
+	content: '✓';
+	color: #fff;
+	font-size: 1.5rem;
+	position: absolute;
+	top: 8px;
+	right: 12px;
+	font-weight: bold;
 }

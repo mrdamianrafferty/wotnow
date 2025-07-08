@@ -331,18 +331,6 @@ export const activityTypes: ActivityType[] = [
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
-    id: 'wild_swimming',
-    name: 'Wild Swimming',
-    category: 'Sports',
-    secondaryCategory: 'Outdoor',
-    weatherSensitive: true,
-    tags: ['water', 'adventure', 'swimming'],
-    poorConditions: ['water_temp<15', 'wind_speed>15', 'rain>5'],
-    goodConditions: ['water_temp=16-22', 'wind_speed<10', 'clouds=20-50'],
-    perfectConditions: ['water_temp=18-22', 'wind_speed<5', 'clear_sky'],
-     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
-  },
-  {
     id: 'archery',
     name: 'Archery',
     category: 'Sports',

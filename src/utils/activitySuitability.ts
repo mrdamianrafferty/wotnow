@@ -8,6 +8,8 @@ export interface WeatherData {
   [key: string]: number | undefined;
 }
 
+const weatherKeyMap: Record<string, string> = { temp: 'temperature', rain: 'precipitation', wind_speed: 'windSpeed' };
+
 // NOTE: To support indoor activities being 'good' when weather is poor for outdoors,
 // add to activityTypes.ts for indoor activities:
 // goodConditions: ['temperature<10', 'precipitation>=2', 'windSpeed>=20']
@@ -22,6 +24,7 @@ export function evaluateConditions(
   weather: WeatherData,
   conditions: string[]
 ): boolean {
+  console.debug("Weather data passed to evaluateConditions:", weather);
   for (const condition of conditions) {
     console.debug(`Evaluating condition: "${condition}" against weather:`, weather);
 
@@ -30,10 +33,18 @@ export function evaluateConditions(
       const [, key, minStr, maxStr] = rangeMatch;
       const min = parseFloat(minStr);
       const max = parseFloat(maxStr);
-      const actual = typeof weather[key] === 'number' ? weather[key] as number : null;
+      const mappedKey = weatherKeyMap[key] || key;
+      const actual = typeof weather[mappedKey] === 'number' ? weather[mappedKey] as number
+                    : typeof weather[key] === 'number' ? weather[key] as number
+                    : null;
       if (actual === null) {
-        console.debug(`Skipping condition "${condition}" due to missing weather key: ${key}`);
-        continue; // skip this condition and move on
+        // Suppressing water_temp checks until a proper water temperature source is integrated
+        if (mappedKey === 'water_temp') {
+          console.debug(`Skipping water_temp condition "${condition}" as no water temperature data is available yet.`);
+          continue;
+        }
+        console.debug(`Weather key "${mappedKey}" missing, condition "${condition}" fails.`);
+        return false; // previously: continue
       }
       console.debug(`Condition "${condition}": actual=${actual}, expected range=${min}-${max}`);
       if (actual < min || actual > max) return false;
@@ -45,10 +56,18 @@ export function evaluateConditions(
 
     const [, key, operator, valueStr] = match;
     const value = parseFloat(valueStr);
-    const actual = typeof weather[key] === 'number' ? weather[key] as number : null;
+    const mappedKey = weatherKeyMap[key] || key;
+    const actual = typeof weather[mappedKey] === 'number' ? weather[mappedKey] as number
+                  : typeof weather[key] === 'number' ? weather[key] as number
+                  : null;
     if (actual === null) {
-      console.debug(`Skipping condition "${condition}" due to missing weather key: ${key}`);
-      continue; // skip this condition and move on
+      // Suppressing water_temp checks until a proper water temperature source is integrated
+      if (mappedKey === 'water_temp') {
+        console.debug(`Skipping water_temp condition "${condition}" as no water temperature data is available yet.`);
+        continue;
+      }
+      console.debug(`Weather key "${mappedKey}" missing, condition "${condition}" fails.`);
+      return false; // previously: continue
     }
 
     console.debug(`Condition "${condition}": actual=${actual}, operator=${operator}, expected=${value}`);
@@ -114,3 +133,5 @@ export function getSuitability(
   console.debug(`No conditions defined for activity: ${activity.id} (${activity.name}), returning 'unknown'.`, activity);
   return 'unknown';
 }
+
+export { getSuitability as getActivitySuitability };
