@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { activityTypes } from '../data/activityTypes';
 
 interface Preferences {
   location: { name: string; lat?: number; lon?: number };
@@ -23,7 +24,24 @@ const UserPreferencesContext = createContext<UserPreferencesContextType | undefi
 export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [preferences, setPreferences] = useState<Preferences>(() => {
     const stored = localStorage.getItem('preferences');
-    return stored ? JSON.parse(stored) : defaultPreferences;
+    if (!stored) return defaultPreferences;
+    const parsed = JSON.parse(stored);
+    const validActivityIds = new Set([
+      'dog_walking',
+      'outdoor_gardening',
+      'going_to_pub',
+      'surfing',
+      'kayaking',
+      'photography',
+      'bbq',
+      'camping',
+      'fly_fishing_freshwater',
+      'diy',
+      'canoeing',
+      'urban_exploring',
+    ]);
+    parsed.interests = parsed.interests.filter((id: string) => validActivityIds.has(id));
+    return parsed;
   });
 
   // Try to set location dynamically if missing

@@ -2,10 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import Interests from './pages/Interests';
-import OverNextFewDays from './pages/OverNextFewDays';
 import Weather from './pages/Weather';
 import Location from './pages/Location';
-import Calendar from './pages/Calendar';
 
 const App: React.FC = () => (
   <BrowserRouter>
@@ -19,10 +17,8 @@ const App: React.FC = () => (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/interests" element={<Interests />} />
-      <Route path="/next-few-days" element={<OverNextFewDays />} />
       <Route path="/weather" element={<Weather />} />
       <Route path="/location" element={<Location />} />
-      <Route path="/calendar" element={<Calendar />} />
     </Routes>
   </BrowserRouter>
 );

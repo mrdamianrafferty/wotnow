@@ -1,5 +1,4 @@
 import "../index.css";
-import "../weather-cards.css";
 import React, { useState, useEffect } from 'react';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 
