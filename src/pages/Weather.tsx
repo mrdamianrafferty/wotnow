@@ -2,26 +2,28 @@ import "../index.css";
 import React, { useState, useEffect } from 'react';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 
-interface SlotData {
-  temp: number | null;
-  wind: number | null;
-  precipitation: number | null;
-  description: string | null;
-}
-
-interface ForecastEntry {
+interface Slot {
   date: string;
-  morning: SlotData;
-  afternoon: SlotData;
-  night: SlotData;
+  time: string;
+  temp: number;
+  description: string;
+  precipitation: number;
+  wind: number;
+  humidity: number;
+  clouds: number;
+  visibility: number;
 }
 
 const Weather: React.FC = () => {
   const { preferences } = useUserPreferences();
   const { location } = preferences;
-  const [forecast, setForecast] = useState<ForecastEntry[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  const [sunrise, setSunrise] = useState<string>('');
+  const [sunset, setSunset] = useState<string>('');
+
   const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
 
   useEffect(() => {
@@ -35,6 +37,7 @@ const Weather: React.FC = () => {
       setLoading(false);
       return;
     }
+
     const fetchForecast = async () => {
       try {
         const response = await fetch(
@@ -42,55 +45,36 @@ const Weather: React.FC = () => {
         );
         if (!response.ok) throw new Error('Failed to fetch forecast');
         const data = await response.json();
-        // Group by date and time slots
-        const slots = ['09:00:00', '15:00:00', '21:00:00'];
-        const emptySlot = (): SlotData => ({
-          temp: null,
-          wind: null,
-          precipitation: null,
-          description: null,
-        });
-        const entries: Record<string, ForecastEntry> = {};
-        data.list.forEach((item: any) => {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const newSlots: Slot[] = data.list.map((item: any) => {
           const [date, time] = item.dt_txt.split(' ');
-          if (!entries[date]) {
-            entries[date] = {
-              date,
-              morning: emptySlot(),
-              afternoon: emptySlot(),
-              night: emptySlot(),
-            };
-          }
-          if (time === slots[0]) {
-            entries[date].morning.temp = Math.round(item.main.temp);
-            entries[date].morning.wind = item.wind?.speed ?? null;
-            entries[date].morning.precipitation = item.rain?.['3h'] ?? item.snow?.['3h'] ?? null;
-            entries[date].morning.description = item.weather?.[0]?.description ?? null;
-          }
-          if (time === slots[1]) {
-            entries[date].afternoon.temp = Math.round(item.main.temp);
-            entries[date].afternoon.wind = item.wind?.speed ?? null;
-            entries[date].afternoon.precipitation = item.rain?.['3h'] ?? item.snow?.['3h'] ?? null;
-            entries[date].afternoon.description = item.weather?.[0]?.description ?? null;
-          }
-          if (time === slots[2]) {
-            entries[date].night.temp = Math.round(item.main.temp);
-            entries[date].night.wind = item.wind?.speed ?? null;
-            entries[date].night.precipitation = item.rain?.['3h'] ?? item.snow?.['3h'] ?? null;
-            entries[date].night.description = item.weather?.[0]?.description ?? null;
-          }
+          return {
+            date,
+            time: time.slice(0, 5),
+            temp: Math.round(item.main.temp),
+            description: item.weather?.[0]?.description ?? '',
+            precipitation: item.rain?.['3h'] ?? item.snow?.['3h'] ?? 0,
+            wind: item.wind?.speed ?? 0,
+            humidity: item.main?.humidity ?? 0,
+            clouds: item.clouds?.all ?? 0,
+            visibility: (item.visibility ?? 10000) / 1000
+          };
         });
-        // Remove past slots for today
-        const today = new Date().toISOString().split('T')[0];
-        if (entries[today]) {
-          const now = new Date().getHours();
-          if (now >= 9) entries[today].morning.temp = null;
-          if (now >= 15) entries[today].afternoon.temp = null;
-        }
-        // Take next 5 calendar days
-        const sortedDates = Object.keys(entries).sort();
-        const nextFive = sortedDates.slice(0, 5).map(date => entries[date]);
-        setForecast(nextFive);
+        const expanded: Record<string, boolean> = {};
+        expanded[todayStr] = true;
+        setExpandedDays(expanded);
+        setSlots(newSlots);
+
+        // Fetch sunrise and sunset times
+        const weatherResponse = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${apiKey}`
+        );
+        if (!weatherResponse.ok) throw new Error('Failed to fetch weather data');
+        const weatherData = await weatherResponse.json();
+        const sunriseDate = new Date(weatherData.sys.sunrise * 1000);
+        const sunsetDate = new Date(weatherData.sys.sunset * 1000);
+        setSunrise(sunriseDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+        setSunset(sunsetDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -103,70 +87,95 @@ const Weather: React.FC = () => {
   if (loading) return <div>Loading forecast...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
-  // Function to get a simple weather icon emoji based on description
-  const getWeatherIcon = (description: string | null) => {
-    if (!description) return '☀️';
+  const getWeatherIcon = (description: string, time?: string) => {
     const lower = description.toLowerCase();
+
+    const isNight = (() => {
+      if (!time) return false;
+      const [hourStr] = time.split(':');
+      const hour = parseInt(hourStr, 10);
+      return hour < 6 || hour >= 20;
+    })();
+
     if (lower.includes('rain') || lower.includes('shower')) return '🌧️';
     if (lower.includes('storm') || lower.includes('thunder')) return '⛈️';
     if (lower.includes('snow') || lower.includes('sleet') || lower.includes('flurr')) return '❄️';
-    if (lower.includes('clear') || lower.includes('sun')) return '☀️';
+    if (lower.includes('clear') || lower.includes('sun')) return isNight ? '🌙' : '☀️';
     if (lower.includes('cloud')) return '☁️';
-    return '☀️';
+    return isNight ? '🌙' : '☀️';
   };
 
-  // Function to capitalize first letter of each word for description
-  const capitalizeDescription = (desc: string | null) => {
-    if (!desc) return "N/A";
-    return desc.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  const toggleDay = (date: string) => {
+    setExpandedDays(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  const groupedByDay = slots.reduce<Record<string, Slot[]>>((acc, slot) => {
+    if (!acc[slot.date]) acc[slot.date] = [];
+    acc[slot.date].push(slot);
+    return acc;
+  }, {});
+
+  const getDayName = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) return 'Today';
+    if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
   };
 
   return (
-    <div className="container">
-      <h1>5-Day Forecast for {location.name}</h1>
-      {forecast.map(entry => {
-        const dateObj = new Date(entry.date);
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-
-        const isToday = dateObj.toDateString() === today.toDateString();
-        const isTomorrow = dateObj.toDateString() === tomorrow.toDateString();
-
-        let label = dateObj.toLocaleDateString();
-        if (isToday) label = "Today";
-        else if (isTomorrow) label = "Tomorrow";
-        else label = dateObj.toLocaleDateString(undefined, { weekday: 'long' });
-
-        return (
-          <div key={entry.date}>
-            <h3>{label}</h3>
-            <div className="grid-container" style={{ display: 'flex', gap: '1rem' }}>
-              {['Morning', 'Afternoon', 'Evening'].map((timeLabel, idx) => {
-                const slot = idx === 0 ? entry.morning : idx === 1 ? entry.afternoon : entry.night;
-                return slot.temp != null && (
-                  <div className="grid-item" key={timeLabel} style={{ flex: 1 }}>
-                    <div className="weatherCard">
-                      <div className="timeOfDay">{timeLabel}</div>
-                      <div className="currentTemp">
-                        <span className="temp">{slot.temp}°</span>
-                        <span className="location">{capitalizeDescription(slot.description)}</span>
-                      </div>
-                      <div className="currentWeather">
-                        <span className="conditions">{getWeatherIcon(slot.description)}</span>
-                        <div className="info">
-                          <div className="rain">☔ {slot.precipitation ?? 0} mm</div>
-                          <div className="wind">💨 {slot.wind ?? 0} m/s</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+    <div className="container" style={{ paddingLeft: '1rem' }}>
+      <h1>5-Day Detailed Forecast for {location.name.charAt(0).toUpperCase() + location.name.slice(1)}</h1>
+      <table className="weather-table spaced">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>🌡️ Temp</th>
+            <th>Weather</th>
+            <th>☔ Precip</th>
+            <th>💨 Wind</th>
+            <th>💧 Humidity</th>
+            <th>☁️ Clouds</th>
+            <th>🔍 Visibility</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(groupedByDay).map(([date, daySlots]) => (
+            <React.Fragment key={date}>
+              <tr className="day-header" onClick={() => toggleDay(date)}>
+                <td colSpan={8} style={{ cursor: 'pointer', background: '#f0f0f0' }}>
+                  <span style={{ fontWeight: 'bold' }}>{expandedDays[date] ? '▼' : '▶'} {getDayName(date)}</span>{getDayName(date) === 'Today' && sunrise && sunset ? ` (Sunrise at ${sunrise} and Sunset at ${sunset})` : ''}
+                </td>
+              </tr>
+              {expandedDays[date] && daySlots.map(slot => (
+                <tr key={`${slot.date}-${slot.time}`}>
+                  <td>
+                    {(() => {
+                      const dateObj = new Date(`${slot.date}T${slot.time}`);
+                      const hours = dateObj.getHours();
+                      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                      if (hours === 0) return 'Midnight';
+                      if (hours === 12) return 'Noon';
+                      return dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                    })()}
+                  </td>
+                  <td className={slot.temp > 25 ? 'hot' : slot.temp < 5 ? 'cold' : ''}>{slot.temp}°C</td>
+                  <td style={{ fontSize: '1.2rem' }}>{getWeatherIcon(slot.description, slot.time)}</td>
+                  <td>{slot.precipitation} mm</td>
+                  <td className={slot.wind > 15 ? 'windy' : ''}>{(slot.wind * 3.6).toFixed(1)} km/h</td>
+                  <td>{slot.humidity}%</td>
+                  <td>{slot.clouds}%</td>
+                  <td>{slot.visibility} km</td>
+                </tr>
+              ))}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

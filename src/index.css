@@ -1,466 +1,252 @@
-/* ========================================
-   WotNow - Main Stylesheet
-   Includes site-wide typography, navigation,
-   homepage cards, weather cards, and interests page styling
-   ======================================== */
+/* Updated index.css with interactive card grid for Interests page */
 
-/* Fonts & Icons */
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:300,400,700);
-@import url(https://cdnjs.cloudflare.com/ajax/libs/weather-icons/1.2/css/weather-icons.min.css);
-
-/* Global */
+/* Base styles */
 body {
-	background: #f2f4f8;
-	font-family: 'Open Sans', sans-serif;
-	color: #222;
-	line-height: 1.6;
-	font-size: 16px;
-	margin: 0;
-	padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+  margin: 0;
+  padding: 0;
 }
 
-h1, h2, h3, nav a {
-	color: #222;
-	font-weight: 600;
-	margin: 0.5rem 0;
-}
-
-nav a {
-	text-decoration: none;
-	margin-right: 1rem;
-}
-
-.nav-list {
-	display: flex;
-	justify-content: center;
-	gap: 1.5rem;
-	list-style: none;
-	padding: 0;
-	margin: 1rem 0;
-}
-
-nav a:hover,
-nav a:focus {
-	text-decoration: underline;
-	outline: none;
-}
-
-/* Layout */
-.main-grid {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 20px;
-	padding: 20px;
-}
-
-/* ========================================
-   Card Components: Homepage & Weather Cards
-   ======================================== */
-
-/* Shared card styling */
-.homepage-card,
-.weatherCard,
-.interest-card {
-	background-color: #fff;
-	color: #222;
-	box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-	border: 1px solid #ddd;
-	position: relative;
-	display: flex;
-	border-radius: 16px;
-	backdrop-filter: blur(20px);
-	-webkit-backdrop-filter: blur(20px);
-	transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.homepage-card {
-	flex: 1 1 300px;
-	max-width: 350px;
-	min-width: 250px;
-	padding: 0.75rem;
-	flex-direction: column;
-	gap: 0.5rem;
-	height: auto;
-}
-
-/* Homepage card conditions icon */
-.homepage-card .conditions {
-	font-family: weathericons;
-	font-size: 60px;
-	margin: 0 auto 0.5rem auto;
-	text-align: center;
-	display: block;
-}
-
-.homepage-card:hover,
-.homepage-card:focus-within {
-	transform: translateY(-2px);
-	box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-	outline: none;
-}
-
-.weatherCard:hover {
-	transform: scale(1.05);
-	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-	outline: none;
-}
-
-/* WeatherCard specific layout */
-/* WeatherCard - Light Theme, Improved Contrast & Readability */
-.weatherCard {
-	width: 400px;
-	height: 200px;
-	margin: 20px auto;
-	border-radius: 24px;
-	background-color: #fff;
-	color: #222;
-	box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-	border: 1px solid #ddd;
-	display: flex;
-	overflow: hidden;
-}
-
-.weatherCard .timeOfDay {
-	position: absolute;
-	top: 8px;
-	left: 50%;
-	transform: translateX(-50%);
-	background: rgba(0, 0, 0, 0.1);
-	color: #222;
-	padding: 2px 8px;
-	border-radius: 12px;
-	font-size: 14px;
-	font-weight: 600;
-	z-index: 1;
-}
-
-.currentTemp {
-	width: 220px;
-	height: 200px;
-	background: #f7f9fb;
-	color: #222;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	border-top-left-radius: 24px;
-	border-bottom-left-radius: 24px;
-}
-
-.currentTemp .temp {
-	font-size: 80px;
-	font-weight: 300;
-	margin: 0;
-}
-
-.currentTemp .location {
-	font-size: 30px;
-	font-weight: 700;
-	text-transform: uppercase;
-	text-align: center;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	text-wrap: balance;
-	padding: 0 5px;
-}
-
-.currentWeather {
-	width: 180px;
-	height: 200px;
-	background: #f0f2f5;
-	color: #222;
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	border-top-right-radius: 24px;
-	border-bottom-right-radius: 24px;
-}
-
-.currentWeather .conditions {
-	font-family: weathericons;
-	font-size: 80px;
-	margin: 0;
-}
-
-.info {
-	width: 180px;
-	height: 50px;
-	background: #e9ecef;
-	color: #222;
-	font-weight: 700;
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	border-bottom-right-radius: 24px;
-}
-
-.info .rain::before {
-	content: '\f04e';
-	font-family: weathericons;
-	margin-right: 5px;
-}
-
-.info .wind::before {
-	content: '\f050';
-	font-family: weathericons;
-	margin-right: 5px;
-}
-
-.page-title {
-	text-align: center;
-	font-size: 2rem;
-	font-weight: 700;
-	margin: 1rem 0;
-}
-
-/* ========================================
-   Interests Page Styling
-   ======================================== */
-
-.interests-page {
-	padding: 1rem;
-	text-align: center;
-}
-
-.interests-category-tabs {
-	display: flex;
-	justify-content: center;
-	gap: 1rem;
-	flex-wrap: wrap;
-	margin-bottom: 1.5rem;
-}
-
-.interests-category-tabs button {
-	background: rgba(255, 255, 255, 0.1);
-	color: #333;
-	border: 1px solid rgba(0, 0, 0, 0.1);
-	border-radius: 8px;
-	padding: 0.5rem 1rem;
-	cursor: pointer;
-	transition: background 0.3s ease;
-}
-
-.interests-category-tabs button:hover,
-.interests-category-tabs button:focus {
-	background: rgba(255, 255, 255, 0.2);
-	outline: none;
-}
-
-.interests-category-tabs .active {
-	background: rgba(0, 0, 0, 0.1);
-	font-weight: 700;
-}
-
-.interests-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	gap: 20px;
-	justify-items: center;
-	padding: 1rem;
-	max-width: 1200px;
-	margin: 0 auto;
-}
-
-.interest-card {
-  width: 100%;
-  max-width: 180px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+header {
+  background-color: #4a90e2;
+  color: #fff;
   padding: 1rem;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   text-align: center;
+}
+
+a {
+  color: #4a90e2;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+main, .page {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.page {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+  font-weight: 600;
   color: #222;
 }
 
-.interest-card:hover {
-	transform: scale(1.05);
-	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+button {
+  background-color: #4a90e2;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-.interest-card.selected {
-	border: 2px solid #fff;
-	position: relative;
+button:hover {
+  background-color: #357ABD;
 }
 
-.interest-card.selected::after {
-	content: '✓';
-	color: #222;
-	font-size: 1.5rem;
-	position: absolute;
-	top: 8px;
-	right: 12px;
-	font-weight: bold;
-}
-/* ========================================
-   Homepage Card Semantic Structure Enhancements
-   ======================================== */
-
-.card-header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
+/* Home page weather cards */
+.weatherCard,
+.homepage-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
-.card-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+.homepage-card h2 {
   margin: 0;
-  color: #333;
+  font-size: 1.4rem;
 }
 
-.card-date {
-  font-size: 0.9rem;
-  color: #777;
-  font-style: italic;
-}
-
-.card-weather {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0.25rem 0;
-}
-
-.card-weather .wi {
-  font-size: 6rem;
-  margin-bottom: 0.2rem;
-}
-
-.card-condition {
-  font-size: 1.5rem;
-  margin: 0;
-  font-weight: 700;
-  color: #333;
-}
-
-.card-temp-range {
-  display: none;
-}
-
-.card-weather-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(80px, 1fr));
-  gap: 0.25rem 1rem;
-  justify-items: center;
-  margin: 0.5rem 0;
-}
-
-.card-rain-detail {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: #555;
-}
-
-.card-suggestions {
-  margin-top: 1rem;
-  font-size: 1rem;
-  border-top: 1px solid #eee;
-  padding-top: 0.5rem;
-}
-
-.card-suggestions p {
-  margin: 0.5rem 0 0 0;
-}
-
-.suggestion-message {
-  font-style: italic;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-@media (prefers-color-scheme: dark) {
-	body {
-		background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
-		color: #eee;
-	}
-	h1, h2, h3, nav a {
-		color: #eee;
-	}
-	.homepage-card,
-	.weatherCard,
-	.interest-card {
-		background-color: rgba(30, 30, 30, 0.8);
-		color: #eee;
-	}
-}
-
-/* ========================================
-   Improved Header, Title, and Location Input Styling
-   ======================================== */
-
-header.site-header {
+.homepage-card .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1rem;
+  background-color: transparent;
 }
 
-header.site-header .nav-list {
-  margin: 0;
+.homepage-card .card-condition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
-.page-title {
+.homepage-card .card-condition span:first-child {
+  font-size: 4rem;
+}
+
+.homepage-card .card-condition span:last-child {
+  margin-top: 0.25rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.homepage-card .temperature {
+  font-size: 2rem;
+  font-weight: bold;
   text-align: center;
-  font-size: 2.5rem;
   margin-top: 1rem;
-  font-weight: 700;
 }
 
-.page-subtitle {
-  text-align: center;
-  font-size: 1rem;
+.homepage-card .weather-stats {
+  font-size: 0.95rem;
   color: #555;
-  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.location-input {
+.homepage-card .rain-summary {
+  margin-top: 0.5rem;
+  color: #444;
   text-align: center;
-  margin-bottom: 1rem;
 }
 
-.location-input input {
-  padding: 0.4rem 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.homepage-card .card-suggestions {
+  margin-top: 1rem;
   font-size: 1rem;
+  color: #444;
 }
 
-.location-input button {
-  padding: 0.4rem 0.8rem;
-  margin-left: 0.5rem;
-  border: none;
-  background: #007BFF;
+/* Interests page */
+.interests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Interests page card hover and focus states for better visibility */
+.interest-card {
+  padding: 1rem;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 transparent;
+}
+
+.interest-card:hover {
+  background-color: #eef4fb;
+  border-color: #bbb;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.interest-card.selected {
+  background-color: #4a90e2;
   color: #fff;
+  border-color: #4a90e2;
+  position: relative;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+/* subtle text-shadow for better contrast on selected cards */
+.interest-card.selected span {
+  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+}
+
+.interest-card.selected::after {
+  content: "✔";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1rem;
+  color: #fff;
+}
+
+/* Weather table */
+.weatherTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.weatherTable th,
+.weatherTable td {
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  min-width: 80px;
+}
+
+.weatherTable th {
+  background-color: #eef4fb;
+  font-weight: 600;
+}
+
+.weatherTable tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Site header */
+.site-header {
+  background-color: #4a90e2;
+  color: #fff;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Main grid for homepage cards */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+/* Location input field */
+.location-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Category tabs for Interests page */
+.category-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.category-tab {
+  background-color: #eef4fb;
+  color: #333;
+  border: none;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
 }
 
-.location-input button:hover {
-  background: #0056b3;
+.category-tab.active {
+  background-color: #4a90e2;
+  color: #fff;
 }
-/* Make temperature on homepage card larger and prominent */
-.homepage-card .temp {
-  font-size: 4rem;
-  font-weight: 300;
-  line-height: 1;
-  margin: 0.1rem 0 0 0;
-  text-align: center;
+
+/* Small weather icon for tables */
+.weather-icon-small {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin-right: 0.25rem;
 }

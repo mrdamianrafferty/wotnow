@@ -22,11 +22,18 @@ const Interests: React.FC = () => {
   const grouped = activityTypes.reduce<Record<string, typeof activityTypes>>((acc, act) => {
     const categories = [act.category, act.secondaryCategory].filter(Boolean);
     categories.forEach(cat => {
+      if (cat === 'Uncategorised') {
+        console.log('Uncategorised activity:', act);
+      }
       acc[cat] = acc[cat] || [];
       acc[cat].push(act);
+      console.log(`Activity: ${act.name}, Category: ${cat}`);
     });
     return acc;
   }, {});
+
+  console.log('Detected categories:', Object.keys(grouped));
+  console.log('Full grouped object:', grouped);
 
   return (
     <div className="interests-page">
@@ -55,7 +62,7 @@ const Interests: React.FC = () => {
         <div className="category-group">
           <h2 className="interests-category-heading">{selectedCategory}</h2>
           {/* Container styled as a responsive CSS grid */}
-          <div className="interests-cards-container interests-grid">
+          <div className="interests-grid">
             {grouped[selectedCategory]
               .slice()
               .sort((a, b) => a.name.localeCompare(b.name))
@@ -67,7 +74,7 @@ const Interests: React.FC = () => {
                   role="button"
                   aria-pressed={interests.includes(activity.id)}
                 >
-                  {activity.name}
+                  <span className="interest-name">{activity.name}</span>
                 </div>
             ))}
           </div>
