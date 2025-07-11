@@ -1,0 +1,10 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/dev-gigs": "pages/dev-gigs.js",
+  "/api/getVenues": "pages/api/getVenues.js",
+  "/api/gigs": "pages/api/gigs.js",
+  "/weather": "pages/weather.js",
+  "/venues": "pages/venues.js"
+}
