@@ -52,7 +52,8 @@ button {
 }
 
 button:hover {
-  background-color: #357ABD;
+  background-color: #555;
+  color: #fff;
 }
 
 /* Home page weather cards */
@@ -249,4 +250,22 @@ button:hover {
   height: 24px;
   vertical-align: middle;
   margin-right: 0.25rem;
+}
+
+/* Toast notifications */
+.toast {
+  background-color: #444;
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 0.95;
 }

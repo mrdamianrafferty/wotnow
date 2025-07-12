@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let lat: number | undefined;
   let lon: number | undefined;
 
-  // 🌍 Dynamic country lookup using OpenStreetMap Nominatim
+  // 🌍 Geocode city
   try {
     let geoUrl = `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(city as string)}&format=json&limit=1&addressdetails=1`;
     if (countryCode) {
@@ -24,63 +24,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lat = parseFloat(geoData[0].lat);
       lon = parseFloat(geoData[0].lon);
     } else {
-      console.error('Geocoding returned empty result for city:', city);
       return res.status(404).json({ error: 'Could not determine lat/lon for city' });
     }
-  } catch (geoErr) {
-    console.error('Geocoding failed:', geoErr);
+  } catch {
     return res.status(500).json({ error: 'Geocoding failed' });
   }
 
   console.log(`📍 Fetching venues for latlong: ${lat},${lon} with radius 60km`);
 
   try {
-    const url = `https://app.ticketmaster.com/discovery/v2/venues.json?apikey=${apiKey}&latlong=${lat},${lon}&radius=60&size=100`;
-    const response = await fetch(url);
-    const data = await response.json();
+    // Step 1: fetch all venues nearby
+    const venuesUrl = `https://app.ticketmaster.com/discovery/v2/venues.json?apikey=${apiKey}&latlong=${lat},${lon}&radius=60&size=100`;
+    const venuesResp = await fetch(venuesUrl);
+    const venuesData = await venuesResp.json();
 
-    if (!data._embedded?.venues) {
-      console.warn('No venues found in Ticketmaster response');
+    if (!venuesData._embedded?.venues) {
       return res.status(404).json({ error: 'No venues found' });
     }
 
-    const requestedCategory = typeof category === 'string' ? category.toLowerCase() : null;
+    let allVenues = venuesData._embedded.venues
+      .filter((v: any) => {
+        const lowerName = (v.name || '').toLowerCase();
+        return lowerName !== 'ticketmaster shop' && lowerName !== 'ticketmaster merchandise' && !lowerName.startsWith('live nation');
+      })
+      .map((v: any) => ({
+        id: v.id || null,
+        name: v.name || '',
+        address: v.address?.line1 || null,
+        city: v.city?.name || null,
+        country: v.country?.name || null
+      }));
 
-    const venueMap = new Map<string, any>();
+    // Supported categories
+    const allowedCategories = ['Music', 'Sports', 'Arts & Theatre', 'All'];
+    const selectedCategory = typeof category === 'string' ? category : 'All';
+    if (!selectedCategory || selectedCategory === 'All') {
+      const venuesSorted = allVenues.sort((a, b) => a.name.localeCompare(b.name));
+      return res.status(200).json({ venues: venuesSorted });
+    }
+    if (!allowedCategories.includes(selectedCategory)) {
+      return res.status(400).json({ error: 'Unsupported category' });
+    }
 
-    data._embedded.venues.forEach((v: any) => {
-      const name = v.name || '';
-      const lowerName = name.toLowerCase();
+    // Step 2: fetch events in selected category to find which venues host events
+    const eventsUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${apiKey}&latlong=${lat},${lon}&radius=60&classificationName=${encodeURIComponent(selectedCategory)}&size=100`;
+    const eventsResp = await fetch(eventsUrl);
+    const eventsData = await eventsResp.json();
 
-      if (
-        lowerName === 'ticketmaster shop' ||
-        lowerName === 'ticketmaster merchandise' ||
-        lowerName.startsWith('live nation')
-      ) {
-        return;
-      }
+    if (!eventsData._embedded?.events) {
+      return res.status(404).json({ error: 'No events found in this category' });
+    }
 
-      if (requestedCategory) {
-        const segmentName = v.classifications?.[0]?.segment?.name;
-        if (!segmentName || segmentName.toLowerCase() !== requestedCategory) {
-          return;
-        }
-      }
+    const eventVenueIds = new Set(eventsData._embedded.events.map((e: any) => e._embedded?.venues?.[0]?.id).filter(Boolean));
 
-      if (!venueMap.has(name)) {
-        venueMap.set(name, {
-          id: v.id || null,
-          name,
-          address: v.address?.line1 || null,
-          city: v.city?.name || null,
-          country: v.country?.name || null
-        });
-      }
-    });
+    const filteredVenues = allVenues.filter(v => eventVenueIds.has(v.id));
 
-    const venues = Array.from(venueMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-
-    res.status(200).json({ venues });
+    const venuesSorted = filteredVenues.sort((a, b) => a.name.localeCompare(b.name));
+    res.status(200).json({ venues: venuesSorted });
   } catch (err) {
     console.error('Ticketmaster API failed:', err);
     res.status(500).json({ error: 'Failed to fetch venues from Ticketmaster' });

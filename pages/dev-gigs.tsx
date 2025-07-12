@@ -31,19 +31,42 @@ function getWeatherIconEmoji(condition: string): string {
 }
 
 function DevGigs() {
-  const { preferences: { interests, location }, setPreferences, preferences } = useUserPreferences();
-  const safeInterests = interests || [];
+  // Date range constants for filtering gigs
+  const today = new Date();
+  const threeMonthsLater = new Date();
+  threeMonthsLater.setMonth(today.getMonth() + 3);
+  const dateRange = {
+    start: today.toISOString().split('T')[0],
+    end: threeMonthsLater.toISOString().split('T')[0]
+  };
+  const { preferences, setPreferences } = useUserPreferences();
+  const location = preferences.location;
+  const safeInterests = preferences.interests || [];
   const safeVenues = preferences.venues || [];
-  const safeGenres = preferences.genres || [];
   const [inputLocation, setInputLocation] = useState(location?.name || '');
-
   const [gigs, setGigs] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // Category/genre state, default category is 'Music', genre is empty (All)
+  const [selectedCategory, setSelectedCategory] = useState(preferences.gigsCategory || 'Music');
+  const [selectedGenre, setSelectedGenre] = useState(preferences.gigsGenre || '');
+
+  // Tab click handlers
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    setPreferences({ ...preferences, gigsCategory: cat, gigsGenre: '' });
+    if (cat !== 'Music') {
+      setSelectedGenre('');
+    }
+  };
+
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenre(genre);
+    setPreferences({ ...preferences, gigsCategory: selectedCategory, gigsGenre: genre });
+  };
 
   const handleSaveLocation = async () => {
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${import.meta.env.VITE_OPENWEATHER_KEY}`
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${import.meta.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
       );
       const data = await response.json();
       if (data && data.length > 0) {
@@ -56,8 +79,6 @@ function DevGigs() {
       setPreferences({ ...preferences, location: { name: inputLocation } });
     }
   };
-
-  console.log('🏠 Home component rendered, interests:', interests);
 
   const [forecastByDay, setForecastByDay] = useState<WeatherForecastDay[]>([]);
 
@@ -125,15 +146,15 @@ function DevGigs() {
     fetchData();
   }, [location]);
 
+  // Fetch gigs with new category/genre UI
   useEffect(() => {
     async function fetchGigs() {
       try {
         const params = new URLSearchParams();
         params.append('city', location?.name || '');
         if (selectedCategory) params.append('category', selectedCategory);
+        if (selectedCategory === 'Music' && selectedGenre) params.append('genre', selectedGenre);
         if (safeVenues.length > 0) params.append('venues', safeVenues.join(','));
-        if (safeGenres.length > 0) params.append('genres', safeGenres.join(','));
-
         const res = await fetch(`/api/gigs?${params.toString()}`);
         const data = await res.json();
         setGigs(data || []);
@@ -142,7 +163,7 @@ function DevGigs() {
       }
     }
     fetchGigs();
-  }, [location, selectedCategory, safeVenues, safeGenres]);
+  }, [location, selectedCategory, selectedGenre, safeVenues]);
 
   if (!forecastByDay) {
     return (
@@ -161,6 +182,40 @@ function DevGigs() {
       </section>
     );
   }
+
+  // All genres for the current set of gigs (for Music category)
+  const allGenres = Array.from(
+    new Set(
+      gigs
+        .filter(g => g.category === 'Music' && Array.isArray(g.genres))
+        .flatMap(g => g.genres)
+    )
+  );
+
+  // Filter gigs by date range, category, and genre
+  const filteredGigs = gigs.filter(gig =>
+    (!gig.date ? false : (() => {
+      const gigDate = new Date(gig.date);
+      return gigDate >= today && gigDate <= threeMonthsLater;
+    })()) &&
+    (selectedCategory === 'All' || gig.category === selectedCategory) &&
+    (selectedCategory !== 'Music' || !selectedGenre || (Array.isArray(gig.genres) && gig.genres.includes(selectedGenre)))
+  );
+
+  // Needed for date range display
+  const todayISO = today.toISOString().split('T')[0];
+  const threeMonthsLaterISO = threeMonthsLater.toISOString().split('T')[0];
+
+  // Ticketmaster category/genre mapping (should exist in file scope or above, not duplicated)
+  const ticketmasterCategoryMap = {
+    'Music': 'KZFzniwnSyZfZ7v7nJ',
+    'Arts & Theatre': 'KZFzniwnSyZfZ7v7na',
+    'Sports': 'KZFzniwnSyZfZ7v7nE',
+    'All': ''
+  };
+  // Genre mapping for Music genres (should exist in file scope or above, not duplicated)
+  const ticketmasterGenreMap = {};
+  allGenres.forEach(g => { ticketmasterGenreMap[g] = g; });
 
   return (
     <section>
@@ -193,6 +248,7 @@ function DevGigs() {
 
           const allActivities: ActivityType[] = activityTypes;
 
+          // Keep logging for debug
           console.log('Filtered activities:', allActivities);
           console.log('Weather for', dayForecast.date, ':', weather);
 
@@ -294,61 +350,136 @@ function DevGigs() {
           );
         })}
       </section>
+      <section>
+        {/* Category and genre filter tabs */}
+        <nav aria-label="Event categories" className="category-tabs" style={{ marginBottom: '1rem', marginTop: '2rem' }}>
+          {['Music', 'Arts & Theatre', 'Sports', 'All'].map(cat => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => {
+                setSelectedCategory(ticketmasterCategoryMap[cat] || '');
+                setSelectedGenre('');
+              }}
+              style={{
+                marginRight: '0.5rem',
+                padding: '0.5rem 1rem',
+                border: selectedCategory === (ticketmasterCategoryMap[cat] || '') ? '2px solid #0070f3' : '1px solid #ccc',
+                background: selectedCategory === (ticketmasterCategoryMap[cat] || '') ? '#eef6ff' : '#fff',
+                cursor: 'pointer',
+                borderRadius: '4px'
+              }}
+              aria-pressed={selectedCategory === (ticketmasterCategoryMap[cat] || '')}
+            >
+              {cat}
+            </button>
+          ))}
+        </nav>
 
-      <div style={{ marginTop: '1rem' }}>
-        <label htmlFor="categorySelect">Category: </label>
-        <select
-          id="categorySelect"
-          value={selectedCategory}
-          onChange={e => setSelectedCategory(e.target.value)}
-        >
-          <option value="">All</option>
-          <option value="Music">Music</option>
-          <option value="Sports">Sports</option>
-          <option value="Arts & Theatre">Arts & Theatre</option>
-          <option value="Film">Film</option>
-          <option value="Miscellaneous">Miscellaneous</option>
-        </select>
-      </div>
-
-      <section style={{ marginTop: '2rem' }}>
-        <h2>Upcoming Gigs</h2>
-        {Array.isArray(gigs) && gigs.length > 0 ? (
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Artist</th>
-                <th>Venue</th>
-                <th>Genres</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gigs.map((gig, idx) => (
-                <tr key={idx}>
-                  <td>{gig.date || 'N/A'}</td>
-                  <td>{gig.artist || 'Unknown Artist'}</td>
-                  <td>{gig.venue || 'Unknown Venue'}</td>
-                  <td>
-                    {(Array.isArray(gig.genres) ? gig.genres : []).map((genre, gidx) => (
-                      <span key={gidx} className="badge bg-secondary" style={{ marginRight: '0.25rem' }}>
-                        {genre}
-                      </span>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <p>No gigs found for your preferences. <a href="/venues">Set your venues and genres</a> to see suggestions here.</p>
+        {selectedCategory === 'KZFzniwnSyZfZ7v7nJ' /* Ticketmaster 'Music' segmentId */ && (
+          <nav aria-label="Music genres" className="genre-tabs" style={{ marginBottom: '1rem' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedGenre('')}
+              style={{
+                marginRight: '0.5rem',
+                padding: '0.3rem 0.8rem',
+                border: !selectedGenre ? '2px solid #0070f3' : '1px solid #ccc',
+                background: !selectedGenre ? '#eef6ff' : '#fff',
+                cursor: 'pointer',
+                borderRadius: '4px',
+                fontSize: '0.85rem'
+              }}
+              aria-pressed={!selectedGenre}
+            >
+              All Genres
+            </button>
+            {allGenres.map(genre => (
+              <button
+                key={genre}
+                type="button"
+                onClick={() => setSelectedGenre(ticketmasterGenreMap[genre] || '')}
+                style={{
+                  marginRight: '0.5rem',
+                  padding: '0.3rem 0.8rem',
+                  border: selectedGenre === (ticketmasterGenreMap[genre] || '') ? '2px solid #0070f3' : '1px solid #ccc',
+                  background: selectedGenre === (ticketmasterGenreMap[genre] || '') ? '#eef6ff' : '#fff',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  fontSize: '0.85rem'
+                }}
+                aria-pressed={selectedGenre === (ticketmasterGenreMap[genre] || '')}
+              >
+                {genre}
+              </button>
+            ))}
+          </nav>
         )}
-      </section>
 
-      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-        <p>🎵 No gig preferences yet. We can give you suggestions for music and events in your favourite local venues if you'd like.</p>
-        <a href="/venues" className="btn btn-secondary">Set My Venues</a>
-      </div>
+        <section aria-labelledby="upcoming-gigs-heading">
+          <h2 id="upcoming-gigs-heading">Upcoming Gigs and Events</h2>
+
+          <div className="date-range" style={{ marginBottom: '1rem' }}>
+            Showing events from <time dateTime={todayISO}>{today.toLocaleDateString()}</time> to <time dateTime={threeMonthsLaterISO}>{threeMonthsLater.toLocaleDateString()}</time>
+          </div>
+
+          {filteredGigs.length > 0 ? (
+            <ul className="gigs-list" style={{ listStyle: 'none', padding: 0 }}>
+              {filteredGigs.slice(0, 10).map((gig, idx) => (
+                <li
+                  key={idx}
+                  className="gig-item"
+                  style={{
+                    marginBottom: '1rem',
+                    padding: '0.75rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    background: '#fff'
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.1rem' }}>
+                    {gig.artist?.trim() || 'Unknown Artist'}
+                  </h3>
+                  <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                    📅 <time dateTime={gig.dateISO || ''}>{gig.date || 'N/A'}</time> | 📍 {gig.venue?.trim() || 'N/A'}
+                  </p>
+                  {Array.isArray(gig.genres) && gig.genres.length > 0 ? (
+                    <div style={{ marginTop: '0.25rem' }}>
+                      {gig.genres.map((genre, gidx) => (
+                        <span
+                          key={gidx}
+                          className="badge genre-badge"
+                          style={{
+                            display: 'inline-block',
+                            marginRight: '0.25rem',
+                            padding: '0.2rem 0.4rem',
+                            background: '#0070f3',
+                            color: '#fff',
+                            borderRadius: '3px',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          {genre || 'N/A'}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: '#777' }}>
+                      🎵 Genres: N/A
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p style={{ marginTop: '1rem' }}>
+              No gigs or events found for your preferences in this date range.
+              <br />
+              <a href="/venues">Select your favourite venues</a> or adjust your filters to see more suggestions.
+            </p>
+          )}
+        </section>
+      </section>
     </section>
   );
 }

@@ -5,12 +5,16 @@ interface Preferences {
   location: { name: string; lat?: number; lon?: number };
   interests: string[];
   forecast?: any[];
+  category?: string;
+  genre?: string;
 }
 
 const defaultPreferences: Preferences = {
   location: { name: '' },
   interests: [],
   forecast: [],
+  category: 'Music',
+  genre: '',
 };
 
 interface UserPreferencesContextType {

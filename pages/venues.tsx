@@ -6,7 +6,7 @@ const Venues: React.FC = () => {
   const [location, setLocation] = useState(preferences.location?.name || '');
   const [selectedVenues, setSelectedVenues] = useState<string[]>(preferences.venues || []);
   const [selectedGenres, setSelectedGenres] = useState<string[]>(preferences.genres || []);
-  const [selectedSegment, setSelectedSegment] = useState(preferences.segment || '');
+  const [selectedSegment, setSelectedSegment] = useState(preferences.segment || 'Music');
   const [message, setMessage] = useState('');
 
   type Venue = { id: string; name: string };
@@ -18,7 +18,7 @@ const Venues: React.FC = () => {
     'Pop', 'Rock', 'Hip-Hop/Rap', 'Dance/Electronic', 'Jazz', 'Folk', 'Classical', 'Undefined'
   ];
 
-  const availableSegments = ['Music', 'Sports', 'Arts & Theatre', 'Film', 'Miscellaneous'];
+  const availableSegments = ['All', 'Music', 'Sports', 'Arts & Theatre'];
 
   const toggleSelection = (value: string, list: string[], setter: (v: string[]) => void) => {
     if (list.includes(value)) {
@@ -53,7 +53,9 @@ const Venues: React.FC = () => {
     setError('');
     try {
       const params = new URLSearchParams({ city: cityToFetch });
-      params.append('category', segmentToFetch || '');
+      if (segmentToFetch && segmentToFetch !== 'All') {
+        params.append('category', segmentToFetch);
+      }
       const res = await fetch(`/api/getVenues?${params.toString()}`);
       if (!res.ok) {
         throw new Error(`Server returned ${res.status}`);
@@ -86,10 +88,8 @@ const Venues: React.FC = () => {
     if (preferences.genres) {
       setSelectedGenres(preferences.genres);
     }
-  }, [preferences.location, preferences.segment, preferences.venues, preferences.genres]);
+  }, [preferences]);
 
-
-  // If availableVenues changes and some selectedVenues are not present, remove them
   useEffect(() => {
     setSelectedVenues(selectedVenues.filter(v =>
       availableVenues.some(av => av.name === v)
@@ -98,50 +98,22 @@ const Venues: React.FC = () => {
 
   return (
     <div className="venues-page">
-      <h1>Set Your Gigs Preferences</h1>
+      <h1>Where do you go for a good time?</h1>
       <div>
-        <label>Location:</label>
+        <label>City or Town: </label>
         <input
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Enter your city"
         />
-        <button onClick={fetchVenuesForCity} disabled={loadingVenues}>
+        <button onClick={() => fetchVenuesForCity()} disabled={loadingVenues}>
           {loadingVenues ? 'Loading…' : 'Update Venues'}
         </button>
       </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-
       <div>
-        <h2>Select Category</h2>
-        <label style={{ marginRight: '10px' }}>
-          <input
-            type="radio"
-            name="segment"
-            value=""
-            checked={selectedSegment === ''}
-            onChange={() => setSelectedSegment('')}
-          />
-          All
-        </label>
-        {availableSegments.map(segment => (
-          <label key={segment} style={{ marginRight: '10px' }}>
-            <input
-              type="radio"
-              name="segment"
-              value={segment}
-              checked={selectedSegment === segment}
-              onChange={() => setSelectedSegment(segment)}
-            />
-            {segment}
-          </label>
-        ))}
-      </div>
-
-      <div>
-        <h2>Select Venues</h2>
+        <h2>Keep an eye on your favourite venues</h2>
         <label>
           <input
             type="checkbox"
@@ -157,49 +129,22 @@ const Venues: React.FC = () => {
           />
           Select All
         </label>
-        {availableVenues.length === 0 ? (
-          <p>No venues available. Enter a location.</p>
-        ) : (
-          availableVenues.map(venue => (
-            <label key={venue.id}>
-              <input
-                type="checkbox"
-                checked={selectedVenues.includes(venue.name)}
-                onChange={() => toggleSelection(venue.name, selectedVenues, setSelectedVenues)}
-              />
-              {venue.name}
-            </label>
-          ))
+        {loadingVenues ? <p>Loading venues…</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
+          availableVenues.length === 0 ? (
+            <p>No venues available. Enter a location.</p>
+          ) : (
+            availableVenues.map(venue => (
+              <label key={venue.id}>
+                <input
+                  type="checkbox"
+                  checked={selectedVenues.includes(venue.name)}
+                  onChange={() => toggleSelection(venue.name, selectedVenues, setSelectedVenues)}
+                />
+                {venue.name}
+              </label>
+            ))
+          )
         )}
-      </div>
-
-      <div>
-        <h2>Select Genres</h2>
-        <label>
-          <input
-            type="checkbox"
-            checked={selectedGenres.length === availableGenres.length}
-            indeterminate={selectedGenres.length > 0 && selectedGenres.length < availableGenres.length ? 'true' : undefined}
-            onChange={e => {
-              if (e.target.checked) {
-                setSelectedGenres(availableGenres);
-              } else {
-                setSelectedGenres([]);
-              }
-            }}
-          />
-          Select All
-        </label>
-        {availableGenres.map(genre => (
-          <label key={genre}>
-            <input
-              type="checkbox"
-              checked={selectedGenres.includes(genre)}
-              onChange={() => toggleSelection(genre, selectedGenres, setSelectedGenres)}
-            />
-            {genre}
-          </label>
-        ))}
       </div>
 
       <button onClick={handleSave}>Save Preferences</button>
