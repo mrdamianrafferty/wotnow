@@ -1,4 +1,4 @@
-import activityTypes from '../../data/activityTypes';
+import { activityTypes } from '../../data/activityTypes';
 
 export default function handler(req, res) {
   const { city } = req.query;
