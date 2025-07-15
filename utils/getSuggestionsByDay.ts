@@ -1,135 +1,105 @@
-import { evaluateCondition } from './activitySuitability';
+// utils/getSuggestionsByDay.ts
+
+import {
+  getActivitySuitability,
+  safeEvaluate,
+  extractWeatherKey,
+} from './activitySuitability';
+
+/**
+ * Suggests up to 10 activities per day based on:
+ * 1) Outdoor with perfect conditions
+ * 2) Outdoor with good conditions
+ * 3) Indoor alternatives
+ * 4) Indoor weather-irrelevant interests
+ */
 export function getSuggestionsByDay({ forecast = [], interests = [], activities = [] }) {
   console.debug("getSuggestionsByDay called with:", { forecast, interests, activities });
-  
 
   if (!Array.isArray(activities)) {
-    console.error("🚨 activities argument is not an array. Received:", activities);
-    if (activities && Array.isArray(activities.activities)) {
-      console.warn("⚠️ Unwrapping activities.activities property");
-      activities = activities.activities;
-    } else {
-      return [];
-    }
+    console.error("🚨 activities is not an array:", activities);
+    return [];
   }
-
   if (!Array.isArray(forecast)) {
-    console.error("🚨 forecast argument is not an array. Received:", forecast);
+    console.error("🚨 forecast is not an array:", forecast);
     return [];
   }
 
   return forecast.map(day => {
     const weather = day.weather || {};
+    const currentMonth = new Date(day.date).getMonth() + 1;
 
-    // Priority buckets
-    const perfectOutdoor: { activityId: string, evaluation: string }[] = [];
-    const goodOutdoor: { activityId: string, evaluation: string }[] = [];
-    const indoorAlternativesNames: string[] = [];
-    const userIndoor: { activityId: string, evaluation: string }[] = [];
+    const selected = activities.filter(
+      a =>
+        interests.includes(a.id) &&
+        (!a.seasonalMonths || a.seasonalMonths.includes(currentMonth))
+    );
 
-    // First pass: collect activities by type and suitability
-    activities.forEach(activity => {
-      const isInterest = interests.includes(activity.id);
-      const isOutdoor = activity.secondaryCategory === 'Outdoor';
-      const isIndoor = activity.secondaryCategory === 'Indoor';
-      if (!isInterest) return;
-      const currentMonth = new Date(day.date).getMonth() + 1; // JS months are 0-based
-      if (activity.seasonalMonths && !activity.seasonalMonths.includes(currentMonth)) {
-        console.debug(`Activity '${activity.id}' skipped because it is out of season.`);
-        return;
+    const perfect: any[] = [];
+    const good: any[] = [];
+    const indoorAlternatives: string[] = [];
+    const indoor: any[] = [];
+
+    selected.forEach(activity => {
+      const { id, weatherSensitive, poorConditions, indoorAlternative } = activity;
+
+      const suitability = getActivitySuitability(activity, weather);
+
+      if (suitability === "excluded") return;
+      if (suitability === "perfect") {
+        perfect.push({ activityId: id, evaluation: "perfect" });
+      } else if (suitability === "good") {
+        good.push({ activityId: id, evaluation: "good" });
+      } else if (suitability === "acceptable") {
+        good.push({ activityId: id, evaluation: "acceptable" });
+      } else if (suitability === "indoor") {
+        indoor.push({ activityId: id, evaluation: "indoor" });
       }
 
-      if (isOutdoor) {
-        // Check poor conditions first
-        let poor = false;
-        if (activity.poorConditions && activity.poorConditions.length > 0) {
-          poor = activity.poorConditions.some(c => {
-            const res = evaluateCondition(c, weather);
-            console.debug(`Checking poor condition '${c}' for activity '${activity.id}': ${res}`);
-            return res;
-          });
-          if (poor) {
-            console.debug(`Activity '${activity.id}' skipped due to poor condition.`);
-            return; // skip activity entirely
-          }
-        }
-
-        // Check perfect conditions
-        let perfect = false;
-        if (activity.perfectConditions && activity.perfectConditions.length > 0) {
-          perfect = activity.perfectConditions.every(c => {
-            const res = evaluateCondition(c, weather);
-            console.debug(`Checking perfect condition '${c}' for activity '${activity.id}': ${res}`);
-            return res;
-          });
-          if (perfect) {
-            console.debug(`Activity '${activity.id}' added as perfect.`);
-            perfectOutdoor.push({ activityId: activity.id, evaluation: 'perfect' });
-            return;
-          }
-        }
-        // Check good conditions (relaxed: at least 66% must pass)
-        let good = false;
-        if (activity.goodConditions && activity.goodConditions.length > 0) {
-          const passed = activity.goodConditions.filter(c => {
-            const res = evaluateCondition(c, weather);
-            console.debug(`Checking good condition '${c}' for activity '${activity.id}': ${res}`);
-            return res;
-          }).length;
-
-          const ratio = passed / activity.goodConditions.length;
-
-          if (ratio >= 0.33) {
-            good = true;
-            console.debug(`Activity '${activity.id}' added as good (passed ${passed}/${activity.goodConditions.length}).`);
-            goodOutdoor.push({ activityId: activity.id, evaluation: 'good' });
-            return;
-          }
-        }
-        // If no perfect/good, and no poor detected earlier, add as acceptable
-        if (!perfect && !good && !poor) {
-          console.debug(`Activity '${activity.id}' added as acceptable.`);
-          goodOutdoor.push({ activityId: activity.id, evaluation: 'acceptable' });
-          return;
-        }
-        // If no perfect/good/acceptable, collect indoor alternative name if available
-        if (activity.indoorAlternative) {
-          indoorAlternativesNames.push(activity.indoorAlternative);
-        }
-      } else if (isIndoor) {
-        userIndoor.push({ activityId: activity.id, evaluation: 'indoor' });
+      if (weatherSensitive && indoorAlternative) {
+        indoorAlternatives.push(indoorAlternative);
       }
     });
 
-    // Combine in priority order:
-    let combined: { activityId: string, evaluation: string }[] = [
-      ...perfectOutdoor,
-      ...goodOutdoor
-    ];
+    const suggestions: any[] = [];
+    const seen = new Set<string>();
 
-    // Add indoor alternatives (by name) if still under 10
-    if (combined.length < 10 && indoorAlternativesNames.length > 0) {
-      for (const altName of indoorAlternativesNames) {
-        // Find the activity in activities by name
-        const altActivity = activities.find(a => a.name === altName);
-        if (altActivity) {
-          combined.push({ activityId: altActivity.id, evaluation: 'indoorAlternative' });
-          if (combined.length >= 10) break;
+    function add(list: any[]) {
+      list.forEach(i => {
+        if (!seen.has(i.activityId) && suggestions.length < 10) {
+          seen.add(i.activityId);
+          suggestions.push(i);
+        }
+      });
+    }
+
+    add(perfect);
+    add(good);
+
+    if (suggestions.length < 10 && indoorAlternatives.length > 0) {
+      for (const alt of indoorAlternatives) {
+        const altActivity = activities.find(a => a.id === alt || a.name === alt);
+        if (altActivity && !seen.has(altActivity.id)) {
+          suggestions.push({ activityId: altActivity.id, evaluation: "indoorAlternative" });
+          seen.add(altActivity.id);
+          if (suggestions.length >= 10) break;
         }
       }
     }
 
-    // Add user's own indoor activities if still under 10
-    if (combined.length < 10 && userIndoor.length > 0) {
-      for (const indoor of userIndoor) {
-        combined.push(indoor);
-        if (combined.length >= 10) break;
+    if (suggestions.length < 10) {
+      for (const i of indoor) {
+        if (!seen.has(i.activityId)) {
+          suggestions.push(i);
+          seen.add(i.activityId);
+          if (suggestions.length >= 10) break;
+        }
       }
     }
 
     return {
       date: day.date,
-      suggestions: combined.slice(0, 10)
+      suggestions,
     };
   });
 }

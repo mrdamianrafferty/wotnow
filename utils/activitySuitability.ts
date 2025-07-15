@@ -1,54 +1,133 @@
-import type { WeatherData } from './activitySuitability';
+// utils/activitySuitability.ts
+
+export interface WeatherData {
+  temperature?: number;
+  precipitation?: number;
+  windSpeed?: number;
+  water_temp?: number;
+  clouds?: number;
+  [key: string]: number | undefined | null;
+}
 
 /**
- * Evaluates a single weather condition string against the provided weather data.
- * Supports operators: <, <=, >, >=, =, ==, !=, range (e.g., temperature=10..20)
- * Returns true if the condition is met, false otherwise.
+ * Extracts the weather key name from a condition string.
+ * (e.g., "temperature>15" -> "temperature")
+ */
+export function extractWeatherKey(condition: string): string {
+  const rangeMatch = condition.match(/^([a-zA-Z_]+)=(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?)/);
+  if (rangeMatch) return rangeMatch[1];
+  const opMatch = condition.match(/^([a-zA-Z_]+)[<>=!]=?/);
+  if (opMatch) return opMatch[1];
+  return condition;
+}
+
+/**
+ * Parses a condition string into key/operator/value
+ */
+export function parseConditionString(condition: string) {
+  const rangeMatch = condition.match(/^([a-zA-Z_]+)=(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?)/);
+  if (rangeMatch) {
+    return {
+      key: rangeMatch[1],
+      operator: 'range',
+      min: parseFloat(rangeMatch[2]),
+      max: parseFloat(rangeMatch[3]),
+    };
+  }
+  const opMatch = condition.match(/^([a-zA-Z_]+)([<>=!]=?|==)(-?\d+(?:\.\d+)?)/);
+  if (opMatch) {
+    return {
+      key: opMatch[1],
+      operator: opMatch[2],
+      value: parseFloat(opMatch[3]),
+    };
+  }
+  return null;
+}
+
+/**
+ * Evaluates a parsed condition against weather
  */
 export function evaluateCondition(condition: string, weather: WeatherData): boolean {
-  console.debug(`Evaluating single condition: "${condition}" against weather:`, weather);
+  const parsed = parseConditionString(condition);
+  if (!parsed) return false;
 
-  const weatherKeyMap: Record<string, string> = {
-    temp: 'temperature',
-    rain: 'precipitation',
-    wind_speed: 'windSpeed',
-  };
+  const weatherValue = weather[parsed.key];
+  if (weatherValue === undefined || weatherValue === null) return false;
 
-  const rangeMatch = condition.match(/^([a-zA-Z_]+)=(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?)$/);
-  if (rangeMatch) {
-    const [, key, minStr, maxStr] = rangeMatch;
-    const min = parseFloat(minStr);
-    const max = parseFloat(maxStr);
-    const mappedKey = weatherKeyMap[key] || key;
-    const actual = typeof weather[mappedKey] === 'number' ? weather[mappedKey] as number : null;
-    if (actual === null) return false;
-    return actual >= min && actual <= max;
+  if (parsed.operator === 'range') {
+    return weatherValue >= parsed.min && weatherValue <= parsed.max;
   }
 
-  const match = condition.match(/^([a-zA-Z_]+)([<>=!]+)([0-9.]+)$/);
-  if (!match) return false; // skip malformed
-
-  const [, key, operator, valueStr] = match;
-  const value = parseFloat(valueStr);
-  const mappedKey = weatherKeyMap[key] || key;
-  const actual = typeof weather[mappedKey] === 'number' ? weather[mappedKey] as number : null;
-  if (actual === null) return false;
-
-  switch (operator) {
-    case '<':
-      return actual < value;
-    case '<=':
-      return actual <= value;
+  switch (parsed.operator) {
     case '>':
-      return actual > value;
+      return weatherValue > parsed.value;
     case '>=':
-      return actual >= value;
+      return weatherValue >= parsed.value;
+    case '<':
+      return weatherValue < parsed.value;
+    case '<=':
+      return weatherValue <= parsed.value;
     case '=':
     case '==':
-      return actual === value;
+      return weatherValue === parsed.value;
     case '!=':
-      return actual !== value;
+      return weatherValue !== parsed.value;
     default:
+      console.warn(`Unknown operator: ${parsed.operator}`);
       return false;
   }
+}
+
+/**
+ * Gracefully evaluates a condition, skipping missing weather fields.
+ */
+export function safeEvaluate(condition: string, weather: WeatherData): boolean {
+  const key = extractWeatherKey(condition);
+  const value = weather[key];
+  if (value === undefined || value === null) return true; // Treat missing fields as neutral
+  return evaluateCondition(condition, weather);
+}
+
+/**
+ * Returns true if any poor condition matches.
+ */
+export function hasPoorCondition(activity: { poorConditions?: string[] }, weather: WeatherData): boolean {
+  return !!activity.poorConditions?.some(cond => safeEvaluate(cond, weather));
+}
+
+/**
+ * Returns true if all perfect conditions with known weather keys match.
+ */
+export function hasPerfectConditions(activity: { perfectConditions?: string[] }, weather: WeatherData): boolean {
+  return !!activity.perfectConditions?.length &&
+    activity.perfectConditions.every(cond => safeEvaluate(cond, weather));
+}
+
+/**
+ * Returns true if all good conditions with known weather keys match.
+ */
+export function hasGoodConditions(activity: { goodConditions?: string[] }, weather: WeatherData): boolean {
+  return !!activity.goodConditions?.length &&
+    activity.goodConditions.every(cond => safeEvaluate(cond, weather));
+}
+
+/**
+ * Returns the suitability level of an activity for the given weather.
+ */
+export function getActivitySuitability(
+  activity: any,
+  weather: WeatherData
+): "excluded" | "perfect" | "good" | "acceptable" | "indoor" {
+  if (activity.weatherSensitive === false) return "indoor";
+  if (hasPoorCondition(activity, weather)) return "excluded";
+  if (hasPerfectConditions(activity, weather)) return "perfect";
+  if (hasGoodConditions(activity, weather)) return "good";
+  if (
+    (!activity.goodConditions || activity.goodConditions.length === 0) &&
+    (!activity.perfectConditions || activity.perfectConditions.length === 0)
+  ) {
+    return "acceptable";
+  }
+  return "excluded";
 }

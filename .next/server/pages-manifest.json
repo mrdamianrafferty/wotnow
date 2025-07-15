@@ -1,14 +1,7 @@
 {
-  "/_error": "pages/_error.js",
   "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/activities": "pages/api/activities.js",
-  "/api/getVenues": "pages/api/getVenues.js",
   "/api/gigs": "pages/api/gigs.js",
-  "/interests": "pages/interests.html",
-  "/": "pages/index.html",
-  "/dev-gigs": "pages/dev-gigs.html",
-  "/weather": "pages/weather.html",
-  "/location": "pages/location.html",
-  "/venues": "pages/venues.html"
+  "/dev-gigs": "pages/dev-gigs.js"
 }

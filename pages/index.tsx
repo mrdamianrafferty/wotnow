@@ -4,7 +4,7 @@ import { ActivityType, activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { WeatherCondition } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
-import { evaluateCondition } from '../pages/evaluateCondition';
+import { safeEvaluate } from '../pages/evaluateCondition';
 
 function getWeatherIconEmoji(condition: string): string {
   switch (condition.toLowerCase()) {
@@ -38,7 +38,7 @@ function Home() {
   const handleSaveLocation = async () => {
     try {
       const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${import.meta.env.VITE_OPENWEATHER_KEY}`
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${import.meta.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
       );
       const data = await response.json();
       if (data && data.length > 0) {

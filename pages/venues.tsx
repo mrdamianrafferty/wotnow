@@ -28,13 +28,30 @@ const Venues: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  // UPDATED: handleSave with geocoding
+  const handleSave = async () => {
+    let updatedLocation = { name: location };
+    try {
+      const geoResp = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
+      );
+      const geoData = await geoResp.json();
+      if (geoData[0] && geoData[0].lat && geoData[0].lon) {
+        updatedLocation = {
+          name: location,
+          lat: geoData[0].lat,
+          lon: geoData[0].lon,
+        };
+      }
+    } catch (err) {
+      // keep just the city name if geocoding fails
+    }
     setPreferences({
       ...preferences,
-      location: { name: location },
+      location: updatedLocation,
       venues: selectedVenues,
       genres: selectedGenres,
-      segment: selectedSegment
+      segment: selectedSegment,
     });
     setMessage('Preferences saved!');
     setTimeout(() => setMessage(''), 3000);

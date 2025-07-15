@@ -1,3 +1,4 @@
+// src/context/UserPreferencesContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { activityTypes } from '../data/activityTypes';
 
@@ -7,14 +8,26 @@ interface Preferences {
   forecast?: any[];
   category?: string;
   genre?: string;
+  eventPreferences?: {
+    sport: boolean;
+    music: boolean;
+    arts: boolean;
+    genres: string[];
+  };
 }
 
 const defaultPreferences: Preferences = {
-  location: { name: '' },
+  location: { name: 'Colunga, Asturias' },
   interests: [],
   forecast: [],
   category: 'Music',
   genre: '',
+  eventPreferences: {
+    sport: false,
+    music: false,
+    arts: false,
+    genres: [],
+  },
 };
 
 interface UserPreferencesContextType {
@@ -32,28 +45,38 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     }
     const stored = localStorage.getItem('preferences');
     if (!stored) return defaultPreferences;
-    const parsed = JSON.parse(stored);
-    const validActivityIds = new Set([
-      'dog_walking',
-      'outdoor_gardening',
-      'going_to_pub',
-      'surfing',
-      'kayaking',
-      'photography',
-      'bbq',
-      'camping',
-      'fly_fishing_freshwater',
-      'diy',
-      'canoeing',
-      'urban_exploring',
-    ]);
-    parsed.interests = parsed.interests.filter((id: string) => validActivityIds.has(id));
-    return parsed;
+    try {
+      const parsed = JSON.parse(stored);
+      // Validate interests dynamically against all supported activity IDs
+      const validIds = new Set(activityTypes.map(a => a.id));
+      parsed.interests = Array.isArray(parsed.interests)
+        ? parsed.interests.filter((id: string) => validIds.has(id))
+        : [];
+      // Validate eventPreferences shape
+      if (!parsed.eventPreferences) {
+        parsed.eventPreferences = defaultPreferences.eventPreferences;
+      } else {
+        parsed.eventPreferences.sport = !!parsed.eventPreferences.sport;
+        parsed.eventPreferences.music = !!parsed.eventPreferences.music;
+        parsed.eventPreferences.arts = !!parsed.eventPreferences.arts;
+        parsed.eventPreferences.genres = Array.isArray(parsed.eventPreferences.genres)
+          ? parsed.eventPreferences.genres
+          : [];
+      }
+      return parsed;
+    } catch (e) {
+      console.warn('Failed to parse preferences from localStorage, using defaults.', e);
+      return defaultPreferences;
+    }
   });
 
-  // Try to set location dynamically if missing
+  // Auto-detect location if not set
   useEffect(() => {
-    if ((!preferences.location.lat || !preferences.location.lon) && typeof window !== "undefined" && navigator.geolocation) {
+    if (
+      (!preferences.location.lat || !preferences.location.lon) &&
+      typeof window !== "undefined" &&
+      navigator.geolocation
+    ) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setPreferences(prev => ({
@@ -70,53 +93,75 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
           setPreferences(prev => ({
             ...prev,
             location: {
-              name: 'Berlin, Germany',
-              lat: 52.52,
-              lon: 13.405,
+              name: 'Colunga, Asturias',
+              lat: 43.4667,
+              lon: -5.45,
             },
           }));
         }
       );
     }
-  // Only run on mount and if lat/lon not set
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Persist preferences on every change
   useEffect(() => {
-    localStorage.setItem('preferences', JSON.stringify(preferences));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preferences', JSON.stringify(preferences));
+    }
   }, [preferences]);
 
+  // Weather forecast fetcher
   const fetchForecast = async () => {
     if (!preferences.location.lat || !preferences.location.lon) return;
 
     const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${preferences.location.lat}&lon=${preferences.location.lon}&appid=${apiKey}&units=metric`;
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const byDay: any[] = [];
-
-    for (let i = 0; i < 5; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      const dayStr = date.toISOString().split('T')[0];
-      const daySlots = data.list.filter((entry: any) => entry.dt_txt.startsWith(dayStr));
-
-      const slots = {
-        date: dayStr,
-        morning: daySlots.filter((e: any) => parseInt(e.dt_txt.slice(11, 13)) >= 6 && parseInt(e.dt_txt.slice(11, 13)) < 12)[0],
-        afternoon: daySlots.filter((e: any) => parseInt(e.dt_txt.slice(11, 13)) >= 12 && parseInt(e.dt_txt.slice(11, 13)) < 18)[0],
-        night: daySlots.filter((e: any) => parseInt(e.dt_txt.slice(11, 13)) >= 18 || parseInt(e.dt_txt.slice(11, 13)) < 6)[0],
-      };
-
-      byDay.push(slots);
+    if (!apiKey) {
+      console.warn('OpenWeather API key is missing');
+      return;
     }
 
-    setPreferences(prev => ({
-      ...prev,
-      forecast: byDay,
-    }));
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${preferences.location.lat}&lon=${preferences.location.lon}&appid=${apiKey}&units=metric`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.warn('Failed to fetch forecast:', res.statusText);
+        return;
+      }
+      const data = await res.json();
+
+      // Structure forecast by day/slot (morning, afternoon, night)
+      const byDay: any[] = [];
+      for (let i = 0; i < 5; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        const dayStr = date.toISOString().split('T')[0];
+        const daySlots = data.list.filter((entry: any) => entry.dt_txt.startsWith(dayStr));
+        const slots = {
+          date: dayStr,
+          morning: daySlots.find((e: any) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13));
+            return hour >= 6 && hour < 12;
+          }),
+          afternoon: daySlots.find((e: any) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13));
+            return hour >= 12 && hour < 18;
+          }),
+          night: daySlots.find((e: any) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13));
+            return hour >= 18 || hour < 6;
+          }),
+        };
+        byDay.push(slots);
+      }
+      setPreferences(prev => ({
+        ...prev,
+        forecast: byDay,
+      }));
+    } catch (error) {
+      console.warn('Error fetching forecast:', error);
+    }
   };
 
   return (
@@ -128,9 +173,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
 
 export const useUserPreferences = (): UserPreferencesContextType => {
   const context = useContext(UserPreferencesContext);
-  if (!context) {
-    throw new Error('useUserPreferences must be used within a UserPreferencesProvider');
-  }
+  if (!context) throw new Error('useUserPreferences must be used within a UserPreferencesProvider');
   return context;
 };
 
