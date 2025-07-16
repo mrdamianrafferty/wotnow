@@ -1,172 +1,179 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 
 const Venues: React.FC = () => {
   const { preferences, setPreferences } = useUserPreferences();
-  const [location, setLocation] = useState(preferences.location?.name || '');
-  const [selectedVenues, setSelectedVenues] = useState<string[]>(preferences.venues || []);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(preferences.genres || []);
-  const [selectedSegment, setSelectedSegment] = useState(preferences.segment || 'Music');
+  const [inputLocation, setInputLocation] = useState(preferences.location?.name || '');
   const [message, setMessage] = useState('');
-
-  type Venue = { id: string; name: string };
-  const [availableVenues, setAvailableVenues] = useState<Venue[]>([]);
   const [loadingVenues, setLoadingVenues] = useState(false);
   const [error, setError] = useState('');
 
-  const availableGenres = [
-    'Pop', 'Rock', 'Hip-Hop/Rap', 'Dance/Electronic', 'Jazz', 'Folk', 'Classical', 'Undefined'
-  ];
+  const [availableVenues, setAvailableVenues] = useState<string[]>([]);
+  const [selectedVenues, setSelectedVenues] = useState<string[]>(preferences.venues || []);
+  const [suggestedLocation, setSuggestedLocation] = useState(preferences.location);
 
-  const availableSegments = ['All', 'Music', 'Sports', 'Arts & Theatre'];
-
-  const toggleSelection = (value: string, list: string[], setter: (v: string[]) => void) => {
-    if (list.includes(value)) {
-      setter(list.filter(v => v !== value));
-    } else {
-      setter([...list, value]);
-    }
-  };
-
-  // UPDATED: handleSave with geocoding
-  const handleSave = async () => {
-    let updatedLocation = { name: location };
-    try {
-      const geoResp = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
-      );
-      const geoData = await geoResp.json();
-      if (geoData[0] && geoData[0].lat && geoData[0].lon) {
-        updatedLocation = {
-          name: location,
-          lat: geoData[0].lat,
-          lon: geoData[0].lon,
-        };
-      }
-    } catch (err) {
-      // keep just the city name if geocoding fails
-    }
-    setPreferences({
-      ...preferences,
-      location: updatedLocation,
-      venues: selectedVenues,
-      genres: selectedGenres,
-      segment: selectedSegment,
-    });
-    setMessage('Preferences saved!');
-    setTimeout(() => setMessage(''), 3000);
-  };
-
-  const fetchVenuesForCity = async (cityOverride?: string, segmentOverride?: string) => {
-    const cityToFetch = typeof cityOverride === 'string' ? cityOverride : location;
-    const segmentToFetch = typeof segmentOverride === 'string' ? segmentOverride : selectedSegment;
-
-    if (!cityToFetch.trim() || cityToFetch.trim().toLowerCase() === 'current location') {
-      setError('Please enter a valid city name.');
-      return;
-    }
-
+  // Update venues based on city
+  const fetchVenues = async (city: string) => {
     setLoadingVenues(true);
     setError('');
+
     try {
-      const params = new URLSearchParams({ city: cityToFetch });
-      if (segmentToFetch && segmentToFetch !== 'All') {
-        params.append('category', segmentToFetch);
-      }
-      const res = await fetch(`/api/getVenues?${params.toString()}`);
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
-      const data = await res.json();
-      if (data.venues) {
-        setAvailableVenues(data.venues.map((v: any) => ({ id: v.id, name: v.name })));
+      const res = await fetch(`/api/eventVenues?city=${encodeURIComponent(city)}&radius=50km`);
+      const json = await res.json();
+      if (Array.isArray(json.venues) && json.venues.length > 0) {
+        const names = json.venues.map((v: any) => v.name);
+        setAvailableVenues(names);
       } else {
         setAvailableVenues([]);
-        setError(data.error || 'No venues found.');
+        setError('No venues found for this location.');
       }
     } catch (err) {
       console.error(err);
-      setError('Failed to fetch venues.');
+      setError('Failed to fetch venue data.');
     } finally {
       setLoadingVenues(false);
     }
   };
 
+  // Load initial city locations once
   useEffect(() => {
-    if (preferences.location?.name) {
-      setLocation(preferences.location.name);
+    if (suggestedLocation?.name) {
+      setInputLocation(suggestedLocation.name);
+      fetchVenues(suggestedLocation.name);
     }
-    if (preferences.segment) {
-      setSelectedSegment(preferences.segment);
-    }
-    if (preferences.venues) {
-      setSelectedVenues(preferences.venues);
-    }
-    if (preferences.genres) {
-      setSelectedGenres(preferences.genres);
-    }
-  }, [preferences]);
+  }, []);
 
+  // Update selectedVenues when available ones change
   useEffect(() => {
-    setSelectedVenues(selectedVenues.filter(v =>
-      availableVenues.some(av => av.name === v)
-    ));
+    setSelectedVenues(prev =>
+      prev.filter(v => availableVenues.includes(v))
+    );
   }, [availableVenues]);
 
+  const handleSave = async () => {
+    try {
+      const geoRes = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
+      );
+      const geoData = await geoRes.json();
+      const res = geoData[0];
+
+      const updatedLocation = res?.lat && res?.lon
+        ? {
+            name: inputLocation,
+            lat: res.lat,
+            lon: res.lon,
+            countryCode: res.country
+          }
+        : { name: inputLocation };
+
+      setPreferences(prev => ({
+        ...prev,
+        location: updatedLocation,
+        venues: selectedVenues
+      }));
+
+      setSuggestedLocation(updatedLocation);
+      setMessage('Preferences saved!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Failed to save location:', error);
+      setMessage('Failed to update location. Try again.');
+    }
+  };
+
+  const toggleVenue = (name: string) => {
+    setSelectedVenues(prev =>
+      prev.includes(name)
+        ? prev.filter(v => v !== name)
+        : [...prev, name]
+    );
+  };
+
   return (
-    <div className="venues-page">
-      <h1>Where do you go for a good time?</h1>
-      <div>
-        <label>City or Town: </label>
-        <input
-          type="text"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Enter your city"
-        />
-        <button onClick={() => fetchVenuesForCity()} disabled={loadingVenues}>
-          {loadingVenues ? 'Loading…' : 'Update Venues'}
-        </button>
-      </div>
+    <main style={{ maxWidth: 640, margin: '0 auto', padding: '2rem 1rem' }}>
+      <h1 style={{ fontSize: '1.8rem', marginBottom: 20 }}>🎯 Favorite Venues</h1>
 
-      <div>
-        <h2>Keep an eye on your favourite venues</h2>
-        <label>
+      <section style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: '1.1rem' }}>Your location</h2>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            fetchVenues(inputLocation);
+          }}
+        >
           <input
-            type="checkbox"
-            checked={availableVenues.length > 0 && selectedVenues.length === availableVenues.length}
-            indeterminate={selectedVenues.length > 0 && selectedVenues.length < availableVenues.length ? 'true' : undefined}
-            onChange={e => {
-              if (e.target.checked) {
-                setSelectedVenues(availableVenues.map(v => v.name));
-              } else {
-                setSelectedVenues([]);
-              }
-            }}
+            type="text"
+            value={inputLocation}
+            onChange={e => setInputLocation(e.target.value)}
+            placeholder="Enter a city or town"
+            style={{ padding: '0.5rem', fontSize: '1rem', width: '70%' }}
           />
-          Select All
-        </label>
-        {loadingVenues ? <p>Loading venues…</p> : error ? <p style={{ color: 'red' }}>{error}</p> : (
-          availableVenues.length === 0 ? (
-            <p>No venues available. Enter a location.</p>
-          ) : (
-            availableVenues.map(venue => (
-              <label key={venue.id}>
-                <input
-                  type="checkbox"
-                  checked={selectedVenues.includes(venue.name)}
-                  onChange={() => toggleSelection(venue.name, selectedVenues, setSelectedVenues)}
-                />
-                {venue.name}
-              </label>
-            ))
-          )
-        )}
-      </div>
+          <button
+            type="submit"
+            style={{ marginLeft: '1rem', padding: '0.5rem 1rem' }}
+            disabled={loadingVenues}
+          >
+            {loadingVenues ? 'Searching...' : 'Update'}
+          </button>
+        </form>
+        {error && <p style={{ color: 'red', marginTop: 12 }}>{error}</p>}
+      </section>
 
-      <button onClick={handleSave}>Save Preferences</button>
-      {message && <p>{message}</p>}
-    </div>
+      <section>
+        <h2 style={{ fontSize: '1.1rem' }}>Select your favorite venues</h2>
+        {availableVenues.length === 0 ? (
+          <p>No venues found. Try another location.</p>
+        ) : (
+          <div style={{ marginTop: 16 }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedVenues.length === availableVenues.length}
+                onChange={e =>
+                  setSelectedVenues(
+                    e.target.checked ? [...availableVenues] : []
+                  )
+                }
+              />{" "}
+              Select All
+            </label>
+
+            <ul style={{ listStyle: 'none', padding: 0, marginTop: 12 }}>
+              {availableVenues.map((name) => (
+                <li key={name} style={{ marginBottom: 8 }}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedVenues.includes(name)}
+                      onChange={() => toggleVenue(name)}
+                    />{" "}
+                    {name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <button
+        onClick={handleSave}
+        style={{
+          marginTop: 24,
+          background: '#059669',
+          color: 'white',
+          fontWeight: 'bold',
+          padding: '10px 20px',
+          border: 'none',
+          borderRadius: 6,
+        }}
+      >
+        Save Preferences
+      </button>
+
+      {message && <p style={{ marginTop: 16 }}>{message}</p>}
+    </main>
   );
 };
 

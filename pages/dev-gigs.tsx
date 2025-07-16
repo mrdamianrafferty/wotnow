@@ -13,20 +13,47 @@ function getWeatherIconEmoji(condition: string = '') {
   return '🌤️';
 }
 
+const EVENT_MAPPINGS: Record<string, {
+  label: string;
+  category: number;
+  format?: number;
+  keywords?: string;
+  radius?: string;
+}> = {
+  live_music:        { label: 'Live Music', category: 103, format: 6 },
+  music_festivals:   { label: 'Music Festivals', category: 103, format: 7 },
+  dj_dance:          { label: 'DJ / Dance Events', category: 103, format: 5, keywords: 'DJ OR dance OR club' },
+  local_music:       { label: 'Local Music Scene', category: 103, format: 6, radius: '25km' },
+  theatre_performance: { label: 'Theatre & Performance', category: 105, keywords: 'theatre OR play OR drama' },
+  comedy_entertainment: { label: 'Comedy & Entertainment', category: 105, format: 5, keywords: 'comedy OR stand-up OR improv' },
+  art_exhibitions:   { label: 'Art Exhibitions', category: 105, keywords: 'exhibition OR gallery' },
+  dance_movement:    { label: 'Dance & Movement', category: 105, format: 6, keywords: 'dance OR ballet OR contemporary' },
+  film_media:        { label: 'Film & Media', category: 104, format: 9 },
+  competitive_sports:{ label: 'Competitive Sports', category: 108, format: 12 },
+  fitness_wellness:  { label: 'Fitness & Wellness', category: 107, format: 11 },
+  running_cycling:   { label: 'Running & Cycling', category: 108, format: 12, keywords: 'run OR cycle OR marathon' },
+  outdoor_adventures:{ label: 'Outdoor Adventures', category: 109, format: 11 },
+  team_sports_social:{ label: 'Team Sports Social', category: 108, format: 4, keywords: 'football OR basketball OR volleyball' },
+};
+
 export default function DevGigs() {
-  const today = new Date();
   const { preferences, setPreferences } = useUserPreferences();
   const location = preferences.location;
   const userInterests = preferences.interests || [];
-  const [inputLocation, setInputLocation] = useState(location?.name || 'Berlin');
-  const [forecast, setForecast] = useState<any[]>([]);
-  const [gigs, setGigs] = useState<any[]>([]);
-  const [category, setCategory] = useState(preferences.gigsCategory || 'Music');
-  const [genre, setGenre] = useState(preferences.gigsGenre || '');
-
-  // Use countryCode from preferences if present
   const city = location?.name || 'Berlin';
-  const countryCode = location?.countryCode || '';
+  const [inputLocation, setInputLocation] = useState(city);
+  const [forecast, setForecast] = useState<any[]>([]);
+  const [eventsByCategory, setEventsByCategory] = useState<Record<string, any[]>>({});
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  const selectedKeys = [
+    ...(preferences.eventPreferences?.musicCategories ?? []),
+    ...(preferences.eventPreferences?.artsCategories ?? []),
+    ...(preferences.eventPreferences?.sportsCategories ?? []),
+  ];
+
+  useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
     async function fetchForecast() {
@@ -34,19 +61,14 @@ export default function DevGigs() {
         const key = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
         const lat = location?.lat ?? 52.52;
         const lon = location?.lon ?? 13.405;
-
-        const res = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${key}`
-        );
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${key}`);
         const json = await res.json();
         const grouped: Record<string, any[]> = {};
-
         json.list.forEach((entry: any) => {
           const date = entry.dt_txt.split(' ')[0];
           if (!grouped[date]) grouped[date] = [];
           grouped[date].push(entry);
         });
-
         const days = Object.entries(grouped).slice(0, 5).map(([date, entries]) => {
           const noon = entries.find(e => e.dt_txt.includes('12:00:00')) || entries[0];
           return {
@@ -60,41 +82,58 @@ export default function DevGigs() {
             clouds: noon.clouds?.all ?? 0,
           };
         });
-
         setForecast(days);
       } catch (err) {
-        console.error('Forecast error:', err);
+        console.error('Failed to fetch forecast:', err);
       }
     }
-
     fetchForecast();
   }, [location]);
 
   useEffect(() => {
-    async function fetchGigs() {
-      const params = new URLSearchParams();
-      params.append('city', city);
-      if (countryCode) params.append('countryCode', countryCode);
-      if (category && category !== 'All') params.append('category', category);
-      if (genre) params.append('genre', genre);
+    async function fetchAllEvents() {
+      if (!city || selectedKeys.length === 0) return;
+      setLoadingEvents(true);
+      const results: Record<string, any[]> = {};
 
-      try {
-        const res = await fetch(`/api/gigs?${params.toString()}`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setGigs(data);
-        } else {
-          setGigs([]);
+      for (const key of selectedKeys) {
+        const meta = EVENT_MAPPINGS[key];
+        if (!meta) continue;
+        const params = new URLSearchParams({ city, category: String(meta.category) });
+        if (meta.format) params.set('format', String(meta.format));
+        if (meta.keywords) params.set('keywords', meta.keywords);
+        params.set('radius', meta.radius || '100km');
+        try {
+          const res = await fetch(`/api/events?${params.toString()}`);
+          const json = await res.json();
+          if (Array.isArray(json.events)) {
+            results[key] = json.events;
+          } else {
+            results[key] = [];
+          }
+        } catch (err) {
+          results[key] = [];
         }
-      } catch (err) {
-        setGigs([]);
       }
+
+      if (process.env.NODE_ENV === 'development') {
+        results['live_music'] ??= [];
+        results['live_music'].push({
+          id: 'demo-event',
+          name: '🎵 Demo Live Music Event',
+          date: new Date().toISOString(),
+          venue: 'Test Venue Hall',
+          city: city,
+          url: 'https://eventbrite.com/fake'
+        });
+      }
+
+      setEventsByCategory(results);
+      setLoadingEvents(false);
     }
+    fetchAllEvents();
+  }, [city, selectedKeys.join(',')]);
 
-    fetchGigs();
-  }, [city, countryCode, category, genre]);
-
-  // Save location and set countryCode by geocoding
   async function handleLocationSave(e: React.FormEvent) {
     e.preventDefault();
     try {
@@ -107,9 +146,7 @@ export default function DevGigs() {
           location: { name: inputLocation, lat, lon, countryCode: country }
         }));
       }
-    } catch (err) {
-      // Optional: fallback or error message
-    }
+    } catch (err) {}
   }
 
   const suggestions = forecast.map(day => {
@@ -133,111 +170,107 @@ export default function DevGigs() {
     };
   });
 
-  const genres = Array.from(new Set(
-    (Array.isArray(gigs) ? gigs : [])
-      .filter(g => g.category === 'Music' && Array.isArray(g.genres))
-      .flatMap(g => g.genres)
-  ));
-
-  const filteredGigs = (Array.isArray(gigs) ? gigs : []).filter(g =>
-    (category === 'All' || g.category === category) &&
-    (!genre || (Array.isArray(g.genres) && g.genres.includes(genre)))
-  );
+  if (!isClient) return null;
 
   return (
-    <main style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>WotNow: Suggestions & Upcoming Gigs</h1>
+    <main className="devgigs">
+      <h1 className="devgigs__title">WotNow: Suggestions & Upcoming Events</h1>
 
-      <section style={{ marginBottom: '2rem' }}>
+      <section className="devgigs__section devgigs__section--location">
         <h2>Location</h2>
-        <form onSubmit={handleLocationSave}>
-          <input value={inputLocation} onChange={e => setInputLocation(e.target.value)} />
-          <button type="submit">Save</button>
+        <form className="devgigs__location-form" onSubmit={handleLocationSave}>
+          <input
+            className="devgigs__location-input"
+            value={inputLocation}
+            onChange={(e) => setInputLocation(e.target.value)}
+            placeholder="Enter city or town"
+            />
+          <button className="devgigs__location-btn" type="submit">Save</button>
         </form>
       </section>
 
-      <section>
+      <section className="devgigs__section devgigs__section--forecast">
         <h2>Suggestions by Day</h2>
+        <ul className="devgigs__forecast-list">
         {suggestions.map(({ date, emoji, description, suggestions }) => (
-          <div key={date} style={{ borderBottom: '1px solid #ccc', marginBottom: '1rem', paddingBottom: '1rem' }}>
-            <strong>{date}</strong> – {emoji} {description}
+          <li
+            className="devgigs__forecast-item"
+            key={date}
+          >
+            <span className="devgigs__forecast-date"><strong>{date}</strong> – {emoji} {description}</span>
             {suggestions.length > 0 ? (
-              <ul>
-                {suggestions.map(s => {
+              <ul className="devgigs__activity-list">
+                {suggestions.map((s) => {
                   const act = activityTypes.find(a => a.id === s.activityId);
                   return (
-                    <li key={s.activityId}>{act?.name || s.activityId} ({s.evaluation})</li>
+                    <li className="devgigs__activity-item" key={s.activityId}>
+                      {act?.name || s.activityId} <span className="devgigs__activity-eval">({s.evaluation})</span>
+                    </li>
                   );
                 })}
               </ul>
             ) : (
-              <p>No suggestions for this day.</p>
+              <span className="devgigs__forecast-none">No suggestions for this day.</span>
             )}
-          </div>
+          </li>
         ))}
+        </ul>
       </section>
 
-      <section>
-        <h2>Event Filters</h2>
-        <div>
-          {['All', 'Music', 'Arts & Theatre', 'Sports'].map(cat => (
-            <button
-              key={cat}
-              onClick={() => {
-                setCategory(cat);
-                setGenre('');
-                setPreferences(prev => ({ ...prev, gigsCategory: cat, gigsGenre: '' }));
-              }}
-              style={{ marginRight: 8, fontWeight: category === cat ? 'bold' : 'normal' }}
-            >
-              {cat}
-            </button>
-          ))}
+      <section className="devgigs__section devgigs__section--events">
+        <h2>Events You Might Enjoy</h2>
+        {selectedKeys.length === 0 && (
+          <p className="devgigs__no-categories">You haven't selected any event categories in your preferences. Head to the <strong>Interests</strong> page to pick some!</p>
+        )}
+        {!loadingEvents &&
+          Object.values(eventsByCategory).flat().length === 0 &&
+          selectedKeys.length > 0 && (
+            <p className="devgigs__no-events">✅ No upcoming events found for your selected categories. Adjust preferences or check again later.</p>
+        )}
+        <div className="devgigs__events-group">
+        {selectedKeys.map(key => {
+          const meta = EVENT_MAPPINGS[key];
+          const events = eventsByCategory[key];
+          if (!meta) return null;
+          return (
+            <div className="devgigs__category" key={key}>
+              <h3 className="devgigs__category-label">{meta.label}</h3>
+              {loadingEvents ? (
+                <p className="devgigs__loading">Fetching events…</p>
+              ) : !events || events.length === 0 ? (
+                <p className="devgigs__no-events-category">No events found in this category.</p>
+              ) : (
+                <ul className="devgigs__events-list">
+                  {events.map(e => (
+                    <li className="devgigs__event-card" key={e.id}>
+                      <strong className="devgigs__event-title">{e.name}</strong><br />
+                      <span className="devgigs__event-details">
+                        {new Date(e.date).toLocaleString()} at{' '}
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.venue + ', ' + e.city)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="devgigs__event-venue-link"
+                        >
+                          {e.venue}
+                        </a>
+                      </span><br />
+                      <a
+                        href={e.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="devgigs__event-link"
+                      >
+                        Event details →
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
         </div>
-
-        {category === 'Music' && genres.length > 0 && (
-          <div style={{ marginTop: '1rem' }}>
-            {genres.map(g => (
-              <button
-                key={g}
-                onClick={() => {
-                  setGenre(g);
-                  setPreferences(prev => ({ ...prev, gigsGenre: g }));
-                }}
-                aria-pressed={genre === g}
-                style={{ marginRight: 8, fontWeight: genre === g ? 'bold' : 'normal' }}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section>
-        <h2>Upcoming Gigs in {city}</h2>
-
-        {filteredGigs.length > 0 ? (
-          <ul>
-            {filteredGigs.map((gig, i) => (
-              <li key={i} style={{ marginBottom: '1rem' }}>
-                <strong>{gig.artist}</strong> @ {gig.venue}<br />
-                📅 {gig.date}<br />
-                {gig.genres && gig.genres.length > 0 && (
-                  <div>{gig.genres.map(g => <span key={g} style={{
-                    display: 'inline-block',
-                    marginRight: '0.5rem',
-                    padding: '0.2rem 0.4rem',
-                    background: '#eee',
-                    borderRadius: '4px'
-                  }}>{g}</span>)}</div>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No gigs match your filters.</p>
-        )}
       </section>
     </main>
   );

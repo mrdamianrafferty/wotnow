@@ -1,6 +1,14 @@
-// src/context/UserPreferencesContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { activityTypes } from '../data/activityTypes';
+
+interface EventPreferences {
+  sport: boolean;
+  music: boolean;
+  arts: boolean;
+  musicCategories: string[];
+  artsCategories: string[];
+  sportsCategories: string[];
+}
 
 interface Preferences {
   location: { name: string; lat?: number; lon?: number };
@@ -8,13 +16,17 @@ interface Preferences {
   forecast?: any[];
   category?: string;
   genre?: string;
-  eventPreferences?: {
-    sport: boolean;
-    music: boolean;
-    arts: boolean;
-    genres: string[];
-  };
+  eventPreferences?: EventPreferences;
 }
+
+const defaultEventPreferences: EventPreferences = {
+  sport: false,
+  music: false,
+  arts: false,
+  musicCategories: [],
+  artsCategories: [],
+  sportsCategories: [],
+};
 
 const defaultPreferences: Preferences = {
   location: { name: 'Colunga, Asturias' },
@@ -22,12 +34,7 @@ const defaultPreferences: Preferences = {
   forecast: [],
   category: 'Music',
   genre: '',
-  eventPreferences: {
-    sport: false,
-    music: false,
-    arts: false,
-    genres: [],
-  },
+  eventPreferences: defaultEventPreferences,
 };
 
 interface UserPreferencesContextType {
@@ -47,21 +54,26 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (!stored) return defaultPreferences;
     try {
       const parsed = JSON.parse(stored);
+
       // Validate interests dynamically against all supported activity IDs
       const validIds = new Set(activityTypes.map(a => a.id));
       parsed.interests = Array.isArray(parsed.interests)
         ? parsed.interests.filter((id: string) => validIds.has(id))
         : [];
-      // Validate eventPreferences shape
-      if (!parsed.eventPreferences) {
-        parsed.eventPreferences = defaultPreferences.eventPreferences;
+
+      // --- Event Preferences Migration & Validation (for Eventbrite) ---
+      if (!parsed.eventPreferences || typeof parsed.eventPreferences !== 'object') {
+        parsed.eventPreferences = { ...defaultEventPreferences };
       } else {
-        parsed.eventPreferences.sport = !!parsed.eventPreferences.sport;
-        parsed.eventPreferences.music = !!parsed.eventPreferences.music;
-        parsed.eventPreferences.arts = !!parsed.eventPreferences.arts;
-        parsed.eventPreferences.genres = Array.isArray(parsed.eventPreferences.genres)
-          ? parsed.eventPreferences.genres
-          : [];
+        const ep = parsed.eventPreferences;
+        parsed.eventPreferences = {
+          sport: !!ep.sport,
+          music: !!ep.music,
+          arts: !!ep.arts,
+          musicCategories: Array.isArray(ep.musicCategories) ? ep.musicCategories : [],
+          artsCategories: Array.isArray(ep.artsCategories) ? ep.artsCategories : [],
+          sportsCategories: Array.isArray(ep.sportsCategories) ? ep.sportsCategories : [],
+        };
       }
       return parsed;
     } catch (e) {

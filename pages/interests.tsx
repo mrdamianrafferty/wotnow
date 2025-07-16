@@ -155,18 +155,132 @@ const ActivitiesGrid: React.FC<{
   );
 };
 
-// --- Live Event Preferences Step ---
+// --- Updated Event Categories for Eventbrite API ---
 const EVENT_TYPES = [
   { key: 'sport', label: 'Sporting Events', icon: '🏟️' },
-  { key: 'music', label: 'Music Concerts', icon: '🎵' },
+  { key: 'music', label: 'Music Events', icon: '🎵' },
   { key: 'arts', label: 'Arts & Theatre', icon: '🎭' },
 ];
-const MUSIC_GENRES = [
-  'Rock','Pop','Jazz','Hip-Hop/Rap','Dance/Electronic','Folk',
-  'Indie','Classical','Metal'
+
+// Music Categories for Eventbrite
+const MUSIC_CATEGORIES = [
+  { 
+    key: 'live_music', 
+    label: 'Live Music', 
+    icon: '🎤',
+    description: 'Concerts and live performances',
+    eventbrite: { category: 103, format: 6 }
+  },
+  { 
+    key: 'music_festivals', 
+    label: 'Music Festivals', 
+    icon: '🎪',
+    description: 'Multi-day music events',
+    eventbrite: { category: 103, format: 7 }
+  },
+  { 
+    key: 'dj_dance', 
+    label: 'DJ/Dance Events', 
+    icon: '🕺',
+    description: 'Club nights and dance events',
+    eventbrite: { category: 103, format: 5, keywords: 'DJ OR dance OR club OR electronic' }
+  },
+  { 
+    key: 'local_music', 
+    label: 'Local Music Scene', 
+    icon: '🎸',
+    description: 'Intimate venues and local acts',
+    eventbrite: { category: 103, radius: 25 }
+  }
 ];
 
-type EventPrefs = { sport: boolean; music: boolean; arts: boolean; genres: string[] };
+// Arts Categories for Eventbrite
+const ARTS_CATEGORIES = [
+  { 
+    key: 'theatre_performance', 
+    label: 'Theatre & Performance', 
+    icon: '🎭',
+    description: 'Live theatre, plays, and dramatic performances',
+    eventbrite: { category: 105, keywords: 'theatre OR play OR drama OR musical' }
+  },
+  { 
+    key: 'comedy_entertainment', 
+    label: 'Comedy & Entertainment', 
+    icon: '😂',
+    description: 'Stand-up comedy, improv shows, and entertainment',
+    eventbrite: { category: 105, format: 5, keywords: 'comedy OR stand-up OR improv' }
+  },
+  { 
+    key: 'art_exhibitions', 
+    label: 'Art Exhibitions & Galleries', 
+    icon: '🎨',
+    description: 'Gallery openings, art exhibitions, and cultural events',
+    eventbrite: { category: 105, keywords: 'exhibition OR gallery OR "art show"' }
+  },
+  { 
+    key: 'dance_movement', 
+    label: 'Dance & Movement', 
+    icon: '💃',
+    description: 'Dance performances, ballet, and movement arts',
+    eventbrite: { category: 105, format: 6, keywords: 'dance OR ballet OR contemporary' }
+  },
+  { 
+    key: 'film_media', 
+    label: 'Film & Media Events', 
+    icon: '🎬',
+    description: 'Film screenings, documentaries, and media events',
+    eventbrite: { category: 104, format: 9 }
+  }
+];
+
+// Sports Categories for Eventbrite
+const SPORTS_CATEGORIES = [
+  { 
+    key: 'competitive_sports', 
+    label: 'Competitive Sports', 
+    icon: '🏆',
+    description: 'Tournaments, competitions, and sporting events',
+    eventbrite: { category: 108, format: 12 }
+  },
+  { 
+    key: 'fitness_wellness', 
+    label: 'Fitness & Wellness Events', 
+    icon: '💪',
+    description: 'Fitness classes, wellness workshops, and health events',
+    eventbrite: { category: 107, format: 11 }
+  },
+  { 
+    key: 'running_cycling', 
+    label: 'Running & Cycling Events', 
+    icon: '🏃‍♂️',
+    description: 'Races, fun runs, cycling events, and endurance challenges',
+    eventbrite: { category: 108, format: 12, keywords: 'run OR cycle OR marathon OR bike' }
+  },
+  { 
+    key: 'outdoor_adventures', 
+    label: 'Outdoor Adventures', 
+    icon: '🥾',
+    description: 'Hiking groups, outdoor skills, and adventure activities',
+    eventbrite: { category: 109, format: 11 }
+  },
+  { 
+    key: 'team_sports_social', 
+    label: 'Team Sports & Social', 
+    icon: '⚽',
+    description: 'Social sports leagues, pickup games, and sports meetups',
+    eventbrite: { category: 108, format: 4, keywords: 'football OR basketball OR volleyball' }
+  }
+];
+
+// Updated EventPrefs type
+type EventPrefs = { 
+  sport: boolean; 
+  music: boolean; 
+  arts: boolean; 
+  musicCategories: string[];
+  artsCategories: string[];
+  sportsCategories: string[];
+};
 
 function EventPreferencesStep({
   eventPrefs,
@@ -179,25 +293,37 @@ function EventPreferencesStep({
   onBack: () => void,
   onDone: () => void,
 }) {
-  const toggleType = (key: keyof EventPrefs) =>
-    setEventPrefs(prev => ({
-      ...prev,
-      [key]: key !== 'genres' ? !prev[key] : prev[key],
-      genres: key === 'music' && !eventPrefs.music ? [] : prev.genres
-    }));
+  const toggleType = (key: keyof EventPrefs) => {
+    const newPrefs = { ...eventPrefs };
+    if (key === 'sport' || key === 'music' || key === 'arts') {
+      newPrefs[key] = !eventPrefs[key];
+      // Clear subcategories when main category is deselected
+      if (!newPrefs[key]) {
+        if (key === 'music') newPrefs.musicCategories = [];
+        if (key === 'arts') newPrefs.artsCategories = [];
+        if (key === 'sport') newPrefs.sportsCategories = [];
+      }
+    }
+    setEventPrefs(newPrefs);
+  };
 
-  const toggleGenre = (g: string) =>
+  const toggleSubCategory = (categoryKey: string, type: 'music' | 'arts' | 'sports') => {
+    const arrayKey = `${type}Categories` as keyof EventPrefs;
+    const currentArray = eventPrefs[arrayKey] as string[];
+    
     setEventPrefs(prev => ({
       ...prev,
-      genres: prev.genres.includes(g)
-        ? prev.genres.filter(val => val !== g)
-        : [...prev.genres, g]
+      [arrayKey]: currentArray.includes(categoryKey)
+        ? currentArray.filter(val => val !== categoryKey)
+        : [...currentArray, categoryKey]
     }));
+  };
 
   return (
-    <div className="event-interests-section" style={{marginTop:32, maxWidth:430}}>
-      <h2 style={{marginBottom:8}}>Are you interested in going to live local events?</h2>
-      <div className="event-preferences-row" style={{display:'flex', gap:16}}>
+    <div className="event-interests-section" style={{marginTop:32, maxWidth:600}}>
+      <h2 style={{marginBottom:16}}>Are you interested in going to live local events?</h2>
+      
+      <div className="event-preferences-row" style={{display:'flex', gap:16, flexWrap:'wrap', marginBottom:24}}>
         {EVENT_TYPES.map(({ key, label, icon }) => (
           <button
             key={key}
@@ -209,41 +335,140 @@ function EventPreferencesStep({
               padding: '12px 16px', minHeight: 44, fontWeight:'bold',
               border:`2px solid ${eventPrefs[key as keyof EventPrefs] ? '#2563eb' : '#bbb'}`,
               borderRadius:24, background: eventPrefs[key as keyof EventPrefs] ? '#2563eb' : '#fff',
-              color: eventPrefs[key as keyof EventPrefs] ? '#fff' : '#222', fontSize: 18, cursor:'pointer'
+              color: eventPrefs[key as keyof EventPrefs] ? '#fff' : '#222', fontSize: 16, cursor:'pointer'
             }}
           >
             <span style={{marginRight:8}}>{icon}</span>{label}
           </button>
         ))}
       </div>
+
+      {/* Music Categories */}
       {eventPrefs.music && (
-        <div style={{marginTop:24}}>
-          <h3 style={{marginBottom:4}}>What genres of music do you enjoy?</h3>
-          <div style={{display:'flex', flexWrap:'wrap', gap:12, marginTop:8}}>
-            {MUSIC_GENRES.map(g => (
+        <div style={{marginBottom:32}}>
+          <h3 style={{marginBottom:12, color:'#2563eb'}}>🎵 Music Event Types</h3>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))', gap:12}}>
+            {MUSIC_CATEGORIES.map(({ key, label, icon, description }) => (
               <button
-                key={g} onClick={() => toggleGenre(g)}
-                aria-pressed={eventPrefs.genres.includes(g)}
-                className={`genre-chip${eventPrefs.genres.includes(g) ? ' selected' : ''}`}
+                key={key} 
+                onClick={() => toggleSubCategory(key, 'music')}
+                aria-pressed={eventPrefs.musicCategories.includes(key)}
                 style={{
-                  padding:'8px 14px', border: eventPrefs.genres.includes(g) ? '2px solid #db2777' : '2px solid #bbb',
-                  borderRadius:16, background: eventPrefs.genres.includes(g) ? '#db2777' : '#fff', color: eventPrefs.genres.includes(g) ? '#fff' : '#222',
-                  fontWeight:'bold', cursor:'pointer', fontSize:15
+                  padding:'12px 16px', 
+                  border: eventPrefs.musicCategories.includes(key) ? '2px solid #2563eb' : '2px solid #bbb',
+                  borderRadius:12, 
+                  background: eventPrefs.musicCategories.includes(key) ? '#2563eb' : '#fff', 
+                  color: eventPrefs.musicCategories.includes(key) ? '#fff' : '#222',
+                  fontWeight:'bold', 
+                  cursor:'pointer', 
+                  fontSize:14,
+                  textAlign:'left',
+                  display:'flex',
+                  flexDirection:'column',
+                  alignItems:'flex-start',
+                  gap:4
                 }}
-              >{g}</button>
+              >
+                <div style={{display:'flex', alignItems:'center', gap:8}}>
+                  <span style={{fontSize:'1.2rem'}}>{icon}</span>
+                  <span>{label}</span>
+                </div>
+                <span style={{fontSize:'0.8rem', opacity:0.8}}>{description}</span>
+              </button>
             ))}
           </div>
         </div>
       )}
+
+      {/* Arts Categories */}
+      {eventPrefs.arts && (
+        <div style={{marginBottom:32}}>
+          <h3 style={{marginBottom:12, color:'#db2777'}}>🎭 Arts & Theatre Event Types</h3>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))', gap:12}}>
+            {ARTS_CATEGORIES.map(({ key, label, icon, description }) => (
+              <button
+                key={key} 
+                onClick={() => toggleSubCategory(key, 'arts')}
+                aria-pressed={eventPrefs.artsCategories.includes(key)}
+                style={{
+                  padding:'12px 16px', 
+                  border: eventPrefs.artsCategories.includes(key) ? '2px solid #db2777' : '2px solid #bbb',
+                  borderRadius:12, 
+                  background: eventPrefs.artsCategories.includes(key) ? '#db2777' : '#fff', 
+                  color: eventPrefs.artsCategories.includes(key) ? '#fff' : '#222',
+                  fontWeight:'bold', 
+                  cursor:'pointer', 
+                  fontSize:14,
+                  textAlign:'left',
+                  display:'flex',
+                  flexDirection:'column',
+                  alignItems:'flex-start',
+                  gap:4
+                }}
+              >
+                <div style={{display:'flex', alignItems:'center', gap:8}}>
+                  <span style={{fontSize:'1.2rem'}}>{icon}</span>
+                  <span>{label}</span>
+                </div>
+                <span style={{fontSize:'0.8rem', opacity:0.8}}>{description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sports Categories */}
+      {eventPrefs.sport && (
+        <div style={{marginBottom:32}}>
+          <h3 style={{marginBottom:12, color:'#059669'}}>🏟️ Sports Event Types</h3>
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))', gap:12}}>
+            {SPORTS_CATEGORIES.map(({ key, label, icon, description }) => (
+              <button
+                key={key} 
+                onClick={() => toggleSubCategory(key, 'sports')}
+                aria-pressed={eventPrefs.sportsCategories.includes(key)}
+                style={{
+                  padding:'12px 16px', 
+                  border: eventPrefs.sportsCategories.includes(key) ? '2px solid #059669' : '2px solid #bbb',
+                  borderRadius:12, 
+                  background: eventPrefs.sportsCategories.includes(key) ? '#059669' : '#fff', 
+                  color: eventPrefs.sportsCategories.includes(key) ? '#fff' : '#222',
+                  fontWeight:'bold', 
+                  cursor:'pointer', 
+                  fontSize:14,
+                  textAlign:'left',
+                  display:'flex',
+                  flexDirection:'column',
+                  alignItems:'flex-start',
+                  gap:4
+                }}
+              >
+                <div style={{display:'flex', alignItems:'center', gap:8}}>
+                  <span style={{fontSize:'1.2rem'}}>{icon}</span>
+                  <span>{label}</span>
+                </div>
+                <span style={{fontSize:'0.8rem', opacity:0.8}}>{description}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
       <div style={{display:'flex', justifyContent: 'space-between', marginTop:40}}>
         <button
-          type="button" style={{background:'#e5e7eb', color:'#222', fontWeight:'bold', border:'none', borderRadius:8, padding:'10px 24px'}}
+          type="button" 
+          style={{background:'#e5e7eb', color:'#222', fontWeight:'bold', border:'none', borderRadius:8, padding:'10px 24px'}}
           onClick={onBack}
-        >Back</button>
+        >
+          Back
+        </button>
         <button
-          type="button" style={{background:'#059669', color:'#fff', fontWeight:'bold', border:'none', borderRadius:8, padding:'10px 24px'}}
+          type="button" 
+          style={{background:'#059669', color:'#fff', fontWeight:'bold', border:'none', borderRadius:8, padding:'10px 24px'}}
           onClick={onDone}
-        >Finish</button>
+        >
+          Finish
+        </button>
       </div>
     </div>
   );
@@ -258,7 +483,14 @@ const Interests: React.FC = () => {
   const path = [mainCat, subCat].filter(Boolean) as string[];
 
   const [eventPrefs, setEventPrefs] = useState<EventPrefs>(
-    preferences.eventPreferences || {sport:false, music:false, arts:false, genres:[]}
+    preferences.eventPreferences || {
+      sport: false, 
+      music: false, 
+      arts: false, 
+      musicCategories: [],
+      artsCategories: [],
+      sportsCategories: []
+    }
   );
 
   const toggleInterest = (id: string, name: string) => {
@@ -310,7 +542,10 @@ const Interests: React.FC = () => {
     content = (
       <div style={{textAlign:'center', marginTop:48}}>
         <h2>🎉 Preferences saved!</h2>
-        <p>You’ll now get tailored ideas for activities and live events.</p>
+        <p>You'll now get tailored ideas for activities and live events across Europe.</p>
+        <div style={{marginTop:24, fontSize:14, color:'#6b7280'}}>
+          <p>Your event preferences will be used to find relevant concerts, exhibitions, sports events, and more in your area using the Eventbrite network.</p>
+        </div>
       </div>
     );
   }

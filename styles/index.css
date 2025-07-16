@@ -1,6 +1,5 @@
-/* Updated index.css with interactive card grid for Interests page */
+/* ------ GLOBAL STYLES ------ */
 
-/* Base styles */
 body {
   font-family: Arial, sans-serif;
   background-color: #f7f7f7;
@@ -25,7 +24,8 @@ a:hover {
   text-decoration: underline;
 }
 
-main, .page {
+main,
+.page {
   max-width: 1200px;
   margin: 2rem auto;
   padding: 1rem;
@@ -34,10 +34,12 @@ main, .page {
 .page {
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-weight: 600;
   color: #222;
 }
@@ -46,7 +48,7 @@ button {
   background-color: #4a90e2;
   color: #fff;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   cursor: pointer;
   border-radius: 4px;
 }
@@ -56,7 +58,8 @@ button:hover {
   color: #fff;
 }
 
-/* Home page weather cards */
+/* ------ HOMEPAGE CARDS & FORECAST ------ */
+
 .weatherCard,
 .homepage-card {
   background-color: #fff;
@@ -71,14 +74,14 @@ button:hover {
   font-size: 1.4rem;
 }
 
-.homepage-card .card-header {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: transparent;
 }
 
-.homepage-card .card-condition {
+.card-condition {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,24 +89,24 @@ button:hover {
   font-weight: bold;
 }
 
-.homepage-card .card-condition span:first-child {
+.card-condition span:first-child {
   font-size: 4rem;
 }
 
-.homepage-card .card-condition span:last-child {
+.card-condition span:last-child {
   margin-top: 0.25rem;
   font-weight: 500;
   text-transform: capitalize;
 }
 
-.homepage-card .temperature {
+.temperature {
   font-size: 2rem;
   font-weight: bold;
   text-align: center;
   margin-top: 1rem;
 }
 
-.homepage-card .weather-stats {
+.weather-stats {
   font-size: 0.95rem;
   color: #555;
   margin-top: 0.5rem;
@@ -113,19 +116,8 @@ button:hover {
   flex-wrap: wrap;
 }
 
-.homepage-card .rain-summary {
-  margin-top: 0.5rem;
-  color: #444;
-  text-align: center;
-}
+/* ------ INTEREST CARDS ------ */
 
-.homepage-card .card-suggestions {
-  margin-top: 1rem;
-  font-size: 1rem;
-  color: #444;
-}
-
-/* Interests page */
 .interests-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -133,7 +125,6 @@ button:hover {
   margin-top: 1rem;
 }
 
-/* Interests page card hover and focus states for better visibility */
 .interest-card {
   padding: 1rem;
   background-color: #fff;
@@ -159,9 +150,8 @@ button:hover {
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
-/* subtle text-shadow for better contrast on selected cards */
 .interest-card.selected span {
-  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .interest-card.selected::after {
@@ -173,7 +163,8 @@ button:hover {
   color: #fff;
 }
 
-/* Weather table */
+/* ------ WEATHER TABLE ------ */
+
 .weatherTable {
   width: 100%;
   border-collapse: collapse;
@@ -197,7 +188,8 @@ button:hover {
   background-color: #f9f9f9;
 }
 
-/* Site header */
+/* ------ SITE HEADER ------ */
+
 .site-header {
   background-color: #4a90e2;
   color: #fff;
@@ -207,7 +199,8 @@ button:hover {
   align-items: center;
 }
 
-/* Main grid for homepage cards */
+/* ------ HOMEPAGE GRID ------ */
+
 .main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -215,7 +208,8 @@ button:hover {
   padding: 0 1rem;
 }
 
-/* Location input field */
+/* ------ LOCATION INPUT ------ */
+
 .location-input {
   display: flex;
   align-items: center;
@@ -223,7 +217,8 @@ button:hover {
   margin-top: 0.5rem;
 }
 
-/* Category tabs for Interests page */
+/* ------ CATEGORY TABS ------ */
+
 .category-tabs {
   display: flex;
   gap: 0.5rem;
@@ -244,15 +239,8 @@ button:hover {
   color: #fff;
 }
 
-/* Small weather icon for tables */
-.weather-icon-small {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 0.25rem;
-}
+/* ------ TOAST MESSAGES ------ */
 
-/* Toast notifications */
 .toast {
   background-color: #444;
   color: #fff;
@@ -269,6 +257,9 @@ button:hover {
 .toast.show {
   opacity: 0.95;
 }
+
+/* ------ INTERESTS CATEGORIES & BREADCRUMB ------ */
+
 .main-categories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -362,4 +353,118 @@ button:hover {
   font-size: 1.1rem;
   margin-bottom: 30px;
   text-align: center;
+}
+
+/* ------ DEVGIGS PAGE STYLES ------ */
+
+.devgigs {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.devgigs__title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.devgigs__section {
+  margin-bottom: 2.5rem;
+}
+
+.devgigs__location-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.devgigs__location-input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.devgigs__location-btn {
+  padding: 0.5rem 1rem;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.devgigs__forecast-list {
+  list-style: none;
+  padding: 0;
+}
+
+.devgigs__forecast-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.devgigs__activity-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.devgigs__activity-item {
+  background: #f3f4f6;
+  padding: 0.4rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.97rem;
+}
+
+.devgigs__events-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.devgigs__event-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.devgigs__event-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.devgigs__event-details {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.devgigs__event-link {
+  font-size: 0.9rem;
+  color: #059669;
+  text-decoration: underline;
+}
+
+.devgigs__category-label {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.devgigs__no-events, .devgigs__no-categories, .devgigs__no-events-category {
+  font-style: italic;
+  color: #777;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .devgigs {
+    padding: 1rem 0.5rem;
+  }
+
+  .devgigs__event-card {
+    padding: 0.8rem;
+  }
 }
