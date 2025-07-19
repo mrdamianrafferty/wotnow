@@ -2,6 +2,12 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/api/eventVenues": "pages/api/eventVenues.js",
+  "/api/activities": "pages/api/activities.js",
+  "/api/events": "pages/api/events.js",
+  "/progressive-interests": "pages/progressive-interests.js",
+  "/dev-gigs": "pages/dev-gigs.js",
   "/interests": "pages/interests.js",
-  "/": "pages/index.js"
+  "/": "pages/index.js",
+  "/weather": "pages/weather.js"
 }
