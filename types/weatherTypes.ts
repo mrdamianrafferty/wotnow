@@ -28,3 +28,20 @@ export type WeatherCondition =
   | 'mist'
   | 'drizzle'
   | 'unknown';
+
+  export interface MarineWeatherData {
+  time: string;
+  waterTemperature?: number;
+  waveHeight?: number;
+  windSpeed?: number;
+  windDirection?: number;
+  swellHeight?: number;
+  swellDirection?: number;
+  swellPeriod?: number;
+}
+
+// Extend your per-day forecast type:
+export interface WeatherForecastDay {
+  // your existing props...
+  marine?: MarineWeatherData[];
+}

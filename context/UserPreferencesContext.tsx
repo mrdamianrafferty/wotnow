@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { activityTypes } from '../data/activityTypes';
 
+// --- Types ---
+type LocationType = 'home' | 'coastal';
+
+interface Location {
+  name: string;
+  lat: number;
+  lon: number;
+  type?: LocationType;
+}
+
 interface EventPreferences {
   sport: boolean;
   music: boolean;
@@ -11,13 +21,33 @@ interface EventPreferences {
 }
 
 interface Preferences {
-  location: { name: string; lat?: number; lon?: number };
+  locations: Location[];           // Now supports multiple locations!
   interests: string[];
   forecast?: any[];
   category?: string;
   genre?: string;
   eventPreferences?: EventPreferences;
 }
+
+// --- Constants ---
+const waterActivityIds = [
+  'kayaking', 'canoeing', 'surfing', 'stand_up_paddleboarding', 'snorkeling',
+  'swimming', 'sea_fishing_shore', 'sea_fishing_boat'
+];
+
+const DEFAULT_HOME_LOCATION: Location = {
+  name: "Colunga, Asturias",
+  lat: 43.4667,
+  lon: -5.45,
+  type: 'home',
+};
+
+const DEFAULT_COASTAL_LOCATION: Location = {
+  name: "Playa de La Griega", // You can customize for your region!
+  lat: 43.4898,
+  lon: -5.2716,
+  type: 'coastal',
+};
 
 const defaultEventPreferences: EventPreferences = {
   sport: false,
@@ -29,7 +59,7 @@ const defaultEventPreferences: EventPreferences = {
 };
 
 const defaultPreferences: Preferences = {
-  location: { name: 'Colunga, Asturias' },
+  locations: [DEFAULT_HOME_LOCATION],
   interests: [],
   forecast: [],
   category: 'Music',
@@ -37,6 +67,7 @@ const defaultPreferences: Preferences = {
   eventPreferences: defaultEventPreferences,
 };
 
+// --- Context/Provider ---
 interface UserPreferencesContextType {
   preferences: Preferences;
   setPreferences: React.Dispatch<React.SetStateAction<Preferences>>;
@@ -55,13 +86,13 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     try {
       const parsed = JSON.parse(stored);
 
-      // Validate interests dynamically against all supported activity IDs
+      // --- Interests validation
       const validIds = new Set(activityTypes.map(a => a.id));
       parsed.interests = Array.isArray(parsed.interests)
         ? parsed.interests.filter((id: string) => validIds.has(id))
         : [];
 
-      // --- Event Preferences Migration & Validation (for Eventbrite) ---
+      // --- Event Preferences validation
       if (!parsed.eventPreferences || typeof parsed.eventPreferences !== 'object') {
         parsed.eventPreferences = { ...defaultEventPreferences };
       } else {
@@ -75,6 +106,12 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
           sportsCategories: Array.isArray(ep.sportsCategories) ? ep.sportsCategories : [],
         };
       }
+
+      // --- Locations validation
+      parsed.locations = Array.isArray(parsed.locations) && parsed.locations.length > 0
+        ? parsed.locations
+        : [DEFAULT_HOME_LOCATION];
+
       return parsed;
     } catch (e) {
       console.warn('Failed to parse preferences from localStorage, using defaults.', e);
@@ -82,33 +119,33 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     }
   });
 
-  // Auto-detect location if not set
+  // --- Auto-detect home location if not set ---
   useEffect(() => {
-    if (
-      (!preferences.location.lat || !preferences.location.lon) &&
-      typeof window !== "undefined" &&
-      navigator.geolocation
-    ) {
+    const hasHome = preferences.locations.some(l => l.type === 'home');
+    if (!hasHome && typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setPreferences(prev => ({
             ...prev,
-            location: {
-              name: 'Current Location',
-              lat: position.coords.latitude,
-              lon: position.coords.longitude,
-            },
+            locations: [
+              ...prev.locations.filter(l => l.type !== 'home'),
+              {
+                name: 'Current Location',
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                type: 'home'
+              }
+            ]
           }));
         },
-        (err) => {
-          console.warn('Geolocation failed or denied', err);
+        () => {
+          // fallback, set to default home location
           setPreferences(prev => ({
             ...prev,
-            location: {
-              name: 'Colunga, Asturias',
-              lat: 43.4667,
-              lon: -5.45,
-            },
+            locations: [
+              ...prev.locations.filter(l => l.type !== 'home'),
+              DEFAULT_HOME_LOCATION
+            ]
           }));
         }
       );
@@ -116,16 +153,37 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist preferences on every change
+  // --- Watch for water activities, auto-add coastal location if needed ---
+  useEffect(() => {
+    const wantsCoastal = preferences.interests.some(id => waterActivityIds.includes(id));
+    const hasCoastal = preferences.locations.some(l => l.type === 'coastal');
+    if (wantsCoastal && !hasCoastal) {
+      setPreferences(prev => ({
+        ...prev,
+        locations: [...prev.locations, DEFAULT_COASTAL_LOCATION]
+      }));
+    }
+    // Optional: You might want to remove the coastal location if no more water activities
+    // else if (!wantsCoastal && hasCoastal) {
+    //   setPreferences(prev => ({
+    //     ...prev,
+    //     locations: prev.locations.filter(l => l.type !== 'coastal')
+    //   }));
+    // }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preferences.interests]);
+
+  // --- Persist preferences to localStorage ---
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('preferences', JSON.stringify(preferences));
     }
   }, [preferences]);
 
-  // Weather forecast fetcher
+  // --- Weather forecast fetcher (fetches for home location) ---
   const fetchForecast = async () => {
-    if (!preferences.location.lat || !preferences.location.lon) return;
+    const home = preferences.locations.find(l => l.type === 'home');
+    if (!home?.lat || !home.lon) return;
 
     const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
     if (!apiKey) {
@@ -133,7 +191,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
       return;
     }
 
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${preferences.location.lat}&lon=${preferences.location.lon}&appid=${apiKey}&units=metric`;
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${home.lat}&lon=${home.lon}&appid=${apiKey}&units=metric`;
 
     try {
       const res = await fetch(url);

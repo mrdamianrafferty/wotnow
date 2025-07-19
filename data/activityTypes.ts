@@ -12,7 +12,7 @@ export interface ActivityType {
   perfectConditions?: string[];
   indoorAlternative?: string;
   /**
-   * In which months this activity is considered "in season" (1 = January, ..., 12 = December)
+   * In which months this activity is considered 'in season' (1 = January, ..., 12 = December)
    */
   seasonalMonths?: number[];
 }
@@ -207,13 +207,12 @@ export const activityTypes: ActivityType[] = [
       'windSpeed=5..15',
       // 'swell_height=1-2',
     ],
-    perfectConditions: [
-      // 'water_temp>18',
-      'windSpeed=8..12',
-      // 'clean_swell',
-      // 'clear_sky',
-      // 'light_wind',
-    ],
+perfectConditions: [
+  'waterTemperature>18',
+  'waveHeight=0.7..2.0',
+  'swellPeriod=10..18',
+  'windSpeed=7..14',
+],
     seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
@@ -952,7 +951,7 @@ export const activityTypes: ActivityType[] = [
     tags: ['music', 'relaxation', 'leisure'],
   },
     {
-    id: 'make-music',
+    id: 'make_music',
     name: 'Make Music',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
@@ -1044,7 +1043,7 @@ export const activityTypes: ActivityType[] = [
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
   },
   {
-    id: 'basketball_Team Sports',
+    id: 'basketball_outdoor',
     name: 'Basketball (Outdoor)',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
@@ -1178,218 +1177,257 @@ export const activityTypes: ActivityType[] = [
   // --- Add these objects to your activityTypes array ---
 
 {
-  id: "american_football",
-  name: "American Football",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'american_football',
+  name: 'American Football',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team", "football"],
+  tags: ['sport', 'team', 'football'],
   poorConditions: [
-    "precipitation>10",
-    "windSpeed>25",
-    "temperature<0"
+    'precipitation>10',
+    'windSpeed>25',
+    'temperature<0'
   ],
   goodConditions: [
-    "temperature=10..20",
-    "windSpeed<15"
+    'temperature=10..20',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=15..18",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=15..18',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [8, 9, 10, 11, 12]
 },
 
 {
-  id: "baseball",
-  name: "Baseball",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'baseball',
+  name: 'Baseball',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team", "bat-and-ball"],
+  tags: ['sport', 'team', 'bat-and-ball'],
   poorConditions: [
-    "precipitation>5",
-    "windSpeed>20",
-    "temperature<5"
+    'precipitation>5',
+    'windSpeed>20',
+    'temperature<5'
   ],
   goodConditions: [
-    "temperature=15..25",
-    "windSpeed<15"
+    'temperature=15..25',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=18..22",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=18..22',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [4, 5, 6, 7, 8, 9]
 },
 
 {
-  id: "ice_hockey_us",
-  name: "Ice Hockey (US)",
-  category: "Winter Sports",
-  secondaryCategory: "Ice Sports",
+  id: 'ice_hockey_us',
+  name: 'Ice Hockey (US)',
+  category: 'Winter Sports',
+  secondaryCategory: 'Ice Sports',
   weatherSensitive: true,
-  tags: ["winter", "sport", "ice"],
+  tags: ['winter', 'sport', 'ice'],
   poorConditions: [
-    "temperature>2",
-    "precipitation>0",
-    "windSpeed>20"
+    'temperature>2',
+    'precipitation>0',
+    'windSpeed>20'
   ],
   goodConditions: [
-    "temperature=-10..0",
-    "windSpeed<15"
+    'temperature=-10..0',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=-5..-1",
-    "windSpeed<10"
+    'temperature=-5..-1',
+    'windSpeed<10'
   ],
   seasonalMonths: [10, 11, 12, 1, 2, 3]
 },
 
 {
-  id: "hurling",
-  name: "Hurling",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'hurling_camogie',
+  name: 'Hurling & Camogie',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team", "irish"],
+  tags: ['sport', 'team', 'irish'],
   poorConditions: [
-    "precipitation>10",
-    "windSpeed>25",
-    "temperature<5"
+    'precipitation>10',
+    'windSpeed>25',
+    'temperature<5'
   ],
   goodConditions: [
-    "temperature=10..20",
-    "windSpeed<15"
+    'temperature=10..20',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=15..18",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=15..18',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9]
 },
 
 {
-  id: "gaelic_football",
-  name: "Gaelic Football",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'gaelic_football',
+  name: 'Gaelic Football',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team", "irish"],
+  tags: ['sport', 'team', 'irish'],
   poorConditions: [
-    "precipitation>10",
-    "windSpeed>25",
-    "temperature<5"
+    'precipitation>10',
+    'windSpeed>25',
+    'temperature<5'
   ],
   goodConditions: [
-    "temperature=10..20",
-    "windSpeed<15"
+    'temperature=10..20',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=15..18",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=15..18',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9]
 },
 
 {
-  id: "hockey",
-  name: "Hockey",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'hockey',
+  name: 'Hockey',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team", "field"],
+  tags: ['sport', 'team', 'field'],
   poorConditions: [
-    "precipitation>10",
-    "windSpeed>25",
-    "temperature<0"
+    'precipitation>10',
+    'windSpeed>25',
+    'temperature<0'
   ],
   goodConditions: [
-    "temperature=10..20",
-    "windSpeed<15"
+    'temperature=10..20',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=15..18",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=15..18',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [9, 10, 11, 12, 1, 2, 3]
 },
 
 {
-  id: "padel",
-  name: "Padel",
-  category: "Active Sports",
-  secondaryCategory: "Individual Sports",
+  id: 'padel',
+  name: 'Padel',
+  category: 'Active Sports',
+  secondaryCategory: 'Individual Sports',
   weatherSensitive: true,
-  tags: ["sport", "racquet"],
+  tags: ['sport', 'racquet'],
   poorConditions: [
-    "precipitation>0",
-    "windSpeed>20",
-    "temperature<10"
+    'precipitation>0',
+    'windSpeed>20',
+    'temperature<10'
   ],
   goodConditions: [
-    "temperature=15..25",
-    "windSpeed<15"
+    'temperature=15..25',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=18..22",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=18..22',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
 },
 
 {
-  id: "pickleball",
-  name: "Pickleball",
-  category: "Active Sports",
-  secondaryCategory: "Individual Sports",
+  id: 'pickleball',
+  name: 'Pickleball',
+  category: 'Active Sports',
+  secondaryCategory: 'Individual Sports',
   weatherSensitive: true,
-  tags: ["sport", "racquet"],
+  tags: ['sport', 'racquet'],
   poorConditions: [
-    "precipitation>0",
-    "windSpeed>20",
-    "temperature<10"
+    'precipitation>0',
+    'windSpeed>20',
+    'temperature<10'
   ],
   goodConditions: [
-    "temperature=15..25",
-    "windSpeed<15"
+    'temperature=15..25',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=18..22",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=18..22',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
 },
 
 {
-  id: "netball",
-  name: "Netball",
-  category: "Active Sports",
-  secondaryCategory: "Team Sports",
+  id: 'netball',
+  name: 'Netball',
+  category: 'Active Sports',
+  secondaryCategory: 'Team Sports',
   weatherSensitive: true,
-  tags: ["sport", "team"],
+  tags: ['sport', 'team'],
   poorConditions: [
-    "precipitation>5",
-    "windSpeed>20",
-    "temperature<5"
+    'precipitation>5',
+    'windSpeed>20',
+    'temperature<5'
   ],
   goodConditions: [
-    "temperature=15..25",
-    "windSpeed<15"
+    'temperature=15..25',
+    'windSpeed<15'
   ],
   perfectConditions: [
-    "temperature=18..22",
-    "windSpeed<10",
-    "precipitation=0"
+    'temperature=18..22',
+    'windSpeed<10',
+    'precipitation=0'
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10]
 },
-
+  {
+    id: 'cooking',
+    name: 'Cooking',
+    category: 'Creative & Arts',
+    secondaryCategory: 'Home Activities',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+  },
+    {
+    id: 'cinema',
+    name: 'Cinema',
+    category: 'Indoor Recreation',
+    secondaryCategory: 'Social Activities',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+  },
+    {
+    id: 'shopping',
+    name: 'Shopping',
+    category: 'Indoor Recreation',
+    secondaryCategory: 'Social Activities',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+  },
+      {
+    id: 'museum',
+    name: 'Museum',
+    category: 'Indoor Recreation',
+    secondaryCategory: 'Social Activities',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+  },
+        {
+    id: 'cafe',
+    name: 'Visiting a Café',
+    category: 'Indoor Recreation',
+    secondaryCategory: 'Social Activities',
+    weatherSensitive: false,
+    tags: ['art', 'creativity', 'relaxation'],
+  },
 ];

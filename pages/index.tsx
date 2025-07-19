@@ -1,277 +1,304 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
-import { ActivityType, activityTypes } from '../data/activityTypes';
+import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
-import { WeatherCondition } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
-import { safeEvaluate } from '../pages/evaluateCondition';
+import { getActivityEmoji } from '../data/emojiMap';
+import { getActivityBg } from '../data/bgMap';
 
-function getWeatherIconEmoji(condition: string): string {
-  switch (condition.toLowerCase()) {
-    case 'sunny':
-    case 'clear':
-      return '☀️';
-    case 'rain':
-      return '🌧️';
-    case 'cloudy':
-    case 'clouds':
-      return '☁️';
-    case 'snow':
-      return '❄️';
-    case 'thunderstorm':
-      return '⛈️';
-    case 'fog':
-    case 'mist':
-      return '🌫️';
-    case 'drizzle':
-      return '🌦️';
-    default:
-      return '❔';
-  }
-}
+// --- Utility: Indoor Fallback Activities ---
+// This function returns indoor activities prioritized by user interests.
+const getIndoorActivities = (interests: string[]) => {
+  const indoorIds = [
+    'reading', 'going_to_pub', 'watch_a_movie', 'cooking', 'cinema', 'museum', 'shopping',
+    'cafe', 'playing_cards', 'crafts', 'knitting', 'diy', 'indoor_climbing', 'gym_workout',
+    'yoga', 'meditation', 'painting'
+  ];
+  const prioritised = indoorIds.filter(id => interests.includes(id));
+  const filled = [...prioritised, ...indoorIds.filter(id => !prioritised.includes(id))].slice(0, 10);
+  return filled.map(id => {
+    const activity = activityTypes.find(a => a.id === id);
+    return { activityId: id, activity };
+  });
+};
 
-function Home() {
-  const { preferences: { interests, location }, setPreferences, preferences } = useUserPreferences();
-  const safeInterests = interests || [];
-  const [inputLocation, setInputLocation] = useState(location?.name || '');
+export default function Home() {
+  // --- User Preferences & State Initialization ---
+  const { preferences, setPreferences } = useUserPreferences();
+  const { interests = [], location } = preferences;
 
-  const handleSaveLocation = async () => {
-    try {
-      const response = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${import.meta.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        setPreferences({ ...preferences, location: { name: inputLocation, lat, lon } });
-      } else {
-        setPreferences({ ...preferences, location: { name: inputLocation } });
-      }
-    } catch {
-      setPreferences({ ...preferences, location: { name: inputLocation } });
-    }
-  };
-
-  console.log('🏠 Home component rendered, interests:', interests);
-
+  // Tracks forecast data, input location text, loading & error states
   const [forecastByDay, setForecastByDay] = useState<WeatherForecastDay[]>([]);
+  const [inputLocation, setInputLocation] = useState(location?.name || '');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Utility flags for UI state
+  const isFirstTimeUser = interests.length === 0;
+  const needsLocation = !location?.lat || !location?.lon;
+
+  // --- Effect: Fetch Weather Forecast ---
   useEffect(() => {
-    async function fetchData() {
+    const fetchForecast = async () => {
       try {
-        const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY as string;
-        const lat = location?.lat ?? 40.4168;
-        const lon = location?.lon ?? -3.7038;
-        const response = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
+        const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+        if (!apiKey) throw new Error('Missing OpenWeather API key');
+        if (!location?.lat || !location?.lon) return;
+
+        setLoading(true);
+
+        const res = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${location.lat}&lon=${location.lon}&units=metric&appid=${apiKey}`
         );
-        const data = await response.json();
+        const data = await res.json();
+        if (!data.list) throw new Error('Invalid weather data');
 
-        // Group forecast entries by date and sum rain per day, collect per-block rain details
-        const groupedByDate: Record<string, { entries: any[]; totalRain: number }> = {};
-
-        data.list.forEach((entry: any) => {
-          const date = entry.dt_txt.split(' ')[0];
-          if (!groupedByDate[date]) {
-            groupedByDate[date] = { entries: [], totalRain: 0 };
-          }
-          groupedByDate[date].entries.push(entry);
-          if (entry.rain?.['3h']) {
-            groupedByDate[date].totalRain += entry.rain['3h'];
-          }
+        // Group forecast by date
+        const grouped: Record<string, any[]> = {};
+        data.list.forEach((item: any) => {
+          const date = item.dt_txt.split(' ')[0];
+          if (!grouped[date]) grouped[date] = [];
+          grouped[date].push(item);
         });
 
-        const dailyForecast: WeatherForecastDay[] = Object.entries(groupedByDate)
+        // Build 5-day forecast summary
+        const forecast = Object.entries(grouped)
           .slice(0, 5)
-          .map(([date, { entries, totalRain }]) => {
-            // Prefer noon entry, fallback to first
-            const noonEntry = entries.find(e => e.dt_txt.includes('12:00:00')) || entries[0];
-            const rainDetails = entries
-              .filter(e => e.rain?.['3h'] && Math.round(e.rain['3h']) > 0)
-              .map(e => {
-                const hour = new Date(e.dt_txt).getHours();
-                return `${hour}:00 ${Math.round(e.rain['3h'])}mm`;
-              });
+          .map(([date, entries]: [string, any[]]) => {
+            const noon = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
             return {
               date,
-              tempMax: Math.round(noonEntry.main.temp_max),
-              tempMin: Math.round(noonEntry.main.temp_min),
-              temperature: Math.round(noonEntry.main.temp),
-              condition: noonEntry.weather[0].main,
-              description: noonEntry.weather[0].description,
-              icon: noonEntry.weather[0].icon,
-              wind_speed: Math.round(noonEntry.wind.speed * 3.6),
-              rain: Math.round(noonEntry.rain?.['3h'] ?? 0),
-              snow: noonEntry.snow?.['3h'] ? Math.round(noonEntry.snow['3h']) : 0,
-              clouds: noonEntry.clouds?.all ?? null,
-              humidity: noonEntry.main.humidity,
-              visibility: noonEntry.visibility ?? null,
-              totalRain: Math.round(totalRain),
-              rainDetails
+              temperature: Math.round(noon.main.temp),
+              tempMax: Math.round(noon.main.temp_max),
+              tempMin: Math.round(noon.main.temp_min),
+              condition: noon.weather[0].main,
+              description: noon.weather[0].description,
+              icon: noon.weather[0].icon,
+              rain: Math.round(noon.rain?.['3h'] || 0),
+              snow: Math.round(noon.snow?.['3h'] || 0),
+              wind_speed: Math.round(noon.wind.speed * 3.6),
+              clouds: noon.clouds.all,
+              humidity: noon.main.humidity,
+              visibility: noon.visibility ?? 10000,
+              totalRain: Math.round(entries.reduce((sum, e) => sum + (e.rain?.['3h'] || 0), 0)),
+              rainDetails: entries.filter(e => e.rain?.['3h']).map(e => `${new Date(e.dt_txt).getHours()}:00 ${Math.round(e.rain['3h'])}mm`)
             };
           });
 
-        setForecastByDay(dailyForecast);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        setForecastByDay(forecast);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load forecast data.');
+        setForecastByDay([]);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData();
+    fetchForecast();
   }, [location]);
 
-  if (!forecastByDay) {
-    return (
-      <section>
-        <h2>Loading forecast data…</h2>
-        <p>Please wait while we fetch the latest weather information.</p>
-      </section>
-    );
-  }
+  // --- Handler: Save User Location ---
+  const handleSaveLocation = async () => {
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
+      );
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const { lat, lon } = data[0];
+        setPreferences({ ...preferences, location: { name: inputLocation, lat, lon } });
+        setError(null);
+      } else {
+        setError('Could not find that location. Please try another.');
+      }
+    } catch {
+      setError('Failed to fetch location. Please try again.');
+    }
+  };
 
-  if (forecastByDay.length === 0) {
-    return (
-      <section>
-        <h2>No forecast data available.</h2>
-        <p>We couldn't retrieve any forecast data. Please try again later or check your connection.</p>
-      </section>
-    );
-  }
-
+  // --- Rendering ---
   return (
     <section>
-      <header className="site-header">
-        <div>
-          <h1 className="page-title">WotNow</h1>
-          <p className="page-subtitle"><a href="/interests">What are you into?</a></p>
-        </div>
-        <div className="location-input">
-          <span>Location: </span>
-          <input
-            type="text"
-            value={inputLocation}
-            onChange={e => setInputLocation(e.target.value)}
-            placeholder="Enter city name"
-          />
-          <button onClick={handleSaveLocation}>Save</button>
+      {/* === HEADER SECTION === */}
+      <header className="homepage-banner">
+        <div className="homepage-banner__container">
+          <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+          <div className="homepage-banner__text">
+            <h1 className="homepage-banner__title">What's good, when?</h1>
+            <p className="homepage-banner__subtitle">Live your best life, every day</p>
+          </div>
         </div>
       </header>
 
-      <section className="main-grid">
-        {forecastByDay.map((dayForecast, index) => {
-          const weather = {
-            temperature: dayForecast.temperature ?? Math.round((dayForecast.tempMin + dayForecast.tempMax) / 2),
-            precipitation: dayForecast.rain ?? 0,
-            windSpeed: dayForecast.wind_speed ?? 0,
-            water_temp: null,
-            clouds: dayForecast.clouds ?? null
-          };
+      {/* === LOCATION INPUT BANNER === */}
+      <div className="location-banner">
+        <div className="location-banner__container">
+          <label htmlFor="location-input" className="location-banner__label">📍 Your location:</label>
+          <input
+            id="location-input"
+            type="text"
+            className="location-banner__input"
+            value={inputLocation}
+            onChange={e => setInputLocation(e.target.value)}
+            placeholder="Enter your city or town"
+            aria-label="Location input"
+          />
+          <button className="location-banner__button" onClick={handleSaveLocation}>Save</button>
+          <span 
+            style={{ marginLeft: 10, color: '#237e6b', fontWeight: 500 }}
+            aria-live="polite"
+          >
+            {location?.name ?? ''}
+          </span>
+        </div>
+        {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
+      </div>
 
-          const allActivities: ActivityType[] = activityTypes;
+      {/* === ONBOARDING PROMPT === */}
+      {isFirstTimeUser && (
+        <aside className="onboarding-message">
+          👋 Welcome! <a href="/interests">Choose your favourite activities</a> to get personalized suggestions.
+        </aside>
+      )}
 
-          console.log('Filtered activities:', allActivities);
-          console.log('Weather for', dayForecast.date, ':', weather);
+      {/* === CONDITIONAL UI: Location Needed, Loading, Error, or Forecast === */}
+      {needsLocation ? (
+        <div style={{ padding: '2rem' }}>Please enter a location above to view tailored suggestions.</div>
+      ) : loading ? (
+        <div style={{ padding: '2rem' }}>⏳ Loading forecast…</div>
+      ) : error ? (
+        <div style={{ padding: '2rem', color: 'red' }}>⚠️ {error}</div>
+      ) : (
+        <div className="main-grid" role="list">
+          {forecastByDay.map((day, idx) => {
+            const suggestions = getSuggestionsByDay({
+              forecast: [{
+                date: day.date,
+                weather: {
+                  temperature: day.temperature,
+                  precipitation: day.rain,
+                  windSpeed: day.wind_speed,
+                  clouds: day.clouds,
+                  water_temp: null,
+                  humidity: day.humidity,
+                  visibility: day.visibility
+                }
+              }],
+              interests,
+              activities: activityTypes
+            })[0]?.suggestions ?? [];
 
-          const suggestionsResult =
-            allActivities.length > 0
-              ? getSuggestionsByDay({
-                  activities: allActivities,
-                  interests: safeInterests,
-                  forecast: [
-                    {
-                      date: dayForecast.date,
-                      weather
-                    }
-                  ]
-                })
-              : [];
+            const perfect = suggestions.filter(s => s.evaluation === 'perfect');
+            const good = suggestions.filter(s => ['good', 'acceptable'].includes(s.evaluation));
+            const indoor = suggestions.filter(s => ['indoor', 'indoorAlternative'].includes(s.evaluation));
+            const fallbackIndoor = getIndoorActivities(interests);
+            const showOnlyIndoor = perfect.length === 0 && good.length === 0;
 
-          const todaySuggestions = suggestionsResult[0]?.suggestions ?? [];
+            const mainActivityId =
+              perfect.length > 0 ? perfect[0].activityId
+              : good.length > 0 ? good[0].activityId
+              : indoor.length > 0 ? indoor[0].activityId
+              : 'indoorsy';
 
-          console.log('Suggestions for', dayForecast.date, ':', todaySuggestions);
+            const cardBg = `url(${getActivityBg(mainActivityId)})`;
 
-          const friendlyTimeSlots = dayForecast.rainDetails.length > 0 ? (
-            <>
-              {dayForecast.rainDetails
-                .map(detail => {
-                  // detail is like "0:00 1mm"
-                  const match = detail.match(/^(\d+):\d+\s+(\d+)mm$/);
-                  if (!match) return detail;
-                  const hour = parseInt(match[1], 10);
-                  const mm = match[2];
-                  if (hour === 0) {
-                    return `${mm}mm around midnight`;
-                  } else if (hour === 12) {
-                    return `${mm}mm around noon`;
-                  } else {
-                    const period = hour < 12 ? 'AM' : 'PM';
-                    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-                    return `${mm}mm around ${hour12} ${period}`;
-                  }
-                })
-                .join(', ')}
-            </>
-          ) : null;
-
-          return (
-            <article key={dayForecast.date} className="homepage-card">
-              <header className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h2 className="card-title" style={{ margin: 0 }}>
-                    {index === 0
-                      ? 'Today'
-                      : index === 1
-                      ? 'Tomorrow'
-                      : new Date(dayForecast.date).toLocaleDateString('en-GB', { weekday: 'long' })}
+            return (
+              <article
+                key={day.date}
+                className="activity-card-enhanced"
+                style={{
+                  backgroundImage: cardBg,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat',
+                  borderRadius: 22,
+                  color: '#fff',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  minHeight: 170,
+                }}
+                role="listitem"
+                tabIndex={0}
+                aria-label={`Suggestions for ${new Date(day.date).toLocaleDateString('en-GB', { weekday: 'long' })}`}
+              >
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.32)',
+                  borderRadius: 22,
+                  zIndex: 1
+                }} />
+                <div style={{ position: 'relative', zIndex: 2, padding: '1.5rem' }}>
+                  <h2 className="day-name">
+                    {idx === 0
+                      ? 'Today is perfect for'
+                      : new Date(day.date).toLocaleDateString('en-GB', { weekday: 'long' })}
                   </h2>
-                  <div className="card-date" style={{ fontSize: '0.9rem' }}>
-                    {new Date(dayForecast.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}
-                  </div>
-                </div>
-                <div className="card-condition" style={{ fontSize: '1.2rem', fontWeight: 'bold', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: '4rem', marginRight: '0.5rem' }}>{getWeatherIconEmoji(dayForecast.condition)}</span>
-                  <span style={{ fontSize: '1rem', fontWeight: 'normal', textTransform: 'capitalize' }}>{dayForecast.description}</span>
-                </div>
-              </header>
-
-              <div className="card-info">
-                <div
-                  className="temperature"
-                  style={{ fontSize: '2rem', fontWeight: 'bold' }}
-                >
-                  {dayForecast.temperature}°C
-                </div>
-                {dayForecast.totalRain > 0 && (
-                  <div className="rain-summary">🌧️ {dayForecast.totalRain}mm expected ({friendlyTimeSlots})</div>
-                )}
-                <div className="weather-stats">
-                  💨 {dayForecast.wind_speed} km/h | ☁️ {dayForecast.clouds}% | 💧 {dayForecast.humidity}% | 🔍 {Math.round((dayForecast.visibility ?? 10000) / 1000)} km
-                </div>
-              </div>
-
-              <div className="card-suggestions" style={{ marginTop: '0.25rem' }}>
-                {todaySuggestions.length > 0 ? (
                   <p>
-                    <strong>Suggestions:</strong>{' '}
-                    {todaySuggestions
-                      .slice(0, 5)
-                      .map((s, idx) => {
-                        const activity = activityTypes.find(a => a.id === s.activityId);
-                        return activity?.name || s.activityId;
-                      })
-                      .filter(Boolean)
-                      .join(', ')}
+                    {day.temperature}°C • {day.description} {day.totalRain > 0 ? `• ${day.totalRain}mm rain` : '• Dry day'}
                   </p>
-                ) : (
-                  <p>No suggestions match your current interests for this day. <a href="/interests">Add more interests</a> to get better suggestions!</p>
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </section>
+
+                  {/* Perfect suggestion block */}
+                  {perfect.length > 0 && (() => {
+                    const best = perfect[0];
+                    const activity = activityTypes.find(a => a.id === best.activityId);
+                    return (
+                      <div className="perfect-activity" style={{ marginTop: 18 }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontSize: '2.3rem', marginRight: 15 }}>
+                            {getActivityEmoji(best.activityId)}
+                          </span>
+                          <strong style={{ fontSize: '1.25rem' }}>
+                            {activity?.name || best.activityId}
+                            {best.score != null ? ` (${Math.round(best.score)})` : ''}
+                          </strong>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Good suggestions */}
+                  {!showOnlyIndoor && good.length > 0 && (
+                    <div className="also-good-section" style={{ marginTop: 14 }}>
+                      <strong>Also good:</strong>
+                      <ul>
+                        {good.map(g => {
+                          const a = activityTypes.find(x => x.id === g.activityId);
+                          return (
+                            <li key={g.activityId}>
+                              {getActivityEmoji(g.activityId)} {a?.name || g.activityId}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Indoor or fallback suggestions */}
+                  {(showOnlyIndoor || indoor.length > 0) && (
+                    <div className="indoor-section" style={{ marginTop: 14 }}>
+                      <strong>Indoor ideas:</strong>
+                      <ul>
+                        {(indoor.length > 0 ? indoor : fallbackIndoor).map(g => {
+                          const a = activityTypes.find(x => x.id === g.activityId);
+                          return (
+                            <li key={g.activityId}>
+                              {getActivityEmoji(g.activityId)} {a?.name || g.activityId}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
-
-export default Home;

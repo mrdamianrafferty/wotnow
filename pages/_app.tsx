@@ -7,13 +7,9 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <UserPreferencesProvider>
       <nav>
-        <ul>
-          <li><Link href="/">Home</Link></li>
-          <li><Link href="/interests">Interests</Link></li>
-          <li><Link href="/weather">Weather</Link></li>
-          <li><Link href="/dev-gigs">Dev Gigs</Link></li>
-          <li><Link href="/venues">Venues</Link></li>
-        </ul>
+        
+          <Link href="/">Home</Link> | <Link href="/interests">Set Your Interests</Link> | <Link href="/weather">Weather in Detail</Link>
+        
       </nav>
       <Component {...pageProps} />
     </UserPreferencesProvider>

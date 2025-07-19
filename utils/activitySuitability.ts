@@ -1,13 +1,26 @@
 // utils/activitySuitability.ts
 
 export interface WeatherData {
+  // Land conditions
   temperature?: number;
   precipitation?: number;
   windSpeed?: number;
-  water_temp?: number;
   clouds?: number;
+  humidity?: number;
+  visibility?: number;
+
+  // Marine conditions (from Stormglass)
+  waterTemperature?: number; // Celsius
+  waveHeight?: number;       // Meters
+  swellHeight?: number;      // Meters
+  swellPeriod?: number;      // Seconds
+  swellDirection?: number;   // Degrees
+  windDirection?: number;    // Degrees
+
+  // fallback
   [key: string]: number | undefined | null;
 }
+
 
 /**
  * Extracts the weather key name from a condition string.
