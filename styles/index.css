@@ -105,7 +105,7 @@ button:hover {
 .location-banner {
   width: 100vw;
   display: flex;
-  justify-content: center;
+  justify-content: left;
   background: #f3fffa;
   box-shadow: 0 2px 8px rgba(35, 126, 107, 0.03);
   padding: 1.3rem 0;
@@ -166,68 +166,131 @@ button:hover {
   background: #249177;
 }
 
-/* ------ HOMEPAGE CARDS & FORECAST ------ */
-
-.weatherCard,
+/* --- HOMEPAGE CARDS & FORECAST --- */
 .homepage-card {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 14px 0 rgba(0,0,0,0.09);
+  padding: 1.4rem;
+  margin-bottom: 2rem;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 430px;
+  width: 100%;
+  /* Responsive width for mobile */
+  box-sizing: border-box;
 }
 
-.homepage-card h2 {
-  margin: 0;
-  font-size: 1.4rem;
-}
-
-.day-name {
-  color: #fff;
-  /* Optionally add text-shadow for contrast: */
-  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+@media (max-width: 650px) {
+  .homepage-card {
+    padding: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 97vw;
+  }
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: transparent;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.day-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.16rem;
+  letter-spacing: 0.1rem;
+  min-width: 80px;
+  white-space: nowrap;
 }
 
 .card-condition {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 1.2rem;
-  font-weight: bold;
+  justify-content: center;
+  min-width: 80px;
 }
 
 .card-condition span:first-child {
   font-size: 4rem;
+  line-height: 1;
+}
+
+.card-condition img {
+  width: 40px;
+  height: 40px;
+  vertical-align: bottom;
+  margin-bottom: 2px;
 }
 
 .card-condition span:last-child {
-  margin-top: 0.25rem;
+  margin-top: 0.17rem;
   font-weight: 500;
   text-transform: capitalize;
+  font-size: 1.02rem;
 }
 
 .temperature {
   font-size: 2rem;
   font-weight: bold;
-  text-align: center;
-  margin-top: 1rem;
+  color: #ffffff;
+  text-align: right;
+  min-width: 68px;
 }
 
 .weather-stats {
-  font-size: 0.95rem;
-  color: #555;
-  margin-top: 0.5rem;
+  font-size: 0.98rem;
+  color: #33333;
   display: flex;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: start;
+  gap: 1.1rem;
+  margin-bottom: 0.6rem;
+  margin-top: 2px;
   flex-wrap: wrap;
+}
+
+.marine-block {
+  font-size: 0.74rem;
+  margin-top: 0.5rem;
+  color: #eee;
+}
+
+.marine-header {
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.marine-location-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0 0.25rem;
+  color: #89e3ff;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.marine-values {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.marine-values li {
+  color: #d8f6ff;
+  font-size: 0.74rem;
 }
 
 /* ------ ENHANCED ACTIVITY CARDS ------ */

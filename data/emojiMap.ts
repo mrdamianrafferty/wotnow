@@ -1,5 +1,6 @@
 const emojiMap: Record<string, string> = {
   beach_volleyball: '🏐',
+  cricket: '🏏',
   american_football: '🏈',
   baseball: '⚾',
   hurling_camogie: '🏑',
@@ -84,7 +85,11 @@ const emojiMap: Record<string, string> = {
   cinema: '🎬',
   museum: '🏛️',
   shopping: '🛍️',
-  cafe: '☕'
+  cafe: '☕',
+jetskiing: '🚤',
+scuba_diving: '🤿',
+kitesurfing: '🏄‍♂️',
+windsurfing: '🏄‍♀️',
 };
 
 export default emojiMap;

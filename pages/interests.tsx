@@ -26,7 +26,7 @@ const mainCategories = [
         key: "Water Sports",
         icon: "🛶",
         acts: [
-          "kayaking","canoeing","surfing","stand_up_paddleboarding","snorkeling","swimming","indoor_swimming","sea_fishing_shore","sea_fishing_boat"
+          "kayaking","canoeing","surfing","stand_up_paddleboarding","snorkeling","swimming","indoor_swimming","sea_fishing_shore","sea_fishing_boat", "windsurfing", "kitesurfing", "jet_skiing", "scuba_diving",
         ],
       },
       {
@@ -422,23 +422,44 @@ const Interests: React.FC = () => {
       </h1>
       <Breadcrumb path={["Interests", ...path]} onBack={handleBack} />
       {content}
-      <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 42 }}>
-        <button
-          onClick={handleDone}
-          style={{
-            padding: "12px 28px",
-            borderRadius: 9,
-            fontSize: "1.08rem",
-            background: "#059669",
-            border: "none",
-            color: "#fff",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          ✅ I'm Done
-        </button>
-      </div>
+<div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 42 }}>
+  {(mainCat || subCat) && (
+    <button
+      onClick={() => {
+        setMainCat(null);
+        setSubCat(null);
+      }}
+      style={{
+        padding: "12px 28px",
+        borderRadius: 9,
+        fontSize: "1.08rem",
+        background: "#3b82f6",
+        border: "none",
+        color: "#fff",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      ➕ Add More Interests
+    </button>
+  )}
+  <button
+    onClick={handleDone}
+    style={{
+      padding: "12px 28px",
+      borderRadius: 9,
+      fontSize: "1.08rem",
+      background: "#059669",
+      border: "none",
+      color: "#fff",
+      fontWeight: 700,
+      cursor: "pointer",
+    }}
+  >
+    ✅ I'm Done
+  </button>
+</div>
+
       {showToast && (
         <div
           className="custom-toast show"

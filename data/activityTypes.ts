@@ -357,32 +357,30 @@ perfectConditions: [
       // 'dry_pitch',
     ],
   },
-  {
-    id: 'kayaking',
-    name: 'Kayaking',
-    category: 'Active Sports',
-    secondaryCategory: 'Water Sports',
-    weatherSensitive: true,
-    tags: ['water', 'paddling', 'adventure'],
-    poorConditions: [
-      'windSpeed>20',
-      'precipitation>10',
-      // 'thunderstorm',
-      // 'high_waves',
-    ],
-    goodConditions: [
-      'windSpeed=0..15',
-      'temperature=15..25',
-      'clouds=20-60',
-    ],
-    perfectConditions: [
-      'windSpeed<10',
-      'temperature=18..22',
-      // 'clear_sky',
-      // 'calm_waters',
-    ],
-    seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
-  },
+{
+  id: 'kayaking',
+  name: 'Kayaking',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'paddling', 'adventure'],
+  poorConditions: [
+    'windSpeed>20',
+    'waveHeight>1.5',     // New!
+    'precipitation>10'
+  ],
+  goodConditions: [
+    'windSpeed=0..15',
+    'waveHeight<1.0',
+    'waterTemperature=15..25'
+  ],
+  perfectConditions: [
+    'windSpeed<8',
+    'waveHeight<0.7',
+    'waterTemperature=17..23'
+  ],
+  seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
+},
   {
     id: 'rock_climbing',
     name: 'Rock Climbing',
@@ -569,18 +567,30 @@ perfectConditions: [
     perfectConditions: ['temperature=15..20', 'windSpeed<10', /* 'clear_sky' */],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
-  {
-    id: 'sea_fishing_shore',
-    name: 'Shore Fishing',
-    category: 'Outdoor Activities',
-    secondaryCategory: 'Fishing',
-    weatherSensitive: true,
-    tags: ['fishing', 'sea', 'leisure'],
-    poorConditions: ['windSpeed>25', 'precipitation>15', 'thunderstorm'],
-    goodConditions: ['windSpeed=5..20', 'temperature=10..22'],
-    perfectConditions: ['windSpeed<12', 'temperature=14..20'],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
-  },
+{
+  id: 'sea_fishing_shore',
+  name: 'Shore Fishing',
+  category: 'Outdoor Activities',
+  secondaryCategory: 'Fishing',
+  weatherSensitive: true,
+  tags: ['fishing', 'sea', 'leisure'],
+  poorConditions: [
+    'windSpeed>25',
+    'precipitation>15',
+    'waveHeight>2.5'
+  ],
+  goodConditions: [
+    'windSpeed=5..20',
+    'waveHeight=0.3..1.5',
+    'waterTemperature=13..20'
+  ],
+  perfectConditions: [
+    'windSpeed<12',
+    'waveHeight=0.5..1.0',
+    'waterTemperature=15..19'
+  ],
+  seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
+},
   {
     id: 'sea_fishing_boat',
     name: 'Boat Fishing',
@@ -640,43 +650,80 @@ perfectConditions: [
     perfectConditions: ['temperature=15..20', 'windSpeed<5', /* 'clear_sky', */ /* 'dry_rocks' */],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
-  {
-    id: 'snorkeling',
-    name: 'Snorkeling',
-    category: 'Active Sports',
-    secondaryCategory: 'Water Sports',
-    weatherSensitive: true,
-    tags: ['water', 'swimming', 'adventure'],
-    poorConditions: [/* 'water_temp<20', */ 'windSpeed>15', 'precipitation>5'],
-    goodConditions: [/* 'water_temp=21..26', */ 'windSpeed<10', /* 'clouds=10-50' */],
-    perfectConditions: [/* 'water_temp=24..26', */ 'windSpeed<5', /* 'clear_sky', */ /* 'calm_sea' */],
-    seasonalMonths: [5, 6, 7, 8, 9, 10],
-  },
-  {
-    id: 'stand_up_paddleboarding',
-    name: 'Paddleboarding',
-    category: 'Active Sports',
-    secondaryCategory: 'Water Sports',
-    weatherSensitive: true,
-    tags: ['water', 'paddling', 'balance'],
-    poorConditions: ['windSpeed>15', 'precipitation>5', /* 'high_waves' */],
-    goodConditions: ['windSpeed<15', 'temperature=18..25', /* 'clouds=10-40' */],
-    perfectConditions: ['windSpeed<5', 'temperature=20..24', /* 'clear_sky', */ /* 'calm_waters' */],
-    seasonalMonths: [5, 6, 7, 8, 9, 10],
-  },
-  {
-    id: 'swimming',
-    name: 'Wild Swimming',
-    category: 'Active Sports',
-    secondaryCategory: 'Water Sports',
-    weatherSensitive: true,
-    tags: ['water', 'exercise'],
-    poorConditions: [/* 'water_temp<18', */ 'precipitation>5', 'windSpeed>15'],
-    goodConditions: [/* 'water_temp=19..25', */ 'windSpeed<10', /* 'clouds=10-50' */],
-    perfectConditions: [/* 'water_temp=22..25', */ 'windSpeed<5', /* 'clear_sky' */],
-    indoorAlternative: 'Indoor Swimming',
-    seasonalMonths: [5, 6, 7, 8, 9, 10],
-  },
+{
+  id: 'snorkeling',
+  name: 'Snorkeling',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'swimming', 'adventure'],
+  poorConditions: [
+    'waterTemperature<17',
+    'windSpeed>15',
+    'waveHeight>1',
+    'precipitation>5'
+  ],
+  goodConditions: [
+    'waterTemperature=18..22',
+    'windSpeed<10',
+    'waveHeight<0.5'
+  ],
+  perfectConditions: [
+    'waterTemperature=20..24',
+    'windSpeed<6',
+    'waveHeight<0.3'
+  ],
+  seasonalMonths: [5, 6, 7, 8, 9, 10],
+},
+
+{
+  id: 'stand_up_paddleboarding',
+  name: 'Paddleboarding',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'paddling', 'balance'],
+  poorConditions: [
+    'windSpeed>15',
+    'waveHeight>1.2',
+    'precipitation>5'
+  ],
+  goodConditions: [
+    'windSpeed<10',
+    'waveHeight<0.6',
+    'waterTemperature=18..25'
+  ],
+  perfectConditions: [
+    'windSpeed<5',
+    'waveHeight<0.3',
+    'waterTemperature=20..24'
+  ],
+  seasonalMonths: [5, 6, 7, 8, 9, 10],
+},
+{
+  id: 'swimming',
+  name: 'Wild Swimming',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'exercise'],
+  poorConditions: [
+    'waterTemperature<16',   // Now enabled!
+    'precipitation>5',
+    'windSpeed>15'
+  ],
+  goodConditions: [
+    'waterTemperature=17..22',
+    'windSpeed<10'
+  ],
+  perfectConditions: [
+    'waterTemperature=19..23',
+    'windSpeed<5'
+  ],
+  indoorAlternative: 'Indoor Swimming',
+  seasonalMonths: [5, 6, 7, 8, 9, 10],
+},
+
   {
     id: 'tennis_indoor',
     name: 'Tennis (Indoor)',
@@ -994,18 +1041,137 @@ perfectConditions: [
     perfectConditions: ['windSpeed=12..18', 'temperature=18..22', 'precipitation=0'],
     seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   },
-  {
-    id: 'windsurfing',
-    name: 'Windsurfing',
-    category: 'Active Sports',
-    secondaryCategory: 'Water Sports',
-    weatherSensitive: true,
-    tags: ['water', 'wind', 'adventure'],
-    poorConditions: ['windSpeed<8', 'windSpeed>30', 'precipitation>5', 'temperature<12'],
-    goodConditions: ['windSpeed=12..22', 'temperature=16..26'],
-    perfectConditions: ['windSpeed=15..20', 'temperature=18..24', 'precipitation=0'],
-    seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
-  },
+{
+  id: 'windsurfing',
+  name: 'Windsurfing',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'wind', 'adventure'],
+  poorConditions: [
+    'windSpeed<8',              // Not enough wind
+    'windSpeed>30',             // Too strong, dangerous
+    'precipitation>5',          // Heavy rain, unpleasant
+    'temperature<12',           // Too cold for comfort/safety
+    'waveHeight>2',             // Dangerous for intermediates
+    'waterTemperature<14'       // Risk of cold shock/hypothermia
+  ],
+  goodConditions: [
+    'windSpeed=12..22',         // Planing and fun for most
+    'temperature=16..26',
+    'waterTemperature=15..22',
+    'waveHeight<1.5'
+  ],
+  perfectConditions: [
+    'windSpeed=15..20',         // Ideal power for most
+    'temperature=18..24',
+    'waterTemperature>=16',
+    'waveHeight<1',             // Light to moderate safe chop
+    'precipitation=0'
+    // Optionally: add windDirection if available (e.g., side-shore)
+  ],
+  seasonalMonths: [4, 5, 6, 7, 8, 9, 10]   // Typical spring to autumn season
+},
+
+{
+  id: 'kitesurfing',
+  name: 'Kitesurfing',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'wind', 'adventure', 'extreme'],
+  poorConditions: [
+    'windSpeed<6',             // Not enough power for most kites/safety
+    'windSpeed>15',            // (if in m/s; 15 m/s = ~29 knots, above safe limit for most)
+    'precipitation>3',
+    'temperature<12',
+    'waterTemperature<14',     // Risk of cold shock/hypothermia
+    'waveHeight>3'             // Dangerous, especially for less advanced kiters
+    // Optionally: add gustiness/variability keys if available
+  ],
+  goodConditions: [
+    'windSpeed=7..13',         // Steady, suitable for intermediate riders
+    'temperature=16..28',
+    'waterTemperature=16..22',
+    'waveHeight<2'
+  ],
+  perfectConditions: [
+    'windSpeed=8..12',         // “Goldilocks” for most kiters (in m/s: 16–24 knots)
+    'temperature=20..26',
+    'waterTemperature>=16',
+    'waveHeight=0.5..1.5',
+    'precipitation=0'
+    // Add windDirection: side-shore or side-onshore, if modeled in your data
+  ],
+  seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10] // Spring to autumn/warm months
+},
+{
+  id: 'scuba_diving',
+  name: 'Scuba Diving',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'exploration', 'adventure', 'underwater'],
+  poorConditions: [
+    'waterTemperature<15',       // Too cold without drysuit
+    'airTemperature<12',
+    'waveHeight>1.2',            // Rough entry/exit, more risk
+    'precipitation>6',           // Heavy rain — surface/boat visibility
+    'windSpeed>13',              // Difficult entries and safety risk
+    'visibility<4'               // Low underwater visibility
+    // Add 'current>strong' if you have current strength in data
+  ],
+  goodConditions: [
+    'waterTemperature=17..22',
+    'airTemperature=16..28',
+    'waveHeight<0.9',
+    'windSpeed<10',
+    'visibility=6..15'
+  ],
+  perfectConditions: [
+    'waterTemperature>=18',
+    'airTemperature=20..26',
+    'waveHeight<0.6',
+    'windSpeed<7',
+    'visibility>=10',
+    'precipitation=0'
+    // Optionally: add 'clouds<=25' for sunny days, if you want!
+  ],
+  seasonalMonths: [5, 6, 7, 8, 9, 10] // Late spring to early autumn in temperate zones
+},
+{
+  id: 'jetskiing',
+  name: 'Jetskiing',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  tags: ['water', 'motor', 'adventure', 'power'],
+  poorConditions: [
+    'windSpeed>15',             // Too rough, choppy, or risky for control (above ~29 knots)
+    'windSpeed<2',              // No wind can mean fog/calm but usually safe
+    'waveHeight>2',             // Large waves are dangerous
+    'waterTemperature<13',      // Cold water increases risk
+    'precipitation>6',          // Heavy rain -> poor visibility, safety risk
+    'temperature<12',           // Air too cold for comfort (hypothermia risk if splashed)
+    // Optionally add gustiness or very low tide/obstruction logic if you track those
+  ],
+  goodConditions: [
+    'windSpeed=2..10',          // Light to moderate breeze
+    'temperature=16..30',
+    'waveHeight=0.2..1.2',      // Small chop is fun, doesn't throw off balance
+    'waterTemperature=14..24',
+    'precipitation=0..3'
+  ],
+  perfectConditions: [
+    'windSpeed=3..7',           // Just enough breeze for cooling, not choppy (~6–13 knots)
+    'temperature=18..28',
+    'waveHeight=0.2..0.8',      // Light chop or flat, stable riding
+    'waterTemperature>=16',
+    'precipitation=0'           // No rain
+  ],
+  seasonalMonths: [5, 6, 7, 8, 9, 10], // Late spring to early autumn
+},
+
   {
     id: 'cricket',
     name: 'Cricket',
