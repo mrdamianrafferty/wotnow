@@ -1,5 +1,6 @@
 import { getActivitySuitability } from './activitySuitability';
 import { ActivityType } from '../data/activityTypes';
+import { matchScore } from '../utils/matchScore';
 
 // --- Types ---
 export type SuitabilityLevel = 'perfect' | 'good' | 'acceptable' | 'indoor' | 'indoorAlternative';
@@ -20,13 +21,12 @@ export interface WeatherData {
 
 export interface MarineWeatherData {
   [key: string]: number | undefined | null;
-  // You can extend with explicit properties if desired
 }
 
 export interface ForecastDayInput {
   date: string;
   weather: WeatherData;
-  marine?: MarineWeatherData[]; // Each day can include marine data array
+  marine?: MarineWeatherData[];
 }
 
 export interface Suggestion {
@@ -46,14 +46,6 @@ export interface GetSuggestionsByDayParams {
   activities: ActivityType[];
 }
 
-// --- Main Function ---
-/**
- * Suggests up to 10 activities per day:
- * 1) Outdoor with perfect conditions (land & marine aware)
- * 2) Outdoor with good/acceptable conditions
- * 3) Indoor alternatives
- * 4) Indoor, weather-irrelevant interests
- */
 export function getSuggestionsByDay({
   forecast = [],
   interests = [],
@@ -61,8 +53,19 @@ export function getSuggestionsByDay({
 }: GetSuggestionsByDayParams): SuggestionsForDay[] {
   if (!Array.isArray(activities) || !Array.isArray(forecast)) return [];
 
+  // --- Prepare context tags ONCE per call (can move this out if you already have it elsewhere) ---
+  const now = new Date();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const currentDay = days[now.getDay()];
+  const hour = now.getHours();
+  const contextTags = [
+    currentDay,
+    hour >= 18 ? 'evening' : hour >= 12 ? 'afternoon' : 'morning',
+    'relaxation', 'family', 'cultural', 'leisure', 'home', 'social'
+  ];
+
   return forecast.map(day => {
-    // --- Merge land and marine weather ---
+    // --- Merge weather data ---
     const marine = Array.isArray(day.marine) && day.marine.length > 0 ? day.marine[0] : {};
     const weather: WeatherData = { ...day.weather, ...marine };
 
@@ -96,7 +99,7 @@ export function getSuggestionsByDay({
       if (weatherSensitive && indoorAlternative) indoorAlternatives.push(indoorAlternative);
     }
 
-    // -- Order suggestions: perfect, good/acceptable, indoor alt, then indoor --
+    // -- Order suggestions: perfect, good/acceptable, indoor alt, then sorted indoor --
     const suggestions: Suggestion[] = [];
     const seen = new Set<string>();
     function add(list: Suggestion[]) {
@@ -120,8 +123,17 @@ export function getSuggestionsByDay({
         }
       }
     }
+
+    // Add sorted indoor activities by context-match
     if (suggestions.length < 10) {
-      for (const i of indoor) {
+      const sortedIndoor = indoor
+        .map(i => ({
+          ...i,
+          score: matchScore((activities.find(a => a.id === i.activityId)?.tags) || [], contextTags)
+        }))
+        .sort((a, b) => b.score - a.score);
+
+      for (const i of sortedIndoor) {
         if (!seen.has(i.activityId)) {
           suggestions.push(i);
           seen.add(i.activityId);

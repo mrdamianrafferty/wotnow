@@ -39,13 +39,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // 🛰️ Fetch from Stormglass
   try {
-    const params = [
-      'waveHeight',
-      'waterTemperature',
-      'swellHeight',
-      'swellPeriod',
-      'windSpeed'
-    ].join(',');
+
+const params = [
+  'windSpeed',
+  'windDirection',
+  'gust',
+  'currentSpeed',
+  'currentDirection',
+  'waveHeight',
+  'waveDirection',
+  'wavePeriod',
+  'swellHeight',
+  'swellDirection',
+  'swellPeriod',
+  'waterTemperature',
+  'visibility'
+].join(',');
+
 
     const url = `${STORMGLASS_API}?lat=${lat}&lng=${lon}&params=${params}&start=${start}&end=${end}`;
 

@@ -10,22 +10,20 @@ import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
 
-// List of activities that use marine conditions
+// ✅ FIXED: Move time-sensitive logic into useEffect to prevent hydration mismatch
 const MARINE_ACTIVITY_IDS = [
   'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
   'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
   'swimming', 'sea_fishing_shore', 'sea_fishing_boat'
 ];
 
-// Helper to safely render marine values
+// Helper functions (safe for SSR)
 const formatMarineValue = (value: number | undefined, label: string, unit: string): string =>
   typeof value === 'number' ? ` • ${label}: ${value}${unit}` : '';
-
 
 const hasMarineInterest = (interests: string[]) =>
   interests.some(id => MARINE_ACTIVITY_IDS.includes(id));
 
-// --- Utility for fallback indoor activities ---
 const getIndoorActivities = (interests: string[]) => {
   const indoorIds = [
     'reading', 'going_to_pub', 'watch_a_movie', 'cooking', 'cinema', 'museum', 'shopping',
@@ -40,22 +38,37 @@ const getIndoorActivities = (interests: string[]) => {
   });
 };
 
-function getDayLabel(dateStr: string, idx: number) {
+// ✅ FIXED: Safe day label function with consistent formatting
+function getDayLabel(dateStr: string, idx: number, serverTime?: Date) {
+  console.log(`🗓️ getDayLabel called for ${dateStr}, idx: ${idx}`);
+  
   const date = new Date(dateStr);
-  const today = new Date();
-  if (
-    date.getDate() === today.getDate() &&
+  const today = serverTime || new Date();
+  
+  const isSameDay = date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  ) {
+    date.getFullYear() === today.getFullYear();
+  
+  if (isSameDay) {
     return 'Today';
   }
+  
   return date.toLocaleDateString('en-GB', { weekday: 'long' });
 }
 
 export default function Home() {
+  console.log('🏠 Home component rendering...');
+  
   const { preferences, setPreferences } = useUserPreferences();
   const hasMounted = useHasMounted();
+
+  // ✅ FIXED: All client-only state properly managed
+  const [timeInfo, setTimeInfo] = useState<{
+    currentDay: string;
+    hour: number;
+    contextTags: string[];
+    serverTime: Date;
+  } | null>(null);
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
@@ -70,132 +83,249 @@ export default function Home() {
   const isFirstTimeUser = interests.length === 0;
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
 
+  // ✅ COMPREHENSIVE LOGGING: Add detailed debugging
+  useEffect(() => {
+    console.log('🔍 HYDRATION DEBUG - Component state:', {
+      hasMounted,
+      homeLocation: homeLocation ? `${homeLocation.name} (${homeLocation.lat}, ${homeLocation.lon})` : 'undefined',
+      coastalLocation: coastalLocation ? `${coastalLocation.name}` : 'undefined',
+      interests: interests.length,
+      interestsList: interests,
+      isFirstTimeUser,
+      needsLocation
+    });
+  }, [hasMounted, homeLocation, coastalLocation, interests, isFirstTimeUser, needsLocation]);
 
-useEffect(() => {
-  if (!hasMounted || !homeLocation?.lat || !homeLocation?.lon) return;
-  let isMounted = true;
+  // ✅ FIXED: Handle time-sensitive data after hydration
+  useEffect(() => {
+    if (!hasMounted) return;
+    
+    console.log('⏰ Setting up time info after hydration...');
+    
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const currentDay = days[now.getDay()];
+    const hour = now.getHours();
 
-  async function fetchForecasts() {
-    try {
-      setLoading(true);
-      setError(null);
+    const contextTags = [
+      currentDay,
+      hour >= 18 ? 'evening' : hour >= 12 ? 'afternoon' : 'morning',
+      'relaxation', 'family', 'cultural', 'leisure', 'home', 'social'
+    ];
 
-      // --- OpenWeather (Land Forecast) ---
-      const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-      const [lat, lon] = [homeLocation.lat, homeLocation.lon];
+    console.log('⏰ Time info generated:', { currentDay, hour, contextTags });
 
-      const owRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${openWeatherKey}`
-      );
-      const owData = await owRes.json();
-      if (!owData?.list) throw new Error('Invalid weather data');
+    setTimeInfo({
+      currentDay,
+      hour,
+      contextTags,
+      serverTime: now
+    });
+  }, [hasMounted]);
 
-      // Group forecasts by day
-      const grouped: Record<string, any[]> = {};
-      owData.list.forEach((item: any) => {
-        const date = item.dt_txt.split(' ')[0];
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(item);
+  // ✅ FIXED: Weather fetching with comprehensive error handling
+  useEffect(() => {
+    if (!hasMounted || !homeLocation?.lat || !homeLocation?.lon) {
+      console.log('⏭️ Skipping weather fetch - conditions not met:', {
+        hasMounted,
+        hasLocation: !!homeLocation?.lat && !!homeLocation?.lon
       });
-
-      const forecast = Object.entries(grouped).slice(0, 5).map(([date, entries]: [string, any[]]) => {
-        const noon = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
-        return {
-          date,
-          temperature: Math.round(noon.main.temp),
-          tempMax: Math.round(noon.main.temp_max),
-          tempMin: Math.round(noon.main.temp_min),
-          condition: noon.weather[0].main,
-          description: noon.weather[0].description,
-          icon: noon.weather[0].icon,
-          rain: Math.round(noon.rain?.['3h'] || 0),
-          wind_speed: Math.round(noon.wind.speed * 3.6),
-          clouds: noon.clouds.all,
-          humidity: noon.main.humidity,
-          visibility: noon.visibility ?? 10000,
-          totalRain: Math.round(entries.reduce((sum, e) => sum + (e.rain?.['3h'] || 0), 0)),
-          rainDetails: entries
-            .filter(e => e.rain?.['3h'])
-            .map(e => `${new Date(e.dt_txt).getHours()}:00 ${Math.round(e.rain['3h'])}mm`),
-          // Marine fields (to be merged)
-          waveHeight: undefined,
-          waterTemperature: undefined,
-          swellHeight: undefined,
-          swellPeriod: undefined,
-        };
-      });
-
-      // --- Stormglass (Marine Forecast) ---
-      const marineLat = coastalLocation?.lat ?? lat;
-      const marineLon = coastalLocation?.lon ?? lon;
-      const now = Math.floor(Date.now() / 1000); // UNIX time in seconds
-      const end = now + (5 * 86400); // 5 days
-
-      let marineHours: any[] = [];
-      try {
-        const sgRes = await fetch(
-          `/api/marine?lat=${marineLat}&lon=${marineLon}&start=${now}&end=${end}`
-        );
-        const sgData = await sgRes.json();
-        if (Array.isArray(sgData.hours)) {
-          marineHours = sgData.hours;
-        } else {
-          console.warn("Stormglass returned unexpected format", sgData);
-        }
-      } catch (marineErr) {
-        console.warn('Failed to fetch marine data', marineErr);
-      }
-
-      // Merge marine data into forecast
-      forecast.forEach(day => {
-        const match = marineHours.find((h: any) => h.time.startsWith(day.date));
-        if (match) {
-          day.waveHeight = match.waveHeight?.sg;
-          day.waterTemperature = match.waterTemperature?.sg;
-          day.swellHeight = match.swellHeight?.sg;
-          day.swellPeriod = match.swellPeriod?.sg;
-        }
-      });
-
-      if (isMounted) setForecastByDay(forecast);
-    } catch (err: any) {
-      if (isMounted) {
-        setForecastByDay([]);
-        setError(err.message || 'Failed to load forecast data.');
-      }
-    } finally {
-      if (isMounted) setLoading(false);
+      return;
     }
-  }
 
-  fetchForecasts();
-  return () => {
-    isMounted = false;
-  };
-}, [homeLocation, coastalLocation, hasMounted]);
+    let isMounted = true;
+    console.log('🌤️ Starting weather fetch...');
 
+    async function fetchForecasts() {
+      try {
+        console.log('🌤️ Fetching forecasts for:', homeLocation.name);
+        setLoading(true);
+        setError(null);
 
-  // --- User location change handler ---
+        // OpenWeather API
+        const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+        console.log('🔑 OpenWeather key available:', !!openWeatherKey);
+        
+        const [lat, lon] = [homeLocation.lat, homeLocation.lon];
+        console.log('📍 Coordinates:', { lat, lon });
+
+        const owRes = await fetch(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${openWeatherKey}`
+        );
+        
+        console.log('🌤️ OpenWeather response status:', owRes.status);
+        const owData = await owRes.json();
+        
+        if (!owData?.list) {
+          console.error('❌ Invalid OpenWeather ', owData);
+          throw new Error('Invalid weather data');
+        }
+
+        console.log('✅ OpenWeather data received, entries:', owData.list.length);
+
+        // Group forecasts by day
+        const grouped: Record<string, any[]> = {};
+        owData.list.forEach((item: any) => {
+          const date = item.dt_txt.split(' ')[0];
+          if (!grouped[date]) grouped[date] = [];
+          grouped[date].push(item);
+        });
+
+        console.log('📅 Grouped forecast days:', Object.keys(grouped));
+
+        const forecast = Object.entries(grouped).slice(0, 5).map(([date, entries]: [string, any[]]) => {
+          const noon = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
+          console.log(`📅 Processing day ${date}, entries: ${entries.length}, noon `, !!noon);
+          
+          return {
+            date,
+            temperature: Math.round(noon.main.temp),
+            tempMax: Math.round(noon.main.temp_max),
+            tempMin: Math.round(noon.main.temp_min),
+            condition: noon.weather[0].main,
+            description: noon.weather[0].description,
+            icon: noon.weather[0].icon,
+            rain: Math.round(noon.rain?.['3h'] || 0),
+            wind_speed: Math.round(noon.wind.speed * 3.6),
+            clouds: noon.clouds.all,
+            humidity: noon.main.humidity,
+            visibility: noon.visibility ?? 10000,
+            totalRain: Math.round(entries.reduce((sum, e) => sum + (e.rain?.['3h'] || 0), 0)),
+            rainDetails: entries
+              .filter(e => e.rain?.['3h'])
+              .map(e => `${new Date(e.dt_txt).getHours()}:00 ${Math.round(e.rain['3h'])}mm`),
+            // Marine fields (to be merged)
+            waveHeight: undefined,
+            waterTemperature: undefined,
+            swellHeight: undefined,
+            swellPeriod: undefined,
+          };
+        });
+
+        console.log('✅ Land forecast processed:', forecast.length, 'days');
+
+        // Marine data (optional, will fail gracefully)
+        const marineLat = coastalLocation?.lat ?? lat;
+        const marineLon = coastalLocation?.lon ?? lon;
+        const now = Math.floor(Date.now() / 1000);
+        const end = now + (5 * 86400);
+
+        console.log('🌊 Attempting marine data fetch for:', { marineLat, marineLon });
+
+        let marineHours: any[] = [];
+        try {
+          const sgRes = await fetch(
+            `/api/marine?lat=${marineLat}&lon=${marineLon}&start=${now}&end=${end}`
+          );
+          const sgData = await sgRes.json();
+          
+          console.log('🌊 Marine API response:', sgRes.status, sgData);
+          
+          if (Array.isArray(sgData.hours)) {
+            marineHours = sgData.hours;
+            console.log('✅ Marine data received:', marineHours.length, 'hours');
+          } else {
+            console.warn('⚠️ Unexpected marine data format:', sgData);
+          }
+        } catch (marineErr) {
+          console.warn('⚠️ Marine fetch failed (expected if quota exceeded):', marineErr);
+        }
+
+        // Merge marine data
+        forecast.forEach(day => {
+          const match = marineHours.find((h: any) => h.time.startsWith(day.date));
+          if (match) {
+            day.waveHeight = match.waveHeight?.sg;
+            day.waterTemperature = match.waterTemperature?.sg;
+            day.swellHeight = match.swellHeight?.sg;
+            day.swellPeriod = match.swellPeriod?.sg;
+            console.log(`🌊 Marine data merged for ${day.date}`);
+          }
+        });
+
+        if (isMounted) {
+          console.log('✅ Setting forecast ', forecast);
+          setForecastByDay(forecast);
+        }
+
+      } catch (err: any) {
+        console.error('❌ Weather fetch error:', err);
+        if (isMounted) {
+          setForecastByDay([]);
+          setError(err.message || 'Failed to load forecast data.');
+        }
+      } finally {
+        if (isMounted) {
+          console.log('🏁 Weather fetch complete');
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchForecasts();
+    return () => {
+      console.log('🧹 Cleaning up weather fetch');
+      isMounted = false;
+    };
+  }, [homeLocation, coastalLocation, hasMounted]);
+
+  // Location save handler
   const handleSaveLocation = async () => {
+    console.log('💾 Saving location:', inputLocation);
     try {
       setError(null);
       const res = await fetch(
         `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
       );
       const data = await res.json();
+      console.log('🗺️ Geocoding response:', data);
+      
       if (Array.isArray(data) && data.length > 0) {
         const { lat, lon } = data[0];
-        setPreferences({ ...preferences, location: { name: inputLocation, lat, lon } });
+        console.log('✅ Location found:', { name: inputLocation, lat, lon });
+        setPreferences({ 
+          ...preferences, 
+          locations: [
+            ...(preferences.locations?.filter(l => l.type !== 'home') || []),
+            { name: inputLocation, lat, lon, type: 'home' }
+          ]
+        });
       } else {
+        console.error('❌ Location not found');
         setError('Could not find that location. Please try another.');
       }
-    } catch {
+    } catch (err) {
+      console.error('❌ Location save error:', err);
       setError('Failed to fetch location. Please try again.');
     }
   };
 
-  return ( <section>
-      {/* -------- HEADER -------- */}
+  // ✅ FIXED: Prevent hydration mismatch by ensuring consistent initial render
+  if (!hasMounted) {
+    console.log('⏳ Pre-hydration render - showing minimal content');
+    return (
+      <section>
+        <header className="homepage-banner">
+          <div className="homepage-banner__container">
+            <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+            <div className="homepage-banner__text">
+              <h1 className="homepage-banner__title">What's good, when?</h1>
+              <p className="homepage-banner__subtitle">Live your best life, every day</p>
+            </div>
+          </div>
+        </header>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <div>⏳ Loading your personalized suggestions...</div>
+        </div>
+      </section>
+    );
+  }
+
+  console.log('🎨 Rendering main content - hydration complete');
+
+  return (
+    <section>
+      {/* HEADER */}
       <header className="homepage-banner">
         <div className="homepage-banner__container">
           <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
@@ -206,9 +336,8 @@ useEffect(() => {
         </div>
       </header>
 
-      {/* -------- PAGE CONTENT -------- */}
       <div>
-        {/* --- LOCATION BANNER --- */}
+        {/* LOCATION BANNER */}
         <div className="location-banner">
           <div className="location-banner__container">
             <label htmlFor="location-input" className="location-banner__label">📍 Your location:</label>
@@ -223,22 +352,20 @@ useEffect(() => {
             />
             <button className="location-banner__button" onClick={handleSaveLocation}>Save</button>
             <span style={{ marginLeft: 10, color: '#237e6b', fontWeight: 500 }}>
-  {hasMounted ? (location?.name ?? "") : ""}
-</span>
-
-
+              {homeLocation?.name ?? ""}
+            </span>
           </div>
           {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
         </div>
 
-        {/* --- ONBOARDING PROMPT --- */}
+        {/* ONBOARDING */}
         {isFirstTimeUser && (
           <aside className="onboarding-message">
             👋 Welcome! <a href="/interests">Choose your favourite activities</a> to get personalized suggestions.
           </aside>
         )}
 
-        {/* -------- SNAG-FREE, CONSISTENT UI STRUCTURE -------- */}
+        {/* MAIN CONTENT */}
         <div>
           {needsLocation ? (
             <div style={{ padding: '2rem' }}>Please enter a location above to view tailored suggestions.</div>
@@ -249,6 +376,8 @@ useEffect(() => {
           ) : (
             <div className="main-grid" role="list">
               {forecastByDay.map((day, idx) => {
+                console.log(`🎯 Processing suggestions for day ${idx} (${day.date})`);
+                
                 const suggestions = getSuggestionsByDay({
                   forecast: [{
                     date: day.date,
@@ -269,11 +398,22 @@ useEffect(() => {
                   activities: activityTypes
                 })[0]?.suggestions ?? [];
 
+                console.log(`🎯 Day ${idx} suggestions:`, {
+                  total: suggestions.length,
+                  evaluations: suggestions.map(s => s.evaluation)
+                });
+
                 const perfect = suggestions.filter(s => s.evaluation === 'perfect');
                 const good = suggestions.filter(s => ['good', 'acceptable'].includes(s.evaluation));
                 const indoor = suggestions.filter(s => ['indoor', 'indoorAlternative'].includes(s.evaluation));
-                const fallbackIndoor = getIndoorActivities(interests);
                 const showOnlyIndoor = perfect.length === 0 && good.length === 0;
+
+                console.log(`🎯 Day ${idx} categorized:`, {
+                  perfect: perfect.length,
+                  good: good.length,
+                  indoor: indoor.length,
+                  showOnlyIndoor
+                });
 
                 const mainActivityId =
                   perfect.length > 0 ? perfect[0].activityId
@@ -300,7 +440,7 @@ useEffect(() => {
                     }}
                     role="listitem"
                     tabIndex={0}
-                    aria-label={`Suggestions for ${new Date(day.date).toLocaleDateString('en-GB', { weekday: 'long' })}`}
+                    aria-label={`Suggestions for ${getDayLabel(day.date, idx, timeInfo?.serverTime)}`}
                   >
                     <div style={{
                       position: 'absolute',
@@ -310,118 +450,98 @@ useEffect(() => {
                       zIndex: 1
                     }} />
                     <div style={{ position: 'relative', zIndex: 2 }}>
-                     
-                     {/* --- HOMEPAGE CARD TOP --- */}
-<div className="card-header">
-  {/* Day Name */}
-  <span className="day-name">
-    {getDayLabel(day.date, idx)}
-  </span>
-  
-  {/* Weather Icon + Description */}
-  <div className="card-condition">
-    <span>
-      <img
-        src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
-        alt={day.description}
-        className="weather-icon"
-      />
-    </span>
-    <span>
-      {day.description.charAt(0).toUpperCase() + day.description.slice(1)}
-    </span>
-  </div>
-  
-  {/* Main Temperature */}
-  <span className="temperature">
-    {day.temperature}°C
-  </span>
-</div>
 
-{/* --- High/Low and other stats --- */}
-<div className="weather-stats">
-  <span>H: {day.tempMax}°</span>
-  <span>L: {day.tempMin}°</span>
-</div>
+                      {/* CARD HEADER */}
+                      <div className="card-header">
+                        <span className="day-name">
+                          {getDayLabel(day.date, idx, timeInfo?.serverTime)}
+                        </span>
+                        
+                        <div className="card-condition">
+                          <img
+                            src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
+                            alt={day.description}
+                            className="weather-icon"
+                          />
+                          <span>
+                            {day.description.charAt(0).toUpperCase() + day.description.slice(1)}
+                          </span>
+                        </div>
+                        
+                        <span className="temperature">
+                          {day.temperature}°C
+                        </span>
+                      </div>
 
+                      <div className="weather-stats">
+                        <span>H: {day.tempMax}°</span>
+                        <span>L: {day.tempMin}°</span>
+                      </div>
 
-
-
-                      {/* --- Perfect suggestions --- */}
+                      {/* PERFECT SUGGESTIONS */}
                       {perfect.length > 0 && (() => {
                         const best = perfect[0];
                         const activity = activityTypes.find(a => a.id === best.activityId);
+                        console.log(`🌟 Perfect activity for day ${idx}:`, best.activityId);
                         return (
                           <div className="perfect-activity" style={{ marginTop: 18 }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                               <span style={{ fontSize: '2.3rem', marginRight: 15 }}>
                                 {getActivityEmoji(best.activityId)}
                               </span>
-                              <strong style={{ fontSize: '1.25rem' }}>Perfect for&nbsp;
-                                {activity?.name || best.activityId}
+                              <strong style={{ fontSize: '1.25rem' }}>
+                                {activity?.name || best.activityId} 💯
                                 {best.score != null ? ` (${Math.round(best.score)})` : ''}
                               </strong>
                             </div>
                           </div>
                         );
                       })()}
-                      
-                {/* --- marine conditions --- */}
-{hasMounted &&
-  hasMarineInterest(interests) &&
-  [
-    day.waveHeight,
-    day.waterTemperature,
-    day.swellHeight,
-    day.swellPeriod,
-    day.wind_speed
-  ].some(v => typeof v === 'number') && (
-<div className="marine-block">
-  <div className="marine-header">
-    Conditions for{' '}
-    {coastalLocation ? (
-      <button
-        type="button"
-        onClick={() => setShowCoastDialog(true)}
-        className="marine-location-button"
-      >
-        {coastalLocation.name}
-      </button>
-    ) : (
-      'your coastal location'
-    )}
-    :
-  </div>
 
-  <ul className="marine-values">
-    {typeof day.waveHeight === 'number' && (
-      <li>🌊 Wave: {day.waveHeight}m</li>
-    )}
-    {typeof day.wind_speed === 'number' && (
-      <li>💨 Wind: {day.wind_speed} km/h</li>
-    )}
-    {typeof day.waterTemperature === 'number' && (
-      <li>🌡️ Water: {day.waterTemperature}°C</li>
-    )}
-    {typeof day.swellHeight === 'number' && (
-      <li>🌊📈 Swell: {day.swellHeight}m</li>
-    )}
-    {typeof day.swellPeriod === 'number' && (
-      <li>⏱️ Period: {day.swellPeriod}s</li>
-    )}
-  </ul>
-</div>
+                      {/* MARINE CONDITIONS */}
+                      {hasMarineInterest(interests) &&
+                        [day.waveHeight, day.waterTemperature, day.swellHeight, day.swellPeriod, day.wind_speed].some(v => typeof v === 'number') && (
+                          <div className="marine-block">
+                            <div className="marine-header">
+                              Conditions for{' '}
+                              {coastalLocation ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCoastDialog(true)}
+                                  className="marine-location-button"
+                                >
+                                  {coastalLocation.name}
+                                </button>
+                              ) : (
+                                'your coastal location'
+                              )}
+                              :
+                            </div>
 
+                            <ul className="marine-values">
+                              {typeof day.waveHeight === 'number' && (
+                                <li>🌊 Wave: {day.waveHeight}m</li>
+                              )}
+                              {typeof day.wind_speed === 'number' && (
+                                <li>💨 Wind: {day.wind_speed} km/h</li>
+                              )}
+                              {typeof day.waterTemperature === 'number' && (
+                                <li>🌡️ Water: {day.waterTemperature}°C</li>
+                              )}
+                              {typeof day.swellHeight === 'number' && (
+                                <li>🌊📈 Swell: {day.swellHeight}m</li>
+                              )}
+                              {typeof day.swellPeriod === 'number' && (
+                                <li>⏱️ Period: {day.swellPeriod}s</li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
 
-  )
-}
-
-
-
-                      {/* --- Good suggestions --- */}
+                      {/* GOOD SUGGESTIONS */}
                       {!showOnlyIndoor && good.length > 0 && (
                         <div className="also-good-section" style={{ marginTop: 14 }}>
-                          <strong>Also good:</strong>
+                          <strong>It's a good day for</strong>
                           <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
                             {good.map(g => {
                               const a = activityTypes.find(x => x.id === g.activityId);
@@ -435,23 +555,27 @@ useEffect(() => {
                         </div>
                       )}
 
-                    
-                      {/* --- Indoor or fallback suggestions + Add More Interests --- */}
+                      {/* ✅ FIXED: INDOOR SUGGESTIONS */}
                       {(showOnlyIndoor || indoor.length > 0) && (
                         <>
                           <div className="indoor-section" style={{ marginTop: 14 }}>
                             <strong>Indoor ideas:</strong>
                             <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                              {(indoor.length > 0 ? indoor : fallbackIndoor).map(g => {
-                                const a = activityTypes.find(x => x.id === g.activityId);
-                                return (
-                                  <li key={g.activityId}>
-                                    {getActivityEmoji(g.activityId)} {a?.name || g.activityId}
-                                  </li>
-                                );
-                              })}
+                              {/* ✅ FIXED: Use correct suggestions array, not day.suggestions */}
+                              {indoor
+                                .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+                                .map(s => {
+                                  const a = activityTypes.find(x => x.id === s.activityId);
+                                  console.log(`🏠 Indoor activity for day ${idx}:`, s.activityId, s.evaluation);
+                                  return (
+                                    <li key={s.activityId}>
+                                      {getActivityEmoji(s.activityId)} {a?.name || s.activityId}
+                                    </li>
+                                  );
+                                })}
                             </ul>
                           </div>
+
                           <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
                             <a
                               href="/interests"
@@ -465,12 +589,14 @@ useEffect(() => {
                                 textDecoration: "none",
                                 fontSize: "1rem",
                                 boxShadow: "0 1px 3px rgba(0,0,0,0.08)"
-                              }}>
+                              }}
+                            >
                               ➕ Add More Interests
                             </a>
                           </div>
                         </>
                       )}
+
                     </div>
                   </article>
                 );
@@ -478,12 +604,14 @@ useEffect(() => {
             </div>
           )}
         </div>
-     
+
+        {/* COASTAL DIALOG */}
         {showCoastDialog && (
           <CoastalLocationDialog
             open={showCoastDialog}
             onClose={() => setShowCoastDialog(false)}
             onSave={(loc) => {
+              console.log('🏖️ Saving coastal location:', loc);
               setPreferences((prev) => ({
                 ...prev,
                 locations: [
@@ -499,5 +627,3 @@ useEffect(() => {
     </section>
   );
 }
-
-

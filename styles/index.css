@@ -651,30 +651,223 @@ button:hover {
   text-align: center;
 }
 
+.weather-tabs {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.weather-tabs button {
+  background-color: #eef4fb;
+  border: 1.8px solid #d1d5db;
+  color: #334155;
+  padding: 0.55rem 1.1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+  min-width: 110px;
+  text-align: center;
+  user-select: none;
+}
+
+.weather-tabs button:hover:not(.active) {
+  background-color: #dde9fb;
+  border-color: #3b82f6;
+  color: #1e40af;
+}
+
+.weather-tabs button.active {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  cursor: default;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.weather-tabs button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+
 /* ------ WEATHER TABLE ------ */
 
-.weatherTable {
+/* ===== Enhanced Weather & Marine Tables ===== */
+
+.weather-table,
+.marine-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  border-collapse: separate; /* for better row distinction */
+  border-spacing: 0 6px;     /* vertical spacing for rows */
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 32px rgba(90, 108, 234, 0.08);
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
 }
 
-.weatherTable th,
-.weatherTable td {
-  border-bottom: 1px solid #ddd;
-  text-align: left;
-  padding: 0.75rem 1rem;
-  min-width: 80px;
-}
+/* Header */
 
-.weatherTable th {
+.weather-table th,
+.marine-table th {
   background-color: #eef4fb;
+  color: #294e80;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.9rem 1.2rem;
+  border-bottom: 2px solid #d4d6dc;
+  text-align: left;
+  user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Table rows */
+
+.weather-table tbody tr,
+.marine-table tbody tr {
+  box-shadow: 0 6px 12px rgba(0, 98, 255, 0.04);
+  border-radius: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.weather-table tbody tr:nth-child(even),
+.marine-table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+.weather-table tbody tr:hover,
+.marine-table tbody tr:hover {
+  background: #eef4ff;
+  cursor: default;
+}
+
+/* Cells */
+
+.weather-table td,
+.marine-table td {
+  padding: 0.75rem 1.25rem;
+  font-size: 1.05rem;
+  vertical-align: middle;
+  color: #2d3748;
+}
+
+/* Align numeric columns to right (typically temperature, wind, humidity, visibility) */
+
+.weather-table td:nth-child(n+2),
+.marine-table td:nth-child(n+2) {
+  text-align: right;
+}
+
+.weather-table td:nth-child(3), /* Weather icon */
+.marine-table td:nth-child(3) {
+  text-align: center;
+  font-size: 1.4rem;
+}
+
+/* Conditional styling for extremes */
+
+.weather-table td.hot {
+  color: #d44747;
   font-weight: 600;
 }
 
-.weatherTable tr:nth-child(even) {
-  background-color: #f9f9f9;
+.weather-table td.cold {
+  color: #3578bc;
+  font-weight: 600;
 }
+
+.weather-table td.windy {
+  background-color: #fff3cd;
+  font-weight: 600;
+}
+
+/* Expand/Collapse day header */
+
+.day-header strong::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 0.4em;
+  transition: transform 0.2s ease;
+  transform-origin: center;
+}
+
+.day-header.expanded strong::before {
+  transform: rotate(90deg);
+}
+
+
+/* Responsive scroll */
+
+@media (max-width: 900px) {
+  .weather-table,
+  .marine-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Tooltips stand out */
+
+abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+/* Weather icons */
+
+.weather-icon {
+  font-size: 1.6rem;
+  user-select: none;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* Additional spacing for table container if needed */
+
+.table-container {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Optional: smooth expanding arrow */
+
+.day-header strong::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 0.4em;
+  transition: transform 0.2s ease;
+  transform-origin: center;
+}
+
+.day-header.expanded strong::before {
+  transform: rotate(90deg);
+}
+
+/* Scrollbar styling for webkit browsers */
+
+.weather-table::-webkit-scrollbar,
+.marine-table::-webkit-scrollbar {
+  height: 6px;
+}
+
+.weather-table::-webkit-scrollbar-thumb,
+.marine-table::-webkit-scrollbar-thumb {
+  background-color: #b3c4f5;
+  border-radius: 10px;
+}
+
+.weather-table::-webkit-scrollbar-track,
+.marine-table::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
 
 /* ------ INTERACTIVE ELEMENTS ------ */
 

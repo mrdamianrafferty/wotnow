@@ -739,7 +739,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Strength & Gym',
     weatherSensitive: false,
-    tags: ['exercise', 'fitness'],
+    tags: ['fitness', 'personal', 'health', 'evening', 'Monday', 'Wednesday', 'self-care'],
   },
   {
     id: 'yoga',
@@ -747,7 +747,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
-    tags: ['exercise', 'relaxation', 'mindfulness'],
+    tags: ['wellness', 'relaxation', 'mindfulness', 'self-care', 'Sunday', 'Monday', 'Wednesday', 'evening'],
   },
   {
     id: 'pilates',
@@ -755,7 +755,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
-    tags: ['exercise', 'core', 'flexibility'],
+    tags: ['wellness', 'relaxation', 'mindfulness', 'self-care', 'Sunday', 'Monday', 'Wednesday', 'evening'],
   },
   {
     id: 'indoor_climbing',
@@ -763,7 +763,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Indoor Recreation',
     weatherSensitive: false,
-    tags: ['sport', 'strength', 'adventure'],
+    tags: ['fun', 'adventure', 'social', 'evening', 'leisure', 'Tuesday', 'Wednesday', 'Saturday'],
   },
   {
     id: 'squash',
@@ -771,7 +771,7 @@ perfectConditions: [
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
-    tags: ['sport', 'racquet'],
+    tags: ['sport', 'social', 'active', 'evening', 'Tuesday', 'Wednesday', 'leisure'],
   },
   {
     id: 'badminton',
@@ -779,7 +779,7 @@ perfectConditions: [
     category: 'Active Sports',
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
-    tags: ['sport', 'racquet'],
+    tags: ['sport', 'social', 'active', 'evening', 'Tuesday', 'Wednesday', 'Thursday', 'leisure'],
   },
   {
     id: 'table_tennis',
@@ -787,7 +787,7 @@ perfectConditions: [
     category: 'Active Sports',
     secondaryCategory: 'Indoor Recreation',
     weatherSensitive: false,
-    tags: ['sport', 'racquet'],
+    tags: ['sport', 'social', 'fun', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'leisure'],
   },
   {
     id: 'indoor_swimming',
@@ -795,7 +795,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Water Sports',
     weatherSensitive: false,
-    tags: ['water', 'exercise'],
+    tags: ['fitness', 'relaxation', 'family', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday', 'water', 'leisure']
   },
   {
     id: 'dance',
@@ -803,7 +803,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
-    tags: ['exercise', 'art', 'music'],
+    tags: ['fun', 'art', 'music', 'social', 'evening', 'Friday', 'Saturday'],
   },
   {
     id: 'urban_exploring',
@@ -907,7 +907,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
-    tags: ['craft', 'relaxation', 'hobby'],
+    tags: ['relaxation', 'hobby', 'home', 'craft', 'Wednesday', 'Thursday', 'Sunday', 'evening', 'solo'],
   },
   {
     id: 'tai_chi',
@@ -915,7 +915,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
-    tags: ['exercise', 'mindfulness', 'relaxation'],
+    tags: ['relaxation', 'wellness', 'mindfulness', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'self-care']
   },
   {
     id: 'martial_arts',
@@ -923,7 +923,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
-    tags: ['exercise', 'strength', 'discipline'],
+     tags: ['relaxation', 'discipline', 'mindfulness', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'self-care'],
   },
   {
     id: 'meditation',
@@ -931,7 +931,7 @@ perfectConditions: [
     category: 'Fitness & Wellness',
     secondaryCategory: 'Mindfulness',
     weatherSensitive: false,
-    tags: ['mindfulness', 'relaxation', 'wellbeing'],
+    tags: ['relaxation', 'wellness', 'mindfulness', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'self-care'],
   },
   {
     id: 'reading',
@@ -939,7 +939,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Literature',
     weatherSensitive: false,
-    tags: ['books', 'relaxation', 'learning'],
+    tags: ['relaxation', 'learning', 'mindfulness', 'evening', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'self-care'],
   },
   {
     id: 'going_to_pub',
@@ -947,7 +947,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['social', 'leisure', 'relaxation'],
+    tags: ['social', 'leisure', 'relaxation', 'group', 'Sunday', 'Thursday', 'Friday', 'Saturday', 'evening'],
   },
     {
     id: 'playing_cards',
@@ -955,7 +955,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['social', 'leisure', 'relaxation'],
+    tags: ['social', 'fun', 'leisure', 'relaxation', 'group', 'Sunday', 'evening', 'Thursday', 'Friday', 'Saturday'],
   },
   {
     id: 'watch_a_movie',
@@ -963,7 +963,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['social', 'leisure', 'relaxation'],
+    tags: ['relaxation', 'family', 'home', 'leisure', 'Tuesday', 'Wednesday', 'Thursday', 'evening', 'cultural']
   },
   {
     id: 'painting',
@@ -971,7 +971,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Visual Arts',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['art', 'creativity', 'relaxation', 'Sunday', 'Saturday', 'evening', 'home', 'solo'],
   },
   {
     id: 'diy',
@@ -979,7 +979,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
-    tags: ['craft', 'home', 'practical'],
+    tags: ['craft', 'home', 'practical', 'Saturday', 'Sunday', 'evening', 'creative'],
   },
   {
     id: 'crafts',
@@ -987,7 +987,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+   tags: ['relaxation', 'hobby', 'home', 'craft', 'Wednesday', 'Thursday', 'Sunday', 'evening', 'solo'],
   },
   {
     id: 'playing_records',
@@ -995,7 +995,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
-    tags: ['music', 'relaxation', 'leisure'],
+    tags: ['music', 'relaxation', 'leisure', 'solo', 'evening', 'Saturday', 'Friday', 'Sunday', 'home'],
   },
     {
     id: 'make_music',
@@ -1003,7 +1003,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
-    tags: ['music', 'relaxation', 'leisure'],
+    tags: ['music', 'creativity', 'relaxation', 'leisure', 'Saturday', 'Sunday', 'evening', 'home'],
   },
   {
     id: 'outdoor_music',
@@ -1562,7 +1562,7 @@ perfectConditions: [
     category: 'Creative & Arts',
     secondaryCategory: 'Home Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['creativity', 'relaxation', 'home', 'family', 'Saturday', 'Sunday', 'evening'],
   },
     {
     id: 'cinema',
@@ -1570,7 +1570,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['cultural', 'family', 'relaxation', 'leisure', 'Friday', 'Saturday', 'Sunday', 'evening', 'social'],
   },
     {
     id: 'shopping',
@@ -1578,7 +1578,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['leisure', 'social', 'Sunday', 'family', 'Saturday', 'Friday',],
   },
       {
     id: 'museum',
@@ -1586,7 +1586,7 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['cultural', 'family', 'relaxation', 'Saturday', 'Sunday', 'evening'],
   },
         {
     id: 'cafe',
@@ -1594,6 +1594,6 @@ perfectConditions: [
     category: 'Indoor Recreation',
     secondaryCategory: 'Social Activities',
     weatherSensitive: false,
-    tags: ['art', 'creativity', 'relaxation'],
+    tags: ['social', 'relaxation', 'leisure', 'home', 'Saturday', 'Sunday', 'evening', 'family'],
   },
 ];

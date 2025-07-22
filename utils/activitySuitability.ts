@@ -1,5 +1,4 @@
-// utils/activitySuitability.ts
-
+// --- Types ---
 export interface WeatherData {
   // Land conditions
   temperature?: number;
@@ -9,22 +8,23 @@ export interface WeatherData {
   humidity?: number;
   visibility?: number;
 
-  // Marine conditions (from Stormglass)
-  waterTemperature?: number; // Celsius
-  waveHeight?: number;       // Meters
-  swellHeight?: number;      // Meters
-  swellPeriod?: number;      // Seconds
-  swellDirection?: number;   // Degrees
-  windDirection?: number;    // Degrees
+  // Marine conditions (optional if available)
+  waterTemperature?: number;
+  waveHeight?: number;
+  swellHeight?: number;
+  swellPeriod?: number;
+  swellDirection?: number;
+  windDirection?: number;
 
-  // fallback
+  // Fallback
   [key: string]: number | undefined | null;
 }
 
+// --- Parsing & Evaluation Utilities ---
 
 /**
- * Extracts the weather key name from a condition string.
- * (e.g., "temperature>15" -> "temperature")
+ * Extracts the weather key name from a condition string
+ * (e.g., "temperature>15" → "temperature")
  */
 export function extractWeatherKey(condition: string): string {
   const rangeMatch = condition.match(/^([a-zA-Z_]+)=(-?\d+(?:\.\d+)?)\.\.(-?\d+(?:\.\d+)?)/);
@@ -59,7 +59,7 @@ export function parseConditionString(condition: string) {
 }
 
 /**
- * Evaluates a parsed condition against weather
+ * Evaluates a parsed condition against the weather data
  */
 export function evaluateCondition(condition: string, weather: WeatherData): boolean {
   const parsed = parseConditionString(condition);
@@ -73,19 +73,13 @@ export function evaluateCondition(condition: string, weather: WeatherData): bool
   }
 
   switch (parsed.operator) {
-    case '>':
-      return weatherValue > parsed.value;
-    case '>=':
-      return weatherValue >= parsed.value;
-    case '<':
-      return weatherValue < parsed.value;
-    case '<=':
-      return weatherValue <= parsed.value;
+    case '>': return weatherValue > parsed.value;
+    case '>=': return weatherValue >= parsed.value;
+    case '<': return weatherValue < parsed.value;
+    case '<=': return weatherValue <= parsed.value;
     case '=':
-    case '==':
-      return weatherValue === parsed.value;
-    case '!=':
-      return weatherValue !== parsed.value;
+    case '==': return weatherValue === parsed.value;
+    case '!=': return weatherValue !== parsed.value;
     default:
       console.warn(`Unknown operator: ${parsed.operator}`);
       return false;
@@ -93,54 +87,55 @@ export function evaluateCondition(condition: string, weather: WeatherData): bool
 }
 
 /**
- * Gracefully evaluates a condition, skipping missing weather fields.
+ * Gracefully evaluates a condition, skipping undefined weather fields
  */
 export function safeEvaluate(condition: string, weather: WeatherData): boolean {
   const key = extractWeatherKey(condition);
   const value = weather[key];
-  if (value === undefined || value === null) return true; // Treat missing fields as neutral
+  if (value === undefined || value === null) return true; // Treat missing data as neutral
   return evaluateCondition(condition, weather);
 }
 
-/**
- * Returns true if any poor condition matches.
- */
+// --- Suitability Evaluation Functions ---
+
 export function hasPoorCondition(activity: { poorConditions?: string[] }, weather: WeatherData): boolean {
   return !!activity.poorConditions?.some(cond => safeEvaluate(cond, weather));
 }
 
-/**
- * Returns true if all perfect conditions with known weather keys match.
- */
 export function hasPerfectConditions(activity: { perfectConditions?: string[] }, weather: WeatherData): boolean {
   return !!activity.perfectConditions?.length &&
     activity.perfectConditions.every(cond => safeEvaluate(cond, weather));
 }
 
-/**
- * Returns true if all good conditions with known weather keys match.
- */
 export function hasGoodConditions(activity: { goodConditions?: string[] }, weather: WeatherData): boolean {
   return !!activity.goodConditions?.length &&
     activity.goodConditions.every(cond => safeEvaluate(cond, weather));
 }
 
+// --- Main Suitability Function ---
+
 /**
- * Returns the suitability level of an activity for the given weather.
+ * Returns the activity suitability level for the given weather
  */
 export function getActivitySuitability(
   activity: any,
   weather: WeatherData
 ): "excluded" | "perfect" | "good" | "acceptable" | "indoor" {
-  if (activity.weatherSensitive === false) return "indoor";
+  // Indoor activities (weather-agnostic)
+  if (activity.weatherSensitive === false) {
+    return "indoor";
+  }
+
+  // Weather-sensitive activities
   if (hasPoorCondition(activity, weather)) return "excluded";
   if (hasPerfectConditions(activity, weather)) return "perfect";
   if (hasGoodConditions(activity, weather)) return "good";
-  if (
+
+  const noConditions =
     (!activity.goodConditions || activity.goodConditions.length === 0) &&
-    (!activity.perfectConditions || activity.perfectConditions.length === 0)
-  ) {
-    return "acceptable";
-  }
+    (!activity.perfectConditions || activity.perfectConditions.length === 0);
+
+  if (noConditions) return "acceptable";
+
   return "excluded";
 }
