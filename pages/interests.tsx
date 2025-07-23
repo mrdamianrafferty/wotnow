@@ -32,12 +32,12 @@ const mainCategories = [
       {
         key: "Action Sports",
         icon: "🚵‍♂️",
-        acts: ["mountain_biking","rock_climbing","indoor_climbing","skateboarding","rollerblading"],
+        acts: ["mountain_biking", "road_cycling", "gravel_biking", "rock_climbing", "indoor_climbing", "skateboarding", "rollerblading"],
       },
       {
         key: "Cardio & Running",
         icon: "🏃",
-        acts: ["running", "trail_running", "road_cycling", "cycling", "urban_exploring"],
+        acts: ["running", "trail_running", "cycling", "urban_exploring"],
       },
       {
         key: "Strength & Gym",
@@ -101,7 +101,7 @@ const mainCategories = [
         key: "Ice Sports",
         icon: "⛸️",
         acts: [
-          "ice_skating","curling","ice_hockey","ice_fishing",
+          "ice_skating","curling","ice_hockey","ice_fishing","ice_hockey_indoor",
         ],
       },
     ],
@@ -458,6 +458,29 @@ const Interests: React.FC = () => {
   >
     ✅ I'm Done
   </button>
+  
+  {/* NEW: Selected Activities Buttons Below */}
+{interests.length > 0 && (
+<section
+  className="selected-activities-container"
+  aria-label="Your Selected Activities"
+>
+  {interests
+    .map(id => activityTypes.find(a => a.id === id))
+    .filter(Boolean)
+    .map(act => (
+      <button
+        key={act!.id}
+        onClick={() => toggleInterest(act!.id)}
+        className="selected-activity-btn"
+        aria-label={`Remove ${act!.name} from selected interests`}
+      >
+        {act!.name}
+        <span>×</span>
+      </button>
+    ))}
+</section>
+)}
 </div>
 
       {showToast && (

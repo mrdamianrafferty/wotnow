@@ -10,38 +10,22 @@ import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
 
-// ✅ FIXED: Move time-sensitive logic into useEffect to prevent hydration mismatch
+// Marine activities that benefit from coastal conditions
 const MARINE_ACTIVITY_IDS = [
   'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
   'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
   'swimming', 'sea_fishing_shore', 'sea_fishing_boat'
 ];
 
-// Helper functions (safe for SSR)
+// Helper functions (SSR-safe)
 const formatMarineValue = (value: number | undefined, label: string, unit: string): string =>
   typeof value === 'number' ? ` • ${label}: ${value}${unit}` : '';
 
 const hasMarineInterest = (interests: string[]) =>
   interests.some(id => MARINE_ACTIVITY_IDS.includes(id));
 
-const getIndoorActivities = (interests: string[]) => {
-  const indoorIds = [
-    'reading', 'going_to_pub', 'watch_a_movie', 'cooking', 'cinema', 'museum', 'shopping',
-    'cafe', 'playing_cards', 'crafts', 'knitting', 'diy', 'indoor_climbing', 'gym_workout',
-    'yoga', 'meditation', 'painting'
-  ];
-  const prioritised = indoorIds.filter(id => interests.includes(id));
-  const filled = [...prioritised, ...indoorIds.filter(id => !prioritised.includes(id))].slice(0, 10);
-  return filled.map(id => {
-    const activity = activityTypes.find(a => a.id === id);
-    return { activityId: id, activity };
-  });
-};
-
-// ✅ FIXED: Safe day label function with consistent formatting
+// Enhanced day label function with hydration-safe rendering
 function getDayLabel(dateStr: string, idx: number, serverTime?: Date) {
-  console.log(`🗓️ getDayLabel called for ${dateStr}, idx: ${idx}`);
-  
   const date = new Date(dateStr);
   const today = serverTime || new Date();
   
@@ -56,18 +40,28 @@ function getDayLabel(dateStr: string, idx: number, serverTime?: Date) {
   return date.toLocaleDateString('en-GB', { weekday: 'long' });
 }
 
+// Score-based activity categorization for UI display
+function getScoreCategory(score: number): { emoji: string; label: string; color: string } {
+  if (score >= 80) return { emoji: '💯', label: 'Perfect', color: '#10b981' };
+  if (score >= 60) return { emoji: '👍', label: 'Good', color: '#3b82f6' };
+  if (score >= 30) return { emoji: '🤔', label: 'Okay', color: '#f59e0b' };
+  return { emoji: '🏠', label: 'Indoor', color: '#8b5cf6' };
+}
+
 export default function Home() {
-  console.log('🏠 Home component rendering...');
+  console.log('🏠 Enhanced Home component rendering with activity scoring system...');
   
   const { preferences, setPreferences } = useUserPreferences();
   const hasMounted = useHasMounted();
 
-  // ✅ FIXED: All client-only state properly managed
+  // Enhanced time information state with context awareness
   const [timeInfo, setTimeInfo] = useState<{
     currentDay: string;
     hour: number;
     contextTags: string[];
     serverTime: Date;
+    isEvening: boolean;
+    eveningPhase: string;
   } | null>(null);
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
@@ -83,47 +77,92 @@ export default function Home() {
   const isFirstTimeUser = interests.length === 0;
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
 
-  // ✅ COMPREHENSIVE LOGGING: Add detailed debugging
+  // Comprehensive hydration debug logging
   useEffect(() => {
-    console.log('🔍 HYDRATION DEBUG - Component state:', {
+    console.log('🔍 ENHANCED HYDRATION DEBUG - System state:', {
       hasMounted,
       homeLocation: homeLocation ? `${homeLocation.name} (${homeLocation.lat}, ${homeLocation.lon})` : 'undefined',
       coastalLocation: coastalLocation ? `${coastalLocation.name}` : 'undefined',
       interests: interests.length,
-      interestsList: interests,
+      interestsSample: interests.slice(0, 5),
       isFirstTimeUser,
-      needsLocation
+      needsLocation,
+      timeInfo: timeInfo ? {
+        hour: timeInfo.hour,
+        isEvening: timeInfo.isEvening,
+        phase: timeInfo.eveningPhase
+      } : 'not set'
     });
-  }, [hasMounted, homeLocation, coastalLocation, interests, isFirstTimeUser, needsLocation]);
+  }, [hasMounted, homeLocation, coastalLocation, interests, isFirstTimeUser, needsLocation, timeInfo]);
 
-  // ✅ FIXED: Handle time-sensitive data after hydration
+  // Enhanced time-aware context generation
   useEffect(() => {
     if (!hasMounted) return;
     
-    console.log('⏰ Setting up time info after hydration...');
+    console.log('⏰ Setting up enhanced time info with evening intelligence...');
     
     const now = new Date();
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const currentDay = days[now.getDay()];
     const hour = now.getHours();
+    const isEvening = hour >= 18;
 
-    const contextTags = [
+    // Generate evening-aware context tags
+    const baseContextTags = [
       currentDay,
-      hour >= 18 ? 'evening' : hour >= 12 ? 'afternoon' : 'morning',
+      isEvening ? 'evening' : hour >= 12 ? 'afternoon' : 'morning',
       'relaxation', 'family', 'cultural', 'leisure', 'home', 'social'
     ];
 
-    console.log('⏰ Time info generated:', { currentDay, hour, contextTags });
+    // Enhanced evening context
+    let eveningPhase = 'day';
+    if (isEvening) {
+      if (hour < 19) {
+        baseContextTags.push('early_evening', 'social', 'dining', 'transition_time');
+        eveningPhase = 'early evening';
+      } else if (hour < 21) {
+        baseContextTags.push('prime_evening', 'entertainment', 'social_gathering', 'peak_activity');
+        eveningPhase = 'prime evening';
+      } else {
+        baseContextTags.push('late_evening', 'wind_down', 'quiet_activities', 'preparation');
+        eveningPhase = 'late evening';
+      }
+
+      // Day-specific evening preferences
+      const daySpecificEvening: Record<string, string[]> = {
+        'Friday': ['going_out', 'social', 'celebration', 'pub'],
+        'Saturday': ['leisure', 'family_time', 'extended_activities'],
+        'Sunday': ['preparation', 'relaxation', 'early_rest'],
+        'Monday': ['recovery', 'light_activity', 'week_planning'],
+        'Tuesday': ['mid_week_social', 'hobby_time'],
+        'Wednesday': ['mid_week_break', 'personal_time'],
+        'Thursday': ['anticipation', 'social_prep']
+      };
+      
+      if (daySpecificEvening[currentDay]) {
+        baseContextTags.push(...daySpecificEvening[currentDay]);
+      }
+    }
+
+    console.log('⏰ Enhanced time info generated:', { 
+      currentDay, 
+      hour, 
+      isEvening, 
+      eveningPhase,
+      contextTags: baseContextTags.length 
+    });
 
     setTimeInfo({
       currentDay,
       hour,
-      contextTags,
-      serverTime: now
+      contextTags: baseContextTags,
+      serverTime: now,
+      isEvening,
+      eveningPhase
     });
   }, [hasMounted]);
 
-  // ✅ FIXED: Weather fetching with comprehensive error handling
+  // Enhanced weather fetching with comprehensive error handling
   useEffect(() => {
     if (!hasMounted || !homeLocation?.lat || !homeLocation?.lon) {
       console.log('⏭️ Skipping weather fetch - conditions not met:', {
@@ -134,7 +173,7 @@ export default function Home() {
     }
 
     let isMounted = true;
-    console.log('🌤️ Starting weather fetch...');
+    console.log('🌤️ Starting enhanced weather fetch with marine integration...');
 
     async function fetchForecasts() {
       try {
@@ -142,7 +181,6 @@ export default function Home() {
         setLoading(true);
         setError(null);
 
-        // OpenWeather API
         const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
         console.log('🔑 OpenWeather key available:', !!openWeatherKey);
         
@@ -157,7 +195,7 @@ export default function Home() {
         const owData = await owRes.json();
         
         if (!owData?.list) {
-          console.error('❌ Invalid OpenWeather ', owData);
+          console.error('❌ Invalid OpenWeather response:', owData);
           throw new Error('Invalid weather data');
         }
 
@@ -175,7 +213,7 @@ export default function Home() {
 
         const forecast = Object.entries(grouped).slice(0, 5).map(([date, entries]: [string, any[]]) => {
           const noon = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
-          console.log(`📅 Processing day ${date}, entries: ${entries.length}, noon `, !!noon);
+          console.log(`📅 Processing day ${date}, entries: ${entries.length}, noon  ${!!noon}`);
           
           return {
             date,
@@ -194,7 +232,6 @@ export default function Home() {
             rainDetails: entries
               .filter(e => e.rain?.['3h'])
               .map(e => `${new Date(e.dt_txt).getHours()}:00 ${Math.round(e.rain['3h'])}mm`),
-            // Marine fields (to be merged)
             waveHeight: undefined,
             waterTemperature: undefined,
             swellHeight: undefined,
@@ -204,7 +241,7 @@ export default function Home() {
 
         console.log('✅ Land forecast processed:', forecast.length, 'days');
 
-        // Marine data (optional, will fail gracefully)
+        // Enhanced marine data integration with graceful degradation
         const marineLat = coastalLocation?.lat ?? lat;
         const marineLon = coastalLocation?.lon ?? lon;
         const now = Math.floor(Date.now() / 1000);
@@ -219,19 +256,19 @@ export default function Home() {
           );
           const sgData = await sgRes.json();
           
-          console.log('🌊 Marine API response:', sgRes.status, sgData);
+          console.log('🌊 Marine API response:', sgRes.status);
           
           if (Array.isArray(sgData.hours)) {
             marineHours = sgData.hours;
             console.log('✅ Marine data received:', marineHours.length, 'hours');
           } else {
-            console.warn('⚠️ Unexpected marine data format:', sgData);
+            console.warn('⚠️ Unexpected marine data format, continuing without marine conditions');
           }
         } catch (marineErr) {
-          console.warn('⚠️ Marine fetch failed (expected if quota exceeded):', marineErr);
+          console.warn('⚠️ Marine fetch failed (expected if quota exceeded), continuing with land-only forecast');
         }
 
-        // Merge marine data
+        // Merge marine data with enhanced logging
         forecast.forEach(day => {
           const match = marineHours.find((h: any) => h.time.startsWith(day.date));
           if (match) {
@@ -239,24 +276,27 @@ export default function Home() {
             day.waterTemperature = match.waterTemperature?.sg;
             day.swellHeight = match.swellHeight?.sg;
             day.swellPeriod = match.swellPeriod?.sg;
-            console.log(`🌊 Marine data merged for ${day.date}`);
+            console.log(`🌊 Marine data merged for ${day.date}:`, {
+              wave: day.waveHeight,
+              water: day.waterTemperature
+            });
           }
         });
 
         if (isMounted) {
-          console.log('✅ Setting forecast ', forecast);
+          console.log('✅ Setting enhanced forecast ', forecast.length, 'days');
           setForecastByDay(forecast);
         }
 
       } catch (err: any) {
-        console.error('❌ Weather fetch error:', err);
+        console.error('❌ Enhanced weather fetch error:', err);
         if (isMounted) {
           setForecastByDay([]);
           setError(err.message || 'Failed to load forecast data.');
         }
       } finally {
         if (isMounted) {
-          console.log('🏁 Weather fetch complete');
+          console.log('🏁 Enhanced weather fetch complete');
           setLoading(false);
         }
       }
@@ -264,25 +304,25 @@ export default function Home() {
 
     fetchForecasts();
     return () => {
-      console.log('🧹 Cleaning up weather fetch');
+      console.log('🧹 Cleaning up enhanced weather fetch');
       isMounted = false;
     };
   }, [homeLocation, coastalLocation, hasMounted]);
 
-  // Location save handler
+  // Enhanced location save handler
   const handleSaveLocation = async () => {
-    console.log('💾 Saving location:', inputLocation);
+    console.log('💾 Saving location with enhanced validation:', inputLocation);
     try {
       setError(null);
       const res = await fetch(
         `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(inputLocation)}&limit=1&appid=${process.env.NEXT_PUBLIC_OPENWEATHER_KEY}`
       );
       const data = await res.json();
-      console.log('🗺️ Geocoding response:', data);
+      console.log('🗺️ Enhanced geocoding response:', data.length, 'results');
       
       if (Array.isArray(data) && data.length > 0) {
         const { lat, lon } = data[0];
-        console.log('✅ Location found:', { name: inputLocation, lat, lon });
+        console.log('✅ Location found and validated:', { name: inputLocation, lat, lon });
         setPreferences({ 
           ...preferences, 
           locations: [
@@ -291,18 +331,18 @@ export default function Home() {
           ]
         });
       } else {
-        console.error('❌ Location not found');
+        console.error('❌ Location not found in geocoding service');
         setError('Could not find that location. Please try another.');
       }
     } catch (err) {
-      console.error('❌ Location save error:', err);
+      console.error('❌ Enhanced location save error:', err);
       setError('Failed to fetch location. Please try again.');
     }
   };
 
-  // ✅ FIXED: Prevent hydration mismatch by ensuring consistent initial render
+  // Hydration-safe pre-render state
   if (!hasMounted) {
-    console.log('⏳ Pre-hydration render - showing minimal content');
+    console.log('⏳ Pre-hydration render - showing loading state');
     return (
       <section>
         <header className="homepage-banner">
@@ -321,11 +361,11 @@ export default function Home() {
     );
   }
 
-  console.log('🎨 Rendering main content - hydration complete');
+  console.log('🎨 Rendering enhanced main content - full scoring system active');
 
   return (
     <section>
-      {/* HEADER */}
+      {/* ENHANCED HEADER */}
       <header className="homepage-banner">
         <div className="homepage-banner__container">
           <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
@@ -337,7 +377,7 @@ export default function Home() {
       </header>
 
       <div>
-        {/* LOCATION BANNER */}
+        {/* ENHANCED LOCATION BANNER */}
         <div className="location-banner">
           <div className="location-banner__container">
             <label htmlFor="location-input" className="location-banner__label">📍 Your location:</label>
@@ -358,69 +398,119 @@ export default function Home() {
           {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
         </div>
 
-        {/* ONBOARDING */}
+        {/* ENHANCED EVENING MODE INDICATOR */}
+        {timeInfo && timeInfo.isEvening && (
+          <div className="evening-mode-banner" style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            margin: '0 20px 20px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            animation: 'fadeIn 0.3s ease-in'
+          }}>
+            <div style={{ fontSize: '1.5rem', marginRight: '12px' }}>🌙</div>
+            <div>
+              <strong>Evening Mode Active</strong>
+              <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                Recommendations optimized for {timeInfo.eveningPhase} activities
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ENHANCED ONBOARDING */}
         {isFirstTimeUser && (
-          <aside className="onboarding-message">
-            👋 Welcome! <a href="/interests">Choose your favourite activities</a> to get personalized suggestions.
+          <aside className="onboarding-message" style={{
+            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+            color: '#92400e',
+            padding: '16px 24px',
+            borderRadius: '8px',
+            margin: '0 20px 20px 20px',
+            border: '1px solid #f59e0b'
+          }}>
+            👋 <strong>Welcome to WotNow!</strong> <a href="/interests" style={{ color: '#92400e', fontWeight: 'bold' }}>Choose your favourite activities</a> to get AI-powered, weather-aware suggestions.
           </aside>
         )}
 
-        {/* MAIN CONTENT */}
+        {/* ENHANCED MAIN CONTENT WITH FULL SCORING SYSTEM */}
         <div>
           {needsLocation ? (
-            <div style={{ padding: '2rem' }}>Please enter a location above to view tailored suggestions.</div>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>📍</div>
+              <div>Please enter a location above to view your personalized, weather-aware activity suggestions.</div>
+            </div>
           ) : loading ? (
-            <div style={{ padding: '2rem' }}>⏳ Loading forecast…</div>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>⏳</div>
+              <div>Loading your smart recommendations...</div>
+            </div>
           ) : error ? (
-            <div style={{ padding: '2rem', color: 'red' }}>⚠️ {error}</div>
+            <div style={{ padding: '2rem', color: 'red', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>⚠️</div>
+              <div>{error}</div>
+            </div>
           ) : (
             <div className="main-grid" role="list">
               {forecastByDay.map((day, idx) => {
-                console.log(`🎯 Processing suggestions for day ${idx} (${day.date})`);
+                console.log(`🎯 Processing enhanced suggestions for day ${idx} (${day.date})`);
                 
-                const suggestions = getSuggestionsByDay({
-                  forecast: [{
-                    date: day.date,
-                    weather: {
-                      temperature: day.temperature,
-                      precipitation: day.rain,
-                      windSpeed: day.wind_speed,
-                      clouds: day.clouds,
-                      humidity: day.humidity,
-                      visibility: day.visibility,
-                      waterTemperature: day.waterTemperature,
-                      waveHeight: day.waveHeight,
-                      swellHeight: day.swellHeight,
-                      swellPeriod: day.swellPeriod
-                    }
-                  }],
-                  interests,
-                  activities: activityTypes
-                })[0]?.suggestions ?? [];
+                // ENHANCED: Pass time information for evening intelligence
+const userActivities = activityTypes.filter(a => interests.includes(a.id));
 
-                console.log(`🎯 Day ${idx} suggestions:`, {
-                  total: suggestions.length,
-                  evaluations: suggestions.map(s => s.evaluation)
+const suggestionsData = getSuggestionsByDay({
+  forecast: [{
+    date: day.date,
+    weather: {
+      temperature: day.temperature,
+      precipitation: day.rain,
+      windSpeed: day.wind_speed,
+      clouds: day.clouds,
+      humidity: day.humidity,
+      visibility: day.visibility,
+      waterTemperature: day.waterTemperature,
+      waveHeight: day.waveHeight,
+      swellHeight: day.swellHeight,
+      swellPeriod: day.swellPeriod
+    }
+  }],
+  interests,
+  activities: userActivities, // <-- NOW ONLY USER'S ACTIVITIES
+  now: timeInfo?.serverTime || new Date()
+})[0];
+const suggestions = suggestionsData?.suggestions ?? [];
+const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
+                const heroActivity = perfectList[0] || (suggestions.length > 0 ? suggestions[0] : null);
+                const alsoGoodPerfect = perfectList.slice(1, 10); // Up to 9 more perfects
+
+                // ENHANCED: Comprehensive analytics logging
+                console.log(`🎯 Day ${idx} enhanced analytics:`, {
+                  date: day.date,
+                  totalSuggestions: suggestions.length,
+                  heroActivity: heroActivity ? {
+                    id: heroActivity.activityId,
+                    score: heroActivity.score,
+                    evaluation: heroActivity.evaluation,
+                    reasoning: heroActivity.reasoning
+                  } : 'none',
+                  scoreDistribution: {
+                    perfect: suggestions.filter(s => s.score >= 80).length,
+                    good: suggestions.filter(s => s.score >= 60 && s.score < 80).length,
+                    acceptable: suggestions.filter(s => s.score >= 30 && s.score < 60).length,
+                    indoor: suggestions.filter(s => s.evaluation === 'indoor').length
+                  },
+                  eveningMode: timeInfo ? timeInfo.isEvening : false,
+                  averageScore: suggestions.length > 0 ? Math.round(suggestions.reduce((sum, s) => sum + (s.score || 0), 0) / suggestions.length) : 0
                 });
 
-                const perfect = suggestions.filter(s => s.evaluation === 'perfect');
-                const good = suggestions.filter(s => ['good', 'acceptable'].includes(s.evaluation));
-                const indoor = suggestions.filter(s => ['indoor', 'indoorAlternative'].includes(s.evaluation));
-                const showOnlyIndoor = perfect.length === 0 && good.length === 0;
+                // ENHANCED: Smart hero selection with fallback
+                const displayHero = heroActivity || (suggestions.length > 0 ? 
+                  suggestions.sort((a, b) => (b.score || 0) - (a.score || 0))[0] : null);
 
-                console.log(`🎯 Day ${idx} categorized:`, {
-                  perfect: perfect.length,
-                  good: good.length,
-                  indoor: indoor.length,
-                  showOnlyIndoor
-                });
-
-                const mainActivityId =
-                  perfect.length > 0 ? perfect[0].activityId
-                  : good.length > 0 ? good[0].activityId
-                  : indoor.length > 0 ? indoor[0].activityId
-                  : 'indoorsy';
-
+                // ENHANCED: Dynamic background based on hero activity
+                const mainActivityId = displayHero?.activityId || 'indoorsy';
                 const cardBg = `url(${getActivityBg(mainActivityId)})`;
 
                 return (
@@ -436,118 +526,135 @@ export default function Home() {
                       color: '#fff',
                       overflow: 'hidden',
                       position: 'relative',
-                      minHeight: 170,
+                      minHeight: 180,
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}
                     role="listitem"
                     tabIndex={0}
                     aria-label={`Suggestions for ${getDayLabel(day.date, idx, timeInfo?.serverTime)}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     <div style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'rgba(0,0,0,0.32)',
+                      background: 'rgba(0,0,0,0.35)',
                       borderRadius: 22,
                       zIndex: 1
                     }} />
-                    <div style={{ position: 'relative', zIndex: 2 }}>
+                    <div style={{ position: 'relative', zIndex: 2, padding: '20px' }}>
 
-                      {/* CARD HEADER */}
-                      <div className="card-header">
-                        <span className="day-name">
+                      {/* ENHANCED CARD HEADER */}
+                      <div className="card-header" style={{ marginBottom: '12px' }}>
+                        <span className="day-name" style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
                           {getDayLabel(day.date, idx, timeInfo?.serverTime)}
                         </span>
                         
-                        <div className="card-condition">
+                        <div className="card-condition" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <img
                             src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
                             alt={day.description}
                             className="weather-icon"
+                            style={{ width: '32px', height: '32px' }}
                           />
-                          <span>
+                          <span style={{ fontSize: '0.9rem' }}>
                             {day.description.charAt(0).toUpperCase() + day.description.slice(1)}
                           </span>
                         </div>
                         
-                        <span className="temperature">
+                        <span className="temperature" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
                           {day.temperature}°C
                         </span>
                       </div>
 
-                      <div className="weather-stats">
+                      <div className="weather-stats" style={{ marginBottom: '16px', fontSize: '0.85rem', opacity: 0.9 }}>
                         <span>H: {day.tempMax}°</span>
+                        <span style={{ margin: '0 8px' }}>•</span>
                         <span>L: {day.tempMin}°</span>
                       </div>
 
-                      {/* PERFECT SUGGESTIONS */}
-                      {perfect.length > 0 && (() => {
-                        const best = perfect[0];
-                        const activity = activityTypes.find(a => a.id === best.activityId);
-                        console.log(`🌟 Perfect activity for day ${idx}:`, best.activityId);
+                      {/* ENHANCED HERO ACTIVITY */}
+                      {heroActivity && (() => {
+                        const activity = activityTypes.find(a => a.id === heroActivity.activityId);
+                        const scoreInfo = getScoreCategory(heroActivity.score || 0);
                         return (
-                          <div className="perfect-activity" style={{ marginTop: 18 }}>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              <span style={{ fontSize: '2.3rem', marginRight: 15 }}>
-                                {getActivityEmoji(best.activityId)}
+                          <div className="hero-activity" style={{ 
+                            marginBottom: '18px',
+                            padding: '12px',
+                            background: 'rgba(255,255,255,0.1)',
+                            borderRadius: '8px',
+                            backdropFilter: 'blur(10px)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '2.2rem', marginRight: '12px' }}>
+                                {getActivityEmoji(heroActivity.activityId)}
                               </span>
-                              <strong style={{ fontSize: '1.25rem' }}>
-                                {activity?.name || best.activityId} 💯
-                                {best.score != null ? ` (${Math.round(best.score)})` : ''}
-                              </strong>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                  <strong style={{ fontSize: '1.2rem' }}>
+                                    {activity?.name || heroActivity.activityId}
+                                  </strong>
+                                  <span style={{ 
+                                    fontSize: '0.8rem',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    background: scoreInfo.color,
+                                    color: 'white',
+                                    fontWeight: 'bold'
+                                  }}>
+                                    {scoreInfo.emoji} {heroActivity.score || 0}%
+                                  </span>
+                                </div>
+                                {heroActivity.reasoning && (
+                                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontStyle: 'italic' }}>
+                                    {heroActivity.reasoning}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
                       })()}
 
-                      {/* MARINE CONDITIONS */}
-                      {hasMarineInterest(interests) &&
-                        [day.waveHeight, day.waterTemperature, day.swellHeight, day.swellPeriod, day.wind_speed].some(v => typeof v === 'number') && (
-                          <div className="marine-block">
-                            <div className="marine-header">
-                              Conditions for{' '}
-                              {coastalLocation ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setShowCoastDialog(true)}
-                                  className="marine-location-button"
-                                >
-                                  {coastalLocation.name}
-                                </button>
-                              ) : (
-                                'your coastal location'
-                              )}
-                              :
-                            </div>
-
-                            <ul className="marine-values">
-                              {typeof day.waveHeight === 'number' && (
-                                <li>🌊 Wave: {day.waveHeight}m</li>
-                              )}
-                              {typeof day.wind_speed === 'number' && (
-                                <li>💨 Wind: {day.wind_speed} km/h</li>
-                              )}
-                              {typeof day.waterTemperature === 'number' && (
-                                <li>🌡️ Water: {day.waterTemperature}°C</li>
-                              )}
-                              {typeof day.swellHeight === 'number' && (
-                                <li>🌊📈 Swell: {day.swellHeight}m</li>
-                              )}
-                              {typeof day.swellPeriod === 'number' && (
-                                <li>⏱️ Period: {day.swellPeriod}s</li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-
-                      {/* GOOD SUGGESTIONS */}
-                      {!showOnlyIndoor && good.length > 0 && (
-                        <div className="also-good-section" style={{ marginTop: 14 }}>
-                          <strong>It's a good day for</strong>
-                          <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                            {good.map(g => {
-                              const a = activityTypes.find(x => x.id === g.activityId);
+                      {/* ALSO GOOD: Up to 9 more perfects */}
+                      {alsoGoodPerfect.length > 0 && (
+                        <div className="also-good-section" style={{ marginBottom: '14px' }}>
+                          <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
+                            Also perfect today
+                          </strong>
+                          <ul style={{ 
+                            listStyle: 'none', 
+                            paddingLeft: 0, 
+                            margin: 0,
+                            fontSize: '0.85rem'
+                          }}>
+                            {alsoGoodPerfect.map(suggestion => {
+                              const activity = activityTypes.find(x => x.id === suggestion.activityId);
                               return (
-                                <li key={g.activityId}>
-                                  {getActivityEmoji(g.activityId)} {a?.name || g.activityId}
+                                <li key={suggestion.activityId} style={{ 
+                                  display: 'flex', 
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '4px'
+                                }}>
+                                  <span>
+                                    {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
+                                  </span>
+                                  <span style={{ 
+                                    fontSize: '0.7rem', 
+                                    opacity: 0.8,
+                                    background: 'rgba(255,255,255,0.2)',
+                                    padding: '1px 4px',
+                                    borderRadius: '3px'
+                                  }}>
+                                    {suggestion.score}%
+                                  </span>
                                 </li>
                               );
                             })}
@@ -555,47 +662,182 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* ✅ FIXED: INDOOR SUGGESTIONS */}
-                      {(showOnlyIndoor || indoor.length > 0) && (
-                        <>
-                          <div className="indoor-section" style={{ marginTop: 14 }}>
-                            <strong>Indoor ideas:</strong>
-                            <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0 }}>
-                              {/* ✅ FIXED: Use correct suggestions array, not day.suggestions */}
-                              {indoor
-                                .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                                .map(s => {
-                                  const a = activityTypes.find(x => x.id === s.activityId);
-                                  console.log(`🏠 Indoor activity for day ${idx}:`, s.activityId, s.evaluation);
-                                  return (
-                                    <li key={s.activityId}>
-                                      {getActivityEmoji(s.activityId)} {a?.name || s.activityId}
-                                    </li>
-                                  );
-                                })}
+                      {/* ENHANCED MARINE CONDITIONS */}
+                      {hasMarineInterest(interests) &&
+                        [day.waveHeight, day.waterTemperature, day.swellHeight, day.swellPeriod, day.wind_speed].some(v => typeof v === 'number') && (
+                          <div className="marine-block" style={{
+                            marginBottom: '16px',
+                            padding: '10px',
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            borderRadius: '6px',
+                            fontSize: '0.85rem'
+                          }}>
+                            <div className="marine-header" style={{ marginBottom: '6px', fontWeight: 'bold' }}>
+                              🌊 Marine conditions for{' '}
+                              {coastalLocation ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCoastDialog(true)}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'inherit',
+                                    textDecoration: 'underline',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  {coastalLocation.name}
+                                </button>
+                              ) : (
+                                'your coastal location'
+                              )}
+                            </div>
+
+                            <ul className="marine-values" style={{ 
+                              listStyle: 'none', 
+                              padding: 0, 
+                              margin: 0,
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '8px'
+                            }}>
+                              {typeof day.waveHeight === 'number' && (
+                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  🌊 {day.waveHeight}m
+                                </li>
+                              )}
+                              {typeof day.wind_speed === 'number' && (
+                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  💨 {day.wind_speed}km/h
+                                </li>
+                              )}
+                              {typeof day.waterTemperature === 'number' && (
+                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+                                  🌡️ {day.waterTemperature}°C
+                                </li>
+                              
+                              )}
                             </ul>
                           </div>
+                        )}
 
-                          <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
-                            <a
-                              href="/interests"
-                              style={{
-                                display: "inline-block",
-                                padding: "10px 20px",
-                                borderRadius: "8px",
-                                background: "rgba(59, 130, 246, 0.1)",
-                                color: "#fff",
-                                fontWeight: 600,
-                                textDecoration: "none",
-                                fontSize: "1rem",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.08)"
-                              }}
-                            >
-                              ➕ Add More Interests
-                            </a>
-                          </div>
-                        </>
+                      {/* ENHANCED GOOD SUGGESTIONS WITH SCORES */}
+                      {suggestions.filter(s => s.score >= 60 && s.score < 80).length > 0 && (
+                        <div className="also-good-section" style={{ marginBottom: '14px' }}>
+                          <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
+                            Also good today
+                          </strong>
+                          <ul style={{ 
+                            listStyle: 'none', 
+                            paddingLeft: 0, 
+                            margin: 0,
+                            fontSize: '0.85rem'
+                          }}>
+                            {suggestions
+                              .filter(s => s.score >= 60 && s.score < 80)
+                              .sort((a, b) => b.score - a.score)
+                              .slice(0, 4)
+                              .map(suggestion => {
+                                const activity = activityTypes.find(x => x.id === suggestion.activityId);
+                                return (
+                                  <li key={suggestion.activityId} style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '4px'
+                                  }}>
+                                    <span>
+                                      {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
+                                    </span>
+                                    <span style={{ 
+                                      fontSize: '0.7rem', 
+                                      opacity: 0.8,
+                                      background: 'rgba(255,255,255,0.2)',
+                                      padding: '1px 4px',
+                                      borderRadius: '3px'
+                                    }}>
+                                      {suggestion.score}%
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                          </ul>
+                        </div>
                       )}
+
+{/* ENHANCED INDOOR SUGGESTIONS WITH EVENING PRIORITY */}
+
+{(() => {
+  const isToday = idx === 0;
+  const isEvening = timeInfo?.isEvening && isToday;
+
+  // Only show "Stay Inside" if NOT evening for today
+  if (!isEvening) {
+    // Find the top 5 indoor activities by score, deduped
+    const indoorList = suggestions
+      .filter(s => {
+        const activity = activityTypes.find(a => a.id === s.activityId);
+        return activity && activity.weatherSensitive === false;
+      })
+      .sort((a, b) => b.score! - a.score!)
+      .filter((s, i, arr) => arr.findIndex(x => x.activityId === s.activityId) === i)
+      .slice(0, 5);
+
+    if (!indoorList.length) return null;
+
+    return (
+      <div className="indoor-section" style={{ marginTop: 12 }}>
+        <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
+          👹 Stay Inside
+        </strong>
+        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0, fontSize: '0.95rem' }}>
+          {indoorList.map(s => {
+            const activity = activityTypes.find(a => a.id === s.activityId);
+            return (
+              <li key={s.activityId} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ marginRight: 8 }}>{getActivityEmoji(s.activityId)}</span>
+                <span style={{ flex: 1 }}>{activity?.name}</span>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: 8 }}>{s.score}%</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+  return null;
+})()}
+
+
+
+                      {/* ENHANCED ADD INTERESTS LINK */}
+                      <div style={{ marginTop: 20, display: "flex", justifyContent: "center" }}>
+                        <a
+                          href="/interests"
+                          style={{
+                            display: "inline-block",
+                            padding: "8px 16px",
+                            borderRadius: "6px",
+                            background: "rgba(59, 130, 246, 0.8)",
+                            color: "#fff",
+                            fontWeight: 600,
+                            textDecoration: "none",
+                            fontSize: "0.9rem",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            transition: "all 0.2s ease"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 1)";
+                            e.currentTarget.style.transform = "translateY(-1px)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(59, 130, 246, 0.8)";
+                            e.currentTarget.style.transform = "translateY(0)";
+                          }}
+                        >
+                          ➕ Add More Interests
+                        </a>
+                      </div>
 
                     </div>
                   </article>
@@ -605,13 +847,13 @@ export default function Home() {
           )}
         </div>
 
-        {/* COASTAL DIALOG */}
+        {/* ENHANCED COASTAL DIALOG */}
         {showCoastDialog && (
           <CoastalLocationDialog
             open={showCoastDialog}
             onClose={() => setShowCoastDialog(false)}
             onSave={(loc) => {
-              console.log('🏖️ Saving coastal location:', loc);
+              console.log('🏖️ Saving coastal location with enhanced validation:', loc);
               setPreferences((prev) => ({
                 ...prev,
                 locations: [
