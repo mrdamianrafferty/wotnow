@@ -2,9 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/weather": "pages/weather.js",
-  "/interests": "pages/interests.js",
   "/": "pages/index.js",
   "/api/marine": "pages/api/marine.js",
-  "/api/tides": "pages/api/tides.js"
+  "/interests": "pages/interests.js",
+  "/weather": "pages/weather.js"
 }

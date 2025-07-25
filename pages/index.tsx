@@ -784,7 +784,7 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
     return (
 <div className="indoor-section" style={{ marginTop: 12 }}>
   <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
-    👹 Stay Inside
+    👹 Staying inside?
   </strong>
   <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0, fontSize: '0.85rem' }}>
     {indoorList.map(s => {
