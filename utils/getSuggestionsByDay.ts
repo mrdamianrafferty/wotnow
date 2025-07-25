@@ -145,10 +145,18 @@ export function getSuggestionsByDay({
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 
+    // Always show top 5 indoor activities, deduped
+    const top5Indoors = suggestions
+      .filter(s => !s.weatherSensitive)
+      .sort((a, b) => b.score - a.score)
+      .filter((s, i, arr) => arr.findIndex(x => x.activityId === s.activityId) === i)
+      .slice(0, 5);
+
     return {
       date: day.date,
       suggestions: top10.map(({ weatherSensitive, ...rest }) => rest),
-      heroActivity: selectHeroActivity(top10, isEvening)
+      heroActivity: selectHeroActivity(top10, isEvening),
+      stayInside: top5Indoors.map(({ weatherSensitive, ...rest }) => rest), // <-- add this
     };
     }); // <-- This closes the forecast.map
 } // <-- This closes the getSuggestionsByDay function

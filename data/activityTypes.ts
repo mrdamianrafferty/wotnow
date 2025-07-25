@@ -794,6 +794,39 @@ export const activityTypes: ActivityType[] = [
     indoorAlternative: 'Grill indoors or host a casual dinner party with BBQ flavours'
 },
 {
+    id: 'beach',
+    name: 'Go To The Beach',
+    category: 'Outdoor Leisure',
+    secondaryCategory: 'Social Activities',
+    weatherSensitive: true,
+    tags: ['leisure', 'social', 'outdoors', 'food', 'Saturday', 'Sunday', 'holiday'],
+    poorConditions: [
+      'temperature<15',                // too cold for comfort
+      'temperature>39',              // oppressive heat
+      'windSpeed>18',                // hard to keep grill lit & unpleasant
+      'cloudCover>60',               // too cloudy for sunbathing
+      'precipitation>1',            // heavy rain makes it miserable
+      'visibility<2'                 // foggy, damp
+      
+    ],
+    goodConditions: [
+      'temperature=16..30',
+      'windSpeed<12',
+      'cloudCover=10-40',
+      'humidity<85',
+      'visibility>5'
+    ],
+    perfectConditions: [
+      'temperature=20..26',
+      'windSpeed<10',
+      'cloudCover=0-10',
+      'humidity=40-65',
+      'visibility>10'
+    ],
+    seasonalMonths: [5, 6, 7, 8, 9],
+    indoorAlternative: 'Get that Baywatch box set out and watch some classic beach scenes or plan your next beach trip'
+},
+{
     id: 'geocaching',
     name: 'Geocaching',
     category: 'Outdoor Activities',

@@ -48,6 +48,10 @@ function getScoreCategory(score: number): { emoji: string; label: string; color:
   return { emoji: '🏠', label: 'Indoor', color: '#8b5cf6' };
 }
 
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export default function Home() {
   console.log('🏠 Enhanced Home component rendering with activity scoring system...');
   
@@ -551,76 +555,71 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                     <div style={{ position: 'relative', zIndex: 2, padding: '20px' }}>
 
                       {/* ENHANCED CARD HEADER */}
-                      <div className="card-header" style={{ marginBottom: '12px' }}>
-                        <span className="day-name" style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
-                          {getDayLabel(day.date, idx, timeInfo?.serverTime)}
-                        </span>
-                        
-                        <div className="card-condition" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <img
-                            src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
-                            alt={day.description}
-                            className="weather-icon"
-                            style={{ width: '32px', height: '32px' }}
-                          />
-                          <span style={{ fontSize: '0.9rem' }}>
-                            {day.description.charAt(0).toUpperCase() + day.description.slice(1)}
-                          </span>
-                        </div>
-                        
-                        <span className="temperature" style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
-                          {day.temperature}°C
-                        </span>
-                      </div>
+                      <div className="card-header" style={{ 
+  display: 'flex', 
+  alignItems: 'center', 
+  justifyContent: 'space-between', 
+  marginBottom: '12px' 
+}}>
+  <span className="day-name" style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+    {getDayLabel(day.date, idx, timeInfo?.serverTime)}
+  </span>
+  <div className="card-condition" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <img
+      src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
+      alt={day.description}
+      className="weather-icon"
+      style={{ width: '32px', height: '32px' }}
+    />
+  </div>
+</div>
 
-                      <div className="weather-stats" style={{ marginBottom: '16px', fontSize: '0.85rem', opacity: 0.9 }}>
-                        <span>H: {day.tempMax}°</span>
-                        <span style={{ margin: '0 8px' }}>•</span>
-                        <span>L: {day.tempMin}°</span>
-                      </div>
+{/* HERO BOX NOW SITS DIRECTLY UNDER DAY NAME */}
+{heroActivity && (() => {
+  const activity = activityTypes.find(a => a.id === heroActivity.activityId);
+  const scoreInfo = getScoreCategory(heroActivity.score || 0);
+  return (
+    <div className="hero-activity" style={{ 
+      marginBottom: '18px',
+      padding: '12px',
+      background: 'rgba(255,255,255,0.05)',
+      borderRadius: '8px',
+      backdropFilter: 'blur(10px)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+        <span style={{ fontSize: '2.2rem', marginRight: '12px' }}>
+          {getActivityEmoji(heroActivity.activityId)}
+        </span>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <strong style={{ fontSize: '1.2rem' }}>
+              {activity?.name || heroActivity.activityId}
+            </strong>
+            <span style={{ 
+              fontSize: '0.8rem',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: scoreInfo.color,
+              color: 'white',
+              fontWeight: 'bold'
+            }}>
+              {scoreInfo.emoji} 
+            </span>
+          </div>
+          {heroActivity.reasoning && (
+            <div style={{ fontSize: '0.75rem', opacity: 0.8, fontStyle: 'italic' }}>
+              {heroActivity.reasoning}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+})()}
+
 
                       {/* ENHANCED HERO ACTIVITY */}
-                      {heroActivity && (() => {
-                        const activity = activityTypes.find(a => a.id === heroActivity.activityId);
-                        const scoreInfo = getScoreCategory(heroActivity.score || 0);
-                        return (
-                          <div className="hero-activity" style={{ 
-                            marginBottom: '18px',
-                            padding: '12px',
-                            background: 'rgba(255,255,255,0.1)',
-                            borderRadius: '8px',
-                            backdropFilter: 'blur(10px)'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '2.2rem', marginRight: '12px' }}>
-                                {getActivityEmoji(heroActivity.activityId)}
-                              </span>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                                  <strong style={{ fontSize: '1.2rem' }}>
-                                    {activity?.name || heroActivity.activityId}
-                                  </strong>
-                                  <span style={{ 
-                                    fontSize: '0.8rem',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    background: scoreInfo.color,
-                                    color: 'white',
-                                    fontWeight: 'bold'
-                                  }}>
-                                    {scoreInfo.emoji} {heroActivity.score || 0}%
-                                  </span>
-                                </div>
-                                {heroActivity.reasoning && (
-                                  <div style={{ fontSize: '0.75rem', opacity: 0.8, fontStyle: 'italic' }}>
-                                    {heroActivity.reasoning}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      
 
                       {/* ALSO GOOD: Up to 9 more perfects */}
                       {alsoGoodPerfect.length > 0 && (
@@ -672,26 +671,31 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                             borderRadius: '6px',
                             fontSize: '0.85rem'
                           }}>
+
+<p style={{ fontSize: '0.85rem', margin: '8px 0 16px 0', opacity: 0.92 }}>
+  {`${capitalize(day.description)} in ${homeLocation?.name?.split(',')[0] || 'your area'} with a high of ${day.tempMax}°`}
+</p>
+
                             <div className="marine-header" style={{ marginBottom: '6px', fontWeight: 'bold' }}>
-                              🌊 Marine conditions for{' '}
-                              {coastalLocation ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setShowCoastDialog(true)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'inherit',
-                                    textDecoration: 'underline',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  {coastalLocation.name}
-                                </button>
-                              ) : (
-                                'your coastal location'
-                              )}
-                            </div>
+  🌊{' '}
+  {coastalLocation ? (
+    <button
+      type="button"
+      onClick={() => setShowCoastDialog(true)}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: 'inherit',
+        textDecoration: 'underline',
+        cursor: 'pointer'
+      }}
+    >
+      {coastalLocation.name.split(',')[0]}
+    </button>
+  ) : (
+    'your coastal location'
+  )}
+</div>
 
                             <ul className="marine-values" style={{ 
                               listStyle: 'none', 
@@ -711,12 +715,11 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                                   💨 {day.wind_speed}km/h
                                 </li>
                               )}
-                              {typeof day.waterTemperature === 'number' && (
-                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-                                  🌡️ {day.waterTemperature}°C
-                                </li>
-                              
-                              )}
+{typeof day.waterTemperature === 'number' && (
+  <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+    🌡️ {day.waterTemperature.toFixed(1)}°
+  </li>
+)}
                             </ul>
                           </div>
                         )}
@@ -774,35 +777,37 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
   // Only show "Stay Inside" if NOT evening for today
   if (!isEvening) {
     // Find the top 5 indoor activities by score, deduped
-    const indoorList = suggestions
-      .filter(s => {
-        const activity = activityTypes.find(a => a.id === s.activityId);
-        return activity && activity.weatherSensitive === false;
-      })
-      .sort((a, b) => b.score! - a.score!)
-      .filter((s, i, arr) => arr.findIndex(x => x.activityId === s.activityId) === i)
-      .slice(0, 5);
+    const indoorList = suggestionsData?.stayInside ?? [];
 
     if (!indoorList.length) return null;
 
     return (
-      <div className="indoor-section" style={{ marginTop: 12 }}>
-        <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
-          👹 Stay Inside
-        </strong>
-        <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0, fontSize: '0.95rem' }}>
-          {indoorList.map(s => {
-            const activity = activityTypes.find(a => a.id === s.activityId);
-            return (
-              <li key={s.activityId} style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{ marginRight: 8 }}>{getActivityEmoji(s.activityId)}</span>
-                <span style={{ flex: 1 }}>{activity?.name}</span>
-                <span style={{ fontSize: '0.8rem', opacity: 0.8, marginLeft: 8 }}>{s.score}%</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+<div className="indoor-section" style={{ marginTop: 12 }}>
+  <strong style={{ fontSize: '0.95rem', marginBottom: '6px', display: 'block' }}>
+    👹 Stay Inside
+  </strong>
+  <ul style={{ listStyle: 'none', paddingLeft: 0, margin: 0, fontSize: '0.85rem' }}>
+    {indoorList.map(s => {
+      const activity = activityTypes.find(a => a.id === s.activityId);
+      return (
+        <li
+          key={s.activityId}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '4px'
+          }}
+        >
+          <span>
+            {getActivityEmoji(s.activityId)} {activity?.name}
+          </span>
+
+        </li>
+      );
+    })}
+  </ul>
+</div>
     );
   }
   return null;

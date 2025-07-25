@@ -154,14 +154,9 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
               onClick={() => toggleDay(date)}
               style={{ cursor: 'pointer', background: '#f0f0f0' }}
             >
-              <td colSpan={8}>
-                <strong>
-                  {getDayName(date)}
-                  {getDayName(date) === 'Today' && sunrise && sunset
-                    ? ` (Sunrise at ${sunrise}, Sunset at ${sunset})`
-                    : ''}
-                </strong>
-              </td>
+<td colSpan={10}>
+  <strong>{getDayName(date)}</strong>
+</td>
             </tr>
             {expandedDays[date] &&
               daySlots.map((slot) => (
@@ -194,10 +189,12 @@ const StormglassMarineWeather = ({
   location,
   start,
   end,
+  tides = {},
 }: {
   location: any;
   start: string;
   end: string;
+  tides?: Record<string, { high: string[]; low: string[] }>;
 }) => {
   const [slots, setSlots] = useState<MarineSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -305,7 +302,17 @@ const StormglassMarineWeather = ({
             >
               <td colSpan={10}>
                 <strong>{getDayName(date)}</strong>
-              </td>
+                {tides && tides[date] && (
+                  <span style={{ marginLeft: 12, fontWeight: 400, fontSize: '0.95em', color: '#2563eb' }}>
+                    {tides[date].high.length > 0 && (
+                      <> | <b>High Tide:</b> {tides[date].high.join(', ')} </>
+                    )}
+                    {tides[date].low.length > 0 && (
+                      <> | <b>Low:</b> {tides[date].low.join(', ')} </>
+                    )}
+                  </span>
+                )}
+              </td> 
             </tr>
             {expandedDays[date] &&
               daySlots.map((s, idx) => (
@@ -351,6 +358,31 @@ const WeatherPageBothLocations: React.FC = () => {
     'main' | 'marine' | 'placeholder1' | 'placeholder2' | 'placeholder3' | 'placeholder4'
   >('main');
 
+  const [tides, setTides] = useState<Record<string, { high: string[]; low: string[] }>>({});
+
+  useEffect(() => {
+    if (!coastalLocation) return;
+    const fetchTides = async () => {
+      try {
+        const res = await fetch(`/api/tides?lat=${coastalLocation.lat}&lon=${coastalLocation.lon}`);
+        const data = await res.json();
+        // Group by date and type
+        const grouped: Record<string, { high: string[]; low: string[] }> = {};
+        (data.data || []).forEach((tide: any) => {
+          const date = tide.time.slice(0, 10);
+          if (!grouped[date]) grouped[date] = { high: [], low: [] };
+          grouped[date][tide.type].push(
+            `${new Date(tide.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${tide.height.toFixed(2)}m)`
+          );
+        });
+        setTides(grouped);
+      } catch {
+        setTides({});
+      }
+    };
+    fetchTides();
+  }, [coastalLocation]);
+
   return (
     <div className="container" style={{ padding: '1rem' }}>
       <h1>5-Day Forecast</h1>
@@ -390,7 +422,7 @@ const WeatherPageBothLocations: React.FC = () => {
         <>
           <h2>🌊 {isClient && coastalLocation?.name ? coastalLocation.name : 'Coastal location'}</h2>
           {isClient && coastalLocation ? (
-            <StormglassMarineWeather location={coastalLocation} start={range.start} end={range.end} />
+            <StormglassMarineWeather location={coastalLocation} start={range.start} end={range.end} tides={tides} />
           ) : (
             <p>⚠️ No coastal location selected.</p>
           )}
@@ -444,7 +476,7 @@ const WeatherPageBothLocations: React.FC = () => {
         <tr><td>12–16</td><td>1.3–1.1</td><td>5.6–6.5</td><td>~15–16</td><td>Still OK, wind picking up</td></tr>
         <tr><td>17–18</td><td>1.0–1.1</td><td>7.0–7.3</td><td>~14–12</td><td>Intermediates, small walls</td></tr>
         <tr><td>19–21</td><td>1.2–1.4</td><td>14–15</td><td>~12–10</td><td>Best punch, clean evening glass</td></tr>
-        <tr><td>After dark</td><td>—</td><td>—</td><td>—</td><td>Grab a beer, not your board 🍻</td></tr>
+        <tr><td>After dark</td><td>—</td><td>—</td><td>Grab a beer, not your board 🍻</td></tr>
       </tbody>
     </table>
 
