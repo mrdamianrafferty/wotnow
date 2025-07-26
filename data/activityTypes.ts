@@ -770,14 +770,14 @@ export const activityTypes: ActivityType[] = [
     weatherSensitive: true,
     tags: ['leisure', 'social', 'outdoors', 'food', 'Saturday', 'Sunday', 'holiday'],
     poorConditions: [
-      'temperature<5',                // too cold for comfort
+      'temperature<12',                // too cold for comfort
       'temperature>35',              // oppressive heat
       'windSpeed>25',                // hard to keep grill lit & unpleasant
       'precipitation>10',            // heavy rain makes it miserable
       'visibility<2'                 // foggy, damp
     ],
     goodConditions: [
-      'temperature=12..30',
+      'temperature=14..30',
       'windSpeed<20',
       'cloudCover=0-80',
       'humidity<85',

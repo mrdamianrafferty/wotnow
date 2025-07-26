@@ -453,6 +453,7 @@ const Interests: React.FC = () => {
 	const [subCat, setSubCat] = useState<string | null>(null);
 	const [showCoastDialog, setShowCoastDialog] = useState(false);
 	const [showToast, setShowToast] = useState(false);
+	const [menuOpen, setMenuOpen] = useState(false);
 
 	// Path for breadcrumb
 	const path = [mainCat, subCat].filter(Boolean);
@@ -577,8 +578,52 @@ const Interests: React.FC = () => {
 				maxWidth: 650,
 				margin: "0 auto",
 				padding: "32px 18px",
+				position: "relative"
 			}}
 		>
+			<img
+				src="/burger-menu-svgrepo-com.svg"
+				alt="Open menu"
+				className="burger-menu-icon"
+				style={{ width: 36, height: 36, cursor: 'pointer', display: 'none', position: 'absolute', top: 18, right: 18, zIndex: 1100 }}
+				onClick={() => setMenuOpen(true)}
+			/>
+			{menuOpen && (
+				<nav
+					className="mobile-nav"
+					style={{
+						position: 'fixed',
+						top: 0,
+						left: 0,
+						width: '100vw',
+						height: '100vh',
+						background: 'rgba(0,0,0,0.7)',
+						zIndex: 2000,
+						display: 'flex',
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center'
+					}}
+				>
+					<a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Home</a>
+					<a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Interests</a>
+					<a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Weather</a>
+					<button
+						onClick={() => setMenuOpen(false)}
+						style={{
+							marginTop: 24,
+							background: '#fff',
+							border: 'none',
+							padding: '8px 16px',
+							borderRadius: 6,
+							fontWeight: 600,
+							cursor: 'pointer'
+						}}
+					>
+						Close
+					</button>
+				</nav>
+			)}
 			<h1
 				className="page-title"
 				style={{

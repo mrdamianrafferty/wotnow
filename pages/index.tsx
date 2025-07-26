@@ -9,6 +9,11 @@ import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
+import BurgerIcon from '../public/burger-menu-svgrepo-com.svg';
+import { marineConditionsSummary } from '../utils/marineConditionsSummary';
+
+// Example usage:
+// const summary = marineConditionsSummary(day.waveHeight, day.wind_speed);
 
 // Marine activities that benefit from coastal conditions
 const MARINE_ACTIVITY_IDS = [
@@ -53,6 +58,8 @@ function capitalize(str: string) {
 }
 
 export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false); // <-- Place this at the top
+
   console.log('🏠 Enhanced Home component rendering with activity scoring system...');
   
   const { preferences, setPreferences } = useUserPreferences();
@@ -373,72 +380,21 @@ export default function Home() {
       <header className="homepage-banner">
         <div className="homepage-banner__container">
           <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+          <img
+            src="/burger-menu-svgrepo-com.svg"
+            alt="Open menu"
+            className="burger-menu-icon"
+            style={{ width: 36, height: 36, cursor: 'pointer', display: 'none' }}
+            onClick={() => setMenuOpen(true)}
+          />
           <div className="homepage-banner__text">
             <h1 className="homepage-banner__title">What's good, when?</h1>
-            <p className="homepage-banner__subtitle">Live your best life, every day</p>
+            <p className="homepage-banner__subtitle"></p>
           </div>
         </div>
       </header>
 
       <div>
-        {/* ENHANCED LOCATION BANNER */}
-        <div className="location-banner">
-          <div className="location-banner__container">
-            <label htmlFor="location-input" className="location-banner__label">📍 Your location:</label>
-            <input
-              id="location-input"
-              type="text"
-              className="location-banner__input"
-              value={inputLocation}
-              onChange={e => setInputLocation(e.target.value)}
-              placeholder="Enter your city or town"
-              aria-label="Location input"
-            />
-            <button className="location-banner__button" onClick={handleSaveLocation}>Save</button>
-            <span style={{ marginLeft: 10, color: '#237e6b', fontWeight: 500 }}>
-              {homeLocation?.name ?? ""}
-            </span>
-          </div>
-          {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
-        </div>
-
-        {/* ENHANCED EVENING MODE INDICATOR */}
-        {timeInfo && timeInfo.isEvening && (
-          <div className="evening-mode-banner" style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: '#fff',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            margin: '0 20px 20px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            animation: 'fadeIn 0.3s ease-in'
-          }}>
-            <div style={{ fontSize: '1.5rem', marginRight: '12px' }}>🌙</div>
-            <div>
-              <strong>Evening Mode Active</strong>
-              <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                Recommendations optimized for {timeInfo.eveningPhase} activities
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ENHANCED ONBOARDING */}
-        {isFirstTimeUser && (
-          <aside className="onboarding-message" style={{
-            background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-            color: '#92400e',
-            padding: '16px 24px',
-            borderRadius: '8px',
-            margin: '0 20px 20px 20px',
-            border: '1px solid #f59e0b'
-          }}>
-            👋 <strong>Welcome to WotNow!</strong> <a href="/interests" style={{ color: '#92400e', fontWeight: 'bold' }}>Choose your favourite activities</a> to get AI-powered, weather-aware suggestions.
-          </aside>
-        )}
-
         {/* ENHANCED MAIN CONTENT WITH FULL SCORING SYSTEM */}
         <div>
           {needsLocation ? (
@@ -517,6 +473,8 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                 const mainActivityId = displayHero?.activityId || 'indoorsy';
                 const cardBg = `url(${getActivityBg(mainActivityId)})`;
 
+                const marineSummary = marineConditionsSummary(day.waveHeight, day.wind_speed);
+
                 return (
                   <article
                     key={day.date}
@@ -552,26 +510,31 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                       borderRadius: 22,
                       zIndex: 1
                     }} />
-                    <div style={{ position: 'relative', zIndex: 2, padding: '20px' }}>
+                    <div style={{ position: 'relative', zIndex: 2, padding: '8px 12px 14px 12px' }}>
 
                       {/* ENHANCED CARD HEADER */}
-                      <div className="card-header" style={{ 
+                      <div style={{ 
   display: 'flex', 
-  alignItems: 'center', 
+  alignItems: 'flex-end',
   justifyContent: 'space-between', 
-  marginBottom: '12px' 
+  marginBottom: '8px' // was 12px
 }}>
-  <span className="day-name" style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+  <div style={{ fontSize: '1.3rem', fontWeight: 'bold', lineHeight: 1.1 }}>
     {getDayLabel(day.date, idx, timeInfo?.serverTime)}
-  </span>
-  <div className="card-condition" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-    <img
-      src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
-      alt={day.description}
-      className="weather-icon"
-      style={{ width: '32px', height: '32px' }}
-    />
   </div>
+  <img
+    src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
+    alt={day.description}
+    className="weather-icon"
+    style={{
+      width: 72, // or 64 for slightly smaller
+      height: 72,
+      marginLeft: 12,
+      objectFit: 'contain',
+      display: 'block'
+      // No marginTop!
+    }}
+  />
 </div>
 
 {/* HERO BOX NOW SITS DIRECTLY UNDER DAY NAME */}
@@ -661,7 +624,7 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                         </div>
                       )}
 
-                      {/* ENHANCED MARINE CONDITIONS */}
+                      {/* ENHANCED LAND and MARINE CONDITIONS */}
                       {hasMarineInterest(interests) &&
                         [day.waveHeight, day.waterTemperature, day.swellHeight, day.swellPeriod, day.wind_speed].some(v => typeof v === 'number') && (
                           <div className="marine-block" style={{
@@ -669,58 +632,81 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
                             padding: '10px',
                             background: 'rgba(59, 130, 246, 0.2)',
                             borderRadius: '6px',
-                            fontSize: '0.85rem'
+                            fontSize: '0.85rem' // Match "also good"
                           }}>
-
-<p style={{ fontSize: '0.85rem', margin: '8px 0 16px 0', opacity: 0.92 }}>
-  {`${capitalize(day.description)} in ${homeLocation?.name?.split(',')[0] || 'your area'} with a high of ${day.tempMax}°`}
-</p>
-
-                            <div className="marine-header" style={{ marginBottom: '6px', fontWeight: 'bold' }}>
-  🌊{' '}
-  {coastalLocation ? (
-    <button
-      type="button"
-      onClick={() => setShowCoastDialog(true)}
-      style={{
-        background: 'none',
-        border: 'none',
-        color: 'inherit',
-        textDecoration: 'underline',
-        cursor: 'pointer'
-      }}
-    >
-      {coastalLocation.name.split(',')[0]}
-    </button>
-  ) : (
-    'your coastal location'
-  )}
+{/* homelocation summary text */}
+ <div style={{ fontSize: '0.85rem', marginBottom: 6 }}>
+  🏡 {day.temperature}° and {day.description} in{' '}
+  <button
+    type="button"
+    onClick={() => {
+      document.getElementById(
+        window.innerWidth < 800 ? 'location-input-mobile' : 'location-input-desktop'
+      )?.focus();
+    }}
+    style={{
+      background: 'none',
+      border: 'none',
+      color: '#fff',
+      textDecoration: 'underline',
+      cursor: 'pointer',
+      fontWeight: 600,
+      fontSize: 'inherit',
+      padding: 0,
+    }}
+  >
+    {homeLocation ? homeLocation.name.split(',')[0] : 'your location'}
+  </button>
 </div>
 
-                            <ul className="marine-values" style={{ 
-                              listStyle: 'none', 
-                              padding: 0, 
-                              margin: 0,
-                              display: 'flex',
-                              flexWrap: 'wrap',
-                              gap: '8px'
-                            }}>
-                              {typeof day.waveHeight === 'number' && (
-                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-                                  🌊 {day.waveHeight}m
-                                </li>
-                              )}
-                              {typeof day.wind_speed === 'number' && (
-                                <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-                                  💨 {day.wind_speed}km/h
-                                </li>
-                              )}
-{typeof day.waterTemperature === 'number' && (
-  <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-    🌡️ {day.waterTemperature.toFixed(1)}°
-  </li>
-)}
-                            </ul>
+{/* Marine summary text */}
+<p style={{ fontSize: '0.85rem', margin: '0 0 6px 0', opacity: 0.92 }}>
+  🌊 {marineSummary} in{' '}
+  <button
+    type="button"
+    onClick={() => setShowCoastDialog(true)}
+    style={{
+      background: 'none',
+      border: 'none',
+      color: '#fff',
+      textDecoration: 'underline',
+      cursor: 'pointer',
+      fontWeight: 600,
+      fontSize: 'inherit',
+      padding: 0,
+    }}
+  >
+    {coastalLocation ? coastalLocation.name.split(',')[0] : 'your coastal location'}
+  </button>
+  
+</p>
+
+
+
+<ul className="marine-values" style={{
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '8px'
+}}>
+  {typeof day.waveHeight === 'number' && (
+    <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+      🌊 {day.waveHeight}m
+    </li>
+  )}
+  {typeof day.wind_speed === 'number' && (
+    <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+      💨 {day.wind_speed}km/h
+    </li>
+  )}
+  {typeof day.waterTemperature === 'number' && (
+    <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
+      🌡️ {day.waterTemperature.toFixed(1)}°
+    </li>
+  )}
+</ul>
                           </div>
                         )}
 
@@ -870,6 +856,86 @@ const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.scor
             }}
           />
         )}
+
+        {/* ENHANCED MOBILE NAVIGATION */}
+        {menuOpen && (
+  <nav
+    className="mobile-nav"
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background: 'rgba(0,0,0,0.7)',
+      zIndex: 1000,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
+  >
+    <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Home</a>
+    <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Interests</a>
+    <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Weather</a>
+    <button
+      onClick={() => setMenuOpen(false)}
+      style={{
+        marginTop: 24,
+        background: '#fff',
+        border: 'none',
+        padding: '8px 16px',
+        borderRadius: 6,
+        fontWeight: 600,
+        cursor: 'pointer'
+      }}
+    >
+      Close
+    </button>
+  </nav>
+)}
+
+{/* Mobile location banner (bottom, visible on mobile only) */}
+<div className="location-banner mobile-location-banner">
+  <div className="location-banner__container">
+    <label htmlFor="location-input-mobile" className="location-banner__label">📍 Your location:</label>
+    <input
+      id="location-input-mobile"
+      type="text"
+      className="location-banner__input"
+      value={inputLocation}
+      onChange={e => setInputLocation(e.target.value)}
+      placeholder="Enter your city or town"
+      aria-label="Location input"
+    />
+    <button className="location-banner__button" onClick={handleSaveLocation}>Save</button>
+    <span style={{ marginLeft: 10, color: '#237e6b', fontWeight: 500 }}>
+      {homeLocation?.name ?? ""}
+    </span>
+  </div>
+  {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
+</div>
+
+{/* Desktop location banner (top, visible on desktop/tablet) */}
+<div className="location-banner desktop-location-banner">
+  <div className="location-banner__container">
+    <label htmlFor="location-input-desktop" className="location-banner__label">📍 Your location:</label>
+    <input
+      id="location-input-desktop"
+      type="text"
+      className="location-banner__input"
+      value={inputLocation}
+      onChange={e => setInputLocation(e.target.value)}
+      placeholder="Enter your city or town"
+      aria-label="Location input"
+    />
+    <button className="location-banner__button" onClick={handleSaveLocation}>Save</button>
+    <span style={{ marginLeft: 10, color: '#237e6b', fontWeight: 500 }}>
+      {homeLocation?.name ?? ""}
+    </span>
+  </div>
+  {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
+</div>
       </div>
     </section>
   );

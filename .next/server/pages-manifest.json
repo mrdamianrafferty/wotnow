@@ -3,7 +3,7 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/api/marine": "pages/api/marine.js",
   "/interests": "pages/interests.js",
-  "/weather": "pages/weather.js"
+  "/weather": "pages/weather.js",
+  "/api/marine": "pages/api/marine.js"
 }
