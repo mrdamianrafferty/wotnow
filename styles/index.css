@@ -1072,6 +1072,7 @@ abbr[title] {
     flex-direction: column !important;
     align-items: stretch !important;
   }
+
 }
 .perfect-emoji-bg {
   display: inline-flex;
@@ -1099,9 +1100,12 @@ abbr[title] {
   }
 }
 
+/* ------ LOCATION BANNER ------ */
+
 .desktop-location-banner {
   display: block;
 }
+
 .mobile-location-banner {
   display: none;
 }
@@ -1121,5 +1125,19 @@ abbr[title] {
     z-index: 1200;
     padding: 10px 8px !important;
     border-radius: 12px 12px 0 0;
+  }
+}
+
+/* Hide desktop location banner on mobile */
+@media (max-width: 800px) {
+  .desktop-location-banner {
+    display: none !important;
+  }
+}
+
+/* Hide mobile location banner on desktop */
+@media (min-width: 801px) {
+  .mobile-location-banner {
+    display: none !important;
   }
 }

@@ -58,7 +58,7 @@ function capitalize(str: string) {
 }
 
 export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false); // <-- Place this at the top
+  const [menuOpen, setMenuOpen] = useState(false);
 
   console.log('🏠 Enhanced Home component rendering with activity scoring system...');
   
@@ -377,21 +377,61 @@ export default function Home() {
   return (
     <section>
       {/* ENHANCED HEADER */}
-      <header className="homepage-banner">
-        <div className="homepage-banner__container">
-          <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
-          <img
-            src="/burger-menu-svgrepo-com.svg"
-            alt="Open menu"
-            className="burger-menu-icon"
-            style={{ width: 36, height: 36, cursor: 'pointer', display: 'none' }}
-            onClick={() => setMenuOpen(true)}
-          />
-          <div className="homepage-banner__text">
-            <h1 className="homepage-banner__title">What's good, when?</h1>
-            <p className="homepage-banner__subtitle"></p>
-          </div>
-        </div>
+      <header className="homepage-banner" style={{ position: 'relative', minHeight: 60 }}>
+        {/* Hamburger icon: visible on mobile, top left */}
+        <img
+          src="/burger-menu-svgrepo-com.svg"
+          alt="Open menu"
+          className="burger-menu-icon"
+          style={{
+            width: 36,
+            height: 36,
+            cursor: 'pointer',
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            zIndex: 10,
+            display: 'block'
+          }}
+          onClick={() => setMenuOpen(true)}
+        />
+        {/* Logo centered */}
+        <img
+          src="/wotnow-horizontal.png"
+          alt="WotNow Logo"
+          className="homepage-banner__logo"
+          style={{
+            display: 'block',
+            margin: '0 auto',
+            maxWidth: 180,
+            paddingTop: 8
+          }}
+        />
+        {/* TEXT NAVIGATION: hidden on mobile, visible on desktop */}
+        <nav
+          className="global-nav"
+          style={{
+            display: 'flex',
+            gap: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 8,
+            fontSize: '1.05rem'
+          }}
+        >
+          <a href="/" style={{ color: '#237e6b', textDecoration: 'none' }}>Home</a>
+          <span style={{ color: '#237e6b' }}>|</span>
+          <a href="/interests" style={{ color: '#237e6b', textDecoration: 'none' }}>Set Your Interests</a>
+          <span style={{ color: '#237e6b' }}>|</span>
+          <a href="/weather" style={{ color: '#237e6b', textDecoration: 'none' }}>Weather in Detail</a>
+        </nav>
+        <style>{`
+          @media (max-width: 800px) {
+            .global-nav {
+              display: none !important;
+            }
+          }
+        `}</style>
       </header>
 
       <div>
