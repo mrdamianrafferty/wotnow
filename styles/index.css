@@ -1058,7 +1058,7 @@ abbr[title] {
     margin-bottom: 0 !important;
   }
   .location-banner {
-    position: fixed;
+    position: static;
     left: 0;
     bottom: 0;
     width: 100vw;
@@ -1116,7 +1116,7 @@ abbr[title] {
   }
   .mobile-location-banner {
     display: block !important;
-    position: fixed;
+    position: static;
     left: 0;
     bottom: 0;
     width: 100vw;
