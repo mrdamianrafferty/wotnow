@@ -1570,7 +1570,7 @@ weatherSensitive: true,
   },
 {
   id: 'watch_a_movie',
-  name: 'Watch a Movie',
+  name: 'Watch TV',
   category: 'Indoor Recreation',
   secondaryCategory: 'Social Activities',
   weatherSensitive: false,
