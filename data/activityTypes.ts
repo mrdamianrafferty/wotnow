@@ -831,7 +831,7 @@ export const activityTypes: ActivityType[] = [
     weatherSensitive: true,
     tags: ['leisure', 'social', 'outdoors', 'food', 'Saturday', 'Sunday', 'holiday'],
     poorConditions: [
-      'temperature<15',                // too cold for comfort
+      'temperature<18',                // too cold for comfort
       'temperature>39',              // oppressive heat
       'windSpeed>18',                // hard to keep grill lit & unpleasant
       'cloudCover>60',               // too cloudy for sunbathing
@@ -840,14 +840,14 @@ export const activityTypes: ActivityType[] = [
       
     ],
     goodConditions: [
-      'temperature=16..30',
+      'temperature=18..30',
       'windSpeed<12',
       'cloudCover=10-40',
       'humidity<85',
       'visibility>5'
     ],
     perfectConditions: [
-      'temperature=20..26',
+      'temperature=22..26',
       'windSpeed<10',
       'cloudCover=0-10',
       'humidity=40-65',
@@ -1181,6 +1181,15 @@ weatherSensitive: true,
     secondaryCategory: 'Individual Sports',
     weatherSensitive: false,
     tags: ['sport', 'racquet', 'indoor', 'social', 'leisure', 'Wednesday', 'Thursday', 'Saturday', 'Sunday', 'evening'],
+
+  },
+    {
+    id: 'volleyball_indoor',
+    name: 'Volleyball',
+    category: 'Active Sports',
+    secondaryCategory: 'Individual Sports',
+    weatherSensitive: false,
+    tags: ['sport', 'ball', 'indoor', 'social', 'leisure', 'Wednesday', 'Thursday', 'Saturday', 'Sunday', 'evening'],
 
   },
   {

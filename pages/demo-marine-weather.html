@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Marine Weather Demo – Colunga</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+/* ----------- CSS CUSTOM PROPERTIES ---------- */
+:root{
+  --surface-1:#fff;
+  --surface-2:#f2f4f7;
+  --surface-3:#dfe4ea;
+  --border-1:#ccd0d5;
+  --text-1:#111;
+  --text-2:#555;
+  --accent-1:#0077ff;
+  --accent-2:#005fcc;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  line-height:1.45;
+  color:var(--text-1);
+}
+/* ---------- GLOBAL ---------- */
+body{margin:0;background:var(--surface-2);}
+h3{margin-top:.3rem;margin-bottom:.3rem;font-size:1.05rem;}
+button{font:inherit}
+[hidden]{display:none !important;}
+/* ---------- TOP TABS ---------- */
+.top-tabs{
+  display:flex;justify-content:center;gap:.5rem;
+  padding:.75rem 0;background:var(--surface-3);position:sticky;top:0;z-index:10;
+}
+.top-tabs button{
+  padding:.45rem 1rem;border:0;border-radius:.4rem;cursor:pointer;
+  background:none;font-weight:600;color:var(--text-2);
+}
+.top-tabs button.active{background:var(--accent-1);color:#fff;}
+.top-tabs button:focus-visible{outline:2px solid var(--accent-1);outline-offset:2px;}
+/* ---------- SUB TABS ---------- */
+.sub-tabs{display:flex;justify-content:center;gap:.3rem;margin:.7rem 0;}
+.sub-tabs button{padding:.3rem .65rem;border-radius:.35rem;border:0;background:none;cursor:pointer;color:var(--text-2);}
+.sub-tabs button.active{background:var(--accent-2);color:#fff;}
+.sub-tabs button:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;}
+/* ---------- HOME FORECAST CARDS ---------- */
+.forecast-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.75rem;padding:.75rem;}
+.card{background:var(--surface-1);border-radius:.6rem;padding:.6rem .5rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.card header{font-size:.83rem;color:var(--text-2);margin-bottom:.2rem;}
+.card img{width:60px;height:60px;}
+.card .temp{font:700 1.3rem/1.1 sans-serif;margin:.15rem 0;}
+.card .wind,.card .precip{font-size:.83rem;color:var(--text-2);margin:0;}
+/* ---------- MARINE TABLE ---------- */
+.table-wrap{overflow-x:auto;padding:.5rem 0 .75rem;}
+table{border-collapse:collapse;width:100%;min-width:720px;}
+th,td{padding:.4rem .55rem;border:1px solid var(--border-1);white-space:nowrap;text-align:center;font-size:.87rem;}
+thead th{background:var(--surface-3);position:sticky;top:44px;z-index:5;}
+tbody tr:nth-child(even){background:var(--surface-2);}
+td span.arrow{display:inline-block;width:18px;height:18px;transform-origin:center center;}
+/* Water temperature heat-map */
+td.very-cold{background:#0d47a1;color:#fff;}
+td.cold{background:#1565c0;color:#fff;}
+td.cool{background:#4fc3f7;}
+td.comfort{background:#81c784;}
+td.warm{background:#ffb74d;}
+td.hot{background:#e64a19;color:#fff;}
+/* ---------- WATER TEMP KEY ---------- */
+.water-temp-key{display:flex;flex-wrap:wrap;gap:.5rem;padding:0 .75rem 1rem;font-size:.85rem;}
+.water-temp-key span{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .45rem;border-radius:.3rem;color:#fff;}
+.water-temp-key .very-cold{background:#0d47a1;}
+.water-temp-key .cold{background:#1565c0;}
+.water-temp-key .cool{background:#4fc3f7;color:#111;}
+.water-temp-key .comfort{background:#81c784;color:#111;}
+.water-temp-key .warm{background:#ffb74d;color:#111;}
+.water-temp-key .hot{background:#e64a19;}
+/* ---------- ACTIVITY GRID ---------- */
+.activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;padding:1rem;}
+.activity-grid article{background:var(--surface-1);border-radius:.6rem;padding:.8rem;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.activity-grid h4{margin:.1rem 0;font-size:1rem;}
+.activity-grid p{margin:.15rem 0;font-size:.87rem;color:var(--text-2);}
+@media(max-width:480px){
+  .forecast-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
+  table{min-width:660px;}
+}
+</style>
+</head>
+<body>
+
+<nav class="top-tabs" aria-label="Primary weather sections">
+  <button class="active" role="tab" aria-selected="true" data-top="home">Home</button>
+  <button role="tab" aria-selected="false"           data-top="marine">Marine</button>
+  <button role="tab" aria-selected="false"           data-top="activity">Activity</button>
+</nav>
+
+<!-- ========================== HOME SECTION ========================== -->
+<section id="homeSection">
+  <nav class="sub-tabs" aria-label="Home forecast days">
+    <button class="active" role="tab" aria-selected="true"  data-home="0">Today</button>
+    <button role="tab" aria-selected="false"                data-home="1">Tomorrow</button>
+    <button role="tab" aria-selected="false"                data-home="2">Day 3</button>
+    <button role="tab" aria-selected="false"                data-home="3">Day 4</button>
+    <button role="tab" aria-selected="false"                data-home="4">Day 5</button>
+  </nav>
+  <section class="forecast-grid" id="homeCards"></section>
+</section>
+
+<!-- ========================== MARINE SECTION ======================== -->
+<section id="marineSection" hidden>
+  <nav class="sub-tabs" aria-label="Marine forecast days">
+    <button class="active" role="tab" aria-selected="true"  data-marine="0">Today</button>
+    <button role="tab" aria-selected="false"                data-marine="1">Tomorrow</button>
+    <button role="tab" aria-selected="false"                data-marine="2">Day 3</button>
+    <button role="tab" aria-selected="false"                data-marine="3">Day 4</button>
+    <button role="tab" aria-selected="false"                data-marine="4">Day 5</button>
+  </nav>
+
+  <div class="table-wrap">
+    <table id="marineTable" aria-label="Marine forecast detail">
+      <thead><tr>
+        <th scope="col">Time</th>
+        <th scope="col">Water&nbsp;Temp</th>
+        <th scope="col">Wave&nbsp;m</th>
+        <th scope="col">Wind&nbsp;m/s</th>
+        <th scope="col">Gust&nbsp;m/s</th>
+        <th scope="col">Swell&nbsp;m</th>
+        <th scope="col">Dir</th>
+        <th scope="col">Period&nbsp;s</th>
+        <th scope="col">Vis&nbsp;km</th>
+        <th scope="col">Current&nbsp;kts</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="water-temp-key" aria-label="Water temperature colour guide">
+    <span class="very-cold">💧 0-15°C</span>
+    <span class="cold">💧 15-18°C</span>
+    <span class="cool">💧 18-20°C</span>
+    <span class="comfort">💧 20-24°C</span>
+    <span class="warm">💧 24-28°C</span>
+    <span class="hot">💧 28-35°C</span>
+  </div>
+</section>
+
+<!-- ========================== ACTIVITY SECTION ====================== -->
+<section id="activitySection" hidden>
+  <section class="activity-grid" id="activityGrid"></section>
+</section>
+
+<script>
+/* ---------- MOCK DATA GENERATORS ---------- */
+const fiveDaySlots = Array.from({length:40}, (_,i)=>({
+  dt: Date.now()/1000 + i*3*3600,
+  weather:[{icon: (()=>{
+      const hour = (new Date(Date.now()+i*3*3600)).getHours();
+      const night = hour<6 || hour>=19;
+      return night? "01n":"01d";
+    })(),
+    description:"Clear sky"}],
+  main:{temp:18 + Math.sin(i/3)*4},
+  wind:{speed:3+Math.random()*3, gust:5+Math.random()*5},
+  pop:Math.random()*0.8,
+  rain:{["3h"]:Math.random()<0.4?Math.random()*3:0}
+}));
+
+const marineRows = Array.from({length:5},(_,d)=>(
+  Array.from({length:24},(_,h)=>{
+    const water = 16+Math.sin((d*24+h)/12)*4;
+    const classify = v=>v<15?"very-cold":v<18?"cold":v<20?"cool":v<24?"comfort":v<28?"warm":"hot";
+    return{
+      iso:new Date(Date.now()+((d*24+h))*3600*1000).toISOString(),
+      local:new Date(Date.now()+((d*24+h))*3600*1000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),
+      water, className:classify(water),
+      wave:0.6+Math.random()*1.2,
+      wind:2+Math.random()*4,
+      gust:6+Math.random()*4,
+      swell:0.8+Math.random()*1.5,
+      swellDir:Math.random()*360,
+      period:6+Math.floor(Math.random()*6),
+      vis:5+Math.floor(Math.random()*5),
+      current:(Math.random()*3).toFixed(1)
+    };
+  })
+));
+
+/* ---------- UTILITIES ---------- */
+const $ = sel=>document.querySelector(sel);
+const $$ = sel=>document.querySelectorAll(sel);
+const formatNum = n=>Number(n).toFixed(1);
+
+/* ---------- TOP TAB HANDLERS ---------- */
+$$('.top-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const id=btn.dataset.top;
+    /* toggle sections */
+    ['home','marine','activity'].forEach(sec=>{
+      $(`#${sec}Section`).hidden = sec!==id;
+      $(`[data-top="${sec}"]`).classList.toggle('active',sec===id);
+      $(`[data-top="${sec}"]`).setAttribute('aria-selected',sec===id);
+    });
+  });
+});
+
+/* ---------- HOME TAB RENDER ---------- */
+function renderHome(dayIdx){
+  /* update sub-tab state */
+  $$('.sub-tabs button[data-home]').forEach(b=>{
+    const match = Number(b.dataset.home)===dayIdx;
+    b.classList.toggle('active',match);
+    b.setAttribute('aria-selected',match);
+  });
+  const start = new Date(); start.setHours(0,0,0,0);
+  const dayStart = start.getTime()+dayIdx*86400000;
+  const dayEnd   = dayStart+86400000;
+
+  const slots = fiveDaySlots.filter(s=>{
+    const t=s.dt*1000;
+    return t>=dayStart && t<dayEnd;
+  });
+
+  const wrap = $('#homeCards');
+  wrap.innerHTML='';
+  slots.forEach(s=>{
+    const card=document.createElement('article');
+    card.className='card';
+    card.innerHTML=`
+      <header>${new Date(s.dt*1000).toLocaleString([], {weekday:'short', hour:'2-digit', minute:'2-digit'})}</header>
+      <img src="https://openweathermap.org/img/wn/${s.weather[0].icon}@2x.png" alt="${s.weather[0].description}">
+      <p class="temp">${Math.round(s.main.temp)}°</p>
+      <p class="wind">💨 ${formatNum(s.wind.speed)} m/s <small>${s.wind.gust?`gust ${formatNum(s.wind.gust)} m/s`:''}</small></p>
+      <p class="precip">🌧 ${formatNum(s.rain['3h']||0)} mm <small>(${Math.round(s.pop*100)} %)</small></p>
+    `;
+    wrap.appendChild(card);
+  });
+}
+$$('.sub-tabs button[data-home]').forEach(b=>{
+  b.addEventListener('click',()=>renderHome(Number(b.dataset.home)));
+});
+renderHome(0);
+
+/* ---------- MARINE TAB RENDER ---------- */
+function arrowSvg(deg){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');
+  svg.setAttribute('width','18');
+  svg.setAttribute('height','18');
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d','M12 2 L5 22 h14 Z');
+  path.setAttribute('fill','currentColor');
+  svg.appendChild(path);
+  svg.classList.add('arrow');
+  svg.style.transform=`rotate(${deg}deg)`;
+  return svg;
+}
+function renderMarine(dayIdx){
+  $$('.sub-tabs button[data-marine]').forEach(b=>{
+    const match = Number(b.dataset.marine)===dayIdx;
+    b.classList.toggle('active',match);
+    b.setAttribute('aria-selected',match);
+  });
+  const rows = marineRows[dayIdx];
+  const tbody = $('#marineTable tbody');
+  tbody.innerHTML='';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${r.local}</td>
+      <td class="${r.className}">💧 ${formatNum(r.water)}°C</td>
+      <td>${formatNum(r.wave)}</td>
+      <td>${formatNum(r.wind)}</td>
+      <td>${formatNum(r.gust)}</td>
+      <td>${formatNum(r.swell)}</td>
+      <td></td>
+      <td>${r.period}</td>
+      <td>${r.vis}</td>
+      <td>${r.current}</td>
+    `;
+    tr.children[6].appendChild(arrowSvg(r.swellDir));
+    tbody.appendChild(tr);
+  });
+}
+$$('.sub-tabs button[data-marine]').forEach(b=>{
+  b.addEventListener('click',()=>renderMarine(Number(b.dataset.marine)));
+});
+renderMarine(0);
+
+/* ---------- ACTIVITY TAB RENDER ---------- */
+function renderActivities(dayIdx){
+  const today = marineRows[dayIdx][12]||marineRows[dayIdx][0]; // midday snapshot
+  const score = cond=>cond?'Good':'Poor';
+  const grid=$('#activityGrid');
+  grid.innerHTML=`
+    <article><h4>Surf</h4><p>Wave: ${formatNum(today.wave)} m</p><p>Rating: ${score(today.wave>1)}</p></article>
+    <article><h4>SUP</h4><p>Wind: ${formatNum(today.wind)} m/s</p><p>Rating: ${score(today.wind<4)}</p></article>
+    <article><h4>Boat</h4><p>Visibility: ${today.vis} km</p><p>Rating: ${score(today.vis>5)}</p></article>
+    <article><h4>Kayak</h4><p>Current: ${today.current} kts</p><p>Rating: ${score(today.current<2)}</p></article>
+  `;
+}
+renderActivities(0);
+</script>
+</body>
+</html>

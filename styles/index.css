@@ -2,7 +2,7 @@
 
 body {
   font-family: Roboto, sans-serif;
-  background-color: #f7f7f7;
+  background: linear-gradient(135deg, #f7f7f7 0%, #e3f0ff 100%);
   color: #333;
   margin: 0;
   padding: 0;
@@ -33,8 +33,11 @@ main,
 
 .page {
   background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  padding: 2rem 2vw;
+  margin: 2rem auto;
+  max-width: 1100px;
 }
 
 h1, h2, h3 {
@@ -49,11 +52,17 @@ button {
   padding: 0.5rem 1rem;
   cursor: pointer;
   border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, background 0.2s;
 }
 
 button:hover {
   background-color: #555;
   color: #fff;
+}
+
+button:active {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
 /* ------ HOMEPAGE BANNER ------ */
@@ -168,19 +177,26 @@ button:hover {
 
 /* --- HOMEPAGE CARDS & FORECAST --- */
 .homepage-card {
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 3px 14px 0 rgba(0,0,0,0.09);
-  padding: 1.4rem;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.2rem 1.2rem 1.5rem 1.2rem;
   margin-bottom: 2rem;
   color: #222;
   display: flex;
   flex-direction: column;
+  align-items: center;
   min-width: 0;
-  max-width: 430px;
+  max-width: 320px;
   width: 100%;
-  /* Responsive width for mobile */
   box-sizing: border-box;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1px solid #f0f4fa;
+}
+
+.homepage-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  transform: translateY(-2px) scale(1.02);
 }
 
 @media (max-width: 650px) {
@@ -193,12 +209,12 @@ button:hover {
 }
 
 .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0.7rem;
-  flex-wrap: wrap;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #237e6b;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
 .day-name {
@@ -218,42 +234,47 @@ button:hover {
   min-width: 80px;
 }
 
+.card-condition img {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 0.7rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .card-condition span:first-child {
   font-size: 4rem;
   line-height: 1;
 }
 
-.card-condition img {
-  width: 40px;
-  height: 40px;
-  vertical-align: bottom;
-  margin-bottom: 2px;
-}
-
 .card-condition span:last-child {
-  margin-top: 0.17rem;
+  margin-top: 0.3rem;
   font-weight: 500;
   text-transform: capitalize;
-  font-size: 1.02rem;
+  font-size: 1.08rem;
+  color: #6b7280;
+  text-align: center;
 }
 
 .temperature {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #ffffff;
-  text-align: right;
-  min-width: 68px;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #294e80;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
 .weather-stats {
   font-size: 0.98rem;
-  color: #33333;
+  color: #294e80;
   display: flex;
-  justify-content: start;
+  justify-content: center;
   gap: 1.1rem;
   margin-bottom: 0.6rem;
   margin-top: 2px;
   flex-wrap: wrap;
+  text-align: center;
 }
 
 .marine-block {
@@ -647,9 +668,9 @@ button:hover {
 
 .main-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  padding: 0 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
 }
 
 .breadcrumb {
@@ -856,8 +877,12 @@ abbr[title] {
 /* Additional spacing for table container if needed */
 
 .table-container {
-  margin-top: 1rem;
-  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  padding: 1rem;
 }
 
 /* Optional: smooth expanding arrow */
@@ -1140,4 +1165,542 @@ abbr[title] {
   .mobile-location-banner {
     display: none !important;
   }
+}
+
+/* --- Section styling for better separation --- */
+section {
+  margin-bottom: 2.5rem;
+  padding: 2rem 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+section[hidden] {
+  display: none !important;
+}
+
+/* --- Responsive grid for main content --- */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+/* --- Weather/Forecast Card --- */
+.homepage-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.2rem 1.2rem 1.5rem 1.2rem;
+  margin-bottom: 2rem;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 320px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1px solid #f0f4fa;
+}
+
+.homepage-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* --- Card header (time) --- */
+.card-header {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #237e6b;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* --- Weather icon --- */
+.card-condition img {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 0.7rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Temperature --- */
+.temperature {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #294e80;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Description --- */
+.card-condition span:last-child {
+  margin-top: 0.3rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  font-size: 1.08rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* --- Weather stats (wind, rain) --- */
+.weather-stats {
+  font-size: 0.98rem;
+  color: #294e80;
+  display: flex;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-bottom: 0.6rem;
+  margin-top: 2px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+/* --- Responsive grid for cards --- */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2.2rem;
+  padding: 1.2rem 0;
+  justify-items: center;
+}
+
+/* --- Responsive tweaks for mobile --- */
+@media (max-width: 700px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    padding: 0;
+  }
+  .homepage-card {
+    max-width: 97vw;
+    padding: 1.2rem 0.5rem;
+  }
+}
+
+/* --- Section header (date, etc) --- */
+.section-header {
+  background: #fdf6ec;
+  border-radius: 16px;
+  padding: 1.2rem 2rem;
+  margin-bottom: 2.2rem;
+  font-size: 1.18rem;
+  color: #294e80;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- Hide scrollbars for grid --- */
+.main-grid::-webkit-scrollbar {
+  display: none;
+}
+.main-grid {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- TopTabs improvements --- */
+.top-tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.top-tabs button {
+  background: #eef4fb;
+  color: #294e80;
+  border: 2px solid #d1d5db;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.top-tabs button.active,
+.top-tabs button[aria-selected="true"] {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.18);
+}
+
+.top-tabs button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* --- Section headers --- */
+section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #237e6b;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.02em;
+}
+
+/* --- Responsive tweaks for mobile --- */
+@media (max-width: 700px) {
+  .page {
+    padding: 1rem 2vw;
+    border-radius: 8px;
+    margin: 1rem auto;
+  }
+  section {
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+  }
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0;
+  }
+  .top-tabs {
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+}
+
+/* --- Add a little breathing room below the WaterTempKey --- */
+.water-temp-key {
+  margin-bottom: 1.5rem;
+}
+/* --- Add a subtle background gradient for the body --- */
+body {
+  font-family: Roboto, sans-serif;
+  background: linear-gradient(135deg, #f7f7f7 0%, #e3f0ff 100%);
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- Make .page container more visually distinct --- */
+.page {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  padding: 2rem 2vw;
+  margin: 2rem auto;
+  max-width: 1100px;
+}
+
+/* --- Section styling for better separation --- */
+section {
+  margin-bottom: 2.5rem;
+  padding: 2rem 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+section[hidden] {
+  display: none !important;
+}
+
+/* --- Responsive grid for main content --- */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+/* --- Weather/Forecast Card --- */
+.homepage-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2.2rem 1.2rem 1.5rem 1.2rem;
+  margin-bottom: 2rem;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  max-width: 320px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1px solid #f0f4fa;
+}
+
+.homepage-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* --- Card header (time) --- */
+.card-header {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #237e6b;
+  margin-bottom: 0.8rem;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* --- Weather icon --- */
+.card-condition img {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 0.7rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Temperature --- */
+.temperature {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #294e80;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* --- Description --- */
+.card-condition span:last-child {
+  margin-top: 0.3rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  font-size: 1.08rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* --- Weather stats (wind, rain) --- */
+.weather-stats {
+  font-size: 0.98rem;
+  color: #294e80;
+  display: flex;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-bottom: 0.6rem;
+  margin-top: 2px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+/* --- Responsive grid for cards --- */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2.2rem;
+  padding: 1.2rem 0;
+  justify-items: center;
+}
+
+/* --- Responsive tweaks for mobile --- */
+@media (max-width: 700px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    padding: 0;
+  }
+  .homepage-card {
+    max-width: 97vw;
+    padding: 1.2rem 0.5rem;
+  }
+}
+
+/* --- Section header (date, etc) --- */
+.section-header {
+  background: #fdf6ec;
+  border-radius: 16px;
+  padding: 1.2rem 2rem;
+  margin-bottom: 2.2rem;
+  font-size: 1.18rem;
+  color: #294e80;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- Hide scrollbars for grid --- */
+.main-grid::-webkit-scrollbar {
+  display: none;
+}
+.main-grid {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- TopTabs improvements --- */
+.top-tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.top-tabs button {
+  background: #eef4fb;
+  color: #294e80;
+  border: 2px solid #d1d5db;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.top-tabs button.active,
+.top-tabs button[aria-selected="true"] {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.18);
+}
+
+.top-tabs button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* --- Section headers --- */
+section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #237e6b;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.02em;
+}
+
+/* --- Responsive tweaks for mobile --- */
+@media (max-width: 700px) {
+  .page {
+    padding: 1rem 2vw;
+    border-radius: 8px;
+    margin: 1rem auto;
+  }
+  section {
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+  }
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0;
+  }
+  .top-tabs {
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+}
+
+/* --- Add a little breathing room below the WaterTempKey --- */
+.water-temp-key {
+  margin-bottom: 1.5rem;
+}
+
+/* --- Make buttons more tactile --- */
+button {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+button:active {
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* --- Add a subtle hover effect for cards --- */
+.homepage-card:hover,
+.activity-card-enhanced:hover {
+  background: #f0f6ff;
+}
+
+/* --- Improve section transitions --- */
+section {
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+/* ------ MARINE CARD STYLES ------ */
+
+.marine-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2rem 1.2rem 1.5rem 1.2rem;
+  margin-bottom: 2rem;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 320px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #f0f4fa;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.marine-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.marine-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.8rem;
+}
+
+.marine-card-time {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #237e6b;
+}
+
+.marine-card-temp {
+  background: #e6fff7;
+  color: #237e6b;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  padding: 0.4rem 1rem;
+}
+
+.marine-card-divider {
+  width: 100%;
+  height: 2px;
+  background: #237e6b;
+  opacity: 0.12;
+  margin: 0.7rem 0 1.2rem 0;
+  border-radius: 2px;
+}
+
+.marine-card-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem 1.2rem;
+  width: 100%;
+}
+
+.marine-card-stat-label {
+  font-size: 0.98rem;
+  color: #6b7280;
+}
+
+.marine-card-stat-value {
+  font-size: 1.08rem;
+  color: #222;
+  font-weight: 500;
 }

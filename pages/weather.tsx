@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useForecastData } from '../lib/useForecastData';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 
 interface Slot {
@@ -344,6 +345,8 @@ const WeatherPageBothLocations: React.FC = () => {
 
   const mainLocation = preferences.locations?.find((l) => l.type === 'main') || preferences.location;
   const coastalLocation = preferences.locations?.find((l) => l.type === 'coastal');
+
+  const { slots, marine, loading } = useForecastData(mainLocation?.lat, mainLocation?.lon);
 
   useEffect(() => {
     const now = new Date();

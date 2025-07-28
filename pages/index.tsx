@@ -374,6 +374,61 @@ export default function Home() {
 
   console.log('🎨 Rendering enhanced main content - full scoring system active');
 
+  // --- ROTATING HERO LOGIC ---
+  // Track which perfect activities have been used as hero so far
+  const usedHeroActivities = new Set<string>();
+
+  // Prepare hero/alsoPerfect lists for each day
+  const heroDataByDay = forecastByDay.map((day, idx) => {
+    const suggestionsData = getSuggestionsByDay({
+      forecast: [{
+        date: day.date,
+        weather: {
+          temperature: day.temperature,
+          precipitation: day.rain,
+          windSpeed: day.wind_speed,
+          clouds: day.clouds,
+          humidity: day.humidity,
+          visibility: day.visibility,
+          waterTemperature: day.waterTemperature,
+          waveHeight: day.waveHeight,
+          swellHeight: day.swellHeight,
+          swellPeriod: day.swellPeriod
+        }
+      }],
+      interests,
+      activities: activityTypes.filter(a => interests.includes(a.id)),
+      now: timeInfo?.serverTime || new Date()
+    })[0];
+    const suggestions = suggestionsData?.suggestions ?? [];
+    const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
+
+    // Find a perfect activity not yet used as hero
+    let heroActivity = perfectList.find(a => !usedHeroActivities.has(a.activityId));
+    if (!heroActivity && perfectList.length > 0) {
+      heroActivity = perfectList[0];
+    }
+    if (heroActivity) {
+      usedHeroActivities.add(heroActivity.activityId);
+    }
+
+    // If no perfect, pick highest scoring good activity (score >= 60)
+    if (!heroActivity) {
+      const goodList = suggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
+      if (goodList.length > 0) {
+        heroActivity = { ...goodList[0], isGood: true }; // Mark as good for emoji
+      }
+    }
+
+    return {
+      day,
+      suggestions,
+      heroActivity,
+      alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
+      suggestionsData
+    };
+  });
+
   return (
     <section>
       {/* ENHANCED HEADER */}
@@ -450,36 +505,11 @@ export default function Home() {
             </div>
           ) : (
             <div className="main-grid" role="list">
-              {forecastByDay.map((day, idx) => {
+              {heroDataByDay.map(({ day, suggestions, heroActivity, alsoGoodPerfect, suggestionsData }, idx) => {
                 console.log(`🎯 Processing enhanced suggestions for day ${idx} (${day.date})`);
                 
                 // ENHANCED: Pass time information for evening intelligence
-const userActivities = activityTypes.filter(a => interests.includes(a.id));
-
-const suggestionsData = getSuggestionsByDay({
-  forecast: [{
-    date: day.date,
-    weather: {
-      temperature: day.temperature,
-      precipitation: day.rain,
-      windSpeed: day.wind_speed,
-      clouds: day.clouds,
-      humidity: day.humidity,
-      visibility: day.visibility,
-      waterTemperature: day.waterTemperature,
-      waveHeight: day.waveHeight,
-      swellHeight: day.swellHeight,
-      swellPeriod: day.swellPeriod
-    }
-  }],
-  interests,
-  activities: userActivities, // <-- NOW ONLY USER'S ACTIVITIES
-  now: timeInfo?.serverTime || new Date()
-})[0];
-const suggestions = suggestionsData?.suggestions ?? [];
-const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
-                const heroActivity = perfectList[0] || (suggestions.length > 0 ? suggestions[0] : null);
-                const alsoGoodPerfect = perfectList.slice(1, 10); // Up to 9 more perfects
+                
 
                 // ENHANCED: Comprehensive analytics logging
                 console.log(`🎯 Day ${idx} enhanced analytics:`, {

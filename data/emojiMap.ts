@@ -95,6 +95,7 @@ const emojiMap: Record<string, string> = {
 jetskiing: '🚤',
 scuba_diving: '🤿',
 kitesurfing: '🏄‍♂️',
+volleyball_indoor: '🏐',
 windsurfing: '🏄‍♀️',
 };
 

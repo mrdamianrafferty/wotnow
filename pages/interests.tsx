@@ -38,6 +38,7 @@ const mainCategories = [
 					"table_tennis",
 					"archery",
 					"pickleball",
+					"volleyball_indoor",
 					"padel",
 				],
 			},
