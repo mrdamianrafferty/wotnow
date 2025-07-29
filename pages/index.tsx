@@ -11,6 +11,17 @@ import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
 import BurgerIcon from '../public/burger-menu-svgrepo-com.svg';
 import { marineConditionsSummary } from '../utils/marineConditionsSummary';
+import { activityMessages, getActivityMessage } from '../data/activityMessages';
+import {
+  getBeaufortDescription,
+  getRainfallDescription,
+  getTemperatureDescription,
+  getHumidityDescription,
+  getWaveDescription,
+  getWaterTemperatureDescription,
+} from '../utils/weatherLabels';
+
+
 
 // Example usage:
 // const summary = marineConditionsSummary(day.waveHeight, day.wind_speed);
@@ -19,7 +30,7 @@ import { marineConditionsSummary } from '../utils/marineConditionsSummary';
 const MARINE_ACTIVITY_IDS = [
   'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
   'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
-  'swimming', 'sea_fishing_shore', 'sea_fishing_boat'
+  'swimming', 'sea_fishing_shore', 'beach','sea_fishing_boat'
 ];
 
 // Helper functions (SSR-safe)
@@ -57,27 +68,44 @@ function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
+// Helper to check if activity is outdoor
+function isOutdoor(activityId: string) {
+  // You can use your activity type logic or a list of outdoor activities
+  // For example, check if activityMessages[activityId] exists
+  return !!activityMessages[activityId];
+}
 
+export default function Home() {
+  const hasMounted = useHasMounted(); // ✅ Correct: inside the component!
+  const [menuOpen, setMenuOpen] = useState(false);
+const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
+  // ...rest of your code...
+  
   console.log('🏠 Enhanced Home component rendering with activity scoring system...');
   
   const { preferences, setPreferences } = useUserPreferences();
-  const hasMounted = useHasMounted();
-
-  // Enhanced time information state with context awareness
-  const [timeInfo, setTimeInfo] = useState<{
-    currentDay: string;
-    hour: number;
-    contextTags: string[];
-    serverTime: Date;
-    isEvening: boolean;
-    eveningPhase: string;
-  } | null>(null);
-
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
   const interests = preferences.interests ?? [];
+
+  // Tide data state
+  const [tideData, setTideData] = useState<{ high?: string[]; low?: string[] }>({});
+
+  // Fetch tide data effect
+  useEffect(() => {
+    async function fetchTides() {
+      if (!homeLocation?.lat || !homeLocation?.lon) return;
+      const res = await fetch(`/api/tides?lat=${homeLocation.lat}&lon=${homeLocation.lon}`);
+      const data = await res.json();
+      if (Array.isArray(data.data)) {
+        const today = new Date().toISOString().slice(0, 10);
+        const highs = data.data.filter((t: any) => t.type === 'high' && t.time.startsWith(today)).map((t: any) => t.time.slice(11, 16));
+        const lows = data.data.filter((t: any) => t.type === 'low' && t.time.startsWith(today)).map((t: any) => t.time.slice(11, 16));
+        setTideData({ high: highs, low: lows });
+      }
+    }
+    fetchTides();
+  }, [homeLocation]);
 
   const [showCoastDialog, setShowCoastDialog] = useState(false);
   const [inputLocation, setInputLocation] = useState(homeLocation?.name ?? '');
@@ -351,6 +379,146 @@ export default function Home() {
     }
   };
 
+  const [popupActivity, setPopupActivity] = useState<null | {
+    activityId: string;
+    category: 'perfect' | 'good' | 'poor';
+    reasons: { key: string; value: any; label: string }[];
+  }>(null);
+
+  // Example popup component
+  function ActivityPopup({ activityId, category, reasons, highTide = [], lowTide = [], onClose }: any) {
+    const bgUrl = getActivityBg(activityId);
+    const message = getActivityMessage(activityId, category, reasons);
+    const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
+    const windReason = reasons.find(r => r.key === 'wind');
+    const windKmh = windReason?.value;
+
+    return (
+      <div className="activity-popup-overlay" onClick={onClose}>
+        <div
+          className="activity-popup"
+          style={{
+            backgroundImage: `url(${bgUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: 16,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+            padding: '2rem',
+            maxWidth: 400,
+            margin: '5vh auto',
+            color: '#fff',
+            position: 'relative',
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              background: 'rgba(0,0,0,0.5)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              padding: '0.5rem 1rem',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+            onClick={onClose}
+          >
+            ×
+          </button>
+          <div
+            style={{
+              background: 'rgba(0,0,0,0.45)',
+              borderRadius: 12,
+              padding: '1.2rem 1rem',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              cursor: 'pointer', // shows it's clickable
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+            onClick={() => {
+              setPopupActivity({
+                activityId: heroActivity.activityId,
+                category: heroActivity.category,
+                reasons: buildReasons(day, heroActivity.activityId),
+              });
+            }}
+          >
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.6rem',
+              fontWeight: 700,
+              color: '#fff',
+              textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+            }}>
+              {activityId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </h2>
+            <p style={{
+              marginTop: '1rem',
+              fontSize: '1.15rem',
+              fontWeight: 500,
+              textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+            }}>
+              {message}
+            </p>
+            {isMarine && windKmh !== undefined && (
+              <p style={{
+                marginTop: '1rem',
+                fontSize: '0.95rem',
+                color: '#fff',
+                background: 'rgba(0,0,0,0.25)',
+                borderRadius: 8,
+                padding: '0.7rem',
+                textAlign: 'left'
+              }}>
+                <strong>What does {windKmh} km/h wind mean?</strong><br />
+                {getBeaufortExplanation(windKmh)}
+              </p>
+            )}
+            {isMarine && (
+              <table style={{ width: '100%', marginTop: '1rem', color: '#fff' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: '6px', fontWeight: 600 }}>High Tide</td>
+                    <td style={{ padding: '6px', textAlign: 'right' }}>{highTide.length ? highTide.join(' / ') : '—'}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: '6px', fontWeight: 600 }}>Low Tide</td>
+                    <td style={{ padding: '6px', textAlign: 'right' }}>{lowTide.length ? lowTide.join(' / ') : '—'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function buildReasons(day: WeatherForecastDay, activityId: string) {
+    const reasons = [
+      { key: 'wind', value: day.wind_speed, label: getBeaufortDescription(day.wind_speed) },
+      { key: 'rain', value: day.rain, label: getRainfallDescription(day.rain) },
+      { key: 'temperature', value: day.temperature, label: getTemperatureDescription(day.temperature) },
+      { key: 'humidity', value: day.humidity, label: getHumidityDescription(day.humidity) },
+    ];
+
+    // Only add marine data for marine activities
+    if (MARINE_ACTIVITY_IDS.includes(activityId)) {
+      if (typeof day.waveHeight === 'number') {
+        reasons.push({ key: 'wave', value: day.waveHeight, label: getWaveDescription(day.waveHeight) });
+      }
+      if (typeof day.waterTemperature === 'number') {
+        reasons.push({ key: 'water', value: day.waterTemperature, label: getWaterTemperatureDescription(day.waterTemperature) });
+      }
+    }
+
+    return reasons.filter(r => r.label && r.label !== 'Unknown temperature' && r.label !== 'Unknown humidity');
+  }
+
   // Hydration-safe pre-render state
   if (!hasMounted) {
     console.log('⏳ Pre-hydration render - showing loading state');
@@ -405,9 +573,27 @@ export default function Home() {
 
     // Find a perfect activity not yet used as hero
     let heroActivity = perfectList.find(a => !usedHeroActivities.has(a.activityId));
+
+    // If no unused perfect, pick highest scoring unused good activity
+    if (!heroActivity) {
+      const goodList = suggestions
+        .filter(s => s.score >= 60 && s.score < 80 && !usedHeroActivities.has(s.activityId))
+        .sort((a, b) => b.score - a.score);
+      if (goodList.length > 0) {
+        heroActivity = { ...goodList[0], isGood: true };
+      }
+    }
+
+    // If still no hero (all perfects and goods used), allow repeats (fallback)
     if (!heroActivity && perfectList.length > 0) {
       heroActivity = perfectList[0];
+    } else if (!heroActivity) {
+      const goodList = suggestions.filter(s => s.score >= 60 && s.score < 80);
+      if (goodList.length > 0) {
+        heroActivity = { ...goodList[0], isGood: true };
+      }
     }
+
     if (heroActivity) {
       usedHeroActivities.add(heroActivity.activityId);
     }
@@ -604,6 +790,9 @@ export default function Home() {
 </div>
 
 {/* HERO BOX NOW SITS DIRECTLY UNDER DAY NAME */}
+
+
+
 {heroActivity && (() => {
   const activity = activityTypes.find(a => a.id === heroActivity.activityId);
   const scoreInfo = getScoreCategory(heroActivity.score || 0);
@@ -621,9 +810,26 @@ export default function Home() {
         </span>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-            <strong style={{ fontSize: '1.2rem' }}>
-              {activity?.name || heroActivity.activityId}
-            </strong>
+            <strong
+  style={{
+    fontSize: '1.2rem',
+    cursor: isOutdoor(heroActivity.activityId) ? 'pointer' : 'default',
+    color: isOutdoor(heroActivity.activityId) ? '#fff' : undefined,
+    fontWeight: isOutdoor(heroActivity.activityId) ? 700 : undefined,
+    textDecoration: isOutdoor(heroActivity.activityId) ? 'underline' : 'none'
+  }}
+  onClick={() => {
+    if (isOutdoor(heroActivity.activityId)) {
+      setPopupActivity({
+        activityId: heroActivity.activityId,
+        category: heroActivity.score >= 80 ? 'perfect' : 'good',
+        reasons: buildReasons(day, heroActivity.activityId)
+    });
+    }
+  }}
+>
+  {activity?.name || heroActivity.activityId}
+</strong>
             <span style={{ 
               fontSize: '0.8rem',
               padding: '2px 6px',
@@ -671,9 +877,29 @@ export default function Home() {
                                   alignItems: 'center',
                                   marginBottom: '4px'
                                 }}>
-                                  <span>
-                                    {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
-                                  </span>
+                                  <span
+  style={{
+    cursor: isOutdoor(suggestion.activityId) ? 'pointer' : 'default',
+    color: isOutdoor(suggestion.activityId) ? '#fff' : undefined, // white
+    fontWeight: isOutdoor(suggestion.activityId) ? 700 : undefined, // bold
+    textDecoration: isOutdoor(suggestion.activityId) ? 'underline' : undefined,
+  }}
+  onClick={() => {
+    if (isOutdoor(suggestion.activityId)) {
+      setPopupActivity({
+        activityId: suggestion.activityId,
+        category: suggestion.score >= 80 ? 'perfect' : 'good',
+        reasons: suggestion.reasoning
+          ? Array.isArray(suggestion.reasoning)
+            ? suggestion.reasoning
+            : [{ key: 'reason', value: suggestion.reasoning, label: suggestion.reasoning }]
+          : [],
+      });
+    }
+  }}
+>
+  {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
+</span>
                                   <span style={{ 
                                     fontSize: '0.7rem', 
                                     opacity: 0.8,
@@ -789,7 +1015,7 @@ export default function Home() {
                             fontSize: '0.85rem'
                           }}>
                             {suggestions
-                              .filter(s => s.score >= 60 && s.score < 80)
+                              .filter(s => s.score >= 60 && s.score < 80 && s.activityId !== heroActivity?.activityId)
                               .sort((a, b) => b.score - a.score)
                               .slice(0, 4)
                               .map(suggestion => {
@@ -801,7 +1027,23 @@ export default function Home() {
                                     alignItems: 'center',
                                     marginBottom: '4px'
                                   }}>
-                                    <span>
+                                    <span
+                                      style={{
+                                        cursor: isOutdoor(suggestion.activityId) ? 'pointer' : 'default',
+                                        color: isOutdoor(suggestion.activityId) ? '#fff' : undefined, // white
+                                        fontWeight: isOutdoor(suggestion.activityId) ? 700 : undefined, // bold
+                                        textDecoration: isOutdoor(suggestion.activityId) ? 'underline' : undefined,
+                                      }}
+                                      onClick={() => {
+                                        if (isOutdoor(suggestion.activityId)) {
+                                          setPopupActivity({
+                                            activityId: suggestion.activityId,
+                                            category: suggestion.score >= 80 ? 'perfect' : 'good',
+                                            reasons: buildReasons(day, suggestion.activityId), // <-- use live weather data here
+                                          });
+                                        }
+                                      }}
+                                    >
                                       {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
                                     </span>
                                     <span style={{ 
@@ -1002,7 +1244,34 @@ export default function Home() {
   </div>
   {error && <p className="location-error" style={{ color: '#c00', marginTop: 6 }}>{error}</p>}
 </div>
+
+{popupActivity && (
+  <ActivityPopup
+    activityId={popupActivity.activityId}
+    category={popupActivity.category}
+    reasons={popupActivity.reasons}
+    highTide={tideData.high}   // <-- Pass high tide times
+    lowTide={tideData.low}     // <-- Pass low tide times
+    onClose={() => setPopupActivity(null)}
+  />
+)}
       </div>
     </section>
   );
+}
+
+function getBeaufortExplanation(windKmh: number) {
+  if (windKmh < 2) return "Calm: Smoke rises vertically, sea like a mirror.";
+  if (windKmh < 6) return "Light air: Ripples with the appearance of scales are formed, but without foam crests.";
+  if (windKmh < 12) return "Light breeze: Small wavelets, still short but more pronounced; crests have a glassy appearance but do not break.";
+  if (windKmh < 20) return "Gentle breeze: Large wavelets; crests begin to break; scattered whitecaps.";
+  if (windKmh < 29) return "Moderate breeze: Small branches move, dust and loose paper are raised; waves become longer; fairly frequent white horses.";
+  if (windKmh < 39) return "Fresh breeze: Small trees in leaf begin to sway; waves moderate, many white horses, some spray.";
+  if (windKmh < 50) return "Strong breeze: Large branches in motion; whistling heard in overhead wires; umbrellas used with difficulty; waves larger, white foam crests more extensive.";
+  if (windKmh < 62) return "Near gale: Whole trees in motion; inconvenience felt when walking against wind; sea heaps up, white foam from breaking waves begins to be blown in streaks along direction of wind.";
+  if (windKmh < 75) return "Gale: Twigs break off trees; progress generally impeded; moderately high waves of greater length; edges of crests begin to break into spindrift; foam is blown in well-marked streaks along the direction of the wind.";
+  if (windKmh < 89) return "Severe gale: Slight structural damage occurs; high waves; dense streaks of foam along the direction of the wind; sea begins to roll; spray affects visibility.";
+  if (windKmh < 103) return "Storm: Trees uprooted; considerable structural damage occurs; very high waves with long overhanging crests; sea is completely white with foam and spray; visibility seriously affected.";
+  if (windKmh < 118) return "Violent storm: Exceptionally high waves; sea covered with white foam patches; visibility reduced.";
+  return "Hurricane: Air filled with foam and spray; sea completely white with driving spray; visibility very seriously affected.";
 }

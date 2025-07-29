@@ -239,6 +239,7 @@ const mainCategories = [
 					"cinema",
 					"museum",
 					"shopping",
+					"dance",
 				],
 			},
 			{
@@ -254,7 +255,7 @@ const mainCategories = [
 					"pilates",
 					"yoga",
 					"meditation",
-					"dance",
+					
 				],
 			},
 		],

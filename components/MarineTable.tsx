@@ -4,7 +4,7 @@ import SwellArrow from "./SwellArrow";
 export default function MarineTable({ rows }: { rows: MarineRow[] }) {
   return (
     <div className="table-wrap">
-      <table aria-label="Marine forecast detail">
+      <table className="marine-table" aria-label="Marine forecast detail">
         <thead>
           <tr>
             {[

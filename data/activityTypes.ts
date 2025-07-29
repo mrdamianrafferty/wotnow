@@ -438,8 +438,8 @@ export const activityTypes: ActivityType[] = [
     indoorAlternative: 'Tie rigs, sort your tackle box, or plan your next session'
 },
   {
-    id: 'soccer',
-    name: 'Soccer',
+    id: 'football_soccer',
+    name: 'Football (Soccer)',
     category: 'Active Sports',
     secondaryCategory: 'Team Sports',
     weatherSensitive: true,
@@ -1456,38 +1456,7 @@ weatherSensitive: true,
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Inspect and repair equipment, assemble frames, render wax, or read up on hive management'
 },
-  {
-    id: 'trail_hunting',
-    name: 'Trail Hunting',
-    category: 'Outdoor Activities',
-    secondaryCategory: 'Outdoor Recreation',
-  weatherSensitive: true,
-  tags: ['hunting', 'equestrian', 'tradition', 'social', 'nature', 'Saturday', 'Sunday', 'holiday'],
-  poorConditions: [
-    'temperature<2',                // risk of ice, hard ground
-    'temperature>25',              // too hot for horses & hounds
-    'windSpeed>25',                // uncomfortable & dangerous
-    'precipitation>10',           // heavy rain ruins ground
-    'humidity>85',                // sticky & stressful
-    'visibility<2'                // fog & poor sightlines
-  ],
-  goodConditions: [
-    'temperature=7..20',
-    'windSpeed<15',
-    'cloudCover=20-80',
-    'precipitation=0..2',
-    'visibility>5'
-  ],
-  perfectConditions: [
-    'temperature=10..16',
-    'windSpeed<8',
-    'cloudCover=30-60',
-    'precipitation=0',
-    'visibility>10'
-  ],
-  seasonalMonths: [10, 11, 12, 1, 2, 3],
-  indoorAlternative: 'Clean and repair tack, exercise horses in arena, or plan routes and social events'
-},
+
 {
   id: 'camping',
   name: 'Camping',

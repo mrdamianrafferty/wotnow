@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForecastData } from '../lib/useForecastData';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import SwellArrow from '../components/SwellArrow';
 
 interface Slot {
   date: string;
@@ -137,14 +138,14 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
     <table className="weather-table spaced">
       <thead>
         <tr>
-          <th>Time</th>
-          <th>🌡️ Temp</th>
-          <th>Weather</th>
-          <th>☔ Precip</th>
-          <th>💨 Wind</th>
-          <th>💧 Humidity</th>
-          <th>☁️ Clouds</th>
-          <th>🔍 Visibility</th>
+          <th style={{ textAlign: 'left' }}>Time</th>
+          <th style={{ textAlign: 'left' }}>🌡️</th>
+          <th style={{ textAlign: 'left' }}>☔</th>
+          <th style={{ textAlign: 'left' }}>💨 Wind</th>
+          <th style={{ textAlign: 'left' }}>💧 Humidity</th>
+          
+          <th style={{ textAlign: 'left' }}>☁️ Clouds</th>
+          <th style={{ textAlign: 'left' }}>🔍 Visibility</th>
         </tr>
       </thead>
       <tbody>
@@ -155,28 +156,38 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
               onClick={() => toggleDay(date)}
               style={{ cursor: 'pointer', background: '#f0f0f0' }}
             >
-<td colSpan={10}>
-  <strong>{getDayName(date)}</strong>
-</td>
+              <td colSpan={10} style={{ textAlign: 'left' }}>
+                <strong>{getDayName(date)}</strong>
+                {/* Show sunrise/sunset only for today */}
+                {date === new Date().toISOString().split('T')[0] && sunrise && sunset && (
+                  <span style={{ marginLeft: 16, fontWeight: 400, fontSize: '0.95em', color: '#eab308' }}>
+                    🌅 Sunrise: {sunrise} &nbsp;|&nbsp; 🌇 Sunset: {sunset}
+                  </span>
+                )}
+              </td>
             </tr>
             {expandedDays[date] &&
               daySlots.map((slot) => (
                 <tr key={`${slot.date}-${slot.time}`}>
-                  <td>
-                    {new Date(`${slot.date}T${slot.time}`).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
+                  <td style={{ textAlign: 'left' }}>
+                    {new Date(`${slot.date}T${slot.time}`).toLocaleTimeString('en-GB', {
+                      hour: '2-digit',
                       minute: '2-digit',
+                      hour12: false,
                     })}
+                    &nbsp;
+                    <span className="weather-icon" style={{ float: 'right' }}>
+                      {getWeatherIcon(slot.description, slot.time)}
+                    </span>
                   </td>
-                  <td className={slot.temp > 25 ? 'hot' : slot.temp < 5 ? 'cold' : ''}>
+                  <td style={{ textAlign: 'left' }} className={slot.temp > 25 ? 'hot' : slot.temp < 5 ? 'cold' : ''}>
                     {slot.temp}°C
                   </td>
-                  <td className="weather-icon">{getWeatherIcon(slot.description, slot.time)}</td>
-                  <td>{slot.precipitation} mm</td>
-                  <td>{(slot.wind * 3.6).toFixed(1)} km/h</td>
-                  <td>{slot.humidity}%</td>
-                  <td>{slot.clouds}%</td>
-                  <td>{slot.visibility} km</td>
+                  <td style={{ textAlign: 'left', fontSize: '1em' }}>{slot.precipitation} mm</td>
+                  <td style={{ textAlign: 'left' }}>{(slot.wind * 3.6).toFixed(1)} km/h</td>
+                  <td style={{ textAlign: 'left' }}>{slot.humidity}%</td>
+                  <td style={{ textAlign: 'left' }}>{slot.clouds}%</td>
+                  <td style={{ textAlign: 'left' }}>{slot.visibility} km</td>
                 </tr>
               ))}
           </React.Fragment>
@@ -277,17 +288,17 @@ const StormglassMarineWeather = ({
             <abbr title="Height of ocean swell (m) before breaking.">🏄 Swell</abbr>
           </th>
           <th>
-            <abbr title="Direction swell is coming from (degrees or compass).">🧭 Swell Dir</abbr>
-          </th>
-          <th>
             <abbr title="Average wind speed (km/h). Affects surface conditions.">💨 Wind</abbr>
           </th>
           <th>
             <abbr title="Strongest wind gusts (km/h). Sudden bursts increase difficulties.">💨 Gust</abbr>
           </th>
-          <th>
-            <abbr title="Current speed (m/s). Important for paddlers and swimmers.">⚡ Curr Speed</abbr>
-          </th>
+          {/* Use slots instead of daySlots */}
+          {slots.some(s => s.currentSpeed?.noaa != null) && (
+            <th>
+              <abbr title="Current speed (m/s). Important for paddlers and swimmers.">⚡ Curr Speed</abbr>
+            </th>
+          )}
           <th>
             <abbr title="Visibility in km; important for navigation and safety.">👁 Visib</abbr>
           </th>
@@ -301,7 +312,7 @@ const StormglassMarineWeather = ({
               onClick={() => toggleDay(date)}
               style={{ cursor: 'pointer', background: '#f0f0f0' }}
             >
-              <td colSpan={10}>
+              <td colSpan={slots.some(s => s.currentSpeed?.noaa != null) ? 9 : 8}>
                 <strong>{getDayName(date)}</strong>
                 {tides && tides[date] && (
                   <span style={{ marginLeft: 12, fontWeight: 400, fontSize: '0.95em', color: '#2563eb' }}>
@@ -313,21 +324,38 @@ const StormglassMarineWeather = ({
                     )}
                   </span>
                 )}
-              </td> 
+              </td>
             </tr>
             {expandedDays[date] &&
               daySlots.map((s, idx) => (
                 <tr key={s.time || idx}>
-                  <td>{new Date(s.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                  <td>{formatMarineValue(s.waterTemperature?.noaa, '°C')}</td>
-                  <td>{formatMarineValue(s.waveHeight?.noaa, 'm')}</td>
-                  <td>{formatMarineValue(s.wavePeriod?.noaa, 's')}</td>
-                  <td>{formatMarineValue(s.swellHeight?.noaa, 'm')}</td>
-                  <td>{formatMarineValue(s.swellDirection?.noaa, '°')}</td>
-                  <td>{formatMarineValue(s.windSpeed?.noaa, '', true)}</td>
-                  <td>{formatMarineValue(s.gust?.noaa, '', true)}</td>
-                  <td>{formatMarineValue(s.currentSpeed?.noaa, 'm/s')}</td>
-                  <td>{formatMarineValue(s.visibility?.noaa, 'km')}</td>
+                  <td style={{ textAlign: 'left' }}>
+                    {new Date(s.time).toLocaleTimeString('en-GB', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: false,
+                    })}
+                  </td>
+                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.waterTemperature?.noaa, '°C')}</td>
+                  <td style={{ textAlign: 'left', fontSize: '1em' }}>{formatMarineValue(s.waveHeight?.noaa, 'm')}</td>
+                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.wavePeriod?.noaa, 's')}</td>
+                  <td style={{ textAlign: 'left' }}>
+                    {formatMarineValue(s.swellHeight?.noaa, 'm')}
+                    {typeof s.swellDirection?.noaa === 'number' && (
+                      <>
+                        &nbsp;<SwellArrow deg={s.swellDirection.noaa} />
+                      </>
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.windSpeed?.noaa, '', true)}</td>
+                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.gust?.noaa, '', true)}</td>
+                  {/* Only render Curr Speed cell if data exists */}
+                  {daySlots.some(slot => slot.currentSpeed?.noaa != null) && (
+                    <td style={{ textAlign: 'left' }}>
+                      {s.currentSpeed?.noaa != null ? formatMarineValue(s.currentSpeed.noaa, 'm/s') : ''}
+                    </td>
+                  )}
+                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.visibility?.noaa, 'km')}</td>
                 </tr>
               ))}
           </React.Fragment>
@@ -432,8 +460,8 @@ const WeatherPageBothLocations: React.FC = () => {
           </button>
         </nav>
       )}
-      <h1>5-Day Forecast</h1>
-      <div className="weather-tabs" style={{ marginBottom: '1.5rem' }}>
+      <h1 className="section-header">5-Day Forecast</h1>
+      <div className="day-tabs">
         <button className={activeTab === 'main' ? 'active' : ''} onClick={() => setActiveTab('main')} style={{ marginRight: '0.5rem' }}>
           Main Weather
         </button>

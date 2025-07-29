@@ -37,29 +37,10 @@ const CoastalLocationDialog: React.FC<{
   if (!open) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.36)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999
-      }}
-    >
-      <div
-        style={{
-          padding: 28,
-          background: '#fff',
-          borderRadius: 18,
-          maxWidth: 460,
-          width: '92vw',
-          position: 'relative'
-        }}
-      >
-        <button onClick={onClose} style={{ position: 'absolute', right: 12, top: 8, fontSize: 22, background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>&times;</button>
-        <h3 style={{ margin: '0 0 13px 0', color: '#2563eb', fontWeight: 700 }}>Pick your beach or coastal spot</h3>
+    <div className="coastal-dialog-backdrop">
+      <div className="coastal-dialog">
+        <button className="coastal-dialog-close" onClick={onClose}>&times;</button>
+        <h3 className="coastal-dialog-title">Pick your beach or coastal spot</h3>
         <input
           type="text"
           value={query}
@@ -67,55 +48,26 @@ const CoastalLocationDialog: React.FC<{
           placeholder="Search for beach, town, or coast"
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === "Enter" && doSearch()}
-          style={{
-            width: '100%',
-            padding: 10,
-            fontSize: '1rem',
-            border: '1.4px solid #bbb',
-            borderRadius: 7,
-            marginBottom: 13
-          }}
+          className="coastal-dialog-input"
         />
         <button
-          style={{
-            padding: '8px 18px',
-            borderRadius: 7,
-            fontWeight: 600,
-            background: '#059669',
-            color: '#fff',
-            fontSize: '1rem',
-            border: 'none',
-            width: '100%',
-            marginBottom: 12
-          }}
+          className="coastal-dialog-search"
           onClick={doSearch}
           disabled={loading || !query}
         >
           Search
         </button>
-        {loading && <div>Searching…</div>}
+        {loading && <div className="coastal-dialog-loading">Searching…</div>}
         {!loading && results.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          <ul className="coastal-dialog-list">
             {results.map((r, i) => (
-              <li key={i} style={{
-                cursor: 'pointer',
-                padding: '10px 0',
-                borderBottom: i !== results.length - 1 ? '1px solid #eef' : 'none'
-              }}>
+              <li key={i} className="coastal-dialog-list-item">
                 <button
-                  style={{
-                    width: "100%",
-                    background: "none",
-                    border: "none",
-                    color: "#174031",
-                    fontSize: "1.09rem",
-                    textAlign: "left",
-                    padding: 0
-                  }}
+                  className="coastal-dialog-list-btn"
                   onClick={() => onSave(r)}
                 >
                   {r.name}
-                  <span style={{ color: "#70b0ea", fontSize: "0.99rem", marginLeft: 6 }}>
+                  <span className="coastal-dialog-list-coords">
                     ({r.lat.toFixed(3)}, {r.lon.toFixed(3)})
                   </span>
                 </button>

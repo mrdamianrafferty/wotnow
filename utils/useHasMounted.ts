@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 
-/**
- * Returns true only on the client, after the component has mounted.
- */
 export function useHasMounted() {
   const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
