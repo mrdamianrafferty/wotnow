@@ -379,14 +379,29 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
     }
   };
 
-  const [popupActivity, setPopupActivity] = useState<null | {
+  const [popupActivity, setPopupActivity] = useState<{
     activityId: string;
     category: 'perfect' | 'good' | 'poor';
     reasons: { key: string; value: any; label: string }[];
-  }>(null);
+    marineData?: {
+      waveHeight?: number;
+      windSpeed?: number;
+      waterTemp?: number;
+      swellHeight?: number;
+      swellPeriod?: number;
+    };
+  } | null>(null);
 
   // Example popup component
-  function ActivityPopup({ activityId, category, reasons, highTide = [], lowTide = [], onClose }: any) {
+  function ActivityPopup({ 
+    activityId, 
+    category, 
+    reasons, 
+    marineData,
+    highTide = [], 
+    lowTide = [], 
+    onClose 
+  }: any) {
     const bgUrl = getActivityBg(activityId);
     const message = getActivityMessage(activityId, category, reasons);
     const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
@@ -428,71 +443,138 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
           >
             ×
           </button>
-          <div
-            style={{
-              background: 'rgba(0,0,0,0.45)',
-              borderRadius: 12,
-              padding: '1.2rem 1rem',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              cursor: 'pointer', // shows it's clickable
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-            onClick={() => {
-              setPopupActivity({
-                activityId: heroActivity.activityId,
-                category: heroActivity.category,
-                reasons: buildReasons(day, heroActivity.activityId),
-              });
-            }}
-          >
-            <h2 style={{
-              margin: 0,
-              fontSize: '1.6rem',
-              fontWeight: 700,
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'space-between', 
+            marginBottom: '12px'
+          }}>
+            <div style={{ 
+              fontSize: '1.4rem', 
+              fontWeight: 700, 
               color: '#fff',
-              textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+              textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+              flex: 1,
+              marginRight: '8px'
             }}>
               {activityId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </h2>
+            </div>
+            <div style={{ 
+              fontSize: '1.2rem',
+              fontWeight: 500,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              {category === 'perfect' && '💯'}
+              {category === 'good' && '👍'}
+              {category === 'poor' && '👎'}
+              <span style={{ 
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: category === 'perfect' ? '#10b981' : category === 'good' ? '#3b82f6' : '#f59e0b',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.9rem'
+              }}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </span>
+            </div>
+          </div>
+
+          <div style={{
+            fontSize: '0.95rem',
+            lineHeight: 1.4,
+            color: '#fff',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            {message}
+          </div>
+
+          {/* MARINE CONDITIONS */}
+          {isMarine && marineData && (
+            <div style={{
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '12px',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {typeof marineData.waveHeight === 'number' && (
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.2)', 
+                  padding: '4px 8px', 
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  fontWeight: 500
+                }}>
+                  🌊 {marineData.waveHeight}m
+                </span>
+              )}
+              {typeof marineData.windSpeed === 'number' && (
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.2)', 
+                  padding: '4px 8px', 
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  fontWeight: 500
+                }}>
+                  💨 {marineData.windSpeed}km/h
+                </span>
+              )}
+              {typeof marineData.waterTemp === 'number' && (
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.2)', 
+                  padding: '4px 8px', 
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  fontWeight: 500
+                }}>
+                  🌡️ {marineData.waterTemp.toFixed(1)}°
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* BEAUFORT SCALE */}
+          {isMarine && windKmh !== undefined && (
             <p style={{
               marginTop: '1rem',
-              fontSize: '1.15rem',
-              fontWeight: 500,
-              textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+              fontSize: '0.95rem',
+              color: '#fff',
+              background: 'rgba(0,0,0,0.25)',
+              borderRadius: 8,
+              padding: '0.7rem',
+              textAlign: 'left'
             }}>
-              {message}
+              <strong>What does {windKmh} km/h wind mean?</strong><br />
+              {getBeaufortExplanation(windKmh)}
             </p>
-            {isMarine && windKmh !== undefined && (
-              <p style={{
-                marginTop: '1rem',
-                fontSize: '0.95rem',
-                color: '#fff',
-                background: 'rgba(0,0,0,0.25)',
-                borderRadius: 8,
-                padding: '0.7rem',
-                textAlign: 'left'
-              }}>
-                <strong>What does {windKmh} km/h wind mean?</strong><br />
-                {getBeaufortExplanation(windKmh)}
-              </p>
-            )}
-            {isMarine && (
-              <table style={{ width: '100%', marginTop: '1rem', color: '#fff' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: '6px', fontWeight: 600 }}>High Tide</td>
-                    <td style={{ padding: '6px', textAlign: 'right' }}>{highTide.length ? highTide.join(' / ') : '—'}</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '6px', fontWeight: 600 }}>Low Tide</td>
-                    <td style={{ padding: '6px', textAlign: 'right' }}>{lowTide.length ? lowTide.join(' / ') : '—'}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-          </div>
+          )}
+
+          {/* TIDE TABLE */}
+          {isMarine && (
+            <table style={{ width: '100%', marginTop: '1rem', color: '#fff' }}>
+              <tbody>
+                <tr>
+                  <td style={{ padding: '6px', fontWeight: 600 }}>High Tide</td>
+                  <td style={{ padding: '6px', textAlign: 'right' }}>{highTide.length ? highTide.join(' / ') : '—'}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '6px', fontWeight: 600 }}>Low Tide</td>
+                  <td style={{ padding: '6px', textAlign: 'right' }}>{lowTide.length ? lowTide.join(' / ') : '—'}</td>
+                </tr>
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     );
@@ -658,10 +740,11 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
   />
   {/* Spacer to push nav to right if needed */}
   <div style={{ flex: 1 }} />
-  {/* TEXT NAVIGATION: hidden on mobile, visible on desktop */}
-  <nav className="global-nav" style={{ marginRight: 24 }}>
-    {/* ...nav links here... */}
-  </nav>
+            <div className="homepage-banner__text">
+              <h2 className="homepage-banner__title">What's good,&nbsp;when?</h2>
+              <p className="homepage-banner__subtitle">Live your best life, every day</p>
+            </div>
+
   <style>{`
     @media (max-width: 800px) {
       .global-nav {
@@ -823,8 +906,15 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
       setPopupActivity({
         activityId: heroActivity.activityId,
         category: heroActivity.score >= 80 ? 'perfect' : 'good',
-        reasons: buildReasons(day, heroActivity.activityId)
-    });
+        reasons: buildReasons(day, heroActivity.activityId),
+        marineData: {  // ✅ Add this marine data
+          waveHeight: day.waveHeight,
+          windSpeed: day.wind_speed,
+          waterTemp: day.waterTemperature,
+          swellHeight: day.swellHeight,
+          swellPeriod: day.swellPeriod
+        }
+      });
     }
   }}
 >
@@ -894,6 +984,13 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
             ? suggestion.reasoning
             : [{ key: 'reason', value: suggestion.reasoning, label: suggestion.reasoning }]
           : [],
+        marineData: {  // ✅ Add marine data
+          waveHeight: day.waveHeight,
+          windSpeed: day.wind_speed,
+          waterTemp: day.waterTemperature,
+          swellHeight: day.swellHeight,
+          swellPeriod: day.swellPeriod
+        }
       });
     }
   }}
@@ -1030,19 +1127,26 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
                                     <span
                                       style={{
                                         cursor: isOutdoor(suggestion.activityId) ? 'pointer' : 'default',
-                                        color: isOutdoor(suggestion.activityId) ? '#fff' : undefined, // white
-                                        fontWeight: isOutdoor(suggestion.activityId) ? 700 : undefined, // bold
+                                        color: isOutdoor(suggestion.activityId) ? '#fff' : undefined,
+                                        fontWeight: isOutdoor(suggestion.activityId) ? 700 : undefined,
                                         textDecoration: isOutdoor(suggestion.activityId) ? 'underline' : undefined,
                                       }}
-                                      onClick={() => {
-                                        if (isOutdoor(suggestion.activityId)) {
-                                          setPopupActivity({
-                                            activityId: suggestion.activityId,
-                                            category: suggestion.score >= 80 ? 'perfect' : 'good',
-                                            reasons: buildReasons(day, suggestion.activityId), // <-- use live weather data here
-                                          });
-                                        }
-                                      }}
+                                    onClick={() => {
+  if (isOutdoor(suggestion.activityId)) {
+    setPopupActivity({
+      activityId: suggestion.activityId,
+      category: suggestion.score >= 80 ? 'perfect' : 'good',
+      reasons: buildReasons(day, suggestion.activityId),
+      marineData: {  // ✅ ADD THIS MARINE DATA
+        waveHeight: day.waveHeight,
+        windSpeed: day.wind_speed,
+        waterTemp: day.waterTemperature,
+        swellHeight: day.swellHeight,
+        swellPeriod: day.swellPeriod
+      }
+    });
+  }
+}}
                                     >
                                       {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId}
                                     </span>
@@ -1167,40 +1271,91 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
 
         {/* ENHANCED MOBILE NAVIGATION */}
         {menuOpen && (
-  <nav
-    className="mobile-nav"
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      background: 'rgba(0,0,0,0.7)',
-      zIndex: 1000,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center'
-    }}
-  >
-    <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Home</a>
-    <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Interests</a>
-    <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Weather</a>
-    <button
-      onClick={() => setMenuOpen(false)}
+  <>
+    {/* Invisible overlay to detect clicks outside the menu */}
+    <div 
+      className="menu-overlay"
       style={{
-        marginTop: 24,
-        background: '#fff',
-        border: 'none',
-        padding: '8px 16px',
-        borderRadius: 6,
-        fontWeight: 600,
-        cursor: 'pointer'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999,
+        cursor: 'default'
+      }}
+      onClick={() => setMenuOpen(false)}
+    />
+    
+    {/* Menu container */}
+    <nav
+      className="navigation-menu"
+      style={{
+        position: 'fixed',
+        zIndex: 1000,
+        top: 0,
+        left: 0
       }}
     >
-      Close
-    </button>
-  </nav>
+      {/* Menu content */}
+      <div 
+        className="menu-content"
+        style={{
+          background: '#2b323c',
+          borderRadius: '0 0 12px 0', // Increased roundness
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          padding: '12px 24px',
+          minWidth: '220px',
+          maxWidth: '280px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start'
+        }}
+        onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
+      >
+        <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
+        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
+        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
+        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
+        <button
+          onClick={() => setMenuOpen(false)}
+          style={{
+            marginTop: 24,
+            background: '#fff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: 6,
+            fontWeight: 600,
+            cursor: 'pointer',
+            color: '#000'
+          }}
+        >
+          Close
+        </button>
+      </div>
+
+      <style jsx>{`
+        @media (min-width: 800px) {
+          .navigation-menu {
+            top: 60px; /* Position below header on desktop */
+          }
+          
+          .menu-content {
+            border-radius: 0 0 12px 12px !important; /* Increased roundness for desktop */
+            margin-left: 12px;
+          }
+          
+          .menu-content a:hover {
+            text-decoration: underline;
+          }
+          
+          .menu-content button {
+            display: none; /* Hide close button on desktop */
+          }
+        }
+      `}</style>
+    </nav>
+  </>
 )}
 
 {/* Mobile location banner (bottom, visible on mobile only) */}
@@ -1250,8 +1405,9 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
     activityId={popupActivity.activityId}
     category={popupActivity.category}
     reasons={popupActivity.reasons}
-    highTide={tideData.high}   // <-- Pass high tide times
-    lowTide={tideData.low}     // <-- Pass low tide times
+    marineData={popupActivity.marineData}  // ✅ Add this line
+    highTide={tideData.high}
+    lowTide={tideData.low}
     onClose={() => setPopupActivity(null)}
   />
 )}

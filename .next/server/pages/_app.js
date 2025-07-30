@@ -41,7 +41,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ App)\n/* harmony export */ });\n/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ \"react/jsx-dev-runtime\");\n/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _styles_index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../styles/index.css */ \"(pages-dir-node)/./styles/index.css\");\n/* harmony import */ var _styles_index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_styles_index_css__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _context_UserPreferencesContext__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../context/UserPreferencesContext */ \"(pages-dir-node)/./context/UserPreferencesContext.tsx\");\n/* harmony import */ var next_link__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! next/link */ \"(pages-dir-node)/./node_modules/next/link.js\");\n/* harmony import */ var next_link__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(next_link__WEBPACK_IMPORTED_MODULE_3__);\n\n\n\n\nfunction App({ Component, pageProps }) {\n    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_context_UserPreferencesContext__WEBPACK_IMPORTED_MODULE_2__.UserPreferencesProvider, {\n        children: [\n            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(\"nav\", {\n                children: [\n                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)((next_link__WEBPACK_IMPORTED_MODULE_3___default()), {\n                        href: \"/\",\n                        children: \"Home\"\n                    }, void 0, false, {\n                        fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n                        lineNumber: 11,\n                        columnNumber: 11\n                    }, this),\n                    \" | \",\n                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)((next_link__WEBPACK_IMPORTED_MODULE_3___default()), {\n                        href: \"/interests\",\n                        children: \"Set Your Interests\"\n                    }, void 0, false, {\n                        fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n                        lineNumber: 11,\n                        columnNumber: 40\n                    }, this),\n                    \" | \",\n                    /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)((next_link__WEBPACK_IMPORTED_MODULE_3___default()), {\n                        href: \"/weather\",\n                        children: \"Weather in Detail\"\n                    }, void 0, false, {\n                        fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n                        lineNumber: 11,\n                        columnNumber: 92\n                    }, this)\n                ]\n            }, void 0, true, {\n                fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n                lineNumber: 9,\n                columnNumber: 7\n            }, this),\n            /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(Component, {\n                ...pageProps\n            }, void 0, false, {\n                fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n                lineNumber: 14,\n                columnNumber: 7\n            }, this)\n        ]\n    }, void 0, true, {\n        fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n        lineNumber: 8,\n        columnNumber: 5\n    }, this);\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHBhZ2VzLWRpci1ub2RlKS8uL3BhZ2VzL19hcHAudHN4IiwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7OztBQUE0QjtBQUUrQztBQUMvQztBQUViLFNBQVNFLElBQUksRUFBRUMsU0FBUyxFQUFFQyxTQUFTLEVBQVk7SUFDNUQscUJBQ0UsOERBQUNKLG9GQUF1QkE7OzBCQUN0Qiw4REFBQ0s7O2tDQUVHLDhEQUFDSixrREFBSUE7d0JBQUNLLE1BQUs7a0NBQUk7Ozs7OztvQkFBVztrQ0FBRyw4REFBQ0wsa0RBQUlBO3dCQUFDSyxNQUFLO2tDQUFhOzs7Ozs7b0JBQXlCO2tDQUFHLDhEQUFDTCxrREFBSUE7d0JBQUNLLE1BQUs7a0NBQVc7Ozs7Ozs7Ozs7OzswQkFHM0csOERBQUNIO2dCQUFXLEdBQUdDLFNBQVM7Ozs7Ozs7Ozs7OztBQUc5QiIsInNvdXJjZXMiOlsiL1VzZXJzL2RhbWlhbnJhZmZlcnR5L1Byb2plY3RzL1dvdE5vdy9wYWdlcy9fYXBwLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgJy4uL3N0eWxlcy9pbmRleC5jc3MnXG5pbXBvcnQgdHlwZSB7IEFwcFByb3BzIH0gZnJvbSAnbmV4dC9hcHAnXG5pbXBvcnQgeyBVc2VyUHJlZmVyZW5jZXNQcm92aWRlciB9IGZyb20gJy4uL2NvbnRleHQvVXNlclByZWZlcmVuY2VzQ29udGV4dCdcbmltcG9ydCBMaW5rIGZyb20gJ25leHQvbGluaydcblxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gQXBwKHsgQ29tcG9uZW50LCBwYWdlUHJvcHMgfTogQXBwUHJvcHMpIHtcbiAgcmV0dXJuIChcbiAgICA8VXNlclByZWZlcmVuY2VzUHJvdmlkZXI+XG4gICAgICA8bmF2PlxuICAgICAgICBcbiAgICAgICAgICA8TGluayBocmVmPVwiL1wiPkhvbWU8L0xpbms+IHwgPExpbmsgaHJlZj1cIi9pbnRlcmVzdHNcIj5TZXQgWW91ciBJbnRlcmVzdHM8L0xpbms+IHwgPExpbmsgaHJlZj1cIi93ZWF0aGVyXCI+V2VhdGhlciBpbiBEZXRhaWw8L0xpbms+XG4gICAgICAgIFxuICAgICAgPC9uYXY+XG4gICAgICA8Q29tcG9uZW50IHsuLi5wYWdlUHJvcHN9IC8+XG4gICAgPC9Vc2VyUHJlZmVyZW5jZXNQcm92aWRlcj5cbiAgKVxufVxuIl0sIm5hbWVzIjpbIlVzZXJQcmVmZXJlbmNlc1Byb3ZpZGVyIiwiTGluayIsIkFwcCIsIkNvbXBvbmVudCIsInBhZ2VQcm9wcyIsIm5hdiIsImhyZWYiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(pages-dir-node)/./pages/_app.tsx\n");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (/* binding */ App)\n/* harmony export */ });\n/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react/jsx-dev-runtime */ \"react/jsx-dev-runtime\");\n/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _styles_index_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../styles/index.css */ \"(pages-dir-node)/./styles/index.css\");\n/* harmony import */ var _styles_index_css__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_styles_index_css__WEBPACK_IMPORTED_MODULE_1__);\n/* harmony import */ var _context_UserPreferencesContext__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../context/UserPreferencesContext */ \"(pages-dir-node)/./context/UserPreferencesContext.tsx\");\n// Replace the entire file with this cleaned version:\n\n\n\nfunction App({ Component, pageProps }) {\n    return /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(_context_UserPreferencesContext__WEBPACK_IMPORTED_MODULE_2__.UserPreferencesProvider, {\n        children: /*#__PURE__*/ (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV)(Component, {\n            ...pageProps\n        }, void 0, false, {\n            fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n            lineNumber: 11,\n            columnNumber: 7\n        }, this)\n    }, void 0, false, {\n        fileName: \"/Users/damianrafferty/Projects/WotNow/pages/_app.tsx\",\n        lineNumber: 9,\n        columnNumber: 5\n    }, this);\n}\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHBhZ2VzLWRpci1ub2RlKS8uL3BhZ2VzL19hcHAudHN4IiwibWFwcGluZ3MiOiI7Ozs7Ozs7OztBQUFBLHFEQUFxRDs7QUFFekI7QUFFK0M7QUFFNUQsU0FBU0MsSUFBSSxFQUFFQyxTQUFTLEVBQUVDLFNBQVMsRUFBWTtJQUM1RCxxQkFDRSw4REFBQ0gsb0ZBQXVCQTtrQkFFdEIsNEVBQUNFO1lBQVcsR0FBR0MsU0FBUzs7Ozs7Ozs7Ozs7QUFHOUIiLCJzb3VyY2VzIjpbIi9Vc2Vycy9kYW1pYW5yYWZmZXJ0eS9Qcm9qZWN0cy9Xb3ROb3cvcGFnZXMvX2FwcC50c3giXSwic291cmNlc0NvbnRlbnQiOlsiLy8gUmVwbGFjZSB0aGUgZW50aXJlIGZpbGUgd2l0aCB0aGlzIGNsZWFuZWQgdmVyc2lvbjpcblxuaW1wb3J0ICcuLi9zdHlsZXMvaW5kZXguY3NzJ1xuaW1wb3J0IHR5cGUgeyBBcHBQcm9wcyB9IGZyb20gJ25leHQvYXBwJ1xuaW1wb3J0IHsgVXNlclByZWZlcmVuY2VzUHJvdmlkZXIgfSBmcm9tICcuLi9jb250ZXh0L1VzZXJQcmVmZXJlbmNlc0NvbnRleHQnXG5cbmV4cG9ydCBkZWZhdWx0IGZ1bmN0aW9uIEFwcCh7IENvbXBvbmVudCwgcGFnZVByb3BzIH06IEFwcFByb3BzKSB7XG4gIHJldHVybiAoXG4gICAgPFVzZXJQcmVmZXJlbmNlc1Byb3ZpZGVyPlxuICAgICAgey8qIOKchSBSZW1vdmVkIHRoZSB0ZXh0IG5hdmlnYXRpb24gLSBub3cgb25seSBoYW1idXJnZXIgbWVudSB3aWxsIHNob3cgKi99XG4gICAgICA8Q29tcG9uZW50IHsuLi5wYWdlUHJvcHN9IC8+XG4gICAgPC9Vc2VyUHJlZmVyZW5jZXNQcm92aWRlcj5cbiAgKVxufSJdLCJuYW1lcyI6WyJVc2VyUHJlZmVyZW5jZXNQcm92aWRlciIsIkFwcCIsIkNvbXBvbmVudCIsInBhZ2VQcm9wcyJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(pages-dir-node)/./pages/_app.tsx\n");
 
 /***/ }),
 
@@ -52,17 +52,6 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
 /***/ (() => {
 
 
-
-/***/ }),
-
-/***/ "next/dist/compiled/next-server/pages.runtime.dev.js":
-/*!**********************************************************************!*\
-  !*** external "next/dist/compiled/next-server/pages.runtime.dev.js" ***!
-  \**********************************************************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("next/dist/compiled/next-server/pages.runtime.dev.js");
 
 /***/ }),
 
@@ -86,17 +75,6 @@ module.exports = require("react");
 "use strict";
 module.exports = require("react/jsx-dev-runtime");
 
-/***/ }),
-
-/***/ "react/jsx-runtime":
-/*!************************************!*\
-  !*** external "react/jsx-runtime" ***!
-  \************************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("react/jsx-runtime");
-
 /***/ })
 
 };
@@ -106,7 +84,7 @@ module.exports = require("react/jsx-runtime");
 var __webpack_require__ = require("../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@swc"], () => (__webpack_exec__("(pages-dir-node)/./pages/_app.tsx")));
+var __webpack_exports__ = (__webpack_exec__("(pages-dir-node)/./pages/_app.tsx"));
 module.exports = __webpack_exports__;
 
 })();

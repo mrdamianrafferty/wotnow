@@ -1706,6 +1706,7 @@ section {
   color: #222;
   font-weight: 500;
 }
+
 /* === MOBILE GRID LAYOUT === */
 @media (max-width: 600px) {
   .main-grid, .activity-grid {
@@ -1850,4 +1851,126 @@ td, th, .marine-card-stat-label {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .activity-card {
+    min-height: 180px !important;
+  }
+  
+  nav[role="tablist"] {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  
+  nav[role="tablist"]::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  nav[role="tablist"]::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 2px;
+  }
+  
+  nav[role="tablist"]::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  main[role="tabpanel"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Desktop vs Mobile Navigation Menu */
+.navigation-menu {
+  position: fixed;
+  z-index: 1000;
+}
+
+.menu-content {
+  background: #2b323c;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 12px 24px;
+  min-width: 220px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 12px;
+}
+
+.menu-content a {
+  color: #fff;
+  font-size: 1.5rem;
+  margin: 16px 0;
+  text-decoration: none;
+  width: 100%;
+}
+
+.menu-content a:hover {
+  text-decoration: underline;
+}
+
+.menu-content button {
+  margin-top: 24px;
+  background: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #000;
+}
+
+/* Mobile overlay (full screen) */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  cursor: default;
+}
+
+/* Desktop menu positioning */
+@media (min-width: 800px) {
+  .navigation-menu {
+    top: 60px; /* Position below header on desktop */
+  }
+  
+  .menu-content {
+    margin: 0 0 0 12px;
+    border-radius: 0 0 12px 12px;
+  }
+  
+  .menu-content button {
+    display: none; /* Hide close button on desktop */
+  }
+  
+  /* Option to make overlay transparent on desktop */
+  .menu-overlay {
+    background: transparent;
+  }
+}
+
+/* Mobile menu styling */
+@media (max-width: 799px) {
+  .menu-overlay {
+    background: rgba(0,0,0,0.7);
+  }
+  
+  .navigation-menu {
+    top: 0;
+    left: 0;
+  }
+  
+  .menu-content {
+    border-radius: 12px;
+  }
 }

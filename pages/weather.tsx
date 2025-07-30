@@ -371,6 +371,7 @@ const WeatherPageBothLocations: React.FC = () => {
   const [isClient, setIsClient] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
+
   const mainLocation = preferences.locations?.find((l) => l.type === 'main') || preferences.location;
   const coastalLocation = preferences.locations?.find((l) => l.type === 'coastal');
 
@@ -386,9 +387,8 @@ const WeatherPageBothLocations: React.FC = () => {
     setIsClient(true);
   }, []);
 
-  const [activeTab, setActiveTab] = useState<
-    'main' | 'marine' | 'placeholder1' | 'placeholder2' | 'placeholder3' | 'placeholder4'
-  >('main');
+  // Update the state definition
+const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
 
   const [tides, setTides] = useState<Record<string, { high: string[]; low: string[] }>>({});
 
@@ -399,7 +399,7 @@ const WeatherPageBothLocations: React.FC = () => {
         const res = await fetch(`/api/tides?lat=${coastalLocation.lat}&lon=${coastalLocation.lon}`);
         const data = await res.json();
         // Group by date and type
-        const grouped: Record<string, { high: string[]; low: string[] }> = {};
+        const grouped: Record<string, { high: string[]; low: string }> = {};
         (data.data || []).forEach((tide: any) => {
           const date = tide.time.slice(0, 10);
           if (!grouped[date]) grouped[date] = { high: [], low: [] };
@@ -416,394 +416,208 @@ const WeatherPageBothLocations: React.FC = () => {
   }, [coastalLocation]);
 
   return (
-    <div className="container" style={{ padding: '1rem', position: 'relative' }}>
-      <img
-        src="/burger-menu-svgrepo-com.svg"
-        alt="Open menu"
-        className="burger-menu-icon"
-        style={{ width: 36, height: 36, cursor: 'pointer', display: 'none', position: 'absolute', top: 18, right: 18, zIndex: 1100 }}
-        onClick={() => setMenuOpen(true)}
-      />
-      {menuOpen && (
-        <nav
-          className="mobile-nav"
+    <>
+      {/* ✅ ADD HEADER BANNER */}
+      <header
+        className="homepage-banner"
+        style={{
+          position: 'relative',
+          minHeight: 60,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '8px 0 8px 0',
+          background: '#fff',
+          borderBottom: '1px solid #e5e7eb'
+        }}
+      >
+        {/* Hamburger icon: left */}
+        <img
+          src="/burger-menu-svgrepo-com.svg"
+          alt="Open menu"
+          className="burger-menu-icon"
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'rgba(0,0,0,0.7)',
-            zIndex: 2000,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
+            width: 36,
+            height: 36,
+            cursor: 'pointer',
+            marginLeft: 12,
+            marginRight: 12,
+            zIndex: 10,
+            display: 'block'
           }}
-        >
-          <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Home</a>
-          <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Interests</a>
-          <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0' }}>Weather</a>
-          <button
-            onClick={() => setMenuOpen(false)}
+          onClick={() => setMenuOpen(true)}
+        />
+        
+        {/* Logo: left-aligned, next to hamburger */}
+        <img
+          src="/wotnow-horizontal.png"
+          alt="WotNow Logo"
+          className="homepage-banner__logo"
+          style={{
+            display: 'block',
+            maxWidth: 180,
+            height: 'auto'
+          }}
+        />
+        
+        {/* Spacer to push content to right */}
+        <div style={{ flex: 1 }} />
+        
+        {/* Page-specific text */}
+        <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
+          <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
+            Weather Details
+          </h2>
+          <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
+            5-day forecast & marine conditions
+          </p>
+        </div>
+
+        <style>{`
+          @media (max-width: 800px) {
+            .homepage-banner__text {
+              display: none !important;
+            }
+          }
+        `}</style>
+      </header>
+
+      {/* ✅ ADD MOBILE NAVIGATION MENU */}
+      {menuOpen && (
+        <>
+          {/* Invisible overlay to detect clicks outside the menu */}
+          <div 
+            className="menu-overlay"
             style={{
-              marginTop: 24,
-              background: '#fff',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: 6,
-              fontWeight: 600,
-              cursor: 'pointer'
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999,
+              cursor: 'default'
+            }}
+            onClick={() => setMenuOpen(false)}
+          />
+          
+          {/* Menu container */}
+          <nav
+            className="navigation-menu"
+            style={{
+              position: 'fixed',
+              zIndex: 1000,
+              top: 0,
+              left: 0
             }}
           >
-            Close
+            {/* Menu content with properly rounded corners */}
+            <div 
+              className="menu-content"
+              style={{
+                background: '#2b323c',
+                borderRadius: '12px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                padding: '12px 24px',
+                minWidth: '220px',
+                maxWidth: '280px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                margin: '12px'
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
+            >
+              <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
+              <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
+              <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
+              <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
+              <button
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  marginTop: 24,
+                  background: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  color: '#000'
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            <style jsx>{`
+              @media (min-width: 800px) {
+                .navigation-menu {
+                  top: 60px; /* Position below header on desktop */
+                }
+                
+                .menu-content {
+                  margin: 0 0 0 12px;
+                  border-radius: 0 0 12px 12px !important; /* Only round bottom corners on desktop */
+                }
+                
+                .menu-content a:hover {
+                  text-decoration: underline;
+                }
+                
+                .menu-content button {
+                  display: none; /* Hide close button on desktop */
+                }
+              }
+              
+              @media (max-width: 799px) {
+                .menu-overlay {
+                  background: rgba(0,0,0,0.7);
+                }
+              }
+            `}</style>
+          </nav>
+        </>
+      )}
+      {/* EXISTING WEATHER CONTENT */}
+      <div className="container" style={{ padding: '1rem', position: 'relative' }}>
+        <div className="day-tabs">
+          <button 
+            className={activeTab === 'main' ? 'active' : ''} 
+            onClick={() => setActiveTab('main')} 
+            style={{ marginRight: '0.5rem' }}
+          >
+            Main Weather
           </button>
-        </nav>
-      )}
-      <h1 className="section-header">5-Day Forecast</h1>
-      <div className="day-tabs">
-        <button className={activeTab === 'main' ? 'active' : ''} onClick={() => setActiveTab('main')} style={{ marginRight: '0.5rem' }}>
-          Main Weather
-        </button>
-        <button className={activeTab === 'marine' ? 'active' : ''} onClick={() => setActiveTab('marine')} style={{ marginRight: '0.5rem' }}>
-          Marine Weather
-        </button>
-        <button className={activeTab === 'placeholder1' ? 'active' : ''} onClick={() => setActiveTab('placeholder1')} style={{ marginRight: '0.5rem' }}>
-          🏄‍♂️ Surf Outlook
-        </button>
-        <button className={activeTab === 'placeholder2' ? 'active' : ''} onClick={() => setActiveTab('placeholder2')} style={{ marginRight: '0.5rem' }}>
-          SUP Outlook
-        </button>
-        <button className={activeTab === 'placeholder3' ? 'active' : ''} onClick={() => setActiveTab('placeholder3')} style={{ marginRight: '0.5rem' }}>
-          Boat Fishing
-        </button>
-        <button className={activeTab === 'placeholder4' ? 'active' : ''} onClick={() => setActiveTab('placeholder4')} style={{ marginRight: '0.5rem' }}>
-          Kayak
-        </button>
+          <button 
+            className={activeTab === 'marine' ? 'active' : ''} 
+            onClick={() => setActiveTab('marine')} 
+            style={{ marginRight: '0.5rem' }}
+          >
+            Marine Weather
+          </button>
+        </div>
+
+        {activeTab === 'main' && (
+          <>
+            <h2>📍 {isClient && mainLocation?.name ? mainLocation.name : 'Main location'}</h2>
+            {isClient && mainLocation ? (
+              <MainOpenWeatherForecast location={mainLocation} />
+            ) : (
+              <p>⚠️ No main location selected.</p>
+            )}
+          </>
+        )}
+
+        {activeTab === 'marine' && (
+          <>
+            <h2>🌊 {isClient && coastalLocation?.name ? coastalLocation.name : 'Coastal location'}</h2>
+            {isClient && coastalLocation ? (
+              <StormglassMarineWeather location={coastalLocation} start={range.start} end={range.end} tides={tides} />
+            ) : (
+              <p>⚠️ No coastal location selected.</p>
+            )}
+          </>
+        )}
       </div>
-
-      {activeTab === 'main' && (
-        <>
-          <h2>📍 {isClient && mainLocation?.name ? mainLocation.name : 'Main location'}</h2>
-          {isClient && mainLocation ? (
-            <MainOpenWeatherForecast location={mainLocation} />
-          ) : (
-            <p>⚠️ No main location selected.</p>
-          )}
-        </>
-      )}
-
-      {activeTab === 'marine' && (
-        <>
-          <h2>🌊 {isClient && coastalLocation?.name ? coastalLocation.name : 'Coastal location'}</h2>
-          {isClient && coastalLocation ? (
-            <StormglassMarineWeather location={coastalLocation} start={range.start} end={range.end} tides={tides} />
-          ) : (
-            <p>⚠️ No coastal location selected.</p>
-          )}
-        </>
-      )}
-
-{activeTab === 'placeholder1' && (
-  <section style={{ lineHeight: 1.5, maxWidth: 700 }}>
-    <h2>🏄‍♂️ Surf Outlook</h2>
-
-    <h3>Conditions Overview for Today and Tomorrow</h3>
-    <p>
-      We’ve got small, steady swell all day, building slightly into the evening.
-      Nothing epic, but clean and friendly — perfect for beginners and longboarders,
-      with a few fun faces for intermediates later on. Advanced riders might get bored
-      unless you just wanna get wet. Wind stays light through the morning, picking
-      up in the afternoon but not too messy. Water’s mild, air is sunny and warm.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🔆 Best windows to surf</h3>
-    <p><b>✅ Morning (08:00–12:00)</b></p>
-    <p>~1.3m, clean, 8–9s period, very light winds.<br />
-      Super mellow, perfect for beginners and anyone looking to cruise a longboard or softie.
-      Waves hold their shape and it’s glassier before the wind gets into it.
-    </p>
-
-    <p><b>✅ Evening (19:00–21:00)</b></p>
-    <p>~1.2–1.4m, longer 14–15s period building in, light winds easing off.<br />
-      Best of the day for intermediates — longer-period energy starts showing and waves
-      have a bit more punch, while winds calm down. More wall to work with.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🌤️ Hourly vibe check:</h3>
-
-    <table className="marine-table spaced" style={{ marginTop: '0.75rem' }}>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>🌊 Wave (m)</th>
-          <th>⏳ Period (s)</th>
-          <th>💨 Wind (km/h)</th>
-          <th>🏄‍♀️ Who it suits</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>08–11</td><td>1.3</td><td>5.8–5.7</td><td>~10–14</td><td>Beginners, longboards</td></tr>
-        <tr><td>12–16</td><td>1.3–1.1</td><td>5.6–6.5</td><td>~15–16</td><td>Still OK, wind picking up</td></tr>
-        <tr><td>17–18</td><td>1.0–1.1</td><td>7.0–7.3</td><td>~14–12</td><td>Intermediates, small walls</td></tr>
-        <tr><td>19–21</td><td>1.2–1.4</td><td>14–15</td><td>~12–10</td><td>Best punch, clean evening glass</td></tr>
-        <tr><td>After dark</td><td>—</td><td>—</td><td>Grab a beer, not your board 🍻</td></tr>
-      </tbody>
-    </table>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🩱 What to bring?</h3>
-    <ul>
-      <li>3/2 or shorty if you’re tough — water ~14–16°C, air ~23°C</li>
-      <li>Longboard or fish if you’ve got one — today’s not about barrels</li>
-      <li>Sunscreen, wax, smile</li>
-    </ul>
-  </section>
-)}
-
-{activeTab === 'placeholder2' && (
-  <section style={{ lineHeight: 1.5, maxWidth: 700 }}>
-    <h2>🛶 SUP Outlook: Today + Tomorrow</h2>
-
-    <h3>Conditions Overview</h3>
-    <p>
-      This is a great day for paddleboarders — small, steady swell with no real nastiness, light morning winds, and warm air & water. The wind does freshen a bit after midday and the sea chops up slightly, but evenings mellow out again. Perfect for beginners, casual cruisers, or even a fitness paddle.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🔆 Best windows for paddleboarding</h3>
-    <p><b>✅ Morning glass-off (08:00–12:00)</b></p>
-    <p>
-      Light winds, calm sea state, very manageable ~1.3m swell rolling through gently. Ideal for all levels, from absolute beginners to experienced SUPers who want to tour along the coast or get a proper workout.
-    </p>
-
-    <p><b>✅ Evening calm (19:00–21:00)</b></p>
-    <p>
-      Winds drop back down and the longer-period swell is slow and gentle — lovely sunset cruise conditions with plenty of stability.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🌤️ Hourly vibe check:</h3>
-
-    <table className="marine-table spaced" style={{ marginTop: '0.75rem' }}>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>🌊 Wave (m)</th>
-          <th>💨 Wind (km/h)</th>
-          <th>🌅 Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>08–11</td>
-          <td>~1.3</td>
-          <td>~10–14</td>
-          <td>Calm, clean, best for everyone</td>
-        </tr>
-        <tr>
-          <td>12–16</td>
-          <td>~1.3–1.1</td>
-          <td>~15–16</td>
-          <td>Manageable but choppier</td>
-        </tr>
-        <tr>
-          <td>17–18</td>
-          <td>~1.1</td>
-          <td>~12–11</td>
-          <td>Settling, decent again</td>
-        </tr>
-        <tr>
-          <td>19–21</td>
-          <td>~1.2–1.4</td>
-          <td>~10–9</td>
-          <td>Smooth & peaceful sunset vibes</td>
-        </tr>
-        <tr>
-          <td>After dark</td>
-          <td>—</td>
-          <td>—</td>
-          <td>Night paddling only if lit & confident! 🌙</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🩱 What to bring?</h3>
-    <ul>
-      <li>Flatwater or all-round board</li>
-      <li>Light wetsuit or rash vest (water ~14–16°C)</li>
-      <li>Dry bag & water bottle — it’s warm out there (air ~23°C)</li>
-      <li>Sunglasses & hat, sun’s blazing</li>
-    </ul>
-
-    <p>
-      🌅 <b>Best bet:</b> calm morning for easy paddling or a little SUP yoga.<br />
-      🌇 <b>Evening:</b> serene sunset cruise along the coast.<br />
-      💨 <b>Midday:</b> only for the confident — wind chop makes it harder work!
-    </p>
-  </section>
-)}
-
-{activeTab === 'placeholder3' && (
-  <section style={{ lineHeight: 1.5, maxWidth: 700 }}>
-    <h2>🪝 Boat Fishing Outlook: Today + Tomorrow</h2>
-
-    <h3>Conditions Overview</h3>
-    <p>
-      We’re looking at a pretty decent stretch of weather for heading out. Swell stays low and steady through the daylight hours — no nasty surprises — and winds are lightest early and late, freshening a touch in the middle of the day. Visibility’s excellent, and it’s warm on deck. Overall: solid conditions for a comfortable day dropping lines or trolling.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🔆 Best times to launch</h3>
-    <p><b>✅ Early morning (08:00–12:00)</b></p>
-    <p>
-      Sea’s settled, wind’s still sleepy (~10–14 km/h), and swell’s mellow at around ~1.3m. Best for a calm trip, even for smaller craft or nervous passengers. You’ll have an easier time holding position and keeping baits where you want them.
-    </p>
-
-    <p><b>✅ Evening (19:00–21:00)</b></p>
-    <p>
-      Winds ease off again, and though the swell edges up slightly (to ~1.2–1.4m), it’s still very manageable — plus, golden light and cooler temps make for a cracking end to the day.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🌤️ Hourly vibe check:</h3>
-    
-    <table className="marine-table spaced" style={{ marginTop: '0.75rem' }}>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>🌊 Swell (m)</th>
-          <th>💨 Wind (km/h)</th>
-          <th>🎣 Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>08–11</td><td>~1.3</td><td>~10–14</td><td>Smooth sailing, ideal for dropping anchor</td></tr>
-        <tr><td>12–16</td><td>~1.3–1.1</td><td>~15–16</td><td>Still fine, but a bit more drift</td></tr>
-        <tr><td>17–18</td><td>~1.1</td><td>~12</td><td>Settling again</td></tr>
-        <tr><td>19–21</td><td>~1.2–1.4</td><td>~10–9</td><td>Calm evening, scenic & productive</td></tr>
-        <tr><td>After dark</td><td>—</td><td>—</td><td>Only if properly equipped & salty 🌙</td></tr>
-      </tbody>
-    </table>
-    
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🪝 What to pack?</h3>
-    <ul>
-      <li>Sunscreen & hat — deck gets hot (air ~23°C)</li>
-      <li>Cool drinks & snacks</li>
-      <li>Light jacket for evening breeze</li>
-      <li>Something for shade if you’re out midday</li>
-      <li>And of course… sharp hooks & fresh bait! 🐟</li>
-    </ul>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>Top tips</h3>
-    <p>
-      🌅 <b>Best bet:</b> morning launch for calm seas & easy fishing.<br />
-      🌇 Evening: relaxed sunset session & good bite chances.<br />
-      💨 Midday: fine if you don’t mind a bit of drift.
-    </p>
-
-    <p style={{ fontSize: '0.85rem', color: '#555', marginTop: '1rem' }}>
-      Current date: {new Date().toLocaleString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', hour12: true, timeZoneName: 'short',
-      })}
-    </p>
-  </section>
-)}
-
-{activeTab === 'placeholder4' && (
-  <section style={{ lineHeight: 1.5, maxWidth: 700 }}>
-    <h2>🚣 Kayaking Outlook: Today + Tomorrow</h2>
-
-    <h3>Conditions Overview</h3>
-    <p>
-      A solid day to get the kayak wet! Seas are mild, winds are mellow early and late, and visibility is crystal clear. Midday winds pick up and bring a bit of chop — manageable for experienced paddlers but not as relaxing. Air temps are warm and the water’s not too chilly, making it a pleasant few hours on the water.
-    </p>
-    <p>
-      Perfect for coastal touring, wildlife spotting, or just drifting along. Beginners will feel happiest in the morning and evening.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🔆 Best windows to paddle</h3>
-    <p><b>✅ Morning calm (08:00–12:00)</b></p>
-    <p>
-      Low winds (10–14 km/h), ~1.3m swell — very manageable. Great for all levels; easy to track straight and stay stable even in a sit-on-top.
-    </p>
-
-    <p><b>✅ Evening mellow (19:00–21:00)</b></p>
-    <p>
-      Winds drop again to ~10 km/h or less, seas stay gentle around ~1.2–1.4m, and the sunset light is unbeatable. If you’re confident, it’s a magic time to be out.
-    </p>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🌤️ Hourly vibe check:</h3>
-
-    <table className="marine-table spaced" style={{ marginTop: '0.75rem' }}>
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>🌊 Swell (m)</th>
-          <th>💨 Wind (km/h)</th>
-          <th>🚣 Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>08–11</td><td>~1.3</td><td>~10–14</td><td>Calm & safe for all</td></tr>
-        <tr><td>12–16</td><td>~1.3–1.1</td><td>~15–16</td><td>Choppier, better for experienced paddlers</td></tr>
-        <tr><td>17–18</td><td>~1.1</td><td>~12</td><td>Settling down</td></tr>
-        <tr><td>19–21</td><td>~1.2–1.4</td><td>~10–9</td><td>Smooth & serene sunset paddle</td></tr>
-        <tr><td>After dark</td><td>—</td><td>—</td><td>Only with lights & skills 🌙</td></tr>
-      </tbody>
-    </table>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>🩱 What to bring?</h3>
-    <ul>
-      <li>Buoyancy aid (always)</li>
-      <li>Dry bag for phone/keys</li>
-      <li>Hat & sunscreen (it’s ~23°C)</li>
-      <li>Water & snacks</li>
-      <li>Light layers — evening breeze can cool you off</li>
-      <li>Optional: fishing rod, camera, or a cold cider for the beach afterwards 🍏</li>
-    </ul>
-
-    <hr style={{ margin: '1.5rem 0' }} />
-
-    <h3>Top tips</h3>
-    <p>
-      🌅 <b>Best bet:</b> morning if you’re newer to paddling.<br />
-      🌇 Evening: for a peaceful glide along the coast.<br />
-      💨 Midday: fine if you’re strong & steady in chop.
-    </p>
-
-    <p style={{ fontSize: '0.85rem', color: '#555', marginTop: '1rem' }}>
-      Current date: {new Date().toLocaleString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-        hour: 'numeric', minute: 'numeric', hour12: true, timeZoneName: 'short',
-      })}
-    </p>
-  </section>
-)}
-
-    </div>
+    </>
   );
 };
 
