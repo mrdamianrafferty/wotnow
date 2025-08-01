@@ -60,6 +60,7 @@ const mainCategories = [
                     "kitesurfing",
                     "jet_skiing",
                     "scuba_diving",
+					"sailing",
                 ],
             },
             {
@@ -73,6 +74,7 @@ const mainCategories = [
                     "indoor_climbing",
                     "skateboarding",
                     "rollerblading",
+					"riding_motorbike",
                 ],
             },
         ],
@@ -102,7 +104,7 @@ const mainCategories = [
             {
                 key: "Strength & Gym",
                 icon: "🏋️‍♂️",
-                acts: ["gym_workout", "outdoor_gym"],
+                acts: ["gym_workout", "outdoor_gym", "zumba", "boxing", "spinning"],
             },
         ],
     },
@@ -225,6 +227,9 @@ const mainCategories = [
                     "playing_records",
                     "cooking",
                     "painting",
+					"gaming",
+					"online",
+					
                 ],
             },
             {
@@ -240,6 +245,8 @@ const mainCategories = [
                     "museum",
                     "shopping",
                     "dance",
+					"gallery",
+					"bowling",
                 ],
             },
             {
@@ -268,11 +275,15 @@ const waterActivityIds = [
     "surfing",
     "stand_up_paddleboarding",
     "snorkeling",
-    "swimming",
+    "kitesurfing",
+    "windsurfing",
+    "jet_skiing",
+    "scuba_diving",
+    "sailing",
     "sea_fishing_shore",
     "sea_fishing_boat",
     "beach",
-    "indoor_swimming",
+    "sea_swimming",
 ];
 
 // --------------- COASTAL LOCATION MODAL ---------------
@@ -590,9 +601,10 @@ const Interests: React.FC = () => {
                         alignItems: 'center',
                         padding: '8px 0 8px 0',
                         background: '#fff',
-                        borderBottom: '1px solid #e5e7eb'
+                        borderBottom: '1px solid #e5e7eb',
                     }}
                 >
+                    {/* Hamburger icon: left */}
                     <img
                         src="/burger-menu-svgrepo-com.svg"
                         alt="Open menu"
@@ -604,21 +616,29 @@ const Interests: React.FC = () => {
                             marginLeft: 12,
                             marginRight: 12,
                             zIndex: 10,
-                            display: 'block'
+                            display: 'block',
                         }}
                         onClick={() => setMenuOpen(true)}
                     />
-                    <img
-                        src="/wotnow-horizontal.png"
-                        alt="WotNow Logo"
-                        className="homepage-banner__logo"
-                        style={{
-                            display: 'block',
-                            maxWidth: 180,
-                            height: 'auto'
-                        }}
-                    />
+
+                    {/* Logo: left-aligned, next to hamburger */}
+                    <a href="/" style={{ display: 'block' }}>
+                        <img
+                            src="/wotnow-horizontal.png"
+                            alt="WotNow Logo"
+                            className="homepage-banner__logo"
+                            style={{
+                                display: 'block',
+                                maxWidth: 180,
+                                height: 'auto',
+                            }}
+                        />
+                    </a>
+
+                    {/* Spacer to push content to right */}
                     <div style={{ flex: 1 }} />
+
+                    {/* Page-specific text */}
                     <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
                         <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
                             Choose Your Interests
@@ -627,6 +647,14 @@ const Interests: React.FC = () => {
                             Pick activities you love
                         </p>
                     </div>
+
+                    <style>{`
+                        @media (max-width: 800px) {
+                            .homepage-banner__text {
+                                display: none !important;
+                            }
+                        }
+                    `}</style>
                 </header>
                 
                 {/* Loading state */}
@@ -652,7 +680,7 @@ const Interests: React.FC = () => {
                     alignItems: 'center',
                     padding: '8px 0 8px 0',
                     background: '#fff',
-                    borderBottom: '1px solid #e5e7eb'
+                    borderBottom: '1px solid #e5e7eb',
                 }}
             >
                 {/* Hamburger icon: left */}
@@ -667,26 +695,28 @@ const Interests: React.FC = () => {
                         marginLeft: 12,
                         marginRight: 12,
                         zIndex: 10,
-                        display: 'block'
+                        display: 'block',
                     }}
                     onClick={() => setMenuOpen(true)}
                 />
-                
+
                 {/* Logo: left-aligned, next to hamburger */}
-                <img
-                    src="/wotnow-horizontal.png"
-                    alt="WotNow Logo"
-                    className="homepage-banner__logo"
-                    style={{
-                        display: 'block',
-                        maxWidth: 180,
-                        height: 'auto'
-                    }}
-                />
-                
+                <a href="/" style={{ display: 'block' }}>
+                    <img
+                        src="/wotnow-horizontal.png"
+                        alt="WotNow Logo"
+                        className="homepage-banner__logo"
+                        style={{
+                            display: 'block',
+                            maxWidth: 180,
+                            height: 'auto',
+                        }}
+                    />
+                </a>
+
                 {/* Spacer to push content to right */}
                 <div style={{ flex: 1 }} />
-                
+
                 {/* Page-specific text */}
                 <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
                     <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
@@ -752,10 +782,10 @@ const Interests: React.FC = () => {
                       onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
                     >
                       <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-                      <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
-                      <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
-                      <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
-                      <button
+        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
+        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
+        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+        <button
                         onClick={() => setMenuOpen(false)}
                         style={{
                           marginTop: 24,

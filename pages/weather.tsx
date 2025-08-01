@@ -372,7 +372,7 @@ const WeatherPageBothLocations: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
 
-  const mainLocation = preferences.locations?.find((l) => l.type === 'main') || preferences.location;
+  const mainLocation = preferences.locations?.find((l) => l.type === 'home') || preferences.location;
   const coastalLocation = preferences.locations?.find((l) => l.type === 'coastal');
 
   const { slots, marine, loading } = useForecastData(mainLocation?.lat, mainLocation?.lon);
@@ -388,7 +388,7 @@ const WeatherPageBothLocations: React.FC = () => {
   }, []);
 
   // Update the state definition
-const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
+  const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
 
   const [tides, setTides] = useState<Record<string, { high: string[]; low: string[] }>>({});
 
@@ -415,6 +415,11 @@ const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
     fetchTides();
   }, [coastalLocation]);
 
+  useEffect(() => {
+    console.log("Saving preferences to localStorage:", preferences);
+    localStorage.setItem('preferences', JSON.stringify(preferences));
+  }, [preferences]);
+
   return (
     <>
       {/* ✅ ADD HEADER BANNER */}
@@ -427,7 +432,7 @@ const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
           alignItems: 'center',
           padding: '8px 0 8px 0',
           background: '#fff',
-          borderBottom: '1px solid #e5e7eb'
+          borderBottom: '1px solid #e5e7eb',
         }}
       >
         {/* Hamburger icon: left */}
@@ -442,26 +447,28 @@ const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
             marginLeft: 12,
             marginRight: 12,
             zIndex: 10,
-            display: 'block'
+            display: 'block',
           }}
           onClick={() => setMenuOpen(true)}
         />
-        
+
         {/* Logo: left-aligned, next to hamburger */}
-        <img
-          src="/wotnow-horizontal.png"
-          alt="WotNow Logo"
-          className="homepage-banner__logo"
-          style={{
-            display: 'block',
-            maxWidth: 180,
-            height: 'auto'
-          }}
-        />
-        
+        <a href="/" style={{ display: 'block' }}>
+          <img
+            src="/wotnow-horizontal.png"
+            alt="WotNow Logo"
+            className="homepage-banner__logo"
+            style={{
+              display: 'block',
+              maxWidth: 180,
+              height: 'auto',
+            }}
+          />
+        </a>
+
         {/* Spacer to push content to right */}
         <div style={{ flex: 1 }} />
-        
+
         {/* Page-specific text */}
         <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
           <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
@@ -527,10 +534,10 @@ const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
               onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
             >
               <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-              <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
-              <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
-              <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
-              <button
+        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
+        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
+        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+        <button
                 onClick={() => setMenuOpen(false)}
                 style={{
                   marginTop: 24,
@@ -616,6 +623,30 @@ const [activeTab, setActiveTab] = useState<'main' | 'marine'>('main');
             )}
           </>
         )}
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <a
+          href="/"
+          style={{
+            display: 'inline-block',
+            padding: '12px 24px',
+            background: '#3b82f6',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '8px',
+            fontWeight: 600,
+            transition: 'background 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#2563eb';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#3b82f6';
+          }}
+        >
+          ← Back to Homepage
+        </a>
       </div>
     </>
   );

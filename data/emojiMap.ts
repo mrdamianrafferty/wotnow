@@ -22,7 +22,7 @@ const emojiMap: Record<string, string> = {
   surfing: '🏄',
   stand_up_paddleboarding: '🦦',
   snorkeling: '🤿',
-  swimming: '🏊',
+  wild_swimming: '🏊',
   indoor_swimming: '🏊',
   mountain_biking: '🚵',
   rock_climbing: '🧗',
@@ -97,6 +97,17 @@ scuba_diving: '🤿',
 kitesurfing: '🏄‍♂️',
 volleyball_indoor: '🏐',
 windsurfing: '🏄‍♀️',
+  gaming: '🎮',
+  boxing: '🥊',
+  zumba: '🕺',
+  spinning: '🚴‍♀️',
+  riding_motorbike: '🏍️',
+  bowling: '🎳',
+  gallery: '🖼️',
+  online: '💻',
+  sailing: '⛵',
+  sea_swimming: '🌊'
+  
 };
 
 export default emojiMap;

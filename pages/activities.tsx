@@ -52,7 +52,7 @@ function isOutdoor(activityId: string): boolean {
 
 // Activity assessment categories
 function getAssessmentCategory(score: number): { 
-  status: 'poor' | 'good' | 'perfect'; 
+  status: 'poor' | 'fair' | 'good' | 'perfect'; 
   color: string; 
   emoji: string; 
   bgColor: string;
@@ -69,10 +69,16 @@ function getAssessmentCategory(score: number): {
     emoji: '👍', 
     bgColor: 'rgba(59, 130, 246, 0.1)' 
   };
+  if (score >= 40) return { 
+    status: 'fair', 
+    color: '#f59e0b', 
+    emoji: '🙆', 
+    bgColor: 'rgba(245, 158, 11, 0.1)' 
+  };
   return { 
     status: 'poor', 
     color: '#ef4444', 
-    emoji: '👎', 
+    emoji: '⚠️', 
     bgColor: 'rgba(239, 68, 68, 0.1)' 
   };
 }
@@ -150,23 +156,9 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, onClick }
         justifyContent: 'space-between'
       }}
       onClick={onClick}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
       tabIndex={0}
       role="button"
       aria-label={`${activity?.name || activityId} - ${assessment.status} conditions`}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
     >
       {/* Activity Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
@@ -257,7 +249,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, onClick }
                 borderRadius: '4px',
                 color: '#fff'
               }}>
-                🌡️ {day.waterTemperature.toFixed(1)}°
+                🏊‍♂️ {day.waterTemperature.toFixed(1)}°
               </span>
             )}
           </div>
@@ -584,7 +576,7 @@ export default function ActivitiesPage() {
           alignItems: 'center',
           padding: '8px 0 8px 0',
           background: '#fff',
-          borderBottom: '1px solid #e5e7eb'
+          borderBottom: '1px solid #e5e7eb',
         }}
       >
         {/* Hamburger icon: left */}
@@ -599,26 +591,28 @@ export default function ActivitiesPage() {
             marginLeft: 12,
             marginRight: 12,
             zIndex: 10,
-            display: 'block'
+            display: 'block',
           }}
           onClick={() => setMenuOpen(true)}
         />
-        
+
         {/* Logo: left-aligned, next to hamburger */}
-        <img
-          src="/wotnow-horizontal.png"
-          alt="WotNow Logo"
-          className="homepage-banner__logo"
-          style={{
-            display: 'block',
-            maxWidth: 180,
-            height: 'auto'
-          }}
-        />
-        
+        <a href="/" style={{ display: 'block' }}>
+          <img
+            src="/wotnow-horizontal.png"
+            alt="WotNow Logo"
+            className="homepage-banner__logo"
+            style={{
+              display: 'block',
+              maxWidth: 180,
+              height: 'auto',
+            }}
+          />
+        </a>
+
         {/* Spacer to push content to right */}
         <div style={{ flex: 1 }} />
-        
+
         {/* Page-specific text */}
         <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
           <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
@@ -684,10 +678,10 @@ export default function ActivitiesPage() {
               onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
             >
               <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-              <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
-              <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
-              <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
-              <button
+        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
+        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
+        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+        <button
                 onClick={() => setMenuOpen(false)}
                 style={{
                   marginTop: 24,
@@ -1016,7 +1010,7 @@ export default function ActivitiesPage() {
                         borderRadius: '6px',
                         fontSize: '0.9rem'
                       }}>
-                        🌡️ {selectedActivity.marineData.waterTemp.toFixed(1)}°
+                        🏊‍♂️ {selectedActivity.marineData.waterTemp.toFixed(1)}°
                       </span>
                     )}
                   </div>

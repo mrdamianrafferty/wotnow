@@ -610,7 +610,7 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
           <div className="homepage-banner__container">
             <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
             <div className="homepage-banner__text">
-              <h1 className="homepage-banner__title">What's good, when?</h1>
+              <h1 className="homepage-banner__title">Wots good, when?</h1>
               <p className="homepage-banner__subtitle">Live your best life, every day</p>
             </div>
           </div>
@@ -741,7 +741,7 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
   {/* Spacer to push nav to right if needed */}
   <div style={{ flex: 1 }} />
             <div className="homepage-banner__text">
-              <h2 className="homepage-banner__title">What's good,&nbsp;when?</h2>
+              <h1 className="homepage-banner__title">Wots good,&nbsp;when?</h1>
               <p className="homepage-banner__subtitle">Live your best life, every day</p>
             </div>
 
@@ -1025,7 +1025,7 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
                           }}>
 {/* homelocation summary text */}
  <div style={{ fontSize: '0.85rem', marginBottom: 6 }}>
-  🏡 {day.temperature}° and {day.description} in{' '}
+  📍 {day.temperature}° and {day.description} in{' '}
   <button
     type="button"
     onClick={() => {
@@ -1092,7 +1092,7 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
   )}
   {typeof day.waterTemperature === 'number' && (
     <li style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px' }}>
-      🌡️ {day.waterTemperature.toFixed(1)}°
+      🏊‍♂️ {day.waterTemperature.toFixed(1)}°
     </li>
   )}
 </ul>
@@ -1314,9 +1314,9 @@ const [timeInfo, setTimeInfo] = useState<any>(null); // <-- Add this line
         onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
       >
         <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage Interests</a>
-        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>All Activities</a>
-        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Weather Details</a>
+        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
+        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
+        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
         <button
           onClick={() => setMenuOpen(false)}
           style={{
