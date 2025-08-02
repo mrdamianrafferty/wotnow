@@ -283,6 +283,7 @@ const waterActivityIds = [
     "sea_fishing_shore",
     "sea_fishing_boat",
     "beach",
+    "beach_volleyball",
     "sea_swimming",
 ];
 

@@ -10,6 +10,7 @@ interface Slot {
   description: string;
   precipitation: number;
   wind: number;
+  windDirection: number | null; // Update windDirection type
   humidity: number;
   clouds: number;
   visibility: number;
@@ -68,6 +69,7 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
             description: item.weather?.[0]?.description ?? '',
             precipitation: item.rain?.['3h'] ?? item.snow?.['3h'] ?? 0,
             wind: item.wind?.speed ?? 0,
+            windDirection: item.wind?.deg ?? null, // Add wind direction
             humidity: item.main?.humidity ?? 0,
             clouds: item.clouds?.all ?? 0,
             visibility: (item.visibility ?? 10000) / 1000,
@@ -142,8 +144,8 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
           <th style={{ textAlign: 'left' }}>🌡️</th>
           <th style={{ textAlign: 'left' }}>☔</th>
           <th style={{ textAlign: 'left' }}>💨 Wind</th>
+          <th style={{ textAlign: 'left' }}>↗️</th>
           <th style={{ textAlign: 'left' }}>💧 Humidity</th>
-          
           <th style={{ textAlign: 'left' }}>☁️ Clouds</th>
           <th style={{ textAlign: 'left' }}>🔍 Visibility</th>
         </tr>
@@ -156,9 +158,8 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
               onClick={() => toggleDay(date)}
               style={{ cursor: 'pointer', background: '#f0f0f0' }}
             >
-              <td colSpan={10} style={{ textAlign: 'left' }}>
+              <td colSpan={8} style={{ textAlign: 'left' }}>
                 <strong>{getDayName(date)}</strong>
-                {/* Show sunrise/sunset only for today */}
                 {date === new Date().toISOString().split('T')[0] && sunrise && sunset && (
                   <span style={{ marginLeft: 16, fontWeight: 400, fontSize: '0.95em', color: '#eab308' }}>
                     🌅 Sunrise: {sunrise} &nbsp;|&nbsp; 🌇 Sunset: {sunset}
@@ -175,16 +176,16 @@ const MainOpenWeatherForecast = ({ location }: { location: any }) => {
                       minute: '2-digit',
                       hour12: false,
                     })}
-                    &nbsp;
                     <span className="weather-icon" style={{ float: 'right' }}>
                       {getWeatherIcon(slot.description, slot.time)}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'left' }} className={slot.temp > 25 ? 'hot' : slot.temp < 5 ? 'cold' : ''}>
-                    {slot.temp}°C
-                  </td>
-                  <td style={{ textAlign: 'left', fontSize: '1em' }}>{slot.precipitation} mm</td>
+                  <td style={{ textAlign: 'left' }}>{slot.temp}°C</td>
+                  <td style={{ textAlign: 'left' }}>{slot.precipitation} mm</td>
                   <td style={{ textAlign: 'left' }}>{(slot.wind * 3.6).toFixed(1)} km/h</td>
+                  <td style={{ textAlign: 'left' }}>
+                    {slot.windDirection != null && <SwellArrow deg={slot.windDirection} />}
+                  </td>
                   <td style={{ textAlign: 'left' }}>{slot.humidity}%</td>
                   <td style={{ textAlign: 'left' }}>{slot.clouds}%</td>
                   <td style={{ textAlign: 'left' }}>{slot.visibility} km</td>
@@ -288,12 +289,11 @@ const StormglassMarineWeather = ({
             <abbr title="Height of ocean swell (m) before breaking.">🏄 Swell</abbr>
           </th>
           <th>
-            <abbr title="Average wind speed (km/h). Affects surface conditions.">💨 Wind</abbr>
+            <abbr title="Average wind speed (km/h) with direction. Affects surface conditions.">💨 Wind</abbr>
           </th>
           <th>
             <abbr title="Strongest wind gusts (km/h). Sudden bursts increase difficulties.">💨 Gust</abbr>
           </th>
-          {/* Use slots instead of daySlots */}
           {slots.some(s => s.currentSpeed?.noaa != null) && (
             <th>
               <abbr title="Current speed (m/s). Important for paddlers and swimmers.">⚡ Curr Speed</abbr>
@@ -347,9 +347,15 @@ const StormglassMarineWeather = ({
                       </>
                     )}
                   </td>
-                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.windSpeed?.noaa, '', true)}</td>
+                  <td style={{ textAlign: 'left' }}>
+                    {formatMarineValue(s.windSpeed?.noaa, '', true)}
+                    {typeof s.windDirection?.noaa === 'number' && (
+                      <>
+                        &nbsp;<SwellArrow deg={s.windDirection.noaa} />
+                      </>
+                    )}
+                  </td>
                   <td style={{ textAlign: 'left' }}>{formatMarineValue(s.gust?.noaa, '', true)}</td>
-                  {/* Only render Curr Speed cell if data exists */}
                   {daySlots.some(slot => slot.currentSpeed?.noaa != null) && (
                     <td style={{ textAlign: 'left' }}>
                       {s.currentSpeed?.noaa != null ? formatMarineValue(s.currentSpeed.noaa, 'm/s') : ''}

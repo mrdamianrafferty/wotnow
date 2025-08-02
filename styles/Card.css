@@ -1,0 +1,91 @@
+.card {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 22px;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+  min-height: 180px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Card Header */
+.card__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+/* Weather Icon */
+.card__weather-icon {
+  width: 72px;
+  height: 72px;
+  margin-left: 12px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Hero Activity Section */
+.card__hero-activity {
+  margin-bottom: 18px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+/* Hero Activity Title */
+.card__hero-title {
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Score Badge */
+.card__score-badge {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #10b981; /* Example color */
+  color: white;
+  font-weight: bold;
+}
+
+.card__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card__emoji {
+  font-size: 1.5rem;
+}
+
+.card__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.card__description {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.card__marine-data span {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.card__score {
+  font-size: 0.8rem;
+  text-align: right;
+}

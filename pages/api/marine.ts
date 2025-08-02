@@ -17,6 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { lat, lon, start, end } = req.query;
   const apiKey = process.env.STORMGLASS_SECRET_KEY;
 
+  console.log('🌍 Incoming request:', { lat, lon, start, end });
+
   if (!apiKey) {
     console.error('❌ Missing Stormglass API key');
     return res.status(500).json({ error: 'Missing Stormglass API key' });
@@ -39,49 +41,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // 🛰️ Fetch from Stormglass
   try {
-
-const params = [
-  'windSpeed',
-  'windDirection',
-  'gust',
-  'currentSpeed',
-  'currentDirection',
-  'waveHeight',
-  'waveDirection',
-  'wavePeriod',
-  'swellHeight',
-  'swellDirection',
-  'swellPeriod',
-  'waterTemperature',
-  'visibility'
-].join(',');
-
+    const params = [
+      'windSpeed',
+      'windDirection',
+      'gust',
+      'currentSpeed',
+      'currentDirection',
+      'waveHeight',
+      'waveDirection',
+      'wavePeriod',
+      'swellHeight',
+      'swellDirection',
+      'swellPeriod',
+      'waterTemperature',
+      'visibility'
+    ].join(',');
 
     const url = `${STORMGLASS_API}?lat=${lat}&lng=${lon}&params=${params}&start=${start}&end=${end}`;
 
+    console.log('🌊 Stormglass API Request:', url);
+
     const sgRes = await fetch(url, {
       headers: {
-        Authorization: apiKey
-      }
+        Authorization: apiKey,
+      },
     });
+
+    console.log('🌊 Stormglass API Response Status:', sgRes.status);
+
+    if (!sgRes.ok) {
+      const errorText = await sgRes.text();
+      console.error(`❌ Stormglass API error: ${sgRes.status} ${sgRes.statusText}`);
+      console.error('❌ Stormglass API Response:', errorText);
+      return res.status(sgRes.status).json({ error: errorText });
+    }
 
     const data = await sgRes.json();
 
     if (data.errors || data.message) {
-      // Stormglass returned an error, not data
-      console.warn('⚠️ Stormglass API error response:', data);
-      return res.status(502).json({
-        error: 'Stormglass API error',
-        details: data
-      });
-    }
-
-    if (!Array.isArray(data.hours)) {
-      console.warn('⚠️ Stormglass response invalid format:', data);
-      return res.status(500).json({
-        error: 'Stormglass returned invalid format',
-        details: data
-      });
+      console.error('❌ Stormglass API returned an error:', data.errors || data.message);
+      return res.status(500).json({ error: data.errors || data.message });
     }
 
     // ✅ Cache and return
@@ -90,10 +89,10 @@ const params = [
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('❌ Failed to fetch Stormglass ', error);
+    console.error('❌ Stormglass API Error:', error.stack || error);
     return res.status(500).json({
       error: 'Fetch error contacting Stormglass',
-      details: error
+      details: error.message || error,
     });
   }
 }

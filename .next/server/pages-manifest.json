@@ -2,9 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/api/tides": "pages/api/tides.js",
   "/": "pages/index.js",
+  "/weather": "pages/weather.js",
+  "/api/tides": "pages/api/tides.js",
+  "/api/owm": "pages/api/owm.js",
   "/api/marine": "pages/api/marine.js",
-  "/activities": "pages/activities.js",
-  "/interests": "pages/interests.js"
+  "/interests": "pages/interests.js",
+  "/activities": "pages/activities.js"
 }

@@ -34,9 +34,8 @@ main,
 .page {
   background-color: #fff;
   border-radius: 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   padding: 2rem 2vw;
-  margin: 2rem auto;
   max-width: 1100px;
 }
 
@@ -52,130 +51,317 @@ button {
   padding: 0.5rem 1rem;
   cursor: pointer;
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: box-shadow 0.2s, background 0.2s;
 }
 
 button:hover {
   background-color: #555;
-  color: #fff;
 }
 
 button:active {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* ------ HOMEPAGE BANNER ------ */
 
 .homepage-banner {
-  width: 100%;
-  background: #fff5e7;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  position: relative;
+  min-height: 60px;
   display: flex;
-  justify-content: center;
-  padding: 3vw 0 2vw 0;
+  align-items: center;
+  padding: 8px 0;
+  background: #fff;
 }
 
-.homepage-banner__container {
-  display: flex;
-  flex-direction: row;
-  max-width: 1200px;
-  width: 90%;
-  margin: 0 auto;
-  align-items: center;
-  gap: 2rem;
-  flex-wrap: wrap;
+.burger-menu-icon {
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  margin: 0 12px;
+  z-index: 10;
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .burger-menu-icon {
+    display: block !important;
+  }
 }
 
 .homepage-banner__logo {
-  max-width: 240px;
+  display: block;
+  max-width: 180px;
   height: auto;
 }
 
-.homepage-banner__text {
+.homepage-banner__spacer {
   flex: 1;
 }
 
+.homepage-banner__text {
+  text-align: left;
+}
+
 .homepage-banner__title {
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  color: #237e6b;
-  font-weight: 700;
-  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
 }
 
 .homepage-banner__subtitle {
-  font-size: clamp(1rem, 2vw, 1.4rem);
-  color: #ca8a2e;
-  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  color: #555;
 }
 
 /* ------ LOCATION BANNER ------ */
 
 .location-banner {
-  width: 100vw;
+  padding: 12px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
   display: flex;
-  justify-content: left;
-  background: #f3fffa;
-  box-shadow: 0 2px 8px rgba(35, 126, 107, 0.03);
-  padding: 1.3rem 0;
-  border-bottom: 1.5px solid #e3efe4;
+  justify-content: center;
+  align-items: center;
 }
 
 .location-banner__container {
   display: flex;
   align-items: center;
-  gap: 1.3rem;
-  background: #fff;
-  padding: 0.65rem 1.3rem;
-  border-radius: 2.5rem;
-  box-shadow: 0 2px 8px #237e6b12;
-  max-width: 475px;
-  width: 90vw;
+  gap: 8px;
+  max-width: 960px;
+  width: 100%;
 }
 
 .location-banner__label {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #237e6b;
-  font-size: 1.08rem;
+  color: #374151;
 }
 
 .location-banner__input {
   flex: 1;
-  min-width: 100px;
-  max-width: 220px;
-  background: #e6fffa;
-  border: 1.5px solid #ca8a2e49;
-  border-radius: 1.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 1.05rem;
-  color: #174031;
-  transition: border-color 0.25s;
-}
-
-.location-banner__input:focus {
-  outline: none;
-  border-color: #237e6b;
-  background: #f9fff9;
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
 }
 
 .location-banner__button {
-  background: #237e6b;
+  padding: 8px 16px;
+  background: #059669;
   color: #fff;
+  font-size: 0.9rem;
   font-weight: 600;
-  font-size: 0.97rem;
   border: none;
-  border-radius: 1.5rem;
-  padding: 0.55rem 1.5rem;
-  box-shadow: 0 1px 5px #237e6b13;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .location-banner__button:hover {
-  background: #249177;
+  background: #047857;
 }
 
-/* --- HOMEPAGE CARDS & FORECAST --- */
+.location-banner__info {
+  margin-left: 10px;
+  color: #237e6b;
+  font-weight: 500;
+}
+
+.location-error {
+  color: #c00;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.mobile-location-banner,
+.desktop-location-banner {
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+}
+
+.mobile-location-banner {
+  bottom: 0;
+  display: none;
+}
+
+.desktop-location-banner {
+  top: 0;
+}
+
+@media (max-width: 800px) {
+  .desktop-location-banner {
+    display: none !important;
+  }
+  .mobile-location-banner {
+    display: block !important;
+    position: static;
+    background: #fff;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.07);
+    z-index: 1200;
+    padding: 10px 8px !important;
+    border-radius: 12px 12px 0 0;
+  }
+}
+
+/* ------ POPUP ------ */
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1300;
+}
+
+.popup__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1299;
+}
+
+.popup__content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+}
+
+.popup__content--perfect {
+  border-left: 6px solid #10b981;
+}
+
+.popup__content--good {
+  border-left: 6px solid #3b82f6;
+}
+
+.popup__content--fair {
+  border-left: 6px solid #fbbf24;
+}
+
+.popup__content--poor {
+  border-left: 6px solid #ef4444;
+}
+
+.popup__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+.popup__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.popup__description {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #4b5563;
+}
+
+.popup__reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup__reasons li {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+.popup__marine-data {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.popup__marine-data p {
+  margin: 5px 0;
+}
+
+@media (max-width: 768px) {
+  .popup__content {
+    max-width: 90%;
+    padding: 15px;
+  }
+
+  .popup__title {
+    font-size: 1.3rem;
+  }
+
+  .popup__description {
+    font-size: 0.95rem;
+  }
+
+  .popup__reasons li {
+    font-size: 0.85rem;
+  }
+
+  .popup__marine-data {
+    font-size: 0.85rem;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* --- Section styling for better separation --- */
+section {
+  margin-bottom: 2.5rem;
+  padding: 2rem 1.5rem;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+section[hidden] {
+  display: none !important;
+}
+
+/* --- Responsive grid for main content --- */
+.main-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+/* --- Weather/Forecast Card --- */
 .homepage-card {
   background: #fff;
   border-radius: 18px;
@@ -199,15 +385,7 @@ button:active {
   transform: translateY(-2px) scale(1.02);
 }
 
-@media (max-width: 650px) {
-  .homepage-card {
-    padding: 1rem;
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 97vw;
-  }
-}
-
+/* --- Card header (time) --- */
 .card-header {
   font-size: 1.15rem;
   font-weight: 600;
@@ -217,23 +395,7 @@ button:active {
   letter-spacing: 0.02em;
 }
 
-.day-name {
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1.16rem;
-  letter-spacing: 0.1rem;
-  min-width: 80px;
-  white-space: nowrap;
-}
-
-.card-condition {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-}
-
+/* --- Weather icon --- */
 .card-condition img {
   width: 54px;
   height: 54px;
@@ -243,11 +405,16 @@ button:active {
   margin-right: auto;
 }
 
-.card-condition span:first-child {
-  font-size: 4rem;
-  line-height: 1;
+/* --- Temperature --- */
+.temperature {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #294e80;
+  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
+/* --- Description --- */
 .card-condition span:last-child {
   margin-top: 0.3rem;
   font-weight: 500;
@@ -257,14 +424,7 @@ button:active {
   text-align: center;
 }
 
-.temperature {
-  font-size: 2.1rem;
-  font-weight: 700;
-  color: #294e80;
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
+/* --- Weather stats (wind, rain) --- */
 .weather-stats {
   font-size: 0.98rem;
   color: #294e80;
@@ -301,7 +461,7 @@ button:active {
 
 .marine-values {
   list-style: none;
-  padding-left: 0;
+  padding: 0;
   margin: 0;
   display: flex;
   flex-wrap: wrap;
@@ -351,14 +511,13 @@ button:active {
 }
 
 .also-good-section {
-  margin: 1.5rem 0;
+  margin-bottom: 14px;
 }
 
 .also-good-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  display: block;
 }
 
 .activity-list-good {
@@ -428,86 +587,56 @@ button:active {
 }
 
 .indoor-section {
-  margin: 1.5rem 0;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 12px;
 }
 
 .indoor-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  display: block;
 }
 
-.activity-list-indoor {
+.indoor-list {
   list-style: none;
-  padding: 0;
+  padding-left: 0;
   margin: 0;
+  font-size: 0.85rem;
 }
 
-.activity-item-indoor {
+.indoor-item {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  color: #6b7280;
+  margin-bottom: 4px;
 }
 
-.activity-card__header-bad {
-  text-align: center;
-  margin-bottom: 1.5rem;
+/* Add Interests Link */
+.add-interests-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 
-.activity-card__title-bad {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #dc2626;
-  margin: 0 0 0.5rem 0;
-}
-
-.activity-card__subtitle-bad {
-  font-size: 1.1rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-.activity-card__indoor-only {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.activity-card__weather-context {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-  font-size: 0.9rem;
-  color: #6b7280;
-  text-align: center;
-}
-
-.activity-card__action {
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
-.add-interests-btn {
-  background: #fff;
-  border: 1.5px solid #2563eb;
-  color: #2563eb;
-  padding: 8px 20px;
-  border-radius: 26px;
-  font-weight: 600;
-  font-size: 1rem;
-  text-decoration: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  transition: all 0.2s;
-}
-
-.add-interests-btn:hover {
-  background: #2563eb;
+.add-interests-link {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.8);
   color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.add-interests-link.hover {
+  background: rgba(59, 130, 246, 1);
+  transform: translateY(-1px);
+}
+
+.add-interests-link:not(.hover) {
+  transform: translateY(0);
 }
 
 /* ------ INTEREST CARDS ------ */
@@ -1125,852 +1254,214 @@ abbr[title] {
   }
 }
 
-/* ------ LOCATION BANNER ------ */
-
-.desktop-location-banner {
-  display: block;
-}
-
-.mobile-location-banner {
-  display: none;
-}
-
-@media (max-width: 800px) {
-  .desktop-location-banner {
-    display: none !important;
-  }
-  .mobile-location-banner {
-    display: block !important;
-    position: static;
-    left: 0;
-    bottom: 0;
-    width: 100vw;
-    background: #fff;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
-    z-index: 1200;
-    padding: 10px 8px !important;
-    border-radius: 12px 12px 0 0;
-  }
-}
-
-/* Hide desktop location banner on mobile */
-@media (max-width: 800px) {
-  .desktop-location-banner {
-    display: none !important;
-  }
-}
-
-/* Hide mobile location banner on desktop */
-@media (min-width: 801px) {
-  .mobile-location-banner {
-    display: none !important;
-  }
-}
-
-/* --- Section styling for better separation --- */
-section {
-  margin-bottom: 2.5rem;
-  padding: 2rem 1.5rem;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-  background: #fff;
-  transition: box-shadow 0.2s;
-}
-
-section[hidden] {
-  display: none !important;
-}
-
-/* --- Responsive grid for main content --- */
-.main-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  padding: 0.5rem 0;
-}
-
-/* --- Weather/Forecast Card --- */
-.homepage-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2.2rem 1.2rem 1.5rem 1.2rem;
-  margin-bottom: 2rem;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  max-width: 320px;
-  width: 100%;
-  box-sizing: border-box;
-  transition: box-shadow 0.2s, transform 0.2s;
-  border: 1px solid #f0f4fa;
-}
-
-.homepage-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
-  transform: translateY(-2px) scale(1.02);
-}
-
-/* --- Card header (time) --- */
-.card-header {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #237e6b;
-  margin-bottom: 0.8rem;
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-
-/* --- Weather icon --- */
-.card-condition img {
-  width: 54px;
-  height: 54px;
-  margin-bottom: 0.7rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* --- Temperature --- */
-.temperature {
-  font-size: 2.1rem;
-  font-weight: 700;
-  color: #294e80;
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-/* --- Description --- */
-.card-condition span:last-child {
-  margin-top: 0.3rem;
-  font-weight: 500;
-  text-transform: capitalize;
-  font-size: 1.08rem;
-  color: #6b7280;
-  text-align: center;
-}
-
-/* --- Weather stats (wind, rain) --- */
-.weather-stats {
-  font-size: 0.98rem;
-  color: #294e80;
-  display: flex;
-  justify-content: center;
-  gap: 1.1rem;
-  margin-bottom: 0.6rem;
-  margin-top: 2px;
-  flex-wrap: wrap;
-  text-align: center;
-}
-
-/* --- Responsive grid for cards --- */
-.main-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2.2rem;
-  padding: 1.2rem 0;
-  justify-items: center;
-}
-
-/* --- Responsive tweaks for mobile --- */
-@media (max-width: 700px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-    padding: 0;
-  }
-  .homepage-card {
-    max-width: 97vw;
-    padding: 1.2rem 0.5rem;
-  }
-}
-
-/* --- Section header (date, etc) --- */
-.section-header {
-  background: #fdf6ec;
-  border-radius: 16px;
-  padding: 1.2rem 2rem;
-  margin-bottom: 2.2rem;
-  font-size: 1.18rem;
-  color: #294e80;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* --- Hide scrollbars for grid --- */
-.main-grid::-webkit-scrollbar {
-  display: none;
-}
-.main-grid {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* --- TopTabs improvements --- */
-.top-tabs {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.top-tabs button {
-  background: #f9f9f9;
-  color: #294e80;
-  border: 1.5px solid #d1d5db;
-  padding: 0.7rem 1.5rem;
-  font-size: 1.08rem;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.top-tabs button:hover:not(.active),
-.day-tabs button:hover:not(.active) {
-  background: #dde9fb;
-  color: #157efb;
-}
-
-.top-tabs button.active,
-.day-tabs button.active {
-  background: #157efb;
-  color: #fff;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(21,126,251,0.12);
-}
-
-/* --- Section headers --- */
-section h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #237e6b;
-  margin-bottom: 1.2rem;
-  letter-spacing: 0.02em;
-}
-
-/* --- Responsive tweaks for mobile --- */
-@media (max-width: 700px) {
-  .page {
-    padding: 1rem 2vw;
-    border-radius: 8px;
-    margin: 1rem auto;
-  }
-  section {
-    padding: 1rem 0.5rem;
-    border-radius: 8px;
-  }
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 0;
-  }
-  .top-tabs {
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-  }
-}
-
-/* --- Add a little breathing room below the WaterTempKey --- */
-.water-temp-key {
-  margin-bottom: 1.5rem;
-}
-/* --- Add a subtle background gradient for the body --- */
-body {
-  font-family: Roboto, sans-serif;
-  background: linear-gradient(135deg, #f7f7f7 0%, #e3f0ff 100%);
-  color: #333;
-  margin: 0;
-  padding: 0;
-}
-
-/* --- Make .page container more visually distinct --- */
-.page {
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-  padding: 2rem 2vw;
-  margin: 2rem auto;
-  max-width: 1100px;
-}
-
-/* --- Section styling for better separation --- */
-section {
-  margin-bottom: 2.5rem;
-  padding: 2rem 1.5rem;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-  background: #fff;
-  transition: box-shadow 0.2s;
-}
-
-section[hidden] {
-  display: none !important;
-}
-
-/* --- Responsive grid for main content --- */
-.main-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  padding: 0.5rem 0;
-}
-
-/* --- Weather/Forecast Card --- */
-.homepage-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2.2rem 1.2rem 1.5rem 1.2rem;
-  margin-bottom: 2rem;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-  max-width: 320px;
-  width: 100%;
-  box-sizing: border-box;
-  transition: box-shadow 0.2s, transform 0.2s;
-  border: 1px solid #f0f4fa;
-}
-
-.homepage-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
-  transform: translateY(-2px) scale(1.02);
-}
-
-/* --- Card header (time) --- */
-.card-header {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #237e6b;
-  margin-bottom: 0.8rem;
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-
-/* --- Weather icon --- */
-.card-condition img {
-  width: 54px;
-  height: 54px;
-  margin-bottom: 0.7rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* --- Temperature --- */
-.temperature {
-  font-size: 2.1rem;
-  font-weight: 700;
-  color: #294e80;
-  text-align: center;
-  margin-bottom: 0.5rem;
-}
-
-/* --- Description --- */
-.card-condition span:last-child {
-  margin-top: 0.3rem;
-  font-weight: 500;
-  text-transform: capitalize;
-  font-size: 1.08rem;
-  color: #6b7280;
-  text-align: center;
-}
-
-/* --- Weather stats (wind, rain) --- */
-.weather-stats {
-  font-size: 0.98rem;
-  color: #294e80;
-  display: flex;
-  justify-content: center;
-  gap: 1.1rem;
-  margin-bottom: 0.6rem;
-  margin-top: 2px;
-  flex-wrap: wrap;
-  text-align: center;
-}
-
-/* --- Responsive grid for cards --- */
-.main-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2.2rem;
-  padding: 1.2rem 0;
-  justify-items: center;
-}
-
-/* --- Responsive tweaks for mobile --- */
-@media (max-width: 700px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-    padding: 0;
-  }
-  .homepage-card {
-    max-width: 97vw;
-    padding: 1.2rem 0.5rem;
-  }
-}
-
-/* --- Section header (date, etc) --- */
-.section-header {
-  background: #fdf6ec;
-  border-radius: 16px;
-  padding: 1.2rem 2rem;
-  margin-bottom: 2.2rem;
-  font-size: 1.18rem;
-  color: #294e80;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* --- Hide scrollbars for grid --- */
-.main-grid::-webkit-scrollbar {
-  display: none;
-}
-.main-grid {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* --- TopTabs improvements --- */
-.top-tabs {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-}
-
-.top-tabs button {
-  background: #f9f9f9;
-  color: #294e80;
-  border: 1.5px solid #d1d5db;
-  padding: 0.7rem 1.5rem;
-  font-size: 1.08rem;
-  font-weight: 600;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.top-tabs button:hover:not(.active),
-.day-tabs button:hover:not(.active) {
-  background: #dde9fb;
-  color: #157efb;
-}
-
-.top-tabs button.active,
-.day-tabs button.active {
-  background: #157efb;
-  color: #fff;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(21,126,251,0.12);
-}
-
-/* --- Section headers --- */
-section h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #237e6b;
-  margin-bottom: 1.2rem;
-  letter-spacing: 0.02em;
-}
-
-/* --- Responsive tweaks for mobile --- */
-@media (max-width: 700px) {
-  .page {
-    padding: 1rem 2vw;
-    border-radius: 8px;
-    margin: 1rem auto;
-  }
-  section {
-    padding: 1rem 0.5rem;
-    border-radius: 8px;
-  }
-  .main-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 0;
-  }
-  .top-tabs {
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-  }
-}
-
-/* --- Add a little breathing room below the WaterTempKey --- */
-.water-temp-key {
-  margin-bottom: 1.5rem;
-}
-
-/* --- Make buttons more tactile --- */
-button {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: box-shadow 0.2s, background 0.2s;
-}
-
-button:active {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-}
-
-/* --- Add a subtle hover effect for cards --- */
-.homepage-card:hover,
-.activity-card-enhanced:hover {
-  background: #f0f6ff;
-}
-
-/* --- Improve section transitions --- */
-section {
-  transition: box-shadow 0.2s, background 0.2s;
-}
-
-/* ------ MARINE CARD STYLES ------ */
-
-.marine-card {
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2rem 1.2rem 1.5rem 1.2rem;
-  margin-bottom: 2rem;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-  max-width: 320px;
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #f0f4fa;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.marine-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
-  transform: translateY(-2px) scale(1.02);
-}
-
-.marine-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0.8rem;
-}
-
-.marine-card-time {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #237e6b;
-}
-
-.marine-card-temp {
-  background: #e6fff7;
-  color: #237e6b;
-  font-weight: 700;
-  font-size: 1.1rem;
-  border-radius: 12px;
-  padding: 0.4rem 1rem;
-}
-
-.marine-card-divider {
-  width: 100%;
-  height: 2px;
-  background: #237e6b;
-  opacity: 0.12;
-  margin: 0.7rem 0 1.2rem 0;
-  border-radius: 2px;
-}
-
-.marine-card-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.7rem 1.2rem;
-  width: 100%;
-}
-
-.marine-card-stat-label {
-  font-size: 0.98rem;
-  color: #6b7280;
-}
-
-.marine-card-stat-value {
-  font-size: 1.08rem;
-  color: #222;
-  font-weight: 500;
-}
-
-/* === MOBILE GRID LAYOUT === */
-@media (max-width: 600px) {
-  .main-grid, .activity-grid {
-    grid-template-columns: 1fr !important;
-    gap: 1rem;
-    min-height: unset;
-  }
-  .homepage-card,
-  .marine-card {
-    margin-bottom: 0.8rem;
-    font-size: 0.95rem;
-    padding: 0.7rem 0.7rem 0.8rem 0.7rem;
-    min-width: 0; /* prevents horizontal scroll on nested grids */
-  }
-  .page {
-    padding: 0.5rem;
-    border-radius: 10px;
-  }
-}
-
-/* === TABS: Make Horizontally Scrollable === */
-.top-tabs,
-.day-tabs {
-  display: flex;
-  overflow-x: auto;
-  white-space: nowrap;
-  -webkit-overflow-scrolling: touch;
-  gap: 0.2rem;
-  padding-bottom: 0.2rem;
-}
-
-/* Expand tab/toggle buttons for accessibility */
-.top-tabs button,
-.day-tabs button {
-  min-width: 110px;
-  min-height: 40px;
-  font-size: 1rem;
-  padding: 0.5rem 0.7rem;
-  border-radius: 8px;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: #eef4fb;
-  color: #294e80;
-  border: 1.5px solid #d1d5db;
-  font-weight: 600;
-  transition: background 0.18s, color 0.18s;
-}
-
-/* On mobile, show fewer tab labels if desired via CSS only (optional, uncomment to use) */
-/*
-@media (max-width: 400px) {
-  .top-tabs button,
-  .day-tabs button { font-size: 0.9rem; min-width: 80px; }
-  .top-tabs button .label-text,
-  .day-tabs button .label-text { display: none; }
-}
-*/
-
-/* === TABLE RESPONSIVENESS === */
-.marine-table-wrapper,
-.table-scrollable {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.marine-table,
-.table-scrollable table {
-  min-width: 420px;
-  width: 100%;
-}
-.marine-table td,
-.table-scrollable td {
-  word-break: break-word;
-  vertical-align: middle;
-}
-
-/* === LARGER TAP TARGETS: Consistent hit area === */
-button, .marine-card, .homepage-card {
-  min-height: 40px;
-}
-
-/* === VISUAL SEPARATION === */
-.marine-card, .homepage-card {
-  box-shadow: 0px 2px 10px rgba(80,110,162,0.07);
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid #f0f4f8;
-  transition: box-shadow 0.15s;
-}
-.marine-card:hover,
-.homepage-card:hover {
-  box-shadow: 0px 6px 18px rgba(60,110,162,0.14);
-}
-
-/* === STICKY TABS (OPTIONAL, UNCOMMENT TO ENABLE) === */
-/*
-.top-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: #fff;
-  border-bottom: 1px solid #e0eefa;
-}
-*/
-
-/* === GENERAL: Responsive font and container tweaks === */
-@media (max-width: 600px) {
-  .page,
-  .homepage-card,
-  .marine-card {
-    font-size: 0.98rem;
-  }
-}
-
-@media (max-width: 410px) {
-  .top-tabs button,
-  .day-tabs button {
-    padding-left: 0.36em;
-    padding-right: 0.36em;
-    font-size: 0.87rem;
-  }
-}
-
-/* === TABLE & CARD LABEL WRAP === */
-td, th, .marine-card-stat-label {
-  word-break: break-word;
-}
-
-/* === ACCESSIBILITY: visually hidden utility === */
-.sr-only {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0);
-  border: 0;
-}
-
-.activity-popup-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 768px) {
-  .activity-card {
-    min-height: 180px !important;
-  }
-  
-  nav[role="tablist"] {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  
-  nav[role="tablist"]::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  nav[role="tablist"]::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 2px;
-  }
-  
-  nav[role="tablist"]::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 2px;
-  }
-}
-
-@media (max-width: 480px) {
-  main[role="tabpanel"] {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Desktop vs Mobile Navigation Menu */
-.navigation-menu {
-  position: fixed;
-  z-index: 1000;
-}
-
-.menu-content {
-  background: #2b323c;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  padding: 12px 24px;
-  min-width: 220px;
-  max-width: 280px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin: 12px;
-}
-
-.menu-content a {
-  color: #fff;
-  font-size: 1.5rem;
-  margin: 16px 0;
-  text-decoration: none;
-  width: 100%;
-}
-
-.menu-content a:hover {
-  text-decoration: underline;
-}
-
-.menu-content button {
-  margin-top: 24px;
-  background: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #000;
-}
-
-/* Mobile overlay (full screen) */
-.menu-overlay {
+/* Popup Container */
+.popup {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 999;
-  cursor: default;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1300; /* Increased z-index to ensure it overlays all elements */
 }
 
-/* Desktop menu positioning */
-@media (min-width: 800px) {
-  .navigation-menu {
-    top: 60px; /* Position below header on desktop */
+/* Popup Overlay */
+.popup__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Dim background */
+  z-index: 1299; /* Slightly lower than the popup content */
+}
+
+/* Popup Content */
+.popup__content {
+  position: relative;
+  background: #ffffff; /* Match homepage card background */
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh; /* Ensure the popup does not exceed the viewport height */
+  overflow: auto; /* Enable scrolling for long content */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+  animation: fadeIn 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif; /* Match homepage font */
+  z-index: 1300;
+}
+
+/* Popup Content by Category */
+.popup__content--perfect {
+  border-left: 6px solid #10b981; /* Green for perfect */
+}
+
+.popup__content--good {
+  border-left: 6px solid #3b82f6; /* Blue for good */
+}
+
+.popup__content--fair {
+  border-left: 6px solid #fbbf24; /* Yellow for fair */
+}
+
+.popup__content--poor {
+  border-left: 6px solid #ef4444; /* Red for poor */
+}
+
+/* Popup Close Button */
+.popup__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #374151; /* Neutral dark color */
+}
+
+/* Popup Title */
+.popup__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #111827; /* Match homepage text color */
+}
+
+/* Popup Description */
+.popup__description {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #4b5563; /* Subtle gray for secondary text */
+}
+
+/* Popup Reasons */
+.popup__reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup__reasons li {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: #374151; /* Neutral dark color */
+}
+
+/* Popup Marine Data */
+.popup__marine-data {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #374151; /* Neutral dark color */
+}
+
+.popup__marine-data p {
+  margin: 5px 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .popup__content {
+    max-width: 90%;
+    padding: 15px;
   }
-  
-  .menu-content {
-    margin: 0 0 0 12px;
-    border-radius: 0 0 12px 12px;
+
+  .popup__title {
+    font-size: 1.3rem;
   }
-  
-  .menu-content button {
-    display: none; /* Hide close button on desktop */
+
+  .popup__description {
+    font-size: 0.95rem;
   }
-  
-  /* Option to make overlay transparent on desktop */
-  .menu-overlay {
-    background: transparent;
+
+  .popup__reasons li {
+    font-size: 0.85rem;
+  }
+
+  .popup__marine-data {
+    font-size: 0.85rem;
   }
 }
 
-/* Mobile menu styling */
-@media (max-width: 799px) {
-  .menu-overlay {
-    background: rgba(0,0,0,0.7);
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
-  
-  .navigation-menu {
-    top: 0;
-    left: 0;
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
-  
-  .menu-content {
-    border-radius: 12px;
-  }
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300; /* Above the overlay */
+}
+
+.popup__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Dim background */
+  z-index: 1299; /* Below the popup content */
+}
+
+.popup__content {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1300; /* Above the overlay */
+}
+
+.popup__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.popup__title {
+  margin: 0 0 10px 0;
+  font-size: 24px;
+}
+
+.popup__description {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.popup__reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.popup__reasons li {
+  margin-bottom: 5px;
+}
+
+.popup__marine-data {
+  font-size: 14px;
+  color: #555;
 }

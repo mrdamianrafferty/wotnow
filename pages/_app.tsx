@@ -1,6 +1,7 @@
 // Replace the entire file with this cleaned version:
 
 import '../styles/index.css'
+import '../styles/Card.css'
 import type { AppProps } from 'next/app'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 

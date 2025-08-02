@@ -32,6 +32,16 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/webpack.js",
       "static/chunks/main.js",
       "static/chunks/pages/activities.js"
+    ],
+    "/interests": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/interests.js"
+    ],
+    "/weather": [
+      "static/chunks/webpack.js",
+      "static/chunks/main.js",
+      "static/chunks/pages/weather.js"
     ]
   },
   "ampFirstPages": []
