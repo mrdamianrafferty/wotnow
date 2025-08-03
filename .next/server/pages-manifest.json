@@ -3,10 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/weather": "pages/weather.js",
-  "/api/tides": "pages/api/tides.js",
-  "/api/owm": "pages/api/owm.js",
-  "/api/marine": "pages/api/marine.js",
-  "/interests": "pages/interests.js",
-  "/activities": "pages/activities.js"
+  "/activities": "pages/activities.js",
+  "/api/marine": "pages/api/marine.js"
 }

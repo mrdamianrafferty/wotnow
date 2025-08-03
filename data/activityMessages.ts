@@ -2,6 +2,7 @@ export type ActivityMessageConfig = {
   templates: {
     perfect: string;
     good: string;
+    fair: string;
     poor: string;
   };
   omitReasons?: string[];
@@ -630,7 +631,7 @@ beach_volleyball: {
 
 export function getActivityMessage(
   activityId: string,
-  category: 'perfect' | 'good' | 'poor',
+  category: 'perfect' | 'good' | 'fair' | 'poor',
   reasons: { key: string; value: any; label: string }[]
 ): string {
   const config = activityMessages[activityId];

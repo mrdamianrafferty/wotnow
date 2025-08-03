@@ -13,7 +13,7 @@ import { ActivityType } from '../data/activityTypes';
 export type SuitabilityLevel =
   | 'perfect'
   | 'good'
-  | 'acceptable'
+  | 'fair'
   | 'indoor'
   | 'indoorAlternative';
 

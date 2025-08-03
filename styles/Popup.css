@@ -1,0 +1,272 @@
+/* Popup Container */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1300;
+}
+
+/* Popup Overlay */
+.popup__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1299;
+}
+
+/* Popup Content */
+.popup__content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Popup Content by Category */
+.popup__content--perfect {
+  border-left: 6px solid #10b981;
+}
+
+.popup__content--good {
+  border-left: 6px solid #3b82f6;
+}
+
+.popup__content--fair {
+  border-left: 6px solid #fbbf24; /* Yellow for fair conditions */
+}
+
+.popup__content--poor {
+  border-left: 6px solid #ef4444;
+}
+
+/* Popup Close Button */
+.popup__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+/* Popup Title */
+.popup__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+/* Popup Description */
+.popup__description {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #4b5563;
+}
+
+/* Popup Reasons */
+.popup__reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup__reasons li {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+/* Popup Activity Message */
+.popup__message {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #4b5563;
+  font-style: italic;
+}
+
+/* Popup Marine Data */
+.popup__marine-data {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.popup__marine-data p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
+.popup__marine-data strong {
+  font-weight: bold;
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}/* Popup Container */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1300;
+}
+
+/* Popup Overlay */
+.popup__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1299;
+}
+
+/* Popup Content */
+.popup__content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+  font-family: 'Arial', sans-serif;
+}
+
+/* Popup Content by Category */
+.popup__content--perfect {
+  border-left: 6px solid #10b981;
+}
+
+.popup__content--good {
+  border-left: 6px solid #3b82f6;
+}
+
+.popup__content--fair {
+  border-left: 6px solid #fbbf24;
+}
+
+.popup__content--poor {
+  border-left: 6px solid #ef4444;
+}
+
+/* Popup Close Button */
+.popup__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #374151;
+}
+
+/* Popup Title */
+.popup__title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+/* Popup Description */
+.popup__description {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #4b5563;
+}
+
+/* Popup Reasons */
+.popup__reasons {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.popup__reasons li {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  color: #374151;
+}
+
+/* Popup Marine Data */
+.popup__marine-data {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.popup__marine-data p {
+  margin: 5px 0;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .popup__content {
+    max-width: 90%;
+    padding: 15px;
+  }
+
+  .popup__title {
+    font-size: 1.3rem;
+  }
+
+  .popup__description {
+    font-size: 0.95rem;
+  }
+
+  .popup__reasons li {
+    font-size: 0.85rem;
+  }
+
+  .popup__marine-data {
+    font-size: 0.85rem;
+  }
+}
+
+/* Fade-in Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

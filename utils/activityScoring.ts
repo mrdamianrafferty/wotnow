@@ -33,7 +33,12 @@ export function calculateActivityScore(
 
   // Apply poor condition penalties
   baseScore = Math.max(0, baseScore - (poorPenalty * 40));
-  return Math.round(baseScore);
+  const score = Math.round(baseScore);
+
+  console.log('Activity:', activity);
+  console.log('Score:', score);
+
+  return score;
 }
 
 function calculateConditionMatchScore(conditions: string[], weather: WeatherData): number {
