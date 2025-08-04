@@ -79,10 +79,8 @@ export default function Home() {
   const isFirstTimeUser = interests.length === 0;
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
 
-  const heroDataByDay = forecastByDay.map((day) => {
+  const heroDataByDay = forecastByDay.map((day, idx) => {
     const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
-    console.log('Filtered Activities:', filteredActivities);
-
     const suggestionsData = getSuggestionsByDay({
       forecast: [{
         date: day.date,
@@ -104,12 +102,11 @@ export default function Home() {
       now: timeInfo?.serverTime || new Date()
     })[0];
 
-    console.log('Suggestions Data:', suggestionsData);
-
     const suggestions = suggestionsData?.suggestions ?? [];
     const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
     const goodList = suggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
 
+    // Select a unique hero activity for the day
     const heroActivity = findHeroActivity(perfectList, goodList, true);
 
     return {
@@ -314,6 +311,7 @@ export default function Home() {
                       <div className="card__header-title">
                         {getDayLabel(day.date, idx, timeInfo?.serverTime)}
                       </div>
+                      
                       <img
                         src={`https://openweathermap.org/img/wn/${day.icon}@2x.png`}
                         alt={day.description}
@@ -645,14 +643,8 @@ const usedHeroActivities = new Set<string>();
 function findHeroActivity(
   perfectList: any[],
   goodList: any[],
-  allowRepeats: boolean,
-  resetUsedActivities: boolean = false
+  allowRepeats: boolean
 ): any | null {
-  // Reset the used activities set if needed
-  if (resetUsedActivities) {
-    usedHeroActivities.clear();
-  }
-
   // Find an unused perfect activity
   let heroActivity = perfectList.find(a => !usedHeroActivities.has(a.activityId));
 
@@ -671,5 +663,5 @@ function findHeroActivity(
     usedHeroActivities.add(heroActivity.activityId);
   }
 
-  return heroActivity || { activityId: 'default_activity', name: 'Default Activity' }; // Fallback
+  return heroActivity;
 }
