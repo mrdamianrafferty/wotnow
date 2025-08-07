@@ -635,10 +635,11 @@ export function getActivityMessage(
   reasons: { key: string; value: any; label: string }[]
 ): string {
   const config = activityMessages[activityId];
-  if (!config) return '';
+  if (!config) return 'No specific message available for this activity.';
   const filteredReasons = reasons.filter(
     r => !(config.omitReasons || []).includes(r.key)
   );
-const reasonText = reasons.map(r => r.label.trim().replace(/\.$/, '')).join('. ') + '.';  const template = config.templates[category];
-  return template.replace('{reasons}', reasonText);
+  const reasonText = filteredReasons.map(r => r.label.trim().replace(/\.$/, '')).join('. ') + '.';
+  const template = config.templates[category];
+  return template.replace('{reasons}', reasonText || 'No reasons provided.');
 }

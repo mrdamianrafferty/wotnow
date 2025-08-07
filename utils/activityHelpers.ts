@@ -5,23 +5,37 @@ import {
   getHumidityDescription,
   getWaveDescription,
   getWaterTemperatureDescription,
-} from './weatherLabels'; // Adjust the path if needed
+} from './weatherLabels';
 
-const MARINE_ACTIVITY_IDS = [
-  'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
-  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
-  'swimming', 'sea_fishing_shore', 'beach', 'sea_fishing_boat',
+export const MARINE_ACTIVITY_IDS = [
+  'surfing',
+  'sailing',
+  'kayaking',
+  'scuba_diving',
+  'snorkeling',
+  'sea_fishing_boat',
+  'sea_fishing_shore',
+  'stand_up_paddleboarding',
+  'windsurfing',
+  'beach_volleyball',
+  'jet_skiing',
+  'sea_swimming',
+  'kitesurfing',
+  'canoeing',
 ];
 
 export function buildReasons(day: any, activityId: string) {
+  const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
+  const windValue = isMarine ? day.windSpeed : day.wind_speed;
+
   const reasons = [
-    { key: 'wind', value: day.wind_speed, label: getBeaufortDescription(day.wind_speed) },
+    { key: 'wind', value: windValue, label: getBeaufortDescription(windValue) },
     { key: 'rain', value: day.rain, label: getRainfallDescription(day.rain) },
     { key: 'temperature', value: day.temperature, label: getTemperatureDescription(day.temperature) },
     { key: 'humidity', value: day.humidity, label: getHumidityDescription(day.humidity) },
   ];
 
-  if (MARINE_ACTIVITY_IDS.includes(activityId)) {
+  if (isMarine) {
     if (typeof day.waveHeight === 'number') {
       reasons.push({ key: 'wave', value: day.waveHeight, label: getWaveDescription(day.waveHeight) });
     }
@@ -30,5 +44,40 @@ export function buildReasons(day: any, activityId: string) {
     }
   }
 
-  return reasons.filter(r => r.label && r.label !== 'Unknown temperature' && r.label !== 'Unknown humidity');
+  return reasons.filter(
+    (r) => r.label && r.label !== 'Unknown temperature' && r.label !== 'Unknown humidity'
+  );
+}
+
+export function findHeroActivity(
+  perfectList: any[],
+  goodList: any[],
+  usedHeroActivities: Set<string>,
+  allowRepeats: boolean = false
+) {
+  // Try unused perfect activities first
+  const perfectCandidate = perfectList.find(
+    (a) => !usedHeroActivities.has(a.activityId)
+  );
+  if (perfectCandidate) {
+    usedHeroActivities.add(perfectCandidate.activityId);
+    return perfectCandidate;
+  }
+
+  // Try unused good activities next
+  const goodCandidate = goodList.find(
+    (a) => !usedHeroActivities.has(a.activityId)
+  );
+  if (goodCandidate) {
+    usedHeroActivities.add(goodCandidate.activityId);
+    return goodCandidate;
+  }
+
+  // If repeats are allowed, pick the top of the list
+  if (allowRepeats) {
+    return perfectList[0] || goodList[0] || null;
+  }
+
+  // Nothing found
+  return null;
 }

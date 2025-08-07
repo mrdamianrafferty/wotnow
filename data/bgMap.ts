@@ -9,7 +9,7 @@ const bgMap: Record<string, string> = {
   beach_volleyball:       '/beachvolley.png',
   american_football:      '/amfootbally.png',
   baseball:               '/basebally.png',
-  hurling_camogie:                '/hurcam.png',
+  hurling_camogie:        '/hurcam.png',
   gaelic_football:        '/gaelic.png',
   hockey:                 '/fieldhockey.png',
   netball:                '/netball.png',
@@ -28,9 +28,9 @@ const bgMap: Record<string, string> = {
   surfing:                '/surfy.png',
   stand_up_paddleboarding:'/suppy.png',
   snorkeling:             '/snorkely.png',
-  sea_swimming:               '/seaswim.png',
+  sea_swimming:           '/seaswim.png',
   wild_swimming:          '/wildswim.png',
-  beach:                 '/beachrio.png',
+  beach:                  '/beachrio.png',
   indoor_swimming:        '/swimpool.png',
   fly_fishing_freshwater: '/trout.png',
   coarse_fishing:         '/lake.png',
@@ -85,7 +85,7 @@ const bgMap: Record<string, string> = {
   ice_skating:            '/outdooriceskatingy.png',
   curling:                '/curly.png',
   ice_hockey:             '/icehockey.png',
-  ice_hockey_indoor:     '/indooricehockey.png',
+  ice_hockey_indoor:      '/indooricehockey.png',
   ice_fishing:            '/snowy.png',
   birdwatching:           '/woodsy.png',
   foraging:               '/foreagey.png',
@@ -98,22 +98,22 @@ const bgMap: Record<string, string> = {
   shopping:               '/shoppy.png',
   jetskiing:              '/watery.png',
   scuba_diving:           '/scuba.png',
-  kitesurfing:           '/kitey.png',
-  windsurfing:          '/windy.png',
-  gaming:          '/gaming.png',
-  boxing:          '/boxing.png',
-  zumba:          '/zumba.png',
-  spinning:          '/spinning.png',
-  riding_motorbike:          '/motorbikey.png',
-  bowling:          '/bowling.png',
-  gallery:          '/gallery.png',
-online:          '/online.png',
-sailing:          '/sailing2.png',
+  kitesurfing:            '/kitey.png',
+  windsurfing:            '/windy.png',
+  gaming:                 '/gaming.png',
+  boxing:                 '/boxing.png',
+  zumba:                  '/zumba.png',
+  spinning:               '/spinning.png',
+  riding_motorbike:      '/motorbikey.png',
+  bowling:               '/bowling.png',
+  gallery:               '/gallery.png',
+  online:                '/online.png',
+  sailing:               '/sailing2.png',
 };
 
 export default bgMap;
 
 // Utility: get image path for given activity ID, fallback to indoorsy
 export function getActivityBg(id: string): string {
-  return bgMap[id] || '/indoorsy.png';
+  return bgMap[id] || '/zumba.png';
 }

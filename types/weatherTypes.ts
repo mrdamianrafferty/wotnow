@@ -14,6 +14,14 @@ export type WeatherForecastDay = {
   visibility: number | null;
   totalRain: number;
   rainDetails: string[];
+
+  // Add these marine fields:
+  waveHeight?: number;
+  waterTemperature?: number;
+  swellHeight?: number;
+  swellPeriod?: number;
+  windDirection?: number;
+  windSpeed?: number;
 };
 
 export type WeatherCondition =
@@ -29,19 +37,5 @@ export type WeatherCondition =
   | 'drizzle'
   | 'unknown';
 
-  export interface MarineWeatherData {
-  time: string;
-  waterTemperature?: number;
-  waveHeight?: number;
-  windSpeed?: number;
-  windDirection?: number;
-  swellHeight?: number;
-  swellDirection?: number;
-  swellPeriod?: number;
-}
 
-// Extend your per-day forecast type:
-export interface WeatherForecastDay {
-  // your existing props...
-  marine?: MarineWeatherData[];
-}
+

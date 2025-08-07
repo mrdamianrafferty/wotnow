@@ -19,7 +19,7 @@ const emojiMap: Record<string, string> = {
   padel: '🎾',
   kayaking: '🛶',
   canoeing: '🛶',
-  surfing: '🏄',
+  surfing: '🏄‍♂️',
   stand_up_paddleboarding: '🦦',
   snorkeling: '🤿',
   wild_swimming: '🏊',
@@ -32,7 +32,7 @@ const emojiMap: Record<string, string> = {
   running: '🏃',
   trail_running: '🏃',
   road_cycling: '🚴',
-  cycling: '🚴',
+  cycling: '🚴‍♀️',
   gravel_biking: '🚵',
   urban_exploring: '🚶🏽',
   gym_workout: '🏋️',
@@ -92,11 +92,11 @@ const emojiMap: Record<string, string> = {
   museum: '🏛️',
   shopping: '🛍️',
   cafe: '☕',
-jetskiing: '🚤',
-scuba_diving: '🤿',
-kitesurfing: '🏄‍♂️',
-volleyball_indoor: '🏐',
-windsurfing: '🏄‍♀️',
+  jetskiing: '🚤',
+  scuba_diving: '🤿',
+  kitesurfing: '🏄‍♂️',
+  volleyball_indoor: '🏐',
+  windsurfing: '🏄‍♀️',
   gaming: '🎮',
   boxing: '🥊',
   zumba: '🕺',
@@ -106,12 +106,24 @@ windsurfing: '🏄‍♀️',
   gallery: '🖼️',
   online: '💻',
   sailing: '⛵',
-  sea_swimming: '🌊'
-  
+  sea_swimming: '🌊',
 };
 
-export default emojiMap;
-
-export function getActivityEmoji(id: string): string {
-  return emojiMap[id] || '❔';
+export function getActivityEmoji(activityId: string): string {
+  return emojiMap[activityId] || '😎'; // Return fallback emoji if not found
 }
+
+export function getAssessmentEmoji(
+  category: 'perfect' | 'good' | 'fair' | 'poor'
+): string {
+  const assessmentMap: Record<string, string> = {
+    perfect: '💯',
+    good: '👍',
+    fair: '🙆',
+    poor: '⚠️',
+  };
+
+  return assessmentMap[category] || '❓';
+}
+
+export default emojiMap;

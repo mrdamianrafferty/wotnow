@@ -66,7 +66,7 @@ export default Card;
     marineData: {
       waveHeight: day.waveHeight,
       windSpeed: day.wind_speed,
-      waterTemperature: day.waterTemperature,
+      waterTemperature: day.waterTemp,
     },
   })}
 />

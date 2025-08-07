@@ -22,7 +22,7 @@ import {
 const MARINE_ACTIVITY_IDS = [
   'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
   'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
-  'swimming', 'sea_fishing_shore', 'beach', 'sea_fishing_boat'
+  'swimming', 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'
 ];
 
 // Check if activity is outdoor
