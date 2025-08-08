@@ -27,10 +27,12 @@ import {
   getHumidityDescription,
   getWaveDescription,
   getWaterTemperatureDescription,
+  getWindMessage,
 } from '../utils/weatherLabels';
 import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
 import { isOutdoor } from '../utils/activityHelpers';
+import { getActivityMessage } from '../data/activityMessages';
 
 const handleClose = () => {
   setPopupActivity(null);
@@ -240,7 +242,9 @@ export default function Home() {
       try {
         const startISO = new Date().toISOString();
         const endISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        const res = await fetch(`/api/marine?lat=${homeLocation.lat}&lon=${homeLocation.lon}&start=${startISO}&end=${endISO}`);
+        const lat = coastalLocation?.lat ?? homeLocation?.lat;
+        const lon = coastalLocation?.lon ?? homeLocation?.lon;
+        const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startISO}&end=${endISO}`);
         if (!res.ok) throw new Error(`Failed to fetch marine data: ${res.statusText}`);
         const data = await res.json();
         setMarineHours(data.hours || []);
@@ -249,10 +253,10 @@ export default function Home() {
       }
     }
 
-    if (homeLocation?.lat && homeLocation?.lon) {
+    if ((coastalLocation?.lat && coastalLocation?.lon) || (homeLocation?.lat && homeLocation?.lon)) {
       fetchMarineData();
     }
-  }, [homeLocation]);
+  }, [coastalLocation, homeLocation]);
 
   if (!hasMounted) {
     return <div>Loading...</div>;
@@ -274,29 +278,130 @@ export default function Home() {
   return (
   <>
     <section>
-      <header className="homepage-banner">
+
+
+{/* Banner */}
+      <header
+        className="homepage-banner"
+        style={{
+          position: 'relative',
+          minHeight: 60,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '8px 0',
+          background: '#fff',
+          borderBottom: '1px solid #e5e7eb',
+        }}
+      >
         <img
           src="/burger-menu-svgrepo-com.svg"
           alt="Open menu"
           className="burger-menu-icon"
+          style={{
+            width: 36,
+            height: 36,
+            cursor: 'pointer',
+            marginLeft: 12,
+            marginRight: 12,
+            zIndex: 10,
+            display: 'block',
+          }}
           onClick={() => setMenuOpen(true)}
         />
         <img
           src="/wotnow-horizontal.png"
           alt="WotNow Logo"
           className="homepage-banner__logo"
+          style={{
+            display: 'block',
+            maxWidth: 180,
+            height: 'auto',
+          }}
         />
-        <div className="homepage-banner__spacer" />
-        <div className="homepage-banner__text">
-          <h1 className="homepage-banner__title">Wots good,&nbsp;when?</h1>
-          <p className="homepage-banner__subtitle"></p>
+        <div style={{ flex: 1 }} />
+        <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
+          <h1 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
+            Wots good,&nbsp;when?
+          </h1>
+          <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
+            Your personalised activity suggestions
+          </p>
         </div>
       </header>
+
+      {/* Burger Menu */}
+      {menuOpen && (
+        <>
+          <div
+            className="menu-overlay"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999,
+              cursor: 'default',
+              background: 'rgba(0,0,0,0.7)',
+            }}
+            onClick={() => setMenuOpen(false)}
+          />
+          <nav
+            className="navigation-menu"
+            style={{
+              position: 'fixed',
+              zIndex: 1000,
+              top: 0,
+              left: 0,
+              background: '#2b323c',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              padding: '12px 24px',
+              minWidth: '220px',
+              maxWidth: '280px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              margin: '12px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+              Home
+            </a>
+            <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+              Manage my interests
+            </a>
+            <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+              Scan my interests
+            </a>
+            <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+              Local weather in detail
+            </a>
+            <button
+              onClick={() => setMenuOpen(false)}
+              style={{
+                marginTop: 24,
+                background: '#fff',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: 6,
+                fontWeight: 600,
+                cursor: 'pointer',
+                color: '#000',
+              }}
+            >
+              Close
+            </button>
+          </nav>
+        </>
+      )}
+
       <div>
         {needsLocation ? (
           <div className="location-message">
             <div className="location-icon">📍</div>
-            <div>Please enter a location above to view your personalized, weather-aware activity suggestions.</div>
+            <div>Please enter a location above to view your personalised, weather-aware activity suggestions.</div>
           </div>
         ) : loading ? (
           <div className="loading-message">
@@ -351,7 +456,9 @@ export default function Home() {
   const emoji = getActivityEmoji(activityId) || '❓';
   const scoreInfo = getScoreCategory(score || 0);
   const isOutdoorActivity = isOutdoor(activityId);
-  
+
+  // Get the activity message without reasons
+  const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase(), []);
 
   // Prepare popup payload once
   const popupPayload = buildPopupActivityPayload({
@@ -385,8 +492,15 @@ export default function Home() {
       <div className="card__hero-title">
         <span className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>
           {activity?.name || activityId.replace(/_/g, ' ')}
+        
+              <div className="card__hero-message">
+        {activityMessage}
+      </div>
+        
         </span>
       </div>
+
+   
 
       <div
         className="card__score-badge"
@@ -444,74 +558,89 @@ export default function Home() {
                             padding: '10px',
                             background: 'rgba(6, 69, 170, 0.5)',
                             borderRadius: '6px',
-                            fontSize: '0.85rem' // Match "also good"
+                            fontSize: '0.85rem'
                           }}>
-{/* homelocation summary text */}
- <div style={{ fontSize: '0.85rem', marginBottom: 6 }}>
-  📍 {day.temperature}° and {day.description} in{' '}
-  <button
-    type="button"
-    onClick={() => {
-      document.getElementById(
-        window.innerWidth < 800 ? 'location-input-mobile' : 'location-input-desktop'
-      )?.focus();
-    }}
-    style={{
-      background: 'none',
-      border: 'none',
-      color: '#fff',
-      textDecoration: 'underline',
-      cursor: 'pointer',
-      fontWeight: 600,
-      fontSize: 'inherit',
-      padding: 0,
-    }}
-  >
-    {homeLocation ? homeLocation.name.split(',')[0] : 'your location'}
-  </button>
-</div>
+                            {/* homelocation summary text */}
+                            <div style={{ fontSize: '0.85rem', marginBottom: 6 }}>
+                              📍 {day.temperature}° and {day.description} in{' '}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  document.getElementById(
+                                    window.innerWidth < 800 ? 'location-input-mobile' : 'location-input-desktop'
+                                  )?.focus();
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#fff',
+                                  textDecoration: 'underline',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: 'inherit',
+                                  padding: 0,
+                                }}
+                              >
+                                {homeLocation ? homeLocation.name.split(',')[0] : 'your location'}
+                              </button>
+                            </div>
 
-{/* Marine summary text */}
-<p style={{ fontSize: '0.85rem', margin: '0 0 6px 0', opacity: 0.92 }}>
-  🌊 {marineSummary} in {' '}
-  <button
-    type="button"
-    onClick={() => setShowCoastDialog(true)}
-    style={{
-      background: 'none',
-      border: 'none',
-      color: '#fff',
-      textDecoration: 'underline',
-      cursor: 'pointer',
-      fontWeight: 600,
-      fontSize: 'inherit',
-      padding: 0,
-    }}
-  >
-    {coastalLocation ? coastalLocation.name.split(',')[0] : 'your coastal location'}
-  </button>
-  
-</p>
+                            {/* Marine summary text */}
+                            <p style={{ fontSize: '0.85rem', margin: '0 0 6px 0', opacity: 0.92 }}>
+                              🌊 {marineSummary} in{' '}
+                              <button
+                                type="button"
+                                onClick={() => setShowCoastDialog(true)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#fff',
+                                  textDecoration: 'underline',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontSize: 'inherit',
+                                  padding: 0,
+                                }}
+                              >
+                                {coastalLocation ? coastalLocation.name.split(',')[0] : 'your coastal location'}
+                              </button>
+                            </p>
 
+                            {/* Wind message using helper */}
+                            {getWindMessage({
+                              windSpeed: day.windSpeed,
+                              gustSpeed: day.gustSpeed,
+                              windDirection: day.windDirection,
+                              windDirectionsToday: day.windDirectionsToday,
+                              context: 'marine'
+                            }) && (
+                              <div style={{ fontSize: '0.85rem', marginBottom: 6 }}>
+                                {getWindMessage({
+                                  windSpeed: day.windSpeed,
+                                  gustSpeed: day.gustSpeed,
+                                  windDirection: day.windDirection,
+                                  windDirectionsToday: day.windDirectionsToday,
+                                  context: 'marine'
+                                })}
+                              </div>
+                            )}
 
-
-<ul className="marine-values">
-    {typeof day.temperature === 'number' && (
-    <li>
-      🌡️ {day.temperature}°
-    </li>
-  )}
-  {typeof day.waveHeight === 'number' && (
-  <li>🌊 {day.waveHeight}m</li>
-)}
-{typeof day.windSpeed === 'number' && (
-  <li>💨 {day.windSpeed}km/h</li>
-)}
-{typeof day.waterTemperature === 'number' && (
-  <li>🏊‍♂️ {day.waterTemperature.toFixed(1)}°</li>
-)}
-
-</ul>
+                            <ul className="marine-values">
+                              {typeof day.temperature === 'number' && (
+                                <li>
+                                  🌡️ {day.temperature}°
+                                </li>
+                              )}
+                              {typeof day.waveHeight === 'number' && (
+                                <li>🌊 {day.waveHeight}m</li>
+                              )}
+                              {typeof day.windSpeed === 'number' && (
+                                <li>💨 {day.windSpeed}km/h</li>
+                              )}
+                              {typeof day.waterTemperature === 'number' && (
+                                <li>🏊‍♂️ {day.waterTemperature.toFixed(1)}°</li>
+                              )}
+                            </ul>
                           </div>
                         )}
 

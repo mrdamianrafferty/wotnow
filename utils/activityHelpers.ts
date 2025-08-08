@@ -5,6 +5,8 @@ import {
   getHumidityDescription,
   getWaveDescription,
   getWaterTemperatureDescription,
+  getWindMessage,
+  getVisibilityDescription,
 } from './weatherLabels';
 
 export const MARINE_ACTIVITY_IDS = [
@@ -29,11 +31,24 @@ export function buildReasons(day: any, activityId: string) {
   const windValue = isMarine ? day.windSpeed : day.wind_speed;
 
   const reasons = [
-    { key: 'wind', value: windValue, label: getBeaufortDescription(windValue) },
+    { key: 'wind', value: windValue, label: getWindMessage({
+      windSpeed: windValue,
+      gustSpeed: isMarine ? day.gustSpeed : day.gust_speed,
+      windDirection: isMarine ? day.windDirection : day.wind_direction,
+      windDirectionsToday: day.wind_directions_today,
+      context: isMarine ? 'marine' : 'land'
+    }) },
     { key: 'rain', value: day.rain, label: getRainfallDescription(day.rain) },
     { key: 'temperature', value: day.temperature, label: getTemperatureDescription(day.temperature) },
     { key: 'humidity', value: day.humidity, label: getHumidityDescription(day.humidity) },
   ];
+
+  if (typeof day.visibility === 'number') {
+    const visibilityLabel = getVisibilityDescription(day.visibility);
+    if (visibilityLabel) {
+      reasons.push({ key: 'visibility', value: day.visibility, label: visibilityLabel });
+    }
+  }
 
   if (isMarine) {
     if (typeof day.waveHeight === 'number') {

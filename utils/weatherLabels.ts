@@ -169,3 +169,137 @@ export function getSwellMessage({
 
   return null; // No additional message needed
 }
+
+// Visibility (km) to description, omitting moderate/good ranges
+export function getVisibilityDescription(visibilityKm: number): string | null {
+  if (visibilityKm < 0.1) return '⚠️ Dense fog – extremely limited visibility';
+  if (visibilityKm < 0.5) return '⚠️ Thick fog – very difficult to see';
+  if (visibilityKm < 1) return 'Fog – take extra care';
+  if (visibilityKm < 2) return 'Poor visibility – reduced awareness';
+  if (visibilityKm > 20) return ' Excellent visibility – see for miles and miles';
+  return null; // Skip for moderate/good
+}
+
+export function getWindMessage({
+  windSpeed,
+  gustSpeed,
+  windDirection,
+  windDirectionsToday,
+  context = 'land',
+}: {
+  windSpeed?: number;
+  gustSpeed?: number;
+  windDirection?: number;
+  windDirectionsToday?: number[];
+  context?: 'land' | 'marine';
+}): string | null {
+  return context === 'marine'
+    ? buildWindMessageMarine({ windSpeed, gustSpeed, windDirection, windDirectionsToday })
+    : buildWindMessageLand({ windSpeed, gustSpeed, windDirection, windDirectionsToday });
+}
+
+function getCompassDirection(degrees: number): string {
+  // 16 compass points
+  const directions = [
+    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
+  ];
+  const idx = Math.round(((degrees % 360) / 22.5)) % 16;
+  return directions[idx];
+}
+
+function buildWindMessageLand({
+  windSpeed,
+  gustSpeed,
+  windDirection,
+  windDirectionsToday
+}: {
+  windSpeed?: number,
+  gustSpeed?: number,
+  windDirection?: number,
+  windDirectionsToday?: number[]
+}): string | null {
+  if (!windSpeed) return null;
+
+  const kmh = windSpeed;
+  const base = getBeaufortDescription(kmh);
+  const direction = typeof windDirection === 'number'
+    ? `from the ${getCompassDirection(windDirection)}`
+    : '';
+
+  let gustEmoji = '';
+  let gustText = '';
+  if (gustSpeed && gustSpeed > windSpeed * 1.5) {
+    gustEmoji = '🌬️';
+    gustText = ' – gusty conditions';
+  }
+
+  let shiftEmoji = '';
+  let shiftText = '';
+  if (windDirectionsToday && windDirectionsToday.length > 1) {
+    const min = Math.min(...windDirectionsToday);
+    const max = Math.max(...windDirectionsToday);
+    const swing = max - min;
+    if (swing > 90) {
+      shiftEmoji = '🔄';
+      shiftText = ' – changing direction';
+    }
+  }
+
+  if (kmh < 6) return '🌬️ Light air – flat calm';
+
+  const warnEmoji = kmh >= 62 ? '⚠️ ' : '';
+  const emojiPrefix = `${warnEmoji}${shiftEmoji}${gustEmoji}`.trim();
+  const prefix = emojiPrefix ? `${emojiPrefix} ` : '';
+  const suffix = `${shiftText}${gustText}`.trim();
+
+  return `${prefix}${base} ${direction}${suffix ? ` ${suffix}` : ''}`.trim();
+}
+
+function buildWindMessageMarine({
+  windSpeed,
+  gustSpeed,
+  windDirection,
+  windDirectionsToday
+}: {
+  windSpeed?: number,
+  gustSpeed?: number,
+  windDirection?: number,
+  windDirectionsToday?: number[]
+}): string | null {
+  if (!windSpeed) return null;
+
+  const kmh = windSpeed;
+  const base = getBeaufortDescription(kmh);
+  const direction = typeof windDirection === 'number'
+    ? `from the ${getCompassDirection(windDirection)}`
+    : '';
+
+  let gustEmoji = '';
+  let gustText = '';
+  if (gustSpeed && gustSpeed > windSpeed * 1.3) {
+    gustEmoji = '🌬️';
+    gustText = ' – gusts could affect handling';
+  }
+
+  let shiftEmoji = '';
+  let shiftText = '';
+  if (windDirectionsToday && windDirectionsToday.length > 1) {
+    const min = Math.min(...windDirectionsToday);
+    const max = Math.max(...windDirectionsToday);
+    const swing = max - min;
+    if (swing > 60) {
+      shiftEmoji = '🔄';
+      shiftText = ' – variable direction';
+    }
+  }
+
+  if (kmh < 6) return '🌬️ Light air – smooth seas';
+
+  const warnEmoji = kmh >= 62 ? '⚠️ ' : '';
+  const emojiPrefix = `${warnEmoji}${shiftEmoji}${gustEmoji}`.trim();
+  const prefix = emojiPrefix ? `${emojiPrefix} ` : '';
+  const suffix = `${shiftText}${gustText}`.trim();
+
+  return `${prefix}${base} ${direction}${suffix ? ` ${suffix}` : ''}`.trim();
+}

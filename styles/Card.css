@@ -85,10 +85,9 @@
   gap: 12px;
 }
 .card__hero-title {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: bold;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  margin-bottom: 8px; /* Adds spacing below the title */
 }
 .card__score-badge {
   font-size: 0.9rem;
@@ -122,13 +121,18 @@
 .card__hero-icon {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
-  margin-right: 12px;
+  margin-bottom: 8px; /* Add spacing below the icon */
+  margin-right: 0;    /* Remove right margin if present */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -395,4 +399,12 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.card__hero-message {
+  font-size: 0.8rem;
+  color: #ffffff; /* Adjust color for better readability */
+  margin-bottom: 0px; /* Adds spacing below the message */
+  text-align: left; /* Ensures the text aligns properly */
+  font-weight: normal; /* Explicitly set font weight to normal */
 }

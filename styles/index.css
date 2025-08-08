@@ -945,3 +945,35 @@ abbr[title] {
   }
 }
 
+/* Remove bullet points and indentation */
+.also-good-perfect-list,
+.marine-values,
+.indoor-list {
+  list-style: none; /* Removes bullet points */
+  padding: 0; /* Removes extra indentation */
+  margin: 0; /* Removes extra spacing */
+}
+
+/* Align activities */
+.also-good-perfect-list li,
+.marine-values li,
+.indoor-list li {
+  display: flex; /* Ensures consistent alignment */
+  align-items: center; /* Vertically aligns content */
+  justify-content: flex-start; /* Aligns content to the left */
+  padding: 8px 0; /* Adds consistent spacing */
+  margin: 0; /* Removes extra spacing */
+}
+
+/* Optional: Add spacing between items */
+.also-good-perfect-list li + li,
+.marine-values li + li,
+.indoor-list li + li {
+  margin-top: 8px; /* Adds spacing between items */
+}
+
+/* Ensure hero activity stands out */
+.card__hero-activity {
+  margin-bottom: 16px; /* Adds spacing below hero activity */
+}
+

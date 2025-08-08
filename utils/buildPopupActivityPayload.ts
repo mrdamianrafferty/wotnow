@@ -34,7 +34,9 @@ export function buildPopupActivityPayload({
   const categoryEmoji = getAssessmentEmoji ? getAssessmentEmoji(category) : '';
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
 
-  const marineData = isMarine
+  const hasMarineData = day.waveHeight || day.wind_speed || day.waterTemperature || day.swellHeight || day.swellPeriod;
+
+  const marineData = isMarine && hasMarineData
     ? {
         waveHeight: day.waveHeight,
         windSpeed: day.wind_speed,
@@ -48,7 +50,7 @@ export function buildPopupActivityPayload({
     ? {
         description: day.description,
         temperature: day.temperature,
-        windSpeed: day.wind_speed,
+        windSpeed: day.windSpeed,
         windDirection: day.wind_deg,
         humidity: day.humidity,
         precipitation: day.rain ?? day.precipitation ?? 0,

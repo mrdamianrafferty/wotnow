@@ -16,6 +16,8 @@ import {
   getHumidityDescription,
   getWaveDescription,
   getWaterTemperatureDescription,
+  getWindMessage,
+  getVisibilityDescription,
 } from '../utils/weatherLabels';
 
 // Marine activities for conditional data display
@@ -101,11 +103,29 @@ function getDayLabel(dateStr: string, idx: number, serverTime?: Date): string {
 // Build comprehensive reasons
 function buildReasons(day: WeatherForecastDay, activityId: string) {
   const reasons = [
-    { key: 'wind', value: day.wind_speed, label: getBeaufortDescription(day.wind_speed) },
+    {
+      key: 'wind',
+      value: day.wind_speed,
+      label: getWindMessage({
+        windSpeed: day.wind_speed,
+        gustSpeed: day.gust_speed,
+        windDirection: day.wind_direction,
+        windDirectionsToday: day.wind_directions_today,
+        context: MARINE_ACTIVITY_IDS.includes(activityId) ? 'marine' : 'land'
+      }),
+    },
     { key: 'rain', value: day.rain, label: getRainfallDescription(day.rain) },
     { key: 'temperature', value: day.temperature, label: getTemperatureDescription(day.temperature) },
     { key: 'humidity', value: day.humidity, label: getHumidityDescription(day.humidity) },
   ];
+
+  // Add visibility after humidity if available
+  if (typeof day.visibility === 'number') {
+    const visibilityLabel = getVisibilityDescription(day.visibility);
+    if (visibilityLabel) {
+      reasons.push({ key: 'visibility', value: day.visibility, label: visibilityLabel });
+    }
+  }
 
   if (MARINE_ACTIVITY_IDS.includes(activityId)) {
     if (typeof day.waveHeight === 'number') {
@@ -116,7 +136,12 @@ function buildReasons(day: WeatherForecastDay, activityId: string) {
     }
   }
 
-  return reasons.filter(r => r.label && r.label !== 'Unknown temperature' && r.label !== 'Unknown humidity');
+  return reasons.filter(
+    r =>
+      r.label &&
+      r.label !== 'Unknown temperature' &&
+      r.label !== 'Unknown humidity'
+  );
 }
 
 // Activity Card Component
