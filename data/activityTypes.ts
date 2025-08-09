@@ -1148,7 +1148,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'beach',
-  name: 'Go To The Beach',
+  name: 'Go to the Beach',
   category: 'Outdoor Leisure',
   secondaryCategory: 'Social Activities',
   weatherSensitive: true,

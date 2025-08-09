@@ -624,6 +624,14 @@ beach_volleyball: {
       poor: "Rough seas or murky water—best to stay dry and try tomorrow. {reasons}"
     }
   },
+  playing_records: {
+    templates: {
+      perfect: "Sun’s out, tunes are on—perfect day to spin some vinyl. {reasons}",
+      good: "Decent weather to enjoy your record collection outside. {reasons}",
+      fair: "A bit breezy but still nice for a chill listening session. {reasons}",
+      poor: "Wind or rain might scratch the vibe—better to keep the records indoors today. {reasons}"
+       }
+  },
 
 };
 
@@ -632,14 +640,20 @@ beach_volleyball: {
 export function getActivityMessage(
   activityId: string,
   category: 'perfect' | 'good' | 'fair' | 'poor',
-  reasons: { key: string; value: any; label: string }[]
+  reasons: { key: string; value: any; label: string }[] = []
 ): string {
   const config = activityMessages[activityId];
   if (!config) return 'No specific message available for this activity.';
-  const filteredReasons = reasons.filter(
+
+  const arr = Array.isArray(reasons) ? reasons : [];
+  const filteredReasons = arr.filter(
     r => !(config.omitReasons || []).includes(r.key)
   );
-  const reasonText = filteredReasons.map(r => r.label.trim().replace(/\.$/, '')).join('. ') + '.';
-  const template = config.templates[category];
-  return template.replace('{reasons}', reasonText || 'No reasons provided.');
+  const reasonText =
+    filteredReasons.length > 0
+      ? filteredReasons.map(r => r.label.trim().replace(/\.$/, '')).join('. ') + '.'
+      : '';
+
+  const template = config.templates[category] ?? config.templates.fair;
+  return template.replace('{reasons}', reasonText);
 }

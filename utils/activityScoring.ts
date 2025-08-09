@@ -1,72 +1,104 @@
-import { WeatherData } from './weatherTypes';
-import { ActivityType } from '../data/activityTypes';
-import { evaluateConditionScore, parseConditionString } from './activitySuitability';
-
-export function calculateActivityScore(
+// Updated scoring function using your existing evening logic
+function calculateActivityScore(
   activity: ActivityType,
   weather: WeatherData,
   isWeatherGood: boolean,
-  isEvening: boolean
+  isEveningToday: boolean,
+  contextTags: string[],
+  opts?: {
+    nowTs?: number;
+    sunsetTs?: number | null;
+    month?: number;
+  }
 ): number {
+  console.log(`🎯 Scoring ${activity.id}:`, { weather, contextTags, isEveningToday });
+  
+  const hour = new Date(opts?.nowTs || Date.now()).getHours();
+  
+  // INDOOR ACTIVITIES: Use evening bonus system for context-based scoring
   if (!activity.weatherSensitive) {
-    // Penalize indoor activities if weather is good and NOT evening
-    if (isWeatherGood && !isEvening) {
-      return 20; // Lower base score for indoor activities
+    let baseScore = 45; // Lower daytime base - not hero material unless evening
+    
+    // Apply your sophisticated evening bonus system
+    const eveningResult = applyEveningBonus(activity, hour, contextTags, opts);
+    baseScore *= eveningResult.multiplier;
+    
+    // Log the evening reasons for transparency
+    if (Object.keys(eveningResult.reasons).length > 0) {
+      console.log(`🌙 Evening bonuses for ${activity.id}:`, eveningResult.reasons);
     }
-    return 50; // Normal base score for indoor activities
+    
+    const finalScore = Math.min(95, Math.round(baseScore));
+    const heroEligible = finalScore >= 70; // Heroes need 70+ after evening multipliers
+    
+    console.log(`🏠 ${activity.id} scored ${finalScore} (indoor, hero-eligible: ${heroEligible})`);
+    return finalScore;
   }
 
-  // Calculate condition match scores (0-1 range)
-  const perfectScore = calculateConditionMatchScore(activity.perfectConditions || [], weather);
-  const goodScore = calculateConditionMatchScore(activity.goodConditions || [], weather);
-  const poorPenalty = calculatePoorConditionPenalty(activity.poorConditions || [], weather);
+  // OUTDOOR ACTIVITIES: Weather-dependent + evening considerations
+  const normalizedWeather: WeatherData = {
+    temperature: weather.temperature,
+    precipitation: weather.precipitation,
+    windSpeed: weather.windspeed,
+    clouds: weather.clouds,
+    humidity: weather.humidity,
+    visibility: (weather.visibility || 10000) / 1000,
+    waterTemperature: weather.waterTemperature,
+    waveHeight: weather.waveHeight,
+    swellHeight: weather.swellHeight,
+    swellPeriod: weather.swellPeriod,
+  };
 
-  let baseScore = 25; // Minimum for viable activities
+  let score = 20; // Base outdoor score
+  let conditionLevel = 'poor';
+  let dangerWarning = '';
 
-  if (perfectScore >= 0.8) {
-    baseScore = 80 + (perfectScore * 20); // 80-100 range
-  } else if (goodScore >= 0.6) {
-    baseScore = 60 + (goodScore * 20); // 60-80 range  
-  } else if (perfectScore >= 0.4 || goodScore >= 0.4) {
-    baseScore = 30 + Math.max(perfectScore, goodScore) * 30; // 30-60 range
-  }
-
-  // Apply poor condition penalties
-  baseScore = Math.max(0, baseScore - (poorPenalty * 40));
-  const score = Math.round(baseScore);
-
-  console.log('Activity:', activity);
-  console.log('Score:', score);
-
-  return score;
-}
-
-function calculateConditionMatchScore(conditions: string[], weather: WeatherData): number {
-  if (conditions.length === 0) return 0;
-  
-  let totalScore = 0;
-  let evaluatedConditions = 0;
-  
-  for (const condition of conditions) {
-    const score = evaluateConditionScore(condition, weather);
-    if (score >= 0) {
-      totalScore += score;
-      evaluatedConditions++;
-    }
-  }
-  
-  return evaluatedConditions > 0 ? totalScore / evaluatedConditions : 0;
-}
-
-function calculatePoorConditionPenalty(conditions: string[], weather: WeatherData): number {
-  if (conditions.length === 0) return 0;
-  
-  let penalties = 0;
-  for (const condition of conditions) {
-    if (evaluateConditionScore(condition, weather) > 0.7) {
-      penalties += 1;
+  // Use your existing condition evaluation
+  if (activity.poorConditions && activity.poorConditions.length > 0) {
+    const poorPenalty = calculatePoorConditionPenalty(activity.poorConditions, normalizedWeather);
+    if (poorPenalty > 0.7) {
+      score = 8 + Math.random() * 12;
+      conditionLevel = 'dangerous';
+      dangerWarning = '⚠️ Potentially dangerous conditions';
     }
   }
+
+  if (conditionLevel !== 'dangerous' && activity.perfectConditions && activity.perfectConditions.length > 0) {
+    const perfectMatch = calculateConditionMatchScore(activity.perfectConditions, normalizedWeather);
+    if (perfectMatch > 0.85) {
+      score = 87 + perfectMatch * 8;
+      conditionLevel = 'perfect';
+    }
+  }
+
+  if (conditionLevel === 'poor' && activity.goodConditions && activity.goodConditions.length > 0) {
+    const goodMatch = calculateConditionMatchScore(activity.goodConditions, normalizedWeather);
+    if (goodMatch > 0.6) {
+      score = 68 + goodMatch * 15;
+      conditionLevel = 'good';
+    }
+  }
+
+  if (conditionLevel === 'poor' && activity.fairConditions && activity.fairConditions.length > 0) {
+    const fairMatch = calculateConditionMatchScore(activity.fairConditions, normalizedWeather);
+    if (fairMatch > 0.5) {
+      score = 45 + fairMatch * 15;
+      conditionLevel = 'fair';
+    }
+  }
+
+  // Apply evening considerations for outdoor activities too
+  if (isEveningToday) {
+    const eveningResult = applyEveningBonus(activity, hour, contextTags, opts);
+    score *= eveningResult.multiplier;
+    
+    if (Object.keys(eveningResult.reasons).length > 0) {
+      console.log(`🌙 Evening adjustments for outdoor ${activity.id}:`, eveningResult.reasons);
+    }
+  }
+
+  const finalScore = Math.round(Math.min(95, Math.max(5, score)));
+  console.log(`🌤️ ${activity.id} scored ${finalScore} (${conditionLevel}) ${dangerWarning}`);
   
-  return Math.min(1, penalties / conditions.length);
+  return finalScore;
 }

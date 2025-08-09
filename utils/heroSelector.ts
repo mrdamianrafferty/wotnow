@@ -1,42 +1,44 @@
-export function selectHeroActivity(
-  suggestions: Suggestion[],
-  isEvening: boolean
-): Suggestion | null {
-  if (suggestions.length === 0) return null;
+import {
+  Level,
+  SuggestionLike,
+  uniqueByActivityId,
+  selectWithVariety,
+  recordHeroSelection,
+} from './heroVariety';
 
-  const sorted = suggestions.slice().sort((a, b) => b.score - a.score);
+/**
+ * Choose the "hero" activity for a day, preferring outdoor and higher scores,
+ * then apply variety rules from heroVariety to avoid repeating the same hero.
+ *
+ * Input "suggestions" should already be the day's scored activities.
+ */
+export function selectHeroActivity<T extends SuggestionLike>(
+  suggestions: T[],
+  _isEveningToday?: boolean
+): T | null {
+  if (!Array.isArray(suggestions) || suggestions.length === 0) return null;
 
-  const thresholds = isEvening ? 
-    { perfect: 70, good: 50, acceptable: 25 } : 
-    { perfect: 80, good: 60, acceptable: 30 };
+  // 1) Deduplicate
+  const unique = uniqueByActivityId(suggestions);
 
-  const perfect = sorted.filter(s => s.score >= thresholds.perfect);
-  const good = sorted.filter(s => s.score >= thresholds.good && s.score < thresholds.perfect);
-  const acceptable = sorted.filter(s => s.score >= thresholds.acceptable && s.score < thresholds.good);
-  const indoor = sorted
-    .filter(s => s.evaluation === 'indoor' && s.score >= thresholds.acceptable)
-    .sort((a, b) => b.score - a.score);
+  // 2) Prefer outdoor categories first (perfect/good/fair). Only if none exist, allow indoor.
+  const isOutdoor = (lvl: Level) => lvl === 'perfect' || lvl === 'good' || lvl === 'fair';
+  const outdoor = unique.filter((s) => isOutdoor(s.evaluation));
+  const indoor = unique.filter((s) => !isOutdoor(s.evaluation));
 
-  if (perfect.length > 0) {
-    console.log(`🌟 Hero: Perfect activity selected - ${perfect[0].activityId} (${perfect[0].score})`);
-    return perfect[0];
-  }
+  // 3) Sort by score desc for both pools
+  outdoor.sort((a, b) => b.score - a.score);
+  indoor.sort((a, b) => b.score - a.score);
 
-  if (good.length > 0) {
-    console.log(`👍 Hero: Good activity selected - ${good[0].activityId} (${good[0].score})`);
-    return good[0];
-  }
+  // 4) Choose pool
+  const pool = outdoor.length > 0 ? outdoor : indoor;
 
-  if (acceptable.length > 0) {
-    console.log(`🤔 Hero: Acceptable activity selected - ${acceptable[0].activityId} (${acceptable[0].score})`);
-    return acceptable[0];
-  }
+  // 5) Apply variety choice
+  const chosen = selectWithVariety(pool);
+  if (!chosen) return null;
 
-  if (indoor.length > 0) {
-    console.log(`🏠 Hero: Indoor fallback selected - ${indoor[0].activityId} (${indoor[0].score})`);
-    return indoor[0];
-  }
+  // 6) Record the selection for future variety
+  recordHeroSelection(chosen.activityId);
 
-  console.log(`⚠️ Hero: Emergency fallback - ${sorted[0].activityId} (${sorted[0].score})`);
-  return sorted[0];
+  return chosen;
 }

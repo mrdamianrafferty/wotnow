@@ -408,3 +408,11 @@
   text-align: left; /* Ensures the text aligns properly */
   font-weight: normal; /* Explicitly set font weight to normal */
 }
+
+/* Ensure cards don’t collapse and bg stays behind */
+.hero-card { position: relative; overflow: hidden; border-radius: 12px; min-height: 120px; }
+.hero-card .hero-bg { position: absolute; inset: 0; border-radius: 12px; z-index: 0; pointer-events: none; opacity: .18; }
+.hero-card > *:not(.hero-bg) { position: relative; z-index: 1; }
+
+/* Emoji pills */
+.emoji-circle { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.06); font-size: 18px; line-height: 1; }
