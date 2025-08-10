@@ -19,6 +19,7 @@ import { findHeroActivity } from '../utils/activityHelpers';
 import { useForecastData } from '../lib/useForecastData';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
 import { selectHeroActivity } from '../utils/heroSelector';
+import 'weather-icons/css/weather-icons.css';
 
 import '../styles/Card.css';
 import '../styles/Popup.css';
@@ -157,6 +158,30 @@ const getScoreCategory = (score: number) => {
 const isOutdoor = (activityId: string) => {
   return !!activityMessages[activityId];
 };
+
+function getWeatherIconClass(iconCode: string) {
+  const map: Record<string, string> = {
+    '01d': 'wi-day-sunny',
+    '01n': 'wi-night-clear',
+    '02d': 'wi-day-cloudy',
+    '02n': 'wi-night-alt-cloudy',
+    '03d': 'wi-cloud',
+    '03n': 'wi-cloud',
+    '04d': 'wi-cloudy',
+    '04n': 'wi-cloudy',
+    '09d': 'wi-showers',
+    '09n': 'wi-showers',
+    '10d': 'wi-day-rain',
+    '10n': 'wi-night-alt-rain',
+    '11d': 'wi-thunderstorm',
+    '11n': 'wi-thunderstorm',
+    '13d': 'wi-snow',
+    '13n': 'wi-snow',
+    '50d': 'wi-fog',
+    '50n': 'wi-fog',
+  };
+  return map[iconCode] || 'wi-na';
+}
 
 export default function Home() {
   const { preferences } = useUserPreferences();
@@ -516,67 +541,33 @@ return (
         className="activity-card-enhanced"
         style={{
           backgroundImage: `url(${getActivityBg(heroActivity?.activityId)})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          borderRadius: '22px',
-          color: '#fff',
-          overflow: 'hidden',
-          position: 'relative',
         }}
       >
         <div className="activity-card-overlay" />
-        <div className="activity-card-content" style={{ position: 'relative', zIndex: 1 }}>
-          {/* Today badge */}
-          {isToday && (
-            <div
-              className="today-badge"
-              style={{
-                position: 'absolute',
-                top: '20px',
-                left: '24px',
-                background: `linear-gradient(135deg, ${getActivityBg(heroActivity?.activityId)}, ${getActivityBg(heroActivity?.activityId)}dd)`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                color: '#ccc',
-                padding: '6px 16px',
-                borderRadius: '20px',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-              }}
-            >
-              Today
-            </div>
-          )}
+        <div className="activity-card-content">
+            <div className="weather-icon-topright">
+    <i className={`wi ${getWeatherIconClass(day.icon)}`}></i>
+  </div>
 
           {/* Weather summary */}
-          <div className="forecast-header" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '24px',
-            paddingTop: isToday ? '40px' : '0'
-          }}>
-            <div className="date-info" style={{ flex: 1 }}>
-              <h3 className="date-label" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937', fontWeight: '600' }}>
-                {dayLabel}
-              </h3>
-              <p className="date-meta" style={{ fontSize: '1rem', margin: '4px 0 0 0', color: '#6b7280' }}>
-                {date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-              </p>
+          <div className="forecast-header">
+            <div className="date-info">
+              <h3 className="date-label">{dayLabel}</h3>
+
             </div>
-            <div className="temperature-info" style={{ textAlign: 'right' }}>
-              <span className="temperature-value" style={{ fontSize: '2.5rem', fontWeight: '700', color: '#111827' }}>
-                {Math.round(day.temperature)}°C
+            <div className="temperature-info">
+              <span className="temperature-value">
+                {Math.round(day.temperature)}°
               </span>
-              <br />
-              <span className="temperature-label" style={{ fontSize: '1rem', color: '#6b7280' }}>
-                / {day.description || 'partly cloudy'}
-              </span>
+                            <span className="temperature-label">
+  
+  &nbsp;{day.description || 'partly cloudy'}
+</span>
+
             </div>
           </div>
 
-          {/* HERO ACTIVITY as a section in the card */}
+          {/* HERO ACTIVITY */}
           {heroActivity && (() => {
             const { activityId, score } = heroActivity;
             const activity = activityTypes.find((a) => a.id === activityId);
@@ -610,51 +601,20 @@ return (
                     handlePopupOpen();
                   }
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '20px',
-                  backgroundColor: '#f8fafc',
-                  borderRadius: '12px',
-                  marginBottom: '24px',
-                  cursor: isOutdoorActivity ? 'pointer' : 'default',
-                  transition: 'all 0.2s ease',
-                  border: '2px solid transparent',
-                }}
               >
-                <div className="card__hero-icon" style={{ fontSize: '2.5rem', marginRight: '16px' }}>
-                  {emoji}
-                </div>
-                <div className="card__hero-title" style={{ flex: 1 }}>
-                  <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`} style={{
-                    fontSize: '1.25rem',
-                    fontWeight: '600',
-                    color: '#1f2937',
-                    marginBottom: '4px'
-                  }}>
+                <div className="card__hero-icon">{emoji}</div>
+                <div className="card__hero-title">
+                  <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>
                     {activity?.name || activityId.replace(/_/g, ' ')}
                   </div>
-                  <div className="card__hero-message" style={{
-                    fontSize: '1rem',
-                    color: '#6b7280',
-                    lineHeight: '1.4'
-                  }}>
+                  <div className="card__hero-message">
                     {activityMessage}
                   </div>
                 </div>
                 <div
                   className="card__score-badge"
-                  style={{
-                    background: scoreInfo.color,
-                    color: '#fff',
-                    padding: '8px 12px',
-                    borderRadius: '20px',
-                    fontSize: '1rem',
-                    fontWeight: '600',
-                    minWidth: '60px',
-                    textAlign: 'center'
-                  }}
                   title={scoreInfo.label}
+                  style={{ background: scoreInfo.color }}
                 >
                   {scoreInfo.emoji}
                 </div>
@@ -663,20 +623,12 @@ return (
           })()}
 
           {/* Activity Lists */}
-          <div className="activity-suggestions" style={{ display: 'grid', gap: '20px' }}>
+          <div className="activity-suggestions">
             {/* Perfect Activities */}
             {alsoGoodPerfect.length > 0 && (
               <div className="activity-section">
-                <h4 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
-                  💯 Also Perfect Today
-                </h4>
-                <ul className="also-good-perfect-list" style={{
-                  display: 'grid',
-                  gap: '8px',
-                  listStyle: 'none',
-                  padding: 0,
-                  margin: 0
-                }}>
+                <h4 className="also-good-title">💯 Also Perfect Today</h4>
+                <ul className="also-good-list">
                   {alsoGoodPerfect.map(suggestion => {
                     const activity = activityTypes.find(a => a.id === suggestion.activityId);
                     const isOutdoorActivity = isOutdoor(suggestion.activityId);
@@ -686,7 +638,7 @@ return (
                         key={suggestion.activityId}
                         role="button"
                         tabIndex={0}
-                        className="card__suggestion"
+                        className="also-good-item"
                         onClick={() => {
                           if (isOutdoorActivity) {
                             const popupPayload = buildPopupActivityPayload({
@@ -699,22 +651,13 @@ return (
                           }
                         }}
                         style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '12px 16px',
-                          backgroundColor: '#ecfdf5',
-                          borderRadius: '8px',
                           cursor: isOutdoorActivity ? 'pointer' : 'default',
-                          transition: 'all 0.2s ease',
-                          fontSize: '1rem',
-                          fontWeight: '500'
                         }}
                       >
                         <span>
                           {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
                         </span>
-                        <span style={{ color: '#10b981', fontWeight: '600' }}>
+                        <span className="also-good-score">
                           {Math.round(suggestion.score)}%
                         </span>
                       </li>
@@ -735,16 +678,8 @@ return (
 
               return (
                 <div className="activity-section">
-                  <h4 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
-                    👍 Good Options Today
-                  </h4>
-                  <ul style={{
-                    display: 'grid',
-                    gap: '8px',
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0
-                  }}>
+                  <h4 className="also-good-title">👍 Good Options Today</h4>
+                  <ul className="activity-list-good">
                     {goodActivities.map(suggestion => {
                       const activity = activityTypes.find(a => a.id === suggestion.activityId);
                       const isOutdoorActivity = isOutdoor(suggestion.activityId);
@@ -754,7 +689,7 @@ return (
                           key={suggestion.activityId}
                           role="button"
                           tabIndex={0}
-                          className="card__suggestion"
+                          className="activity-item-good"
                           onClick={() => {
                             if (isOutdoorActivity) {
                               const popupPayload = buildPopupActivityPayload({
@@ -767,22 +702,13 @@ return (
                             }
                           }}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px 16px',
-                            backgroundColor: '#eff6ff',
-                            borderRadius: '8px',
                             cursor: isOutdoorActivity ? 'pointer' : 'default',
-                            transition: 'all 0.2s ease',
-                            fontSize: '1rem',
-                            fontWeight: '500'
                           }}
                         >
                           <span>
                             {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
                           </span>
-                          <span style={{ color: '#3b82f6', fontWeight: '600' }}>
+                          <span className="also-good-score">
                             {Math.round(suggestion.score)}%
                           </span>
                         </li>
@@ -802,16 +728,8 @@ return (
 
                 return (
                   <div className="indoor-section">
-                    <h4 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
-                      🏠 Indoor Alternatives
-                    </h4>
-                    <ul className="indoor-list" style={{
-                      display: 'grid',
-                      gap: '8px',
-                      listStyle: 'none',
-                      padding: 0,
-                      margin: 0
-                    }}>
+                    <h4 className="indoor-title">🏠 Indoor Alternatives</h4>
+                    <ul className="indoor-list">
                       {indoorList.map((s) => {
                         const activity = activityTypes.find((a) => a.id === s.activityId);
                         const isOutdoorActivity = isOutdoor(s.activityId);
@@ -833,15 +751,7 @@ return (
                               setPopupActivity(popupPayload);
                             }}
                             style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '12px 16px',
-                              backgroundColor: '#faf5ff',
-                              borderRadius: '8px',
                               cursor: 'default',
-                              fontSize: '1rem',
-                              fontWeight: '500'
                             }}
                           >
                             <span>

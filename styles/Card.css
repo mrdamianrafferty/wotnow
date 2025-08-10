@@ -53,6 +53,13 @@
   padding: 16px;
 }
 
+.date-label {
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  margin-bottom: 8px;
+}
+
 /* Card header and subcomponents */
 .card__header {
   display: flex;
@@ -239,7 +246,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 0;
-  color: #059669;
+  color: #fcfffe;
 }
 .also-good-score {
   font-size: 0.7rem;
@@ -416,3 +423,18 @@
 
 /* Emoji pills */
 .emoji-circle { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.06); font-size: 18px; line-height: 1; }
+
+/* Weather Icon Top Right */
+.weather-icon-topright {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+}
+
+.weather-icon-topright .wi {
+  font-size: 2.2rem;
+  color: #fff;
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
