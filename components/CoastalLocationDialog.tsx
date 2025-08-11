@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-// --------------- COASTAL LOCATION MODAL ---------------
+
+// Define the component interface
 const CoastalLocationDialog: React.FC<{
   open: boolean;
   onClose: () => void;
+  title?: string;
   onSave: (loc: { name: string; lat: number; lon: number }) => void;
-}> = ({ open, onClose, onSave }) => {
+  homeLocation?: any;
+  coastalLocation?: any;
+  setHomeLocation?: (loc: any) => void;
+  setCoastalLocation?: (loc: any) => void;
+}> = ({ 
+  open, 
+  onClose, 
+  title = "Pick your location",
+  onSave, 
+  homeLocation,
+  coastalLocation,
+  setHomeLocation,
+  setCoastalLocation
+}) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ name: string; lat: number; lon: number }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,37 +49,53 @@ const CoastalLocationDialog: React.FC<{
     setLoading(false);
   };
 
+  // If dialog is not open, don't render anything
   if (!open) return null;
 
+  // Use CSS classes from index.css for styling
   return (
-    <div className="coastal-dialog-backdrop">
-      <div className="coastal-dialog">
+    <div className="coastal-dialog-backdrop coastal-dialog-modal">
+      <div className="coastal-dialog coastal-dialog-content">
+        {/* Close button */}
         <button className="coastal-dialog-close" onClick={onClose}>&times;</button>
-        <h3 className="coastal-dialog-title">Pick your beach or coastal spot</h3>
+        
+        {/* Dialog title */}
+        <h3 className="coastal-dialog-title">{title}</h3>
+        
+        {/* Search input */}
         <input
           type="text"
           value={query}
           autoFocus
-          placeholder="Search for beach, town, or coast"
+          placeholder="Search for location"
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === "Enter" && doSearch()}
-          className="coastal-dialog-input"
+          className="coastal-dialog-input location-banner__input"
         />
+        
+        {/* Search button */}
         <button
-          className="coastal-dialog-search"
+          className="coastal-dialog-search location-banner__button"
           onClick={doSearch}
           disabled={loading || !query}
         >
           Search
         </button>
+        
+        {/* Loading indicator */}
         {loading && <div className="coastal-dialog-loading">Searching…</div>}
+        
+        {/* Results list */}
         {!loading && results.length > 0 && (
           <ul className="coastal-dialog-list">
             {results.map((r, i) => (
               <li key={i} className="coastal-dialog-list-item">
                 <button
                   className="coastal-dialog-list-btn"
-                  onClick={() => onSave(r)}
+                  onClick={() => {
+                    // Save the selected location and close the dialog
+                    onSave(r);
+                  }}
                 >
                   {r.name}
                   <span className="coastal-dialog-list-coords">
@@ -79,4 +110,5 @@ const CoastalLocationDialog: React.FC<{
     </div>
   );
 };
+
 export default CoastalLocationDialog;

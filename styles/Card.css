@@ -46,11 +46,11 @@
 .activity-card-content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  flex: 1 1 auto;
   position: relative;
-  z-index: 2;
-  height: 100%;
-  padding: 16px;
+  padding: 1.5rem;
+  z-index: 1;
+  height: 100%; /* <-- add this line */
 }
 
 .date-label {
@@ -286,22 +286,16 @@
   text-align: center;
 }
 .indoor-day-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.8rem;
+  list-style: none; /* Remove bullet points */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
 }
 .indoor-day-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
+  display: flex; /* Enables flexbox layout */
+  align-items: center; /* Aligns items vertically */
+  justify-content: space-between; /* Ensures proper spacing */
+  gap: 0.5rem; /* Adds spacing between elements */
+  padding: 0.3rem 0;
 }
 .indoor-day-item:hover {
   background: #f1f5f9;
@@ -314,7 +308,7 @@
 .indoor-day-item .activity-name {
   font-weight: 500;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 /* Indoor Section */
@@ -331,14 +325,13 @@
   list-style: none;
   padding-left: 0;
   margin: 0;
-  font-size: 0.85rem;
   color: #fff;
 }
 .indoor-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+
 }
 
 /* Add Interests Link */
@@ -437,4 +430,49 @@
   color: #fff;
   opacity: 1;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.activity-card-enhanced {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 420px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.activity-card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  position: relative;
+  padding: 1.5rem;
+  z-index: 1;
+  height: 100%; /* <-- add this line */
+}
+
+.activity-card-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 1rem;
+  padding-top: 1.5rem;
+}
+
+.activity-card-btn {
+  background: #3b82f6;
+  color: #fff;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 300;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+  transition: background 0.2s;
+  display: inline-block;
+}
+.activity-card-btn + .activity-card-btn {
+  background: #10b981;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
 }

@@ -184,7 +184,7 @@ function getWeatherIconClass(iconCode: string) {
 }
 
 export default function Home() {
-  const { preferences } = useUserPreferences();
+  const { preferences, setPreferences } = useUserPreferences();
   const interests = preferences.interests ?? [];
 
   useEffect(() => {
@@ -197,6 +197,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showHomeDialog, setShowHomeDialog] = useState(false);
   const [showCoastDialog, setShowCoastDialog] = useState(false);
   const [popupActivity, setPopupActivity] = useState<any>(null);
   const [timeInfo, setTimeInfo] = useState<any>(null);
@@ -204,9 +205,57 @@ export default function Home() {
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
+  
+// Helper functions to update locations
+  const setHomeLocation = (loc: any) => {
+    const newLocations = Array.isArray(preferences.locations) 
+      ? preferences.locations.slice() // Create a copy
+      : [];
+      
+    // Find if home location already exists
+    const homeIndex = newLocations.findIndex(l => l.type === 'home');
+    
+    if (homeIndex >= 0) {
+      // Update existing home location
+      newLocations[homeIndex] = { ...newLocations[homeIndex], ...loc };
+    } else {
+      // Add new home location
+      newLocations.push({ ...loc, type: 'home' });
+    }
+    
+    // Update preferences
+    setPreferences({
+      ...preferences,
+      locations: newLocations
+    });
+  };
+
+  const setCoastalLocation = (loc: any) => {
+    const newLocations = Array.isArray(preferences.locations) 
+      ? preferences.locations.slice() // Create a copy
+      : [];
+      
+    // Find if coastal location already exists
+    const coastalIndex = newLocations.findIndex(l => l.type === 'coastal');
+    
+    if (coastalIndex >= 0) {
+      // Update existing coastal location
+      newLocations[coastalIndex] = { ...newLocations[coastalIndex], ...loc };
+    } else {
+      // Add new coastal location
+      newLocations.push({ ...loc, type: 'coastal' });
+    }
+    
+    // Update preferences
+    setPreferences({
+      ...preferences,
+      locations: newLocations
+    });
+  };
+
   const isFirstTimeUser = interests.length === 0;
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
-      const usedHeroActivities = new Set<string>();
+  const usedHeroActivities = new Set<string>();
 
 const heroDataByDay = forecastByDay.map((day, idx) => {
   const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
@@ -394,61 +443,119 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
   }
 
   // MAIN RETURN - Enhanced version preserving all your functionality
-return (
-<>
-  <section>
-    {/* Banner - UNCHANGED */}
-    <header
-      className="homepage-banner"
-      style={{
-        position: 'relative',
-        minHeight: 60,
-        display: 'flex',
-        alignItems: 'center',
-        padding: '8px 0',
-        background: '#fff',
-        borderBottom: '1px solid #e5e7eb',
-      }}
-    >
-      <img
-        src="/burger-menu-svgrepo-com.svg"
-        alt="Open menu"
-        className="burger-menu-icon"
-        style={{
-          width: 36,
-          height: 36,
-          cursor: 'pointer',
-          marginLeft: 12,
-          marginRight: 12,
-          zIndex: 10,
-          display: 'block',
-        }}
-        onClick={() => setMenuOpen(true)}
-      />
-      <img
-        src="/wotnow-horizontal.png"
-        alt="WotNow Logo"
-        className="homepage-banner__logo"
-        style={{
-          display: 'block',
-          maxWidth: 180,
-          height: 'auto',
-        }}
-      />
-      <div style={{ flex: 1 }} />
-      <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
-        <h1 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
-          Wots good,&nbsp;when?
-        </h1>
-        <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
-          Your personalised activity suggestions
-        </p>
-      </div>
-    </header>
+  return (
+    <>
+      {/* Home Location Modal */}
+      {showHomeDialog && (
+        <CoastalLocationDialog
+          open={showHomeDialog}
+          onClose={() => setShowHomeDialog(false)}
+          title="Pick your home location"
+          homeLocation={homeLocation}
+          coastalLocation={coastalLocation}
+          setHomeLocation={setHomeLocation}
+          setCoastalLocation={setCoastalLocation}
+          onSave={(loc) => {
+            setHomeLocation(loc);
+            setShowHomeDialog(false);
+          }}
+        />
+      )}
 
-    {/* Burger Menu - UNCHANGED */}
-    {menuOpen && (
-      <>
+      {/* Coastal Location Modal */}
+      {showCoastDialog && (
+        <CoastalLocationDialog
+          open={showCoastDialog}
+          onClose={() => setShowCoastDialog(false)}
+          title="Pick your beach or coastal spot"
+          homeLocation={homeLocation}
+          coastalLocation={coastalLocation}
+          setHomeLocation={setHomeLocation}
+          setCoastalLocation={setCoastalLocation}
+          onSave={(loc) => {
+            setCoastalLocation(loc);
+            setShowCoastDialog(false);
+          }}
+        />
+      )}
+
+      <section>
+        {/* Banner with location buttons */}
+        <header
+          className="homepage-banner"
+          style={{
+            position: 'relative',
+            minHeight: 60,
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px 0',
+            background: '#fff',
+            borderBottom: '1px solid #e5e7eb',
+          }}
+        >
+          {/* Menu icon */}
+          <img
+            src="/burger-menu-svgrepo-com.svg"
+            alt="Open menu"
+            className="burger-menu-icon"
+            style={{
+              width: 36,
+              height: 36,
+              cursor: 'pointer',
+              marginLeft: 12,
+              marginRight: 12,
+              zIndex: 10,
+              display: 'block',
+            }}
+            onClick={() => setMenuOpen(true)}
+          />
+          
+          {/* Logo */}
+          <img
+            src="/wotnow-horizontal.png"
+            alt="WotNow Logo"
+            className="homepage-banner__logo"
+            style={{
+              display: 'block',
+              maxWidth: 180,
+              height: 'auto',
+            }}
+          />
+          
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+          
+          {/* Title section */}
+          <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
+            <h1 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
+              Wots good,&nbsp;when?
+            </h1>
+            <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
+              Your personalised activity suggestions
+            </p>
+          </div>
+          
+          {/* Location buttons */}
+          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', marginRight: 12 }}>
+            <button 
+              className="location-banner__button"
+              onClick={() => setShowHomeDialog(true)}
+            >
+              Set Home Location
+            </button>
+            <button 
+              className="location-banner__button"
+              style={{ background: '#10b981' }}
+              onClick={() => setShowCoastDialog(true)}
+            >
+              Set Coastal Location
+            </button>
+          </div>
+        </header>
+
+        {/* Menu overlay */}
+        {menuOpen && (
+          <>
         <div
           className="menu-overlay"
           style={{
@@ -503,33 +610,7 @@ return (
       </>
     )}
 
-    {/* Coastal Location Dialog - UNCHANGED */}
-    {showCoastDialog && (
-      <CoastalLocationDialog
-        open={showCoastDialog}
-        onClose={() => setShowCoastDialog(false)}
-        homeLocation={homeLocation}
-        coastalLocation={coastalLocation}
-        setHomeLocation={(loc) => {
-          setMenuOpen(false);
-          setShowCoastDialog(false);
-          preferences.locations = preferences.locations?.map((l) =>
-            l.type === 'home' ? { ...l, ...loc } : l
-          );
-          setHomeLocation(loc);
-        }}
-        setCoastalLocation={(loc) => {
-          setMenuOpen(false);
-          setShowCoastDialog(false);
-          preferences.locations = preferences.locations?.map((l) =>
-            l.type === 'coastal' ? { ...l, ...loc } : l
-          );
-          setCoastalLocation(loc);
-        }}
-      />
-    )}
 
-    {/* Main Content - ENHANCED */}
 <div className="main-grid">
   {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, suggestionsData, dayLabel }, idx) => {
     const date = new Date(day.date * 1000);
@@ -727,9 +808,9 @@ return (
                 if (!indoorList.length) return null;
 
                 return (
-                  <div className="indoor-section">
-                    <h4 className="indoor-title">🏠 Indoor Alternatives</h4>
-                    <ul className="indoor-list">
+                  <div className="also-good-section">
+                    <h4 className="also-good-title">🏠 Indoor Alternatives</h4>
+                    <ul className="also-good-list">
                       {indoorList.map((s) => {
                         const activity = activityTypes.find((a) => a.id === s.activityId);
                         const isOutdoorActivity = isOutdoor(s.activityId);
@@ -737,7 +818,7 @@ return (
                         return (
                           <li
                             key={s.activityId}
-                            className="indoor-item"
+                            className="also-good-item"
                             role="button"
                             tabIndex={0}
                             onClick={() => {
@@ -757,7 +838,7 @@ return (
                             <span>
                               {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
                             </span>
-                            <span style={{ color: '#8b5cf6', fontWeight: '600' }}>
+                            <span className="also-good-score">
                               {Math.round(s.score ?? 0)}%
                             </span>
                           </li>
@@ -770,30 +851,30 @@ return (
               return null;
             })()}
           </div>
+          </div>
         </div>
-      </div>
+
     );
   })}
-</div>
+</div> {/* End of main-grid */}
 
-    {/* Popup - UNCHANGED */}
-    {popupActivity && (
-      <Popup
-        activityId={popupActivity.activityId}
-        title={
-          activityTypes.find(a => a.id === popupActivity.activityId)?.name ||
-          popupActivity.activityId
-        }
-        category={popupActivity.category}
-        message={popupActivity.message}
-        marineData={popupActivity.marineData}
-        weatherData={popupActivity.weatherData}
-        score={popupActivity.score}
-        onClose={() => setPopupActivity(null)}
-      />
-    )}
-  </section>
-</>
-);
-};
-
+{/* Popup for activity details */}
+{popupActivity && (
+  <Popup
+    activityId={popupActivity.activityId}
+    title={
+      activityTypes.find(a => a.id === popupActivity.activityId)?.name ||
+      popupActivity.activityId
+    }
+    category={popupActivity.category}
+    message={popupActivity.message}
+    marineData={popupActivity.marineData}
+    weatherData={popupActivity.weatherData}
+    score={popupActivity.score}
+    onClose={() => setPopupActivity(null)}
+  />
+)}
+      </section> {/* End of section */}
+    </> /* End of fragment */
+  ); // End of return
+} // End of Home component

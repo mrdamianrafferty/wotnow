@@ -976,4 +976,92 @@ abbr[title] {
 .card__hero-activity {
   margin-bottom: 16px; /* Adds spacing below hero activity */
 }
+.coastal-dialog-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.coastal-dialog-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  min-width: 320px;
+  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.coastal-dialog-title {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+}
+.coastal-dialog-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+.coastal-dialog-search {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+.coastal-dialog-search:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.coastal-dialog-loading {
+  margin: 10px 0;
+  text-align: center;
+  color: #4b5563;
+}
+.coastal-dialog-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.coastal-dialog-list-item {
+  margin-bottom: 8px;
+}
+.coastal-dialog-list-btn {
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.coastal-dialog-list-btn:hover {
+  background-color: #f3f4f6;
+}
+.coastal-dialog-list-coords {
+  display: block;
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+.coastal-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+}
 
