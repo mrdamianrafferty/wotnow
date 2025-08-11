@@ -1,41 +1,40 @@
-export type WeatherForecastDay = {
-  date: string;
-  tempMax: number;
-  tempMin: number;
+export interface MarineHour {
+  time: string;
+  waveHeight?: { noaa?: number };
+  waterTemperature?: { noaa?: number };
+  swellHeight?: { noaa?: number };
+  swellPeriod?: { noaa?: number };
+  windSpeed?: { noaa?: number };
+  windDirection?: { noaa?: number };
+  windGust?: { noaa?: number };
+  swellDirection?: { noaa?: number };
+  visibility?: { noaa?: number };
+  precipitation?: { noaa?: number };
+  currentSpeed?: { noaa?: number };
+  currentDirection?: { noaa?: number };
+  [key: string]: any; // Allow additional fields
+}
+  // ...add any other fields you use
+
+
+export interface WeatherForecastDay {
+  date: number;
   temperature: number;
-  condition: string;
-  description: string;
-  icon: string;
-  wind_speed: number;
-  rain: number;
-  snow: number;
-  clouds: number | null;
-  humidity: number;
-  visibility: number | null;
-  totalRain: number;
-  rainDetails: string[];
+  tempMax?: number;
+  tempMin?: number;
+  condition?: string;
+  description?: string;
+  icon?: string;
+  rain?: number;
+  wind_speed?: number;
+  clouds?: number;
+  humidity?: number;
+  visibility?: number;
 
-  // Add these marine fields:
-  waveHeight?: number;
-  waterTemperature?: number;
-  swellHeight?: number;
-  swellPeriod?: number;
-  windDirection?: number;
-  windSpeed?: number;
-};
+  marine?: MarineHour[];
+}
 
-export type WeatherCondition =
-  | 'sunny'
-  | 'clear'
-  | 'rain'
-  | 'cloudy'
-  | 'clouds'
-  | 'snow'
-  | 'thunderstorm'
-  | 'fog'
-  | 'mist'
-  | 'drizzle'
-  | 'unknown';
+console.log('date:', date, 'marineHour.time:', marineHours[0]?.time);
 
 
 

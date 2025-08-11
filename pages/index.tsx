@@ -20,6 +20,7 @@ import { useForecastData } from '../lib/useForecastData';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
 import { selectHeroActivity } from '../utils/heroSelector';
 import 'weather-icons/css/weather-icons.css';
+import { getBeaufortNumber } from '../utils/beaufort';
 
 import '../styles/Card.css';
 import '../styles/Popup.css';
@@ -37,7 +38,28 @@ import { buildReasons } from '../utils/activityHelpers'; // Adjust the path base
 import { isOutdoor } from '../utils/activityHelpers';
 import { getActivityMessage } from '../data/activityMessages';
 
+function WindIcon({ windKmh, size = 28, alt = 'Wind' }: { windKmh: number, size?: number, alt?: string }) {
+  const beaufort = getBeaufortNumber(windKmh);
 
+  // Use windsock for Beaufort < 3, otherwise wind-beaufort-X.svg or fallback to wind.svg
+  let iconName = '';
+  if (beaufort < 3) {
+    iconName = 'windsock.svg';
+  } else if (beaufort <= 12) {
+    iconName = `wind-beaufort-${beaufort}.svg`;
+  } else {
+    iconName = 'wind.svg';
+  }
+
+  return (
+    <img
+      src={`/weather-icons/design/fill/final/${iconName}`}
+      alt={alt}
+      style={{ width: size, height: size, verticalAlign: 'middle' }}
+      loading="lazy"
+    />
+  );
+}
 
 // Improved data fetching hook
 const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests: string[]) => {
@@ -45,6 +67,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeInfo, setTimeInfo] = useState<any>(null);
+  const [weatherData, setWeatherData] = useState<any>(null);
   const [marineHours, setMarineHours] = useState<any[]>([]);
 
   useEffect(() => {
@@ -68,26 +91,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         }
 
         const weatherData = await weatherResponse.json();
-
-        // Fetch marine data if user has marine interests and coastal location
-        let marineData = null;
-        if (hasMarineInterest(interests) && coastalLocation?.lat && coastalLocation?.lon) {
-          const marineResponse = await fetch(
-            `/api/marine?lat=${coastalLocation.lat}&lon=${coastalLocation.lon}`,
-            { cache: 'no-store' }
-          );
-
-          if (marineResponse.ok) {
-            marineData = await marineResponse.json();
-          }
-        }
-
-        // Process and combine the data
-        const processedForecast = processWeatherData(weatherData, marineData);
-        
-        setForecastByDay(processedForecast.forecast);
-        setTimeInfo(processedForecast.timeInfo);
-        setMarineHours(processedForecast.marineHours || []);
+        setWeatherData(weatherData);
 
       } catch (err) {
         console.error('Error fetching forecast ', err);
@@ -98,7 +102,70 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
     };
 
     fetchWeatherData();
-  }, [homeLocation?.lat, homeLocation?.lon, coastalLocation?.lat, coastalLocation?.lon, interests]);
+  }, [homeLocation?.lat, homeLocation?.lon]);
+
+  useEffect(() => {
+    async function fetchMarineData() {
+      try {
+        const startISO = new Date().toISOString();
+        const endISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        const lat = coastalLocation?.lat ?? homeLocation?.lat;
+        const lon = coastalLocation?.lon ?? homeLocation?.lon;
+        const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startISO}&end=${endISO}`);
+        if (!res.ok) throw new Error(`Failed to fetch marine data: ${res.statusText}`);
+        const data = await res.json();
+        setMarineHours(data.hours || []);
+      } catch (err) {
+        console.error('Error fetching marine data:', err);
+      }
+    }
+
+    if ((coastalLocation?.lat && coastalLocation?.lon) || (homeLocation?.lat && homeLocation?.lon)) {
+      fetchMarineData();
+    }
+  }, [coastalLocation, homeLocation]);
+
+  useEffect(() => {
+  if (!weatherData || marineHours.length === 0) return;
+
+  // Now build forecastByDay using weatherData and marineHours
+  const grouped: Record<string, any[]> = {};
+  weatherData.list.forEach((item: any) => {
+    const date = item.dt_txt.split(' ')[0];
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(item);
+  });
+
+  const forecast: WeatherForecastDay[] = Object.entries(grouped)
+    .slice(0, 5)
+    .map(([date, entries]: [string, any[]]) => {
+      const noon = entries.find((e) => e.dt_txt.includes('12:00:00')) ?? entries[0];
+      // Attach all marine hours for this day
+      const marineForDay = marineHours.filter(
+        (h: MarineHour) => h.time && h.time.startsWith(date)
+      );
+      return {
+        date: Math.floor(new Date(noon.dt_txt).getTime() / 1000),
+        temperature: Math.round(noon.main.temp),
+        tempMax: Math.round(noon.main.temp_max),
+        tempMin: Math.round(noon.main.temp_min),
+        condition: noon.weather[0].main,
+        description: noon.weather[0].description,
+        icon: noon.weather[0].icon,
+        rain: Math.round(noon.rain?.['3h'] || 0),
+        wind_speed: Math.round(noon.wind.speed * 3.6),
+        windSpeed: Math.round(noon.wind.speed * 3.6),
+        clouds: noon.clouds.all,
+        humidity: noon.main.humidity,
+        visibility: noon.visibility ?? 10000,
+        waveHeight: undefined,
+        waterTemperature: undefined,
+        marine: marineForDay,
+      };
+    });
+
+  setForecastByDay(forecast);
+}, [weatherData, marineHours]);
 
   return { forecastByDay, loading, error, timeInfo, marineHours };
 };
@@ -159,28 +226,41 @@ const isOutdoor = (activityId: string) => {
   return !!activityMessages[activityId];
 };
 
-function getWeatherIconClass(iconCode: string) {
-  const map: Record<string, string> = {
-    '01d': 'wi-day-sunny',
-    '01n': 'wi-night-clear',
-    '02d': 'wi-day-cloudy',
-    '02n': 'wi-night-alt-cloudy',
-    '03d': 'wi-cloud',
-    '03n': 'wi-cloud',
-    '04d': 'wi-cloudy',
-    '04n': 'wi-cloudy',
-    '09d': 'wi-showers',
-    '09n': 'wi-showers',
-    '10d': 'wi-day-rain',
-    '10n': 'wi-night-alt-rain',
-    '11d': 'wi-thunderstorm',
-    '11n': 'wi-thunderstorm',
-    '13d': 'wi-snow',
-    '13n': 'wi-snow',
-    '50d': 'wi-fog',
-    '50n': 'wi-fog',
-  };
-  return map[iconCode] || 'wi-na';
+function getWeatherIconUrl(iconCode: string) {
+  // Fallback to a default icon if not found
+  const supportedIcons = [
+    '01d','01n','02d','02n','03d','03n','04d','04n',
+    '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'
+  ];
+  if (supportedIcons.includes(iconCode)) {
+    return `/weather-icons/design/fill/final/${iconCode}.svg`;
+  }
+  return '/weather-icons/design/fill/final/na.svg'; // fallback icon
+}
+
+function getPopupDay(activityId: string, day: any, timeInfo: any) {
+  if (MARINE_ACTIVITY_IDS.includes(activityId) && Array.isArray(day.marine)) {
+    const targetHourIso = timeInfo?.serverTime.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+    const marineHour = day.marine.find(
+      (h: any) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
+    );
+    if (marineHour) {
+      // Map to flat structure expected by popup
+      return {
+        ...day,
+        wave: marineHour.waveHeight?.noaa ?? undefined,
+        swell: marineHour.swellHeight?.noaa ?? undefined,
+        period: marineHour.swellPeriod?.noaa ?? undefined,
+        water: marineHour.waterTemperature?.noaa ?? undefined,
+        wind: marineHour.windSpeed?.noaa ?? undefined,
+        gust: marineHour.windGust?.noaa ?? undefined,
+        swellDir: marineHour.swellDirection?.noaa ?? undefined,
+        vis: marineHour.visibility?.noaa ?? undefined,
+        current: marineHour.currentSpeed?.noaa ?? undefined,
+      };
+    }
+  }
+  return day;
 }
 
 export default function Home() {
@@ -360,8 +440,12 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
           .slice(0, 5)
           .map(([date, entries]: [string, any[]]) => {
             const noon = entries.find((e) => e.dt_txt.includes('12:00:00')) ?? entries[0];
+            // Attach all marine hours for this day
+            const marineForDay = marineHours.filter(
+              (h: MarineHour) => h.time && h.time.startsWith(date)
+            ); // <-- Add this line
             return {
-              date: Math.floor(new Date(noon.dt_txt).getTime() / 1000), // <-- Unix timestamp
+              date: Math.floor(new Date(noon.dt_txt).getTime() / 1000),
               temperature: Math.round(noon.main.temp),
               tempMax: Math.round(noon.main.temp_max),
               tempMin: Math.round(noon.main.temp_min),
@@ -376,19 +460,20 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
               visibility: noon.visibility ?? 10000,
               waveHeight: undefined,
               waterTemperature: undefined,
+              marine: marineForDay, // <-- Attach marine hours array here
             };
           });
 
-  forecast.forEach(day => {
-    const match = marineHours.find((h: any) => h.time.startsWith(day.date));
-    if (match) {
-      day.waveHeight = match.waveHeight?.noaa;
-      day.waterTemperature = match.waterTemperature?.noaa; // <-- FIX: use waterTemperature
-      day.swellHeight = match.swellHeight?.noaa;
-      day.swellPeriod = match.swellPeriod?.noaa;
-      day.windSpeed = match.windSpeed?.noaa;
-    }
-  });
+    forecast.forEach(day => {
+      const match = marineHours.find((h: any) => h.time.startsWith(day.date));
+      if (match) {
+        day.waveHeight = match.waveHeight?.noaa;
+        day.waterTemperature = match.waterTemperature?.noaa; // <-- FIX: use waterTemperature
+        day.swellHeight = match.swellHeight?.noaa;
+        day.swellPeriod = match.swellPeriod?.noaa;
+        day.windSpeed = match.windSpeed?.noaa;
+      }
+    });
 
         setForecastByDay(forecast);
       } catch (err: any) {
@@ -425,6 +510,8 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
   useEffect(() => {
     console.log('Forecast by day:', forecastByDay);
   }, [forecastByDay]);
+
+  console.log('marineHours before building forecast:', marineHours);
 
   if (!hasMounted) {
     return <div>Loading...</div>;
@@ -465,18 +552,16 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
       {/* Coastal Location Modal */}
       {showCoastDialog && (
         <CoastalLocationDialog
-          open={showCoastDialog}
-          onClose={() => setShowCoastDialog(false)}
-          title="Pick your beach or coastal spot"
-          homeLocation={homeLocation}
-          coastalLocation={coastalLocation}
-          setHomeLocation={setHomeLocation}
-          setCoastalLocation={setCoastalLocation}
-          onSave={(loc) => {
-            setCoastalLocation(loc);
-            setShowCoastDialog(false);
-          }}
-        />
+  open={showCoastDialog}
+  onClose={() => setShowCoastDialog(false)}
+  coastalLocation={coastalLocation}
+  setHomeLocation={setHomeLocation}
+  setCoastalLocation={setCoastalLocation}
+  onSave={(loc) => {
+    setCoastalLocation(loc);
+    setShowCoastDialog(false);
+  }}
+/>
       )}
 
       <section>
@@ -531,26 +616,30 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
               Wots good,&nbsp;when?
             </h1>
             <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
-              Your personalised activity suggestions
+              Defy the doom loop
             </p>
           </div>
           
-          {/* Location buttons */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', marginRight: 12 }}>
-            <button 
-              className="location-banner__button"
-              onClick={() => setShowHomeDialog(true)}
-            >
-              Set Home Location
-            </button>
-            <button 
-              className="location-banner__button"
-              style={{ background: '#10b981' }}
-              onClick={() => setShowCoastDialog(true)}
-            >
-              Set Coastal Location
-            </button>
-          </div>
+{/* Location buttons */}
+<div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', marginRight: 12 }}>
+  <button 
+    className="location-banner__button"
+    onClick={() => setShowHomeDialog(true)}
+  >
+    {homeLocation?.name 
+      ? `My 🏡 is ${homeLocation.name.split(',')[0]} ✓` 
+      : 'My home is here...'}
+  </button>
+  <button 
+    className="location-banner__button"
+    style={{ background: '#10b981' }}
+    onClick={() => setShowCoastDialog(true)}
+  >
+    {coastalLocation?.name 
+      ? `My 🏖️ is ${coastalLocation.name.split(',')[0]} ✓` 
+      : 'My beach is here...'}
+  </button>
+</div>
         </header>
 
         {/* Menu overlay */}
@@ -627,7 +716,14 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
         <div className="activity-card-overlay" />
         <div className="activity-card-content">
             <div className="weather-icon-topright">
-    <i className={`wi ${getWeatherIconClass(day.icon)}`}></i>
+    <div className="weather-icon-topright">
+  <img
+    src={getWeatherIconUrl(day.icon)}
+    alt={day.description || 'weather icon'}
+    style={{ width: 48, height: 48 }}
+    loading="lazy"
+  />
+</div>
   </div>
 
           {/* Weather summary */}
@@ -637,12 +733,11 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
 
             </div>
             <div className="temperature-info">
-              <span className="temperature-value">
-                {Math.round(day.temperature)}°
-              </span>
+             
                             <span className="temperature-label">
   
-  &nbsp;{day.description || 'partly cloudy'}
+  &nbsp;{Math.round(day.temperature)}° {day.description}
+  <WindIcon windKmh={day.wind_speed} />
 </span>
 
             </div>
@@ -657,12 +752,19 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
             const isOutdoorActivity = isOutdoor(activityId);
             const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase(), []);
 
+            // Suppose 'forecastDay' is the day object and you have marine hours attached
+const targetHourIso = timeInfo?.serverTime.toISOString().split(':')[0]; // Get current hour in ISO format
+const marineHour = day.marine?.find(h => typeof h.time === 'string' && h.time.startsWith(targetHourIso));
+
+            console.log('targetHourIso:', targetHourIso);
+console.log('day.marine:', day.marine);
+
             const popupPayload = buildPopupActivityPayload({
-              activityId,
-              day,
-              score,
-              reasons: buildReasons(day, activityId),
-            });
+            activityId: heroActivity.activityId,
+            day: getPopupDay(heroActivity.activityId, day, timeInfo),
+            score: heroActivity.score,
+            reasons: buildReasons(day, heroActivity.activityId),
+    });
 
             const handlePopupOpen = () => {
               if (isOutdoorActivity) {
@@ -723,11 +825,11 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
                         onClick={() => {
                           if (isOutdoorActivity) {
                             const popupPayload = buildPopupActivityPayload({
-                              activityId: suggestion.activityId,
-                              day,
-                              score: suggestion.score,
-                              reasons: buildReasons(day, suggestion.activityId)
-                            });
+                            activityId: suggestion.activityId,
+                            day: getPopupDay(suggestion.activityId, day, timeInfo),
+                            score: suggestion.score,
+                            reasons: buildReasons(day, suggestion.activityId),
+});
                             setPopupActivity(popupPayload);
                           }
                         }}
@@ -774,11 +876,11 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
                           onClick={() => {
                             if (isOutdoorActivity) {
                               const popupPayload = buildPopupActivityPayload({
-                                activityId: suggestion.activityId,
-                                day,
-                                score: suggestion.score,
-                                reasons: buildReasons(day, suggestion.activityId)
-                              });
+                              activityId: suggestion.activityId,
+                              day: getPopupDay(suggestion.activityId, day, timeInfo),
+                              score: suggestion.score,
+                              reasons: buildReasons(day, suggestion.activityId),
+                            });
                               setPopupActivity(popupPayload);
                             }
                           }}
@@ -825,8 +927,8 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
                               if (!isOutdoorActivity) return;
                               const popupPayload = buildPopupActivityPayload({
                                 activityId: s.activityId,
-                                day,
-                                score: s.score ?? 0,
+                                day: getPopupDay(suggestion.activityId, day, timeInfo),
+                                score: s.score,
                                 reasons: buildReasons(day, s.activityId),
                               });
                               setPopupActivity(popupPayload);
@@ -850,9 +952,26 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
               }
               return null;
             })()}
+          </div> {/* This is the closing tag for activity-suggestions */}
+          
+          {/* Add back the bottom-aligned action buttons */}
+          <div className="activity-card-actions">
+            <a 
+              href="/interests" 
+              className="activity-card-btn"
+            >
+              Add more interests
+            </a>
+            <a 
+              href="/activities" 
+              className="activity-card-btn"
+            >
+              Scan my activities
+            </a>
           </div>
-          </div>
-        </div>
+          
+        </div> 
+      </div> 
 
     );
   })}

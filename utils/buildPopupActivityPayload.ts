@@ -36,17 +36,25 @@ export function buildPopupActivityPayload({
 
   const hasMarineData = day.waveHeight || day.wind_speed || day.waterTemperature || day.swellHeight || day.swellPeriod;
 
-  const marineData = isMarine && hasMarineData
+  const hasRealMarineData =
+    (typeof day.waveHeight === 'number' && !isNaN(day.waveHeight)) ||
+    (typeof day.swellHeight === 'number' && !isNaN(day.swellHeight));
+
+  const marineData = isMarine && day
     ? {
-        waveHeight: day.waveHeight,
-        windSpeed: day.wind_speed,
-        waterTemperature: day.waterTemperature,
-        swellHeight: day.swellHeight,
-        swellPeriod: day.swellPeriod,
+        waveHeight: day.wave,
+        windSpeed: day.wind,
+        waterTemperature: day.water,
+        swellHeight: day.swell,
+        swellPeriod: day.period,
+        gust: day.gust,
+        swellDir: day.swellDir,
+        vis: day.vis,
+        current: day.current,
       }
     : undefined;
 
-  const weatherData = !isMarine
+  const weatherData = !isMarine || !hasRealMarineData
     ? {
         description: day.description,
         temperature: day.temperature,
@@ -54,12 +62,23 @@ export function buildPopupActivityPayload({
         windDirection: day.wind_deg,
         humidity: day.humidity,
         precipitation: day.rain ?? day.precipitation ?? 0,
+        icon: day.icon,
       }
     : undefined;
 
   const message =
     getActivityMessage(activityId, category, reasons) ??
     'No specific message available for this activity.';
+
+  if (isMarine) {
+    console.log('Marine activity:', activityId, {
+      waveHeight: day.waveHeight,
+      swellHeight: day.swellHeight,
+      swellPeriod: day.swellPeriod,
+      waterTemperature: day.waterTemperature,
+      wind_speed: day.wind_speed,
+    });
+  }
 
   // Optionally, add render helpers if you use them
   // const renderMarineData = () => ...;

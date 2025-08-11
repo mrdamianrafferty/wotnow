@@ -51,9 +51,10 @@ const Popup: React.FC<PopupProps> = ({
   coastalLocation,
   homeLocation,
 }) => {
-  const isMarine = !!marineData;
+  const isMarine = !!marineData && Object.keys(marineData).length > 1; // More than just windSpeed
   const emoji = getActivityEmoji(activityId);
   const backgroundImage = bgMap[activityId] ?? '/default-bg.jpg';
+  const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}?activity=${encodeURIComponent(activityId)}`;
@@ -77,7 +78,9 @@ const Popup: React.FC<PopupProps> = ({
     const lat = coastalLocation?.lat ?? homeLocation?.lat;
     const lon = coastalLocation?.lon ?? homeLocation?.lon;
 
-    fetchMarineData(lat, lon);
+    if (typeof lat === 'number' && !isNaN(lat) && typeof lon === 'number' && !isNaN(lon)) {
+      fetchMarineData(lat, lon);
+    }
   }, [coastalLocation, homeLocation]);
 
   return (
@@ -107,41 +110,88 @@ const Popup: React.FC<PopupProps> = ({
             <ul>
               {isMarine && marineData && (
                 <>
-                  {typeof marineData.waveHeight === 'number' && (
-                    <li>🌊 <strong>{marineData.waveHeight.toFixed(2)}</strong> m</li>
-                  )}
-                  {typeof marineData.swellPeriod === 'number' && (
-                    <li>⏲ <strong>{marineData.swellPeriod}</strong> s</li>
-                  )}
-                  {typeof marineData.windSpeed === 'number' && (
-                    <li>💨 <strong>{marineData.windSpeed}</strong> km/h</li>
-                  )}
-                  {typeof marineData.waterTemperature === 'number' && (
-                    <li>🏊 <strong>{marineData.waterTemperature.toFixed(1)}</strong>°c</li>
-                  )}
+                  <li>💧 <strong>{marineData.waterTemperature?.toFixed(1)}</strong>°C</li>
+                  <li>🌊 <strong>{marineData.waveHeight?.toFixed(1)}</strong> m</li>
+                  <li>
+                    <img
+                      src={getWindIcon(marineData.windSpeed)}
+                      alt="Wind"
+                      style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+                    />{' '}
+                    <strong>{marineData.windSpeed?.toFixed(1)}</strong> m/s
+                    {marineData.gust && <> (gust {marineData.gust.toFixed(1)} m/s)</>}
+                  </li>
+                  <li>🌊 Swell: <strong>{marineData.swellHeight?.toFixed(1)}</strong> m</li>
+                  <li>
+                    <SwellArrow deg={marineData.swellDir} /> {marineData.swellDir}°
+                  </li>
+                  <li>⏲ <strong>{marineData.swellPeriod}</strong> s</li>
+                  <li>👁️ <strong>{marineData.vis}</strong> km</li>
+                  <li>🧭 Current: <strong>{marineData.current}</strong> kts</li>
                 </>
               )}
               {!isMarine && weatherData && (
                 <>
-                  {weatherData.description && (
-                    <li>🌈 {weatherData.description}</li>
+                  {weatherData.icon && (
+                    <li>
+                      <img
+                        src={getWeatherIconUrl(weatherData.icon)}
+                        alt={weatherData.description || 'weather'}
+                        style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+                      />{' '}
+                      {weatherData.description}
+                    </li>
                   )}
                   {typeof weatherData.temperature === 'number' && (
-                    <li>🌡️ <strong>{weatherData.temperature}</strong>°c</li>
+                    <li>
+                      <img
+                        src={thermometerIcon}
+                        alt="Temperature"
+                        style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>{weatherData.temperature}</strong>°
+                    </li>
                   )}
                   {typeof weatherData.windSpeed === 'number' && (
-                    <li>💨 <strong>{(weatherData.windSpeed * 1).toFixed(1)}</strong> km/h</li>
+                    <li>
+                      <img
+                        src={getWindIcon(weatherData.windSpeed)}
+                        alt="Wind"
+                        style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>{weatherData.windSpeed}</strong> km/h
+                    </li>
                   )}
                   {typeof weatherData.humidity === 'number' && (
-                    <li>😅 <strong>{weatherData.humidity}</strong>%</li>
+                    <li>
+                      <img
+                        src={humidityIcon}
+                        alt="Humidity"
+                        style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>{weatherData.humidity}</strong>%
+                    </li>
                   )}
                   {typeof weatherData.precipitation === 'number' && (
-                    <li>☂️ <strong>{weatherData.precipitation}</strong> mm</li>
+                    <li>
+                      <img
+                        src={rainIcon}
+                        alt="Precipitation"
+                        style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>{weatherData.precipitation}</strong> mm
+                    </li>
                   )}
                 </>
               )}
             </ul>
           </section>
+        )}
+
+        {(!coastalLocation?.lat && !homeLocation?.lat) && (
+          <div className="popup__marine-warning">
+            Please set your beach or coastal location to see marine stuff like wave heights and swells.
+          </div>
         )}
 
         <footer className="popup__footer">Score: {typeof score === 'number' ? `${score}%` : '—'}</footer>
@@ -155,6 +205,36 @@ const Popup: React.FC<PopupProps> = ({
     </div>
   );
 };
+
+// Map weather description/icon code to your SVG
+function getWeatherIconUrl(iconCode: string) {
+  const supportedIcons = [
+    '01d','01n','02d','02n','03d','03n','04d','04n',
+    '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'
+  ];
+  if (supportedIcons.includes(iconCode)) {
+    return `/weather-icons/design/fill/final/${iconCode}.svg`;
+  }
+  return '/weather-icons/design/fill/final/na.svg';
+}
+
+// Thermometer, humidity, rain icons
+const thermometerIcon = '/weather-icons/design/fill/final/thermometer-celsius.svg';
+const humidityIcon = '/weather-icons/design/fill/final/humidity.svg';
+const rainIcon = '/weather-icons/design/fill/final/raindrop-measure.svg';
+
+// Beaufort wind icon logic
+import { getBeaufortNumber } from '../utils/beaufort'; // adjust path as needed
+function getWindIcon(windKmh: number) {
+  const beaufort = getBeaufortNumber(windKmh);
+  if (beaufort < 3) return '/weather-icons/design/fill/final/windsock.svg';
+  if (beaufort <= 12) return `/weather-icons/design/fill/final/wind-beaufort-${beaufort}.svg`;
+  return '/weather-icons/design/fill/final/wind.svg';
+}
+
+function kmhToKnots(kmh: number): number {
+  return kmh * 0.539957;
+}
 
 async function fetchMarineData(lat: number | undefined, lon: number | undefined) {
   try {

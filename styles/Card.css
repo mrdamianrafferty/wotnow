@@ -432,6 +432,13 @@
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
+.weather-icon-topright img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .activity-card-enhanced {
   display: flex;
   flex-direction: column;

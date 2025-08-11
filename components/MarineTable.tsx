@@ -2,6 +2,10 @@ import type { MarineRow } from "@/lib/types";
 import SwellArrow from "./SwellArrow";
 
 export default function MarineTable({ rows }: { rows: MarineRow[] }) {
+  // Find the MarineRow closest to the current time or the selected hour
+  const nowIso = new Date().toISOString().slice(0, 13); // e.g., "2025-08-11T14"
+  const currentMarineRow = rows.find(r => r.iso.startsWith(nowIso));
+
   return (
     <div className="table-wrap">
       <table className="marine-table" aria-label="Marine forecast detail">
