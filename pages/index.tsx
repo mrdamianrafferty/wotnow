@@ -687,13 +687,11 @@ const isToday = dayDate.getDate() === today.getDate() &&
 const hour = isToday ? today.getHours() : 12;
 const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
 
-// Option 2: Build reasons with the enhanced day object
-const enhancedDay = getPopupDay(heroActivity.activityId, day, timeInfo);
-const popupPayload = buildPopupActivityPayload({
-activityId: heroActivity.activityId,
-day: enhancedDay,
-score: heroActivity.score,
-reasons: buildReasons(enhancedDay, heroActivity.activityId), // Use enhanced day
+            const popupPayload = buildPopupActivityPayload({
+            activityId: heroActivity.activityId,
+            day: getPopupDay(heroActivity.activityId, day, timeInfo),
+            score: heroActivity.score,
+            // Do NOT pass reasons!
 });
 
             const handlePopupOpen = () => {

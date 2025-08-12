@@ -7,6 +7,7 @@ import { getActivityMessage } from '../data/activityMessages';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
 import bgMap from '../data/bgMap'; // Should be default export if used
 import SwellArrow from './SwellArrow'; // Path as appropriate
+import WindDirectionIcon from './WindDirectionIcon';
 
 
 interface MarineData {
@@ -113,41 +114,96 @@ const Popup: React.FC<PopupProps> = ({
         {(marineData || weatherData) && (
           <section className="popup__weather-bar">
             <ul>
-              {isMarine && marineData && (
-                <>
-                  <li>💧 <strong>{marineData.waterTemperature?.toFixed(1)}</strong>°C</li>
-                  <li>🌊 <strong>{marineData.waveHeight?.toFixed(1)}</strong> m</li>
-                  <li>
-                    <img
-                      src={getWindIcon(marineData.windSpeed)}
-                      alt="Wind"
-                      style={{ width: 28, height: 28, verticalAlign: 'middle' }}
-                    />{' '}
-                    <strong>{marineData.windSpeed?.toFixed(1)}</strong> m/s
-                    {marineData.gust && <> (gust {marineData.gust.toFixed(1)} m/s)</>}
-                  </li>
-                  <li>🌊 Swell: <strong>{marineData.swellHeight?.toFixed(1)}</strong> m</li>
-                  <li>
-                    <SwellArrow deg={marineData.swellDir} /> {marineData.swellDir}°
-                  </li>
-                  <li>⏲ <strong>{marineData.swellPeriod}</strong> s</li>
-                  <li>👁️ <strong>{marineData.vis}</strong> km</li>
-                  
-                </>
-              )}
+{isMarine && marineData && (
+  <>
+    {typeof weatherData?.temperature === 'number' && (
+      <li>
+        <img
+          src="/weather-icons/design/fill/final/thermometer-celsius.svg"
+          alt="Air temperature"
+          style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+        />{' '}
+        <strong>{weatherData.temperature.toFixed(1)}</strong>°
+      </li>
+    )}
+
+    {typeof marineData.waterTemperature === 'number' && (
+      <li>
+        <img
+          src="/weather-icons/design/fill/final/thermometer-water.svg"
+          alt="Water temperature"
+          style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+        />{' '}
+        <strong>{marineData.waterTemperature.toFixed(1)}</strong>°
+      </li>
+    )}
+
+    {weatherData?.icon && (
+      <li>
+        <img
+          src={getWeatherIconUrl(weatherData.icon)}
+          alt={weatherData.description || 'weather'}
+          style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+        />{' '}
+        {weatherData.description}
+      </li>
+    )}
+
+    {typeof marineData.waveHeight === 'number' && (
+      <li>
+        🌊 <strong>{marineData.waveHeight.toFixed(1)}</strong>m
+      </li>
+    )}
+
+    {typeof marineData.windSpeed === 'number' && (
+      <li>
+        <img
+          src={getWindIcon(marineData.windSpeed)}
+          alt="Wind"
+          style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+        />{' '}
+        <strong>{marineData.windSpeed.toFixed(1)}</strong> m/s
+        {typeof marineData.gust === 'number' && <> (gust {marineData.gust.toFixed(1)} m/s)</>}
+        {typeof marineData.windDir === 'number' && (
+          <>
+            {' '}
+            <WindDirectionIcon deg={marineData.windDir} />
+            {' '}
+            <span style={{ fontWeight: 600 }}>
+              {getCompassDirection(marineData.windDir)}
+            </span>
+          </>
+        )}
+      </li>
+    )}
+
+    {typeof marineData.swellHeight === 'number' && (
+      <li>
+        🌊 Swell: <strong>{marineData.swellHeight.toFixed(1)}</strong>m{' '}
+        {typeof marineData.swellDir === 'number' && <SwellArrow deg={marineData.swellDir} />}
+      </li>
+    )}
+
+    {typeof marineData.swellPeriod === 'number' && (
+      <li>
+        ⏲ <strong>{marineData.swellPeriod.toFixed(1)}</strong>s
+      </li>
+    )}
+
+    {typeof marineData.vis === 'number' && (
+      <li>
+        👀 <strong>
+          {marineData.vis > 3
+            ? Math.round(marineData.vis)
+            : marineData.vis.toFixed(1)}
+        </strong> km
+      </li>
+    )}
+  </>
+)}
               {!isMarine && weatherData && (
                 <>
-                  {weatherData.icon && (
-                    <li>
-                      <img
-                        src={getWeatherIconUrl(weatherData.icon)}
-                        alt={weatherData.description || 'weather'}
-                        style={{ width: 28, height: 28, verticalAlign: 'middle' }}
-                      />{' '}
-                      {weatherData.description}
-                    </li>
-                  )}
-                  {typeof weatherData.temperature === 'number' && (
+                  {typeof weatherData?.temperature === 'number' && (
                     <li>
                       <img
                         src={thermometerIcon}
@@ -157,7 +213,19 @@ const Popup: React.FC<PopupProps> = ({
                       <strong>{weatherData.temperature}</strong>°
                     </li>
                   )}
-                  {typeof weatherData.windSpeed === 'number' && (
+
+                  {weatherData?.icon && (
+                    <li>
+                      <img
+                        src={getWeatherIconUrl(weatherData.icon)}
+                        alt={weatherData.description || 'weather'}
+                        style={{ width: 28, height: 28, verticalAlign: 'middle' }}
+                      />{' '}
+                      {weatherData.description}
+                    </li>
+                  )}
+
+                  {typeof weatherData?.windSpeed === 'number' && (
                     <li>
                       <img
                         src={getWindIcon(weatherData.windSpeed)}
@@ -167,7 +235,8 @@ const Popup: React.FC<PopupProps> = ({
                       <strong>{weatherData.windSpeed}</strong> km/h
                     </li>
                   )}
-                  {typeof weatherData.humidity === 'number' && (
+
+                  {typeof weatherData?.humidity === 'number' && (
                     <li>
                       <img
                         src={humidityIcon}
@@ -177,7 +246,8 @@ const Popup: React.FC<PopupProps> = ({
                       <strong>{weatherData.humidity}</strong>%
                     </li>
                   )}
-                  {typeof weatherData.precipitation === 'number' && (
+
+                  {typeof weatherData?.precipitation === 'number' && (
                     <li>
                       <img
                         src={rainIcon}
