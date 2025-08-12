@@ -5,8 +5,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const STORMGLASS_API = 'https://api.stormglass.io/v2/weather/point';
 
 // In-memory cache: key = lat_lon_bucket, for up to 12hrs, split into AM/PM
-const cache = new Map<string, { timestamp: number;  any }>();
-
+const cache = new Map<string, { timestamp: number; data: any }>();
 // Returns "am" or "pm" to split bucket windows
 const getTimeBucket = () => {
   const hour = new Date().getHours();
@@ -56,22 +55,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'waterTemperature',
       'visibility'
     ].join(',');
-
+    
+    // Build the URL with all parameters
     const url = `${STORMGLASS_API}?lat=${lat}&lng=${lon}&params=${params}&start=${start}&end=${end}`;
-
-    console.log('🌊 Stormglass API Request:', url);
-
+    
+    // Make the request to Stormglass
     const sgRes = await fetch(url, {
       headers: {
-        Authorization: apiKey,
-      },
+        'Authorization': apiKey
+      }
     });
-
-    console.log('🌊 Stormglass API Response Status:', sgRes.status);
-
+    
     if (!sgRes.ok) {
       const errorText = await sgRes.text();
-      console.error(`❌ Stormglass API error: ${sgRes.status} ${sgRes.statusText}`);
       console.error('❌ Stormglass API Response:', errorText);
       return res.status(sgRes.status).json({ error: errorText });
     }

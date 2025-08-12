@@ -82,7 +82,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         setError(null);
 
         // Fetch main weather data
-        const weatherResponse = await fetch(`/api/weather?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
+        const weatherResponse = await fetch(`/api/owm?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
           cache: 'no-store'
         });
 
@@ -105,20 +105,28 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   }, [homeLocation?.lat, homeLocation?.lon]);
 
   useEffect(() => {
-    async function fetchMarineData() {
+    const fetchMarineData = async () => {
       try {
-        const startISO = new Date().toISOString();
-        const endISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        // Get coastal or home location
         const lat = coastalLocation?.lat ?? homeLocation?.lat;
         const lon = coastalLocation?.lon ?? homeLocation?.lon;
-        const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startISO}&end=${endISO}`);
+        
+        if (!lat || !lon) return;
+        
+        // Use Unix timestamps (seconds)
+        const now = new Date();
+        const startTime = Math.floor(now.getTime() / 1000); // Unix seconds
+        const endTime = startTime + (5 * 24 * 60 * 60); // 5 days later
+        
+        const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startTime}&end=${endTime}`);
         if (!res.ok) throw new Error(`Failed to fetch marine data: ${res.statusText}`);
+        
         const data = await res.json();
         setMarineHours(data.hours || []);
       } catch (err) {
-        console.error('Error fetching marine data:', err);
+        console.error("Marine data error:", err);
       }
-    }
+    };
 
     if ((coastalLocation?.lat && coastalLocation?.lon) || (homeLocation?.lat && homeLocation?.lon)) {
       fetchMarineData();
@@ -138,11 +146,11 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
 
   const forecast: WeatherForecastDay[] = Object.entries(grouped)
     .slice(0, 5)
-    .map(([date, entries]: [string, any[]]) => {
-      const noon = entries.find((e) => e.dt_txt.includes('12:00:00')) ?? entries[0];
-      // Attach all marine hours for this day
+    .map(([, dayEntries]: [string, any[]]) => {
+      const noon = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
+      const dateStr = noon.dt_txt.split(' ')[0]; // "YYYY-MM-DD"
       const marineForDay = marineHours.filter(
-        (h: MarineHour) => h.time && h.time.startsWith(date)
+        (h: MarineHour) => h.time && h.time.slice(0, 10) === dateStr
       );
       return {
         date: Math.floor(new Date(noon.dt_txt).getTime() / 1000),
@@ -240,48 +248,75 @@ function getWeatherIconUrl(iconCode: string) {
 
 function getPopupDay(activityId: string, day: any, timeInfo: any) {
   if (MARINE_ACTIVITY_IDS.includes(activityId) && Array.isArray(day.marine)) {
-    const targetHourIso = timeInfo?.serverTime.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+    // Convert Unix timestamp to Date
+    const dayDate = new Date(day.date * 1000);
+    const today = new Date();
+    
+    // Check if this is today
+    const isToday = dayDate.getDate() === today.getDate() &&
+                   dayDate.getMonth() === today.getMonth() &&
+                   dayDate.getFullYear() === today.getFullYear();
+    
+    // Use current hour for today, noon (12) for future days
+    const hour = isToday ? today.getHours() : 12;
+    
+    // Format: YYYY-MM-DDThh
+    const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
+    
+    console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
+    console.log("Marine hours available:", day.marine.map(h => h.time));
+    
     const marineHour = day.marine.find(
       (h: any) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
     );
+    
     if (marineHour) {
-      // Map to flat structure expected by popup
+      console.log("Found matching marine hour:", marineHour);
+      // Use CONSISTENT property names
       return {
         ...day,
-        wave: marineHour.waveHeight?.noaa ?? undefined,
-        swell: marineHour.swellHeight?.noaa ?? undefined,
-        period: marineHour.swellPeriod?.noaa ?? undefined,
-        water: marineHour.waterTemperature?.noaa ?? undefined,
-        wind: marineHour.windSpeed?.noaa ?? undefined,
-        gust: marineHour.windGust?.noaa ?? undefined,
-        swellDir: marineHour.swellDirection?.noaa ?? undefined,
-        vis: marineHour.visibility?.noaa ?? undefined,
-        current: marineHour.currentSpeed?.noaa ?? undefined,
+        waveHeight: marineHour.waveHeight?.noaa,  // FIXED
+        swellHeight: marineHour.swellHeight?.noaa,  // FIXED
+        swellPeriod: marineHour.swellPeriod?.noaa,  // FIXED
+        waterTemperature: marineHour.waterTemperature?.noaa,  // FIXED
+        windSpeed: marineHour.windSpeed?.noaa,  // FIXED
+        swellDir: marineHour.swellDirection?.noaa,
+        gust: marineHour.windGust?.noaa,
+        vis: marineHour.visibility?.noaa,
+        current: marineHour.currentSpeed?.noaa,
       };
+    } else {
+      console.log("No matching marine hour found");
     }
   }
   return day;
 }
 
+// Consistent helper function you can reuse
+const getTargetHourForDay = (dayUnixTimestamp) => {
+  const dayDate = new Date(dayUnixTimestamp * 1000);
+  const today = new Date();
+  const isToday = dayDate.getDate() === today.getDate() && 
+                  dayDate.getMonth() === today.getMonth() && 
+                  dayDate.getFullYear() === today.getFullYear();
+  
+  const hour = isToday ? today.getHours() : 12;
+  return `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
+};
+
 export default function Home() {
   const { preferences, setPreferences } = useUserPreferences();
   const interests = preferences.interests ?? [];
-
-  useEffect(() => {
-    console.log('Preferences in Home:', preferences);
-    console.log('Interests in Home:', interests);
-  }, [preferences]);
-
-  const hasMounted = useHasMounted();
-  const [forecastByDay, setForecastByDay] = useState<WeatherForecastDay[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Add these missing state variables
   const [showHomeDialog, setShowHomeDialog] = useState(false);
   const [showCoastDialog, setShowCoastDialog] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Your existing state
+  const hasMounted = useHasMounted();
   const [popupActivity, setPopupActivity] = useState<any>(null);
-  const [timeInfo, setTimeInfo] = useState<any>(null);
-  const [marineHours, setMarineHours] = useState<any[]>([]);
+
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
@@ -337,30 +372,38 @@ export default function Home() {
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
   const usedHeroActivities = new Set<string>();
 
-const heroDataByDay = forecastByDay.map((day, idx) => {
-  const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
+const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecastData(
+  homeLocation, 
+  coastalLocation, 
+  interests
+);
 
-  // ✅ CORRECT: Use the original getSuggestionsByDay structure
-  const suggestionsData = getSuggestionsByDay({
-    forecast: [{
-      date: day.date,
-      weather: {
-        temperature: day.temperature,
-        precipitation: day.rain,
-        windspeed: day.wind_speed,
-        clouds: day.clouds,
-        humidity: day.humidity,
-        visibility: day.visibility,
-        waterTemperature: day.waterTemperature,
-        waveHeight: day.waveHeight,
-        swellHeight: day.swellHeight,
-        swellPeriod: day.swellPeriod
-      }
-    }],
-    interests,
-    activities: filteredActivities,
-    now: timeInfo?.serverTime || new Date()
-  })[0]; // Get first day's data
+
+
+  const heroDataByDay = forecastByDay.map((day, idx) => {
+    const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
+
+    // ✅ CORRECT: Use the original getSuggestionsByDay structure
+    const suggestionsData = getSuggestionsByDay({
+      forecast: [{
+        date: day.date,
+        weather: {
+          temperature: day.temperature,
+          precipitation: day.rain,
+          windspeed: day.wind_speed,
+          clouds: day.clouds,
+          humidity: day.humidity,
+          visibility: day.visibility,
+          waterTemperature: day.waterTemperature,
+          waveHeight: day.waveHeight,
+          swellHeight: day.swellHeight,
+          swellPeriod: day.swellPeriod
+        }
+      }],
+      interests,
+      activities: filteredActivities,
+      now: timeInfo?.serverTime || new Date()
+    })[0]; // Get first day's data
 
   // ✅ CORRECT: Access suggestions directly (no double nesting)
   const suggestions = suggestionsData?.suggestions ?? [];
@@ -387,125 +430,6 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
   };
 });
 
-
-  useEffect(() => {
-    if (!hasMounted || !homeLocation?.lat || !homeLocation?.lon) return;
-
-    const now = new Date();
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const currentDay = days[now.getDay()];
-    const hour = now.getHours();
-    const isEvening = hour >= 18;
-
-    const contextTags = [
-      currentDay,
-      isEvening ? 'evening' : hour >= 12 ? 'afternoon' : 'morning',
-      'relaxation', 'family', 'cultural', 'leisure', 'home', 'social'
-    ];
-
-    setTimeInfo({
-      currentDay,
-      hour,
-      isEvening,
-      contextTags,
-      serverTime: now,
-    });
-  }, [hasMounted, homeLocation]);
-
-  useEffect(() => {
-    if (!hasMounted || !homeLocation?.lat || !homeLocation?.lon) return;
-
-    async function fetchForecasts() {
-      setLoading(true);
-      setError(null);
-      try {
-        const openWeatherKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-        const [lat, lon] = [homeLocation.lat, homeLocation.lon];
-
-        const owRes = await fetch(
-          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${openWeatherKey}`
-        );
-        const owData = await owRes.json();
-
-        if (!owData?.list) throw new Error('Invalid weather data');
-
-        const grouped: Record<string, any[]> = {};
-        owData.list.forEach((item: any) => {
-          const date = item.dt_txt.split(' ')[0];
-          if (!grouped[date]) grouped[date] = [];
-          grouped[date].push(item);
-        });
-
-        const forecast: WeatherForecastDay[] = Object.entries(grouped)
-          .slice(0, 5)
-          .map(([date, entries]: [string, any[]]) => {
-            const noon = entries.find((e) => e.dt_txt.includes('12:00:00')) ?? entries[0];
-            // Attach all marine hours for this day
-            const marineForDay = marineHours.filter(
-              (h: MarineHour) => h.time && h.time.startsWith(date)
-            ); // <-- Add this line
-            return {
-              date: Math.floor(new Date(noon.dt_txt).getTime() / 1000),
-              temperature: Math.round(noon.main.temp),
-              tempMax: Math.round(noon.main.temp_max),
-              tempMin: Math.round(noon.main.temp_min),
-              condition: noon.weather[0].main,
-              description: noon.weather[0].description,
-              icon: noon.weather[0].icon,
-              rain: Math.round(noon.rain?.['3h'] || 0),
-              wind_speed: Math.round(noon.wind.speed * 3.6),
-              windSpeed: Math.round(noon.wind.speed * 3.6),
-              clouds: noon.clouds.all,
-              humidity: noon.main.humidity,
-              visibility: noon.visibility ?? 10000,
-              waveHeight: undefined,
-              waterTemperature: undefined,
-              marine: marineForDay, // <-- Attach marine hours array here
-            };
-          });
-
-    forecast.forEach(day => {
-      const match = marineHours.find((h: any) => h.time.startsWith(day.date));
-      if (match) {
-        day.waveHeight = match.waveHeight?.noaa;
-        day.waterTemperature = match.waterTemperature?.noaa; // <-- FIX: use waterTemperature
-        day.swellHeight = match.swellHeight?.noaa;
-        day.swellPeriod = match.swellPeriod?.noaa;
-        day.windSpeed = match.windSpeed?.noaa;
-      }
-    });
-
-        setForecastByDay(forecast);
-      } catch (err: any) {
-        setError(err.message || 'Failed to load forecast data.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchForecasts();
-  }, [homeLocation, hasMounted]);
-
-  useEffect(() => {
-    async function fetchMarineData() {
-      try {
-        const startISO = new Date().toISOString();
-        const endISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        const lat = coastalLocation?.lat ?? homeLocation?.lat;
-        const lon = coastalLocation?.lon ?? homeLocation?.lon;
-        const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startISO}&end=${endISO}`);
-        if (!res.ok) throw new Error(`Failed to fetch marine data: ${res.statusText}`);
-        const data = await res.json();
-        setMarineHours(data.hours || []);
-      } catch (err) {
-        console.error('Error fetching marine data:', err);
-      }
-    }
-
-    if ((coastalLocation?.lat && coastalLocation?.lon) || (homeLocation?.lat && homeLocation?.lon)) {
-      fetchMarineData();
-    }
-  }, [coastalLocation, homeLocation]);
 
   useEffect(() => {
     console.log('Forecast by day:', forecastByDay);
@@ -753,11 +677,15 @@ const heroDataByDay = forecastByDay.map((day, idx) => {
             const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase(), []);
 
             // Suppose 'forecastDay' is the day object and you have marine hours attached
-const targetHourIso = timeInfo?.serverTime.toISOString().split(':')[0]; // Get current hour in ISO format
-const marineHour = day.marine?.find(h => typeof h.time === 'string' && h.time.startsWith(targetHourIso));
+const dayDate = new Date(day.date * 1000);
+const today = new Date();
+const isToday = dayDate.getDate() === today.getDate() && 
+                dayDate.getMonth() === today.getMonth() && 
+                dayDate.getFullYear() === today.getFullYear();
 
-            console.log('targetHourIso:', targetHourIso);
-console.log('day.marine:', day.marine);
+// Use current time for today, midday for future
+const hour = isToday ? today.getHours() : 12;
+const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
 
             const popupPayload = buildPopupActivityPayload({
             activityId: heroActivity.activityId,
@@ -927,7 +855,7 @@ console.log('day.marine:', day.marine);
                               if (!isOutdoorActivity) return;
                               const popupPayload = buildPopupActivityPayload({
                                 activityId: s.activityId,
-                                day: getPopupDay(suggestion.activityId, day, timeInfo),
+                                day: getPopupDay(s.activityId, day, timeInfo),
                                 score: s.score,
                                 reasons: buildReasons(day, s.activityId),
                               });

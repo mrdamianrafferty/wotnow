@@ -40,19 +40,17 @@ export function buildPopupActivityPayload({
     (typeof day.waveHeight === 'number' && !isNaN(day.waveHeight)) ||
     (typeof day.swellHeight === 'number' && !isNaN(day.swellHeight));
 
-  const marineData = isMarine && day
-    ? {
-        waveHeight: day.wave,
-        windSpeed: day.wind,
-        waterTemperature: day.water,
-        swellHeight: day.swell,
-        swellPeriod: day.period,
-        gust: day.gust,
-        swellDir: day.swellDir,
-        vis: day.vis,
-        current: day.current,
-      }
-    : undefined;
+  const marineData = MARINE_ACTIVITY_IDS.includes(activityId) ? {
+    waveHeight: day.waveHeight, // FIXED
+    swellHeight: day.swellHeight, // FIXED
+    swellPeriod: day.swellPeriod, // FIXED
+    waterTemperature: day.waterTemperature, // FIXED
+    windSpeed: day.windSpeed || day.wind_speed,
+    swellDir: day.swellDir,
+    gust: day.gust,
+    vis: day.vis,
+    current: day.current
+  } : undefined;
 
   const weatherData = !isMarine || !hasRealMarineData
     ? {
