@@ -51,7 +51,12 @@ const Popup: React.FC<PopupProps> = ({
   coastalLocation,
   homeLocation,
 }) => {
+  console.log('Popup received message:', message);
+  
   const isMarine = !!marineData && Object.keys(marineData).length > 1; // More than just windSpeed
+  const hasMarineData = isMarine && 
+    marineData?.waveHeight !== undefined && 
+    marineData?.waterTemperature !== undefined;
   const emoji = getActivityEmoji(activityId);
   const backgroundImage = bgMap[activityId] ?? '/default-bg.jpg';
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
@@ -127,7 +132,7 @@ const Popup: React.FC<PopupProps> = ({
                   </li>
                   <li>⏲ <strong>{marineData.swellPeriod}</strong> s</li>
                   <li>👁️ <strong>{marineData.vis}</strong> km</li>
-                  <li>🧭 Current: <strong>{marineData.current}</strong> kts</li>
+                  
                 </>
               )}
               {!isMarine && weatherData && (
@@ -188,17 +193,17 @@ const Popup: React.FC<PopupProps> = ({
           </section>
         )}
 
-        {(!coastalLocation?.lat && !homeLocation?.lat) && (
-          <div className="popup__marine-warning">
-            Please set your beach or coastal location to see marine stuff like wave heights and swells.
-          </div>
-        )}
+{isMarineActivity && !hasMarineData && (
+  <div className="location-prompt">
+    Please set your beach or coastal location.
+  </div>
+)}
 
         <footer className="popup__footer">Score: {typeof score === 'number' ? `${score}%` : '—'}</footer>
 
         <div className="popup__action">
           <button className="popup__share-button" onClick={handleShare}>
-            📤 Invite a friend to join
+            📤 Invite a friend to join you
           </button>
         </div>
       </div>

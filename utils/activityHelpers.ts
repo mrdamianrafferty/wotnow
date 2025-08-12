@@ -93,10 +93,26 @@ export function buildPopupActivityPayload({ activityId, day, score, reasons }: B
 
   const uiLabel = scoreLabel(score);
   const msgCategory = toMessageCategory(uiLabel);
-  const reasonsArr = Array.isArray(reasons) ? reasons : [];
+  
+  // Create reason objects from string reasons
+  let reasonObjects: { key: string; value: any; label: string }[] = [];
+  
+  // Get reasons from buildReasons if not provided
+  const reasonsArray = reasons || buildReasons(day, activityId);
+  
+  // Convert strings to objects - Add defensive coding
+  if (Array.isArray(reasonsArray)) {
+    reasonObjects = reasonsArray
+      .filter(reason => reason !== null && reason !== undefined)
+      .map(reason => ({
+        key: typeof reason === 'string' ? reason.toLowerCase().replace(/\s+/g, '_') : 'unknown',
+        value: true,
+        label: String(reason) // Ensure it's a string
+      }));
+  }
 
   const message = getActivityMessage
-    ? getActivityMessage(activityId, msgCategory, reasonsArr)
+    ? getActivityMessage(activityId, msgCategory, reasonObjects)
     : '';
 
   return {
@@ -109,42 +125,121 @@ export function buildPopupActivityPayload({ activityId, day, score, reasons }: B
   };
 }
 
+// 1. First, modify buildReasons to return an array of strings instead of a combined string
 export function buildReasons(day: any, activityId: string) {
-  const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
-  const windValue = isMarine ? day.windSpeed : day.wind_speed;
-
-  const reasons = [
-    { key: 'wind', value: windValue, label: getWindMessage({
-      windSpeed: windValue,
-      gustSpeed: isMarine ? day.gustSpeed : day.gust_speed,
-      windDirection: isMarine ? day.windDirection : day.wind_direction,
-      windDirectionsToday: day.wind_directions_today,
-      context: isMarine ? 'marine' : 'land'
-    }) },
-    { key: 'rain', value: day.rain, label: getRainfallDescription(day.rain) },
-    { key: 'temperature', value: day.temperature, label: getTemperatureDescription(day.temperature) },
-    { key: 'humidity', value: day.humidity, label: getHumidityDescription(day.humidity) },
-  ];
-
-  if (typeof day.visibility === 'number') {
-    const visibilityLabel = getVisibilityDescription(day.visibility);
-    if (visibilityLabel) {
-      reasons.push({ key: 'visibility', value: day.visibility, label: visibilityLabel });
+  // Debug to see what's actually in the day object
+  console.log('Day data in buildReasons:', day);
+  
+  const reasons: string[] = [];
+  
+  // Add standard weather reasons with better null handling
+  if (day.wind_speed !== undefined) {
+    console.log(`Trying to get wind message for speed: ${day.wind_speed}`);
+    const windMsg = getWindMessage(day.wind_speed);
+    console.log(`Wind message result: ${windMsg}`);
+    
+    if (windMsg) {
+      reasons.push(windMsg);
+    } else {
+      // Fallback to beaufort description if available
+      const beaufortDescription = getBeaufortDescription(day.wind_speed);
+      if (beaufortDescription) {
+        reasons.push(beaufortDescription);
+      } else {
+        // Ultimate fallback with raw wind speed
+        reasons.push(`Wind speed: ${day.wind_speed} m/s`);
+      }
     }
   }
-
-  if (isMarine) {
-    if (typeof day.waveHeight === 'number') {
-      reasons.push({ key: 'wave', value: day.waveHeight, label: getWaveDescription(day.waveHeight) });
+  
+  if (day.rain !== undefined) {
+    const rainMsg = getRainfallDescription(day.rain);
+    if (rainMsg) reasons.push(rainMsg);
+  }
+  
+  if (day.temperature !== undefined) {
+    const tempMsg = getTemperatureDescription(day.temperature);
+    if (tempMsg) reasons.push(tempMsg);
+  }
+  
+  if (day.humidity !== undefined) {
+    const humidityMsg = getHumidityDescription(day.humidity);
+    if (humidityMsg) reasons.push(humidityMsg);
+  }
+  
+  if (day.visibility !== undefined) {
+    reasons.push(`${day.visibility >= 8000 ? 'Excellent' : 'Reduced'} visibility${day.visibility >= 8000 ? '' : ''}`);
+  }
+  
+  // Add marine-specific reasons for marine activities
+  if (MARINE_ACTIVITY_IDS.includes(activityId)) {
+    console.log('Processing marine activity:', activityId);
+    console.log('Marine data available:', {
+      waterTemp: day.waterTemperature,
+      waveHeight: day.waveHeight,
+      swellPeriod: day.swellPeriod
+    });
+    
+    // Water temperature
+    if (day.waterTemperature !== undefined && day.waterTemperature !== null) {
+      let waterTempMsg;
+      
+      if (day.waterTemperature < 10) {
+        waterTempMsg = "Water is bloody cold - wetsuit required";
+      } else if (day.waterTemperature < 16) {
+        waterTempMsg = "Cold water - full wetsuit recommended";
+      } else if (day.waterTemperature < 21) {
+        waterTempMsg = "Cool water - light wetsuit may be comfortable";
+      } else if (day.waterTemperature < 26) {
+        waterTempMsg = "Pleasant water temperature";
+      } else {
+        waterTempMsg = "Warm water - perfect for swimming";
+      }
+      
+      console.log('Adding water temp reason:', waterTempMsg);
+      reasons.push(waterTempMsg);
     }
-    if (typeof day.waterTemperature === 'number') {
-      reasons.push({ key: 'water', value: day.waterTemperature, label: getWaterTemperatureDescription(day.waterTemperature) });
+    
+    // Wave height
+    if (day.waveHeight !== undefined && day.waveHeight !== null) {
+      let waveMsg;
+      
+      if (day.waveHeight < 0.3) {
+        waveMsg = "Minimal waves";
+      } else if (day.waveHeight < 0.8) {
+        waveMsg = `Small waves around ${day.waveHeight.toFixed(1)}m`;
+      } else if (day.waveHeight < 1.5) {
+        waveMsg = `Decent waves at ${day.waveHeight.toFixed(1)}m`;
+      } else if (day.waveHeight < 2.5) {
+        waveMsg = `Good sized waves at ${day.waveHeight.toFixed(1)}m`;
+      } else {
+        waveMsg = `Large waves at ${day.waveHeight.toFixed(1)}m - for experienced only`;
+      }
+      
+      reasons.push(waveMsg);
+    }
+    
+    // Swell period
+    if (day.swellPeriod !== undefined && day.swellPeriod !== null) {
+      let swellMsg;
+      
+      if (day.swellPeriod < 6) {
+        swellMsg = "Short chop, less power";
+      } else if (day.swellPeriod < 10) {
+        swellMsg = `Medium period swell at ${day.swellPeriod.toFixed(0)}s`;
+      } else {
+        swellMsg = `Long period swell at ${day.swellPeriod.toFixed(0)}s - good power`;
+      }
+      
+      reasons.push(swellMsg);
     }
   }
-
-  return reasons.filter(
-    (r) => r.label && r.label !== 'Unknown temperature' && r.label !== 'Unknown humidity'
-  );
+  
+  // Filter out empty strings, null, undefined
+  const validReasons = reasons.filter(r => r && r.trim() !== '');
+  console.log('Valid reasons after filtering:', validReasons);
+  
+  return validReasons.length > 0 ? validReasons : ['Weather conditions look OK for this.'];
 }
 
 export function findHeroActivity(

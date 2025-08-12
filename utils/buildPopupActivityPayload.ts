@@ -20,7 +20,7 @@ export function buildPopupActivityPayload({
   activityId,
   day,
   score,
-  reasons,
+  reasons: passedReasons,
 }: ActivityDayPayload) {
   const activity = activityTypes.find((a) => a.id === activityId);
   const title = activity?.name ?? activityId.replace(/_/g, ' ');
@@ -40,33 +40,54 @@ export function buildPopupActivityPayload({
     (typeof day.waveHeight === 'number' && !isNaN(day.waveHeight)) ||
     (typeof day.swellHeight === 'number' && !isNaN(day.swellHeight));
 
-  const marineData = MARINE_ACTIVITY_IDS.includes(activityId) ? {
-    waveHeight: day.waveHeight, // FIXED
-    swellHeight: day.swellHeight, // FIXED
-    swellPeriod: day.swellPeriod, // FIXED
-    waterTemperature: day.waterTemperature, // FIXED
-    windSpeed: day.windSpeed || day.wind_speed,
-    swellDir: day.swellDir,
-    gust: day.gust,
-    vis: day.vis,
-    current: day.current
-  } : undefined;
+  // Find marine data
+  const marineData = {
+    waveHeight: day?.waveHeight ?? null,
+    waterTemperature: day?.waterTemperature ?? null,
+    swellHeight: day?.swellHeight ?? null,
+    swellPeriod: day?.swellPeriod ?? null,
+    windSpeed: day?.windSpeed ?? day?.wind_speed ?? null,
+    gustSpeed: day?.gustSpeed ?? null,
+    windDirection: day?.windDirection ?? null,
+  };
 
-  const weatherData = !isMarine || !hasRealMarineData
-    ? {
-        description: day.description,
-        temperature: day.temperature,
-        windSpeed: day.windSpeed,
-        windDirection: day.wind_deg,
-        humidity: day.humidity,
-        precipitation: day.rain ?? day.precipitation ?? 0,
-        icon: day.icon,
-      }
-    : undefined;
+  // Create weather data object from day properties
+  const weatherData = {
+    temperature: day?.temperature ?? null,
+    tempMin: day?.tempMin ?? null, 
+    tempMax: day?.tempMax ?? null,
+    humidity: day?.humidity ?? null,
+    windSpeed: day?.wind_speed ?? day?.windSpeed ?? null,
+    precipitation: day?.rain ?? day?.precipitation ?? null,
+    visibility: day?.visibility ?? null,
+    condition: day?.condition ?? null,
+    icon: day?.icon ?? null,
+  };
 
-  const message =
-    getActivityMessage(activityId, category, reasons) ??
-    'No specific message available for this activity.';
+  // Merge the marine data into the day object for buildReasons
+  const dayWithMarine = {
+    ...day,
+    waterTemperature: marineData.waterTemperature,
+    waveHeight: marineData.waveHeight,
+    swellHeight: marineData.swellHeight,
+    swellPeriod: marineData.swellPeriod
+  };
+
+  // Get reasons from buildReasons if not provided, using enhanced day object
+  const reasons = passedReasons || buildReasons(dayWithMarine, activityId);
+  
+  // Create reason objects from strings
+  const reasonsObjects = Array.isArray(reasons) 
+    ? reasons.map(reason => ({
+        key: reason.toLowerCase().replace(/\s+/g, '_'),
+        value: true,
+        label: reason
+      }))
+    : [];
+
+  const message = getActivityMessage
+    ? getActivityMessage(activityId, category, reasonsObjects)
+    : '';
 
   if (isMarine) {
     console.log('Marine activity:', activityId, {
