@@ -4,6 +4,7 @@ import '../styles/index.css'
 import '../styles/Card.css'
 import '../styles/Popup.css'
 import 'weather-icons/css/weather-icons.css';
+import 'weather-icons/css/weather-icons.min.css';
 import type { AppProps } from 'next/app'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 
