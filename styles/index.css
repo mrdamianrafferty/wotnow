@@ -66,21 +66,23 @@ button:active {
 /* ------ HOMEPAGE BANNER ------ */
 
 .homepage-banner {
-  position: relative;
-  min-height: 60px;
   display: flex;
   align-items: center;
-  padding: 8px 0;
+  justify-content: flex-start;
+  padding: 16px 32px;
   background: #fff;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
 }
 
 .burger-menu-icon {
+  display: block;
   width: 36px;
   height: 36px;
   cursor: pointer;
-  margin: 0 12px;
+  margin-right: 16px;
   z-index: 10;
-  display: none;
 }
 
 @media (max-width: 800px) {
@@ -90,9 +92,9 @@ button:active {
 }
 
 .homepage-banner__logo {
-  display: block;
   max-width: 180px;
   height: auto;
+  margin-right: 24px;
 }
 
 .homepage-banner__spacer {
@@ -147,23 +149,23 @@ button:active {
 }
 
 .location-banner__button {
-  padding: 8px 16px;
-  background: #059669;
-  color: #fff;
-  font-size: 0.9rem;
+  border-radius: 16px;
+  font-size: 1.1rem;
   font-weight: 600;
+  padding: 0.8rem 2rem;
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  max-width: 180px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
 }
 
+
+
 .location-banner__button:hover {
-  background: #047857;
+  background: #059669;
+  box-shadow: 0 4px 16px rgba(16,185,129,0.15);
 }
 
 .location-banner__info {
@@ -208,8 +210,6 @@ button:active {
     border-radius: 12px 12px 0 0;
   }
 }
-
-
 
 /* --- Section styling for better separation --- */
 section {
@@ -865,121 +865,84 @@ abbr[title] {
 }
 
 @media (max-width: 600px) {
-  .homepage-banner__container {
-    flex-direction: column;
-    gap: 1.5rem;
-    width: 98vw;
-    padding: 0 2vw;
-    text-align: center;
+  .hide-on-mobile {
+    display: none !important;
   }
-  
-  .homepage-banner__logo {
-    max-width: 50vw;
-    margin: 0 auto;
-  }
-  
-  .homepage-banner__title {
-    font-size: 1.5rem;
-  }
-}
-@media (max-width: 800px) {
-  .homepage-banner__container {
-    padding: 8px 8px !important;
-    min-height: unset !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
+  .homepage-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.5rem 1rem;
   }
   .homepage-banner__logo {
-    width: 110px !important;
-    height: auto !important;
-    margin-bottom: 4px !important;
+    max-width: 120px;
+    margin: 0;
   }
-  .homepage-banner__text {
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-  .homepage-banner__title {
-    font-size: 1.2rem !important;
-    margin-bottom: 2px !important;
-  }
-  .homepage-banner__subtitle {
-    font-size: 0.9rem !important;
-    margin-bottom: 0 !important;
-  }
-  .location-banner {
-    position: static;
-    left: 0;
-    bottom: 0;
+  .homepage-banner__location-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
     width: 100vw;
-    background: #fff;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
-    z-index: 1200;
-    padding: 10px 8px !important;
-    border-radius: 12px 12px 0 0;
+    max-width: 98vw;
+    margin: 0.5rem auto 0 auto;
+    padding: 0 1vw;
   }
-  .location-banner__container {
-    flex-direction: column !important;
-    align-items: stretch !important;
+  .location-banner__button {
+    flex: 1 1 0;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 1rem;
+    margin: 0;
   }
-
 }
-.perfect-emoji-bg {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 64px;
-  height: 64px;
-  /* Remove: background, box-shadow */
+
+/* ------ SPECIFIC COMPONENT STYLES ------ */
+
+.indoor-day-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.indoor-day-item {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.indoor-day-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.activity-name {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.activity-time {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.activity-card-enhanced {
+  background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
-}
-.perfect-emoji {
-  font-size: 2.4rem;
-  z-index: 1;
-}
-.burger-menu-icon {
-  display: none;
-}
-@media (max-width: 800px) {
-  .burger-menu-icon {
-    display: block !important;
-  }
-  .homepage-banner__container nav {
-    display: none;
-  }
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Remove bullet points and indentation */
-.also-good-perfect-list,
-.marine-values,
-.indoor-list {
-  list-style: none; /* Removes bullet points */
-  padding: 0; /* Removes extra indentation */
-  margin: 0; /* Removes extra spacing */
+.activity-card-enhanced:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
-/* Align activities */
-.also-good-perfect-list li,
-.marine-values li,
-.indoor-list li {
-  display: flex; /* Ensures consistent alignment */
-  align-items: center; /* Vertically aligns content */
-  justify-content: flex-start; /* Aligns content to the left */
-  padding: 8px 0; /* Adds consistent spacing */
-  margin: 0; /* Removes extra spacing */
-}
-
-/* Optional: Add spacing between items */
-.also-good-perfect-list li + li,
-.marine-values li + li,
-.indoor-list li + li {
-  margin-top: 8px; /* Adds spacing between items */
-}
-
-/* Ensure hero activity stands out */
-.card__hero-activity {
-  margin-bottom: 16px; /* Adds spacing below hero activity */
-}
 .coastal-dialog-modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -1069,3 +1032,146 @@ abbr[title] {
   color: #6b7280;
 }
 
+/* Remove bullet points and indentation */
+.also-good-perfect-list,
+.marine-values,
+.indoor-list {
+  list-style: none; /* Removes bullet points */
+  padding: 0; /* Removes extra indentation */
+  margin: 0; /* Removes extra spacing */
+}
+
+/* Align activities */
+.also-good-perfect-list li,
+.marine-values li,
+.indoor-list li {
+  display: flex; /* Ensures consistent alignment */
+  align-items: center; /* Vertically aligns content */
+  justify-content: flex-start; /* Aligns content to the left */
+  padding: 8px 0; /* Adds consistent spacing */
+  margin: 0; /* Removes extra spacing */
+}
+
+/* Optional: Add spacing between items */
+.also-good-perfect-list li + li,
+.marine-values li + li,
+.indoor-list li + li {
+  margin-top: 8px; /* Adds spacing between items */
+}
+
+/* Ensure hero activity stands out */
+.card__hero-activity {
+  margin-bottom: 16px; /* Adds spacing below hero activity */
+}
+
+@media (max-width: 600px) {
+  header,
+  .site-header {
+    padding: 0.5rem 0.5rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+  .homepage-banner__container {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 1vw;
+    text-align: center;
+  }
+  .homepage-banner__logo {
+    max-width: 120px;
+    margin: 0 auto 4px auto;
+  }
+  .homepage-banner__title {
+    font-size: 1rem;
+    margin-bottom: 2px;
+    gap: 0.5rem 0.5rem;
+  }
+  .homepage-banner__subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    gap: 0.5rem 0.5rem;
+  }
+  .burger-menu-icon {
+    display: block !important;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 8px auto;
+  }
+  .homepage-banner__text {
+    margin: 0;
+    padding: 0;
+  }
+  .site-header nav {
+    display: none;
+  }
+  main,
+  .page {
+    padding: 0.5rem;
+    margin: 0;
+    max-width: 100vw;
+    border-radius: 0;
+  }
+  section {
+    padding: 1rem 0.5rem;
+    margin-bottom: 1.2rem;
+    border-radius: 8px;
+  }
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .activity-card-enhanced {
+    min-width: 0;
+    width: 100%;
+    border-radius: 12px;
+    padding: 0.5rem;
+    min-height: 0 !important;
+    height: auto !important;
+    
+  }
+  .homepage-card {
+    max-width: 98vw;
+    padding: 1rem 0.5rem;
+  }
+  .location-banner__container,
+  .weather-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100vw;
+    max-width: 100vw;
+  }
+  .location-banner__input,
+  .location-banner__button {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 1rem;
+  }
+}
+
+/* Desktop: show banner location buttons, hide mobile version */
+.desktop-location-buttons {
+  margin-left: auto;      /* Pushes buttons to the right */
+  display: flex;
+  gap: 32px;              /* Increase spacing between buttons */
+}
+.mobile-location-buttons {
+  display: none;
+}
+
+/* Mobile: hide banner location buttons, show mobile version below */
+@media (max-width: 600px) {
+  .desktop-location-buttons {
+    display: none !important;
+  }
+  .mobile-location-buttons {
+    display: flex !important;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100vw;
+    max-width: 320px; /* Match your card's max-width */
+    margin: 0.5rem auto 0 auto;
+    padding: 0;
+    margin-bottom: 1.2rem;
+  }
+}

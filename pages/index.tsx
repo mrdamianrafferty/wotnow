@@ -490,73 +490,50 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
 
       <section>
         {/* Banner with location buttons */}
-        <header
-          className="homepage-banner"
-          style={{
-            position: 'relative',
-            minHeight: 60,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '8px 0',
-            background: '#fff',
-            borderBottom: '1px solid #e5e7eb',
-          }}
-        >
-          {/* Menu icon */}
-          <img
-            src="/burger-menu-svgrepo-com.svg"
-            alt="Open menu"
-            className="burger-menu-icon"
-            style={{
-              width: 36,
-              height: 36,
-              cursor: 'pointer',
-              marginLeft: 12,
-              marginRight: 12,
-              zIndex: 10,
-              display: 'block',
-            }}
-            onClick={() => setMenuOpen(true)}
-          />
-          
-          {/* Logo */}
-          <img
-            src="/wotnow-horizontal.png"
-            alt="WotNow Logo"
-            className="homepage-banner__logo"
-            style={{
-              display: 'block',
-              maxWidth: 180,
-              height: 'auto',
-            }}
-          />
-          
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-          
-          {/* Title section */}
-          <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
-            <h1 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
-              Wots good,&nbsp;when?
-            </h1>
-            <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
-              Defy the doom loop
-            </p>
-          </div>
-          
-{/* Location buttons */}
-<div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto', marginRight: 12 }}>
-  <button 
+        <header className="homepage-banner">
+  <img
+    src="/burger-menu-svgrepo-com.svg"
+    alt="Open menu"
+    className="burger-menu-icon"
+    onClick={() => setMenuOpen(true)}
+  />
+  <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+  <div className="homepage-banner__location-buttons desktop-location-buttons">
+    <button
+      className="location-banner__button"
+      style={{ background: '#10b981' }} // green for home
+      onClick={() => setShowHomeDialog(true)}
+    >
+      {homeLocation?.name 
+        ? `My 🏡 is ${homeLocation.name.split(',')[0]} ✓` 
+        : 'My home is here...'}
+    </button>
+    <button
+      className="location-banner__button"
+      style={{ background: '#3b82f6' }} // blue for coastal
+      onClick={() => setShowCoastDialog(true)}
+    >
+      {coastalLocation?.name 
+        ? `My 🏖️ is ${coastalLocation.name.split(',')[0]} ✓` 
+        : 'My beach is here...'}
+    </button>
+  </div>
+</header>
+
+{/* Mobile location buttons (outside the banner) */}
+<div className="homepage-banner__location-buttons mobile-location-buttons">
+  <button
     className="location-banner__button"
+    style={{ background: '#10b981' }} // green for home
     onClick={() => setShowHomeDialog(true)}
   >
     {homeLocation?.name 
       ? `My 🏡 is ${homeLocation.name.split(',')[0]} ✓` 
       : 'My home is here...'}
   </button>
-  <button 
+  <button
     className="location-banner__button"
-    style={{ background: '#10b981' }}
+    style={{ background: '#3b82f6' }} // blue for coastal
     onClick={() => setShowCoastDialog(true)}
   >
     {coastalLocation?.name 
@@ -564,8 +541,6 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
       : 'My beach is here...'}
   </button>
 </div>
-        </header>
-
         {/* Menu overlay */}
         {menuOpen && (
           <>

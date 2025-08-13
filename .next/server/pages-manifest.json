@@ -4,5 +4,6 @@
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
   "/api/owm": "pages/api/owm.js",
+  "/interests": "pages/interests.js",
   "/api/marine": "pages/api/marine.js"
 }
