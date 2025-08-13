@@ -3,6 +3,6 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/": "pages/index.js",
-  "/api/marine": "pages/api/marine.js",
-  "/api/owm": "pages/api/owm.js"
+  "/api/owm": "pages/api/owm.js",
+  "/api/marine": "pages/api/marine.js"
 }

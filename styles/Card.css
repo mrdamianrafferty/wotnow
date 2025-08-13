@@ -483,3 +483,16 @@
   background: #10b981;
   box-shadow: 0 2px 8px rgba(16,185,129,0.08);
 }
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+  .activity-card-enhanced {
+    min-width: 0;
+    width: 100%;
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+}
