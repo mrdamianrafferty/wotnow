@@ -7,10 +7,7 @@ globalThis.__BUILD_MANIFEST = {
   ],
   "ampDevFiles": [],
   "lowPriorityFiles": [],
-  "rootMainFiles": [
-    "static/chunks/webpack.js",
-    "static/chunks/main-app.js"
-  ],
+  "rootMainFiles": [],
   "rootMainFilesTree": {},
   "pages": {
     "/": [
@@ -28,10 +25,10 @@ globalThis.__BUILD_MANIFEST = {
       "static/chunks/main.js",
       "static/chunks/pages/_error.js"
     ],
-    "/weather": [
+    "/interests": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/weather.js"
+      "static/chunks/pages/interests.js"
     ]
   },
   "ampFirstPages": []

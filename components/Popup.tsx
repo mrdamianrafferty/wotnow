@@ -21,6 +21,8 @@ interface MarineData {
 interface WeatherData {
   description?: string;
   temperature?: number;
+  tempMin?: number;  // Add this line
+  tempMax?: number;  // Add this line
   windSpeed?: number;
   humidity?: number;
   precipitation?: number;
@@ -51,6 +53,12 @@ type SharePayload = {
   imageUrl?: string; // absolute URL preferred for previews
   phone?: string;    // optional international number without plus
 };
+
+
+// Prefer a canonical public homepage URL for shared links
+const PUBLIC_SITE_URL = (typeof window === 'undefined'
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : (process.env.NEXT_PUBLIC_SITE_URL || 'https://wotnow.vercel.app'));
 
 const _isSecure = typeof window !== 'undefined' && window.isSecureContext;
 
@@ -169,7 +177,7 @@ const Popup: React.FC<PopupProps> = ({
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}?activity=${encodeURIComponent(activityId)}`;
+    const shareUrl = `${PUBLIC_SITE_URL}?activity=${encodeURIComponent(activityId)}`;
 
     // Prefer an absolute image URL for richer previews and file-share
     const absImageUrl = backgroundImage?.startsWith('http')
@@ -497,10 +505,37 @@ useEffect(() => {
 )}
               {!isMarine && weatherData && (
                 <>
-                  {typeof weatherData?.temperature === 'number' && (
+                  {/* High temperature with regular thermometer icon */}
+                  {typeof weatherData?.tempMax === 'number' && (
                     <li>
                       <img
-                        src={thermometerIcon}
+                        src="/weather-icons/design/fill/final/thermometer-celsius.svg" // Use direct path instead of variable
+                        alt="High Temperature"
+                        style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>H: {weatherData.tempMax}</strong>°
+                    </li>
+                  )}
+
+                  {/* Low temperature with cold thermometer icon */}
+                  {typeof weatherData?.tempMin === 'number' && (
+                    <li>
+                      <img
+                        src="/weather-icons/design/fill/final/thermometer-colder.svg"
+                        alt="Low Temperature"
+                        style={{ width: 24, height: 24, verticalAlign: 'middle' }}
+                      />{' '}
+                      <strong>L: {weatherData.tempMin}</strong>°
+                    </li>
+                  )}
+
+                  {/* Fallback to original temperature if min/max not available */}
+                  {typeof weatherData?.temperature === 'number' && 
+                   typeof weatherData?.tempMin === 'undefined' && 
+                   typeof weatherData?.tempMax === 'undefined' && (
+                    <li>
+                      <img
+                        src="/weather-icons/design/fill/final/thermometer-celsius.svg" // Use direct path
                         alt="Temperature"
                         style={{ width: 24, height: 24, verticalAlign: 'middle' }}
                       />{' '}

@@ -146,27 +146,57 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
 
   const forecast: WeatherForecastDay[] = Object.entries(grouped)
     .slice(0, 5)
-    .map(([, dayEntries]: [string, any[]]) => {
-      const noon = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
-      const dateStr = noon.dt_txt.split(' ')[0]; // "YYYY-MM-DD"
+    .map(([dateStr, dayEntries]: [string, any[]], dayIndex) => {
+      // Different handling for today vs future days
+      const isToday = dayIndex === 0;
+      
+      let currentEntry;
+      
+      if (isToday) {
+        // For today, find the closest time entry to now
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        // Sort entries by how close they are to current time
+        const sortedByCloseness = [...dayEntries].sort((a, b) => {
+          const hourA = new Date(a.dt_txt).getHours();
+          const hourB = new Date(b.dt_txt).getHours();
+          return Math.abs(hourA - currentHour) - Math.abs(hourB - currentHour);
+        });
+        
+        // Use the closest time entry
+        currentEntry = sortedByCloseness[0];
+        console.log('Today: Using current conditions instead of noon:', 
+          { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
+      } else {
+        // For future days, use noon as before
+        currentEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
+      }
+      
+      // Calculate true min and max temps across all hours of the day
+      const allTemps = dayEntries.map(entry => entry.main.temp);
+      const minTemp = Math.min(...allTemps);
+      const maxTemp = Math.max(...allTemps);
+      
       const marineForDay = marineHours.filter(
         (h: MarineHour) => h.time && h.time.slice(0, 10) === dateStr
       );
+      
       return {
-        date: Math.floor(new Date(noon.dt_txt).getTime() / 1000),
-        temperature: Math.round(noon.main.temp),
-        tempMax: Math.round(noon.main.temp_max),
-        tempMin: Math.round(noon.main.temp_min),
-        condition: noon.weather[0].main,
-        description: noon.weather[0].description,
-        icon: noon.weather[0].icon,
-        rain: Math.round(noon.rain?.['3h'] || 0),
-        wind_speed: Math.round(noon.wind.speed * 3.6),
-        windSpeed: Math.round(noon.wind.speed * 1.94384),
-        wind_direction: noon.wind.deg,
-        clouds: noon.clouds.all,
-        humidity: noon.main.humidity,
-        visibility: noon.visibility ?? 10000,
+        date: Math.floor(new Date(currentEntry.dt_txt).getTime() / 1000),
+        temperature: Math.round(currentEntry.main.temp),
+        tempMax: Math.round(maxTemp),
+        tempMin: Math.round(minTemp),
+        condition: currentEntry.weather[0].main,
+        description: currentEntry.weather[0].description,
+        icon: currentEntry.weather[0].icon,
+        rain: Math.round(currentEntry.rain?.['3h'] || 0),
+        wind_speed: Math.round(currentEntry.wind.speed * 3.6),
+        windSpeed: Math.round(currentEntry.wind.speed * 1.94384),
+        wind_direction: currentEntry.wind.deg,
+        clouds: currentEntry.clouds.all,
+        humidity: currentEntry.main.humidity,
+        visibility: currentEntry.visibility ?? 10000,
         waveHeight: undefined,
         waterTemperature: undefined,
         marine: marineForDay,
