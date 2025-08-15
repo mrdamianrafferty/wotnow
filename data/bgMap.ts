@@ -33,7 +33,7 @@ const bgMap: Record<string, string> = {
   beach:                  '/beachrio.png',
   indoor_swimming:        '/swimpool.png',
   fly_fishing_freshwater: '/trout.png',
-  coarse_fishing:         '/lake.png',
+  coarse_fishing:         '/carp.png',
   sea_fishing_shore:      '/beachfishy.png',
   sea_fishing_boat:       '/boaty.png',
   mountain_biking:        '/mountainbikey.png',

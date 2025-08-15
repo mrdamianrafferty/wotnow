@@ -59,7 +59,7 @@ function getAssessmentCategory(score: number): {
   emoji: string; 
   bgColor: string;
 } {
-  if (score >= 80) return { 
+  if (score >= 90) return { // Change from 80 to 90 to match index.tsx
     status: 'perfect', 
     color: '#10b981', 
     emoji: '💯', 
@@ -77,11 +77,17 @@ function getAssessmentCategory(score: number): {
     emoji: '🙆', 
     bgColor: 'rgba(245, 158, 11, 0.1)' 
   };
-  return { 
+  if (score >= 30) return { // Add this condition to match index.tsx
     status: 'poor', 
     color: '#ef4444', 
     emoji: '⚠️', 
     bgColor: 'rgba(239, 68, 68, 0.1)' 
+  };
+  return { // This becomes the "very poor" fallback
+    status: 'poor', 
+    color: '#dc2626', // Darker red
+    emoji: '❌', 
+    bgColor: 'rgba(220, 38, 38, 0.1)' 
   };
 }
 
@@ -204,7 +210,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, onClick }
         
         {/* Assessment Badge */}
         <div style={{
-          background: assessment.color,
+          background: !isOutdoor(activityId) ? '#8B5CF6' : assessment.color, // Purple for indoor
           color: 'white',
           padding: '4px 8px',
           borderRadius: '6px',
@@ -214,8 +220,11 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, onClick }
           alignItems: 'center',
           gap: '4px'
         }}>
-          {assessment.emoji}
-          {assessment.status}
+          {!isOutdoor(activityId) ? (
+            <>🛋️ indoor</>
+          ) : (
+            <>{assessment.emoji} {assessment.status}</>
+          )}
         </div>
       </div>
 
@@ -228,7 +237,14 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, onClick }
         color: '#fff',
         textShadow: '0 1px 2px rgba(0,0,0,0.7)'
       }}>
-        {message}
+        {!isOutdoor(activityId) ? (
+          `${activity?.name || activityId.replace(/_/g, ' ')} is an indoor activity available anytime.`
+        ) : (
+          message || (score < 40 ? 
+            `Not ideal weather for ${activity?.name || activityId.replace(/_/g, ' ')}, but still an option if you're interested.` : 
+            message
+          )
+        )}
       </div>
 
       {/* Marine Conditions */}
@@ -428,22 +444,51 @@ export default function ActivitiesPage() {
           grouped[date].push(item);
         });
 
-        const forecast = Object.entries(grouped).slice(0, 5).map(([date, entries]: [string, any[]]) => {
-          const noon = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
+        const forecast = Object.entries(grouped).slice(0, 5).map(([date, entries]: [string, any[]], dayIndex) => {
+          // Different handling for today vs future days
+          const isToday = dayIndex === 0;
+          
+          let currentEntry;
+          
+          if (isToday) {
+            // For today, find the closest time entry to now
+            const now = new Date();
+            const currentHour = now.getHours();
+            
+            // Sort entries by how close they are to current time
+            const sortedByCloseness = [...entries].sort((a, b) => {
+              const hourA = new Date(a.dt_txt).getHours();
+              const hourB = new Date(b.dt_txt).getHours();
+              return Math.abs(hourA - currentHour) - Math.abs(hourB - currentHour);
+            });
+            
+            // Use the closest time entry
+            currentEntry = sortedByCloseness[0];
+            console.log('Today: Using current conditions instead of noon:', 
+              { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
+          } else {
+            // For future days, use noon as before
+            currentEntry = entries.find(e => e.dt_txt.includes('12:00:00')) ?? entries[0];
+          }
+          
+          // Calculate true min and max temps across all hours of the day
+          const allTemps = entries.map(entry => entry.main.temp);
+          const minTemp = Math.min(...allTemps);
+          const maxTemp = Math.max(...allTemps);
           
           return {
             date,
-            temperature: Math.round(noon.main.temp),
-            tempMax: Math.round(noon.main.temp_max),
-            tempMin: Math.round(noon.main.temp_min),
-            condition: noon.weather[0].main,
-            description: noon.weather[0].description,
-            icon: noon.weather[0].icon,
-            rain: Math.round(noon.rain?.['3h'] || 0),
-            wind_speed: Math.round(noon.wind.speed * 3.6),
-            clouds: noon.clouds.all,
-            humidity: noon.main.humidity,
-            visibility: noon.visibility ?? 10000,
+            temperature: Math.round(currentEntry.main.temp),
+            tempMax: Math.round(maxTemp),
+            tempMin: Math.round(minTemp),
+            condition: currentEntry.weather[0].main,
+            description: currentEntry.weather[0].description,
+            icon: currentEntry.weather[0].icon,
+            rain: Math.round(currentEntry.rain?.['3h'] || 0),
+            wind_speed: Math.round(currentEntry.wind.speed * 3.6),
+            clouds: currentEntry.clouds.all,
+            humidity: currentEntry.main.humidity,
+            visibility: currentEntry.visibility ?? 10000,
             waveHeight: undefined,
             waterTemperature: undefined,
             swellHeight: undefined,
@@ -500,6 +545,12 @@ export default function ActivitiesPage() {
     };
   }, [homeLocation, coastalLocation, hasMounted]);
 
+  // Calculate whether it's evening (same way index.tsx does)
+  const now = timeInfo?.serverTime || new Date();
+  const isEveningToday = now.getHours() >= 18 && activeDay === 0;
+
+  console.log(`🕒 Time context for scoring: { now: ${now.toISOString()}, isEveningToday: ${isEveningToday} }`);
+
   // Generate activity assessments for the selected day
   const currentDayData = forecastByDay[activeDay];
   
@@ -509,7 +560,7 @@ export default function ActivitiesPage() {
       weather: {
         temperature: currentDayData.temperature,
         precipitation: currentDayData.rain,
-        windSpeed: currentDayData.wind_speed,
+        windspeed: currentDayData.wind_speed, // Note: lowercase 's'
         clouds: currentDayData.clouds,
         humidity: currentDayData.humidity,
         visibility: currentDayData.visibility,
@@ -520,11 +571,54 @@ export default function ActivitiesPage() {
       }
     }],
     interests,
-    activities: activityTypes.filter(a => interests.includes(a.id) && isOutdoor(a.id)),
-    now: timeInfo?.serverTime || new Date()
+    activities: activityTypes.filter(a => interests.includes(a.id)),
+    now: timeInfo?.serverTime || new Date(),
+    includeAllActivities: true,
+    isEveningToday: isEveningToday // Pass the evening flag
   })[0] : null;
 
+  // Log after getting results
+  if (dayAssessments) {
+    console.log('🔍 Activity assessments:', {
+      perfectCount: dayAssessments.suggestions.filter(s => s.score >= 90).length,
+      goodCount: dayAssessments.suggestions.filter(s => s.score >= 60 && s.score < 90).length,
+      fairCount: dayAssessments.suggestions.filter(s => s.score >= 40 && s.score < 60).length,
+      poorCount: dayAssessments.suggestions.filter(s => s.score < 40).length,
+      totalCount: dayAssessments.suggestions.length
+    });
+  }
+
   const activities = dayAssessments?.suggestions || [];
+
+  // Make sure ALL selected interests appear in the activities list
+  if (interests.length > 0 && currentDayData) {
+    // Find which interests are missing from the activities list
+    const existingActivityIds = activities.map(a => a.activityId);
+    const missingInterests = interests.filter(id => !existingActivityIds.includes(id));
+    
+    // Add the missing interests with a default score
+    if (missingInterests.length > 0) {
+      console.log('Adding missing interests to activities list:', missingInterests);
+      
+      const missingActivities = missingInterests.map(id => {
+        const activity = activityTypes.find(a => a.id === id);
+        if (!activity) return null;
+        
+        // Use a better default score for activities
+        return {
+          activityId: id,
+          score: 50, // Change from 35 to 50 (makes it "fair" instead of "poor")
+          evaluation: 'Available option',
+          reasoning: 'Conditions vary, but available based on your interests',
+          // Add any other required fields with default or null values
+          day: currentDayData,
+          onClick: () => {},
+        };
+      }).filter((a): a is Exclude<typeof a, null> => a !== null);
+      
+      activities.push(...missingActivities);
+    }
+  }
 
   // Pre-hydration loading state
   if (!hasMounted) {

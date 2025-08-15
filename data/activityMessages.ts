@@ -13,7 +13,7 @@ export const activityMessages: Record<string, ActivityMessageConfig> = {
     templates: {
       perfect: "Surf's up! {reasons}",
       good: "Grab your wetsuit, it's pretty nice out there. {reasons}",
-      fair: "Might be a bit choppy, but still rideable. {reasons}",
+      fair: "Might be a bit rubbish, but still rideable. {reasons}",
       poor: "Keep that board in the van. {reasons}"
     },
     omitReasons: ['month']
@@ -306,10 +306,10 @@ coarse_fishing: {
 },
 sea_fishing_shore: {
   templates: {
-    perfect: "Tides right, surf calm—perfect for bagging a shore catch. {reasons}",
-    good: "Good surf and steady bites—great day to try your luck from the beach. {reasons}",
-    fair: "A bit rough but still fishable—time to cast from the shore. {reasons}",
-    poor: "Rough surf or strong winds—shore fishing could be a challenge today. {reasons}"
+    perfect: "Fish the incoming tide, and bag a shore catch. {reasons}",
+    good: "Steady bites—great day to try your luck from the beach. {reasons}",
+    fair: "A bit hit and miss but still fishable—time to cast from the shore. {reasons}",
+    poor: "Shore fishing could be a challenge today. {reasons}"
   }
 },
 sea_fishing_boat: {
@@ -639,19 +639,38 @@ export function getActivityMessage(
   if (!config) return 'Enjoy!';
 
   const arr = Array.isArray(reasons) ? reasons : [];
+  
+  // Special handling for surfing when rating is poor
+  if (activityId === 'surfing' && category === 'poor') {
+    const waveReason = arr.find(r => r.key === 'wave');
+    if (waveReason) {
+      const waveHeight = waveReason.value || 0;
+      
+      // Prepend specific wave condition information
+      if (waveHeight < 0.5) {
+        return `Keep that board in the van. Waves are too small today. ${getReasonText(arr, config.omitReasons)}`; 
+      } 
+      else if (waveHeight > 2.5) {
+        return `Warning: Dangerous surf conditions! Waves too large for safe surfing. ${getReasonText(arr, config.omitReasons)}`;
+      }
+    }
+  }
+  
+  // Standard processing for other activities
   const filteredReasons = arr.filter(
     r => !(config.omitReasons || []).includes(r.key)
   );
   
-  // Add safety checks
-  const reasonText =
-    filteredReasons.length > 0
-      ? filteredReasons
-          .filter(r => r && typeof r === 'object' && r.label) // Ensure r and r.label exist
-          .map(r => r.label.trim().replace(/\.$/, ''))
-          .join('. ') + '.'
-      : '';
+  const reasonText = getReasonText(filteredReasons, config.omitReasons);
 
   const template = config.templates[category] ?? config.templates.fair;
   return template.replace('{reasons}', reasonText);
+}
+
+// Helper function to extract and format reasons text
+function getReasonText(reasons: { key: string; value: any; label: string }[], omitReasons?: string[]): string {
+  return reasons
+    .filter(r => r && typeof r === 'object' && r.label) // Ensure r and r.label exist
+    .map(r => r.label.trim().replace(/\.$/, ''))
+    .join('. ') + (reasons.length > 0 ? '.' : '');
 }

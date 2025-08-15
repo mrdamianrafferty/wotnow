@@ -2165,7 +2165,7 @@ export const activityTypes: ActivityType[] = [
   },
     {
     id: 'make_music',
-    name: 'Make Music',
+    name: 'Making Music',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,

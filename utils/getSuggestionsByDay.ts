@@ -46,6 +46,9 @@ import { applyEveningBonus } from './eveningScoring';
 import { activityTypes } from '../data/activityTypes';
 import { getActivityMessage } from '../data/activityMessages';
 
+// Minimum score threshold for activity suggestions (unless includeAllActivities is true)
+const MINIMUM_ACCEPTABLE_SCORE = 40; // Matches your 'fair' threshold in toLevel()
+
 // Simple context tags helper used by scoring/bonuses
 function buildContextTagsForDay(dayName: string, hour: number, isToday: boolean): string[] {
   const dn = dayName.toLowerCase();
@@ -140,90 +143,95 @@ function calculateActivityScore(
   return Math.round(score);
 }
 
+// Define these helper functions if they don't exist elsewhere
+function getScoreEvaluation(score: number): SuitabilityLevel {
+  return toLevel(score);
+}
+
+function getReasoningForScore(score: number, activity: ActivityType, weather: WeatherData): string {
+  if (score >= 90) return `Perfect conditions for ${activity.name || activity.id}!`;
+  if (score >= 60) return `Good weather for ${activity.name || activity.id}.`;
+  if (score >= 40) return `Fair conditions for ${activity.name || activity.id}.`;
+  return `Not ideal weather for ${activity.name || activity.id}, but still an option.`;
+}
+
 // Main function
-export function getSuggestionsByDay(payload: {
-  forecast: Array<{ date: any; weather: WeatherData }>;
-  interests: string[];
-  activities: ActivityType[];
-  now: Date;
+export function getSuggestionsByDay({ 
+  forecast, 
+  activities, 
+  interests,
+  now,
+  includeAllActivities = false,
+  isEveningToday = false // Add this parameter with default value
 }) {
-  const { forecast, interests, activities, now } = payload;
-  const nowTs = now.getTime();
+  // Add debugging logs
+  console.log('📊 getSuggestionsByDay INPUTS:', { 
+    forecastLength: forecast.length,
+    activitiesCount: activities.length,
+    interestsCount: interests.length,
+    now: now.toISOString(),
+    includeAllActivities,
+    isEveningToday
+  });
 
-  return forecast.map(dayData => {
-    const day = dayData;
-    const safeActs = Array.isArray(activities) ? activities : [];
-    const today = now;
-    const dayDate = new Date(day.date * 1000);
-    const dayName = dayDate.toLocaleDateString('en-GB', { weekday: 'long' });
-    const isToday = dayDate.toDateString() === today.toDateString();
-    const hour = now.getHours();
-    const isEvening = isToday && hour >= 17;
-    const month = dayDate.getMonth() + 1;
-    const contextTags = buildContextTagsForDay(dayName, hour, isToday);
-    const dw = day.weather ?? {};
+  return forecast.map(day => {
+    console.log('🌤️ Processing day:', day.date);
+    
+    const suggestions = activities
+      .map(activity => {
+        // Add important debugging log before scoring
+        console.log(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
+        
+        // Calculate score for activity - use dynamic context tags
+        const currentDate = new Date(now);
+        const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const currentDayName = dayNames[currentDate.getDay()];
+        const month = currentDate.getMonth(); // 0-11 for Jan-Dec
 
-    // Filter by interests
-    const filtered = safeActs.filter(a => interests.includes(a.id));
-    // Seasonal
-    const inSeason = filtered.filter(a => !a.seasonalMonths?.length || a.seasonalMonths.includes(month));
-    // Weather good probe
-    const probe = inSeason.filter(a => a.weatherSensitive).map(a =>
-      calculateActivityScore(a, dw, false, false, contextTags, { nowTs, sunsetTs: dw.sunsetTs, month })
-    );
-    const isWeatherGood = probe.some(s => s >= 60);
+        const contextTags = buildContextTagsForDay(
+          currentDayName, 
+          currentDate.getHours(),
+          true // Is today
+        );
 
-    // Build raw suggestions
-    const raw = inSeason.map(activity => {
-      let score = calculateActivityScore(activity, dw, isWeatherGood, isEvening, contextTags, {
-        nowTs,
-        sunsetTs: dw.sunsetTs,
-        month,
-      });
+        // Add season tags
+        if (month >= 2 && month <= 4) contextTags.push('spring');
+        if (month >= 5 && month <= 7) contextTags.push('summer');
+        if (month >= 8 && month <= 10) contextTags.push('autumn');
+        if (month >= 11 || month <= 1) contextTags.push('winter');
 
-      // Tag-based day nudge
-      if (activity.tags?.includes(dayName)) score = Math.round(score * 1.1);
+        console.log(`🏷️ Using context tags:`, contextTags);
 
-      // Classification
-      const evalLevel: SuitabilityLevel = activity.weatherSensitive
-        ? toLevel(score)
-        : (activity.indoorAlternative ? 'indoorAlternative' : 'indoor');
-
-      // Evening reasons
-      const eveningRes = isEvening
-        ? applyEveningBonus(activity, hour, contextTags, { nowTs, sunsetTs: dw.sunsetTs, month })
-        : { multiplier: 1, reasons: {} };
-
-      return {
-        activityId: activity.id,
-        score,
-        evaluation: evalLevel,
-        eveningReasons: eveningRes.reasons,
-        __weatherSensitive: activity.weatherSensitive,
-      } as Suggestion & { __weatherSensitive: boolean };
-    });
-
-    // Top lists
-    const top10 = raw.sort((a, b) => b.score - a.score).slice(0, 10);
-    const topIndoors = raw
-      .filter(r => !r.__weatherSensitive)
-      .sort((a, b) => b.score - a.score)
-      .filter((r, i, arr) => arr.findIndex(x => x.activityId === r.activityId) === i)
-      .slice(0, 5);
-
-    const suggestionsList: Suggestion[] = top10.map(({ __weatherSensitive, ...rest }) => rest);
-    const stayInside: Suggestion[] = topIndoors.map(({ __weatherSensitive, ...rest }) => rest);
-
-    // Hero
-    let hero = selectHeroActivity
-      ? selectHeroActivity(suggestionsList, isEvening)
-      : suggestionsList[0] || null;
-
+        const score = calculateActivityScore(
+          activity, 
+          day.weather,
+          day.weather.precipitation < 5, // isWeatherGood
+          isEveningToday,
+          contextTags,
+          { nowTs: now.getTime() }
+        );
+        
+        console.log(`📈 ${activity.id} scored: ${score}`);
+        
+        // When includeAllActivities is true, include ALL activities regardless of score
+        if (includeAllActivities || score >= MINIMUM_ACCEPTABLE_SCORE) {
+          return {
+            activityId: activity.id,
+            score,
+            evaluation: getScoreEvaluation(score),
+            reasoning: getReasoningForScore(score, activity, day.weather),
+            // ... other properties
+          };
+        }
+        return null;
+      })
+      .filter(Boolean) // Remove null items
+      .sort((a, b) => b.score - a.score); // Sort by score
+      
+    console.log(`✅ Finished day with ${suggestions.length} activities`);
     return {
       date: day.date,
-      suggestions: suggestionsList,
-      heroActivity: hero,
-      stayInside,
+      suggestions
     };
   });
 }

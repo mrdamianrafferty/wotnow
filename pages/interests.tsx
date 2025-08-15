@@ -483,6 +483,11 @@ const Interests: React.FC = () => {
         if (wantsCoast && !hasCoast) setShowCoastDialog(true);
     }, [interests, preferences.locations]);
 
+    // Add this effect to log current interests
+    useEffect(() => {
+      console.log('Current interests from preferences:', preferences.interests);
+    }, [preferences.interests]);
+
     const handleCoastSave = (loc: { name: string; lat: number; lon: number }) => {
         setPreferences((prev) => ({
             ...prev,
@@ -497,6 +502,7 @@ const Interests: React.FC = () => {
             const newList = chosen.includes(id)
                 ? chosen.filter((i) => i !== id)
                 : [...chosen, id];
+            console.log('Updated interests list:', newList);
             return { ...prev, interests: newList };
         });
     };
