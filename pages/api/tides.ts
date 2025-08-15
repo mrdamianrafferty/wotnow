@@ -12,12 +12,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const url = `https://api.stormglass.io/v2/tide/extremes/point?lat=${lat}&lng=${lon}`;
 
   try {
+    console.log('🌊 Fetching tide data from Stormglass');
     const response = await fetch(url, {
       headers: {
-        Authorization: apiKey
+        'Authorization': `${apiKey}` // Fixed format
       }
     });
+    
+    if (!response.ok) {
+      console.error('🌊 Tide API response not OK:', response.status);
+      return res.status(response.status).json({ 
+        error: 'Stormglass API error', 
+        status: response.status 
+      });
+    }
+    
     const data = await response.json();
+    console.log('🌊 Tide data received', { count: data?.data?.length || 0 });
 
     if (data && Array.isArray(data.data)) {
       return res.status(200).json(data);

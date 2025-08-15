@@ -49,7 +49,7 @@ const marineData = hasMarineData ? {
   swellHeight: day?.swellHeight ?? day?.swell_height ?? null,
   swellPeriod: day?.swellPeriod ?? day?.swell_period ?? null,
   windSpeed: day?.windSpeed ?? null, // Stormglass only
-  windDir: day?.windDir ?? day?.windDirection ?? null, // Stormglass only
+  windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null, // Stormglass only
   gust: day?.gust ?? null, // Stormglass if available
   vis: day?.vis ?? null, // Stormglass if available
   swellDir: day?.swellDir ?? day?.swell_direction ?? null,
@@ -87,7 +87,7 @@ const weatherData = {
     swellHeight: marineData.swellHeight,
     swellPeriod: marineData.swellPeriod,
     windSpeed: marineData.windSpeed,
-    windDir: marineData.windDir,
+    windDirection: day.windDirection,
   };
 
   // Get reasons from buildReasons if not provided, using enhanced day object
@@ -112,7 +112,8 @@ const weatherData = {
       swellHeight: day.swellHeight,
       swellPeriod: day.swellPeriod,
       waterTemperature: day.waterTemperature,
-      wind_speed: day.wind_speed,
+      windSpeed: day.windSpeed,
+      windDirection: day.windDirection,
     });
   }
 
@@ -123,6 +124,7 @@ const weatherData = {
   // const renderMarineData = () => ...;
   // const renderFooter = () => ...;
 
+  // In the return statement at the bottom of the function
   return {
     activityId,
     title,
@@ -131,10 +133,11 @@ const weatherData = {
     category,
     categoryEmoji,
     reasons,
-    marineData,
-    weatherData, // <-- now defined!
+    marineData: isMarine ? marineData : undefined,
+    weatherData: weatherData,
     score,
     message,
+    dayTimestamp: day.date, // Add this line to include the timestamp directly
     // renderMarineData,
     // renderFooter,
   };

@@ -162,7 +162,8 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         icon: noon.weather[0].icon,
         rain: Math.round(noon.rain?.['3h'] || 0),
         wind_speed: Math.round(noon.wind.speed * 3.6),
-        windSpeed: Math.round(noon.wind.speed * 3.6),
+        windSpeed: Math.round(noon.wind.speed * 1.94384),
+        wind_direction: noon.wind.deg,
         clouds: noon.clouds.all,
         humidity: noon.main.humidity,
         visibility: noon.visibility ?? 10000,
@@ -275,15 +276,16 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
       // Use CONSISTENT property names
       return {
         ...day,
-        waveHeight: marineHour.waveHeight?.noaa,  // FIXED
-        swellHeight: marineHour.swellHeight?.noaa,  // FIXED
-        swellPeriod: marineHour.swellPeriod?.noaa,  // FIXED
-        waterTemperature: marineHour.waterTemperature?.noaa,  // FIXED
-        windSpeed: marineHour.windSpeed?.noaa,  // FIXED
+        waveHeight: marineHour.waveHeight?.noaa,
+        swellHeight: marineHour.swellHeight?.noaa,
+        swellPeriod: marineHour.swellPeriod?.noaa,
+        waterTemperature: marineHour.waterTemperature?.noaa,
+        windSpeed: marineHour.windSpeed?.noaa,
         swellDir: marineHour.swellDirection?.noaa,
         gust: marineHour.windGust?.noaa,
         vis: marineHour.visibility?.noaa,
         current: marineHour.currentSpeed?.noaa,
+        windDir: marineHour.windDirection?.noaa, // <-- Add this line
       };
     } else {
       console.log("No matching marine hour found");
@@ -662,11 +664,17 @@ const isToday = dayDate.getDate() === today.getDate() &&
 const hour = isToday ? today.getHours() : 12;
 const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
 
-            const popupPayload = buildPopupActivityPayload({
-            activityId: heroActivity.activityId,
-            day: getPopupDay(heroActivity.activityId, day, timeInfo),
-            score: heroActivity.score,
-            // Do NOT pass reasons!
+            const isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
+const marinePopupDay = getPopupDay(heroActivity.activityId, day, timeInfo); // Stormglass
+const weatherPopupDay = getWeatherDay(day, timeInfo); // <-- Use a function that extracts OpenWeather fields
+
+const popupPayload = buildPopupActivityPayload({
+  activityId: heroActivity.activityId,
+  score: heroActivity.score,
+  marineData: isMarineActivity ? marinePopupDay : undefined,
+  weatherData: weatherPopupDay, // Always pass weatherData for both marine and non-marine
+  day: marinePopupDay,
+  reasons: buildReasons(day, heroActivity.activityId),
 });
 
             const handlePopupOpen = () => {
@@ -727,11 +735,14 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
                         className="also-good-item"
                         onClick={() => {
                           if (isOutdoorActivity) {
-                            const popupPayload = buildPopupActivityPayload({
-                            activityId: suggestion.activityId,
-                            day: getPopupDay(suggestion.activityId, day, timeInfo),
-                            score: suggestion.score,
-                            reasons: buildReasons(day, suggestion.activityId),
+const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
+const popupPayload = buildPopupActivityPayload({
+  activityId: suggestion.activityId,
+  score: suggestion.score,
+  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  day: getPopupDay(suggestion.activityId, day, timeInfo),
+  reasons: buildReasons(day, suggestion.activityId),
 });
                             setPopupActivity(popupPayload);
                           }
@@ -778,12 +789,15 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
                           className="activity-item-good"
                           onClick={() => {
                             if (isOutdoorActivity) {
-                              const popupPayload = buildPopupActivityPayload({
-                              activityId: suggestion.activityId,
-                              day: getPopupDay(suggestion.activityId, day, timeInfo),
-                              score: suggestion.score,
-                              reasons: buildReasons(day, suggestion.activityId),
-                            });
+const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
+const popupPayload = buildPopupActivityPayload({
+  activityId: suggestion.activityId,
+  score: suggestion.score,
+  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  day: getPopupDay(suggestion.activityId, day, timeInfo),
+  reasons: buildReasons(day, suggestion.activityId),
+});
                               setPopupActivity(popupPayload);
                             }
                           }}
@@ -828,12 +842,15 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
                             tabIndex={0}
                             onClick={() => {
                               if (!isOutdoorActivity) return;
-                              const popupPayload = buildPopupActivityPayload({
-                                activityId: s.activityId,
-                                day: getPopupDay(s.activityId, day, timeInfo),
-                                score: s.score,
-                                reasons: buildReasons(day, s.activityId),
-                              });
+const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
+const popupPayload = buildPopupActivityPayload({
+  activityId: suggestion.activityId,
+  score: suggestion.score,
+  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
+  day: getPopupDay(suggestion.activityId, day, timeInfo),
+  reasons: buildReasons(day, suggestion.activityId),
+});
                               setPopupActivity(popupPayload);
                             }}
                             style={{
@@ -893,6 +910,10 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
     marineData={popupActivity.marineData}
     weatherData={popupActivity.weatherData}
     score={popupActivity.score}
+    reasons={popupActivity.reasons}
+    dayTimestamp={popupActivity.dayTimestamp} // Use the direct timestamp property
+    coastalLocation={coastalLocation}
+    homeLocation={homeLocation}
     onClose={() => setPopupActivity(null)}
   />
 )}
@@ -900,3 +921,21 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
     </> /* End of fragment */
   ); // End of return
 } // End of Home component
+
+function getWeatherDay(day: any, timeInfo: any) {
+  return {
+    temperature: day.temperature,
+    tempMax: day.tempMax,
+    tempMin: day.tempMin,
+    condition: day.condition,
+    description: day.description,
+    icon: day.icon,
+    precipitation: day.rain,
+    windSpeed: day.wind_speed,
+    windDir: day.wind_direction,
+    humidity: day.humidity,
+    visibility: day.visibility,
+    clouds: day.clouds,
+    // Add more OpenWeather fields as needed
+  };
+}

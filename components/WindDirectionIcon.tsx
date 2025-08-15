@@ -1,14 +1,14 @@
-import 'weather-icons/css/weather-icons.min.css';
+import '/styles/weather-icons-wind.css';
+import '/styles/weather-icons-wind.min.css';
 
 export default function WindDirectionIcon({ deg }: { deg: number }) {
-  // Round to nearest 10 for icon class
-  const rounded = Math.round(deg / 10) * 10;
-  const iconClass = `wi wi-wind wi-from-deg-${rounded}`;
+  const roundedDeg = Math.round(deg);
+  const iconClass = `wi wi-wind from-${roundedDeg}-deg`;
 
   return (
     <i
       className={iconClass}
-      title={`Wind from ${deg}°`}
+      title={`Wind from ${roundedDeg}°`}
       style={{ fontSize: 24, verticalAlign: 'middle' }}
     />
   );

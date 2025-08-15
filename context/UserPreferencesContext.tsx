@@ -119,6 +119,12 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     }
   });
 
+  const [coastalLocation, setCoastalLocation] = useState<Location | null>(
+    typeof window !== 'undefined' && localStorage.getItem('coastalLocation')
+      ? JSON.parse(localStorage.getItem('coastalLocation')!)
+      : null
+  );
+
   // --- Auto-detect home location if not set ---
   useEffect(() => {
     const hasHome = preferences.locations.some(l => l.type === 'home');

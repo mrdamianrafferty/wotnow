@@ -27,6 +27,7 @@ export interface WeatherForecastDay {
   icon?: string;
   rain?: number;
   wind_speed?: number;
+  wind_direction?: number; 
   clouds?: number;
   humidity?: number;
   visibility?: number;

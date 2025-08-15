@@ -198,13 +198,9 @@ export function getWindMessage({
     : buildWindMessageLand({ windSpeed, gustSpeed, windDirection, windDirectionsToday });
 }
 
-function getCompassDirection(degrees: number): string {
-  // 16 compass points
-  const directions = [
-    "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-    "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
-  ];
-  const idx = Math.round(((degrees % 360) / 22.5)) % 16;
+export function getCompassDirection(degrees: number): string {
+  const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+  const idx = Math.round(degrees / 45) % 8;
   return directions[idx];
 }
 

@@ -125,21 +125,42 @@ export function buildPopupActivityPayload({ activityId, day, score, reasons }: B
   };
 }
 
+// Add this function to get wind directions for the day
+function getWindDirectionsForDay(day: any): number[] {
+  // If day already has hourly data with wind directions
+  if (day.hourly && Array.isArray(day.hourly)) {
+    return day.hourly
+      .filter((hour: any) => hour.wind_direction !== undefined)
+      .map((hour: any) => hour.wind_direction);
+  }
+  
+  // If no hourly data, just return the single direction if available
+  return day.wind_direction ? [day.wind_direction] : [];
+}
+
+// Then fix your buildReasons function
 // 1. First, modify buildReasons to return an array of strings instead of a combined string
 export function buildReasons(day: any, activityId: string) {
   // Debug to see what's actually in the day object
   console.log('Day data in buildReasons:', day);
   
   const reasons: string[] = [];
+  const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId); // Define this
   
   // Add standard weather reasons with better null handling
   if (day.wind_speed !== undefined) {
     console.log(`Trying to get wind message for speed: ${day.wind_speed}`);
-    const windMsg = getWindMessage(day.wind_speed);
-    console.log(`Wind message result: ${windMsg}`);
+    const windMessage = getWindMessage({
+      windSpeed: day.wind_speed,
+      gustSpeed: day.wind_gust,
+      windDirection: day.wind_direction,
+      windDirectionsToday: getWindDirectionsForDay(day),
+      context: isMarineActivity ? 'marine' : 'land'
+    });
+    console.log(`Wind message result: ${windMessage}`);
     
-    if (windMsg) {
-      reasons.push(windMsg);
+    if (windMessage) { // Changed from windMsg to windMessage
+      reasons.push(windMessage);
     } else {
       // Fallback to beaufort description if available
       const beaufortDescription = getBeaufortDescription(day.wind_speed);
