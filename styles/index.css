@@ -946,90 +946,218 @@ abbr[title] {
 .coastal-dialog-modal {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.65); /* Darker overlay for better contrast */
   z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(2px); /* Subtle blur effect for depth */
+  padding: 1rem; /* Add padding for mobile */
 }
+
 .coastal-dialog-content {
   background: #fff;
-  border-radius: 12px;
-  padding: 2rem;
-  min-width: 320px;
-  max-width: 90vw;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  border-radius: 16px; /* Larger radius for softer appearance */
+  padding: 2.5rem;
+  min-width: 360px;
+  max-width: min(90vw, 480px); /* Limit width with responsive cap */
+  box-shadow: 0 12px 48px rgba(0,0,0,0.25); /* Deeper shadow for depth */
+  position: relative; /* For close button positioning */
+  overflow: hidden; /* Contain internal elements */
 }
+
 .coastal-dialog-title {
-  margin: 0 0 16px 0;
-  font-size: 1.25rem;
+  margin: 0 0 24px 0;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #374151;
+  color: #1f2937; /* Darker text for better contrast */
+  line-height: 1.2;
+  letter-spacing: -0.01em; /* Tighter letter spacing for headings */
 }
+
 .coastal-dialog-input {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: #111827;
 }
+
+.coastal-dialog-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
 .coastal-dialog-search {
   background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 10px 15px;
+  border-radius: 8px;
+  padding: 12px 16px;
   font-weight: 600;
+  font-size: 1.05rem;
   cursor: pointer;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  width: 100%;
+  transition: background-color 0.2s, transform 0.1s;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
+
+.coastal-dialog-search:hover {
+  background: #2563eb;
+}
+
+.coastal-dialog-search:active {
+  transform: translateY(1px);
+}
+
 .coastal-dialog-search:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+  opacity: 0.8;
 }
+
 .coastal-dialog-loading {
-  margin: 10px 0;
+  margin: 16px 0;
   text-align: center;
   color: #4b5563;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
+
 .coastal-dialog-list {
   list-style-type: none;
   padding: 0;
   margin: 0;
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
+
+/* Custom scrollbar for the location list */
+.coastal-dialog-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.coastal-dialog-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.coastal-dialog-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+
+.coastal-dialog-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 .coastal-dialog-list-item {
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
+
 .coastal-dialog-list-btn {
   width: 100%;
   text-align: left;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #f9fafb;
+  padding: 14px 16px;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  background: transparent;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
+  font-size: 1rem;
+  color: #1f2937;
+  display: block;
 }
+
+.coastal-dialog-list-btn:last-child {
+  border-bottom: none;
+}
+
 .coastal-dialog-list-btn:hover {
-  background-color: #f3f4f6;
+  background-color: #eef2ff;
 }
+
+.coastal-dialog-list-btn:focus {
+  outline: none;
+  background-color: #eef2ff;
+  box-shadow: 0 0 0 2px #3b82f6 inset;
+}
+
 .coastal-dialog-list-coords {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #6b7280;
-  margin-top: 2px;
+  margin-top: 4px;
 }
+
 .coastal-dialog-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
+  top: 16px;
+  right: 16px;
+  background: rgba(243, 244, 246, 0.8);
   border: none;
-  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.25rem;
   cursor: pointer;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.coastal-dialog-close:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Empty state styling */
+.coastal-dialog-empty {
+  text-align: center;
+  padding: 24px 16px;
   color: #6b7280;
+  font-size: 1rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .coastal-dialog-content {
+    padding: 1.5rem;
+    min-width: 0;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .coastal-dialog-title {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+    padding-right: 24px; /* Space for close button */
+  }
+  
+  .coastal-dialog-list {
+    max-height: 240px;
+  }
+  
+  .coastal-dialog-close {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+  }
 }
 
 /* Remove bullet points and indentation */

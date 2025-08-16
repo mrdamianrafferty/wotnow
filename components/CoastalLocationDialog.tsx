@@ -23,6 +23,8 @@ const CoastalLocationDialog: React.FC<{
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<{ name: string; lat: number; lon: number }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const doSearch = async () => {
     if (!query) return;
@@ -49,6 +51,84 @@ const CoastalLocationDialog: React.FC<{
     setLoading(false);
   };
 
+  // Fix the API key inconsistency in the getCurrentLocation function
+  const getCurrentLocation = () => {
+    setLocationError(null);
+    setIsGettingLocation(true);
+    
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser");
+      setIsGettingLocation(false);
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          
+          // Use the same API key variable that's used in the search function
+          const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+          
+          // Add logging to debug API call
+          console.log(`Getting location name for coordinates: ${latitude}, ${longitude}`);
+          
+          // Reverse geocode to get location name
+          const response = await fetch(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${apiKey}`
+          );
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Reverse geocoding failed, bad robot:", response.status, errorText);
+            throw new Error(`Damn, we failed to get your location (${response.status})`);
+          }
+          
+          const data = await response.json();
+          console.log("Reverse geocoding response:", data);
+          
+          if (data && data.length > 0) {
+            const locationName = data[0].name + (data[0].state ? `, ${data[0].state}` : "");
+            
+            // Call onSave with the location data
+            onSave({
+              name: locationName,
+              lat: latitude,
+              lon: longitude
+            });
+          } else {
+            throw new Error("No location data found in API response");
+          }
+        } catch (error) {
+          console.error("Error getting location:", error);
+          setLocationError(`Damn, we failed to determine your location: ${error.message}. Please try again or enter manually.`);
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        let errorMessage = "Failed to get your location.";
+        
+        if (error.code === 1) {
+          errorMessage = "Location permission denied. Please allow location access.";
+        } else if (error.code === 2) {
+          errorMessage = "Please try again or enter manually.";
+        } else if (error.code === 3) {
+          errorMessage = "Location request timed out. Please try again.";
+        }
+        
+        setLocationError(errorMessage);
+        setIsGettingLocation(false);
+      },
+      { 
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  };
+
   // If dialog is not open, don't render anything
   if (!open) return null;
 
@@ -61,6 +141,59 @@ const CoastalLocationDialog: React.FC<{
         
         {/* Dialog title */}
         <h3 className="coastal-dialog-title">{title}</h3>
+        
+        {/* Current location button */}
+        <button
+          className="coastal-dialog-current-location"
+          onClick={() => {
+            // Add this confirmation before requesting location
+            if (confirm("This will request access to your location. Continue?")) {
+              getCurrentLocation();
+            }
+          }}
+          disabled={isGettingLocation}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            background: '#f3f4f6',
+            border: '2px solid #d1d5db',
+            borderRadius: '8px',
+            fontSize: '1.05rem',
+            color: '#374151',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            fontWeight: '500'
+          }}
+        >
+          {isGettingLocation ? (
+            <span>Getting your location...</span>
+          ) : (
+            <>
+              <span style={{ marginRight: '8px' }}>📍</span>
+              <span>Use my current location)</span>
+            </>
+          )}
+        </button>
+        
+        {/* Show error message if there is one */}
+        {locationError && (
+          <div 
+            style={{ 
+              color: '#dc2626', 
+              marginBottom: '16px', 
+              padding: '8px', 
+              background: '#fee2e2', 
+              borderRadius: '6px',
+              fontSize: '0.9rem'
+            }}
+          >
+            {locationError}
+          </div>
+        )}
         
         {/* Search input */}
         <input
