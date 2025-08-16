@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import countryNameToFlagEmoji from '../utils/flags';
+import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
 
 // Define the component interface
 const CoastalLocationDialog: React.FC<{
@@ -10,6 +12,7 @@ const CoastalLocationDialog: React.FC<{
   coastalLocation?: any;
   setHomeLocation?: (loc: any) => void;
   setCoastalLocation?: (loc: any) => void;
+  recentLocations?: { name: string; lat: number; lon: number }[];
 }> = ({ 
   open, 
   onClose, 
@@ -18,39 +21,43 @@ const CoastalLocationDialog: React.FC<{
   homeLocation,
   coastalLocation,
   setHomeLocation,
-  setCoastalLocation
+  setCoastalLocation,
+  recentLocations,
 }) => {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ name: string; lat: number; lon: number; country?: string }[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  const doSearch = async () => {
-    if (!query) return;
-    setLoading(true);
-    setResults([]);
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-      const resp = await fetch(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=5&appid=${apiKey}`
-      );
-      const data = await resp.json();
-      setResults(
-        Array.isArray(data)
-          ? data.map((r: any) => ({
-            name: `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`,
-            lat: r.lat,
-            lon: r.lon,
-            country: r.country
-          }))
-          : []
-      );
-    } catch (e) {
-      setResults([]);
+  const [recentLocationsState, setRecentLocationsState] = useState<{ name: string; lat: number; lon: number }[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("recentCoastalLocations");
+    if (saved) {
+      try {
+        setRecentLocationsState(JSON.parse(saved));
+      } catch (e) {
+        console.error("Error parsing recent locations", e);
+      }
     }
-    setLoading(false);
-  };
+  }, []);
+
+  const {
+    ready,
+    value,
+    setValue,
+    suggestions: { status, data },
+    clearSuggestions,
+  } = usePlacesAutocomplete({
+requestOptions: {
+  locationBias: {
+    center: {
+      lat: homeLocation?.lat || 43.48,
+      lng: homeLocation?.lon || -5.27,
+    },
+    radius: 100000, // 100 km in metres
+  }
+},
+    debounce: 300,
+  });
 
   // Fix the API key inconsistency in the getCurrentLocation function
   const getCurrentLocation = () => {
@@ -97,6 +104,9 @@ const CoastalLocationDialog: React.FC<{
               lat: latitude,
               lon: longitude
             });
+            const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
+            const updated = [ { name: locationName, lat: latitude, lon: longitude }, ...existing.filter(l => l.name !== locationName) ].slice(0, 5);
+            localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
           } else {
             throw new Error("No location data found in API response");
           }
@@ -197,67 +207,114 @@ const CoastalLocationDialog: React.FC<{
             {locationError}
           </div>
         )}
+
+        {recentLocationsState && recentLocationsState.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '8px' }}>Recent Locations</h4>
+            <ul className="coastal-dialog-recent-list" style={{ padding: 0, listStyle: 'none' }}>
+              {recentLocationsState.map((loc, index) => (
+                <li key={index} className="coastal-dialog-list-item">
+                  <button
+                    className="coastal-dialog-list-btn"
+                    onClick={() => {
+                      onSave(loc);
+                    }}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%',
+                      padding: '10px',
+                      background: '#f0fdf4',
+                      border: '1px solid #bbf7d0',
+                      borderRadius: '6px',
+                      marginBottom: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    <span>{loc.name}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         
         {/* Search input */}
         <input
           type="text"
-          value={query}
+          value={value}
           autoFocus
+          disabled={!ready}
           placeholder="Search for location"
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && doSearch()}
+          onChange={e => setValue(e.target.value)}
           className="coastal-dialog-input location-banner__input"
           style={{ marginBottom: '12px', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', width: '100%' }}
         />
         
-        {/* Search button */}
-        <button
-          className="coastal-dialog-search location-banner__button"
-          onClick={doSearch}
-          disabled={loading || !query}
-          style={{ marginTop: '8px', padding: '10px 16px', backgroundColor: '#10b981', color: '#fff', fontSize: '1rem', borderRadius: '6px', border: 'none', width: '100%' }}
-        >
-          Search
-        </button>
-        
-        {/* Loading indicator */}
-        {loading && <div className="coastal-dialog-loading">Searching…</div>}
-        
-        {/* Results list */}
-        {!loading && results.length > 0 && (
-          <ul className="coastal-dialog-list" style={{ padding: 0, marginTop: '16px', listStyle: 'none' }}>
-            {results.map((r, i) => (
-              <li key={i} className="coastal-dialog-list-item">
-                <button
-                  className="coastal-dialog-list-btn"
-                  onClick={() => {
-                    // Save the selected location and close the dialog
-                    onSave(r);
-                  }}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '100%',
-                    padding: '10px',
-                    background: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    marginBottom: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  <span>
-                    {r.country ? `${String.fromCodePoint(...[...r.country.toUpperCase()].map(c => 0x1f1e6 - 65 + c.charCodeAt(0)))} ` : ''}
-                    {r.name}
-                  </span>
-                  <span className="coastal-dialog-list-coords">
-                    ({r.lat.toFixed(3)}, {r.lon.toFixed(3)})
-                  </span>
-                </button>
-              </li>
-            ))}
+        {status === "OK" && (
+          <ul
+            className="coastal-dialog-list"
+            style={{
+              padding: 0,
+              marginTop: '16px',
+              listStyle: 'none'
+            }}
+          >
+            {data.map((suggestion, i) => {
+              const { place_id, description } = suggestion;
+
+              return (
+                <li key={place_id} className="coastal-dialog-list-item">
+                  <button
+                    className="coastal-dialog-list-btn"
+                    onClick={async () => {
+                      try {
+                        setValue(description, false);
+                        clearSuggestions();
+
+                        const results = await getGeocode({ address: description });
+                        const { lat, lng } = await getLatLng(results[0]);
+
+                        onSave({
+                          name: description,
+                          lat,
+                          lon: lng,
+                        });
+                      } catch (error) {
+                        console.error("Error selecting place:", error);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      width: '100%',
+                      padding: '10px',
+                      background: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      marginBottom: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    <span>
+                      {(() => {
+                        const parts = description.split(',');
+                        if (parts.length < 2) return description;
+
+                        const countryName = parts[parts.length - 1].trim();
+                        const flag = countryNameToFlagEmoji(countryName);
+                        parts[parts.length - 1] = ` ${flag}`; // Add space before the flag, no comma
+                        return parts.join(',').replace(/,\s+$/, '').trim(); // Clean trailing commas
+                      })()}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
