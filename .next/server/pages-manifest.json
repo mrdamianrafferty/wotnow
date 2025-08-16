@@ -3,6 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/api/marine": "pages/api/marine.js",
-  "/activities": "pages/activities.js",
   "/": "pages/index.js"
 }

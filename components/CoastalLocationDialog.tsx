@@ -13,7 +13,7 @@ const CoastalLocationDialog: React.FC<{
 }> = ({ 
   open, 
   onClose, 
-  title = "Pick your location",
+  title = "Pick your coastal location",
   onSave, 
   homeLocation,
   coastalLocation,
@@ -21,7 +21,7 @@ const CoastalLocationDialog: React.FC<{
   setCoastalLocation
 }) => {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<{ name: string; lat: number; lon: number }[]>([]);
+  const [results, setResults] = useState<{ name: string; lat: number; lon: number; country?: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -41,7 +41,8 @@ const CoastalLocationDialog: React.FC<{
           ? data.map((r: any) => ({
             name: `${r.name}${r.state ? ', ' + r.state : ''}${r.country ? ', ' + r.country : ''}`,
             lat: r.lat,
-            lon: r.lon
+            lon: r.lon,
+            country: r.country
           }))
           : []
       );
@@ -135,12 +136,14 @@ const CoastalLocationDialog: React.FC<{
   // Use CSS classes from index.css for styling
   return (
     <div className="coastal-dialog-backdrop coastal-dialog-modal">
-      <div className="coastal-dialog coastal-dialog-content">
+      <div className="coastal-dialog coastal-dialog-content" style={{ padding: '24px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: '12px' }}>
         {/* Close button */}
         <button className="coastal-dialog-close" onClick={onClose}>&times;</button>
         
         {/* Dialog title */}
-        <h3 className="coastal-dialog-title">{title}</h3>
+        <h3 className="coastal-dialog-title" style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '20px' }}>
+          <span className="coastal-dialog-icon">📍</span> {title}
+        </h3>
         
         {/* Current location button */}
         <button
@@ -159,11 +162,11 @@ const CoastalLocationDialog: React.FC<{
             width: '100%',
             padding: '12px 16px',
             marginBottom: '16px',
-            background: '#f3f4f6',
-            border: '2px solid #d1d5db',
+            background: '#e0f2fe',
+            border: '2px solid #0284c7',
             borderRadius: '8px',
             fontSize: '1.05rem',
-            color: '#374151',
+            color: '#0369a1',
             cursor: 'pointer',
             transition: 'all 0.2s',
             fontWeight: '500'
@@ -174,7 +177,7 @@ const CoastalLocationDialog: React.FC<{
           ) : (
             <>
               <span style={{ marginRight: '8px' }}>📍</span>
-              <span>Use my current location)</span>
+              <span>Use my current location</span>
             </>
           )}
         </button>
@@ -204,6 +207,7 @@ const CoastalLocationDialog: React.FC<{
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === "Enter" && doSearch()}
           className="coastal-dialog-input location-banner__input"
+          style={{ marginBottom: '12px', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', width: '100%' }}
         />
         
         {/* Search button */}
@@ -211,6 +215,7 @@ const CoastalLocationDialog: React.FC<{
           className="coastal-dialog-search location-banner__button"
           onClick={doSearch}
           disabled={loading || !query}
+          style={{ marginTop: '8px', padding: '10px 16px', backgroundColor: '#10b981', color: '#fff', fontSize: '1rem', borderRadius: '6px', border: 'none', width: '100%' }}
         >
           Search
         </button>
@@ -220,7 +225,7 @@ const CoastalLocationDialog: React.FC<{
         
         {/* Results list */}
         {!loading && results.length > 0 && (
-          <ul className="coastal-dialog-list">
+          <ul className="coastal-dialog-list" style={{ padding: 0, marginTop: '16px', listStyle: 'none' }}>
             {results.map((r, i) => (
               <li key={i} className="coastal-dialog-list-item">
                 <button
@@ -229,8 +234,24 @@ const CoastalLocationDialog: React.FC<{
                     // Save the selected location and close the dialog
                     onSave(r);
                   }}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    padding: '10px',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem'
+                  }}
                 >
-                  {r.name}
+                  <span>
+                    {r.country ? `${String.fromCodePoint(...[...r.country.toUpperCase()].map(c => 0x1f1e6 - 65 + c.charCodeAt(0)))} ` : ''}
+                    {r.name}
+                  </span>
                   <span className="coastal-dialog-list-coords">
                     ({r.lat.toFixed(3)}, {r.lon.toFixed(3)})
                   </span>
