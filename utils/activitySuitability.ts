@@ -1,5 +1,7 @@
 // src/utils/activitySuitability.ts
 
+import { classifyWindRelative, onshoreComponentScore } from './orientation';
+
 // --- Types ---
 export interface WeatherData {
   // Land conditions
@@ -17,6 +19,9 @@ export interface WeatherData {
   swellPeriod?: number;
   swellDirection?: number;
   windDirection?: number;
+
+  // Contextual fields (non-weather but needed for evaluation)
+  beachOrientation?: number; // seaward-facing beach bearing (0–359)
 
   // Fallback for any other numeric fields
   [key: string]: number | undefined | null;
@@ -64,6 +69,23 @@ export function parseConditionString(condition: string):
   return null;
 }
 
+// --- Wind-relative token support ---
+const WIND_REL_REGEX = /^windRelative=(onshore|offshore|cross-shore|side-onshore|side-offshore)$/;
+
+/**
+ * Returns 1 for a match, 0 for a non-match, 0.5 when data is missing,
+ * or null when the token is not a windRelative token.
+ */
+function evaluateWindRelativeToken(token: string, weather: WeatherData): number | null {
+  const m = token.match(WIND_REL_REGEX);
+  if (!m) return null;
+  const wanted = m[1] as 'onshore' | 'offshore' | 'cross-shore' | 'side-onshore' | 'side-offshore';
+  const { windDirection, beachOrientation } = weather;
+  if (typeof windDirection !== 'number' || typeof beachOrientation !== 'number') return 0.5;
+  const actual = classifyWindRelative(beachOrientation, windDirection);
+  return actual === wanted ? 1 : 0;
+}
+
 /**
  * Graduated scoring: returns a 0–1 score for how well a single condition is met.
  */
@@ -106,9 +128,99 @@ export function evaluateConditionScore(condition: string, weather: WeatherData):
   }
 }
 
+// --- Compound conditions (AND / OR) ---
+// Split helpers (support "and" / "&" and "or" / "|" / "||")
+const AND_SPLIT_RE = /\s*&\s*|\s+\band\b\s+/i;
+const OR_SPLIT_RE  = /\s+\bor\b\s+|\s*\|\|\s*|\s*\|\s*/i;
+
 /**
- * Aggregates multiple condition scores into a single 0–1 match score.
+ * If a token within an OR/AND group omits the key (e.g. "26..28"),
+ * reuse the previous key and add the appropriate operator.
  */
+function withImpliedKey(token: string, lastKey: string | undefined): string {
+  const t = token.trim();
+  if (!t) return t;
+  // If it already starts with a letter (has its own key), leave it alone
+  if (/^[a-zA-Z_]/.test(t)) return t;
+  if (!lastKey) return t;
+
+  // Add "=" for range like "26..28"
+  if (/^\d/.test(t) && t.includes('..')) return `${lastKey}=${t}`;
+  // If it starts with a comparator or "=", just prefix the key
+  if (/^[<>=!]/.test(t) || t.startsWith('=')) return `${lastKey}${t}`;
+  // For bare windRelative alternatives like "offshore"
+  if (/^[a-z-]+$/i.test(t)) return `${lastKey}=${t}`;
+  return `${lastKey}=${t}`;
+}
+
+/**
+ * Evaluate a single atomic condition token into a score and whether it counts.
+ * - windRelative tokens always "count" (missing data yields 0.5)
+ * - numeric tokens only count if the referenced weather key exists
+ */
+function evalAtomicScore(token: string, weather: WeatherData): { score: number; counted: boolean } {
+  const trimmed = token.trim();
+  if (!trimmed) return { score: 0, counted: false };
+
+  const windRelScore = evaluateWindRelativeToken(trimmed, weather);
+  if (windRelScore !== null) {
+    return { score: windRelScore, counted: true };
+  }
+
+  const parsed = parseConditionString(trimmed);
+  if (!parsed) return { score: 0, counted: false };
+  const key = parsed.key;
+  const val = weather[key];
+  if (val === undefined || val === null) return { score: 0, counted: false };
+  return { score: evaluateConditionScore(trimmed, weather), counted: true };
+}
+
+/**
+ * Evaluate an expression with optional OR and AND.
+ * Precedence: OR splits first, then each branch is an AND of atoms.
+ * Scoring: AND takes the min of its parts; OR takes the max of its branches.
+ * Counting: the whole expression counts if any branch has at least one counted atom.
+ */
+function evalCompoundScore(expr: string, weather: WeatherData): { score: number; counted: boolean } {
+  const orParts = expr.split(OR_SPLIT_RE).map(s => s.trim()).filter(Boolean);
+  if (orParts.length <= 1) {
+    // Single branch -> AND only
+    let lastKey: string | undefined;
+    const atoms = expr.split(AND_SPLIT_RE).map(s => s.trim()).filter(Boolean);
+    const scores: number[] = [];
+    for (let raw of atoms) {
+      const token = withImpliedKey(raw, lastKey);
+      const parsed = parseConditionString(token);
+      if (parsed) lastKey = parsed.key;
+      const { score, counted } = evalAtomicScore(token, weather);
+      if (counted) scores.push(score);
+    }
+    if (!scores.length) return { score: 0, counted: false };
+    return { score: Math.min(...scores), counted: true };
+  }
+
+  // OR of AND branches
+  let anyCounted = false;
+  let best = 0;
+  for (const branch of orParts) {
+    let lastKey: string | undefined;
+    const atoms = branch.split(AND_SPLIT_RE).map(s => s.trim()).filter(Boolean);
+    const scores: number[] = [];
+    for (let raw of atoms) {
+      const token = withImpliedKey(raw, lastKey);
+      const parsed = parseConditionString(token);
+      if (parsed) lastKey = parsed.key;
+      const { score, counted } = evalAtomicScore(token, weather);
+      if (counted) scores.push(score);
+    }
+    if (!scores.length) continue;
+    anyCounted = true;
+    const branchScore = Math.min(...scores);
+    if (branchScore > best) best = branchScore;
+  }
+  return { score: best, counted: anyCounted };
+}
+
 export function calculateConditionMatchScore(
   conditions: string[],
   weather: WeatherData
@@ -117,9 +229,9 @@ export function calculateConditionMatchScore(
   let total = 0;
   let count = 0;
   for (const cond of conditions) {
-    const key = extractWeatherKey(cond);
-    if (weather[key] === undefined || weather[key] === null) continue;
-    total += evaluateConditionScore(cond, weather);
+    const { score, counted } = evalCompoundScore(cond, weather);
+    if (!counted) continue;
+    total += score;
     count++;
   }
   return count > 0 ? total / count : 0;
@@ -136,9 +248,8 @@ export function calculatePoorConditionPenalty(
   let total = 0;
   let count = 0;
   for (const cond of conditions) {
-    const key = extractWeatherKey(cond);
-    if (weather[key] === undefined || weather[key] === null) continue;
-    const score = evaluateConditionScore(cond, weather);
+    const { score, counted } = evalCompoundScore(cond, weather);
+    if (!counted) continue;
     if (score > 0.7) total += score;
     count++;
   }
@@ -148,17 +259,28 @@ export function calculatePoorConditionPenalty(
 // --- Legacy boolean evaluators (deprecated) ---
 
 export function safeEvaluate(cond: string, weather: WeatherData): boolean {
-  const key = extractWeatherKey(cond);
-  const val = weather[key];
-  if (val === undefined || val === null) return true;
-  return evaluateConditionScore(cond, weather) > 0.5;
+  const { score, counted } = evalCompoundScore(cond, weather);
+  if (!counted) return true; // preserve neutral pass on missing data
+  return score > 0.5;
 }
 
+/**
+ * Poor-condition evaluator: returns true only when the expression can be
+ * evaluated (has at least one counted atom) AND its score exceeds 0.5.
+ * Missing data should NOT trigger poor conditions.
+ */
+export function safeEvaluatePoor(cond: string, weather: WeatherData): boolean {
+  const { score, counted } = evalCompoundScore(cond, weather);
+  if (!counted) return false; // do not trigger on missing data
+  return score > 0.5;
+}
+
+// Missing data no longer triggers poor conditions
 export function hasPoorCondition(
   activity: { poorConditions?: string[] },
   weather: WeatherData
 ): boolean {
-  return !!activity.poorConditions?.some(c => safeEvaluate(c, weather));
+  return !!activity.poorConditions?.some(c => safeEvaluatePoor(c, weather));
 }
 
 export function hasPerfectConditions(
@@ -219,6 +341,14 @@ export function calculateActivityScore(
   else if (gScore >= 0.6) base = 60 + gScore * 20;
   else if (pScore >= 0.4 || gScore >= 0.4) base = 30 + Math.max(pScore, gScore) * 30;
   base = Math.max(0, base - penalty * 40);
+
+  // Optional wind-relative nudge when available and opted-in by the activity
+  if (activity?.usesWindRelative && typeof weather.beachOrientation === 'number' && typeof weather.windDirection === 'number') {
+    base += onshoreComponentScore(weather.beachOrientation, weather.windDirection) * 15; // ±15 points
+  }
+
+  // Clamp and round
+  base = Math.max(0, Math.min(100, base));
   return Math.round(base);
 }
 
@@ -257,5 +387,13 @@ export function generateScoreReasoning(
   if (gScore > 0.6) parts.push(`Good conditions: ${Math.round(gScore * 100)}%`);
   if (penalty > 0.2) parts.push(`Poor conditions penalty: -${Math.round(penalty * 40)} pts`);
   if (isEvening) parts.push('Evening boost applied');
+
+  if (activity?.usesWindRelative && typeof weather.beachOrientation === 'number' && typeof weather.windDirection === 'number') {
+    try {
+      const rel = classifyWindRelative(weather.beachOrientation, weather.windDirection);
+      parts.push(`Wind is ${rel.replace('-', ' ')} vs beach`);
+    } catch {}
+  }
+
   return parts.length ? parts.join(', ') : `Score: ${finalScore}/100`;
 }

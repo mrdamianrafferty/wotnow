@@ -262,3 +262,29 @@
   }
 }
 
+
+/* Styles applied only while exporting: keeps background image, removes blur, darkens for white text */
+.popup__exporting {
+  /* Keep the background image and gradient! */
+  background: none !important;
+  background-image: var(--export-gradient), var(--export-bg) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  opacity: 1 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Optionally, tune header/footer for crisp export */
+.popup__exporting .popup__card-header,
+.popup__exporting .popup__footer {
+  background: transparent !important;
+}
+
+/* Hide action buttons in exports if they're still inside export area (optional) */
+.popup__exporting .popup__action {
+  display: none !important;
+}

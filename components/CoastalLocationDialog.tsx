@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import countryNameToFlagEmoji from '../utils/flags';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
+import dynamic from 'next/dynamic';
+import { computeSimulatedOrientation } from '../utils/orientation';
+
+
+const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
 
 // Define the component interface
 const CoastalLocationDialog: React.FC<{
@@ -26,8 +31,13 @@ const CoastalLocationDialog: React.FC<{
 }) => {
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const [recentLocationsState, setRecentLocationsState] = useState<{ name: string; lat: number; lon: number }[]>([]);
+
+  // Added new state hooks as per instructions
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [selectedName, setSelectedName] = useState<string>('Pinned location');
 
   useEffect(() => {
     const saved = localStorage.getItem("recentCoastalLocations");
@@ -143,6 +153,105 @@ requestOptions: {
   // If dialog is not open, don't render anything
   if (!open) return null;
 
+  // Show map picker modal
+  if (showMapPicker) {
+    return (
+      <div className="coastal-dialog-backdrop coastal-dialog-modal">
+        <div className="coastal-dialog coastal-dialog-content" style={{ padding: '24px', borderRadius: '12px' }}>
+          <button className="coastal-dialog-close" onClick={() => setShowMapPicker(false)}>&times;</button>
+          <h3 className="coastal-dialog-title" style={{ fontSize: '1.5rem', marginBottom: '12px' }}>
+            📍 Pick location from map
+          </h3>
+          <MapPicker
+            homeLocation={homeLocation}
+            onSelect={async (lat, lon) => {
+              setSelectedCoords({ lat, lon });
+
+              try {
+                const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+                const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`);
+                const data = await response.json();
+                if (data && data.length > 0) {
+                  const name = data[0].name + (data[0].state ? `, ${data[0].state}` : '');
+                  setSelectedName(name);
+                } else {
+                  setSelectedName('Pinned location');
+                }
+              } catch (err) {
+                console.error("Reverse geocoding failed", err);
+                setSelectedName('Pinned location');
+              }
+            }}
+          />
+          {selectedCoords && (
+            <>
+              <div style={{ margin: '12px 0', fontSize: '0.95rem', fontWeight: '500' }}>
+                📍 Selected: {selectedName}
+              </div>
+              <button
+                onClick={() => {
+                  if (selectedCoords) {
+                    const { lat, lon } = selectedCoords;
+                    onSave({ name: selectedName, lat, lon });
+                    const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
+                    const updated = [{ name: selectedName, lat, lon }, ...existing.filter(l => l.name !== selectedName)].slice(0, 5);
+                    localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
+                    // Add likely beach caching logic
+                    const isLikelyBeach = (name: string) =>
+                      /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal)\b/i.test(name);
+                    if (isLikelyBeach(selectedName)) {
+                      const orientation = computeSimulatedOrientation(lat, lon);
+                      const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
+                      const exists = cached.some((b: any) => b.name === selectedName || (Math.abs(b.lat - lat) < 0.005 && Math.abs(b.lon - lon) < 0.005));
+                      if (!exists) {
+                        const updated = [{
+                          name: selectedName,
+                          lat,
+                          lon,
+                          orientation,
+                          added: new Date().toISOString(),
+                          source: 'userSearch',
+                          sourceCoords: { lat, lon }
+                        }, ...cached].slice(0, 100);
+                        localStorage.setItem("cachedBeaches", JSON.stringify(updated));
+                      }
+                    }
+                    setShowMapPicker(false);
+                  }
+                }}
+                style={{
+                  background: '#4ade80',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  marginBottom: '12px'
+                }}
+              >
+                ✅ Save this location
+              </button>
+            </>
+          )}
+          <button
+            onClick={() => setShowMapPicker(false)}
+            style={{
+              background: '#e5e7eb',
+              border: 'none',
+              padding: '10px 16px',
+              borderRadius: '6px',
+              fontWeight: '500',
+              cursor: 'pointer'
+            }}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Use CSS classes from index.css for styling
   return (
     <div className="coastal-dialog-backdrop coastal-dialog-modal">
@@ -252,6 +361,25 @@ requestOptions: {
           className="coastal-dialog-input location-banner__input"
           style={{ marginBottom: '12px', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', width: '100%' }}
         />
+        {/* Map picker button */}
+        <button
+          className="coastal-dialog-map-btn"
+          onClick={() => setShowMapPicker(true)}
+          style={{
+            width: '100%',
+            padding: '10px',
+            marginBottom: '12px',
+            background: '#fef3c7',
+            border: '1px solid #fcd34d',
+            borderRadius: '6px',
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            fontWeight: '500',
+            color: '#000000',
+          }}
+        >
+          🗺️ Or find on map
+        </button>
         
         {status === "OK" && (
           <ul
@@ -282,6 +410,32 @@ requestOptions: {
                           lat,
                           lon: lng,
                         });
+                        const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
+                        const updated = [ { name: description, lat, lon: lng }, ...existing.filter(l => l.name !== description) ].slice(0, 5);
+                        localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
+                        // Add likely beach caching logic
+                        const isLikelyBeach = (name: string) =>
+                          /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal)\b/i.test(name);
+                        if (isLikelyBeach(description)) {
+                          const orientation = computeSimulatedOrientation(lat, lng);
+                          const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
+                          const exists = cached.some((b: any) => b.name === description || (Math.abs(b.lat - lat) < 0.005 && Math.abs(b.lon - lng) < 0.005));
+                          if (!exists) {
+                            // Save new beach with placeId and sourceCoords
+                            const newBeach = {
+  name: description,
+  lat,
+  lon: lng,
+  orientation,
+  added: new Date().toISOString(),
+  source: 'userSearch',
+  placeId: place_id,
+  sourceCoords: { lat, lon: lng }
+};
+                            const updated = [newBeach, ...cached].slice(0, 100);
+                            localStorage.setItem("cachedBeaches", JSON.stringify(updated));
+                          }
+                        }
                       } catch (error) {
                         console.error("Error selecting place:", error);
                       }

@@ -1,4 +1,11 @@
 // All condition keys are normalised: temp → temperature, wind_speed → windSpeed, rain → precipitation
+// Visibility semantics
+// --------------------
+// `visibility` in all condition arrays refers to ABOVE-WATER (atmospheric) horizontal visibility,
+// i.e. how far you can see in the air/sky from the shore or boat. It is NOT underwater clarity.
+// Units: kilometres (km) after normalisation; if your source provides metres, convert to km.
+// Rationale: This controls safety around fog/mist and surface navigation/observation.
+// If we later add underwater clarity, use a separate key such as `waterClarity` (m) or `secchiDepth` (m).
 
 export interface ActivityType {
   id: string;
@@ -13,10 +20,23 @@ export interface ActivityType {
   goodConditions?: string[];              // Recommended and generally enjoyable
   perfectConditions?: string[];           // Ideal and most desirable conditions
   indoorAlternative?: string;             // Optional fallback if the activity is weather-sensitive
+  /** If true, scoring should derive wind-relative direction (onshore/cross/offshore) from beach orientation */
+  usesWindRelative?: boolean;
+  /** If true, activity benefits from a known beach orientation (e.g., surfing, sea swimming) */
+  requiresBeachOrientation?: boolean;
 }
 
 /**
  * In which months this activity is considered 'in season' (1 = January, ..., 12 = December)
+ */
+
+/**
+ * Relative wind support
+ * ---------------------
+ * Some activities can use a derived, relative wind classification instead of raw degrees.
+ * For these, add condition strings like `windRelative=offshore`, `windRelative=cross-shore`,
+ * `windRelative=onshore`, `windRelative=side-onshore`, or `windRelative=side-offshore`.
+ * The app should compute this via classifyWindRelative(beachOrientation, windFromDeg).
  */
 
 export const activityTypes: ActivityType[] = [
@@ -304,7 +324,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'fly_fishing_freshwater',
-  name: 'Fly Fishing (Freshwater)',
+  name: 'Fly Fishing',
   category: 'Outdoor Activities',
   secondaryCategory: 'Fishing',
   weatherSensitive: true,
@@ -385,22 +405,26 @@ export const activityTypes: ActivityType[] = [
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
   indoorAlternative: 'Plan garden layout or start seedlings indoors'
 },
- {
+{
   id: 'surfing',
   name: 'Surfing',
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
   tags: ['water', 'waves', 'leisure', 'ocean', 'outdoors', 'sport', 'adventure', 'Friday', 'Saturday', 'Sunday'],
- perfectConditions: [
+  // Four levels from unsafe to ideal with context-aware wind rules
+  perfectConditions: [
     'waterTemperature=16..20',
     'airTemperature=18..24',
     'waveHeight=0.8..1.5',
     'swellPeriod=10..12',
     'windSpeed=5..10',
-    'windDirection=offshore',
+    'windRelative=offshore',      // for "perfect" we require true offshore
     'gust<8',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
   goodConditions: [
     'waterTemperature=14..26',
@@ -408,7 +432,8 @@ export const activityTypes: ActivityType[] = [
     'waveHeight=0.5..1.8',
     'swellPeriod=8..12',
     'windSpeed=5..15',
-    'windDirection=offshore',
+    // Direction logic: offshore ideal; side-offshore OK up to 12 kt; very light cross-shore OK
+    'windRelative=offshore or windRelative=side-offshore & windSpeed<=12 or windRelative=cross-shore & windSpeed<=8',
     'gust<12',
     'visibility>5'
   ],
@@ -418,17 +443,20 @@ export const activityTypes: ActivityType[] = [
     'waveHeight=0.3..0.5 or 1.8..2.5',
     'swellPeriod=6..8 or 12..14',
     'windSpeed=15..20',
-    'windDirection=cross-shore',
+    // Direction logic: cross-shore with moderate wind; side-onshore in light winds; light onshore only if long period & modest size
+    'windRelative=cross-shore & windSpeed=8..15 or windRelative=side-onshore & windSpeed<=12 or windRelative=onshore & windSpeed<=8 & swellPeriod>=10 & waveHeight<=1.2',
     'gust=12..18',
-    'visibility=2..5'
+    'visibility=2..5',
+    'precipitation=2..10'
   ],
   poorConditions: [
     'waterTemperature<12',
-    'airTemperature<8 or airTemperature>30',
+    'airTemperature<8 or airTemperature>32',
     'waveHeight<0.3 or waveHeight>2.5',
     'swellPeriod<6 or swellPeriod>14',
     'windSpeed>20',
-    'windDirection=onshore',
+    // Unsafe/unpleasant onshore rules (contextual): strong onshore, short period, or tiny waves with onshore
+    'windRelative=onshore & windSpeed>10 or windRelative=onshore & swellPeriod<8 or windRelative=onshore & waveHeight<0.4',
     'gust>18',
     'visibility<2',
     'precipitation>10'
@@ -561,7 +589,7 @@ export const activityTypes: ActivityType[] = [
 },
   {
   id: 'coarse_fishing',
-  name: 'Coarse and Carp Fishing',
+  name: 'Coarse & Carp Fishing',
   category: 'Outdoor Activities',
   secondaryCategory: 'Fishing',
   weatherSensitive: true,
@@ -692,6 +720,67 @@ export const activityTypes: ActivityType[] = [
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],  // spring to autumn — best chance for decent weather and warm water
 
   indoorAlternative: 'Check your gear, practise strokes on a paddle machine, or plan your next trip'
+},
+{
+  id: 'sea_kayaking',
+  name: 'Sea Kayaking',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['sport', 'water', 'sea', 'coastal', 'outdoors', 'adventure', 'Saturday', 'Sunday', 'holiday'],
+
+  // Community-aligned thresholds (Bft 2–3 perfect, up to low Bft 4 good; offshore is discouraged/unsafe)
+  perfectConditions: [
+    'temperature=14..20',
+    'windSpeed<10',
+    'gust<8',
+    'waveHeight<0.3',
+    'visibility>10',
+    'precipitation=0',
+    // Prefer onshore or cross-shore in light winds; avoid offshore even when light
+    'windRelative=cross-shore & windSpeed<10 or windRelative=onshore & windSpeed<8'
+  ],
+
+  goodConditions: [
+    'temperature=10..24',
+    'windSpeed<15',
+    'gust<12',
+    'waveHeight<0.6',
+    'visibility>5',
+    'precipitation=0..2',
+    // Manageable directions with modest breeze
+    'windRelative=cross-shore & windSpeed<=15 or windRelative=onshore & windSpeed<=12'
+  ],
+
+  fairConditions: [
+    'temperature=5..10 or 24..28',
+    'windSpeed=15..20',
+    'gust=12..15',
+    'waveHeight=0.6..1.0',
+    'visibility=2..5',
+    'precipitation=2..10',
+    // Only very light offshore tolerated, and only with small surf
+    'windRelative=offshore & windSpeed<=6 & gust<=10 & waveHeight<0.4'
+  ],
+
+  poorConditions: [
+    'temperature<5 or temperature>28',
+    'windSpeed>20',
+    'gust>15',
+    'waveHeight>1.0',
+    'visibility<2',
+    'precipitation>10',
+    'waterTemperature<12',
+    // Unsafe combinations
+    'windRelative=offshore & windSpeed>10 or windRelative=offshore & gust>12',
+    'windRelative=onshore & waveHeight>0.8',
+    'windRelative=cross-shore & windSpeed>20'
+  ],
+
+  seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
+  indoorAlternative: 'Check your kit, practise rescues in a pool, or plan a coastal route'
 },
 {
   id: 'rock_climbing',
@@ -1248,7 +1337,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'sea_fishing_shore',
-  name: 'Sea Fishing (Shore)',
+  name: 'Shore Fishing',
   category: 'Outdoor Activities',
   secondaryCategory: 'Fishing',
   weatherSensitive: true,
@@ -1298,7 +1387,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'sea_fishing_boat',
-  name: 'Sea Fishing (Boat)',
+  name: 'Boat Fishing',
   category: 'Outdoor Activities',
   secondaryCategory: 'Fishing',
   weatherSensitive: true,
@@ -1506,40 +1595,62 @@ export const activityTypes: ActivityType[] = [
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
-  tags: ['water', 'swimming', 'adventure', 'leisure', 'nature', 'Saturday', 'Sunday', 'holiday'],
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'swimming', 'adventure', 'leisure', 'nature', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+
+  // Safety-first: avoid offshore winds unless extremely light and in tiny surf; keep waves small; cap gusts; watch for heavy rain (murk)
   poorConditions: [
-    'waterTemperature<17',           // uncomfortably cold
-    'waterTemperature>30',           // stifling, algae risk
-    'windSpeed>20',                  // choppy & unsafe
-    'gust>18',                       // unpredictable surface disturbance
-    'waveHeight>1',                  // hard to breathe & see
-    'precipitation>10',              // poor visibility, unpleasant
-    'visibility<2'                   // foggy, unsafe
+    'waterTemperature<17',            // uncomfortably cold for most casual snorkellers
+    'windSpeed>18',                   // choppy & unsafe (whitecaps likely)
+    'gust>16',                        // unpredictable surface disturbance
+    'waveHeight>1',                   // hard to breathe & see in the break zone
+    'precipitation>6',                // heavy rain reduces water clarity & surface safety
+    'visibility<2',                   // foggy, unsafe for navigation/spotters
+    // Directional hazards
+    'windRelative=offshore & windSpeed>6 or windRelative=offshore & gust>8',
+    'windRelative=onshore & waveHeight>0.6',
+    'windRelative=cross-shore & windSpeed>14'
   ],
+
   fairConditions: [
-    'waterTemperature=17..19',       // brisk but tolerable with gear
-    'windSpeed=12..18',
-    'gust=12..18',
-    'waveHeight=0.5..1',
+    'waterTemperature=17..19',        // brisk but tolerable with suitable gear
+    'windSpeed=10..16',
+    'gust=10..14',
+    'waveHeight=0.3..0.8',
     'cloudCover=60-90',
-    'visibility=2..5'
+    'visibility=2..5',
+    'precipitation=2..6',
+    // Directional allowances (only if very light and waves are tiny)
+    'windRelative=offshore & windSpeed<=5 & gust<=8 & waveHeight<0.3',
+    'windRelative=onshore & windSpeed<=10 & waveHeight<=0.5',
+    'windRelative=cross-shore & windSpeed<=12'
   ],
+
   goodConditions: [
     'waterTemperature=20..28',
-    'windSpeed<12',
+    'windSpeed<10',
     'gust<=10',
     'waveHeight<0.5',
     'cloudCover=0-60',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0..2',
+    // Prefer cross-shore or very light onshore; avoid offshore in exposed areas
+    'windRelative=cross-shore & windSpeed<=10 or windRelative=onshore & windSpeed<=8'
   ],
+
   perfectConditions: [
     'waterTemperature=22..26',
     'windSpeed<6',
-    'gust<5',
+    'gust<6',
     'waveHeight<0.3',
     'cloudCover=10-40',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0',
+    // Flat, clear, and safe directions (no offshore)
+    'windRelative=cross-shore & windSpeed<6 or windRelative=onshore & windSpeed<5'
   ],
+
   seasonalMonths: [5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Practise breath-holding techniques, research marine life, or plan your next beach trip'
 },
@@ -1588,43 +1699,133 @@ export const activityTypes: ActivityType[] = [
   indoorAlternative: 'Practise balance & core strength, or research local waterways'
 },
 {
+  id: 'sup_sea',
+  name: 'Coastal SUP',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'balance', 'nature', 'leisure', 'fitness', 'SUP', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+
+  // Community-aligned safety: avoid offshore winds, keep waves small, cap gusts
+  perfectConditions: [
+    'waterTemperature=18..22',
+    'temperature=18..24',
+    'windSpeed<6',
+    'gust<6',
+    'waveHeight<0.3',
+    'visibility>10',
+    'precipitation=0',
+    // Prefer cross/onshore in light winds only. Offshore is not considered perfect even when light.
+    'windRelative=cross-shore & windSpeed<6 or windRelative=onshore & windSpeed<5'
+  ],
+
+  goodConditions: [
+    'waterTemperature=16..24',
+    'temperature=15..28',
+    'windSpeed<10',
+    'gust<=10',
+    'waveHeight<0.5',
+    'visibility>5',
+    'precipitation=0..2',
+    // Manageable directions with modest breeze
+    'windRelative=cross-shore & windSpeed<=10 or windRelative=onshore & windSpeed<=8'
+  ],
+
+  fairConditions: [
+    'waterTemperature=14..16 or 24..26',
+    'temperature=12..15 or 28..30',
+    'windSpeed=10..14',
+    'gust=10..15',
+    'waveHeight=0.5..0.8',
+    'visibility=2..5',
+    'precipitation=2..6',
+    // Only very light offshore tolerated, and only with tiny surf
+    'windRelative=offshore & windSpeed<=5 & gust<=8 & waveHeight<0.3'
+  ],
+
+  poorConditions: [
+    'waterTemperature<14',
+    'temperature<12 or temperature>30',
+    'windSpeed>14',
+    'gust>15',
+    'waveHeight>0.8',
+    'visibility<2',
+    'precipitation>6',
+    // Unsafe combinations
+    'windRelative=offshore & windSpeed>5 or windRelative=offshore & gust>8',
+    'windRelative=onshore & waveHeight>0.6',
+    'windRelative=cross-shore & windSpeed>14'
+  ],
+
+  seasonalMonths: [5, 6, 7, 8, 9, 10],
+  indoorAlternative: 'Practise balance and paddle technique at home or in a pool'
+},
+{
   id: 'sea_swimming',
   name: 'Sea Swimming',
   category: 'Outdoor Activities',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
   tags: ['water', 'nature', 'leisure', 'wellness', 'adventure', 'Saturday', 'Sunday', 'holiday'],
+
+  // Single activity. Wetsuit guidance is surfaced via reasons (based on water/air temp & wind chill).
+  // Safety-first: add directional vetoes; keep waves small; cap gusts; treat very cold water as unsafe.
   poorConditions: [
-    'waterTemperature<10',           // risk of cold shock for casual swimmers
-    'airTemperature<8',             // uncomfortable after
-    'windSpeed>20',                 // chilling & unpleasant
-    'waveHeight>1',                 // unsafe in sea
-    'precipitation>10',             // heavy rain, poor visibility
-    'visibility<2'                  // fog, unsafe
+    'waterTemperature<10',            // cold shock risk for most casual swimmers
+    'airTemperature<8',              // very cold exit; hypothermia risk after
+    'windSpeed>18',                  // choppy & unpleasant; strong drift
+    'gust>16',                       // unpredictable surface disturbance
+    'waveHeight>0.8',                // heavy shorebreak/rollers
+    'precipitation>6',               // heavy rain reduces visibility & safety cover
+    'visibility<2',                  // foggy, unsafe for navigation/spotters
+    // Directional hazards (hard vetoes)
+    'windRelative=offshore & windSpeed>6 or windRelative=offshore & gust>8',
+    'windRelative=onshore & waveHeight>0.6',
+    'windRelative=cross-shore & windSpeed>16'
   ],
+
   fairConditions: [
-    'waterTemperature=10..14',       // fresh but manageable for some
-    'airTemperature=10..15',         // chilly but not extreme
-    'windSpeed=12..18',              // breezy, may deter some
-    'waveHeight=0.5..0.8',           // manageable for stronger swimmers
-    'visibility=2..5'
+    'waterTemperature=10..14',        // brisk; short dips for acclimatised swimmers
+    'airTemperature=8..12 or airTemperature=28..32', // chilly exit or hot day management
+    'windSpeed=12..18',
+    'gust=12..16',
+    'waveHeight=0.5..0.8',
+    'visibility=2..5',
+    'precipitation=2..6',
+    // Directional allowances (only if very light and waves are tiny)
+    'windRelative=offshore & windSpeed<=5 & gust<=8 & waveHeight<0.3',
+    'windRelative=onshore & windSpeed<=10 & waveHeight<=0.5',
+    'windRelative=cross-shore & windSpeed<=12'
   ],
+
   goodConditions: [
     'waterTemperature=14..24',
     'airTemperature=15..28',
     'windSpeed<12',
+    'gust<=10',
     'waveHeight<0.5',
-    'cloudCover=10-80',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0..2',
+    // Preferred directions
+    'windRelative=cross-shore & windSpeed<=10 or windRelative=onshore & windSpeed<=8'
   ],
+
   perfectConditions: [
     'waterTemperature=18..22',
     'airTemperature=20..26',
     'windSpeed<6',
+    'gust<6',
     'waveHeight<0.2',
-    'cloudCover=20-50',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0',
+    // No offshore in perfect
+    'windRelative=cross-shore & windSpeed<6 or windRelative=onshore & windSpeed<5'
   ],
+
   seasonalMonths: [5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Visit a pool or practise breathing & cold exposure techniques at home'
 },
@@ -2252,82 +2453,210 @@ export const activityTypes: ActivityType[] = [
 
 {
   id: 'windsurfing',
-  name: 'Windsurfing',
+  name: 'Windsurfing (Sea)',
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
-  tags: ['water', 'wind', 'adventure', 'skill', 'Saturday', 'Sunday', 'holiday'],
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'wind', 'adventure', 'skill', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+  // Safety-first: prefer side-shore / slight onshore. Avoid offshore except ultra-light in tiny surf.
   poorConditions: [
-    'windSpeed<6',                   // not enough power
-    'windSpeed>30',                  // dangerous, too strong
-    'gust>20',                       // sudden bursts too difficult
-    'precipitation>5',               // reduced visibility, unpleasant
-    'temperature<12',                // cold, uncomfortable
-    'waterTemperature<14',           // risk of cold shock
-    'waveHeight>2'                   // hard to control board
+    'windSpeed<4',                    // not enough power to make progress
+    'windSpeed>22',                   // very strong; advanced only
+    'gust>18',                        // heavy gusts increase risk
+    'precipitation>6',                // heavy rain reduces visibility
+    'temperature<12',                 // cold air (without good gear)
+    'waterTemperature<12',            // cold shock risk with falls
+    'waveHeight>2',                   // hard launch/landing; hold-down risk
+    // Directional hazards and combos
+    'windRelative=offshore & windSpeed>5 or windRelative=offshore & gust>8',
+    'windRelative=onshore & waveHeight>1.2',
+    'windRelative=cross-shore & windSpeed>14 & waveHeight>1.5'
   ],
   fairConditions: [
-    'windSpeed=6..10',               // light breeze, OK for learning
-    'gust=15..20',                   // gusty but manageable
-    'temperature=12..16',            // cool but manageable
-    'waterTemperature=14..15',       // brisk, but wetsuit helps
-    'waveHeight=1.5..2',             // choppy but surfable
-    'precipitation=1..3'             // drizzle or light rain
+    'windSpeed=4..6',                 // learning/cruising in light breeze
+    'windSpeed=18..22',               // strong; experienced sailors only
+    'gust=15..18',                    // gusty but manageable
+    'temperature=12..16',
+    'waterTemperature=12..15',
+    'waveHeight=1.5..2',
+    'precipitation=1..6',
+    // Directional allowances in marginal cases
+    'windRelative=offshore & windSpeed<=5 & gust<=8 & waveHeight<0.3',
+    'windRelative=onshore & windSpeed<=10 & waveHeight<=1',
+    'windRelative=cross-shore & windSpeed<=18'
   ],
   goodConditions: [
-    'windSpeed=10..22',
+    'windSpeed=6..14',
     'gust<=15',
     'temperature=16..26',
     'waterTemperature=15..22',
     'waveHeight<1.5',
-    'precipitation<=2'
+    'precipitation<=2',
+    // Preferred directions
+    'windRelative=cross-shore or windRelative=onshore & windSpeed<=10'
   ],
   perfectConditions: [
-    'windSpeed=14..18',
+    'windSpeed=7..11',
     'gust<10',
     'temperature=18..24',
     'waterTemperature>=16',
-    'waveHeight=0.5..1',
-    'precipitation=0'
+    'waveHeight=0.5..1.2',
+    'precipitation=0',
+    // Optimal launch/return directions
+    'windRelative=cross-shore or windRelative=onshore & windSpeed=6..9 & waveHeight<1.2'
+  ],
+  seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
+  indoorAlternative: 'Practise balance, study technique videos, or maintain your gear'
+},
+{
+  id: 'windsurfing_inland',
+  name: 'Windsurfing (Inland)',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  usesWindRelative: false,            // direction relative to a shoreline not required for lakes
+  requiresBeachOrientation: false,
+  tags: ['water', 'wind', 'lake', 'reservoir', 'flatwater', 'Saturday', 'Sunday', 'holiday'],
+  // Simpler, flat-water focused thresholds (OpenWeather data only)
+  poorConditions: [
+    'windSpeed<5',                    // too light to make progress/return
+    'windSpeed>20',                   // very strong; advanced only
+    'gust>16',                        // unstable, unpleasant
+    'precipitation>6',                // heavy rain reduces visibility
+    'temperature<10',                 // cold air without good gear
+    'temperature>32',                 // heat stress
+    'visibility<2'                    // fog, low contrast
+  ],
+  fairConditions: [
+    'windSpeed=5..7',                 // learner/float, non-planing
+    'windSpeed=16..20',               // strong; experienced riders
+    'gust=12..16',                    // gusty but doable
+    'temperature=10..14 or temperature=28..32',
+    'precipitation=1..6',
+    'visibility=2..5'
+  ],
+  goodConditions: [
+    'windSpeed=7..14',                // planing likely for many set-ups
+    'gust<=12',
+    'temperature=14..28',
+    'precipitation<=2',
+    'visibility>5'
+  ],
+  perfectConditions: [
+    'windSpeed=8..12',                // steady, forgiving
+    'gust<8',
+    'temperature=18..24',
+    'precipitation=0',
+    'visibility>10'
   ],
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Practise balance, study technique videos, or maintain your gear'
 },
 {
   id: 'sailing',
-  name: 'Sailing',
+  name: 'Sailing (Sea)',
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
-  tags: ['water', 'wind', 'adventure', 'skill', 'weekend', 'holiday'],
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'wind', 'adventure', 'skill', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+  // Sea/coastal leisure sailors often have larger boats or more experience than lake dinghy sailors,
+  // but we still prioritise safety. Directional hazards included for launch/return.
   poorConditions: [
-    'windSpeed<8',              // Too little wind to sail effectively or for beginners
-    'windSpeed>25',             // Too strong, risky especially for small boats
-    'gust>15',                  // Excessive gusts make handling difficult
-    'precipitation>5',          // Heavy rain reduces visibility and comfort
-    'temperature<10',           // Cold air temp may reduce comfort
-    'waveHeight>1'              // High waves can be unsafe for small boats
+    'windSpeed<6',                    // hard to make way / steerage for many boats
+    'windSpeed>28',                   // strong conditions; leisure crews at risk
+    'gust>22',                        // heavy gusts increase knockdown/broach risk
+    'precipitation>8',                // heavy rain reduces visibility & comfort
+    'temperature<8',                  // cold air; hypothermia risk if wet
+    'waterTemperature<10',            // MOB survival time low
+    'waveHeight>2',                   // rough for small yachts/dinghies; risky near shore
+    'visibility<2',                   // fog; collision/grounding risk
+    // Directional hazards and combinations
+    'windRelative=offshore & windSpeed>10 or windRelative=offshore & gust>12',
+    'windRelative=onshore & waveHeight>1.5',
+    'windRelative=cross-shore & windSpeed>24 & waveHeight>1.8'
   ],
   fairConditions: [
-    'windSpeed=8..10',          // Light winds, okay for relaxed outings
-    'gust=10..15',              // Gusty but manageable
-    'temperature=10..14',       // Cool but tolerable with layers
-    'waveHeight=0.8..1',        // Some chop, manageable with caution
-    'precipitation=1..5'        // Showers or light rain
+    'windSpeed=6..8',                 // light air; progress slow
+    'windSpeed=22..28',               // strong; experienced crew only
+    'gust=16..22',                    // gusty but manageable with reefing
+    'temperature=8..12 or temperature=28..32',
+    'waterTemperature=10..12',
+    'waveHeight=1.2..2',              // lumpy; caution entering harbours
+    'precipitation=2..8',
+    'visibility=2..5',
+    // Directional allowances in marginal cases
+    'windRelative=offshore & windSpeed<=10 & gust<=12 & waveHeight<0.5',
+    'windRelative=onshore & windSpeed<=12 & waveHeight<=1.2',
+    'windRelative=cross-shore & windSpeed<=24'
   ],
   goodConditions: [
-    'windSpeed=10..18',         // Moderate steady winds, ideal range
-    'gust<=10',                 // Low to moderate gusts for control
-    'temperature=14..26',       // Comfortable air temp range
-    'waveHeight<0.8',           // Calm to slight chop preferred
-    'precipitation<=5'          // Light or no rain
+    'windSpeed=8..20',
+    'gust<=16',
+    'temperature=12..28',
+    'waterTemperature=12..22',
+    'waveHeight<1.2',
+    'precipitation<=4',
+    'visibility>5',
+    // Preferred directions for easy handling/return
+    'windRelative=cross-shore or windRelative=onshore & windSpeed<=12'
   ],
   perfectConditions: [
-    'windSpeed=12..16',         // Steady moderate breeze ideal for ease and enjoyment
-    'gust<5',                   // Very steady wind, minimal gusts
-    'temperature=16..24',       // Pleasant warm temps
-    'waveHeight<0.5',           // Glassy or very calm waters favoured
-    'precipitation=0'           // No rain or storms
+    'windSpeed=10..16',
+    'gust<10',
+    'temperature=16..24',
+    'waterTemperature>=14',
+    'waveHeight<0.8',
+    'precipitation=0',
+    'visibility>10',
+    // Offshore excluded from perfect; easy launch/return
+    'windRelative=cross-shore or windRelative=onshore & windSpeed=6..10 & waveHeight<0.8'
+  ],
+  seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
+  indoorAlternative: 'Work on sailing theory, practise rope handling, or maintain your boat gear'
+},
+{
+  id: 'sailing_inland',
+  name: 'Sailing (Lakes)',
+  category: 'Active Sports',
+  secondaryCategory: 'Water Sports',
+  weatherSensitive: true,
+  usesWindRelative: false,              // lake sailing doesn’t need shoreline-relative wind rules
+  requiresBeachOrientation: false,
+  tags: ['water', 'wind', 'adventure', 'skill', 'lake', 'inland', 'Saturday', 'Sunday', 'holiday'],
+  // Flat-water thresholds focused on steady breeze; no waves/swell data required
+  poorConditions: [
+    'windSpeed<5',                      // too little to make progress/learn
+    'windSpeed>18',                     // strong/gusty; capsizes likely for leisure crews
+    'gust>14',                          // turbulent inland gusts are punchy
+    'precipitation>5',                  // heavy rain → poor visibility/comfort
+    'temperature<8 or temperature>32',  // cold start/overheating
+    'visibility<2'                      // fog on lakes can be hazardous
+  ],
+  fairConditions: [
+    'windSpeed=5..7',                   // light air drifting
+    'windSpeed=15..18',                 // breezy; experienced helm/reefing
+    'gust=10..14',                      // gusty but manageable
+    'temperature=8..12 or temperature=28..32',
+    'precipitation=1..5',
+    'visibility=2..5'
+  ],
+  goodConditions: [
+    'windSpeed=7..14',                  // most dinghies/dayboats happy
+    'gust<=10',
+    'temperature=12..28',
+    'precipitation<=2',
+    'visibility>5'
+  ],
+  perfectConditions: [
+    'windSpeed=8..12',                  // steady & forgiving
+    'gust<6',
+    'temperature=16..24',
+    'precipitation=0',
+    'visibility>10'
   ],
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Work on sailing theory, practise rope handling, or maintain your boat gear'
@@ -2339,41 +2668,66 @@ export const activityTypes: ActivityType[] = [
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
-  tags: ['water', 'wind', 'adventure', 'extreme', 'Saturday', 'Sunday', 'holiday'],
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'wind', 'adventure', 'extreme', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+
+  // Sea-focused rules; safety-first with directional vetoes. Wind units assumed ~mph (Beaufort mapping in app).
   poorConditions: [
-    'windSpeed<6',                // Too light to stay up
-    'windSpeed>15',               // Gusty/dangerous for beginners
-    'gust>20',                    // Sudden gusts add danger
-    'precipitation>3',            // Reduces visibility, unpleasant
-    'temperature<14',             // Cold & uncomfortable
-    'waterTemperature<15',        // Risk of cold shock
-    'waveHeight>2'                // Too rough for learning
+    'windSpeed<10',                 // too light to waterstart/return reliably
+    'windSpeed>30',                 // very strong; advanced only, unsafe for casual riders
+    'gust>25',                      // heavy gusts; risk of lofting/losing control
+    'precipitation>8',              // heavy rain reduces visibility & kite response
+    'temperature<12',               // cold air without good gear
+    'waterTemperature<12',          // cold shock risk if you crash
+    'waveHeight>2.5',               // heavy surf; dangerous launch/landing
+    'visibility<2',                 // fog: spotter/traffic risk
+    // Directional hard vetoes
+    'windRelative=offshore',        // offshore is unsafe without rescue cover
+    'windRelative=onshore & waveHeight>1.5',
+    'windRelative=cross-shore & windSpeed>26 & waveHeight>2'
   ],
+
   fairConditions: [
-    'windSpeed=6..7',             // Just enough for light riders or larger kites
-    'gust=10..15',                // Manageable for confident riders
-    'temperature=14..16',         // Slightly chilly
-    'waterTemperature=15..16',    // Borderline comfort
-    'waveHeight=1.5..2',          // Rougher than ideal
-    'precipitation=1..3'          // Light rain possible
+    'windSpeed=12..15',             // marginal planing
+    'windSpeed=25..30',             // strong; experienced kiters only
+    'gust=18..25',                  // gusty; workable with caution
+    'temperature=12..16',
+    'waterTemperature=12..14',
+    'waveHeight=1.2..2',
+    'precipitation=2..8',
+    'visibility=2..5',
+    // Directional allowances (still no pure offshore)
+    'windRelative=onshore & windSpeed<=18 & waveHeight<=1.2',
+    'windRelative=cross-shore & windSpeed<=26'
   ],
+
   goodConditions: [
-    'windSpeed=7..12',            // Steady & safe
-    'gust<12',
+    'windSpeed=15..24',             // steady power for most kite sizes
+    'gust<=18',
     'temperature=16..28',
-    'waterTemperature=16..22',
-    'waveHeight<1.5'
+    'waterTemperature=14..24',
+    'waveHeight=0.5..1.5',
+    'precipitation<=2',
+    'visibility>5',
+    // Preferred directions
+    'windRelative=cross-shore or windRelative=onshore & windSpeed<=20 & waveHeight<=1.2'
   ],
+
   perfectConditions: [
-    'windSpeed=8..11',            // “Goldilocks” for control
-    'gust<8',
-    'temperature=20..26',
-    'waterTemperature>=17',
-    'waveHeight=0.5..1.2',
-    'precipitation=0'
+    'windSpeed=18..22',             // “goldilocks” for control & fun
+    'gust<12',
+    'temperature=18..26',
+    'waterTemperature>=16',
+    'waveHeight=0.7..1.2',
+    'precipitation=0',
+    'visibility>10',
+    // Optimal launch/return angles
+    'windRelative=cross-shore or windRelative=onshore & windSpeed=15..20 & waveHeight<=1'
   ],
+
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
-  indoorAlternative: 'Practise balance, review safety procedures, or watch instructional videos'
+  indoorAlternative: 'Practise self-rescue drills on land, tune your bar/lines, or watch safety videos'
 },
 {
   id: 'scuba_diving',
@@ -2381,39 +2735,65 @@ export const activityTypes: ActivityType[] = [
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
-  tags: ['water', 'exploration', 'adventure', 'underwater', 'Saturday', 'Sunday', 'holiday'],
+  usesWindRelative: true,
+  requiresBeachOrientation: true,
+  tags: ['water', 'exploration', 'adventure', 'underwater', 'boat', 'shore', 'reef', 'wreck', 'sea', 'coastal', 'Saturday', 'Sunday', 'holiday'],
+  // Sea diving via shore or RIB/day-boat. Safety-first: cap wind/gusts, keep surf small, avoid strong current, and exclude offshore winds for shore entries.
   poorConditions: [
-    'waterTemperature<15',       // Too cold without drysuit
-    'airTemperature<12',
-    'waveHeight>1.2',            // Rough entry/exit, more risk
-    'precipitation>6',           // Heavy rain — surface/boat visibility
-    'windSpeed>13',              // Difficult entries and safety risk
-    'visibility<4'               // Low underwater visibility
-    // 'current>strong'           // Add if you have current data
+    'waterTemperature<15',            // cold without drysuit / heavy exposure protection
+    'airTemperature<12',             // very cold on deck between dives
+    'windSpeed>20',                  // rough boat ride and hazardous entries
+    'gust>18',                       // unpredictable surface/ladder conditions
+    'waveHeight>1.5',                // surf/ladder danger; strong surge near rocks
+    'swellPeriod<7',                 // short-period dumpy surf and surge
+    'currentSpeed>0.8',              // ~>1.5 kt if m/s; strong for casual divers
+    'precipitation>8',               // heavy rain; surface vis/comfort
+    'visibility<2',                  // fog – poor nav/spotter safety
+    // Directional / combination vetoes (shore-entry/nearshore)
+    'windRelative=onshore & waveHeight>1',
+    'windRelative=offshore & windSpeed>10',
+    'swellPeriod>=14 & waveHeight>1'  // long-period sets create powerful breakers/surge
   ],
   fairConditions: [
     'waterTemperature=15..17',
     'airTemperature=12..16',
-    'waveHeight=0.9..1.2',
-    'windSpeed=10..13',
-    'visibility=4..6',
-    'precipitation=1..6'
+    'windSpeed=15..20',
+    'gust=15..18',
+    'waveHeight=0.9..1.5',
+    'swellPeriod=7..8 or swellPeriod=13..16',
+    'currentSpeed=0.5..0.8',
+    'precipitation=2..8',
+    'visibility=2..5',
+    // Shore/boat allowances when marginal
+    'windRelative=offshore & windSpeed<=8 & gust<=10 & waveHeight<0.6',
+    'windRelative=onshore & windSpeed<=12 & waveHeight<=0.8',
+    'windRelative=cross-shore & windSpeed<=16'
   ],
   goodConditions: [
-    'waterTemperature=17..22',
+    'waterTemperature=17..26',
     'airTemperature=16..28',
+    'windSpeed<15',
+    'gust<=12',
     'waveHeight<0.9',
-    'windSpeed<10',
-    'visibility=6..15'
+    'swellPeriod=8..13',            // avoids short-period surge
+    'currentSpeed<0.5',
+    'precipitation<=2',
+    'visibility>5',
+    // Preferred directions; avoid pure offshore
+    'windRelative=cross-shore or windRelative=onshore & windSpeed<=12 & waveHeight<=0.6'
   ],
   perfectConditions: [
-    'waterTemperature>=18',
+    'waterTemperature=20..28',
     'airTemperature=20..26',
+    'windSpeed<10',
+    'gust<8',
     'waveHeight<0.6',
-    'windSpeed<7',
-    'visibility>=10',
-    'precipitation=0'
-    // 'cloudCover<=25'           // Optional: sunny dive days
+    'swellPeriod=9..12',
+    'currentSpeed<0.3',
+    'visibility>10',
+    'precipitation=0',
+    // No offshore in perfect; easy surface/ladder/shore work
+    'windRelative=cross-shore or windRelative=onshore & windSpeed<=8 & waveHeight<=0.5'
   ],
   seasonalMonths: [5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Practise buoyancy in a pool, clean gear, or review dive logs and plan your next trip'

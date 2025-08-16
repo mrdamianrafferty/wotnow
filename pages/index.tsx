@@ -258,7 +258,7 @@ const getScoreCategory = (score: number) => {
   if (score >= 60) return { emoji: '👍', label: 'Good', color: '#3b82f6' };
   if (score >= 40) return { emoji: '🙆', label: 'Fair', color: '#fbbf24' };
   if (score >= 30) return { emoji: '⚠️', label: 'Poor', color: '#f59e0b' };
-  return { emoji: '🏠', label: 'Indoor', color: '#8b5cf6' };
+  return { emoji: '👺', label: 'Indoor', color: '#8b5cf6' };
 };
 
 const isOutdoor = (activityId: string) => {
@@ -437,30 +437,35 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
       now: timeInfo?.serverTime || new Date()
     })[0]; // Get first day's data
 
-  // ✅ CORRECT: Access suggestions directly (no double nesting)
-  const suggestions = suggestionsData?.suggestions ?? [];
-  const perfectList = suggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
-  const goodList = suggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
-  const indoorList = suggestionsData?.stayInside ?? [];
+    // Filter out out-of-season activities
+    const suggestions = suggestionsData?.suggestions ?? [];
+    const currentMonth = new Date(day.date * 1000).getMonth() + 1;
+    const filteredSuggestions = suggestions.filter(suggestion => {
+      const activity = activityTypes.find(a => a.id === suggestion.activityId);
+      return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
+    });
+    const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
+    const goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
+    const indoorList = suggestionsData?.stayInside ?? [];
 
-  // Select a unique hero activity for the day
-  const heroActivity = selectHeroActivity(suggestions);
+    // Select a unique hero activity for the day
+    const heroActivity = selectHeroActivity(filteredSuggestions);
 
-  // ✅ Add the hero to used activities AFTER finding it
-  if (heroActivity) {
-    usedHeroActivities.add(heroActivity.activityId);
-  }
+    // ✅ Add the hero to used activities AFTER finding it
+    if (heroActivity) {
+      usedHeroActivities.add(heroActivity.activityId);
+    }
 
-  return {
-    day,
-    suggestions,
-    heroActivity,
-    alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
-    suggestionsData,
-    indoorList,
-    dayLabel: getDayLabel(day.date, idx, timeInfo?.serverTime) // Add this for the render
-  };
-});
+    return {
+      day,
+      suggestions: filteredSuggestions,
+      heroActivity,
+      alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
+      suggestionsData,
+      indoorList,
+      dayLabel: getDayLabel(day.date, idx, timeInfo?.serverTime) // Add this for the render
+    };
+  });
 
 
   useEffect(() => {
@@ -851,57 +856,46 @@ const popupPayload = buildPopupActivityPayload({
 
             {/* Indoor Section */}
             {(() => {
-              const isEvening = timeInfo?.isEvening && isToday;
-              if (!isEvening) {
-                const indoorList = suggestionsData?.stayInside ?? [];
-                if (!indoorList.length) return null;
+  // Get indoor activities from the suggestions list
+  const indoorListFiltered = suggestions
+    .filter(s => {
+      const activity = activityTypes.find(a => a.id === s.activityId);
+      return activity && !activity.weatherSensitive;
+    })
+    .sort((a, b) => b.score - a.score);
+  
+  if (!indoorListFiltered.length) return null;
 
-                return (
-                  <div className="also-good-section">
-                    <h4 className="also-good-title">🏠 Indoor Alternatives</h4>
-                    <ul className="also-good-list">
-                      {indoorList.map((s) => {
-                        const activity = activityTypes.find((a) => a.id === s.activityId);
-                        const isOutdoorActivity = isOutdoor(s.activityId);
-
-                        return (
-                          <li
-                            key={s.activityId}
-                            className="also-good-item"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => {
-                              if (!isOutdoorActivity) return;
-const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
-const popupPayload = buildPopupActivityPayload({
-  activityId: suggestion.activityId,
-  score: suggestion.score,
-  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
-  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
-  day: getPopupDay(suggestion.activityId, day, timeInfo),
-  reasons: buildReasons(day, suggestion.activityId),
-});
-                              setPopupActivity(popupPayload);
-                            }}
-                            style={{
-                              cursor: 'default',
-                            }}
-                          >
-                            <span>
-                              {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
-                            </span>
-                            <span className="also-good-score">
-                              {Math.round(s.score ?? 0)}%
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+  return (
+    <div className="also-good-section">
+      <h4 className="also-good-title">👺 Staying Indoors?</h4>
+      <ul className="also-good-list">
+        {indoorListFiltered.map((s) => {
+          const activity = activityTypes.find((a) => a.id === s.activityId);
+          
+          return (
+            <li
+              key={s.activityId}
+              className="also-good-item"
+              role="button"
+              tabIndex={0}
+              style={{
+                cursor: 'default',
+              }}
+            >
+              <span>
+                {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
+              </span>
+              <span className="also-good-score">
+                {Math.round(s.score ?? 0)}%
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+})()}
           </div> {/* This is the closing tag for activity-suggestions */}
           
           {/* Add back the bottom-aligned action buttons */}

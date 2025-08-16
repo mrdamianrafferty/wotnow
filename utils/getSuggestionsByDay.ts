@@ -182,6 +182,13 @@ export function getSuggestionsByDay({
         // Add important debugging log before scoring
         console.log(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
         
+        // Flag if out of season
+        const currentMonth = new Date(now).getMonth() + 1;
+        const outOfSeason = activity.seasonalMonths && !activity.seasonalMonths.includes(currentMonth);
+        if (outOfSeason) {
+          console.log(`🍂 Activity ${activity.id} is out of season`);
+        }
+
         // Calculate score for activity - use dynamic context tags
         const currentDate = new Date(now);
         const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -220,7 +227,7 @@ export function getSuggestionsByDay({
             score,
             evaluation: getScoreEvaluation(score),
             reasoning: getReasoningForScore(score, activity, day.weather),
-            // ... other properties
+            outOfSeason
           };
         }
         return null;

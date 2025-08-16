@@ -111,3 +111,54 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
     return 'Unable to share';
   }
 }
+
+export type SharePayload = {
+  title?: string;
+  text?: string;
+  url?: string;
+  imageUrl?: string;    // Absolute URL if you need fallback
+  imageFile?: File;     // Direct image file for sharing
+  phone?: string;
+};
+
+export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
+  const hasNavigatorShare = typeof navigator !== 'undefined' && !!navigator.share;
+  // Prefer imageFile if it's present and supported
+  if (
+    hasNavigatorShare &&
+    payload.imageFile &&
+    (navigator as any).canShare?.({ files: [payload.imageFile] })
+  ) {
+    try {
+      await navigator.share({
+        title: payload.title,
+        text: payload.text,
+        files: [payload.imageFile],
+      });
+      return 'Shared via system sheet';
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || err?.message?.includes('Abort')) return 'Share cancelled';
+      return 'Share failed';
+    }
+  }
+
+  // Fallback: share text/link/imageUrl as before
+  const textWithLinks = [payload.text, payload.url, payload.imageUrl].filter(Boolean).join('\n');
+  try {
+    // WhatsApp web share or fallback - open URL
+    const encoded = encodeURIComponent(textWithLinks);
+    const href = payload.phone
+      ? `https://wa.me/${payload.phone}?text=${encoded}`
+      : `https://wa.me/?text=${encoded}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return 'Opened WhatsApp';
+  } catch {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(textWithLinks);
+      return 'Copied message to clipboard';
+    } catch {
+      return 'Unable to share';
+    }
+  }
+}

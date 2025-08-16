@@ -1,5 +1,5 @@
 export const MARINE_ACTIVITY_IDS = [
-  'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
-  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
+  'surfing', 'kitesurfing', 'windsurfing', 'canoeing', 'sailing',
+  'snorkeling', 'scuba_diving', 'jet_skiing', 'sup_sea', 'sea_kayaking',
   'sea_swimming', 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat',
 ];

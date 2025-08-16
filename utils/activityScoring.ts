@@ -49,6 +49,29 @@ function calculateActivityScore(
     swellPeriod: weather.swellPeriod,
   };
 
+  // --- SAFETY GATES (hard-stop) ---
+  // If any AND-group in `activity.safetyGates.hardStopAny` is fully satisfied,
+  // we mark the activity as dangerous and short-circuit before any positive scoring or evening multipliers.
+  try {
+    const hardStopGroups = (activity as any).safetyGates?.hardStopAny as string[][] | undefined;
+    if (hardStopGroups && hardStopGroups.length > 0) {
+      const triggeredGroup = hardStopGroups.find((group) => {
+        // Reuse the existing simple-condition evaluator by asking for a full match across the group.
+        const match = calculateConditionMatchScore(group, normalizedWeather);
+        return match >= 0.999; // all conditions in the AND-group satisfied
+      });
+
+      if (triggeredGroup) {
+        const finalScore = 5; // clamp to minimum for unsafe/very poor
+        console.log(`⛔ Hard-stop for ${activity.id} due to safety gate:`, triggeredGroup);
+        console.log(`🌤️ ${activity.id} scored ${finalScore} (dangerous) ⚠️ Hard-stop safety condition`);
+        return finalScore; // short-circuit: unsafe cannot be rescued by other positives
+      }
+    }
+  } catch (err) {
+    console.warn('Safety gate evaluation error', { activity: activity.id, err });
+  }
+
   let score = 20; // Base outdoor score
   let conditionLevel = 'poor';
   let dangerWarning = '';

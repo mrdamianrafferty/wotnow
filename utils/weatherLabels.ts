@@ -185,16 +185,18 @@ export function getWindMessage({
   gustSpeed,
   windDirection,
   windDirectionsToday,
+  beachOrientation,
   context = 'land',
 }: {
   windSpeed?: number;
   gustSpeed?: number;
   windDirection?: number;
   windDirectionsToday?: number[];
+  beachOrientation?: number;
   context?: 'land' | 'marine';
 }): string | null {
   return context === 'marine'
-    ? buildWindMessageMarine({ windSpeed, gustSpeed, windDirection, windDirectionsToday })
+    ? buildWindMessageMarine({ windSpeed, gustSpeed, windDirection, windDirectionsToday, beachOrientation })
     : buildWindMessageLand({ windSpeed, gustSpeed, windDirection, windDirectionsToday });
 }
 
@@ -204,16 +206,29 @@ export function getCompassDirection(degrees: number): string {
   return directions[idx];
 }
 
+function getOnshoreOffshoreLabel(
+  windDeg: number,
+  beachDeg: number
+): 'onshore' | 'offshore' | 'cross-shore' {
+  // Smallest angular difference 0..180
+  const diff = Math.abs(((windDeg - beachDeg + 540) % 360) - 180);
+  if (diff <= 30) return 'onshore';
+  if (diff >= 150) return 'offshore';
+  return 'cross-shore';
+}
+
 function buildWindMessageLand({
   windSpeed,
   gustSpeed,
   windDirection,
-  windDirectionsToday
+  windDirectionsToday,
+  beachOrientation,
 }: {
   windSpeed?: number,
   gustSpeed?: number,
   windDirection?: number,
-  windDirectionsToday?: number[]
+  windDirectionsToday?: number[],
+  beachOrientation?: number,
 }): string | null {
   if (!windSpeed) return null;
 
@@ -290,12 +305,17 @@ function buildWindMessageMarine({
     }
   }
 
-  if (kmh < 6) return '🌬️ Light air – smooth seas';
+  // Orientation suffix, e.g. (onshore)
+  const orientationSuffix = (typeof windDirection === 'number' && typeof beachOrientation === 'number')
+    ? ` (${getOnshoreOffshoreLabel(windDirection, beachOrientation)})`
+    : '';
+
+  if (kmh < 6) return `🌬️ Light air – smooth seas${orientationSuffix}`.trim();
 
   const warnEmoji = kmh >= 62 ? '⚠️ ' : '';
   const emojiPrefix = `${warnEmoji}${shiftEmoji}${gustEmoji}`.trim();
   const prefix = emojiPrefix ? `${emojiPrefix} ` : '';
   const suffix = `${shiftText}${gustText}`.trim();
 
-  return `${prefix}${base} ${direction}${suffix ? ` ${suffix}` : ''}`.trim();
+  return `${prefix}${base} ${direction}${suffix ? ` ${suffix}` : ''}${orientationSuffix}`.trim();
 }

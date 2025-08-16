@@ -3,6 +3,7 @@ import '../styles/Card.css'
 import '../styles/Popup.css'
 import '../styles/weather-icons-wind.css';
 import '../styles/weather-icons-wind.min.css';
+import 'leaflet/dist/leaflet.css';
 import type { AppProps } from 'next/app'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import Script from 'next/script';
