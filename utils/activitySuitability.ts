@@ -302,13 +302,13 @@ export function hasGoodConditions(
 // --- Primary categorical suitability function (legacy) ---
 
 /**
- * Returns one of: excluded, perfect, good, acceptable, indoor.
+ * Returns one of: excluded, perfect, good, fair, indoor.
  * Treats weatherSensitive=false as indoor.
  */
 export function getActivitySuitability(
   activity: any,
   weather: WeatherData
-): 'excluded' | 'perfect' | 'good' | 'acceptable' | 'indoor' {
+): 'excluded' | 'perfect' | 'good' | 'fair' | 'indoor' {
   if (activity.weatherSensitive === false) {
     return 'indoor';
   }
@@ -318,7 +318,7 @@ export function getActivitySuitability(
   const noConds =
     (!activity.goodConditions?.length) &&
     (!activity.perfectConditions?.length);
-  if (noConds) return 'acceptable';
+  if (noConds) return 'fair';
   return 'excluded';
 }
 
@@ -358,11 +358,11 @@ export function calculateActivityScore(
 export function categorizeByScore(
   score: number,
   isIndoor: boolean
-): 'perfect' | 'good' | 'acceptable' | 'indoor' | 'excluded' {
+): 'perfect' | 'good' | 'fair' | 'indoor' | 'excluded' {
   if (isIndoor) return 'indoor';
   if (score >= 80) return 'perfect';
   if (score >= 60) return 'good';
-  if (score >= 30) return 'acceptable';
+  if (score >= 30) return 'fair';
   return 'excluded';
 }
 

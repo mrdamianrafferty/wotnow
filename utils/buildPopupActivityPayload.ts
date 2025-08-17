@@ -166,7 +166,7 @@ export function buildPopupActivityPayload({
     waterTemperature: day?.waterTemperature ?? day?.water_temp ?? null,
     swellHeight: day?.swellHeight ?? day?.swell_height ?? null,
     swellPeriod: day?.swellPeriod ?? day?.swell_period ?? null,
-    windSpeed: day?.windSpeed ?? day?.wind_speed ?? null, // prefer Stormglass camelCase, fallback to OpenWeather snake_case
+    windSpeed: day?.windSpeed ?? day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - Stormglass/OpenWeather both provide m/s
     windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null, // coalesce any available direction
     gust: day?.gust ?? null, // Stormglass if available
     vis: day?.vis ?? null, // Stormglass if available
@@ -188,7 +188,7 @@ export function buildPopupActivityPayload({
     tempMin: day?.tempMin ?? day?.temp_min ?? null,
     tempMax: day?.tempMax ?? day?.temp_max ?? null,
     humidity: day?.humidity ?? null,
-    windSpeed: day?.wind_speed ?? null, // OpenWeather only
+    windSpeed: day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - OpenWeather provides m/s
     windDir: day?.wind_direction ?? null, // OpenWeather only
     gust: day?.wind_gust ?? null,
     precipitation: day?.precipitation ?? day?.rain ?? null,

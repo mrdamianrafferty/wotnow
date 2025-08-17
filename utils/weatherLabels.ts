@@ -1,7 +1,10 @@
 // Utility functions for weather descriptions: wind, rain, wave/swell
 
-// Wind speed (km/h) to Beaufort description
-export function getBeaufortDescription(windKmh: number): string {
+// Wind speed (m/s) to Beaufort description - UPDATED to use m/s as standard unit
+export function getBeaufortDescription(windMs: number): string {
+  // Convert m/s to km/h for Beaufort scale thresholds
+  const windKmh = windMs * 3.6;
+  
   if (windKmh < 2) return 'Calm';
   if (windKmh < 6) return 'Light air';
   if (windKmh < 12) return 'Light breeze';
@@ -188,7 +191,9 @@ export function getWindMessage({
   beachOrientation,
   context = 'land',
 }: {
+  /** Wind speed in m/s (meters per second) - standard internal unit */
   windSpeed?: number;
+  /** Gust speed in m/s (meters per second) */
   gustSpeed?: number;
   windDirection?: number;
   windDirectionsToday?: number[];
@@ -224,7 +229,9 @@ function buildWindMessageLand({
   windDirectionsToday,
   beachOrientation,
 }: {
+  /** Wind speed in m/s (meters per second) */
   windSpeed?: number,
+  /** Gust speed in m/s (meters per second) */
   gustSpeed?: number,
   windDirection?: number,
   windDirectionsToday?: number[],
@@ -232,8 +239,8 @@ function buildWindMessageLand({
 }): string | null {
   if (!windSpeed) return null;
 
-  const kmh = windSpeed;
-  const base = getBeaufortDescription(kmh);
+  // windSpeed is now in m/s, pass directly to getBeaufortDescription
+  const base = getBeaufortDescription(windSpeed);
   const direction = typeof windDirection === 'number'
     ? `from the ${getCompassDirection(windDirection)}`
     : '';
@@ -257,6 +264,8 @@ function buildWindMessageLand({
     }
   }
 
+  // Convert m/s to km/h for threshold check
+  const kmh = windSpeed * 3.6;
   if (kmh < 6) return '🌬️ Light air – flat calm';
 
   const warnEmoji = kmh >= 62 ? '⚠️ ' : '';
@@ -271,17 +280,21 @@ function buildWindMessageMarine({
   windSpeed,
   gustSpeed,
   windDirection,
-  windDirectionsToday
+  windDirectionsToday,
+  beachOrientation
 }: {
+  /** Wind speed in m/s (meters per second) */
   windSpeed?: number,
+  /** Gust speed in m/s (meters per second) */
   gustSpeed?: number,
   windDirection?: number,
-  windDirectionsToday?: number[]
+  windDirectionsToday?: number[],
+  beachOrientation?: number
 }): string | null {
   if (!windSpeed) return null;
 
-  const kmh = windSpeed;
-  const base = getBeaufortDescription(kmh);
+  // windSpeed is now in m/s, pass directly to getBeaufortDescription
+  const base = getBeaufortDescription(windSpeed);
   const direction = typeof windDirection === 'number'
     ? `from the ${getCompassDirection(windDirection)}`
     : '';
@@ -310,6 +323,8 @@ function buildWindMessageMarine({
     ? ` (${getOnshoreOffshoreLabel(windDirection, beachOrientation)})`
     : '';
 
+  // Convert m/s to km/h for threshold check
+  const kmh = windSpeed * 3.6;
   if (kmh < 6) return `🌬️ Light air – smooth seas${orientationSuffix}`.trim();
 
   const warnEmoji = kmh >= 62 ? '⚠️ ' : '';

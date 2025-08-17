@@ -1,4 +1,16 @@
-function evaluateConditionScore(condition: string, weather: WeatherData): number {
+import { parseConditionString } from './activitySuitability';
+
+/**
+ * Evaluates activity condition scoring based on weather data.
+ * 
+ * IMPORTANT: All wind speed values in WeatherData should be in m/s (meters per second).
+ * Any wind speed thresholds or comparisons should use m/s values.
+ * 
+ * @param condition - The condition string to evaluate (e.g., "wind_speed<5")
+ * @param weather - Weather data object with wind speeds in m/s
+ * @returns Score between 0 and 1
+ */
+export function evaluateConditionScore(condition: string, weather: any): number {
   const parsed = parseConditionString(condition);
   if (!parsed) return 0;
 
@@ -6,7 +18,7 @@ function evaluateConditionScore(condition: string, weather: WeatherData): number
   if (weatherValue === undefined || weatherValue === null) return 0.5; // Neutral for missing data
 
   if (parsed.operator === 'range') {
-    const { min, max } = parsed;
+    const { min, max } = parsed as { key: string; operator: 'range'; min: number; max: number };
     const center = (min + max) / 2;
     const range = max - min;
     
@@ -23,8 +35,8 @@ function evaluateConditionScore(condition: string, weather: WeatherData): number
 
   // Handle comparison operators with graduated scoring
   switch (parsed.operator) {
-    case '>': return weatherValue > parsed.value ? 1 : weatherValue / parsed.value;
-    case '<': return weatherValue < parsed.value ? 1 : parsed.value / weatherValue;
-    default: return evaluateCondition(condition, weather) ? 1 : 0;
+    case '>': return weatherValue > (parsed as any).value ? 1 : weatherValue / (parsed as any).value;
+    case '<': return weatherValue < (parsed as any).value ? 1 : (parsed as any).value / weatherValue;
+    default: return 0; // Fallback for unsupported operators
   }
 }

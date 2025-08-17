@@ -1,3 +1,33 @@
+// Wind speed unit conversion utilities
+// Standard internal unit: meters per second (m/s)
+
+/**
+ * Convert knots to meters per second
+ * @param knots Wind speed in knots
+ * @returns Wind speed in m/s
+ */
+export function knotsToMps(knots: number): number {
+  return knots * 0.51444;
+}
+
+/**
+ * Convert meters per second to knots
+ * @param mps Wind speed in m/s
+ * @returns Wind speed in knots
+ */
+export function mpsToKnots(mps: number): number {
+  return mps * 1.94384;
+}
+
+/**
+ * Convert meters per second to km/h
+ * @param mps Wind speed in m/s
+ * @returns Wind speed in km/h
+ */
+export function mpsToKmh(mps: number): number {
+  return mps * 3.6;
+}
+
 export function getBeaufortExplanation(windKmh: number): string {
   if (windKmh < 2) return "Calm: Smoke rises vertically, sea like a mirror.";
   if (windKmh < 6) return "Light air: Ripples with the appearance of scales are formed, but without foam crests.";

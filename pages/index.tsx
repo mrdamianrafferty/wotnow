@@ -18,6 +18,7 @@ import PopupTemplate from '../components/PopupTemplate';
 import { findHeroActivity } from '../utils/activityHelpers';
 import { useForecastData } from '../lib/useForecastData';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
+import { knotsToMps } from '../utils/weatherUtils';
 import { selectHeroActivity } from '../utils/heroSelector';
 import 'weather-icons/css/weather-icons.css';
 import { getBeaufortNumber } from '../utils/beaufort';
@@ -38,24 +39,38 @@ import { buildReasons } from '../utils/activityHelpers'; // Adjust the path base
 import { isOutdoor } from '../utils/activityHelpers';
 import { getActivityMessage } from '../data/activityMessages';
 
-function WindIcon({ windKmh, size = 28, alt = 'Wind' }: { windKmh: number, size?: number, alt?: string }) {
-  const beaufort = getBeaufortNumber(windKmh);
+function WindIcon({ windMs, size = 28, alt = 'Wind' }: { windMs: number, size?: number, alt?: string }) {
+  // Convert m/s to km/h for Beaufort calculation (getBeaufortNumber expects m/s now)
+  const beaufort = getBeaufortNumber(windMs);
 
   // Use windsock for Beaufort < 3, otherwise wind-beaufort-X.svg or fallback to wind.svg
   let iconName = '';
+  let needsGlow = false; // Only numbered Beaufort icons need glow for visibility
+  
   if (beaufort < 3) {
     iconName = 'windsock.svg';
+    needsGlow = false; // Windsock doesn't have dark numbers
   } else if (beaufort <= 12) {
     iconName = `wind-beaufort-${beaufort}.svg`;
+    needsGlow = true; // Beaufort icons have dark numbers that need glow
   } else {
     iconName = 'wind.svg';
+    needsGlow = false; // Fallback icon doesn't need glow
   }
 
   return (
     <img
       src={`/weather-icons/design/fill/final/${iconName}`}
       alt={alt}
-      style={{ width: size, height: size, verticalAlign: 'middle' }}
+      style={{ 
+        width: size, 
+        height: size, 
+        verticalAlign: 'middle',
+        // Only add white glow for Beaufort numbered icons to make dark numbers visible
+        filter: needsGlow 
+          ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
+          : 'none',
+      }}
       loading="lazy"
     />
   );
@@ -191,8 +206,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         description: currentEntry.weather[0].description,
         icon: currentEntry.weather[0].icon,
         rain: Math.round(currentEntry.rain?.['3h'] || 0),
-        wind_speed: Math.round(currentEntry.wind.speed * 3.6),
-        windSpeed: Math.round(currentEntry.wind.speed * 1.94384),
+        wind_speed: currentEntry.wind.speed, // OpenWeather provides m/s - keep in m/s for consistency
         wind_direction: currentEntry.wind.deg,
         clouds: currentEntry.clouds.all,
         humidity: currentEntry.main.humidity,
@@ -214,7 +228,7 @@ const processWeatherData = (weatherData: any, marineData?: any) => {
     date: day.dt,
     temperature: Math.round(day.temp.day),
     rain: day.rain?.['1h'] || 0,
-    wind_speed: day.wind_speed,
+    wind_speed: day.wind_speed, // OpenWeather provides m/s - keep as is
     clouds: day.clouds,
     humidity: day.humidity,
     visibility: day.visibility || 10000,
@@ -303,19 +317,27 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
     
     if (marineHour) {
       console.log("Found matching marine hour:", marineHour);
-      // Use CONSISTENT property names
+      console.log("Raw Stormglass wind speed (knots):", marineHour.windSpeed?.noaa);
+      
+      // Convert Stormglass wind speed from knots to m/s for internal consistency
+      const windSpeedKnots = marineHour.windSpeed?.noaa;
+      const windSpeedMps = windSpeedKnots ? knotsToMps(windSpeedKnots) : undefined;
+      
+      console.log("Converted wind speed (m/s):", windSpeedMps);
+      
+      // Use CONSISTENT property names and units (all wind speeds in m/s)
       return {
         ...day,
         waveHeight: marineHour.waveHeight?.noaa,
         swellHeight: marineHour.swellHeight?.noaa,
         swellPeriod: marineHour.swellPeriod?.noaa,
         waterTemperature: marineHour.waterTemperature?.noaa,
-        windSpeed: marineHour.windSpeed?.noaa,
+        windSpeed: windSpeedMps, // ⚠️ FIXED: Convert knots to m/s
         swellDir: marineHour.swellDirection?.noaa,
-        gust: marineHour.windGust?.noaa,
+        gust: marineHour.windGust?.noaa ? knotsToMps(marineHour.windGust.noaa) : undefined, // Convert gust too
         vis: marineHour.visibility?.noaa,
         current: marineHour.currentSpeed?.noaa,
-        windDir: marineHour.windDirection?.noaa, // <-- Add this line
+        windDir: marineHour.windDirection?.noaa,
       };
     } else {
       console.log("No matching marine hour found");
@@ -673,7 +695,7 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
                             <span className="temperature-label">
   
   &nbsp;{Math.round(day.temperature)}° {day.description}
-  <WindIcon windKmh={day.wind_speed} />
+  <WindIcon windMs={day.wind_speed || 0} />
 </span>
 
             </div>
@@ -955,7 +977,7 @@ function getWeatherDay(day: any, timeInfo: any) {
     description: day.description,
     icon: day.icon,
     precipitation: day.rain,
-    windSpeed: day.wind_speed,
+    windSpeed: day.wind_speed, // Already in m/s from OpenWeather
     windDir: day.wind_direction,
     humidity: day.humidity,
     visibility: day.visibility,

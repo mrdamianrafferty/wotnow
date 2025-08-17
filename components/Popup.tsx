@@ -12,12 +12,16 @@ import html2canvas from 'html2canvas';
 import { getCompassDirection } from '../utils/weatherLabels';
 import { classifyWindRelative, computeSimulatedOrientation } from '../utils/orientation';
 import { getBeaufortNumber } from '../utils/beaufort';
+import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 
 // --- Types ---
+// All windSpeed fields are in meters per second (m/s) throughout the pipeline.
 interface MarineData {
   waveHeight?: number;
+  /** Wind speed in m/s (meters per second) */
   windSpeed?: number;
   waterTemperature?: number;
+  swellHeight?: number;
   swellPeriod?: number;
   gust?: number;
   windDir?: number;
@@ -26,16 +30,19 @@ interface MarineData {
   beachOrientation?: number;
 }
 
+// All windSpeed fields are in meters per second (m/s) throughout the pipeline.
 interface WeatherData {
   description?: string;
   temperature?: number;
   tempMin?: number;
   tempMax?: number;
+  /** Wind speed in m/s (meters per second) */
   windSpeed?: number;
   windDir?: number;
   humidity?: number;
   precipitation?: number;
   beachOrientation?: number;
+  icon?: string;
 }
 
 type Category = 'perfect' | 'good' | 'fair' | 'poor';
@@ -161,16 +168,29 @@ function getWeatherIconUrl(iconCode: string) {
   return '/weather-icons/design/fill/final/na.svg';
 }
 
-function getWindIcon(windKmh: number) {
-  const beaufort = getBeaufortNumber(windKmh);
+
+// --- Wind speed utilities ---
+
+/**
+ * Get wind icon based on Beaufort number, using m/s as input.
+ * getBeaufortNumber expects m/s and converts internally to km/h.
+ */
+function getWindIcon(windMs: number) {
+  const beaufort = getBeaufortNumber(windMs); // Pass m/s directly, function handles conversion
   if (beaufort < 3) return '/weather-icons/design/fill/final/windsock.svg';
   if (beaufort <= 12) return `/weather-icons/design/fill/final/wind-beaufort-${beaufort}.svg`;
   return '/weather-icons/design/fill/final/wind.svg';
 }
 
-function kmhToKnots(kmh: number): number {
-  return kmh * 0.539957;
+/**
+ * Check if wind icon needs glow effect (only numbered Beaufort icons)
+ */
+function windIconNeedsGlow(windMs: number) {
+  const beaufort = getBeaufortNumber(windMs);
+  return beaufort >= 3 && beaufort <= 12; // Only numbered Beaufort icons have dark text
 }
+
+// Remove kmhToKnots, use mpsToKnots for all wind speed conversions
 
 function formatTideTime(timeString: string): string {
   const date = new Date(timeString);
@@ -221,6 +241,19 @@ const Popup: React.FC<PopupProps> = ({
   const emoji = getActivityEmoji(activityId);
   const backgroundImage = bgMap[activityId] ?? '/default-bg.jpg';
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
+
+  // --- Wind speed display helpers ---
+  // Always use m/s internally, convert for display only
+  const windSpeedMs = marineData?.windSpeed ?? weatherData?.windSpeed ?? null;
+  const windSpeedKnots = windSpeedMs != null ? mpsToKnots(windSpeedMs) : null;
+  const windSpeedKmh = windSpeedMs != null ? mpsToKmh(windSpeedMs) : null;
+
+  // Example usage in render:
+  // <span>{windSpeedMs?.toFixed(1)} m/s</span>
+  // <span>{windSpeedKnots?.toFixed(1)} knots</span>
+  // <span>{windSpeedKmh?.toFixed(1)} km/h</span>
+
+  // Document: All wind speed logic, scoring, and messaging should use m/s internally.
 
   // Export PNG (only main content, no footer/buttons)
 const handleDownload = async () => {
@@ -380,10 +413,18 @@ const handleDownload = async () => {
                     )}
                     {typeof marineData.windSpeed === 'number' && (
                       <li>
-                        <img src={getWindIcon(marineData.windSpeed * 1)}
-                             alt="Wind" style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
-                        <strong>{Math.round(marineData.windSpeed)}</strong>knots
-                        {typeof marineData.gust === 'number' && <> (gust {(marineData.gust * 1).toFixed(1)} knots)</>}
+                        <img src={getWindIcon(marineData.windSpeed)}
+                             alt="Wind" style={{ 
+                               width: 28, 
+                               height: 28, 
+                               verticalAlign: 'middle',
+                               // Only add glow for numbered Beaufort icons (not windsock)
+                               filter: windIconNeedsGlow(marineData.windSpeed) 
+                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
+                                 : 'none'
+                             }} />{' '}
+                        <strong>{Math.round(mpsToKnots(marineData.windSpeed))}</strong>knots
+                        {typeof marineData.gust === 'number' && <> (gust {mpsToKnots(marineData.gust).toFixed(1)} knots)</>}
                         {(() => {
                           const rawDir: any = (marineData as any).windDir ?? (marineData as any).windDirection;
                           const dir = typeof rawDir === 'number' ? rawDir : undefined;
@@ -499,9 +540,17 @@ const handleDownload = async () => {
                     )}
                     {typeof weatherData?.windSpeed === 'number' && (
                       <li>
-                        <img src={getWindIcon(weatherData.windSpeed * 1)} alt="Wind"
-                             style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
-                        <strong>{Math.round(weatherData.windSpeed)}</strong>km/h
+                        <img src={getWindIcon(weatherData.windSpeed)} alt="Wind"
+                             style={{ 
+                               width: 28, 
+                               height: 28, 
+                               verticalAlign: 'middle',
+                               // Only add glow for numbered Beaufort icons (not windsock)
+                               filter: windIconNeedsGlow(weatherData.windSpeed) 
+                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
+                                 : 'none'
+                             }} />{' '}
+                        <strong>{Math.round(mpsToKmh(weatherData.windSpeed))}</strong>km/h
                         {typeof weatherData.windDir === 'number' && (
                           <>
                             {' '}

@@ -401,8 +401,18 @@ export function buildReasons(day: any, activityId: string) {
   // Add standard weather reasons with better null handling
   if (day.wind_speed !== undefined) {
     console.log(`Trying to get wind message for speed: ${day.wind_speed}`);
+    console.log(`Also available - windSpeed: ${day.windSpeed}`);
+    console.log(`Day object keys:`, Object.keys(day).filter(k => k.toLowerCase().includes('wind')));
+    
+    // For marine activities, prefer windSpeed (marine data in m/s) over wind_speed (weather data)
+    const effectiveWindSpeed = isMarineActivity && typeof day.windSpeed === 'number' 
+      ? day.windSpeed 
+      : day.wind_speed;
+    
+    console.log(`Using effective wind speed: ${effectiveWindSpeed} (marine: ${isMarineActivity})`);
+    
     let windMessage = getWindMessage({
-      windSpeed: day.wind_speed,
+      windSpeed: effectiveWindSpeed,
       gustSpeed: day.wind_gust,
       windDirection: repWindDeg,
       windDirectionsToday: getWindDirectionsForDay(day),
@@ -524,11 +534,13 @@ export function buildReasons(day: any, activityId: string) {
       case 'sea_kayaking': {
         // Offshore can carry paddlers/swimmers out to sea
         if (windRelative === 'offshore' && typeof windSpeed === 'number' && windSpeed > 6) {
-          reasons.push('Offshore wind can carry you out—unsafe unless in a sheltered bay or with safety cover');
+          // 6 m/s ≈ 11.7 knots
+          reasons.push('Offshore wind can carry you out—unsafe unless in a sheltered bay...');
         }
         // Strong lateral drift
         if (windRelative === 'cross-shore' && typeof windSpeed === 'number' && windSpeed > 8) {
-          reasons.push('Strong lateral drift from cross‑shore wind—plan an upwind return or avoid open crossings');
+          // 8 m/s ≈ 15.6 knots
+          reasons.push('Strong lateral drift from cross‑shore wind—plan an upwind return...');
         }
         // Dumping shorebreak hazard
         if (typeof waveHeight === 'number' && waveHeight > 1.2 && (windRelative === 'onshore' || windRelative === 'side-onshore')) {
@@ -540,6 +552,7 @@ export function buildReasons(day: any, activityId: string) {
         if (typeof waveHeight === 'number' && waveHeight > 2.5) {
           reasons.push('Very large surf—advanced surfers only');
         }
+        // Strong onshore wind (>10 m/s or ~19.4 knots) affects wave quality
         if (windRelative === 'onshore' && typeof windSpeed === 'number' && windSpeed > 10) {
           reasons.push('Strong onshore wind—messy, fatiguing surf');
         }
@@ -555,9 +568,11 @@ export function buildReasons(day: any, activityId: string) {
 
     // Generic severe warnings for all marine activities
     if (typeof windSpeed === 'number' && windSpeed > 20) {
+      // 20 m/s ≈ 38.9 knots (gale force)
       reasons.push('Very strong wind—unsafe for casual sea activities');
     }
     if (typeof gustSpeed === 'number' && gustSpeed > 18) {
+      // 18 m/s ≈ 35 knots
       reasons.push('Strong gusts—control will be difficult');
     }
     const precip = day.precipitation ?? day.rain;
@@ -730,3 +745,12 @@ const heatSensitiveActivities = new Set([
 
   return null;
 }
+
+/*
+ * Wind Speed Reference (m/s to knots):
+ * 5 m/s  ≈ 9.7 knots  - Fresh breeze
+ * 8 m/s  ≈ 15.6 knots - Moderate breeze
+ * 10 m/s ≈ 19.4 knots - Strong breeze
+ * 15 m/s ≈ 29.2 knots - Near gale
+ * 20 m/s ≈ 38.9 knots - Gale
+ */
