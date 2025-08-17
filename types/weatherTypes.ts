@@ -32,6 +32,8 @@ export interface WeatherForecastDay {
   rain?: number;
   /** Wind speed in m/s (meters per second) - standard internal unit */
   wind_speed?: number;
+  /** Gust speed in m/s (meters per second) - standard internal unit */
+  gust_speed?: number;
   wind_direction?: number; 
   clouds?: number;
   humidity?: number;

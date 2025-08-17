@@ -10,7 +10,7 @@ import SwellArrow from './SwellArrow';
 import WindDirectionIcon from './WindDirectionIcon';
 import html2canvas from 'html2canvas';
 import { getCompassDirection } from '../utils/weatherLabels';
-import { classifyWindRelative, computeSimulatedOrientation } from '../utils/orientation';
+import { classifyWindRelative, computeSimulatedOrientation, resolveBeachOrientationAsync } from '../utils/orientation';
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 
@@ -242,6 +242,10 @@ const Popup: React.FC<PopupProps> = ({
   const backgroundImage = bgMap[activityId] ?? '/default-bg.jpg';
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
 
+  // --- Orientation (OSM-backed) ---
+  const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
+  const [orientationVia, setOrientationVia] = useState<string | undefined>(undefined);
+
   // --- Wind speed display helpers ---
   // Always use m/s internally, convert for display only
   const windSpeedMs = marineData?.windSpeed ?? weatherData?.windSpeed ?? null;
@@ -304,6 +308,35 @@ const handleDownload = async () => {
     }
   }, [coastalLocation, homeLocation, isMarineActivity, dayTimestamp]);
 
+  // Resolve beach orientation from OSM (cached) when we have a coastal/home point
+  useEffect(() => {
+    const lat = coastalLocation?.lat ?? homeLocation?.lat;
+    const lon = coastalLocation?.lon ?? homeLocation?.lon;
+    if (!isMarineActivity || typeof lat !== 'number' || typeof lon !== 'number') {
+      setResolvedOrientation(undefined);
+      setOrientationVia(undefined);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await resolveBeachOrientationAsync({ lat, lon });
+        if (cancelled) return;
+        // @ts-ignore via is added by our patched util
+        const via = (res as any).via || res.source;
+        // Fallback to simulated only if resolver couldn't find anything
+        const o = typeof res.orientation === 'number' ? res.orientation : computeSimulatedOrientation(lat, lon);
+        setResolvedOrientation(o);
+        setOrientationVia(via);
+      } catch {
+        // Last-ditch fallback
+        setResolvedOrientation(computeSimulatedOrientation(lat, lon));
+        setOrientationVia('sim');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isMarineActivity, coastalLocation?.lat, coastalLocation?.lon, homeLocation?.lat, homeLocation?.lon]);
+
   const fetchTideData = async (lat: number, lon: number, dayTimestamp?: number) => {
     try {
       const today = new Date();
@@ -316,8 +349,8 @@ const handleDownload = async () => {
       if (!data || !Array.isArray(data.data)) return;
       const targetDateStr = targetDay.toISOString().split('T')[0];
       const dayTides = data.data.filter((tide: any) => {
-        const tideDate = new Date(tide.time).toISOString().split('T');
-        return tideDate === targetDateStr;
+        const tideDateStr = new Date(tide.time).toISOString().split('T')[0];
+        return tideDateStr === targetDateStr;
       });
       if (isCurrentDay) {
         const currentTime = new Date();
@@ -428,13 +461,15 @@ const handleDownload = async () => {
                         {(() => {
                           const rawDir: any = (marineData as any).windDir ?? (marineData as any).windDirection;
                           const dir = typeof rawDir === 'number' ? rawDir : undefined;
-                          const orient = typeof marineData.beachOrientation === 'number'
-                            ? marineData.beachOrientation
-                            : (typeof weatherData?.beachOrientation === 'number'
-                                ? weatherData!.beachOrientation
-                                : (coastalLocation
-                                    ? computeSimulatedOrientation(coastalLocation.lat, coastalLocation.lon)
-                                    : undefined));
+                          // Priority: provided orientation -> resolved OSM/cache -> simulated fallback
+                          const orientProvided = typeof marineData?.beachOrientation === 'number' 
+                            ? marineData!.beachOrientation 
+                            : (typeof weatherData?.beachOrientation === 'number' ? weatherData!.beachOrientation : undefined);
+                          const orient = typeof orientProvided === 'number' 
+                            ? orientProvided 
+                            : (typeof resolvedOrientation === 'number' ? resolvedOrientation : (
+                                coastalLocation ? computeSimulatedOrientation(coastalLocation.lat, coastalLocation.lon) : undefined
+                              ));
                           return typeof dir === 'number' ? (
                             <>
                               {' '}
@@ -447,6 +482,11 @@ const handleDownload = async () => {
                                 <>
                                   {' '}
                                   <span>({classifyWindRelative(orient, dir)})</span>
+                                  {orientationVia && orientationVia !== 'computed' && (
+  <em style={{ marginLeft: 6, opacity: 0.75 }}>
+    ({orientationVia === 'simulated' ? 'sim' : orientationVia})
+  </em>
+)}
                                 </>
                               )}
                             </>
@@ -456,7 +496,7 @@ const handleDownload = async () => {
                     )}
                     {typeof marineData.swellHeight === 'number' && (
                       <li>
-                        🌊 Swell: <strong>{marineData.swellHeight.toFixed(1)}</strong>m{' '}
+                        🏄🏿‍♀️ Swell: <strong>{marineData.swellHeight.toFixed(1)}</strong>m{' '}
                         {typeof marineData.swellDir === 'number' && <SwellArrow deg={marineData.swellDir} />}
                       </li>
                     )}

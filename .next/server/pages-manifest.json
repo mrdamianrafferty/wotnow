@@ -2,7 +2,9 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/interests": "pages/interests.js",
   "/": "pages/index.js",
   "/api/marine": "pages/api/marine.js",
-  "/api/owm": "pages/api/owm.js"
+  "/api/owm": "pages/api/owm.js",
+  "/activities": "pages/activities.js"
 }

@@ -97,14 +97,17 @@ export function evaluateConditionScore(condition: string, weather: WeatherData):
   if (value === undefined || value === null) return 0.5; // neutral for missing data
 
   if (parsed.operator === 'range') {
-    const { min, max } = parsed;
-    const center = (min + max) / 2;
-    const span = max - min;
-    if (value >= min && value <= max) {
-      return 1 - Math.abs(value - center) / (span / 2);
+    if ('min' in parsed && 'max' in parsed) {
+      const { min, max } = parsed;
+      const center = (min + max) / 2;
+      const span = max - min;
+      if (value >= min && value <= max) {
+        return 1 - Math.abs(value - center) / (span / 2);
+      }
+      const overflow = value < min ? min - value : value - max;
+      return Math.max(0, 1 - overflow / span);
     }
-    const overflow = value < min ? min - value : value - max;
-    return Math.max(0, 1 - overflow / span);
+    return 0;
   }
 
   switch (parsed.operator) {
@@ -250,8 +253,10 @@ export function calculatePoorConditionPenalty(
   for (const cond of conditions) {
     const { score, counted } = evalCompoundScore(cond, weather);
     if (!counted) continue;
-    if (score > 0.7) total += score;
-    count++;
+    if (score > 0.7) {
+      total += score;
+      count++;
+    }
   }
   return count > 0 ? Math.min(1, total / count) : 0;
 }

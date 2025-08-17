@@ -11,6 +11,12 @@ export interface ActivityType {
   weatherSensitive?: boolean;         // true => outdoor
   indoorAlternative?: boolean;
   seasonalMonths?: number[];
+  poorConditions?: string[];
+  fairConditions?: string[];
+  goodConditions?: string[];
+  perfectConditions?: string[];
+  category?: string;
+  secondaryCategory?: string;
 }
 
 export interface WeatherData {
@@ -81,11 +87,14 @@ function calculateActivityScore(
   contextTags: string[],
   opts: { nowTs: number; sunsetTs?: number | null; month?: number }
 ): number {
+  console.log(`🎯 Scoring ${activity.id}...`);
+  console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
+  
   // Indoor activities: low daytime, boosted in evening
   if (!activity.weatherSensitive) {
     let score = 45;
     const hour = new Date(opts.nowTs).getHours();
-    const eveningResult = applyEveningBonus(activity, hour, contextTags, opts);
+    const eveningResult = applyEveningBonus(activity as any, hour, contextTags, opts);
     score *= eveningResult.multiplier;
     return Math.min(95, Math.round(score));
   }
@@ -94,7 +103,7 @@ function calculateActivityScore(
   const w = {
     temperature: weather.temperature,
     precipitation: weather.precipitation,
-    windSpeed: weather.windspeed,
+    windSpeed: weather.windspeed ? weather.windspeed / 3.6 : 0, // Convert km/h back to m/s for activity conditions
     clouds: weather.clouds,
     humidity: weather.humidity,
     visibility: (weather.visibility ?? 10000) / 1000,
@@ -104,38 +113,62 @@ function calculateActivityScore(
     swellPeriod: weather.swellPeriod,
   };
 
-  let score = 20;
-  let cl = 'poor';
+  console.log(`🌤️ ${activity.id} normalized weather:`, JSON.stringify(w, null, 2));
+
+  let score = 50; // Start with neutral score instead of 20
+  let cl = 'fair';
 
   // Dangerous conditions
   if (activity.poorConditions?.length) {
     const penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
+    console.log(`💀 ${activity.id} poor condition penalty: ${penalty.toFixed(3)}`);
     if (penalty > 0.7) {
       score = 8 + Math.random() * 12;
       cl = 'poor';
+      console.log(`❌ ${activity.id} marked as poor due to dangerous conditions`);
     }
   }
 
   // Perfect
-  if (activity.perfectConditions?.length && calculateConditionMatchScore(activity.perfectConditions, w) > 0.85) {
-    score = 90 + Math.random() * 8;
-    cl = 'perfect';
+  if (activity.perfectConditions?.length) {
+    const perfectScore = calculateConditionMatchScore(activity.perfectConditions, w);
+    console.log(`✨ ${activity.id} perfect match score: ${perfectScore.toFixed(3)}`);
+    if (perfectScore > 0.8) {
+      score = 90 + Math.random() * 8;
+      cl = 'perfect';
+      console.log(`🌟 ${activity.id} marked as perfect`);
+    }
   }
   // Good
-  else if (activity.goodConditions?.length && calculateConditionMatchScore(activity.goodConditions, w) > 0.6) {
-    score = 68 + Math.random() * 15;
-    cl = 'good';
+  if (cl !== 'perfect' && activity.goodConditions?.length) {
+    const goodScore = calculateConditionMatchScore(activity.goodConditions, w);
+    console.log(`👍 ${activity.id} good match score: ${goodScore.toFixed(3)}`);
+    if (goodScore > 0.5) {
+      score = 68 + Math.random() * 15;
+      cl = 'good';
+      console.log(`✅ ${activity.id} marked as good`);
+    }
   }
   // Fair
-  else if (activity.fairConditions?.length && calculateConditionMatchScore(activity.fairConditions, w) > 0.5) {
-    score = 45 + Math.random() * 15;
-    cl = 'fair';
+  if (cl !== 'perfect' && cl !== 'good' && activity.fairConditions?.length) {
+    const fairScore = calculateConditionMatchScore(activity.fairConditions, w);
+    console.log(`👌 ${activity.id} fair match score: ${fairScore.toFixed(3)}`);
+    if (fairScore > 0.3) {
+      score = 45 + Math.random() * 15;
+      cl = 'fair';
+      console.log(`🆗 ${activity.id} marked as fair`);
+    }
+  }
+  // If no poor conditions triggered but no specific good conditions met, give moderate score
+  if (cl === 'fair' && score === 50) {
+    score = 40 + Math.random() * 20; // 40-60 range for neutral conditions
+    console.log(`📝 ${activity.id} using neutral conditions score: ${score}`);
   }
 
   // Evening adjustments for outdoor
   if (isEveningToday) {
     const hour = new Date(opts.nowTs).getHours();
-    const eveningRes = applyEveningBonus(activity, hour, contextTags, opts);
+    const eveningRes = applyEveningBonus(activity as any, hour, contextTags, opts);
     score *= eveningRes.multiplier;
   }
 

@@ -504,6 +504,41 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
     return <div>Please set your home location to see suggestions.</div>;
   }
 
+  if (isFirstTimeUser) {
+    return (
+      <div style={{ 
+        textAlign: 'center' as const, 
+        padding: '3rem', 
+        background: '#fefbf2', 
+        borderRadius: '8px',
+        border: '1px solid #fed7aa',
+        margin: '2rem'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
+        <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected</h2>
+        <p style={{ color: '#92400e' }}>
+          Choose your outdoor interests to see personalised activity recommendations based on the weather.
+        </p>
+        <a 
+          href="/interests" 
+          style={{ 
+            display: 'inline-block',
+            marginTop: '1rem',
+            padding: '12px 24px',
+            background: '#d97706',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '6px',
+            fontWeight: 600,
+            fontSize: '1.1rem'
+          }}
+        >
+          Choose Activities
+        </a>
+      </div>
+    );
+  }
+
   if (loading) {
     return <div>Loading your smart recommendations...</div>;
   }

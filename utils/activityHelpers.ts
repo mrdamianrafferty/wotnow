@@ -138,6 +138,24 @@ export function isOutdoor(activityId: string): boolean {
   return !!a.weatherSensitive;
 }
 
+/**
+ * Check if an activity is out of season based on current month
+ * @param activityId - The activity ID to check
+ * @param currentDate - Optional current date, defaults to now
+ * @returns true if the activity has seasonal months defined and current month is not in that range
+ */
+export function isOutOfSeason(activityId: string, currentDate?: Date): boolean {
+  const activity = activityTypes.find((x) => x.id === activityId);
+  if (!activity || !activity.seasonalMonths || activity.seasonalMonths.length === 0) {
+    return false; // Not seasonal or no seasonal data
+  }
+  
+  const now = currentDate || new Date();
+  const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed, we want 1-12
+  
+  return !activity.seasonalMonths.includes(currentMonth);
+}
+
 function scoreLabel(score: number): 'perfect' | 'good' | 'fair' | 'okay' | 'indoor' {
   if (score >= 80) return 'perfect';
   if (score >= 60) return 'good';
@@ -527,85 +545,88 @@ export function buildReasons(day: any, activityId: string) {
       }
     } catch { /* ignore */ }
 
-    // Activity-specific rules
+    // Activity-specific rules with practical advice
     switch (activityId) {
       case 'sea_swimming':
       case 'sup_sea':
       case 'sea_kayaking': {
         // Offshore can carry paddlers/swimmers out to sea
         if (windRelative === 'offshore' && typeof windSpeed === 'number' && windSpeed > 6) {
-          // 6 m/s ≈ 11.7 knots
-          reasons.push('Offshore wind can carry you out—unsafe unless in a sheltered bay...');
+          reasons.push('Strong offshore wind - stay close to shore or choose sheltered location');
         }
         // Strong lateral drift
         if (windRelative === 'cross-shore' && typeof windSpeed === 'number' && windSpeed > 8) {
-          // 8 m/s ≈ 15.6 knots
-          reasons.push('Strong lateral drift from cross‑shore wind—plan an upwind return...');
+          reasons.push('Strong cross-shore wind will push you sideways - plan accordingly');
         }
         // Dumping shorebreak hazard
         if (typeof waveHeight === 'number' && waveHeight > 1.2 && (windRelative === 'onshore' || windRelative === 'side-onshore')) {
-          reasons.push('Dumping shorebreak makes entry/exit hazardous');
+          reasons.push('Large waves + onshore wind creates dangerous shore break');
         }
         break;
       }
       case 'surfing': {
         if (typeof waveHeight === 'number' && waveHeight > 2.5) {
-          reasons.push('Very large surf—advanced surfers only');
+          reasons.push('Large surf conditions - experienced surfers only');
+        } else if (typeof waveHeight === 'number' && waveHeight < 0.3) {
+          reasons.push('Very small waves - may not be worth the paddle out');
         }
-        // Strong onshore wind (>10 m/s or ~19.4 knots) affects wave quality
-        if (windRelative === 'onshore' && typeof windSpeed === 'number' && windSpeed > 10) {
-          reasons.push('Strong onshore wind—messy, fatiguing surf');
-        }
-        if (windRelative === 'onshore' && typeof swellPeriod === 'number' && swellPeriod < 8) {
-          reasons.push('Onshore + short period—choppy, disorganised waves');
-        }
-        if (windRelative === 'onshore' && typeof waveHeight === 'number' && waveHeight < 0.4) {
-          reasons.push('Onshore breeze with tiny swell—barely surfable');
+        // Wind quality for surfing
+        if (windRelative === 'offshore' && typeof windSpeed === 'number' && windSpeed >= 3 && windSpeed <= 8) {
+          reasons.push('Offshore wind creating clean wave conditions');
+        } else if (windRelative === 'onshore' && typeof windSpeed === 'number' && windSpeed > 10) {
+          reasons.push('Strong onshore wind making waves messy and difficult');
         }
         break;
       }
     }
 
-    // Generic severe warnings for all marine activities
-    if (typeof windSpeed === 'number' && windSpeed > 20) {
-      // 20 m/s ≈ 38.9 knots (gale force)
-      reasons.push('Very strong wind—unsafe for casual sea activities');
+    // Practical safety warnings for all marine activities
+    if (typeof windSpeed === 'number' && windSpeed > 15) {
+      reasons.push('Very strong wind conditions - dangerous for most water activities');
+    } else if (typeof windSpeed === 'number' && windSpeed > 12) {
+      reasons.push('Strong wind - only for experienced water users');
     }
-    if (typeof gustSpeed === 'number' && gustSpeed > 18) {
-      // 18 m/s ≈ 35 knots
-      reasons.push('Strong gusts—control will be difficult');
+    
+    if (typeof gustSpeed === 'number' && gustSpeed > 15) {
+      reasons.push('Strong wind gusts make boat/board control difficult');
     }
+    
     const precip = day.precipitation ?? day.rain;
-    if (typeof precip === 'number' && precip > 10) {
-      reasons.push('Heavy rain—reduced visibility and water quality');
+    if (typeof precip === 'number' && precip > 5) {
+      reasons.push('Heavy rain reduces visibility and comfort on water');
     }
+    
     if (typeof day.visibility === 'number' && day.visibility < 2000) {
-      reasons.push('Poor visibility—hard to spot hazards and other water users');
+      reasons.push('Poor visibility - difficult to spot other boats and hazards');
     }
 
-    // Sea-swimming specific wetsuit guidance
+    // Sea-swimming specific safety advice
     if (activityId === 'sea_swimming' && typeof day.waterTemperature === 'number') {
-      if (day.waterTemperature < 12) {
-        reasons.push('Cold shock risk—wear a proper wetsuit, neoprene cap/boots/gloves');
-      } else if (day.waterTemperature < 16) {
-        reasons.push('Chilly water—wetsuit recommended, limit time and warm up after');
+      if (day.waterTemperature < 10) {
+        reasons.push('Very cold water - wetsuit, boots, gloves essential - cold shock risk');
+      } else if (day.waterTemperature < 15) {
+        reasons.push('Cold water - wetsuit recommended, limit swim time');
+      } else if (day.waterTemperature >= 18) {
+        reasons.push('Comfortable water temperature for swimming');
       }
     }
     
-    // Water temperature
+    // Water temperature for all marine activities
     if (day.waterTemperature !== undefined && day.waterTemperature !== null) {
       let waterTempMsg;
       
-      if (day.waterTemperature < 10) {
-        waterTempMsg = "Water is bloody cold - wetsuit required";
+      if (day.waterTemperature < 8) {
+        waterTempMsg = "Extremely cold water - serious hypothermia risk";
+      } else if (day.waterTemperature < 12) {
+        waterTempMsg = "Very cold water - full wetsuit essential";
       } else if (day.waterTemperature < 16) {
-        waterTempMsg = "Cold water - full wetsuit recommended";
-      } else if (day.waterTemperature < 21) {
-        waterTempMsg = "Cool water - light wetsuit may be comfortable";
-      } else if (day.waterTemperature < 26) {
+        waterTempMsg = "Cold water - wetsuit recommended";
+      } else if (day.waterTemperature < 20) {
+        waterTempMsg = "Cool but manageable water temperature";
+      } else if (day.waterTemperature < 24) {
         waterTempMsg = "Pleasant water temperature";
       } else {
-        waterTempMsg = "Warm water - perfect for swimming";
+        waterTempMsg = "Warm, comfortable water";
       }
       
       console.log('Adding water temp reason:', waterTempMsg);
@@ -647,11 +668,14 @@ export function buildReasons(day: any, activityId: string) {
     }
   }
   
+  // Add activity-specific reasons based on conditions
+  addActivitySpecificReasons(day, activityId, reasons);
+  
   // Filter out empty strings, null, undefined
   const validReasons = reasons.filter(r => r && r.trim() !== '');
   console.log('Valid reasons after filtering:', validReasons);
   
-  return validReasons.length > 0 ? validReasons : ['Weather conditions look OK for this.'];
+  return validReasons.length > 0 ? validReasons : getDefaultReasonForActivity(activityId);
 }
 
 export function findHeroActivity(
@@ -732,15 +756,17 @@ const heatSensitiveActivities = new Set([
 
   if (activityId && !heatSensitiveActivities.has(activityId)) return null;
 
-  const heatIndex = tempC + (0.33 * humidity) - 0.7;
+  // Improved heat index calculation (closer to actual heat index formula)
+  const heatIndex = tempC + (0.33 * (humidity / 100 * 6.105 * Math.exp(17.27 * tempC / (237.7 + tempC)))) - 0.7;
 
-  if (heatIndex >= 60) {
-    return '☠️ Extreme danger: heat stroke possible – avoid strenuous activity';
-  } else if (heatIndex >= 50) {
-    return 'Risk of heat exhaustion or heat stroke, be sensible';
-  } else if (heatIndex >= 42) {
-    return 'Caution, take frequent breaks and hydrate';
-
+  if (heatIndex >= 54) {
+    return '☠️ Extreme heat danger - avoid all strenuous outdoor activity';
+  } else if (heatIndex >= 46) {
+    return '🔥 High heat risk - take frequent breaks, stay hydrated, watch for heat exhaustion signs';
+  } else if (heatIndex >= 38) {
+    return '⚠️ Moderate heat stress - take regular breaks and drink plenty of water';
+  } else if (heatIndex >= 32) {
+    return 'Warm conditions - stay hydrated and avoid peak sun hours';
   }
 
   return null;
@@ -754,3 +780,234 @@ const heatSensitiveActivities = new Set([
  * 15 m/s ≈ 29.2 knots - Near gale
  * 20 m/s ≈ 38.9 knots - Gale
  */
+
+/**
+ * Add activity-specific reasoning based on weather conditions
+ */
+function addActivitySpecificReasons(day: any, activityId: string, reasons: string[]) {
+  const temp = day.temperature;
+  const windSpeed = day.wind_speed ?? day.windSpeed ?? 0;
+  const rain = day.rain ?? day.precipitation ?? 0;
+  const humidity = day.humidity;
+  const clouds = day.clouds;
+
+  switch (activityId) {
+    case 'basketball_outdoor':
+      if (rain > 0) {
+        reasons.push('Wet court makes dribbling and movement dangerous');
+      } else if (windSpeed > 8) {
+        reasons.push('Strong wind affects shooting accuracy');
+      } else if (temp && temp > 30) {
+        reasons.push('Hot conditions - stay hydrated and take breaks');
+      } else if (temp && temp < 5) {
+        reasons.push('Cold weather affects ball grip and handling');
+      } else if (clouds < 20) {
+        reasons.push('Clear court and good visibility for play');
+      }
+      break;
+
+    case 'football_soccer':
+      if (rain > 5) {
+        reasons.push('Heavy rain makes pitch slippery and unsafe');
+      } else if (rain > 0) {
+        reasons.push('Light rain adds challenge but still playable');
+      } else if (windSpeed > 10) {
+        reasons.push('Strong wind affects passing and ball control');
+      } else if (temp && temp > 32) {
+        reasons.push('Very hot - increased risk of heat exhaustion');
+      } else if (temp && temp < 0) {
+        reasons.push('Freezing conditions may make pitch hard');
+      } else {
+        reasons.push('Good conditions for a proper match');
+      }
+      break;
+
+    case 'tennis':
+      if (rain > 0) {
+        reasons.push('Rain makes courts slippery and dangerous');
+      } else if (windSpeed > 6) {
+        reasons.push('Wind will affect ball trajectory and serve');
+      } else if (temp && temp > 35) {
+        reasons.push('Very hot conditions - heat exhaustion risk');
+      } else if (clouds > 80) {
+        reasons.push('Overcast but good for avoiding sun glare');
+      } else {
+        reasons.push('Great conditions for tennis');
+      }
+      break;
+
+    case 'running':
+      if (temp && temp > 28 && humidity && humidity > 70) {
+        reasons.push('Hot and humid - high risk of overheating');
+      } else if (temp && temp < -5) {
+        reasons.push('Very cold - risk of slipping on ice');
+      } else if (rain > 10) {
+        reasons.push('Heavy rain makes running unpleasant and risky');
+      } else if (windSpeed > 12) {
+        reasons.push('Strong headwind will make running much harder');
+      } else if (temp && temp >= 15 && temp <= 20) {
+        reasons.push('Perfect running temperature');
+      } else {
+        reasons.push('Good conditions for a run');
+      }
+      break;
+
+    case 'cycling':
+    case 'road_cycling':
+      if (rain > 2) {
+        reasons.push('Wet roads increase crash risk significantly');
+      } else if (windSpeed > 15) {
+        reasons.push('Very strong wind makes cycling exhausting');
+      } else if (windSpeed > 8) {
+        reasons.push('Moderate wind will slow progress');
+      } else if (temp && temp < 0) {
+        reasons.push('Freezing conditions - risk of ice on roads');
+      } else if (temp && temp > 35) {
+        reasons.push('Very hot - increased dehydration risk');
+      } else {
+        reasons.push('Good cycling conditions');
+      }
+      break;
+
+    case 'golf':
+      if (rain > 0) {
+        reasons.push('Rain affects ball flight and green conditions');
+      } else if (windSpeed > 10) {
+        reasons.push('Strong wind will significantly affect ball flight');
+      } else if (windSpeed > 5) {
+        reasons.push('Moderate wind adds challenge to club selection');
+      } else if (temp && temp < 5) {
+        reasons.push('Cold affects ball compression and distance');
+      } else if (clouds < 30) {
+        reasons.push('Clear skies ideal for reading greens');
+      } else {
+        reasons.push('Good golfing weather');
+      }
+      break;
+
+    case 'hiking':
+      if (rain > 5) {
+        reasons.push('Heavy rain makes trails muddy and slippery');
+      } else if (windSpeed > 15) {
+        reasons.push('Very strong wind makes hiking difficult');
+      } else if (temp && temp < -5) {
+        reasons.push('Very cold - hypothermia risk on longer hikes');
+      } else if (temp && temp > 30) {
+        reasons.push('Hot conditions - carry extra water');
+      } else if (day.visibility && day.visibility < 1000) {
+        reasons.push('Poor visibility makes navigation difficult');
+      } else {
+        reasons.push('Great day for exploring trails');
+      }
+      break;
+
+    case 'picnicking':
+      if (rain > 0) {
+        reasons.push('Rain will spoil outdoor dining');
+      } else if (windSpeed > 8) {
+        reasons.push('Strong wind will blow napkins and plates around');
+      } else if (temp && temp > 30) {
+        reasons.push('Very hot - food safety concerns in heat');
+      } else if (temp && temp < 10) {
+        reasons.push('Cold weather not comfortable for outdoor eating');
+      } else if (clouds >= 20 && clouds <= 70) {
+        reasons.push('Partly cloudy - perfect for avoiding harsh sun');
+      } else {
+        reasons.push('Perfect picnic weather');
+      }
+      break;
+
+    case 'beach':
+      if (rain > 0) {
+        reasons.push('Rain ruins beach relaxation');
+      } else if (windSpeed > 12) {
+        reasons.push('Very windy - sand will blow everywhere');
+      } else if (windSpeed > 6) {
+        reasons.push('Moderate wind keeps things fresh');
+      } else if (temp && temp > 35) {
+        reasons.push('Very hot - risk of sunburn and dehydration');
+      } else if (temp && temp < 18) {
+        reasons.push('Too cold for comfortable beach time');
+      } else if (clouds < 50) {
+        reasons.push('Sunny skies perfect for beach day');
+      } else {
+        reasons.push('Nice beach conditions');
+      }
+      break;
+
+    case 'gardening':
+    case 'outdoor_gardening':
+      if (rain > 5) {
+        reasons.push('Heavy rain makes soil too muddy to work');
+      } else if (rain > 0 && rain <= 2) {
+        reasons.push('Light rain is actually good for watering');
+      } else if (windSpeed > 10) {
+        reasons.push('Strong wind makes it hard to work with plants');
+      } else if (temp && temp > 30) {
+        reasons.push('Very hot - risk of heat exhaustion outdoors');
+      } else if (temp && temp < 0) {
+        reasons.push('Freezing - soil too hard to work with');
+      } else if (temp && temp >= 15 && temp <= 25) {
+        reasons.push('Perfect temperature for gardening');
+      } else {
+        reasons.push('Good conditions for garden work');
+      }
+      break;
+
+    case 'photography':
+      if (rain > 2) {
+        reasons.push('Heavy rain damages equipment and limits shots');
+      } else if (clouds >= 70 && clouds <= 90) {
+        reasons.push('Overcast provides perfect diffused lighting');
+      } else if (clouds < 30) {
+        reasons.push('Clear skies great for landscape shots');
+      } else if (windSpeed > 8) {
+        reasons.push('Wind makes it hard to keep camera steady');
+      } else if (day.visibility && day.visibility > 10000) {
+        reasons.push('Excellent visibility for distant subjects');
+      } else {
+        reasons.push('Good photography conditions');
+      }
+      break;
+
+    default:
+      // Generic outdoor activity reasoning
+      if (rain > 5) {
+        reasons.push('Heavy rain makes outdoor activities unpleasant');
+      } else if (windSpeed > 15) {
+        reasons.push('Very strong wind makes outdoor activities difficult');
+      } else if (temp && temp > 35) {
+        reasons.push('Very hot conditions - heat safety concerns');
+      } else if (temp && temp < -5) {
+        reasons.push('Very cold conditions may be uncomfortable');
+      } else {
+        reasons.push("It's a good day to be outside");
+      }
+      break;
+  }
+}
+
+/**
+ * Get a default reason when no specific weather conditions apply
+ */
+function getDefaultReasonForActivity(activityId: string): string[] {
+  const activity = activityTypes.find(a => a.id === activityId);
+  const activityName = activity?.name || activityId.replace(/_/g, ' ');
+  
+  // Activity-specific defaults
+  const defaults: Record<string, string> = {
+    'basketball_outdoor': 'Courts are available for a game',
+    'football_soccer': 'Pitch conditions allow for play',
+    'tennis': 'Courts are in good condition',
+    'running': 'Good conditions for a run',
+    'cycling': 'Roads are clear for cycling',
+    'golf': 'Course is playable',
+    'hiking': 'Trails are accessible',
+    'picnicking': 'Suitable for outdoor dining',
+    'beach': 'Beach conditions are reasonable',
+    'gardening': 'Garden work is possible',
+    'photography': 'Lighting conditions are workable'
+  };
+
+  return [defaults[activityId] || `Conditions are suitable for ${activityName.toLowerCase()}`];
+}

@@ -337,21 +337,21 @@ export const activityTypes: ActivityType[] = [
     'visibility>10'
   ],
   goodConditions: [
-    'temperature=8..22',
+    'temperature=8..24',        // Extended range - 22°C should be good, not fair
     'windSpeed<12',
     'clouds=50..100',
     'precipitation=0..2',
     'visibility>5'
   ],
   fairConditions: [
-    'temperature=4..8 or 22..26',
+    'temperature=4..8 or 24..28',  // Moved 22°C threshold higher
     'windSpeed=12..20',
     'clouds=20..50',
     'precipitation=2..5',
     'visibility=2..5'
   ],
   poorConditions: [
-    'temperature<4 or temperature>26',
+    'temperature<4 or temperature>28',  // Only truly uncomfortable temperatures
     'windSpeed>20',
     'precipitation>5',
     'clouds<20',
@@ -429,18 +429,18 @@ export const activityTypes: ActivityType[] = [
   goodConditions: [
     'waterTemperature=14..26',
     'airTemperature=12..28',
-    'waveHeight=0.5..1.8',
+    'waveHeight=0.35..1.8',   // Increased minimum from 0.5 to include 0.4m waves  
     'swellPeriod=8..12',
     'windSpeed=5..15',
-    // Direction logic: offshore ideal; side-offshore OK up to 12 kt; very light cross-shore OK
-    'windRelative=offshore or windRelative=side-offshore & windSpeed<=12 or windRelative=cross-shore & windSpeed<=8',
+    // Direction logic: offshore ideal; side-offshore OK up to 12 kt; very light cross-shore OK; side-onshore OK with smaller waves
+    'windRelative=offshore or windRelative=side-offshore & windSpeed<=12 or windRelative=cross-shore & windSpeed<=8 or windRelative=side-onshore & windSpeed<=10 & waveHeight<=1.0',
     'gust<12',
     'visibility>5'
   ],
   fairConditions: [
     'waterTemperature=12..14 or 26..28',
     'airTemperature=8..12 or 28..30',
-    'waveHeight=0.3..0.5 or 1.8..2.5',
+    'waveHeight=0.25..0.5 or 1.8..2.5',  // Lowered minimum from 0.3 to 0.25
     'swellPeriod=6..8 or 12..14',
     'windSpeed=15..20',
     // Direction logic: cross-shore with moderate wind; side-onshore in light winds; light onshore only if long period & modest size
@@ -452,11 +452,11 @@ export const activityTypes: ActivityType[] = [
   poorConditions: [
     'waterTemperature<12',
     'airTemperature<8 or airTemperature>32',
-    'waveHeight<0.3 or waveHeight>2.5',
+    'waveHeight<0.25 or waveHeight>2.5',  // Lowered minimum from 0.3 to 0.25
     'swellPeriod<6 or swellPeriod>14',
     'windSpeed>20',
     // Unsafe/unpleasant onshore rules (contextual): strong onshore, short period, or tiny waves with onshore
-    'windRelative=onshore & windSpeed>10 or windRelative=onshore & swellPeriod<8 or windRelative=onshore & waveHeight<0.4',
+    'windRelative=onshore & windSpeed>10 or windRelative=onshore & swellPeriod<8 or windRelative=onshore & waveHeight<0.3',  // Kept 0.3 for onshore minimum
     'gust>18',
     'visibility<2',
     'precipitation>10'
@@ -1382,7 +1382,7 @@ export const activityTypes: ActivityType[] = [
     'visibility>10',
     'waterTemperature=12..16'        // ideal for nearshore feeders in spring/autumn
   ],
-  seasonalMonths: [1, 2, 3, 4, 5, 6, 9, 10, 11, 12],
+
   indoorAlternative: 'Tie rigs, organise tackle box, or research tides and marks for your next trip'
 },
 {
@@ -2153,29 +2153,29 @@ export const activityTypes: ActivityType[] = [
     'temperature<-10',               // extreme cold, uncomfortable
     'temperature>35',               // oppressive heat
     'windSpeed>30',                 // camera shake, unpleasant
-    'precipitation>20',             // soaking rain, unsafe for gear
-    'visibility<2'                  // fog/whiteout
+    'precipitation>15',             // reduced from 20 - heavy rain, unsafe for gear
+    'visibility<1'                  // reduced from 2 - severe fog/whiteout
   ],
   fairConditions: [
-    'temperature=-5..0',            // chilly but manageable
-    'windSpeed=20..30',             // tricky but creative options
-    'cloudCover=90-100',            // very overcast, moodier tones
-    'precipitation=5..20',          // light to steady rain/snow
-    'visibility=2..5'               // fog/mist can be atmospheric
+    'temperature=-5..5 or temperature=30..35',  // extended cold range, reduced hot range
+    'windSpeed=25..30',             // reduced from 20-30 - quite windy but manageable
+    'cloudCover=95-100',            // reduced from 90-100 - very overcast only
+    'precipitation=8..15',          // reduced from 5-20 - moderate rain
+    'visibility=1..3'               // reduced from 2-5 - thick fog/mist
   ],
   goodConditions: [
-    'temperature=0..25',
-    'windSpeed<20',
-    'cloudCover=20-90',
-    'precipitation=0..5',
-    'visibility>5'
+    'temperature=5..30',            // extended from 0-25 - 22°C should be good!
+    'windSpeed<25',                 // increased from 20 - light winds are fine
+    'cloudCover=10-95',             // wider range - broken clouds are good!
+    'precipitation=0..8',           // increased from 0-5 - light drizzle OK
+    'visibility>3'                  // reduced from 5 - excellent visibility is good
   ],
   perfectConditions: [
-    'temperature=8..18',
+    'temperature=10..25',           // extended from 8-18 - more comfortable range
     'windSpeed<10',
-    'cloudCover=40-70',             // soft light, good contrast
+    'cloudCover=30-80',             // wider range from 40-70 - broken clouds perfect
     'precipitation=0',
-    'visibility>10'
+    'visibility>8'                  // reduced from 10 - very good visibility
   ],
   seasonalMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   indoorAlternative: 'Organise and edit your photos, research new locations, or experiment with indoor lighting and composition'
@@ -2971,7 +2971,7 @@ export const activityTypes: ActivityType[] = [
 
   poorConditions: [
     'precipitation>0',      // slippery & unsafe
-    'windSpeed>20',         // disruptive to play
+    'windSpeed>35',         // very disruptive to play (was 20)
     'temperature<5',        // too cold for comfort
     'temperature>35',       // risk of heat stress
     'visibility<2'          // fog/darkness
@@ -2979,20 +2979,20 @@ export const activityTypes: ActivityType[] = [
 
   fairConditions: [
     'temperature=5..12 or temperature=28..32',  // cool or hot but tolerable
-    'windSpeed=18..20',                         // breezy but still playable
+    'windSpeed=20..35',                         // breezy but still playable (expanded range)
     'visibility=2..5',                          // hazy or low light conditions
-    'cloudCover=70-100'                         // overcast but dry
+    'clouds=70..100'                            // overcast but dry (fixed from cloudCover)
   ],
 
   goodConditions: [
     'temperature=12..28',   // comfortable for most
-    'windSpeed<18',
+    'windSpeed<20',         // less windy (increased from 18)
     'visibility>5'
   ],
 
   perfectConditions: [
     'temperature=18..22',   // mild & comfortable
-    'windSpeed<10',
+    'windSpeed<12',         // calm conditions (increased from 10)
     'visibility>10'
   ],
 
@@ -3103,26 +3103,26 @@ export const activityTypes: ActivityType[] = [
 
   poorConditions: [
     'precipitation>0',            // rain makes it wet and unsafe
-    'windSpeed>20',               // gusts make balance difficult
-    'temperature<8',              // too cold for comfort
-    'temperature>30',             // oppressive heat
-    'humidity>85',                // muggy & sticky
+    'windSpeed>25',               // increased from 20 - strong gusts make balance difficult
+    'temperature<5',              // increased tolerance from 8
+    'temperature>32',             // increased from 30 - oppressive heat
+    'humidity>90',                // increased from 85 - really muggy & sticky
     'visibility<2'                // foggy, gloomy
   ],
 
   fairConditions: [
-    'temperature=8..12 or temperature=26..30', // slightly chilly or warm but manageable
-    'windSpeed=12..18',                        // breezy but tolerable
-    'humidity=75..85',                         // sticky but still possible
+    'temperature=5..10 or temperature=28..32', // wider range
+    'windSpeed=18..25',                        // adjusted range
+    'humidity=85..90',                         // narrower range - move 84% to good
     'cloudCover=70-100',                       // dull or overcast
     'visibility=2..5'                          // hazy conditions
   ],
 
   goodConditions: [
-    'temperature=12..26',
-    'windSpeed<12',
+    'temperature=10..28',         // extended range to include 22°C comfortably
+    'windSpeed<18',              // increased from 12 to include 9km/h comfortably  
     'cloudCover=0-70',
-    'humidity<75',
+    'humidity<85',               // 84% humidity should now be good!
     'visibility>5'
   ],
 
@@ -3381,27 +3381,29 @@ export const activityTypes: ActivityType[] = [
 
   poorConditions: [
     'precipitation>0',         // wet conditions ruin stillness
-    'windSpeed>20',            // gusty wind distracts and chills
-    'temperature<5',           // too cold to sit still comfortably
-    'temperature>30'           // heat stress and discomfort
+    'windSpeed>25',            // increased from 20 - strong gusts are distracting, but moderate wind is fine
+    'temperature<2',           // reduced from 5 - mildly cool is manageable with proper clothing
+    'temperature>32'           // increased from 30 - hot but not dangerous
   ],
 
   fairConditions: [
-    'temperature=5..10 or 25..30',  // cooler or hotter but tolerable
-    'windSpeed=15..20',             // steady breeze may distract
+    'temperature=2..8 or 28..32',   // wider acceptable range
+    'windSpeed=20..25',             // moved threshold up
     'cloudCover=80-100',            // dull, but not oppressive
-    'humidity=70..85',              // sticky but manageable
+    'humidity=85..95',              // moved humidity threshold up - 84% should be fine
     'visibility=2..5'               // hazy or misty, calming to some
   ],
 
   goodConditions: [
-    'temperature=15..25',           // pleasant range
-    'windSpeed<15'
+    'temperature=12..28',           // extended pleasant range
+    'windSpeed<20',                 // increased from 15 - light breeze can be pleasant
+    'humidity<85'                   // added humidity condition for good weather
   ],
 
   perfectConditions: [
-    'temperature=18..22',           // ideal balance
-    'windSpeed<10'
+    'temperature=18..24',           // slightly wider ideal balance
+    'windSpeed<10',
+    'humidity<70'                   // perfect conditions have low humidity
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10]

@@ -58,7 +58,7 @@ mountain_biking: {
     perfect: "Hero dirt and clear skies—shred it!. {reasons}",
     good: "Good grip, good flow—trail calls. {reasons}",
     fair: "A bit less than optimal but still rideable—grab your bike. {reasons}",
-    poor: "Unless you love mud baths and washouts, maybe wait this one. {reasons}"
+    poor: "Trail conditions aren't suitable—better to wait for better weather. {reasons}"
   }
 },
 kayaking: {
@@ -82,7 +82,7 @@ trail_running: {
     perfect: "Trails are at their best—time to hit the dirt. {reasons}",
     good: "Solid trail conditions for exploring. {reasons}",
     fair: "A bit rough but still passable—time to lace up. {reasons}",
-    poor: "Roots, rocks, and weather say pause—maybe rest this one. {reasons}"
+    poor: "Trail conditions aren't ideal—maybe stick to roads today. {reasons}"
   }
 },
 skateboarding: {
@@ -90,7 +90,7 @@ skateboarding: {
     perfect: "Concrete's dry, sky's clear—get out and shred. {reasons}",
     good: "Decent surface—time for a quick session. {reasons}",
     fair: "A bit rough but still rideable—grab your board. {reasons}",
-    poor: "Slippery decks and sketchy weather—better keep the grip tape dry. {reasons}"
+    poor: "Conditions aren't right for skating—better to wait for better weather. {reasons}"
   }
 },
 rollerblading: {
@@ -219,6 +219,7 @@ picnicking: {
   templates: {
     perfect: "Blankets down and baskets out—it's a perfect picnic day. {reasons}",
     good: "Fresh air and fine skies—ideal for alfresco snacks. {reasons}",
+    fair: "Conditions are decent for a picnic—just bring a backup plan. {reasons}",
     poor: "Breezy or wet—picnic indoors and save the park for next time. {reasons}"
   }
 },
@@ -266,8 +267,8 @@ photography: {
   templates: {
     perfect: "Light's magic, skies are stunning—get out and capture the moment. {reasons}",
     good: "Grab your camera—decent light and some inspiration out there. {reasons}",
-    fair: "A bit cloudy or drizzlybut still some shots to be had—time to explore. {reasons}",
-    poor: "Clouds or drizzle blur the scene—save your shots for another day. {reasons}"
+    fair: "Conditions are manageable for photography—still opportunities to explore. {reasons}",
+    poor: "Challenging conditions for photography—might be worth waiting for better light. {reasons}"
   }
 },
   // Add any additional outdoor activities from emojiMap here
@@ -301,7 +302,7 @@ coarse_fishing: {
     perfect: "Bite alarms ready—ideal weather to chase that PB. {reasons}",
     good: "Solid conditions to settle in and enjoy your session. {reasons}",
     fair: "A bit slow but still some bites to be had—time to cast a line. {reasons}",
-    poor: "Mud and wind may hamper fishing—consider holding off and prepping gear. {reasons}"
+    poor: "Tough conditions for fishing today—fish won't be feeding actively. {reasons}"
   }
 },
 sea_fishing_shore: {
@@ -624,8 +625,73 @@ beach_volleyball: {
       poor: "Rough seas or murky water—best to stay dry and try tomorrow. {reasons}"
     }
   },
-
-
+  sailing_inland: {
+    templates: {
+      perfect: "Perfect lake conditions—ideal breeze and calm waters for inland sailing. {reasons}",
+      good: "Good winds on sheltered waters—great for a relaxed sail or skills practice. {reasons}",
+      fair: "Conditions are decent enough for lake sailing—time to hoist the sails. {reasons}",
+      poor: "Wind conditions aren't suitable for sailing—best to keep the boat on dry land. {reasons}"
+    },
+    omitReasons: ['month']
+  },
+  windsurfing_inland: {
+    templates: {
+      perfect: "Prime lake conditions for windsurfing—steady winds and flat water. {reasons}",
+      good: "Good wind strength and calm waters—ideal for inland windsurfing. {reasons}",
+      fair: "Conditions are adequate for lake windsurfing—grab your gear. {reasons}",
+      poor: "Wind conditions aren't right for windsurfing—maybe work on rigging instead. {reasons}"
+    },
+    omitReasons: ['month']
+  },
+  sup_sea: {
+    templates: {
+      perfect: "Calm seas and perfect conditions for stand-up paddleboarding. {reasons}",
+      good: "Good conditions for SUP—manageable waves and steady weather. {reasons}",
+      fair: "Conditions are decent for coastal paddleboarding—stay close to shore. {reasons}",
+      poor: "Sea conditions aren't safe for SUP—stick to sheltered waters or skip today. {reasons}"
+    }
+  },
+  sea_kayaking: {
+    templates: {
+      perfect: "Tides are calling—prime paddling conditions ahead. {reasons}",
+      good: "Grab your paddle, the sea's welcoming. {reasons}",
+      fair: "Conditions are adequate for a coastal paddle. {reasons}",
+      poor: "Sea conditions aren't ideal for kayaking—stay closer to shore or skip today. {reasons}"
+    }
+  },
+  basketball_outdoor: {
+    templates: {
+      perfect: "Court's dry and the weather's perfect—time to shoot some hoops. {reasons}",
+      good: "Solid conditions for a game—grab the ball and let's play. {reasons}",
+      fair: "Bit breezy or cloudy but still good for a pickup game. {reasons}",
+      poor: "Wet court or harsh conditions—better to hit the indoor courts today. {reasons}"
+    }
+  },
+  outdoor_gardening: {
+    templates: {
+      perfect: "Soil's ready and the sun's shining—perfect day to tend the garden. {reasons}",
+      good: "Good conditions for planting, weeding, or harvesting. {reasons}",
+      fair: "Bit muddy or overcast but still manageable—time to get your hands dirty. {reasons}",
+      poor: "Too wet or harsh for gardening—maybe plan what to plant next instead. {reasons}"
+    }
+  },
+  beekeeping: {
+    templates: {
+      perfect: "Calm, warm weather—ideal day to visit the hives and check on your bees. {reasons}",
+      good: "Good conditions for hive inspection—bees should be active and manageable. {reasons}",
+      fair: "Weather's okay but bees might be a bit cranky—suit up and be careful. {reasons}",
+      poor: "Too windy, cold, or wet—bees won't be happy, better to leave them be today. {reasons}"
+    }
+  },
+  curling: {
+    templates: {
+      perfect: "Ice is keen and conditions are spot-on—perfect for sweeping up a win. {reasons}",
+      good: "Solid ice conditions—grab your broom and slide into action. {reasons}",
+      fair: "Ice is a bit rough but still playable—mind your delivery. {reasons}",
+      poor: "Ice conditions aren't ideal—maybe watch the pros instead. {reasons}"
+    },
+    omitReasons: ['month']
+  },
 };
 
 
