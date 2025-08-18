@@ -1,0 +1,318 @@
+# services/astro_highlights/agent_setup_canaries.yml
+# Setup instructions for astronomy canaries system
+
+tasks:
+  - name: sanity_check_repo
+    description: Verify repo layout and create missing folders
+    steps:
+      - create_dir: "services/astro_highlights/out"
+      - create_dir: ".github/workflows"
+      - verify_file: "services/astro_highlights/astro_highlights/astro_highlights/__init__.py"
+      - verify_file: "services/astro_highlights/astro_highlights/astro_highlights/build_highlights.py"
+
+  - name: ensure_virtualenv_and_install
+    description: Create venv (if needed) and install package editable
+    vars:
+      venv: "services/astro_highlights/astro_highlights/.venv"
+      pkg_dir: "services/astro_highlights/astro_highlights"
+    steps:
+      - run: "cd {{pkg_dir}} && python3 -m venv {{venv}} || true"
+      - run: "cd {{pkg_dir}} && {{venv}}/bin/pip install --upgrade pip"
+      - run: "cd {{pkg_dir}} && {{venv}}/bin/pip install -e ."
+
+  - name: write_local_canary_yaml
+    description: Create/overwrite the local canary runner config used by agents/CI
+    vars:
+      local_canary_yaml: "services/astro_highlights/astro_canaries.yml"
+      venv: "services/astro_highlights/astro_highlights/.venv"
+      pkg_dir: "services/astro_highlights/astro_highlights"
+      out_dir: "services/astro_highlights/out"
+      days: 7
+      start_date: null
+    write_file:
+      path: "{{local_canary_yaml}}"
+      content: |
+        # services/astro_highlights/astro_canaries.yml
+        vars:
+          venv: "{{venv}}"
+          pkg_dir: "{{pkg_dir}}"
+          out_dir: "{{out_dir}}"
+          days: {{days}}
+          start_date: {{start_date}}
+
+        canaries:
+          europe:
+            - { name: "Tromso_NO",       lat: 69.6,  lon: 18.9 }
+            - { name: "Berlin_DE",       lat: 52.5,  lon: 13.4 }
+            - { name: "Rome_IT",         lat: 41.9,  lon: 12.5 }
+            - { name: "Dublin_IE",       lat: 53.3,  lon: -6.3 }
+            - { name: "Bucharest_RO",    lat: 44.4,  lon: 26.1 }
+            - { name: "Madrid_ES",       lat: 40.4,  lon: -3.7 }
+
+          north_america:
+            - { name: "Anchorage_AK_US", lat: 61.2,  lon: -149.9 }
+            - { name: "NYC_US",          lat: 40.7,  lon: -74.0 }
+            - { name: "Denver_CO_US",    lat: 39.7,  lon: -105.0 }
+            - { name: "LosAngeles_CA_US",lat: 34.0,  lon: -118.2 }
+            - { name: "MexicoCity_MX",   lat: 19.4,  lon: -99.1 }
+            - { name: "Toronto_CA",      lat: 43.7,  lon: -79.4 }
+
+          south_america:
+            - { name: "Bogota_CO",       lat: 4.7,   lon: -74.1 }
+            - { name: "SaoPaulo_BR",     lat: -23.5, lon: -46.6 }
+            - { name: "BuenosAires_AR",  lat: -34.6, lon: -58.4 }
+
+          africa:
+            - { name: "Cairo_EG",        lat: 30.0,  lon: 31.2 }
+            - { name: "Nairobi_KE",      lat: -1.3,  lon: 36.8 }
+            - { name: "CapeTown_ZA",     lat: -33.9, lon: 18.4 }
+
+          asia:
+            - { name: "Delhi_IN",        lat: 28.6,  lon: 77.2 }
+            - { name: "Bangkok_TH",      lat: 13.7,  lon: 100.5 }
+            - { name: "Tokyo_JP",        lat: 35.7,  lon: 139.7 }
+            - { name: "Beijing_CN",      lat: 39.9,  lon: 116.4 }
+            - { name: "Jakarta_ID",      lat: -6.2,  lon: 106.8 }
+
+          oceania:
+            - { name: "Sydney_AU",       lat: -33.9, lon: 151.2 }
+            - { name: "Perth_AU",        lat: -31.9, lon: 115.9 }
+            - { name: "Auckland_NZ",     lat: -36.9, lon: 174.8 }
+
+          caribbean:
+            - { name: "Havana_CU",       lat: 23.1,  lon: -82.4 }
+            - { name: "SanJuan_PR_US",   lat: 18.5,  lon: -66.1 }
+
+          pacific_islands:
+            - { name: "Honolulu_HI_US",  lat: 21.3,  lon: -157.8 }
+            - { name: "Suva_FJ",         lat: -18.1, lon: 178.4 }
+
+          antarctica:
+            - { name: "McMurdo_AQ",      lat: -77.8, lon: 166.7 }
+
+  - name: write_local_runner_script
+    description: Small local runner that reads astro_canaries.yml and builds everything
+    vars:
+      pkg_dir: "services/astro_highlights/astro_highlights"
+    write_file:
+      path: "{{pkg_dir}}/run_canaries.py"
+      content: |
+        import os, json, subprocess, shlex, datetime, sys, yaml
+        CFG = "services/astro_highlights/astro_canaries.yml"
+        with open(CFG, "r") as f:
+            data = yaml.safe_load(f)
+        venv = data["vars"]["venv"]
+        pkg_dir = data["vars"]["pkg_dir"]
+        out_dir = data["vars"]["out_dir"]
+        days = int(data["vars"].get("days", 7))
+        start_date = data["vars"].get("start_date") or None
+        date_arg = ["--date", start_date] if start_date else []
+        py = os.path.join(venv, "bin", "python")
+        cmd_base = [py, "-m", "astro_highlights.build_highlights", "--days", str(days)]
+        os.makedirs(out_dir, exist_ok=True)
+        manifest = []
+        today = datetime.date.today().isoformat()
+
+        canaries = data.get("canaries") or {}
+        for region, items in canaries.items():
+            for it in items:
+                name = it["name"]; lat = it["lat"]; lon = it["lon"]
+                out_file = os.path.join(out_dir, f"highlights_{region}_{name}.json")
+                cmd = cmd_base + ["--lat", str(lat), "--lon", str(lon), "--out", out_file] + date_arg
+                print("→", " ".join(shlex.quote(x) for x in cmd))
+                subprocess.check_call(cmd, cwd=pkg_dir)
+                manifest.append({"region": region, "name": name, "lat": lat, "lon": lon, "out": out_file, "built_at": today})
+
+        with open(os.path.join(out_dir, "index_canaries.json"), "w") as f:
+            json.dump({"items": manifest}, f, indent=2)
+        print("✓ Wrote", os.path.join(out_dir, "index_canaries.json"))
+
+  - name: write_github_actions_workflow
+    description: Add nightly GitHub Actions workflow to build and upload artefacts
+    write_file:
+      path: ".github/workflows/astro_canaries.yml"
+      content: |
+        name: Build global astronomy canaries
+        
+        on:
+          workflow_dispatch:
+          schedule:
+            - cron: '0 2 * * *'  # nightly at 02:00 UTC
+        
+        jobs:
+          build-canaries:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@v4
+              
+              - name: Set up Python
+                uses: actions/setup-python@v4
+                with:
+                  python-version: '3.11'
+              
+              - name: Install dependencies
+                run: |
+                  cd services/astro_highlights/astro_highlights
+                  python -m venv .venv
+                  .venv/bin/pip install --upgrade pip
+                  .venv/bin/pip install -e .
+              
+              - name: Build canaries
+                run: |
+                  python services/astro_highlights/astro_highlights/run_canaries.py
+              
+              - name: Upload artifacts
+                uses: actions/upload-artifact@v3
+                with:
+                  name: astronomy-canaries
+                  path: services/astro_highlights/out/
+                  retention-days: 30
+
+  - name: add_npm_script_optional
+    description: Add npm script 'astro:canaries' if package.json exists
+    conditional: "file_exists('package.json')"
+    script: |
+      if [ -f "package.json" ]; then
+        if ! grep -q '"astro:canaries"' package.json; then
+          # Add script to package.json
+          sed -i.bak '/"scripts": {/a\
+          \    "astro:canaries": "python services/astro_highlights/astro_highlights/run_canaries.py",' package.json
+          echo "✓ Added astro:canaries script to package.json"
+        else
+          echo "✓ astro:canaries script already exists in package.json"
+        fi
+      else
+        echo "ℹ No package.json found, skipping npm script addition"
+      fi
+
+  - name: write_docs
+    description: Write README with local run, outputs, and UI guidance
+    write_file:
+      path: "services/astro_highlights/README_canaries.md"
+      content: |
+        # Astronomy Canaries System
+        
+        This system generates astronomy highlights for representative locations across all inhabited landmasses.
+        
+        ## Quick Start
+        
+        ### Local Development
+        ```bash
+        # Run all canaries
+        python services/astro_highlights/astro_highlights/run_canaries.py
+        
+        # Or via npm script (if available)
+        npm run astro:canaries
+        ```
+        
+        ### Configuration
+        
+        Canary locations are configured in `services/astro_highlights/astro_canaries.yml`:
+        - 30+ locations across all continents
+        - From Arctic (Tromsø) to Antarctic (McMurdo)
+        - Major cities and representative coordinates
+        
+        ### Outputs
+        
+        The system generates:
+        - `services/astro_highlights/out/highlights_{region}_{location}.json` - Individual location highlights
+        - `services/astro_highlights/out/index_canaries.json` - Master manifest for UI consumption
+        
+        ### UI Integration
+        
+        The UI should:
+        1. Read `index_canaries.json` to get all available locations
+        2. Find the nearest canary to the user's location
+        3. Load that canary's highlights JSON
+        4. Display astronomy highlights in stargazing cards:
+           - "Look to the east tonight around midnight to see the Perseids"
+           - Moon phase and visibility information
+           - Planet visibility and conjunctions
+           - Eclipse notifications
+        
+        ### Data Sources
+        
+        - **Meteor Showers**: International Meteor Organization (IMO)
+        - **Eclipses**: NASA/Goddard Space Flight Center catalogues
+        - **Ephemerides**: JPL DE440s via Skyfield
+        - **Calculations**: Custom astronomy computations
+        
+        ### CI/CD
+        
+        GitHub Actions workflow (`.github/workflows/astro_canaries.yml`):
+        - Runs nightly at 02:00 UTC
+        - Builds all canaries with fresh data
+        - Uploads artifacts for UI consumption
+        - Manual trigger via workflow_dispatch
+        
+        ### Local Testing
+        
+        ```bash
+        # Test with specific location
+        cd services/astro_highlights/astro_highlights
+        .venv/bin/python -m astro_highlights.build_highlights \
+          --lat 53.3 --lon -6.3 --days 7 \
+          --out test_dublin.json
+        ```
+        
+        ### Output Format
+        
+        Each highlights JSON contains:
+        ```json
+        {
+          "location": {"name": "Dublin_IE", "lat": 53.3, "lon": -6.3},
+          "generated_at": "2025-08-18T12:00:00Z",
+          "highlights": [
+            {
+              "type": "meteor_shower",
+              "name": "Perseids",
+              "peak_date": "2025-08-12",
+              "description": "Look northeast after midnight",
+              "visibility": "excellent"
+            }
+          ]
+        }
+        ```
+
+  - name: local_smoke_test
+    description: Build two quick locations (Asturias & Dublin) and verify files exist
+    script: |
+      cd services/astro_highlights/astro_highlights
+      
+      # Test Dublin
+      .venv/bin/python -m astro_highlights.build_highlights \
+        --lat 53.3 --lon -6.3 --days 7 \
+        --out ../out/highlights_smoke_Dublin_IE.json
+      
+      # Test Asturias (approximate coordinates)
+      .venv/bin/python -m astro_highlights.build_highlights \
+        --lat 43.3 --lon -5.8 --days 7 \
+        --out ../out/highlights_smoke_Asturias_ES.json
+      
+      # Verify files exist
+      if [ -f "../out/highlights_smoke_Dublin_IE.json" ] && [ -f "../out/highlights_smoke_Asturias_ES.json" ]; then
+        echo "✓ Smoke test passed - both test files created"
+      else
+        echo "✗ Smoke test failed - missing output files"
+        exit 1
+      fi
+
+  - name: run_full_canaries_locally
+    description: Build all configured canaries and write index manifest
+    script: |
+      python services/astro_highlights/astro_highlights/run_canaries.py
+      if [ -f "services/astro_highlights/out/index_canaries.json" ]; then
+        echo "✓ Full canaries build completed successfully"
+        echo "Generated $(jq '.items | length' services/astro_highlights/out/index_canaries.json) canary files"
+      else
+        echo "✗ Full canaries build failed - no index manifest created"
+        exit 1
+      fi
+
+  - name: optional_git_commit
+    description: Stage changes (commit optional as commented line)
+    script: |
+      git add services/astro_highlights/
+      git add .github/workflows/astro_canaries.yml
+      echo "✓ Staged all astronomy canaries changes"
+      echo "# To commit: git commit -m 'Add astronomy canaries system'"

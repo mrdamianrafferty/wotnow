@@ -1,0 +1,357 @@
+version: 1
+name: astronomy-highlights-setup
+description: >
+  Set up, verify, and integrate the astro_highlights Python package to produce
+  nightly astronomy highlights and surface them in the WotNow Next.js app.
+  Start with fixed coordinates; then add dynamic lat/lon inputs and document
+  how star-gazing cards consume the data.
+
+# ---------------------------
+# Global variables & defaults
+# ---------------------------
+vars:
+  PROJECT_ROOT: "/Users/damianrafferty/Projects/WotNow"
+  ASTRO_SVC_DIR: "{{PROJECT_ROOT}}/services/astro_highlights/astro_highlights"
+  VENV_DIR: "{{ASTRO_SVC_DIR}}/.venv"
+  PYTHON: "{{VENV_DIR}}/bin/python"
+  PIP: "{{VENV_DIR}}/bin/pip"
+  PACKAGE_IMPORT: "astro_highlights"
+  OUTPUT_JSON: "{{ASTRO_SVC_DIR}}/highlights.json"
+  FIXED_COORDS:
+    lat: 43.55
+    lon: -5.65
+  DAYS_DEFAULT: 7
+  DATE_UTC: "$(date -u +%F)"  # evaluated by shell at runtime
+  NEXT_APP_DIR: "{{PROJECT_ROOT}}"
+  TS_LIB_PATH: "{{PROJECT_ROOT}}/services/web/lib/astro/highlights.ts"
+  API_ROUTE_PATH: "{{PROJECT_ROOT}}/app/api/astro/highlights/route.ts"
+  PACKAGE_JSON: "{{PROJECT_ROOT}}/package.json"
+
+# -----------------------------------------------------
+# Phase 0 — Discovery: find files, paths, entry points
+# -----------------------------------------------------
+phase_discovery:
+  steps:
+    - name: check-directories
+      run:
+        - "test -d '{{PROJECT_ROOT}}'"
+        - "test -d '{{ASTRO_SVC_DIR}}'"
+    - name: list-python-package
+      run:
+        - "ls -la {{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}} || true"
+        - "ls -la {{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/build_highlights.py || true"
+        - "ls -la {{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/compute.py || true"
+    - name: locate-output-json
+      run:
+        - "ls -la {{OUTPUT_JSON}} || true"
+    - name: show-venv
+      run:
+        - "ls -la {{VENV_DIR}} || true"
+        - "test -x '{{PYTHON}}' && echo 'PYTHON OK' || echo 'PYTHON MISSING'"
+
+# -------------------------------------------------------------------
+# Phase 1 — Environment: ensure venv, deps, and importability are OK
+# -------------------------------------------------------------------
+phase_environment:
+  steps:
+    - name: create-venv-if-missing
+      run:
+        - "test -d '{{VENV_DIR}}' || python3 -m venv '{{VENV_DIR}}'"
+    - name: upgrade-pip
+      run:
+        - "'{{PYTHON}}' -m pip install --upgrade pip"
+    - name: install-runtime-deps
+      comment: "Skyfield + JPL ephemeris reader and friends"
+      run:
+        - "'{{PIP}}' install skyfield jplephem numpy python-dateutil pytz sgp4"
+    - name: import-check
+      run:
+        - "'{{PYTHON}}' - <<'PY'\nimport importlib; import sys\nm=importlib.import_module('{{PACKAGE_IMPORT}}')\nprint('OK import', m.__file__)\nPY"
+    - name: byte-compile
+      run:
+        - "'{{PYTHON}}' -m py_compile '{{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/build_highlights.py'"
+        - "'{{PYTHON}}' -m py_compile '{{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/compute.py'"
+
+# --------------------------------------------------------------------------------------
+# Phase 2 — Code health check: API compatibility & common pitfalls (British commentary)
+# --------------------------------------------------------------------------------------
+phase_health_check:
+  checks:
+    - name: avoid-almanac-NIGHT
+      grep:
+        file: "{{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/compute.py"
+        must_not_contain: "almanac.NIGHT"
+      guidance: >
+        Skyfield ≥1.48 removed almanac.NIGHT. If referenced, replace logic with:
+        “astronomical dark” detected via Sun altitude < −18° (sample or event pairs).
+    - name: timezone-awareness
+      grep:
+        file: "{{ASTRO_SVC_DIR}}/{{PACKAGE_IMPORT}}/build_highlights.py"
+        must_contain:
+          - "replace(\"Z\", \"+00:00\")"
+          - "tzinfo=timezone.utc"
+      guidance: Ensure offset-aware datetimes; never compare naive vs aware.
+    - name: output-shape
+      expect_json_schema:
+        file: "{{OUTPUT_JSON}}"
+        optional: true
+        schema:
+          nights: "array"
+          eclipses: "array?"
+      guidance: >
+        If file missing (first run), ignore. Later we’ll validate exact keys.
+
+# -----------------------------------------------------------------------
+# Phase 3 — Fixed coordinates: produce and validate highlights JSON (OK)
+# -----------------------------------------------------------------------
+phase_fixed_coords:
+  steps:
+    - name: run-builder-fixed
+      run:
+        - >
+          cd '{{ASTRO_SVC_DIR}}' &&
+          '{{PYTHON}}' -m {{PACKAGE_IMPORT}}.build_highlights
+          --lat {{FIXED_COORDS.lat}} --lon {{FIXED_COORDS.lon}}
+          --date {{DATE_UTC}} --days {{DAYS_DEFAULT}}
+          --out '{{OUTPUT_JSON}}'
+    - name: validate-json-shape
+      run:
+        - "'{{PYTHON}}' - <<'PY'\nimport json,sys\np='{{OUTPUT_JSON}}'\nd=json.load(open(p))\nassert 'nights' in d and isinstance(d['nights'], list)\nfor n in d['nights']:\n  assert 'date' in n\n  s=n.get('sun',{})\n  m=n.get('moon',{})\n  # keys may be None depending on latitude/season; that’s acceptable\nprint('OK nights:', len(d['nights']))\nprint('eclipses:', len(d.get('eclipses',[])))\nPY"
+    - name: sample-human-readable
+      run:
+        - "'{{PYTHON}}' - <<'PY'\nimport json\nfrom datetime import datetime\np='{{OUTPUT_JSON}}'\nd=json.load(open(p))\nfor n in d['nights'][:3]:\n  sun=n.get('sun',{})\n  moon=n.get('moon',{})\n  print(n['date'], '| dark:', sun.get('astro_dark_start'),'→',sun.get('astro_dark_end'), '| moon:', moon.get('phase'), moon.get('illumination'))\nPY"
+  acceptance:
+    - "Exit codes are zero."
+    - "highlights.json exists and contains nights[]."
+    - "At least one of astro_dark_start/astro_dark_end or moon info present per night (seasonal caveat accepted)."
+
+# ----------------------------------------------------------------------------------------
+# Phase 4 — Next.js wiring (server helper, optional API route, prebuild script, idempotent)
+# ----------------------------------------------------------------------------------------
+phase_next_integration:
+  steps:
+    - name: add-ts-server-helper
+      write_file:
+        path: "{{TS_LIB_PATH}}"
+        contents: |
+          import fs from 'node:fs/promises';
+          import path from 'node:path';
+
+          export type AstroNight = {
+            date: string;
+            sun?: { astro_dark_start?: string; astro_dark_end?: string };
+            moon?: { phase?: string; illumination?: number; events?: { time: string; event: 'rise'|'set' }[] };
+            dark_sky?: number | null;
+            cloud_score?: number | null;
+          };
+          export type AstroHighlights = { nights: AstroNight[]; eclipses?: any[] };
+
+          const HIGHLIGHTS_PATH = path.join(
+            process.cwd(),
+            'services','astro_highlights','astro_highlights','highlights.json'
+          );
+
+          export async function getAstroHighlights(): Promise<AstroHighlights> {
+            const raw = await fs.readFile(HIGHLIGHTS_PATH, 'utf-8');
+            return JSON.parse(raw);
+          }
+    - name: optional-api-route
+      write_file:
+        path: "{{API_ROUTE_PATH}}"
+        contents: |
+          import { NextResponse } from 'next/server';
+          import { getAstroHighlights } from '@/services/web/lib/astro/highlights';
+
+          export const dynamic = 'force-dynamic';
+          export async function GET() {
+            try {
+              const data = await getAstroHighlights();
+              return NextResponse.json(data);
+            } catch {
+              return NextResponse.json({ error: 'astro highlights not available' }, { status: 503 });
+            }
+          }
+    - name: add-prebuild-script
+      patch_json:
+        file: "{{PACKAGE_JSON}}"
+        merge:
+          scripts:
+            "astro:build": "cd services/astro_highlights/astro_highlights && . .venv/bin/activate && {{PYTHON}} -m astro_highlights.build_highlights --lat {{FIXED_COORDS.lat}} --lon {{FIXED_COORDS.lon}} --date $(date -u +%F) --days {{DAYS_DEFAULT}} --out highlights.json"
+            "predev": "npm run astro:build"
+            "prestart": "npm run astro:build"
+  acceptance:
+    - "TypeScript helper compiles (no type errors)."
+    - "API route (if created) returns JSON in dev: GET /api/astro/highlights → 200."
+
+# ------------------------------------------------------------------------------------------
+# Phase 5 — Dynamic coordinates: parameterise generation & endpoint for lat/lon (safe, rate-limited)
+# ------------------------------------------------------------------------------------------
+phase_dynamic_coords:
+  steps:
+    - name: add-build-endpoint
+      write_file:
+        path: "{{PROJECT_ROOT}}/app/api/astro/build/route.ts"
+        contents: |
+          import { NextResponse } from 'next/server';
+          import { spawn } from 'node:child_process';
+          import path from 'node:path';
+
+          // WARNING: gate this in production (auth + rate-limit).
+          export const dynamic = 'force-dynamic';
+
+          function sh(cmd: string, args: string[], cwd: string): Promise<{ code: number, stdout: string, stderr: string }> {
+            return new Promise((resolve) => {
+              const child = spawn(cmd, args, { cwd });
+              let stdout = '', stderr = '';
+              child.stdout.on('data', d => stdout += d.toString());
+              child.stderr.on('data', d => stderr += d.toString());
+              child.on('close', code => resolve({ code: code ?? 0, stdout, stderr }));
+            });
+          }
+
+          export async function POST(req: Request) {
+            const { lat, lon, days = 7, date = new Date().toISOString().slice(0,10) } = await req.json();
+            if (typeof lat !== 'number' || typeof lon !== 'number') {
+              return NextResponse.json({ error: 'lat/lon must be numbers' }, { status: 400 });
+            }
+            const svc = path.join(process.cwd(), 'services','astro_highlights','astro_highlights');
+            const py = path.join(svc, '.venv','bin','python');
+            const out = path.join(svc, 'highlights.json');
+
+            const { code, stdout, stderr } = await sh(py, ['-m','astro_highlights.build_highlights',
+              '--lat', String(lat),
+              '--lon', String(lon),
+              '--date', String(date),
+              '--days', String(days),
+              '--out', out
+            ], svc);
+
+            if (code !== 0) {
+              console.error(stderr);
+              return NextResponse.json({ error: 'build failed', details: stderr }, { status: 500 });
+            }
+            return NextResponse.json({ ok: true, out: 'services/astro_highlights/astro_highlights/highlights.json' });
+          }
+    - name: test-dynamic-build
+      run:
+        - >
+          curl -s -X POST http://localhost:3000/api/astro/build
+          -H 'content-type: application/json'
+          --data '{"lat":51.5,"lon":-0.12,"days":3}' | tee /tmp/astro_build_resp.json
+  acceptance:
+    - "Endpoint returns { ok: true } and regenerates highlights.json."
+    - "Subsequent /api/astro/highlights shows updated nights[]."
+
+# ---------------------------------------------------------------------------------------------------
+# Phase 6 — Documentation: how star-gazing cards use it, units, and gotchas (written to repo)
+# ---------------------------------------------------------------------------------------------------
+phase_documentation:
+  steps:
+    - name: write-readme
+      write_file:
+        path: "{{ASTRO_SVC_DIR}}/README.md"
+        contents: |
+          # Astronomy Highlights (WotNow)
+
+          ## What this is
+          A tiny Python tool (Skyfield + JPL ephemerides) that produces JSON with:
+          - `nights[]`: nightly Sun/Moon info (astronomical darkness, moon rise/set, phase, illumination)
+          - `eclipses[]`: optional nearby eclipses if you provide catalogues
+
+          ## Inputs & units
+          - Coordinates: latitude/longitude in decimal degrees
+          - Dates: UTC calendar dates (YYYY-MM-DD)
+          - Times in JSON: ISO 8601 UTC (e.g. `2025-08-18T22:05:00Z`)
+          - Illumination: 0–1 fraction
+          - Moon phase: friendly label (e.g. “Waxing gibbous”)
+
+          ## How the WotNow app uses it
+          - Server helper reads `services/astro_highlights/astro_highlights/highlights.json`
+          - (Optional) API route exposes the JSON at `/api/astro/highlights`
+          - Star-gazing card shows tonight’s dark window and moon phase/illumination
+          - Future add-ons: `dark_sky` (Bortle/VIIRS), `cloud_score` (Open-Meteo)
+
+          ## Common gotchas
+          - Skyfield removed `almanac.NIGHT`; we compute astronomical dark (Sun alt < −18°)
+          - Keep datetimes **offset-aware**; never compare naive vs aware
+          - At high latitudes in summer/winter, there may be **no astronomical darkness**
+
+          ## Regeneration
+          - `npm run astro:build` runs a fixed-coords generation nightly (hooked to `predev`/`prestart`)
+          - Dynamic build: `POST /api/astro/build` with `{ lat, lon, days, date }`
+
+    - name: add-usage-snippet
+      write_file:
+        path: "{{PROJECT_ROOT}}/app/(cards)/astronomy/AstroHighlightsCard.tsx"
+        contents: |
+          import { getAstroHighlights } from '@/services/web/lib/astro/highlights';
+
+          export default async function AstroHighlightsCard() {
+            const { nights, eclipses } = await getAstroHighlights();
+            const n = nights?.[0];
+            return (
+              <section className="card">
+                <h3>Astronomy highlights</h3>
+                {!n ? <p>No data.</p> : (
+                  <ul>
+                    <li>Date: {n.date}</li>
+                    <li>Dark: {n.sun?.astro_dark_start} → {n.sun?.astro_dark_end}</li>
+                    <li>Moon: {n.moon?.phase} ({Math.round((n.moon?.illumination ?? 0)*100)}%)</li>
+                  </ul>
+                )}
+                {!!eclipses?.length && <p>Nearby eclipses: {eclipses.length}</p>}
+              </section>
+            );
+          }
+
+# -----------------------------------------------------------------------------------
+# Phase 7 — Optional enrichments: dark-sky, clouds, meteor showers, eclipses
+# -----------------------------------------------------------------------------------
+phase_enrichments_optional:
+  notes: >
+    These are optional; enable as needed. Each should be feature-flagged.
+
+  tasks:
+    - id: dark-sky-score
+      description: Sample Bortle/VIIRS raster once per location and store as `dark_sky` (0–10 best→worst)
+      acceptance:
+        - JSON includes `night.dark_sky` numbers
+    - id: cloud-score
+      description: Call Open-Meteo for cloud cover (%) and record a nightly “worst hour” or average as `cloud_score`
+      acceptance:
+        - JSON includes `night.cloud_score` in 0–100
+    - id: meteor-showers
+      description: Parse IMO calendar; annotate nights with peak and ZHR guidance
+      acceptance:
+        - Nights overlapping peaks include `meteor_shower: { name, peak_utc, zhr }`
+    - id: eclipse-catalogues
+      description: Accept CSV/JSON solar/lunar catalogues (GSFC) and filter by ±window days
+      acceptance:
+        - `eclipses[]` present and sorted ascending by time
+
+# ------------------------------
+# Final acceptance checklist
+# ------------------------------
+acceptance:
+  - "Fixed-coords build produces valid highlights.json with nights[]."
+  - "Next.js can read and render a card for tonight’s highlights."
+  - "Dynamic build endpoint regenerates JSON for arbitrary lat/lon."
+  - "Documentation explains inputs, units, limitations, and regeneration."
+  - "Optional enrichments (if enabled) appear in output and don’t break shape."
+
+# ------------------------------
+# Rollback & recovery
+# ------------------------------
+rollback:
+  - "If build fails: restore previous highlights.json from Git history."
+  - "If compute logic breaks: revert compute.py/build_highlights.py to last known good commit."
+  - "If API route misbehaves: remove /api/astro/build and rely on fixed nightly build."
+
+# ------------------------------
+# Safety & ops notes
+# ------------------------------
+safety:
+  - "Guard /api/astro/build behind authentication and rate limiting in production."
+  - "Do not run arbitrary shell from user input; only pass numeric lat/lon/days/date."
+  - "Cache JPL ephemerides on disk; avoid repeated network downloads at runtime."
+  - "Be tolerant of polar day/night (no astronomical darkness)."

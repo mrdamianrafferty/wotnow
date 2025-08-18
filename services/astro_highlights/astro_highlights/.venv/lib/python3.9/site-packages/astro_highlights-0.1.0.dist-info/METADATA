@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: astro_highlights
+Version: 0.1.0
+Summary: Astronomy highlights generator for WotNow
+Requires-Python: >=3.9
+License-File: LICENSE-ATTRIBUTION.txt
+Requires-Dist: skyfield>=1.49
+Requires-Dist: python-dateutil>=2.9.0
+Requires-Dist: pytz>=2024.1
+Requires-Dist: pyyaml>=6.0
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

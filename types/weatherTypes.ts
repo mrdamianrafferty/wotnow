@@ -38,12 +38,31 @@ export interface WeatherForecastDay {
   clouds?: number;
   humidity?: number;
   visibility?: number;
+  pressure?: number;
   
   // Marine-specific properties when available
   waterTemperature?: number;
   waveHeight?: number;
   swellHeight?: number;
   swellPeriod?: number;
+  
+  // Pollen data
+  pollen?: {
+    grass?: number;
+    tree?: number;
+    weed?: number;
+  };
+
+  // Air quality data
+  airQuality?: {
+    overall?: number;    // Overall AQI
+    pm2_5?: number;      // PM2.5 particulate matter
+    pm10?: number;       // PM10 particulate matter  
+    no2?: number;        // Nitrogen dioxide
+    o3?: number;         // Ozone
+    so2?: number;        // Sulfur dioxide
+    co?: number;         // Carbon monoxide
+  };
 
   marine?: MarineHour[];
 }

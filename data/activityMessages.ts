@@ -8,6 +8,236 @@ export type ActivityMessageConfig = {
   omitReasons?: string[];
 };
 
+export type CategoryDefaults = {
+  [category: string]: ActivityMessageConfig;
+};
+
+// Category-level default templates that serve as fallbacks when an activity lacks specific messaging
+export const categoryDefaults: CategoryDefaults = {
+  'Active Sports': {
+    templates: {
+      perfect: "Perfect conditions for getting active—ideal weather for sports and movement. {reasons}",
+      good: "Good conditions for an active session—grab your gear and get moving. {reasons}",
+      fair: "Conditions are decent enough for some activity—time to get the blood pumping. {reasons}",
+      poor: "Weather's not cooperating for outdoor sports today—maybe try an indoor alternative. {reasons}"
+    }
+  },
+  'Water Sports': {
+    templates: {
+      perfect: "Prime water conditions—perfect day to make a splash. {reasons}",
+      good: "Good conditions on the water—time to get wet and have some fun. {reasons}",
+      fair: "Water conditions are adequate—manageable for a session if you're keen. {reasons}",
+      poor: "Water conditions aren't ideal today—best to stay dry and wait for better conditions. {reasons}"
+    }
+  },
+  'Winter Sports': {
+    templates: {
+      perfect: "Winter paradise—ideal conditions for snow and ice sports. {reasons}",
+      good: "Solid winter conditions—great weather for cold-weather activities. {reasons}",
+      fair: "Conditions are decent for winter sports—bundle up and enjoy. {reasons}",
+      poor: "Winter conditions aren't right today—maybe warm up indoors instead. {reasons}"
+    }
+  },
+  'Team Sports': {
+    templates: {
+      perfect: "Perfect team sport weather—ideal conditions to play with mates. {reasons}",
+      good: "Good conditions for team sports—gather the squad and get playing. {reasons}",
+      fair: "Conditions are playable—not perfect but still worth a game. {reasons}",
+      poor: "Weather's not cooperating for team sports—maybe practice indoors or watch the highlights. {reasons}"
+    }
+  },
+  'Outdoor Activities': {
+    templates: {
+      perfect: "Beautiful day to be outside—perfect conditions for outdoor adventures. {reasons}",
+      good: "Great weather for outdoor activities—time to step outside and explore. {reasons}",
+      fair: "Conditions are decent for outdoor pursuits—worth venturing out. {reasons}",
+      poor: "Weather's not ideal for outdoor activities—maybe find something cozy indoors. {reasons}"
+    }
+  },
+  'Fitness & Wellness': {
+    templates: {
+      perfect: "Ideal conditions for wellness activities—perfect weather to focus on your health. {reasons}",
+      good: "Good conditions for fitness and wellness—time to prioritize your well-being. {reasons}",
+      fair: "Conditions are manageable for wellness activities—still worth getting some movement in. {reasons}",
+      poor: "Weather might impact your wellness routine—consider indoor alternatives. {reasons}"
+    }
+  },
+  'Indoor Sports': {
+    templates: {
+      perfect: "Perfect day for indoor sports—enjoy the climate-controlled comfort. {reasons}",
+      good: "Good conditions for indoor activities—great weather to stay active inside. {reasons}",
+      fair: "Decent weather for indoor sports—reliable conditions regardless of what's outside. {reasons}",
+      poor: "Indoor sports are your best bet today—weather's not cooperating outdoors. {reasons}"
+    }
+  }
+};
+
+// Activity to category mapping for message fallbacks
+export const activityCategories: { [activityId: string]: string } = {
+  // Active Sports
+  'running': 'Active Sports',
+  'trail_running': 'Active Sports',
+  'cycling': 'Active Sports',
+  'road_cycling': 'Active Sports',
+  'gravel_biking': 'Active Sports',
+  'mountain_biking': 'Active Sports',
+  'hiking': 'Active Sports',
+  'rock_climbing': 'Active Sports',
+  'skateboarding': 'Active Sports',
+  'rollerblading': 'Active Sports',
+  'orienteering': 'Active Sports',
+  'archery': 'Active Sports',
+  'riding_motorbike': 'Active Sports',
+  
+  // Water Sports
+  'surfing': 'Water Sports',
+  'sailing': 'Water Sports',
+  'sailing_inland': 'Water Sports',
+  'kayaking': 'Water Sports',
+  'sea_kayaking': 'Water Sports',
+  'canoeing': 'Water Sports',
+  'stand_up_paddleboarding': 'Water Sports',
+  'sup_sea': 'Water Sports',
+  'scuba_diving': 'Water Sports',
+  'snorkeling': 'Water Sports',
+  'snorkelling': 'Water Sports',
+  'sea_swimming': 'Water Sports',
+  'wild_swimming': 'Water Sports',
+  'windsurfing': 'Water Sports',
+  'windsurfing_inland': 'Water Sports',
+  'kitesurfing': 'Water Sports',
+  'jetskiing': 'Water Sports',
+  'beach_volleyball': 'Water Sports',
+  
+  // Winter Sports
+  'skiing': 'Winter Sports',
+  'snowboarding': 'Winter Sports',
+  'cross_country_skiing': 'Winter Sports',
+  'ice_skating': 'Winter Sports',
+  'ice_fishing': 'Winter Sports',
+  'ice_hockey': 'Winter Sports',
+  'curling': 'Winter Sports',
+  
+  // Team Sports
+  'football_soccer': 'Team Sports',
+  'american_football': 'Team Sports',
+  'rugby': 'Team Sports',
+  'cricket': 'Team Sports',
+  'baseball': 'Team Sports',
+  'field_hockey': 'Team Sports',
+  'hockey': 'Team Sports',
+  'basketball_outdoor': 'Team Sports',
+  'netball': 'Team Sports',
+  'hurling_camogie': 'Team Sports',
+  'gaelic_football': 'Team Sports',
+  
+  // Outdoor Activities
+  'beach': 'Outdoor Activities',
+  'camping': 'Outdoor Activities',
+  'picnicking': 'Outdoor Activities',
+  'geocaching': 'Outdoor Activities',
+  'birdwatching': 'Outdoor Activities',
+  'foraging': 'Outdoor Activities',
+  'mushroom_hunting': 'Outdoor Activities',
+  'stargazing': 'Outdoor Activities',
+  'photography': 'Outdoor Activities',
+  'dog_walking': 'Outdoor Activities',
+  'urban_exploring': 'Outdoor Activities',
+  'bbq': 'Outdoor Activities',
+  'outdoor_reading': 'Outdoor Activities',
+  'outdoor_playground': 'Outdoor Activities',
+  'outdoor_chess': 'Outdoor Activities',
+  'outdoor_painting': 'Outdoor Activities',
+  'outdoor_music': 'Outdoor Activities',
+  'outdoor_gardening': 'Outdoor Activities',
+  'beekeeping': 'Outdoor Activities',
+  'rock_hopping': 'Outdoor Activities',
+  
+  // Fitness & Wellness
+  'outdoor_gym': 'Fitness & Wellness',
+  'outdoor_yoga': 'Fitness & Wellness',
+  'outdoor_meditation': 'Fitness & Wellness',
+  'tai_chi': 'Fitness & Wellness',
+  
+  // Fishing (subcategory of Outdoor Activities)
+  'fly_fishing_freshwater': 'Outdoor Activities',
+  'coarse_fishing': 'Outdoor Activities',
+  'sea_fishing_shore': 'Outdoor Activities',
+  'sea_fishing_boat': 'Outdoor Activities',
+  
+  // Individual Sports (subcategory of Active Sports)
+  'tennis': 'Active Sports',
+  'golf': 'Active Sports',
+  'frisbee': 'Active Sports',
+  'padel': 'Active Sports',
+  'pickleball': 'Active Sports',
+  'horse_riding': 'Active Sports',
+};
+
+// Activity aliases for spelling variations and normalization
+export const activityAliases: { [alias: string]: string } = {
+  // Common spelling variations
+  'snorkelling': 'snorkeling',
+  'jet_skiing': 'jetskiing',
+  'stand_up_paddle_boarding': 'stand_up_paddleboarding',
+  'sup': 'stand_up_paddleboarding',
+  'paddle_boarding': 'stand_up_paddleboarding',
+  'paddleboarding': 'stand_up_paddleboarding',
+  'gravel_cycling': 'gravel_biking',
+  'mountain_biking': 'mountain_biking',
+  'mtb': 'mountain_biking',
+  'road_biking': 'road_cycling',
+  'cycling_road': 'road_cycling',
+  
+  // Soccer/Football variations
+  'soccer': 'football_soccer',
+  'football': 'football_soccer',
+  
+  // American vs other variations
+  'american_football': 'american_football',
+  'gridiron': 'american_football',
+  
+  // Ice vs field hockey
+  'ice_hockey': 'ice_hockey',
+  'field_hockey': 'field_hockey',
+  
+  // Various fishing terms
+  'fishing': 'coarse_fishing', // default to coarse fishing
+  'angling': 'coarse_fishing',
+  'sea_angling': 'sea_fishing_shore',
+  'shore_fishing': 'sea_fishing_shore',
+  'boat_fishing': 'sea_fishing_boat',
+  'deep_sea_fishing': 'sea_fishing_boat',
+  
+  // Swimming variations
+  'swimming': 'sea_swimming', // default to sea swimming for coastal areas
+  'open_water_swimming': 'wild_swimming',
+  
+  // Other common variations
+  'bbq': 'bbq',
+  'barbecue': 'bbq',
+  'barbecuing': 'bbq',
+  'grilling': 'bbq',
+  'picnic': 'picnicking',
+  'birdwatching': 'birdwatching',
+  'bird_watching': 'birdwatching',
+  'birding': 'birdwatching',
+  'jogging': 'running',
+  'trekking': 'hiking',
+  'walking': 'hiking',
+  'rambling': 'hiking',
+};
+
+// Global fallback defaults for when neither activity nor category templates exist
+export const globalDefaults: ActivityMessageConfig = {
+  templates: {
+    perfect: "Perfect conditions—ideal weather for outdoor activities. {reasons}",
+    good: "Good conditions—great weather to get outside and enjoy. {reasons}",
+    fair: "Conditions are decent—still worth venturing out. {reasons}",
+    poor: "Weather's not cooperating today—maybe try indoor alternatives. {reasons}"
+  }
+};
+
 export const activityMessages: Record<string, ActivityMessageConfig> = {
   surfing: {
     templates: {
@@ -201,7 +431,7 @@ windsurfing: {
 },
 beach: {
   templates: {
-    perfect: "Sun's out, sea's calm—ultimate beach day. {reasons}",
+    perfect: "Perfect beach weather—grab your towel and head to the sand. {reasons}",
     good: "Pack your towel—good times await on the sand. {reasons}",
     fair: "A few clouds but still nice—enjoy the beach. {reasons}",
     poor: "High winds or stormy skies—best to plan the beach for another day. {reasons}"
@@ -282,7 +512,7 @@ photography: {
 },
 jetskiing: {
   templates: {
-    perfect: "Sun's out, water's smooth—prime time to rev up the jet ski. {reasons}",
+    perfect: "Ideal conditions—prime time to rev up the jet ski. {reasons}",
     good: "Decent conditions for a fun jet skiing session. {reasons}",
     fair: "A bit bumpy but still rideable if you absolutely insist. {reasons}",
     poor: "Choppy waves or gusty winds—best park the jet ski and ride another day. {reasons}"
@@ -382,7 +612,7 @@ ice_fishing: {
 },
   bbq: {
   templates: {
-    perfect: "Sunshine and gentle breeze—perfect BBQ weather. {reasons}",
+    perfect: "Great weather for firing up the grill—perfect BBQ conditions. {reasons}",
     good: "Good conditions to fire up the grill and enjoy. {reasons}",
     fair: "A bit 🤷 but still manageable—time to grill up some fun. {reasons}",
     poor: "Rain or wind might spoil the sizzle—better to wait on the BBQ. {reasons}"
@@ -701,13 +931,34 @@ export function getActivityMessage(
   category: 'perfect' | 'good' | 'fair' | 'poor',
   reasons: { key: string; value: any; label: string }[] = []
 ): string {
-  const config = activityMessages[activityId];
-  if (!config) return 'Enjoy!';
-
   const arr = Array.isArray(reasons) ? reasons : [];
   
-  // Special handling for surfing when rating is poor
-  if (activityId === 'surfing' && category === 'poor') {
+  // Step 1: Try to get activity-specific config
+  let config = activityMessages[activityId];
+  
+  // Step 2: If no activity-specific config, check for alias and try again
+  if (!config) {
+    const normalizedId = activityAliases[activityId];
+    if (normalizedId) {
+      config = activityMessages[normalizedId];
+    }
+  }
+  
+  // Step 3: If still no config, fall back to category defaults
+  if (!config) {
+    const categoryId = activityCategories[activityId] || activityCategories[activityAliases[activityId]];
+    if (categoryId) {
+      config = categoryDefaults[categoryId];
+    }
+  }
+  
+  // Step 4: Final fallback to global defaults
+  if (!config) {
+    config = globalDefaults;
+  }
+  
+  // Special handling for surfing when rating is poor (preserve existing logic)
+  if ((activityId === 'surfing' || activityAliases[activityId] === 'surfing') && category === 'poor') {
     const waveReason = arr.find(r => r.key === 'wave');
     if (waveReason) {
       const waveHeight = waveReason.value || 0;
@@ -722,7 +973,7 @@ export function getActivityMessage(
     }
   }
   
-  // Standard processing for other activities
+  // Standard processing for all activities
   const filteredReasons = arr.filter(
     r => !(config.omitReasons || []).includes(r.key)
   );

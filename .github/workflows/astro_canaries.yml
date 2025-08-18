@@ -1,0 +1,35 @@
+name: Build global astronomy canaries
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'  # nightly at 02:00 UTC
+
+jobs:
+  build-canaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd services/astro_highlights/astro_highlights
+          python -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -e .
+      
+      - name: Build canaries
+        run: |
+          python services/astro_highlights/astro_highlights/run_canaries.py
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: astronomy-canaries
+          path: services/astro_highlights/out/
+          retention-days: 30

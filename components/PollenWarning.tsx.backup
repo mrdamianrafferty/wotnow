@@ -1,0 +1,609 @@
+import React from 'react';
+import { PollenLevel, PollenAssessment, getPollenLevelDescription, assessPollenConditions, PollenSummary, getPollenIndex } from '../utils/pollenUtils';
+
+interface PollenWarningProps {
+  pollen?: PollenSummary;
+  assessment?: PollenAssessment;
+  mode?: 'compact' | 'full';
+  className?: string;
+}
+
+/**
+ * Get color for pollen level following UX best practices
+ * Green -> Yellow -> Orange -> Red progression
+ */
+function getPollenLevelColor(level: PollenLevel): string {
+  switch (level) {
+    case PollenLevel.NONE: return '#22c55e'; // Green
+    case PollenLevel.LOW: return '#22c55e'; // Green  
+    case PollenLevel.MODERATE: return '#eab308'; // Yellow
+    case PollenLevel.HIGH: return '#f97316'; // Orange
+    case PollenLevel.VERY_HIGH: return '#ef4444'; // Red
+    default: return '#6b7280'; // Gray fallback
+  }
+}
+
+/**
+ * Get background color with opacity for better visual hierarchy
+ */
+function getPollenBackgroundColor(level: PollenLevel): string {
+  switch (level) {
+    case PollenLevel.NONE: return 'rgba(34, 197, 94, 0.1)'; // Light green
+    case PollenLevel.LOW: return 'rgba(34, 197, 94, 0.1)'; // Light green
+    case PollenLevel.MODERATE: return 'rgba(234, 179, 8, 0.15)'; // Light yellow
+    case PollenLevel.HIGH: return 'rgba(249, 115, 22, 0.15)'; // Light orange
+    case PollenLevel.VERY_HIGH: return 'rgba(239, 68, 68, 0.15)'; // Light red
+    default: return 'rgba(107, 114, 128, 0.1)'; // Light gray
+  }
+}
+
+/**
+ * Get appropriate pollen type icon
+ */
+function getPollenTypeIcon(type: 'grass' | 'tree' | 'weed'): string {
+  const basePath = '/weather-icons/design/fill/final';
+  switch (type) {
+    case 'grass': return `${basePath}/grass.svg`;
+    case 'tree': return `${basePath}/tree.svg`;  
+    case 'weed': return `${basePath}/flower.svg`; // Using flower for weed pollen
+    default: return `${basePath}/pollen.svg`;
+  }
+}
+
+/**
+ * Individual pollen type indicator component
+ */
+function PollenTypeIndicator({ 
+  type, 
+  level, 
+  value 
+}: { 
+  type: 'grass' | 'tree' | 'weed'; 
+  level: PollenLevel; 
+  value?: number;
+}) {
+  if (level === PollenLevel.NONE) return null;
+
+  const color = getPollenLevelColor(level);
+  const bgColor = getPollenBackgroundColor(level);
+  const levelText = getPollenLevelDescription(level);
+  const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+  
+  return (
+    <div 
+      className="pollen-type-indicator"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '4px 8px',
+        borderRadius: '12px',
+        backgroundColor: bgColor,
+        border: `1px solid ${color}`,
+        fontSize: '12px',
+        fontWeight: '500'
+      }}
+      role="status"
+      aria-label={`${typeLabel} pollen: ${levelText} level${value ? `, index ${getPollenIndex(value)}` : ''}`}
+    >
+      {/* Color-coded circle indicator */}
+      <div
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          flexShrink: 0
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Pollen type icon */}
+      <img 
+        src={getPollenTypeIcon(type)}
+        alt=""
+        style={{ width: '14px', height: '14px', opacity: 0.8 }}
+        aria-hidden="true"
+      />
+      
+      {/* Type and level text */}
+      <span style={{ color: '#374151', fontWeight: '600' }}>
+        {typeLabel}
+      </span>
+      <span style={{ color: color, fontWeight: '700' }}>
+        {levelText}
+      </span>
+      
+      {/* Optional numerical index */}
+      {value && value > 0 && (
+        <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: '500' }}>
+          ({getPollenIndex(value)})
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Overall pollen level indicator for compact mode
+ */
+function OverallPollenIndicator({ 
+  level, 
+  assessment 
+}: { 
+  level: PollenLevel; 
+  assessment: PollenAssessment;
+}) {
+  if (level === PollenLevel.NONE) return null;
+
+  const color = getPollenLevelColor(level);
+  const bgColor = getPollenBackgroundColor(level);
+  const levelText = getPollenLevelDescription(level);
+  
+  // Count active pollen types for summary
+  const activeTypes = [];
+  if (assessment.grass > PollenLevel.NONE) activeTypes.push('grass');
+  if (assessment.tree > PollenLevel.NONE) activeTypes.push('tree'); 
+  if (assessment.weed > PollenLevel.NONE) activeTypes.push('weed');
+  
+  const typesSummary = activeTypes.length > 1 
+    ? `${activeTypes.length} types` 
+    : activeTypes[0] || 'pollen';
+
+  return (
+    <div 
+      className="pollen-overall-indicator"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 12px',
+        borderRadius: '16px',
+        backgroundColor: bgColor,
+        border: `2px solid ${color}`,
+        fontSize: '13px',
+        fontWeight: '600'
+      }}
+      role="status"
+      aria-label={`Overall pollen level: ${levelText} from ${typesSummary}`}
+    >
+      {/* Large color-coded circle */}
+      <div
+        style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          flexShrink: 0
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Pollen icon */}
+      <img 
+        src="/weather-icons/design/fill/final/pollen.svg"
+        alt=""
+        style={{ width: '16px', height: '16px', opacity: 0.9 }}
+        aria-hidden="true"
+      />
+      
+      {/* Summary text */}
+      <span style={{ color: '#374151' }}>
+        Pollen:
+      </span>
+      <span style={{ color: color }}>
+        {levelText}
+      </span>
+      <span style={{ color: '#6b7280', fontSize: '11px' }}>
+        ({typesSummary})
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Main PollenWarning component with improved UX
+ */
+export default function PollenWarning({ 
+  pollen, 
+  assessment, 
+  mode = 'full', 
+  className = '' 
+}: PollenWarningProps) {
+  // Use provided assessment or calculate from pollen data
+  const pollenAssessment = assessment || (pollen ? assessPollenConditions(pollen) : null);
+  
+  // Don't render if no meaningful pollen levels
+  if (!pollenAssessment || pollenAssessment.overall < PollenLevel.MODERATE) {
+    return null;
+  }
+
+  if (mode === 'compact') {
+    return (
+      <div className={`pollen-warning-compact ${className}`}>
+        <OverallPollenIndicator level={pollenAssessment.overall} assessment={pollenAssessment} />
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className={`pollen-warning-full ${className}`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        padding: '12px',
+        borderRadius: '12px',
+        backgroundColor: '#f9fafb',
+        border: '1px solid #e5e7eb'
+      }}
+      role="region"
+      aria-label="Pollen level information"
+    >
+      {/* Header with overall level */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '4px'
+      }}>
+        <img 
+          src="/weather-icons/design/fill/final/pollen.svg"
+          alt=""
+          style={{ width: '18px', height: '18px' }}
+          aria-hidden="true"
+        />
+        <span style={{ 
+          fontSize: '14px', 
+          fontWeight: '700', 
+          color: '#374151' 
+        }}>
+          Pollen Levels
+        </span>
+      </div>
+
+      {/* Individual pollen type indicators */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '6px'
+      }}>
+        <PollenTypeIndicator 
+          type="grass" 
+          level={pollenAssessment.grass} 
+          value={pollen?.grass}
+        />
+        <PollenTypeIndicator 
+          type="tree" 
+          level={pollenAssessment.tree} 
+          value={pollen?.tree}
+        />
+        <PollenTypeIndicator 
+          type="weed" 
+          level={pollenAssessment.weed} 
+          value={pollen?.weed}
+        />
+      </div>
+
+      {/* Warning messages if any */}
+      {pollenAssessment.warnings.length > 0 && (
+        <div style={{
+          marginTop: '6px',
+          padding: '8px',
+          borderRadius: '8px',
+          backgroundColor: getPollenBackgroundColor(pollenAssessment.overall),
+          border: `1px solid ${getPollenLevelColor(pollenAssessment.overall)}`,
+          fontSize: '12px',
+          lineHeight: '1.4'
+        }}>
+          {pollenAssessment.warnings.map((warning, index) => (
+            <div key={index} style={{ color: '#374151' }}>
+              • {warning}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Get color for pollen level following UX best practices
+ * Green -> Yellow -> Orange -> Red progression
+ */
+function getPollenLevelColor(level: PollenLevel): string {
+  switch (level) {
+    case PollenLevel.NONE: return '#22c55e'; // Green
+    case PollenLevel.LOW: return '#22c55e'; // Green  
+    case PollenLevel.MODERATE: return '#eab308'; // Yellow
+    case PollenLevel.HIGH: return '#f97316'; // Orange
+    case PollenLevel.VERY_HIGH: return '#ef4444'; // Red
+    default: return '#6b7280'; // Gray fallback
+  }
+}
+
+/**
+ * Get background color with opacity for better visual hierarchy
+ */
+function getPollenBackgroundColor(level: PollenLevel): string {
+  switch (level) {
+    case PollenLevel.NONE: return 'rgba(34, 197, 94, 0.1)'; // Light green
+    case PollenLevel.LOW: return 'rgba(34, 197, 94, 0.1)'; // Light green
+    case PollenLevel.MODERATE: return 'rgba(234, 179, 8, 0.15)'; // Light yellow
+    case PollenLevel.HIGH: return 'rgba(249, 115, 22, 0.15)'; // Light orange
+    case PollenLevel.VERY_HIGH: return 'rgba(239, 68, 68, 0.15)'; // Light red
+    default: return 'rgba(107, 114, 128, 0.1)'; // Light gray
+  }
+}
+
+/**
+ * Get appropriate pollen type icon
+ */
+function getPollenTypeIcon(type: 'grass' | 'tree' | 'weed'): string {
+  const basePath = '/weather-icons/design/fill/final';
+  switch (type) {
+    case 'grass': return `${basePath}/grass.svg`;
+    case 'tree': return `${basePath}/tree.svg`;  
+    case 'weed': return `${basePath}/flower.svg`; // Using flower for weed pollen
+    default: return `${basePath}/pollen.svg`;
+  }
+}
+
+/**
+ * Individual pollen type indicator component
+ */
+function PollenTypeIndicator({ 
+  type, 
+  level, 
+  value 
+}: { 
+  type: 'grass' | 'tree' | 'weed'; 
+  level: PollenLevel; 
+  value?: number;
+}) {
+  if (level === PollenLevel.NONE) return null;
+
+  const color = getPollenLevelColor(level);
+  const bgColor = getPollenBackgroundColor(level);
+  const levelText = getPollenLevelDescription(level);
+  const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+  
+  return (
+    <div 
+      className="pollen-type-indicator"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '4px 8px',
+        borderRadius: '12px',
+        backgroundColor: bgColor,
+        border: `1px solid ${color}`,
+        fontSize: '12px',
+        fontWeight: '500'
+      }}
+      role="status"
+      aria-label={`${typeLabel} pollen: ${levelText} level${value ? `, index ${value.toFixed(1)}` : ''}`}
+    >
+      {/* Color-coded circle indicator */}
+      <div
+        style={{
+          width: '8px',
+          height: '8px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          flexShrink: 0
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Pollen type icon */}
+      <img 
+        src={getPollenTypeIcon(type)}
+        alt=""
+        style={{ width: '14px', height: '14px', opacity: 0.8 }}
+        aria-hidden="true"
+      />
+      
+      {/* Type and level text */}
+      <span style={{ color: '#374151', fontWeight: '600' }}>
+        {typeLabel}
+      </span>
+      <span style={{ color: color, fontWeight: '700' }}>
+        {levelText}
+      </span>
+      
+      {/* Optional numerical index */}
+      {value && value > 0 && (
+        <span style={{ color: '#6b7280', fontSize: '11px', fontWeight: '500' }}>
+          ({getPollenIndex(value)})
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Overall pollen level indicator for compact mode
+ */
+function OverallPollenIndicator({ 
+  level, 
+  assessment 
+}: { 
+  level: PollenLevel; 
+  assessment: PollenAssessment;
+}) {
+  if (level === PollenLevel.NONE) return null;
+
+  const color = getPollenLevelColor(level);
+  const bgColor = getPollenBackgroundColor(level);
+  const levelText = getPollenLevelDescription(level);
+  
+  // Count active pollen types for summary
+  const activeTypes = [];
+  if (assessment.grass > PollenLevel.NONE) activeTypes.push('grass');
+  if (assessment.tree > PollenLevel.NONE) activeTypes.push('tree'); 
+  if (assessment.weed > PollenLevel.NONE) activeTypes.push('weed');
+  
+  const typesSummary = activeTypes.length > 1 
+    ? `${activeTypes.length} types` 
+    : activeTypes[0] || 'pollen';
+
+  return (
+    <div 
+      className="pollen-overall-indicator"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 12px',
+        borderRadius: '16px',
+        backgroundColor: bgColor,
+        border: `2px solid ${color}`,
+        fontSize: '13px',
+        fontWeight: '600'
+      }}
+      role="status"
+      aria-label={`Overall pollen level: ${levelText} from ${typesSummary}`}
+    >
+      {/* Large color-coded circle */}
+      <div
+        style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: color,
+          flexShrink: 0
+        }}
+        aria-hidden="true"
+      />
+      
+      {/* Pollen icon */}
+      <img 
+        src="/weather-icons/design/fill/final/pollen.svg"
+        alt=""
+        style={{ width: '16px', height: '16px', opacity: 0.9 }}
+        aria-hidden="true"
+      />
+      
+      {/* Summary text */}
+      <span style={{ color: '#374151' }}>
+        Pollen:
+      </span>
+      <span style={{ color: color }}>
+        {levelText}
+      </span>
+      <span style={{ color: '#6b7280', fontSize: '11px' }}>
+        ({typesSummary})
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Main PollenWarning component with improved UX
+ */
+export default function PollenWarning({ 
+  pollen, 
+  assessment, 
+  mode = 'full', 
+  className = '' 
+}: PollenWarningProps) {
+  // Use provided assessment or calculate from pollen data
+  const pollenAssessment = assessment || (pollen ? assessPollenConditions(pollen) : null);
+  
+  // Don't render if no meaningful pollen levels
+  if (!pollenAssessment || pollenAssessment.overall < PollenLevel.MODERATE) {
+    return null;
+  }
+
+  if (mode === 'compact') {
+    return (
+      <div className={`pollen-warning-compact ${className}`}>
+        <OverallPollenIndicator level={pollenAssessment.overall} assessment={pollenAssessment} />
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className={`pollen-warning-full ${className}`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        padding: '12px',
+        borderRadius: '12px',
+        backgroundColor: '#f9fafb',
+        border: '1px solid #e5e7eb'
+      }}
+      role="region"
+      aria-label="Pollen level information"
+    >
+      {/* Header with overall level */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '4px'
+      }}>
+        <img 
+          src="/weather-icons/design/fill/final/pollen.svg"
+          alt=""
+          style={{ width: '18px', height: '18px' }}
+          aria-hidden="true"
+        />
+        <span style={{ 
+          fontSize: '14px', 
+          fontWeight: '700', 
+          color: '#374151' 
+        }}>
+          Pollen Levels
+        </span>
+      </div>
+
+      {/* Individual pollen type indicators */}
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '6px'
+      }}>
+        <PollenTypeIndicator 
+          type="grass" 
+          level={pollenAssessment.grass} 
+          value={pollen?.grass}
+        />
+        <PollenTypeIndicator 
+          type="tree" 
+          level={pollenAssessment.tree} 
+          value={pollen?.tree}
+        />
+        <PollenTypeIndicator 
+          type="weed" 
+          level={pollenAssessment.weed} 
+          value={pollen?.weed}
+        />
+      </div>
+
+      {/* Warning messages if any */}
+      {pollenAssessment.warnings.length > 0 && (
+        <div style={{
+          marginTop: '6px',
+          padding: '8px',
+          borderRadius: '8px',
+          backgroundColor: getPollenBackgroundColor(pollenAssessment.overall),
+          border: `1px solid ${getPollenLevelColor(pollenAssessment.overall)}`,
+          fontSize: '12px',
+          lineHeight: '1.4'
+        }}>
+          {pollenAssessment.warnings.map((warning, index) => (
+            <div key={index} style={{ color: '#374151' }}>
+              • {warning}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

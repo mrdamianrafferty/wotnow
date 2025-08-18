@@ -1,0 +1,311 @@
+version: 1
+name: wotnow_sharing_agent
+description: >
+  Plan, generate, and distribute highly shareable invites and venue polls for
+  non-weather activities. Optimise for fast decision-making, low friction shares,
+  and appealing previews across chat apps.
+
+# ────────────────────────────────────────────────────────────────────────────────
+objectives:
+  - Increase invites sent per active user
+  - Increase join conversions (clicked invite → added to calendar or directions)
+  - Reduce time-to-agree on venue via lightweight polls
+  - Keep privacy-first; avoid sharing exact origins
+
+success_metrics:
+  invites_per_user_daily: ">= 1.3"
+  poll_vote_rate: ">= 70%"
+  join_conversion_rate: ">= 35%"
+  time_to_decision_minutes: "<= 30"
+  cost_per_invite_usd: "<= 0.01"
+
+# ────────────────────────────────────────────────────────────────────────────────
+triggers:
+  - event: user_opens_activity
+    condition: activity.weatherSensitive == false
+    action: propose_invite_flow
+  - event: user_clicks_share
+    action: build_and_share_invite
+  - event: user_adds_multiple_venues
+    action: create_poll
+
+# ────────────────────────────────────────────────────────────────────────────────
+inputs:
+  user_profile:
+    - user_id
+    - display_name
+    - locale
+    - preferred_language
+    - accessibility_needs # e.g., step-free
+  activity_context:
+    - activity_id
+    - activity_name
+    - default_duration_mins
+    - share_copy_template_ids
+  location_context:
+    - chosen_neighbourhood # optional
+    - last_used_places # cache of placeIds
+  device_capabilities:
+    - web_share_api
+    - can_create_files # for .ics
+    - can_open_deeplinks
+  permissions:
+    - approximate_location_allowed: boolean
+    - notifications_allowed: boolean
+
+# ────────────────────────────────────────────────────────────────────────────────
+tools:
+  places_search:        # Google Places / Places API
+    params: [query, types, lat, lng, radius]
+  place_details:        # name, address, lat, lng, photos, opening hours, rating, price_level, url
+    params: [place_id]
+  static_map_url:       # builds sharable map image
+    params: [lat, lng, zoom, size]
+  distance_matrix:      # optional; only if user consents to share approximate origin
+    params: [origins[], destinations[]]
+  shortlink_create:
+    params: [long_url, campaign, tags[]]
+  calendar_ics_create:
+    params: [title, start_iso, end_iso, description, location_text, url]
+  db:
+    - put_poll
+    - get_poll
+    - put_vote
+    - cache_place_details
+  realtime_pubsub:
+    - publish_poll_update
+    - subscribe_poll
+  analytics_log:
+    params: [event_name, props]
+  ab_experiments:
+    - assign_user_to_variant
+  secrets:
+    - maps_server_key
+    - maps_browser_key
+
+# ────────────────────────────────────────────────────────────────────────────────
+policy:
+  privacy:
+    - Never include users’ exact origin in shared URLs.
+    - Compute ETAs client-side where possible; otherwise store only aggregate stats (median/max).
+    - Auto-expire poll data after 14 days.
+  localisation:
+    date_format: "locale"
+    currency_symbol: "€ by region, fallback £/$"
+    spelling: "British English"
+  accessibility:
+    - Ensure text alternatives for map images.
+    - Promote step-free venues when any voter flags need.
+  rate_limits:
+    places_search_per_min: 8
+    place_details_ttl_hours: 24 # cache window
+  cost_controls:
+    - Prefer Place Details on selection, not per search keystroke.
+    - Use Static Maps for shares; render live maps lazily.
+  content_safety:
+    - Filter venues by rating >= 3.8 unless user overrides.
+    - Exclude flagged types (e.g., age-restricted) for family activities.
+
+# ────────────────────────────────────────────────────────────────────────────────
+flow_invite:
+  goal: "Create a single-venue invite with rich preview and easy sharing."
+  steps:
+    - id: shortlist
+      do:
+        if: inputs.location_context.chosen_neighbourhood or permissions.approximate_location_allowed
+        then:
+          call: places_search
+          with:
+            query: activity_name
+            types: ["cafe","library","store","bar"] # tune per activity
+            lat: user_lat_optional
+            lng: user_lng_optional
+            radius: 2500
+          save: candidates
+        else:
+          use: last_used_places or manual_search_field
+    - id: choose_venue
+      do:
+        strategy: "Present 3–5 candidates; allow manual search"
+        output: place_id
+    - id: fetch_details
+      do:
+        call: place_details
+        with: { place_id: $.choose_venue.place_id }
+        cache: db.cache_place_details(place_id, ttl=24h)
+        save: venue
+    - id: compose_share_assets
+      do:
+        map_image: static_map_url(venue.lat, venue.lng, 16, "1200x630")
+        ics_file: calendar_ics_create(
+          title: "${activity_name} meetup",
+          start_iso: now_plus(2h),
+          end_iso: now_plus(2h + default_duration_mins),
+          description: "Created in WotNow. ${venue.website or ''}",
+          location_text: "${venue.name}, ${venue.address}",
+          url: deep_link_maps(venue.place_id, venue.lat, venue.lng)
+        )
+        og_tags:
+          title: "Join me for ${activity_name}"
+          description: "${venue.name} · ${friendly_time(start_iso)}"
+          image: map_image
+    - id: generate_message
+      do:
+        variant: ab_experiments.assign_user_to_variant(["A_short","B_detail","C_emoji"])
+        template: pick_from_library(activity_name, variant)
+        message_text: render(template, {
+          activity_name, start_time, venue_name: venue.name,
+          address: venue.address, directions_link: directions_link(venue),
+          poll_link: null
+        })
+    - id: shorten_url
+      do:
+        long_url: invite_page_url(activity_name, venue.place_id, start_iso)
+        short_url: shortlink_create(long_url, campaign="invite", tags=[activity_name])
+    - id: share
+      do:
+        if: device_capabilities.web_share_api
+        then: web_share({ title: "Join me: ${activity_name}", text: message_text + "\n" + short_url })
+        else: open_url("https://wa.me/?text=" + urlencode(message_text + "\n" + short_url))
+    - id: analytics
+      do:
+        analytics_log("invite_sent", { activity: activity_name, place_id: venue.place_id, variant })
+
+# ────────────────────────────────────────────────────────────────────────────────
+flow_poll:
+  goal: "Collect group votes on 2–5 venues quickly; auto-pick a fair winner."
+  steps:
+    - id: collect_candidates
+      do:
+        ensure: 2 <= count(candidates) <= 5
+        source: shortlist + manual_add
+    - id: inflate_details
+      do:
+        for_each: candidates
+        call: place_details(place_id)
+        cache: ttl=24h
+        save: enriched_candidates
+    - id: create_poll
+      do:
+        payload:
+          activity: activity_name
+          startsAt: proposed_start_time
+          closesAt: now_plus(60m)
+          candidates: enriched_candidates
+        poll: db.put_poll(payload)
+        live_channel: realtime_pubsub.subscribe_poll(poll.id)
+    - id: build_poll_link
+      do:
+        long_url: poll_page_url(poll.id)
+        short_url: shortlink_create(long_url, campaign="poll", tags=[activity_name])
+        og_tags:
+          title: "Vote a spot for ${activity_name}"
+          description: "${friendly_time(proposed_start_time)} · ${count(candidates)} options"
+          image: collage_of(candidate_photos_or_maps, size="1200x630")
+    - id: share_poll
+      do:
+        share_text: "Help pick a venue for ${activity_name} (${friendly_time(proposed_start_time)}): ${short_url}"
+        if: device_capabilities.web_share_api
+        then: web_share({ title: "Vote a venue", text: share_text })
+        else: open_url("https://wa.me/?text=" + urlencode(share_text))
+    - id: collect_votes
+      do:
+        # On poll page (client):
+        - voter_option: single_choice(candidate.place_id)
+        - optional_eta: compute_locally_via_maps_deeplink or consent_distance_matrix
+        - accessibility_flag: boolean
+        - submit: db.put_vote(poll.id, choice, etaMins?, accessibility?)
+        - realtime: realtime_pubsub.publish_poll_update(poll.id)
+    - id: decide_winner
+      when: now >= closesAt or votes >= quorum
+      do:
+        winner = pick_winner(enriched_candidates, votes) # see tie-break logic below
+        db.put_poll({ id: poll.id, status: "locked", winnerPlaceId: winner.placeId })
+    - id: announce
+      do:
+        result_url: result_page_url(poll.id)
+        short_result: shortlink_create(result_url, campaign="poll_result", tags=[activity_name])
+        message: "Winner: ${winner.name}. See details & directions: ${short_result}"
+        share_back_to_thread(message)
+        analytics_log("poll_locked", { poll_id: poll.id, winner_place_id: winner.placeId })
+
+# ────────────────────────────────────────────────────────────────────────────────
+tie_break_logic:
+  description: "Most votes wins; ties resolved by group fairness."
+  score_formula: "TieScore = 0.5 * medianETA + 0.3 * maxETA + 0.2 * accessibilityPenalty"
+  accessibilityPenalty:
+    - +10 if any voter flagged accessibility and venue not step_free
+    - +5 if likely insufficient seating for group size
+    - +5 if closing_time < (start + duration)
+  final_order: "Sort by votes desc, then TieScore asc, then rating desc"
+
+# ────────────────────────────────────────────────────────────────────────────────
+message_templates:
+  A_short: |
+    Fancy {{activity_name}}?
+    {{venue_name}} • {{start_time}}
+    Directions: {{directions_link}}
+  B_detail: |
+    {{activity_name}} tonight?
+    {{venue_name}} ({{address}})
+    Starts {{start_time}} • Tap for directions: {{directions_link}}
+  C_emoji: |
+    {{activity_name}} 🗓️ {{start_time}}
+    📍 {{venue_name}}
+    ➡️ {{directions_link}}
+
+# ────────────────────────────────────────────────────────────────────────────────
+ui_guidelines:
+  - Always show venue photo or Static Map hero.
+  - Show rating ★, price €–€€€, and “Open now / Closes HH:MM”.
+  - Provide buttons: Open in Maps, Directions, Share, Add to Calendar.
+  - On poll cards, show “Your ETA” pill if computed locally.
+  - Countdown chip: “Voting closes in {{mm}}m”.
+
+# ────────────────────────────────────────────────────────────────────────────────
+error_handling:
+  - places_quota_exceeded:
+      fallback: "Permit manual address entry; still generate Static Map from typed lat/lng."
+  - no_candidates_found:
+      fallback: "Expand radius to 5km; widen types; allow manual entry."
+  - photo_unavailable:
+      fallback: "Use Static Map at zoom 16."
+  - web_share_unavailable:
+      fallback: "Pre-fill WhatsApp link with URL-encoded message."
+  - ics_creation_failed:
+      fallback: "Show Add to Calendar deeplinks (Google/Apple)."
+
+# ────────────────────────────────────────────────────────────────────────────────
+experiments:
+  - id: og_collage_vs_map
+    hypothesis: "Collage of venue photos improves link CTR vs plain map."
+    variants: ["collage", "static_map"]
+    metric: "poll_click_through_rate"
+  - id: short_vs_detail_copy
+    variants: ["A_short","B_detail","C_emoji"]
+    metric: "share_click_through_rate"
+  - id: deadline_prompting
+    variants: ["soft_nudge_15m","no_nudge"]
+    metric: "vote_completion_rate"
+
+# ────────────────────────────────────────────────────────────────────────────────
+logging:
+  events:
+    - invite_sent
+    - invite_opened
+    - poll_created
+    - poll_viewed
+    - poll_voted
+    - poll_locked
+    - directions_clicked
+    - ics_downloaded
+    - share_failed
+  pii_redaction: "Strip exact origins; hash user_id; store only aggregate ETAs."
+
+# ────────────────────────────────────────────────────────────────────────────────
+outputs:
+  - shortlink_invite
+  - shortlink_poll
+  - og_image_url # for unfurl cards
+  - ics_file_url
+  - analytics_events

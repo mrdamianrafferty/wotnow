@@ -68,12 +68,37 @@ button:active {
 .homepage-banner {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 16px 32px;
   background: #fff;
   border-radius: 18px 18px 0 0;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   margin-bottom: 2rem;
+}
+
+.homepage-banner__left {
+  display: flex;
+  align-items: center;
+}
+
+.homepage-banner__location-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Desktop location buttons - shown by default */
+.desktop-location-buttons {
+  display: flex;
+}
+
+/* Mobile location buttons - hidden by default */
+.mobile-location-buttons {
+  display: none;
+  width: 100%;
+  padding: 16px;
+  gap: 12px;
+  margin-bottom: 1rem;
 }
 
 .burger-menu-icon {
@@ -88,6 +113,20 @@ button:active {
 @media (max-width: 800px) {
   .burger-menu-icon {
     display: block !important;
+  }
+  
+  /* Hide desktop buttons on mobile */
+  .desktop-location-buttons {
+    display: none;
+  }
+  
+  /* Show mobile buttons on mobile */
+  .mobile-location-buttons {
+    display: flex;
+  }
+  
+  .homepage-banner {
+    padding: 12px 16px;
   }
 }
 
@@ -816,6 +855,266 @@ abbr[title] {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ------ COASTAL LOCATION DIALOG ------ */
+
+.coastal-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+}
+
+.coastal-dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.3);
+}
+
+.coastal-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.coastal-dialog-close:hover {
+  color: #374151;
+}
+
+.coastal-dialog-title {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coastal-dialog-icon {
+  font-size: 1.2em;
+}
+
+.coastal-dialog-input {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  margin-bottom: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  color: #1f2937;
+  background: #fff;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.coastal-dialog-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.coastal-dialog-input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+/* Search input container */
+.coastal-dialog-search-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.coastal-dialog-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: all 0.2s;
+}
+
+.coastal-dialog-search-clear:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Two action buttons side by side */
+.coastal-dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.coastal-dialog-action-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.coastal-dialog-action-btn:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s;
+}
+
+.coastal-dialog-action-btn:hover:before {
+  left: 100%;
+}
+
+.coastal-dialog-location-btn {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  border: 2px solid #0284c7;
+  color: #0369a1;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.1);
+}
+
+.coastal-dialog-location-btn:hover {
+  background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%);
+  border-color: #0369a1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
+}
+
+.coastal-dialog-location-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.coastal-dialog-map-btn {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1);
+}
+
+.coastal-dialog-map-btn:hover {
+  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+  border-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.coastal-dialog-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0 0;
+}
+
+.coastal-dialog-list li {
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f9fafb;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.coastal-dialog-list li button {
+  width: 100%;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  border-radius: inherit;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.coastal-dialog-list li button:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Enhanced search result styling */
+.coastal-dialog-search-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.coastal-dialog-result-type {
+  font-size: 1.1em;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.coastal-dialog-result-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.coastal-dialog-result-main {
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.coastal-dialog-result-details {
+  font-size: 0.85em;
+  color: #6b7280;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
 /* ------ MOBILE RESPONSIVE ------ */
 
 @media (max-width: 680px) {
@@ -868,32 +1167,44 @@ abbr[title] {
   .hide-on-mobile {
     display: none !important;
   }
+  
   .homepage-banner {
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between;
     padding: 0.5rem 1rem;
   }
+  
+  .homepage-banner__left {
+    display: flex;
+    align-items: center;
+  }
+  
   .homepage-banner__logo {
     max-width: 120px;
     margin: 0;
   }
-  .homepage-banner__location-buttons {
-    display: flex;
+  
+  /* Ensure desktop buttons are hidden on mobile */
+  .desktop-location-buttons {
+    display: none !important;
+  }
+  
+  /* Ensure mobile buttons are shown */
+  .mobile-location-buttons {
+    display: flex !important;
     flex-direction: row;
     gap: 0.5rem;
-    width: 100vw;
-    max-width: 98vw;
-    margin: 0.5rem auto 0 auto;
-    padding: 0 1vw;
-  }
-  .location-banner__button {
-    flex: 1 1 0;
     width: 100%;
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+  
+  .mobile-location-buttons .location-banner__button {
+    flex: 1;
+    font-size: 0.9rem;
+    padding: 8px 12px;
     min-width: 0;
-    max-width: 100%;
-    font-size: 1rem;
-    margin: 0;
   }
 }
 
@@ -1372,3 +1683,133 @@ abbr[title] {
 }
 
 /* ------ END HEADER LAYOUT STYLES ------ */
+
+/* Recent locations list styling */
+.coastal-dialog-recent-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coastal-dialog-recent-list li {
+  padding: 0;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+  flex: 0 0 auto;
+}
+
+/* Default styling for coastal locations */
+.coastal-dialog-recent-list .coastal-location-item {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #1e40af;
+}
+
+.coastal-dialog-recent-list .coastal-location-item:hover {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #1e3a8a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.coastal-dialog-recent-list li button {
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  text-align: center;
+  cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  border-radius: inherit;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.coastal-dialog-recent-list .location-icon {
+  font-size: 1em;
+  flex-shrink: 0;
+}
+
+/* Recent locations section header */
+.coastal-dialog h4 {
+  margin: 16px 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Improve button styling inside dialogs */
+.coastal-dialog button {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.coastal-dialog-list-btn,
+.coastal-dialog-recent-list button {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* Subtle background patterns for location distinction */
+.coastal-dialog-recent-list .home-location-item {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  position: relative;
+}
+
+.coastal-dialog-recent-list .home-location-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(34, 197, 94, 0.1) 1px, transparent 0);
+  background-size: 8px 8px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+.coastal-dialog-recent-list li:not(.home-location-item) {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  position: relative;
+}
+
+.coastal-dialog-recent-list li:not(.home-location-item)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.1) 1px, transparent 0);
+  background-size: 6px 6px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.2;
+}

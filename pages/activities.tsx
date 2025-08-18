@@ -33,7 +33,14 @@ import {
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import WindDirectionIcon from '../components/WindDirectionIcon';
+import PollenWarning from '../components/PollenWarning';
+import AirQualityWarning from '../components/AirQualityWarning';
+import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import { resolveBeachOrientationAsync, computeSimulatedOrientation, classifyWindRelative } from '../utils/orientation';
+import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
+import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
+
+
 
 // =============================================================================
 // CONSTANTS & CONFIGURATION
@@ -203,11 +210,29 @@ interface ActivityCardProps {
 }
 
 function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel, coastalLocation, homeLocation }: ActivityCardProps) {
+  console.log('🎯 ActivityCard for:', activityId, 'with day data:', { 
+    pollen: day.pollen, 
+    airQuality: day.airQuality,
+    hasPollenData: !!day.pollen,
+    hasAirQualityData: !!day.airQuality 
+  });
+
   // Get activity data and styling
   const activity = activityTypes.find(a => a.id === activityId);
   const assessment = getAssessmentCategory(score, activityId);
   const bgUrl = getActivityBg(activityId);
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
+  
+  // Determine if this activity should show pollen warnings
+  // Exclude marine, winter, and indoor activities as specified
+  const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice_skating', 'sledding'];
+  const isWinterActivity = winterActivities.includes(activityId);
+  const isIndoorActivity = !isOutdoor(activityId);
+  const shouldShowPollenWarning = !isMarine && !isWinterActivity && !isIndoorActivity;
+  
+  // Determine if this activity should show air quality warnings
+  // Use same exclusion logic as pollen
+  const shouldShowAirQualityWarning = !isMarine && !isWinterActivity && !isIndoorActivity;
   
   // Build assessment message using same logic as homepage
   const reasonsStrings = buildReasons(day, activityId);
@@ -324,14 +349,14 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                 <li className="activity-card__data-item">
                   <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
                        className="activity-card__data-icon" />
-                  <strong>{day.temperature.toFixed(1)}</strong>°
+                  <strong>{day.temperature.toFixed(1)}°</strong>
                 </li>
               )}
               {typeof day.waterTemperature === 'number' && (
                 <li className="activity-card__data-item">
                   <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
                        className="activity-card__data-icon" />
-                  <strong>{day.waterTemperature.toFixed(1)}</strong>°
+                  <strong>{day.waterTemperature.toFixed(1)}°</strong>
                 </li>
               )}
               {day.icon && (
@@ -340,6 +365,15 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                        alt={day.description || 'weather'}
                        className="activity-card__data-icon--lg" />
                   {day.description}
+                  {typeof day.rain === 'number' && day.rain > 0 && (
+                    <>
+                      {' '}
+                      <img src={rainIcon} alt="Precipitation"
+                           className="activity-card__data-icon" 
+                           style={{ marginLeft: '8px' }} />
+                      <strong>{day.rain}mm</strong>
+                    </>
+                  )}
                 </li>
               )}
               {typeof day.waveHeight === 'number' && (
@@ -402,14 +436,14 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                 <li className="activity-card__data-item">
                   <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
                        className="activity-card__data-icon" />
-                  <strong>H: {day.tempMax}</strong>°
+                  <strong>H: {day.tempMax}°</strong>
                 </li>
               )}
               {typeof day.tempMin === 'number' && (
                 <li className="activity-card__data-item">
                   <img src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
                        className="activity-card__data-icon" />
-                  <strong>L: {day.tempMin}</strong>°
+                  <strong>L: {day.tempMin}°</strong>
                 </li>
               )}
               {typeof day.temperature === 'number' &&
@@ -418,7 +452,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                 <li className="activity-card__data-item">
                   <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
                        className="activity-card__data-icon" />
-                  <strong>{day.temperature}</strong>°
+                  <strong>{day.temperature}°</strong>
                 </li>
               )}
               {day.icon && (
@@ -427,13 +461,22 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                        alt={day.description || 'weather'}
                        className="activity-card__data-icon--lg" />
                   {day.description}
+                  {typeof day.rain === 'number' && day.rain > 0 && (
+                    <>
+                      {' '}
+                      <img src={rainIcon} alt="Precipitation"
+                           className="activity-card__data-icon" 
+                           style={{ marginLeft: '8px' }} />
+                      <strong>{day.rain}mm</strong>
+                    </>
+                  )}
                 </li>
               )}
               {typeof day.wind_speed === 'number' && (
                 <li className="activity-card__data-item activity-card__data-item--wrap">
                   <img src={getWindIcon(day.wind_speed)} alt="Wind"
                        className={`activity-card__data-icon--lg ${windIconNeedsGlow(day.wind_speed) ? 'activity-card__wind-icon--glow' : ''}`} />
-                  <strong>{Math.round(mpsToKmh(day.wind_speed))}</strong>km/h
+                  <strong>{Math.round(mpsToKmh(day.wind_speed))}km/h</strong>
                   {typeof day.wind_direction === 'number' && (
                     <>
                       <WindDirectionIcon deg={day.wind_direction} />
@@ -448,16 +491,18 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                 <li className="activity-card__data-item">
                   <img src={humidityIcon} alt="Humidity"
                        className="activity-card__data-icon" />
-                  <strong>{day.humidity}</strong>%
+                  <strong>{day.humidity}%</strong>
                 </li>
               )}
-              {typeof day.rain === 'number' && day.rain > 0 && (
+              {(shouldShowPollenWarning && day.pollen) || (shouldShowAirQualityWarning && day.airQuality) ? (
                 <li className="activity-card__data-item">
-                  <img src={rainIcon} alt="Precipitation"
-                       className="activity-card__data-icon" />
-                  <strong>{day.rain}</strong>mm
+                  <EnvironmentalIndicators 
+                    pollen={shouldShowPollenWarning ? day.pollen : undefined}
+                    airQuality={shouldShowAirQualityWarning ? day.airQuality : undefined}
+                    mode="compact"
+                  />
                 </li>
-              )}
+              ) : null}
             </>
           )}
         </ul>
@@ -569,7 +614,7 @@ export default function ActivitiesPage() {
     });
   }, [hasMounted]);
 
-  // Fetch OpenWeather data (same as homepage)
+  // Fetch weather data with pollen information (enhanced from OpenWeather + Open-Meteo)
   useEffect(() => {
     const fetchWeatherData = async () => {
       if (!homeLocation?.lat || !homeLocation?.lon) {
@@ -581,8 +626,8 @@ export default function ActivitiesPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch main weather data
-        const weatherResponse = await fetch(`/api/owm?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
+        // Fetch merged weather data including pollen
+        const weatherResponse = await fetch(`/api/weather-with-pollen?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
           cache: 'no-store'
         });
 
@@ -638,72 +683,74 @@ export default function ActivitiesPage() {
   // DATA PROCESSING (Same logic as homepage)
   // =============================================================================
 
-  // Build forecast data from weather and marine data
+  // Build forecast data from merged weather data (includes pollen)
   const forecastByDay: WeatherForecastDay[] = React.useMemo(() => {
     if (!weatherData || !weatherData.list) return [];
 
+    // Group OpenWeather forecast data by date (same logic as homepage)
     const grouped: Record<string, any[]> = {};
     weatherData.list.forEach((item: any) => {
-      const date = item.dt_txt.split(' ')[0];
+      const date = item.dt_txt.split(' ')[0]; // YYYY-MM-DD
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(item);
     });
 
-    return Object.entries(grouped).slice(0, 5).map(([dateStr, dayEntries]: [string, any[]], dayIndex) => {
-      const isToday = dayIndex === 0;
-      
-      let currentEntry;
-      
-      if (isToday) {
-        const now = new Date();
-        const currentHour = now.getHours();
+    // Build forecast for up to 5 days
+    return Object.entries(grouped)
+      .slice(0, 5)
+      .map(([dateStr, dayEntries]: [string, any[]], dayIndex) => {
+        // Use noon entry as representative for the day, or first if noon not available
+        const noonEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
         
-        const sortedByCloseness = [...dayEntries].sort((a, b) => {
-          const hourA = new Date(a.dt_txt).getHours();
-          const hourB = new Date(b.dt_txt).getHours();
-          return Math.abs(hourA - currentHour) - Math.abs(hourB - currentHour);
+        // Calculate min/max temps across all hours of the day
+        const allTemps = dayEntries.map(entry => entry.main.temp);
+        const minTemp = Math.min(...allTemps);
+        const maxTemp = Math.max(...allTemps);
+        
+        // Get marine data for this day
+        const marineForDay = marineHours.filter(
+          (h: any) => h.time && h.time.slice(0, 10) === dateStr
+        );
+        
+        // Get pollen data for this date
+        const pollenForDate = weatherData.pollenByDate?.[dateStr];
+        
+        // Get air quality data for this date
+        const airQualityForDate = weatherData.airQualityByDate?.[dateStr];
+        
+        console.log(`📊 Day ${dayIndex} (${dateStr}):`, { 
+          pollenForDate, 
+          airQualityForDate,
+          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some(v => v > 0),
+          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some(v => v > 0)
         });
         
-        currentEntry = sortedByCloseness[0];
-      } else {
-        currentEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
-      }
-      
-      const allTemps = dayEntries.map(entry => entry.main.temp);
-      const minTemp = Math.min(...allTemps);
-      const maxTemp = Math.max(...allTemps);
-      
-      // Get marine data for this day
-      const marineForDay = marineHours.filter(
-        (h: any) => h.time && h.time.slice(0, 10) === dateStr
-      );
-      
-      // Convert date string to Unix timestamp to match WeatherForecastDay interface
-      const dateTimestamp = Math.floor(new Date(dateStr).getTime() / 1000);
-      
-      return {
-        date: dateTimestamp, // Unix timestamp as expected by interface
-        temperature: Math.round(currentEntry.main.temp),
-        tempMax: Math.round(maxTemp),
-        tempMin: Math.round(minTemp),
-        condition: currentEntry.weather[0].main,
-        description: currentEntry.weather[0].description,
-        icon: currentEntry.weather[0].icon,
-        rain: Math.round(currentEntry.rain?.['3h'] || 0),
-        wind_speed: currentEntry.wind.speed, // OpenWeather provides m/s
-        gust_speed: currentEntry.wind.gust || currentEntry.wind.speed,
-        wind_direction: currentEntry.wind.deg,
-        wind_directions_today: [currentEntry.wind.deg],
-        clouds: currentEntry.clouds.all,
-        humidity: currentEntry.main.humidity,
-        visibility: currentEntry.visibility ?? 10000,
-        pressure: currentEntry.main.pressure,
-        waveHeight: marineForDay.length > 0 ? marineForDay[0].waveHeight?.noaa : undefined,
-        waterTemperature: marineForDay.length > 0 ? marineForDay[0].waterTemperature?.noaa : undefined,
-        swellHeight: marineForDay.length > 0 ? marineForDay[0].swellHeight?.noaa : undefined,
-        swellPeriod: marineForDay.length > 0 ? marineForDay[0].swellPeriod?.noaa : undefined,
-      };
-    });
+        return {
+          date: Math.floor(new Date(noonEntry.dt_txt).getTime() / 1000),
+          temperature: Math.round(noonEntry.main.temp),
+          tempMax: Math.round(maxTemp),
+          tempMin: Math.round(minTemp),
+          condition: noonEntry.weather[0].main,
+          description: noonEntry.weather[0].description,
+          icon: noonEntry.weather[0].icon,
+          rain: Math.round(noonEntry.rain?.['3h'] || 0),
+          wind_speed: noonEntry.wind.speed,        
+          gust_speed: noonEntry.wind.gust || noonEntry.wind.speed,
+          wind_direction: noonEntry.wind.deg,
+          wind_directions_today: [noonEntry.wind.deg],
+          clouds: noonEntry.clouds.all,
+          humidity: noonEntry.main.humidity,
+          visibility: noonEntry.visibility ?? 10000,
+          pressure: noonEntry.main.pressure,
+          waveHeight: marineForDay.length > 0 ? marineForDay[0].waveHeight?.noaa : undefined,
+          waterTemperature: marineForDay.length > 0 ? marineForDay[0].waterTemperature?.noaa : undefined,
+          swellHeight: marineForDay.length > 0 ? marineForDay[0].swellHeight?.noaa : undefined,
+          swellPeriod: marineForDay.length > 0 ? marineForDay[0].swellPeriod?.noaa : undefined,
+          marine: marineForDay,
+          pollen: pollenForDate, // Include pollen data from API response
+          airQuality: airQualityForDate, // Include air quality data from API response
+        };
+      });
   }, [weatherData, marineHours]);
 
   // =============================================================================

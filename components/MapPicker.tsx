@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 const MapPicker = ({ homeLocation, onSelect }) => {
   const [position, setPosition] = useState(null);
+  const [hasClicked, setHasClicked] = useState(false);
 
   const LocationMarker = () => {
     useMapEvents({
@@ -13,6 +14,7 @@ const MapPicker = ({ homeLocation, onSelect }) => {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
         setPosition({ lat, lon });
+        setHasClicked(true);
         onSelect(lat, lon);
       },
     });
@@ -21,17 +23,26 @@ const MapPicker = ({ homeLocation, onSelect }) => {
   };
 
   return (
-    <MapContainer
-      center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27]}
-      zoom={8}
-      style={{ height: '400px', width: '100%', borderRadius: '8px', marginBottom: '16px' }}
-    >
-      <TileLayer
-        attribution='&copy; OpenStreetMap contributors'
-        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-      />
-      <LocationMarker />
-    </MapContainer>
+    <div className="map-picker-container">
+      {!hasClicked && (
+        <div className="map-picker-instructions">
+          📍 Click on the map to select a location
+        </div>
+      )}
+      {!hasClicked && <div className="map-picker-crosshair"></div>}
+      
+      <MapContainer
+        center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27]}
+        zoom={8}
+        style={{ height: '400px', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors'
+          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        />
+        <LocationMarker />
+      </MapContainer>
+    </div>
   );
 };
 

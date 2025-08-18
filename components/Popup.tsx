@@ -4,15 +4,21 @@ import React, { useEffect, useState, useRef } from 'react';
 import '../styles/Popup.css';
 import { getActivityEmoji, getAssessmentEmoji } from '../data/emojiMap';
 import { getActivityMessage } from '../data/activityMessages';
-import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
+import { MARINE_ACTIVITY_IDS, isOutdoor } from '../utils/activityHelpers';
 import bgMap from '../data/bgMap';
 import SwellArrow from './SwellArrow';
 import WindDirectionIcon from './WindDirectionIcon';
+import PollenWarning from './PollenWarning';
+import AirQualityWarning from './AirQualityWarning';
+import EnvironmentalIndicators from './EnvironmentalIndicators';
 import html2canvas from 'html2canvas';
 import { getCompassDirection } from '../utils/weatherLabels';
 import { classifyWindRelative, computeSimulatedOrientation, resolveBeachOrientationAsync } from '../utils/orientation';
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
+import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
+import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
+import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
 
 // --- Types ---
 // All windSpeed fields are in meters per second (m/s) throughout the pipeline.
@@ -59,6 +65,8 @@ interface PopupProps {
   coastalLocation?: { lat: number; lon: number };
   homeLocation?: { lat: number; lon: number };
   dayTimestamp?: number;
+  pollen?: PollenSummary;
+  airQuality?: AirQualitySummary;
 }
 
 // ---- WhatsApp/Web Share helpers (inline; no new files) ----
@@ -95,7 +103,7 @@ function buildMessage({ title, text, url }: SharePayload) {
 
 function buildEmailishSubject(activityTitle: string) {
   const t = activityTitle.trim();
-  const firstWord = t.split(/\s+/) || '';
+  const firstWord = t.split(/\s+/)[0] || '';
   const looksGerund = /ing\b/i.test(firstWord);
   if (looksGerund) return `Fancy ${t.toLowerCase()}?`;
   return `Fancy some ${t.toLowerCase()}?`;
@@ -222,6 +230,8 @@ const Popup: React.FC<PopupProps> = ({
   coastalLocation,
   homeLocation,
   dayTimestamp,
+  pollen,
+  airQuality,
 }) => {
   const [tideData, setTideData] = useState<{
     nextHighTide?: { time: string; height: number };
@@ -239,8 +249,54 @@ const Popup: React.FC<PopupProps> = ({
     marineData?.waveHeight !== undefined &&
     marineData?.waterTemperature !== undefined;
   const emoji = getActivityEmoji(activityId);
-  const backgroundImage = bgMap[activityId] ?? '/default-bg.jpg';
+  
+  // Smart background image loading with WebP optimization
+  const [backgroundImage, setBackgroundImage] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  useEffect(() => {
+    const loadOptimalImage = async () => {
+      if (isImageOptimized(activityId)) {
+        const webpSrc = getOptimizedImageSrc(activityId, isMobile ? 'webpMobile' : 'webp');
+        try {
+          await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = webpSrc;
+          });
+          setBackgroundImage(webpSrc);
+        } catch {
+          // Fallback to original
+          setBackgroundImage(bgMap[activityId] ?? '/default-bg.jpg');
+        }
+      } else {
+        setBackgroundImage(bgMap[activityId] ?? '/default-bg.jpg');
+      }
+    };
+    
+    loadOptimalImage();
+  }, [activityId, isMobile]);
+  
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
+  
+  // Determine if this activity should show pollen warnings
+  // Exclude marine, winter, and indoor activities as specified
+  const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice_skating', 'sledding'];
+  const isWinterActivity = winterActivities.includes(activityId);
+  const isIndoorActivity = !isOutdoor(activityId);
+  const shouldShowPollenWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
+  
+  // Determine if this activity should show air quality warnings
+  // Use same exclusion logic as pollen
+  const shouldShowAirQualityWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
 
   // --- Orientation (OSM-backed) ---
   const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
@@ -421,14 +477,14 @@ const handleDownload = async () => {
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.temperature.toFixed(1)}</strong>°
+                        <strong>{weatherData.temperature.toFixed(1)}°</strong>
                       </li>
                     )}
                     {typeof marineData.waterTemperature === 'number' && (
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{marineData.waterTemperature.toFixed(1)}</strong>°
+                        <strong>{marineData.waterTemperature.toFixed(1)}°</strong>
                       </li>
                     )}
                     {weatherData?.icon && (
@@ -437,6 +493,14 @@ const handleDownload = async () => {
                              alt={weatherData.description || 'weather'}
                              style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
                         {weatherData.description}
+                        {typeof weatherData?.precipitation === 'number' && weatherData.precipitation > 0 && (
+                          <>
+                            {' '}
+                            <img src={rainIcon} alt="Precipitation"
+                                 style={{ width: 24, height: 24, verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
+                            <strong>{weatherData.precipitation}mm</strong>
+                          </>
+                        )}
                       </li>
                     )}
                     {typeof marineData.waveHeight === 'number' && (
@@ -551,14 +615,14 @@ const handleDownload = async () => {
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>H: {weatherData.tempMax}</strong>°
+                        <strong>H: {weatherData.tempMax}°</strong>
                       </li>
                     )}
                     {typeof weatherData?.tempMin === 'number' && (
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>L: {weatherData.tempMin}</strong>°
+                        <strong>L: {weatherData.tempMin}°</strong>
                       </li>
                     )}
                     {typeof weatherData?.temperature === 'number' &&
@@ -567,7 +631,7 @@ const handleDownload = async () => {
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.temperature}</strong>°
+                        <strong>{weatherData.temperature}°</strong>
                       </li>
                     )}
                     {weatherData?.icon && (
@@ -576,6 +640,14 @@ const handleDownload = async () => {
                              alt={weatherData.description || 'weather'}
                              style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
                         {weatherData.description}
+                        {typeof weatherData?.precipitation === 'number' && weatherData.precipitation > 0 && (
+                          <>
+                            {' '}
+                            <img src={rainIcon} alt="Precipitation"
+                                 style={{ width: 24, height: 24, verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
+                            <strong>{weatherData.precipitation}mm</strong>
+                          </>
+                        )}
                       </li>
                     )}
                     {typeof weatherData?.windSpeed === 'number' && (
@@ -590,7 +662,7 @@ const handleDownload = async () => {
                                  ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
                                  : 'none'
                              }} />{' '}
-                        <strong>{Math.round(mpsToKmh(weatherData.windSpeed))}</strong>km/h
+                        <strong>{Math.round(mpsToKmh(weatherData.windSpeed))}km/h</strong>
                         {typeof weatherData.windDir === 'number' && (
                           <>
                             {' '}
@@ -607,16 +679,18 @@ const handleDownload = async () => {
                       <li>
                         <img src={humidityIcon} alt="Humidity"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.humidity}</strong>%
+                        <strong>{weatherData.humidity}%</strong>
                       </li>
                     )}
-                    {typeof weatherData?.precipitation === 'number' && (
+                    {(shouldShowPollenWarning && pollen) || (shouldShowAirQualityWarning && airQuality) ? (
                       <li>
-                        <img src={rainIcon} alt="Precipitation"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.precipitation}</strong>mm
+                        <EnvironmentalIndicators 
+                          pollen={shouldShowPollenWarning ? pollen : undefined}
+                          airQuality={shouldShowAirQualityWarning ? airQuality : undefined}
+                          mode="compact"
+                        />
                       </li>
-                    )}
+                    ) : null}
                   </>
                 )}
               </ul>

@@ -11,12 +11,11 @@ import {
 import { activityTypes } from '../data/activityTypes';
 import { getActivityMessage } from '../data/activityMessages';
 import { classifyWindRelative, computeSimulatedOrientation } from '../utils/orientation';
+import { assessPollenConditions, getPollenAdviceForActivity, getPollenTimingAdvice } from './pollenUtils';
 
 export const MARINE_ACTIVITY_IDS = [
   'surfing',
   'sailing',
-  'sea_kayaking',
-
   'scuba_diving',
   'snorkeling',
   'sea_fishing_boat',
@@ -918,8 +917,12 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
       break;
 
     case 'beach':
-      if (rain > 0) {
-        reasons.push('Rain ruins beach relaxation');
+      if (rain > 5) {
+        reasons.push('Heavy rain ruins beach relaxation');
+      } else if (rain > 2) {
+        reasons.push('Moderate rain not ideal for beach activities');
+      } else if (rain > 0 && rain <= 2) {
+        reasons.push('Light rain might interrupt beach time occasionally');
       } else if (windSpeed > 12) {
         reasons.push('Very windy - sand will blow everywhere');
       } else if (windSpeed > 6) {
@@ -984,6 +987,35 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push("It's a good day to be outside");
       }
       break;
+  }  // ➕ Add pollen-related reasons for outdoor activities
+  if (isOutdoor(activityId) && day.pollen) {
+    try {
+      console.log('🌸 Processing pollen for activity:', activityId, 'Pollen data:', day.pollen);
+      const pollenAssessment = assessPollenConditions(day.pollen);
+      console.log('🌸 Pollen assessment:', pollenAssessment);
+      
+      // Only add warnings if overall pollen level is moderate or higher
+      if (pollenAssessment.overall >= 2) { // PollenLevel.MODERATE = 2
+        const pollenAdvice = getPollenAdviceForActivity(activityId, pollenAssessment);
+        console.log('🌸 Pollen advice:', pollenAdvice);
+
+        if (pollenAdvice) {
+          reasons.push(pollenAdvice);
+        }
+
+        // Add general pollen warnings for high levels only
+        if (pollenAssessment.overall >= 3) { // PollenLevel.HIGH = 3
+          const timingAdvice = getPollenTimingAdvice(pollenAssessment.overall);
+          if (timingAdvice) {
+            reasons.push(timingAdvice);
+          }
+        }
+      } else {
+        console.log('🌸 Pollen levels too low for warnings, skipping');
+      }
+    } catch (e) {
+      console.warn('Pollen assessment error:', e);
+    }
   }
 }
 

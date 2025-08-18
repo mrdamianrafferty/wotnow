@@ -1,0 +1,126 @@
+{
+  "nights": [
+    {
+      "date": "2025-08-18",
+      "sun": {
+        "astro_dark_start": "2025-08-18T02:01:14.121975+00:00",
+        "astro_dark_end": "2025-08-18T19:31:37.331130+00:00"
+      },
+      "moon": {
+        "events": [],
+        "phase": 0.8153334163983134,
+        "illumination": 30.046518123358446
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-19",
+      "sun": {
+        "astro_dark_start": "2025-08-19T02:05:55.660138+00:00",
+        "astro_dark_end": "2025-08-19T19:26:32.519627+00:00"
+      },
+      "moon": {
+        "events": [],
+        "phase": 0.8515954922822966,
+        "illumination": 20.206710304938756
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-20",
+      "sun": {
+        "astro_dark_start": "2025-08-20T02:10:33.613207+00:00",
+        "astro_dark_end": "2025-08-20T19:21:30.144642+00:00"
+      },
+      "moon": {
+        "events": [],
+        "phase": 0.8874457303470136,
+        "illumination": 11.99077657403148
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-21",
+      "sun": {
+        "astro_dark_start": "2025-08-21T02:15:08.196671+00:00",
+        "astro_dark_end": "2025-08-21T19:16:30.027823+00:00"
+      },
+      "moon": {
+        "events": [],
+        "phase": 0.9227715245041398,
+        "illumination": 5.771867501063966
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-22",
+      "sun": {
+        "astro_dark_start": "2025-08-22T02:19:39.607309+00:00",
+        "astro_dark_end": "2025-08-22T19:11:32.007151+00:00"
+      },
+      "moon": {
+        "events": [
+          {
+            "time": "2025-08-22T19:32:32.164950+00:00",
+            "event": "set"
+          }
+        ],
+        "phase": 0.9574709872287792,
+        "illumination": 1.7745349838702629
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-23",
+      "sun": {
+        "astro_dark_start": "2025-08-23T02:24:08.025728+00:00",
+        "astro_dark_end": "2025-08-23T19:06:35.935492+00:00"
+      },
+      "moon": {
+        "events": [
+          {
+            "time": "2025-08-23T02:02:12.928496+00:00",
+            "event": "rise"
+          },
+          {
+            "time": "2025-08-23T18:58:03.255231+00:00",
+            "event": "set"
+          }
+        ],
+        "phase": 0.9914654835315018,
+        "illumination": 0.07187097153649735
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    },
+    {
+      "date": "2025-08-24",
+      "sun": {
+        "astro_dark_start": "2025-08-24T02:28:33.618936+00:00",
+        "astro_dark_end": "2025-08-24T19:01:41.678226+00:00"
+      },
+      "moon": {
+        "events": [
+          {
+            "time": "2025-08-24T04:10:32.858085+00:00",
+            "event": "rise"
+          },
+          {
+            "time": "2025-08-24T18:31:42.995607+00:00",
+            "event": "set"
+          }
+        ],
+        "phase": 0.02471115215624926,
+        "illumination": 0.6014687848431954
+      },
+      "dark_sky": null,
+      "cloud_score": null
+    }
+  ],
+  "eclipses": []
+}

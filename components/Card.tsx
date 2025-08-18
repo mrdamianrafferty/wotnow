@@ -1,6 +1,7 @@
 import React from 'react';
 import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
+import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 
 interface CardProps {
   activityId: string;
@@ -17,7 +18,10 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ activityId, title, score, category, description, marineData, onClick }) => {
-  const bgUrl = getActivityBg(activityId);
+  // Use optimized image if available, otherwise fallback to original
+  const bgUrl = isImageOptimized(activityId) 
+    ? getOptimizedImageSrc(activityId, 'webpMobile') // Cards are smaller, use mobile version
+    : getActivityBg(activityId);
 
   return (
     <article

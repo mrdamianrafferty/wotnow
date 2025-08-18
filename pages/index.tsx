@@ -36,8 +36,23 @@ import {
 } from '../utils/weatherLabels';
 import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
-import { isOutdoor } from '../utils/activityHelpers';
 import { getActivityMessage } from '../data/activityMessages';
+import AstronomyCard from '../components/AstronomyCard';
+
+// MarineHour interface for typing
+interface MarineHour {
+  time: string;
+  windSpeed?: { noaa?: number };
+  windDirection?: { noaa?: number };
+  waveHeight?: { noaa?: number };
+  swellHeight?: { noaa?: number };
+  swellPeriod?: { noaa?: number };
+  waterTemperature?: { noaa?: number };
+  windGust?: { noaa?: number };
+  visibility?: { noaa?: number };
+  currentSpeed?: { noaa?: number };
+  swellDirection?: { noaa?: number };
+}
 
 function WindIcon({ windMs, size = 28, alt = 'Wind' }: { windMs: number, size?: number, alt?: string }) {
   // Convert m/s to km/h for Beaufort calculation (getBeaufortNumber expects m/s now)
@@ -96,8 +111,8 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         setLoading(true);
         setError(null);
 
-        // Fetch main weather data
-        const weatherResponse = await fetch(`/api/owm?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
+        // Fetch merged weather data including pollen
+        const weatherResponse = await fetch(`/api/weather-with-pollen?lat=${homeLocation.lat}&lon=${homeLocation.lon}`, {
           cache: 'no-store'
         });
 
@@ -197,6 +212,10 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         (h: MarineHour) => h.time && h.time.slice(0, 10) === dateStr
       );
       
+      // Get pollen and air quality data for this date
+      const pollenForDate = weatherData.pollenByDate?.[dateStr];
+      const airQualityForDate = weatherData.airQualityByDate?.[dateStr];
+      
       return {
         date: Math.floor(new Date(currentEntry.dt_txt).getTime() / 1000),
         temperature: Math.round(currentEntry.main.temp),
@@ -214,6 +233,8 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         waveHeight: undefined,
         waterTemperature: undefined,
         marine: marineForDay,
+        pollen: pollenForDate, // Add pollen data
+        airQuality: airQualityForDate, // Add air quality data
       };
     });
 
@@ -222,37 +243,6 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
 
   return { forecastByDay, loading, error, timeInfo, marineHours };
 };
-
-const processWeatherData = (weatherData: any, marineData?: any) => {
-  const forecast: WeatherForecastDay[] = weatherData.daily.map((day: any, index: number) => ({
-    date: day.dt,
-    temperature: Math.round(day.temp.day),
-    rain: day.rain?.['1h'] || 0,
-    wind_speed: day.wind_speed, // OpenWeather provides m/s - keep as is
-    clouds: day.clouds,
-    humidity: day.humidity,
-    visibility: day.visibility || 10000,
-    waterTemperature: marineData?.daily?.[index]?.water_temp || null,
-    waveHeight: marineData?.daily?.[index]?.wave_height || null,
-    swellHeight: marineData?.daily?.[index]?.swell_height || null,
-    swellPeriod: marineData?.daily?.[index]?.swell_period || null,
-  }));
-
-  return {
-    forecast,
-    timeInfo: {
-      serverTime: new Date(weatherData.current.dt * 1000),
-      sunrise: new Date(weatherData.current.sunrise * 1000),
-      sunset: new Date(weatherData.current.sunset * 1000),
-    },
-    marineHours: marineData?.hourly || [],
-  };
-};
-
-const handleClose = () => {
-  setPopupActivity(null);
-};
-
 
 const hasMarineInterest = (interests: string[]) =>
   interests.some((id) => MARINE_ACTIVITY_IDS.includes(id));
@@ -585,56 +575,60 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
       <section>
         {/* Banner with location buttons */}
         <header className="homepage-banner">
-  <img
-    src="/burger-menu-svgrepo-com.svg"
-    alt="Open menu"
-    className="burger-menu-icon"
-    onClick={() => setMenuOpen(true)}
-  />
-  <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
-  <div className="homepage-banner__location-buttons desktop-location-buttons">
-    <button
-      className="location-banner__button"
-      style={{ background: '#10b981' }} // green for home
-      onClick={() => setShowHomeDialog(true)}
-    >
-      {homeLocation?.name 
-        ? `My 🏡 is ${homeLocation.name.split(',')[0]} ✓` 
-        : 'My home is here...'}
-    </button>
-    <button
-      className="location-banner__button"
-      style={{ background: '#3b82f6' }} // blue for coastal
-      onClick={() => setShowCoastDialog(true)}
-    >
-      {coastalLocation?.name 
-        ? `My 🏖️ is ${coastalLocation.name.split(',')[0]} ✓` 
-        : 'My beach is here...'}
-    </button>
-  </div>
-</header>
+          <div className="homepage-banner__left">
+            <img
+              src="/burger-menu-svgrepo-com.svg"
+              alt="Open menu"
+              className="burger-menu-icon"
+              onClick={() => setMenuOpen(true)}
+            />
+            <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+          </div>
+          
+          {/* Desktop location buttons - in top right */}
+          <div className="homepage-banner__location-buttons desktop-location-buttons">
+            <button
+              className="location-banner__button"
+              style={{ background: '#10b981' }} // green for home
+              onClick={() => setShowHomeDialog(true)}
+            >
+              {homeLocation?.name 
+                ? `🏡 ${homeLocation.name.split(',')[0]} ✓` 
+                : 'Set home location'}
+            </button>
+            <button
+              className="location-banner__button"
+              style={{ background: '#3b82f6' }} // blue for coastal
+              onClick={() => setShowCoastDialog(true)}
+            >
+              {coastalLocation?.name 
+                ? `🏖️ ${coastalLocation.name.split(',')[0]} ✓` 
+                : 'Set beach location'}
+            </button>
+          </div>
+        </header>
 
-{/* Mobile location buttons (outside the banner) */}
-<div className="homepage-banner__location-buttons mobile-location-buttons">
-  <button
-    className="location-banner__button"
-    style={{ background: '#10b981' }} // green for home
-    onClick={() => setShowHomeDialog(true)}
-  >
-    {homeLocation?.name 
-      ? `My 🏡 is ${homeLocation.name.split(',')[0]} ✓` 
-      : 'My home is here...'}
-  </button>
-  <button
-    className="location-banner__button"
-    style={{ background: '#3b82f6' }} // blue for coastal
-    onClick={() => setShowCoastDialog(true)}
-  >
-    {coastalLocation?.name 
-      ? `My 🏖️ is ${coastalLocation.name.split(',')[0]} ✓` 
-      : 'My beach is here...'}
-  </button>
-</div>
+        {/* Mobile location buttons (below banner) */}
+        <div className="homepage-banner__location-buttons mobile-location-buttons">
+          <button
+            className="location-banner__button"
+            style={{ background: '#10b981', flex: 1 }} // green for home
+            onClick={() => setShowHomeDialog(true)}
+          >
+            {homeLocation?.name 
+              ? `🏡 ${homeLocation.name.split(',')[0]} ✓` 
+              : 'Set home location'}
+          </button>
+          <button
+            className="location-banner__button"
+            style={{ background: '#3b82f6', flex: 1 }} // blue for coastal
+            onClick={() => setShowCoastDialog(true)}
+          >
+            {coastalLocation?.name 
+              ? `🏖️ ${coastalLocation.name.split(',')[0]} ✓` 
+              : 'Set beach location'}
+          </button>
+        </div>
         {/* Menu overlay */}
         {menuOpen && (
           <>
@@ -692,18 +686,26 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
       </>
     )}
 
-
 <div className="main-grid">
   {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, suggestionsData, dayLabel }, idx) => {
     const date = new Date(day.date * 1000);
     const isToday = idx === 0;
 
-    return (
+    // Insert AstronomyCard after today's card (idx === 0)
+    // Pass tonight's weather data (look for evening/night data from today or tomorrow)
+    const astronomyCard = idx === 0 ? (
+      <AstronomyCard 
+        key="astronomy-card" 
+        weatherData={day} // Pass today's weather data as base for tonight
+      />
+    ) : null;
+
+    const dayCard = (
       <div
         key={day.date}
         className="activity-card-enhanced"
         style={{
-          backgroundImage: `url(${getActivityBg(heroActivity?.activityId)})`,
+          backgroundImage: `url(${getActivityBg(heroActivity?.activityId || 'default')})`,
         }}
       >
         <div className="activity-card-overlay" />
@@ -711,7 +713,7 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
             <div className="weather-icon-topright">
     <div className="weather-icon-topright">
   <img
-    src={getWeatherIconUrl(day.icon)}
+    src={getWeatherIconUrl(day.icon || '01d')}
     alt={day.description || 'weather icon'}
     style={{ width: 48, height: 48 }}
     loading="lazy"
@@ -743,7 +745,7 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
             const emoji = getActivityEmoji(activityId) || '❓';
             const scoreInfo = getScoreCategory(score || 0);
             const isOutdoorActivity = isOutdoor(activityId);
-            const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase(), []);
+            const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase() as "perfect" | "good" | "fair" | "poor", []);
 
             // Suppose 'forecastDay' is the day object and you have marine hours attached
 const dayDate = new Date(day.date * 1000);
@@ -763,8 +765,6 @@ const weatherPopupDay = getWeatherDay(day, timeInfo); // <-- Use a function that
 const popupPayload = buildPopupActivityPayload({
   activityId: heroActivity.activityId,
   score: heroActivity.score,
-  marineData: isMarineActivity ? marinePopupDay : undefined,
-  weatherData: weatherPopupDay, // Always pass weatherData for both marine and non-marine
   day: marinePopupDay,
   reasons: buildReasons(day, heroActivity.activityId),
 });
@@ -831,8 +831,6 @@ const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
 const popupPayload = buildPopupActivityPayload({
   activityId: suggestion.activityId,
   score: suggestion.score,
-  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
-  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
   day: getPopupDay(suggestion.activityId, day, timeInfo),
   reasons: buildReasons(day, suggestion.activityId),
 });
@@ -885,8 +883,6 @@ const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
 const popupPayload = buildPopupActivityPayload({
   activityId: suggestion.activityId,
   score: suggestion.score,
-  marineData: isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
-  weatherData: !isMarineActivity ? getPopupDay(suggestion.activityId, day, timeInfo) : undefined,
   day: getPopupDay(suggestion.activityId, day, timeInfo),
   reasons: buildReasons(day, suggestion.activityId),
 });
@@ -973,7 +969,14 @@ const popupPayload = buildPopupActivityPayload({
           
         </div> 
       </div> 
+    );
 
+    // Return both the day card and astronomy card if it's the first day
+    return (
+      <React.Fragment key={`fragment-${day.date}`}>
+        {dayCard}
+        {astronomyCard}
+      </React.Fragment>
     );
   })}
 </div> {/* End of main-grid */}
@@ -991,10 +994,11 @@ const popupPayload = buildPopupActivityPayload({
     marineData={popupActivity.marineData}
     weatherData={popupActivity.weatherData}
     score={popupActivity.score}
-    reasons={popupActivity.reasons}
     dayTimestamp={popupActivity.dayTimestamp} // Use the direct timestamp property
     coastalLocation={coastalLocation}
     homeLocation={homeLocation}
+    pollen={popupActivity.pollen}
+    airQuality={popupActivity.airQuality}
     onClose={() => setPopupActivity(null)}
   />
 )}

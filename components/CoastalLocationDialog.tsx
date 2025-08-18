@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import countryNameToFlagEmoji from '../utils/flags';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
 import dynamic from 'next/dynamic';
@@ -106,7 +106,31 @@ requestOptions: {
           console.log("Reverse geocoding response:", data);
           
           if (data && data.length > 0) {
-            const locationName = data[0].name + (data[0].state ? `, ${data[0].state}` : "");
+            const location = data[0];
+            
+            // Build a more descriptive location name
+            let locationName = '';
+            
+            // Try to build a meaningful name using available components
+            if (location.name && location.name !== location.country) {
+              locationName = location.name;
+            } else if (location.local_names && location.local_names.en) {
+              locationName = location.local_names.en;
+            } else {
+              locationName = 'Current Location';
+            }
+            
+            // Add state/region if available and different from name
+            if (location.state && location.state !== locationName) {
+              locationName += `, ${location.state}`;
+            }
+            
+            // Add country if it's not already obvious and we have a specific local name
+            if (location.country && locationName !== 'Current Location' && !locationName.includes(location.country)) {
+              locationName += `, ${location.country}`;
+            }
+            
+            console.log(`Constructed location name: "${locationName}" from data:`, location);
             
             // Call onSave with the location data
             onSave({
@@ -172,8 +196,31 @@ requestOptions: {
                 const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`);
                 const data = await response.json();
                 if (data && data.length > 0) {
-                  const name = data[0].name + (data[0].state ? `, ${data[0].state}` : '');
-                  setSelectedName(name);
+                  const location = data[0];
+                  
+                  // Build a more descriptive location name
+                  let locationName = '';
+                  
+                  // Try to build a meaningful name using available components
+                  if (location.name && location.name !== location.country) {
+                    locationName = location.name;
+                  } else if (location.local_names && location.local_names.en) {
+                    locationName = location.local_names.en;
+                  } else {
+                    locationName = 'Pinned location';
+                  }
+                  
+                  // Add state/region if available and different from name
+                  if (location.state && location.state !== locationName) {
+                    locationName += `, ${location.state}`;
+                  }
+                  
+                  // Add country if it's not already obvious and we have a specific local name
+                  if (location.country && locationName !== 'Pinned location' && !locationName.includes(location.country)) {
+                    locationName += `, ${location.country}`;
+                  }
+                  
+                  setSelectedName(locationName);
                 } else {
                   setSelectedName('Pinned location');
                 }
@@ -254,52 +301,76 @@ requestOptions: {
 
   // Use CSS classes from index.css for styling
   return (
-    <div className="coastal-dialog-backdrop coastal-dialog-modal">
-      <div className="coastal-dialog coastal-dialog-content" style={{ padding: '24px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: '12px' }}>
+    <div className="coastal-dialog-backdrop">
+      <div className="coastal-dialog">
         {/* Close button */}
         <button className="coastal-dialog-close" onClick={onClose}>&times;</button>
         
         {/* Dialog title */}
-        <h3 className="coastal-dialog-title" style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '20px' }}>
+        <h3 className="coastal-dialog-title">
           <span className="coastal-dialog-icon">📍</span> {title}
         </h3>
         
-        {/* Current location button */}
-        <button
-          className="coastal-dialog-current-location"
-          onClick={() => {
-            // Add this confirmation before requesting location
-            if (confirm("This will request access to your location. Continue?")) {
-              getCurrentLocation();
-            }
-          }}
-          disabled={isGettingLocation}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            padding: '12px 16px',
-            marginBottom: '16px',
-            background: '#e0f2fe',
-            border: '2px solid #0284c7',
-            borderRadius: '8px',
-            fontSize: '1.05rem',
-            color: '#0369a1',
-            cursor: 'pointer',
-            transition: 'all 0.2s',
-            fontWeight: '500'
-          }}
-        >
-          {isGettingLocation ? (
-            <span>Getting your location...</span>
-          ) : (
-            <>
-              <span style={{ marginRight: '8px' }}>📍</span>
-              <span>Use my current location</span>
-            </>
+        {/* Search input at the top */}
+        <div className="coastal-dialog-search-container">
+          <input
+            type="text"
+            value={value}
+            autoFocus
+            disabled={!ready}
+            placeholder={!ready ? "Loading..." : "Search for location"}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setValue('');
+                clearSuggestions();
+              }
+            }}
+            className="coastal-dialog-input"
+          />
+          {value && (
+            <button
+              className="coastal-dialog-search-clear"
+              onClick={() => {
+                setValue('');
+                clearSuggestions();
+              }}
+              title="Clear search"
+            >
+              ✕
+            </button>
           )}
-        </button>
+        </div>
+
+        {/* Two action buttons side by side */}
+        <div className="coastal-dialog-actions">
+          <button
+            className="coastal-dialog-action-btn coastal-dialog-location-btn"
+            onClick={() => {
+              // Add this confirmation before requesting location
+              if (confirm("This will request access to your location. Continue?")) {
+                getCurrentLocation();
+              }
+            }}
+            disabled={isGettingLocation}
+          >
+            {isGettingLocation ? (
+              <span>Getting location...</span>
+            ) : (
+              <>
+                <span style={{ marginRight: '6px' }}>📍</span>
+                <span>Use my location</span>
+              </>
+            )}
+          </button>
+          
+          <button
+            className="coastal-dialog-action-btn coastal-dialog-map-btn"
+            onClick={() => setShowMapPicker(true)}
+          >
+            🗺️ Find on map
+          </button>
+        </div>
         
         {/* Show error message if there is one */}
         {locationError && (
@@ -319,77 +390,49 @@ requestOptions: {
 
         {recentLocationsState && recentLocationsState.length > 0 && (
           <div style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '8px' }}>Recent Locations</h4>
-            <ul className="coastal-dialog-recent-list" style={{ padding: 0, listStyle: 'none' }}>
+            <h4>Recent Locations</h4>
+            <ul className="coastal-dialog-recent-list">
               {recentLocationsState.map((loc, index) => (
-                <li key={index} className="coastal-dialog-list-item">
+                <li key={index} className="coastal-dialog-recent-item coastal-location-item">
                   <button
-                    className="coastal-dialog-list-btn"
                     onClick={() => {
                       onSave(loc);
                     }}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '10px',
-                      background: '#f0fdf4',
-                      border: '1px solid #bbf7d0',
-                      borderRadius: '6px',
-                      marginBottom: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.95rem'
-                    }}
+                    title={loc.name} // Show full name on hover
+                    className="coastal-dialog-recent-btn"
                   >
-                    <span>{loc.name}</span>
+                    <span className="location-icon">🏖️</span>
+                    <span>{loc.name.split(',')[0]}</span>
                   </button>
                 </li>
               ))}
             </ul>
           </div>
         )}
-        
-        {/* Search input */}
-        <input
-          type="text"
-          value={value}
-          autoFocus
-          disabled={!ready}
-          placeholder="Search for location"
-          onChange={e => setValue(e.target.value)}
-          className="coastal-dialog-input location-banner__input"
-          style={{ marginBottom: '12px', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '1rem', width: '100%' }}
-        />
-        {/* Map picker button */}
-        <button
-          className="coastal-dialog-map-btn"
-          onClick={() => setShowMapPicker(true)}
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '12px',
-            background: '#fef3c7',
-            border: '1px solid #fcd34d',
-            borderRadius: '6px',
-            fontSize: '0.95rem',
-            cursor: 'pointer',
-            fontWeight: '500',
-            color: '#000000',
-          }}
-        >
-          🗺️ Or find on map
-        </button>
+
+        {/* Show home location as a recent option if available */}
+        {homeLocation && (
+          <div style={{ marginBottom: '16px' }}>
+            <h4>Quick Options</h4>
+            <ul className="coastal-dialog-recent-list">
+              <li className="coastal-dialog-recent-item home-location-item">
+                <button
+                  onClick={() => {
+                    onSave(homeLocation);
+                  }}
+                  title={homeLocation.name}
+                  className="coastal-dialog-recent-btn home-location-btn"
+                >
+                  <span className="location-icon">🏡</span>
+                  <span>{homeLocation.name.split(',')[0]} (Home)</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        )}
         
         {status === "OK" && (
-          <ul
-            className="coastal-dialog-list"
-            style={{
-              padding: 0,
-              marginTop: '16px',
-              listStyle: 'none'
-            }}
-          >
+          <ul className="coastal-dialog-list">
             {data.map((suggestion, i) => {
               const { place_id, description } = suggestion;
 
@@ -440,31 +483,39 @@ requestOptions: {
                         console.error("Error selecting place:", error);
                       }
                     }}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      width: '100%',
-                      padding: '10px',
-                      background: '#f9fafb',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      marginBottom: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.95rem'
-                    }}
                   >
-                    <span>
+                    <div className="coastal-dialog-search-result">
                       {(() => {
                         const parts = description.split(',');
-                        if (parts.length < 2) return description;
+                        if (parts.length < 2) {
+                          return (
+                            <>
+                              <span className="coastal-dialog-result-type">🏖️</span>
+                              <span className="coastal-dialog-result-main">{description}</span>
+                            </>
+                          );
+                        }
 
+                        const mainLocation = parts[0].trim();
                         const countryName = parts[parts.length - 1].trim();
                         const flag = countryNameToFlagEmoji(countryName);
-                        parts[parts.length - 1] = ` ${flag}`; // Add space before the flag, no comma
-                        return parts.join(',').replace(/,\s+$/, '').trim(); // Clean trailing commas
+                        const details = parts.slice(1).join(',').trim();
+                        
+                        // Detect if this looks like a coastal/beach location
+                        const isLikelyBeach = /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal|bay|coast|shore|marina|harbor|harbour|pier|wharf)\b/i.test(description);
+                        const locationIcon = isLikelyBeach ? '🏖️' : '📍';
+                        
+                        return (
+                          <>
+                            <span className="coastal-dialog-result-type">{locationIcon}</span>
+                            <div className="coastal-dialog-result-content">
+                              <span className="coastal-dialog-result-main">{mainLocation} {flag}</span>
+                              <span className="coastal-dialog-result-details">{details}</span>
+                            </div>
+                          </>
+                        );
                       })()}
-                    </span>
+                    </div>
                   </button>
                 </li>
               );

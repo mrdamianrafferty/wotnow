@@ -1,0 +1,12 @@
+{
+  "name": "image-optimizer",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "optimize": "node optimize-images.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0",
+    "fs-extra": "^11.2.0"
+  }
+}

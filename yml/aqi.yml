@@ -1,0 +1,210 @@
+meta:
+  goal: >
+    Implement AQI policy with differentiated penalties:
+    - Reduce points from AQI ≥150 for all activities.
+    - Heavier penalties for strenuous vs lighter for non-strenuous.
+    - In AQI 201–300, force "poor" only for strenuous; non-strenuous show advisory warning.
+    - At AQI ≥301, override all messaging with "Suspend training and all outdoor activities" for everyone.
+
+sequence:
+  - id: write_policy
+    description: Create/replace the AQI policy with dual multipliers and band rules.
+    create_file:
+      path: "src/policies/airQualityPolicy.yaml"
+      contents: |
+        aqi_policy:
+          bands:
+            - id: good
+              range: [0, 50]
+              colour: "#00E400"
+              multiplier_strenuous: 1.0
+              multiplier_non_strenuous: 1.0
+              force_poor_strenuous: false
+              warn_non_strenuous: null
+              override_all_messaging: null
+
+            - id: moderate
+              range: [51, 100]
+              colour: "#FFFF00"
+              multiplier_strenuous: 0.95
+              multiplier_non_strenuous: 0.98
+              force_poor_strenuous: false
+              warn_non_strenuous: null
+              override_all_messaging: null
+
+            - id: usg            # Unhealthy for Sensitive Groups
+              range: [101, 150]
+              colour: "#FF7E00"
+              multiplier_strenuous: 0.9
+              multiplier_non_strenuous: 0.95
+              force_poor_strenuous: false
+              warn_non_strenuous: "Sensitive individuals: consider reducing intensity."
+              override_all_messaging: null
+
+            - id: unhealthy
+              range: [151, 200]
+              colour: "#FF0000"
+              multiplier_strenuous: 0.75
+              multiplier_non_strenuous: 0.85   # ← smaller penalty for non-strenuous
+              force_poor_strenuous: false
+              warn_non_strenuous: "Consider lighter or shorter sessions."
+              override_all_messaging: null
+
+            - id: very_unhealthy
+              range: [201, 300]
+              colour: "#99004C"
+              multiplier_strenuous: 0.5
+              multiplier_non_strenuous: 0.75   # ← lighter than strenuous
+              force_poor_strenuous: true       # ← strenuous marked "poor"
+              warn_non_strenuous: "Air quality is very unhealthy. Avoid strenuous effort; choose gentle outdoor activity or move indoors."
+              override_all_messaging: null
+
+            - id: hazardous
+              range: [301, 500]
+              colour: "#7E0023"
+              multiplier_strenuous: 0.0
+              multiplier_non_strenuous: 0.0
+              force_poor_strenuous: true
+              warn_non_strenuous: "Air quality is hazardous. Suspend training and outdoor activities."
+              override_all_messaging: "Air quality is hazardous (AQI ≥301). Suspend training and all outdoor activities."
+
+  - id: add_policy_loader
+    description: Update TS types to support dual multipliers and warnings.
+    create_or_update_file:
+      path: "src/utils/airQualityPolicy.ts"
+      contents: |
+        export type AqiBand = {
+          id: string;
+          range: [number, number];
+          colour: string;
+          multiplier_strenuous: number;
+          multiplier_non_strenuous: number;
+          force_poor_strenuous: boolean;
+          warn_non_strenuous: string | null;
+          override_all_messaging: string | null;
+        };
+
+        export const AQI_BANDS: AqiBand[] = [
+          { id: "good",          range: [0, 50],   colour: "#00E400", multiplier_strenuous: 1.0,  multiplier_non_strenuous: 1.0,  force_poor_strenuous: false, warn_non_strenuous: null, override_all_messaging: null },
+          { id: "moderate",      range: [51,100],  colour: "#FFFF00", multiplier_strenuous: 0.95, multiplier_non_strenuous: 0.98, force_poor_strenuous: false, warn_non_strenuous: null, override_all_messaging: null },
+          { id: "usg",           range: [101,150], colour: "#FF7E00", multiplier_strenuous: 0.9,  multiplier_non_strenuous: 0.95, force_poor_strenuous: false, warn_non_strenuous: "Sensitive individuals: consider reducing intensity.", override_all_messaging: null },
+          { id: "unhealthy",     range: [151,200], colour: "#FF0000", multiplier_strenuous: 0.75, multiplier_non_strenuous: 0.85, force_poor_strenuous: false, warn_non_strenuous: "Consider lighter or shorter sessions.", override_all_messaging: null },
+          { id: "very_unhealthy",range: [201,300], colour: "#99004C", multiplier_strenuous: 0.5,  multiplier_non_strenuous: 0.75, force_poor_strenuous: true,  warn_non_strenuous: "Air quality is very unhealthy. Avoid strenuous effort; choose gentle outdoor activity or move indoors.", override_all_messaging: null },
+          { id: "hazardous",     range: [301,500], colour: "#7E0023", multiplier_strenuous: 0.0,  multiplier_non_strenuous: 0.0,  force_poor_strenuous: true,  warn_non_strenuous: "Air quality is hazardous. Suspend training and outdoor activities.", override_all_messaging: "Air quality is hazardous (AQI ≥301). Suspend training and all outdoor activities." },
+        ];
+
+        export function getAqiBand(aqi: number): AqiBand {
+          const clamped = Math.max(0, Math.min(500, Math.round(aqi)));
+          return AQI_BANDS.find(b => clamped >= b.range[0] && clamped <= b.range[1]) ?? AQI_BANDS[0];
+        }
+
+  - id: add_scoring_adjuster
+    description: Use dual multipliers; keep strenuous-only “poor” at 201–300 and global override ≥301.
+    create_or_update_file:
+      path: "src/utils/scoring/airQualityScoring.ts"
+      contents: |
+        import { getAqiBand } from "../airQualityPolicy";
+
+        export type AqiAdjustmentResult = {
+          adjustedScore: number;
+          forcePoor: boolean;             // true for strenuous @ 201–300, and for all @ ≥301
+          colourHex: string;
+          overrideAllMessaging?: string;
+          bandId: string;
+          advisory?: string;              // optional text for non-strenuous warnings
+        };
+
+        export function adjustScoreForAqi(params: {
+          baseScore: number;
+          aqi: number;
+          isStrenuous: boolean;
+        }): AqiAdjustmentResult {
+          const { baseScore, aqi, isStrenuous } = params;
+          const band = getAqiBand(aqi);
+
+          const multiplier = isStrenuous ? band.multiplier_strenuous : band.multiplier_non_strenuous;
+          const adjusted = Math.max(0, Math.round(baseScore * multiplier));
+
+          const hazardous = band.override_all_messaging !== null; // ≥301
+          const forcePoorStrenuous = band.force_poor_strenuous && isStrenuous;
+
+          return {
+            adjustedScore: hazardous ? 0 : adjusted,
+            forcePoor: hazardous ? true : forcePoorStrenuous,
+            colourHex: band.colour,
+            overrideAllMessaging: band.override_all_messaging ?? undefined,
+            bandId: band.id,
+            advisory: (!isStrenuous && band.warn_non_strenuous) ? band.warn_non_strenuous : undefined,
+          };
+        }
+
+  - id: integrate_scoring
+    description: Surface advisory text for non-strenuous in 201–300; preserve hazardous override.
+    create_or_update_file:
+      path: "src/utils/scoring/applyEnvironmentalAdjustments.ts"
+      contents: |
+        import { adjustScoreForAqi } from "./airQualityScoring";
+        import { isStrenuous } from "../../data/activityMeta";
+
+        export function applyAqiToActivityScore(params: {
+          activityId: string;
+          baseScore: number;
+          aqi?: number;
+        }) {
+          const { activityId, baseScore, aqi } = params;
+          if (aqi == null) return { score: baseScore, flags: {}, ui: {}, status: "ok" };
+
+          const isStren = isStrenuous(activityId);
+          const { adjustedScore, forcePoor, overrideAllMessaging, colourHex, bandId, advisory } =
+            adjustScoreForAqi({ baseScore, aqi, isStrenuous: isStren });
+
+          const finalScore = forcePoor ? Math.min(adjustedScore, 25) : adjustedScore;
+          const status = overrideAllMessaging ? "suspend" : (forcePoor ? "poor" : "ok");
+
+          return {
+            score: finalScore,
+            flags: {
+              aqiBand: bandId,
+              aqiColour: colourHex,
+              aqiOverrideMessage: overrideAllMessaging || null,
+              aqiForcePoor: forcePoor,
+              aqiAdvisory: advisory || null,
+              aqiIsStrenuous: isStren,
+            },
+            ui: {
+              message:
+                overrideAllMessaging ||
+                (forcePoor ? "Air quality is very unhealthy for strenuous activity. Consider moving training indoors."
+                           : advisory || undefined),
+            },
+            status,
+          };
+        }
+
+  - id: tests_update
+    description: Update tests to cover lighter penalty and advisory for non-strenuous at 201–300.
+    create_or_update_file:
+      path: "tests/airQualityScoring.test.ts"
+      contents: |
+        import { adjustScoreForAqi } from "../src/utils/scoring/airQualityScoring";
+
+        test("AQI 220 running (strenuous → poor)", () => {
+          const r = adjustScoreForAqi({ baseScore: 80, aqi: 220, isStrenuous: true });
+          expect(r.adjustedScore).toBe(40);
+          expect(r.forcePoor).toBe(true);
+          expect(r.advisory).toBeUndefined();
+        });
+
+        test("AQI 220 chess_park (non-strenuous → lighter penalty + advisory)", () => {
+          const r = adjustScoreForAqi({ baseScore: 80, aqi: 220, isStrenuous: false });
+          expect(r.adjustedScore).toBe(60); // 80 * 0.75
+          expect(r.forcePoor).toBe(false);
+          expect(r.advisory).toBeTruthy();
+        });
+
+        test("AQI 310 anything (override for all)", () => {
+          const r = adjustScoreForAqi({ baseScore: 80, aqi: 310, isStrenuous: false });
+          expect(r.adjustedScore).toBe(0);
+          expect(r.forcePoor).toBe(true);
+          expect(r.overrideAllMessaging).toBeTruthy();
+        })

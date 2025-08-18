@@ -268,6 +268,8 @@ export function buildPopupActivityPayload({
     message,
     dayTimestamp: day.date, // Add this line to include the timestamp directly
     beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
+    pollen: day.pollen, // Include pollen data from day
+    airQuality: day.airQuality, // Include air quality data from day
     // renderMarineData,
     // renderFooter,
   };

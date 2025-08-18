@@ -1,0 +1,219 @@
+version: 1
+name: astronomy_ingestion_and_highlights
+description: >
+  Fetch IMO meteor showers (JSON), NASA/GSFC eclipse catalogues (CSV/ASCII),
+  manage ephemerides (Skyfield + JPL DE), and build validated highlights.json.
+  Runs at startup and on sensible schedules. Produces cache + ready-to-serve data.
+
+env:
+  PROJECT_ROOT: "{{REPO_ROOT}}/services/astro_highlights/astro_highlights"
+  VENV: "{{PROJECT_ROOT}}/.venv"
+  PYTHON: "{{VENV}}/bin/python"
+  PIP: "{{VENV}}/bin/pip"
+  DATA_DIR: "{{PROJECT_ROOT}}/data"
+  CACHE_DIR: "{{PROJECT_ROOT}}/cache"
+  OUT_DIR: "{{PROJECT_ROOT}}/out"
+
+schedules:
+  # Run ingestion regularly so datasets are fresh before UI hits them.
+  - name: startup-seed
+    when: on_startup
+    phases: [verify_layout, setup_env, download_core_datasets, validate_datasets, build_default_highlights]
+
+  - name: nightly-build
+    when: "0 2 * * *"    # nightly 02:00 local
+    phases: [download_core_datasets, validate_datasets, build_default_highlights]
+
+  - name: monthly-heavy-refresh
+    when: "15 3 1 * *"   # monthly at 03:15
+    phases: [refresh_ephemerides]
+
+phases:
+
+  verify_layout:
+    steps:
+      - name: ensure-folders
+        run:
+          - "mkdir -p '{{DATA_DIR}}/imo' '{{DATA_DIR}}/nasa' '{{DATA_DIR}}/ephem'"
+          - "mkdir -p '{{CACHE_DIR}}' '{{OUT_DIR}}'"
+
+      - name: locate-code
+        assert:
+          - "test -f '{{PROJECT_ROOT}}/astro_highlights/build_highlights.py'"
+          - "test -f '{{PROJECT_ROOT}}/astro_highlights/compute.py'"
+          - "test -f '{{PROJECT_ROOT}}/astro_highlights/ephem_loader.py'"
+
+    acceptance:
+      - "Required directories exist."
+      - "build_highlights.py, compute.py, ephem_loader.py present."
+
+  setup_env:
+    steps:
+      - name: ensure-venv
+        run:
+          - "test -d '{{VENV}}' || python3 -m venv '{{VENV}}'"
+          - "'{{PIP}}' install --upgrade pip"
+
+      - name: install-deps
+        run:
+          - >-
+            '{{PIP}}' install
+            skyfield jplephem numpy python-dateutil pytz sgp4
+            requests pandas
+
+    acceptance:
+      - "skyfield and jplephem import without error."
+      - "Python interpreter is '{{PYTHON}}'."
+
+  download_core_datasets:
+    steps:
+      # 1) IMO Meteor Showers (JSON) — update weekly (they don’t change hourly)
+      - name: fetch-imo-json
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import json, pathlib, requests, time
+            root = pathlib.Path('{{DATA_DIR}}/imo')
+            root.mkdir(parents=True, exist_ok=True)
+            url = 'https://example.imo.net/api/meteor-showers.json'  # replace with real IMO JSON endpoint
+            r = requests.get(url, timeout=60)
+            r.raise_for_status()
+            p = root / 'meteor_showers.json'
+            p.write_text(r.text, encoding='utf-8')
+            print('Saved', p)
+            PY
+
+      # 2) NASA/GSFC Eclipse Catalogues — refresh monthly (or if missing)
+      - name: fetch-nasa-eclipse-csv
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import pathlib, requests
+            nasa = pathlib.Path('{{DATA_DIR}}/nasa'); nasa.mkdir(parents=True, exist_ok=True)
+            files = {
+              'solar': 'https://eclipse.gsfc.nasa.gov/SEpath/SEpath0.html',   # example; swap to CSV/ASCII if available
+              'lunar': 'https://eclipse.gsfc.nasa.gov/LEpubs/LEcatalog.txt'   # example ASCII table
+            }
+            for key, url in files.items():
+              r = requests.get(url, timeout=60)
+              r.raise_for_status()
+              ext = 'csv' if url.endswith('.csv') else ('txt' if url.endswith('.txt') else 'html')
+              p = nasa / f'{key}_eclipses.{ext}'
+              p.write_bytes(r.content)
+              print('Saved', p)
+            PY
+
+      # 3) Ephemerides — rarely change. Ensure a known file (de421 or de422).
+      - name: ensure-ephemeris
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import pathlib, requests
+            ep = pathlib.Path('{{DATA_DIR}}/ephem'); ep.mkdir(parents=True, exist_ok=True)
+            bsp = ep/'de421.bsp'
+            if not bsp.exists():
+                url='https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de421.bsp'
+                print('Downloading', url)
+                r = requests.get(url, timeout=300)
+                r.raise_for_status()
+                bsp.write_bytes(r.content)
+                print('Saved', bsp)
+            else:
+                print('Found', bsp)
+            PY
+
+    acceptance:
+      - "IMO meteor_showers.json exists and is valid JSON."
+      - "NASA eclipse files present (CSV/TXT/HTML as applicable)."
+      - "JPL de421.bsp present."
+
+  validate_datasets:
+    steps:
+      - name: validate-imo-json
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import json, pathlib
+            p = pathlib.Path('{{DATA_DIR}}/imo/meteor_showers.json')
+            data = json.loads(p.read_text(encoding='utf-8'))
+            assert isinstance(data, (list, dict)), 'IMO JSON not list/dict'
+            print('IMO OK: entries =', len(data) if isinstance(data, list) else len(data.keys()))
+            PY
+
+      - name: validate-nasa-files
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import pathlib, re
+            nasa = pathlib.Path('{{DATA_DIR}}/nasa')
+            assert nasa.exists(), 'NASA folder missing'
+            files = list(nasa.glob('*_eclipses.*'))
+            assert files, 'No NASA files'
+            for f in files:
+              txt = f.read_text(errors='ignore')
+              assert len(txt) > 100, f'{f.name} looks too small'
+              print('OK', f.name, len(txt),'bytes')
+            PY
+
+      - name: validate-ephemeris
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            from skyfield.api import load
+            eph = load('{{DATA_DIR}}/ephem/de421.bsp')
+            _ = eph['sun'], eph['earth'], eph['moon']
+            print('Ephemeris OK (sun/earth/moon available)')
+            PY
+
+    acceptance:
+      - "Validation scripts succeed without assertion errors."
+
+  build_default_highlights:
+    steps:
+      # Build for a small canary set so UI always has something to render
+      - name: build-canary-highlights
+        vars:
+          RUNS:
+            - {lat: 43.55, lon: -5.65, date: "today", days: 3, out: "highlights_asturias.json"}
+            - {lat: 53.35, lon: -6.26, date: "today", days: 3, out: "highlights_dublin.json"}
+            - {lat: 51.50, lon: -0.12, date: "today", days: 3, out: "highlights_london.json"}
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import json, datetime as dt, subprocess, shlex, pathlib
+            project='{{PROJECT_ROOT}}'
+            out_dir=pathlib.Path('{{OUT_DIR}}'); out_dir.mkdir(parents=True, exist_ok=True)
+            runs = {{RUNS}}
+            for r in runs:
+                date = dt.date.today().isoformat() if r['date']=='today' else r['date']
+                out = out_dir / r['out']
+                cmd = f"{{'{{PYTHON}}'}} -m astro_highlights.build_highlights --lat {r['lat']} --lon {r['lon']} --date {date} --days {r['days']} --out {out}"
+                print('Running:', cmd)
+                subprocess.check_call(shlex.split(cmd))
+            PY
+
+      - name: sanity-check-json
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            import json, pathlib
+            for p in pathlib.Path('{{OUT_DIR}}').glob('highlights_*.json'):
+              d=json.loads(p.read_text())
+              assert 'nights' in d and isinstance(d['nights'], list), f'{p} missing nights'
+              print('OK', p.name, 'nights:', len(d['nights']))
+            PY
+
+    acceptance:
+      - "Highights JSON exists for canary locations with at least 1 night record."
+
+  refresh_ephemerides:
+    steps:
+      - name: optional-newer-kernels
+        run:
+          - >-
+            '{{PYTHON}}' - <<'PY'
+            # Placeholder: only if you decide to move to de430/de440
+            print('No action: de421 is sufficient for this app. Consider de440 if needed.')
+            PY
+    acceptance:
+      - "Phase is a no-op unless you decide to upgrade kernels."

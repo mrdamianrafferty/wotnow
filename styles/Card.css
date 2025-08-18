@@ -484,6 +484,173 @@
   box-shadow: 0 2px 8px rgba(16,185,129,0.08);
 }
 
+/* Data Bars Styling for Astronomy Card */
+.data-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.data-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  backdrop-filter: blur(5px);
+}
+
+.data-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.data-label img {
+  width: 20px;
+  height: 20px;
+  filter: brightness(0) invert(1);
+}
+
+.data-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.data-subtitle {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 4px;
+}
+
+.data-bar-visual {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.data-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s ease-in-out;
+}
+
+/* Different colors for different data types */
+.data-bar-fill.moon {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.data-bar-fill.clouds {
+  background: linear-gradient(90deg, #94a3b8, #64748b);
+}
+
+.data-bar-fill.visibility {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.data-bar-fill.dark-sky {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
+
+/* Card name styling for astronomy card */
+.card__hero-name.outdoor {
+  cursor: pointer;
+}
+
+.card__hero-name.outdoor:hover {
+  text-decoration: underline;
+}
+
+/* Weather Data Bars - Used in AstronomyCard and activity popups */
+.weather-data-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.weather-data-bar:last-child {
+  border-bottom: none;
+}
+
+.weather-data-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.weather-data-label .data-icon {
+  font-size: 1rem;
+}
+
+.weather-data-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 1;
+  margin-left: 12px;
+}
+
+.weather-data-value {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.weather-data-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.weather-data-bar-visual {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 120px;
+}
+
+.weather-data-bar-fill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Data bars container */
+.data-bars {
+  margin: 16px 0;
+  padding: 0 8px;
+}
+
+/* Activity footer for messages */
+.activity-footer {
+  margin-top: auto;
+  padding: 12px 8px 0;
+}
+
+.activity-message {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 600px) {
   .main-grid {

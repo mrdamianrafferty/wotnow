@@ -1,0 +1,134 @@
+# services/astro_highlights/agent_meta.yml
+# Purpose: Tell the agent what "good" looks like and in what order to run the setup.
+# British English spellings used.
+
+meta:
+  product: "WotNow"
+  feature: "Astronomy highlights (global canaries + nightly builds)"
+  owner: "services/astro_highlights"
+  objectives:
+    - Provide precomputed astronomy highlights for representative locations on all inhabited landmasses.
+    - Enable a nightly CI job that refreshes highlights and uploads artefacts.
+    - Offer a local runner + manifest that the UI can read immediately.
+  non_goals:
+    - No UI work in this playbook (only outputs & docs for UI to consume).
+    - No persistence beyond JSON artefacts in repo (no DB work).
+
+success_criteria:
+  - "Local smoke test runs successfully and writes two JSON files into services/astro_highlights/out."
+  - "Full canary build produces JSON files for all configured regions and an index_canaries.json manifest."
+  - "GitHub Actions workflow exists and passes on a dry run (workflow_dispatch)."
+  - "README_canaries.md explains how to run locally and how the UI consumes outputs."
+  - "Optional npm script 'astro:canaries' is present if package.json exists."
+
+preconditions:
+  - Python 3.9+ available locally.
+  - Repo contains: services/astro_highlights/astro_highlights (Python package).
+  - Internet access to fetch Python packages.
+
+artefacts:
+  local_config: "services/astro_highlights/astro_canaries.yml"
+  runner_script: "services/astro_highlights/astro_highlights/run_canaries.py"
+  outputs_dir: "services/astro_highlights/out"
+  outputs_manifest: "services/astro_highlights/out/index_canaries.json"
+  gha_workflow: ".github/workflows/astro_canaries.yml"
+  docs_readme: "services/astro_highlights/README_canaries.md"
+
+execution_plan:
+  order:
+    - id: 01_layout_check
+      description: Verify repo layout and create missing folders.
+      run: "sanity_check_repo"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 02_venv_install
+      description: Create venv (if needed) and install package editable.
+      run: "ensure_virtualenv_and_install"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 03_write_config
+      description: Write global canary coordinates config.
+      run: "write_local_canary_yaml"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 04_write_runner
+      description: Write local Python runner that reads config and builds all canaries.
+      run: "write_local_runner_script"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 05_write_workflow
+      description: Add nightly GitHub Actions workflow to build and upload artefacts.
+      run: "write_github_actions_workflow"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 06_add_dev_script_optional
+      description: Add npm script 'astro:canaries' if package.json exists.
+      run: "add_npm_script_optional"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 07_write_docs
+      description: Write README with local run, outputs, and UI guidance.
+      run: "write_docs"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+    - id: 08_local_smoke_test
+      description: Build two quick locations (Asturias & Dublin) and verify files exist.
+      run: "local_smoke_test"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+      verification:
+        - "test -f services/astro_highlights/out/highlights_smoke_Asturias_ES.json"
+        - "test -f services/astro_highlights/out/highlights_smoke_Dublin_IE.json"
+
+    - id: 09_full_local_build
+      description: Build all configured canaries and write index manifest.
+      run: "run_full_canaries_locally"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+      verification:
+        - "test -f services/astro_highlights/out/index_canaries.json"
+
+    - id: 10_optional_commit
+      description: Stage changes (commit optional as commented line).
+      run: "optional_git_commit"
+      source: "services/astro_highlights/agent_setup_canaries.yml"
+
+gates:
+  - id: G1_manifest_present
+    require_after: "09_full_local_build"
+    checks:
+      - file_exists: "services/astro_highlights/out/index_canaries.json"
+
+  - id: G2_readme_present
+    require_after: "07_write_docs"
+    checks:
+      - file_exists: "services/astro_highlights/README_canaries.md"
+
+fallbacks:
+  - condition: "venv errors or pip conflicts"
+    action: "recreate venv, re-run step 02"
+  - condition: "workflow write blocked"
+    action: "ensure .github/workflows exists, re-run step 05"
+  - condition: "smoke test fails"
+    action: "print runner stdout/stderr and retry once; if still failing, dump python -V, pip freeze"
+
+telemetry:
+  log_files:
+    - "services/astro_highlights/out/index_canaries.json"
+  stdout_capture: true
+  redact_patterns:
+    - "Authorization:"
+    - "token:"
+
+manual_notes_for_humans:
+  - "To run locally without the agent: python services/astro_highlights/astro_highlights/run_canaries.py"
+  - "To trigger CI manually: GitHub → Actions → 'Build global astronomy canaries' → Run workflow"
+  - "UI should read index_canaries.json, locate nearest canary, and display highlights."
+
+agent_instructions:
+  mode: "strict-ordered"
+  on_error: "stop_at_failed_step_and_report"
+  report:
+    include:
+      - executed_steps
+      - verification_results
+      - stdout_tail
+      - file_tree_changes

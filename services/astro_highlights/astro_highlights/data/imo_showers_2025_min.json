@@ -1,0 +1,19 @@
+{
+  "year": 2025,
+  "source": "IMO Meteor Shower Calendar 2025",
+  "link": "https://www.imo.net/files/meteor-shower/cal2025.pdf",
+  "showers": [
+    {
+      "id": "perseids",
+      "iau_code": "007 PER",
+      "name": "Perseids",
+      "active_start": "2025-07-14",
+      "active_end": "2025-09-01",
+      "peak_utc": "2025-08-12T21:00:00Z",
+      "zhr_notes": "ZHR ~100 in favourable years; moonlight can reduce rates.",
+      "radiant_ra_deg": 48.0,
+      "radiant_dec_deg": 58.0,
+      "velocity_kms": 59.0
+    }
+  ]
+}
