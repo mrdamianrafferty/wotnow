@@ -8,6 +8,7 @@ import type { AppProps } from 'next/app'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import Script from 'next/script';
 
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <UserPreferencesProvider>

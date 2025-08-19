@@ -4,12 +4,12 @@ export default async function handler(req, res) {
   if (!lat || !lon || !apiKey) {
     return res.status(400).json({ error: "Missing parameters or API key" });
   }
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-    res.status(200).json(data);
+    const { getFullWeather } = require('../../lib/openweather');
+    const weatherData = await getFullWeather({ lat, lon, apiKey });
+    return res.status(200).json(weatherData);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch OpenWeather data" });
+    console.error('OpenWeather API error:', err);
+    return res.status(500).json({ error: `Failed to fetch OpenWeather data: ${err.message}` });
   }
 }

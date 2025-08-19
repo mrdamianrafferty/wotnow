@@ -9,7 +9,7 @@ import dayjs from "dayjs";
  */
 export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?: number, coastalLon?: number) {
   const [slots, setSlots] = useState<OWMForecastSlot[]>([]);
-  const [marine, setMarine] = useState<MarineRow[][]>([[], [], [], [], []]);
+  const [marine, setMarine] = useState<MarineRow[][]>([[], [], [], [], [], [], [], []]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,18 +31,18 @@ export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?:
         .then(r => r.json())
         .then(d => {
           const rows: MarineRow[] = mapStormglass(d);
-          const grouped: MarineRow[][] = [[], [], [], [], []];
+          const grouped: MarineRow[][] = [[], [], [], [], [], [], [], []];
           rows.forEach(r => {
             const diff = dayjs(r.iso).startOf("day")
               .diff(dayjs().startOf("day"), "day");
-            if (diff >= 0 && diff < 5) grouped[diff].push(r);
+            if (diff >= 0 && diff < 8) grouped[diff].push(r);
           });
           setMarine(grouped);
         })
-        .catch(() => setMarine([[], [], [], [], []]))
+        .catch(() => setMarine([[], [], [], [], [], [], [], []]))
         .finally(() => setLoading(false));
     } else {
-      setMarine([[], [], [], [], []]);
+      setMarine([[], [], [], [], [], [], [], []]);
       setLoading(false);
     }
   }, [mainLat, mainLon, coastalLat, coastalLon]);

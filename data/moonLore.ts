@@ -1,3 +1,29 @@
+/**
+ * Map various moon phase names to canonical keys for moonLore and icons.
+ */
+export function normalizeMoonPhase(phase: string): MoonPhase | undefined {
+  if (!phase) return undefined;
+  const map: Record<string, MoonPhase> = {
+    'new moon': 'new',
+    'new': 'new',
+    'waxing crescent': 'waxing_crescent',
+    'waxing_crescent': 'waxing_crescent',
+    'first quarter': 'first_quarter',
+    'first_quarter': 'first_quarter',
+    'waxing gibbous': 'waxing_gibbous',
+    'waxing_gibbous': 'waxing_gibbous',
+    'full moon': 'full',
+    'full': 'full',
+    'waning gibbous': 'waning_gibbous',
+    'waning_gibbous': 'waning_gibbous',
+    'last quarter': 'last_quarter',
+    'last_quarter': 'last_quarter',
+    'waning crescent': 'waning_crescent',
+    'waning_crescent': 'waning_crescent',
+  };
+  const key = phase.trim().toLowerCase().replace(/_/g, ' ');
+  return map[key] || undefined;
+}
 // data/moonLore.ts
 
 export type MoonPhase =
@@ -158,7 +184,11 @@ export const moonLore: Record<MoonPhase, LoreItem[]> = {
 
 // Random item (with optional culture filter)
 export function getMoonLore(phase: MoonPhase, culture?: Culture): LoreItem {
-  const items = culture ? moonLore[phase].filter(i => i.culture === culture) : moonLore[phase];
+  const canonicalPhase = normalizeMoonPhase(phase as string) || phase;
+  const phaseLore = moonLore[canonicalPhase as MoonPhase];
+  if (!Array.isArray(phaseLore) || phaseLore.length === 0) return undefined;
+  const items = culture ? phaseLore.filter(i => i.culture === culture) : phaseLore;
+  if (!items.length) return undefined;
   return items[Math.floor(Math.random() * items.length)];
 }
 
@@ -168,11 +198,15 @@ export function getMoonLoreDistinct(
   phase: MoonPhase,
   opts?: { culture?: Culture; used?: Set<string> }
 ): { item: LoreItem; key: string } {
+  const canonicalPhase = normalizeMoonPhase(phase as string) || phase;
+  const phaseLore = moonLore[canonicalPhase as MoonPhase];
+  if (!Array.isArray(phaseLore) || phaseLore.length === 0) return { item: undefined, key: undefined };
   const used = opts?.used ?? new Set<string>();
-  const pool = (opts?.culture ? moonLore[phase].filter(i => i.culture === opts.culture) : moonLore[phase]).map(i => ({
+  const pool = (opts?.culture ? phaseLore.filter(i => i.culture === opts.culture) : phaseLore).map(i => ({
     ...i,
     _key: i.key ?? `${i.culture}:${i.title}`,
   }));
+  if (!pool.length) return { item: undefined, key: undefined };
   // Try to find an unused item
   const unused = pool.filter(i => !used.has(i._key));
   const chosen = (unused.length ? unused : pool)[Math.floor(Math.random() * (unused.length ? unused.length : pool.length))];

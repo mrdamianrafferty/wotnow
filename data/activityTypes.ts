@@ -675,7 +675,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'kayaking',
-  name: 'Kayaking',
+  name: 'Kayaking (Inland)',
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
@@ -683,10 +683,10 @@ export const activityTypes: ActivityType[] = [
 
   perfectConditions: [
     'temperature=15..22',         // warm enough without overheating
-    'windSpeed<8',                // gentle breeze, safe for sea or lake paddling
+    'windSpeed<8',                // gentle breeze, safe for river or lake paddling
     'waveHeight<0.3',             // flat to gently rippled water
     'gust<5',                     // steady, predictable conditions
-    'visibility>10',              // excellent for navigation and scenery
+    'visibility>10',              // excellent for seeing where you are going and scenery
     'precipitation=0'             // dry conditions ensure comfort and safety
   ],
 
@@ -723,7 +723,7 @@ export const activityTypes: ActivityType[] = [
 },
 {
   id: 'sea_kayaking',
-  name: 'Sea Kayaking',
+  name: 'Kayaking (Sea)',
   category: 'Active Sports',
   secondaryCategory: 'Water Sports',
   weatherSensitive: true,
@@ -1273,7 +1273,7 @@ export const activityTypes: ActivityType[] = [
     'cloudCover=40..90',
     'humidity<85',
     'visibility=3..6',
-    'precipitation=0..1'
+    'precipitation=0..0.1'
   ],
 
   poorConditions: [
@@ -1283,7 +1283,7 @@ export const activityTypes: ActivityType[] = [
     'windSpeed>18',
     'waveHeight>1.2',                  // rough & unsafe for most
     'cloudCover>90',
-    'precipitation>1',
+    'precipitation>0',
     'visibility<3'
   ],
 
@@ -1457,7 +1457,7 @@ export const activityTypes: ActivityType[] = [
   goodConditions: [
     'temperature=12..20',
     'windSpeed<15',
-    'precipitation=0..2',            // recent light rain helps growth
+    'precipitation=0..1',            // recent light rain helps growth
     'cloudCover=30-80',
     'humidity=60..85',
     'visibility>5'
@@ -1536,7 +1536,7 @@ export const activityTypes: ActivityType[] = [
     'temperature=5..22',
     'windSpeed<20',
     'cloudCover=10-80',
-    'precipitation=0..5',
+    'precipitation=0',
     'visibility>5'
   ],
   perfectConditions: [
@@ -1584,13 +1584,15 @@ export const activityTypes: ActivityType[] = [
     'temperature=22..26',          // warm, may require breaks
     'windSpeed=10..15',            // slightly breezy
     'cloudCover=60-90',            // mostly overcast
-    'visibility=2..5'
+    'visibility=2..5',
+    'precipitation=0..0.5',
     // 'tide=mid'                   // not ideal but not dangerous
   ],
   goodConditions: [
     'temperature=10..22',
     'windSpeed<10',
     'cloudCover=10-60',
+    'precipitation=0..0.1',
     'visibility>5'
     // 'tide=low'                   // better rock exposure
   ],
@@ -1598,6 +1600,7 @@ export const activityTypes: ActivityType[] = [
     'temperature=15..20',
     'windSpeed<5',
     'cloudCover=20-50',
+    'precipitation=0',
     'visibility>10'
     // 'tide=low & dry_rocks'
   ],
@@ -2010,21 +2013,21 @@ export const activityTypes: ActivityType[] = [
     'temperature<-5',                // freezing & icy
     'temperature>35',               // heat exhaustion risk
     'windSpeed>40',                 // strong gales
-    'precipitation>15',             // torrential rain
+    'precipitation>3',             // torrential rain
     'visibility<2'                  // fog, unsafe
   ],
   fairConditions: [
     'temperature=-5..5',            // cold but tolerable
     'temperature=25..30',           // warm for brisk walking
     'windSpeed=15..30',             // breezy but manageable
-    'precipitation=3..10',          // light to moderate rain
+    'precipitation=0..3',          // light to moderate rain
     'visibility=2..5'               // reduced visibility but acceptable
   ],
   goodConditions: [
     'temperature=6..25',
     'windSpeed<15',
     'cloudCover=0-90',
-    'precipitation=0..2',
+    'precipitation=0',
     'visibility>5'
   ],
   perfectConditions: [
@@ -2048,14 +2051,14 @@ export const activityTypes: ActivityType[] = [
     'temperature<0',                // frost kills fungi
     'temperature>25',              // ground dries out
     'windSpeed>20',                // uncomfortable & risky
-    'precipitation>15',            // flooded ground, unpleasant
+    'precipitation>5..10',            // flooded ground, unpleasant
     'visibility<2'                 // fog, unsafe
   ],
   fairConditions: [
     'temperature=0..8',             // cool but possible
     'temperature=18..22',           // a bit warm, but shaded forests may be fine
     'windSpeed=10..20',             // breezy but manageable
-   //  'recentPrecipitation=2..5',     // not ideal but damp enough
+    'precipitation=2..5',           // not ideal but damp enough
     'visibility=2..5'               // dim light may still be safe
   ],
   goodConditions: [
@@ -2246,14 +2249,14 @@ export const activityTypes: ActivityType[] = [
     'temperature<5',                // freezing nights
     'temperature>30',              // uncomfortable heat
     'windSpeed>25',                // tents unsafe
-    'precipitation>10',            // heavy rain
+    'precipitation>5',            // heavy rain
     'visibility<2'                 // fog & disorienting
   ],
   fairConditions: [
     'temperature=5..10',           // chilly mornings
     'temperature=25..30',          // hot but manageable
     'windSpeed=12..18',            // breezy but fine with guy lines
-    'precipitation=2..10',         // showers, muddy but okay
+    'precipitation=0..5',         // showers, muddy but okay
     'humidity=80..90',             // muggy
     'visibility=2..5'              // misty but still campable
   ],
@@ -2261,7 +2264,7 @@ export const activityTypes: ActivityType[] = [
     'temperature=10..25',
     'windSpeed<12',
     'cloudCover=10-70',
-    'precipitation=0..2',
+    'precipitation=0',
     'humidity<80',
     'visibility>5'
   ],
@@ -2409,7 +2412,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed=12..18',            // breezy, might need to anchor music
     'cloudCover=70-90',            // grey skies, less vibrant
     'humidity=70..85',             // damp but manageable
-    'visibility=2..5'              // misty but atmospheric
+    'visibility=2..5',              // misty but atmospheric
+    'precipitation=0',
   ],
   goodConditions: [
     'temperature=12..25',
@@ -2438,7 +2442,7 @@ export const activityTypes: ActivityType[] = [
   weatherSensitive: true,
   tags: ['leisure', 'strategy', 'outdoor', 'social', 'Saturday', 'Sunday'],
   poorConditions: [
-    'precipitation>0',             // rain ruins the board
+    'precipitation>0.1',             // rain ruins the board
     'windSpeed>20',                // blows pieces away
     'temperature<2',               // fingers too cold to move pieces
     'temperature>30',              // overheated and uncomfortable
@@ -2449,19 +2453,22 @@ export const activityTypes: ActivityType[] = [
     'temperature=26..30',          // warm but tolerable in shade
     'windSpeed=12..18',            // breezy, may need to hold the board
     'cloudCover=80-100',           // grey skies, low contrast
-    'visibility=2..5'              // misty but moody
+    'visibility=2..5',              // misty but moody
+    'precipitation=0',               // light drizzle acceptable
   ],
   goodConditions: [
     'temperature=10..26',
     'windSpeed<12',
     'cloudCover=0-80',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0',
   ],
   perfectConditions: [
     'temperature=18..22',
     'windSpeed<6',
     'cloudCover=20-50',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0',
   ],
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
   indoorAlternative: 'Play online, at a café, or solve puzzles at home'
@@ -2966,13 +2973,15 @@ export const activityTypes: ActivityType[] = [
   goodConditions: [
     'temperature=5..15',     // crisp but pleasant
     'clouds<=20',            // mostly clear
-    'windSpeed<10'           // calm or gentle breeze
+    'windSpeed<10',           // calm or gentle breeze
+    'precipitation=0',     // no rain
   ],
 
   perfectConditions: [
     'temperature=8..12',     // just right
     'clouds=0',              // clear skies
-    'windSpeed<5'            // still night
+    'windSpeed<5',           // still night
+    'precipitation=0',      // no rain
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
@@ -3003,13 +3012,15 @@ export const activityTypes: ActivityType[] = [
   goodConditions: [
     'temperature=12..28',   // comfortable for most
     'windSpeed<20',         // less windy (increased from 18)
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0',      // no Rain
   ],
 
   perfectConditions: [
     'temperature=18..22',   // mild & comfortable
     'windSpeed<12',         // calm conditions (increased from 10)
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -3042,7 +3053,9 @@ export const activityTypes: ActivityType[] = [
     'temperature=12..28',         // broad range
     'windSpeed<18',
     'cloudCover=0-90',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'
+
   ],
 
   perfectConditions: [
@@ -3084,14 +3097,16 @@ export const activityTypes: ActivityType[] = [
     'temperature=10..28',        // comfortable for most
     'windSpeed<15',              // still playable
     'cloudCover=0-80',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'
   ],
 
   perfectConditions: [
     'temperature=18..24',        // ideal comfort
     'windSpeed<8',               // calm & easy control
     'cloudCover=20-50',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
 
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -3139,7 +3154,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<18',              // increased from 12 to include 9km/h comfortably  
     'cloudCover=0-70',
     'humidity<85',               // 84% humidity should now be good!
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'
   ],
 
   perfectConditions: [
@@ -3147,7 +3163,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<8',
     'cloudCover=20-50',
     'humidity=50-65',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -3182,7 +3199,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<15',
     'cloudCover=0-80',
     'humidity<80',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'
   ],
 
   perfectConditions: [
@@ -3190,7 +3208,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<8',
     'cloudCover=20-50',
     'humidity=40-65',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
 
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -3226,7 +3245,8 @@ export const activityTypes: ActivityType[] = [
     'temperature=10..28',          // wide comfort range
     'windSpeed<15',
     'cloudCover=0-80',
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'
   ],
 
   // Optimal, enjoyable weather
@@ -3234,7 +3254,8 @@ export const activityTypes: ActivityType[] = [
     'temperature=18..24',          // mild and comfortable
     'windSpeed<8',                 // stable and safe
     'cloudCover=10-50',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
 
   seasonalMonths: [3, 4, 5, 6, 7, 8, 9, 10],
@@ -3274,7 +3295,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<12',                // calm to light breeze
     'cloudCover=10-80',            // even overcast is fine
     'humidity<75',                 // workable
-    'visibility>5'                 // decent light
+    'visibility>5',                 // decent light
+    'precipitation=0',      // no Rain
   ],
 
   // Ideal weather for outdoor painting
@@ -3283,7 +3305,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<6',                 // very calm
     'cloudCover=20-50',            // some sun for highlights
     'humidity=50-65',              // comfortable
-    'visibility>10'                // clear & bright
+    'visibility>10' ,               // clear & bright
+    'precipitation=0',      // no Rain
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -3361,7 +3384,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed=12..18',             // breezy but doable if sheltered
     'humidity=75..85',              // slightly muggy
     'cloudCover=80-100',            // heavy overcast
-    'visibility=2..5'               // dull light but readable
+    'visibility=2..5',               // dull light but readable
+    'precipitation=0',               // no Rain
   ],
 
   goodConditions: [
@@ -3369,7 +3393,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<12',                 // light breeze ok
     'cloudCover=10-80',             // even overcast is fine
     'humidity<75',                  // not too muggy
-    'visibility>5'
+    'visibility>5',
+    'precipitation=0'               // no Rain
   ],
 
   perfectConditions: [
@@ -3377,7 +3402,8 @@ export const activityTypes: ActivityType[] = [
     'windSpeed<6',                  // very calm
     'cloudCover=20-50',             // some sun for light
     'humidity=50-65',               // pleasant
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'               // no Rain
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10],
@@ -3407,19 +3433,26 @@ export const activityTypes: ActivityType[] = [
     'windSpeed=20..25',             // moved threshold up
     'cloudCover=80-100',            // dull, but not oppressive
     'humidity=85..95',              // moved humidity threshold up - 84% should be fine
-    'visibility=2..5'               // hazy or misty, calming to some
+    'visibility=2..5',               // hazy or misty, calming to some
+    'precipitation>0.5',               // no Rain
   ],
 
   goodConditions: [
     'temperature=12..28',           // extended pleasant range
     'windSpeed<20',                 // increased from 15 - light breeze can be pleasant
-    'humidity<85'                   // added humidity condition for good weather
+    'humidity<85',                   // added humidity condition for good weather
+    'cloudCover=0-80',              // clear to partly cloudy
+    'visibility>5',                 // clear enough to see surroundings
+    'precipitation=0'               // no Rain
   ],
 
   perfectConditions: [
     'temperature=18..24',           // slightly wider ideal balance
     'windSpeed<10',
-    'humidity<70'                   // perfect conditions have low humidity
+  'humidity<70',                   // perfect conditions have low humidity
+  'cloudCover=20..50',             // some sun for warmth
+  'visibility>10',                 // clear and bright
+  'precipitation=0'                // no Rain
   ],
 
   seasonalMonths: [4, 5, 6, 7, 8, 9, 10]
@@ -3573,7 +3606,8 @@ export const activityTypes: ActivityType[] = [
   perfectConditions: [
     'temperature=-5..-1',       // ideal surface & comfort
     'windSpeed<8',
-    'visibility>10'
+    'visibility>10',
+    'precipitation=0'
   ],
   seasonalMonths: [12, 1, 2],
   indoorAlternative: 'Play at a local indoor rink or practise stickhandling drills at home'
@@ -3715,12 +3749,12 @@ export const activityTypes: ActivityType[] = [
   fairConditions: [
     'temperature=8..10 or 28..32', // cooler or hotter than ideal, still doable
     'windSpeed=20..25',            // gusty, affects shots
-    'precipitation=1..2'           // light rain, some may continue
+    'precipitation=0..2'           // light rain, some may continue
   ],
   goodConditions: [
     'temperature=10..28',          // broad playable range
     'windSpeed<20',
-    'precipitation=0..2'           // light drizzle tolerated
+    'precipitation=0'           // light drizzle tolerated
   ],
   perfectConditions: [
     'temperature=18..22',          // mild & comfortable

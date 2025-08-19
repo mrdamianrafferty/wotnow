@@ -1,1 +1,3 @@
-{}
+{
+  "/api/iss-visible/route": "app/api/iss-visible/route.js"
+}

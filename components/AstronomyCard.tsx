@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { getMoonLore } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import MoonNugget from './MoonNugget';
+import { useIssBestTimes, IssSightingNote } from '../lib/hooks/useIssBestTimes.tsx';
 import '../styles/Card.css';
+import { indieFlower } from "@/app/fonts";
 
 // Astronomy highlight interfaces
 interface AstronomyEvent {
@@ -76,94 +80,268 @@ const getAstronomyIcon = (events: SpecialEvent[], moonIllumination: number, clou
   return 'star.svg';
 };
 
-// Helper function to get weather icon for night conditions
-const getNightWeatherIcon = (condition: string, isNight: boolean) => {
-  if (!isNight) return null;
+// Helper function to generate weather-aware astronomy message
+const getWeatherAwareMessage = (
+  primaryEvent: SpecialEvent | undefined,
+  tonight: AstronomyHighlight,
+  weatherData: any,
+  stargazingScore: number
+) => {
+  const cloudCover = weatherData?.clouds || 0;
+  const visibility = weatherData?.visibility || 10000;
+  const rain = weatherData?.rain || 0;
+  const snow = weatherData?.snow || 0;
   
-  const conditionLower = condition.toLowerCase();
-  if (conditionLower.includes('clear')) return '01n.svg';
-  if (conditionLower.includes('few clouds')) return '02n.svg';
-  if (conditionLower.includes('scattered clouds')) return '03n.svg';
-  if (conditionLower.includes('broken clouds') || conditionLower.includes('overcast')) return '04n.svg';
-  if (conditionLower.includes('rain')) return '10n.svg';
-  if (conditionLower.includes('thunderstorm')) return '11n.svg';
-  if (conditionLower.includes('snow')) return '13n.svg';
-  if (conditionLower.includes('mist') || conditionLower.includes('fog')) return '50n.svg';
+  // Poor weather conditions
+  if (rain > 0 || snow > 0) {
+    return "Rain/snow expected tonight - not ideal for stargazing. Check forecast for clearer nights.";
+  }
   
-  return '01n.svg'; // Default clear night
+  if (cloudCover >= 80) {
+    return "Heavy cloud cover expected - limited visibility for astronomy tonight.";
+  }
+  
+  if (cloudCover >= 60) {
+    return "Cloudy skies expected - some breaks in clouds may allow brief stargazing opportunities.";
+  }
+  
+  // Special events with weather context
+  if (primaryEvent) {
+    let message = primaryEvent.description;
+    
+    if (cloudCover >= 40) {
+      message += " Cloud breaks will provide the best viewing windows.";
+    } else if (cloudCover < 20) {
+      message += " Clear skies expected - excellent viewing conditions!";
+    }
+    
+    if (primaryEvent.direction) {
+      message += ` Look ${primaryEvent.direction}.`;
+    }
+    
+    return message;
+  }
+  
+  // General stargazing conditions
+  if (stargazingScore >= 80) {
+    return "Excellent conditions for deep space observation and Milky Way photography.";
+  } else if (stargazingScore >= 60) {
+    return "Good stargazing conditions - planets and bright stars clearly visible.";
+  } else if (stargazingScore >= 40) {
+    return "Fair conditions for basic stargazing - bright objects will be visible.";
+  } else if (tonight.moon.illumination > 80) {
+    return "Bright moonlight will wash out fainter stars, but great for lunar observation.";
+  } else {
+    return "Challenging conditions for stargazing tonight - consider waiting for clearer skies.";
+  }
+};
+const getMidnightWeatherIcon = (weatherData: any) => {
+  // Always return a night icon since this is for midnight
+  if (!weatherData) return '01n.svg'; // Default clear night
+  
+  const condition = weatherData.condition || '';
+  const clouds = weatherData.clouds || 0;
+  const rain = weatherData.rain || 0;
+  const snow = weatherData.snow || 0;
+  
+  // Check for precipitation first
+  if (snow > 0) return '13n.svg'; // Snow
+  if (rain > 0) return '10n.svg'; // Rain
+  
+  // Check for thunderstorms
+  if (condition.toLowerCase().includes('thunderstorm') || condition.toLowerCase().includes('storm')) {
+    return '11n.svg';
+  }
+  
+  // Check cloud coverage
+  if (clouds >= 75) return '04n.svg'; // Overcast/broken clouds
+  if (clouds >= 50) return '03n.svg'; // Scattered clouds  
+  if (clouds >= 25) return '02n.svg'; // Few clouds
+  
+  // Check for fog/mist
+  if (condition.toLowerCase().includes('mist') || 
+      condition.toLowerCase().includes('fog') || 
+      (weatherData.visibility && weatherData.visibility < 5000)) {
+    return '50n.svg';
+  }
+  
+  return '01n.svg'; // Clear night
+};
+
+// Helper to get midnight weather from hourly data
+const getMidnightWeather = (weatherData: any) => {
+  if (!weatherData?.hourly) return null;
+  // Find the first hour at 00:00 (midnight)
+  const midnightHour = weatherData.hourly.find((h: any) => {
+    const date = new Date(h.dt * 1000);
+    return date.getHours() === 0;
+  });
+  return midnightHour || null;
+};
+
+// Helper to get current weather
+const getCurrentWeather = (weatherData: any) => {
+  return weatherData?.current || null;
+};
+
+// Helper to get daily high/low
+const getDailyTemps = (weatherData: any) => {
+  const today = weatherData?.daily?.[0];
+  if (!today) return { tempMin: null, tempMax: null };
+  return {
+    tempMin: today.temp?.min ?? null,
+    tempMax: today.temp?.max ?? null,
+  };
 };
 
 const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {}, weatherData }) => {
+
+  // Stable moon lore selection
+  const [moonLoreText, setMoonLoreText] = useState<string | undefined>(undefined);
   const { preferences } = useUserPreferences();
   const [highlights, setHighlights] = useState<AstronomyHighlight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const homeLocation = preferences.locations?.find((l) => l.type === 'home');
+  // Defensive: preferences and locations
+  const homeLocation = preferences?.locations?.find((l) => l.type === 'home');
 
+  // Defensive: interests array
+  const interests = Array.isArray(preferences?.interests) ? preferences.interests : [];
+
+  // Defensive: always call hooks at top level, now pass sunrise/sunset for night time logic
+  // We'll use tonight.sun.sunrise/sunset if available, else undefined
+  const [sunTimes, setSunTimes] = useState<{sunrise?: string, sunset?: string}>({});
   useEffect(() => {
+    if (highlights && highlights.length > 0 && highlights[0].sun) {
+      setSunTimes({
+        sunrise: highlights[0].sun.sunrise,
+        sunset: highlights[0].sun.sunset
+      });
+    }
+  }, [highlights]);
+  const iss = useIssBestTimes(homeLocation?.lat, homeLocation?.lon, sunTimes.sunrise, sunTimes.sunset);
+
+  // Defensive: fetch astronomy highlights only if lat/lon are available
+  useEffect(() => {
+    let cancelled = false;
     const fetchAstronomyHighlights = async () => {
       if (!homeLocation?.lat || !homeLocation?.lon) {
         setLoading(false);
+        setHighlights([]);
         return;
       }
-
       try {
         setLoading(true);
         setError(null);
-
         const response = await fetch(
           `/api/astronomy-highlights?lat=${homeLocation.lat}&lon=${homeLocation.lon}&days=3`
         );
-
         if (!response.ok) {
           throw new Error('Failed to fetch astronomy highlights');
         }
-
         const data = await response.json();
-        setHighlights(data.highlights || []);
+        if (!cancelled) setHighlights(Array.isArray(data.highlights) ? data.highlights : []);
       } catch (err) {
-        console.error('Error fetching astronomy highlights:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch astronomy data');
+        if (!cancelled) {
+          console.error('Error fetching astronomy highlights:', err);
+          setError(err instanceof Error ? err.message : 'Failed to fetch astronomy data');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-
     fetchAstronomyHighlights();
+    return () => { cancelled = true; };
   }, [homeLocation?.lat, homeLocation?.lon]);
 
-  // Don't render if no astronomy-related interests
-  const hasAstronomyInterest = preferences.interests?.some(interest => 
-    ['stargazing', 'astrophotography', 'camping', 'hiking', 'nature_observation', 'photography'].includes(interest)
-  );
+  // Defensive: ensure highlights array has at least 2 days
+  let safeHighlights = Array.isArray(highlights) ? highlights.slice(0, 2) : [];
+  if (safeHighlights.length === 1) {
+    // Mock a second day by copying the first and incrementing the date
+    const first = safeHighlights[0];
+    const nextDate = new Date(first.date);
+    nextDate.setDate(nextDate.getDate() + 1);
+    safeHighlights.push({
+      ...first,
+      date: nextDate.toISOString().split('T')[0],
+      dayName: nextDate.toLocaleDateString('en-US', { weekday: 'long' }),
+      isToday: false,
+      wotnowMessage: '[Mocked] Second day highlight.'
+    });
+  }
+  const tonight = safeHighlights.length > 0 ? safeHighlights[0] : undefined;
 
-  if (!hasAstronomyInterest || loading || error || !highlights.length) {
-    return null;
+  useEffect(() => {
+    if (tonight?.moon?.phaseName) {
+      const loreItem = getMoonLore(tonight.moon.phaseName as MoonPhase);
+      setMoonLoreText(loreItem?.text || undefined);
+    } else {
+      setMoonLoreText(undefined);
+    }
+  }, [tonight?.moon?.phaseName]);
+
+  // Always render the Astronomy Card, regardless of interests, loading, error, or highlight state
+  // Show fallback UI if loading, error, or no highlights
+  if (loading) {
+    return (
+      <div className={`activity-card-enhanced ${className}`} style={{ backgroundImage: `url(/milkyway.png)`, ...style }}>
+        <div className="activity-card-overlay" />
+        <div className="activity-card-content">
+          <div className="forecast-header">
+            <div className="date-info">
+              <h3 className="date-label">Tonight's Sky</h3>
+            </div>
+          </div>
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            Loading astronomy highlights...
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (error || !tonight) {
+    return (
+      <div className={`activity-card-enhanced ${className}`} style={{ backgroundImage: `url(/milkyway.png)`, ...style }}>
+        <div className="activity-card-overlay" />
+        <div className="activity-card-content">
+          <div className="forecast-header">
+            <div className="date-info">
+              <h3 className="date-label">Tonight's Sky</h3>
+            </div>
+          </div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
+            Unable to load astronomy highlights.<br />
+            {error ? `Error: ${error}` : 'No highlight data available.'}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const tonight = highlights[0];
-  const hasSpecialEvents = tonight.events.length > 0;
-  const hasDarkWindow = tonight.darkWindow && tonight.darkWindow.durationHours > 6;
-  const cloudCover = weatherData?.clouds || 0;
-  const currentHour = new Date().getHours();
-  const isNight = currentHour >= 20 || currentHour < 6;
+  // Extract weather info
+  const currentWeather = getCurrentWeather(weatherData);
+  const midnightWeather = getMidnightWeather(weatherData);
+  const { tempMin, tempMax } = getDailyTemps(weatherData);
 
-  // Only show if there's something interesting or good conditions
-  if (!hasSpecialEvents && !hasDarkWindow && (tonight.moon.illumination > 60 || cloudCover > 70)) {
-    return null;
-  }
+  // Defensive: weather data
+  const cloudCover = typeof weatherData?.clouds === 'number' ? weatherData.clouds : 0;
+  const astronomyIcon = getAstronomyIcon(Array.isArray(tonight.events) ? tonight.events : [], tonight.moon.illumination, cloudCover);
+  const midnightWeatherIcon = midnightWeather ? midnightWeather.weather?.[0]?.icon + '.svg' : getMidnightWeatherIcon(weatherData);
 
-  // Get the appropriate astronomy icon
-  const astronomyIcon = getAstronomyIcon(tonight.events, tonight.moon.illumination, cloudCover);
-  const nightWeatherIcon = getNightWeatherIcon(weatherData?.condition || 'clear', isNight);
+  // Defensive: primary event
+  const eventsArr = Array.isArray(tonight.events) ? tonight.events : [];
+  const primaryEvent = eventsArr.find(e => e.type === 'eclipse') ||
+                      eventsArr.find(e => e.type === 'meteor_shower') ||
+                      eventsArr[0];
 
-  // Determine the primary event to feature
-  const primaryEvent = tonight.events.find(e => e.type === 'eclipse') ||
-                      tonight.events.find(e => e.type === 'meteor_shower') ||
-                      tonight.events[0];
+  // Defensive: stargazing score
+  const moonIllum = typeof tonight.moon.illumination === 'number' ? tonight.moon.illumination : 0;
+  const stargazingScore = Math.max(0, 100 - moonIllum - cloudCover);
 
-  const stargazingScore = Math.max(0, 100 - tonight.moon.illumination - cloudCover);
+  console.log('AstronomyCard weatherData:', weatherData);
+  console.log('midnightWeather:', midnightWeather);
+  console.log('currentWeather:', currentWeather);
 
   return (
     <div
@@ -175,16 +353,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
     >
       <div className="activity-card-overlay" />
       <div className="activity-card-content">
-        {/* Weather icon top right - show night weather icon */}
+        {/* Weather icon top right - show midnight weather icon */}
         <div className="weather-icon-topright">
-          {nightWeatherIcon && (
-            <img
-              src={`/weather-icons/design/fill/final/${nightWeatherIcon}`}
-              alt="Tonight's weather"
-              style={{ width: 48, height: 48 }}
-              loading="lazy"
-            />
-          )}
+          <img
+            src={`/weather-icons/design/fill/final/${midnightWeatherIcon}`}
+            alt="Midnight weather"
+            style={{ width: 48, height: 48 }}
+            loading="lazy"
+          />
         </div>
 
         {/* Header matching day card structure */}
@@ -192,11 +368,31 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <div className="date-info">
             <h3 className="date-label">Tonight's Sky</h3>
           </div>
-          <div className="temperature-info">
-            <span className="temperature-label">
-              {weatherData?.tempMin && `${Math.round(weatherData.tempMin)}°`} {tonight.moon.phaseName}
-            </span>
-          </div>
+        </div>
+        {/* Astronomy header details: temp, condition, wind - always visible and styled for contrast */}
+        <div className="astro-header-details" style={{
+          fontSize: '1.5em', fontWeight: 600, margin: '12px 0 18px 0', color: '#222', background: 'rgba(255,255,255,0.85)', borderRadius: 8, padding: '8px 16px', display: 'inline-block', boxShadow: '0 2px 8px #0002'
+        }}>
+          {midnightWeather && (
+            <>
+              {Math.round(midnightWeather.temp)}° {midnightWeather.weather?.[0]?.description}
+              {typeof midnightWeather.wind_speed === 'number' && (
+                <span style={{ marginLeft: 12 }}>
+                  💨 {Math.round(midnightWeather.wind_speed)} km/h
+                </span>
+              )}
+            </>
+          )}
+          {!midnightWeather && currentWeather && (
+            <>
+              {Math.round(currentWeather.temp)}° {currentWeather.weather?.[0]?.description}
+              {typeof currentWeather.wind_speed === 'number' && (
+                <span style={{ marginLeft: 12 }}>
+                  💨 {Math.round(currentWeather.wind_speed)} km/h
+                </span>
+              )}
+            </>
+          )}
         </div>
 
         {/* Hero activity section - astronomy event or stargazing */}
@@ -205,7 +401,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <img
               src={`/weather-icons/design/fill/final/${astronomyIcon}`}
               alt="Astronomy highlight"
-              style={{ width: 48, height: 48 }}
+              style={{ width: 96, height: 96 }}
               loading="lazy"
             />
           </div>
@@ -219,9 +415,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           </div>
           <div
             className="card__score-badge"
-            style={{ background: stargazingScore > 70 ? '#10b981' : stargazingScore > 40 ? '#3b82f6' : '#fbbf24' }}
+            style={{ background: 'transparent' }}
           >
-            {stargazingScore > 70 ? '🌟' : stargazingScore > 40 ? '👍' : '⭐'}
+            <img
+              src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
+              alt={tonight.moon.phaseName}
+              style={{ width: 80, height: 80 }}
+              loading="lazy"
+            />
           </div>
         </div>
 
@@ -325,15 +526,28 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           )}
         </div>
 
-        {/* Footer message */}
-        <div className="activity-footer">
-          <div className="activity-message">
-            {primaryEvent 
-              ? `${primaryEvent.description}${primaryEvent.direction ? ` Look ${primaryEvent.direction}` : ''}`
-              : tonight.wotnowMessage.split('\n')[0]
-            }
-          </div>
+        {/* Moon folklore section - stable moon lore below weather bars */}
+        {/* Moon folklore — stable snippet below weather bars */}
+<div className="moon-lore mt-4">
+  <h4 className={`${indieFlower.className} font-bold text-lg leading-snug`}>
+    Moon folklore
+  </h4>
+  <p className="mt-1 opacity-90">
+    {moonLoreText ?? 'No lore available for this phase.'}
+  </p>
+</div>
+
+        {/* Astronomy message section - formatted similarly to moon lore */}
+        <div className="astronomy-message" style={{ margin: '16px 0' }}>
+          <strong>Astronomy outlook</strong>
+          <br />
+          {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
         </div>
+
+        {/* ISS sighting note - only if visible tonight */}
+        {iss && !iss.loading && !iss.error && Array.isArray(iss.data?.results) && iss.data.results.length > 0 ? (
+          <IssSightingNote data={iss.data} />
+        ) : null}
       </div>
     </div>
   );

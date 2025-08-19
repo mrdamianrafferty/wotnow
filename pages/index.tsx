@@ -146,7 +146,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
         // Use Unix timestamps (seconds)
         const now = new Date();
         const startTime = Math.floor(now.getTime() / 1000); // Unix seconds
-        const endTime = startTime + (5 * 24 * 60 * 60); // 5 days later
+        const endTime = startTime + (8 * 24 * 60 * 60); // 8 days later
         
         const res = await fetch(`/api/marine?lat=${lat}&lon=${lon}&start=${startTime}&end=${endTime}`);
         if (!res.ok) throw new Error(`Failed to fetch marine data: ${res.statusText}`);
