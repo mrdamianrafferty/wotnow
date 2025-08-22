@@ -218,7 +218,7 @@ export async function GET(req: NextRequest) {
       dayPromises.push(fetchSunTimes(lat, lon, toISODateUTC(d)));
     }
     const settled = await Promise.allSettled(dayPromises);
-    const days: Array<{ sunriseISO: string | null; sunsetISO: string | null }>[] = [] as any;
+    const days: Array<{ sunriseISO: string | null; sunsetISO: string | null }> = [];
     const sunErrors: string[] = [];
     for (const s of settled) {
       if (s.status === "fulfilled") days.push(s.value); else sunErrors.push(String((s as any).reason?.message || (s as any).reason || "sun error"));

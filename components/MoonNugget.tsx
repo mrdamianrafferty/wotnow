@@ -103,10 +103,9 @@ export default function MoonNugget(props: MoonNuggetProps) {
   return (
     <div className={"rounded-2xl border p-4 shadow-sm bg-white/70 dark:bg-zinc-900/60 backdrop-blur " + (props.className ?? '')}>
       <div className="flex items-center gap-2 mb-2">
-        
-          
-          <span className="indie-text">Moon folklore</span>
-         
+        <span className="indie-text">
+          Moon folklore - {item?.title ?? <span className="italic opacity-70">No lore available</span>}
+        </span>
         <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">{phase?.replace('_', ' ')}</span>
         {item?.culture && (
           <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">{item.culture.replace('_', ' ')}</span>
@@ -118,9 +117,9 @@ export default function MoonNugget(props: MoonNuggetProps) {
       )}
 
       <div className="text-sm leading-relaxed">
-        {item ? (
+        {item?.text ? (
           <>
-            <div className="font-medium mb-0.5">{item.title}</div>
+            <div className="font-medium mb-0.5"></div>
             <div className="opacity-90">{item.text}</div>
           </>
         ) : (

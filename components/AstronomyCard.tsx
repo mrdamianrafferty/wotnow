@@ -1,10 +1,60 @@
 import React, { useState, useEffect } from 'react';
+// WindIcon copied from pages/index.tsx for local use
+function WindIcon({ windMs, size = 28, alt = 'Wind' }) {
+  // Convert m/s to Beaufort scale
+  function getBeaufortNumber(windMs) {
+    // Standard Beaufort scale for m/s
+    if (windMs < 0.3) return 0;
+    if (windMs < 1.5) return 1;
+    if (windMs < 3.3) return 2;
+    if (windMs < 5.4) return 3;
+    if (windMs < 7.9) return 4;
+    if (windMs < 10.7) return 5;
+    if (windMs < 13.8) return 6;
+    if (windMs < 17.1) return 7;
+    if (windMs < 20.7) return 8;
+    if (windMs < 24.4) return 9;
+    if (windMs < 28.4) return 10;
+    if (windMs < 32.6) return 11;
+    return 12;
+  }
+  const beaufort = getBeaufortNumber(windMs);
+  let iconName = '';
+  let needsGlow = false;
+  if (beaufort < 3) {
+    iconName = 'windsock.svg';
+    needsGlow = false;
+  } else if (beaufort <= 12) {
+    iconName = `wind-beaufort-${beaufort}.svg`;
+    needsGlow = true;
+  } else {
+    iconName = 'wind.svg';
+    needsGlow = false;
+  }
+  return (
+    <img
+      src={`/weather-icons/design/fill/final/${iconName}`}
+      alt={alt}
+      style={{
+        width: size,
+        height: size,
+        verticalAlign: 'middle',
+        filter: needsGlow
+          ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))'
+          : 'none',
+      }}
+      loading="lazy"
+    />
+  );
+}
 import { getMoonLore } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import MoonNugget from './MoonNugget';
 import { useIssBestTimes, IssSightingNote } from '../lib/hooks/useIssBestTimes.tsx';
+import { describeIssPass } from '../utils/issHelper';
 import '../styles/Card.css';
 import { indieFlower } from "@/app/fonts";
+import { describeClearestSkiesFromHourly } from '../lib/services/goingOutTonight';
 
 // Astronomy highlight interfaces
 interface AstronomyEvent {
@@ -107,19 +157,29 @@ const getWeatherAwareMessage = (
   
   // Special events with weather context
   if (primaryEvent) {
-    let message = primaryEvent.description;
-    
+    // Build message parts, deduplicate direction, join naturally
+    const parts: string[] = [];
+    // Do NOT include bestTime here (now shown in data bar)
+    if (primaryEvent.description) {
+      parts.push(primaryEvent.description);
+    }
+    // Weather context
     if (cloudCover >= 40) {
-      message += " Cloud breaks will provide the best viewing windows.";
+      parts.push("Cloud breaks may offer good windows");
     } else if (cloudCover < 20) {
-      message += " Clear skies expected - excellent viewing conditions!";
+      parts.push("Clear skies expected - excellent viewing conditions!");
     }
-    
+    // Direction, only add if not already present
     if (primaryEvent.direction) {
-      message += ` Look ${primaryEvent.direction}.`;
+      const dirPhrase = `Look ${primaryEvent.direction}`;
+      // Only add if not already present in any part
+      if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction.toLowerCase()))) {
+        parts.push(dirPhrase);
+      }
     }
-    
-    return message;
+    // Remove duplicate phrases
+    const deduped = Array.from(new Set(parts));
+    return deduped.join('. ') + '.';
   }
   
   // General stargazing conditions
@@ -194,10 +254,28 @@ const getDailyTemps = (weatherData: any) => {
   };
 };
 
+// Build an Open‑Meteo‑like hourly object from OpenWeather One Call hourly
+function buildHourlyForClearSkies(weatherData: any) {
+  const hourly = Array.isArray(weatherData?.hourly) ? weatherData.hourly : [];
+  if (!hourly.length) return null;
+  const time = hourly.map((h: any) => new Date(h.dt * 1000).toISOString());
+  const cloudcover = hourly.map((h: any) => Number(h?.clouds ?? NaN));
+  return { time, cloudcover };
+}
+
+// Only treat as ISO if it looks like a date string; otherwise ignore
+function toISOIfISOish(s?: string) {
+  if (typeof s !== 'string') return undefined;
+  if (!(/[TZ]|\d{4}-\d{2}-\d{2}/.test(s))) return undefined;
+  const d = new Date(s);
+  return Number.isFinite(d.getTime()) ? d.toISOString() : undefined;
+}
+
 const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {}, weatherData }) => {
 
   // Stable moon lore selection
   const [moonLoreText, setMoonLoreText] = useState<string | undefined>(undefined);
+  const [moonLoreTitle, setMoonLoreTitle] = useState<string | undefined>(undefined);
   const { preferences } = useUserPreferences();
   const [highlights, setHighlights] = useState<AstronomyHighlight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,10 +352,19 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 
   useEffect(() => {
     if (tonight?.moon?.phaseName) {
-      const loreItem = getMoonLore(tonight.moon.phaseName as MoonPhase);
-      setMoonLoreText(loreItem?.text || undefined);
+      // Normalize phase name to match enum keys
+      const phaseKey = tonight.moon.phaseName.toLowerCase().replace(/\s+/g, '_');
+      const loreItems = getMoonLore(phaseKey as MoonPhase);
+      if (loreItems && loreItems.length > 0) {
+        setMoonLoreText(loreItems[0].text);
+        setMoonLoreTitle(loreItems[0].title);
+      } else {
+        setMoonLoreText(undefined);
+        setMoonLoreTitle(undefined);
+      }
     } else {
       setMoonLoreText(undefined);
+      setMoonLoreTitle(undefined);
     }
   }, [tonight?.moon?.phaseName]);
 
@@ -323,6 +410,24 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   const currentWeather = getCurrentWeather(weatherData);
   const midnightWeather = getMidnightWeather(weatherData);
   const { tempMin, tempMax } = getDailyTemps(weatherData);
+  // Robust: Get night temperature and description for tonight
+  let nightTemp = null;
+  let nightDescription = '';
+  // Prefer One Call 3.0 daily[0] for tonight
+  if (weatherData?.daily?.[0]?.temp?.night !== undefined) {
+    nightTemp = weatherData.daily[0].temp.night;
+    nightDescription = weatherData.daily[0].weather?.[0]?.description ?? '';
+  } else if (weatherData?.nightTemp !== undefined) {
+    nightTemp = weatherData.nightTemp;
+    // Try to get a description for night: prefer 'nightDescription', else fallback to 'description'
+    nightDescription = weatherData.nightDescription ?? weatherData.description ?? '';
+  } else if (midnightWeather?.temp !== undefined) {
+    nightTemp = midnightWeather.temp;
+    nightDescription = midnightWeather.weather?.[0]?.description ?? '';
+  } else if (currentWeather?.temp !== undefined) {
+    nightTemp = currentWeather.temp;
+    nightDescription = currentWeather.weather?.[0]?.description ?? '';
+  }
 
   // Defensive: weather data
   const cloudCover = typeof weatherData?.clouds === 'number' ? weatherData.clouds : 0;
@@ -342,6 +447,15 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   console.log('AstronomyCard weatherData:', weatherData);
   console.log('midnightWeather:', midnightWeather);
   console.log('currentWeather:', currentWeather);
+
+  // "Clearest skies" message using hourly cloud cover (prefers dark window if provided)
+  const hourlyForClear = buildHourlyForClearSkies(weatherData);
+  const tzGuess = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
+  const windowStartISO = toISOIfISOish(tonight?.darkWindow?.start);
+  const windowEndISO = toISOIfISOish(tonight?.darkWindow?.end);
+  const clearestSkiesMsg = hourlyForClear
+    ? describeClearestSkiesFromHourly(hourlyForClear, tzGuess, { windowStartISO, windowEndISO, smooth: 3 })
+    : null;
 
   return (
     <div
@@ -367,32 +481,23 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
         <div className="forecast-header">
           <div className="date-info">
             <h3 className="date-label">Tonight's Sky</h3>
+            {/* Astronomy header details: temp, condition, wind - styled as in day cards */}
+            <div className="astro-header-details card__header-details">
+<span className="temperature-label">
+  &nbsp;{typeof nightTemp === 'number' ? Math.round(nightTemp) : '--'}°
+  {nightDescription ? ` ${nightDescription}` : ''}
+  <WindIcon windMs={
+    typeof weatherData?.wind_speed === 'number'
+      ? weatherData.wind_speed
+      : typeof midnightWeather?.wind_speed === 'number'
+      ? midnightWeather.wind_speed / 3.6
+      : typeof currentWeather?.wind_speed === 'number'
+      ? currentWeather.wind_speed / 3.6
+      : 0
+  } />
+</span>
+            </div>
           </div>
-        </div>
-        {/* Astronomy header details: temp, condition, wind - always visible and styled for contrast */}
-        <div className="astro-header-details" style={{
-          fontSize: '1.5em', fontWeight: 600, margin: '12px 0 18px 0', color: '#222', background: 'rgba(255,255,255,0.85)', borderRadius: 8, padding: '8px 16px', display: 'inline-block', boxShadow: '0 2px 8px #0002'
-        }}>
-          {midnightWeather && (
-            <>
-              {Math.round(midnightWeather.temp)}° {midnightWeather.weather?.[0]?.description}
-              {typeof midnightWeather.wind_speed === 'number' && (
-                <span style={{ marginLeft: 12 }}>
-                  💨 {Math.round(midnightWeather.wind_speed)} km/h
-                </span>
-              )}
-            </>
-          )}
-          {!midnightWeather && currentWeather && (
-            <>
-              {Math.round(currentWeather.temp)}° {currentWeather.weather?.[0]?.description}
-              {typeof currentWeather.wind_speed === 'number' && (
-                <span style={{ marginLeft: 12 }}>
-                  💨 {Math.round(currentWeather.wind_speed)} km/h
-                </span>
-              )}
-            </>
-          )}
         </div>
 
         {/* Hero activity section - astronomy event or stargazing */}
@@ -519,7 +624,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
               <div className="weather-data-content">
                 <div className="weather-data-value">{primaryEvent.name}</div>
                 {primaryEvent.bestTime && (
-                  <div className="weather-data-subtitle">Best: {primaryEvent.bestTime}</div>
+                  <div className="weather-data-subtitle">Best viewing {primaryEvent.bestTime}</div>
                 )}
               </div>
             </div>
@@ -529,26 +634,123 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
         {/* Moon folklore section - stable moon lore below weather bars */}
         {/* Moon folklore — stable snippet below weather bars */}
 <div className="moon-lore mt-4">
-  <h4 className={`${indieFlower.className} font-bold text-lg leading-snug`}>
-    Moon folklore
+  <h4 className={`${indieFlower.className} font-bold text-lg leading-snug mb-1`}>
+    {tonight?.moon?.phaseName
+      ? `${tonight.moon.phaseName.replace(/_/g, ' ')} Moon Folklore${moonLoreTitle ? ' - ' + moonLoreTitle : ''}`
+      : 'Moon Folklore'}
   </h4>
-  <p className="mt-1 opacity-90">
+  <p className={`${indieFlower.className} opacity-90`} style={{ marginTop: 0 }}>
     {moonLoreText ?? 'No lore available for this phase.'}
   </p>
 </div>
 
         {/* Astronomy message section - formatted similarly to moon lore */}
         <div className="astronomy-message" style={{ margin: '16px 0' }}>
-          <strong>Astronomy outlook</strong>
+          <strong>🔭 Astronomy 🌖utlook</strong>
           <br />
           {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
         </div>
 
+        {/* Best sky window hint: only show concise time window message */}
+        {clearestSkiesMsg && (
+          <div className="astronomy-message" style={{ margin: '4px 0 12px', opacity: 0.9 }}>
+            <span style={{ fontStyle: 'italic' }}>{clearestSkiesMsg}</span>
+          </div>
+        )}
+
         {/* ISS sighting note - only if visible tonight */}
-        {iss && !iss.loading && !iss.error && Array.isArray(iss.data?.results) && iss.data.results.length > 0 ? (
-          <IssSightingNote data={iss.data} />
-        ) : null}
+        {/* Next ISS pass tonight (first after sunset) */}
+        {homeLocation?.lat && homeLocation?.lon && tonight?.sun?.sunset && (
+          <IssNextPassNote lat={homeLocation.lat} lon={homeLocation.lon} sunsetISO={tonight.sun.sunset} />
+        )}
       </div>
+    </div>
+  );
+};
+
+// Helper component: fetch and show next ISS pass tonight
+const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }> = ({ lat, lon, sunsetISO }) => {
+  // Import the helper
+  // ...existing imports...
+  // import { describeIssPass } from '../utils/issHelper';
+  const [pass, setPass] = useState<{ risetime?: string; duration?: number; mag?: number; maxEl?: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    // Fetch ISS next night pass from backend API
+    fetch(`/api/iss-next-night-pass?lat=${lat}&lon=${lon}&sunsetISO=${encodeURIComponent(sunsetISO ?? '')}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!cancelled) {
+          if (data?.pass && data.pass.risetime) {
+            setPass({
+              risetime: data.pass.risetime,
+              duration: data.pass.duration,
+              mag: data.pass.mag,
+              maxEl: data.pass.maxEl
+            });
+          } else if (data?.error) {
+            setError(data.error);
+            setPass(null);
+          } else {
+            setError('No ISS pass found after sunset');
+            setPass(null);
+          }
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setError(err?.message || String(err));
+          setPass(null);
+        }
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [lat, lon, sunsetISO]);
+  if (loading) return null;
+  if (error) {
+    // Friendlier message for no pass found
+    const friendlyMsg = error === 'No ISS pass found after sunset'
+      ? 'No visible ISS pass tonight for your location. Try again tomorrow!'
+      : `ISS sighting info unavailable: ${error}`;
+    return (
+      <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444' }}>
+        <span style={{ fontWeight: 500 }}>
+          {friendlyMsg}
+        </span>
+      </div>
+    );
+  }
+  if (!pass?.risetime) return null;
+  // Use describeIssPass helper for a natural language summary
+  // Compose the data object for the helper
+  const issData = {
+    ok: true,
+    risetime: pass.risetime,
+    duration: pass.duration,
+    mag: pass.mag,
+    maxEl: pass.maxEl,
+    sunset: '', // not needed for summary
+    nextSunrise: '' // not needed for summary
+  };
+  // Import describeIssPass at the top of the file:
+  // import { describeIssPass } from '../utils/issHelper';
+  // If not already imported, add it.
+  // Render the summary
+  return (
+    <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <img
+        src="/satellite_iss.png"
+        alt="ISS icon"
+        style={{ width: 28, height: 28, verticalAlign: 'middle', filter: 'drop-shadow(0px 0px 2px #fff)' }}
+        loading="lazy"
+      />
+      <span style={{ fontWeight: 500 }}>
+        {describeIssPass(issData)}
+      </span>
     </div>
   );
 };

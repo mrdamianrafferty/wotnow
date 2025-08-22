@@ -1,519 +1,362 @@
-name: "WotNow: Gardening (RHS baseline + biodynamic twist)"
-version: "1.0"
-owner: "Damian"
-project_root: "."
+name: “WotNow: Gardening (RHS baseline + biodynamic twist)”
+version: “1.5”
+owner: “Damian”
+project_root: “.”
 description: >
-  Add actionable, standards-first gardening advice to cards using an RHS-style planting calendar
-  (offset by climate zone + elevation) and contrast it with live weather & soil data.
-  Use Stormglass moon phase if available, and append biodynamic notes for fun only.
-  Integrate with existing files: src/utils/biodynamicAdvisor.ts and components/MoonNugget.tsx.
+Add actionable, standards‑first gardening advice to cards using an RHS‑style planting calendar
+(offset by climate zone + elevation) and contrast it with live weather, soil data, sunshine, and recent weather history.
+Use Stormglass moon phase if available, and append biodynamic notes for fun only.
+Elevation is applied as a soil‑first gate, then a lapse‑rate fallback (0.5–0.65 °C per 100 m)
+translated into day offsets via the local spring warming slope; a human‑readable reason is shown.
 
 conventions:
-  british_english: true
-  moon_phase_source: "Stormglass preferred; fallback to internal phase helper."
-  weather_sources:
-    - "OpenWeather (air temp, wind, precip)"
-    - "Open-Meteo (UV, soil temperature/moisture; hourly)"
-  safety_note: "Biodynamic messaging must never block standard, safe horticultural guidance."
+british_english: true
+moon_phase_source: “Stormglass preferred; fallback to internal phase helper.”
+elevation_offset_method: >
+1) Primary gate: allow sow/plant when soil_temperature_0cm ≥ crop threshold (default 7 °C; warm‑season crops 10 °C).
+2) Fallback: ΔT_alt = elevation_m * 0.005..0.0065 (°C/m). Divide by local warming slope (°C/day),
+estimated from the last 21–30 days of Open‑Meteo daily temperature, to get a ±days shift.
+Clamp to −10..+21 days; scale to ~65% for cool‑season crops.
+weather_sources:
+- “OpenWeather (air temp, wind, precip, gusts)”
+- “Open‑Meteo (UV, soil temperature/moisture; hourly + daily; DAYLIGHT + SUNSHINE durations; history + archive)”
+lookbacks:
+soil_history_days: 7
+frost_history_years: 5
+frost_window: { spring_start: “01-01”, spring_end: “06-30” }
+frost_threshold_c: 0
+frost_show_window: { before_days: 30, after_days: 14 }
+rain48h_mm_compaction: 12
+thresholds:
+rain_week_dry_mm: 15
+rain_week_wet_mm: 35
+soil_moisture_wet_m3m3: 0.35
+soil_moisture_dry_m3m3: 0.18
+seedling_uv_index_warn: 6
+cold_soil_c_default: 7
+cold_soil_c_warm_lovers: 10
+strong_gust_kmh: 55
+light_full_sun_h_per_day: 6     # typical horticultural definition of “full sun”
+light_partial_sun_h_per_day: 4  # partial sun / light shade
+safety_note: “Biodynamic messaging must never block standard, safe horticultural guidance.”
+
+user_stories:
+	•	id: gardener_weekly_summary
+as_a: “keen gardener”
+i_want: “a handy summary of tasks for this week and a summary of my conditions”
+so_that: “I can plan my activities, find inspiration, and be more productive and successful”
+surfaced_in: [“gardening cards”, “pop‑ups”, “(future) notifications”]
+acceptance_criteria:
+	•	“Weekly list includes sow/plant/harvest prompts from active RHS windows adjusted by zone + elevation + soil gate.”
+	•	“Conditions summary reflects UV, wind, rain, soil moisture trend, recent frost risk, and sunshine hours.”
+	•	“A ‘How do you know that?’ explainer is available with sources, assumptions, and calculations.”
+
+service_contracts:
+weatherService.attachOpenMeteoToForecast:
+expects:
+- days[].date
+fetches:
+- daily: [“daylight_duration”, “sunshine_duration”]  # in seconds (Open‑Meteo)
+provides:
+- days[].uvIndexMin
+- days[].uvIndexMean
+- days[].uvIndexMax
+- days[].air.euAqiMax
+- days[].air.euAqiMaxTime
+- days[].soil.temp0cm.{min,mean,max}
+- days[].soil.moisture0to1.{min,mean,max}
+- days[].soil.moisture1to3.{min,mean,max}
+- days[].soil.moisture3to9.{min,mean,max}
+- days[].soil.moisture9to27.{min,mean,max}
+- days[].soil.moisture27to81.{min,mean,max}
+- days[].pollen.aggregate
+- days[].pollen.dominant
+- days[].pollen.severity
+- days[].sunlight.daylightHours        # daylight_duration/3600
+- days[*].sunlight.sunshineHours        # sunshine_duration/3600
+notes: >
+Attach function must include daily=daylight_duration,sunshine_duration and surface per‑day hours as numbers.
+
+weatherService.attachAstronomyToForecast:
+provides:
+- days[].astronomy.sunrise
+- days[].astronomy.sunset
+- days[*].astronomy.moonPhase
+
+env_mapper.toGardenEnv (Open‑Meteo recent‑history derivations):
+provides:
+- recent.rain7dMm
+- recent.dryDays7
+- recent.rain48hMm
+- recent.frostNights3
+- recent.minTemp48hC
+- recent.soilMoistureMean7
+- recent.soilMoistureTrend
+- recent.sunshineHoursMean7       # mean of last ~7 days sunshine_duration (h)
+- recent.daylightHoursMean7       # mean of last ~7 days daylight_duration (h)
+notes: >
+Sunshine = bright‑sun hours (forecast/archive). Daylight = sunrise→sunset span. We prefer sunshine for light‑suitability.
 
 files:
-  biodynamic_advisor: "src/utils/biodynamicAdvisor.ts"         # already exists
-  moon_nugget_component: "src/components/MoonNugget.tsx"       # already exists
-  garden_env_mapper: "src/utils/env/gardenEnv.ts"
-  climate_zones: "src/data/climateZones.ts"
-  planting_offsets: "src/utils/plantingOffsets.ts"
-  rhs_calendar: "data/rhsCalendar.ts"
-  planting_schedule: "src/utils/plantingSchedule.ts"
-  crop_advisor: "src/utils/cropAdvisor.ts"
-  garden_messages: "src/utils/messages/gardeningMessages.ts"
-  card_component_primary: "src/components/ActivityCard.tsx"
-  card_component_alt: "src/components/ActivityListItem.tsx"
-  tests_dir: "tests/gardening"
+biodynamic_advisor: “src/utils/biodynamicAdvisor.ts”
+moon_nugget_component: “src/components/MoonNugget.tsx”
+garden_env_mapper: “src/utils/env/gardenEnv.ts”
+climate_zones: “src/data/climateZones.ts”
+planting_offsets: “src/utils/plantingOffsets.ts”
+rhs_calendar: “data/rhsCalendar.ts”
+planting_schedule: “src/utils/plantingSchedule.ts”
+crop_advisor: “src/utils/cropAdvisor.ts”
+perennial_advisor: “src/utils/perennialAdvisor.ts”
+garden_messages: “src/utils/messages/gardeningMessages.ts”
+weekly_tasks: “src/utils/weeklyTasks.ts”
+last_frost_helper: “src/utils/lastFrostHelper.ts”
+provenance: “src/utils/provenance.ts”
+card_component_primary: “src/components/ActivityCard.tsx”
+card_component_alt: “src/components/ActivityListItem.tsx”
+tests_dir: “tests/gardening”
 
 phases:
-  - id: sanity
-    title: "Sanity & inventory"
-    actions:
-      - run: "node -v"
-      - verify_paths:
-          any_exist:
-            - "${files.biodynamic_advisor}"
-            - "${files.moon_nugget_component}"
-      - ensure_typescript_compiles: true
-    success_criteria:
-      - "TypeScript compiles (or has unrelated warnings)."
-      - "biodynamicAdvisor + MoonNugget present."
+	•	id: env_mapper_update_sunlight
+title: “Env mapper: compute 7‑day sunshine/daylight means”
+actions:
+	•	create_or_update_file:
+file: “${files.garden_env_mapper}”
+content: |
+// src/utils/env/gardenEnv.ts
+import type { WeatherSnapshot } from ‘@/utils/biodynamicAdvisor’;
 
-  - id: env_mapper
-    title: "Normalise Stormglass/OpenWeather/Open-Meteo → GardenEnv"
-    actions:
-      - create_or_update_file:
-          file: "${files.garden_env_mapper}"
-          content: |
-            // src/utils/env/gardenEnv.ts
-            // Normalises data for gardening advice & biodynamic twist.
-            import type { WeatherSnapshot } from '@/utils/biodynamicAdvisor';
+export interface GardenEnvRecent {
+  rain7dMm?: number;
+  dryDays7?: number;
+  frostNights3?: number;
+  soilMoistureMean7?: number;
+  soilMoistureTrend?: 'rising'|'falling'|'flat';
+  rain48hMm?: number;
+  minTemp48hC?: number;
+  sunshineHoursMean7?: number;
+  daylightHoursMean7?: number;
+}
 
-            export interface GardenEnv {
-              phase?: string;            // 'new' | 'waxing_crescent' | ... from Stormglass if present
-              weather: WeatherSnapshot;  // mapped from OpenWeather/Open-Meteo
-              uvIndex?: number;          // from Open-Meteo hourly max if available
-              soilTemp5cm?: number;      // °C at 0–10 cm (Open-Meteo)
-              soilMoisture?: number;     // m³/m³ (Open-Meteo)
-              elevationM?: number;       // site elevation
-              climateZone?: string;      // e.g. '8b'
-            }
+export interface GardenEnv {
+  phase?: string;
+  weather: WeatherSnapshot;
+  uvIndex?: number;
+  soilTemp5cm?: number;
+  soilMoisture?: number;
+  elevationM?: number;
+  climateZone?: string;
+  recent?: GardenEnvRecent;
+}
 
-            export function toGardenEnv(input: {
-              stormglass?: any;
-              openWeather?: any;
-              openMeteo?: any;
-              climateZone?: string;
-              elevationM?: number;
-            }): GardenEnv {
-              const ow = input.openWeather ?? {};
-              const om = input.openMeteo ?? {};
-              const phase = input.stormglass?.moonPhase ?? undefined;
+export function toGardenEnv(input: {
+  stormglass?: any;
+  openWeather?: any;
+  openMeteo?: any;
+  climateZone?: string;
+  elevationM?: number;
+}): GardenEnv {
+  const ow = input.openWeather ?? {};
+  const om = input.openMeteo ?? {};
+  const phase = input.stormglass?.moonPhase ?? undefined;
 
-              const snap: WeatherSnapshot = {
-                temperature: N(ow.tempC) ?? N(ow.temperature) ?? N(om.temperature_2m),
-                minTemperature: N(ow.minTempC) ?? N(ow.tempMinC) ?? N(om.temperature_2m_min),
-                precipitation: N(ow.precipMm) ?? N(ow.rain_mm) ?? N(om.precipitation),
-                windSpeed: N(ow.windKmh) ?? ktsToKmh(N(ow.wind_speed)) ?? msToKmh(N(om.wind_speed_10m)),
-                gust: N(ow.gustKmh) ?? ktsToKmh(N(ow.wind_gust)) ?? msToKmh(N(om.wind_gusts_10m)),
-                soilTemperature: N(om.soil_temperature_0cm) ?? N(om.soil_temperature_7cm),
-                frostRisk: boolish(ow.frostRisk) || frostFromMins(N(ow.tempMinC) ?? N(ow.minTempC) ?? N(om.temperature_2m_min)),
-                humidity: N(ow.humidity) ?? N(om.relative_humidity_2m),
-              };
+  const snap: WeatherSnapshot = {
+    temperature: N(ow.tempC) ?? N(ow.temperature) ?? N(om.temperature_2m),
+    minTemperature: N(ow.minTempC) ?? N(ow.tempMinC) ?? N(om.temperature_2m_min),
+    precipitation: N(ow.precipMm) ?? N(ow.rain_mm) ?? N(om.precipitation),
+    windSpeed: N(ow.windKmh) ?? ktsToKmh(N(ow.wind_speed)) ?? msToKmh(N(om.windspeed_10m)),
+    gust: N(ow.gustKmh) ?? ktsToKmh(N(ow.wind_gust)) ?? msToKmh(N(om.windgusts_10m)),
+    soilTemperature: N(om.soil_temperature_0cm) ?? N(om.soil_temperature_7cm),
+    frostRisk: frostFromMins(N(ow.tempMinC) ?? N(ow.minTempC) ?? N(om.temperature_2m_min)),
+    humidity: N(ow.humidity) ?? N(om.relative_humidity_2m),
+  };
 
-              const uvIndex = N(om.uv_index_max) ?? N(om.uv_index);
-              const soilTemp5cm = N(om.soil_temperature_0cm) ?? N(om.soil_temperature_7cm);
-              const soilMoisture = N(om.soil_moisture_0_1m) ?? N(om.soil_moisture_0_7cm);
+  const uvIndex = N(om.uv_index_max) ?? N(om.uv_index);
+  const soilTemp5cm = N(om.soil_temperature_0cm) ?? N(om.soil_temperature_7cm);
+  const soilMoisture = N(om.soil_moisture_0_to_1cm) ?? N(om.soil_moisture_0_1m) ?? N(om.soil_moisture_0_7cm);
 
-              return {
-                phase,
-                weather: snap,
-                uvIndex,
-                soilTemp5cm,
-                soilMoisture,
-                elevationM: input.elevationM,
-                climateZone: input.climateZone,
-              };
-            }
+  const recent: GardenEnvRecent = {};
+  try {
+    const dTime: string[] = arr(om?.daily?.time);
+    const dPsum: number[] = nums(om?.daily?.precipitation_sum);
+    const dTmin: number[] = nums(om?.daily?.temperature_2m_min);
+    const dSun: number[] = nums(om?.daily?.sunshine_duration).map(s => s/3600);
+    const dLight: number[] = nums(om?.daily?.daylight_duration).map(s => s/3600);
+    if (dTime.length && dPsum.length === dTime.length) {
+      const last7 = lastN(dPsum, 7);
+      recent.rain7dMm = sum(last7);
+      recent.dryDays7 = last7.filter(v => isFinite(v) && v < 1).length;
+      recent.rain48hMm = sum(lastN(dPsum, 2));
+    }
+    if (dTime.length && dTmin.length === dTime.length) {
+      recent.frostNights3 = lastN(dTmin, 3).filter(v => isFinite(v) && v <= 0).length;
+      recent.minTemp48hC = Math.min(...lastN(dTmin, 2));
+    }
+    if (dLight.length) recent.daylightHoursMean7 = mean(lastN(dLight, 7));
+    if (dSun.length) recent.sunshineHoursMean7 = mean(lastN(dSun, 7));
 
-            function N(v: any): number | undefined {
-              if (v === null || v === undefined) return undefined;
-              const n = typeof v === 'number' ? v : Number(v);
-              return Number.isFinite(n) ? n : undefined;
-            }
-            function ktsToKmh(v?: number) { return typeof v === 'number' ? v * 1.852 : undefined; }
-            function msToKmh(v?: number) { return typeof v === 'number' ? v * 3.6 : undefined; }
-            function boolish(v: any) { return v === true || v === 'true' || v === 1; }
-            function frostFromMins(min?: number) { return typeof min === 'number' ? min <= 1 : false; }
+    const hSm: number[] = nums(om?.hourly?.soil_moisture_0_to_1cm ?? om?.hourly?.soil_moisture_0_1m);
+    if (hSm.length) {
+      const last7h = lastN(hSm, 24*7);
+      recent.soilMoistureMean7 = mean(last7h);
+      const last48 = lastN(hSm, 48);
+      const first24 = last48.slice(0, 24);
+      const next24  = last48.slice(24);
+      const diff = mean(next24) - mean(first24);
+      recent.soilMoistureTrend = Math.abs(diff) < 0.01 ? 'flat' : (diff > 0 ? 'rising' : 'falling');
+    }
+  } catch {}
 
-  - id: climate_zone_offsets
-    title: "Climate zones & elevation-based planting offsets"
-    actions:
-      - create_or_update_file:
-          file: "${files.climate_zones}"
-          content: |
-            // data/climateZones.ts
-            // Minimal zone baselines (extend as needed). Weeks offset from a reference planting window.
-            export type Zone = '7a' | '7b' | '8a' | '8b' | '9a' | '9b';
-            export const zoneOffsetsWeeks: Record<Zone, number> = {
-              '7a': -3, '7b': -2, '8a': 0, '8b': 1, '9a': 3, '9b': 4
-            };
-      - create_or_update_file:
-          file: "${files.planting_offsets}"
-          content: |
-            // src/utils/plantingOffsets.ts
-            import { zoneOffsetsWeeks, type Zone } from '@/data/climateZones';
+  return { phase, weather: snap, uvIndex, soilTemp5cm, soilMoisture, elevationM: input.elevationM, climateZone: input.climateZone, recent };
+}
 
-            export function zoneWeekOffset(zone?: string): number {
-              if (!zone) return 0;
-              const z = zone.toLowerCase() as Zone;
-              return zoneOffsetsWeeks[z] ?? 0;
-            }
+function N(v: any): number | undefined { const n = typeof v === 'number' ? v : Number(v); return Number.isFinite(n) ? n : undefined; }
+function arr(v: any): any[] { return Array.isArray(v) ? v : []; }
+function nums(v: any): number[] { return arr(v).map(Number).filter(n => Number.isFinite(n)); }
+function lastN<T>(a: T[], n: number): T[] { return a.slice(Math.max(0, a.length - n)); }
+function sum(a: number[]) { return a.reduce((s, v) => s + (isFinite(v) ? v : 0), 0); }
+function mean(a: number[]) { return a.length ? sum(a) / a.length : 0; }
+function ktsToKmh(v?: number) { return typeof v === 'number' ? v * 1.852 : undefined; }
+function msToKmh(v?: number) { return typeof v === 'number' ? v * 3.6 : undefined; }
+function frostFromMins(min?: number) { return typeof min === 'number' ? min <= 1 : false; }
 
-            // crude lapse rate: ~0.6 °C per 100 m elevation → ~1 week per ~1.7 °C
-            export function elevationWeekOffset(elevationM?: number): number {
-              if (!Number.isFinite(elevationM || NaN)) return 0;
-              const deltaC = (elevationM as number) * 0.006;
-              return Math.round(-deltaC / 1.7);
-            }
 
-            export function totalGuideOffsetWeeks(zone?: string, elevationM?: number): number {
-              return zoneWeekOffset(zone) + elevationWeekOffset(elevationM);
-            }
+	•	id: crop_light_nudges
+title: “Crop advisor: sunlight suitability nudges”
+actions:
+	•	create_or_update_file:
+file: “${files.crop_advisor}”
+content: |
+// src/utils/cropAdvisor.ts (sunlight‑aware)
+import { buildCropSchedule } from ‘@/utils/plantingSchedule’;
+import { getDailyBiodynamicAdvice } from ‘@/utils/biodynamicAdvisor’;
+import type { GardenEnv } from ‘@/utils/env/gardenEnv’;
 
-  - id: rhs_calendar
-    title: "RHS-style baseline calendar"
-    actions:
-      - create_or_update_file:
-          file: "${files.rhs_calendar}"
-          content: |
-            // data/rhsCalendar.ts
-            export type MonthNum = 1|2|3|4|5|6|7|8|9|10|11|12;
+export interface CropAdvice { crop: string; active: Array<{ label: 'sowIndoors'|'sowOutdoors'|'transplant'|'harvest'; startISO: string; endISO: string }>; blockers: string[]; nudges: string[]; standardLine: string; biodynamicLine?: string; summary: string; }
 
-            export interface CropWindow {
-              crop: string;
-              sowIndoors?: MonthNum[];
-              sowOutdoors?: MonthNum[];
-              transplant?: MonthNum[];
-              harvest?: MonthNum[];
-              notes?: string;
-            }
+const SOIL_MIN: Record<string, number> = { default: 7, Tomato: 10, Courgette: 10, 'French Bean (dwarf)': 10, 'Runner Bean': 10, Pea: 5, Carrot: 7, Beetroot: 7, Lettuce: 5, Spinach: 5, Kale: 7, 'Cabbage (summer)': 7, 'Potato (first earlies)': 7, 'Onion (from sets)': 5, 'Spring Onion': 5, Strawberry: 7 };
+const CROP_LIGHT: Record<string,'full'|'partial'|'shade'> = { Tomato:'full', Courgette:'full', 'Runner Bean':'full', 'French Bean (dwarf)':'full', Strawberry:'full', Pepper:'full', Sweetcorn:'full', Lettuce:'partial', Spinach:'partial', Kale:'partial' };
 
-            export const rhsCalendar: CropWindow[] = [
-              { crop: 'Tomato', sowIndoors: [2,3], transplant: [5,6], harvest: [7,8,9],
-                notes: 'Warmth-loving; protect from frost. Greenhouse extends season.' },
-              { crop: 'Courgette', sowIndoors: [4,5], sowOutdoors: [5,6], harvest: [7,8,9],
-                notes: 'Rich soil; steady moisture.' },
-              { crop: 'French Bean (dwarf)', sowIndoors: [4,5], sowOutdoors: [5,6], harvest: [7,8,9],
-                notes: 'Avoid cold/wet soils.' },
-              { crop: 'Runner Bean', sowIndoors: [4,5], sowOutdoors: [5,6], transplant: [5,6], harvest: [7,8,9],
-                notes: 'Needs sturdy supports.' },
-              { crop: 'Pea', sowOutdoors: [3,4,5], harvest: [6,7,8],
-                notes: 'Cooler soils preferred; protect from mice/pigeons.' },
-              { crop: 'Carrot', sowOutdoors: [3,4,5,6,7], harvest: [6,7,8,9,10],
-                notes: 'Fine, stone-free seedbed; cover for carrot fly.' },
-              { crop: 'Beetroot', sowOutdoors: [4,5,6,7], harvest: [6,7,8,9,10],
-                notes: 'Thin to size; steady moisture helps tenderness.' },
-              { crop: 'Lettuce', sowIndoors: [2,3,4,5,6,7,8], sowOutdoors: [3,4,5,6,7,8,9], harvest: [5,6,7,8,9,10],
-                notes: 'Bolt-resistant types for summer; protect in heat/cold snaps.' },
-              { crop: 'Spinach', sowOutdoors: [3,4,5,8,9], harvest: [5,6,9,10],
-                notes: 'Can bolt in heat; keep moist and pick young.' },
-              { crop: 'Kale', sowIndoors: [4,5], sowOutdoors: [4,5,6], transplant: [6,7], harvest: [10,11,12,1,2,3],
-                notes: 'Net against pigeons; very hardy.' },
-              { crop: 'Cabbage (summer)', sowIndoors: [2,3], sowOutdoors: [3,4], transplant: [4,5], harvest: [6,7,8],
-                notes: 'Firm planting; brassica mesh recommended.' },
-              { crop: 'Potato (first earlies)', sowOutdoors: [3,4], harvest: [6,7],
-                notes: 'Frost protection for early foliage.' },
-              { crop: 'Onion (from sets)', sowOutdoors: [3,4], harvest: [8,9],
-                notes: 'Plant sets shallow; keep weed-free.' },
-              { crop: 'Spring Onion', sowOutdoors: [3,4,5,6,7,8], harvest: [5,6,7,8,9,10],
-                notes: 'Successional small rows.' },
-              { crop: 'Strawberry', transplant: [7,8,9], harvest: [6,7],
-                notes: 'Mulch/cover to keep berries clean; net from birds.' }
-            ];
+export function adviseCrop(cropName: string, env: GardenEnv): CropAdvice | undefined {
+  const sched = buildCropSchedule(cropName, { climateZone: env.climateZone, elevationM: env.elevationM });
+  if (!sched) return undefined;
+  const today = new Date().toISOString().slice(0,10);
+  const active = sched.windows.filter(w => w.startISO <= today && w.endISO >= today);
+  const bio = getDailyBiodynamicAdvice(env.weather);
+  const blockers: string[] = [...bio.blockers];
+  const nudges: string[] = [...bio.nudges];
 
-  - id: planting_schedule
-    title: "Offset + date helper from RHS windows"
-    actions:
-      - create_or_update_file:
-          file: "${files.planting_schedule}"
-          content: |
-            // src/utils/plantingSchedule.ts
-            import { rhsCalendar, type CropWindow, type MonthNum } from '@/data/rhsCalendar';
-            import { totalGuideOffsetWeeks } from '@/utils/plantingOffsets';
+  const soilT = env.weather.soilTemperature ?? env.soilTemp5cm;
+  const minSoil = SOIL_MIN[cropName] ?? SOIL_MIN.default;
+  if (soilT != null && soilT < minSoil) blockers.push(`soil too cold (${soilT.toFixed(1)} °C; needs ≥ ${minSoil} °C)`);
 
-            export interface DatedWindow {
-              label: 'sowIndoors'|'sowOutdoors'|'transplant'|'harvest';
-              startISO: string;
-              endISO: string;
-            }
-            export interface CropScheduleOut {
-              crop: string;
-              windows: DatedWindow[];
-              notes?: string;
-              offsetWeeks: number;
-            }
+  if ((env.weather.precipitation ?? 0) > 8) blockers.push('heavy rain');
+  if ((env.weather.gust ?? 0) > 55) blockers.push('very gusty');
 
-            function monthsToRange(months: MonthNum[], year: number) {
-              const m = [...months].sort((a,b)=>a-b);
-              const start = new Date(Date.UTC(year, m[0]-1, 5));
-              const end   = new Date(Date.UTC(year, m[m.length-1]-1, 25));
-              return { start, end };
-            }
-            function shiftWeeks(d: Date, w: number) {
-              const out = new Date(d.getTime());
-              out.setUTCDate(out.getUTCDate() + w*7);
-              return out;
-            }
-            const iso = (d: Date) => d.toISOString().slice(0,10);
+  const r = env.recent || {};
+  if ((r.rain7dMm ?? 0) < 15 && (r.soilMoistureTrend === 'falling' || (r.dryDays7 ?? 0) >= 5)) nudges.push('Water deeply this evening (dry week)');
+  else if ((r.rain7dMm ?? 0) > 35) nudges.push('Hold off watering; soils likely saturated');
+  if ((r.minTemp48hC ?? 10) >= 6 && ((r.rain48hMm ?? 0) > 5 || (r.soilMoistureMean7 ?? 0) > 0.25)) nudges.push('Protect seedlings from slugs (damp, mild nights)');
 
-            export function buildCropSchedule(
-              cropName: string,
-              opts: { climateZone?: string; elevationM?: number; year?: number } = {}
-            ): CropScheduleOut | undefined {
-              const base = rhsCalendar.find(c => c.crop.toLowerCase() === cropName.toLowerCase());
-              if (!base) return undefined;
-              const year = opts.year ?? new Date().getUTCFullYear();
-              const offsetWeeks = totalGuideOffsetWeeks(opts.climateZone, opts.elevationM);
+  // Sunlight suitability
+  const avgSun = r.sunshineHoursMean7;
+  const need = CROP_LIGHT[cropName] || 'full';
+  if (typeof avgSun === 'number') {
+    if (need === 'full' && avgSun < 5.5) nudges.push(`Light looks limited this week (~${avgSun.toFixed(1)} h of sunshine/day) — choose the sunniest spot or delay planting out.`);
+    if (need === 'partial' && avgSun > 7.5) nudges.push('Very bright week — offer light shade in the afternoon to prevent bolting/scorch.');
+  }
 
-              const windows: DatedWindow[] = [];
-              const push = (label: DatedWindow['label'], months?: MonthNum[]) => {
-                if (!months || !months.length) return;
-                const { start, end } = monthsToRange(months, year);
-                windows.push({ label, startISO: iso(shiftWeeks(start, offsetWeeks)), endISO: iso(shiftWeeks(end, offsetWeeks)) });
-              };
-              push('sowIndoors', base.sowIndoors);
-              push('sowOutdoors', base.sowOutdoors);
-              push('transplant', base.transplant);
-              push('harvest', base.harvest);
+  const acts = active.map(a => ({ sowIndoors:'sow indoors', sowOutdoors:'sow outdoors', transplant:'transplant', harvest:'harvest' }[a.label] || 'garden')).join(', ');
+  const standardLine = !active.length ? `No RHS window for ${cropName} today — check coming weeks.` : blockers.length ? `${cropName}: RHS says ${acts}, but today’s not ideal — ${blockers[0]}.` : `${cropName}: Good day to ${acts}.`;
+  const biodynamicLine = `Biodynamic note — ${bio.summary.replace(/^Lovely for biodynamic rhythm:\s*/i, '')}`;
+  const summary = `${standardLine} ${biodynamicLine}`.trim();
+  return { crop: cropName, active, blockers, nudges, standardLine, biodynamicLine, summary };
+}
 
-              return { crop: base.crop, windows, notes: base.notes, offsetWeeks };
-            }
 
-            export function buildSchedules(crops: string[], opts: { climateZone?: string; elevationM?: number; year?: number } = {}) {
-              return crops.map(c => buildCropSchedule(c, opts)).filter(Boolean) as CropScheduleOut[];
-            }
+	•	id: weekly_tasks_sunlight
+title: “Weekly tasks: include sunshine suitability + conditions line”
+actions:
+	•	create_or_update_file:
+file: “${files.weekly_tasks}”
+content: |
+// src/utils/weeklyTasks.ts (sunlight‑aware)
+import type { GardenEnv } from ‘@/utils/env/gardenEnv’;
+import { buildCropSchedule } from ‘@/utils/plantingSchedule’;
 
-  - id: crop_advisor_merge
-    title: "Merge schedule + live weather/soil + biodynamic (for fun)"
-    actions:
-      - create_or_update_file:
-          file: "${files.crop_advisor}"
-          content: |
-            // src/utils/cropAdvisor.ts
-            // Combines RHS schedule + live weather/soil + biodynamicAdvisor into per-crop advice lines.
-            import { buildCropSchedule, type DatedWindow } from '@/utils/plantingSchedule';
-            import { getDailyBiodynamicAdvice, type WeatherSnapshot } from '@/utils/biodynamicAdvisor';
-            import type { GardenEnv } from '@/utils/env/gardenEnv';
+export interface WeeklyOut { tasks: string[]; conditions: string; }
 
-            export interface CropAdvice {
-              crop: string;
-              active: Array<{ label: DatedWindow['label']; startISO: string; endISO: string }>;
-              blockers: string[];
-              nudges: string[];
-              standardLine: string;   // standards-first
-              biodynamicLine?: string; // fun-only
-              summary: string;        // combined one-liner
-            }
+const SUN_NEED_FULL = 6; // h/day
+const SUN_NEED_PARTIAL = 4; // h/day
 
-            // Simple soil thresholds (°C) for practical sowing; tweak per crop if you like.
-            const SOIL_MIN: Record<string, number> = {
-              default: 7, Tomato: 10, Courgette: 10, 'French Bean (dwarf)': 10, 'Runner Bean': 10,
-              Pea: 5, Carrot: 7, Beetroot: 7, Lettuce: 5, Spinach: 5, Kale: 7,
-              'Cabbage (summer)': 7, 'Potato (first earlies)': 7, 'Onion (from sets)': 5, 'Spring Onion': 5, Strawberry: 7
-            };
+export function buildWeeklyTasks(env: GardenEnv, crops: string[] = []): WeeklyOut {
+  const tasks: string[] = [];
+  const r = env.recent || {};
 
-            export function adviseCrop(
-              cropName: string,
-              env: GardenEnv,
-              opts: { year?: number } = {}
-            ): CropAdvice | undefined {
-              const sched = buildCropSchedule(cropName, {
-                climateZone: env.climateZone,
-                elevationM: env.elevationM,
-                year: opts.year
-              });
-              if (!sched) return undefined;
+  if ((r.rain7dMm ?? 0) < 15 && (r.soilMoistureTrend === 'falling' || (r.dryDays7 ?? 0) >= 5)) tasks.push('Water deeply this evening; add a light mulch to hold moisture.');
+  else if ((r.rain7dMm ?? 0) > 35) tasks.push('Skip watering; check drainage after a wet week.');
 
-              const today = new Date().toISOString().slice(0,10);
-              const active = sched.windows.filter(w => w.startISO <= today && w.endISO >= today);
+  if ((r.minTemp48hC ?? 10) >= 6 && ((r.rain48hMm ?? 0) > 5 || (r.soilMoistureMean7 ?? 0) > 0.25)) tasks.push('Lay slug traps or collars for seedlings after dusk.');
 
-              const bio = getDailyBiodynamicAdvice(env.weather);
-              const blockers = [...bio.blockers];
+  const today = new Date().toISOString().slice(0,10);
+  const sow: string[] = []; const trans: string[] = [];
+  for (const c of crops) {
+    const sch = buildCropSchedule(c, { climateZone: env.climateZone, elevationM: env.elevationM });
+    if (!sch) continue;
+    sch.windows.forEach(w => {
+      if (w.startISO <= today && w.endISO >= today) {
+        if (w.label === 'sowOutdoors' || w.label === 'sowIndoors') sow.push(c);
+        if (w.label === 'transplant') trans.push(c);
+      }
+    });
+  }
+  if (sow.length) tasks.push(`Sow: ${uniq(sow).join(', ')}.`);
+  if (trans.length) tasks.push(`Transplant: ${uniq(trans).join(', ')}.`);
 
-              // Soil gating (standards-first; biodynamic never overrides this)
-              const soilT = env.weather.soilTemperature ?? env.soilTemp5cm;
-              const minSoil = SOIL_MIN[cropName] ?? SOIL_MIN.default;
-              if (soilT != null && soilT < minSoil) {
-                blockers.push(`soil too cold for ${cropName.toLowerCase()} (${soilT.toFixed(1)} °C; needs ≥ ${minSoil} °C)`);
-              }
+  // Sunlight hints
+  if (typeof r.sunshineHoursMean7 === 'number') {
+    const sun = r.sunshineHoursMean7;
+    if (sun < SUN_NEED_PARTIAL) tasks.push(`Light is scarce this week (~${sun.toFixed(1)} h/day). Hold back sun‑lovers; use the brightest bed.`);
+    else if (sun >= SUN_NEED_FULL) tasks.push(`Plenty of sun (~${sun.toFixed(1)} h/day). Good for tomatoes, courgettes and beans.`);
+  }
 
-              // Heavy rain or strong wind makes transplanting/sowing impractical
-              if ((env.weather.precipitation ?? 0) > 8) blockers.push('heavy rain');
-              if ((env.weather.gust ?? 0) > 55) blockers.push('very gusty');
+  if ((r.rain7dMm ?? 0) > 10) tasks.push('Hoe off small weeds on the next dry afternoon.');
 
-              // Standard line
-              let standardLine: string;
-              if (!active.length) {
-                standardLine = `No RHS window for ${cropName} today — check coming weeks.`;
-              } else if (blockers.length) {
-                const acts = active.map(a => labelToVerb(a.label)).join(', ');
-                standardLine = `${cropName}: RHS says ${acts}, but today’s not ideal — ${blockers[0]}.`;
-              } else {
-                const acts = active.map(a => labelToVerb(a.label)).join(', ');
-                standardLine = `${cropName}: Good day to ${acts}.`;
-              }
+  const uv = env.uvIndex != null ? `UV ~${Math.round(env.uvIndex)}` : undefined;
+  const wind = env.weather?.windSpeed != null ? `wind ~${Math.round(env.weather.windSpeed)} km/h` : undefined;
+  const rain = r.rain7dMm != null ? `${Math.round(r.rain7dMm)} mm in 7 days` : undefined;
+  const sun = typeof r.sunshineHoursMean7 === 'number' ? `${r.sunshineHoursMean7.toFixed(1)} h sunshine/day` : undefined;
+  const soil = r.soilMoistureTrend ? `soil moisture ${r.soilMoistureTrend}` : undefined;
+  const bits = [uv, wind, rain, sun, soil].filter(Boolean);
+  const conditions = bits.length ? bits.join(' • ') : 'Local conditions unavailable';
 
-              // Biodynamic fun-only line (re-phrase bio.summary gently)
-              const biodynamicLine = `Biodynamic note — ${bio.summary.replace(/^Lovely for biodynamic rhythm:\s*/i, '')}`;
+  return { tasks: tasks.slice(0, 7), conditions };
 
-              // Combine
-              const summary = blockers.length ? `${standardLine} ${biodynamicLine}` : `${standardLine} ${biodynamicLine}`;
+  function uniq(a: string[]) { return Array.from(new Set(a)); }
+}
 
-              return {
-                crop: cropName,
-                active: active.map(a => ({ label: a.label, startISO: a.startISO, endISO: a.endISO })),
-                blockers,
-                nudges: bio.nudges,
-                standardLine,
-                biodynamicLine,
-                summary: summary.trim()
-              };
-            }
 
-            function labelToVerb(label: DatedWindow['label']) {
-              switch (label) {
-                case 'sowIndoors': return 'sow indoors';
-                case 'sowOutdoors': return 'sow outdoors';
-                case 'transplant': return 'transplant';
-                case 'harvest': return 'harvest';
-                default: return 'garden';
-              }
-            }
+	•	id: tests_sunlight
+title: “Tests for sunshine/daylight mapping”
+actions:
+	•	create_file:
+path: “${files.tests_dir}/env.mapper.sunlight.test.ts”
+content: |
+import { toGardenEnv } from ‘@/utils/env/gardenEnv’;
+test(‘computes sunshine/daylight 7‑day means’, () => {
+const daily = {
+time: Array.from({length: 8}, (_,i)=>2025-06-${(i+1).toString().padStart(2,'0')}),
+precipitation_sum: Array(8).fill(0),
+temperature_2m_min: Array(8).fill(8),
+sunshine_duration: [0, 18000, 21600, 25200, 28800, 19800, 16200, 14400],
+daylight_duration:  [43200,43200,43200,43200,43200,43200,43200,43200]
+} as any;
+const env = toGardenEnv({ openMeteo: { daily }, openWeather: {}, climateZone: ‘8b’, elevationM: 50 });
+expect(env.recent?.sunshineHoursMean7).toBeGreaterThan(0);
+expect(env.recent?.daylightHoursMean7).toBeGreaterThan(10);
+});
 
-  - id: messages_hook
-    title: "Card-level message builder (standards + biodynamic note)"
-    actions:
-      - create_or_update_file:
-          file: "${files.garden_messages}"
-          content: |
-            // src/utils/messages/gardeningMessages.ts
-            import type { GardenEnv } from '@/utils/env/gardenEnv';
-            import { adviseCrop } from '@/utils/cropAdvisor';
-            import { buildSchedules } from '@/utils/plantingSchedule';
-            import { getDailyBiodynamicAdvice } from '@/utils/biodynamicAdvisor';
-
-            export interface GardeningAdviceOut {
-              header: string;
-              oneLiner: string;
-              reasons: string[];
-              cropLines: string[]; // per-crop summaries
-            }
-
-            export function buildGardeningAdvice(env: GardenEnv, crops: string[] = []): GardeningAdviceOut {
-              const bio = getDailyBiodynamicAdvice(env.weather);
-              const header = bio.blockers.length
-                ? 'Gardening — proceed with caution'
-                : 'Gardening — looks good';
-
-              const oneLiner = bio.summary; // already British English and contrastive
-
-              const cropLines: string[] = [];
-              for (const c of crops) {
-                const a = adviseCrop(c, env);
-                if (a) cropLines.push(a.summary);
-              }
-
-              const reasons = [
-                ...(bio.blockers.length ? ['Weather watch-outs: ' + bio.blockers.join(', ')] : []),
-              ];
-
-              return { header, oneLiner, reasons, cropLines };
-            }
-
-  - id: ui_integration
-    title: "Wire into Gardening card"
-    actions:
-      - locate_file_fallback:
-          preferred: "${files.card_component_primary}"
-          fallbacks:
-            - "${files.card_component_alt}"
-      - ensure_imports:
-          file: "${files.card_component_primary}"
-          imports:
-            - "import { toGardenEnv } from '@/utils/env/gardenEnv';"
-            - "import { buildGardeningAdvice } from '@/utils/messages/gardeningMessages';"
-            - "import MoonNugget from '@/components/MoonNugget';"
-      - integrate_snippet:
-          file: "${files.card_component_primary}"
-          after_pattern: "<h3 className=\"text-lg font-semibold\">Gardening</h3>|<Header>Gardening</Header>"
-          code: |
-            {(() => {
-              const env = toGardenEnv({
-                stormglass: props?.stormglass,   // has moonPhase already
-                openWeather: props?.weather,
-                openMeteo: props?.openMeteo,
-                climateZone: props?.climateZone,
-                elevationM: props?.elevationM,
-              });
-
-              // Optionally pass user's favourite crops; or keep empty to show only the one-liner
-              const crops = props?.crops ?? ['Tomato','Carrot','Lettuce'];
-              const adv = buildGardeningAdvice(env, crops);
-
-              return (
-                <div className="mt-2 space-y-2">
-                  <p className="text-sm font-medium">{adv.header}</p>
-                  <p className="text-sm">{adv.oneLiner}</p>
-
-                  {!!adv.reasons.length && (
-                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
-                      {adv.reasons.map(r => <div key={r}>• {r}</div>)}
-                    </div>
-                  )}
-
-                  {!!adv.cropLines.length && (
-                    <ul className="text-sm list-disc pl-5">
-                      {adv.cropLines.slice(0, 4).map(line => <li key={line}>{line}</li>)}
-                    </ul>
-                  )}
-
-                  {/* Serendipitous folklore (no controls) */}
-                  <MoonNugget className="mt-2" />
-                </div>
-              );
-            })()}
-      - commit:
-          message: "feat(ui): Gardening card shows RHS+weather advice and biodynamic note"
-
-  - id: tests
-    title: "Basic tests"
-    actions:
-      - create_dir: "${files.tests_dir}"
-      - create_file:
-          path: "${files.tests_dir}/advisor.positive.test.ts"
-          content: |
-            import { getDailyBiodynamicAdvice } from '@/utils/biodynamicAdvisor';
-            test('positive when no blockers', () => {
-              const a = getDailyBiodynamicAdvice({ temperature: 16, minTemperature: 8, precipitation: 0, windSpeed: 10, gust: 18, soilTemperature: 10 });
-              expect(a.blockers.length).toBe(0);
-              expect(a.summary.toLowerCase()).toContain('lovely');
-            });
-      - create_file:
-          path: "${files.tests_dir}/env.mapper.test.ts"
-          content: |
-            import { toGardenEnv } from '@/utils/env/gardenEnv';
-            test('maps providers to GardenEnv', () => {
-              const env = toGardenEnv({
-                stormglass: { moonPhase: 'full' },
-                openWeather: { tempC: 15, minTempC: 5, windKmh: 12, gustKmh: 25, precipMm: 0 },
-                openMeteo: { soil_temperature_0cm: 9, uv_index_max: 4.5 },
-                climateZone: '8b',
-                elevationM: 120
-              });
-              expect(env.phase).toBe('full');
-              expect(env.weather.temperature).toBe(15);
-              expect(env.uvIndex).toBe(4.5);
-            });
-      - create_file:
-          path: "${files.tests_dir}/crop.advice.test.ts"
-          content: |
-            import { adviseCrop } from '@/utils/cropAdvisor';
-            import { toGardenEnv } from '@/utils/env/gardenEnv';
-            test('advises tomato with soil gating', () => {
-              const env = toGardenEnv({
-                openWeather: { tempC: 16, minTempC: 6, windKmh: 8, gustKmh: 18, precipMm: 0 },
-                openMeteo: { soil_temperature_0cm: 9 }, // below Tomato 10 °C
-                climateZone: '8a', elevationM: 50
-              });
-              const a = adviseCrop('Tomato', env);
-              expect(a?.blockers.join(' ')).toMatch(/soil too cold/i);
-              expect(a?.summary.toLowerCase()).toContain('not ideal');
-            });
-      - commit:
-          message: "test(garden): basic env, advisor and crop advice tests"
-
-quality_gates:
-  - "TS builds: npm run build"
-  - "Tests pass: npm run test"
-  - "Gardening card shows: header, one-liner, optional reasons, up to 4 crop lines, plus Moon nugget"
-  - "Biodynamic note is appended but never used as a blocker"
-
-rollbacks:
-  - if_build_fails:
-      revert_last_commit: true
-      message: "revert(garden): rollback gardening advice integration"
-  - if_runtime_errors:
-      stash_changes_and_open_pr: true
-
-acceptance_criteria:
-  - "Stormglass moon phase is used when available; fallback still works."
-  - "RHS windows appear adjusted by climate zone + elevation."
-  - "Per-crop advice contrasts with weather/soil (e.g., ‘RHS says sow outdoors, but soil too cold’)."
-  - "Positive days read as ‘good for any gardener’; biodynamic line is flavour only."
-  - "UI renders without controls for the Moon nugget (pure serendipity)."
+notes_for_engineers:
+	•	Ensure your Open‑Meteo forecast calls include daily=daylight_duration,sunshine_duration alongside existing hourly params.
+	•	Convert seconds → hours (÷3600). Prefer sunshine for light‑suitability; daylight is the upper bound.
+	•	Crop light needs: use 6+ h/day for “full sun”, 4–6 h for “partial”, <4 h considered poor for sun‑lovers.
+	•	Messaging stays suggestive (nudges), not hard blockers, unless combined with other adverse conditions.

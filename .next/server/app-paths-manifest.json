@@ -1,3 +1,5 @@
 {
-  "/api/iss-visible/route": "app/api/iss-visible/route.js"
+  "/api/iss-visible/route": "app/api/iss-visible/route.js",
+  "/api/iss-next-night-pass/route": "app/api/iss-next-night-pass/route.js",
+  "/_not-found/page": "app/_not-found/page.js"
 }

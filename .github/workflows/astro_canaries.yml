@@ -28,7 +28,7 @@ jobs:
           python services/astro_highlights/astro_highlights/run_canaries.py
       
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: astronomy-canaries
           path: services/astro_highlights/out/

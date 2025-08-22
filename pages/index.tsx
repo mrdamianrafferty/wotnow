@@ -416,15 +416,46 @@ export default function Home() {
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
   const usedHeroActivities = new Set<string>();
 
-const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecastData(
+const { forecastByDay, loading, error, timeInfo, marineHours, weatherData } = useFetchForecastData(
   homeLocation, 
   coastalLocation, 
   interests
 );
 
+// Helper: Build forecastByDay from One Call 3.0 if available
+function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
+  if (!weatherData?.daily) return [];
+  return weatherData.daily.slice(0, 5).map((day, idx) => {
+    return {
+      date: day.dt,
+      temperature: Math.round(day.temp.day),
+      tempMax: Math.round(day.temp.max),
+      tempMin: Math.round(day.temp.min),
+      condition: day.weather?.[0]?.main ?? '',
+      description: day.weather?.[0]?.description ?? '',
+      icon: day.weather?.[0]?.icon ?? '01d',
+      rain: Math.round(day.rain ?? 0),
+      wind_speed: day.wind_speed,
+      wind_direction: day.wind_deg,
+      clouds: day.clouds,
+      humidity: day.humidity,
+      visibility: weatherData.current?.visibility ?? 10000,
+      waveHeight: undefined,
+      waterTemperature: undefined,
+      marine: [],
+      pollen: weatherData.pollenByDate?.[day.dt],
+      airQuality: weatherData.airQualityByDate?.[day.dt],
+    };
+  });
+}
 
 
-  const heroDataByDay = forecastByDay.map((day, idx) => {
+
+  // Use One Call 3.0 if available, else fallback to old format
+  const useOneCall = weatherData && weatherData.daily;
+  const forecastDays = useOneCall ? buildForecastFromOneCall(weatherData) : forecastByDay;
+
+  const heroDataByDay = forecastDays.map((day, idx) => {
     const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
 
     // ✅ CORRECT: Use the original getSuggestionsByDay structure
@@ -691,12 +722,23 @@ const { forecastByDay, loading, error, timeInfo, marineHours } = useFetchForecas
     const date = new Date(day.date * 1000);
     const isToday = idx === 0;
 
-    // Insert AstronomyCard after today's card (idx === 0)
-    // Pass tonight's weather data (look for evening/night data from today or tomorrow)
-    const astronomyCard = idx === 0 ? (
-      <AstronomyCard 
-        key="astronomy-card" 
-        weatherData={day} // Pass today's weather data as base for tonight
+    // Always show AstronomyCard for users with stargazing interest after today's card
+    const hasStargazing = interests.includes('stargazing');
+    // Pass full One Call 3.0 object if available, else pass summary day with nightTemp fallback
+    let astronomyWeatherData;
+    if (useOneCall && weatherData && weatherData.daily) {
+      astronomyWeatherData = weatherData;
+    } else {
+      // Add nightTemp fallback for summary day object
+      astronomyWeatherData = {
+        ...day,
+        nightTemp: typeof day.nightTemp === 'number' ? day.nightTemp : day.temperature // fallback to temperature if nightTemp missing
+      };
+    }
+    const astronomyCard = idx === 0 && hasStargazing ? (
+      <AstronomyCard
+        key="astronomy-card"
+        weatherData={astronomyWeatherData}
       />
     ) : null;
 

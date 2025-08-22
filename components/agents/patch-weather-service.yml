@@ -1,0 +1,416 @@
+name: Patch Weather Service (unify + graceful fallbacks)
+owner: Damian
+version: 1.2
+
+goals:
+  - De-duplicate helpers/functions in lib/services/weatherService.ts
+  - Replace Stormglass tides fetcher with graceful/timeout version
+  - Ensure marine, astronomy, bio, elevation fetchers exist and are graceful
+  - Extend normaliser to include marine, astronomy, elevation
+  - Add buildUnifiedFeatures() orchestrator
+  - Add tests at repo root (test-weather-service.ts)
+  - Keep TypeScript strict; British spelling; fail gracefully
+
+assumptions:
+  - Primary path: lib/services/weatherService.ts
+  - If not found, secondary: services/weatherService.ts
+  - Jest present (jest.config.cjs + jest.setup.js)
+  - Node 18+/Next runtime (global fetch)
+
+preflight:
+  - run: git status --porcelain
+  - if_output_contains: ""
+    then: echo "Working tree clean"
+  - else: |
+      echo "Uncommitted changes detected — commit or stash before patching."
+      exit 1
+
+discovery:
+  - id: weather_service_path
+    find_file:
+      patterns:
+        - "lib/services/weatherService.ts"
+        - "services/weatherService.ts"
+    require: true
+
+  - id: test_file_path
+    ensure_file_exists:
+      preferred: "test-weather-service.ts"
+      create_if_missing: true
+
+edits:
+  - step: 1) Hoist shared helpers and remove duplicates
+    file: "{{ weather_service_path }}"
+    actions:
+      - ensure_block_present:
+          before: "export default async function handler"
+          code: |
+            // ---- Shared helpers (single source of truth) ----
+            const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
+              await new Promise((resolve, reject) => {
+                const id = setTimeout(() => reject(new Error('timeout')), ms);
+                p.then(v => { clearTimeout(id); resolve(v); })
+                 .catch(e => { clearTimeout(id); reject(e); });
+              });
+
+            const safeJson = async (res: Response) => {
+              try { return await res.json(); } catch { return null as any; }
+            };
+
+            const nullOnError = async <T>(fn: () => Promise<T>): Promise<T | null> => {
+              try { return await fn(); } catch { return null; }
+            };
+      - remove_duplicate_blocks:
+          signatures:
+            - "const withTimeout = async <T>"
+            - "const safeJson = async (res: Response)"
+            - "const nullOnError = async <T>"
+          keep_first: true
+
+  - step: 2) Replace Stormglass tides fetcher (graceful + shape check)
+    file: "{{ weather_service_path }}"
+    actions:
+      - replace_function:
+          name: "fetchStormglassTides"
+          code: |
+            export async function fetchStormglassTides(
+              lat: number,
+              lon: number,
+              apiKey: string
+            ): Promise<any | null> {
+              const url = new URL('https://api.stormglass.io/v2/tide/extremes/point');
+              url.searchParams.set('lat', String(lat));
+              url.searchParams.set('lng', String(lon));
+
+              return await nullOnError(async () => {
+                const res  = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
+                if (!res.ok) return null;
+                const data = await safeJson(res);
+                if (!data || !Array.isArray(data.data)) return null; // expected shape
+                return data;
+              });
+            }
+
+  - step: 3) Ensure Stormglass marine/astronomy/bio/elevation fetchers exist (graceful)
+    file: "{{ weather_service_path }}"
+    actions:
+      - ensure_function:
+          name: "fetchStormglassMarine"
+          code: |
+            export async function fetchStormglassMarine(
+              lat: number,
+              lon: number,
+              startISO: string,
+              endISO: string,
+              params: string | undefined,
+              apiKey: string
+            ): Promise<any | null> {
+              const url = new URL('https://api.stormglass.io/v2/marine/point');
+              url.searchParams.set('lat', String(lat));
+              url.searchParams.set('lng', String(lon));
+              url.searchParams.set('start', startISO);
+              url.searchParams.set('end', endISO);
+              url.searchParams.set('params', params ?? [
+                'waveHeight','waveDirection','wavePeriod',
+                'swellHeight','swellDirection','swellPeriod',
+                'windWaveHeight','windWaveDirection','windWavePeriod',
+                'waterTemperature','currentSpeed','currentDirection',
+                'windSpeed','windDirection','gust'
+              ].join(','));
+
+              return await nullOnError(async () => {
+                const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
+                if (!res.ok) return null;
+                return await safeJson(res);
+              });
+            }
+      - ensure_function:
+          name: "fetchStormglassAstronomy"
+          code: |
+            export async function fetchStormglassAstronomy(
+              lat: number,
+              lon: number,
+              startISO: string,
+              endISO: string,
+              apiKey: string
+            ): Promise<any | null> {
+              const url = new URL('https://api.stormglass.io/v2/astronomy/point');
+              url.searchParams.set('lat', String(lat));
+              url.searchParams.set('lng', String(lon));
+              url.searchParams.set('start', startISO);
+              url.searchParams.set('end', endISO);
+
+              return await nullOnError(async () => {
+                const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
+                if (!res.ok) return null;
+                return await safeJson(res);
+              });
+            }
+      - ensure_function:
+          name: "fetchStormglassBio"
+          code: |
+            export async function fetchStormglassBio(
+              lat: number,
+              lon: number,
+              startISO: string,
+              endISO: string,
+              params: string | undefined,
+              apiKey: string
+            ): Promise<any | null> {
+              const url = new URL('https://api.stormglass.io/v2/bio/point');
+              url.searchParams.set('lat', String(lat));
+              url.searchParams.set('lng', String(lon));
+              url.searchParams.set('start', startISO);
+              url.searchParams.set('end', endISO);
+              url.searchParams.set('params', params ?? [
+                'chlorophyll','dissolvedOxygen','nitrate','phosphate','salinity','sst'
+              ].join(','));
+
+              return await nullOnError(async () => {
+                const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
+                if (!res.ok) return null;
+                return await safeJson(res);
+              });
+            }
+      - ensure_function:
+          name: "fetchStormglassElevation"
+          code: |
+            export async function fetchStormglassElevation(
+              lat: number,
+              lon: number,
+              apiKey: string
+            ): Promise<any | null> {
+              const url = new URL('https://api.stormglass.io/v2/elevation/point');
+              url.searchParams.set('lat', String(lat));
+              url.searchParams.set('lng', String(lon));
+
+              return await nullOnError(async () => {
+                const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
+                if (!res.ok) return null;
+                return await safeJson(res);
+              });
+            }
+
+  - step: 4) Replace normaliser to include marine/astronomy/elevation
+    file: "{{ weather_service_path }}"
+    actions:
+      - replace_function:
+          name: "normalizeWeatherFeatures"
+          code: |
+            export function normalizeWeatherFeatures(
+              openWeatherDaySummary: any,
+              openMeteoAirPollen: any,
+              stormglassTides: any,
+              stormglassMarine?: any,
+              stormglassAstronomy?: any,
+              stormglassElevation?: any
+            ) {
+              const toNum = (v: any): number | null => {
+                const n = typeof v === 'number' ? v : Number(v);
+                return Number.isFinite(n) ? n : null;
+              };
+
+              const uvi = openWeatherDaySummary?.uvi ?? null;
+
+              const hourly = openMeteoAirPollen?.hourly ?? {};
+              const maxOf  = (arr?: any[]) =>
+                Array.isArray(arr) && arr.length
+                  ? Math.max(...arr.filter((x: any) => Number.isFinite(Number(x))).map(Number))
+                  : null;
+              const pollen =
+                hourly && Object.keys(hourly).length
+                  ? {
+                      alder:   maxOf(hourly.alder_pollen) ?? 0,
+                      birch:   maxOf(hourly.birch_pollen) ?? 0,
+                      grass:   maxOf(hourly.grass_pollen) ?? 0,
+                      ragweed: maxOf(hourly.ragweed_pollen) ?? 0,
+                      source: 'open-meteo',
+                      unit: 'grains/m³'
+                    }
+                  : null;
+
+              const tides =
+                Array.isArray(stormglassTides?.data)
+                  ? stormglassTides.data
+                      .map((t: any) => ({
+                        time: new Date(t.time).toISOString(),
+                        type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
+                        height: toNum(t.height)
+                      }))
+                      .sort((a: any, b: any) => a.time.localeCompare(b.time))
+                  : null;
+
+              let marine: any = null;
+              const firstHour = stormglassMarine?.hours?.[0];
+              if (firstHour) {
+                const sg = (k: string) => toNum(firstHour?.[k]?.sg);
+                marine = {
+                  waveHeight: sg('waveHeight'),
+                  waveDirection: sg('waveDirection'),
+                  wavePeriod: sg('wavePeriod'),
+                  swellHeight: sg('swellHeight'),
+                  swellDirection: sg('swellDirection'),
+                  swellPeriod: sg('swellPeriod'),
+                  windWaveHeight: sg('windWaveHeight'),
+                  windWaveDirection: sg('windWaveDirection'),
+                  windWavePeriod: sg('windWavePeriod'),
+                  waterTemperature: sg('waterTemperature'),
+                  currentSpeed: sg('currentSpeed'),
+                  currentDirection: sg('currentDirection'),
+                  windSpeed: sg('windSpeed'),
+                  windDirection: sg('windDirection'),
+                  gust: sg('gust')
+                };
+              }
+
+              let astronomy: any = null;
+              const a0 = stormglassAstronomy?.data?.[0];
+              if (a0) {
+                astronomy = {
+                  sunrise: a0.sunrise ? new Date(a0.sunrise).toISOString() : null,
+                  sunset: a0.sunset ? new Date(a0.sunset).toISOString() : null,
+                  moonrise: a0.moonrise ? new Date(a0.moonrise).toISOString() : null,
+                  moonset: a0.moonset ? new Date(a0.moonset).toISOString() : null,
+                  moonPhase: toNum(a0.moonPhase)
+                };
+              }
+
+              const elevation = toNum(stormglassElevation?.data?.[0]?.elevation);
+
+              return {
+                uvi,
+                pollen,
+                tides,
+                marine,
+                astronomy,
+                meta: { elevation: elevation ?? null }
+              };
+            }
+
+  - step: 5) Add orchestrator buildUnifiedFeatures()
+    file: "{{ weather_service_path }}"
+    actions:
+      - ensure_function:
+          name: "buildUnifiedFeatures"
+          code: |
+            export async function buildUnifiedFeatures(
+              coords: { lat: number; lon: number },
+              keys: { openWeatherKey?: string; stormglassKey: string },
+              range?: { startISO?: string; endISO?: string }
+            ) {
+              const { lat, lon } = coords;
+              const startISO = range?.startISO ?? new Date().toISOString();
+              const endISO   = range?.endISO   ?? new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString();
+
+              const daySummaryP = keys.openWeatherKey
+                ? nullOnError(async () => {
+                    return await fetchOpenWeatherDaySummary(lat as any, lon as any, new Date().toISOString().slice(0, 10), keys.openWeatherKey!);
+                  })
+                : Promise.resolve(null);
+
+              const pollenP = nullOnError(async () => {
+                const d = new Date().toISOString().slice(0, 10);
+                return await fetchOpenMeteoAirPollen(lat, lon, d, d);
+              });
+
+              const tidesP  = fetchStormglassTides(lat, lon, keys.stormglassKey);
+              const marineP = fetchStormglassMarine(lat, lon, startISO, endISO, undefined, keys.stormglassKey);
+              const astroP  = fetchStormglassAstronomy(lat, lon, startISO, endISO, keys.stormglassKey);
+              const elevP   = fetchStormglassElevation(lat, lon, keys.stormglassKey);
+
+              const [daySummary, pollen, tides, marine, astronomy, elevation] = await Promise.all([
+                daySummaryP, pollenP, tidesP, marineP, astroP, elevP
+              ]);
+
+              return normalizeWeatherFeatures(daySummary, pollen, tides, marine, astronomy, elevation);
+            }
+
+  - step: 6) Remove duplicate OpenWeather helpers/functions
+    file: "{{ weather_service_path }}"
+    actions:
+      - remove_duplicate_functions:
+          names:
+            - "getWeatherAlerts"
+            - "getAirPollution"
+          keep_first: true
+
+tests:
+  - step: 7) Root-level test for extended normaliser
+    file: "{{ test_file_path }}"
+    actions:
+      - ensure_block_present:
+          code: |
+            import { normalizeWeatherFeatures } from './lib/services/weatherService';
+
+            describe('normalizeWeatherFeatures (extended)', () => {
+              const mockDaySummary = { uvi: 7 };
+              const mockAirPollen = {
+                hourly: {
+                  alder_pollen: [0,2,5,3],
+                  birch_pollen: [1,4,2,6],
+                  grass_pollen: [0,0,1,2],
+                  ragweed_pollen: [0,0,0,1],
+                }
+              };
+              const mockTides = {
+                data: [
+                  { time: '2025-08-21T06:00:00+00:00', type: 'high', height: 2.1 },
+                  { time: '2025-08-21T12:00:00+00:00', type: 'low',  height: 0.3 }
+                ]
+              };
+              const mockMarine = {
+                hours: [
+                  {
+                    time: '2025-08-21T06:00:00+00:00',
+                    waveHeight: { sg: 1.2 },
+                    swellHeight: { sg: 0.8 },
+                    swellPeriod: { sg: 7.5 },
+                    swellDirection: { sg: 240 },
+                    windWaveHeight: { sg: 0.5 }
+                  }
+                ]
+              };
+              const mockAstronomy = {
+                data: [{
+                  sunrise:  '2025-08-21T05:59:00+00:00',
+                  sunset:   '2025-08-21T19:42:00+00:00',
+                  moonrise: '2025-08-21T18:10:00+00:00',
+                  moonset:  '2025-08-21T03:12:00+00:00',
+                  moonPhase: 0.62
+                }]
+              };
+              const mockElevation = { data: [{ elevation: 8 }] };
+
+              it('merges UVI, pollen, tides, marine, astronomy, elevation', () => {
+                const r = normalizeWeatherFeatures(
+                  mockDaySummary, mockAirPollen, mockTides, mockMarine, mockAstronomy, mockElevation
+                );
+                expect(r.uvi).toBe(7);
+                expect(r.pollen?.birch).toBe(6);
+                expect(r.tides?.[0].type).toBe('high');
+                expect(r.marine?.waveHeight).toBe(1.2);
+                expect(r.astronomy?.moonPhase).toBe(0.62);
+                expect(r.meta?.elevation).toBe(8);
+              });
+
+              it('gracefully handles missing providers', () => {
+                const r = normalizeWeatherFeatures({}, null, null, null, null, null);
+                expect(r.uvi).toBeNull();
+                expect(r.pollen).toBeNull();
+                expect(r.tides).toBeNull();
+                expect(r.marine).toBeNull();
+                expect(r.astronomy).toBeNull();
+                expect(r.meta?.elevation).toBeNull();
+              });
+            });
+
+validation:
+  - run: npx tsc -p .
+  - run: npm test -- --watch=false || npm run test -- --watch=false
+
+commit:
+  - message: "feat(weather): unify Stormglass suite + extend normaliser; graceful fallbacks; add orchestrator + tests"
+
+rollback:
+  - run: git restore -SW -- .
+  - run: git clean -fd

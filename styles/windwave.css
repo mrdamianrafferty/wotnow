@@ -1,0 +1,39 @@
+.wa-clouds {
+  background-image: url('/skies/Cloudy Sky/Cloudy_Sky-Blue_04-1024x512.png');
+  background-size: cover;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: wa-cloudscroll 90s linear infinite;
+}
+
+.wa-waves {
+  background-image: url('/waves/waves1/00.png');
+  background-size: cover;
+  opacity: 0.7;
+  mix-blend-mode: overlay;
+  animation: wa-waveScroll 6s steps(44) infinite;
+}
+
+@keyframes wa-waveScroll {
+  from { background-position: 0 0; }
+  to { background-position: -1024px 0; }
+}
+
+@media (max-width: 768px) {
+  .wa-clouds {
+    opacity: 0.35;
+  }
+  .wa-waves {
+    opacity: 0.5;
+    animation: wa-waveScroll 8s steps(22) infinite;
+  }
+}
+.wa-bg { position:absolute; inset:0; pointer-events:none; }
+.wa-lit { mix-blend-mode:screen; }
+
+.SceneLayers {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  contain: paint;
+}

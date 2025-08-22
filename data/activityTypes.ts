@@ -19,6 +19,7 @@ export interface ActivityType {
   fairConditions?: string[];              // Acceptable but not ideal conditions
   goodConditions?: string[];              // Recommended and generally enjoyable
   perfectConditions?: string[];           // Ideal and most desirable conditions
+  applyBeaufort?: boolean;                // ✅ Add this line for wave efect on inland waters
   indoorAlternative?: string;             // Optional fallback if the activity is weather-sensitive
   /** If true, scoring should derive wind-relative direction (onshore/cross/offshore) from beach orientation */
   usesWindRelative?: boolean;
