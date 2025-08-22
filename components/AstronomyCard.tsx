@@ -424,6 +424,26 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   } else if (midnightWeather?.temp !== undefined) {
     nightTemp = midnightWeather.temp;
     nightDescription = midnightWeather.weather?.[0]?.description ?? '';
+  } else if (
+    tonight?.sun?.sunset &&
+    Array.isArray(weatherData?.hourly) &&
+    weatherData.hourly.length > 0
+  ) {
+    // Offset sunset by 2 hours and find nearest hourly data
+    const sunsetTime = new Date(tonight.sun.sunset).getTime();
+    const targetTime = sunsetTime + 2 * 60 * 60 * 1000;
+    let closestHour = weatherData.hourly[0];
+    let minDiff = Math.abs(new Date(weatherData.hourly[0].dt * 1000).getTime() - targetTime);
+    for (const h of weatherData.hourly) {
+      const hTime = new Date(h.dt * 1000).getTime();
+      const diff = Math.abs(hTime - targetTime);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestHour = h;
+      }
+    }
+    nightTemp = closestHour.temp;
+    nightDescription = closestHour.weather?.[0]?.description ?? '';
   } else if (currentWeather?.temp !== undefined) {
     nightTemp = currentWeather.temp;
     nightDescription = currentWeather.weather?.[0]?.description ?? '';
@@ -730,9 +750,9 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   const issData = {
     ok: true,
     risetime: pass.risetime,
-    duration: pass.duration,
-    mag: pass.mag,
-    maxEl: pass.maxEl,
+    duration: typeof pass.duration === 'number' ? pass.duration : 0,
+    mag: typeof pass.mag === 'number' ? pass.mag : 0,
+    maxEl: typeof pass.maxEl === 'number' ? pass.maxEl : 0,
     sunset: '', // not needed for summary
     nextSunrise: '' // not needed for summary
   };
