@@ -5,11 +5,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/iss-visible/route.js"
     ],
-    "/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/layout.js"
-    ],
     "/api/iss-next-night-pass/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
