@@ -755,20 +755,20 @@ const heatSensitiveActivities = new Set([
 
   if (activityId && !heatSensitiveActivities.has(activityId)) return null;
 
-  // Improved heat index calculation (closer to actual heat index formula)
-  const heatIndex = tempC + (0.33 * (humidity / 100 * 6.105 * Math.exp(17.27 * tempC / (237.7 + tempC)))) - 0.7;
+// Improved heat index calculation (closer to actual heat index formula)
+const heatIndex = tempC + (0.33 * (humidity / 100 * 6.105 * Math.exp(17.27 * tempC / (237.7 + tempC)))) - 0.7;
 
-  if (heatIndex >= 54) {
-    return '☠️ Extreme heat danger - avoid all strenuous outdoor activity';
-  } else if (heatIndex >= 46) {
-    return '🔥 High heat risk - take frequent breaks, stay hydrated, watch for heat exhaustion signs';
-  } else if (heatIndex >= 38) {
-    return '⚠️ Moderate heat stress - take regular breaks and drink plenty of water';
-  } else if (heatIndex >= 32) {
-    return 'Warm conditions - stay hydrated and avoid peak sun hours';
-  }
+if (heatIndex >= 54) {
+  return "Extreme heat danger — stay indoors and postpone outdoor exercise.";
+} else if (heatIndex >= 46) {
+  return "Very high heat risk — seek shade often, sip water regularly, watch for dizziness or nausea.";
+} else if (heatIndex >= 38) {
+  return "Heat stress likely — slow the pace, rest frequently, and keep drinking water/electrolytes.";
+} else if (heatIndex >= 32) {
+  return "Warm and muggy — stay hydrated and avoid the midday sun.";
+}
 
-  return null;
+return null;
 }
 
 /*
@@ -790,20 +790,20 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
   const humidity = day.humidity;
   const clouds = day.clouds;
 
-  switch (activityId) {
-    case 'basketball_outdoor':
-      if (rain > 0) {
-        reasons.push('Wet court makes dribbling and movement dangerous');
-      } else if (windSpeed > 8) {
-        reasons.push('Strong wind affects shooting accuracy');
-      } else if (temp && temp > 30) {
-        reasons.push('Hot conditions - stay hydrated and take breaks');
-      } else if (temp && temp < 5) {
-        reasons.push('Cold weather affects ball grip and handling');
-      } else if (clouds < 20) {
-        reasons.push('Clear court and good visibility for play');
-      }
-      break;
+switch (activityId) {
+  case 'basketball_outdoor':
+    if (rain > 0) {
+      reasons.push("Slippery court — no one wants a busted ankle. Game’s off.");
+    } else if (windSpeed > 8) {
+      reasons.push("Wind’s got your shot drifting like a bad pass.");
+    } else if (temp && temp > 30) {
+      reasons.push("Heat’s real out here — grab water and take a breather.");
+    } else if (temp && temp < 5) {
+      reasons.push("Too cold — ball feels like a rock and grip’s gone.");
+    } else if (clouds < 20) {
+      reasons.push("Clear skies — perfect run on the blacktop.");
+    }
+    break;
 
     case 'football_soccer':
       if (rain > 5) {
@@ -868,21 +868,21 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
       }
       break;
 
-    case 'golf':
-      if (rain > 0) {
-        reasons.push('Rain affects ball flight and green conditions');
-      } else if (windSpeed > 10) {
-        reasons.push('Strong wind will significantly affect ball flight');
-      } else if (windSpeed > 5) {
-        reasons.push('Moderate wind adds challenge to club selection');
-      } else if (temp && temp < 5) {
-        reasons.push('Cold affects ball compression and distance');
-      } else if (clouds < 30) {
-        reasons.push('Clear skies ideal for reading greens');
-      } else {
-        reasons.push('Good golfing weather');
-      }
-      break;
+case 'golf':
+  if (rain > 0) {
+    reasons.push("Rain’s here — the only thing under par will be your mood.");
+  } else if (windSpeed > 10) {
+    reasons.push("Wind’s so strong it’ll slice your shots for you.");
+  } else if (windSpeed > 5) {
+    reasons.push("Bit breezy — time to blame the wind for your scorecard.");
+  } else if (temp && temp < 5) {
+    reasons.push("Cold day — balls won’t fly, but excuses will.");
+  } else if (clouds < 30) {
+    reasons.push("Sunny skies — perfect for spotting where your ball *didn’t* land.");
+  } else {
+    reasons.push("Looks like a fine day to ruin a good walk.");
+  }
+  break;
 
     case 'hiking':
       if (rain > 5) {
@@ -900,93 +900,93 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
       }
       break;
 
-    case 'picnicking':
-      if (rain > 0) {
-        reasons.push('Rain will spoil outdoor dining');
-      } else if (windSpeed > 8) {
-        reasons.push('Strong wind will blow napkins and plates around');
-      } else if (temp && temp > 30) {
-        reasons.push('Very hot - food safety concerns in heat');
-      } else if (temp && temp < 10) {
-        reasons.push('Cold weather not comfortable for outdoor eating');
-      } else if (clouds >= 20 && clouds <= 70) {
-        reasons.push('Partly cloudy - perfect for avoiding harsh sun');
-      } else {
-        reasons.push('Perfect picnic weather');
-      }
-      break;
+case 'picnicking':
+  if (rain > 0) {
+    reasons.push("Raindrops on sandwiches? Best save the picnic for another day.");
+  } else if (windSpeed > 8) {
+    reasons.push("Windy weather — expect runaway napkins and tumbling cups.");
+  } else if (temp && temp > 30) {
+    reasons.push("Too hot for comfort — tricky to keep food (and people) fresh.");
+  } else if (temp && temp < 10) {
+    reasons.push("Too chilly for a blanket lunch outdoors — maybe indoors instead?");
+  } else if (clouds >= 20 && clouds <= 70) {
+    reasons.push("Lovely mix of sun and shade — ideal picnic skies.");
+  } else {
+    reasons.push("Perfect picnic weather — pack the basket and enjoy!");
+  }
+  break;
 
-    case 'beach':
-      if (rain > 5) {
-        reasons.push('Heavy rain ruins beach relaxation');
-      } else if (rain > 2) {
-        reasons.push('Moderate rain not ideal for beach activities');
-      } else if (rain > 0 && rain <= 2) {
-        reasons.push('Light rain might interrupt beach time occasionally');
-      } else if (windSpeed > 12) {
-        reasons.push('Very windy - sand will blow everywhere');
-      } else if (windSpeed > 6) {
-        reasons.push('Moderate wind keeps things fresh');
-      } else if (temp && temp > 35) {
-        reasons.push('Very hot - risk of sunburn and dehydration');
-      } else if (temp && temp < 18) {
-        reasons.push('Too cold for comfortable beach time');
-      } else if (clouds < 50) {
-        reasons.push('Sunny skies perfect for beach day');
-      } else {
-        reasons.push('Nice beach conditions');
-      }
-      break;
+case 'beach':
+  if (rain > 5) {
+    reasons.push("Heavy rain means no sandcastles today.");
+  } else if (rain > 2) {
+    reasons.push("Showers might spoil the fun — not the best beach day.");
+  } else if (rain > 0 && rain <= 2) {
+    reasons.push("A few drops of rain — could be in and out of the water quickly!");
+  } else if (windSpeed > 12) {
+    reasons.push("Very windy — expect sand in sandwiches and hair!");
+  } else if (windSpeed > 6) {
+    reasons.push("A fresh breeze — good for kites, less so for umbrellas.");
+  } else if (temp && temp > 35) {
+    reasons.push("Scorching heat — pack shade, water, and lots of sunscreen.");
+  } else if (temp && temp < 18) {
+    reasons.push("A bit chilly for swimsuits — maybe a beach walk instead?");
+  } else if (clouds < 50) {
+    reasons.push("Sunny skies — perfect day for the family beach trip!");
+  } else {
+    reasons.push("Pleasant beach weather — enjoy the sand and sea.");
+  }
+  break;
 
-    case 'gardening':
-    case 'outdoor_gardening':
-      if (rain > 5) {
-        reasons.push('Heavy rain makes soil too muddy to work');
-      } else if (rain > 0 && rain <= 2) {
-        reasons.push('Light rain is actually good for watering');
-      } else if (windSpeed > 10) {
-        reasons.push('Strong wind makes it hard to work with plants');
-      } else if (temp && temp > 30) {
-        reasons.push('Very hot - risk of heat exhaustion outdoors');
-      } else if (temp && temp < 0) {
-        reasons.push('Freezing - soil too hard to work with');
-      } else if (temp && temp >= 15 && temp <= 25) {
-        reasons.push('Perfect temperature for gardening');
-      } else {
-        reasons.push('Good conditions for garden work');
-      }
-      break;
+case 'gardening':
+case 'outdoor_gardening':
+  if (rain > 5) {
+    reasons.push("Heavy rain — the soil’s a swamp, best admired from the window with a cup of tea.");
+  } else if (rain > 0 && rain <= 2) {
+    reasons.push("A light shower — nature lending a hand with the watering can.");
+  } else if (windSpeed > 10) {
+    reasons.push("Too blustery — even the gnomes would topple over.");
+  } else if (temp && temp > 30) {
+    reasons.push("Scorching heat — weeds grow, but gardeners wilt.");
+  } else if (temp && temp < 0) {
+    reasons.push("Frozen ground — the earth sleeps, and so should your spade.");
+  } else if (temp && temp >= 15 && temp <= 25) {
+    reasons.push("Mild and gentle — perfect weather to lose track of time in the garden.");
+  } else {
+    reasons.push("Fair conditions — enough to keep hands busy and hearts content.");
+  }
+  break;
 
-    case 'photography':
-      if (rain > 2) {
-        reasons.push('Heavy rain damages equipment and limits shots');
-      } else if (clouds >= 70 && clouds <= 90) {
-        reasons.push('Overcast provides perfect diffused lighting');
-      } else if (clouds < 30) {
-        reasons.push('Clear skies great for landscape shots');
-      } else if (windSpeed > 8) {
-        reasons.push('Wind makes it hard to keep camera steady');
-      } else if (day.visibility && day.visibility > 10000) {
-        reasons.push('Excellent visibility for distant subjects');
-      } else {
-        reasons.push('Good photography conditions');
-      }
-      break;
+case 'photography':
+  if (rain > 2) {
+    reasons.push("Heavy rain — say goodbye to clear shots and probably your camera too.");
+  } else if (clouds >= 70 && clouds <= 90) {
+    reasons.push("Overcast skies — nature’s softbox, pity about the mood.");
+  } else if (clouds < 30) {
+    reasons.push("Clear skies — great landscapes, terrible shadows on faces.");
+  } else if (windSpeed > 8) {
+    reasons.push("Windy — perfect if you wanted a blurry impressionist phase.");
+  } else if (day.visibility && day.visibility > 10000) {
+    reasons.push("Crisp visibility — so you can really capture how empty the horizon feels.");
+  } else {
+    reasons.push("Not perfect, not terrible — in other words, real photography.");
+  }
+  break;
 
-    default:
-      // Generic outdoor activity reasoning
-      if (rain > 5) {
-        reasons.push('Heavy rain makes outdoor activities unpleasant');
-      } else if (windSpeed > 15) {
-        reasons.push('Very strong wind makes outdoor activities difficult');
-      } else if (temp && temp > 35) {
-        reasons.push('Very hot conditions - heat safety concerns');
-      } else if (temp && temp < -5) {
-        reasons.push('Very cold conditions may be uncomfortable');
-      } else {
-        reasons.push("It's a good day to be outside");
-      }
-      break;
+default:
+  // Generic outdoor activity reasoning
+  if (rain > 5) {
+    reasons.push("Buckets of rain falling from the sky — maybe stay cosy inside?");
+  } else if (windSpeed > 15) {
+    reasons.push("Blustery enough to send your hat on holiday — tricky outdoors!");
+  } else if (temp && temp > 35) {
+    reasons.push("It’s scorching out there — take it slow and hydrate!");
+  } else if (temp && temp < -5) {
+    reasons.push("Colder than a penguin’s picnic — dress up or stay in!");
+  } else {
+    reasons.push("Get out there!");
+  }
+  break;
   }  // ➕ Add pollen-related reasons for outdoor activities
   if (isOutdoor(activityId) && day.pollen) {
     try {
@@ -1028,17 +1028,107 @@ function getDefaultReasonForActivity(activityId: string): string[] {
   
   // Activity-specific defaults
   const defaults: Record<string, string> = {
-    'basketball_outdoor': 'Courts are available for a game',
-    'football_soccer': 'Pitch conditions allow for play',
-    'tennis': 'Courts are in good condition',
-    'running': 'Good conditions for a run',
-    'cycling': 'Roads are clear for cycling',
-    'golf': 'Course is playable',
-    'hiking': 'Trails are accessible',
-    'picnicking': 'Suitable for outdoor dining',
-    'beach': 'Beach conditions are reasonable',
-    'gardening': 'Garden work is possible',
-    'photography': 'Lighting conditions are workable'
+    // ── Action Sports ─────────────────────────────────────────
+    mountain_biking: "Trails are rolling — mud optional, smiles mandatory.",
+    road_cycling: "Roads are clear — watch potholes, not just your PB.",
+    gravel_biking: "Crunchy lanes ahead — perfect for getting pleasantly lost.",
+    rock_climbing: "Rock’s in nick — chalk up and mind the ankles.",
+    indoor_climbing: "Holds are fresh — excuses less so.",
+    skateboarding: "Park’s good to roll — gravity still undefeated.",
+    rollerblading: "Smooth enough to glide (or wobble stylishly).",
+    riding_motorbike: "Good riding weather — ride your plan, not your ego.",
+
+    // ── Fitness & Wellness ───────────────────────────────────
+    yoga: "Calm enough to stretch time as well as hamstrings.",
+    outdoor_yoga: "Gentle breeze and quiet vibes — mats at the ready.",
+    meditation: "Settle in — the world can wait five minutes.",
+    outdoor_meditation: "Soft sounds, easy focus — breathe in the day.",
+    pilates: "Core’s calling — posture today, smugness tomorrow.",
+    martial_arts: "Sharp footwork weather — bow in, switch on.",
+    tai_chi: "Slow flow approved — serenity with a side of balance.",
+    running: "Good running weather — no medals for staying on the sofa.",
+    trail_running: "Trails are friendly — shoes may disagree.",
+    cycling: "Roads are clear — legs may lodge a complaint.",
+    urban_exploring: "City’s open — pockets of wonder round every corner.",
+    gym_workout: "Racks are free — today’s effort, tomorrow’s brag.",
+    outdoor_gym: "Kit’s usable — fresh air beats air-con.",
+    zumba: "Beat’s good, feet’s good — shake off the day.",
+    boxing: "Good rounds ahead — footwork first, heroics later.",
+    spinning: "Wheels up — sweat now, grin after.",
+
+    // ── Outdoor Activities → Nature ──────────────────────────
+    hiking: "Paths are open — go lose track of time out there.",
+    birdwatching: "Quiet skies — patience rewarded with feathers.",
+    photography: "Conditions are decent — beauty’s still in the eye of the beholder.",
+    foraging: "Woods are whispering — basket optional, wonder guaranteed.",
+    mushroom_hunting: "Forest’s in good voice — pick wisely, ID twice.",
+    stargazing: "Skies cooperating — wish upon responsibly.",
+
+    // ── Outdoor → Fishing (dad humour) ───────────────────────
+    fly_fishing_freshwater: "River’s in mood — trout may or may not be.",
+    coarse_fishing: "Still waters, still minds — bites negotiable.",
+    sea_fishing_shore: "Shore’s workable — fish haven’t read your plans.",
+    sea_fishing_boat: "Fair afloat — bring luck, and a spare sandwich.",
+    ice_fishing: "Ice is agreeable — toes less so. Dress like you mean it.",
+
+    // ── Outdoor → Recreation (family-friendly) ───────────────
+    picnicking: "Perfect picnic weather — ants haven’t got the memo yet.",
+    bbq: "Grill-friendly day — try not to set the sausages to ‘meteor’.",
+    beach: "Beach is welcoming — sand will still get everywhere.",
+    geocaching: "Signals good — treasure probably plastic, fun definitely real.",
+    camping: "Tents at the ready — stars included, snoring optional.",
+    outdoor_reading: "Pages won’t flap — plot might.",
+    dog_walking: "Prime walkies — tail wags guaranteed.",
+    outdoor_playground: "Slides and swings approved — giggles likely.",
+    outdoor_chess: "Quiet board, sharp minds — try not to blunder in public.",
+    outdoor_painting: "Light’s kind — capture the mess before it dries.",
+    outdoor_music: "Good busking weather — applause not guaranteed.",
+
+    // ── Winter Sports ────────────────────────────────────────
+    skiing: "Slopes are open — gravity’s still the boss.",
+    snowboarding: "Runs are ready — style optional, helmet not.",
+    cross_country_skiing: "Tracks set — glide now, brag later.",
+    ice_skating: "Ice is honest — elegance not guaranteed.",
+    curling: "Stones will behave — teammates mightn’t.",
+    ice_hockey: "Surface is playable — bruises with friends.",
+    ice_hockey_indoor: "Rink’s ready — tape up and get stuck in.",
+
+    // ── Creative & Arts ──────────────────────────────────────
+    painting: "Brush day — the paint’s in a cooperative mood.",
+
+    crafts: "Craft table’s calling — glue strings of joy await.",
+    knitting: "Needles up — one row now, a jumper by Christmas (maybe).",
+    diy: "Tools at peace — measure twice, mutter once.",
+    playing_records: "Needle down — let the dust add ‘warmth’.",
+    make_music: "Good vibes — noise complaints not currently forecast.",
+    dance: "Floor’s friendly — rhythm may vary by participant.",
+    reading: "Words behaving — lose an hour, gain a chapter.",
+
+    // ── Indoor Recreation ────────────────────────────────────
+    going_to_pub: "Pints pulling well — responsible cheer encouraged.",
+    table_tennis: "Tables true — spin like you meant it.",
+    playing_cards: "Deck’s honest — friends less so.",
+    watch_a_movie: "Screen time justified — snacks strongly implied.",
+    cafe: "Beans behaving — conversation optional but recommended.",
+    cinema: "Projector purring — turn your phone to ‘forgotten’.",
+    museum: "Quiet corners and good labels — curiosity welcome.",
+    shopping: "Queues civilised — wallet less so.",
+    gallery: "Walls have wonders — take your time.",
+    bowling: "Lanes are true — bumpers strictly between friends.",
+    squash: "Court’s crisp — apologies to the hamstrings.",
+    badminton: "Feathers will fly — so should you.",
+    tennis_indoor: "Even bounce, no breeze — your serve.",
+    indoor_swimming: "Lanes civil — splash diplomacy advised.",
+
+    // ── Water & Sea (if not elsewhere) ───────────────────────
+    surfing: "Waves are rideable — wipeouts included free.",
+    swimming_sea: "Sea’s swimmable — remember, it isn’t a bathtub.",
+    swimming_pool: "Pool’s fine — lane hogs on best behaviour (we hope).",
+    snorkelling: "Water’s clear enough — fish are probably judging.",
+    scuba_diving: "Diveable today — adventure below, pressure above.",
+    kayaking: "Waters friendly — stay curious, not cocky.",
+    sailing: "Winds fair — good day to argue with ropes.",
+    fishing: "Conditions are fine — fish still mightn’t care."
   };
 
   return [defaults[activityId] || `Conditions are suitable for ${activityName.toLowerCase()}`];

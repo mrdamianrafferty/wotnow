@@ -53,11 +53,11 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }: WindIconProps) {
     />
   );
 }
-import { getMoonLore } from '../data/moonLore';
+import { getMoonLore, getRandomMoonLore, MoonPhase } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { describeIssPass } from '../utils/issHelper';
 import '../styles/Card.css';
-import { indieFlower } from "@/app/fonts";
+import { indieFlower, oxanium } from "@/app/fonts";
 import { describeClearestSkiesFromHourly } from '../lib/services/goingOutTonight';
 
 // Astronomy highlight interfaces
@@ -174,12 +174,11 @@ const getWeatherAwareMessage = (
       parts.push("Clear skies expected - excellent viewing conditions!");
     }
     // Direction, only add if not already present
-    if (primaryEvent.direction) {
-      if (typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
-        const dirPhrase = `Look ${primaryEvent.direction}`;
-        if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction.toLowerCase()))) {
-          parts.push(dirPhrase);
-        }
+    if (primaryEvent.direction && typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
+      const direction = primaryEvent.direction;
+      const dirPhrase = `Look ${direction}`;
+      if (!parts.some(p => p.toLowerCase().includes(direction.toLowerCase()))) {
+        parts.push(dirPhrase);
       }
     }
     // Remove duplicate phrases
@@ -357,11 +356,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   useEffect(() => {
     if (tonight?.moon?.phaseName) {
       // Normalize phase name to match enum keys
-      const phaseKey = tonight.moon.phaseName.toLowerCase().replace(/\s+/g, '_');
-      const loreItems = getMoonLore(phaseKey as MoonPhase);
-      if (loreItems && loreItems.length > 0) {
-        setMoonLoreText(loreItems[0].text);
-        setMoonLoreTitle(loreItems[0].title);
+      let phaseKey = tonight.moon.phaseName.toLowerCase().replace(/\s+/g, '_');
+      if (phaseKey === 'new_moon' || phaseKey === 'newmoon') phaseKey = 'new';
+      const loreItem = getRandomMoonLore(phaseKey as MoonPhase);
+      if (loreItem) {
+        setMoonLoreText(loreItem.text);
+        setMoonLoreTitle(loreItem.title);
       } else {
         setMoonLoreText(undefined);
         setMoonLoreTitle(undefined);
@@ -577,6 +577,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             </div>
           </div>
 
+
           {/* Cloud cover bar */}
           {weatherData?.clouds !== undefined && (
             <div className="weather-data-bar">
@@ -638,6 +639,38 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             </div>
           )}
 
+          {/* Moonrise and Moonset bars */}
+          {(tonight.moon.rise || tonight.moon.set) && (
+            <div className="weather-data-bar">
+              <div className="weather-data-label">
+                <img
+                  src="/weather-icons/design/fill/final/moonrise.svg"
+                  alt="moonrise"
+                  style={{ width: 16, height: 16, marginRight: 4 }}
+                />
+                <span>Moonrise</span>
+              </div>
+              <div className="weather-data-content">
+                <div className="weather-data-value">{tonight.moon.rise ?? '--'}</div>
+              </div>
+            </div>
+          )}
+          {(tonight.moon.set) && (
+            <div className="weather-data-bar">
+              <div className="weather-data-label">
+                <img
+                  src="/weather-icons/design/fill/final/moonset.svg"
+                  alt="moonset"
+                  style={{ width: 16, height: 16, marginRight: 4 }}
+                />
+                <span>Moonset</span>
+              </div>
+              <div className="weather-data-content">
+                <div className="weather-data-value">{tonight.moon.set}</div>
+              </div>
+            </div>
+          )}
+
           {/* Special events */}
           {primaryEvent && (
             <div className="weather-data-bar">
@@ -656,7 +689,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
         </div>
 
         {/* Moon folklore section - stable moon lore below weather bars */}
-        {/* Moon folklore — stable snippet below weather bars */}
+        
 <div className="moon-lore mt-4">
   <h4 className={`${indieFlower.className} font-bold text-lg leading-snug mb-1`}>
     {tonight?.moon?.phaseName
@@ -669,7 +702,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 </div>
 
         {/* Astronomy message section - formatted similarly to moon lore */}
-        <div className="astronomy-message" style={{ margin: '16px 0' }}>
+        <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '16px 0', fontSize: '0.9rem' }}>
           <strong>🔭 Astronomy 🌖utlook</strong>
           <br />
           {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
@@ -677,7 +710,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 
         {/* Best sky window hint: only show concise time window message */}
         {clearestSkiesMsg && (
-          <div className="astronomy-message" style={{ margin: '4px 0 12px', opacity: 0.9 }}>
+          <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '4px 0 12px', opacity: 0.9, fontSize: '0.85rem' }}>
             <span style={{ fontStyle: 'italic' }}>{clearestSkiesMsg}</span>
           </div>
         )}
@@ -741,7 +774,7 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
       ? 'No visible ISS pass tonight for your location. Try again tomorrow!'
       : `ISS sighting info unavailable: ${error}`;
     return (
-      <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444' }}>
+      <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444', fontSize: '0.85rem' }}>
         <span style={{ fontWeight: 500 }}>
           {friendlyMsg}
         </span>
@@ -765,7 +798,7 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   // If not already imported, add it.
   // Render the summary
   return (
-    <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
       <img
         src="/satellite_iss.png"
         alt="ISS icon"

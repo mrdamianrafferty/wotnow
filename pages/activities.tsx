@@ -354,9 +354,31 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
               )}
               {typeof day.waterTemperature === 'number' && (
                 <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
-                       className="activity-card__data-icon" />
-                  <strong>{day.waterTemperature.toFixed(1)}°</strong>
+                  {(() => {
+                    const temp = day.waterTemperature;
+                    let key = '';
+                    if (temp < 10) {
+                      key = 'Very Cold / Dangerous: Immediate cold shock risk; hypothermia within minutes. Only for trained/drysuit users.';
+                    } else if (temp < 16) {
+                      key = 'Cold: Wetsuit strongly recommended. Cold shock possible; hypothermia within 30–60 mins.';
+                    } else if (temp < 20) {
+                      key = 'Cool: Bracing for swimming; wetsuit advised for long sessions. Comfortable for surfing/kayaking in gear.';
+                    } else if (temp < 24) {
+                      key = 'Mild / Comfortable: Good for most swimmers without wetsuits; pleasant for water sports.';
+                    } else if (temp < 28) {
+                      key = 'Warm: Very comfortable for swimming and sport. Little thermal stress.';
+                    } else {
+                      key = 'Hot / Tropical: Comfortable but can feel overheated during exertion. Monitor hydration and sun risk.';
+                    }
+                    return (
+                      <span title={`Sea Water: ${temp.toFixed(1)}°C\n${key}`}
+                        style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
+                          className="activity-card__data-icon" />
+                        <strong>{temp.toFixed(1)}°</strong>
+                      </span>
+                    );
+                  })()}
                 </li>
               )}
               {day.icon && (
@@ -378,15 +400,61 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
               )}
               {typeof day.waveHeight === 'number' && (
                 <li className="activity-card__data-item">
-                  🌊 <strong>{day.waveHeight.toFixed(1)}</strong>m
+                  {(() => {
+                    const wave = day.waveHeight;
+                    let key = '';
+                    if (wave <= 0.5) {
+                      key = 'Calm: Safe for swimming, kids, casual paddle sports.';
+                    } else if (wave <= 1.0) {
+                      key = 'Choppy / Manageable: Fun for confident swimmers, bodyboarders; tiring for casual bathers.';
+                    } else if (wave <= 2.0) {
+                      key = 'Strong surf: Powerful waves; risky for swimmers, good for experienced surfers.';
+                    } else if (wave <= 3.0) {
+                      key = 'Heavy surf / Hazardous: Dangerous for swimming; only skilled surfers or sport with safety cover.';
+                    } else {
+                      key = 'Extreme seas: Unsafe for general recreation; specialist conditions only.';
+                    }
+                    return (
+                      <span title={`Wave Height: ${wave.toFixed(1)}m\n${key}`}
+                        style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        🌊 <strong>{wave.toFixed(1)}</strong>m
+                      </span>
+                    );
+                  })()}
                 </li>
               )}
               {typeof day.wind_speed === 'number' && (
                 <li className="activity-card__data-item activity-card__data-item--wrap">
-                  <img src={getWindIcon(day.wind_speed)}
-                       alt="Wind" 
-                       className={`activity-card__data-icon--lg ${windIconNeedsGlow(day.wind_speed) ? 'activity-card__wind-icon--glow' : ''}`} />
-                  <strong>{Math.round(mpsToKnots(day.wind_speed))}</strong>knots
+                  {(() => {
+                    const windMs = day.wind_speed;
+                    const beaufort = getBeaufortNumber(windMs);
+                    const knots = mpsToKnots(windMs);
+                    const beaufortDescriptions = [
+                      'Calm: Smoke rises vertically.', // 0
+                      'Light Air: Ripples, leaves still.', // 1
+                      'Light Breeze: Leaves rustle, wind felt on face.', // 2
+                      'Gentle Breeze: Leaves and twigs in motion.', // 3
+                      'Moderate Breeze: Raises dust, small branches move.', // 4
+                      'Fresh Breeze: Small trees sway.', // 5
+                      'Strong Breeze: Large branches move, whistling in wires.', // 6
+                      'Near Gale: Whole trees in motion.', // 7
+                      'Gale: Twigs break off trees.', // 8
+                      'Strong Gale: Slight structural damage.', // 9
+                      'Storm: Trees uprooted, damage.', // 10
+                      'Violent Storm: Widespread damage.', // 11
+                      'Hurricane: Severe damage.', // 12
+                    ];
+                    const windDesc = beaufortDescriptions[Math.max(0, Math.min(beaufort, 12))];
+                    return (
+                      <span title={`Beaufort ${beaufort}: ${windDesc}`}
+                        style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <img src={getWindIcon(windMs)}
+                          alt={`Wind: Beaufort ${beaufort}`}
+                          className={`activity-card__data-icon--lg ${windIconNeedsGlow(windMs) ? 'activity-card__wind-icon--glow' : ''}`} />
+                        <strong>{Math.round(knots)}</strong>knots
+                      </span>
+                    );
+                  })()}
                   {typeof day.gust_speed === 'number' && day.gust_speed !== day.wind_speed && (
                     <span> (gust {mpsToKnots(day.gust_speed).toFixed(1)} knots)</span>
                   )}
@@ -398,25 +466,77 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                       </span>
                     </>
                   )}
-                  {typeof day.wind_direction === 'number' && typeof resolvedOrientation === 'number' && (
-                    <>
-                      {' '}
-                      <span>({classifyWindRelative(resolvedOrientation, day.wind_direction)})</span>
-                      {orientationVia && orientationVia !== 'computed' && (
-                        <em style={{ marginLeft: 6, opacity: 0.75 }}>
-                          ({orientationVia === 'simulated' ? 'sim' : orientationVia})
-                        </em>
-                      )}
-                    </>
-                  )}
+                  {typeof day.wind_direction === 'number' && typeof resolvedOrientation === 'number' && (() => {
+                    const rel = classifyWindRelative(resolvedOrientation, day.wind_direction);
+                    let advice = '';
+                    if (rel === 'onshore') {
+                      advice = 'Onshore wind (towards land): Pushes waves into the beach, making the sea choppy and breaking early. Safer for swimmers (drifts you landward) but can create strong rips. Surfers get messy, low-quality waves.';
+                    } else if (rel === 'offshore') {
+                      advice = 'Offshore wind (out to sea): Holds waves up, creating clean, well-shaped surf. Surfers love it, but swimmers and small craft risk being blown out. Strong offshore winds can be dangerous even close to shore.';
+                    } else if (rel === 'cross-shore') {
+                      advice = 'Cross-shore wind (along the coast): Blows parallel to the beach, pushing swimmers sideways. Can make surf crumbly and less predictable. Small boats and SUPs constantly fight drift.';
+                    }
+                    return (
+                      <span title={advice} style={{ marginLeft: 6 }}>
+                        ({rel})
+                        {orientationVia && orientationVia !== 'computed' && (
+                          <em style={{ marginLeft: 6, opacity: 0.75 }}>
+                            ({orientationVia === 'simulated' ? 'sim' : orientationVia})
+                          </em>
+                        )}
+                      </span>
+                    );
+                  })()}
                 </li>
               )}
               {typeof day.swellHeight === 'number' && (
                 <li className="activity-card__data-item">
-                  🏄🏿‍♀️ Swell: <strong>{day.swellHeight.toFixed(1)}</strong>m
-                  {typeof day.swellPeriod === 'number' && (
-                    <span> ({day.swellPeriod.toFixed(1)}s)</span>
-                  )}
+                  {(() => {
+                    const swell = day.swellHeight;
+                    let key = '';
+                    if (swell < 0.5) {
+                      key = 'Flat / Tiny: Barely surfable, calm seas; ideal for swimming, kayaking, SUP.';
+                    } else if (swell < 1.5) {
+                      key = 'Small / Fun: Good for beginners in surfing/bodyboarding; comfortable sailing and swimming.';
+                    } else if (swell < 2.5) {
+                      key = 'Medium / Powerful: Quality surf for intermediates; challenging for casual sea sports. Strong rips possible.';
+                    } else if (swell < 4.0) {
+                      key = 'Large / Heavy: Advanced surfing only; hazardous for swimming and small craft.';
+                    } else {
+                      key = 'Very Large / Extreme: Big-wave surfing, storm seas; unsafe for general recreation.';
+                    }
+                    return (
+                      <span
+                        title={`Swell Height: ${swell.toFixed(1)}m\n${key}`}
+                        style={{ display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        🏄🏿‍♀️ Swell: <strong>{swell.toFixed(1)}</strong>m
+                      </span>
+                    );
+                  })()}
+                  {typeof day.swellPeriod === 'number' && (() => {
+                    const period = day.swellPeriod;
+                    let key = '';
+                    if (period < 5) {
+                      key = 'Wind chop: Short, messy, low-power waves. Poor for surfing; safe but uncomfortable for swimming/boating.';
+                    } else if (period < 8) {
+                      key = 'Short swell / Choppy: Small, weak surf; okay for beginners on soft boards. Bumpy for small craft.';
+                    } else if (period < 12) {
+                      key = 'Medium period: Decent surf potential; waves carry more push. Noticeable set waves for surfers, moderate rolling seas for sailing.';
+                    } else if (period < 16) {
+                      key = 'Long period / Ground swell: Powerful, organised waves. Great for surfing, but beach breaks become much heavier. Strong rips likely.';
+                    } else {
+                      key = 'Very long period / Big-wave energy: Extremely powerful waves even if swell height looks modest. Big surf conditions, challenging and dangerous for most users.';
+                    }
+                    return (
+                      <span
+                        title={`Wave Period: ${period.toFixed(1)}s\n${key}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '6px' }}
+                      >
+                        ⏲ <strong>{period.toFixed(1)}</strong>s
+                      </span>
+                    );
+                  })()}
                 </li>
               )}
               {typeof day.visibility === 'number' && (

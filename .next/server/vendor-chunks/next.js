@@ -1125,6 +1125,16 @@ eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'Indie Flow
 
 /***/ }),
 
+/***/ "(pages-dir-node)/./node_modules/next/font/google/target.css?{\"path\":\"app/fonts.ts\",\"import\":\"Oxanium\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"300\",\"400\",\"500\",\"600\",\"700\"],\"display\":\"swap\"}],\"variableName\":\"oxanium\"}":
+/*!********************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/next/font/google/target.css?{"path":"app/fonts.ts","import":"Oxanium","arguments":[{"subsets":["latin"],"weight":["300","400","500","600","700"],"display":"swap"}],"variableName":"oxanium"} ***!
+  \********************************************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+eval("// Exports\nmodule.exports = {\n\t\"style\": {\"fontFamily\":\"'Oxanium', 'Oxanium Fallback'\",\"fontStyle\":\"normal\"},\n\t\"className\": \"__className_25ebf3\"\n};\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHBhZ2VzLWRpci1ub2RlKS8uL25vZGVfbW9kdWxlcy9uZXh0L2ZvbnQvZ29vZ2xlL3RhcmdldC5jc3M/e1wicGF0aFwiOlwiYXBwL2ZvbnRzLnRzXCIsXCJpbXBvcnRcIjpcIk94YW5pdW1cIixcImFyZ3VtZW50c1wiOlt7XCJzdWJzZXRzXCI6W1wibGF0aW5cIl0sXCJ3ZWlnaHRcIjpbXCIzMDBcIixcIjQwMFwiLFwiNTAwXCIsXCI2MDBcIixcIjcwMFwiXSxcImRpc3BsYXlcIjpcInN3YXBcIn1dLFwidmFyaWFibGVOYW1lXCI6XCJveGFuaXVtXCJ9IiwibWFwcGluZ3MiOiJBQUFBO0FBQ0E7QUFDQSxXQUFXLGtFQUFrRTtBQUM3RTtBQUNBIiwic291cmNlcyI6WyIvVXNlcnMvZGFtaWFucmFmZmVydHkvUHJvamVjdHMvV290Tm93L25vZGVfbW9kdWxlcy9uZXh0L2ZvbnQvZ29vZ2xlL3RhcmdldC5jc3M/e1wicGF0aFwiOlwiYXBwL2ZvbnRzLnRzXCIsXCJpbXBvcnRcIjpcIk94YW5pdW1cIixcImFyZ3VtZW50c1wiOlt7XCJzdWJzZXRzXCI6W1wibGF0aW5cIl0sXCJ3ZWlnaHRcIjpbXCIzMDBcIixcIjQwMFwiLFwiNTAwXCIsXCI2MDBcIixcIjcwMFwiXSxcImRpc3BsYXlcIjpcInN3YXBcIn1dLFwidmFyaWFibGVOYW1lXCI6XCJveGFuaXVtXCJ9Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIEV4cG9ydHNcbm1vZHVsZS5leHBvcnRzID0ge1xuXHRcInN0eWxlXCI6IHtcImZvbnRGYW1pbHlcIjpcIidPeGFuaXVtJywgJ094YW5pdW0gRmFsbGJhY2snXCIsXCJmb250U3R5bGVcIjpcIm5vcm1hbFwifSxcblx0XCJjbGFzc05hbWVcIjogXCJfX2NsYXNzTmFtZV8yNWViZjNcIlxufTtcbiJdLCJuYW1lcyI6W10sImlnbm9yZUxpc3QiOlswXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(pages-dir-node)/./node_modules/next/font/google/target.css?{\"path\":\"app/fonts.ts\",\"import\":\"Oxanium\",\"arguments\":[{\"subsets\":[\"latin\"],\"weight\":[\"300\",\"400\",\"500\",\"600\",\"700\"],\"display\":\"swap\"}],\"variableName\":\"oxanium\"}\n");
+
+/***/ }),
+
 /***/ "(pages-dir-node)/./node_modules/next/script.js":
 /*!*************************************!*\
   !*** ./node_modules/next/script.js ***!

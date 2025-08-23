@@ -219,8 +219,9 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
       return {
         date: Math.floor(new Date(currentEntry.dt_txt).getTime() / 1000),
         temperature: Math.round(currentEntry.main.temp),
-        tempMax: Math.round(maxTemp),
-        tempMin: Math.round(minTemp),
+        tempMax: Math.round(currentEntry.main.temp_max), // Use OpenWeather daily max
+        tempMin: Math.round(currentEntry.main.temp_min), // Use OpenWeather daily min
+        uvi: currentEntry.uvi, // Pass UVI from daily forecast
         condition: currentEntry.weather[0].main,
         description: currentEntry.weather[0].description,
         icon: currentEntry.weather[0].icon,
@@ -283,6 +284,8 @@ function getWeatherIconUrl(iconCode: string) {
 
 function getPopupDay(activityId: string, day: any, timeInfo: any) {
   if (MARINE_ACTIVITY_IDS.includes(activityId) && Array.isArray(day.marine)) {
+    console.log('🏄‍♂️ MARINE ACTIVITY DETECTED:', activityId);
+    console.log('📦 Marine array length:', day.marine.length);
     // Convert Unix timestamp to Date
     const dayDate = new Date(day.date * 1000);
     const today = new Date();
@@ -315,8 +318,24 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
       
       console.log("Converted wind speed (m/s):", windSpeedMps);
       
+      // Detailed extraction debugging
+      const extractedData = {
+        waveHeight: marineHour.waveHeight?.noaa,
+        swellHeight: marineHour.swellHeight?.noaa,
+        swellPeriod: marineHour.swellPeriod?.noaa,
+        waterTemperature: marineHour.waterTemperature?.noaa,
+        windSpeed: windSpeedMps,
+        swellDir: marineHour.swellDirection?.noaa,
+        gust: marineHour.windGust?.noaa ? knotsToMps(marineHour.windGust.noaa) : undefined,
+        vis: marineHour.visibility?.noaa,
+        current: marineHour.currentSpeed?.noaa,
+        windDir: marineHour.windDirection?.noaa,
+      };
+      
+      console.log("🌊 EXTRACTED MARINE DATA:", extractedData);
+      
       // Use CONSISTENT property names and units (all wind speeds in m/s)
-      return {
+      const result = {
         ...day,
         waveHeight: marineHour.waveHeight?.noaa,
         swellHeight: marineHour.swellHeight?.noaa,
@@ -329,6 +348,9 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
         current: marineHour.currentSpeed?.noaa,
         windDir: marineHour.windDirection?.noaa,
       };
+      
+      console.log("🎯 FINAL POPUP DAY OBJECT:", result);
+      return result;
     } else {
       console.log("No matching marine hour found");
     }
@@ -1053,7 +1075,8 @@ function getWeatherDay(day: any, timeInfo: any) {
   return {
     temperature: day.temperature,
     tempMax: day.tempMax,
-    tempMin: day.tempMin,
+    tempMin: day.tempMin, // Already calculated as Math.min(...allTemps) in forecast builder
+    uvi: day.uvi, // Pass UVI from unified weather data
     condition: day.condition,
     description: day.description,
     icon: day.icon,

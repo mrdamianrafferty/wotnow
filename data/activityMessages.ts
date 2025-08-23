@@ -1,10 +1,7 @@
+
+export type ActivityTemplates = Record<'perfect' | 'good' | 'fair' | 'poor', string>;
 export type ActivityMessageConfig = {
-  templates: {
-    perfect: string;
-    good: string;
-    fair: string;
-    poor: string;
-  };
+  templates: ActivityTemplates;
   omitReasons?: string[];
 };
 
@@ -12,63 +9,66 @@ export type CategoryDefaults = {
   [category: string]: ActivityMessageConfig;
 };
 
-// Category-level default templates that serve as fallbacks when an activity lacks specific messaging
+
+// Helper to create templates
+const makeTemplates = (perfect: string, good: string, fair: string, poor: string): ActivityTemplates => ({ perfect, good, fair, poor });
+
 export const categoryDefaults: CategoryDefaults = {
   'Active Sports': {
-    templates: {
-      perfect: "Perfect conditions for getting active—ideal weather for sports and movement. {reasons}",
-      good: "Good conditions for an active session—grab your gear and get moving. {reasons}",
-      fair: "Conditions are decent enough for some activity—time to get the blood pumping. {reasons}",
-      poor: "Weather's not cooperating for outdoor sports today—maybe try an indoor alternative. {reasons}"
-    }
+    templates: makeTemplates(
+      "Perfect conditions for getting active—ideal weather for sports and movement. {reasons}",
+      "Good conditions for an active session—grab your gear and get moving. {reasons}",
+      "Conditions are decent enough for some activity—time to get the blood pumping. {reasons}",
+      "Weather's not cooperating for outdoor sports today—maybe try an indoor alternative. {reasons}"
+    )
   },
   'Water Sports': {
-    templates: {
-      perfect: "Prime water conditions—perfect day to make a splash. {reasons}",
-      good: "Good conditions on the water—time to get wet and have some fun. {reasons}",
-      fair: "Water conditions are adequate—manageable for a session if you're keen. {reasons}",
-      poor: "Water conditions aren't ideal today—best to stay dry and wait for better conditions. {reasons}"
-    }
+    templates: makeTemplates(
+      "Prime water conditions—perfect day to make a splash. {reasons}",
+      "Good conditions on the water—time to get wet and have some fun. {reasons}",
+      "Water conditions are adequate—manageable for a session if you're keen. {reasons}",
+      "Water conditions aren't ideal today—best to stay dry and wait for better conditions. {reasons}"
+    )
   },
   'Winter Sports': {
-    templates: {
-      perfect: "Winter paradise—ideal conditions for snow and ice sports. {reasons}",
-      good: "Solid winter conditions—great weather for cold-weather activities. {reasons}",
-      fair: "Conditions are decent for winter sports—bundle up and enjoy. {reasons}",
-      poor: "Winter conditions aren't right today—maybe warm up indoors instead. {reasons}"
-    }
+    templates: makeTemplates(
+      "Winter paradise—ideal conditions for snow and ice sports. {reasons}",
+      "Solid winter conditions—great weather for cold-weather activities. {reasons}",
+      "Conditions are decent for winter sports—bundle up and enjoy. {reasons}",
+      "Winter conditions aren't right today—maybe warm up indoors instead. {reasons}"
+    )
   },
   'Team Sports': {
-    templates: {
-      perfect: "Perfect team sport weather—ideal conditions to play with mates. {reasons}",
-      good: "Good conditions for team sports—gather the squad and get playing. {reasons}",
-      fair: "Conditions are playable—not perfect but still worth a game. {reasons}",
-      poor: "Weather's not cooperating for team sports—maybe practice indoors or watch the highlights. {reasons}"
-    }
+    templates: makeTemplates(
+      "Perfect team sport weather—ideal conditions to play with mates. {reasons}",
+      "Good conditions for team sports—gather the squad and get playing. {reasons}",
+      "Conditions are playable—not perfect but still worth a game. {reasons}",
+      "Weather's not cooperating for team sports—maybe practice indoors or watch the highlights. {reasons}"
+    )
   },
   'Outdoor Activities': {
-    templates: {
-      perfect: "Beautiful day to be outside—perfect conditions for outdoor adventures. {reasons}",
-      good: "Great weather for outdoor activities—time to step outside and explore. {reasons}",
-      fair: "Conditions are decent for outdoor pursuits—worth venturing out. {reasons}",
-      poor: "Weather's not ideal for outdoor activities—maybe find something cozy indoors. {reasons}"
-    }
+    templates: makeTemplates(
+      "Beautiful day to be outside—perfect conditions for outdoor adventures. {reasons}",
+      "Great weather for outdoor activities—time to step outside and explore. {reasons}",
+      "Conditions are decent for outdoor pursuits—worth venturing out. {reasons}",
+      "Weather's not ideal for outdoor activities—maybe find something cozy indoors. {reasons}"
+    )
   },
   'Fitness & Wellness': {
-    templates: {
-      perfect: "Ideal conditions for wellness activities—perfect weather to focus on your health. {reasons}",
-      good: "Good conditions for fitness and wellness—time to prioritize your well-being. {reasons}",
-      fair: "Conditions are manageable for wellness activities—still worth getting some movement in. {reasons}",
-      poor: "Weather might impact your wellness routine—consider indoor alternatives. {reasons}"
-    }
+    templates: makeTemplates(
+      "Ideal conditions for wellness activities—perfect weather to focus on your health. {reasons}",
+      "Good conditions for fitness and wellness—time to prioritize your well-being. {reasons}",
+      "Conditions are manageable for wellness activities—still worth getting some movement in. {reasons}",
+      "Weather might impact your wellness routine—consider indoor alternatives. {reasons}"
+    )
   },
   'Indoor Sports': {
-    templates: {
-      perfect: "Perfect day for indoor sports—enjoy the climate-controlled comfort. {reasons}",
-      good: "Good conditions for indoor activities—great weather to stay active inside. {reasons}",
-      fair: "Decent weather for indoor sports—reliable conditions regardless of what's outside. {reasons}",
-      poor: "Indoor sports are your best bet today—weather's not cooperating outdoors. {reasons}"
-    }
+    templates: makeTemplates(
+      "Perfect day for indoor sports—enjoy the climate-controlled comfort. {reasons}",
+      "Good conditions for indoor activities—great weather to stay active inside. {reasons}",
+      "Decent weather for indoor sports—reliable conditions regardless of what's outside. {reasons}",
+      "Indoor sports are your best bet today—weather's not cooperating outdoors. {reasons}"
+    )
   }
 };
 
@@ -228,14 +228,15 @@ export const activityAliases: { [alias: string]: string } = {
   'rambling': 'hiking',
 };
 
+
 // Global fallback defaults for when neither activity nor category templates exist
 export const globalDefaults: ActivityMessageConfig = {
-  templates: {
-    perfect: "Perfect conditions—ideal weather for outdoor activities. {reasons}",
-    good: "Good conditions—great weather to get outside and enjoy. {reasons}",
-    fair: "Conditions are decent—still worth venturing out. {reasons}",
-    poor: "Weather's not cooperating today—maybe try indoor alternatives. {reasons}"
-  }
+  templates: makeTemplates(
+    "Perfect conditions—ideal weather for outdoor activities. {reasons}",
+    "Good conditions—great weather to get outside and enjoy. {reasons}",
+    "Conditions are decent—still worth venturing out. {reasons}",
+    "Weather's not cooperating today—maybe try indoor alternatives. {reasons}"
+  )
 };
 
 export const activityMessages: Record<string, ActivityMessageConfig> = {
@@ -267,25 +268,25 @@ road_cycling: {
 },
 sailing: {
   templates: {
-    perfect: "Steady breeze and calm seas—perfect day to set sail and enjoy the water. {reasons}",
-    good: "Good winds and manageable waves—great for a relaxed sail or honing your skills. {reasons}",
-    fair: "A bit gusty but still worth it—grab your gear and head out. {reasons}",
-    poor: "Winds or waves are not in your favour—best to keep the boat docked for now. {reasons}"
+    perfect: "Ideal day on the water — smooth, steady, and set for adventure. {reasons}",
+    good: "Great time to hoist the sails — conditions look inviting. {reasons}",
+    fair: "Not the easiest sail, but still worth a try if you’re keen. {reasons}",
+    poor: "Best to stay in harbour today — the sea will wait. {reasons}"
   },
   omitReasons: ['month']
 },
 
 hiking: {
   templates: {
-    perfect: "Blue skies, clear trails—get those boots on. {reasons}",
-    good: "A solid day for some trail time. {reasons}",
-    fair: "A bit marginal but still passable—time to explore. {reasons}",
-    poor: "Might be best to admire the peaks from indoors today. {reasons}"
+    perfect: "Trails are calling — ideal day to wander and clear your head. {reasons}",
+    good: "Great day to stretch your legs and enjoy the outdoors. {reasons}",
+    fair: "Not the easiest hike, but still worth lacing up if you’re keen. {reasons}",
+    poor: "Best to leave the boots by the door — the hills will wait. {reasons}"
   }
 },
 mountain_biking: {
   templates: {
-    perfect: "Hero dirt and clear skies—shred it!. {reasons}",
+    perfect: "Hero dirt and open skies—shred it!. {reasons}",
     good: "Good grip, good flow—trail calls. {reasons}",
     fair: "A bit less than optimal but still rideable—grab your bike. {reasons}",
     poor: "Trail conditions aren't suitable—better to wait for better weather. {reasons}"
@@ -358,10 +359,10 @@ hurling_camogie: {
 },
 gaelic_football: {
   templates: {
-    perfect: "The pitch is perfect and the ball's bouncing true—a cracker of a day to play. {reasons}",
-    good: "Decent enough conditions for a bit of football. {reasons}",
-    fair: "Bit rough out, but sure you’d manage a kickabout all the same. {reasons}",
-    poor: "Dodgy weather for football—might be better to have a pint. {reasons}"
+    perfect: "The pitch looks like it was ironed by angels, and the ball’s got the bounce of a caffeinated otter — pure poetry in motion. {reasons}",
+    good: "Decent day out, like kicking around in your granny’s back garden if she lived on the moon. {reasons}",
+    fair: "Bit rough — the grass feels like it owes you money, but sure that’s character-building. {reasons}",
+    poor: "The field’s a swamp, the ball’s a brick, and you’d be happier inside arguing with lads about who was the best corner back in ’98. {reasons}"
   }
 },
 
@@ -391,26 +392,26 @@ sea_swimming: {
 },
 stand_up_paddleboarding: {
   templates: {
-    perfect: "Glass-calm water—SUP heaven. {reasons}",
-    good: "Good conditions for paddling and balance. {reasons}",
-    fair: "A bit choppy but still manageable—grab your board. {reasons}",
-    poor: "Chop or wind make it tricky—maybe sit this session out. {reasons}"
+    perfect: "The water lies flat as glass, an indifferent mirror. For a moment, you may believe you have conquered chaos. {reasons}",
+    good: "The surface undulates gently, inviting the human to stand, fragile and foolish, upon its skin. {reasons}",
+    fair: "The water resists, restless and uneven. Each stroke is a negotiation with futility. {reasons}",
+    poor: "The elements conspire — the chop and wind mock your balance. Today, the board becomes a coffin for pride. {reasons}"
   }
 },
-  snorkeling: {
+snorkeling: {
   templates: {
-    perfect: "Waters are crystal clear—snorkel paradise awaits. {reasons}",
-    good: "Decent visibility and gentle seas—grab your mask. {reasons}",
-    fair: "A bit choppy but still some fish to see—don't forget your gear. {reasons}",
-    poor: "Surf's up or currents strong—best to skip snorkeling today. {reasons}"
+    perfect: "Ah, the waters, they shimmer like a lover’s gaze. To place one’s face beneath is to kiss another world. {reasons}",
+    good: "The sea is generous today, clear enough to spy the small citizens of Neptune’s garden. {reasons}",
+    fair: "The waves are restless, but still they reveal fish with the patience of a saint. {reasons}",
+    poor: "Non, mon ami… the sea is in no mood for guests. Better to wait, and dream of gills. {reasons}"
   }
 },
 scuba_diving: {
   templates: {
-    perfect: "Blue depths beckon—prime conditions to dive in. {reasons}",
-    good: "Steady currents and good viz—solid day to explore. {reasons}",
-    fair: "A bit of current but still plenty to see—but be careful. {reasons}",
-    poor: "Seas are unsettled or murky—dive another day. {reasons}"
+    perfect: "Into the blue cathedral we descend, pilgrims among the silent congregation of fish. {reasons}",
+    good: "Currents are steady, visibility kind — the ocean opens her arms, if only for an hour. {reasons}",
+    fair: "She stirs with some resistance, yet still she offers mystery to those who listen. {reasons}",
+    poor: "The waters are clouded, unsettled — to dive now is to chase shadows, not wonder. {reasons}"
   }
 },
 kitesurfing: {
@@ -431,125 +432,126 @@ windsurfing: {
 },
 beach: {
   templates: {
-    perfect: "Perfect beach weather—grab your towel and head to the sand. {reasons}",
-    good: "Pack your towel—good times await on the sand. {reasons}",
-    fair: "A few clouds but still nice—enjoy the beach. {reasons}",
-    poor: "High winds or stormy skies—best to plan the beach for another day. {reasons}"
+    perfect: "The beach is showing off today — sand, sea, and smiles all included. {reasons}",
+    good: "A fine day to stretch out a towel and let the hours drift by. {reasons}",
+    fair: "Not postcard-perfect, but still plenty of sandcastles and splashing to be had. {reasons}",
+    poor: "The sea’s in one of her moods — maybe save the beach bag for tomorrow. {reasons}"
   }
 },
 camping: {
   templates: {
-    perfect: "Starry skies and gentle breezes—pitch that tent. {reasons}",
-    good: "Decent weather for a night under canvas. {reasons}",
-    fair: "Not ideal but that's half the fun—bring extra layers. {reasons}",
-    poor: "Storms or chill in the air—maybe hold off on camping. {reasons}"
+    perfect: "✨Stars out, vibes immaculate — go touch grass and pretend you’re Bear Grylls. {reasons}",
+    good: "Pretty solid night for sleeping in a nylon bag like a woodland burrito. {reasons}",
+    fair: "Low-key uncomfortable but that’s kinda the point — character development unlocked. {reasons}",
+    poor: "Congrats, you’ve chosen ‘wet sock simulator 3000’. Maybe stay home. {reasons}"
   }
 },
 picnicking: {
   templates: {
-    perfect: "Blankets down and baskets out—it's a perfect picnic day. {reasons}",
-    good: "Fresh air and fine skies—ideal for alfresco snacks. {reasons}",
-    fair: "Conditions are decent for a picnic—just bring a backup plan. {reasons}",
-    poor: "Breezy or wet—picnic indoors and save the park for next time. {reasons}"
+    perfect: "Peak cottagecore moment — blanket down, strawberries out, live your aesthetic. {reasons}",
+    good: "Solid day for snacks on grass — ants RSVP’d but it’s fine. {reasons}",
+    fair: "Not the vibe but still edible outdoors — bring chaos napkins. {reasons}",
+    poor: "Sky said no. Enjoy your sad little indoor charcuterie instead. {reasons}"
   }
 },
 geocaching: {
   templates: {
-    perfect: "Clear skies and firm ground—time for a geocaching quest. {reasons}",
-    good: "Solid hiding and seeking weather—GPS at the ready. {reasons}",
-    fair: "A bit muddy or windy but still findable—grab your gear. {reasons}",
-    poor: "Rain, mud, or fog—track down caches another day. {reasons}"
+    perfect: "Lovely day for wandering about with your phone, pretending you’re Indiana Jones but finding Tupperware. {reasons}",
+    good: "Decent weather — you’ll still look mad rooting around in bushes, but at least it’s dry. {reasons}",
+    fair: "Bit scrappy out there — mud on your knees, GPS jumping about, but hey, that’s the adventure. {reasons}",
+    poor: "Rain, fog, the lot — you’ll just look like a burglar in the park. Best wait it out. {reasons}"
   }
-},
- outdoor_gym: {
+
+},outdoor_gym: {
   templates: {
-    perfect: "Fresh air and sunshine—prime time for outdoor gym gains. {reasons}",
-    good: "Solid conditions to get your workout on outside. {reasons}",
-    fair: "A bit breezy or drizzly but still doable—time to hit the outdoor gym. {reasons}",
-    poor: "Rain or cold's got the upper hand—save the muscle for another day. {reasons}"
+    perfect: "Sun’s out, joints oiled — time to show the youngsters how it’s done. {reasons}",
+    good: "Decent day for fresh-air fitness — you’ll feel it tomorrow, in a good way. {reasons}",
+    fair: "Bit of breeze, bit of drizzle — nothing worse than what the knees already say in the morning. {reasons}",
+    poor: "Cold and wet — let the dumbbells rust, you’ve earned a tea break. {reasons}"
   }
 },
 outdoor_yoga: {
   templates: {
-    perfect: "Sun-kissed mats and peaceful vibes—outdoor yoga bliss. {reasons}",
-    good: "Nice breeze and open skies—unroll the mat for some flow. {reasons}",
-    fair: "A bit windy or chilly but still manageable—find your zen outdoors. {reasons}",
-    poor: "Wind or weather might disrupt your zen—try indoor yoga today. {reasons}"
+    perfect: "The cosmos has aligned — mats kissed by sunlight, chakras practically humming. {reasons}",
+    good: "The breeze whispers encouragement, the sky applauds your downward dog. {reasons}",
+    fair: "Slightly breezy, slightly chilly — think of it as resistance training for your aura. {reasons}",
+    poor: "The elements refuse to vibe with your practice — retreat indoors to manifest serenity. {reasons}"
   }
 },
 outdoor_meditation: {
   templates: {
-    perfect: "Calm, quiet, and perfect air—ideal for outdoor meditation. {reasons}",
-    good: "Serene enough for mindful moments outdoors. {reasons}",
-    fair: "A bit breezy but still peaceful—find your calm outside. {reasons}",
-    poor: "Noise or weather out of balance—find some calm indoors instead. {reasons}"
+    perfect: "Stillness everywhere — the universe is practically begging you to close your eyes. {reasons}",
+    good: "Air is pure enough to inhale enlightenment with minimal effort. {reasons}",
+    fair: "A bit of wind, a hint of chaos — ideal conditions for levelling up your inner monk. {reasons}",
+    poor: "Nature is not cooperating — realign your chakras on the sofa instead. {reasons}"
   }
 },
 dog_walking: {
   templates: {
-    perfect: "Paws up! It's a great day to walk the dog. {reasons}",
-    good: "Leash up—solid weather for a stroll with your buddy. {reasons}",
-    fair: "The dog will enjoy it much more than you today—maybe a shorter walk today. {reasons}",
-    poor: "Greys or rain holding you back—maybe just a quick loop today. {reasons}"
+    perfect: "Fine, I’ll admit it — even I don’t mind a walk on a day like this. The dog’s delighted, of course. {reasons}",
+    good: "Leash up then… the mutt’s happy, my knees less so. {reasons}",
+    fair: "The dog thinks it’s grand, but I’d rather be sat with a cuppa. Keep it short. {reasons}",
+    poor: "Rain, cold, misery — the dog doesn’t care, but I do. Quick loop, then home. {reasons}"
   }
 },
 photography: {
   templates: {
-    perfect: "Light's magic, skies are stunning—get out and capture the moment. {reasons}",
-    good: "Grab your camera—decent light and some inspiration out there. {reasons}",
-    fair: "Conditions are manageable for photography—still opportunities to explore. {reasons}",
-    poor: "Challenging conditions for photography—might be worth waiting for better light. {reasons}"
+    perfect: "The light is showing off — go pretend you’re Ansel Adams for a day. {reasons}",
+    good: "Grab the camera — there’s always something worth pointing it at, even if it’s a bin with good shadows. {reasons}",
+    fair: "Not ideal, but real photographers thrive on suffering. Go make ‘moody’ your style. {reasons}",
+    poor: "The world looks dreadful — perfect time to charge batteries and sulk artistically. {reasons}"
   }
+
 },
   // Add any additional outdoor activities from emojiMap here
-  canoeing: {
+ canoeing: {
   templates: {
-    perfect: "Calm waters and blue skies—paddle on, it's perfect for canoeing. {reasons}",
-    good: "Steady water and fresh air—worth launching your canoe. {reasons}",
-    fair: "A bit choppy but still manageable—grab your paddle and go. {reasons}",
-    poor: "Winds or weather aren't on your side—safer to stay ashore for canoes today. {reasons}"
+    perfect: "Water like glass — glide along and feel like you invented peace. {reasons}",
+    good: "Solid paddling day — rhythm, splash, and a bit of arm ache for free. {reasons}",
+    fair: "Choppy enough to keep you humble, calm enough to stay afloat. {reasons}",
+    poor: "The water’s having a tantrum — best to let the canoe dream onshore today. {reasons}"
   }
 },
 jetskiing: {
   templates: {
-    perfect: "Ideal conditions—prime time to rev up the jet ski. {reasons}",
-    good: "Decent conditions for a fun jet skiing session. {reasons}",
-    fair: "A bit bumpy but still rideable if you absolutely insist. {reasons}",
-    poor: "Choppy waves or gusty winds—best park the jet ski and ride another day. {reasons}"
+    perfect: "Ocean’s a racetrack — unleash your inner action hero. {reasons}",
+    good: "Good day to make too much noise and annoy the fish. {reasons}",
+    fair: "Bit bumpy — hang on tight and call it ‘extreme sports’. {reasons}",
+    poor: "Chop’s nasty, wind’s worse — the jet ski stays parked while your ego cools off. {reasons}"
   }
 },
-  
-  fly_fishing_freshwater: {
+ fly_fishing_freshwater: {
   templates: {
-    perfect: "Hatches rising and clear water—prime time to cast your fly. {reasons}",
-    good: "Steady trout activity—good for refining that drift and presentation. {reasons}",
-    fair: "A bit tricky but still worth a cast—time to hit the water. {reasons}",
-    poor: "Tricky conditions for fly fishing—might be best to watch the water today. {reasons}"
+    perfect: "The trout are practically queueing up — even your dodgy cast might work today. {reasons}",
+    good: "Fish are stirring, enough to keep you hopeful and humble. {reasons}",
+    fair: "Not much rising, but you can always enjoy untangling knots in your leader. {reasons}",
+    poor: "Fish have clocked off — best excuse for staring at the river and calling it mindfulness. {reasons}"
   }
 },
 coarse_fishing: {
   templates: {
-    perfect: "Bite alarms ready—ideal weather to chase that PB. {reasons}",
-    good: "Solid conditions to settle in and enjoy your session. {reasons}",
-    fair: "A bit slow but still some bites to be had—time to cast a line. {reasons}",
-    poor: "Tough conditions for fishing today—fish won't be feeding actively. {reasons}"
+    perfect: "The float will dip, the alarms will sing — even your flask of tea will taste like victory. {reasons}",
+    good: "Decent day for sitting still and convincing yourself patience is a sport. {reasons}",
+    fair: "A few nibbles if you’re lucky — otherwise it’s you, the maggots, and your thoughts. {reasons}",
+    poor: "Fish aren’t biting, and neither are you — maybe just feed the ducks. {reasons}"
   }
 },
 sea_fishing_shore: {
   templates: {
-    perfect: "Fish the incoming tide, and bag a shore catch. {reasons}",
-    good: "Steady bites—great day to try your luck from the beach. {reasons}",
-    fair: "A bit hit and miss but still fishable—time to cast from the shore. {reasons}",
-    poor: "Shore fishing could be a challenge today. {reasons}"
+    perfect: "The sea’s in a generous mood — you might even bring something home that isn’t just seaweed. {reasons}",
+    good: "Good chance of a tug or two — at worst, you’ll perfect your windswept look. {reasons}",
+    fair: "A bit patchy — expect long chats with gulls between bites. {reasons}",
+    poor: "The tide’s laughing at you — might as well save the bait money for chips. {reasons}"
   }
 },
 sea_fishing_boat: {
   templates: {
-    perfect: "Clear skies and calm seas—prime boat fishing conditions. {reasons}",
-    good: "Steady weather and good marks—solid day on the water. {reasons}",
-    fair: "A bit of chop but still plenty to catch—time to head out but bring some motion sickness pills. {reasons}",
-    poor: "Rough seas or safety concerns—best to anchor the boat and wait it out. {reasons}"
+    perfect: "The sea’s settled, the rods are lively — you’ll swear you’re a professional. {reasons}",
+    good: "A solid day afloat — enough bites to justify the fuel bill. {reasons}",
+    fair: "Choppy, queasy, but still fishable — remember, leaning over the side is part of the charm. {reasons}",
+    poor: "Rough seas, empty buckets — better off telling tall tales ashore. {reasons}"
   }
+
 },
  rock_climbing: {
   templates: {
@@ -603,383 +605,377 @@ ice_skating: {
 },
 ice_fishing: {
   templates: {
-    perfect: "Solid ice and calm conditions—great ice fishing today. {reasons}",
-    good: "Good conditions to drop a line through the ice. {reasons}",
-    fair: "A bit sketchy but still fishable—time to bundle up and try. {reasons}",
-    poor: "Dangerous ice or weather—best to postpone your ice fishing trip. {reasons}"
+    perfect: "A banner day for holes and tall tales — drop a line and feel smug. {reasons}",
+    good: "Decent for sitting, staring, and claiming the thermos improves technique. {reasons}",
+    fair: "A slow grind — pack patience and a good story. {reasons}",
+    poor: "Today’s for fixing the sled, not the hole. {reasons}"
   },
   omitReasons: ['month']
 },
-  bbq: {
+
+bbq: {
   templates: {
-    perfect: "Great weather for firing up the grill—perfect BBQ conditions. {reasons}",
-    good: "Good conditions to fire up the grill and enjoy. {reasons}",
-    fair: "A bit 🤷 but still manageable—time to grill up some fun. {reasons}",
-    poor: "Rain or wind might spoil the sizzle—better to wait on the BBQ. {reasons}"
+    perfect: "Peak sizzle energy — aprons on, debates about sauces commence. {reasons}",
+    good: "Solid grilling vibes — smoke, chat, and a slightly overdone sausage. {reasons}",
+    fair: "Not ‘BBQ of the year’, but the tongs still work. {reasons}",
+    poor: "Let the grill rest — order chips and call it strategy. {reasons}"
   }
 },
+
 outdoor_reading: {
   templates: {
-    perfect: "Calm and bright—perfect for getting lost in a book outside. {reasons}",
-    good: "Nice day to enjoy your reading nook outdoors. {reasons}",
-    fair: "A bit breezy or cloudy but still cozy enough to read outside. {reasons}",
-    poor: "Cloudy or windy—might be best to read indoors today. {reasons}"
+    perfect: "The garden becomes a library, the breeze turns pages like a courteous ghost; you read until the tea forgets to cool. {reasons}",
+    good: "A fine afternoon for loitering between sentences; benches become armchairs if you believe hard enough. {reasons}",
+    fair: "Reality coughs and tugs your sleeve, yet the book insists — read on, slightly askance. {reasons}",
+    poor: "Today the sky edits your prose with damp and drama; retreat indoors and annotate the kettle. {reasons}"
   }
 },
+
 outdoor_playground: {
   templates: {
-    perfect: "Clear skies and safe grounds—perfect playground weather. {reasons}",
-    good: "Good day for playtime and fun outside. {reasons}",
-    fair: "Weather is 🤷 but the kids don't care—time for some outdoor fun. {reasons}",
-    poor: "Wet or slippery—better to keep the playground visits short today. {reasons}"
+    perfect: "Slides sing, swings soar — bring the chaos and snacks. {reasons}",
+    good: "Prime time for big laughs and small bruises. {reasons}",
+    fair: "Playable enough — pocket snacks and negotiate turns. {reasons}",
+    poor: "Quick burst, then cocoa — energy out, home you go. {reasons}"
   }
 },
+
 outdoor_chess: {
   templates: {
-    perfect: "Peaceful and pleasant—perfect for a game of chess in the park. {reasons}",
-    good: "Good weather to enjoy some outdoor strategy. {reasons}",
-    fair: "A bit breezy but still manageable—time to set up the board outside. {reasons}",
-    poor: "Wind or clouds might interrupt your moves—better indoors today. {reasons}"
+    perfect: "Silence enough for thinking, chaos enough for genius — let the pawns dream of promotion. {reasons}",
+    good: "A fine time to quarrel politely with fate, one square at a time. {reasons}",
+    fair: "The position is messy; so is life. Make a plan, then improve it. {reasons}",
+    poor: "Today the world plays white from move one — retreat to a café and claim you meant it. {reasons}"
   }
 },
+
 outdoor_painting: {
   templates: {
-    perfect: "Bright light and gentle breeze—ideal plein air painting conditions. {reasons}",
-    good: "Good day to set up your easel outside. {reasons}",
-    fair: "A bit breezy but still inspiring—time to paint outdoors. {reasons}",
-    poor: "Unfavorable weather for painting outdoors—keep the canvas inside. {reasons}"
+    perfect: "Light so kind even your stick figures feel profound. {reasons}",
+    good: "Colours practically begging to be immortalised. {reasons}",
+    fair: "Breezes and wobbles — collaborators in your masterpiece. {reasons}",
+    poor: "The muse has gone feral — commune with your canvas indoors. {reasons}"
   }
 },
+
 outdoor_music: {
   templates: {
-    perfect: "Clear skies and warm air—perfect for outdoor music sessions. {reasons}",
-    good: "Good conditions to share your tunes outside. {reasons}",
-    fair: "A bit 🤷 but still enjoyable—time to play some music outdoors. {reasons}",
-    poor: "Wind or rain might dampen the mood—better save outdoor music for another day. {reasons}"
+    perfect: "Man, the sky’s wide and clean — let the air carry the stuff you can’t say. {reasons}",
+    good: "Set up and blow. Don’t overthink it — play the damn instrument. {reasons}",
+    fair: "It’s rough out, but music doesn’t care — put it down raw and walk away. {reasons}",
+    poor: "Save the chorus — the world can hear you when it deserves it. {reasons}"
   }
 },
+
 tai_chi: {
   templates: {
-    perfect: "Calm and serene—perfect for tai chi practice outdoors. {reasons}",
-    good: "Good weather to move and breathe outside. {reasons}",
-    fair: "Weather a bit 🤷 but still manageable—time to find your flow outdoors. {reasons}",
-    poor: "Windy or unsettled conditions—better to find your zen indoors today. {reasons}"
+    perfect: "Energy flows like silk — balance and harmony at their most photogenic. {reasons}",
+    good: "Sway like bamboo and pretend you understand yin and yang. {reasons}",
+    fair: "A wobble is just advanced enlightenment. {reasons}",
+    poor: "Let your chi drift toward a warm cup of tea. {reasons}"
   }
 },
+
 american_football: {
   templates: {
-    perfect: "Gridiron glory! Crisp air, dry field—prime time for pigskin. {reasons}",
-    good: "Decent field conditions—plenty good for drills or a friendly scrimmage. {reasons}",
-    fair: "Bit sketchy, but hey—tape up, run some plays, make it count. {reasons}",
-    poor: "Slick turf and nasty weather—might be smarter to break down game film today. {reasons}"
+    perfect: "Pads on, heads up — first down energy all day. {reasons}",
+    good: "Crisp routes, loud huddles — get the chains moving. {reasons}",
+    fair: "Ugly yardage is still yardage — lean on the basics. {reasons}",
+    poor: "Save the heroics — chalk it up and plan the comeback. {reasons}"
   }
 },
+
 baseball: {
   templates: {
-    perfect: "Sun’s out, field’s dry—perfect day to knock it outta the park. {reasons}",
-    good: "Decent diamond and clear skies—grab your glove and let’s play ball. {reasons}",
-    fair: "Bit of drizzle or wind, but nothing we haven’t played through—game on. {reasons}",
-    poor: "Pitch is soaked or wind’s a mess—better bench it and save your arm. {reasons}"
+    perfect: "Sweet spots and scandalously optimistic slides. {reasons}",
+    good: "Clean throws, loud dugouts — play ball. {reasons}",
+    fair: "Small ball wins hearts — grind out the innings. {reasons}",
+    poor: "Bench the ego — work the signs and live to bat tomorrow. {reasons}"
   }
 },
 
 cricket: {
   templates: {
-    perfect: "Wicket's dry, sky is clear—textbook cricket weather. {reasons}",
-    good: "Decent bounce and no showers—grab the pads and get out there. {reasons}",
-    fair: "Could go either way—keep the covers handy and see how it plays. {reasons}",
-    poor: "Pitch is a bog or it's blowing sideways—probably a day for the highlights reel. {reasons}"
+    perfect: "A day for elegant leaves and scandalous cover drives. {reasons}",
+    good: "Plenty of runs in it — play the percentages. {reasons}",
+    fair: "Grit over glamour — nurdle, block, wait your moment. {reasons}",
+    poor: "Call it tactics: tea now, heroics later. {reasons}"
   }
 },
 
 ice_hockey: {
   templates: {
-    perfect: "Cracking cold—prime day for some outdoor puck. {reasons}",
-    good: "Decent freeze and not too gusty—grand for a proper match. {reasons}",
-    fair: "Bit slushy or breezy, but sure it’s still a runabout with the lads. {reasons}",
-    poor: "Puck’ll sink or wind’ll steal it—probably wise to head for the indoor rink. {reasons}"
+    perfect: "Ice snaps, blades sing — make memories and divots. {reasons}",
+    good: "Honest sheet — tape up and get stuck in. {reasons}",
+    fair: "Scrappy shifts — win the corners, smile anyway. {reasons}",
+    poor: "Call the change — today favours sticks and stories indoors. {reasons}"
   }
 },
+
 field_hockey: {
   templates: {
-    perfect: "Dry pitch and perfect temp—let’s stick it to ’em. {reasons}",
-    good: "Conditions are grand—grab the shinguards and go. {reasons}",
-    fair: "Bit blowy or damp, but still worth a match. {reasons}",
-    poor: "Soaked pitch or gusty chaos—maybe hit the tactics board instead. {reasons}"
+    perfect: "Ball zips, sticks talk — press high and enjoy it. {reasons}",
+    good: "Crisp feeds and a bit of needle. {reasons}",
+    fair: "Messy midfield day — hold shape and nick one. {reasons}",
+    poor: "Tactics over turnovers — run drills and live to sprint tomorrow. {reasons}"
   }
 },
 
-  padel: {
-    templates: {
-      perfect: "Sun's shining and the court’s dry—grab your mates and smash it. {reasons}",
-      good: "Decent enough for a rally—just mind the breeze. {reasons}",
-      fair: "Bit warm or blowy, but grand for a casual knockabout. {reasons}",
-      poor: "Courts are soaked or the sun’s scorchin’—maybe hit the indoor court instead. {reasons}"
-    }
-  },
-  pickleball: {
-    templates: {
-      perfect: "Clear skies and perfect temps—time to dink and smash. {reasons}",
-      good: "Decent bounce and not too breezy—grab your paddle and go. {reasons}",
-      fair: "Bit gusty or warm, but you’ll get a good rally in. {reasons}",
-      poor: "Slick court or roasting heat—might be better to sit this match out. {reasons}"
-    }
-  },
+padel: {
+  templates: {
+    perfect: "Walls are your friends — bring the lobs and the laughs. {reasons}",
+    good: "Rallies for days — smash with abandon, apologise later. {reasons}",
+    fair: "Scrappy points are still points — work the screens. {reasons}",
+    poor: "Let the court miss you — group-chat the rematch. {reasons}"
+  }
+},
 
-  netball: {
-    templates: {
-      perfect: "Bright skies and calm air—spot on for netball drills or a proper match. {reasons}",
-      good: "Conditions are decent—grab your bibs and have a go. {reasons}",
-      fair: "Bit gusty or grey, but grand for keeping sharp and passing around. {reasons}",
-      poor: "Too wild or wet to play safely—maybe stick to tactics and dry runs indoors. {reasons}"
-    }
-  },
+pickleball: {
+  templates: {
+    perfect: "Dinks on a string — kitchen zen unlocked. {reasons}",
+    good: "Solid rallies and polite trash talk. {reasons}",
+    fair: "Not pretty, still fun — reset, reset, reset. {reasons}",
+    poor: "Park the paddle — save your wrists for tomorrow. {reasons}"
+  }
+},
 
-  rock_hopping: {
-    templates: {
-      perfect: "Clear skies and dry rocks—ideal day for hopping about the shore. {reasons}",
-      good: "Good grip and nice weather—mind your step and explore. {reasons}",
-      fair: "Bit slippy or windy, but still worth a careful clamber. {reasons}",
-      poor: "Waves, rain, or slick rocks—probably not worth the tumble. {reasons}"
-    }
-  },
+netball: {
+  templates: {
+    perfect: "Zip in the passes, snap in the shots — textbook centre-court chaos. {reasons}",
+    good: "Crisp feeds, noisy bibs — lovely stuff. {reasons}",
+    fair: "Grit wins — work the channels and annoy the WA. {reasons}",
+    poor: "Run the plays, shelve the heroics — legs for another day. {reasons}"
+  }
+},
+
+rock_hopping: {
+  templates: {
+    perfect: "A day for nimble feet and tide-pool gossip. {reasons}",
+    good: "Plenty to clamber — mind the gaps, enjoy the finds. {reasons}",
+    fair: "Careful steps, curious eyes — adventure in small doses. {reasons}",
+    poor: "Save the ankles — storytime, not scramble time. {reasons}"
+  }
+},
+
 rugby: {
   templates: {
-    perfect: "Firm ground and crisp air—ideal for big hits and flowing rugby. {reasons}",
-    good: "Conditions are solid—plenty of grip for a good running game. {reasons}",
-    fair: "Bit greasy or blustery, but grand for a good old forwards battle. {reasons}",
-    poor: "Pitch is a swamp or wind’s howling—maybe better to review the playbook. {reasons}"
+    perfect: "Glorious rugby day — big carries, slick hands, backs pretending they planned it. {reasons}",
+    good: "Grand for a run — scrums bite, offloads stick, plenty of chat. {reasons}",
+    fair: "Ugly rugby is still rugby — keep it tight, kick the corners, enjoy the wrestle. {reasons}",
+    poor: "A day for brave fools — tape everything and rehearse the post-match excuses. {reasons}"
   }
 },
-  archery: {
-    templates: {
-      perfect: "Clear skies and steady hands—perfect for nocking arrows and hitting bullseyes. {reasons}",
-      good: "Decent weather to fine-tune your aim—time to draw and release. {reasons}",
-      fair: "A bit breezy or grey, but still manageable for some target practice. {reasons}",
-      poor: "Wind or rain could throw off your aim—maybe fletch some arrows instead. {reasons}"
-    }
-  },
-  riding_motorbike: {
-    templates: {
-      perfect: "Dry roads and open skies—ideal for a scenic ride. {reasons}",
-      good: "Conditions are decent—saddle up and enjoy the road. {reasons}",
-      fair: "A bit of wind or cloud, but still rideable—take it steady. {reasons}",
-      poor: "Wet, windy, or just plain risky—best save the trip for another day. {reasons}"
-    }
-  },
-  cycling: {
-    templates: {
-      perfect: "Sun on your back and smooth tarmac—crackin' day for a proper spin. {reasons}",
-      good: "Grand weather to clock a few miles and clear the head. {reasons}",
-      fair: "Bit of a breeze or damp patch, but still worth gettin’ the legs movin’. {reasons}",
-      poor: "Windy, wet, or dodgy roads—probably better to tune the bike or put the feet up. {reasons}"
-    }
-  },
+
+archery: {
+  templates: {
+    perfect: "Arrows fly true — bullseyes and quiet nods. {reasons}",
+    good: "Clean shots, tidy groups — breathe, release, repeat. {reasons}",
+    fair: "Wobbly ends build legends — adjust, then grin. {reasons}",
+    poor: "Today’s for fletching and tea — targets can wait. {reasons}"
+  }
+},
+
+riding_motorbike: {
+  templates: {
+    perfect: "A day that turns roads into stories. {reasons}",
+    good: "Measured miles — ride smooth, ride long. {reasons}",
+    fair: "Keep it light and local — let the horizon wait. {reasons}",
+    poor: "Wrench, polish, plot — the road will still be there. {reasons}"
+  }
+},
+
+cycling: {
+  templates: {
+    perfect: "Legs purr, miles melt — queen-stage energy. {reasons}",
+    good: "Steady spin, happy head — bank some quiet kilometres. {reasons}",
+    fair: "No glory, just graft — cadence and snacks will see you through. {reasons}",
+    poor: "Tune the bike, plan the loop — call it active patience. {reasons}"
+  }
+},
+
 football_soccer: {
   templates: {
-    perfect: "Pitch is mint and the weather’s a dream—time for a beautiful game. {reasons}",
-    good: "Conditions are solid—great day for a proper kickabout. {reasons}",
-    fair: "Bit iffy, but you'll still get a good match in—just mind your footing. {reasons}",
-    poor: "Pitch is a puddle or the wind’s gone mad—might be best to call it off. {reasons}"
-  }
-},  
-  frisbee: {
-    templates: {
-      perfect: "Clear skies and no wind—time for some serious hucking. {reasons}",
-      good: "Good conditions for a game or a throw-around in the park. {reasons}",
-      fair: "Bit gusty or cloudy, but still good for a casual toss about. {reasons}",
-      poor: "Wind's wild or rain’s coming in sideways—best leave the disc at home. {reasons}"
+    perfect: "A day for triangles and poetry — play the beautiful game beautifully. {reasons}",
+    good: "Plenty of zip — press high, pass fast, enjoy it. {reasons}",
+    fair: "Scrappy but honest — win your duels and nick a goal. {reasons}",
+    poor: "Boots off, brains on — tactics and tea instead. {reasons}"
     }
-  },
-  golf: {
-    templates: {
-      perfect: "Sun’s out, greens are rolling—time to hit the fairways. {reasons}",
-      good: "Solid conditions—good day to work on your game. {reasons}",
-      fair: "Bit breezy or damp, but still a decent round if you’re keen. {reasons}",
-      poor: "Wet greens or wild wind—maybe head to the range or clubhouse. {reasons}"
-    }
-  },
-  hockey: {
-    templates: {
-      perfect: "Pitch is prepped and skies are fair—stick down and game on. {reasons}",
-      good: "Conditions are decent—plenty fine for a solid match. {reasons}",
-      fair: "Bit dodgy underfoot or breezy, but grand for a knockabout. {reasons}",
-      poor: "Pitch is boggy or weather’s wild—best to regroup and wait it out. {reasons}"
-    }
-  },
-    tennis: {
-    templates: {
-      perfect: "Courts are dry and the breeze is just right—ace day for tennis. {reasons}",
-      good: "Decent bounce and clear skies—grab your racquet. {reasons}",
-      fair: "Bit breezy or warm but still good for a rally or two. {reasons}",
-      poor: "Slippery courts or wild winds—maybe time to watch Wimbledon highlights instead. {reasons}"
-    }
-  },
-    wild_swimming: {
-    templates: {
-      perfect: "Water’s like glass and the sun’s peepin’ out—prime for a dip. {reasons}",
-      good: "Bit fresh but still a fine day for a wild swim. {reasons}",
-      fair: "Chilly or breezy, but sure it’ll waken you up—bring a towel and a flask. {reasons}",
-      poor: "Waves are up or the sky’s throwin’ shade—better to wait it out. {reasons}"
-    }
-  },
-beach_volleyball: {
+},
+frisbee: {
   templates: {
-    perfect: "Sun’s out, sand’s prime—game on! Time to spike and dive. {reasons}",
-    good: "Solid beach vibes—grab your mates and hit the court. {reasons}",
-    fair: "Bit breezy or grey, but still good for a casual rally or two. {reasons}",
-    poor: "Sand’s soggy or wind’s wild—probably best to chill and save it for later. {reasons}"
+    perfect: "Discs fly true — time for ridiculous layouts. {reasons}",
+    good: "Solid day for a throw-around — spins, smiles, repeat. {reasons}",
+    fair: "Not slick, still fun — keep it casual, keep it moving. {reasons}",
+    poor: "Call it strategy: save the shoulder, plan the rematch. {reasons}"
   }
 },
-  horse_riding: {
-    templates: {
-      perfect: "Sun’s out, hooves down—perfect day for a ride through the fields. {reasons}",
-      good: "Solid ground and good weather—saddle up and enjoy the trot. {reasons}",
-      fair: "Bit mucky or gusty, but still rideable if you take it easy. {reasons}",
-      poor: "Slippery trails or wild wind—best to keep the horse dry and safe. {reasons}"
-    }
+golf: {
+  templates: {
+    perfect: "Greens kind, swing unbothered — the only thing under par should be your score. {reasons}",
+    good: "Course is honest — time to blame the clubs, not the weather. {reasons}",
+    fair: "Manage your expectations and your tempo — excuses included. {reasons}",
+    poor: "Practise the art of not playing — range, putting mat, tall tales. {reasons}"
+  }
+},
+hockey: {
+  templates: {
+    perfect: "Sticks talking, passes snapping — game on. {reasons}",
+    good: "Plenty in it — keep the press high and the chat higher. {reasons}",
+    fair: "Scrappy shifts — win the corners and the day. {reasons}",
+    poor: "Call the drill session — tactics now, trophies later. {reasons}"
+  }
+},
+tennis: {
+  templates: {
+    perfect: "Ace energy — lines crisp, footwork light. {reasons}",
+    good: "Rallies for days — your serve. {reasons}",
+    fair: "Not pretty, still tennis — grind it out. {reasons}",
+    poor: "Rest the knees — highlights now, comebacks later. {reasons}"
+  }
+},
+wild_swimming: {
+  templates: {
+    perfect: "A dip that feels like starting over — in, breathe, grin. {reasons}",
+    good: "Bracing and brilliant — swim, warm up, tell everyone. {reasons}",
+    fair: "Short, sharp, soul-reset — towel and flask highly recommended. {reasons}",
+    poor: "Today the water wins — plan the plunge, not the hypothermia. {reasons}"
+  }
+},
+beach_volleyball: {
+  templates: {
+    perfect: "Sand angels and perfect sets — spike with abandon. {reasons}",
+    good: "Good rally energy — dive, laugh, repeat. {reasons}",
+    fair: "Messy points are still points — play to the whistle. {reasons}",
+    poor: "Bench the bump — playlist and chill instead. {reasons}"
+  }
+},
+horse_riding: {
+  templates: {
+    perfect: "Miles of quiet — let the hooves write the story. {reasons}",
+    good: "Saddle up for steady miles and long breaths. {reasons}",
+    fair: "Keep it easy, keep it local — good company in the reins. {reasons}",
+    poor: "Stable day — brush, bond, and plan the next ride. {reasons}"
+  }
+},
+orienteering: {
+  templates: {
+    perfect: "Map magic — get lost exactly where you meant to. {reasons}",
+    good: "A fine day for dots, dashes, and smug bearings. {reasons}",
+    fair: "Expect detours — the right kind of wrong turns. {reasons}",
+    poor: "Practise at the table — the forest will wait. {reasons}"
+  }
+},
+snorkelling: {
+  templates: {
+    perfect: "Ah, the waters, they shimmer like a lover’s gaze. To place one’s face beneath is to kiss another world. {reasons}",
+    good: "The sea is generous today, clear enough to spy the small citizens of Neptune’s garden. {reasons}",
+    fair: "The waves are restless, but still they reveal fish with the patience of a saint. {reasons}",
+    poor: "Non, mon ami… the sea is in no mood for guests. Better to wait, and dream of gills. {reasons}"
+  }
+},
+sailing_inland: {
+  templates: {
+    perfect: "A friendly mirror of a lake — set a course for nowhere in particular. {reasons}",
+    good: "Sheltered water, simple joys — trim, drift, grin. {reasons}",
+    fair: "Not elegant, still afloat — practice makes stories. {reasons}",
+    poor: "Harbour day — tie knots, tell lies, make tea. {reasons}"
   },
-  orienteering: {
-    templates: {
-      perfect: "Clear skies and firm ground—ideal for getting lost (on purpose). {reasons}",
-      good: "Good day for map and compass adventures—get exploring. {reasons}",
-      fair: "Bit rough underfoot but still fun—just mind your bearings. {reasons}",
-      poor: "Rain, fog, or wild wind—navigation could be sketchy, maybe wait it out. {reasons}"
-    }
+  omitReasons: ['month']
+},
+windsurfing_inland: {
+  templates: {
+    perfect: "Everything clicks — harness in, grin out. {reasons}",
+    good: "Plenty to play with — sheet in and dance. {reasons}",
+    fair: "Wobbly fun — treat it like balance training. {reasons}",
+    poor: "Rig, tweak, daydream — tomorrow will rip. {reasons}"
   },
-  snorkelling: {
-    templates: {
-      perfect: "Water’s crystal clear and calm—snorkel heaven awaits. {reasons}",
-      good: "Good visibility and light current—plenty to see below the surface. {reasons}",
-      fair: "A bit choppy but still doable—keep it close to shore. {reasons}",
-      poor: "Rough seas or murky water—best to stay dry and try tomorrow. {reasons}"
-    }
+  omitReasons: ['month']
+},
+sup_sea: {
+  templates: {
+    perfect: "You stand upon the sea and nothing argues — for once. {reasons}",
+    good: "The board forgives and the horizon approves — take the hint. {reasons}",
+    fair: "Every stroke is a small negotiation with chaos. {reasons}",
+    poor: "Today the ocean insists — sit it out and keep your pride dry. {reasons}"
+  }
+},
+sea_kayaking: {
+  templates: {
+    perfect: "A quiet line along the coast — let the bow draw it. {reasons}",
+    good: "Coves and stories — mosey and mind the rhythm. {reasons}",
+    fair: "Short hops, curious eyes — adventure, politely. {reasons}",
+    poor: "Chart it, don’t chase it — plan the next crossing. {reasons}"
+  }
+},
+basketball_outdoor: {
+  templates: {
+    perfect: "Blacktop’s calling — run it till the lights come on. {reasons}",
+    good: "Good run energy — clear lane, fresh trash talk. {reasons}",
+    fair: "Rim rattlin’, still hoopin’ — play smart, keep it chill. {reasons}",
+    poor: "Call next for another day — ankles and pride intact. {reasons}"
+  }
+},
+outdoor_gardening: {
+  templates: {
+    perfect: "A day to potter and forget the clock. {reasons}",
+    good: "Enough promise in the soil to keep hands happy. {reasons}",
+    fair: "Little jobs, little joys — the garden will notice. {reasons}",
+    poor: "Let the beds rest — plan, prune, and put the kettle on. {reasons}"
+  }
+},
+beekeeping: {
+  templates: {
+    perfect: "The apiary hums like a compliment — visit with respect. {reasons}",
+    good: "Steady hands, calm hearts — check the frames and learn the mood. {reasons}",
+    fair: "Go slow, be brief — the bees have their opinions. {reasons}",
+    poor: "Admire from the gate — queens dislike drama. {reasons}"
+  }
+},
+curling: {
+  templates: {
+    perfect: "Ice is a pure belter — keen as ye like; gie it laldy and sweep tae glory. {reasons}",
+    good: "Sheet’s sound — steady throw and gie the broom a right good laldy. {reasons}",
+    fair: "Bit clatty, bit bumpy — haud the line and dinnae daft the weight. {reasons}",
+    poor: "Ice is mingin’ and the stanes are skitin’ — sack it and hit the café. {reasons}"
   },
-  sailing_inland: {
-    templates: {
-      perfect: "Perfect lake conditions—ideal breeze and calm waters for inland sailing. {reasons}",
-      good: "Good winds on sheltered waters—great for a relaxed sail or skills practice. {reasons}",
-      fair: "Conditions are decent enough for lake sailing—time to hoist the sails. {reasons}",
-      poor: "Wind conditions aren't suitable for sailing—best to keep the boat on dry land. {reasons}"
-    },
-    omitReasons: ['month']
-  },
-  windsurfing_inland: {
-    templates: {
-      perfect: "Prime lake conditions for windsurfing—steady winds and flat water. {reasons}",
-      good: "Good wind strength and calm waters—ideal for inland windsurfing. {reasons}",
-      fair: "Conditions are adequate for lake windsurfing—grab your gear. {reasons}",
-      poor: "Wind conditions aren't right for windsurfing—maybe work on rigging instead. {reasons}"
-    },
-    omitReasons: ['month']
-  },
-  sup_sea: {
-    templates: {
-      perfect: "Calm seas and perfect conditions for stand-up paddleboarding. {reasons}",
-      good: "Good conditions for SUP—manageable waves and steady weather. {reasons}",
-      fair: "Conditions are decent for coastal paddleboarding—stay close to shore. {reasons}",
-      poor: "Sea conditions aren't safe for SUP—stick to sheltered waters or skip today. {reasons}"
-    }
-  },
-  sea_kayaking: {
-    templates: {
-      perfect: "Tides are calling—prime paddling conditions ahead. {reasons}",
-      good: "Grab your paddle, the sea's welcoming. {reasons}",
-      fair: "Conditions are adequate for a coastal paddle. {reasons}",
-      poor: "Sea conditions aren't ideal for kayaking—stay closer to shore or skip today. {reasons}"
-    }
-  },
-  basketball_outdoor: {
-    templates: {
-      perfect: "Court's dry and the weather's perfect—time to shoot some hoops. {reasons}",
-      good: "Solid conditions for a game—grab the ball and let's play. {reasons}",
-      fair: "Bit breezy or cloudy but still good for a pickup game. {reasons}",
-      poor: "Wet court or harsh conditions—better to hit the indoor courts today. {reasons}"
-    }
-  },
-  outdoor_gardening: {
-    templates: {
-      perfect: "Soil's ready and the sun's shining—perfect day to tend the garden. {reasons}",
-      good: "Good conditions for planting, weeding, or harvesting. {reasons}",
-      fair: "Bit muddy or overcast but still manageable—time to get your hands dirty. {reasons}",
-      poor: "Too wet or harsh for gardening—maybe plan what to plant next instead. {reasons}"
-    }
-  },
-  beekeeping: {
-    templates: {
-      perfect: "Calm, warm weather—ideal day to visit the hives and check on your bees. {reasons}",
-      good: "Good conditions for hive inspection—bees should be active and manageable. {reasons}",
-      fair: "Weather's okay but bees might be a bit cranky—suit up and be careful. {reasons}",
-      poor: "Too windy, cold, or wet—bees won't be happy, better to leave them be today. {reasons}"
-    }
-  },
-  curling: {
-    templates: {
-      perfect: "Ice is keen and conditions are spot-on—perfect for sweeping up a win. {reasons}",
-      good: "Solid ice conditions—grab your broom and slide into action. {reasons}",
-      fair: "Ice is a bit rough but still playable—mind your delivery. {reasons}",
-      poor: "Ice conditions aren't ideal—maybe watch the pros instead. {reasons}"
-    },
-    omitReasons: ['month']
-  },
-};
+  omitReasons: ['month']
+  }
+}
+
 
 
 
 export function getActivityMessage(
   activityId: string,
-  category: 'perfect' | 'good' | 'fair' | 'poor',
+  category: keyof ActivityTemplates,
   reasons: { key: string; value: any; label: string }[] = []
 ): string {
   const arr = Array.isArray(reasons) ? reasons : [];
-  
-  // Step 1: Try to get activity-specific config
-  let config = activityMessages[activityId];
-  
-  // Step 2: If no activity-specific config, check for alias and try again
-  if (!config) {
-    const normalizedId = activityAliases[activityId];
-    if (normalizedId) {
-      config = activityMessages[normalizedId];
-    }
-  }
-  
-  // Step 3: If still no config, fall back to category defaults
-  if (!config) {
-    const categoryId = activityCategories[activityId] || activityCategories[activityAliases[activityId]];
-    if (categoryId) {
-      config = categoryDefaults[categoryId];
-    }
-  }
-  
-  // Step 4: Final fallback to global defaults
-  if (!config) {
-    config = globalDefaults;
-  }
-  
+
+  // Unified config lookup
+  let config = activityMessages[activityId]
+    || activityMessages[activityAliases[activityId]]
+    || categoryDefaults[activityCategories[activityId] || activityCategories[activityAliases[activityId]]]
+    || globalDefaults;
+
   // Special handling for surfing when rating is poor (preserve existing logic)
   if ((activityId === 'surfing' || activityAliases[activityId] === 'surfing') && category === 'poor') {
     const waveReason = arr.find(r => r.key === 'wave');
     if (waveReason) {
       const waveHeight = waveReason.value || 0;
-      
-      // Prepend specific wave condition information
       if (waveHeight < 0.5) {
-        return `Keep that board in the van. Waves are too small today. ${getReasonText(arr, config.omitReasons)}`; 
-      } 
-      else if (waveHeight > 2.5) {
+        return `Keep that board in the van. Waves are too small today. ${getReasonText(arr, config.omitReasons)}`;
+      } else if (waveHeight > 2.5) {
         return `Warning: Dangerous surf conditions! Waves too large for safe surfing. ${getReasonText(arr, config.omitReasons)}`;
       }
     }
   }
-  
+
   // Standard processing for all activities
   const filteredReasons = arr.filter(
     r => !(config.omitReasons || []).includes(r.key)
   );
-  
   const reasonText = getReasonText(filteredReasons, config.omitReasons);
-
   const template = config.templates[category] ?? config.templates.fair;
   return template.replace('{reasons}', reasonText);
 }

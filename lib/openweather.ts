@@ -207,7 +207,8 @@ export function transformDailyForecast(oneCallData) {
     rain: day.rain ? { "3h": day.rain } : undefined,
     snow: day.snow ? { "3h": day.snow } : undefined,
     dt_txt: new Date(day.dt * 1000).toISOString().replace('T', ' ').slice(0, 19),
-    sys: { pod: "d" }
+    sys: { pod: "d" },
+    uvi: day.uvi // <-- Add UVI to daily forecast
   }));
 }
 

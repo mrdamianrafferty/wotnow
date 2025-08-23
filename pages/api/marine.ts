@@ -55,20 +55,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       'waterTemperature',
       'visibility'
     ].join(',');
-    
+
     // Build the URL with all parameters
     const url = `${STORMGLASS_API}?lat=${lat}&lng=${lon}&params=${params}&start=${start}&end=${end}`;
-    
+
     // Make the request to Stormglass
-    const sgRes = await fetch(url, {
-      headers: {
-        'Authorization': apiKey
+    let sgRes;
+    try {
+      sgRes = await fetch(url, {
+        headers: {
+          'Authorization': apiKey
+        }
+      });
+    } catch (networkError) {
+      console.error('❌ Network error contacting Stormglass:', networkError);
+      // Fallback: return cached data if available
+      if (cached) {
+        console.warn('⚠️ Returning stale cached marine data due to network error');
+        return res.status(200).json(cached.data);
       }
-    });
-    
+      return res.status(503).json({ error: 'Network error contacting Stormglass', details: networkError.message || networkError });
+    }
+
     if (!sgRes.ok) {
       const errorText = await sgRes.text();
       console.error('❌ Stormglass API Response:', errorText);
+      // Fallback: return cached data if available
+      if (cached) {
+        console.warn('⚠️ Returning stale cached marine data due to Stormglass error response');
+        return res.status(200).json(cached.data);
+      }
       return res.status(sgRes.status).json({ error: errorText });
     }
 
@@ -76,6 +92,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (data.errors || data.message) {
       console.error('❌ Stormglass API returned an error:', data.errors || data.message);
+      // Fallback: return cached data if available
+      if (cached) {
+        console.warn('⚠️ Returning stale cached marine data due to Stormglass error payload');
+        return res.status(200).json(cached.data);
+      }
       return res.status(500).json({ error: data.errors || data.message });
     }
 
@@ -86,6 +107,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json(data);
   } catch (error) {
     console.error('❌ Stormglass API Error:', error.stack || error);
+    // Fallback: return cached data if available
+    if (cached) {
+      console.warn('⚠️ Returning stale cached marine data due to general error');
+      return res.status(200).json(cached.data);
+    }
     return res.status(500).json({
       error: 'Fetch error contacting Stormglass',
       details: error.message || error,
