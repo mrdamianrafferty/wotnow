@@ -1,1 +1,3 @@
-{}
+{
+  "/api/iss-next-night-pass/route": "app/api/iss-next-night-pass/route.js"
+}

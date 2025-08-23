@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       nextSunrise = sunTomorrow.sunrise;
     }
     // Find next ISS pass during night
-    const nextNightPass = passes.find(p => isNight(p.risetime, sunset, nextSunrise));
+    const nextNightPass = passes.find((p: { risetime: string }) => isNight(new Date(p.risetime), sunset, nextSunrise));
     if (!nextNightPass) {
       return Response.json({ ok: false, error: "No nighttime ISS pass found in next passes." }, { status: 404 });
     }
@@ -102,3 +102,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ ok: false, error: err?.message ?? String(err) }, { status: 500 });
   }
 }
+
+type IssPass = { risetime: string; duration: number; mag: number; maxEl: number; /* ... */ };
