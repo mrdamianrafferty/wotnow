@@ -77,12 +77,6 @@ type ApiRouteConfig = {
   handler satisfies RouteHandlerConfig<"/api/iss-visible">
 }
 
-// Validate ../../app/api/route.ts
-{
-  const handler = {} as typeof import("../../app/api/route.js")
-  handler satisfies RouteHandlerConfig<"/api">
-}
-
 // Validate ../../pages/_app.tsx
 {
   const handler = {} as typeof import("../../pages/_app.js")
