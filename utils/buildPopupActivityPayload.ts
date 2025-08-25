@@ -249,10 +249,6 @@ export function buildPopupActivityPayload({
   console.log('marineData:', marineData);
   console.log('Parsed day object:', day);
 
-  // Add debug for pollen and air quality data
-  console.log('Pollen data:', day.pollen);
-  console.log('Air quality data:', day.airQuality);
-
   // Optionally, add render helpers if you use them
   // const renderMarineData = () => ...;
   // const renderFooter = () => ...;
@@ -274,8 +270,6 @@ export function buildPopupActivityPayload({
     beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
     pollen: day.pollen, // Include pollen data from day
     airQuality: day.airQuality, // Include air quality data from day
-    isEnvironmentalDataStale: day.isEnvironmentalDataStale || false, // Include stale data flag
-    environmentalDataLastUpdated: day.environmentalDataLastUpdated, // Include timestamp when data was last updated
     // renderMarineData,
     // renderFooter,
   };

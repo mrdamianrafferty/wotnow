@@ -860,6 +860,7 @@ export function normalizeWeatherFeatures(
 
   return result;
 }
+}
 
 /**
  * Fetch astronomy data from Stormglass

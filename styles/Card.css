@@ -1,8 +1,7 @@
 /* Main Grid */
 .main-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  /* Responsive grid */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
   gap: 16px;
   align-items: stretch;
   grid-auto-rows: 1fr;
@@ -16,21 +15,17 @@
   background-repeat: no-repeat;
   border-radius: 22px;
   color: #fff;
-  overflow: hidden;
-  /* Key for overlay/card radius */
+  overflow: hidden;       /* Key for overlay/card radius */
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-
 .card:hover,
 .activity-card-enhanced:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
-
 .main-grid .activity-card-enhanced {
-  border-radius: 22px !important;
-  /* Ensures grid cards use same rounding */
+  border-radius: 22px !important; /* Ensures grid cards use same rounding */
   overflow: hidden !important;
   position: relative !important;
 }
@@ -38,18 +33,13 @@
 /* Overlay Styling */
 .activity-card-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
   border-radius: inherit;
-  overflow: hidden;
-  /* Defensive: ensures nothing hangs outside, even if overlay has inner content */
-  z-index: 1;
-  /* Below content */
-  pointer-events: none;
-  /* Or control as desired */
+  overflow: hidden; /* Defensive: ensures nothing hangs outside, even if overlay has inner content */
+  z-index: 1; /* Below content */
+  pointer-events: none; /* Or control as desired */
 }
 
 /* Card content above overlay */
@@ -60,14 +50,13 @@
   position: relative;
   padding: 1.5rem;
   z-index: 1;
-  height: 100%;
-  /* <-- add this line */
+  height: 100%; /* <-- add this line */
 }
 
 .date-label {
   font-weight: bold;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   margin-bottom: 8px;
 }
 
@@ -78,15 +67,13 @@
   justify-content: space-between;
   margin-bottom: 8px;
 }
-
 .card__header-title {
   font-size: 1.5rem;
   font-weight: bold;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   margin-bottom: 8px;
 }
-
 .card__weather-icon {
   width: 72px;
   height: 72px;
@@ -94,25 +81,21 @@
   object-fit: contain;
   display: block;
 }
-
 .card__hero-activity {
   margin-bottom: 18px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   border-radius: 8px;
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .card__hero-title {
   font-size: 1.2rem;
   font-weight: bold;
-  margin-bottom: 8px;
-  /* Adds spacing below the title */
+  margin-bottom: 8px; /* Adds spacing below the title */
 }
-
 .card__score-badge {
   font-size: 0.9rem;
   padding: 4px 8px;
@@ -136,7 +119,6 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
   transition: transform 0.3s ease-in-out;
 }
-
 .card__hero-activity:hover {
   transform: scale(1.02);
   background: rgba(255, 255, 255, 0.2);
@@ -156,10 +138,8 @@
   align-items: center;
   justify-content: center;
   font-size: 1.4rem;
-  margin-bottom: 8px;
-  /* Add spacing below the icon */
-  margin-right: 0;
-  /* Remove right margin if present */
+  margin-bottom: 8px; /* Add spacing below the icon */
+  margin-right: 0;    /* Remove right margin if present */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -190,34 +170,28 @@
   flex-direction: column;
   justify-content: space-between;
 }
-
 .card__emoji {
   font-size: 1.5rem;
 }
-
 .card__title {
   font-size: 1.1rem;
   color: white;
   font-weight: 600;
 }
-
 .card__description {
   font-size: 0.9rem;
   line-height: 1.4;
   margin-top: 8px;
 }
-
 .card__marine-data {
   font-size: 0.85rem;
   margin-top: 12px;
   color: #d8f6ff;
 }
-
 .card__marine-data span {
   display: inline-block;
   margin-right: 8px;
 }
-
 .card__score {
   font-size: 0.8rem;
   text-align: right;
@@ -232,24 +206,21 @@
 
 /* Perfect Activity */
 .perfect-activity {
-  background: rgba(60, 60, 60, 0.1);
+  background: rgba(60,60,60,0.1);
   color: white;
   padding: 1.5rem;
   margin: 1rem 0;
   text-align: center;
 }
-
 .perfect-activity-item {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
 }
-
 .perfect-emoji {
   font-size: 3rem;
 }
-
 .perfect-name {
   font-size: 1.4rem;
   color: white;
@@ -260,19 +231,16 @@
 .also-good-section {
   margin-bottom: 14px;
 }
-
 .also-good-title {
   font-size: 0.95rem;
   margin-bottom: 8px;
   color: #fff;
 }
-
 .activity-list-good {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-
 .activity-item-good {
   display: flex;
   align-items: center;
@@ -280,7 +248,6 @@
   padding: 0.3rem 0;
   color: #fcfffe;
 }
-
 .also-good-score {
   font-size: 0.7rem;
   opacity: 0.8;
@@ -288,30 +255,19 @@
   padding: 1px 4px;
   border-radius: 3px;
   text-align: right;
-  margin-left: auto;
-  /* Push the score to the right */
-  display: inline-block;
-  /* Ensure proper alignment */
+  margin-left: auto; /* Push the score to the right */
+  display: inline-block; /* Ensure proper alignment */
 }
-
 .also-good-list {
-  list-style: none;
-  /* Remove bullet points */
-  padding: 0;
-  /* Remove padding */
-  margin: 0;
-  /* Remove margin */
+  list-style: none; /* Remove bullet points */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
 }
-
 .also-good-item {
-  display: flex;
-  /* Enables flexbox layout */
-  align-items: center;
-  /* Aligns items vertically */
-  justify-content: space-between;
-  /* Ensures proper spacing */
-  gap: 0.5rem;
-  /* Adds spacing between elements */
+  display: flex; /* Enables flexbox layout */
+  align-items: center; /* Aligns items vertically */
+  justify-content: space-between; /* Ensures proper spacing */
+  gap: 0.5rem; /* Adds spacing between elements */
   padding: 0.3rem 0;
 }
 
@@ -322,7 +278,6 @@
   margin: 1rem 0;
   border: 1px solid #e2e8f0;
 }
-
 .indoor-day-title {
   font-size: 1.1rem;
   font-weight: 600;
@@ -330,38 +285,26 @@
   margin-bottom: 1rem;
   text-align: center;
 }
-
 .indoor-day-list {
-  list-style: none;
-  /* Remove bullet points */
-  padding: 0;
-  /* Remove padding */
-  margin: 0;
-  /* Remove margin */
+  list-style: none; /* Remove bullet points */
+  padding: 0; /* Remove padding */
+  margin: 0; /* Remove margin */
 }
-
 .indoor-day-item {
-  display: flex;
-  /* Enables flexbox layout */
-  align-items: center;
-  /* Aligns items vertically */
-  justify-content: space-between;
-  /* Ensures proper spacing */
-  gap: 0.5rem;
-  /* Adds spacing between elements */
+  display: flex; /* Enables flexbox layout */
+  align-items: center; /* Aligns items vertically */
+  justify-content: space-between; /* Ensures proper spacing */
+  gap: 0.5rem; /* Adds spacing between elements */
   padding: 0.3rem 0;
 }
-
 .indoor-day-item:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
 }
-
 .indoor-day-item .activity-emoji {
   font-size: 1.2rem;
   min-width: 1.5rem;
 }
-
 .indoor-day-item .activity-name {
   font-weight: 500;
   color: #fff;
@@ -372,21 +315,18 @@
 .indoor-section {
   margin-top: 12px;
 }
-
 .indoor-title {
   font-size: 0.95rem;
   color: #fff;
   margin-bottom: 6px;
   display: block;
 }
-
 .indoor-list {
   list-style: none;
   padding-left: 0;
   margin: 0;
   color: #fff;
 }
-
 .indoor-item {
   display: flex;
   justify-content: space-between;
@@ -400,7 +340,6 @@
   display: flex;
   justify-content: center;
 }
-
 .add-interests-link {
   display: inline-block;
   padding: 8px 16px;
@@ -410,15 +349,13 @@
   font-weight: 600;
   text-decoration: none;
   font-size: 0.9rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
 }
-
 .add-interests-link:hover {
   background: rgba(59, 130, 246, 1);
   transform: translateY(-1px);
 }
-
 .add-interests-link:not(.hover) {
   transform: translateY(0);
 }
@@ -466,50 +403,19 @@
 
 .card__hero-message {
   font-size: 0.8rem;
-  color: #ffffff;
-  /* Adjust color for better readability */
-  margin-bottom: 0px;
-  /* Adds spacing below the message */
-  text-align: left;
-  /* Ensures the text aligns properly */
-  font-weight: normal;
-  /* Explicitly set font weight to normal */
+  color: #ffffff; /* Adjust color for better readability */
+  margin-bottom: 0px; /* Adds spacing below the message */
+  text-align: left; /* Ensures the text aligns properly */
+  font-weight: normal; /* Explicitly set font weight to normal */
 }
 
 /* Ensure cards don’t collapse and bg stays behind */
-.hero-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  min-height: 120px;
-}
-
-.hero-card .hero-bg {
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  z-index: 0;
-  pointer-events: none;
-  opacity: .18;
-}
-
-.hero-card>*:not(.hero-bg) {
-  position: relative;
-  z-index: 1;
-}
+.hero-card { position: relative; overflow: hidden; border-radius: 12px; min-height: 120px; }
+.hero-card .hero-bg { position: absolute; inset: 0; border-radius: 12px; z-index: 0; pointer-events: none; opacity: .18; }
+.hero-card > *:not(.hero-bg) { position: relative; z-index: 1; }
 
 /* Emoji pills */
-.emoji-circle {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, .06);
-  font-size: 18px;
-  line-height: 1;
-}
+.emoji-circle { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(0,0,0,.06); font-size: 18px; line-height: 1; }
 
 /* Weather Icon Top Right */
 .weather-icon-topright {
@@ -523,7 +429,7 @@
   font-size: 2.2rem;
   color: #fff;
   opacity: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .weather-icon-topright img {
@@ -551,8 +457,7 @@
   position: relative;
   padding: 1.5rem;
   z-index: 1;
-  height: 100%;
-  /* <-- add this line */
+  height: 100%; /* <-- add this line */
 }
 
 .activity-card-actions {
@@ -570,14 +475,13 @@
   text-decoration: none;
   font-weight: 300;
   font-size: 1rem;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+  box-shadow: 0 2px 8px rgba(59,130,246,0.08);
   transition: background 0.2s;
   display: inline-block;
 }
-
-.activity-card-btn+.activity-card-btn {
+.activity-card-btn + .activity-card-btn {
   background: #10b981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
 }
 
 /* Data Bars Styling for Astronomy Card */
@@ -898,44 +802,15 @@
     width: 36px !important;
     height: 36px !important;
   }
+  @media (max-width: 600px) {
+  .activity-card-enhanced {
+    min-height: 0 !important;
+    height: auto !important;
+    /* other mobile styles */
+  }
 }
-
 .indie-text {
-  font-family: "Indie Flower", cursive;
+  font-family: "Indie Flower", 
 }
 
-/* AstronomyCard: compact two-column info grid */
-.astro-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 1rem;
-  /* ~16px */
-  row-gap: 0.5rem;
-  /* ~8px */
-}
-
-.astro-grid .item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  font-size: 0.8rem;
-  /* Reduced font size */
-}
-
-.astro-grid .item img {
-  width: 25px;
-  height: 25px;
-}
-
-/* AstronomyCard: heading/body typography fixes */
-.astronomy-message .astro-heading {
-  font-size: 1rem;        /* ~16px, same as Tailwind text-base */
-  font-weight: 600;       /* same as font-semibold */
-  line-height: 1.25;
-}
-.astronomy-message .astro-body {
-  font-size: 0.8125rem;   /* ~13px, clearly smaller than headers */
-  font-weight: 400;       /* normal weight */
-  line-height: 1.35;
 }

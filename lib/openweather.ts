@@ -159,54 +159,22 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
     exclude: options?.exclude || '',
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
-  
-  // Create AbortController for timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-  
   try {
-    console.log(`Fetching from OpenWeather 3.0 API: ${url.replace(apiKey, 'API_KEY_HIDDEN')}`);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    
+    const response = await fetch(url);
     const data = await response.json();
-    console.log(`OpenWeather 3.0 API response status: ${response.status}`);
-    
     if (!response.ok) {
-      console.error(`OpenWeather 3.0 API error: ${response.status}`, data);
       throw { status: response.status, data };
     }
-    
     return { source: 'onecall3', data };
   } catch (err) {
-    clearTimeout(timeoutId);
-    console.log(`Falling back to OpenWeather 2.5 API due to error: ${err.message || JSON.stringify(err)}`);
-    
-    // Fallback to 2.5 API with new timeout
-    const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), 8000);
-    
-    try {
-      const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
-      console.log(`Fetching from OpenWeather 2.5 API: ${url2.replace(apiKey, 'API_KEY_HIDDEN')}`);
-      
-      const response2 = await fetch(url2, { signal: controller2.signal });
-      clearTimeout(timeoutId2);
-      
-      const data2 = await response2.json();
-      console.log(`OpenWeather 2.5 API response status: ${response2.status}`);
-      
-      if (!response2.ok) {
-        console.error(`OpenWeather 2.5 API error: ${response2.status}`, data2);
-        throw { status: response2.status, data: data2 };
-      }
-      
-      return { source: 'forecast2.5', data: data2 };
-    } catch (fallbackErr) {
-      clearTimeout(timeoutId2);
-      console.error('Both OpenWeather API calls failed:', fallbackErr);
-      throw fallbackErr;
+    // Fallback to 2.5 API
+    const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
+    const response2 = await fetch(url2);
+    const data2 = await response2.json();
+    if (!response2.ok) {
+      throw { status: response2.status, data: data2 };
     }
+    return { source: 'forecast2.5', data: data2 };
   }
 }
 
@@ -239,11 +207,7 @@ export function transformDailyForecast(oneCallData) {
     rain: day.rain ? { "3h": day.rain } : undefined,
     snow: day.snow ? { "3h": day.snow } : undefined,
     dt_txt: new Date(day.dt * 1000).toISOString().replace('T', ' ').slice(0, 19),
-    sys: { pod: "d" },
-    // Add UVI data from OpenWeather
-    uvi: day.uvi || 0,
-    // Debug log to verify UVI data
-    ...(day.uvi && { _debug_uvi_included: true })
+    sys: { pod: "d" }
   }));
 }
 
@@ -271,37 +235,22 @@ export function transformCity(oneCallData, lat, lon) {
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
 export async function getFullWeather({ lat, lon, apiKey, options = {} }) {
-  try {
-    if (!lat || !lon) {
-      throw new Error('Missing latitude or longitude parameters');
-    }
-    
-    if (!apiKey) {
-      throw new Error('Missing OpenWeather API key');
-    }
-    
-    console.log(`OpenWeather API call - lat: ${lat}, lon: ${lon}`);
-    const result = await getOneCallData({ lat, lon, apiKey, options });
-    
-    if (result.source === 'onecall3') {
-      return {
-        cod: "200",
-        message: 0,
-        cnt: result.data.daily?.length || 8,
-        list: transformDailyForecast(result.data),
-        city: transformCity(result.data, lat, lon),
-        alerts: result.data.alerts || [],
-        current: result.data.current || {},
-        hourly: result.data.hourly || [],
-        minutely: result.data.minutely || [],
-        source: 'onecall3',
-      };
-    } else {
-      // Return 2.5 API data as-is
-      return { ...result.data, source: 'forecast2.5' };
-    }
-  } catch (error) {
-    console.error('Error in getFullWeather:', error);
-    throw error;
+  const result = await getOneCallData({ lat, lon, apiKey, options });
+  if (result.source === 'onecall3') {
+    return {
+      cod: "200",
+      message: 0,
+      cnt: result.data.daily?.length || 8,
+      list: transformDailyForecast(result.data),
+      city: transformCity(result.data, lat, lon),
+      alerts: result.data.alerts || [],
+      current: result.data.current || {},
+      hourly: result.data.hourly || [],
+      minutely: result.data.minutely || [],
+      source: 'onecall3',
+    };
+  } else {
+    // Return 2.5 API data as-is
+    return { ...result.data, source: 'forecast2.5' };
   }
 }

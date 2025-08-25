@@ -2,12 +2,12 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
   "/weather": "pages/weather.js",
-  "/activities": "pages/activities.js",
-  "/api/weather-with-pollen": "pages/api/weather-with-pollen.js",
-  "/api/marine": "pages/api/marine.js",
-  "/api/astronomy-highlights": "pages/api/astronomy-highlights.js",
   "/api/tides": "pages/api/tides.js",
-  "/api/osm-orientation": "pages/api/osm-orientation.js"
+  "/api/owm": "pages/api/owm.js",
+  "/api/weather-with-pollen": "pages/api/weather-with-pollen.js",
+  "/api/astronomy-highlights": "pages/api/astronomy-highlights.js",
+  "/": "pages/index.js",
+  "/api/osm-orientation": "pages/api/osm-orientation.js",
+  "/api/marine": "pages/api/marine.js"
 }

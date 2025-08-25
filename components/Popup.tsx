@@ -67,8 +67,6 @@ interface PopupProps {
   dayTimestamp?: number;
   pollen?: PollenSummary;
   airQuality?: AirQualitySummary;
-  isEnvironmentalDataStale?: boolean;
-  environmentalDataLastUpdated?: Date; // timestamp when the environmental data was last updated
 }
 
 // ---- WhatsApp/Web Share helpers (inline; no new files) ----
@@ -234,8 +232,6 @@ const Popup: React.FC<PopupProps> = ({
   dayTimestamp,
   pollen,
   airQuality,
-  isEnvironmentalDataStale,
-  environmentalDataLastUpdated,
 }) => {
   const [tideData, setTideData] = useState<{
     nextHighTide?: { time: string; height: number };
@@ -291,11 +287,16 @@ const Popup: React.FC<PopupProps> = ({
   
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
   
-  // These variables are kept for reference but no longer used to restrict display
-  // since we now show environmental data for all activity types where available
+  // Determine if this activity should show pollen warnings
+  // Exclude marine, winter, and indoor activities as specified
   const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice_skating', 'sledding'];
   const isWinterActivity = winterActivities.includes(activityId);
   const isIndoorActivity = !isOutdoor(activityId);
+  const shouldShowPollenWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
+  
+  // Determine if this activity should show air quality warnings
+  // Use same exclusion logic as pollen
+  const shouldShowAirQualityWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
 
   // --- Orientation (OSM-backed) ---
   const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
@@ -444,33 +445,6 @@ const handleDownload = async () => {
 
   // Build classes/styles for the content export area
   const exportClass = `popup__export-area${isExporting ? ' popup__exporting' : ''}`;
-
-  // Check if we have pollen or air quality data for a date beyond the Open-Meteo max date
-  // The current date is 2025-08-25, and Open-Meteo max date is 2025-08-24
-  const currentDate = new Date();
-  const OPEN_METEO_MAX_DATE = new Date('2025-08-24');
-  const isEnvironmentalDataStaleComputed = currentDate > OPEN_METEO_MAX_DATE;
-  
-  // Use the passed prop if available, otherwise use the computed value
-  const useStaleDataFlag = isEnvironmentalDataStale !== undefined ? isEnvironmentalDataStale : isEnvironmentalDataStaleComputed;
-  
-  // Convert the timestamp string to a Date object if needed
-  const lastUpdatedDate = environmentalDataLastUpdated instanceof Date 
-    ? environmentalDataLastUpdated 
-    : (typeof environmentalDataLastUpdated === 'string' ? new Date(environmentalDataLastUpdated) : undefined);
-
-  // Debug the environmental data
-  useEffect(() => {
-    if (pollen || airQuality) {
-      console.log('Popup received environmental data:');
-      console.log('- Pollen:', pollen);
-      console.log('- Air Quality:', airQuality);
-      console.log('- Is stale data:', useStaleDataFlag);
-      console.log('- Last updated:', lastUpdatedDate);
-    } else {
-      console.log('Popup did NOT receive any environmental data');
-    }
-  }, [pollen, airQuality, useStaleDataFlag, lastUpdatedDate]);
 
   return (
     <div className="popup" onClick={onClose}>
@@ -633,18 +607,6 @@ const handleDownload = async () => {
                         )}
                       </li>
                     )}
-                    {/* Show environmental indicators for marine activities as well */}
-                    {(pollen || airQuality) && (
-                      <li>
-                        <EnvironmentalIndicators 
-                          pollen={pollen}
-                          airQuality={airQuality}
-                          mode="compact"
-                          isStaleData={useStaleDataFlag}
-                          lastUpdated={lastUpdatedDate}
-                        />
-                      </li>
-                    )}
                   </>
                 )}
                 {!isMarine && weatherData && (
@@ -720,18 +682,15 @@ const handleDownload = async () => {
                         <strong>{weatherData.humidity}%</strong>
                       </li>
                     )}
-                    {/* Show environmental indicators for all activities where data is available */}
-                    {(pollen || airQuality) && (
+                    {(shouldShowPollenWarning && pollen) || (shouldShowAirQualityWarning && airQuality) ? (
                       <li>
                         <EnvironmentalIndicators 
-                          pollen={pollen}
-                          airQuality={airQuality}
+                          pollen={shouldShowPollenWarning ? pollen : undefined}
+                          airQuality={shouldShowAirQualityWarning ? airQuality : undefined}
                           mode="compact"
-                          isStaleData={useStaleDataFlag}
-                          lastUpdated={lastUpdatedDate}
                         />
                       </li>
-                    )}
+                    ) : null}
                   </>
                 )}
               </ul>

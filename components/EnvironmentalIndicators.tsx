@@ -11,8 +11,6 @@ interface EnvironmentalIndicatorsProps {
   className?: string;
   showPollenFor?: string; // activity type for exclusion logic
   showAirQualityFor?: string; // activity type for exclusion logic
-  isStaleData?: boolean; // indicates if environmental data is stale/historical
-  lastUpdated?: Date; // timestamp when the environmental data was last updated
 }
 
 /**
@@ -25,9 +23,7 @@ export default function EnvironmentalIndicators({
   mode = 'compact', 
   className = '',
   showPollenFor,
-  showAirQualityFor,
-  isStaleData = false, // default to false if not provided
-  lastUpdated
+  showAirQualityFor
 }: EnvironmentalIndicatorsProps) {
   const pollenAssessment = pollen ? assessPollenConditions(pollen) : null;
   const airQualityAssessment = airQuality ? assessAirQualityConditions(airQuality) : null;
@@ -61,54 +57,6 @@ export default function EnvironmentalIndicators({
           airQuality={airQuality} 
           mode={mode}
         />
-      )}
-      {isStaleData && (
-        <div className="stale-data-indicator" style={{ 
-          fontSize: '11px', 
-          color: '#FF6B00', 
-          fontWeight: 'bold',
-          backgroundColor: 'rgba(255, 251, 230, 0.9)',
-          padding: '2px 4px',
-          borderRadius: '3px',
-          border: '1px solid #FF6B00',
-          marginLeft: '4px',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative'
-        }}>
-          <span style={{ marginRight: '4px' }}>👴🏼</span>
-          {lastUpdated ? (
-            <span>
-              Updated {new Date(lastUpdated).toLocaleDateString()}
-              <span 
-                className="tooltip-trigger"
-                style={{ 
-                  marginLeft: '4px', 
-                  cursor: 'help',
-                  borderBottom: '1px dotted #FF6B00' 
-                }}
-                title={`Environmental data is updated every 12-24 hours. This data was last updated on ${new Date(lastUpdated).toLocaleString()}.`}
-              >
-                ⓘ
-              </span>
-            </span>
-          ) : (
-            <span>
-              Historical Data
-              <span 
-                className="tooltip-trigger"
-                style={{ 
-                  marginLeft: '4px', 
-                  cursor: 'help',
-                  borderBottom: '1px dotted #FF6B00' 
-                }}
-                title="AQI data updates every 12-24 hours, while pollen data updates every few hours. This data may not reflect current conditions."
-              >
-                ⓘ
-              </span>
-            </span>
-          )}
-        </div>
       )}
     </div>
   );

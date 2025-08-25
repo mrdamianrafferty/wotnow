@@ -241,7 +241,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   setForecastByDay(forecast);
 }, [weatherData, marineHours]);
 
-  return { forecastByDay, loading, error, timeInfo, marineHours, weatherData };
+  return { forecastByDay, loading, error, timeInfo, marineHours };
 };
 
 const hasMarineInterest = (interests: string[]) =>
@@ -282,14 +282,6 @@ function getWeatherIconUrl(iconCode: string) {
 }
 
 function getPopupDay(activityId: string, day: any, timeInfo: any) {
-  // Debug environmental data
-  console.log('getPopupDay - Input day object contains environmental data:', {
-    hasPollen: !!day.pollen,
-    hasAirQuality: !!day.airQuality,
-    isStale: day.isEnvironmentalDataStale,
-    lastUpdated: day.environmentalDataLastUpdated
-  });
-  
   if (MARINE_ACTIVITY_IDS.includes(activityId) && Array.isArray(day.marine)) {
     // Convert Unix timestamp to Date
     const dayDate = new Date(day.date * 1000);
@@ -336,11 +328,6 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
         vis: marineHour.visibility?.noaa,
         current: marineHour.currentSpeed?.noaa,
         windDir: marineHour.windDirection?.noaa,
-        // Make sure we keep environmental data
-        pollen: day.pollen,
-        airQuality: day.airQuality,
-        isEnvironmentalDataStale: day.isEnvironmentalDataStale,
-        environmentalDataLastUpdated: day.environmentalDataLastUpdated,
       };
     } else {
       console.log("No matching marine hour found");
@@ -527,17 +514,6 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
   useEffect(() => {
     console.log('Forecast by day:', forecastByDay);
   }, [forecastByDay]);
-
-  // Debug the environmental data flow from API to components
-  useEffect(() => {
-    if (weatherData) {
-      console.log('Environmental data in weatherData:');
-      console.log('- pollenByDate:', weatherData.pollenByDate);
-      console.log('- airQualityByDate:', weatherData.airQualityByDate);
-      console.log('- isEnvironmentalDataStale:', weatherData.isEnvironmentalDataStale);
-      console.log('- environmentalDataLastUpdated:', weatherData.environmentalDataLastUpdated);
-    }
-  }, [weatherData]);
 
   console.log('marineHours before building forecast:', marineHours);
 
@@ -826,7 +802,7 @@ const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().p
 
             const isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
 const marinePopupDay = getPopupDay(heroActivity.activityId, day, timeInfo); // Stormglass
-const weatherPopupDay = getWeatherDay(day, timeInfo, weatherData); // <-- Use a function that extracts OpenWeather fields
+const weatherPopupDay = getWeatherDay(day, timeInfo); // <-- Use a function that extracts OpenWeather fields
 
 const popupPayload = buildPopupActivityPayload({
   activityId: heroActivity.activityId,
@@ -899,13 +875,6 @@ const popupPayload = buildPopupActivityPayload({
   score: suggestion.score,
   day: getPopupDay(suggestion.activityId, day, timeInfo),
   reasons: buildReasons(day, suggestion.activityId),
-});
-// Debug popup payload environmental data
-console.log('Popup payload environmental data:', {
-  hasPollen: !!popupPayload.pollen,
-  hasAirQuality: !!popupPayload.airQuality,
-  isStale: popupPayload.isEnvironmentalDataStale,
-  lastUpdated: popupPayload.environmentalDataLastUpdated
 });
                             setPopupActivity(popupPayload);
                           }
@@ -1056,14 +1025,6 @@ const popupPayload = buildPopupActivityPayload({
 
 {/* Popup for activity details */}
 {popupActivity && (
-  console.log('About to render Popup with environmental data:', {
-    hasPollen: !!popupActivity.pollen,
-    hasAirQuality: !!popupActivity.airQuality,
-    pollenData: popupActivity.pollen,
-    airQualityData: popupActivity.airQuality,
-    isStale: popupActivity.isEnvironmentalDataStale,
-    lastUpdated: popupActivity.environmentalDataLastUpdated
-  }),
   <Popup
     activityId={popupActivity.activityId}
     title={
@@ -1080,8 +1041,6 @@ const popupPayload = buildPopupActivityPayload({
     homeLocation={homeLocation}
     pollen={popupActivity.pollen}
     airQuality={popupActivity.airQuality}
-    isEnvironmentalDataStale={popupActivity.isEnvironmentalDataStale}
-    environmentalDataLastUpdated={popupActivity.environmentalDataLastUpdated ? new Date(popupActivity.environmentalDataLastUpdated) : undefined}
     onClose={() => setPopupActivity(null)}
   />
 )}
@@ -1090,81 +1049,7 @@ const popupPayload = buildPopupActivityPayload({
   ); // End of return
 } // End of Home component
 
-function getWeatherDay(day: any, timeInfo: any, weatherData: any) {
-  // Try different formats for getting the date string
-  const getDateKey = (d: any) => {
-    // Try direct date string
-    if (typeof d.dt_txt === 'string') {
-      return d.dt_txt.split(' ')[0];
-    }
-    
-    // Try timestamp (seconds)
-    if (typeof d.date === 'number') {
-      return new Date(d.date * 1000).toISOString().split('T')[0];
-    }
-    
-    if (typeof d.dt === 'number') {
-      return new Date(d.dt * 1000).toISOString().split('T')[0];
-    }
-    
-    // Try timestamp (milliseconds)
-    if (typeof d.timestamp === 'number') {
-      return new Date(d.timestamp).toISOString().split('T')[0];
-    }
-    
-    // Fallback to today's date
-    return new Date().toISOString().split('T')[0];
-  };
-  
-  const dateKey = getDateKey(day);
-  console.log('Looking up environmental data with date key:', dateKey);
-  
-  // Get pollen and air quality data for this date if available
-  let pollen = null;
-  let airQuality = null;
-  
-  if (dateKey && weatherData) {
-    // Extract pollen data for this date
-    if (weatherData.pollenByDate && weatherData.pollenByDate[dateKey]) {
-      pollen = weatherData.pollenByDate[dateKey];
-      console.log('Found pollen data for date:', dateKey, pollen);
-    } else {
-      console.log('No pollen data for date:', dateKey);
-      console.log('Available pollen dates:', weatherData.pollenByDate ? Object.keys(weatherData.pollenByDate) : 'none');
-      
-      // If this is for the current day and we're beyond Open-Meteo's max date (2025-08-24),
-      // use the max date's data as a fallback
-      const today = new Date().toISOString().split('T')[0];
-      const isToday = dateKey === today;
-      const OPEN_METEO_MAX_DATE = '2025-08-24';
-      
-      if (isToday && today > OPEN_METEO_MAX_DATE && weatherData.pollenByDate && weatherData.pollenByDate[OPEN_METEO_MAX_DATE]) {
-        pollen = weatherData.pollenByDate[OPEN_METEO_MAX_DATE];
-        console.log('Using fallback pollen data from:', OPEN_METEO_MAX_DATE);
-      }
-    }
-    
-    // Extract air quality data for this date
-    if (weatherData.airQualityByDate && weatherData.airQualityByDate[dateKey]) {
-      airQuality = weatherData.airQualityByDate[dateKey];
-      console.log('Found air quality data for date:', dateKey, airQuality);
-    } else {
-      console.log('No air quality data for date:', dateKey);
-      console.log('Available air quality dates:', weatherData.airQualityByDate ? Object.keys(weatherData.airQualityByDate) : 'none');
-      
-      // If this is for the current day and we're beyond Open-Meteo's max date (2025-08-24),
-      // use the max date's data as a fallback
-      const today = new Date().toISOString().split('T')[0];
-      const isToday = dateKey === today;
-      const OPEN_METEO_MAX_DATE = '2025-08-24';
-      
-      if (isToday && today > OPEN_METEO_MAX_DATE && weatherData.airQualityByDate && weatherData.airQualityByDate[OPEN_METEO_MAX_DATE]) {
-        airQuality = weatherData.airQualityByDate[OPEN_METEO_MAX_DATE];
-        console.log('Using fallback air quality data from:', OPEN_METEO_MAX_DATE);
-      }
-    }
-  }
-  
+function getWeatherDay(day: any, timeInfo: any) {
   return {
     temperature: day.temperature,
     tempMax: day.tempMax,
@@ -1178,11 +1063,6 @@ function getWeatherDay(day: any, timeInfo: any, weatherData: any) {
     humidity: day.humidity,
     visibility: day.visibility,
     clouds: day.clouds,
-    date: day.date || day.dt, // Ensure date is passed
-    pollen: pollen, // Add pollen data
-    airQuality: airQuality, // Add air quality data
-    isEnvironmentalDataStale: weatherData?.isEnvironmentalDataStale || false, // Add stale data flag
-    environmentalDataLastUpdated: weatherData?.environmentalDataLastUpdated, // Add timestamp when data was last updated
     // Add more OpenWeather fields as needed
   };
 }

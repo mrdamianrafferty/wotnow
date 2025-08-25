@@ -20,6 +20,7 @@ export type Culture =
   | 'eastern_european'
   | 'japanese'
   | 'ainu';
+ 
 
 export interface LoreItem {
   title: string;
@@ -227,57 +228,4 @@ waning_crescent: [
 
 export function getMoonLore(phase: MoonPhase): LoreItem[] {
   return moonLore[phase] || [];
-}
-
-/**
- * Get a random lore item for a phase, taking into account previously used items
- * @param phase The moon phase to get lore for
- * @param options Optional configuration
- * @returns A lore item and its unique key
- */
-export function getMoonLoreDistinct(
-  phase: MoonPhase, 
-  options: { used?: Set<string>; culture?: Culture } = {}
-): { item: LoreItem | null; key: string } {
-  // Normalize phase to handle variations in naming
-  const normalizedPhase = phase.toLowerCase().replace(/\s+/g, '_') as MoonPhase;
-  
-  // Get all available lore for this phase
-  const loreItems = moonLore[normalizedPhase] || [];
-  if (!loreItems.length) {
-    console.warn(`No lore items found for phase: ${phase} (normalized: ${normalizedPhase})`);
-    return { item: null, key: `${normalizedPhase}|none` };
-  }
-  
-  // Filter by culture if specified
-  const filteredItems = options.culture 
-    ? loreItems.filter(item => item.culture === options.culture)
-    : loreItems;
-  
-  if (!filteredItems.length) {
-    return { item: null, key: `${normalizedPhase}|${options.culture || 'any'}|none` };
-  }
-  
-  // Generate keys for each item if not already present
-  const itemsWithKeys = filteredItems.map(item => {
-    const key = item.key || `${normalizedPhase}|${item.culture}|${item.title}`;
-    return { ...item, key };
-  });
-  
-  // Filter out previously used items if requested
-  const availableItems = options.used instanceof Set
-    ? itemsWithKeys.filter(item => !options.used.has(item.key || ''))
-    : itemsWithKeys;
-  
-  // If all items have been used, just pick randomly from all items
-  const sourceItems = availableItems.length ? availableItems : itemsWithKeys;
-  
-  // Pick random item
-  const randomIndex = Math.floor(Math.random() * sourceItems.length);
-  const selectedItem = sourceItems[randomIndex];
-  
-  return {
-    item: selectedItem,
-    key: selectedItem.key || `${normalizedPhase}|${selectedItem.culture}|${selectedItem.title}`
-  };
 }

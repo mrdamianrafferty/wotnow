@@ -1,0 +1,317 @@
+version: 1
+name: repository_file_audit
+description: >
+  Audit all tracked project files, classify them as "definitely_used", "possibly_unused_or_duplicate",
+  or "safe_to_delete", and generate a single evidence-backed report. Designed for JS/TS (Next/Vite),
+  but extensible. Prioritises safety: nothing is deleted automatically.
+
+# ---------------------------
+# Configuration
+# ---------------------------
+config:
+  # Root and ignore rules
+  repo_root: "."
+  ignore_globs:
+    - "node_modules/**"
+    - ".next/**"
+    - "out/**"
+    - "dist/**"
+    - "build/**"
+    - ".vercel/**"
+    - ".turbo/**"
+    - ".cache/**"
+    - "coverage/**"
+    - ".git/**"
+    - "**/*.map"
+    - "**/*.snap"
+    - "**/*.log"
+    - "**/*.tmp"
+    - "**/.DS_Store"
+
+  # File types we care about
+  include_extensions:
+    - ".ts"
+    - ".tsx"
+    - ".js"
+    - ".jsx"
+    - ".json"
+    - ".css"
+    - ".scss"
+    - ".md"
+    - ".yml"
+    - ".yaml"
+    - ".svg"
+    - ".png"
+    - ".jpg"
+    - ".jpeg"
+    - ".gif"
+
+  # Heuristics for Copilot/test artefacts & dev scratch files
+  suspect_name_patterns:
+    - "**/*copilot*.*"
+    - "**/*_copilot*.*"
+    - "**/*draft*.*"
+    - "**/*try*.*"
+    - "**/*scratch*.*"
+    - "**/*playground*.*"
+    - "**/*temp*.*"
+    - "**/*test*.*"
+    - "**/*.spec.*"
+    - "**/*.test.*"
+    - "**/__tests__/**"
+    - "**/__mocks__/**"
+
+  # Entry points to seed the import graph (add more if you have multiple apps/packages)
+  entrypoints:
+    - "pages/_app.tsx"
+    - "pages/index.tsx"
+    - "src/main.tsx"
+    - "src/index.tsx"
+    - "app/layout.tsx"
+    - "app/page.tsx"
+
+  # Known runtime loaders that can conceal usage (dynamic resolution)
+  dynamic_usage_hints:
+    # Directories that are scanned at runtime (e.g., route/file-based conventions)
+    file_conventions:
+      - "app/**"
+      - "pages/**"
+      - "public/**"
+      - "middleware.ts"
+      - "next.config.js"
+      - "next.config.mjs"
+      - "vite.config.ts"
+      - "tsconfig.json"
+    # Regexes to detect dynamic imports
+    dynamic_import_regexes:
+      - "import\\([^)]*\\)"
+      - "require\\([^)]*\\)"
+      - "new URL\\([^)]*\\)"
+      - "fs\\.(readFile|readdir|existsSync)"
+    # If a file matches a convention, treat as potentially used even if not in graph
+    treat_convention_matches_as_used: true
+
+  # Duplicate detection (content hashing)
+  duplication:
+    algorithm: "sha256"
+    normalise_whitespace_for_text: true
+    treat_same_hash_as_duplicate: true
+
+  # Safety thresholds for classification
+  thresholds:
+    min_inbound_refs_for_definitely_used: 1     # ≥1 real reference
+    max_age_days_for_safe_to_delete_candidates: 120
+    min_lines_for_safe_to_delete_assets: 0
+    require_build_presence_for_used: true       # exclude if not reachable in a build artefact list (when available)
+
+  # Optional build check (if you run a build before auditing, point to the manifest lists)
+  build_artifacts:
+    enabled: true
+    # Globs to scan for emitted assets/manifests (Next/Vite examples)
+    paths:
+      - ".next/**/*.html"
+      - ".next/**/*.js"
+      - ".next/**/*.css"
+      - "dist/**/*.js"
+      - "dist/**/*.css"
+      - "build/**/*.js"
+      - "build/**/*.css"
+
+# ---------------------------
+# Workflow
+# ---------------------------
+workflow:
+  steps:
+
+    - id: enumerate_files
+      description: List all Git-tracked files, apply include/ignore filters.
+      actions:
+        - "git ls-files > .audit/all_files.txt"
+        - "Filter by include_extensions and exclude ignore_globs."
+
+    - id: collect_file_metadata
+      description: Gather size, LOC, mtimes, git blame/first/last commit info.
+      actions:
+        - "stat each file; wc -l for text; git log --follow --format for dates/authors."
+
+    - id: build_dependency_graph
+      description: Parse imports/exports and references to construct a directed graph.
+      notes: >
+        Resolve TS/JS imports (including tsconfig paths), handle .default/.named exports,
+        and chase re-exports (`export * from ...`). Record inbound/outbound edges.
+      actions:
+        - "Parse file AST (TS/JS) for import/export statements."
+        - "Resolve relative and alias paths using tsconfig.json and next.config/vite.config."
+        - "Record edges (from -> to)."
+
+    - id: detect_dynamic_usage
+      description: Scan for dynamic import patterns and framework conventions.
+      actions:
+        - "Regex scan using dynamic_import_regexes."
+        - "Mark files under file_conventions as 'framework_convention_candidate'."
+
+    - id: map_build_reachability
+      run_if: config.build_artifacts.enabled == true
+      description: Check which sources end up referenced in built artefacts.
+      actions:
+        - "Run build separately (outside this workflow)."
+        - "Scan build_artifacts.paths; map back to source via sourcemaps (if present) or name heuristics."
+        - "Mark files 'present_in_build' when traced."
+
+    - id: detect_duplicates
+      description: Hash file contents and cluster identical files.
+      actions:
+        - "Compute sha256; for text, normalise whitespace if enabled."
+        - "Group files by hash; mark duplicates with 'duplicate_of' pointer."
+
+    - id: compute_scores
+      description: Score each file for usage likelihood and deletion safety.
+      scoring:
+        usage_score_formula: >
+          usage_score =
+            2 * (inbound_refs >= thresholds.min_inbound_refs_for_definitely_used ? 1 : 0) +
+            1 * (present_in_build ? 1 : 0) +
+            1 * (is_entrypoint ? 1 : 0) +
+            1 * (is_framework_convention ? 1 : 0) -
+            1 * (matches_suspect_pattern ? 1 : 0)
+        safety_score_formula: >
+          safety_score =
+            1 * (inbound_refs == 0 ? 1 : 0) +
+            1 * (present_in_build ? 0 : 1) +
+            1 * (days_since_last_commit >= thresholds.max_age_days_for_safe_to_delete_candidates ? 1 : 0) +
+            1 * (is_duplicate ? 1 : 0)
+
+    - id: classify
+      description: Classify into three buckets with rationale.
+      rules:
+        - name: definitely_used
+          when:
+            - "usage_score >= 2"
+            - "thresholds.require_build_presence_for_used -> prefer present_in_build OR is_entrypoint OR framework_convention"
+        - name: possibly_unused_or_duplicate
+          when:
+            - "usage_score in [0,1]"
+            - "OR is_duplicate == true"
+            - "OR matches_suspect_pattern == true"
+        - name: safe_to_delete
+          when:
+            - "usage_score <= 0"
+            - "inbound_refs == 0"
+            - "present_in_build == false"
+            - "days_since_last_commit >= thresholds.max_age_days_for_safe_to_delete_candidates"
+
+    - id: produce_report
+      description: Emit 'file_audit.yml' with per-file evidence and summary counts.
+      output_file: "file_audit.yml"
+
+    - id: optional_guardrail_commit
+      description: Create a branch and commit the report; do NOT delete files automatically.
+      actions:
+        - "git checkout -b chore/file-audit"
+        - "git add file_audit.yml"
+        - "git commit -m 'chore: add file audit with classifications and evidence'"
+
+# ---------------------------
+# Output schema
+# ---------------------------
+output:
+  file: "file_audit.yml"
+  schema:
+    summary:
+      generated_at: "<ISO8601 timestamp>"
+      repo: "<repo_root>"
+      totals:
+        files_scanned: <int>
+        definitely_used: <int>
+        possibly_unused_or_duplicate: <int>
+        safe_to_delete: <int>
+    files:
+      - path: "<relative/path.ext>"
+        extension: ".ts"
+        size_bytes: <int>
+        loc: <int>
+        git:
+          first_commit_date: "<YYYY-MM-DD>"
+          last_commit_date: "<YYYY-MM-DD>"
+          last_author: "<name>"
+          days_since_last_commit: <int>
+        graph:
+          inbound_refs: <int>           # number of files importing/using this file
+          outbound_refs: <int>
+          referenced_by:
+            - "<relative/path-a.ts>"
+            - "<relative/path-b.ts>"
+          references:
+            - "<relative/path-c.ts>"
+        build_presence:
+          present_in_build: <true|false|null>   # null if build mapping disabled
+          evidence:
+            - "<built/asset/file.js>"
+        conventions:
+          is_entrypoint: <true|false>
+          is_framework_convention: <true|false>
+          convention_matches:
+            - "pages/**"
+        dynamic_signals:
+          has_dynamic_imports: <true|false>
+          patterns_matched:
+            - "import(…)"
+        duplication:
+          hash: "<sha256>"
+          is_duplicate: <true|false>
+          duplicate_of: "<relative/original.ext>|null"
+          duplicates:
+            - "<relative/dup1.ext>"
+            - "<relative/dup2.ext>"
+        heuristics:
+          matches_suspect_pattern: <true|false>
+          suspect_patterns:
+            - "**/*copilot*.*"
+        scores:
+          usage_score: <int>
+          safety_score: <int>
+        classification:
+          bucket: "definitely_used|possibly_unused_or_duplicate|safe_to_delete"
+          rationale: >
+            "Explain which rules triggered: no inbound refs, not in build, old, dup hash = …"
+        recommended_action:
+          action: "keep|review|delete_candidate"
+          next_steps:
+            - "If 'review': open diff with duplicate_of and confirm single source."
+            - "If 'delete_candidate': move to 'quarantine/' and run test/build."
+
+# ---------------------------
+# Safety & Review Checklist
+# ---------------------------
+manual_review_checklist:
+  - "Search usages in IDE (global find, symbol references) for files marked 'safe_to_delete'."
+  - "Run full type-check and tests after quarantining deletions."
+  - "Run production build; verify no new warnings/errors."
+  - "If image/font asset: confirm no CSS/url() or <Image/> refs missed."
+  - "If config/schema file: verify no runtime `require()` or env-driven paths load it."
+  - "If route/page/layout: confirm no dynamic routing expects it."
+  - "If duplicate: prefer the file that is imported by entrypoints or has most inbound refs."
+
+# ---------------------------
+# Suggested CLI/Script Snippets (reference only)
+# ---------------------------
+snippets:
+  list_tracked: "git ls-files"
+  last_commit_date: "git log -1 --format=%cs -- <file>"
+  first_commit_date: "git log --diff-filter=A --format=%cs -- <file> | tail -n1"
+  count_inbound_refs_grep: "rg -n \"from ['\\\"]\\.?/.*<basename>['\\\"]\" -g '!node_modules' -S"
+  detect_dynamic_imports: "rg -n \"import\\(|require\\(|new URL\\(\" -S"
+  hash_file: "shasum -a 256 <file> | cut -d' ' -f1"
+
+# ---------------------------
+# Optional: Quarantine Plan
+# ---------------------------
+quarantine_plan:
+  # Move candidates instead of deleting; commit; run tests/build; then prune.
+  path: ".quarantine"
+  actions:
+    - "git checkout -b chore/quarantine-deletions"
+    - "mkdir -p .quarantine && move files with action=delete_candidate"
+    - "git add -A && git commit -m 'chore: quarantine unused files (pending validation)'"
+    - "Run: npm run typecheck && npm run test && npm run build"
+    - "If green for 7 days, delete quarantine files on a new PR."

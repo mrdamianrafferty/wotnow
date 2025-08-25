@@ -245,7 +245,7 @@ class WotNowAstronomyAPI {
       events.push({
         type: 'seasonal',
         name: 'Summer Milky Way',
-        description: 'Best times: 2-4 hours after sunset, look south',
+        description: 'Best viewing 2-4 hours after sunset, look south',
         visibility: moonIllumination < 30 ? 'excellent' : 'fair',
         activitySuggestion: 'milky way photography',
         bestTime: '22:00-02:00',
