@@ -1,9 +1,14 @@
-version: 1
+version: 2
 name: wotnow_sharing_agent
 description: >
-  Plan, generate, and distribute highly shareable invites and venue polls for
-  non-weather activities. Optimise for fast decision-making, low friction shares,
-  and appealing previews across chat apps.
+  Plan, generate, and distribute highly shareable invites, venue polls, and
+  conditions‑based outdoor invites. For indoor / non‑weather activities: optimise
+  for fast venue decisions, low‑friction shares, and appealing previews across
+  chat apps. For outdoor / weather‑sensitive activities: create persuasive,
+  data‑backed condition cards with one‑tap RSVP, ICS/webcal options, and live
+  “check conditions” links. Always include growth hooks to drive new traffic and
+  sign‑ups to WotNow (branding, CTAs, attribution, referral tags, and
+  post‑action upsell).
 
 # ────────────────────────────────────────────────────────────────────────────────
 objectives:
@@ -11,6 +16,8 @@ objectives:
   - Increase join conversions (clicked invite → added to calendar or directions)
   - Reduce time-to-agree on venue via lightweight polls
   - Keep privacy-first; avoid sharing exact origins
+  - Drive awareness of wotnow brand via share attribution
+  - Increase sign ups to WotNow
 
 success_metrics:
   invites_per_user_daily: ">= 1.3"
@@ -54,6 +61,7 @@ inputs:
     - notifications_allowed: boolean
 
 # ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 tools:
   places_search:        # Google Places / Places API
     params: [query, types, lat, lng, radius]
@@ -82,7 +90,106 @@ tools:
   secrets:
     - maps_server_key
     - maps_browser_key
+  link_sign:
+    params: [payload_json]
+  notifications:
+    - schedule_local: [title, body, fire_at_iso]
+    - push_opt_in_prompt: []
+  clipboard_copy:
+    params: [text]
+  ui:
+    - toggle: [label, default]
+# ────────────────────────────────────────────────────────────────────────────────
+helpers:
+  # Emoji dictionary for common weather/condition factors
+  emoji_bullets:
+    wave: "🌊"
+    swell: "🌊"
+    wind: "💨"
+    gust: "💨"
+    temperature: "🌡️"
+    heat: "🌡️"
+    sunshine: "☀️"
+    sun: "☀️"
+    uv: "🌞"
+    clouds: "☁️"
+    cloud: "☁️"
+    rain: "🌧️"
+    drizzle: "🌦️"
+    thunder: "⛈️"
+    snow: "❄️"
+    ice: "🧊"
+    visibility: "👀"
+    fog: "🌫️"
+    tide: "🌊↕️"
+    safety: "🛟"
+    warning: "⚠️"
+    fun: "🎉"
+    fitness: "💪"
+    air_quality: "🌬️"
+    pollen: "🌾"
 
+  # Activity → emoji used in headings (British English where relevant)
+  activity_emoji:
+    surfing: "🏄"
+    bodyboarding: "🤙"
+    kayaking: "🛶"
+    sea_kayaking: "🛶"
+    stand_up_paddleboarding: "🏄‍♂️"
+    sup_sea: "🏄‍♂️"
+    snorkelling: "🤿"
+    diving: "🤿"
+    sailing: "⛵"
+    fishing: "🎣"
+    hiking: "🥾"
+    running: "🏃"
+    cycling: "🚴"
+    mountain_biking: "🚵"
+    football: "⚽"
+    climbing: "🧗"
+    bouldering: "🧗"
+    yoga: "🧘"
+    gym: "🏋️"
+    skiing: "🎿"
+    snowboarding: "🏂"
+
+  # Helper: apply emojis to a list of textual reasons
+  # Inputs: reasons [string], max (optional number)
+  # Output: [string]
+  emoji_reasons:
+    logic:
+      - "let list = []"
+      - "for each r in reasons:"
+      - "  let key = find_first_key(r, keys(emoji_bullets))  # substring match, case-insensitive"
+      - "  if key != null: list.push(emoji_bullets[key] + ' ' + r)"
+      - "  else: list.push('• ' + r)"
+      - "if max is set: return list.slice(0, max) else return list"
+
+  # Helper: produce a single line of emoji-backed reasons joined by a middle dot
+  # Inputs: reasons [string], max (optional number)
+  # Output: string
+  reasons_line:
+    logic:
+      - "let arr = call helpers.emoji_reasons with { reasons, max }"
+      - "return join(arr, ' • ')"
+
+  # Helper: return the headline emoji for an activity id; fallback to empty string
+  # Inputs: activity_id string
+  # Output: string
+  emoji_for:
+    logic:
+      - "let e = activity_emoji[activity_id]"
+      - "return e != null ? e : ''"
+
+  # Internal utility used above: find the first matching key in a string (case-insensitive)
+  # Inputs: text string, keys [string]
+  # Output: string|nil
+  find_first_key:
+    logic:
+      - "let t = lower(text)"
+      - "for each k in keys: if t includes lower(k): return k"
+      - "return null"
+# ────────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────────────────────────────────────────────────────
 policy:
   privacy:
@@ -106,6 +213,58 @@ policy:
     - Filter venues by rating >= 3.8 unless user overrides.
     - Exclude flagged types (e.g., age-restricted) for family activities.
 
+  preview_constraints:
+    og_title_max_chars: 60    # keep previews punchy across WhatsApp/iMessage
+    og_desc_max_chars: 90
+    og_image_min_size: "1200x630"
+    whatsapp_line_breaks_ok: true
+
+  link_security:
+    signed_links: true            # HMAC sign poll/invite IDs
+    link_expiry_days: 14          # hard-expire public links
+    one_vote_per_device_cookie: true
+    ip_rate_limit_per_poll_per_hour: 30
+    allow_vote_change_until_close: true
+
+  attribution:
+    use_per_recipient_tokens: true
+    token_payload: [poll_id, sharer_id, recipient_hint, issued_at]
+    privacy_note: "Tokens are pseudonymous; no contact data stored."
+
+  nudge_policy:
+    poll_reminder_minutes_before_close: 15
+    non_voter_reminder: "only_if_consent_notifications"
+    winner_announcement_includes:
+      - add_to_calendar_cta
+      - open_directions_cta
+      - share_back_to_thread
+
+  fairness_modes:
+    default: { max_eta_spread_minutes: 25, favour_accessible: true }
+    relaxed: { max_eta_spread_minutes: 40, favour_accessible: false }
+
+  whatsapp:
+    compact_copy: true               # favour short, scannable lines & emojis
+    prefer_single_link: true         # one shortlink at end to avoid preview truncation
+    newline_between_sentences: true  # improves readability in WA
+    avoid_markdown: true             # WA renders *bold* oddly for some users
+    max_message_lines: 8             # keep above-the-fold
+    use_numbered_options: true       # '1) Place A' etc for polls
+    include_vcard_for_invites: false # keep payload light; link beats vCard
+    locale_emoji: { en: "📍", es: "📍" }
+    group_share_detection: "heuristic_by_target_picker"
+
+  group_inference:
+    min_distinct_devices_for_group: 2
+    device_window_minutes: 10
+    min_unique_votes_for_group: 2
+    cooloff_recheck_minutes: 30
+    override_priority:
+      - explicit_user_toggle
+      - unique_votes_signal
+      - distinct_device_signal
+    privacy_note: "Inference uses aggregate link opens and vote events only; no contacts are read or stored."
+# ────────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────────────────────────────────────────────────────
 flow_invite:
   goal: "Create a single-venue invite with rich preview and easy sharing."
@@ -124,16 +283,19 @@ flow_invite:
           save: candidates
         else:
           use: last_used_places or manual_search_field
+
     - id: choose_venue
       do:
         strategy: "Present 3–5 candidates; allow manual search"
         output: place_id
+
     - id: fetch_details
       do:
         call: place_details
         with: { place_id: $.choose_venue.place_id }
         cache: db.cache_place_details(place_id, ttl=24h)
         save: venue
+
     - id: compose_share_assets
       do:
         map_image: static_map_url(venue.lat, venue.lng, 16, "1200x630")
@@ -149,28 +311,65 @@ flow_invite:
           title: "Join me for ${activity_name}"
           description: "${venue.name} · ${friendly_time(start_iso)}"
           image: map_image
-    - id: generate_message
-      do:
-        variant: ab_experiments.assign_user_to_variant(["A_short","B_detail","C_emoji"])
-        template: pick_from_library(activity_name, variant)
-        message_text: render(template, {
-          activity_name, start_time, venue_name: venue.name,
-          address: venue.address, directions_link: directions_link(venue),
-          poll_link: null
-        })
+
     - id: shorten_url
       do:
         long_url: invite_page_url(activity_name, venue.place_id, start_iso)
         short_url: shortlink_create(long_url, campaign="invite", tags=[activity_name])
+        save: short_url
+
+    - id: create_recipient_tokens
+      do:
+        recipients: infer_from_share_target_or_unknown()
+        tokens: map(recipients, r => link_sign({ kind: "invite", sharer_id: user_id, recipient_hint: r, issued_at: now_iso(), url: short_url }))
+        save: tokens
+
+    - id: tone_toggle
+      do:
+        default_tone: "dm"
+        tone_hint: ui.toggle("Sharing to a group?", default=default_tone)
+        save: tone_hint
+        analytics_log("tone_hint_set", { context: "invite", tone_hint, shortlink_id: short_url })
+
+    - id: generate_message
+      do:
+        variant: ab_experiments.assign_user_to_variant(["A_short","B_detail","C_emoji"]) 
+        template:
+          when: tone_hint == 'group' -> 'GROUP_invite'
+          else: 'DM_invite'
+        message_text: render(template, {
+          activity_name,
+          start_time,
+          venue_name: venue.name,
+          address: address_area_only(venue.address),
+          directions_link: directions_link(venue),
+          short_url: short_url
+        })
+
     - id: share
       do:
+        shareable_url: append_token(short_url, tokens.first_or_null) # if DM to one person
         if: device_capabilities.web_share_api
-        then: web_share({ title: "Join me: ${activity_name}", text: message_text + "\n" + short_url })
-        else: open_url("https://wa.me/?text=" + urlencode(message_text + "\n" + short_url))
+        then: web_share({ title: "Join me: ${activity_name}", text: message_text + "\n" + shareable_url })
+        else:
+          open_url("https://wa.me/?text=" + urlencode(message_text + "\n" + shareable_url))
+
+    - id: seed_inference
+      do:
+        analytics_log("shortlink_seed", { shortlink_id: short_url, tone_hint })
+
+    - id: schedule_host_followups
+      do:
+        notifications.schedule_local(
+          "Quick check",
+          "All set for ${activity_name}? Send a poll if your friend wants options.",
+          fire_at_iso=now_plus(10m)
+        )
+
     - id: analytics
       do:
-        analytics_log("invite_sent", { activity: activity_name, place_id: venue.place_id, variant })
-
+        analytics_log("invite_sent", { activity: activity_name, place_id: venue.place_id, variant, shortlink_id: short_url })
+# ────────────────────────────────────────────────────────────────────────────────
 # ────────────────────────────────────────────────────────────────────────────────
 flow_poll:
   goal: "Collect group votes on 2–5 venues quickly; auto-pick a fair winner."
@@ -202,12 +401,41 @@ flow_poll:
           title: "Vote a spot for ${activity_name}"
           description: "${friendly_time(proposed_start_time)} · ${count(candidates)} options"
           image: collage_of(candidate_photos_or_maps, size="1200x630")
+    - id: tone_toggle
+      do:
+        default_tone: "group"
+        tone_hint: ui.toggle("Sharing to a group?", default=default_tone)
+        save: tone_hint
+        analytics_log("tone_hint_set", { context: "poll", tone_hint, shortlink_id: short_url })
     - id: share_poll
       do:
-        share_text: "Help pick a venue for ${activity_name} (${friendly_time(proposed_start_time)}): ${short_url}"
+        if: tone_hint == 'dm'
+        then:
+          share_text: render('DM_invite', { activity_name, venue_name: enriched_candidates[0].name, start_time: friendly_time(proposed_start_time), directions_link: directions_link(enriched_candidates[0]), short_url })
+        else:
+          # Compose compact WhatsApp-friendly copy with numbered options
+          wa_lines:
+            - "Vote a spot for ${activity_name} (${friendly_time(proposed_start_time)}):"
+          wa_lines_append:
+            - each index, c in enumerate(enriched_candidates):
+                short_opt_link: shortlink_create(poll_option_url(poll.id, c.place_id), campaign="poll_opt", tags=[activity_name, str(index+1)])
+                line: "${index+1}) ${c.name} — ${neighbourhood_only(c.address)}  ${short_opt_link}"
+          share_text: join_lines(wa_lines + wa_lines_append) + "\n" + short_url
         if: device_capabilities.web_share_api
         then: web_share({ title: "Vote a venue", text: share_text })
         else: open_url("https://wa.me/?text=" + urlencode(share_text))
+    - id: seed_inference
+      do:
+        analytics_log("shortlink_seed", { shortlink_id: short_url, tone_hint })
+    - id: schedule_reminders
+      do:
+        if: permissions.notifications_allowed
+        then:
+          notifications.schedule_local(
+            "Poll closes soon",
+            "Vote your spot for ${activity_name} — ${friendly_time(proposed_start_time)}",
+            fire_at_iso=now_plus( nudge_policy.poll_reminder_minutes_before_close )
+          )
     - id: collect_votes
       do:
         # On poll page (client):
@@ -216,18 +444,30 @@ flow_poll:
         - accessibility_flag: boolean
         - submit: db.put_vote(poll.id, choice, etaMins?, accessibility?)
         - realtime: realtime_pubsub.publish_poll_update(poll.id)
-    - id: decide_winner
-      when: now >= closesAt or votes >= quorum
-      do:
-        winner = pick_winner(enriched_candidates, votes) # see tie-break logic below
-        db.put_poll({ id: poll.id, status: "locked", winnerPlaceId: winner.placeId })
     - id: announce
       do:
         result_url: result_page_url(poll.id)
         short_result: shortlink_create(result_url, campaign="poll_result", tags=[activity_name])
-        message: "Winner: ${winner.name}. See details & directions: ${short_result}"
+        fairness_summary: "Median ETA ${medianETA}m • Max ${maxETA}m • ${winner.step_free ? 'Step-free' : 'Check access'}"
+        message: "Winner: ${winner.name}. ${fairness_summary}\nAdd to calendar & get directions: ${short_result}"
         share_back_to_thread(message)
-        analytics_log("poll_locked", { poll_id: poll.id, winner_place_id: winner.placeId })
+        analytics_log("poll_locked", { poll_id: poll.id, winner_place_id: winner.placeId, median_eta: medianETA, max_eta: maxETA })
+# ────────────────────────────────────────────────────────────────────────────────
+post_share_tasks:
+  - id: infer_group_vs_dm
+    trigger: [link_opened, poll_voted]
+    logic:
+      distinct_devices := count_unique_fingerprints(shortlink_id, window=policy.group_inference.device_window_minutes)
+      unique_votes     := count_unique_voters(shortlink_id)
+      tone_explicit    := last("shortlink_seed.tone_hint")
+      inferred :=
+        tone_explicit
+        ?? (unique_votes >= policy.group_inference.min_unique_votes_for_group ? 'group' : null)
+        ?? (distinct_devices >= policy.group_inference.min_distinct_devices_for_group ? 'group' : 'dm')
+    effects:
+      - set_runtime_flag(shortlink_id, "tone", inferred)
+      - realtime_pubsub.publish_poll_update(poll_id, { tone: inferred })
+      - analytics_log("tone_inferred", { shortlink_id, inferred, distinct_devices, unique_votes })
 
 # ────────────────────────────────────────────────────────────────────────────────
 tie_break_logic:
@@ -240,19 +480,37 @@ tie_break_logic:
   final_order: "Sort by votes desc, then TieScore asc, then rating desc"
 
 # ────────────────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
 message_templates:
   A_short: |
     Fancy {{activity_name}}?
     {{venue_name}} • {{start_time}}
-    Directions: {{directions_link}}
+    {{directions_link}}
   B_detail: |
     {{activity_name}} tonight?
-    {{venue_name}} ({{address}})
-    Starts {{start_time}} • Tap for directions: {{directions_link}}
+    {{venue_name}} ({{address_area_only}})
+    Starts {{start_time}} • {{directions_link}}
   C_emoji: |
     {{activity_name}} 🗓️ {{start_time}}
     📍 {{venue_name}}
-    ➡️ {{directions_link}}
+    {{directions_link}}
+  WA_compact: |
+    {{activity_name}}?
+    {{venue_name}}
+    {{start_time}}
+    {{directions_link}}
+    {{short_url}}
+
+  DM_invite: |
+    Fancy {{activity_name}} at {{venue_name}}?
+    {{start_time}} • {{directions_link}}
+    {{short_url}}
+
+  GROUP_invite: |
+    Fancy {{activity_name}}?
+    {{venue_name}} • {{start_time}}
+    Confirm here:
+    {{short_url}}
 
 # ────────────────────────────────────────────────────────────────────────────────
 ui_guidelines:
@@ -275,6 +533,12 @@ error_handling:
   - ics_creation_failed:
       fallback: "Show Add to Calendar deeplinks (Google/Apple)."
 
+fraud_controls:
+  - ensure_signed_tokens_on_poll_and_invites
+  - throttle_votes_by_cookie_and_ip
+  - soft_block_if_vote_velocity_spike
+  - mark_suspect_votes_for_review_not_deletion
+
 # ────────────────────────────────────────────────────────────────────────────────
 experiments:
   - id: og_collage_vs_map
@@ -287,7 +551,13 @@ experiments:
   - id: deadline_prompting
     variants: ["soft_nudge_15m","no_nudge"]
     metric: "vote_completion_rate"
+  - id: quorum_close_vs_timer
+    variants: ["quorum_60pct","timer_60m"]
+    metric: "time_to_decision_minutes"
 
+  - id: poll_size_3_vs_5
+    variants: ["3_options","5_options"]
+    metric: "poll_vote_rate"
 # ────────────────────────────────────────────────────────────────────────────────
 logging:
   events:
@@ -302,6 +572,35 @@ logging:
     - share_failed
   pii_redaction: "Strip exact origins; hash user_id; store only aggregate ETAs."
 
+logging:
+  events:
+    - invite_sent
+    - invite_opened
+    - poll_created
+    - poll_viewed
+    - poll_voted
+    - poll_locked
+    - directions_clicked
+    - ics_downloaded
+    - share_failed
+    - reminder_sent           # NEW
+    - reminder_opened         # NEW
+    - token_attributed        # NEW
+    - tone_hint_set
+    - tone_inferred
+  funnels:
+    invite_to_vote: ["invite_sent","invite_opened","poll_viewed","poll_voted"]
+    vote_to_lock: ["poll_voted","poll_locked"]
+    lock_to_action: ["poll_locked","ics_downloaded","directions_clicked"]
+  event_props:
+    common: [user_id_hash, locale, activity_id, variant, shortlink_id]
+    invite_sent: [place_id, token_count]
+    poll_voted: [place_id, vote_latency_seconds]
+    poll_locked: [winner_place_id, votes_total, median_eta, max_eta, accessibility_flags]
+    tone_hint_set: [shortlink_id, tone_hint, context]
+    tone_inferred: [shortlink_id, inferred, distinct_devices, unique_votes]
+  pii_redaction: "Strip exact origins; hash user_id; store only aggregate ETAs."
+
 # ────────────────────────────────────────────────────────────────────────────────
 outputs:
   - shortlink_invite
@@ -309,3 +608,88 @@ outputs:
   - og_image_url # for unfurl cards
   - ics_file_url
   - analytics_events
+  - whatsapp_optimised_copy
+
+
+  # ────────────────────────────────────────────────────────────────────────────────
+feature_flags:
+  conditions_invite: true
+  webcal_subscribe: true      # show “Subscribe” alongside “Add to calendar”
+
+tools:
+  calendar_ics_create:
+    # EXTEND: support richer fields + an optional VALARM
+    params: [title, start_iso, end_iso, description, location_text, url, geo_lat?, geo_lng?, categories?, apple_structured_location?, valarm_trigger?]
+  webcal_url_create:
+    params: [invite_id]       # returns webcal://…/invite/<id>.ics
+
+# Reuse your existing WA rules, logging, attribution, link_sign, etc.
+
+# ────────────────────────────────────────────────────────────────────────────────
+flow_conditions_invite:
+  when: feature_flags.conditions_invite
+  goal: "Share a persuasive, conditions-based invite for an outdoor activity with one-tap RSVP."
+  steps:
+    - id: compute_conditions
+      do:
+        score: activity_score(activity_id, where=spot, when=start_iso)       # your existing scoring
+        reasons: top_reasons(activity_id, score, weather_env)               # concise 3–5 bullets
+        rating_word: pick(['Perfect','Good','Fair'], score)
+        hero_badge: build_conditions_badge(activity_id, score, reasons)     # OG image for WA
+
+    - id: compose_share_assets
+      do:
+        og_tags:
+          title: "${activity_name} — ${rating_word} today (WotNow)"
+          description: join_bullets(reasons, max=3)
+          image: hero_badge
+        ics:
+          title: "${activity_name} — ${rating_word} (WotNow)"
+          description: join_bullets(reasons, max=5) + "\nRe-check live conditions → ${live_url}"
+          location_text: "${spot.name}"
+          url: invite_page_url(activity_id, spot.id, start_iso)
+          geo_lat: spot.lat
+          geo_lng: spot.lng
+          categories: ["WotNow","Outdoors", activity_name]
+          apple_structured_location: "geo:${spot.lat},${spot.lng};title=${spot.name};radius=65"
+          valarm_trigger: "-PT2H"  # “Re-check live conditions” nudge
+
+    - id: shorten
+      do:
+        long_url: invite_page_url(activity_id, spot.id, start_iso)
+        short_url: shortlink_create(long_url, campaign="conditions_invite", tags=[activity_name])
+
+    - id: message
+      do:
+        # WhatsApp-optimised persuasive copy
+        text: |
+          {{activity_name}}? {{rating_word}} today {{emoji_for(activity_id)}}
+          {{spot.name}} • {{friendly_time(start_iso)}}
+          {{reasons_line(reasons, max=2)}}
+          {{short_url}}
+
+    - id: share
+      do:
+        if: device_capabilities.web_share_api
+        then: web_share({ title: "Join me: ${activity_name}", text: text })
+        else: open_url("https://wa.me/?text=" + urlencode(text))
+
+    - id: produce_calendar
+      do:
+        ics_file: calendar_ics_create({{ics}})
+        if: feature_flags.webcal_subscribe
+        then: webcal_link: webcal_url_create(invite_id)
+
+    - id: landing_config
+      do:
+        landing_page:
+          shows:
+            - live_conditions(score, reasons, spot)     # dynamic on page
+            - rsvp_buttons: ["I'm in","Maybe","Can't"]
+            - add_to_calendar(ics_file)
+            - subscribe_webcal(webcal_link)  # when enabled
+          after_rsvp_cta: "Create your own conditions card in 30 seconds →"  # Trojan horse
+
+    - id: analytics
+      do:
+        analytics_log("conditions_invite_shared", { activity_id, spot_id: spot.id, score, rating_word, shortlink_id: short_url })

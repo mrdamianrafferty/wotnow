@@ -360,3 +360,141 @@ notes_for_engineers:
 	•	Convert seconds → hours (÷3600). Prefer sunshine for light‑suitability; daylight is the upper bound.
 	•	Crop light needs: use 6+ h/day for “full sun”, 4–6 h for “partial”, <4 h considered poor for sun‑lovers.
 	•	Messaging stays suggestive (nudges), not hard blockers, unless combined with other adverse conditions.
+
+ Once the above has been completed, move onto creating a pest management plan as detailed below for gardeners:
+
+garden_pest_disease_rules:
+  - name: Late Blight (Potato, Tomato)
+    conditions:
+      temperature_celsius:
+        min: 10
+        max: 25
+      relative_humidity_percent:
+        min: 90
+      leaf_wetness_hours:
+        min: 8
+      recent_precipitation_days: 2
+    elevation_preferences:
+      preferred: ["valleys", "low elevation", "humid areas"]
+    warning_message: "High risk of late blight detected. Monitor your potato and tomato plants closely."
+    ecological_solutions:
+      - "Remove and destroy infected leaves promptly."
+      - "Use drip irrigation instead of overhead watering."
+      - "Apply organic copper-based fungicides preventively."
+      - "Plant resistant tomato and potato varieties."
+      - "Practice crop rotation and ensure good plant spacing for airflow."
+
+  - name: Slugs and Snails
+    conditions:
+      soil_moisture: "high"
+      night_temperature_celsius:
+        min: 7
+      rainfall_forecast_days: 3
+      shade_presence: true
+    warning_message: "Conditions favor slug and snail activity; take action to protect your garden."
+    ecological_solutions:
+      - "Use copper tape or physical barriers around vulnerable plants."
+      - "Set beer traps or manually remove slugs and snails."
+      - "Encourage natural predators such as hedgehogs or ground beetles."
+      - "Reduce mulch thickness and consider early morning irrigation."
+
+  - name: Aphids
+    conditions:
+      temperature_celsius:
+        min: 15
+        max: 25
+      rainfall: "low_to_moderate"
+      air_humidity_percent:
+        min: 70
+      plant_growth_stage: "young_tender_growth"
+    warning_message: "Increased aphid activity likely; check young plant shoots for infestation."
+    ecological_solutions:
+      - "Encourage beneficial insects like ladybugs and lacewings."
+      - "Use insecticidal soaps or neem oil as needed."
+      - "Prune heavily infested parts of plants."
+      - "Plant companions that repel aphids, such as garlic or chives."
+
+  - name: Powdery Mildew
+    conditions:
+      day_temperature_celsius:
+        min: 20
+        max: 30
+      day_relative_humidity_percent:
+        max: 70
+      night_relative_humidity_percent:
+        min: 85
+      canopy_density: "dense"
+    warning_message: "Risk of powdery mildew detected; improve airflow and monitor plants."
+    ecological_solutions:
+      - "Prune plants to enhance air circulation."
+      - "Apply sulfur-based or potassium bicarbonate sprays at early signs."
+      - "Use resistant plant varieties."
+      - "Avoid excess nitrogen fertilizer to reduce susceptibility."
+
+common_garden_issues_prevalence:
+  description: >
+    Geographic risk layer for the most prevalent garden pests and diseases worldwide,
+    to be combined with local weather, elevation, and seasonal data.
+
+  common_pests:
+    - name: Slugs and Snails
+      description: "Common garden pests that damage tender foliage and fruits."
+      regions_prevalent: "Worldwide, especially in moist temperate zones"
+    - name: Aphids
+      description: "Sap-sucking insects causing distorted growth and sooty mold."
+      regions_prevalent: "Global distribution, increased in warmer, humid climates"
+    - name: Vine Weevil
+      description: "Root and leaf feeder, highly damaging in temperate gardens."
+      regions_prevalent: "Europe, North America, temperate zones"
+    - name: Glasshouse Whitefly
+      description: "Thrives in warm greenhouse environments, feeds on sap."
+      regions_prevalent: "Worldwide in greenhouse settings"
+    - name: Spider Mite
+      description: "Sucks sap from leaves, causing discoloration and defoliation."
+      regions_prevalent: "Warm dry climates globally"
+  
+  common_diseases:
+    - name: Late Blight (Phytophthora infestans)
+      description: "Fungal-like disease affecting potatoes and tomatoes."
+      regions_prevalent: "Cool, moist regions globally"
+    - name: Powdery Mildew
+      description: "Fungal disease causing white powdery leaf spots."
+      regions_prevalent: "Worldwide, especially in dry warm days and humid nights"
+    - name: Black Spot (Roses)
+      description: "Fungal leaf spot disease affecting rose plants."
+      regions_prevalent: "Temperate climates globally"
+    - name: Rust (Pear, other fruit trees)
+      description: "Fungal infection causing rust-colored spores on leaves."
+      regions_prevalent: "Widespread in humid temperate zones"
+    - name: Honey Fungus (Armillaria)
+      description: "Root rot fungus causing collapse and death of woody plants."
+      regions_prevalent: "Temperate forests and gardens worldwide"
+
+general_instructions:
+  alert_levels:
+    - name: Watch
+      description: "Conditions partly favor pest or disease; increased monitoring advised."
+    - name: Warning
+      description: "Multiple conditions met; preventive measures recommended."
+    - name: High Risk
+      description: "All conditions met strongly; immediate action suggested."
+
+  data_inputs_required:
+    - latitude
+    - longitude
+    - elevation
+    - current_temperature_celsius
+    - predicted_temperature_celsius
+    - relative_humidity_percent
+    - soil_moisture_level
+
+    - precipitation_history_days
+    - precipitation_forecast_days
+
+    - plant_growth_stage (guessed from RHS guides)
+
+  recommendations:
+    - "Combine real-time and historical weather data for risk calculations."
+    - "Use weighted scoring to determine alert levels."
+    - "Provide customized alerts per plant/crop type."
+    - "Emphasize ecologically sound pest and disease management."

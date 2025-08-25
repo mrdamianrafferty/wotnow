@@ -118,101 +118,12 @@ interface ActivityDayPayload {
   reasons?: any[];
 }
 
-// --- Weather normalization copied from weatherService.ts ---
-// TODO: Unify this logic into a shared utility for all weather normalization
-function normalizeWeatherFields(weather: any, fallbackWeather?: any, marineWeather?: any, isMarine?: boolean) {
-  function pickField(fieldPaths: string[][], sources: any[]) {
-    for (let i = 0; i < fieldPaths.length; i++) {
-      const value = fieldPaths[i].reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), sources[i]);
-      if (value !== undefined && value !== null) return value;
-    }
-    return null;
-  }
-  const sources = isMarine
-    ? [marineWeather, weather, fallbackWeather]
-    : [weather, fallbackWeather, marineWeather];
-  
-  if (isMarine) {
-    console.log('🔍 NORMALIZATION DEBUG - Sources:', {
-      marineWeather: marineWeather ? Object.keys(marineWeather) : 'undefined',
-      weather: weather ? Object.keys(weather) : 'undefined', 
-      fallbackWeather: fallbackWeather ? Object.keys(fallbackWeather) : 'undefined'
-    });
-  }
-  
-  return {
-    temperature: pickField([
-      ['temperature'],
-      ['temp'],
-      ['temperature']
-    ], sources),
-    precipitation: pickField([
-      ['precipitation'],
-      ['rain'],
-      ['precipitation']
-    ], sources),
-    windSpeed: pickField([
-      ['windSpeed'],
-      ['windspeed'],
-      ['wind_speed']
-    ], sources),
-    clouds: pickField([
-      ['clouds'],
-      ['cloudcover'],
-      ['cloudCover']
-    ], sources),
-    humidity: pickField([
-      ['humidity'],
-      ['humidity'],
-      ['humidity']
-    ], sources),
-    visibility: pickField([
-      ['visibility'],
-      ['visibility'],
-      ['visibility']
-    ], sources),
-    waterTemperature: pickField([
-      ['waterTemperature'],
-      ['waterTemp'],
-      ['waterTemperature']
-    ], sources),
-    waveHeight: pickField([
-      ['waveHeight'],
-      ['wave_height'],
-      ['waveHeight']
-    ], sources),
-    swellHeight: pickField([
-      ['swellHeight'],
-      ['swell_height'],
-      ['swellHeight']
-    ], sources),
-    swellPeriod: pickField([
-      ['swellPeriod'],
-      ['swell_period'],
-      ['swellPeriod']
-    ], sources),
-    sunsetTs: pickField([
-      ['sunsetTs'],
-      ['sunset'],
-      ['sunsetTs']
-    ], sources),
-    uvi: pickField([
-      ['uvi'],
-      ['uvIndex'],
-      ['uvi']
-    ], sources),
-  };
-}
-
 export function buildPopupActivityPayload({
   activityId,
   day,
   score,
   reasons: passedReasons,
 }: ActivityDayPayload) {
-  console.log('🔥 POPUP PAYLOAD DEBUG START:', { activityId, score });
-  console.log('🔥 POPUP PAYLOAD - Raw day object:', JSON.stringify(day, null, 2));
-  
   const activity = activityTypes.find((a) => a.id === activityId);
   const title = activity?.name ?? activityId.replace(/_/g, ' ');
   const description = activity?.description ?? '';
@@ -224,22 +135,12 @@ export function buildPopupActivityPayload({
     : 'poor';
   const categoryEmoji = getAssessmentEmoji ? getAssessmentEmoji(category) : '';
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
-  
-  console.log('🔥 POPUP PAYLOAD - Is Marine?', isMarine);
-  console.log('🔥 POPUP PAYLOAD - Day marine fields:', {
-    waveHeight: day?.waveHeight,
-    swellHeight: day?.swellHeight,
-    waterTemperature: day?.waterTemperature,
-    windSpeed: day?.windSpeed,
-    windDir: day?.windDir,
-    windDirection: day?.windDirection
-  });
 
-  // Use normalization logic - for marine activities, the day object already has marine fields
-  // from getPopupDay, so we can pass it as the primary source
-  const normalized = normalizeWeatherFields(day, undefined, undefined, isMarine);
-  
-  console.log('🔥 POPUP PAYLOAD - Normalized result:', normalized);
+  const hasMarineData = day.waveHeight || day.windSpeed || day.waterTemperature || day.swellHeight || day.swellPeriod;
+
+  const hasRealMarineData =
+    (typeof day.waveHeight === 'number' && !isNaN(day.waveHeight)) ||
+    (typeof day.swellHeight === 'number' && !isNaN(day.swellHeight));
 
   // Determine an effective beach orientation for downstream messaging/scoring
   const approx = getApproximateCoords(day);
@@ -255,57 +156,66 @@ export function buildPopupActivityPayload({
   }
 
   if (effectiveBeachOrientation == null && typeof lat === 'number' && typeof lon === 'number') {
+    // Fallback to simulated orientation so wind-relative messaging still works
     effectiveBeachOrientation = computeSimulatedOrientation(lat, lon);
   }
 
-  // Weather summary used by Popup
-  const weatherData = {
-    temperature: normalized.temperature,
-    tempMax: day?.tempMax ?? day?.temp_max ?? null,
+  // Create weather and marine data objects now that orientation is available
+  const marineData = hasMarineData ? {
+    waveHeight: day?.waveHeight ?? day?.wave_height ?? null,
+    waterTemperature: day?.waterTemperature ?? day?.water_temp ?? null,
+    swellHeight: day?.swellHeight ?? day?.swell_height ?? null,
+    swellPeriod: day?.swellPeriod ?? day?.swell_period ?? null,
+    windSpeed: day?.windSpeed ?? day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - Stormglass/OpenWeather both provide m/s
+    windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null, // coalesce any available direction
+    gust: day?.gust ?? null, // Stormglass if available
+    vis: day?.vis ?? null, // Stormglass if available
+    swellDir: day?.swellDir ?? day?.swell_direction ?? null,
+    temperature: day?.temperature ?? day?.temp ?? null,
     tempMin: day?.tempMin ?? day?.temp_min ?? null,
-    humidity: normalized.humidity,
-    windSpeed: normalized.windSpeed,
-    windDir: day?.wind_direction ?? null,
-    gust: day?.wind_gust ?? null,
-    precipitation: normalized.precipitation,
-    visibility: normalized.visibility,
+    tempMax: day?.tempMax ?? day?.temp_max ?? null,
+    humidity: day?.humidity ?? null,
+    precipitation: day?.precipitation ?? day?.rain ?? null,
+    visibility: day?.visibility ?? null,
     condition: day?.condition ?? null,
     icon: day?.icon ?? null,
     description: day?.description ?? null,
-    uvi: normalized.uvi,
-  };
+    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
+  } : {};
 
-  // Marine summary used by Popup (safe optional fields)
-  const marineData = isMarine ? {
-    waveHeight: normalized.waveHeight,
-    waterTemperature: normalized.waterTemperature,
-    swellHeight: normalized.swellHeight,
-    swellPeriod: normalized.swellPeriod,
-    windSpeed: normalized.windSpeed,
-    gust: day?.gust ?? day?.gustSpeed ?? day?.wind_gust ?? null, // Fixed field name
-    windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null, // Fixed field name
-    swellDir: day?.swellDir ?? day?.swellDirection ?? day?.swell_direction ?? null, // Added missing field
-    vis: day?.vis ?? day?.visibility ?? null, // Added missing field
-    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
-  } : undefined;
+  const weatherData = {
+    temperature: day?.temperature ?? day?.temp ?? null,
+    tempMin: day?.tempMin ?? day?.temp_min ?? null,
+    tempMax: day?.tempMax ?? day?.temp_max ?? null,
+    humidity: day?.humidity ?? null,
+    windSpeed: day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - OpenWeather provides m/s
+    windDir: day?.wind_direction ?? null, // OpenWeather only
+    gust: day?.wind_gust ?? null,
+    precipitation: day?.precipitation ?? day?.rain ?? null,
+    visibility: day?.visibility ?? null,
+    condition: day?.condition ?? null,
+    icon: day?.icon ?? null,
+    description: day?.description ?? null,
+  };
 
   // Merge the marine data into the day object for buildReasons
   const dayWithMarine = {
     ...day,
-    waterTemperature: normalized.waterTemperature,
-    waveHeight: normalized.waveHeight,
-    swellHeight: normalized.swellHeight,
-    swellPeriod: normalized.swellPeriod,
-    windSpeed: normalized.windSpeed,
-    wind_speed: normalized.windSpeed,
-    windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null,
-    wind_direction: day?.wind_direction ?? day?.windDir ?? null,
-    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
+    waterTemperature: marineData.waterTemperature,
+    waveHeight: marineData.waveHeight,
+    swellHeight: marineData.swellHeight,
+    swellPeriod: marineData.swellPeriod,
+    // Keep both naming schemes so downstream helpers (marine vs land) can read either
+    windSpeed: marineData.windSpeed ?? day?.windSpeed ?? null,
+    wind_speed: day?.wind_speed ?? null,
+    windDir: marineData.windDir ?? day?.windDir ?? day?.wind_direction ?? null,
+    wind_direction: day?.wind_direction ?? marineData.windDir ?? null,
+    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
   };
 
   const dayForReasons = {
     ...day,
-    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
+    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
   };
   const reasonsInput = isMarine
     ? { ...dayWithMarine, beachOrientation: dayForReasons.beachOrientation }
@@ -327,18 +237,27 @@ export function buildPopupActivityPayload({
 
   if (isMarine) {
     console.log('Marine activity:', activityId, {
-      waveHeight: normalized.waveHeight,
-      swellHeight: normalized.swellHeight,
-      swellPeriod: normalized.swellPeriod,
-      waterTemperature: normalized.waterTemperature,
-      windSpeed: normalized.windSpeed,
-      windDirection: day?.windDirection,
+      waveHeight: day.waveHeight,
+      swellHeight: day.swellHeight,
+      swellPeriod: day.swellPeriod,
+      waterTemperature: day.waterTemperature,
+      windSpeed: day.windSpeed,
+      windDirection: day.windDirection,
     });
   }
 
   console.log('marineData:', marineData);
   console.log('Parsed day object:', day);
 
+  // Add debug for pollen and air quality data
+  console.log('Pollen data:', day.pollen);
+  console.log('Air quality data:', day.airQuality);
+
+  // Optionally, add render helpers if you use them
+  // const renderMarineData = () => ...;
+  // const renderFooter = () => ...;
+
+  // In the return statement at the bottom of the function
   return {
     activityId,
     title,
@@ -347,13 +266,17 @@ export function buildPopupActivityPayload({
     category,
     categoryEmoji,
     reasons,
-    marineData,
-    weatherData,
+    marineData: isMarine ? marineData : undefined,
+    weatherData: weatherData,
     score,
     message,
-    dayTimestamp: day.date,
+    dayTimestamp: day.date, // Add this line to include the timestamp directly
     beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
-    pollen: day.pollen,
-    airQuality: day.airQuality,
+    pollen: day.pollen, // Include pollen data from day
+    airQuality: day.airQuality, // Include air quality data from day
+    isEnvironmentalDataStale: day.isEnvironmentalDataStale || false, // Include stale data flag
+    environmentalDataLastUpdated: day.environmentalDataLastUpdated, // Include timestamp when data was last updated
+    // renderMarineData,
+    // renderFooter,
   };
 }

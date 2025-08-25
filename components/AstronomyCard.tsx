@@ -53,7 +53,7 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }: WindIconProps) {
     />
   );
 }
-import { getMoonLore, getRandomMoonLore, MoonPhase } from '../data/moonLore';
+import { getMoonLoreDistinct, type MoonPhase } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { describeIssPass } from '../utils/issHelper';
 import '../styles/Card.css';
@@ -145,20 +145,20 @@ const getWeatherAwareMessage = (
   const visibility = weatherData?.visibility || 10000;
   const rain = weatherData?.rain || 0;
   const snow = weatherData?.snow || 0;
-  
+
   // Poor weather conditions
   if (rain > 0 || snow > 0) {
     return "Rain/snow expected tonight - not ideal for stargazing. Check forecast for clearer nights.";
   }
-  
+
   if (cloudCover >= 80) {
     return "Heavy cloud cover expected - limited visibility for astronomy tonight.";
   }
-  
+
   if (cloudCover >= 60) {
     return "Cloudy skies expected - some breaks in clouds may allow brief stargazing opportunities.";
   }
-  
+
   // Special events with weather context
   if (primaryEvent) {
     // Build message parts, deduplicate direction, join naturally
@@ -174,18 +174,19 @@ const getWeatherAwareMessage = (
       parts.push("Clear skies expected - excellent viewing conditions!");
     }
     // Direction, only add if not already present
-    if (primaryEvent.direction && typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
-      const direction = primaryEvent.direction;
-      const dirPhrase = `Look ${direction}`;
-      if (!parts.some(p => p.toLowerCase().includes(direction.toLowerCase()))) {
-        parts.push(dirPhrase);
+    if (primaryEvent.direction) {
+      if (typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
+        const dirPhrase = `Look ${primaryEvent.direction}`;
+        if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction?.toLowerCase() || ''))) {
+          parts.push(dirPhrase);
+        }
       }
     }
     // Remove duplicate phrases
     const deduped = Array.from(new Set(parts));
     return deduped.join('. ') + '.';
   }
-  
+
   // General stargazing conditions
   if (stargazingScore >= 80) {
     return "Excellent conditions for deep space observation and Milky Way photography.";
@@ -202,33 +203,33 @@ const getWeatherAwareMessage = (
 const getMidnightWeatherIcon = (weatherData: any) => {
   // Always return a night icon since this is for midnight
   if (!weatherData) return '01n.svg'; // Default clear night
-  
+
   const condition = weatherData.condition || '';
   const clouds = weatherData.clouds || 0;
   const rain = weatherData.rain || 0;
   const snow = weatherData.snow || 0;
-  
+
   // Check for precipitation first
   if (snow > 0) return '13n.svg'; // Snow
   if (rain > 0) return '10n.svg'; // Rain
-  
+
   // Check for thunderstorms
   if (condition.toLowerCase().includes('thunderstorm') || condition.toLowerCase().includes('storm')) {
     return '11n.svg';
   }
-  
+
   // Check cloud coverage
   if (clouds >= 75) return '04n.svg'; // Overcast/broken clouds
   if (clouds >= 50) return '03n.svg'; // Scattered clouds  
   if (clouds >= 25) return '02n.svg'; // Few clouds
-  
+
   // Check for fog/mist
-  if (condition.toLowerCase().includes('mist') || 
-      condition.toLowerCase().includes('fog') || 
-      (weatherData.visibility && weatherData.visibility < 5000)) {
+  if (condition.toLowerCase().includes('mist') ||
+    condition.toLowerCase().includes('fog') ||
+    (weatherData.visibility && weatherData.visibility < 5000)) {
     return '50n.svg';
   }
-  
+
   return '01n.svg'; // Clear night
 };
 
@@ -275,6 +276,44 @@ function toISOIfISOish(s?: string) {
   return Number.isFinite(d.getTime()) ? d.toISOString() : undefined;
 }
 
+// Pick the first hourly record that matches a given local hour (0-23)
+function getHourAtLocal(weatherData: any, targetHourLocal: number) {
+  if (!Array.isArray(weatherData?.hourly)) return null;
+  const hourly = weatherData.hourly as any[];
+  // Use browser local time for now (same logic as existing midnight helper)
+  const hit = hourly.find((h) => new Date(h.dt * 1000).getHours() === targetHourLocal);
+  return hit || null;
+}
+
+// Build a concise night summary preferring OW daily-night description + 23:00 values
+function buildNightSummary(weatherData: any, tonight: any) {
+  const hour23 = getHourAtLocal(weatherData, 23);
+  const midnight = getMidnightWeather(weatherData);
+  const hourPick = hour23 || midnight || null;
+
+  const nightDesc = weatherData?.daily?.[0]?.weather?.[0]?.description
+    ?? hourPick?.weather?.[0]?.description
+    ?? '';
+
+  const tempC = (typeof hour23?.temp === 'number')
+    ? hour23.temp
+    : (typeof midnight?.temp === 'number' ? midnight.temp : undefined);
+
+  const windMs = (typeof hour23?.wind_speed === 'number')
+    ? hour23.wind_speed
+    : (typeof midnight?.wind_speed === 'number' ? midnight.wind_speed : 0);
+
+  const visibility = (typeof hourPick?.visibility === 'number')
+    ? hourPick.visibility
+    : (typeof weatherData?.visibility === 'number' ? weatherData.visibility : undefined);
+
+  const rainMm = (typeof weatherData?.daily?.[0]?.rain === 'number')
+    ? weatherData.daily[0].rain
+    : (typeof hourPick?.rain === 'number' ? hourPick.rain : 0);
+
+  return { desc: nightDesc, tempC, windMs, visibility, rainMm };
+}
+
 const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {}, weatherData }) => {
 
   // Stable moon lore selection
@@ -293,7 +332,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 
   // Defensive: always call hooks at top level, now pass sunrise/sunset for night time logic
   // We'll use tonight.sun.sunrise/sunset if available, else undefined
-  const [sunTimes, setSunTimes] = useState<{sunrise?: string, sunset?: string}>({});
+  const [sunTimes, setSunTimes] = useState<{ sunrise?: string, sunset?: string }>({});
   useEffect(() => {
     if (highlights && highlights.length > 0 && highlights[0].sun) {
       setSunTimes({
@@ -356,12 +395,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   useEffect(() => {
     if (tonight?.moon?.phaseName) {
       // Normalize phase name to match enum keys
-      let phaseKey = tonight.moon.phaseName.toLowerCase().replace(/\s+/g, '_');
-      if (phaseKey === 'new_moon' || phaseKey === 'newmoon') phaseKey = 'new';
-      const loreItem = getRandomMoonLore(phaseKey as MoonPhase);
-      if (loreItem) {
-        setMoonLoreText(loreItem.text);
-        setMoonLoreTitle(loreItem.title);
+      const phaseKey = tonight.moon.phaseName.toLowerCase().replace(/\s+/g, '_');
+      const { item } = getMoonLoreDistinct(phaseKey as MoonPhase);
+
+      if (item) {
+        setMoonLoreText(item.text);
+        setMoonLoreTitle(item.title);
       } else {
         setMoonLoreText(undefined);
         setMoonLoreTitle(undefined);
@@ -461,8 +500,8 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   // Defensive: primary event
   const eventsArr = Array.isArray(tonight.events) ? tonight.events : [];
   const primaryEvent = eventsArr.find(e => e.type === 'eclipse') ||
-                      eventsArr.find(e => e.type === 'meteor_shower') ||
-                      eventsArr[0];
+    eventsArr.find(e => e.type === 'meteor_shower') ||
+    eventsArr[0];
 
   // Defensive: stargazing score
   const moonIllum = typeof tonight.moon.illumination === 'number' ? tonight.moon.illumination : 0;
@@ -507,25 +546,24 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <h3 className="date-label">Tonight's Sky</h3>
             {/* Astronomy header details: temp, condition, wind - styled as in day cards */}
             <div className="astro-header-details card__header-details">
-<span className="temperature-label">
-  &nbsp;{typeof nightTemp === 'number' ? Math.round(nightTemp) : '--'}°
-  {nightDescription ? ` ${nightDescription}` : ''}
-  <WindIcon windMs={
-    typeof weatherData?.wind_speed === 'number'
-      ? weatherData.wind_speed
-      : typeof midnightWeather?.wind_speed === 'number'
-      ? midnightWeather.wind_speed / 3.6
-      : typeof currentWeather?.wind_speed === 'number'
-      ? currentWeather.wind_speed / 3.6
-      : 0
-  } />
-</span>
+              <span className="temperature-label">
+                {(() => {
+                  const ns = buildNightSummary(weatherData, tonight);
+                  const t = (typeof ns.tempC === 'number') ? Math.round(ns.tempC) : null;
+                  return (
+                    <>
+                      &nbsp;{t !== null ? t : '--'}°{ns.desc ? ` ${ns.desc}` : ''}
+                      <WindIcon windMs={ns.windMs || 0} />
+                    </>
+                  );
+                })()}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Hero activity section - astronomy event or stargazing */}
-        <div className="card__hero-activity">
+        <div className="card__hero-activity" style={{ position: 'relative', alignItems: 'center' }}>
           <div className="card__hero-icon">
             <img
               src={`/weather-icons/design/fill/final/${astronomyIcon}`}
@@ -534,186 +572,151 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
               loading="lazy"
             />
           </div>
-          <div className="card__hero-title">
-            <div className="card__hero-name outdoor">
+          <div className="card__hero-title" style={{ zIndex: 2, paddingRight: 48 }}>
+            <div className="card__hero-name outdoor" style={{ paddingRight: 12 }}>
               {primaryEvent ? primaryEvent.name : 'Stargazing'}
             </div>
             <div className="card__hero-message">
-              {primaryEvent ? 'Special event tonight' : `${Math.round(stargazingScore)}% visibility`}
+              {primaryEvent ? 'Do look up!' : `${Math.round(stargazingScore)}% visibility`}
             </div>
           </div>
           <div
             className="card__score-badge"
-            style={{ background: 'transparent' }}
+            style={{
+              background: 'transparent',
+              position: 'absolute',
+              right: -30,
+              top: -18,
+              zIndex: 1
+            }}
           >
             <img
               src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
               alt={tonight.moon.phaseName}
-              style={{ width: 80, height: 80 }}
+              style={{ width: 140, height: 140 }}
               loading="lazy"
             />
           </div>
         </div>
 
-        {/* Data bars section - astronomy and weather specific */}
-        <div className="data-bars">
-          {/* Moon illumination bar */}
-          <div className="weather-data-bar">
-            <div className="weather-data-label">
-              <span className="data-icon">🌙</span>
-              <span>Moon</span>
-            </div>
-            <div className="weather-data-content">
-              <div className="weather-data-value">{tonight.moon.illumination}%</div>
-              <div className="weather-data-bar-visual">
-                <div 
-                  className="weather-data-bar-fill" 
-                  style={{ 
-                    width: `${tonight.moon.illumination}%`,
-                    background: tonight.moon.illumination < 30 ? '#10b981' : tonight.moon.illumination < 70 ? '#fbbf24' : '#ef4444'
-                  }}
-                />
-              </div>
-            </div>
+        {/* Compact night data grid (two items per row) */}
+        <div className="astro-grid">
+          {/* Row 1: Moon %  |  Rain */}
+          <div className="item">
+            <img
+              src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
+              alt="Moon phase"
+              style={{ width: 25, height: 25 }}
+            />
+            <span>Moon {tonight.moon.illumination}%</span>
+          </div>
+          <div className="item">
+            <img src="/weather-icons/design/fill/final/raindrop.svg" alt="rain" style={{ width: 25, height: 25 }} />
+            <span>
+              {(() => { const ns = buildNightSummary(weatherData, tonight); return `Rain ${Math.round((ns.rainMm || 0))}mm`; })()}
+            </span>
           </div>
 
+          {/* Row 2: Clouds   |  Visibility */}
+          <div className="item">
+            <img
+              src="/weather-icons/design/fill/final/overcast-night-fog.svg"
+              alt="Clouds"
+              style={{ width: 25, height: 25 }}
+            />
+            <span>
+              {typeof weatherData?.clouds === 'number' ? `Clouds ${weatherData.clouds}%` : 'Clouds —'}
+            </span>
+          </div>
+          <div className="item">
+            <img
+              src="/weather-icons/design/fill/final/haze-night.svg"
+              alt="Visibility"
+              style={{ width: 25, height: 25 }}
+            />
+            <span>
+              {(() => {
+                const ns = buildNightSummary(weatherData, tonight);
+                const km = typeof ns.visibility === 'number' ? Math.round(ns.visibility / 1000) : null;
+                return `Visibility ${km !== null ? km + 'km' : '—'}`;
+              })()}
+            </span>
+          </div>
 
-          {/* Cloud cover bar */}
-          {weatherData?.clouds !== undefined && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">☁️</span>
-                <span>Clouds</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{weatherData.clouds}%</div>
-                <div className="weather-data-bar-visual">
-                  <div 
-                    className="weather-data-bar-fill" 
-                    style={{ 
-                      width: `${weatherData.clouds}%`,
-                      background: weatherData.clouds < 30 ? '#10b981' : weatherData.clouds < 70 ? '#fbbf24' : '#ef4444'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Row 3: Sunset   |  Sunrise */}
+          <div className="item">
+            <img src="/weather-icons/design/fill/final/sunset.svg" alt="sunset" style={{ width: 25, height: 25 }} />
+            <span>Sunset {tonight.sun.sunset ?? '—'}</span>
+          </div>
+          <div className="item">
+            <img src="/weather-icons/design/fill/final/sunrise.svg" alt="sunrise" style={{ width: 25, height: 25 }} />
+            <span>Sunrise {tonight.sun.sunrise ?? '—'}</span>
+          </div>
 
-          {/* Visibility bar */}
-          {weatherData?.visibility && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">👁️</span>
-                <span>Visibility</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{Math.round(weatherData.visibility / 1000)}km</div>
-                <div className="weather-data-bar-visual">
-                  <div 
-                    className="weather-data-bar-fill" 
-                    style={{ 
-                      width: `${Math.min(100, (weatherData.visibility / 10000) * 100)}%`,
-                      background: weatherData.visibility > 8000 ? '#10b981' : weatherData.visibility > 5000 ? '#fbbf24' : '#ef4444'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Row 4: Moonrise |  Moonset */}
+          <div className="item">
+            <img src="/weather-icons/design/fill/final/moonrise.svg" alt="moonrise" style={{ width: 25, height: 25 }} />
+            <span>Moonrise {tonight.moon.rise ?? '—'}</span>
+          </div>
+          <div className="item">
+            <img src="/weather-icons/design/fill/final/moonset.svg" alt="moonset" style={{ width: 25, height: 25 }} />
+            <span>Moonset {tonight.moon.set ?? '—'}</span>
+          </div>
 
-          {/* Sunset time */}
-          {tonight.sun.sunset && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <img
-                  src="/weather-icons/design/fill/final/sunset.svg"
-                  alt="sunset"
-                  style={{ width: 16, height: 16 }}
-                />
-                <span>Sunset</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{tonight.sun.sunset}</div>
-              </div>
-            </div>
-          )}
+          {/* Row 5: Event    |  Best viewing */}
+          <div className="item">
+            <img
+              src="/weather-icons/design/fill/final/falling-stars.svg"
+              alt="Event"
+              style={{ width: 25, height: 25 }}
+            />
+            <span>{primaryEvent ? primaryEvent.name : '—'}</span>
+          </div>
+          <div className="item">
 
-          {/* Moonrise and Moonset bars */}
-          {(tonight.moon.rise || tonight.moon.set) && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <img
-                  src="/weather-icons/design/fill/final/moonrise.svg"
-                  alt="moonrise"
-                  style={{ width: 16, height: 16, marginRight: 4 }}
-                />
-                <span>Moonrise</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{tonight.moon.rise ?? '--'}</div>
-              </div>
-            </div>
-          )}
-          {(tonight.moon.set) && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <img
-                  src="/weather-icons/design/fill/final/moonset.svg"
-                  alt="moonset"
-                  style={{ width: 16, height: 16, marginRight: 4 }}
-                />
-                <span>Moonset</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{tonight.moon.set}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Special events */}
-          {primaryEvent && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">✨</span>
-                <span>Event</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{primaryEvent.name}</div>
-                {primaryEvent.bestTime && (
-                  <div className="weather-data-subtitle">Best viewing {primaryEvent.bestTime}</div>
-                )}
-              </div>
-            </div>
-          )}
+            <span>
+              {primaryEvent?.bestTime
+                ? `Best viewing ${primaryEvent.bestTime}`
+                : (tonight.darkWindow?.start && tonight.darkWindow?.end
+                  ? (() => {
+                    const s = new Date(tonight.darkWindow.start);
+                    const e = new Date(tonight.darkWindow.end);
+                    const fmt = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                    return `Best viewing ${fmt(s)}-${fmt(e)}`;
+                  })()
+                  : 'Best viewing —')}
+            </span>
+          </div>
         </div>
 
         {/* Moon folklore section - stable moon lore below weather bars */}
-        
-<div className="moon-lore mt-4">
-  <h4 className={`${indieFlower.className} font-bold text-lg leading-snug mb-1`}>
-    {tonight?.moon?.phaseName
-      ? `${tonight.moon.phaseName.replace(/_/g, ' ')} Moon Folklore${moonLoreTitle ? ' - ' + moonLoreTitle : ''}`
-      : 'Moon Folklore'}
-  </h4>
-  <p className={`${indieFlower.className} opacity-90`} style={{ marginTop: 0 }}>
-    {moonLoreText ?? 'No lore available for this phase.'}
-  </p>
-</div>
-
-        {/* Astronomy message section - formatted similarly to moon lore */}
-        <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '16px 0', fontSize: '0.9rem' }}>
-          <strong>🔭 Astronomy 🌖utlook</strong>
-          <br />
-          {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
+        <div className="moon-lore mt-3">
+          <h4 className={`${indieFlower.className} font-bold text-lg leading-snug mb-0.5`}>
+            {tonight?.moon?.phaseName
+              ? `${tonight.moon.phaseName.replace(/_/g, ' ')} Moon Folklore${moonLoreTitle ? ' - ' + moonLoreTitle : ''}`
+              : 'Moon Folklore'}
+          </h4>
+          <p className={`${indieFlower.className} opacity-90 mt-0`}>
+            {moonLoreText ?? 'No lore available for this phase.'}
+          </p>
         </div>
 
-        {/* Best sky window hint: only show concise time window message */}
-        {clearestSkiesMsg && (
-          <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '4px 0 12px', opacity: 0.9, fontSize: '0.85rem' }}>
-            <span style={{ fontStyle: 'italic' }}>{clearestSkiesMsg}</span>
-          </div>
-        )}
+       <div className="astronomy-message" style={{ margin: '14px 0' }}>
+  <div className={`${oxanium.className} text-base font-semibold mb-1 astro-heading`}>
+    🔭 Astronomy Outlook
+  </div>
+  <div className={`${oxanium.className} text-xs font-normal astro-body`}>
+    {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
+  </div>
+</div>
+
+{clearestSkiesMsg && (
+  <div className="astronomy-message" style={{ margin: '4px 0 12px', opacity: 0.9 }}>
+    <span className={`${oxanium.className} text-sm italic astro-body`}>
+      {clearestSkiesMsg}
+    </span>
+  </div>
+)}
 
         {/* ISS sighting note - only if visible tonight */}
         {/* Next ISS pass tonight (first after sunset) */}
@@ -727,9 +730,6 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 
 // Helper component: fetch and show next ISS pass tonight
 const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }> = ({ lat, lon, sunsetISO }) => {
-  // Import the helper
-  // ...existing imports...
-  // import { describeIssPass } from '../utils/issHelper';
   const [pass, setPass] = useState<{ risetime?: string; duration?: number; mag?: number; maxEl?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -769,13 +769,13 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   }, [lat, lon, sunsetISO]);
   if (loading) return null;
   if (error) {
-    // Friendlier message for no pass found
+    // Ricky Gervais style friendly message
     const friendlyMsg = error === 'No ISS pass found after sunset'
-      ? 'No visible ISS pass tonight for your location. Try again tomorrow!'
-      : `ISS sighting info unavailable: ${error}`;
+      ? "No ISS fly‑by tonight. It’s not ghosting you, it’s just busy orbiting the planet. Try again tomorrow, or go and shout at Elon Musk, it's probably his fault."
+      : `ISS sighting info unavailable: ${error}. Probably some bloke spilled tea on the server. Typical.`;
     return (
-      <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444', fontSize: '0.85rem' }}>
-        <span style={{ fontWeight: 500 }}>
+      <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444' }}>
+        <span className={`${oxanium.className} text-xs font-normal`}>
           {friendlyMsg}
         </span>
       </div>
@@ -793,21 +793,21 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
     sunset: '', // not needed for summary
     nextSunrise: '' // not needed for summary
   };
-  // Import describeIssPass at the top of the file:
-  // import { describeIssPass } from '../utils/issHelper';
-  // If not already imported, add it.
-  // Render the summary
+  // Render the summary, using the correct image path for ISS icon
   return (
-    <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-      <img
-        src="/satellite_iss.png"
-        alt="ISS icon"
-        style={{ width: 28, height: 28, verticalAlign: 'middle', filter: 'drop-shadow(0px 0px 2px #fff)' }}
-        loading="lazy"
-      />
-      <span style={{ fontWeight: 500 }}>
-        {describeIssPass(issData)}
-      </span>
+    <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.95 }}>
+      <div className={`${oxanium.className} text-base font-semibold mb-1`} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <img
+          src="/satellite_iss.png"
+          alt="ISS icon"
+          style={{ width: 28, height: 28, verticalAlign: 'middle', filter: 'drop-shadow(0px 0px 2px #fff)' }}
+          loading="lazy"
+        />
+        <span>International Space Station</span>
+      </div>
+      <div className={`${oxanium.className} text-xs font-normal astro-body`}>
+  {describeIssPass(issData)}
+</div>
     </div>
   );
 };

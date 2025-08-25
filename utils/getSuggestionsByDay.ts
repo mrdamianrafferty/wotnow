@@ -79,80 +79,6 @@ function toLevel(score: number): SuitabilityLevel | 'poor' {
 }
 
 // Unified scoring function
-// --- Weather normalization copied from weatherService.ts ---
-// TODO: Unify this logic into a shared utility for both files
-function normalizeWeatherFields(weather: any, fallbackWeather?: any, marineWeather?: any, isMarine?: boolean) {
-  // Helper to pick first valid value from sources
-  function pickField(fieldPaths: string[][], sources: any[]) {
-    for (let i = 0; i < fieldPaths.length; i++) {
-      const value = fieldPaths[i].reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), sources[i]);
-      if (value !== undefined && value !== null) return value;
-    }
-    return null;
-  }
-  // Source order: marine or land
-  const sources = isMarine
-    ? [marineWeather, weather, fallbackWeather]
-    : [weather, fallbackWeather, marineWeather];
-  return {
-    temperature: pickField([
-      ['temperature'],
-      ['temp'],
-      ['temperature']
-    ], sources),
-    precipitation: pickField([
-      ['precipitation'],
-      ['rain'],
-      ['precipitation']
-    ], sources),
-    windSpeed: pickField([
-      ['windspeed'],
-      ['windSpeed'],
-      ['wind_speed']
-    ], sources),
-    clouds: pickField([
-      ['clouds'],
-      ['cloudcover'],
-      ['cloudCover']
-    ], sources),
-    humidity: pickField([
-      ['humidity'],
-      ['humidity'],
-      ['humidity']
-    ], sources),
-    visibility: pickField([
-      ['visibility'],
-      ['visibility'],
-      ['visibility']
-    ], sources),
-    waterTemperature: pickField([
-      ['waterTemperature'],
-      ['waterTemp'],
-      ['waterTemperature']
-    ], sources),
-    waveHeight: pickField([
-      ['waveHeight'],
-      ['wave_height'],
-      ['waveHeight']
-    ], sources),
-    swellHeight: pickField([
-      ['swellHeight'],
-      ['swell_height'],
-      ['swellHeight']
-    ], sources),
-    swellPeriod: pickField([
-      ['swellPeriod'],
-      ['swell_period'],
-      ['swellPeriod']
-    ], sources),
-    sunsetTs: pickField([
-      ['sunsetTs'],
-      ['sunset'],
-      ['sunsetTs']
-    ], sources),
-  };
-}
-
 function calculateActivityScore(
   activity: ActivityType,
   weather: WeatherData,
@@ -163,6 +89,7 @@ function calculateActivityScore(
 ): number {
   console.log(`🎯 Scoring ${activity.id}...`);
   console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
+  
   // Indoor activities: low daytime, boosted in evening
   if (!activity.weatherSensitive) {
     let score = 45;
@@ -172,13 +99,19 @@ function calculateActivityScore(
     return Math.min(95, Math.round(score));
   }
 
-  // Use normalization logic (for now, fallbackWeather and marineWeather are not passed, so only weather is used)
-  // TODO: Pass additional sources if available
-  const w = normalizeWeatherFields(weather);
-  // Convert windSpeed to m/s if in km/h
-  w.windSpeed = w.windSpeed ? w.windSpeed / 3.6 : 0;
-  // Visibility fallback and normalization
-  w.visibility = (w.visibility ?? 10000) / 1000;
+  // Normalize weather
+  const w = {
+    temperature: weather.temperature,
+    precipitation: weather.precipitation,
+    windSpeed: weather.windspeed ? weather.windspeed / 3.6 : 0, // Convert km/h back to m/s for activity conditions
+    clouds: weather.clouds,
+    humidity: weather.humidity,
+    visibility: (weather.visibility ?? 10000) / 1000,
+    waterTemperature: weather.waterTemperature,
+    waveHeight: weather.waveHeight,
+    swellHeight: weather.swellHeight,
+    swellPeriod: weather.swellPeriod,
+  };
 
   console.log(`🌤️ ${activity.id} normalized weather:`, JSON.stringify(w, null, 2));
 

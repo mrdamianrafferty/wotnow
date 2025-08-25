@@ -49,7 +49,6 @@ interface WeatherData {
   precipitation?: number;
   beachOrientation?: number;
   icon?: string;
-  uvi?: number;
 }
 
 type Category = 'perfect' | 'good' | 'fair' | 'poor';
@@ -68,6 +67,8 @@ interface PopupProps {
   dayTimestamp?: number;
   pollen?: PollenSummary;
   airQuality?: AirQualitySummary;
+  isEnvironmentalDataStale?: boolean;
+  environmentalDataLastUpdated?: Date; // timestamp when the environmental data was last updated
 }
 
 // ---- WhatsApp/Web Share helpers (inline; no new files) ----
@@ -233,6 +234,8 @@ const Popup: React.FC<PopupProps> = ({
   dayTimestamp,
   pollen,
   airQuality,
+  isEnvironmentalDataStale,
+  environmentalDataLastUpdated,
 }) => {
   const [tideData, setTideData] = useState<{
     nextHighTide?: { time: string; height: number };
@@ -244,17 +247,11 @@ const Popup: React.FC<PopupProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const popupRef = useRef<HTMLDivElement | null>(null);
 
-  // Render marine block if marineData exists (even if some fields missing)
-  const isMarine = !!marineData;
-  const hasMarineData = isMarine && (
-    marineData.waveHeight !== undefined ||
-    marineData.waterTemperature !== undefined ||
-    marineData.swellHeight !== undefined ||
-    marineData.swellPeriod !== undefined ||
-    marineData.windSpeed !== undefined ||
-    marineData.gust !== undefined ||
-    marineData.vis !== undefined
-  );
+  const isMarine = !!marineData && Object.keys(marineData).length > 1;
+  const hasMarineData =
+    isMarine &&
+    marineData?.waveHeight !== undefined &&
+    marineData?.waterTemperature !== undefined;
   const emoji = getActivityEmoji(activityId);
   
   // Smart background image loading with WebP optimization
@@ -294,16 +291,11 @@ const Popup: React.FC<PopupProps> = ({
   
   const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
   
-  // Determine if this activity should show pollen warnings
-  // Exclude marine, winter, and indoor activities as specified
+  // These variables are kept for reference but no longer used to restrict display
+  // since we now show environmental data for all activity types where available
   const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice_skating', 'sledding'];
   const isWinterActivity = winterActivities.includes(activityId);
   const isIndoorActivity = !isOutdoor(activityId);
-  const shouldShowPollenWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
-  
-  // Determine if this activity should show air quality warnings
-  // Use same exclusion logic as pollen
-  const shouldShowAirQualityWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
 
   // --- Orientation (OSM-backed) ---
   const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
@@ -453,6 +445,33 @@ const handleDownload = async () => {
   // Build classes/styles for the content export area
   const exportClass = `popup__export-area${isExporting ? ' popup__exporting' : ''}`;
 
+  // Check if we have pollen or air quality data for a date beyond the Open-Meteo max date
+  // The current date is 2025-08-25, and Open-Meteo max date is 2025-08-24
+  const currentDate = new Date();
+  const OPEN_METEO_MAX_DATE = new Date('2025-08-24');
+  const isEnvironmentalDataStaleComputed = currentDate > OPEN_METEO_MAX_DATE;
+  
+  // Use the passed prop if available, otherwise use the computed value
+  const useStaleDataFlag = isEnvironmentalDataStale !== undefined ? isEnvironmentalDataStale : isEnvironmentalDataStaleComputed;
+  
+  // Convert the timestamp string to a Date object if needed
+  const lastUpdatedDate = environmentalDataLastUpdated instanceof Date 
+    ? environmentalDataLastUpdated 
+    : (typeof environmentalDataLastUpdated === 'string' ? new Date(environmentalDataLastUpdated) : undefined);
+
+  // Debug the environmental data
+  useEffect(() => {
+    if (pollen || airQuality) {
+      console.log('Popup received environmental data:');
+      console.log('- Pollen:', pollen);
+      console.log('- Air Quality:', airQuality);
+      console.log('- Is stale data:', useStaleDataFlag);
+      console.log('- Last updated:', lastUpdatedDate);
+    } else {
+      console.log('Popup did NOT receive any environmental data');
+    }
+  }, [pollen, airQuality, useStaleDataFlag, lastUpdatedDate]);
+
   return (
     <div className="popup" onClick={onClose}>
       <div
@@ -478,9 +497,8 @@ const handleDownload = async () => {
           {(marineData || weatherData) && (
             <section className="popup__weather-bar">
               <ul>
-                {isMarine && hasMarineData && marineData && (
+                {isMarine && marineData && (
                   <>
-                    {/* Air temperature */}
                     {typeof weatherData?.temperature === 'number' && (
                       <li>
                         <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
@@ -488,48 +506,13 @@ const handleDownload = async () => {
                         <strong>{weatherData.temperature.toFixed(1)}°</strong>
                       </li>
                     )}
-                    {/* Water temperature (robust fallback for field names) */}
-                    {(() => {
-                      const temp =
-                        typeof marineData.waterTemperature === 'number' ? marineData.waterTemperature :
-                        typeof marineData.waterTemp === 'number' ? marineData.waterTemp :
-                        typeof marineData.sst === 'number' ? marineData.sst : null;
-                      if (temp == null) return null;
-                      let key = '';
-                      if (temp < 10) {
-                        key = 'Very Cold / Dangerous: Immediate cold shock risk; hypothermia within minutes. Only for trained/drysuit users.';
-                      } else if (temp < 16) {
-                        key = 'Cold: Wetsuit strongly recommended. Cold shock possible; hypothermia within 30–60 mins.';
-                      } else if (temp < 20) {
-                        key = 'Cool: Bracing for swimming; wetsuit advised for long sessions. Comfortable for surfing/kayaking in gear.';
-                      } else if (temp < 24) {
-                        key = 'Mild / Comfortable: Good for most swimmers without wetsuits; pleasant for water sports.';
-                      } else if (temp < 28) {
-                        key = 'Warm: Very comfortable for swimming and sport. Little thermal stress.';
-                      } else {
-                        key = 'Hot / Tropical: Comfortable but can feel overheated during exertion. Monitor hydration and sun risk.';
-                      }
-                      return (
-                        <li>
-                          <img
-                            src="/weather-icons/design/fill/final/thermometer-water.svg"
-                            alt="Water temperature"
-                            style={{ width: 24, height: 24, verticalAlign: 'middle' }}
-                            title={`Sea Water: ${temp.toFixed(1)}°C\n${key}`}
-                          />{' '}
-                          <strong>{temp.toFixed(1)}°</strong>
-                        </li>
-                      );
-                    })()}
-                    {/* Humidity */}
-                    {typeof weatherData?.humidity === 'number' && (
+                    {typeof marineData.waterTemperature === 'number' && (
                       <li>
-                        <img src={humidityIcon} alt="Humidity"
+                        <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
                              style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
-                        <strong>{weatherData.humidity}%</strong>
+                        <strong>{marineData.waterTemperature.toFixed(1)}°</strong>
                       </li>
                     )}
-                    {/* Weather icon/description/precipitation */}
                     {weatherData?.icon && (
                       <li>
                         <img src={getWeatherIconUrl(weatherData.icon)}
@@ -546,130 +529,23 @@ const handleDownload = async () => {
                         )}
                       </li>
                     )}
-                    {/* Wave height */}
                     {typeof marineData.waveHeight === 'number' && (
                       <li>
-                        {(() => {
-                          const wave = marineData.waveHeight;
-                          let key = '';
-                          if (wave <= 0.5) {
-                            key = 'Calm: Safe for swimming, kids, casual paddle sports.';
-                          } else if (wave <= 1.0) {
-                            key = 'Choppy / Manageable: Fun for confident swimmers, bodyboarders; tiring for casual bathers.';
-                          } else if (wave <= 2.0) {
-                            key = 'Strong surf: Powerful waves; risky for swimmers, good for experienced surfers.';
-                          } else if (wave <= 3.0) {
-                            key = 'Heavy surf / Hazardous: Dangerous for swimming; only skilled surfers or sport with safety cover.';
-                          } else {
-                            key = 'Extreme seas: Unsafe for general recreation; specialist conditions only.';
-                          }
-                          return (
-                            <span
-                              title={`Wave Height: ${wave.toFixed(1)}m\n${key}`}
-                              style={{ display: 'inline-flex', alignItems: 'center' }}
-                            >
-                              🌊 <strong>{wave.toFixed(1)}</strong>m
-                            </span>
-                          );
-                        })()}
+                        🌊 <strong>{marineData.waveHeight.toFixed(1)}</strong>m
                       </li>
                     )}
-                    {/* Swell height */}
-                    {typeof marineData.swellHeight === 'number' && (
-                      <li>
-                        {(() => {
-                          const swell = marineData.swellHeight;
-                          let key = '';
-                          if (swell < 0.5) {
-                            key = 'Flat / Tiny: Barely surfable, calm seas; ideal for swimming, kayaking, SUP.';
-                          } else if (swell < 1.5) {
-                            key = 'Small / Fun: Good for beginners in surfing/bodyboarding; comfortable sailing and swimming.';
-                          } else if (swell < 2.5) {
-                            key = 'Medium / Powerful: Quality surf for intermediates; challenging for casual sea sports. Strong rips possible.';
-                          } else if (swell < 4.0) {
-                            key = 'Large / Heavy: Advanced surfing only; hazardous for swimming and small craft.';
-                          } else {
-                            key = 'Very Large / Extreme: Big-wave surfing, storm seas; unsafe for general recreation.';
-                          }
-                          return (
-                            <span
-                              title={`Swell Height: ${swell.toFixed(1)}m\n${key}`}
-                              style={{ display: 'inline-flex', alignItems: 'center' }}
-                            >
-                              🏄🏿‍♀️ Swell: <strong>{swell.toFixed(1)}</strong>m{' '}
-                              {typeof marineData.swellDir === 'number' && <SwellArrow deg={marineData.swellDir} />}
-                            </span>
-                          );
-                        })()}
-                      </li>
-                    )}
-                    {/* Swell period */}
-                    {typeof marineData.swellPeriod === 'number' && (
-                      <li>
-                        {(() => {
-                          const period = marineData.swellPeriod;
-                          let key = '';
-                          if (period < 5) {
-                            key = 'Wind chop: Short, messy, low-power waves. Poor for surfing; safe but uncomfortable for swimming/boating.';
-                          } else if (period < 8) {
-                            key = 'Short swell / Choppy: Small, weak surf; okay for beginners on soft boards. Bumpy for small craft.';
-                          } else if (period < 12) {
-                            key = 'Medium period: Decent surf potential; waves carry more push. Noticeable set waves for surfers, moderate rolling seas for sailing.';
-                          } else if (period < 16) {
-                            key = 'Long period / Ground swell: Powerful, organised waves. Great for surfing, but beach breaks become much heavier. Strong rips likely.';
-                          } else {
-                            key = 'Very long period / Big-wave energy: Extremely powerful waves even if swell height looks modest. Big surf conditions, challenging and dangerous for most users.';
-                          }
-                          return (
-                            <span
-                              title={`Wave Period: ${period.toFixed(1)}s\n${key}`}
-                              style={{ display: 'inline-flex', alignItems: 'center' }}
-                            >
-                              ⏲ <strong>{period.toFixed(1)}</strong>s
-                            </span>
-                          );
-                        })()}
-                      </li>
-                    )}
-                    {/* Wind speed, gust, direction, orientation advice */}
                     {typeof marineData.windSpeed === 'number' && (
                       <li>
-                        {(() => {
-                          const windMs = marineData.windSpeed;
-                          const beaufort = getBeaufortNumber(windMs);
-                          // Beaufort descriptions
-                          const beaufortDescriptions = [
-                            'Calm: Smoke rises vertically.', // 0
-                            'Light Air: Ripples, leaves still.', // 1
-                            'Light Breeze: Leaves rustle, wind felt on face.', // 2
-                            'Gentle Breeze: Leaves and twigs in motion.', // 3
-                            'Moderate Breeze: Raises dust, small branches move.', // 4
-                            'Fresh Breeze: Small trees sway.', // 5
-                            'Strong Breeze: Large branches move, whistling in wires.', // 6
-                            'Near Gale: Whole trees in motion.', // 7
-                            'Gale: Twigs break off trees.', // 8
-                            'Strong Gale: Slight structural damage.', // 9
-                            'Storm: Trees uprooted, damage.', // 10
-                            'Violent Storm: Widespread damage.', // 11
-                            'Hurricane: Severe damage.', // 12
-                          ];
-                          const windDesc = beaufortDescriptions[Math.max(0, Math.min(beaufort, 12))];
-                          return (
-                            <img
-                              src={getWindIcon(windMs)}
-                              alt={`Wind: Beaufort ${beaufort}`}
-                              style={{
-                                width: 28,
-                                height: 28,
-                                verticalAlign: 'middle',
-                                filter: windIconNeedsGlow(windMs)
-                                  ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))'
-                                  : 'none',
-                              }}
-                              title={`Beaufort ${beaufort}: ${windDesc}`}
-                            />
-                          );
-                        })()}{' '}
+                        <img src={getWindIcon(marineData.windSpeed)}
+                             alt="Wind" style={{ 
+                               width: 28, 
+                               height: 28, 
+                               verticalAlign: 'middle',
+                               // Only add glow for numbered Beaufort icons (not windsock)
+                               filter: windIconNeedsGlow(marineData.windSpeed) 
+                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
+                                 : 'none'
+                             }} />{' '}
                         <strong>{Math.round(mpsToKnots(marineData.windSpeed))}</strong>knots
                         {typeof marineData.gust === 'number' && <> (gust {mpsToKnots(marineData.gust).toFixed(1)} knots)</>}
                         {(() => {
@@ -684,33 +560,41 @@ const handleDownload = async () => {
                             : (typeof resolvedOrientation === 'number' ? resolvedOrientation : (
                                 coastalLocation ? computeSimulatedOrientation(coastalLocation.lat, coastalLocation.lon) : undefined
                               ));
-                          return typeof dir === 'number' ? (() => {
-                            const rel = classifyWindRelative(orient, dir);
-                            let advice = '';
-                            if (rel === 'onshore') {
-                              advice = 'Onshore wind (towards land): Pushes waves into the beach, making the sea choppy and breaking early. Safer for swimmers (drifts you landward) but can create strong rips. Surfers get messy, low-quality waves.';
-                            } else if (rel === 'offshore') {
-                              advice = 'Offshore wind (out to sea): Holds waves up, creating clean, well-shaped surf. Surfers love it, but swimmers and small craft risk being blown out. Strong offshore winds can be dangerous even close to shore.';
-                            } else if (rel === 'cross-shore') {
-                              advice = 'Cross-shore wind (along the coast): Blows parallel to the beach, pushing swimmers sideways. Can make surf crumbly and less predictable. Small boats and SUPs constantly fight drift.';
-                            }
-                            return (
-                              <span title={advice} style={{ marginLeft: 6 }}>
-                                <WindDirectionIcon deg={dir} />{' '}
-                                <span style={{ fontWeight: 600 }}>{getCompassDirection(dir)}</span>{' '}
-                                ({rel})
-                                {orientationVia && orientationVia !== 'computed' && (
-                                  <em style={{ marginLeft: 6, opacity: 0.75 }}>
-                                    ({orientationVia === 'simulated' ? 'sim' : orientationVia})
-                                  </em>
-                                )}
+                          return typeof dir === 'number' ? (
+                            <>
+                              {' '}
+                              <WindDirectionIcon deg={dir} />
+                              {' '}
+                              <span style={{ fontWeight: 600 }}>
+                                {getCompassDirection(dir)}
                               </span>
-                            );
-                          })() : null;
+                              {typeof orient === 'number' && (
+                                <>
+                                  {' '}
+                                  <span>({classifyWindRelative(orient, dir)})</span>
+                                  {orientationVia && orientationVia !== 'computed' && (
+  <em style={{ marginLeft: 6, opacity: 0.75 }}>
+    ({orientationVia === 'simulated' ? 'sim' : orientationVia})
+  </em>
+)}
+                                </>
+                              )}
+                            </>
+                          ) : null;
                         })()}
                       </li>
                     )}
-                    {/* Visibility */}
+                    {typeof marineData.swellHeight === 'number' && (
+                      <li>
+                        🏄🏿‍♀️ Swell: <strong>{marineData.swellHeight.toFixed(1)}</strong>m{' '}
+                        {typeof marineData.swellDir === 'number' && <SwellArrow deg={marineData.swellDir} />}
+                      </li>
+                    )}
+                    {typeof marineData.swellPeriod === 'number' && (
+                      <li>
+                        ⏲ <strong>{marineData.swellPeriod.toFixed(1)}</strong>s
+                      </li>
+                    )}
                     {typeof marineData.vis === 'number' && (
                       <li>
                         👀<strong>
@@ -720,7 +604,6 @@ const handleDownload = async () => {
                         </strong>km
                       </li>
                     )}
-                    {/* Tides */}
                     {(tideData.nextHighTide || tideData.nextLowTide) && (
                       <li className="tide-info">
                         {tideData.nextHighTide && (
@@ -748,6 +631,18 @@ const handleDownload = async () => {
                             )}
                           </span>
                         )}
+                      </li>
+                    )}
+                    {/* Show environmental indicators for marine activities as well */}
+                    {(pollen || airQuality) && (
+                      <li>
+                        <EnvironmentalIndicators 
+                          pollen={pollen}
+                          airQuality={airQuality}
+                          mode="compact"
+                          isStaleData={useStaleDataFlag}
+                          lastUpdated={lastUpdatedDate}
+                        />
                       </li>
                     )}
                   </>
@@ -795,42 +690,16 @@ const handleDownload = async () => {
                     )}
                     {typeof weatherData?.windSpeed === 'number' && (
                       <li>
-                        {(() => {
-                          const windMs = weatherData.windSpeed;
-                          const beaufort = getBeaufortNumber(windMs);
-                          // Beaufort descriptions
-                          const beaufortDescriptions = [
-                            'Calm: Smoke rises vertically.', // 0
-                            'Light Air: Ripples, leaves still.', // 1
-                            'Light Breeze: Leaves rustle, wind felt on face.', // 2
-                            'Gentle Breeze: Leaves and twigs in motion.', // 3
-                            'Moderate Breeze: Raises dust, small branches move.', // 4
-                            'Fresh Breeze: Small trees sway.', // 5
-                            'Strong Breeze: Large branches move, whistling in wires.', // 6
-                            'Near Gale: Whole trees in motion.', // 7
-                            'Gale: Twigs break off trees.', // 8
-                            'Strong Gale: Slight structural damage.', // 9
-                            'Storm: Trees uprooted, damage.', // 10
-                            'Violent Storm: Widespread damage.', // 11
-                            'Hurricane: Severe damage.', // 12
-                          ];
-                          const windDesc = beaufortDescriptions[Math.max(0, Math.min(beaufort, 12))];
-                          return (
-                            <img
-                              src={getWindIcon(windMs)}
-                              alt={`Wind: Beaufort ${beaufort}`}
-                              style={{
-                                width: 28,
-                                height: 28,
-                                verticalAlign: 'middle',
-                                filter: windIconNeedsGlow(windMs)
-                                  ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))'
-                                  : 'none',
-                              }}
-                              title={`Beaufort ${beaufort}: ${windDesc}`}
-                            />
-                          );
-                        })()}{' '}
+                        <img src={getWindIcon(weatherData.windSpeed)} alt="Wind"
+                             style={{ 
+                               width: 28, 
+                               height: 28, 
+                               verticalAlign: 'middle',
+                               // Only add glow for numbered Beaufort icons (not windsock)
+                               filter: windIconNeedsGlow(weatherData.windSpeed) 
+                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
+                                 : 'none'
+                             }} />{' '}
                         <strong>{Math.round(mpsToKmh(weatherData.windSpeed))}km/h</strong>
                         {typeof weatherData.windDir === 'number' && (
                           <>
@@ -851,48 +720,18 @@ const handleDownload = async () => {
                         <strong>{weatherData.humidity}%</strong>
                       </li>
                     )}
-                    {(shouldShowPollenWarning && pollen) || (shouldShowAirQualityWarning && airQuality) ? (
-                      <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Show environmental indicators for all activities where data is available */}
+                    {(pollen || airQuality) && (
+                      <li>
                         <EnvironmentalIndicators 
-                          pollen={shouldShowPollenWarning ? pollen : undefined}
-                          airQuality={shouldShowAirQualityWarning ? airQuality : undefined}
+                          pollen={pollen}
+                          airQuality={airQuality}
                           mode="compact"
+                          isStaleData={useStaleDataFlag}
+                          lastUpdated={lastUpdatedDate}
                         />
-                        {typeof weatherData?.uvi === 'number' && isOutdoor(activityId) && (
-                          (() => {
-                            const uvi = weatherData.uvi;
-                            let band = '';
-                            let advice = '';
-                            if (uvi <= 2) {
-                              band = 'Low';
-                              advice = 'Safe outside, sunglasses if bright.';
-                            } else if (uvi <= 5) {
-                              band = 'Moderate';
-                              advice = 'Shade at midday, hat + SPF 30.';
-                            } else if (uvi <= 7) {
-                              band = 'High';
-                              advice = 'Cover up, SPF 30+, reapply often.';
-                            } else if (uvi <= 10) {
-                              band = 'Very High';
-                              advice = 'Avoid midday sun, SPF 50, full protection.';
-                            } else {
-                              band = 'Extreme';
-                              advice = 'Stay indoors/shade, cover completely, SPF 50+.';
-                            }
-                            return (
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <img
-                                  src={`/weather-icons/design/fill/final/uv-index-${uvi >= 11 ? '11-plus' : Math.max(1, Math.round(uvi))}.svg`}
-                                  alt={`UV Index: ${uvi}`}
-                                  style={{ width: 20, height: 20, verticalAlign: 'middle' }}
-                                  title={`UV Index: ${uvi} (${band})\n${advice}`}
-                                />
-                              </span>
-                            );
-                          })()
-                        )}
                       </li>
-                    ) : null}
+                    )}
                   </>
                 )}
               </ul>

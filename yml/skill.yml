@@ -27,7 +27,84 @@ conventions:
     util_isOutdoor: "src/utils/activityGuards.ts"
     env_resolver: "src/utils/env/resolveMetrics.ts"
     tests_dir: "tests/skillAware"
-
+# ────────────────────────────────────────────────────────────────────────────────
+# Evidence base & parameter research (authoritative-first)
+research_guidance:
+  objective: >
+    Establish realistic, safety-aware parameter ranges for beginner, intermediate,
+    and advanced participants for each skill-sensitive activity. Use authoritative
+    sources first, cross-check with practitioner guides, and only then triangulate
+    with community forums. Record sources and confidence scores alongside every
+    threshold so future agents (or humans) can audit and refine.
+  preferred_sources:
+    - type: "Governing bodies / federations"
+      examples:
+        - "ISA – International Surfing Association"
+        - "RYA – Royal Yachting Association"
+        - "World Sailing / US Sailing / FFVoile"
+        - "British Mountaineering Council (BMC)"
+        - "UIAA – International Climbing and Mountaineering Federation"
+        - "FIS – International Ski Federation"
+    - type: "Accredited training curricula & syllabi"
+      examples:
+        - "Beginner–advanced course handbooks"
+        - "RYA Competent Crew / Day Skipper sea-state guidance"
+        - "Surf school operating manuals with sea-state limits"
+    - type: "Mainstream publications with expert editorial oversight"
+      examples:
+        - "RNLI sea safety guidance"
+        - "Ski school associations / avalanche centres for weather windows"
+    - type: "Peer-reviewed or institutional safety notes"
+  secondary_sources:
+    - type: "Respected practitioner handbooks"
+    - type: "Manufacturer guidance (e.g., SUP volume vs rider mass)"
+  community_sources:
+    - type: "Forums, subreddits, blogs"
+      usage: "Only to fill gaps or corroborate ranges after authoritative sources. Treat boastful claims sceptically."
+  explicit_exclusions:
+    - "Short-form social media clips without documented methodology"
+    - "Anonymous posts making extreme claims without data"
+  methodology:
+    steps:
+      - "For each activity, collect recommended conditions per skill level for the canonical metrics in `metric_dictionary.canonical_keys`."
+      - "Note original units and convert to canonical units (see conversions)."
+      - "Where ranges differ, choose conservative (safer) bounds for beginners; for advanced, allow wider but still realistic bounds."
+      - "Capture context qualifiers (e.g., ‘sheltered bay’, ‘beach orientation aligned with swell’, ‘groomed piste’)."
+      - "Flag any metric with insufficient evidence and leave undefined rather than guessing."
+  conversions:
+    notes:
+      - "m/s = km/h ÷ 3.6; m/s = knots × 0.514444; knots = m/s × 1.94384"
+      - "Wave height is significant wave height (Hs) unless otherwise stated."
+      - "Visibility in kilometres; water/air temperature in °C; precipitation in mm/h."
+  output_files:
+    - path: "data/skillThresholds.sources.json"
+      description: "Array of source records with per-activity per-skill metric ranges, citations, URLs, dates, and unit conversions applied."
+      schema:
+        - activityId: string
+        - skillLevel: [beginner|intermediate|advanced]
+        - metric: string
+        - range: { min?: number, max?: number }
+        - context: string
+        - citations: [{ title: string, org: string, url: string, date: string, type: string }]
+        - confidence: number
+        - notes: string
+    - path: "data/skillThresholds.ts"
+      description: "Derived canonical map used at runtime; includes confidence and source hash for telemetry."
+  confidence_rating:
+    rubric:
+      - "1.0 = multiple agreeing authoritative sources"
+      - "0.8 = one authoritative + one practitioner source"
+      - "0.6 = practitioner consensus without governing-body material"
+      - "≤0.5 = forum-derived or weakly evidenced (avoid for beginners)"
+  acceptance_rules:
+    - "Do not populate beginner thresholds unless confidence ≥ 0.8."
+    - "Intermediate may use ≥ 0.6 with clear notes."
+    - "Advanced may use ≥ 0.5, bounded by plausible safety limits."
+  audit:
+    required_fields_in_runtime_profile:
+      - "_evidence: { confidence: number, sourceIds: string[], context?: string } per activity"
+  update_policy:
+    - "When new evidence appears, update sources.json and regenerate data; keep a changelog."
 phases:
   - id: phase_0_sanity
     title: "Sanity & inventory"
@@ -42,6 +119,40 @@ phases:
     success_criteria:
       - "Typescript compiles cleanly (or with existing non-related warnings)."
       - "activityTypes.ts is located and readable."
+
+        - id: phase_0b_parameter_research
+    title: "Research & compile evidenced parameter ranges"
+    actions:
+      - research_parameters:
+          activities:
+            - surfing
+            - sea_kayaking
+            - snorkelling
+            - stand_up_paddleboarding
+            - sup_sea
+            - kayaking
+            - mountain_biking
+            - skiing
+            - snowboarding
+            - orienteering
+            - rock_hopping
+          use_guidance_from: research_guidance
+          outputs:
+            sources_json: "data/skillThresholds.sources.json"
+            canonical_ts: "data/skillThresholds.ts"
+      - verify_confidence:
+          min_confidence_beginner: 0.8
+          min_confidence_intermediate: 0.6
+          min_confidence_advanced: 0.5
+      - ensure_runtime_includes_evidence:
+          file: "${files.activity_types}"
+          requirement: "Each activity with skillProfile must include an `_evidence` field with { confidence, sourceIds, context? }."
+      - commit:
+          message: "chore(research): add evidenced parameter ranges + source registry"
+    success_criteria:
+      - "sources.json contains ≥2 authoritative citations per beginner threshold."
+      - "All units converted to canonical metrics per `metric_dictionary`."
+      - "`data/skillThresholds.ts` exports a typed map used by the app."
 
   - id: phase_1_data_model
     title: "Data model: skillSensitive + skillProfile"
@@ -332,6 +443,8 @@ quality_gates:
   - "ESLint/Prettier (if present) are clean: run `${package_manager} run lint`."
   - "Basic runtime smoke test: start dev server and ensure cards render with comparative copy."
   - "No regressions for non-skill activities (they should behave exactly as before)."
+  - "Every beginner/intermediate/advanced range used in `skillProfile` references at least one sourceId present in data/skillThresholds.sources.json."
+  - "Beginner ranges fail the build if confidence < 0.8 (gate)."
 
 tests:
   strategy: "lightweight integration + snapshot"
@@ -828,10 +941,12 @@ metric_dictionary:
     - temperature       # °C
     - precipitation     # mm/h (or mm over interval)
     - visibility        # km
-  guidance:
-    - Resolver functions must convert provider units to the canonical units above
-    - Missing metrics should be set to `undefined`; the scorer handles them gracefully
-
+    guidance:
+    - "Resolver functions must convert provider units to the canonical units above. Never mix units in a single env payload."
+    - "Prefer significant wave height (Hs). If a source uses breaking face height, convert approximately: face ≈ 2 × Hs (document assumption)."
+    - "Wind and gust are 10 m reference height over open terrain/water where possible; annotate if otherwise."
+    - "Missing metrics should be set to `undefined`; the scorer handles them gracefully—never fabricate numbers."
+    - "For marine activities, include context flags (e.g., sheltered_bay: true) when thresholds assume shelter."
 metrics_mapping_guidance:
   - "If your existing env resolver exposes OpenWeather `wind.speed` in m/s and Stormglass `windSpeed` in m/s, pass-through is fine."
   - "If any data is in km/h or knots, convert before scoring: m/s = km/h ÷ 3.6; m/s = knots × 0.514444."
@@ -842,6 +957,7 @@ telemetry:
     - skill_message_rendered: { activityId: string, level?: string, beginner: number, intermediate: number, advanced: number }
     - skill_profile_missing: { activityId: string }
     - skill_env_missing_metrics: { activityId: string, missing: string[] }
+        - evidence_applied: { activityId: string, confidence: number, sourceIds: string[] }
   logging_guidelines:
     - Do not log raw user PII
     - Redact precise coordinates; keep only region-level tags if needed
@@ -891,6 +1007,7 @@ ci_notes:
   - "If a CI pipeline exists, the agent should open a branch `feat/skill-aware` and push incremental commits"
   - "Attach a short summary of changed files and acceptance criteria checks to the PR body"
 
+  - "Each skill-sensitive activity displays a small info tooltip linking to sources (icon only; no outbound link in native apps) and includes the confidence rating."
 developer_experience:
   readme_snippet: |
     ### Skill-aware activities (preview)
@@ -903,3 +1020,59 @@ idempotency:
     - Patches must be re-runnable: check for existing imports/exports before inserting
     - Never duplicate exports or interfaces; verify symbol presence by regex before writing
     - Commits use conventional messages as defined in `commit_style`
+
+
+  - id: phase_6_difficulty_badge
+    title: "UI: Colour-coded difficulty badge"
+    optional: true
+    actions:
+      - patch_file:
+          file: "${files.skill_messages}"
+          description: "Append deriveDifficulty helper to map skill scores → piste-style colour coding"
+          snippet: |
+            export type DifficultyColour = 'green' | 'blue' | 'red' | 'black';
+            export interface DifficultyBadge {
+              colour: DifficultyColour;
+              label: string;
+              icon: string;
+              rationale: string;
+            }
+            export function deriveDifficulty(activity: any, env: Record<string, number | undefined>, selected?: SkillLevel): DifficultyBadge | null {
+              // …implementation per plan (maps scores to 🟢🔵🔴⚫)
+            }
+      - ensure_imports:
+          file: "${files.card_renderer}"
+          imports:
+            - "import { buildSkillMessage, deriveDifficulty } from '@/utils/messages/skillMessages';"
+      - integrate_message:
+          file: "${files.card_renderer}"
+          where_to_render: "directly after the skill message block"
+          code_example: |
+            {(() => {
+              const badge = deriveDifficulty(activity, env, selectedSkillLevel);
+              if (!badge) return null;
+              const STYLES: Record<string, string> = {
+                green: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200',
+                blue:  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200',
+                red:   'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200',
+                black: 'bg-black text-white dark:bg-zinc-900 dark:text-white',
+              };
+              return (
+                <div className="mt-1">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STYLES[badge.colour]}`}
+                    title={badge.rationale}
+                    aria-label={`Difficulty: ${badge.label}`}
+                  >
+                    <span aria-hidden="true">{badge.icon}</span>
+                    <span>{badge.label}</span>
+                  </span>
+                </div>
+              );
+            })()}
+      - commit:
+          message: "feat(ui): add colour-coded difficulty badge (green/blue/red/black)"
+    success_criteria:
+      - "Skill-sensitive cards display a pill badge with 🟢 Beginner, 🔵 Intermediate, 🔴 Advanced, ⚫ Expert."
+      - "Badge colour and label reflect current scoring."
+      - "Accessible: label visible in text, icon + aria-label included."

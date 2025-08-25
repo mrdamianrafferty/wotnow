@@ -191,7 +191,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     const home = preferences.locations.find(l => l.type === 'home');
     if (!home?.lat || !home.lon) return;
 
-    const apiKey = import.meta.env.VITE_OPENWEATHER_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || process.env.OPENWEATHER_API_KEY;
     if (!apiKey) {
       console.warn('OpenWeather API key is missing');
       return;

@@ -8,6 +8,6 @@ export const indieFlower = Indie_Flower({
 
 export const oxanium = Oxanium({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });

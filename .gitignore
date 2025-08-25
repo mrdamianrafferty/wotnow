@@ -1,8 +1,13 @@
 # dependencies
 node_modules/
 
+# Next.js
+.next/
+out/
+
 # production build
 dist/
+build/
 
 # environment variables
 .env
@@ -21,9 +26,22 @@ pnpm-debug.log*
 .DS_Store
 
 # IDE / Editor folders
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 .idea/
 *.sw?
 
 # Optional: TypeScript build output
 *.tsbuildinfo
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.rollup.cache
+
+# Test coverage
+coverage/

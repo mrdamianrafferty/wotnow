@@ -359,10 +359,10 @@ hurling_camogie: {
 },
 gaelic_football: {
   templates: {
-    perfect: "The pitch looks like it was ironed by angels, and the ball’s got the bounce of a caffeinated otter — pure poetry in motion. {reasons}",
+    perfect: "The pitch looks like it was ironed by angels, and the ball’s got the bounce of a caffeinated otter. {reasons}",
     good: "Decent day out, like kicking around in your granny’s back garden if she lived on the moon. {reasons}",
     fair: "Bit rough — the grass feels like it owes you money, but sure that’s character-building. {reasons}",
-    poor: "The field’s a swamp, the ball’s a brick, and you’d be happier inside arguing with lads about who was the best corner back in ’98. {reasons}"
+    poor: "The field’s a swamp, the ball’s a brick, and you’d be happier inside arguing with the lads about shit. {reasons}"
   }
 },
 
@@ -392,26 +392,26 @@ sea_swimming: {
 },
 stand_up_paddleboarding: {
   templates: {
-    perfect: "The water lies flat as glass, an indifferent mirror. For a moment, you may believe you have conquered chaos. {reasons}",
-    good: "The surface undulates gently, inviting the human to stand, fragile and foolish, upon its skin. {reasons}",
-    fair: "The water resists, restless and uneven. Each stroke is a negotiation with futility. {reasons}",
-    poor: "The elements conspire — the chop and wind mock your balance. Today, the board becomes a coffin for pride. {reasons}"
+    perfect: "The water lies flat as glass, an indifferent mirror. {reasons}",
+    good: "The surface undulates gently, inviting the human to stand. {reasons}",
+    fair: "The water resists, restless and uneven. Each stroke fights futility. {reasons}",
+    poor: "The elements conspire. Today, the board becomes a coffin for pride. {reasons}"
   }
 },
 snorkeling: {
   templates: {
-    perfect: "Ah, the waters, they shimmer like a lover’s gaze. To place one’s face beneath is to kiss another world. {reasons}",
-    good: "The sea is generous today, clear enough to spy the small citizens of Neptune’s garden. {reasons}",
+    perfect: "Ah, the waters, they shimmer like a lover’s gaze. Oh to kiss another world. {reasons}",
+    good: "The sea's generous today, clear enough to spy the small citizens of Neptune’s garden. {reasons}",
     fair: "The waves are restless, but still they reveal fish with the patience of a saint. {reasons}",
     poor: "Non, mon ami… the sea is in no mood for guests. Better to wait, and dream of gills. {reasons}"
   }
 },
 scuba_diving: {
   templates: {
-    perfect: "Into the blue cathedral we descend, pilgrims among the silent congregation of fish. {reasons}",
-    good: "Currents are steady, visibility kind — the ocean opens her arms, if only for an hour. {reasons}",
-    fair: "She stirs with some resistance, yet still she offers mystery to those who listen. {reasons}",
-    poor: "The waters are clouded, unsettled — to dive now is to chase shadows, not wonder. {reasons}"
+    perfect: "Into the blue cathedral we descend, pilgrims among the silent fish. {reasons}",
+    good: "Currents are steady, visibility kind — the ocean opens her arms. {reasons}",
+    fair: "She stirs with some resistance, yet still she offers mystery. {reasons}",
+    poor: "The waters are clouded, unsettled — to dive now is to chase shadows. {reasons}"
   }
 },
 kitesurfing: {
@@ -456,7 +456,7 @@ picnicking: {
 },
 geocaching: {
   templates: {
-    perfect: "Lovely day for wandering about with your phone, pretending you’re Indiana Jones but finding Tupperware. {reasons}",
+    perfect: "Lovely day for wandering about with your phone, pretending you’re Indiana Jones. {reasons}",
     good: "Decent weather — you’ll still look mad rooting around in bushes, but at least it’s dry. {reasons}",
     fair: "Bit scrappy out there — mud on your knees, GPS jumping about, but hey, that’s the adventure. {reasons}",
     poor: "Rain, fog, the lot — you’ll just look like a burglar in the park. Best wait it out. {reasons}"
@@ -466,7 +466,7 @@ geocaching: {
   templates: {
     perfect: "Sun’s out, joints oiled — time to show the youngsters how it’s done. {reasons}",
     good: "Decent day for fresh-air fitness — you’ll feel it tomorrow, in a good way. {reasons}",
-    fair: "Bit of breeze, bit of drizzle — nothing worse than what the knees already say in the morning. {reasons}",
+    fair: "Bit of breeze, bit of drizzle — nothing worse than what the knees say in the morning. {reasons}",
     poor: "Cold and wet — let the dumbbells rust, you’ve earned a tea break. {reasons}"
   }
 },
@@ -867,7 +867,7 @@ orienteering: {
 },
 snorkelling: {
   templates: {
-    perfect: "Ah, the waters, they shimmer like a lover’s gaze. To place one’s face beneath is to kiss another world. {reasons}",
+    perfect: "Ah, the waters, they shimmer like a lover’s gaze. Oh to kiss another world. {reasons}",
     good: "The sea is generous today, clear enough to spy the small citizens of Neptune’s garden. {reasons}",
     fair: "The waves are restless, but still they reveal fish with the patience of a saint. {reasons}",
     poor: "Non, mon ami… the sea is in no mood for guests. Better to wait, and dream of gills. {reasons}"
