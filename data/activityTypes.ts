@@ -1557,22 +1557,6 @@ export const activityTypes: ActivityType[] = [
   secondaryCategory: 'Outdoor Recreation',
   weatherSensitive: true,
   tags: ['adventure', 'walking', 'nature', 'coastal', 'Saturday', 'Sunday', 'holiday'],
-  skillSensitive: true,
-  skillProfile: {
-    beginner: {
-      windSpeed: { max: 10 },
-      precipitation: { max: 0 },
-      visibility: { min: 5 }
-    },
-    intermediate: {
-      windSpeed: { max: 15 },
-      precipitation: { max: 2 }
-    },
-    advanced: {
-      windSpeed: { max: 20 },
-      precipitation: { max: 5 }
-    }
-  },
   poorConditions: [
     'temperature<5',                // cold, uncomfortable
     'temperature>28',              // heat, exhausting

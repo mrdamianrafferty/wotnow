@@ -126,7 +126,7 @@ export function buildPopupActivityPayload({
 }: ActivityDayPayload) {
   const activity = activityTypes.find((a) => a.id === activityId);
   const title = activity?.name ?? activityId.replace(/_/g, ' ');
-  const description = activity?.description ?? '';
+  const description = ''; // ActivityType doesn't have description property
   const background = bgMap[activityId] || '/zumba.png';
   const category: Category =
     score >= 80 ? 'perfect'

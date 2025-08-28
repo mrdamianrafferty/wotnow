@@ -1,6 +1,16 @@
 // app/api/iss-next-night-pass/route.ts
 import { NextRequest } from "next/server";
 
+// Types
+interface ISSPass {
+  risetime: Date;
+  duration: number;
+  mag: number;
+  direction: string;
+  maxEl: number;
+  endUTC: Date;
+}
+
 // N2YO API constants
 const N2YO_API_URL = "https://api.n2yo.com/rest/v1/satellite/visualpasses";
 const ISS_SAT_ID = 25544;
@@ -9,7 +19,7 @@ const DEFAULT_DAYS = 2; // how many days ahead to check
 const DEFAULT_MIN_VIS = 1; // minimum visibility in minutes
 
 // Helper: fetch ISS passes for a location using N2YO
-async function fetchIssPassesN2yo(lat: number, lon: number, alt: number, days: number, minVis: number, apiKey: string) {
+async function fetchIssPassesN2yo(lat: number, lon: number, alt: number, days: number, minVis: number, apiKey: string): Promise<ISSPass[]> {
   const url = `${N2YO_API_URL}/${ISS_SAT_ID}/${lat}/${lon}/${alt}/${days}/${minVis}?apiKey=${apiKey}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`N2YO error ${res.status}`);
@@ -82,7 +92,7 @@ export async function GET(req: NextRequest) {
       nextSunrise = sunTomorrow.sunrise;
     }
     // Find next ISS pass during night
-    const nextNightPass = passes.find(p => isNight(p.risetime, sunset, nextSunrise));
+    const nextNightPass = passes.find((p: ISSPass) => isNight(p.risetime, sunset, nextSunrise));
     if (!nextNightPass) {
       return Response.json({ ok: false, error: "No nighttime ISS pass found in next passes." }, { status: 404 });
     }

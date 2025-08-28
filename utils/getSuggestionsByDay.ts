@@ -196,6 +196,13 @@ export function getSuggestionsByDay({
   now,
   includeAllActivities = false,
   isEveningToday = false // Add this parameter with default value
+}: {
+  forecast: any[];
+  activities: any[];
+  interests: any[];
+  now: Date;
+  includeAllActivities?: boolean;
+  isEveningToday?: boolean;
 }) {
   // Add debugging logs
   console.log('📊 getSuggestionsByDay INPUTS:', { 
@@ -265,7 +272,7 @@ export function getSuggestionsByDay({
         }
         return null;
       })
-      .filter(Boolean) // Remove null items
+      .filter((item): item is NonNullable<typeof item> => Boolean(item)) // Remove null items with proper type guard
       .sort((a, b) => b.score - a.score); // Sort by score
       
     console.log(`✅ Finished day with ${suggestions.length} activities`);

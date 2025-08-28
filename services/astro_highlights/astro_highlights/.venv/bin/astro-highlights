@@ -1,4 +1,4 @@
-#!/Users/damianrafferty/Projects/WotNow/services/astro_highlights/astro_highlights/.venv/bin/python3
+#!/home/runner/work/wotnow/wotnow/services/astro_highlights/astro_highlights/.venv/bin/python3
 import sys
 from astro_highlights.build_highlights import main
 if __name__ == '__main__':

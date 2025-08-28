@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
+
+// Type definitions
+interface WindIconProps {
+  windMs: number;
+  size?: number;
+  alt?: string;
+}
+
 // WindIcon copied from pages/index.tsx for local use
-function WindIcon({ windMs, size = 28, alt = 'Wind' }) {
+function WindIcon({ windMs, size = 28, alt = 'Wind' }: WindIconProps) {
   // Convert m/s to Beaufort scale
-  function getBeaufortNumber(windMs) {
+  function getBeaufortNumber(windMs: number): number {
     // Standard Beaufort scale for m/s
     if (windMs < 0.3) return 0;
     if (windMs < 1.5) return 1;
@@ -47,10 +55,10 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }) {
     />
   );
 }
-import { getMoonLore } from '../data/moonLore';
+import { getMoonLore, MoonPhase } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import MoonNugget from './MoonNugget';
-import { useIssBestTimes, IssSightingNote } from '../lib/hooks/useIssBestTimes.tsx';
+import { useIssBestTimes, IssSightingNote } from '../lib/hooks/useIssBestTimes';
 import { describeIssPass } from '../utils/issHelper';
 import '../styles/Card.css';
 import { indieFlower } from "@/app/fonts";
@@ -173,7 +181,7 @@ const getWeatherAwareMessage = (
     if (primaryEvent.direction) {
       const dirPhrase = `Look ${primaryEvent.direction}`;
       // Only add if not already present in any part
-      if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction.toLowerCase()))) {
+      if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction!.toLowerCase()))) {
         parts.push(dirPhrase);
       }
     }

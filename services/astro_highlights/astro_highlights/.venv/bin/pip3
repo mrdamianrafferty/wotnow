@@ -1,4 +1,4 @@
-#!/Users/damianrafferty/Projects/WotNow/services/astro_highlights/astro_highlights/.venv/bin/python3
+#!/home/runner/work/wotnow/wotnow/services/astro_highlights/astro_highlights/.venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
