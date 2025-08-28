@@ -1,4 +1,5 @@
 # services/astro_highlights/astro_canaries_test.yml
+---
 vars:
   venv: "services/astro_highlights/astro_highlights/.venv"
   pkg_dir: "services/astro_highlights/astro_highlights"
@@ -8,5 +9,5 @@ vars:
 
 canaries:
   europe:
-    - { name: "Dublin_IE",       lat: 53.3,  lon: -6.3 }
-    - { name: "Madrid_ES",       lat: 40.4,  lon: -3.7 }
+    - {name: "Dublin_IE", lat: 53.3, lon: -6.3}
+    - {name: "Madrid_ES", lat: 40.4, lon: -3.7}
