@@ -1,155 +1,183 @@
 {
   "nights": [
     {
-      "date": "2025-08-18",
+      "date": "2025-08-28",
       "sun": {
-        "astro_dark_start": "2025-08-18T22:48:30.010731+00:00"
+        "sunset": "2025-08-28T09:56:16.976024+00:00",
+        "sunrise": "2025-08-28T22:38:17.146583+00:00",
+        "astro_dark_start": "2025-08-28T22:37:00.525756+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-18T04:29:36.610803+00:00",
-            "event": "set"
+            "time": "2025-08-28T01:00:14.464255+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-18T19:50:14.112520+00:00",
-            "event": "rise"
+            "time": "2025-08-28T14:43:04.424875+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.8153334163983134,
-        "illumination": 30.046518123358446
+        "phase": 0.15087070859877205,
+        "illumination": 20.832475547564382,
+        "phase_name": "Waxing Crescent",
+        "icon": "moon-waxing-crescent.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-19",
+      "date": "2025-08-29",
       "sun": {
-        "astro_dark_start": "2025-08-19T22:47:24.537217+00:00"
+        "sunset": "2025-08-29T09:56:53.607127+00:00",
+        "sunrise": "2025-08-29T22:37:04.286910+00:00",
+        "astro_dark_start": "2025-08-29T22:35:47.770327+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-19T05:31:58.478698+00:00",
-            "event": "set"
+            "time": "2025-08-29T01:29:39.234446+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-19T20:46:38.373503+00:00",
-            "event": "rise"
+            "time": "2025-08-29T15:40:33.167665+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.8515954922822966,
-        "illumination": 20.206710304938756
+        "phase": 0.181249341282376,
+        "illumination": 29.06682519012086,
+        "phase_name": "Waxing Crescent",
+        "icon": "moon-waxing-crescent.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-20",
+      "date": "2025-08-30",
       "sun": {
-        "astro_dark_start": "2025-08-20T22:46:18.229550+00:00"
+        "sunset": "2025-08-30T09:57:30.128313+00:00",
+        "sunrise": "2025-08-30T22:35:50.841121+00:00",
+        "astro_dark_start": "2025-08-30T22:34:34.424034+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-20T06:39:02.836271+00:00",
-            "event": "set"
+            "time": "2025-08-30T02:02:59.700320+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-20T21:34:03.583377+00:00",
-            "event": "rise"
+            "time": "2025-08-30T16:38:42.197544+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.8874457303470136,
-        "illumination": 11.99077657403148
+        "phase": 0.21150350252945108,
+        "illumination": 38.02355351498373,
+        "phase_name": "Waxing Crescent",
+        "icon": "moon-waxing-crescent.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-21",
+      "date": "2025-08-31",
       "sun": {
-        "astro_dark_start": "2025-08-21T22:45:11.110743+00:00"
+        "sunset": "2025-08-31T09:58:06.546543+00:00",
+        "sunrise": "2025-08-31T22:34:36.834924+00:00",
+        "astro_dark_start": "2025-08-31T22:33:20.513833+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-21T07:47:06.076766+00:00",
-            "event": "set"
+            "time": "2025-08-31T02:41:38.486375+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-21T22:13:30.296672+00:00",
-            "event": "rise"
+            "time": "2025-08-31T17:36:32.108556+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.9227715245041398,
-        "illumination": 5.771867501063966
+        "phase": 0.24184231828747788,
+        "illumination": 47.438310728696344,
+        "phase_name": "First Quarter",
+        "icon": "moon-first-quarter.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-22",
+      "date": "2025-09-01",
       "sun": {
-        "astro_dark_start": "2025-08-22T22:44:03.203729+00:00"
+        "sunset": "2025-09-01T09:58:42.864672+00:00",
+        "sunrise": "2025-09-01T22:33:22.295759+00:00",
+        "astro_dark_start": "2025-09-01T22:32:06.066762+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-22T08:53:16.652896+00:00",
-            "event": "set"
+            "time": "2025-09-01T03:26:45.233955+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-22T22:46:49.762270+00:00",
-            "event": "rise"
+            "time": "2025-09-01T18:32:22.529812+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.9574709872287792,
-        "illumination": 1.7745349838702629
+        "phase": 0.27248205125451724,
+        "illumination": 57.03947904164216,
+        "phase_name": "First Quarter",
+        "icon": "moon-first-quarter.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-23",
+      "date": "2025-09-02",
       "sun": {
-        "astro_dark_start": "2025-08-23T22:42:54.531400+00:00"
+        "sunset": "2025-09-02T09:59:19.091432+00:00",
+        "sunrise": "2025-09-02T22:32:07.251225+00:00",
+        "astro_dark_start": "2025-09-02T22:30:51.110701+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-23T09:56:19.815277+00:00",
-            "event": "set"
+            "time": "2025-09-02T04:18:49.839739+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-23T23:15:56.246219+00:00",
-            "event": "rise"
+            "time": "2025-09-02T19:24:22.376498+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.9914654835315018,
-        "illumination": 0.07187097153649735
+        "phase": 0.30363468641205266,
+        "illumination": 66.53270962096856,
+        "phase_name": "Waxing Gibbous",
+        "icon": "moon-waxing-gibbous.svg"
       },
       "dark_sky": null,
       "cloud_score": null
     },
     {
-      "date": "2025-08-24",
+      "date": "2025-09-03",
       "sun": {
-        "astro_dark_start": "2025-08-24T22:41:45.117252+00:00"
+        "sunset": "2025-09-03T09:59:55.235633+00:00",
+        "sunrise": "2025-09-03T22:30:51.730452+00:00",
+        "astro_dark_start": "2025-09-03T22:29:35.673612+00:00"
       },
       "moon": {
         "events": [
           {
-            "time": "2025-08-24T10:56:18.966425+00:00",
-            "event": "set"
+            "time": "2025-09-03T05:17:16.206236+00:00",
+            "event": "rise"
           },
           {
-            "time": "2025-08-24T23:42:29.338845+00:00",
-            "event": "rise"
+            "time": "2025-09-03T20:11:13.680180+00:00",
+            "event": "set"
           }
         ],
-        "phase": 0.02471115215624926,
-        "illumination": 0.6014687848431954
+        "phase": 0.3354946126352901,
+        "illumination": 75.58569590713762,
+        "phase_name": "Waxing Gibbous",
+        "icon": "moon-waxing-gibbous.svg"
       },
       "dark_sky": null,
       "cloud_score": null

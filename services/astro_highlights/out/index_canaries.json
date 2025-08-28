@@ -5,248 +5,248 @@
       "name": "Tromso_NO",
       "lat": 69.6,
       "lon": 18.9,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Tromso_NO.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Tromso_NO.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "europe",
       "name": "Berlin_DE",
       "lat": 52.5,
       "lon": 13.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Berlin_DE.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Berlin_DE.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "europe",
       "name": "Rome_IT",
       "lat": 41.9,
       "lon": 12.5,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Rome_IT.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Rome_IT.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "europe",
       "name": "Dublin_IE",
       "lat": 53.3,
       "lon": -6.3,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Dublin_IE.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Dublin_IE.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "europe",
       "name": "Bucharest_RO",
       "lat": 44.4,
       "lon": 26.1,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Bucharest_RO.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Bucharest_RO.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "europe",
       "name": "Madrid_ES",
       "lat": 40.4,
       "lon": -3.7,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_europe_Madrid_ES.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_europe_Madrid_ES.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "Anchorage_AK_US",
       "lat": 61.2,
       "lon": -149.9,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_Anchorage_AK_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_Anchorage_AK_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "NYC_US",
       "lat": 40.7,
       "lon": -74.0,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_NYC_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_NYC_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "Denver_CO_US",
       "lat": 39.7,
       "lon": -105.0,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_Denver_CO_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_Denver_CO_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "LosAngeles_CA_US",
       "lat": 34.0,
       "lon": -118.2,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_LosAngeles_CA_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_LosAngeles_CA_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "MexicoCity_MX",
       "lat": 19.4,
       "lon": -99.1,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_MexicoCity_MX.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_MexicoCity_MX.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "north_america",
       "name": "Toronto_CA",
       "lat": 43.7,
       "lon": -79.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_north_america_Toronto_CA.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_north_america_Toronto_CA.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "south_america",
       "name": "Bogota_CO",
       "lat": 4.7,
       "lon": -74.1,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_south_america_Bogota_CO.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_south_america_Bogota_CO.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "south_america",
       "name": "SaoPaulo_BR",
       "lat": -23.5,
       "lon": -46.6,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_south_america_SaoPaulo_BR.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_south_america_SaoPaulo_BR.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "south_america",
       "name": "BuenosAires_AR",
       "lat": -34.6,
       "lon": -58.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_south_america_BuenosAires_AR.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_south_america_BuenosAires_AR.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "africa",
       "name": "Cairo_EG",
       "lat": 30.0,
       "lon": 31.2,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_africa_Cairo_EG.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_africa_Cairo_EG.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "africa",
       "name": "Nairobi_KE",
       "lat": -1.3,
       "lon": 36.8,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_africa_Nairobi_KE.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_africa_Nairobi_KE.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "africa",
       "name": "CapeTown_ZA",
       "lat": -33.9,
       "lon": 18.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_africa_CapeTown_ZA.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_africa_CapeTown_ZA.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "asia",
       "name": "Delhi_IN",
       "lat": 28.6,
       "lon": 77.2,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_asia_Delhi_IN.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_asia_Delhi_IN.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "asia",
       "name": "Bangkok_TH",
       "lat": 13.7,
       "lon": 100.5,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_asia_Bangkok_TH.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_asia_Bangkok_TH.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "asia",
       "name": "Tokyo_JP",
       "lat": 35.7,
       "lon": 139.7,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_asia_Tokyo_JP.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_asia_Tokyo_JP.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "asia",
       "name": "Beijing_CN",
       "lat": 39.9,
       "lon": 116.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_asia_Beijing_CN.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_asia_Beijing_CN.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "asia",
       "name": "Jakarta_ID",
       "lat": -6.2,
       "lon": 106.8,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_asia_Jakarta_ID.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_asia_Jakarta_ID.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "oceania",
       "name": "Sydney_AU",
       "lat": -33.9,
       "lon": 151.2,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_oceania_Sydney_AU.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_oceania_Sydney_AU.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "oceania",
       "name": "Perth_AU",
       "lat": -31.9,
       "lon": 115.9,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_oceania_Perth_AU.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_oceania_Perth_AU.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "oceania",
       "name": "Auckland_NZ",
       "lat": -36.9,
       "lon": 174.8,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_oceania_Auckland_NZ.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_oceania_Auckland_NZ.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "caribbean",
       "name": "Havana_CU",
       "lat": 23.1,
       "lon": -82.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_caribbean_Havana_CU.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_caribbean_Havana_CU.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "caribbean",
       "name": "SanJuan_PR_US",
       "lat": 18.5,
       "lon": -66.1,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_caribbean_SanJuan_PR_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_caribbean_SanJuan_PR_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "pacific_islands",
       "name": "Honolulu_HI_US",
       "lat": 21.3,
       "lon": -157.8,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_pacific_islands_Honolulu_HI_US.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_pacific_islands_Honolulu_HI_US.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "pacific_islands",
       "name": "Suva_FJ",
       "lat": -18.1,
       "lon": 178.4,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_pacific_islands_Suva_FJ.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_pacific_islands_Suva_FJ.json",
+      "built_at": "2025-08-28"
     },
     {
       "region": "antarctica",
       "name": "McMurdo_AQ",
       "lat": -77.8,
       "lon": 166.7,
-      "out": "/Users/damianrafferty/Projects/WotNow/services/astro_highlights/out/highlights_antarctica_McMurdo_AQ.json",
-      "built_at": "2025-08-18"
+      "out": "/home/runner/work/wotnow/wotnow/services/astro_highlights/out/highlights_antarctica_McMurdo_AQ.json",
+      "built_at": "2025-08-28"
     }
   ]
 }
