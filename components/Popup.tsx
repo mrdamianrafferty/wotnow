@@ -19,6 +19,21 @@ import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
 import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
+import dynamic from 'next/dynamic';
+
+// Dynamically import EnhancedShareModal with no SSR to avoid hydration issues
+const EnhancedShareModal = dynamic(() => import('./sharing/EnhancedShareModal'), {
+  ssr: false,
+});
+
+// Share state for the modal
+interface ShareModalState {
+  isOpen: boolean;
+  activityId: string;
+  activityName: string;
+  activityDescription?: string;
+  activityMessage?: string;
+}
 
 // --- Types ---
 // All windSpeed fields are in meters per second (m/s) throughout the pipeline.
@@ -62,6 +77,7 @@ interface PopupProps {
   weatherData?: WeatherData;
   score?: number;
   onClose: () => void;
+  onShare?: (activityId: string, activityName: string) => void;
   coastalLocation?: { lat: number; lon: number };
   homeLocation?: { lat: number; lon: number };
   dayTimestamp?: number;
@@ -227,6 +243,7 @@ const Popup: React.FC<PopupProps> = ({
   weatherData,
   score,
   onClose,
+  onShare,
   coastalLocation,
   homeLocation,
   dayTimestamp,
@@ -241,6 +258,13 @@ const Popup: React.FC<PopupProps> = ({
   }>({});
   const [isToday, setIsToday] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [shareModalData, setShareModalData] = useState<ShareModalState>({
+    isOpen: false,
+    activityId: '',
+    activityName: '',
+    activityDescription: '',
+    activityMessage: ''
+  });
   const popupRef = useRef<HTMLDivElement | null>(null);
 
   const isMarine = !!marineData && Object.keys(marineData).length > 1;
@@ -335,25 +359,16 @@ const handleDownload = async () => {
   }
 };
 
-  const handleShare = async () => {
-    const shareUrl = `${PUBLIC_SITE_URL}?activity=${encodeURIComponent(activityId)}`;
-    const absImageUrl = backgroundImage?.startsWith('http')
-      ? backgroundImage
-      : new URL(backgroundImage, window.location.origin).toString();
-    const catchyTitle = buildEmailishSubject(title);
-    const payload: SharePayload = {
-      title: catchyTitle,
-      text: [
-        `WotNow: ${title}`,
-        message ? `Why: ${message}` : undefined,
-      ].filter(Boolean).join('\n'),
-      url: shareUrl,
-      imageUrl: absImageUrl,
-    };
-    const status = await shareToWhatsApp(payload);
-    if (status === 'Share cancelled') return;
-    if (status === 'Copied message to clipboard') alert('Copied the invite to your clipboard.');
-    if (status === 'Unable to share') alert('Sorry, unable to share from this browser.');
+  const handleShare = () => {
+    setShareModalData({
+      isOpen: true,
+      activityId,
+      activityName: title,
+      activityDescription: weatherData?.description || '',
+      activityMessage: message || ''
+    });
+    // Don't close the popup until the modal has been dismissed
+    // The user will be able to close the popup after interacting with the share modal
   };
 
   useEffect(() => {
@@ -705,12 +720,25 @@ const handleDownload = async () => {
         </div>
         {/* Buttons are visually in the popup but NOT in export area */}
         <div className="popup__action">
-          
           <button className="popup__share-button" onClick={handleShare}>
             📤 Invite a friend to join you
           </button>
         </div>
       </div>
+
+      {/* Share Modal */}
+      {shareModalData.isOpen && (
+        <div className="fixed inset-0 z-50">
+          <EnhancedShareModal
+            isOpen={shareModalData.isOpen}
+            onClose={() => setShareModalData(prev => ({ ...prev, isOpen: false }))}
+            activityId={shareModalData.activityId}
+            activityName={shareModalData.activityName}
+            activityDescription={shareModalData.activityDescription}
+            activityMessage={shareModalData.activityMessage}
+          />
+        </div>
+      )}
     </div>
   );
 };

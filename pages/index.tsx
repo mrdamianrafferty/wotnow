@@ -38,6 +38,7 @@ import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
 import { getActivityMessage } from '../data/activityMessages';
 import AstronomyCard from '../components/AstronomyCard';
+import { ShareModal } from '../components/sharing/NewShareModal';
 
 // MarineHour interface for typing
 interface MarineHour {
@@ -241,7 +242,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   setForecastByDay(forecast);
 }, [weatherData, marineHours]);
 
-  return { forecastByDay, loading, error, timeInfo, marineHours };
+  return { forecastByDay, loading, error, timeInfo, marineHours, weatherData };
 };
 
 const hasMarineInterest = (interests: string[]) =>
@@ -299,7 +300,7 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
     const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
     
     console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
-    console.log("Marine hours available:", day.marine.map(h => h.time));
+    console.log("Marine hours available:", day.marine.map((h: any) => h.time));
     
     const marineHour = day.marine.find(
       (h: any) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
@@ -337,7 +338,7 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
 }
 
 // Consistent helper function you can reuse
-const getTargetHourForDay = (dayUnixTimestamp) => {
+const getTargetHourForDay = (dayUnixTimestamp: any) => {
   const dayDate = new Date(dayUnixTimestamp * 1000);
   const today = new Date();
   const isToday = dayDate.getDate() === today.getDate() && 
@@ -360,6 +361,7 @@ export default function Home() {
   // Your existing state
   const hasMounted = useHasMounted();
   const [popupActivity, setPopupActivity] = useState<any>(null);
+  const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
 
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
@@ -425,7 +427,7 @@ const { forecastByDay, loading, error, timeInfo, marineHours, weatherData } = us
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
   if (!weatherData?.daily) return [];
-  return weatherData.daily.slice(0, 5).map((day, idx) => {
+  return weatherData.daily.slice(0, 5).map((day: any, idx: number) => {
     return {
       date: day.dt,
       temperature: Math.round(day.temp.day),
@@ -476,23 +478,28 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
         }
       }],
       interests,
-      activities: filteredActivities,
+      activities: filteredActivities.map(a => a.id),
       now: timeInfo?.serverTime || new Date()
     })[0]; // Get first day's data
 
     // Filter out out-of-season activities
     const suggestions = suggestionsData?.suggestions ?? [];
     const currentMonth = new Date(day.date * 1000).getMonth() + 1;
-    const filteredSuggestions = suggestions.filter(suggestion => {
+    const filteredSuggestions = suggestions.filter((suggestion: any) => {
       const activity = activityTypes.find(a => a.id === suggestion.activityId);
       return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
     });
-    const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
-    const goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
-    const indoorList = suggestionsData?.stayInside ?? [];
+    const perfectList = filteredSuggestions.filter((s: any) => s.score >= 80).sort((a: any, b: any) => b.score - a.score);
+    const goodList = filteredSuggestions.filter((s: any) => s.score >= 60 && s.score < 80).sort((a: any, b: any) => b.score - a.score);
+    // Filter for indoor activities - those typically would be specifically tagged as indoor
+    const indoorList = filteredSuggestions.filter((s: any) => {
+      const activity = activityTypes.find(a => a.id === s.activityId);
+      return activity?.tags?.includes('indoor');
+    });
 
     // Select a unique hero activity for the day
-    const heroActivity = selectHeroActivity(filteredSuggestions);
+    const nonNullSuggestions = filteredSuggestions.filter((s): s is any => s !== null);
+    const heroActivity = selectHeroActivity(nonNullSuggestions);
 
     // ✅ Add the hero to used activities AFTER finding it
     if (heroActivity) {
@@ -503,7 +510,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
       day,
       suggestions: filteredSuggestions,
       heroActivity,
-      alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
+      alsoGoodPerfect: perfectList.filter((a: any) => a.activityId !== heroActivity?.activityId),
       suggestionsData,
       indoorList,
       dayLabel: getDayLabel(day.date, idx, timeInfo?.serverTime) // Add this for the render
@@ -732,7 +739,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
       // Add nightTemp fallback for summary day object
       astronomyWeatherData = {
         ...day,
-        nightTemp: typeof day.nightTemp === 'number' ? day.nightTemp : day.temperature // fallback to temperature if nightTemp missing
+        nightTemp: typeof (day as any).nightTemp === 'number' ? (day as any).nightTemp : day.temperature // fallback to temperature if nightTemp missing
       };
     }
     const astronomyCard = idx === 0 && hasStargazing ? (
@@ -857,7 +864,7 @@ const popupPayload = buildPopupActivityPayload({
               <div className="activity-section">
                 <h4 className="also-good-title">💯 Also Perfect Today</h4>
                 <ul className="also-good-list">
-                  {alsoGoodPerfect.map(suggestion => {
+                  {alsoGoodPerfect.map((suggestion: any) => {
                     const activity = activityTypes.find(a => a.id === suggestion.activityId);
                     const isOutdoorActivity = isOutdoor(suggestion.activityId);
 
@@ -899,8 +906,8 @@ const popupPayload = buildPopupActivityPayload({
             {/* Good Activities */}
             {(() => {
               const goodActivities = suggestions
-                .filter(s => s.score >= 60 && s.score < 80 && s.activityId !== heroActivity?.activityId)
-                .sort((a, b) => b.score - a.score)
+                .filter((s: any) => s.score >= 60 && s.score < 80 && s.activityId !== heroActivity?.activityId)
+                .sort((a: any, b: any) => b.score - a.score)
                 .slice(0, 4);
 
               if (goodActivities.length === 0) return null;
@@ -909,7 +916,7 @@ const popupPayload = buildPopupActivityPayload({
                 <div className="activity-section">
                   <h4 className="also-good-title">👍 Good Options Today</h4>
                   <ul className="activity-list-good">
-                    {goodActivities.map(suggestion => {
+                    {goodActivities.map((suggestion: any) => {
                       const activity = activityTypes.find(a => a.id === suggestion.activityId);
                       const isOutdoorActivity = isOutdoor(suggestion.activityId);
 
@@ -953,11 +960,11 @@ const popupPayload = buildPopupActivityPayload({
             {(() => {
   // Get indoor activities from the suggestions list
   const indoorListFiltered = suggestions
-    .filter(s => {
+    .filter((s: any) => {
       const activity = activityTypes.find(a => a.id === s.activityId);
       return activity && !activity.weatherSensitive;
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a: any, b: any) => b.score - a.score);
   
   if (!indoorListFiltered.length) return null;
 
@@ -965,7 +972,7 @@ const popupPayload = buildPopupActivityPayload({
     <div className="also-good-section">
       <h4 className="also-good-title">👺 Staying Indoors?</h4>
       <ul className="also-good-list">
-        {indoorListFiltered.map((s) => {
+        {indoorListFiltered.map((s: any) => {
           const activity = activityTypes.find((a) => a.id === s.activityId);
           
           return (
@@ -1042,6 +1049,20 @@ const popupPayload = buildPopupActivityPayload({
     pollen={popupActivity.pollen}
     airQuality={popupActivity.airQuality}
     onClose={() => setPopupActivity(null)}
+    onShare={(activityId: string, activityName: string) => {
+      console.log('onShare called in index.tsx', { activityId, activityName });
+      setShareModalData({ activityId, activityName });
+      setPopupActivity(null);
+    }}
+  />
+)}
+
+{/* Share Modal */}
+{shareModalData && (
+  <ShareModal
+    activityId={shareModalData.activityId}
+    activityName={shareModalData.activityName}
+    onClose={() => setShareModalData(null)}
   />
 )}
       </section> {/* End of section */}

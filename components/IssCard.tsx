@@ -5,11 +5,21 @@ type IssWindow = {
   endtimeISO: string;
   durationSec: number;
 };
-type VisibleResp = {
-  version: string;
-  sourceUsed?: "open-notify" | "prediction";
-  results: IssWindow[];
+
+type NextNightPassResponse = {
+  ok: boolean;
+  pass?: {
+    risetime: string;
+    duration: number;
+    mag: number;
+    direction: string;
+    maxEl: number;
+  };
+  sunset?: string;
+  nextSunrise?: string;
+  error?: string;
 };
+
 type Heartbeat = { ok: boolean; timestamp?: number; position?: { lat: number; lon: number } };
 
 function fmtRange(startISO: string, endISO: string) {
@@ -30,11 +40,29 @@ export function IssCard({ lat, lon }: { lat: number; lon: number }) {
       setLoading(true);
       try {
         const [v, h] = await Promise.all([
-          fetch(`/api/iss-visible?lat=${lat}&lon=${lon}&bestOnly=true`, { cache: "no-store" }).then(r => r.json() as Promise<VisibleResp>),
-          fetch(`/api/iss-heartbeat`, { cache: "no-store" }).then(r => r.json() as Promise<Heartbeat>).catch(() => ({ ok: false })),
+          fetch(`/api/iss-next-night-pass?lat=${lat}&lon=${lon}`, { cache: "no-store" })
+            .then(r => r.json() as Promise<NextNightPassResponse>),
+          fetch(`/api/iss-heartbeat`, { cache: "no-store" })
+            .then(r => r.json() as Promise<Heartbeat>)
+            .catch(() => ({ ok: false })),
         ]);
+        
         if (!cancelled) {
-          setPasses(v.results || []);
+          // Convert from new API format to our expected format
+          if (v.ok && v.pass) {
+            const pass = v.pass;
+            const risetime = new Date(pass.risetime);
+            const endtime = new Date(risetime.getTime() + pass.duration * 1000);
+            
+            setPasses([{
+              risetimeISO: pass.risetime,
+              endtimeISO: endtime.toISOString(),
+              durationSec: pass.duration
+            }]);
+          } else {
+            setPasses([]);
+          }
+          
           setHb(h);
         }
       } finally {
@@ -60,9 +88,9 @@ export function IssCard({ lat, lon }: { lat: number; lon: number }) {
         <div>No decent night-time passes here tonight.</div>
       ) : (
         <ul>
-          {passes.slice(0, 2).map((p, i) => (
+          {passes.map((p, i) => (
             <li key={i}>
-              {i === 0 ? <em>Look up at</em> : <span>Also try</span>}{" "}
+              <em>Look up at</em>{" "}
               {fmtRange(p.risetimeISO, p.endtimeISO)} ({Math.round(p.durationSec / 60)} min)
             </li>
           ))}

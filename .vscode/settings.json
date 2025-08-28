@@ -1,0 +1,50 @@
+{
+  // 🔧 COPILOT TUNING
+  "github.copilot.inlineSuggest.enable": true,
+  "github.copilot.advanced": {
+    "length": 5000,
+    "maxSuggestions": 3
+  },
+
+  // ⚡ GENERAL PERFORMANCE
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+  "editor.suggestSelection": "first",
+  "editor.quickSuggestionsDelay": 50,
+  "editor.parameterHints.enabled": false,
+
+  // 📂 FILE & FOLDER EXCLUSIONS (no indexing)
+  "files.exclude": {
+    "**/.git": true,
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    "**/.cache": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.next": true
+  },
+
+  // 🚫 LINTERS / FORMATTERS IN HEAVY PROJECTS
+  "eslint.lintTask.enable": false,
+  "prettier.disableLanguages": ["javascript", "typescript", "javascriptreact", "typescriptreact"],
+
+  // 🧪 TYPESCRIPT SETTINGS
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.tsserver.log": "off",
+  "typescript.tsserver.trace": "off",
+
+  // 💻 FILE WATCHER LIMITS (macOS default is low)
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true
+  },
+  "files.maxMemoryForLargeFilesMB": 8192,
+
+  // 👁 UI/UX
+  "workbench.editor.enablePreview": false,
+  "workbench.startupEditor": "none"
+}

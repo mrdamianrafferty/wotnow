@@ -4,6 +4,12 @@ import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocom
 import dynamic from 'next/dynamic';
 import { computeSimulatedOrientation } from '../utils/orientation';
 
+interface CoastalLocation {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
 
@@ -139,14 +145,15 @@ requestOptions: {
               lon: longitude
             });
             const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-            const updated = [ { name: locationName, lat: latitude, lon: longitude }, ...existing.filter(l => l.name !== locationName) ].slice(0, 5);
+            const updated = [ { name: locationName, lat: latitude, lon: longitude }, ...existing.filter((l: { name: string }) => l.name !== locationName) ].slice(0, 5);
             localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
           } else {
             throw new Error("No location data found in API response");
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Error getting location:", error);
-          setLocationError(`Damn, we failed to determine your location: ${error.message}. Please try again or enter manually.`);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          setLocationError(`Damn, we failed to determine your location: ${errorMessage}. Please try again or enter manually.`);
         } finally {
           setIsGettingLocation(false);
         }
@@ -188,7 +195,7 @@ requestOptions: {
           </h3>
           <MapPicker
             homeLocation={homeLocation}
-            onSelect={async (lat, lon) => {
+            onSelect={async (lat: number, lon: number) => {
               setSelectedCoords({ lat, lon });
 
               try {
@@ -241,7 +248,12 @@ requestOptions: {
                     const { lat, lon } = selectedCoords;
                     onSave({ name: selectedName, lat, lon });
                     const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                    const updated = [{ name: selectedName, lat, lon }, ...existing.filter(l => l.name !== selectedName)].slice(0, 5);
+                    interface CoastalLocation {
+                      name: string;
+                      lat: number;
+                      lon: number;
+                    }
+                    const updated = [{ name: selectedName, lat, lon }, ...(existing as CoastalLocation[]).filter((l: CoastalLocation) => l.name !== selectedName)].slice(0, 5);
                     localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
                     // Add likely beach caching logic
                     const isLikelyBeach = (name: string) =>
@@ -454,7 +466,7 @@ requestOptions: {
                           lon: lng,
                         });
                         const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                        const updated = [ { name: description, lat, lon: lng }, ...existing.filter(l => l.name !== description) ].slice(0, 5);
+                        const updated = [ { name: description, lat, lon: lng }, ...(existing as CoastalLocation[]).filter((l: CoastalLocation) => l.name !== description) ].slice(0, 5);
                         localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
                         // Add likely beach caching logic
                         const isLikelyBeach = (name: string) =>

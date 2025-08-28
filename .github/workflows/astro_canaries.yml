@@ -1,28 +1,76 @@
+name: Build astronomy canaries
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'   # nightly at 02:00 UTC
+  # Optional: only run on pushes that touch the canaries code or this workflow.
+  # This avoids blocking Vercel on unrelated commits.
+  push:
+    paths:
+      - 'services/astro_highlights/**'
+      - '.github/workflows/build-canaries.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-canaries
+  cancel-in-progress: false
+
 jobs:
   build-canaries:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: services/astro_highlights/astro_highlights
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v5   # updated from v4 to v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+          cache: 'pip'
+          cache-dependency-path: |
+            services/astro_highlights/astro_highlights/requirements*.txt
+            services/astro_highlights/astro_highlights/pyproject.toml
+            services/astro_highlights/astro_highlights/setup.cfg
+
       - name: Install dependencies
         run: |
-          cd services/astro_highlights/astro_highlights
-          python -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install -e .
-      
+          python -m pip install --upgrade pip
+          # Prefer pyproject; fall back to editable install if that’s what you use
+          if [ -f pyproject.toml ]; then
+            python -m pip install .
+          elif [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+            python -m pip install -e .
+          else
+            python -m pip install -e .
+          fi
+
       - name: Build canaries
+        env:
+          PYTHONUNBUFFERED: '1'
         run: |
-          python services/astro_highlights/astro_highlights/run_canaries.py
-      
+          mkdir -p ../out
+          # If your entrypoint is a module, prefer `-m`. Otherwise call the script.
+          if python -c "import run_canaries" 2>/dev/null; then
+            python -m run_canaries
+          else
+            python run_canaries.py
+          fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: astronomy-canaries
           path: services/astro_highlights/out/
+          if-no-files-found: error
           retention-days: 30

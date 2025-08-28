@@ -71,10 +71,28 @@ type ApiRouteConfig = {
   handler satisfies RouteHandlerConfig<"/api/iss-next-night-pass">
 }
 
-// Validate ../../app/api/iss-visible/route.ts
+// Validate ../../pages/AboutUs.tsx
 {
-  const handler = {} as typeof import("../../app/api/iss-visible/route.js")
-  handler satisfies RouteHandlerConfig<"/api/iss-visible">
+  const handler = {} as typeof import("../../pages/AboutUs.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/HowWeDoIt.tsx
+{
+  const handler = {} as typeof import("../../pages/HowWeDoIt.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/PrivacyPolicy.tsx
+{
+  const handler = {} as typeof import("../../pages/PrivacyPolicy.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/TermsAndConditions.tsx
+{
+  const handler = {} as typeof import("../../pages/TermsAndConditions.js")
+  handler satisfies PagesPageConfig
 }
 
 // Validate ../../pages/_app.tsx
@@ -107,6 +125,12 @@ type ApiRouteConfig = {
   handler satisfies PagesPageConfig
 }
 
+// Validate ../../pages/debug-environmental.tsx
+{
+  const handler = {} as typeof import("../../pages/debug-environmental.js")
+  handler satisfies PagesPageConfig
+}
+
 // Validate ../../pages/home-location-demo.tsx
 {
   const handler = {} as typeof import("../../pages/home-location-demo.js")
@@ -122,6 +146,42 @@ type ApiRouteConfig = {
 // Validate ../../pages/interests.tsx
 {
   const handler = {} as typeof import("../../pages/interests.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/invite/[id].tsx
+{
+  const handler = {} as typeof import("../../pages/invite/[id].js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/onboarding.tsx
+{
+  const handler = {} as typeof import("../../pages/onboarding.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/poll/[id].tsx
+{
+  const handler = {} as typeof import("../../pages/poll/[id].js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/share-demo.tsx
+{
+  const handler = {} as typeof import("../../pages/share-demo.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/test-share.tsx
+{
+  const handler = {} as typeof import("../../pages/test-share.js")
+  handler satisfies PagesPageConfig
+}
+
+// Validate ../../pages/test.tsx
+{
+  const handler = {} as typeof import("../../pages/test.js")
   handler satisfies PagesPageConfig
 }
 
@@ -155,9 +215,9 @@ type ApiRouteConfig = {
   handler satisfies ApiRouteConfig
 }
 
-// Validate ../../pages/api/iss-heartbeat.ts
+// Validate ../../pages/api/iss-visible.ts
 {
-  const handler = {} as typeof import("../../pages/api/iss-heartbeat.js")
+  const handler = {} as typeof import("../../pages/api/iss-visible.js")
   handler satisfies ApiRouteConfig
 }
 
@@ -179,6 +239,24 @@ type ApiRouteConfig = {
   handler satisfies ApiRouteConfig
 }
 
+// Validate ../../pages/api/sharing/invites.ts
+{
+  const handler = {} as typeof import("../../pages/api/sharing/invites.js")
+  handler satisfies ApiRouteConfig
+}
+
+// Validate ../../pages/api/sharing/polls.ts
+{
+  const handler = {} as typeof import("../../pages/api/sharing/polls.js")
+  handler satisfies ApiRouteConfig
+}
+
+// Validate ../../pages/api/sharing/vote.ts
+{
+  const handler = {} as typeof import("../../pages/api/sharing/vote.js")
+  handler satisfies ApiRouteConfig
+}
+
 // Validate ../../pages/api/tides.ts
 {
   const handler = {} as typeof import("../../pages/api/tides.js")
@@ -188,12 +266,6 @@ type ApiRouteConfig = {
 // Validate ../../pages/api/weather-with-pollen.ts
 {
   const handler = {} as typeof import("../../pages/api/weather-with-pollen.js")
-  handler satisfies ApiRouteConfig
-}
-
-// Validate ../../pages/api/weather.ts
-{
-  const handler = {} as typeof import("../../pages/api/weather.js")
   handler satisfies ApiRouteConfig
 }
 

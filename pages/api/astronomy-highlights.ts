@@ -28,6 +28,8 @@ interface AstronomyHighlight {
     phaseName: string;
     illumination: number;
     icon: string;
+    riseIcon?: string;
+    setIcon?: string;
   };
   darkWindow?: {
     start: string;

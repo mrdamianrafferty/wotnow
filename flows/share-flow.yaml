@@ -1,0 +1,93 @@
+id: share_flow
+name: Share Activity
+steps:
+  - id: select_share_type
+    type: form
+    title: Share Activity
+    description: Choose how you want to share this activity
+    fields:
+      - id: share_type
+        type: select
+        label: Share as
+        required: true
+        options:
+          - { label: "Invite to a specific venue", value: "invite" }
+          - { label: "Create a poll with options", value: "poll" }
+    actions:
+      - id: next
+        type: "submit"
+        label: "Continue"
+        variant: "primary"
+        action: "next"
+
+  - id: select_venue
+    type: form
+    title: Select a Venue
+    description: Search for a venue or select from your recent places
+    fields:
+      - id: venue_search
+        type: "text"
+        label: "Search for a venue"
+        required: true
+      - id: date_time
+        type: "datetime"
+        label: "When?"
+        required: true
+    actions:
+      - id: back
+        type: "button"
+        label: "Back"
+        variant: "outline"
+        action: "prev"
+      - id: next
+        type: "submit"
+        label: "Continue"
+        variant: "primary"
+        action: "next"
+
+  - id: customize_message
+    type: form
+    title: Customize Your Invite
+    description: Add a personal message to your invite
+    fields:
+      - id: message
+        type: "text"
+        label: "Personal message (optional)"
+        required: false
+    actions:
+      - id: back
+        type: "button"
+        label: "Back"
+        variant: "outline"
+        action: "prev"
+      - id: share
+        type: "submit"
+        label: "Share"
+        variant: "primary"
+        action: "share"
+
+  - id: share_options
+    type: "share"
+    title: Share Your Invite
+    description: Choose how you want to share this invite
+    actions:
+      - id: whatsapp
+        type: "button"
+        label: "WhatsApp"
+        variant: "outline"
+        action: "share.whatsapp"
+      - id: message
+        type: "button"
+        label: "Message"
+        variant: "outline"
+        action: "share.message"
+      - id: copy_link
+        type: "button"
+        label: "Copy Link"
+        variant: "outline"
+        action: "share.copy"
+      - id: done
+        type: "button"
+        label: "Done"
+        variant: "primary"
+        action: "close"

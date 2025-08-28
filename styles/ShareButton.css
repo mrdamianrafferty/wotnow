@@ -1,0 +1,29 @@
+/* Share button styles for activity cards */
+.card__hero-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.card__share-btn {
+  padding: 8px 12px !important;
+  font-size: 12px !important;
+  border-radius: 20px !important;
+  background: rgba(37, 211, 102, 0.9) !important;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.card__share-btn:hover {
+  background: rgba(37, 211, 102, 1) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card__share-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+}
