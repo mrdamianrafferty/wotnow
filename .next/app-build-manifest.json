@@ -1,9 +1,0 @@
-{
-  "pages": {
-    "/api/iss-next-night-pass/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/iss-next-night-pass/route.js"
-    ]
-  }
-}
