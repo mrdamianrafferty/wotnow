@@ -85,10 +85,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('❌ Stormglass API Error:', error.stack || error);
+    console.error('❌ Stormglass API Error:', error instanceof Error ? error.stack || error.message : error);
     return res.status(500).json({
       error: 'Fetch error contacting Stormglass',
-      details: error.message || error,
+      details: error instanceof Error ? error.message : error,
     });
   }
 }

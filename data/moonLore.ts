@@ -238,3 +238,24 @@ waning_crescent: [
 export function getMoonLore(phase: MoonPhase): LoreItem[] {
   return moonLore[phase] || [];
 }
+
+export function getMoonLoreDistinct(phase: MoonPhase, options?: { used?: Set<string> }): { item: LoreItem | null; key: string } {
+  const loreItems = getMoonLore(phase);
+  if (loreItems.length === 0) {
+    return { item: null, key: '' };
+  }
+  
+  const used = options?.used || new Set();
+  
+  // Try to find an unused item
+  for (let i = 0; i < loreItems.length; i++) {
+    const item = loreItems[i];
+    const key = `${phase}-${i}`;
+    if (!used.has(key)) {
+      return { item, key };
+    }
+  }
+  
+  // If all items have been used, return the first one
+  return { item: loreItems[0], key: `${phase}-0` };
+}

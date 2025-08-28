@@ -378,7 +378,7 @@ const WeatherPageBothLocations: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
 
-  const mainLocation = preferences.locations?.find((l) => l.type === 'home') || preferences.location;
+  const mainLocation = preferences.locations?.find((l) => l.type === 'home') || preferences.locations?.[0];
   const coastalLocation = preferences.locations?.find((l) => l.type === 'coastal');
 
   const { slots, marine, loading } = useForecastData(mainLocation?.lat, mainLocation?.lon);
@@ -405,13 +405,15 @@ const WeatherPageBothLocations: React.FC = () => {
         const res = await fetch(`/api/tides?lat=${coastalLocation.lat}&lon=${coastalLocation.lon}`);
         const data = await res.json();
         // Group by date and type
-        const grouped: Record<string, { high: string[]; low: string }> = {};
+        const grouped: Record<string, { high: string[]; low: string[] }> = {};
         (data.data || []).forEach((tide: any) => {
           const date = tide.time.slice(0, 10);
           if (!grouped[date]) grouped[date] = { high: [], low: [] };
-          grouped[date][tide.type].push(
-            `${new Date(tide.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${tide.height.toFixed(2)}m)`
-          );
+          if (tide.type === 'high' || tide.type === 'low') {
+            grouped[date][tide.type as 'high' | 'low'].push(
+              `${new Date(tide.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${tide.height.toFixed(2)}m)`
+            );
+          }
         });
         setTides(grouped);
       } catch {

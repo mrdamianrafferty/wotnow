@@ -316,7 +316,7 @@ const Interests: React.FC = () => {
     const hasMounted = useHasMounted();
 
     // Path for breadcrumb
-    const path = [mainCat, subCat].filter(Boolean);
+    const path = [mainCat, subCat].filter(Boolean) as string[];
 
     // Use the up-to-date interests from preferences
     const interests: string[] = preferences.interests || [];

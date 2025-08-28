@@ -182,9 +182,9 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData) {
+export function transformDailyForecast(oneCallData: any) {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map(day => ({
+  return oneCallData.daily.slice(0, 8).map((day: any) => ({
     dt: day.dt,
     main: {
       temp: day.temp.day,
@@ -214,11 +214,11 @@ export function transformDailyForecast(oneCallData) {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData, lat, lon) {
+export function transformCity(oneCallData: any, lat: number, lon: number) {
   return {
     id: 0,
     name: "Location",
-    coord: { lat: parseFloat(lat), lon: parseFloat(lon) },
+    coord: { lat: lat, lon: lon },
     country: "",
     population: 0,
     timezone: oneCallData.timezone_offset || 0,
@@ -234,7 +234,7 @@ export function transformCity(oneCallData, lat, lon) {
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }) {
+export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number; lon: number; apiKey: string; options?: any }) {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {

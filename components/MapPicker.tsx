@@ -2,15 +2,26 @@
 'use client';
 
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { LatLngTuple } from 'leaflet';
 import { useState } from 'react';
 
-const MapPicker = ({ homeLocation, onSelect }) => {
-  const [position, setPosition] = useState(null);
+interface MapPickerProps {
+  homeLocation: { lat: number; lon: number } | null;
+  onSelect: (lat: number, lon: number) => void;
+}
+
+interface Position {
+  lat: number;
+  lon: number;
+}
+
+const MapPicker = ({ homeLocation, onSelect }: MapPickerProps) => {
+  const [position, setPosition] = useState<Position | null>(null);
   const [hasClicked, setHasClicked] = useState(false);
 
   const LocationMarker = () => {
     useMapEvents({
-      click(e) {
+      click(e: any) {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
         setPosition({ lat, lon });
@@ -32,7 +43,7 @@ const MapPicker = ({ homeLocation, onSelect }) => {
       {!hasClicked && <div className="map-picker-crosshair"></div>}
       
       <MapContainer
-        center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27]}
+        center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27] as LatLngTuple}
         zoom={8}
         style={{ height: '400px', width: '100%' }}
       >

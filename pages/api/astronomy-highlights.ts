@@ -482,7 +482,7 @@ class WotNowAstronomyAPI {
           // Add moonrise and moonset icons for frontend
           riseIcon: 'moonrise.svg',
           setIcon: 'moonset.svg'
-        },
+        } as any,
         darkWindow,
         events,
         wotnowMessage

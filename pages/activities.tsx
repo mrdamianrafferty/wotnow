@@ -721,8 +721,8 @@ export default function ActivitiesPage() {
         console.log(`📊 Day ${dayIndex} (${dateStr}):`, { 
           pollenForDate, 
           airQualityForDate,
-          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some(v => v > 0),
-          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some(v => v > 0)
+          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some((v: any) => v > 0),
+          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some((v: any) => v > 0)
         });
         
         return {
@@ -812,7 +812,7 @@ export default function ActivitiesPage() {
 
   // Make sure ALL selected interests appear in the activities list
   if (interests.length > 0 && currentDayData) {
-    const existingActivityIds = activities.map(a => a.activityId);
+    const existingActivityIds = activities.map((a: any) => a.activityId);
     const missingInterests = interests.filter(id => !existingActivityIds.includes(id));
     
     if (missingInterests.length > 0) {
@@ -825,6 +825,7 @@ export default function ActivitiesPage() {
           score: 50,
           evaluation: 'Available option' as any,
           reasoning: 'Conditions vary, but available based on your interests',
+          outOfSeason: false,
         };
       }).filter((a): a is Exclude<typeof a, null> => a !== null);
       
@@ -833,7 +834,7 @@ export default function ActivitiesPage() {
   }
 
   // Sort activities by priority: perfect, good, fair, poor, indoor, offseason
-  const sortedActivities = activities.sort((a, b) => {
+  const sortedActivities = activities.sort((a: any, b: any) => {
     const getActivityPriority = (activityId: string, score: number) => {
       if (!isOutdoor(activityId)) return 5; // indoor
       if (isOutOfSeason(activityId)) return 6; // offseason
@@ -1139,7 +1140,7 @@ export default function ActivitiesPage() {
                       </div>
                     </div>
                   ) : (
-                    sortedActivities.map((activity) => (
+                    sortedActivities.map((activity: any) => (
                       <ActivityCard
                         key={activity.activityId}
                         activityId={activity.activityId}
