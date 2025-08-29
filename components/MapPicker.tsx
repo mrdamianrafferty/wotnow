@@ -42,7 +42,7 @@ const MapPicker = ({ homeLocation, onSelect }: MapPickerProps) => {
       {!hasClicked && <div className="map-picker-crosshair"></div>}
       
       <MapContainer
-        center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27]}
+        center={[homeLocation?.lat || 43.48, homeLocation?.lon || -5.27] as [number, number]}
         zoom={8}
         style={{ height: '400px', width: '100%' }}
       >
