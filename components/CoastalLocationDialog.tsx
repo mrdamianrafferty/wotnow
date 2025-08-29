@@ -188,7 +188,7 @@ requestOptions: {
           </h3>
           <MapPicker
             homeLocation={homeLocation}
-            onSelect={async (lat, lon) => {
+            onSelect={async (lat: number, lon: number) => {
               setSelectedCoords({ lat, lon });
 
               try {
