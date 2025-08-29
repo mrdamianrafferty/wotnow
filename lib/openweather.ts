@@ -218,7 +218,7 @@ export function transformCity(oneCallData: any, lat: number, lon: number) {
   return {
     id: 0,
     name: "Location",
-    coord: { lat: parseFloat(lat), lon: parseFloat(lon) },
+    coord: { lat, lon },
     country: "",
     population: 0,
     timezone: oneCallData.timezone_offset || 0,
