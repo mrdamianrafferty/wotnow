@@ -177,7 +177,8 @@ const getWeatherAwareMessage = (
     if (primaryEvent.direction) {
       if (typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
         const dirPhrase = `Look ${primaryEvent.direction}`;
-        if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction.toLowerCase()))) {
+        const directionLower = primaryEvent.direction.toLowerCase();
+        if (!parts.some(p => p.toLowerCase().includes(directionLower))) {
           parts.push(dirPhrase);
         }
       }
