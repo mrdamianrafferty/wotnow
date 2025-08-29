@@ -241,7 +241,7 @@ requestOptions: {
                     const { lat, lon } = selectedCoords;
                     onSave({ name: selectedName, lat, lon });
                     const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                    const updated = [{ name: selectedName, lat, lon }, ...existing.filter(l => l.name !== selectedName)].slice(0, 5);
+                    const updated = [{ name: selectedName, lat, lon }, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== selectedName)].slice(0, 5);
                     localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
                     // Add likely beach caching logic
                     const isLikelyBeach = (name: string) =>
