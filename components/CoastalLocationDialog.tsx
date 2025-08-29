@@ -454,7 +454,7 @@ requestOptions: {
                           lon: lng,
                         });
                         const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                        const updated = [ { name: description, lat, lon: lng }, ...existing.filter(l => l.name !== description) ].slice(0, 5);
+                        const updated = [ { name: description, lat, lon: lng }, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== description) ].slice(0, 5);
                         localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
                         // Add likely beach caching logic
                         const isLikelyBeach = (name: string) =>
