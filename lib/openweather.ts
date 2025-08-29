@@ -182,7 +182,7 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData) {
+export function transformDailyForecast(oneCallData: any) {
   if (!oneCallData.daily) return [];
   return oneCallData.daily.slice(0, 8).map(day => ({
     dt: day.dt,
