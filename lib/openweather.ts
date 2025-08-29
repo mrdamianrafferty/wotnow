@@ -184,7 +184,7 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  */
 export function transformDailyForecast(oneCallData: any) {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map(day => ({
+  return oneCallData.daily.slice(0, 8).map((day: any) => ({
     dt: day.dt,
     main: {
       temp: day.temp.day,
