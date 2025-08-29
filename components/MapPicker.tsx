@@ -4,8 +4,18 @@
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { useState } from 'react';
 
-const MapPicker = ({ homeLocation, onSelect }) => {
-  const [position, setPosition] = useState(null);
+interface MapPickerProps {
+  homeLocation?: { lat: number; lon: number };
+  onSelect: (lat: number, lon: number) => void;
+}
+
+interface Position {
+  lat: number;
+  lon: number;
+}
+
+const MapPicker = ({ homeLocation, onSelect }: MapPickerProps) => {
+  const [position, setPosition] = useState<Position | null>(null);
   const [hasClicked, setHasClicked] = useState(false);
 
   const LocationMarker = () => {
