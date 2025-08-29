@@ -1558,7 +1558,7 @@ export const activityTypes: ActivityType[] = [
   weatherSensitive: true,
   tags: ['adventure', 'walking', 'nature', 'coastal', 'Saturday', 'Sunday', 'holiday'],
   // skillSensitive: true, // For later development
-  skillProfile: {
+  /* skillProfile: {
     beginner: {
       windSpeed: { max: 10 },
       precipitation: { max: 0 },
@@ -1572,7 +1572,7 @@ export const activityTypes: ActivityType[] = [
       windSpeed: { max: 20 },
       precipitation: { max: 5 }
     }
-  },
+  }, */
   poorConditions: [
     'temperature<5',                // cold, uncomfortable
     'temperature>28',              // heat, exhausting
