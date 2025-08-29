@@ -20,7 +20,7 @@ const MapPicker = ({ homeLocation, onSelect }: MapPickerProps) => {
 
   const LocationMarker = () => {
     useMapEvents({
-      click(e) {
+      click(e: { latlng: { lat: number; lng: number } }) {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
         setPosition({ lat, lon });
