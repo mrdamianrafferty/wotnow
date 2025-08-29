@@ -1557,7 +1557,7 @@ export const activityTypes: ActivityType[] = [
   secondaryCategory: 'Outdoor Recreation',
   weatherSensitive: true,
   tags: ['adventure', 'walking', 'nature', 'coastal', 'Saturday', 'Sunday', 'holiday'],
-  skillSensitive: true,
+  // skillSensitive: true, // For later development
   skillProfile: {
     beginner: {
       windSpeed: { max: 10 },
