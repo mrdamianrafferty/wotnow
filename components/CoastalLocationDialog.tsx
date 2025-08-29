@@ -146,7 +146,7 @@ requestOptions: {
           }
         } catch (error) {
           console.error("Error getting location:", error);
-          setLocationError(`Damn, we failed to determine your location: ${error.message}. Please try again or enter manually.`);
+          setLocationError(`Damn, we failed to determine your location: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or enter manually.`);
         } finally {
           setIsGettingLocation(false);
         }
