@@ -139,7 +139,7 @@ requestOptions: {
               lon: longitude
             });
             const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-            const updated = [ { name: locationName, lat: latitude, lon: longitude }, ...existing.filter(l => l.name !== locationName) ].slice(0, 5);
+            const updated = [ { name: locationName, lat: latitude, lon: longitude }, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== locationName) ].slice(0, 5);
             localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
           } else {
             throw new Error("No location data found in API response");
