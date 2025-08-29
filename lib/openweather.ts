@@ -214,7 +214,7 @@ export function transformDailyForecast(oneCallData: any) {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData, lat, lon) {
+export function transformCity(oneCallData: any, lat: number, lon: number) {
   return {
     id: 0,
     name: "Location",
