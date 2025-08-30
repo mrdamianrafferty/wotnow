@@ -1,6 +1,7 @@
 import {
   getBeaufortDescription,
   getRainfallDescription,
+  getRainfallDescriptionWithHourly,
   getTemperatureDescription,
   getHumidityDescription,
   getWaveDescription,
@@ -500,7 +501,9 @@ export function buildReasons(day: any, activityId: string) {
   }
   
   if (day.rain !== undefined) {
-    const rainMsg = getRainfallDescription(day.rain);
+    // Use enhanced rain description with hourly data if available
+    const hourlyData = day.hourly || [];
+    const rainMsg = getRainfallDescriptionWithHourly(day.rain, hourlyData);
     if (rainMsg) reasons.push(rainMsg);
   }
   

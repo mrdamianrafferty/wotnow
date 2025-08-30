@@ -103,6 +103,7 @@ const bgMap: Record<string, string> = {
   scuba_diving:           '/scuba.png',
   kitesurfing:            '/kitey.png',
   windsurfing:            '/windy.png',
+  windsurfing_inland:     '/windy.png',
   gaming:                 '/gaming.png',
   boxing:                 '/boxing.png',
   zumba:                  '/zumba.png',
@@ -112,6 +113,9 @@ const bgMap: Record<string, string> = {
   gallery:               '/gallery.png',
   online:                '/online.png',
   sailing:               '/sailing2.png',
+  comedy:                '/comedy.png',
+  live_music:           '/livemusic.png',
+  theatre:              '/theatrey.png',
 };
 
 export default bgMap;

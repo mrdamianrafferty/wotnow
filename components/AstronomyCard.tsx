@@ -57,7 +57,7 @@ import { getMoonLore, MoonPhase } from '../data/moonLore';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { describeIssPass } from '../utils/issHelper';
 import '../styles/Card.css';
-import { indieFlower } from "@/app/fonts";
+import { indieFlower, oxanium } from "@/app/fonts";
 import { describeClearestSkiesFromHourly } from '../lib/services/goingOutTonight';
 
 // Astronomy highlight interfaces
@@ -177,8 +177,7 @@ const getWeatherAwareMessage = (
     if (primaryEvent.direction) {
       if (typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
         const dirPhrase = `Look ${primaryEvent.direction}`;
-        const directionLower = primaryEvent.direction.toLowerCase();
-        if (!parts.some(p => p.toLowerCase().includes(directionLower))) {
+        if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction?.toLowerCase() || ''))) {
           parts.push(dirPhrase);
         }
       }
@@ -540,7 +539,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
               {primaryEvent ? primaryEvent.name : 'Stargazing'}
             </div>
             <div className="card__hero-message">
-              {primaryEvent ? 'Special event tonight' : `${Math.round(stargazingScore)}% visibility`}
+              {primaryEvent ? 'Do look up!' : `${Math.round(stargazingScore)}% visibility`}
             </div>
           </div>
           <div
@@ -550,109 +549,193 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <img
               src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
               alt={tonight.moon.phaseName}
-              style={{ width: 80, height: 80 }}
+              style={{ width: 192, height: 192 }}
               loading="lazy"
             />
           </div>
         </div>
 
-        {/* Data bars section - astronomy and weather specific */}
-        <div className="data-bars">
-          {/* Moon illumination bar */}
-          <div className="weather-data-bar">
-            <div className="weather-data-label">
-              <span className="data-icon">🌙</span>
-              <span>Moon</span>
-            </div>
-            <div className="weather-data-content">
-              <div className="weather-data-value">{tonight.moon.illumination}%</div>
-              <div className="weather-data-bar-visual">
-                <div 
-                  className="weather-data-bar-fill" 
-                  style={{ 
-                    width: `${tonight.moon.illumination}%`,
-                    background: tonight.moon.illumination < 30 ? '#10b981' : tonight.moon.illumination < 70 ? '#fbbf24' : '#ef4444'
-                  }}
+        {/* Data bars section - astronomy and weather specific - 2 column layout */}
+        <div className="data-grid" style={{ 
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '4px',
+          marginBottom: '16px',
+          padding: '0',
+          width: '90%',
+          margin: '0 auto'
+        }}>
+          {/* Row 1: Moon % | Clouds % */}
+          <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <img
+                  src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
+                  alt="Moon phase"
+                  style={{ width: 25, height: 25, marginRight: '4px' }}
+                  loading="lazy"
                 />
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moon</span>
               </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{Math.ceil(tonight.moon.illumination)}%</span>
             </div>
           </div>
-
-          {/* Cloud cover bar */}
-          {weatherData?.clouds !== undefined && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">☁️</span>
-                <span>Clouds</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{weatherData.clouds}%</div>
-                <div className="weather-data-bar-visual">
-                  <div 
-                    className="weather-data-bar-fill" 
-                    style={{ 
-                      width: `${weatherData.clouds}%`,
-                      background: weatherData.clouds < 30 ? '#10b981' : weatherData.clouds < 70 ? '#fbbf24' : '#ef4444'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Visibility bar */}
-          {weatherData?.visibility && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">👁️</span>
-                <span>Visibility</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{Math.round(weatherData.visibility / 1000)}km</div>
-                <div className="weather-data-bar-visual">
-                  <div 
-                    className="weather-data-bar-fill" 
-                    style={{ 
-                      width: `${Math.min(100, (weatherData.visibility / 10000) * 100)}%`,
-                      background: weatherData.visibility > 8000 ? '#10b981' : weatherData.visibility > 5000 ? '#fbbf24' : '#ef4444'
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Sunset time */}
-          {tonight.sun.sunset && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
+          
+          <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
                 <img
-                  src="/weather-icons/design/fill/final/sunset.svg"
-                  alt="sunset"
-                  style={{ width: 16, height: 16 }}
+                  src="/weather-icons/design/fill/final/04d.svg"
+                  alt="Clouds"
+                  style={{ width: 25, height: 25, marginRight: '4px' }}
+                  loading="lazy"
                 />
-                <span>Sunset</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Clouds</span>
               </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{tonight.sun.sunset}</div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>
+                {weatherData?.clouds !== undefined ? `${weatherData.clouds}%` : 'N/A'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Row 2: Visibility km | Precipitation mm */}
+          <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <img
+                  src="/weather-icons/design/fill/final/haze-night.svg"
+                  alt="Visibility"
+                  style={{ width: 25, height: 25, marginRight: '4px' }}
+                  loading="lazy"
+                />
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Visibility</span>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>
+                {weatherData?.visibility ? `${Math.round(weatherData.visibility / 1000)}km` : 'N/A'}
+              </span>
+            </div>
+          </div>
+          
+          <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <img
+                  src="/weather-icons/design/fill/final/09d.svg"
+                  alt="Precipitation"
+                  style={{ width: 25, height: 25, marginRight: '4px' }}
+                  loading="lazy"
+                />
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Rain</span>
+              </div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>
+                {weatherData?.rain ? `${weatherData.rain}mm` : '0mm'}
+              </span>
+            </div>
+          </div>
+          
+          {/* Row 3: Sunset | Sunrise */}
+          {tonight.sun.sunset && (
+            <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <img
+                    src="/weather-icons/design/fill/final/sunset.svg"
+                    alt="sunset"
+                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Sunset</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.sun.sunset}</span>
               </div>
             </div>
           )}
-
-          {/* Special events */}
-          {primaryEvent && (
-            <div className="weather-data-bar">
-              <div className="weather-data-label">
-                <span className="data-icon">✨</span>
-                <span>Event</span>
-              </div>
-              <div className="weather-data-content">
-                <div className="weather-data-value">{primaryEvent.name}</div>
-                {primaryEvent.bestTime && (
-                  <div className="weather-data-subtitle">Best viewing {primaryEvent.bestTime}</div>
-                )}
+          
+          {tonight.sun.sunrise && (
+            <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <img
+                    src="/weather-icons/design/fill/final/sunrise.svg"
+                    alt="sunrise"
+                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Sunrise</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.sun.sunrise}</span>
               </div>
             </div>
+          )}
+          
+          {/* Row 4: Moon rise | Moon set */}
+          {tonight.moon.rise && (
+            <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <img
+                    src="/weather-icons/design/fill/final/moonrise.svg"
+                    alt="Moon rise"
+                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                    loading="lazy"
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moonrise</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.moon.rise}</span>
+              </div>
+            </div>
+          )}
+          
+          {tonight.moon.set && (
+            <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <img
+                    src="/weather-icons/design/fill/final/moonset.svg"
+                    alt="Moon set"
+                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                    loading="lazy"
+                  />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moonset</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.moon.set}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Row 5: Event name | Best viewing (only if primaryEvent exists) */}
+          {primaryEvent && (
+            <>
+              <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img
+                      src="/weather-icons/design/fill/final/falling-stars.svg"
+                      alt="Event"
+                      style={{ width: 25, height: 25, marginRight: '4px' }}
+                      loading="lazy"
+                    />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Event</span>
+                  </div>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{primaryEvent.name}</span>
+                </div>
+              </div>
+              
+              {primaryEvent.bestTime && (
+                <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <img
+                        src="/weather-icons/design/fill/final/star.svg"
+                        alt="Best time"
+                        style={{ width: 20, height: 20, marginRight: '4px' }}
+                        loading="lazy"
+                      />
+                      <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Best time</span>
+                    </div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{primaryEvent.bestTime}</span>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -670,7 +753,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 </div>
 
         {/* Astronomy message section - formatted similarly to moon lore */}
-        <div className="astronomy-message" style={{ margin: '16px 0' }}>
+        <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '16px 0', fontSize: '0.8rem' }}>
           <strong>🔭 Astronomy 🌖utlook</strong>
           <br />
           {getWeatherAwareMessage(primaryEvent, tonight, weatherData, stargazingScore)}
@@ -678,7 +761,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
 
         {/* Best sky window hint: only show concise time window message */}
         {clearestSkiesMsg && (
-          <div className="astronomy-message" style={{ margin: '4px 0 12px', opacity: 0.9 }}>
+          <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '4px 0 12px', opacity: 0.9, fontSize: '0.8rem' }}>
             <span style={{ fontStyle: 'italic' }}>{clearestSkiesMsg}</span>
           </div>
         )}
@@ -742,7 +825,7 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
       ? 'No visible ISS pass tonight for your location. Try again tomorrow!'
       : `ISS sighting info unavailable: ${error}`;
     return (
-      <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444' }}>
+      <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.8, color: '#ef4444', fontSize: '0.8rem' }}>
         <span style={{ fontWeight: 500 }}>
           {friendlyMsg}
         </span>
@@ -766,7 +849,7 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   // If not already imported, add it.
   // Render the summary
   return (
-    <div className="astronomy-message" style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
       <img
         src="/satellite_iss.png"
         alt="ISS icon"

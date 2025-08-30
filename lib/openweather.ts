@@ -229,19 +229,22 @@ export function transformCity(oneCallData: any, lat: number, lon: number) {
 
 // TODO: Add more feature functions here, e.g. getAlerts, getAirPollution, etc.
 
-interface WeatherRequestOptions {
-  lat: number;
-  lon: number;
-  apiKey: string;
-  options?: any;
-}
-
 /**
  * Get full weather data with fallback and unified structure
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }: WeatherRequestOptions) {
+export async function getFullWeather({ 
+  lat, 
+  lon, 
+  apiKey, 
+  options = {} 
+}: { 
+  lat: number; 
+  lon: number; 
+  apiKey: string; 
+  options?: any 
+}) {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {

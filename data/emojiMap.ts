@@ -1,3 +1,5 @@
+import { The_Girl_Next_Door } from "next/font/google";
+
 const emojiMap: Record<string, string> = {
   beach_volleyball: '🏐',
   cricket: '🏏',
@@ -100,6 +102,7 @@ const emojiMap: Record<string, string> = {
   kitesurfing: '🏄‍♂️',
   volleyball_indoor: '🏐',
   windsurfing: '🏄‍♀️',
+  windsurfing_inland: '🏄🏽‍♂️',
   gaming: '🎮',
   boxing: '🥊',
   zumba: '🕺',
@@ -110,7 +113,11 @@ const emojiMap: Record<string, string> = {
   online: '💻',
   sailing: '⛵',
   sea_swimming: '🌊',
+  comedy: '🎭',
+  live_music: '🎸',
+  theatre: '🎟️',
 };
+
 
 export function getActivityEmoji(activityId: string): string {
   return emojiMap[activityId] || '😎'; // Return fallback emoji if not found

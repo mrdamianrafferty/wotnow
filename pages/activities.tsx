@@ -39,6 +39,7 @@ import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import { resolveBeachOrientationAsync, computeSimulatedOrientation, classifyWindRelative } from '../utils/orientation';
 import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
 import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
+import { ShareModal } from '../components/sharing/NewShareModal';
 
 
 
@@ -48,9 +49,9 @@ import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQuali
 
 // Marine activities that get special marine data display (waves, water temp, etc.)
 const MARINE_ACTIVITY_IDS = [
-  'surfing', 'kitesurfing', 'windsurfing', 'kayaking', 'canoeing',
-  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding',
-  'swimming', 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'
+  'surfing', 'kitesurfing', 'windsurfing', 'sea_kayaking', 'canoeing', 
+  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sea_swimming',
+  'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'
 ];
 
 // Icon paths for consistent weather data display
@@ -222,6 +223,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
   const assessment = getAssessmentCategory(score, activityId);
   const bgUrl = getActivityBg(activityId);
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
+  const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
   
   // Determine if this activity should show pollen warnings
   // Exclude marine, winter, and indoor activities as specified
@@ -250,7 +252,10 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    shareActivity(activityId, score, dayLabel);
+    setShareModalData({
+      activityId,
+      activityName: activity?.name || activityId.replace(/_/g, ' ')
+    });
   };
 
   // --- Beach orientation (OSM/cache with simulated fallback) ---
@@ -512,6 +517,15 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
       <div className="activity-card__score">
         Score: {score}%
       </div>
+
+      {/* Share Modal */}
+      {shareModalData && (
+        <ShareModal
+          activityId={shareModalData.activityId}
+          activityName={shareModalData.activityName}
+          onClose={() => setShareModalData(null)}
+        />
+      )}
     </article>
   );
 }
@@ -721,8 +735,8 @@ export default function ActivitiesPage() {
         console.log(`📊 Day ${dayIndex} (${dateStr}):`, { 
           pollenForDate, 
           airQualityForDate,
-          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some(v => v > 0),
-          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some(v => v > 0)
+          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some((v: any) => v > 0),
+          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some((v: any) => v > 0)
         });
         
         return {
@@ -802,7 +816,7 @@ export default function ActivitiesPage() {
       }
     }],
     interests,
-    activities: activityTypes.filter(a => interests.includes(a.id)),
+    activities: activityTypes.filter(a => interests.includes(a.id)).map(a => a.id),
     now: timeInfo?.serverTime || new Date(),
     includeAllActivities: true,
     isEveningToday: isEveningToday
@@ -812,8 +826,8 @@ export default function ActivitiesPage() {
 
   // Make sure ALL selected interests appear in the activities list
   if (interests.length > 0 && currentDayData) {
-    const existingActivityIds = activities.map(a => a.activityId);
-    const missingInterests = interests.filter(id => !existingActivityIds.includes(id));
+    const existingActivityIds = activities.map((a: any) => a.activityId);
+    const missingInterests = interests.filter((id: string) => !existingActivityIds.includes(id));
     
     if (missingInterests.length > 0) {
       const missingActivities = missingInterests.map(id => {
@@ -825,6 +839,7 @@ export default function ActivitiesPage() {
           score: 50,
           evaluation: 'Available option' as any,
           reasoning: 'Conditions vary, but available based on your interests',
+          outOfSeason: false
         };
       }).filter((a): a is Exclude<typeof a, null> => a !== null);
       
@@ -833,7 +848,7 @@ export default function ActivitiesPage() {
   }
 
   // Sort activities by priority: perfect, good, fair, poor, indoor, offseason
-  const sortedActivities = activities.sort((a, b) => {
+  const sortedActivities = activities.sort((a: any, b: any) => {
     const getActivityPriority = (activityId: string, score: number) => {
       if (!isOutdoor(activityId)) return 5; // indoor
       if (isOutOfSeason(activityId)) return 6; // offseason
@@ -1139,7 +1154,7 @@ export default function ActivitiesPage() {
                       </div>
                     </div>
                   ) : (
-                    sortedActivities.map((activity) => (
+                    sortedActivities.map((activity: any) => (
                       <ActivityCard
                         key={activity.activityId}
                         activityId={activity.activityId}
