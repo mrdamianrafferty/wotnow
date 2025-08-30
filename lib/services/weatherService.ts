@@ -441,9 +441,9 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData) {
+export function transformDailyForecast(oneCallData: any) {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map(day => ({
+  return oneCallData.daily.slice(0, 8).map((day: any) => ({
     dt: day.dt,
     main: {
       temp: day.temp.day,
@@ -473,11 +473,11 @@ export function transformDailyForecast(oneCallData) {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData, lat, lon) {
+export function transformCity(oneCallData: any, lat: number | string, lon: number | string) {
   return {
     id: 0,
     name: "Location",
-    coord: { lat: parseFloat(lat), lon: parseFloat(lon) },
+    coord: { lat: typeof lat === "string" ? parseFloat(lat) : lat, lon: typeof lon === "string" ? parseFloat(lon) : lon },
     country: "",
     population: 0,
     timezone: oneCallData.timezone_offset || 0,
@@ -497,10 +497,11 @@ export function transformCity(oneCallData, lat, lon) {
  *
  * Alert fields: sender_name, event, start, end, description, tags[]
  */
-export async function getWeatherAlerts(lat: number, lon: number, apiKey: string): Promise<any[]> {
-  const data = await fetchOpenWeatherOneCall(lat, lon, apiKey);
-  return data.alerts || [];
-}
+// This function is already defined above with a different signature
+// export async function getWeatherAlerts(lat: number, lon: number, apiKey: string): Promise<any[]> {
+//   const data = await fetchOpenWeatherOneCall(lat, lon, apiKey);
+//   return data.alerts || [];
+// }
 
 /**
  * Get air pollution data for a location (OpenWeather Air Pollution API)
@@ -513,21 +514,22 @@ export async function getWeatherAlerts(lat: number, lon: number, apiKey: string)
  *
  * Fields: co, no, no2, o3, so2, pm2_5, pm10, nh3 (µg/m³), dt (timestamp)
  */
-export async function getAirPollution(lat: number, lon: number, apiKey: string): Promise<any[]> {
-  const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-  const response = await fetch(url);
-  const data = await response.json();
-  // data.list: array of pollution objects
-  if (!response.ok) throw { status: response.status, data };
-  return data.list || [];
-}
+// This function is already defined above with a different signature
+// export async function getAirPollution(lat: number, lon: number, apiKey: string): Promise<any[]> {
+//   const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+//   const response = await fetch(url);
+//   const data = await response.json();
+//   // data.list: array of pollution objects
+//   if (!response.ok) throw { status: response.status, data };
+//   return data.list || [];
+// }
 
 /**
  * Get full weather data with fallback and unified structure
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }) {
+export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {
@@ -860,7 +862,6 @@ export function normalizeWeatherFeatures(
 
   return result;
 }
-}
 
 /**
  * Fetch astronomy data from Stormglass
@@ -941,4 +942,23 @@ export async function fetchStormglassBio(
   } catch {
     return null;
   }
+}
+/**
+ * Fetches weather data for the given latitude and longitude
+ * Used by the API endpoint
+ */
+export async function getWeatherData(lat: number, lon: number) {
+  const apiKey = process.env.OPENWEATHER_API_KEY || '';
+  if (!apiKey) {
+    throw new Error('OpenWeather API key is missing');
+  }
+  
+  const data = await getCurrentAndForecast({ 
+    lat, 
+    lon, 
+    apiKey, 
+    options: { units: 'metric' } 
+  });
+  
+  return data;
 }
