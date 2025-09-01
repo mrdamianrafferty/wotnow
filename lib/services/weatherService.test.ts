@@ -1,12 +1,20 @@
-import {
+const {
   fetchOpenMeteoAirPollen,
   fetchStormglassTides,
   normalizeWeatherFeatures
-} from './weatherService';
+} = require('./weatherService');
 
-// If using TypeScript, ensure Jest types are available
-// @ts-ignore
-// import { describe, it, expect } from '@jest/globals';
+// Mock global fetch for tests
+global.fetch = jest.fn();
+
+// Basic test to check if imports are working
+describe('Weather Service', () => {
+  test('functions are properly exported', () => {
+    expect(typeof fetchOpenMeteoAirPollen).toBe('function');
+    expect(typeof fetchStormglassTides).toBe('function');
+    expect(typeof normalizeWeatherFeatures).toBe('function');
+  });
+});
 
 // Mock API responses for integration tests
 const mockDaySummary = { uvi: 7 };

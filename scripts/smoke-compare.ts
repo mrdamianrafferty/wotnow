@@ -6,7 +6,7 @@ import {
   attachAstronomyToForecast,
   attachMarineBioToForecast,
   type WeatherForecastDay,
-} from '../services/weatherService';
+} from '../lib/services/weatherService';
 
 // --- Helpers added: Open-Meteo weather (for UV) & OpenWeather AQ fallback ---
 async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {

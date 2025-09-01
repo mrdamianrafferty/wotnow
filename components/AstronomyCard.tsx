@@ -737,8 +737,8 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <OptimizedImage
               src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
               alt={tonight.moon.phaseName}
-              width={192}
-              height={192}
+              width={96}
+              height={96}
             />
           </div>
         </div>

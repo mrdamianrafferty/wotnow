@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather } from '../../lib/weatherServices';
+const { getFullWeather } = require('../../lib/services/weatherService');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { lat, lon } = req.query as { lat?: string; lon?: string };

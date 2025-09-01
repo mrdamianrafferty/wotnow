@@ -10,31 +10,45 @@
  * @param isMarine boolean (true for marine locations)
  * @returns Unified object: { clouds, rain, snow, snowDepth, ... }
  */
-export function normalizeCoreWeatherFields(openWeatherData: any, openMeteoData: any, stormglassData: any, isMarine: boolean) {
+function normalizeCoreWeatherFields(openWeatherData, openMeteoData, stormglassData, isMarine) {
   // Helper to pick first valid value from sources
-  function pickField(fieldPaths: string[][], sources: any[]) {
+  function pickField(fieldPaths, sources) {
     for (let i = 0; i < fieldPaths.length; i++) {
       const value = fieldPaths[i].reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), sources[i]);
       if (value !== undefined && value !== null) return value;
     }
     return null;
   }
-// ——— Shared helpers ———
-const _withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> => {
-  return await new Promise((resolve, reject) => {
-    const id = setTimeout(() => reject(new Error('timeout')), ms);
-    p.then(v => { clearTimeout(id); resolve(v); })
-     .catch(e => { clearTimeout(id); reject(e); });
-  });
-};
 
-const _safeJson = async (res: Response) => {
-  try { return await res.json(); } catch { return null as unknown; }
-};
-
-const _nullOnError = async <T>(fn: () => Promise<T>): Promise<T | null> => {
-  try { return await fn(); } catch { return null; }
-};
+  // Source order
+  const sources = isMarine
+    ? [stormglassData, openWeatherData, openMeteoData]
+    : [openWeatherData, openMeteoData, stormglassData];
+  // Field paths for each source
+  return {
+    clouds: pickField([
+      ['clouds'], // OpenWeather: %
+      ['hourly', 'cloudcover'], // Open-Meteo: %
+      ['cloudCover'] // Stormglass: % (if available)
+    ], sources),
+    rain: pickField([
+      ['rain'], // OpenWeather: mm
+      ['hourly', 'precipitation'], // Open-Meteo: mm
+      ['precipitation'] // Stormglass: mm (if available)
+    ], sources),
+    snow: pickField([
+      ['snow'], // OpenWeather: mm
+      ['hourly', 'snowfall'], // Open-Meteo: cm
+      ['snow'] // Stormglass: mm (if available)
+    ], sources),
+    snowDepth: pickField([
+      [], // OpenWeather: not available
+      ['hourly', 'snow_depth'], // Open-Meteo: cm
+      [] // Stormglass: not available
+    ], sources),
+    // Add more fields as needed
+  };
+}
 
 /**
  * Get comprehensive weather data for a location
@@ -44,8 +58,8 @@ const _nullOnError = async <T>(fn: () => Promise<T>): Promise<T | null> => {
  * @param lon Longitude
  * @returns Unified weather data object with current, hourly, and daily forecasts
  */
-export async function getWeatherData(lat: number, lon: number): Promise<any> {
-  const apiKey = process.env.OPENWEATHER_API_KEY;
+async function getWeatherData(lat: number, lon: number): Promise<any> {
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
   
   if (!apiKey) {
     throw new Error('OpenWeather API key not configured');
@@ -88,35 +102,6 @@ export async function getWeatherData(lat: number, lon: number): Promise<any> {
   }
 }
 
-  // Source order
-  const sources = isMarine
-    ? [stormglassData, openWeatherData, openMeteoData]
-    : [openWeatherData, openMeteoData, stormglassData];
-  // Field paths for each source
-  return {
-    clouds: pickField([
-      ['clouds'], // OpenWeather: %
-      ['hourly', 'cloudcover'], // Open-Meteo: %
-      ['cloudCover'] // Stormglass: % (if available)
-    ], sources),
-    rain: pickField([
-      ['rain'], // OpenWeather: mm
-      ['hourly', 'precipitation'], // Open-Meteo: mm
-      ['precipitation'] // Stormglass: mm (if available)
-    ], sources),
-    snow: pickField([
-      ['snow'], // OpenWeather: mm
-      ['hourly', 'snowfall'], // Open-Meteo: cm
-      ['snow'] // Stormglass: mm (if available)
-    ], sources),
-    snowDepth: pickField([
-      [], // OpenWeather: not available
-      ['hourly', 'snow_depth'], // Open-Meteo: cm
-      [] // Stormglass: not available
-    ], sources),
-    // Add more fields as needed
-  };
-}
 /**
  * Fetch weather alerts from OpenWeather One Call 3.0 API
  * Returns array of alert objects (if present) for the given location.
@@ -135,7 +120,7 @@ export async function getWeatherData(lat: number, lon: number): Promise<any> {
  *   - description: string (detailed info)
  *   - tags: array of strings (categories)
  */
-export async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
+async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -167,7 +152,7 @@ export async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat
  *       - main: { aqi: number (1–5, 1=Good, 5=Very Poor) }
  *       - components: { co, no, no2, o3, so2, pm2_5, pm10, nh3 } (µg/m³)
  */
-export async function getAirPollution({ lat, lon, apiKey }: { lat: number|string, lon: number|string, apiKey: string }) {
+async function getAirPollution({ lat, lon, apiKey }: { lat: number|string, lon: number|string, apiKey: string }) {
   const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
   const response = await fetch(url);
   const data = await response.json();
@@ -230,9 +215,9 @@ export async function getAirPollution({ lat, lon, apiKey }: { lat: number|string
  *
  * All fetch functions below return raw API responses. Merge and normalization should be handled in higher-level logic.
  */
-import type { NextApiRequest, NextApiResponse } from 'next';
+const { NextApiRequest, NextApiResponse } = require('next');
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { lat, lon } = req.query;
   const apiKey = process.env.STORMGLASS_SECRET_KEY;
 
@@ -308,7 +293,7 @@ const OPENWEATHER_WEATHER_ASSISTANT_WEB = 'https://openweathermap.org/weather-as
  * @param apiKey OpenWeather API key
  * @param options Optional: units, exclude blocks
  */
-export async function getCurrentAndForecast({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
+async function getCurrentAndForecast({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -342,7 +327,7 @@ export async function getCurrentAndForecast({ lat, lon, apiKey, options = {} }: 
  *
  * Units: metric (default), can be changed via API key settings
  */
-export async function getHistoricalWeather({ lat, lon, dt, apiKey }: { lat: number|string, lon: number|string, dt: number|string, apiKey: string }) {
+async function getHistoricalWeather({ lat, lon, dt, apiKey }: { lat: number|string, lon: number|string, dt: number|string, apiKey: string }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -386,7 +371,7 @@ export async function getHistoricalWeather({ lat, lon, dt, apiKey }: { lat: numb
  *
  * Units: metric (default), can be changed via API key settings
  */
-export async function getDailySummary({ lat, lon, date, apiKey }: { lat: number|string, lon: number|string, date: string, apiKey: string }) {
+async function getDailySummary({ lat, lon, date, apiKey }: { lat: number|string, lon: number|string, date: string, apiKey: string }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -413,7 +398,7 @@ export async function getDailySummary({ lat, lon, date, apiKey }: { lat: number|
  * @param lon Longitude
  * @param apiKey OpenWeather API key
  */
-export async function getWeatherOverview({ lat, lon, apiKey }: { lat: number|string, lon: number|string, apiKey: string }) {
+async function getWeatherOverview({ lat, lon, apiKey }: { lat: number|string, lon: number|string, apiKey: string }) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -433,7 +418,7 @@ export async function getWeatherOverview({ lat, lon, apiKey }: { lat: number|str
  * @param apiKey OpenWeather API key
  * @returns URL string
  */
-export function getWeatherAssistantWebUrl(apiKey: string) {
+function getWeatherAssistantWebUrl(apiKey: string) {
   return `${OPENWEATHER_WEATHER_ASSISTANT_WEB}?apikey=${apiKey}`;
 }
 
@@ -460,7 +445,7 @@ type WeatherOptions = {
  * @param apiKey OpenWeather API key
  * @param options Optional: units, exclude blocks
  */
-export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
+async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   if (!lat || !lon || !apiKey) throw new Error('Missing parameters or API key');
   const params = new URLSearchParams({
     lat: String(lat),
@@ -493,7 +478,7 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData: any): any[] {
+function transformDailyForecast(oneCallData: any): any[] {
   if (!oneCallData.daily) return [];
   return oneCallData.daily.slice(0, 8).map((day: any) => ({
     dt: day.dt,
@@ -525,7 +510,7 @@ export function transformDailyForecast(oneCallData: any): any[] {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData: any, lat: number|string, lon: number|string): any {
+function transformCity(oneCallData: any, lat: number|string, lon: number|string): any {
   return {
     id: 0,
     name: "Location",
@@ -581,7 +566,7 @@ export function transformCity(oneCallData: any, lat: number|string, lon: number|
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<any> {
+async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<any> {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {
@@ -603,7 +588,7 @@ export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: 
 }
 
 // OpenWeather One Call 3.0
-export async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
+async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -619,7 +604,7 @@ export async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: 
 }
 
 // OpenWeather 2.5 Forecast (fallback)
-export async function fetchOpenWeatherForecast25(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
+async function fetchOpenWeatherForecast25(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
   const url = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
   const response = await fetch(url);
   const data = await response.json();
@@ -628,7 +613,7 @@ export async function fetchOpenWeatherForecast25(lat: number, lon: number, apiKe
 }
 
 // OpenWeather Timemachine
-export async function fetchOpenWeatherTimemachine(lat: number, lon: number, dt: number, apiKey: string) {
+async function fetchOpenWeatherTimemachine(lat: number, lon: number, dt: number, apiKey: string) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -643,7 +628,7 @@ export async function fetchOpenWeatherTimemachine(lat: number, lon: number, dt: 
 }
 
 // OpenWeather Day Summary
-export async function fetchOpenWeatherDaySummary(lat: number, lon: number, date: string, apiKey: string) {
+async function fetchOpenWeatherDaySummary(lat: number, lon: number, date: string, apiKey: string) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -658,7 +643,7 @@ export async function fetchOpenWeatherDaySummary(lat: number, lon: number, date:
 }
 
 // OpenWeather Overview
-export async function fetchOpenWeatherOverview(lat: number, lon: number, apiKey: string) {
+async function fetchOpenWeatherOverview(lat: number, lon: number, apiKey: string) {
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -672,7 +657,7 @@ export async function fetchOpenWeatherOverview(lat: number, lon: number, apiKey:
 }
 
 // OpenWeather Assistant
-export function getOpenWeatherAssistantUrl(apiKey: string) {
+function getOpenWeatherAssistantUrl(apiKey: string) {
   return `${OPENWEATHER_WEATHER_ASSISTANT_WEB}?apikey=${apiKey}`;
 }
 
@@ -684,7 +669,7 @@ export function getOpenWeatherAssistantUrl(apiKey: string) {
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
  */
-export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
+async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
   const url = new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -719,7 +704,7 @@ export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate:
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
  */
-export async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
+async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
   const url = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -763,7 +748,7 @@ export async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDat
  * @param params Comma-separated variables
  * @param apiKey Stormglass API key
  */
-export async function fetchStormglassMarine(
+async function fetchStormglassMarine(
   lat: number,
   lon: number,
   startISO: string,
@@ -808,7 +793,7 @@ export async function fetchStormglassMarine(
  * @param lon Longitude
  * @param apiKey Stormglass API key
  */
-export async function fetchStormglassTides(lat: number, lon: number, apiKey: string): Promise<any | null> {
+async function fetchStormglassTides(lat: number, lon: number, apiKey: string): Promise<any | null> {
   const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
     await new Promise((resolve, reject) => {
       const id = setTimeout(() => reject(new Error('timeout')), ms);
@@ -839,7 +824,7 @@ export async function fetchStormglassTides(lat: number, lon: number, apiKey: str
  * @param stormglassTides Stormglass tides response
  * @returns Unified object: { uvi, pollen, tides }
  */
-export function normalizeWeatherFeatures(
+function normalizeWeatherFeatures(
   openWeatherDaySummary: any,
   openMeteoAirPollen: any,
   stormglassTides: any,
@@ -923,7 +908,7 @@ export function normalizeWeatherFeatures(
  * @param endDate End date (YYYY-MM-DD)
  * @param apiKey Stormglass API key
  */
-export async function fetchStormglassAstronomy(
+async function fetchStormglassAstronomy(
   lat: number,
   lon: number,
   startISO: string,
@@ -995,3 +980,34 @@ export async function fetchStormglassBio(
     return null;
   }
 }
+
+// Export everything using CommonJS syntax
+module.exports = {
+  normalizeCoreWeatherFields,
+  getWeatherData,
+  getWeatherAlerts,
+  getAirPollution,
+  handler,
+  getCurrentAndForecast,
+  getHistoricalWeather,
+  getDailySummary,
+  getWeatherOverview,
+  getWeatherAssistantWebUrl,
+  getOneCallData,
+  transformDailyForecast,
+  transformCity,
+  getFullWeather,
+  fetchOpenWeatherOneCall,
+  fetchOpenWeatherForecast25,
+  fetchOpenWeatherTimemachine,
+  fetchOpenWeatherDaySummary,
+  fetchOpenWeatherOverview,
+  getOpenWeatherAssistantUrl,
+  fetchOpenMeteoWeather,
+  fetchOpenMeteoAirPollen,
+  fetchStormglassMarine,
+  fetchStormglassTides,
+  normalizeWeatherFeatures,
+  fetchStormglassAstronomy,
+  fetchStormglassBio
+};

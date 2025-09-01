@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getWeatherData } from '../../lib/services/weatherService';
+const { getWeatherData } = require('../../lib/services/weatherService');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
