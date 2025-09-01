@@ -1,5 +1,66 @@
 {
   "version": 2,
-  "builds": [{ "src": "package.json", "use": "@vercel/next" }],
-  "routes": [{ "src": "/(.*)", "dest": "/" }]
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "builds": [
+    { "src": "package.json", "use": "@vercel/next" },
+    { "src": "api/python/**/*.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/python/(.*)", "dest": "/api/python/$1" },
+    { "src": "/(.*)", "dest": "/" }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron-update-weather",
+      "schedule": "0 */3 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
+    },
+    {
+      "source": "/_next/image(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/weather-icons/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
 }
