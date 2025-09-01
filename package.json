@@ -9,6 +9,7 @@
     "test": "jest",
     "astro:canaries": "cd services/astro_highlights/astro_highlights && .venv/bin/python run_canaries.py"
   },
+  "engines": { "node": "20.x" },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",
     "@tanstack/react-query": "^5.83.0",
@@ -18,12 +19,11 @@
     "cally": "^0.8.0",
     "daisyui": "^5.0.54",
     "dayjs": "^1.11.13",
-    "dotenv": "^17.2.1",
     "framer-motion": "^12.23.12",
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.542.0",
-    "next": "^15.4.4",
+    "next": "15.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
@@ -47,20 +47,18 @@
     "@types/react-dom": "^19.1.7",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
     "@typescript-eslint/parser": "^8.41.0",
-    "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.21",
     "cross-fetch": "^4.1.0",
+    "dotenv": "^17.2.1",
     "eslint": "^9.34.0",
     "eslint-config-next": "^15.5.2",
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.13",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.4",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.41.0",
-    "vite": "^7.0.1",
-    "vite-plugin-imagemin": "^0.1.0"
+    "typescript-eslint": "^8.41.0"
   }
 }
