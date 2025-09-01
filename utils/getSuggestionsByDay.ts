@@ -1,8 +1,23 @@
 // src/utils/getSuggestionsByDay.ts
-import { activityTypes, ActivityType } from '../data/activityTypes';
 
 // Lightweight types used here
 type SuitabilityLevel = 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative';
+
+export interface ActivityType {
+  id: string;
+  name?: string;
+  activity?: string;
+  tags?: string[];
+  weatherSensitive?: boolean;         // true => outdoor
+  indoorAlternative?: boolean;
+  seasonalMonths?: number[];
+  poorConditions?: string[];
+  fairConditions?: string[];
+  goodConditions?: string[];
+  perfectConditions?: string[];
+  category?: string;
+  secondaryCategory?: string;
+}
 
 export interface WeatherData {
   temperature?: number;
@@ -34,6 +49,7 @@ import { selectHeroActivity } from './heroSelector';
 import { calculateConditionMatchScore,
          calculatePoorConditionPenalty } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
+import { activityTypes } from '../data/activityTypes';
 import { getActivityMessage } from '../data/activityMessages';
 
 // Minimum score threshold for activity suggestions (unless includeAllActivities is true)
@@ -180,13 +196,6 @@ export function getSuggestionsByDay({
   now,
   includeAllActivities = false,
   isEveningToday = false // Add this parameter with default value
-}: {
-  forecast: any[];
-  activities: string[];
-  interests: string[];
-  now: Date;
-  includeAllActivities?: boolean;
-  isEveningToday?: boolean;
 }) {
   // Add debugging logs
   console.log('📊 getSuggestionsByDay INPUTS:', { 
@@ -202,14 +211,7 @@ export function getSuggestionsByDay({
     console.log('🌤️ Processing day:', day.date);
     
     const suggestions = activities
-      .map(activityId => {
-        // Look up the activity by ID
-        const activity = activityTypes.find(a => a.id === activityId);
-        if (!activity) {
-          console.log(`⚠️ Activity not found for ID: ${activityId}`);
-          return null;
-        }
-        
+      .map(activity => {
         // Add important debugging log before scoring
         console.log(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
         
@@ -263,7 +265,7 @@ export function getSuggestionsByDay({
         }
         return null;
       })
-      .filter((item): item is NonNullable<typeof item> => Boolean(item)) // Remove null items
+      .filter(Boolean) // Remove null items
       .sort((a, b) => b.score - a.score); // Sort by score
       
     console.log(`✅ Finished day with ${suggestions.length} activities`);

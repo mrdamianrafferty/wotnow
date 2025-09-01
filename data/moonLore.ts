@@ -229,3 +229,43 @@ waning_crescent: [
 export function getMoonLore(phase: MoonPhase): LoreItem[] {
   return moonLore[phase] || [];
 }
+
+interface GetMoonLoreDistinctOptions {
+  used?: Set<string>;
+  culture?: Culture;
+}
+
+export function getMoonLoreDistinct(
+  phase: MoonPhase,
+  options: GetMoonLoreDistinctOptions = {}
+): { item: LoreItem | null; key: string } {
+  const { used = new Set(), culture } = options;
+  
+  // Get all lore items for this phase
+  const items = moonLore[phase] || [];
+  if (!items.length) {
+    return { item: null, key: `${phase}|null` };
+  }
+  
+  // Filter by culture if specified
+  const filtered = culture ? items.filter(item => item.culture === culture) : items;
+  if (!filtered.length) {
+    return { item: null, key: `${phase}|null` };
+  }
+  
+  // Try to find an unused item first
+  const availableItems = filtered.filter(item => {
+    const itemKey = item.key || `${phase}|${item.culture}|${item.title}`;
+    return !used.has(itemKey);
+  });
+  
+  // If we found unused items, pick randomly from them
+  // Otherwise pick randomly from all filtered items
+  const sourceArray = availableItems.length > 0 ? availableItems : filtered;
+  const selectedItem = sourceArray[Math.floor(Math.random() * sourceArray.length)];
+  
+  // Generate a stable key for this item
+  const key = selectedItem.key || `${phase}|${selectedItem.culture}|${selectedItem.title}`;
+  
+  return { item: selectedItem, key };
+}

@@ -441,9 +441,9 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData: any) {
+export function transformDailyForecast(oneCallData) {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map((day: any) => ({
+  return oneCallData.daily.slice(0, 8).map(day => ({
     dt: day.dt,
     main: {
       temp: day.temp.day,
@@ -473,11 +473,11 @@ export function transformDailyForecast(oneCallData: any) {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData: any, lat: number | string, lon: number | string) {
+export function transformCity(oneCallData, lat, lon) {
   return {
     id: 0,
     name: "Location",
-    coord: { lat: typeof lat === "string" ? parseFloat(lat) : lat, lon: typeof lon === "string" ? parseFloat(lon) : lon },
+    coord: { lat: parseFloat(lat), lon: parseFloat(lon) },
     country: "",
     population: 0,
     timezone: oneCallData.timezone_offset || 0,
@@ -529,7 +529,7 @@ export function transformCity(oneCallData: any, lat: number | string, lon: numbe
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
+export async function getFullWeather({ lat, lon, apiKey, options = {} }) {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {
@@ -942,23 +942,4 @@ export async function fetchStormglassBio(
   } catch {
     return null;
   }
-}
-/**
- * Fetches weather data for the given latitude and longitude
- * Used by the API endpoint
- */
-export async function getWeatherData(lat: number, lon: number) {
-  const apiKey = process.env.OPENWEATHER_API_KEY || '';
-  if (!apiKey) {
-    throw new Error('OpenWeather API key is missing');
-  }
-  
-  const data = await getCurrentAndForecast({ 
-    lat, 
-    lon, 
-    apiKey, 
-    options: { units: 'metric' } 
-  });
-  
-  return data;
 }

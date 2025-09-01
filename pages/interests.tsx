@@ -11,7 +11,7 @@ const mainCategories = [
         icon: "🏃‍♂️",
         subcategories: [
             {
-                key: "Outdoor Sports",
+                key: "Team Sports",
                 icon: "🤾‍♂️",
                 acts: [
                     "football_soccer",
@@ -25,25 +25,23 @@ const mainCategories = [
                     "gaelic_football",
                     "hockey",
                     "netball",
-                    "padel",
-                    "archery",
-                    "pickleball",
-                    "golf",
-                    "tennis",
-                    
+                    "ice_hockey_us",
                 ],
             },
             {
-                key: "Indoor Sports",
+                key: "Individual Sports",
                 icon: "🎾",
                 acts: [
+                    "golf",
+                    "tennis",
                     "tennis_indoor",
                     "squash",
                     "badminton",
                     "table_tennis",
+                    "archery",
+                    "pickleball",
                     "volleyball_indoor",
-                    "indoor_climbing",
-            
+                    "padel",
                 ],
             },
             {
@@ -73,177 +71,203 @@ const mainCategories = [
             },
             {
                 key: "Action Sports",
-        icon: "🚵‍♂️",
-        acts: [
-          "mountain_biking",
-          "road_cycling",
-          "trail_running",
-          "gravel_biking",
-          "rock_climbing",
-          "indoor_climbing",
-          "skateboarding",
-          "rollerblading",
-          "riding_motorbike",
-          "geocaching",
+                icon: "🚵‍♂️",
+                acts: [
+                    "mountain_biking",
+                    "road_cycling",
+                    "gravel_biking",
+                    "rock_climbing",
+                    "indoor_climbing",
+                    "skateboarding",
+                    "rollerblading",
+					"riding_motorbike",
+                ],
+            },
         ],
-      },
-      {
+    },
+    {
+        key: "Fitness & Wellness",
+        icon: "💪",
+        subcategories: [
+            {
+                key: "Mindfulness",
+                icon: "🧘‍♂️",
+                acts: [
+                    "yoga",
+                    "outdoor_yoga",
+                    "meditation",
+                    "outdoor_meditation",
+                    "pilates",
+                    "martial_arts",
+                    "tai_chi",
+                ],
+            },
+            {
+                key: "Cardio & Running",
+                icon: "🏃",
+                acts: ["running", "trail_running", "cycling", "urban_exploring"],
+            },
+            {
+                key: "Strength & Gym",
+                icon: "🏋️‍♂️",
+                acts: ["gym_workout", "outdoor_gym", "zumba", "boxing", "spinning"],
+            },
+        ],
+    },
+    {
+        key: "Outdoor Activities",
+        icon: "🌲",
+        subcategories: [
+            {
+                key: "Nature Activities",
+                icon: "🌳",
+                acts: [
+                    "hiking",
+                    "birdwatching",
+                    "photography",
+                    "foraging",
+                    "mushroom_hunting",
+                    "stargazing",
+                ],
+            },
+            {
+                key: "Fishing",
+                icon: "🎣",
+                acts: [
+                    "fly_fishing_freshwater",
+                    "coarse_fishing",
+                    "sea_fishing_shore",
+                    "sea_fishing_boat",
+                    "ice_fishing",
+                ],
+            },
+            {
+                key: "Recreation",
+                icon: "🍔",
+                acts: [
+                    "picnicking",
+                    "bbq",
+                    "beach",
+                    "geocaching",
+                    "camping",
+                    "outdoor_reading",
+                    "dog_walking",
+                    "outdoor_playground",
+                    "outdoor_chess",
+                    "outdoor_painting",
+                    "outdoor_music",
+                    "outdoor_gym",
+                    "outdoor_meditation",
+                    "outdoor_yoga",
+                ],
+            },
+        ],
+    },
+    {
         key: "Winter Sports",
-        icon: "⛷️",
-        acts: [
-          "skiing",
-          "snowboarding",
-          "cross_country_skiing",
-          "ice_skating",
-          "curling",
-          "ice_hockey",
-          "ice_fishing",
-          "ice_hockey_indoor",
-          "ice_hockey_us",
+        icon: "❄️",
+        subcategories: [
+            {
+                key: "Snow Sports",
+                icon: "⛷️",
+                acts: ["skiing", "snowboarding", "cross_country_skiing"],
+            },
+            {
+                key: "Ice Sports",
+                icon: "⛸️",
+                acts: [
+                    "ice_skating",
+                    "curling",
+                    "ice_hockey",
+                    "ice_fishing",
+                    "ice_hockey_indoor",
+                ],
+            },
         ],
-      },
-    ],
-  },
-  {
-    key: "Fitness & Wellness",
-    icon: "💪",
-    subcategories: [
-      {
-        key: "Mindfulness",
-        icon: "🧘‍♂️",
-        acts: [
-          "yoga",
-          "outdoor_yoga",
-          "meditation",
-          "outdoor_meditation",
-          "pilates",
-          "tai_chi",
-          "outdoor_gym",
-        ],
-      },
-      {
-        key: "Keeping Fit",
-        icon: "🏃",
-        acts: [
-          "running",
-          "cycling",
-          "urban_exploring",
-          "gym_workout",
-          "outdoor_gym",
-          "zumba",
-          "boxing",
-          "spinning",
-          "martial_arts",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Outdoor Activities",
-    icon: "🌲",
-    subcategories: [
-      {
-        key: "Nature Activities",
-        icon: "🌳",
-        acts: [
-          "hiking",
-          "birdwatching",
-          "photography",
-          "foraging",
-          "mushroom_hunting",
-          "stargazing",
-        ],
-      },
-      {
-        key: "Fishing",
-        icon: "🎣",
-        acts: [
-          "fly_fishing_freshwater",
-          "coarse_fishing",
-          "sea_fishing_shore",
-          "sea_fishing_boat",
-          "ice_fishing",
-        ],
-      },
-      {
-        key: "Relaxing Outdoors",
-        icon: "🪵",
-        acts: [
-          "picnicking",
-          "bbq",
-          "beach",
-          "camping",
-          "outdoor_reading",
-          "dog_walking",
-          "outdoor_playground",
-          "outdoor_chess",
-          "outdoor_painting",
-          "outdoor_music",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Creative & Arts",
-    icon: "🎨",
-    subcategories: [
-      {
-        key: "Visual Arts",
+    },
+    {
+        key: "Creative & Arts",
         icon: "🎨",
-        acts: [
-          "painting",
-          "outdoor_painting",
-          "crafts",
-          "photography",
-          "knitting",
-          "diy",
-          "playing_records",
-          "make_music",
-          "dance",
-          "outdoor_music",
-          "gallery",
-          "live_music",
-          "theatre",
+        subcategories: [
+            {
+                key: "Visual Arts",
+                icon: "🎨",
+                acts: [
+                    "painting",
+                    "outdoor_painting",
+                    "crafts",
+                    "photography",
+                    "knitting",
+                    "diy",
+                ],
+            },
+            {
+                key: "Music & Performance",
+                icon: "🎷",
+                acts: [
+                    "playing_records",
+                    "make_music",
+                    "dance",
+                    "outdoor_music",
+                ],
+            },
+            {
+                key: "Literature & Learning",
+                icon: "📚",
+                acts: ["reading", "outdoor_reading"],
+            },
         ],
-      },
-    ],
-  },
-  {
-    key: "Indoor Activities",
-    icon: "🏠",
-    subcategories: [
-      {
-        key: "Relaxing at Home",
-        icon: "🧶",
-        acts: [
-          "crafts",
-          "knitting",
-          "reading",
-          "diy",
-          "playing_records",
-          "cooking",
-          "painting",
-          "gaming",
-          "online",
-          "watch_a_movie",
-        ],
-      },
-      {
-        key: "Going Out",
-        icon: "🍻",
-        acts: [
-          "going_to_pub",
-          "playing_cards",
-          "cafe",
-          "cinema",
-          "museum",
-          "shopping",
-          "dance",
-          "gallery",
-          "bowling",
-          "live_music",
-          "theatre",
-            "comedy",
+    },
+    {
+        key: "Indoor Recreation",
+        icon: "🏠",
+        subcategories: [
+            {
+                key: "Home Activities",
+                icon: "🧶",
+                acts: [
+                    "crafts",
+                    "knitting",
+                    "reading",
+                    "diy",
+                    "playing_records",
+                    "cooking",
+                    "painting",
+					"gaming",
+					"online",
+					
+                ],
+            },
+            {
+                key: "Social Activities",
+                icon: "🍻",
+                acts: [
+                    "going_to_pub",
+                    "table_tennis",
+                    "playing_cards",
+                    "watch_a_movie",
+                    "cafe",
+                    "cinema",
+                    "museum",
+                    "shopping",
+                    "dance",
+					"gallery",
+					"bowling",
+                ],
+            },
+            {
+                key: "Indoor Sports",
+                icon: "🏓",
+                acts: [
+                    "indoor_climbing",
+                    "squash",
+                    "badminton",
+                    "tennis_indoor",
+                    "indoor_swimming",
+                    "gym_workout",
+                    "pilates",
+                    "yoga",
+                    "meditation",
                 ],
             },
         ],
@@ -252,10 +276,10 @@ const mainCategories = [
 
 // These are the activity IDs that should trigger a coastal spot dialog if chosen
 const waterActivityIds = [
-    "sea_kayaking",
+    "kayaking",
     "canoeing",
     "surfing",
-    "sup_sea",
+    "stand_up_paddleboarding",
     "snorkeling",
     "kitesurfing",
     "windsurfing",
@@ -669,7 +693,7 @@ const Interests: React.FC = () => {
             }}
         >
 
-            <Breadcrumb path={["Interests", ...(path as string[])]} onBack={handleBack} />
+            <Breadcrumb path={["Interests", ...path]} onBack={handleBack} />
             {content}
 
             {/* Selected activities */}

@@ -25,10 +25,10 @@ export function IssSightingNote({ data }: { data: IssResult[] | null }) {
   const first = data[0];
   const range = formatLocalRange(first.risetimeISO, first.endtimeISO);
   const minutes = Math.round(first.durationSec / 60);
-  return React.createElement(
-    "span",
-    null,
-    `The ISS will be visible tonight from ${range} for about ${minutes} minutes.`
+  return (
+    <span>
+      The ISS will be visible tonight from {range} for about {minutes} minutes.
+    </span>
   );
 }
 
@@ -50,11 +50,8 @@ export function useIssBestTimes(
   useEffect(() => {
     if (lat == null || lon == null) return;
     const controller = new AbortController();
-    
-    // Build URL for iss-next-night-pass endpoint
-    let url = `/api/iss-next-night-pass?lat=${lat}&lon=${lon}`;
-    if (sunsetISO) url += `&sunsetISO=${sunsetISO}`;
-    if (sunriseISO) url += `&nextSunriseISO=${sunriseISO}`;
+    const { maxPerNight = 2, minGapMinutes = 45, darknessBufferSec = 1800 } = opts || {};
+    const url = `/api/iss-visible?lat=${lat}&lon=${lon}&bestOnly=true&maxPerNight=${maxPerNight}&minGapMinutes=${minGapMinutes}&darknessBufferSec=${darknessBufferSec}`;
 
     setLoading(true);
     setError(null);
@@ -65,27 +62,20 @@ export function useIssBestTimes(
         try {
           json = await r.json();
         } catch {}
-        
-        // Convert the response format from iss-next-night-pass to match our expected format
-        let results: IssResult[] = [];
-        if (json.ok && json.pass) {
-          const pass = json.pass;
-          const risetimeISO = pass.risetime;
-          // Calculate end time based on duration
-          const risetime = new Date(risetimeISO);
-          const endtime = new Date(risetime.getTime() + (pass.duration * 1000));
-          
-          results = [{
-            risetimeISO,
-            endtimeISO: endtime.toISOString(),
-            durationSec: pass.duration,
-            nightWindow: {
-              startISO: json.sunset,
-              endISO: json.nextSunrise
+        let results: IssResult[] = json.results || [];
+        // Filter to only sightings during night (between sunset and next sunrise)
+        if (sunsetISO && sunriseISO) {
+          const sunset = new Date(sunsetISO).getTime();
+          const sunrise = new Date(sunriseISO).getTime();
+          results = results.filter(sighting => {
+            const risetime = new Date(sighting.risetimeISO).getTime();
+            if (sunrise > sunset) {
+              return risetime >= sunset && risetime <= sunrise;
+            } else {
+              return risetime >= sunset;
             }
-          }];
+          });
         }
-        
         setData(results);
         if (!r.ok) setError(json.error || `ISS API: ${r.status}`);
       })

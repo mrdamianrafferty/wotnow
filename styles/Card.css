@@ -488,14 +488,14 @@
 .data-bars {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+  gap: 0px;
+  margin: 0px 0;
 }
 
 .data-bar {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 0px 0px;
   backdrop-filter: blur(5px);
 }
 

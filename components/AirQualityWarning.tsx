@@ -62,12 +62,15 @@ function OverallAirQualityIndicator({
   // Temporarily removed the level check to debug visibility
   // if (level <= AirQualityLevel.GOOD) return null;
 
-  const color = getAirQualityLevelColor(level);
-  const bgColor = getAirQualityBackgroundColor(level);
-  const levelText = getAirQualityLevelDescription(level);
+  // Use useMemo for values derived from props to prevent unnecessary re-renders
+  const color = React.useMemo(() => getAirQualityLevelColor(level), [level]);
+  const bgColor = React.useMemo(() => getAirQualityBackgroundColor(level), [level]);
+  const levelText = React.useMemo(() => getAirQualityLevelDescription(level), [level]);
   
   // Create comprehensive tooltip text
-  const tooltipText = `Air quality: ${levelText}${aqi ? ` (AQI ${getAirQualityIndex(aqi)})` : ''}`;
+  const tooltipText = React.useMemo(() => {
+    return `Air quality: ${levelText}${aqi ? ` (AQI ${getAirQualityIndex(aqi)})` : ''}`;
+  }, [levelText, aqi]);
 
   return (
     <div 
@@ -110,7 +113,10 @@ export default function AirQualityWarning({
   className = '' 
 }: AirQualityWarningProps) {
   // Use provided assessment or calculate from air quality data
-  const airQualityAssessment = assessment || (airQuality ? assessAirQualityConditions(airQuality) : null);
+  // Use useMemo to prevent unnecessary recalculation that could trigger rerenders
+  const airQualityAssessment = React.useMemo(() => {
+    return assessment || (airQuality ? assessAirQualityConditions(airQuality) : null);
+  }, [assessment, airQuality]);
   
   if (!airQualityAssessment) {
     return null;

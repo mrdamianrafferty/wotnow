@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import OptimizedImage from './OptimizedImage';
+import OptimizedBackgroundImage from './OptimizedBackgroundImage';
+import { WeatherData } from '../types/weatherData';
 // WindIcon copied from pages/index.tsx for local use
 type WindIconProps = {
   windMs: number;
@@ -38,18 +41,17 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }: WindIconProps) {
     needsGlow = false;
   }
   return (
-    <img
+    <OptimizedImage
       src={`/weather-icons/design/fill/final/${iconName}`}
       alt={alt}
+      width={size}
+      height={size}
       style={{
-        width: size,
-        height: size,
         verticalAlign: 'middle',
         filter: needsGlow
           ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))'
           : 'none',
       }}
-      loading="lazy"
     />
   );
 }
@@ -61,7 +63,8 @@ import { indieFlower, oxanium } from "@/app/fonts";
 import { describeClearestSkiesFromHourly } from '../lib/services/goingOutTonight';
 
 // Astronomy highlight interfaces
-interface AstronomyEvent {
+// Keeping for reference but marking with underscore since it's not used directly
+interface _AstronomyEvent {
   type: 'sunset' | 'sunrise' | 'moonrise' | 'moonset' | 'eclipse' | 'meteor_shower' | 'new_moon' | 'full_moon';
   time: string;
   description?: string;
@@ -108,7 +111,7 @@ interface AstronomyHighlight {
 interface AstronomyCardProps {
   className?: string;
   style?: React.CSSProperties;
-  weatherData?: any;
+  weatherData?: WeatherData;
 }
 
 // Helper function to get appropriate astronomy icon based on events
@@ -138,17 +141,18 @@ const getAstronomyIcon = (events: SpecialEvent[], moonIllumination: number, clou
 const getWeatherAwareMessage = (
   primaryEvent: SpecialEvent | undefined,
   tonight: AstronomyHighlight,
-  weatherData: any,
+  weatherData: WeatherData | undefined,
   stargazingScore: number
 ) => {
   const cloudCover = weatherData?.clouds || 0;
-  const visibility = weatherData?.visibility || 10000;
+  // Keeping visibility but marking with underscore since it's not used directly
+  const _visibility = weatherData?.visibility || 10000;
   const rain = weatherData?.rain || 0;
   const snow = weatherData?.snow || 0;
   
   // Poor weather conditions
   if (rain > 0 || snow > 0) {
-    return "Rain/snow expected tonight - not ideal for stargazing. Check forecast for clearer nights.";
+    return "Precipitation expected tonight - not ideal for stargazing. Check forecast for clearer nights.";
   }
   
   if (cloudCover >= 80) {
@@ -177,7 +181,8 @@ const getWeatherAwareMessage = (
     if (primaryEvent.direction) {
       if (typeof primaryEvent.direction === 'string' && primaryEvent.direction.trim()) {
         const dirPhrase = `Look ${primaryEvent.direction}`;
-        if (!parts.some(p => p.toLowerCase().includes(primaryEvent.direction?.toLowerCase() || ''))) {
+        const directionLower = primaryEvent.direction.toLowerCase();
+        if (!parts.some(p => p.toLowerCase().includes(directionLower))) {
           parts.push(dirPhrase);
         }
       }
@@ -200,7 +205,7 @@ const getWeatherAwareMessage = (
     return "Challenging conditions for stargazing tonight - consider waiting for clearer skies.";
   }
 };
-const getMidnightWeatherIcon = (weatherData: any) => {
+const getMidnightWeatherIcon = (weatherData: WeatherData | undefined) => {
   // Always return a night icon since this is for midnight
   if (!weatherData) return '01n.svg'; // Default clear night
   
@@ -234,10 +239,10 @@ const getMidnightWeatherIcon = (weatherData: any) => {
 };
 
 // Helper to get midnight weather from hourly data
-const getMidnightWeather = (weatherData: any) => {
+const getMidnightWeather = (weatherData: WeatherData | undefined) => {
   if (!weatherData?.hourly) return null;
   // Find the first hour at 00:00 (midnight)
-  const midnightHour = weatherData.hourly.find((h: any) => {
+  const midnightHour = weatherData.hourly.find((h) => {
     const date = new Date(h.dt * 1000);
     return date.getHours() === 0;
   });
@@ -245,12 +250,12 @@ const getMidnightWeather = (weatherData: any) => {
 };
 
 // Helper to get current weather
-const getCurrentWeather = (weatherData: any) => {
+const getCurrentWeather = (weatherData: WeatherData | undefined) => {
   return weatherData?.current || null;
 };
 
 // Helper to get daily high/low
-const getDailyTemps = (weatherData: any) => {
+const getDailyTemps = (weatherData: WeatherData | undefined) => {
   const today = weatherData?.daily?.[0];
   if (!today) return { tempMin: null, tempMax: null };
   return {
@@ -260,11 +265,11 @@ const getDailyTemps = (weatherData: any) => {
 };
 
 // Build an Open‑Meteo‑like hourly object from OpenWeather One Call hourly
-function buildHourlyForClearSkies(weatherData: any) {
+function buildHourlyForClearSkies(weatherData: WeatherData | undefined) {
   const hourly = Array.isArray(weatherData?.hourly) ? weatherData.hourly : [];
   if (!hourly.length) return null;
-  const time = hourly.map((h: any) => new Date(h.dt * 1000).toISOString());
-  const cloudcover = hourly.map((h: any) => Number(h?.clouds ?? NaN));
+  const time = hourly.map((h) => new Date(h.dt * 1000).toISOString());
+  const cloudcover = hourly.map((h) => Number(h?.clouds ?? NaN));
   return { time, cloudcover };
 }
 
@@ -289,12 +294,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   // Defensive: preferences and locations
   const homeLocation = preferences?.locations?.find((l) => l.type === 'home');
 
-  // Defensive: interests array
-  const interests = Array.isArray(preferences?.interests) ? preferences.interests : [];
+  // Defensive: interests array - marked with underscore since it's not used directly
+  const _interests = Array.isArray(preferences?.interests) ? preferences.interests : [];
 
   // Defensive: always call hooks at top level, now pass sunrise/sunset for night time logic
   // We'll use tonight.sun.sunrise/sunset if available, else undefined
-  const [sunTimes, setSunTimes] = useState<{sunrise?: string, sunset?: string}>({});
+  const [_sunTimes, setSunTimes] = useState<{sunrise?: string, sunset?: string}>({});
   useEffect(() => {
     if (highlights && highlights.length > 0 && highlights[0].sun) {
       setSunTimes({
@@ -316,18 +321,88 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(
-          `/api/astronomy-highlights?lat=${homeLocation.lat}&lon=${homeLocation.lon}&days=3`
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch astronomy highlights');
+        
+        // Add a retry mechanism for fetching astronomy data
+        let response;
+        let retries = 2;
+        
+        while (retries >= 0) {
+          try {
+            // Create an AbortController for request timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            
+            try {
+              response = await fetch(
+                `/api/astronomy-highlights?lat=${homeLocation.lat}&lon=${homeLocation.lon}&days=3`,
+                { 
+                  // Add cache control headers to avoid stale responses
+                  headers: { 'Cache-Control': 'no-cache' },
+                  // Use the abort controller signal for timeout
+                  signal: controller.signal
+                }
+              );
+            } finally {
+              clearTimeout(timeoutId);
+            }
+            
+            if (response.ok) break; // If successful, break out of retry loop
+            
+            if (retries === 0) {
+              // On final retry, throw with status info
+              throw new Error(`Server responded with status: ${response.status} - ${response.statusText}`);
+            }
+            
+            // Wait before retrying (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (2 - retries)));
+          } catch (fetchErr) {
+            if (retries === 0) throw fetchErr; // Rethrow on final retry
+          }
+          
+          retries--;
         }
-        const data = await response.json();
-        if (!cancelled) setHighlights(Array.isArray(data.highlights) ? data.highlights : []);
+        
+        // Process the response - TypeScript fix for possibly undefined response
+        if (!response) {
+          throw new Error('Failed to receive response from server');
+        }
+        
+        // Handle potential JSON parse errors
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          console.error('JSON parse error:', jsonError);
+          throw new Error('Invalid response format from server');
+        }
+        
+        // Validate the data structure with more detailed error
+        if (!data) {
+          throw new Error('Empty response received from astronomy API');
+        }
+        
+        if (!Array.isArray(data.highlights)) {
+          console.error('Invalid API response format:', data);
+          // Create minimal fallback data structure if possible
+          if (data.error) {
+            throw new Error(`API Error: ${data.error}`);
+          } else {
+            throw new Error('Invalid data format: highlights array missing');
+          }
+        }
+        
+        if (!cancelled) setHighlights(data.highlights);
       } catch (err) {
         if (!cancelled) {
           console.error('Error fetching astronomy highlights:', err);
-          setError(err instanceof Error ? err.message : 'Failed to fetch astronomy data');
+          // More descriptive error message for users
+          const errorMessage = err instanceof Error 
+            ? `${err.message} (Please try again later)`
+            : 'Failed to fetch astronomy data - network error or service unavailable';
+          setError(errorMessage);
+          
+          // Provide fallback data in case of error
+          setHighlights([]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -338,7 +413,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   }, [homeLocation?.lat, homeLocation?.lon]);
 
   // Defensive: ensure highlights array has at least 2 days
-  let safeHighlights = Array.isArray(highlights) ? highlights.slice(0, 2) : [];
+  const safeHighlights = Array.isArray(highlights) ? highlights.slice(0, 2) : [];
   if (safeHighlights.length === 1) {
     // Mock a second day by copying the first and incrementing the date
     const first = safeHighlights[0];
@@ -376,44 +451,159 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
   // Show fallback UI if loading, error, or no highlights
   if (loading) {
     return (
-      <div className={`activity-card-enhanced ${className}`} style={{ backgroundImage: `url(/milkyway.png)`, ...style }}>
+      <OptimizedBackgroundImage
+        src="/milkyway.png"
+        alt="Night sky background"
+        className={`activity-card-enhanced ${className}`}
+        style={style}
+      >
         <div className="activity-card-overlay" />
         <div className="activity-card-content">
           <div className="forecast-header">
             <div className="date-info">
-              <h3 className="date-label">Tonight's Sky</h3>
+              <h3 className="date-label">The Sky Tonight</h3>
             </div>
           </div>
           <div style={{ padding: '2rem', textAlign: 'center' }}>
             Loading astronomy highlights...
           </div>
         </div>
-      </div>
+      </OptimizedBackgroundImage>
     );
   }
   if (error || !tonight) {
+    // Create fallback data based on current date/time
+    const now = new Date();
+    // Calculate a simple moon phase estimate based on date
+    // This is just an approximation for fallback display
+    const dayOfMonth = now.getDate();
+    const phase = (dayOfMonth % 30) / 30; // 0-1 representation of moon cycle
+    
+    // Choose appropriate moon phase and icon based on cycle position
+    let fallbackMoonPhase = "Waxing Gibbous";
+    let fallbackMoonIcon = "moon-waxing-gibbous.svg";
+    
+    if (phase < 0.03) {
+      fallbackMoonPhase = "New Moon";
+      fallbackMoonIcon = "moon-new.svg";
+    } else if (phase < 0.25) {
+      fallbackMoonPhase = "Waxing Crescent";
+      fallbackMoonIcon = "moon-waxing-crescent.svg";
+    } else if (phase < 0.28) {
+      fallbackMoonPhase = "First Quarter";
+      fallbackMoonIcon = "moon-first-quarter.svg";
+    } else if (phase < 0.47) {
+      fallbackMoonPhase = "Waxing Gibbous";
+      fallbackMoonIcon = "moon-waxing-gibbous.svg";
+    } else if (phase < 0.53) {
+      fallbackMoonPhase = "Full Moon";
+      fallbackMoonIcon = "moon-full.svg";
+    } else if (phase < 0.72) {
+      fallbackMoonPhase = "Waning Gibbous";
+      fallbackMoonIcon = "moon-waning-gibbous.svg";
+    } else if (phase < 0.78) {
+      fallbackMoonPhase = "Last Quarter";
+      fallbackMoonIcon = "moon-last-quarter.svg";
+    } else {
+      fallbackMoonPhase = "Waning Crescent";
+      fallbackMoonIcon = "moon-waning-crescent.svg";
+    }
+    
     return (
-      <div className={`activity-card-enhanced ${className}`} style={{ backgroundImage: `url(/milkyway.png)`, ...style }}>
+      <OptimizedBackgroundImage
+        src="/milkyway.png"
+        alt="Night sky background"
+        className={`activity-card-enhanced ${className}`}
+        style={style}
+      >
         <div className="activity-card-overlay" />
         <div className="activity-card-content">
           <div className="forecast-header">
             <div className="date-info">
-              <h3 className="date-label">Tonight's Sky</h3>
+              <h3 className="date-label">Tonight&apos;s Sky</h3>
             </div>
           </div>
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#ef4444' }}>
-            Unable to load astronomy highlights.<br />
-            {error ? `Error: ${error}` : 'No highlight data available.'}
+          
+          {/* Hero activity section with fallback data */}
+          <div className="card__hero-activity">
+            <div className="card__hero-icon">
+              <OptimizedImage
+                src="/weather-icons/design/fill/final/starry-night.svg"
+                alt="Astronomy"
+                width={96}
+                height={96}
+              />
+            </div>
+            <div className="card__hero-title">
+              <div className="card__hero-name outdoor">
+                Stargazing
+              </div>
+              <div className="card__hero-message">
+                Look up tonight!
+              </div>
+            </div>
+            <div
+              className="card__score-badge"
+              style={{ background: 'transparent' }}
+            >
+              <OptimizedImage
+                src={`/weather-icons/design/fill/final/${fallbackMoonIcon}`}
+                alt={fallbackMoonPhase}
+                width={192}
+                height={192}
+              />
+            </div>
+          </div>
+          
+          {/* Error message with retry suggestion */}
+          <div style={{ 
+            padding: '1rem', 
+            margin: '1rem auto', 
+            textAlign: 'center', 
+            color: '#ef4444',
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            borderRadius: '8px',
+            maxWidth: '90%'
+          }}>
+            <p style={{ margin: '0.5rem 0' }}>                <strong>Astronomy data temporarily unavailable</strong>
+            </p>              <p style={{ margin: '0.5rem 0', fontSize: '0.9rem' }}>
+              {error ? error : "Could not retrieve astronomical data for your location."}
+            </p>
+            <button 
+              onClick={() => window.location.reload()} 
+              style={{ 
+                marginTop: '0.5rem',
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '4px',
+                padding: '4px 12px',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              Try again
+            </button>
+          </div>
+          
+          {/* Fallback moon lore section */}
+          <div className="moon-lore mt-4">
+            <h4 className={`${indieFlower.className} font-bold text-lg leading-snug mb-1`}>
+              {fallbackMoonPhase} Moon
+            </h4>
+            <p className={`${indieFlower.className} opacity-90`} style={{ marginTop: 0 }}>
+              Even without detailed data, the night sky offers many wonders to observe.
+            </p>
           </div>
         </div>
-      </div>
+      </OptimizedBackgroundImage>
     );
   }
 
   // Extract weather info
   const currentWeather = getCurrentWeather(weatherData);
   const midnightWeather = getMidnightWeather(weatherData);
-  const { tempMin, tempMax } = getDailyTemps(weatherData);
+  // Marked with underscore since not used directly
+  const { tempMin: _tempMin, tempMax: _tempMax } = getDailyTemps(weatherData);
   // Robust: Get night temperature and description for tonight
   let nightTemp = null;
   let nightDescription = '';
@@ -482,29 +672,28 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
     : null;
 
   return (
-    <div
+    <OptimizedBackgroundImage
+      src="/milkyway.png"
+      alt="Night sky background"
       className={`activity-card-enhanced ${className}`}
-      style={{
-        backgroundImage: `url(/milkyway.png)`,
-        ...style,
-      }}
+      style={style}
     >
       <div className="activity-card-overlay" />
       <div className="activity-card-content">
         {/* Weather icon top right - show midnight weather icon */}
         <div className="weather-icon-topright">
-          <img
+          <OptimizedImage
             src={`/weather-icons/design/fill/final/${midnightWeatherIcon}`}
             alt="Midnight weather"
-            style={{ width: 48, height: 48 }}
-            loading="lazy"
+            width={48}
+            height={48}
           />
         </div>
 
         {/* Header matching day card structure */}
         <div className="forecast-header">
           <div className="date-info">
-            <h3 className="date-label">Tonight's Sky</h3>
+            <h3 className="date-label">Tonight&apos;s Sky</h3>
             {/* Astronomy header details: temp, condition, wind - styled as in day cards */}
             <div className="astro-header-details card__header-details">
 <span className="temperature-label">
@@ -527,30 +716,29 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
         {/* Hero activity section - astronomy event or stargazing */}
         <div className="card__hero-activity">
           <div className="card__hero-icon">
-            <img
+            <OptimizedImage
               src={`/weather-icons/design/fill/final/${astronomyIcon}`}
               alt="Astronomy highlight"
-              style={{ width: 96, height: 96 }}
-              loading="lazy"
+              width={96}
+              height={96}
             />
           </div>
           <div className="card__hero-title">
             <div className="card__hero-name outdoor">
               {primaryEvent ? primaryEvent.name : 'Stargazing'}
-            </div>
-            <div className="card__hero-message">
-              {primaryEvent ? 'Do look up!' : `${Math.round(stargazingScore)}% visibility`}
-            </div>
+            </div>              <div className="card__hero-message">
+                {primaryEvent ? "Do look up!" : `${Math.round(stargazingScore)}% visibility`}
+              </div>
           </div>
           <div
             className="card__score-badge"
             style={{ background: 'transparent' }}
           >
-            <img
+            <OptimizedImage
               src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
               alt={tonight.moon.phaseName}
-              style={{ width: 192, height: 192 }}
-              loading="lazy"
+              width={192}
+              height={192}
             />
           </div>
         </div>
@@ -569,11 +757,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img
+                <OptimizedImage
                   src={`/weather-icons/design/fill/final/${tonight.moon.icon}`}
                   alt="Moon phase"
-                  style={{ width: 25, height: 25, marginRight: '4px' }}
-                  loading="lazy"
+                  width={25}
+                  height={25}
+                  style={{ marginRight: '4px' }}
                 />
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moon</span>
               </div>
@@ -584,11 +773,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img
+                <OptimizedImage
                   src="/weather-icons/design/fill/final/04d.svg"
                   alt="Clouds"
-                  style={{ width: 25, height: 25, marginRight: '4px' }}
-                  loading="lazy"
+                  width={25}
+                  height={25}
+                  style={{ marginRight: '4px' }}
                 />
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Clouds</span>
               </div>
@@ -602,13 +792,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img
+                <OptimizedImage
                   src="/weather-icons/design/fill/final/haze-night.svg"
                   alt="Visibility"
-                  style={{ width: 25, height: 25, marginRight: '4px' }}
-                  loading="lazy"
+                  width={25}
+                  height={25}
+                  style={{ marginRight: '4px' }}
                 />
-                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Visibility</span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Clarity</span>
               </div>
               <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>
                 {weatherData?.visibility ? `${Math.round(weatherData.visibility / 1000)}km` : 'N/A'}
@@ -619,11 +810,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img
+                <OptimizedImage
                   src="/weather-icons/design/fill/final/09d.svg"
                   alt="Precipitation"
-                  style={{ width: 25, height: 25, marginRight: '4px' }}
-                  loading="lazy"
+                  width={25}
+                  height={25}
+                  style={{ marginRight: '4px' }}
                 />
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Rain</span>
               </div>
@@ -638,10 +830,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img
+                  <OptimizedImage
                     src="/weather-icons/design/fill/final/sunset.svg"
                     alt="sunset"
-                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                    width={25}
+                    height={25}
+                    style={{ marginRight: '4px' }}
                   />
                   <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Sunset</span>
                 </div>
@@ -654,12 +848,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img
+                  <OptimizedImage
                     src="/weather-icons/design/fill/final/sunrise.svg"
                     alt="sunrise"
-                    style={{ width: 25, height: 25, marginRight: '4px' }}
+                    width={25}
+                    height={25}
+                    style={{ marginRight: '4px' }}
                   />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Sunrise</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Dawn</span>
                 </div>
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.sun.sunrise}</span>
               </div>
@@ -671,13 +867,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img
+                  <OptimizedImage
                     src="/weather-icons/design/fill/final/moonrise.svg"
                     alt="Moon rise"
-                    style={{ width: 25, height: 25, marginRight: '4px' }}
-                    loading="lazy"
+                    width={25}
+                    height={25}
+                    style={{ marginRight: '4px' }}
                   />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moonrise</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Rise</span>
                 </div>
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.moon.rise}</span>
               </div>
@@ -688,13 +885,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
             <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <img
+                  <OptimizedImage
                     src="/weather-icons/design/fill/final/moonset.svg"
                     alt="Moon set"
-                    style={{ width: 25, height: 25, marginRight: '4px' }}
-                    loading="lazy"
+                    width={25}
+                    height={25}
+                    style={{ marginRight: '4px' }}
                   />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Moonset</span>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Set</span>
                 </div>
                 <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{tonight.moon.set}</span>
               </div>
@@ -707,13 +905,14 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
               <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img
+                    <OptimizedImage
                       src="/weather-icons/design/fill/final/falling-stars.svg"
-                      alt="Event"
-                      style={{ width: 25, height: 25, marginRight: '4px' }}
-                      loading="lazy"
+                      alt="Celestial event"
+                      width={25}
+                      height={25}
+                      style={{ marginRight: '4px' }}
                     />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Event</span>
+                    {/* Removed "Event" label to improve layout */}
                   </div>
                   <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>{primaryEvent.name}</span>
                 </div>
@@ -723,11 +922,12 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
                 <div className="data-cell" style={{ padding: '4px 8px', backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <img
+                      <OptimizedImage
                         src="/weather-icons/design/fill/final/star.svg"
                         alt="Best time"
-                        style={{ width: 20, height: 20, marginRight: '4px' }}
-                        loading="lazy"
+                        width={20}
+                        height={20}
+                        style={{ marginRight: '4px' }}
                       />
                       <span style={{ fontSize: '0.8rem', fontWeight: 400 }}>Best time</span>
                     </div>
@@ -772,7 +972,7 @@ const AstronomyCard: React.FC<AstronomyCardProps> = ({ className = '', style = {
           <IssNextPassNote lat={homeLocation.lat} lon={homeLocation.lon} sunsetISO={tonight.sun.sunset} />
         )}
       </div>
-    </div>
+    </OptimizedBackgroundImage>
   );
 };
 
@@ -784,10 +984,19 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   const [pass, setPass] = useState<{ risetime?: string; duration?: number; mag?: number; maxEl?: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Use a ref to prevent multiple fetches
+  const hasFetched = React.useRef(false);
+  
   useEffect(() => {
+    // Guard against re-fetching and unnecessary API calls
+    if (hasFetched.current) return;
+    
     let cancelled = false;
+    hasFetched.current = true;
     setLoading(true);
     setError(null);
+    
     // Fetch ISS next night pass from backend API
     fetch(`/api/iss-next-night-pass?lat=${lat}&lon=${lon}&sunsetISO=${encodeURIComponent(sunsetISO ?? '')}`)
       .then(res => res.json())
@@ -850,11 +1059,12 @@ const IssNextPassNote: React.FC<{ lat: number; lon: number; sunsetISO?: string }
   // Render the summary
   return (
     <div className={`astronomy-message ${oxanium.className}`} style={{ margin: '8px 0', opacity: 0.95, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
-      <img
+      <OptimizedImage
         src="/satellite_iss.png"
         alt="ISS icon"
-        style={{ width: 28, height: 28, verticalAlign: 'middle', filter: 'drop-shadow(0px 0px 2px #fff)' }}
-        loading="lazy"
+        width={28}
+        height={28}
+        style={{ verticalAlign: 'middle', filter: 'drop-shadow(0px 0px 2px #fff)' }}
       />
       <span style={{ fontWeight: 500 }}>
         {describeIssPass(issData)}

@@ -1,101 +1,63 @@
-import React, { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { Share2 } from 'lucide-react';
-import { createPortal } from 'react-dom';
+// /components/ShareButton.tsx
+import React, { useState } from 'react';
+import { shareToWhatsApp, SharePayload } from '../utils/share';
 
-// Dynamically import EnhancedShareModal with no SSR
-const EnhancedShareModal = dynamic(() => import('./sharing/EnhancedShareModal'), {
-  ssr: false,
-});
-
-// Create a portal target for the modal
-const modalRoot = typeof document !== 'undefined' ? document.body : null;
-
-interface ShareButtonProps {
-  activityId: string;
-  activityName: string;
-  activityDescription?: string;
-  activityMessage?: string;
+type ShareButtonProps = {
+  payload: SharePayload;
   className?: string;
   children?: React.ReactNode;
-  variant?: 'default' | 'ghost' | 'outline' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-}
-
-const buttonVariants = {
-  default: 'btn',
-  ghost: 'btn btn-ghost',
-  outline: 'btn btn-outline',
-  link: 'btn btn-link',
+  onShared?: (status: string) => void;
 };
 
-const buttonSizes = {
-  default: '',
-  sm: 'btn-sm',
-  lg: 'btn-lg',
-  icon: 'btn-square',
-};
+export const ShareButton: React.FC<ShareButtonProps> = ({ payload, className, children, onShared }) => {
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
-export const ShareButton: React.FC<ShareButtonProps> = ({
-  activityId,
-  activityName,
-  activityDescription,
-  activityMessage,
-  className = '',
-  children,
-  variant = 'default',
-  size = 'default'
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsOpen(true);
+  const handleClick = async () => {
+    setBusy(true);
+    const result = await shareToWhatsApp(payload);
+    setBusy(false);
+    setStatus(result);
+    onShared?.(result);
+    // Auto-clear status after a moment
+    window.setTimeout(() => setStatus(null), 2500);
   };
-
-  const handleClose = () => {
-    setIsOpen(false);
-  };
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
 
   return (
-    <>
+    <div className={`share-to-whatsapp ${className ?? ''}`}>
       <button
+        type="button"
         onClick={handleClick}
-        className={`${buttonVariants[variant]} ${buttonSizes[size]} ${className}`}
-        aria-label={`Share ${activityName}`}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
+        disabled={busy}
+        aria-busy={busy}
+        className="share-btn"
       >
-        <Share2 size={16} className="mr-1" />
-        {children || 'Share'}
+        {busy ? 'Sharing…' : (children || 'Share via WhatsApp')}
       </button>
-      
-      {modalRoot && isOpen && createPortal(
-        <div className="fixed inset-0 z-50">
-          <EnhancedShareModal
-            isOpen={isOpen}
-            onClose={handleClose}
-            activityId={activityId}
-            activityName={activityName}
-            activityDescription={activityDescription}
-            activityMessage={activityMessage}
-          />
-        </div>,
-        modalRoot
-      )}
-    </>
+      {status && <div className="share-status" role="status">{status}</div>}
+      <style jsx>{`
+        .share-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          border: none;
+          padding: 0.6rem 1rem;
+          border-radius: 999px;
+          cursor: pointer;
+          background: #25D366; /* WhatsApp green */
+          color: #fff;
+          font-weight: 600;
+        }
+        .share-btn[disabled] {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .share-status {
+          margin-top: 0.4rem;
+          font-size: 0.9rem;
+          opacity: 0.9;
+        }
+      `}</style>
+    </div>
   );
 };

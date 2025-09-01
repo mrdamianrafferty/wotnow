@@ -226,7 +226,7 @@ class WotNowAstronomyAPI {
       events.push({
         type: 'moon_event',
         name: 'Full Moon',
-        description: 'Bright moonlight perfect for night hiking and lunar photography',
+        description: 'Bright moonlight perfect for night strolls and lunar photography',
         visibility: 'excellent',
         activitySuggestion: 'moonlight hiking',
         bestTime: 'all night'
@@ -503,19 +503,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   try {
+    // Input validation with more specific error messages
+    if (isNaN(parseFloat(lat as string))) {
+      return res.status(400).json({ error: 'Invalid latitude value' });
+    }
+    if (isNaN(parseFloat(lon as string))) {
+      return res.status(400).json({ error: 'Invalid longitude value' });
+    }
+    
     const latitude = parseFloat(lat as string);
     const longitude = parseFloat(lon as string);
-    let numDays = parseInt(days as string);
+    
+    // Additional range validation
+    if (latitude < -90 || latitude > 90) {
+      return res.status(400).json({ error: 'Latitude must be between -90 and 90 degrees' });
+    }
+    if (longitude < -180 || longitude > 180) {
+      return res.status(400).json({ error: 'Longitude must be between -180 and 180 degrees' });
+    }
+    
+    let numDays = parseInt(days as string) || 3; // Default to 3 days if parsing fails
     // Clamp to max 14 days
     numDays = Math.max(1, Math.min(numDays, 14));
 
     const api = new WotNowAstronomyAPI();
+    console.log(`Fetching astronomy data for lat: ${latitude}, lon: ${longitude}, days: ${numDays}`);
+    
     const result = await api.generateHighlights(latitude, longitude, numDays);
+    
+    // Validate result structure before returning
+    if (!result || !Array.isArray(result.highlights)) {
+      console.error('Invalid result structure from WotNowAstronomyAPI:', result);
+      return res.status(500).json({ 
+        error: 'Astronomy API returned invalid data structure',
+        details: 'Expected highlights array is missing or invalid'
+      });
+    }
+    
+    if (result.highlights.length === 0) {
+      console.warn('No astronomy highlights generated for the requested location and days');
+    }
 
     res.status(200).json(result);
-  } catch (error) {
-    console.error('Astronomy highlights error:', error);
-    res.status(500).json({ error: 'Failed to fetch astronomy highlights' });
+  } catch (error: any) {
+    // Enhanced error logging with more context
+    console.error('Astronomy highlights error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack,
+      latitude: lat,
+      longitude: lon,
+      days: days
+    });
+    
+    // More detailed error response to help with debugging
+    res.status(500).json({ 
+      error: 'Failed to fetch astronomy highlights',
+      message: error?.message || 'Internal server error',
+      requestParams: { lat, lon, days }
+    });
   }
 }
 

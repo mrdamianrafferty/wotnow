@@ -39,7 +39,8 @@ import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import { resolveBeachOrientationAsync, computeSimulatedOrientation, classifyWindRelative } from '../utils/orientation';
 import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
 import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
-import { ShareModal } from '../components/sharing/NewShareModal';
+// TODO: Uncomment when the sharing feature is merged
+// import { ShareModal } from '../components/sharing/NewShareModal';
 
 
 
@@ -165,7 +166,7 @@ function getDayLabel(dateStr: string | number, idx: number, serverTime?: Date): 
  */
 function shareActivity(activityId: string, score: number, dayLabel: string) {
   const activity = activityTypes.find(a => a.id === activityId);
-  const activityName = activity?.name || activityId.replace(/_/g, ' ');
+  const activityName = activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity');
   const assessment = getAssessmentCategory(score, activityId);
   
   const text = `🌤️ ${activityName} looks ${assessment.status} for ${dayLabel}! Score: ${score}% - Check out WotNow for more activity suggestions.`;
@@ -222,14 +223,15 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
   const activity = activityTypes.find(a => a.id === activityId);
   const assessment = getAssessmentCategory(score, activityId);
   const bgUrl = getActivityBg(activityId);
-  const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
-  const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
+  const isMarine = activityId ? MARINE_ACTIVITY_IDS.includes(activityId) : false;
+  // TODO: Uncomment when the sharing feature is merged
+  // const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
   
   // Determine if this activity should show pollen warnings
   // Exclude marine, winter, and indoor activities as specified
   const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice_skating', 'sledding'];
   const isWinterActivity = winterActivities.includes(activityId);
-  const isIndoorActivity = !isOutdoor(activityId);
+  const isIndoorActivity = activityId ? !isOutdoor(activityId) : false;
   const shouldShowPollenWarning = !isMarine && !isWinterActivity && !isIndoorActivity;
   
   // Determine if this activity should show air quality warnings
@@ -237,7 +239,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
   const shouldShowAirQualityWarning = !isMarine && !isWinterActivity && !isIndoorActivity;
   
   // Build assessment message using same logic as homepage
-  const reasonsStrings = buildReasons(day, activityId);
+  const reasonsStrings = activityId ? buildReasons(day, activityId) : [];
   
   // Convert strings to the expected format for getActivityMessage
   const reasonsObjects = reasonsStrings.map((reason, index) => ({
@@ -247,15 +249,18 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
   }));
   
   const message = assessment.status === 'offseason' 
-    ? `${activity?.name || activityId.replace(/_/g, ' ')} is out of season right now.`
-    : getActivityMessage(activityId, assessment.status, reasonsObjects);
+    ? `${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')} is out of season right now.`
+    : activityId ? getActivityMessage(activityId, assessment.status, reasonsObjects) : "Weather conditions vary - check the details below.";
 
+  // TODO: Uncomment when the sharing feature is merged
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShareModalData({
-      activityId,
-      activityName: activity?.name || activityId.replace(/_/g, ' ')
-    });
+    // setShareModalData({
+    //   activityId,
+    //   activityName: activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')
+    // });
+    // For now, just prevent the default action
+    console.log('Sharing feature not yet available');
   };
 
   // --- Beach orientation (OSM/cache with simulated fallback) ---
@@ -293,28 +298,28 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
       }}
       tabIndex={0}
       role="button"
-      aria-label={`${activity?.name || activityId} - ${assessment.status} conditions`}
+      aria-label={`${activity?.name || (activityId ? activityId : 'Activity')} - ${assessment.status} conditions`}
     >
       {/* Activity Header */}
       <div className="activity-card__header">
         <div className="activity-card__title-section">
           <span className="activity-card__emoji">
-            {getActivityEmoji(activityId)}
+            {activityId ? getActivityEmoji(activityId) : '🏃'}
           </span>
           <h3 className="activity-card__title">
-            {activity?.name || activityId.replace(/_/g, ' ')}
+            {activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}
           </h3>
         </div>
         
         {/* Assessment Badge and Share Button */}
         <div className="activity-card__badges">
           <div className={`activity-card__badge ${
-            !isOutdoor(activityId) ? 'activity-card__badge--indoor' : 
+            activityId && !isOutdoor(activityId) ? 'activity-card__badge--indoor' : 
             assessment.status === 'offseason' ? 'activity-card__badge--offseason' : ''
           }`} style={{
-            background: !isOutdoor(activityId) ? undefined : assessment.color,
+            background: activityId && !isOutdoor(activityId) ? undefined : assessment.color,
           }}>
-            {!isOutdoor(activityId) ? (
+            {activityId && !isOutdoor(activityId) ? (
               <>🛋️ indoor</>
             ) : assessment.status === 'offseason' ? (
               <>🍂 offseason</>
@@ -335,10 +340,10 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
       </div>
 
       {/* Assessment Message - only show for outdoor, in-season activities */}
-      {isOutdoor(activityId) && assessment.status !== 'offseason' && (
+      {activityId && isOutdoor(activityId) && assessment.status !== 'offseason' && (
         <div className="activity-card__message">
           {message || (score < 40 ? 
-            `Not ideal weather for ${activity?.name || activityId.replace(/_/g, ' ')}, but still an option if you're interested.` : 
+            `Not ideal weather for ${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}, but still an option if you're interested.` : 
             message
           )}
         </div>
@@ -516,18 +521,18 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
       {/* Score Display */}
       <div className="activity-card__score">
         Score: {score}%
-      </div>
-
-      {/* Share Modal */}
-      {shareModalData && (
-        <ShareModal
-          activityId={shareModalData.activityId}
-          activityName={shareModalData.activityName}
-          onClose={() => setShareModalData(null)}
-        />
-      )}
-    </article>
-  );
+      </div>        {/* Share Modal */}
+        {/* TODO: Uncomment when the sharing feature is merged
+        {shareModalData && (
+          <ShareModal
+            activityId={shareModalData.activityId}
+            activityName={shareModalData.activityName}
+            onClose={() => setShareModalData(null)}
+          />
+        )}
+        */}
+      </article>
+    );
 }
 
 /**
@@ -847,9 +852,13 @@ export default function ActivitiesPage() {
     }
   }
 
+  // Filter out any activities with undefined activityId first to prevent errors
+  const validActivities = activities.filter((a: any) => a && a.activityId);
+
   // Sort activities by priority: perfect, good, fair, poor, indoor, offseason
-  const sortedActivities = activities.sort((a: any, b: any) => {
+  const sortedActivities = validActivities.sort((a: any, b: any) => {
     const getActivityPriority = (activityId: string, score: number) => {
+      if (!activityId) return 4; // fallback to poor priority if no activityId
       if (!isOutdoor(activityId)) return 5; // indoor
       if (isOutOfSeason(activityId)) return 6; // offseason
       
@@ -1154,7 +1163,9 @@ export default function ActivitiesPage() {
                       </div>
                     </div>
                   ) : (
-                    sortedActivities.map((activity: any) => (
+                    sortedActivities
+                      .filter((activity: any) => activity && activity.activityId) // Filter out any activities with undefined activityId
+                      .map((activity: any) => (
                       <ActivityCard
                         key={activity.activityId}
                         activityId={activity.activityId}

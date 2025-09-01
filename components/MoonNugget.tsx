@@ -98,7 +98,14 @@ export interface MoonNuggetProps {
 export default function MoonNugget(props: MoonNuggetProps) {
   const { phase, item, markUsed } = useMoonNugget({ phase: props.phase });
 
-  React.useEffect(() => { markUsed(); }, [markUsed]);
+  // Fix potential infinite loop by adding a ref to track first render
+  const isFirstRender = React.useRef(true);
+  React.useEffect(() => { 
+    if (isFirstRender.current) {
+      markUsed();
+      isFirstRender.current = false;
+    }
+  }, [markUsed]);
 
   return (
     <div className={"rounded-2xl border p-4 shadow-sm bg-white/70 dark:bg-zinc-900/60 backdrop-blur " + (props.className ?? '')}>

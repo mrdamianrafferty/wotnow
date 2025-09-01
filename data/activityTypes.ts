@@ -25,8 +25,6 @@ export interface ActivityType {
   usesWindRelative?: boolean;
   /** If true, activity benefits from a known beach orientation (e.g., surfing, sea swimming) */
   requiresBeachOrientation?: boolean;
-  // skillSensitive?: boolean;               // If true, activity has different conditions based on skill level
-  // skillProfile?: Record<string, any>;     // Skill level specific conditions
 }
 
 /**
@@ -1559,22 +1557,22 @@ export const activityTypes: ActivityType[] = [
   secondaryCategory: 'Outdoor Recreation',
   weatherSensitive: true,
   tags: ['adventure', 'walking', 'nature', 'coastal', 'Saturday', 'Sunday', 'holiday'],
-  // skillSensitive: true,
-  // skillProfile: {
-  //   beginner: {
-  //     windSpeed: { max: 10 },
-  //     precipitation: { max: 0 },
-  //     visibility: { min: 5 }
-  //   },
-  //   intermediate: {
-  //     windSpeed: { max: 15 },
-  //     precipitation: { max: 2 }
-  //   },
-  //   advanced: {
-  //     windSpeed: { max: 20 },
-  //     precipitation: { max: 5 }
-  //   }
-  // },
+  // skillSensitive: true, // For later development
+  /* skillProfile: {
+    beginner: {
+      windSpeed: { max: 10 },
+      precipitation: { max: 0 },
+      visibility: { min: 5 }
+    },
+    intermediate: {
+      windSpeed: { max: 15 },
+      precipitation: { max: 2 }
+    },
+    advanced: {
+      windSpeed: { max: 20 },
+      precipitation: { max: 5 }
+    }
+  }, */
   poorConditions: [
     'temperature<5',                // cold, uncomfortable
     'temperature>28',              // heat, exhausting
@@ -1999,31 +1997,7 @@ export const activityTypes: ActivityType[] = [
   },
   {
     id: 'dance',
-    name: 'Clubbing',
-    category: 'Creative & Arts',
-    secondaryCategory: 'Music & Performance',
-    weatherSensitive: false,
-    tags: ['fun', 'art', 'music', 'social', 'evening', 'Friday', 'Saturday'],
-  },
-  {
-    id: 'comedy',
-    name: 'Live Comedy',
-    category: 'Creative & Arts',
-    secondaryCategory: 'Music & Performance',
-    weatherSensitive: false,
-    tags: ['fun', 'art', 'arts', 'social', 'evening', 'Friday', 'Saturday'],
-  },
-  {
-    id: 'theatre',
-    name: 'Theatre',
-    category: 'Creative & Arts',
-    secondaryCategory: 'Music & Performance',
-    weatherSensitive: false,
-    tags: ['fun', 'arts', 'arts', 'social', 'evening', 'Friday', 'Saturday'],
-  },
-  {
-    id: 'live_music',
-    name: 'Live Music',
+    name: 'Dance',
     category: 'Creative & Arts',
     secondaryCategory: 'Music & Performance',
     weatherSensitive: false,
