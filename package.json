@@ -9,7 +9,9 @@
     "test": "jest",
     "astro:canaries": "cd services/astro_highlights/astro_highlights && .venv/bin/python run_canaries.py"
   },
-  "engines": { "node": "20.x" },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",
     "@tanstack/react-query": "^5.83.0",
@@ -17,6 +19,7 @@
     "@turf/turf": "^7.2.0",
     "axios": "^1.10.0",
     "cally": "^0.8.0",
+    "caniuse-lite": "^1.0.30001739",
     "daisyui": "^5.0.54",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.23.12",
@@ -49,6 +52,8 @@
     "@typescript-eslint/parser": "^8.41.0",
     "autoprefixer": "^10.4.21",
     "cross-fetch": "^4.1.0",
+    "cssnano": "^6.0.5",
+    "cssnano-preset-default": "^6.0.5",
     "dotenv": "^17.2.1",
     "eslint": "^9.34.0",
     "eslint-config-next": "^15.5.2",

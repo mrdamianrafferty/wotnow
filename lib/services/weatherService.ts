@@ -20,7 +20,7 @@ export function normalizeCoreWeatherFields(openWeatherData: any, openMeteoData: 
     return null;
   }
 // ——— Shared helpers ———
-const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> => {
+const _withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> => {
   return await new Promise((resolve, reject) => {
     const id = setTimeout(() => reject(new Error('timeout')), ms);
     p.then(v => { clearTimeout(id); resolve(v); })
@@ -28,13 +28,65 @@ const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> => {
   });
 };
 
-const safeJson = async (res: Response) => {
-  try { return await res.json(); } catch { return null as any; }
+const _safeJson = async (res: Response) => {
+  try { return await res.json(); } catch { return null as unknown; }
 };
 
-const nullOnError = async <T>(fn: () => Promise<T>): Promise<T | null> => {
+const _nullOnError = async <T>(fn: () => Promise<T>): Promise<T | null> => {
   try { return await fn(); } catch { return null; }
 };
+
+/**
+ * Get comprehensive weather data for a location
+ * Aggregates data from multiple OpenWeather endpoints and handles fallbacks
+ * 
+ * @param lat Latitude
+ * @param lon Longitude
+ * @returns Unified weather data object with current, hourly, and daily forecasts
+ */
+export async function getWeatherData(lat: number, lon: number): Promise<any> {
+  const apiKey = process.env.OPENWEATHER_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('OpenWeather API key not configured');
+  }
+  
+  try {
+    // Get comprehensive weather data
+    const weatherData = await getFullWeather({ 
+      lat, 
+      lon, 
+      apiKey, 
+      options: { units: 'metric' } 
+    });
+    
+    // Get air pollution data if available
+    let airQuality = null;
+    try {
+      airQuality = await getAirPollution({ lat, lon, apiKey });
+    } catch (error) {
+      console.warn('Failed to fetch air quality data:', error);
+    }
+    
+    // Get any weather alerts
+    let alerts = [];
+    try {
+      alerts = await getWeatherAlerts({ lat, lon, apiKey });
+    } catch (error) {
+      console.warn('Failed to fetch weather alerts:', error);
+    }
+    
+    // Combine all data
+    return {
+      ...weatherData,
+      airQuality,
+      alerts: alerts.length > 0 ? alerts : weatherData.alerts || [],
+    };
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+    throw error;
+  }
+}
 
   // Source order
   const sources = isMarine
@@ -425,7 +477,7 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
       throw { status: response.status, data };
     }
     return { source: 'onecall3', data };
-  } catch (err) {
+  } catch (_err) {
     // Fallback to 2.5 API
     const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
     const response2 = await fetch(url2);
@@ -441,9 +493,9 @@ export async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: 
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-export function transformDailyForecast(oneCallData) {
+export function transformDailyForecast(oneCallData: any): any[] {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map(day => ({
+  return oneCallData.daily.slice(0, 8).map((day: any) => ({
     dt: day.dt,
     main: {
       temp: day.temp.day,
@@ -473,7 +525,7 @@ export function transformDailyForecast(oneCallData) {
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-export function transformCity(oneCallData, lat, lon) {
+export function transformCity(oneCallData: any, lat: number|string, lon: number|string): any {
   return {
     id: 0,
     name: "Location",
@@ -529,7 +581,7 @@ export function transformCity(oneCallData, lat, lon) {
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-export async function getFullWeather({ lat, lon, apiKey, options = {} }) {
+export async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<any> {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {
