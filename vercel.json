@@ -1,9 +1,16 @@
 {
   "version": 2,
-  "nodeVersion": "20.x",
+  "framework": "nextjs",
   "buildCommand": "./vercel-build.sh",
   "installCommand": "npm install",
-  "framework": "nextjs",
+  "functions": {
+    "pages/api/**/*.ts": {
+      "maxDuration": 30
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
   "builds": [
     { "src": "package.json", "use": "@vercel/next" },
     { "src": "api/python/**/*.py", "use": "@vercel/python" }

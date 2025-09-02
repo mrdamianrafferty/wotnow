@@ -1,0 +1,74 @@
+# Vercel ignore file - files and directories to exclude from deployment
+
+# Development files
+.env.local
+.env.development
+.env.*.local
+
+# Node modules (handled by package.json)
+node_modules
+
+# Build artifacts
+.next
+dist
+out
+
+# Testing
+coverage
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+__tests__
+jest.config.js
+
+# Development tools
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache directories
+.cache
+.npm
+.yarn
+
+# Temporary files
+*.tmp
+*.temp
+
+# Scripts and utilities not needed in production
+scripts/
+docs/
+examples/
+test-*.js
+test-*.ts
+debug-*.js
+verify-*.js
+check-*.js
+smoke-*.ts
+
+# Config files for development only
+.eslintrc*
+.prettierrc*
+tailwind.config.js.bak
+babel.config.*
+
+# Large assets that should be optimized separately
+*.psd
+*.ai
+*.sketch
+
+# Python virtual environments
+.venv/
+venv/
+__pycache__/
+*.pyc

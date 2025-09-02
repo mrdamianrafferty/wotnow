@@ -1,35 +1,51 @@
 #!/bin/bash
-# vercel-build.sh - Custom build script for Vercel deployments
+# vercel-build.sh - Optimized build script for Vercel deployments
+
+set -e  # Exit on any error
 
 # Print versions for debugging
+echo "🔧 Build Environment:"
 echo "Node version: $(node -v)"
 echo "NPM version: $(npm -v)"
+echo "Working directory: $(pwd)"
 
-# Clean up node_modules cache if it exists
-if [ -d "node_modules/.cache" ]; then
-  echo "Cleaning node_modules cache..."
-  rm -rf node_modules/.cache
-fi
+# Clean up any existing build artifacts
+echo "🧹 Cleaning up previous builds..."
+rm -rf .next
+rm -rf node_modules/.cache
 
-# Install dependencies
-echo "Installing dependencies..."
-npm install
+# Install dependencies with exact versions
+echo "📦 Installing dependencies..."
+npm ci --production=false
 
-# Update caniuse-lite database
-echo "Updating caniuse-lite database..."
+# Update browserslist database
+echo "🔄 Updating browserslist database..."
 npx update-browserslist-db@latest
 
-# Explicitly install cssnano with latest versions
-echo "Installing cssnano and related packages..."
-npm install --no-save cssnano@latest cssnano-preset-default@latest
+# Run image optimizations (if script exists)
+if [ -f "img-optimizer/optimize-images.js" ]; then
+  echo "🖼️  Running image optimizations..."
+  node img-optimizer/optimize-images.js
+else
+  echo "ℹ️  No image optimizer found, skipping..."
+fi
 
-# Run optimizations
-echo "Running image optimizations..."
-node img-optimizer/optimize-images.js
+# Check for required environment variables
+echo "🔐 Checking environment variables..."
+if [ -z "$NEXT_PUBLIC_OPENWEATHER_KEY" ]; then
+  echo "⚠️  Warning: NEXT_PUBLIC_OPENWEATHER_KEY not set"
+fi
 
 # Run the Next.js build
-echo "Running Next.js build..."
+echo "🚀 Running Next.js build..."
 npx next build
 
-# Success message
-echo "Build completed successfully!"
+# Verify build output
+if [ -d ".next" ]; then
+  echo "✅ Build completed successfully!"
+  echo "📊 Build statistics:"
+  du -sh .next
+else
+  echo "❌ Build failed - .next directory not found"
+  exit 1
+fi
