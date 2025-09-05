@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export default function AboutUs() {
   return (
@@ -7,9 +8,11 @@ export default function AboutUs() {
         <h1 className="text-4xl font-bold mb-6 text-primary-content">About Us</h1>
 
         <div className="mb-8 flex flex-col items-center">
-          <img
+          <Image
             src="/bruno.jpg"
             alt="Bruno enjoying the river"
+            width={400}
+            height={300}
             className="rounded-xl shadow-lg w-full max-w-md"
           />
           <span className="text-secondary mt-4 text-lg font-semibold">Bruno, Chief Happiness Officer</span>

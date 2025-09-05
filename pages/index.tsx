@@ -1,57 +1,45 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
-import { getAssessmentEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
-import SwellArrow from '../components/SwellArrow';
-import { marineConditionsSummary } from '../utils/marineConditionsSummary';
 import { activityMessages } from '../data/activityMessages';
 import { buildPopupActivityPayload } from '../utils/buildPopupActivityPayload';
-import PopupTemplate from '../components/PopupTemplate';
-import { findHeroActivity } from '../utils/activityHelpers';
-import { useForecastData } from '../lib/useForecastData';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
 import { knotsToMps } from '../utils/weatherUtils';
 import { selectHeroActivity } from '../utils/heroSelector';
-import 'weather-icons/css/weather-icons.css';
-import { getBeaufortNumber } from '../utils/beaufort';
 
-import '../styles/Card.css';
-import '../styles/Popup.css';
+import { getBeaufortNumber } from '../utils/beaufort';
+import Link from 'next/link';
+import type { MarineHour } from '../types/weatherTypes';
+type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
+
 import {
-  getBeaufortDescription,
-  getRainfallDescription,
-  getTemperatureDescription,
-  getHumidityDescription,
-  getWaveDescription,
-  getWaterTemperatureDescription,
-  getWindMessage,
+  getWindMessage as _getWindMessage,
 } from '../utils/weatherLabels';
 import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
 import { getActivityMessage } from '../data/activityMessages';
+import { WeatherData } from '../types/weatherData';
 import AstronomyCard from '../components/AstronomyCard';
 
 // MarineHour interface for typing
-interface MarineHour {
-  time: string;
-  windSpeed?: { noaa?: number };
-  windDirection?: { noaa?: number };
-  waveHeight?: { noaa?: number };
-  swellHeight?: { noaa?: number };
-  swellPeriod?: { noaa?: number };
-  waterTemperature?: { noaa?: number };
-  windGust?: { noaa?: number };
-  visibility?: { noaa?: number };
-  currentSpeed?: { noaa?: number };
-  swellDirection?: { noaa?: number };
+// Using the imported MarineHour type from '../types/weatherTypes' to avoid duplicate declarations.
+
+// Suggestions type for activity scoring/results - must match getSuggestionsByDay return type
+interface ActivitySuggestion {
+  activityId: string;
+  score: number;
+  evaluation: 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative';
+  reasoning?: string;
+  outOfSeason?: boolean;
 }
 
 function WindIcon({ windMs, size = 28, alt = 'Wind' }: { windMs: number, size?: number, alt?: string }) {
@@ -74,12 +62,12 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }: { windMs: number, size?: 
   }
 
   return (
-    <img
+    <Image
       src={`/weather-icons/design/fill/final/${iconName}`}
       alt={alt}
+      width={size}
+      height={size}
       style={{ 
-        width: size, 
-        height: size, 
         verticalAlign: 'middle',
         // Only add white glow for Beaufort numbered icons to make dark numbers visible
         filter: needsGlow 
@@ -91,14 +79,52 @@ function WindIcon({ windMs, size = 28, alt = 'Wind' }: { windMs: number, size?: 
   );
 }
 
+// Minimal API response shape for /api/weather-with-pollen and optional One Call 3.0 fields
+type OneCallDaily = {
+  dt: number;
+  temp: { day: number; min: number; max: number };
+  weather: Array<{ main: string; description: string; icon: string }>;
+  rain?: number;
+  wind_speed: number;
+  wind_deg: number;
+  clouds: number;
+  humidity: number;
+};
+
+type PollenReading = { grass?: number; tree?: number; weed?: number };
+type AirQualityReading = { 
+  overall?: number; 
+  pm2_5?: number; 
+  pm10?: number; 
+  no2?: number; 
+  o3?: number; 
+  so2?: number; 
+  co?: number; 
+};
+
+type WeatherWithPollen = {
+  list: Array<{
+    dt_txt: string;
+    main: { temp: number; humidity: number };
+    weather: Array<{ main: string; description: string; icon: string }>;
+    rain?: { '3h'?: number };
+    wind: { speed: number; deg: number };
+    clouds: { all: number };
+    visibility?: number;
+  }>;
+  pollenByDate?: Record<string, PollenReading>;
+  airQualityByDate?: Record<string, AirQualityReading>;
+  daily?: OneCallDaily[];
+  current?: { visibility?: number };
+};
+
 // Improved data fetching hook
-const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests: string[]) => {
+const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLocation: LocationLite | undefined, _interests: string[]) => {
   const [forecastByDay, setForecastByDay] = useState<WeatherForecastDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeInfo, setTimeInfo] = useState<any>(null);
-  const [weatherData, setWeatherData] = useState<any>(null);
-  const [marineHours, setMarineHours] = useState<any[]>([]);
+  const [weatherData, setWeatherData] = useState<WeatherWithPollen | null>(null);
+  const [marineHours, setMarineHours] = useState<MarineHour[]>([]);
 
   useEffect(() => {
     const fetchWeatherData = async () => {
@@ -167,8 +193,8 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   if (!weatherData || marineHours.length === 0) return;
 
   // Now build forecastByDay using weatherData and marineHours
-  const grouped: Record<string, any[]> = {};
-  weatherData.list.forEach((item: any) => {
+  const grouped: Record<string, WeatherWithPollen['list']> = {};
+  weatherData.list.forEach((item) => {
     const date = item.dt_txt.split(' ')[0];
     if (!grouped[date]) grouped[date] = [];
     grouped[date].push(item);
@@ -176,7 +202,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
 
   const forecast: WeatherForecastDay[] = Object.entries(grouped)
     .slice(0, 5)
-    .map(([dateStr, dayEntries]: [string, any[]], dayIndex) => {
+    .map(([dateStr, dayEntries], dayIndex) => {
       // Different handling for today vs future days
       const isToday = dayIndex === 0;
       
@@ -208,9 +234,7 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
       const minTemp = Math.min(...allTemps);
       const maxTemp = Math.max(...allTemps);
       
-      const marineForDay = marineHours.filter(
-        (h: MarineHour) => h.time && h.time.slice(0, 10) === dateStr
-      );
+      const marineForDay = marineHours.filter((h) => h.time && h.time.slice(0, 10) === dateStr);
       
       // Get pollen and air quality data for this date
       const pollenForDate = weatherData.pollenByDate?.[dateStr];
@@ -241,10 +265,10 @@ const useFetchForecastData = (homeLocation: any, coastalLocation: any, interests
   setForecastByDay(forecast);
 }, [weatherData, marineHours]);
 
-  return { forecastByDay, loading, error, timeInfo, marineHours };
+  return { forecastByDay, loading, error, marineHours, weatherData };
 };
 
-const hasMarineInterest = (interests: string[]) =>
+const _hasMarineInterest = (interests: string[]) =>
   interests.some((id) => MARINE_ACTIVITY_IDS.includes(id));
 
 const getDayLabel = (dateNum: number, idx: number, serverTime?: Date) => {
@@ -281,7 +305,7 @@ function getWeatherIconUrl(iconCode: string) {
   return '/weather-icons/design/fill/final/na.svg'; // fallback icon
 }
 
-function getPopupDay(activityId: string, day: any, timeInfo: any) {
+function getPopupDay(activityId: string, day: WeatherForecastDay) {
   if (MARINE_ACTIVITY_IDS.includes(activityId) && Array.isArray(day.marine)) {
     // Convert Unix timestamp to Date
     const dayDate = new Date(day.date * 1000);
@@ -299,10 +323,10 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
     const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
     
     console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
-    console.log("Marine hours available:", day.marine.map(h => h.time));
+    console.log("Marine hours available:", (day.marine as MarineHour[]).map((h: MarineHour) => h.time));
     
-    const marineHour = day.marine.find(
-      (h: any) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
+    const marineHour = (day.marine as MarineHour[]).find(
+      (h) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
     );
     
     if (marineHour) {
@@ -335,9 +359,8 @@ function getPopupDay(activityId: string, day: any, timeInfo: any) {
   }
   return day;
 }
-
 // Consistent helper function you can reuse
-const getTargetHourForDay = (dayUnixTimestamp) => {
+const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
   const dayDate = new Date(dayUnixTimestamp * 1000);
   const today = new Date();
   const isToday = dayDate.getDate() === today.getDate() && 
@@ -359,56 +382,36 @@ export default function Home() {
   
   // Your existing state
   const hasMounted = useHasMounted();
-  const [popupActivity, setPopupActivity] = useState<any>(null);
+  const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
 
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
   
 // Helper functions to update locations
-  const setHomeLocation = (loc: any) => {
-    const newLocations = Array.isArray(preferences.locations) 
-      ? preferences.locations.slice() // Create a copy
-      : [];
-      
-    // Find if home location already exists
-    const homeIndex = newLocations.findIndex(l => l.type === 'home');
-    
-    if (homeIndex >= 0) {
-      // Update existing home location
-      newLocations[homeIndex] = { ...newLocations[homeIndex], ...loc };
-    } else {
-      // Add new home location
-      newLocations.push({ ...loc, type: 'home' });
-    }
-    
-    // Update preferences
-    setPreferences({
-      ...preferences,
-      locations: newLocations
+  const setHomeLocation = (loc: LocationLite) => {
+    setPreferences(prev => {
+      const newLocations = Array.isArray(prev.locations) ? prev.locations.slice() : [];
+      const homeIndex = newLocations.findIndex(l => l.type === 'home');
+      if (homeIndex >= 0) {
+        newLocations[homeIndex] = { ...newLocations[homeIndex], ...loc };
+      } else {
+        newLocations.push({ ...loc, type: 'home' });
+      }
+      return { ...prev, locations: newLocations };
     });
   };
 
-  const setCoastalLocation = (loc: any) => {
-    const newLocations = Array.isArray(preferences.locations) 
-      ? preferences.locations.slice() // Create a copy
-      : [];
-      
-    // Find if coastal location already exists
-    const coastalIndex = newLocations.findIndex(l => l.type === 'coastal');
-    
-    if (coastalIndex >= 0) {
-      // Update existing coastal location
-      newLocations[coastalIndex] = { ...newLocations[coastalIndex], ...loc };
-    } else {
-      // Add new coastal location
-      newLocations.push({ ...loc, type: 'coastal' });
-    }
-    
-    // Update preferences
-    setPreferences({
-      ...preferences,
-      locations: newLocations
+  const setCoastalLocation = (loc: LocationLite) => {
+    setPreferences(prev => {
+      const newLocations = Array.isArray(prev.locations) ? prev.locations.slice() : [];
+      const coastalIndex = newLocations.findIndex(l => l.type === 'coastal');
+      if (coastalIndex >= 0) {
+        newLocations[coastalIndex] = { ...newLocations[coastalIndex], ...loc };
+      } else {
+        newLocations.push({ ...loc, type: 'coastal' });
+      }
+      return { ...prev, locations: newLocations };
     });
   };
 
@@ -416,16 +419,16 @@ export default function Home() {
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
   const usedHeroActivities = new Set<string>();
 
-const { forecastByDay, loading, error, timeInfo, marineHours, weatherData } = useFetchForecastData(
+const { forecastByDay, loading, error, marineHours, weatherData } = useFetchForecastData(
   homeLocation, 
   coastalLocation, 
   interests
 );
 
 // Helper: Build forecastByDay from One Call 3.0 if available
-function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
+function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
   if (!weatherData?.daily) return [];
-  return weatherData.daily.slice(0, 5).map((day, idx) => {
+  return weatherData.daily.slice(0, 5).map((day) => {
     return {
       date: day.dt,
       temperature: Math.round(day.temp.day),
@@ -440,11 +443,10 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
       clouds: day.clouds,
       humidity: day.humidity,
       visibility: weatherData.current?.visibility ?? 10000,
-      waveHeight: undefined,
       waterTemperature: undefined,
       marine: [],
-      pollen: weatherData.pollenByDate?.[day.dt],
-      airQuality: weatherData.airQualityByDate?.[day.dt],
+      pollen: weatherData.pollenByDate?.[String(day.dt)],
+      airQuality: weatherData.airQualityByDate?.[String(day.dt)],
     };
   });
 }
@@ -455,8 +457,35 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
   const useOneCall = weatherData && weatherData.daily;
   const forecastDays = useOneCall ? buildForecastFromOneCall(weatherData) : forecastByDay;
 
+  // Normalize and sanitize interests to avoid mismatches (e.g., stray whitespace)
+  const normalizedInterests = Array.isArray(interests)
+    ? interests.map((s) => String(s).trim())
+    : [];
+  const validActivityIds = new Set(activityTypes.map((a) => a.id));
+  const sanitizedInterests = normalizedInterests.filter((id) => validActivityIds.has(id));
+  
+  console.log('🔍 Interest filtering:', {
+    rawInterests: interests,
+    normalizedInterests,
+    sanitizedInterests,
+    validActivityCount: validActivityIds.size
+  });
+
+  // Use a single filtered list for all days
+  let filteredActivitiesBase = activityTypes.filter((a) => sanitizedInterests.includes(a.id));
+  // Safety fallback: if user has interests but none match (e.g., legacy IDs), try soft match by prefix
+  if (sanitizedInterests.length > 0 && filteredActivitiesBase.length === 0) {
+    const interestSet = new Set(sanitizedInterests);
+    filteredActivitiesBase = activityTypes.filter((a) => interestSet.has(a.id) || interestSet.has(a.id.replace(/_/g, '-')));
+  }
+
   const heroDataByDay = forecastDays.map((day, idx) => {
-    const filteredActivities = activityTypes.filter(a => interests.includes(a.id));
+    const filteredActivities = filteredActivitiesBase;
+    console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
+      dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
+      filteredActivitiesCount: filteredActivities.length,
+      interests: sanitizedInterests
+    });
 
     // ✅ CORRECT: Use the original getSuggestionsByDay structure
     const suggestionsData = getSuggestionsByDay({
@@ -465,7 +494,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
         weather: {
           temperature: day.temperature,
           precipitation: day.rain,
-          windspeed: day.wind_speed,
+          windspeed: (typeof day.wind_speed === 'number' ? day.wind_speed * 3.6 : undefined),
           clouds: day.clouds,
           humidity: day.humidity,
           visibility: day.visibility,
@@ -475,24 +504,48 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
           swellPeriod: day.swellPeriod
         }
       }],
-      interests,
       activities: filteredActivities,
-      now: timeInfo?.serverTime || new Date()
-    })[0]; // Get first day's data
-
-    // Filter out out-of-season activities
-    const suggestions = suggestionsData?.suggestions ?? [];
+      interests: sanitizedInterests,
+      now: new Date(day.date * 1000),
+    });
+    // getSuggestionsByDay returns an array of day objects, we want the first (and only) day
+    const dayResults = suggestionsData?.[0];
+    const suggestions: ActivitySuggestion[] = (dayResults?.suggestions ?? []) as ActivitySuggestion[];
     const currentMonth = new Date(day.date * 1000).getMonth() + 1;
-    const filteredSuggestions = suggestions.filter(suggestion => {
+    const filteredSuggestions = suggestions.filter((suggestion: ActivitySuggestion) => {
       const activity = activityTypes.find(a => a.id === suggestion.activityId);
       return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
     });
+    
+    console.log(`🗓️ Day ${idx} seasonal filtering:`, {
+      currentMonth,
+      totalSuggestions: suggestions.length,
+      filteredCount: filteredSuggestions.length,
+      sampleActivity: suggestions[0] ? {
+        id: suggestions[0].activityId,
+        seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
+      } : 'none'
+    });
     const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
-    const goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
-    const indoorList = suggestionsData?.stayInside ?? [];
+    const _goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
+    const indoorList = filteredSuggestions.filter((s) => {
+      const a = activityTypes.find(x => x.id === s.activityId);
+      return a && !a.weatherSensitive;
+    });
 
     // Select a unique hero activity for the day
-    const heroActivity = selectHeroActivity(filteredSuggestions);
+    // Map ActivitySuggestion to SuggestionLike format for hero selector
+    const heroCompatibleSuggestions = filteredSuggestions.map(s => ({
+      activityId: s.activityId,
+      score: s.score,
+      evaluation: s.evaluation === 'poor' ? 'fair' as const : s.evaluation as 'perfect' | 'good' | 'fair' | 'indoor' | 'indoorAlternative'
+    }));
+    const heroActivity = selectHeroActivity(heroCompatibleSuggestions);
+    console.log(`🎯 Day ${idx} hero selection:`, {
+      filteredSuggestionsCount: filteredSuggestions.length,
+      topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
+      selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
+    });
 
     // ✅ Add the hero to used activities AFTER finding it
     if (heroActivity) {
@@ -506,7 +559,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
       alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
       suggestionsData,
       indoorList,
-      dayLabel: getDayLabel(day.date, idx, timeInfo?.serverTime) // Add this for the render
+      dayLabel: getDayLabel(day.date, idx)
     };
   });
 
@@ -540,7 +593,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
         <p style={{ color: '#92400e' }}>
           Choose your outdoor interests to see personalised activity recommendations based on the weather.
         </p>
-        <a 
+        <Link 
           href="/interests" 
           style={{ 
             display: 'inline-block',
@@ -555,7 +608,7 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
           }}
         >
           Choose Activities
-        </a>
+        </Link>
       </div>
     );
   }
@@ -607,13 +660,23 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
         {/* Banner with location buttons */}
         <header className="homepage-banner">
           <div className="homepage-banner__left">
-            <img
-              src="/burger-menu-svgrepo-com.svg"
-              alt="Open menu"
-              className="burger-menu-icon"
-              onClick={() => setMenuOpen(true)}
-            />
-            <img src="/wotnow-horizontal.png" alt="WotNow Logo" className="homepage-banner__logo" />
+                      <Image
+                        src="/burger-menu-svgrepo-com.svg"
+                        alt="Open menu"
+                        className="burger-menu-icon activities-header__burger"
+                        onClick={() => setMenuOpen(true)}
+                        width={24}
+                        height={24}
+                      />
+                      <Image
+                        src="/wotnow-horizontal.png"
+                        alt="WotNow Logo"
+                        className="homepage-banner__logo activities-header__logo"
+                        width={120}
+                        height={40}
+                        priority
+                        style={{ height: 'auto' }}
+                      />
           </div>
           
           {/* Desktop location buttons - in top right */}
@@ -697,42 +760,70 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+          <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
             Home
-          </a>
-          <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+          </Link>
+          <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
             Manage my interests
-          </a>
-          <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
+          </Link>
+          <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>
             Scan my interests
-          </a>
-          <a
+          </Link>
+          <Link
             href="/weather"
             onClick={() => setMenuOpen(false)}
             style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}
           >
             Local weather in detail
-          </a>
+          </Link>
         </nav>
       </>
     )}
 
 <div className="main-grid">
-  {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, suggestionsData, dayLabel }, idx) => {
-    const date = new Date(day.date * 1000);
-    const isToday = idx === 0;
+  {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, suggestionsData: _suggestionsData, dayLabel }, idx) => {
+    const _date = new Date(day.date * 1000);
+    const _isToday = idx === 0;
 
     // Always show AstronomyCard for users with stargazing interest after today's card
     const hasStargazing = interests.includes('stargazing');
     // Pass full One Call 3.0 object if available, else pass summary day with nightTemp fallback
-    let astronomyWeatherData;
+    let astronomyWeatherData: WeatherData | undefined;
     if (useOneCall && weatherData && weatherData.daily) {
-      astronomyWeatherData = weatherData;
+      astronomyWeatherData = {
+        daily: weatherData.daily.map(d => ({
+          dt: d.dt,
+          temp: d.temp,
+          weather: d.weather,
+          wind_speed: d.wind_speed,
+          wind_deg: d.wind_deg,
+          clouds: d.clouds,
+          rain: d.rain,
+        })),
+        current: {
+          dt: day.date,
+          temp: day.temperature,
+          wind_speed: day.wind_speed || 0,
+          clouds: day.clouds || 0,
+          visibility: day.visibility,
+        },
+        clouds: day.clouds,
+        visibility: day.visibility,
+        wind_speed: day.wind_speed,
+        rain: day.rain,
+        condition: day.condition,
+        description: day.description,
+      };
     } else {
       // Add nightTemp fallback for summary day object
       astronomyWeatherData = {
-        ...day,
-        nightTemp: typeof day.nightTemp === 'number' ? day.nightTemp : day.temperature // fallback to temperature if nightTemp missing
+        clouds: day.clouds,
+        visibility: day.visibility,
+        wind_speed: day.wind_speed,
+        rain: day.rain,
+        condition: day.condition,
+        description: day.description,
+        nightTemp: typeof day.tempMin === 'number' ? day.tempMin : day.temperature // fallback to temperature if nightTemp missing
       };
     }
     const astronomyCard = idx === 0 && hasStargazing ? (
@@ -754,11 +845,13 @@ function buildForecastFromOneCall(weatherData: any): WeatherForecastDay[] {
         <div className="activity-card-content">
             <div className="weather-icon-topright">
     <div className="weather-icon-topright">
-  <img
+  <Image
     src={getWeatherIconUrl(day.icon || '01d')}
     alt={day.description || 'weather icon'}
-    style={{ width: 48, height: 48 }}
+    width={48}
+    height={48}
     loading="lazy"
+    unoptimized
   />
 </div>
   </div>
@@ -798,11 +891,11 @@ const isToday = dayDate.getDate() === today.getDate() &&
 
 // Use current time for today, midday for future
 const hour = isToday ? today.getHours() : 12;
-const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
+const _targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
 
-            const isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
-const marinePopupDay = getPopupDay(heroActivity.activityId, day, timeInfo); // Stormglass
-const weatherPopupDay = getWeatherDay(day, timeInfo); // <-- Use a function that extracts OpenWeather fields
+            const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
+const marinePopupDay = getPopupDay(heroActivity.activityId, day); // Stormglass
+const _weatherPopupDay = getWeatherDay(day); // <-- Use a function that extracts OpenWeather fields
 
 const popupPayload = buildPopupActivityPayload({
   activityId: heroActivity.activityId,
@@ -869,11 +962,11 @@ const popupPayload = buildPopupActivityPayload({
                         className="also-good-item"
                         onClick={() => {
                           if (isOutdoorActivity) {
-const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
+const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
 const popupPayload = buildPopupActivityPayload({
   activityId: suggestion.activityId,
   score: suggestion.score,
-  day: getPopupDay(suggestion.activityId, day, timeInfo),
+  day: getPopupDay(suggestion.activityId, day),
   reasons: buildReasons(day, suggestion.activityId),
 });
                             setPopupActivity(popupPayload);
@@ -921,11 +1014,11 @@ const popupPayload = buildPopupActivityPayload({
                           className="activity-item-good"
                           onClick={() => {
                             if (isOutdoorActivity) {
-const isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
+const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
 const popupPayload = buildPopupActivityPayload({
   activityId: suggestion.activityId,
   score: suggestion.score,
-  day: getPopupDay(suggestion.activityId, day, timeInfo),
+  day: getPopupDay(suggestion.activityId, day),
   reasons: buildReasons(day, suggestion.activityId),
 });
                               setPopupActivity(popupPayload);
@@ -995,18 +1088,18 @@ const popupPayload = buildPopupActivityPayload({
           
           {/* Add back the bottom-aligned action buttons */}
           <div className="activity-card-actions">
-            <a 
+            <Link 
               href="/interests" 
               className="activity-card-btn"
             >
               Add more interests
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/activities" 
               className="activity-card-btn"
             >
               Scan my activities
-            </a>
+            </Link>
           </div>
           
         </div> 
@@ -1049,7 +1142,7 @@ const popupPayload = buildPopupActivityPayload({
   ); // End of return
 } // End of Home component
 
-function getWeatherDay(day: any, timeInfo: any) {
+function getWeatherDay(day: WeatherForecastDay) {
   return {
     temperature: day.temperature,
     tempMax: day.tempMax,

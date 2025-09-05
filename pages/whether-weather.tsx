@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Share2, CloudRain, Umbrella, Wind, Cloud, Zap } from "lucide-react";
+// Removed unused Next.js imports to reduce lint noise
 
 /**
  * Weather Forecast Explainer Page

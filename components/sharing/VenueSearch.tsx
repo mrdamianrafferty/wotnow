@@ -1,5 +1,5 @@
 // Venue search component for selecting places
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { loadGoogleMaps } from '../../lib/googleMaps';
 import { useUserPreferences } from '../../context/UserPreferencesContext';
 
@@ -41,7 +41,7 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
   }, []);
 
   // Search for places using Google Places API
-  const searchPlaces = (query: string) => {
+  const searchPlaces = useCallback((query: string) => {
     if (!placesService || !query.trim()) {
       setSearchResults([]);
       return;
@@ -82,7 +82,7 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
         setSearchResults([]);
       }
     });
-  };
+  }, [placesService, preferences.locations, activityName]);
 
   useEffect(() => {
     if (searchQuery.length > 2) {
@@ -93,7 +93,7 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery, placesService]);
+  }, [searchQuery, searchPlaces]);
 
   useEffect(() => {
     onVenuesSelected(selectedVenues);

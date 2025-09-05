@@ -10,18 +10,31 @@
  * @param isMarine boolean (true for marine locations)
  * @returns Unified object: { clouds, rain, snow, snowDepth, ... }
  */
-function normalizeCoreWeatherFields(openWeatherData, openMeteoData, stormglassData, isMarine) {
+type Json = Record<string, unknown>;
+type Source = Json | null | undefined;
+
+function normalizeCoreWeatherFields(
+  openWeatherData: Source,
+  openMeteoData: Source,
+  stormglassData: Source,
+  isMarine: boolean
+) {
   // Helper to pick first valid value from sources
-  function pickField(fieldPaths, sources) {
+  function pickField(fieldPaths: string[][], sources: Source[]) {
     for (let i = 0; i < fieldPaths.length; i++) {
-      const value = fieldPaths[i].reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), sources[i]);
+      const value = fieldPaths[i].reduce((obj: unknown, key: string) => {
+        if (obj && typeof obj === 'object' && key in obj) {
+          return (obj as Record<string, unknown>)[key];
+        }
+        return undefined;
+      }, sources[i]);
       if (value !== undefined && value !== null) return value;
     }
     return null;
   }
 
   // Source order
-  const sources = isMarine
+  const sources: Source[] = isMarine
     ? [stormglassData, openWeatherData, openMeteoData]
     : [openWeatherData, openMeteoData, stormglassData];
   // Field paths for each source
@@ -58,7 +71,13 @@ function normalizeCoreWeatherFields(openWeatherData, openMeteoData, stormglassDa
  * @param lon Longitude
  * @returns Unified weather data object with current, hourly, and daily forecasts
  */
-async function getWeatherData(lat: number, lon: number): Promise<any> {
+interface FullWeather {
+  alerts?: unknown[];
+  daily?: unknown[];
+  [key: string]: unknown;
+}
+
+async function getWeatherData(lat: number, lon: number): Promise<FullWeather> {
   const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
   
   if (!apiKey) {
@@ -75,7 +94,7 @@ async function getWeatherData(lat: number, lon: number): Promise<any> {
     });
     
     // Get air pollution data if available
-    let airQuality = null;
+    let airQuality: unknown = null;
     try {
       airQuality = await getAirPollution({ lat, lon, apiKey });
     } catch (error) {
@@ -83,7 +102,7 @@ async function getWeatherData(lat: number, lon: number): Promise<any> {
     }
     
     // Get any weather alerts
-    let alerts = [];
+    let alerts: unknown[] = [];
     try {
       alerts = await getWeatherAlerts({ lat, lon, apiKey });
     } catch (error) {
@@ -94,7 +113,7 @@ async function getWeatherData(lat: number, lon: number): Promise<any> {
     return {
       ...weatherData,
       airQuality,
-      alerts: alerts.length > 0 ? alerts : weatherData.alerts || [],
+      alerts: alerts.length > 0 ? alerts : ((weatherData as { alerts?: unknown[] }).alerts || []),
     };
   } catch (error) {
     console.error('Error fetching weather data:', error);
@@ -120,6 +139,8 @@ async function getWeatherData(lat: number, lon: number): Promise<any> {
  *   - description: string (detailed info)
  *   - tags: array of strings (categories)
  */
+type WeatherOptions = { units?: 'metric'|'imperial'|'standard'; exclude?: string };
+
 async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   const params = new URLSearchParams({
     lat: String(lat),
@@ -130,10 +151,10 @@ async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: numbe
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
   const response = await fetch(url);
-  const data = await response.json();
+  const data: unknown = await response.json();
   if (!response.ok) throw { status: response.status, data };
   // Alerts are in data.alerts (array)
-  return data.alerts || [];
+  return (data as { alerts?: unknown[] }).alerts || [];
 }
 
 /**
@@ -215,7 +236,7 @@ async function getAirPollution({ lat, lon, apiKey }: { lat: number|string, lon: 
  *
  * All fetch functions below return raw API responses. Merge and normalization should be handled in higher-level logic.
  */
-const { NextApiRequest, NextApiResponse } = require('next');
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { lat, lon } = req.query;
@@ -428,10 +449,7 @@ function getWeatherAssistantWebUrl(apiKey: string) {
  * - units: 'metric', 'imperial', etc.
  * - exclude: comma-separated blocks to exclude (e.g. 'minutely,hourly')
  */
-type WeatherOptions = {
-  units?: string;
-  exclude?: string;
-};
+// Note: WeatherOptions is defined earlier; avoid duplicate declaration
 
 /**
  * Get One Call 3.0 data with fallback to 2.5 forecast API (legacy)
@@ -446,7 +464,9 @@ type WeatherOptions = {
  * @param options Optional: units, exclude blocks
  */
 async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
-  if (!lat || !lon || !apiKey) throw new Error('Missing parameters or API key');
+  if (lat === undefined || lat === null || lon === undefined || lon === null || !apiKey) {
+    throw new Error('Missing parameters or API key');
+  }
   const params = new URLSearchParams({
     lat: String(lat),
     lon: String(lon),
@@ -462,7 +482,7 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
       throw { status: response.status, data };
     }
     return { source: 'onecall3', data };
-  } catch (_err) {
+  } catch {
     // Fallback to 2.5 API
     const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
     const response2 = await fetch(url2);
@@ -478,48 +498,82 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
  * Transform One Call API daily data to a unified forecast structure (up to 8 days)
  * - Returns array of daily forecast objects compatible with legacy 2.5 API consumers
  */
-function transformDailyForecast(oneCallData: any): any[] {
+type ForecastListItem = {
+  dt: number;
+  main: { temp: number; temp_min: number; temp_max: number; humidity: number; pressure: number; feels_like: number; temp_kf: number };
+  weather: Array<{ id?: number; main?: string; description?: string; icon?: string }>;
+  clouds: { all: number };
+  wind: { speed: number; deg: number; gust: number };
+  visibility: number;
+  pop?: number;
+  rain?: { '3h': number };
+  snow?: { '3h': number };
+  dt_txt: string;
+  sys: { pod: string };
+};
+
+function transformDailyForecast(oneCallData: { daily?: unknown[] }): ForecastListItem[] {
   if (!oneCallData.daily) return [];
-  return oneCallData.daily.slice(0, 8).map((day: any) => ({
-    dt: day.dt,
+  type OneCallDay = {
+    dt: number;
+    temp: { day: number; min: number; max: number };
+    humidity: number;
+    pressure: number;
+    feels_like: { day: number };
+    weather: Array<{ id?: number; main?: string; description?: string; icon?: string }>;
+    clouds: number;
+    wind_speed: number;
+    wind_deg: number;
+    wind_gust?: number;
+    pop?: number;
+    rain?: number;
+    snow?: number;
+  };
+  return oneCallData.daily.slice(0, 8).map((day: unknown) => {
+    const oneCallDay = day as OneCallDay;
+    return {
+    dt: oneCallDay.dt,
     main: {
-      temp: day.temp.day,
-      temp_min: day.temp.min,
-      temp_max: day.temp.max,
-      humidity: day.humidity,
-      pressure: day.pressure,
-      feels_like: day.feels_like.day,
+      temp: oneCallDay.temp.day,
+      temp_min: oneCallDay.temp.min,
+      temp_max: oneCallDay.temp.max,
+      humidity: oneCallDay.humidity,
+      pressure: oneCallDay.pressure,
+      feels_like: oneCallDay.feels_like.day,
       temp_kf: 0
     },
-    weather: day.weather,
-    clouds: { all: day.clouds },
+    weather: oneCallDay.weather,
+    clouds: { all: oneCallDay.clouds },
     wind: {
-      speed: day.wind_speed,
-      deg: day.wind_deg,
-      gust: day.wind_gust || 0
+      speed: oneCallDay.wind_speed,
+      deg: oneCallDay.wind_deg,
+      gust: oneCallDay.wind_gust || 0
     },
     visibility: 10000,
-    pop: day.pop || 0,
-    rain: day.rain ? { "3h": day.rain } : undefined,
-    snow: day.snow ? { "3h": day.snow } : undefined,
-    dt_txt: new Date(day.dt * 1000).toISOString().replace('T', ' ').slice(0, 19),
+    pop: oneCallDay.pop || 0,
+    rain: oneCallDay.rain ? { "3h": oneCallDay.rain } : undefined,
+    snow: oneCallDay.snow ? { "3h": oneCallDay.snow } : undefined,
+    dt_txt: new Date(oneCallDay.dt * 1000).toISOString().replace('T', ' ').slice(0, 19),
     sys: { pod: "d" }
-  }));
+  };
+  });
 }
 
 /**
  * Transform One Call API city/meta data to a unified city structure
  */
-function transformCity(oneCallData: any, lat: number|string, lon: number|string): any {
+type CityMeta = { id: number; name: string; coord: { lat: number; lon: number }; country: string; population: number; timezone: number; sunrise: number; sunset: number };
+
+function transformCity(oneCallData: unknown, lat: number|string, lon: number|string): CityMeta {
   return {
     id: 0,
     name: "Location",
-    coord: { lat: parseFloat(lat), lon: parseFloat(lon) },
+    coord: { lat: parseFloat(String(lat)), lon: parseFloat(String(lon)) },
     country: "",
     population: 0,
-    timezone: oneCallData.timezone_offset || 0,
-    sunrise: oneCallData.current?.sunrise || 0,
-    sunset: oneCallData.current?.sunset || 0
+    timezone: (oneCallData as { timezone_offset?: number }).timezone_offset || 0,
+    sunrise: (oneCallData as { current?: { sunrise?: number } }).current?.sunrise || 0,
+    sunset: (oneCallData as { current?: { sunset?: number } }).current?.sunset || 0
   };
 }
 
@@ -566,7 +620,7 @@ function transformCity(oneCallData: any, lat: number|string, lon: number|string)
  * - Returns daily, current, hourly, minutely, alerts, air pollution, city info, etc.
  * - Fallbacks to 2.5 API if One Call 3.0 fails
  */
-async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<any> {
+async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<FullWeather> {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
     return {
@@ -579,6 +633,7 @@ async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|
       current: result.data.current || {},
       hourly: result.data.hourly || [],
       minutely: result.data.minutely || [],
+      daily: result.data.daily || [], // Preserve original daily array for moon data
       source: 'onecall3',
     };
   } else {
@@ -669,7 +724,7 @@ function getOpenWeatherAssistantUrl(apiKey: string) {
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
  */
-async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
+async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
   const url = new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -681,8 +736,13 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
     'precipitation',
     'windspeed_10m',
     'soil_temperature_0cm',
+    'soil_temperature_6cm',
+    'soil_temperature_18cm',
+    'soil_temperature_54cm',
     'soil_moisture_0_to_1cm',
     'soil_moisture_1_to_3cm',
+    'soil_moisture_3_to_9cm',
+    'soil_moisture_9_to_27cm',
     'snowfall',
     'snow_depth',
     'freezing_level_height'
@@ -704,37 +764,40 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
  */
-async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
+async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
   const url = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
   url.searchParams.set('timezone', 'auto');
   url.searchParams.set('start_date', startDate);
   url.searchParams.set('end_date', endDate);
+  // Keep this list minimal and in parity with pages/api/weather-with-pollen.ts
+  // Some regions or time windows may fail if too many metrics are requested
   url.searchParams.set('hourly', [
-    'alder_pollen', // Alder pollen (unitless, relative exposure)
-    'birch_pollen', // Birch pollen (unitless, relative exposure)
-    'grass_pollen', // Grass pollen (unitless, relative exposure)
-    'ragweed_pollen', // Ragweed pollen (unitless, relative exposure)
-    'pm2_5', // Particulate matter <2.5µm (µg/m³)
-    'pm10', // Particulate matter <10µm (µg/m³)
-    'o3', // Ozone (µg/m³)
-    'no2', // Nitrogen dioxide (µg/m³)
-    'so2', // Sulphur dioxide (µg/m³)
-    'co', // Carbon monoxide (µg/m³)
-    'european_aqi', // European AQI (index)
-    'us_aqi' // US AQI (index)
+    'alder_pollen',
+    'birch_pollen',
+    'grass_pollen',
+    'ragweed_pollen',
+    'olive_pollen',
+    'us_aqi'
   ].join(','));
   try {
-    const response = await fetch(url.toString());
+    const reqUrl = url.toString();
+    const response = await fetch(reqUrl);
     const data = await response.json();
-    // Field-level comments:
-    // data.hourly.alder_pollen, birch_pollen, grass_pollen, ragweed_pollen: unitless, daily max recommended
-    // data.hourly.pm2_5, pm10, o3, no2, so2, co: µg/m³
-    // data.hourly.european_aqi, us_aqi: index
-    if (!response.ok) throw { status: response.status, data };
+    if (!response.ok) throw { status: response.status, statusText: response.statusText, data, url: reqUrl };
     return data;
-  } catch (err) {
+  } catch (err: any) {
+    // Surface detailed information for debugging
+    if (err && typeof err === 'object' && 'status' in err) {
+      const details = {
+        status: err.status,
+        statusText: err.statusText,
+        url: err.url,
+        data: err.data,
+      };
+      throw new Error('Open-Meteo air/pollen fetch failed: ' + JSON.stringify(details));
+    }
     throw new Error('Open-Meteo air/pollen fetch failed: ' + (err instanceof Error ? err.message : String(err)));
   }
 }
@@ -755,7 +818,7 @@ async function fetchStormglassMarine(
   endISO: string,
   params: string | undefined,
   apiKey: string
-): Promise<any | null> {
+): Promise<unknown | null> {
   // local helpers (kept here to avoid cross-file refactors)
   const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
     await new Promise((resolve, reject) => {
@@ -763,7 +826,7 @@ async function fetchStormglassMarine(
       p.then(v => { clearTimeout(id); resolve(v); })
        .catch(e => { clearTimeout(id); reject(e); });
     });
-  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null as any; } };
+  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
   const url = new URL('https://api.stormglass.io/v2/marine/point');
   url.searchParams.set('lat', String(lat));
@@ -793,14 +856,14 @@ async function fetchStormglassMarine(
  * @param lon Longitude
  * @param apiKey Stormglass API key
  */
-async function fetchStormglassTides(lat: number, lon: number, apiKey: string): Promise<any | null> {
+async function fetchStormglassTides(lat: number, lon: number, apiKey: string): Promise<unknown | null> {
   const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
     await new Promise((resolve, reject) => {
       const id = setTimeout(() => reject(new Error('timeout')), ms);
       p.then(v => { clearTimeout(id); resolve(v); })
        .catch(e => { clearTimeout(id); reject(e); });
     });
-  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null as any; } };
+  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
   const url = new URL('https://api.stormglass.io/v2/tide/extremes/point');
   url.searchParams.set('lat', String(lat));
@@ -824,39 +887,50 @@ async function fetchStormglassTides(lat: number, lon: number, apiKey: string): P
  * @param stormglassTides Stormglass tides response
  * @returns Unified object: { uvi, pollen, tides }
  */
+type NormalizedFeatures = {
+  uvi: number | null;
+  pollen: { alder: number; birch: number; grass: number; ragweed: number };
+  tides: Array<{ time: string; type: 'high' | 'low'; height: number | null }>;
+  marine?: Record<string, number | null>;
+};
+
 function normalizeWeatherFeatures(
-  openWeatherDaySummary: any,
-  openMeteoAirPollen: any,
-  stormglassTides: any,
-  stormglassMarine?: any
-) {
-  const toNum = (v: any): number | null => {
+  openWeatherDaySummary: unknown,
+  openMeteoAirPollen: unknown,
+  stormglassTides: unknown,
+  stormglassMarine?: unknown
+): NormalizedFeatures {
+  const toNum = (v: unknown): number | null => {
     const n = typeof v === 'number' ? v : Number(v);
     return Number.isFinite(n) ? n : null;
   };
 
   // Pollen: use daily max of hourly arrays; fall back to 0 if missing
-  const hourly = openMeteoAirPollen?.hourly ?? {};
-  const maxOr0 = (arr?: any[]) => Array.isArray(arr) && arr.length
-    ? Math.max(...arr.map((x: any) => Number(x)).filter((n: number) => Number.isFinite(n)))
+  const hourly = (openMeteoAirPollen as { hourly?: Record<string, unknown> })?.hourly ?? {};
+  const maxOr0 = (arr?: unknown[]) => Array.isArray(arr) && arr.length
+    ? Math.max(...arr.map((x) => Number(x as number)).filter((n: number) => Number.isFinite(n)))
     : 0;
 
   // Tides: map safely; return empty array if none
-  const tides = Array.isArray(stormglassTides?.data)
-    ? stormglassTides.data
-        .map((t: any) => ({
-          time: new Date(t.time).toISOString(),
-          type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
-          height: toNum(t.height)
-        }))
-        .sort((a: any, b: any) => a.time.localeCompare(b.time))
+  const tides = Array.isArray((stormglassTides as { data?: unknown[] })?.data)
+    ? ((stormglassTides as { data?: unknown[] }).data as unknown[])
+        .map((t: unknown) => {
+          const tide = t as Record<string, unknown>;
+          const typeStr = String(tide.type).toLowerCase();
+          return {
+            time: new Date(tide.time as string | number | Date).toISOString(),
+            type: typeStr.includes('high') ? 'high' as const : 'low' as const,
+            height: toNum(tide.height)
+          };
+        })
+        .sort((a: { time: string }, b: { time: string }) => a.time.localeCompare(b.time))
     : [];
 
   // Marine: only include if we have any wave data (waveHeight OR swellHeight OR windWaveHeight)
-  let marine: any | undefined;
-  const h = stormglassMarine?.hours?.[0];
+  let marine: Record<string, number | null> | undefined;
+  const h = (stormglassMarine as { hours?: Array<Record<string, unknown>> })?.hours?.[0];
   if (h) {
-    const sg = (k: string) => toNum(h?.[k]?.sg);
+    const sg = (k: string) => toNum(h?.[k] ? (h[k] as Record<string, unknown>)?.sg : undefined);
     const waveHeight = sg('waveHeight');
     const swellHeight = sg('swellHeight');
     const windWaveHeight = sg('windWaveHeight');
@@ -884,13 +958,13 @@ function normalizeWeatherFeatures(
     }
   }
 
-  const result: any = {
-    uvi: openWeatherDaySummary?.uvi ?? null,
+  const result: NormalizedFeatures = {
+    uvi: (openWeatherDaySummary as { uvi?: number })?.uvi ?? null,
     pollen: {
-      alder: maxOr0(hourly.alder_pollen),
-      birch: maxOr0(hourly.birch_pollen),
-      grass: maxOr0(hourly.grass_pollen),
-      ragweed: maxOr0(hourly.ragweed_pollen)
+      alder: maxOr0(Array.isArray(hourly.alder_pollen) ? hourly.alder_pollen : undefined),
+      birch: maxOr0(Array.isArray(hourly.birch_pollen) ? hourly.birch_pollen : undefined),
+      grass: maxOr0(Array.isArray(hourly.grass_pollen) ? hourly.grass_pollen : undefined),
+      ragweed: maxOr0(Array.isArray(hourly.ragweed_pollen) ? hourly.ragweed_pollen : undefined)
     },
     tides
   };
@@ -914,14 +988,14 @@ async function fetchStormglassAstronomy(
   startISO: string,
   endISO: string,
   apiKey: string
-): Promise<any | null> {
+): Promise<unknown | null> {
   const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
     await new Promise((resolve, reject) => {
       const id = setTimeout(() => reject(new Error('timeout')), ms);
       p.then(v => { clearTimeout(id); resolve(v); })
        .catch(e => { clearTimeout(id); reject(e); });
     });
-  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null as any; } };
+  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
   const url = new URL('https://api.stormglass.io/v2/astronomy/point');
   url.searchParams.set('lat', String(lat));
@@ -947,21 +1021,21 @@ async function fetchStormglassAstronomy(
  * @param params Comma-separated variables
  * @param apiKey Stormglass API key
  */
-export async function fetchStormglassBio(
+async function fetchStormglassBio(
   lat: number,
   lon: number,
   startISO: string,
   endISO: string,
   params: string | undefined,
   apiKey: string
-): Promise<any | null> {
+): Promise<unknown | null> {
   const withTimeout = async <T>(p: Promise<T>, ms = 10000): Promise<T> =>
     await new Promise((resolve, reject) => {
       const id = setTimeout(() => reject(new Error('timeout')), ms);
       p.then(v => { clearTimeout(id); resolve(v); })
        .catch(e => { clearTimeout(id); reject(e); });
     });
-  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null as any; } };
+  const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
   const url = new URL('https://api.stormglass.io/v2/bio/point');
   url.searchParams.set('lat', String(lat));
@@ -981,8 +1055,8 @@ export async function fetchStormglassBio(
   }
 }
 
-// Export everything using CommonJS syntax
-module.exports = {
+// ESM named exports for Next.js runtime
+export {
   normalizeCoreWeatherFields,
   getWeatherData,
   getWeatherAlerts,

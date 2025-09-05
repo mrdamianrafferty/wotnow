@@ -121,7 +121,7 @@ class WotNowAstronomyAPI {
       return cached.days;
     }
     // Fetch daily forecast (One Call API)
-    const { getOneCallData } = await import('lib/openweather');
+    const { getOneCallData } = await import('lib/services/weatherService');
     console.log('[WotNowAstronomyAPI] Using OpenWeather API key:', this.openweatherKey);
     console.log('[WotNowAstronomyAPI] Cache key:', cacheKey);
     console.log('[WotNowAstronomyAPI] Cache contents before:', openWeatherDailyCache[cacheKey]);

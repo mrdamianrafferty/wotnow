@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { visibilityPercentMarine } from '../utils/weatherLabels';
 import { useForecastData } from '../lib/useForecastData';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import SwellArrow from '../components/SwellArrow';
+import Link from 'next/link';
+import Image from "next/image";
 
 interface Slot {
   date: string;
@@ -300,7 +303,7 @@ const StormglassMarineWeather = ({
             </th>
           )}
           <th>
-            <abbr title="Visibility in km; important for navigation and safety.">👁 Visib</abbr>
+            <abbr title="Visibility in km; log scale up to 24 km.">👁 Visib</abbr>
           </th>
         </tr>
       </thead>
@@ -361,7 +364,14 @@ const StormglassMarineWeather = ({
                       {s.currentSpeed?.noaa != null ? formatMarineValue(s.currentSpeed.noaa, 'm/s') : ''}
                     </td>
                   )}
-                  <td style={{ textAlign: 'left' }}>{formatMarineValue(s.visibility?.noaa, 'km')}</td>
+                  <td style={{ textAlign: 'left', minWidth: 120 }}>
+                    {formatMarineValue(s.visibility?.noaa, 'km')}
+                    {typeof s.visibility?.noaa === 'number' && (
+                      <div style={{ marginTop: 4 }}>
+                        <progress className="progress w-full" value={visibilityPercentMarine(s.visibility.noaa)} max={100}></progress>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
           </React.Fragment>
@@ -459,7 +469,7 @@ const WeatherPageBothLocations: React.FC = () => {
         />
 
         {/* Logo: left-aligned, next to hamburger */}
-        <a href="/" style={{ display: 'block' }}>
+        <Link href="/" style={{ display: 'block' }}>
           <img
             src="/wotnow-horizontal.png"
             alt="WotNow Logo"
@@ -470,7 +480,7 @@ const WeatherPageBothLocations: React.FC = () => {
               height: 'auto',
             }}
           />
-        </a>
+        </Link>
 
         {/* Spacer to push content to right */}
         <div style={{ flex: 1 }} />
@@ -539,10 +549,10 @@ const WeatherPageBothLocations: React.FC = () => {
               }}
               onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
             >
-              <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
-        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
-        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+              <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</Link>
+        <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</Link>
+        <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</Link>
+        <Link href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</Link>
         <button
                 onClick={() => setMenuOpen(false)}
                 style={{
@@ -632,7 +642,7 @@ const WeatherPageBothLocations: React.FC = () => {
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        <a
+        <Link
           href="/"
           style={{
             display: 'inline-block',
@@ -652,10 +662,11 @@ const WeatherPageBothLocations: React.FC = () => {
           }}
         >
           ← Back to Homepage
-        </a>
+        </Link>
       </div>
     </>
   );
 };
 
 export default WeatherPageBothLocations;
+/* eslint-disable @next/next/no-img-element */

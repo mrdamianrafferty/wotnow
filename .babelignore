@@ -1,0 +1,3 @@
+# Prevent Babel config files from being created
+# Next.js uses SWC compiler by default
+*

@@ -11,6 +11,10 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testEnvironment: 'jsdom',
+  // Prevent Jest from creating babel config files
+  transform: {},
+  // Use Next.js built-in SWC transforms
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
 }
 
 module.exports = createJestConfig(customJestConfig)

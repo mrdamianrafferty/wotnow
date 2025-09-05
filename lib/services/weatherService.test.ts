@@ -1,15 +1,15 @@
-const {
-  fetchOpenMeteoAirPollen,
-  fetchStormglassTides,
-  normalizeWeatherFeatures
-} = require('./weatherService');
-
 // Mock global fetch for tests
 global.fetch = jest.fn();
 
 // Basic test to check if imports are working
 describe('Weather Service', () => {
-  test('functions are properly exported', () => {
+  test('functions are properly exported', async () => {
+    const {
+      fetchOpenMeteoAirPollen,
+      fetchStormglassTides,
+      normalizeWeatherFeatures
+    } = await import('./weatherService');
+    
     expect(typeof fetchOpenMeteoAirPollen).toBe('function');
     expect(typeof fetchStormglassTides).toBe('function');
     expect(typeof normalizeWeatherFeatures).toBe('function');
@@ -146,7 +146,9 @@ function aggregateMarineDaily(hours?: any[]): Array<{
 }
 
 describe('normalizeWeatherFeatures', () => {
-  it('merges UVI, pollen, and tides correctly', () => {
+  it('merges UVI, pollen, and tides correctly', async () => {
+    const { normalizeWeatherFeatures } = await import('./weatherService');
+    
     const result = normalizeWeatherFeatures(mockDaySummary, mockAirPollen, mockTides);
     expect(result.uvi).toBe(7);
     expect(result.pollen.alder).toBe(5);

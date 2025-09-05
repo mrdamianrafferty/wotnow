@@ -66,7 +66,7 @@ function useMoonNugget(opts?: { phase?: MoonPhase; resetMonthly?: boolean }) {
       setState(next);
       saveState(next);
     }
-  }, [monthStamp]);
+  }, [monthStamp, opts?.resetMonthly, state]);
 
   const usedKey = `${phase}|any`;
   const usedSet = React.useMemo(() => new Set(state.used[usedKey] ?? []), [state.used, usedKey]);

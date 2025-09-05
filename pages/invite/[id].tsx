@@ -1,10 +1,22 @@
 // Landing page for invite links
 import { GetServerSideProps } from 'next';
+import Link from 'next/link';
 import { useState } from 'react';
 import { db } from '../../lib/db/sharing';
 
+type LatLng = { lat: number; lng: number };
+interface Invite {
+  id: string;
+  activityName: string;
+  placeName?: string;
+  placeAddress?: string;
+  placeLatLng?: LatLng;
+  startTime: string | number | Date;
+  endTime: string | number | Date;
+}
+
 interface InvitePageProps {
-  invite: any;
+  invite: Invite;
 }
 
 export default function InvitePage({ invite }: InvitePageProps) {
@@ -108,9 +120,9 @@ export default function InvitePage({ invite }: InvitePageProps) {
         {/* Footer */}
         <div className="p-4 text-center text-xs text-gray-500 border-t">
           Created with <span className="font-medium">WotNow</span> • 
-          <a href="/" className="text-blue-600 hover:underline ml-1">
+          <Link href="/" className="text-blue-600 hover:underline ml-1">
             Create your own
-          </a>
+          </Link>
         </div>
       </div>
     </div>

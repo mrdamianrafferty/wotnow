@@ -8,7 +8,7 @@ function Error({ statusCode }: { statusCode: number }) {
   );
 }
 
-Error.getInitialProps = ({ res, err }: any) => {
+Error.getInitialProps = ({ res, err }: { res?: { statusCode: number }; err?: { statusCode: number } }) => {
   const statusCode = res?.statusCode || err?.statusCode || 404;
   return { statusCode };
 };

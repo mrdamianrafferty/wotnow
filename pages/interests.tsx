@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Link from 'next/link';
 import { activityTypes } from "../data/activityTypes";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import { useHasMounted } from "../utils/useHasMounted";
@@ -316,7 +317,7 @@ const Interests: React.FC = () => {
     const hasMounted = useHasMounted();
 
     // Path for breadcrumb
-    const path = [mainCat, subCat].filter(Boolean);
+    const path = [mainCat, subCat].filter(Boolean) as string[];
 
     // Use the up-to-date interests from preferences
     const interests: string[] = preferences.interests || [];
@@ -474,7 +475,7 @@ const Interests: React.FC = () => {
                     />
 
                     {/* Logo: left-aligned, next to hamburger */}
-                    <a href="/" style={{ display: 'block' }}>
+                    <Link href="/" style={{ display: 'block' }}>
                         <img
                             src="/wotnow-horizontal.png"
                             alt="WotNow Logo"
@@ -485,7 +486,7 @@ const Interests: React.FC = () => {
                                 height: 'auto',
                             }}
                         />
-                    </a>
+                    </Link>
 
                     {/* Spacer to push content to right */}
                     <div style={{ flex: 1 }} />
@@ -553,7 +554,7 @@ const Interests: React.FC = () => {
                 />
 
                 {/* Logo: left-aligned, next to hamburger */}
-                <a href="/" style={{ display: 'block' }}>
+                <Link href="/" style={{ display: 'block' }}>
                     <img
                         src="/wotnow-horizontal.png"
                         alt="WotNow Logo"
@@ -564,7 +565,7 @@ const Interests: React.FC = () => {
                             height: 'auto',
                         }}
                     />
-                </a>
+                </Link>
 
                 {/* Spacer to push content to right */}
                 <div style={{ flex: 1 }} />
@@ -633,10 +634,10 @@ const Interests: React.FC = () => {
                       }}
                       onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
                     >
-                      <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
-        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
-        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+                      <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</Link>
+        <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</Link>
+        <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</Link>
+        <Link href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</Link>
         <button
                         onClick={() => setMenuOpen(false)}
                         style={{
@@ -814,3 +815,4 @@ const Interests: React.FC = () => {
 };
 
 export default Interests;
+/* eslint-disable @next/next/no-img-element */

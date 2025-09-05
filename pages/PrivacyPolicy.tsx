@@ -1,5 +1,7 @@
 import React from "react";
 
+
+
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="wotnow">

@@ -9,7 +9,7 @@
  * • Marine: fishing/surf/sailing scoring & safety gates.
  * • Pollen & AQ: health-aware suggestions (running/cycling/kids’ play).
  * • UV: sun-safety chips and time-of-day nudges.
- * • Soil: gardening (sowing windows, soil ‘workability’) & trail ‘muddy/firm’ (0–54 cm temps; 0–27 cm moisture layers).
+ * • Soil: gardening (sowing windows, soil ‘workability’) & trail ‘muddy/firm’ (0–54 cm temps; 0–27 cm moisture layers).
  * • Winter: ski/board suitability (snowfall, freezing level, snow depth).
  * • Astronomy: night hikes, astro, fishing by moon/tide windows.
  * • Elevation: trout/river gradient logic, temperature regime by altitude.

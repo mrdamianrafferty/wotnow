@@ -2,22 +2,7 @@
 
 // Lightweight types used here
 type SuitabilityLevel = 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative';
-
-export interface ActivityType {
-  id: string;
-  name?: string;
-  activity?: string;
-  tags?: string[];
-  weatherSensitive?: boolean;         // true => outdoor
-  indoorAlternative?: boolean;
-  seasonalMonths?: number[];
-  poorConditions?: string[];
-  fairConditions?: string[];
-  goodConditions?: string[];
-  perfectConditions?: string[];
-  category?: string;
-  secondaryCategory?: string;
-}
+import type { ActivityType } from '../data/activityTypes';
 
 export interface WeatherData {
   temperature?: number;
@@ -195,7 +180,14 @@ export function getSuggestionsByDay({
   interests,
   now,
   includeAllActivities = false,
-  isEveningToday = false // Add this parameter with default value
+  isEveningToday = false
+}: {
+  forecast: Array<{ date: number; weather: WeatherData }>;
+  activities: ActivityType[];
+  interests: string[];
+  now: Date;
+  includeAllActivities?: boolean;
+  isEveningToday?: boolean;
 }) {
   // Add debugging logs
   console.log('📊 getSuggestionsByDay INPUTS:', { 
@@ -207,11 +199,11 @@ export function getSuggestionsByDay({
     isEveningToday
   });
 
-  return forecast.map(day => {
+  return forecast.map((day: { date: number; weather: WeatherData }) => {
     console.log('🌤️ Processing day:', day.date);
     
-    const suggestions = activities
-      .map(activity => {
+    const mapped = activities
+      .map((activity: ActivityType) => {
         // Add important debugging log before scoring
         console.log(`⚙️ Scoring activity: ${activity.id} with weather:`, day.weather);
         
@@ -245,7 +237,7 @@ export function getSuggestionsByDay({
         const score = calculateActivityScore(
           activity, 
           day.weather,
-          day.weather.precipitation < 5, // isWeatherGood
+          (day.weather.precipitation ?? 0) < 5, // isWeatherGood
           isEveningToday,
           contextTags,
           { nowTs: now.getTime() }
@@ -264,9 +256,9 @@ export function getSuggestionsByDay({
           };
         }
         return null;
-      })
-      .filter(Boolean) // Remove null items
-      .sort((a, b) => b.score - a.score); // Sort by score
+      });
+    const suggestions: Suggestion[] = (mapped.filter(Boolean) as unknown) as Suggestion[];
+    suggestions.sort((a, b) => b.score - a.score);
       
     console.log(`✅ Finished day with ${suggestions.length} activities`);
     return {

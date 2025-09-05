@@ -1,11 +1,24 @@
 // Landing page for poll links
 import { GetServerSideProps } from 'next';
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 import { db } from '../../lib/db/sharing';
 
-interface PollPageProps {
-  poll: any;
+interface Venue {
+  placeId: string;
+  name: string;
+  address: string;
+  rating?: number;
+  votes?: number;
 }
+interface Poll {
+  id: string;
+  activityName: string;
+  startTime: string | number | Date;
+  closesAt: string | number | Date;
+  candidates: Venue[];
+}
+interface PollPageProps { poll: Poll }
 
 export default function PollPage({ poll }: PollPageProps) {
   const [selectedVenue, setSelectedVenue] = useState<string | null>(null);
@@ -79,7 +92,7 @@ export default function PollPage({ poll }: PollPageProps) {
             <div className="p-6">
               <h2 className="font-semibold mb-4">Choose your preferred venue:</h2>
               <div className="space-y-3">
-                {poll.candidates.map((venue: any, index: number) => (
+                {poll.candidates.map((venue, index: number) => (
                   <div
                     key={venue.placeId}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
@@ -160,9 +173,9 @@ export default function PollPage({ poll }: PollPageProps) {
         {/* Footer */}
         <div className="p-4 text-center text-xs text-gray-500 border-t">
           Created with <span className="font-medium">WotNow</span> • 
-          <a href="/" className="text-blue-600 hover:underline ml-1">
+          <Link href="/" className="text-blue-600 hover:underline ml-1">
             Create your own
-          </a>
+          </Link>
         </div>
       </div>
     </div>

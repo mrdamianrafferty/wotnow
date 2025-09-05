@@ -21,8 +21,8 @@ export function selectHeroActivity<T extends SuggestionLike>(
   // 1) Deduplicate
   const unique = uniqueByActivityId(suggestions);
 
-  // 2) Prefer outdoor categories first (perfect/good/fair). Only if none exist, allow indoor.
-  const isOutdoor = (lvl: Level) => lvl === 'perfect' || lvl === 'good' || lvl === 'fair';
+  // 2) Prefer outdoor categories first (perfect/good/fair/poor). Only if none exist, allow indoor.
+  const isOutdoor = (lvl: string) => lvl === 'perfect' || lvl === 'good' || lvl === 'fair' || lvl === 'poor';
   const outdoor = unique.filter((s) => isOutdoor(s.evaluation));
   const indoor = unique.filter((s) => !isOutdoor(s.evaluation));
 

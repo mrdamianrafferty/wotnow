@@ -92,11 +92,4 @@ function mapStormglass(json: any): MarineRow[] {
   });
 }
 
-import { useForecastData } from "../lib/useForecastData";
-
-export default function WeatherPage({ mainLocation }) {
-  // Always call the hook, even if mainLocation is undefined
-  const { slots, marine, loading } = useForecastData(mainLocation?.lat, mainLocation?.lon);
-
-  // ...rest of your component...
-}
+// NOTE: This module exports only the hook. Page components live under pages/.

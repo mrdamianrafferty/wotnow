@@ -12,7 +12,6 @@ const path = require('path');
 const { execSync } = require('child_process');
 const yaml = require('yaml');
 const crypto = require('crypto');
-const glob = require('glob');
 
 // Set up paths
 const repoRoot = path.resolve(__dirname, '..');

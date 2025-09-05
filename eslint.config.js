@@ -9,13 +9,29 @@ const compat = new FlatCompat({
   recommendedConfig: js.configs.recommended
 });
 
-// Create TypeScript parser config
-const typescript = tseslint.config(
-  // Add TypeScript specific configuration
-  tseslint.configs.recommended
-);
+// Create TypeScript parser config, scoped to TS files only
+const typescript = tseslint.config({
+  files: ['**/*.ts', '**/*.tsx'],
+  extends: [
+    ...tseslint.configs.recommended,
+  ],
+});
 
 export default [
+  // Ignore build and vendor directories
+  { ignores: [
+    '**/.next/**',
+    '**/node_modules/**',
+    '**/.vercel/**',
+    '**/dist/**',
+    '**/build/**',
+    '**/public/**',
+    'next-env.d.ts',
+    'debug-*.js',
+    'img-optimizer/**',
+    'services/astro_highlights/astro_highlights/.venv/**',
+    'api/python/.venv/**',
+  ]},
   // Include recommended JS config
   js.configs.recommended,
   
@@ -25,23 +41,22 @@ export default [
   // Convert eslint-config-next to flat config format
   ...compat.extends('eslint-config-next'),
   
-  // Custom rules for your project
+  // General JS/JSX rules
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
-      // Disable rules that might cause issues with your existing code
       'react/no-unescaped-entities': 'off',
       'react/react-in-jsx-scope': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn', // Downgrade from error to warning
+    },
+    settings: { react: { version: 'detect' } },
+    linterOptions: { reportUnusedDisableDirectives: true },
+  },
+  // TS-specific rules
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
-    linterOptions: {
-      reportUnusedDisableDirectives: true,
     },
   },
 ];

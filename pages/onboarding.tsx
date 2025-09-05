@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import CoastalLocationDialog from "@/components/CoastalLocationDialog";
+// Removed unused imports to reduce lint noise
 
 // DaisyUI version of the hybrid onboarding flow
 // - Uses Tailwind + DaisyUI utility classes (no shadcn imports)

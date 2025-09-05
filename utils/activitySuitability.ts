@@ -191,7 +191,7 @@ function evalCompoundScore(expr: string, weather: WeatherData): { score: number;
     let lastKey: string | undefined;
     const atoms = expr.split(AND_SPLIT_RE).map(s => s.trim()).filter(Boolean);
     const scores: number[] = [];
-    for (let raw of atoms) {
+    for (const raw of atoms) {
       const token = withImpliedKey(raw, lastKey);
       const parsed = parseConditionString(token);
       if (parsed) lastKey = parsed.key;
@@ -209,7 +209,7 @@ function evalCompoundScore(expr: string, weather: WeatherData): { score: number;
     let lastKey: string | undefined;
     const atoms = branch.split(AND_SPLIT_RE).map(s => s.trim()).filter(Boolean);
     const scores: number[] = [];
-    for (let raw of atoms) {
+    for (const raw of atoms) {
       const token = withImpliedKey(raw, lastKey);
       const parsed = parseConditionString(token);
       if (parsed) lastKey = parsed.key;
@@ -397,7 +397,7 @@ export function generateScoreReasoning(
     try {
       const rel = classifyWindRelative(weather.beachOrientation, weather.windDirection);
       parts.push(`Wind is ${rel.replace('-', ' ')} vs beach`);
-    } catch {}
+    } catch (_err) { void 0; }
   }
 
   return parts.length ? parts.join(', ') : `Score: ${finalScore}/100`;

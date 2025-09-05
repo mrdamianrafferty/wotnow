@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather } from '../../lib/openweather';
+import { getFullWeather } from '../../lib/services/weatherService';
 
 async function fetchOpenMeteoAirPollen(lat: number, lon: number) {
   const now = new Date();
@@ -120,6 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         birch: pollenResponse.hourly.birch_pollen?.[i],
         grass: pollenResponse.hourly.grass_pollen?.[i],
         ragweed: pollenResponse.hourly.ragweed_pollen?.[i],
+        olive: pollenResponse.hourly.olive_pollen?.[i],
         aqi: pollenResponse.hourly.us_aqi?.[i],
       }));
       
@@ -128,7 +129,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         // Process pollen data
         if (!pollenByDate[dateKey]) {
-          pollenByDate[dateKey] = { grass: -Infinity, tree: -Infinity, weed: -Infinity };
+          pollenByDate[dateKey] = { grass: -Infinity, tree: -Infinity, weed: -Infinity, olive: -Infinity };
         }
         
         // Calculate daily maxima for pollen
@@ -138,6 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (treeMax > -Infinity) pollenByDate[dateKey].tree = Math.max(pollenByDate[dateKey].tree, treeMax);
         
         if (h.ragweed != null) pollenByDate[dateKey].weed = Math.max(pollenByDate[dateKey].weed, Number(h.ragweed));
+        if (h.olive != null) pollenByDate[dateKey].olive = Math.max(pollenByDate[dateKey].olive, Number(h.olive));
         
         // Process air quality data
         if (!airQualityByDate[dateKey]) {
@@ -153,6 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (p.grass === -Infinity) p.grass = undefined;
         if (p.tree === -Infinity) p.tree = undefined; 
         if (p.weed === -Infinity) p.weed = undefined;
+        if (p.olive === -Infinity) p.olive = undefined;
       });
       
       Object.keys(airQualityByDate).forEach(dateKey => {

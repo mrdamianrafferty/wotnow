@@ -18,9 +18,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
-import { WeatherForecastDay } from '../types/weatherTypes';
+import { WeatherForecastDay, MarineHour } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
@@ -33,12 +35,8 @@ import {
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import WindDirectionIcon from '../components/WindDirectionIcon';
-import PollenWarning from '../components/PollenWarning';
-import AirQualityWarning from '../components/AirQualityWarning';
 import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
-import { resolveBeachOrientationAsync, computeSimulatedOrientation, classifyWindRelative } from '../utils/orientation';
-import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
-import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
+import { resolveBeachOrientationAsync, computeSimulatedOrientation } from '../utils/orientation';
 // TODO: Uncomment when the sharing feature is merged
 // import { ShareModal } from '../components/sharing/NewShareModal';
 
@@ -56,7 +54,6 @@ const MARINE_ACTIVITY_IDS = [
 ];
 
 // Icon paths for consistent weather data display
-const thermometerIcon = '/weather-icons/design/fill/final/thermometer-celsius.svg';
 const humidityIcon = '/weather-icons/design/fill/final/humidity.svg';
 const rainIcon = '/weather-icons/design/fill/final/raindrop-measure.svg';
 
@@ -86,14 +83,6 @@ function getWindIcon(windMs: number) {
   if (beaufort < 3) return '/weather-icons/design/fill/final/windsock.svg';
   if (beaufort <= 12) return `/weather-icons/design/fill/final/wind-beaufort-${beaufort}.svg`;
   return '/weather-icons/design/fill/final/wind.svg';
-}
-
-/**
- * Check if wind icon needs glow effect (only numbered Beaufort icons have dark text)
- */
-function windIconNeedsGlow(windMs: number) {
-  const beaufort = getBeaufortNumber(windMs);
-  return beaufort >= 3 && beaufort <= 12;
 }
 
 /**
@@ -161,32 +150,6 @@ function getDayLabel(dateStr: string | number, idx: number, serverTime?: Date): 
   return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric' });
 }
 
-/**
- * Share activity with native share API or WhatsApp fallback
- */
-function shareActivity(activityId: string, score: number, dayLabel: string) {
-  const activity = activityTypes.find(a => a.id === activityId);
-  const activityName = activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity');
-  const assessment = getAssessmentCategory(score, activityId);
-  
-  const text = `🌤️ ${activityName} looks ${assessment.status} for ${dayLabel}! Score: ${score}% - Check out WotNow for more activity suggestions.`;
-  const url = window.location.origin;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: `WotNow - ${activityName} ${dayLabel}`,
-      text: text,
-      url: url,
-    }).catch(err => {
-      // Silent fail - sharing is optional
-    });
-  } else {
-    // Fallback to WhatsApp
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
-    window.open(whatsappUrl, '_blank');
-  }
-}
-
 // =============================================================================
 // COMPONENTS
 // =============================================================================
@@ -203,7 +166,7 @@ function shareActivity(activityId: string, score: number, dayLabel: string) {
 interface ActivityCardProps {
   activityId: string;
   score: number;
-  evaluation: string;
+  evaluation?: string;
   reasoning?: string;
   day: WeatherForecastDay;
   dayLabel: string;
@@ -211,7 +174,7 @@ interface ActivityCardProps {
   homeLocation?: { lat: number; lon: number } | null;
 }
 
-function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel, coastalLocation, homeLocation }: ActivityCardProps) {
+function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _reasoning, day, dayLabel: _dayLabel, coastalLocation, homeLocation }: ActivityCardProps) {
   console.log('🎯 ActivityCard for:', activityId, 'with day data:', { 
     pollen: day.pollen, 
     airQuality: day.airQuality,
@@ -264,8 +227,8 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
   };
 
   // --- Beach orientation (OSM/cache with simulated fallback) ---
-  const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
-  const [orientationVia, setOrientationVia] = useState<string | undefined>(undefined);
+  const [_resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
+  const [_orientationVia, setOrientationVia] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!isMarine) { setResolvedOrientation(undefined); setOrientationVia(undefined); return; }
@@ -277,8 +240,7 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
       try {
         const res = await resolveBeachOrientationAsync({ lat, lon });
         if (cancelled) return;
-        // @ts-ignore via is included by our util patch
-        const via = (res as any).via || res.source;
+        const via = res.source;
         const o = typeof res.orientation === 'number' ? res.orientation : computeSimulatedOrientation(lat, lon);
         setResolvedOrientation(o);
         setOrientationVia(via);
@@ -357,29 +319,29 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
             <>
               {typeof day.temperature === 'number' && (
                 <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
-                       className="activity-card__data-icon" />
+                  <Image src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
+                       className="activity-card__data-icon" width={24} height={24} />
                   <strong>{day.temperature.toFixed(1)}°</strong>
                 </li>
               )}
               {typeof day.waterTemperature === 'number' && (
                 <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
-                       className="activity-card__data-icon" />
+                  <Image src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
+                       className="activity-card__data-icon" width={24} height={24} />
                   <strong>{day.waterTemperature.toFixed(1)}°</strong>
                 </li>
               )}
               {day.icon && (
                 <li className="activity-card__data-item">
-                  <img src={getWeatherIconUrl(day.icon)}
+                  <Image src={getWeatherIconUrl(day.icon)}
                        alt={day.description || 'weather'}
-                       className="activity-card__data-icon--lg" />
+                       className="activity-card__data-icon--lg" width={32} height={32} />
                   {day.description}
                   {typeof day.rain === 'number' && day.rain > 0 && (
                     <>
                       {' '}
-                      <img src={rainIcon} alt="Precipitation"
-                           className="activity-card__data-icon" 
+                      <Image src={rainIcon} alt="Precipitation"
+                           className="activity-card__data-icon" width={24} height={24}
                            style={{ marginLeft: '8px' }} />
                       <strong>{day.rain}mm</strong>
                     </>
@@ -393,32 +355,21 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
               )}
               {typeof day.wind_speed === 'number' && (
                 <li className="activity-card__data-item activity-card__data-item--wrap">
-                  <img src={getWindIcon(day.wind_speed)}
-                       alt="Wind" 
-                       className={`activity-card__data-icon--lg ${windIconNeedsGlow(day.wind_speed) ? 'activity-card__wind-icon--glow' : ''}`} />
-                  <strong>{Math.round(mpsToKnots(day.wind_speed))}</strong>knots
-                  {typeof day.gust_speed === 'number' && day.gust_speed !== day.wind_speed && (
-                    <span> (gust {mpsToKnots(day.gust_speed).toFixed(1)} knots)</span>
-                  )}
-                  {typeof day.wind_direction === 'number' && (
+                      <Image src={getWindIcon(day.wind_speed)}
+                       alt="Wind" className="activity-card__data-icon" width={24} height={24} />
+                      <strong>{mpsToKnots(day.wind_speed).toFixed(0)} kn</strong>
+                  {day.wind_direction && (
                     <>
-                      <WindDirectionIcon deg={day.wind_direction} />
-                      <span className="font-weight-600">
-                        {getCompassDirection(day.wind_direction)}
-                      </span>
+                      {' '}({getCompassDirection(day.wind_direction)})
                     </>
                   )}
-                  {typeof day.wind_direction === 'number' && typeof resolvedOrientation === 'number' && (
-                    <>
-                      {' '}
-                      <span>({classifyWindRelative(resolvedOrientation, day.wind_direction)})</span>
-                      {orientationVia && orientationVia !== 'computed' && (
-                        <em style={{ marginLeft: 6, opacity: 0.75 }}>
-                          ({orientationVia === 'simulated' ? 'sim' : orientationVia})
-                        </em>
-                      )}
-                    </>
-                  )}
+                  <div className="wind-direction-wrapper">
+                    <WindDirectionIcon 
+                      deg={day.wind_direction || 0} 
+                      size={16} 
+                      className="wind-direction-icon" 
+                    />
+                  </div>
                 </li>
               )}
               {typeof day.swellHeight === 'number' && (
@@ -440,42 +391,46 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
               )}
             </>
           ) : (
-            // Non-marine activities data - match popup order and structure
+            // Non-marine activities data
             <>
-              {typeof day.tempMax === 'number' && (
-                <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
-                       className="activity-card__data-icon" />
-                  <strong>H: {day.tempMax}°</strong>
-                </li>
+              {/* High and low temps for non-marine */}
+              {(typeof day.tempMax === 'number' || typeof day.tempMin === 'number') && (
+                <>
+                  {typeof day.tempMax === 'number' && (
+                    <li className="activity-card__data-item">
+                      <Image src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
+                           className="activity-card__data-icon" width={24} height={24} />
+                      <strong>High: {day.tempMax.toFixed(1)}°</strong>
+                    </li>
+                  )}
+                  {typeof day.tempMin === 'number' && (
+                    <li className="activity-card__data-item">
+                      <Image src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
+                           className="activity-card__data-icon" width={24} height={24} />
+                      <strong>Low: {day.tempMin.toFixed(1)}°</strong>
+                    </li>
+                  )}
+                </>
               )}
-              {typeof day.tempMin === 'number' && (
+              {/* Average temp for non-marine if no high/low */}
+              {typeof day.temperature === 'number' && !day.tempMax && !day.tempMin && (
                 <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
-                       className="activity-card__data-icon" />
-                  <strong>L: {day.tempMin}°</strong>
-                </li>
-              )}
-              {typeof day.temperature === 'number' &&
-               typeof day.tempMin === 'undefined' &&
-               typeof day.tempMax === 'undefined' && (
-                <li className="activity-card__data-item">
-                  <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
-                       className="activity-card__data-icon" />
-                  <strong>{day.temperature}°</strong>
+                  <Image src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
+                       className="activity-card__data-icon" width={24} height={24} />
+                  <strong>{day.temperature.toFixed(1)}°</strong>
                 </li>
               )}
               {day.icon && (
                 <li className="activity-card__data-item">
-                  <img src={getWeatherIconUrl(day.icon)}
+                  <Image src={getWeatherIconUrl(day.icon)}
                        alt={day.description || 'weather'}
-                       className="activity-card__data-icon--lg" />
+                       className="activity-card__data-icon--lg" width={32} height={32} />
                   {day.description}
                   {typeof day.rain === 'number' && day.rain > 0 && (
                     <>
                       {' '}
-                      <img src={rainIcon} alt="Precipitation"
-                           className="activity-card__data-icon" 
+                      <Image src={rainIcon} alt="Precipitation"
+                           className="activity-card__data-icon" width={24} height={24}
                            style={{ marginLeft: '8px' }} />
                       <strong>{day.rain}mm</strong>
                     </>
@@ -483,24 +438,31 @@ function ActivityCard({ activityId, score, evaluation, reasoning, day, dayLabel,
                 </li>
               )}
               {typeof day.wind_speed === 'number' && (
-                <li className="activity-card__data-item activity-card__data-item--wrap">
-                  <img src={getWindIcon(day.wind_speed)} alt="Wind"
-                       className={`activity-card__data-icon--lg ${windIconNeedsGlow(day.wind_speed) ? 'activity-card__wind-icon--glow' : ''}`} />
-                  <strong>{Math.round(mpsToKmh(day.wind_speed))}km/h</strong>
-                  {typeof day.wind_direction === 'number' && (
+                <li className="activity-card__data-item">
+                  <Image src={getWindIcon(day.wind_speed)} alt="Wind"
+                       className="activity-card__data-icon" width={24} height={24} />
+                  <strong>{getBeaufortNumber(day.wind_speed)} Bft</strong>
+                  <span className="wind-speed-additional">
+                    ({mpsToKnots(day.wind_speed).toFixed(0)} kn, {mpsToKmh(day.wind_speed).toFixed(0)} km/h)
+                  </span>
+                  {day.wind_direction && (
                     <>
-                      <WindDirectionIcon deg={day.wind_direction} />
-                      <span className="font-weight-600">
-                        {getCompassDirection(day.wind_direction)}
-                      </span>
+                      {' '}({getCompassDirection(day.wind_direction)})
                     </>
                   )}
+                  <div className="wind-direction-wrapper">
+                    <WindDirectionIcon 
+                      deg={day.wind_direction || 0} 
+                      size={16} 
+                      className="wind-direction-icon"
+                    />
+                  </div>
                 </li>
               )}
               {typeof day.humidity === 'number' && (
                 <li className="activity-card__data-item">
-                  <img src={humidityIcon} alt="Humidity"
-                       className="activity-card__data-icon" />
+                  <Image src={humidityIcon} alt="Humidity"
+                       className="activity-card__data-icon" width={24} height={24} />
                   <strong>{day.humidity}%</strong>
                 </li>
               )}
@@ -606,13 +568,27 @@ export default function ActivitiesPage() {
 
   // UI state
   const [activeDay, setActiveDay] = useState(0);
-  const [timeInfo, setTimeInfo] = useState<any>(null);
+  type TimeInfo = { serverTime: Date; isEvening: boolean } | null;
+  const [timeInfo, setTimeInfo] = useState<TimeInfo>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Weather & marine data (same as homepage pipeline)
-  const [weatherData, setWeatherData] = useState<any>(null);
-  const [marineHours, setMarineHours] = useState<any[]>([]);
+  type WeatherWithPollen = {
+    list: Array<{
+      dt_txt: string;
+      main: { temp: number; humidity: number; pressure: number };
+      weather: Array<{ main: string; description: string; icon: string }>;
+      rain?: { '3h'?: number };
+      wind: { speed: number; deg: number; gust?: number };
+      clouds: { all: number };
+      visibility?: number;
+    }>;
+    pollenByDate?: Record<string, Record<string, number>>;
+    airQualityByDate?: Record<string, Record<string, number>>;
+  } | null;
+  const [weatherData, setWeatherData] = useState<WeatherWithPollen>(null);
+  const [marineHours, setMarineHours] = useState<MarineHour[]>([]);
   const [loading, setLoading] = useState(true);
 
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
@@ -707,8 +683,8 @@ export default function ActivitiesPage() {
     if (!weatherData || !weatherData.list) return [];
 
     // Group OpenWeather forecast data by date (same logic as homepage)
-    const grouped: Record<string, any[]> = {};
-    weatherData.list.forEach((item: any) => {
+    const grouped: Record<string, NonNullable<WeatherWithPollen>['list']> = {} as any;
+    weatherData.list.forEach((item) => {
       const date = item.dt_txt.split(' ')[0]; // YYYY-MM-DD
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(item);
@@ -717,7 +693,7 @@ export default function ActivitiesPage() {
     // Build forecast for up to 5 days
     return Object.entries(grouped)
       .slice(0, 5)
-      .map(([dateStr, dayEntries]: [string, any[]], dayIndex) => {
+      .map(([dateStr, dayEntries], dayIndex) => {
         // Use noon entry as representative for the day, or first if noon not available
         const noonEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
         
@@ -727,9 +703,7 @@ export default function ActivitiesPage() {
         const maxTemp = Math.max(...allTemps);
         
         // Get marine data for this day
-        const marineForDay = marineHours.filter(
-          (h: any) => h.time && h.time.slice(0, 10) === dateStr
-        );
+        const marineForDay = marineHours.filter((h) => h.time && h.time.slice(0, 10) === dateStr);
         
         // Get pollen data for this date
         const pollenForDate = weatherData.pollenByDate?.[dateStr];
@@ -740,8 +714,8 @@ export default function ActivitiesPage() {
         console.log(`📊 Day ${dayIndex} (${dateStr}):`, { 
           pollenForDate, 
           airQualityForDate,
-          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some((v: any) => v > 0),
-          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some((v: any) => v > 0)
+          hasPollenData: !!pollenForDate && Object.values(pollenForDate).some((v) => Number(v) > 0),
+          hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some((v) => Number(v) > 0)
         });
         
         return {
@@ -821,17 +795,18 @@ export default function ActivitiesPage() {
       }
     }],
     interests,
-    activities: activityTypes.filter(a => interests.includes(a.id)).map(a => a.id),
+    activities: activityTypes.filter(a => interests.includes(a.id)),
     now: timeInfo?.serverTime || new Date(),
     includeAllActivities: true,
     isEveningToday: isEveningToday
   })[0] : null;
 
-  const activities = dayAssessments?.suggestions || [];
+  type ActivitySuggestion = { activityId: string; score: number; evaluation?: string; reasoning?: string; outOfSeason?: boolean };
+  const activities: ActivitySuggestion[] = (dayAssessments?.suggestions as ActivitySuggestion[]) || [];
 
   // Make sure ALL selected interests appear in the activities list
   if (interests.length > 0 && currentDayData) {
-    const existingActivityIds = activities.map((a: any) => a.activityId);
+    const existingActivityIds = activities.map((a) => a.activityId);
     const missingInterests = interests.filter((id: string) => !existingActivityIds.includes(id));
     
     if (missingInterests.length > 0) {
@@ -842,7 +817,7 @@ export default function ActivitiesPage() {
         return {
           activityId: id,
           score: 50,
-          evaluation: 'Available option' as any,
+          evaluation: 'Available option',
           reasoning: 'Conditions vary, but available based on your interests',
           outOfSeason: false
         };
@@ -853,10 +828,10 @@ export default function ActivitiesPage() {
   }
 
   // Filter out any activities with undefined activityId first to prevent errors
-  const validActivities = activities.filter((a: any) => a && a.activityId);
+  const validActivities = activities.filter((a): a is ActivitySuggestion => !!a && !!a.activityId);
 
   // Sort activities by priority: perfect, good, fair, poor, indoor, offseason
-  const sortedActivities = validActivities.sort((a: any, b: any) => {
+  const sortedActivities = validActivities.sort((a, b) => {
     const getActivityPriority = (activityId: string, score: number) => {
       if (!activityId) return 4; // fallback to poor priority if no activityId
       if (!isOutdoor(activityId)) return 5; // indoor
@@ -886,16 +861,20 @@ export default function ActivitiesPage() {
       <>
         {/* ✅ ADD HEADER BANNER TO LOADING STATE */}
         <header className="homepage-banner activities-header">
-          <img
+          <Image
             src="/burger-menu-svgrepo-com.svg"
             alt="Open menu"
             className="burger-menu-icon activities-header__burger"
             onClick={() => setMenuOpen(true)}
+            width={24}
+            height={24}
           />
-          <img
+          <Image
             src="/wotnow-horizontal.png"
             alt="WotNow Logo"
             className="homepage-banner__logo activities-header__logo"
+            width={120}
+            height={40}
           />
           <div className="flex-spacer" />
           <div className="homepage-banner__text text-right padding-right-12">
@@ -923,21 +902,25 @@ export default function ActivitiesPage() {
       {/* ✅ ADD HEADER BANNER */}
       <header className="homepage-banner activities-header">
         {/* Hamburger icon: left */}
-        <img
+        <Image
           src="/burger-menu-svgrepo-com.svg"
           alt="Open menu"
           className="burger-menu-icon activities-header__burger"
           onClick={() => setMenuOpen(true)}
+          width={24}
+          height={24}
         />
 
         {/* Logo: left-aligned, next to hamburger */}
-        <a href="/" className="display-block">
-          <img
+        <Link href="/" className="display-block">
+          <Image
             src="/wotnow-horizontal.png"
             alt="WotNow Logo"
             className="homepage-banner__logo activities-header__logo"
+            width={120}
+            height={40}
           />
-        </a>
+        </Link>
 
         {/* Spacer to push content to right */}
         <div className="flex-spacer" />
@@ -997,10 +980,10 @@ export default function ActivitiesPage() {
               }}
               onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
             >
-              <a href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</a>
-        <a href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</a>
-        <a href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</a>
-        <a href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</a>
+              <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</Link>
+        <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</Link>
+        <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</Link>
+        <Link href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</Link>
         <button
                 onClick={() => setMenuOpen(false)}
                 style={{
@@ -1070,7 +1053,7 @@ export default function ActivitiesPage() {
             <p style={{ color: '#7f1d1d' }}>
               Please set your location on the homepage to view activity assessments.
             </p>
-            <a 
+            <Link 
               href="/" 
               style={{ 
                 display: 'inline-block',
@@ -1084,7 +1067,7 @@ export default function ActivitiesPage() {
               }}
             >
               Go to Homepage
-            </a>
+            </Link>
           </div>
         )}
 
@@ -1101,7 +1084,7 @@ export default function ActivitiesPage() {
             <p style={{ color: '#92400e' }}>
               Choose your outdoor interests to see personalised activity assessments.
             </p>
-            <a 
+            <Link 
               href="/interests" 
               style={{ 
                 display: 'inline-block',
@@ -1115,7 +1098,7 @@ export default function ActivitiesPage() {
               }}
             >
               Choose Activities
-            </a>
+            </Link>
           </div>
         )}
 
@@ -1151,8 +1134,8 @@ export default function ActivitiesPage() {
                 {/* Activity Cards Grid */}
                 <main
                   role="tabpanel"
-                  id={`day-panel-${activeDay}`}
-                  aria-labelledby={`day-tab-${activeDay}`}
+                  id={`${'day-panel-'}${String(activeDay)}`}
+                  aria-labelledby={`${'day-tab-'}${String(activeDay)}`}
                   className="activities-grid"
                 >
                   {sortedActivities.length === 0 ? (
@@ -1164,8 +1147,8 @@ export default function ActivitiesPage() {
                     </div>
                   ) : (
                     sortedActivities
-                      .filter((activity: any) => activity && activity.activityId) // Filter out any activities with undefined activityId
-                      .map((activity: any) => (
+                      .filter((activity) => activity && activity.activityId) // Filter out any activities with undefined activityId
+                      .map((activity) => (
                       <ActivityCard
                         key={activity.activityId}
                         activityId={activity.activityId}
@@ -1174,8 +1157,8 @@ export default function ActivitiesPage() {
                         reasoning={activity.reasoning}
                         day={currentDayData}
                         dayLabel={getDayLabel(currentDayData?.date || 0, activeDay, timeInfo?.serverTime)}
-                        coastalLocation={coastalLocation as any}
-                        homeLocation={homeLocation as any}
+                        coastalLocation={coastalLocation}
+                        homeLocation={homeLocation}
                       />
                     ))
                   )}
@@ -1183,7 +1166,7 @@ export default function ActivitiesPage() {
 
                 {/* Back to Homepage Link */}
                 <div style={{ textAlign: 'center' as const, marginTop: '2rem' }}>
-                  <a
+                  <Link
                     href="/"
                     style={{
                       display: 'inline-block',
@@ -1203,7 +1186,7 @@ export default function ActivitiesPage() {
                     }}
                   >
                     ← Back to Homepage
-                  </a>
+                  </Link>
                 </div>
               </>
             )}

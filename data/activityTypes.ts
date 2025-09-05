@@ -12,6 +12,7 @@ export interface ActivityType {
   name: string;
   category: string;
   secondaryCategory?: string;
+  description?: string;
   weatherSensitive: boolean;
   tags: string[];
   seasonalMonths?: number[];              // Optional: indicates best months for this activity

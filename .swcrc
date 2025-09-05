@@ -12,7 +12,7 @@
         "runtime": "automatic"
       }
     },
-    "target": "es2020",
+    "target": "es2017",
     "loose": false,
     "externalHelpers": false
   },

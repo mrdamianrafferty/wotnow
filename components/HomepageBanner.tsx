@@ -1,10 +1,14 @@
+import OptimizedImage from './OptimizedImage';
+
 export default function HomepageBanner() {
   return (
     <header className="homepage-banner">
       <div className="homepage-banner__container">
-        <img
-          src="wotnow-horizontal.png"
+        <OptimizedImage
+          src="/wotnow-horizontal.png"
           alt="WotNow Logo"
+          width={320}
+          height={80}
           className="homepage-banner__logo"
         />
      <div className="homepage-banner__text">

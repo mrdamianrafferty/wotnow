@@ -1,3 +1,8 @@
+@import "tailwindcss";
+@plugin "daisyui";
+/* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
+
+
 /* ------ GLOBAL STYLES ------ */
 
 body {
@@ -1392,7 +1397,7 @@ abbr[title] {
   display: flex;
   gap: 0.5rem;
   margin: 1.5rem 0;
-  overflow-x: auto;
+  overflow: auto;
   padding: 0 0.5rem;
 }
 
@@ -1812,4 +1817,207 @@ abbr[title] {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0.2;
+}
+
+/* ===== Weather Animation Layer (final) ===== */
+/* All layers are absolute, non-interactive and span the viewport */
+.wa-bg,
+.wa-layer { 
+  position: absolute; 
+  inset: 0; 
+  pointer-events: none; 
+}
+
+/* Add light boost for highlights */
+.wa-lit { 
+  mix-blend-mode: screen; 
+  opacity: 0.65; 
+}
+
+/* Precipitation */
+.wa-rain { 
+  background-image: linear-gradient(rgba(255,255,255,.32) 50%, transparent 50%); 
+  background-size: 2px 20px; 
+  animation: wa-rainfall 0.5s linear infinite; 
+  will-change: background-position;
+}
+
+.wa-snow { 
+  background-image: radial-gradient(white 1px, transparent 1px); 
+  background-size: 6px 6px; 
+  animation: wa-snowfall 5s linear infinite; 
+  will-change: background-position;
+}
+
+/* Atmospherics */
+.wa-fog { 
+  background: rgba(200,200,200,0.14); 
+  backdrop-filter: blur(6px); 
+}
+
+/* Clouds: subtle so content remains readable; also works if texture missing */
+.wa-clouds {
+  background-image:
+    url('/cloud-texture.png'),
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.15), rgba(240,244,255,0.06) 60%, transparent 75%);
+  background-size: cover, cover;
+  background-position: center, center;
+  opacity: 0.22; /* dimmer clouds */
+  filter: brightness(0.9) saturate(0.9);
+  animation: wa-cloudscroll 60s linear infinite;
+  will-change: background-position;
+}
+
+/* Waves: high-contrast body, no vertical stripe overlay */
+.wa-waves {
+  position: absolute;
+  inset: 0;
+  opacity: 1;                 /* fully visible */
+  mix-blend-mode: normal;     /* don’t wash out */
+  background:
+    /* deep body */
+    radial-gradient(ellipse at 50% 120%, rgba(3,88,158,0.98), rgba(3,88,158,0.58) 60%, transparent 72%),
+    /* gentle horizon fade */
+    linear-gradient(to top, rgba(5,54,94,0.55), rgba(5,54,94,0.25) 40%, transparent 70%);
+  animation: wa-waveflow 10s linear infinite;
+  background-size: 2400px 100%, 1400px 100%;
+  will-change: background-position;
+}
+
+/* REMOVE strobing white vertical lines by eliminating ::before stripes */
+.wa-waves::before{ content: none; }
+
+/* keep subtle trough shading, slightly stronger for contrast */
+.wa-waves::after{
+  content:"";
+  position:absolute; inset:0;
+  pointer-events:none;
+  background: linear-gradient(to top, rgba(0,0,0,0.18), transparent 55%);
+  mix-blend-mode: multiply;
+  opacity:.6;
+}
+
+/* Sea spray (for windy seas) */
+.wa-spray { 
+  background-image: radial-gradient(rgba(255,255,255,.25) 0 1px, transparent 2px); 
+  background-size: 6px 6px; 
+  animation: wa-sprayDrift 3s linear infinite; 
+  will-change: background-position;
+}
+
+/* Clear day tint, kept subtle */
+.wa-clear {
+  background: linear-gradient(to bottom, rgba(135,206,250,0.22), rgba(255,255,255,0.08));
+}
+
+/* Core keyframes */
+@keyframes wa-rainfall { from { background-position: 0 -20px; } to { background-position: 0 0; } }
+@keyframes wa-snowfall { from { background-position: 0 0; } to { background-position: 0 6px; } }
+@keyframes wa-cloudscroll { from { background-position: 0 0; } to { background-position: 1000px 0; } }
+@keyframes wa-sprayDrift { from { background-position: 0 0; } to { background-position: -60px 120px; } }
+@keyframes wa-waveflow { from { background-position: 0 0, 0 0; } to { background-position: 2400px 0, -1400px 0; } }
+@keyframes wa-crestshift { from { transform: translateX(0); } to { transform: translateX(-160px); } }
+
+/* ===== UI Micro-interactions & Safety Fallbacks ===== */
+
+/* Smooth entrance animations */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+
+/* Weather card animations */
+.weather-card-enter { animation: fadeInScale 0.6s ease-out; }
+.weather-card-enter:nth-child(2) { animation-delay: 0.1s; }
+.weather-card-enter:nth-child(3) { animation-delay: 0.2s; }
+.weather-card-enter:nth-child(4) { animation-delay: 0.3s; }
+.weather-card-enter:nth-child(5) { animation-delay: 0.4s; }
+.weather-card-enter:nth-child(6) { animation-delay: 0.5s; }
+
+/* Enhanced hourly strip */
+.hourly-item { transition: all 0.3s ease; }
+.hourly-item:hover { transform: translateY(-2px); }
+
+/* Temperature gradient */
+.temp-gradient { background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 25%, #10b981 50%, #f59e0b 75%, #ef4444 100%); }
+
+/* Glassmorphism effect */
+.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); }
+
+/* Loading shimmer */
+.shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 1000px 100%; animation: shimmer 2s infinite linear; }
+
+/* DaisyUI 5 carousel safety fallback */
+.carousel { display: flex; flex-wrap: nowrap; gap: 0.75rem; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
+.carousel-item { flex: 0 0 auto; width: 7rem; scroll-snap-align: start; }
+.carousel::-webkit-scrollbar { height: 8px; }
+.carousel::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 8px; }
+.carousel { scrollbar-width: thin; }
+.carousel-item .card { height: 100%; }
+.carousel-item .card:hover { transform: translateY(-2px); transition: transform .2s ease; }
+.section-plate-none {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.section-plate-none::before,
+.section-plate-none::after {
+  background: transparent !important;
+}
+/* Marine glass utilities (blue-tinted) */
+.marine-card{
+  /* deep marine blue glass */
+  background:
+    linear-gradient(180deg, rgba(0,56,94,0.55), rgba(0,56,94,0.38) 55%, rgba(0,56,94,0.25)),
+    radial-gradient(80% 120% at 50% 120%, rgba(2,132,199,0.28), transparent 60%);
+  backdrop-filter: blur(8px) saturate(1.05);
+  border: 1px solid rgba(56,189,248,0.22); /* sky-400 */
+  border-radius: 1rem;
+  box-shadow: 0 10px 24px rgba(2, 44, 77, 0.35);
+}
+
+.marine-subplate{
+  background:
+    linear-gradient(180deg, rgba(3,105,161,0.35), rgba(3,105,161,0.22)),
+    radial-gradient(100% 140% at 50% 110%, rgba(56,189,248,0.18), transparent 60%);
+  backdrop-filter: blur(6px) saturate(1.03);
+  border: 1px solid rgba(56,189,248,0.18);
+  border-radius: .75rem;
+}
+
+.marine-heading{
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.25rem;
+}
+
+/* Apply marine blue filter to all non-transparent cards on the marine layout
+   (keeps layout wrappers that use bg-transparent untouched) */
+.marine-layout .card:not(.bg-transparent) {
+  background:
+    linear-gradient(180deg, rgba(0,56,94,0.52), rgba(0,56,94,0.34) 55%, rgba(0,56,94,0.22)),
+    radial-gradient(80% 120% at 50% 120%, rgba(14,165,233,0.22), transparent 60%);
+  border-color: rgba(56,189,248,0.2) !important;
+  color: #e6f6ff;
+}
+
+/* Slightly brighter titles for contrast */
+.marine-layout .card-title { color: #fff !important; }
+
+/* Make stat blocks readable over blue glass */
+.marine-layout .stat-title { color: rgba(232, 246, 255, 0.85); }
+.marine-layout .stat-value { color: #ffffff; }
+.marine-layout .stat-desc { color: rgba(232, 246, 255, 0.75); }
+/* ==== Marine layout spacing clamps ==== */
+.marine-layout section {
+  margin: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 1.5rem !important;
+}
+.marine-layout .card { margin: 0 !important; }
+/* stack utility: ensure a single controlled vertical rhythm when using a wrapper */
+.marine-stack > * + * { margin-top: 1rem !important; }
+
+/* Force card header titles in marine layout to white */
+.marine-layout .card-title {
+  color: #fff !important;
 }

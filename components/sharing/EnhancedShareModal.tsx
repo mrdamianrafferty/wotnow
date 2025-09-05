@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, MapPin, Calendar, Clock, Share2, Check } from 'lucide-react';
 import { loadGoogleMaps } from '../../lib/googleMaps';
 import { useUserPreferences } from '../../context/UserPreferencesContext';
@@ -94,7 +94,7 @@ export default function EnhancedShareModal({
   }, [isOpen]);
 
   // Handle place search
-  const searchPlaces = (query: string) => {
+  const searchPlaces = useCallback((query: string) => {
     if (!placesService || !query.trim()) {
       setSearchResults([]);
       return;
@@ -134,7 +134,7 @@ export default function EnhancedShareModal({
         setSearchResults([]);
       }
     });
-  };
+  }, [placesService, preferences.locations, activityName]);
 
   // Debounced search
   useEffect(() => {
@@ -146,7 +146,7 @@ export default function EnhancedShareModal({
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, searchPlaces]);
 
   // Share the invitation
   const shareInvite = () => {

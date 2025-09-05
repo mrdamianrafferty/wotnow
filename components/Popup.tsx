@@ -1,6 +1,7 @@
 // src/components/Popup.tsx
 
 import React, { useEffect, useState, useRef } from 'react';
+import OptimizedImage from './OptimizedImage';
 import '../styles/Popup.css';
 import { getActivityEmoji, getAssessmentEmoji } from '../data/emojiMap';
 import { getActivityMessage } from '../data/activityMessages';
@@ -150,12 +151,14 @@ async function shareToWhatsApp(payload: SharePayload): Promise<string> {
     const href = buildWhatsAppUrl({ ...payload, text: textWithLinks, url: undefined });
     const w = window.open(href, '_blank', 'noopener,noreferrer');
     if (w) return 'Opened WhatsApp';
-  } catch {}
+  } catch (_err) {
+    void 0; // swallow and continue to next strategy
+  }
   try {
     const toCopy = [payload.title, textWithLinks].filter(Boolean).join('\n\n');
     await navigator.clipboard.writeText(toCopy);
     return 'Copied message to clipboard';
-  } catch {
+  } catch (_err) {
     return 'Unable to share';
   }
 }
@@ -378,7 +381,6 @@ const handleDownload = async () => {
       try {
         const res = await resolveBeachOrientationAsync({ lat, lon });
         if (cancelled) return;
-        // @ts-ignore via is added by our patched util
         const via = (res as any).via || res.source;
         // Fallback to simulated only if resolver couldn't find anything
         const o = typeof res.orientation === 'number' ? res.orientation : computeSimulatedOrientation(lat, lon);
@@ -440,7 +442,7 @@ const handleDownload = async () => {
           secondLowTide: secondLowTide ? { time: secondLowTide.time, height: secondLowTide.height } : undefined,
         });
       }
-    } catch (err) {}
+    } catch (_err) { void 0; }
   };
 
   // Build classes/styles for the content export area
@@ -475,29 +477,24 @@ const handleDownload = async () => {
                   <>
                     {typeof weatherData?.temperature === 'number' && (
                       <li>
-                        <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Air temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>{weatherData.temperature.toFixed(1)}°</strong>
                       </li>
                     )}
                     {typeof marineData.waterTemperature === 'number' && (
                       <li>
-                        <img src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src="/weather-icons/design/fill/final/thermometer-water.svg" alt="Water temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>{marineData.waterTemperature.toFixed(1)}°</strong>
                       </li>
                     )}
                     {weatherData?.icon && (
                       <li>
-                        <img src={getWeatherIconUrl(weatherData.icon)}
-                             alt={weatherData.description || 'weather'}
-                             style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src={getWeatherIconUrl(weatherData.icon)} alt={weatherData.description || 'weather'} width={28} height={28} style={{ verticalAlign: 'middle' }} />{' '}
                         {weatherData.description}
                         {typeof weatherData?.precipitation === 'number' && weatherData.precipitation > 0 && (
                           <>
                             {' '}
-                            <img src={rainIcon} alt="Precipitation"
-                                 style={{ width: 24, height: 24, verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
+                            <OptimizedImage src={rainIcon} alt="Precipitation" width={24} height={24} style={{ verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
                             <strong>{weatherData.precipitation}mm</strong>
                           </>
                         )}
@@ -510,16 +507,7 @@ const handleDownload = async () => {
                     )}
                     {typeof marineData.windSpeed === 'number' && (
                       <li>
-                        <img src={getWindIcon(marineData.windSpeed)}
-                             alt="Wind" style={{ 
-                               width: 28, 
-                               height: 28, 
-                               verticalAlign: 'middle',
-                               // Only add glow for numbered Beaufort icons (not windsock)
-                               filter: windIconNeedsGlow(marineData.windSpeed) 
-                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
-                                 : 'none'
-                             }} />{' '}
+                        <OptimizedImage src={getWindIcon(marineData.windSpeed)} alt="Wind" width={28} height={28} style={{ verticalAlign: 'middle', filter: windIconNeedsGlow(marineData.windSpeed) ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' : 'none' }} />{' '}
                         <strong>{Math.round(mpsToKnots(marineData.windSpeed))}</strong>knots
                         {typeof marineData.gust === 'number' && <> (gust {mpsToKnots(marineData.gust).toFixed(1)} knots)</>}
                         {(() => {
@@ -576,6 +564,12 @@ const handleDownload = async () => {
                             ? Math.round(marineData.vis)
                             : marineData.vis.toFixed(1)}
                         </strong>km
+                        <div style={{ marginTop: 4 }}>
+                          <progress className="progress w-full" value={(() => {
+                            const v = Math.max(0, Math.min(24, marineData.vis));
+                            return Math.round((Math.log(1 + v) / Math.log(1 + 24)) * 100);
+                          })()} max={100}></progress>
+                        </div>
                       </li>
                     )}
                     {(tideData.nextHighTide || tideData.nextLowTide) && (
@@ -613,15 +607,13 @@ const handleDownload = async () => {
                   <>
                     {typeof weatherData?.tempMax === 'number' && (
                       <li>
-                        <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>H: {weatherData.tempMax}°</strong>
                       </li>
                     )}
                     {typeof weatherData?.tempMin === 'number' && (
                       <li>
-                        <img src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>L: {weatherData.tempMin}°</strong>
                       </li>
                     )}
@@ -629,22 +621,18 @@ const handleDownload = async () => {
                      typeof weatherData?.tempMin === 'undefined' &&
                      typeof weatherData?.tempMax === 'undefined' && (
                       <li>
-                        <img src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>{weatherData.temperature}°</strong>
                       </li>
                     )}
                     {weatherData?.icon && (
                       <li>
-                        <img src={getWeatherIconUrl(weatherData.icon)}
-                             alt={weatherData.description || 'weather'}
-                             style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src={getWeatherIconUrl(weatherData.icon)} alt={weatherData.description || 'weather'} width={28} height={28} style={{ verticalAlign: 'middle' }} />{' '}
                         {weatherData.description}
                         {typeof weatherData?.precipitation === 'number' && weatherData.precipitation > 0 && (
                           <>
                             {' '}
-                            <img src={rainIcon} alt="Precipitation"
-                                 style={{ width: 24, height: 24, verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
+                            <OptimizedImage src={rainIcon} alt="Precipitation" width={24} height={24} style={{ verticalAlign: 'middle', marginLeft: '8px' }} />{' '}
                             <strong>{weatherData.precipitation}mm</strong>
                           </>
                         )}
@@ -652,16 +640,7 @@ const handleDownload = async () => {
                     )}
                     {typeof weatherData?.windSpeed === 'number' && (
                       <li>
-                        <img src={getWindIcon(weatherData.windSpeed)} alt="Wind"
-                             style={{ 
-                               width: 28, 
-                               height: 28, 
-                               verticalAlign: 'middle',
-                               // Only add glow for numbered Beaufort icons (not windsock)
-                               filter: windIconNeedsGlow(weatherData.windSpeed) 
-                                 ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' 
-                                 : 'none'
-                             }} />{' '}
+                        <OptimizedImage src={getWindIcon(weatherData.windSpeed)} alt="Wind" width={28} height={28} style={{ verticalAlign: 'middle', filter: windIconNeedsGlow(weatherData.windSpeed) ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))' : 'none' }} />{' '}
                         <strong>{Math.round(mpsToKmh(weatherData.windSpeed))}km/h</strong>
                         {typeof weatherData.windDir === 'number' && (
                           <>
@@ -677,8 +656,7 @@ const handleDownload = async () => {
                     )}
                     {typeof weatherData?.humidity === 'number' && (
                       <li>
-                        <img src={humidityIcon} alt="Humidity"
-                             style={{ width: 24, height: 24, verticalAlign: 'middle' }} />{' '}
+                        <OptimizedImage src={humidityIcon} alt="Humidity" width={24} height={24} style={{ verticalAlign: 'middle' }} />{' '}
                         <strong>{weatherData.humidity}%</strong>
                       </li>
                     )}
@@ -716,3 +694,4 @@ const handleDownload = async () => {
 };
 
 export default Popup;
+/* eslint-disable @next/next/no-img-element */

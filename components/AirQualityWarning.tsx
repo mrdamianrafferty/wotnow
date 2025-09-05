@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedImage from './OptimizedImage';
 import { AirQualityLevel, AirQualityAssessment, getAirQualityLevelDescription, assessAirQualityConditions, AirQualitySummary, getAirQualityIndex } from '../utils/airQualityUtils';
 
 interface AirQualityWarningProps {
@@ -92,15 +93,12 @@ function OverallAirQualityIndicator({
       aria-label={tooltipText}
       title={tooltipText}
     >
-      <img 
+      <OptimizedImage 
         src={getAirQualityIcon()}
         alt=""
-        style={{ 
-          width: '14px', // Proportional to 18px container
-          height: '14px', // Proportional to 18px container
-          objectFit: 'contain' // Ensure proper scaling
-        }}
-        aria-hidden="true"
+        width={14}
+        height={14}
+        style={{ objectFit: 'contain' }}
       />
     </div>
   );
@@ -173,15 +171,12 @@ export default function AirQualityWarning({
           border: `2px solid ${getAirQualityLevelColor(airQualityAssessment.overall)}`,
           flexShrink: 0
         }}>
-          <img 
+          <OptimizedImage 
             src={getAirQualityIcon()}
             alt=""
-            style={{ 
-              width: '14px', 
-              height: '14px',
-              objectFit: 'contain'
-            }}
-            aria-hidden="true"
+            width={14}
+            height={14}
+            style={{ objectFit: 'contain' }}
           />
         </div>
         <span style={{ 

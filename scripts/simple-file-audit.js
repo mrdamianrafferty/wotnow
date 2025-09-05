@@ -87,7 +87,7 @@ function getLastModifiedDate(file) {
       cwd: ROOT_DIR 
     }).toString().trim();
     return new Date(output);
-  } catch (error) {
+  } catch {
     return new Date(0); // Default to epoch if error
   }
 }
@@ -121,7 +121,7 @@ function getImportCount(file, allFiles) {
           content.includes(`from "${relPath}"`)) {
         count++;
       }
-    } catch (error) {
+    } catch {
       // Ignore read errors
     }
   }

@@ -1,7 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-const { getFullWeather } = require('../../lib/services/weatherService');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Support both ESM and CommonJS exports from the service module
+  const mod = await import('../../lib/services/weatherService');
+  const svc: any = (mod as any).default ?? mod;
+  const { getFullWeather } = svc;
+  
   const { lat, lon } = req.query as { lat?: string; lon?: string };
   const units = (req.query.units as string) || 'metric';
   const exclude = (req.query.exclude as string) || '';

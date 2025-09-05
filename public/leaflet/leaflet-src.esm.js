@@ -2536,9 +2536,9 @@ function setTransform(el, offset, scale) {
 // (used by Leaflet internally to position its layers).
 function setPosition(el, point) {
 
-	/*eslint-disable */
+	 
 	el._leaflet_pos = point;
-	/* eslint-enable */
+	 
 
 	if (Browser.any3d) {
 		setTransform(el, point);
@@ -3859,9 +3859,9 @@ var Map = Evented.extend({
 			delete this._container._leaflet_id;
 			delete this._containerId;
 		} catch (e) {
-			/*eslint-disable */
+			 
 			this._container._leaflet_id = undefined;
-			/* eslint-enable */
+			 
 			this._containerId = undefined;
 		}
 

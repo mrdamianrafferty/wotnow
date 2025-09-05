@@ -6,7 +6,7 @@ import {
   attachAstronomyToForecast,
   attachMarineBioToForecast,
   type WeatherForecastDay,
-} from '../lib/services/weatherService';
+} from '../services/weatherService.js';
 
 // --- Helpers added: Open-Meteo weather (for UV) & OpenWeather AQ fallback ---
 async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<any> {
@@ -654,7 +654,7 @@ async function testGoingOutTonight(place: { name: string; lat: number; lon: numb
   try {
     const w = await fetchOpenMeteoWindow(place.lat, place.lon, startISO, endISO) as any;
     H = w?.hourly || {};
-  } catch {}
+  } catch (_err) { void 0; }
 
   const toNums = (arr: any) => Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : [];
   const avg = (arr: number[]) => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;

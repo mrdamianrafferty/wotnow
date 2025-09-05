@@ -1,6 +1,7 @@
 // components/SceneLayers.tsx
 import React from 'react';
 import WeatherAnimationLayer, { UnifiedWeatherData } from './WeatherAnimationLayer';
+import Image from 'next/image';
 
 type SceneLayersProps = {
   /** Background image URL (your existing hero artwork) */
@@ -54,7 +55,7 @@ export default function SceneLayers({
   return (
     <div className={`relative overflow-hidden rounded-2xl ${className}`} style={{contain:'paint'}}>
       {/* Base artwork */}
-      <img src={imageUrl} alt="" className="block w-full h-full object-cover select-none" />
+      <Image src={imageUrl} alt="" fill className="block object-cover select-none" sizes="100vw" priority />
 
       {/* TOP band – clouds */}
       {ctx.clouds && (

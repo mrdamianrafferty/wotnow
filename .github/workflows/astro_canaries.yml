@@ -1,7 +1,6 @@
 name: Build astronomy canaries
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'   # nightly at 02:00 UTC
   # Optional: only run on pushes that touch the canaries code or this workflow.
@@ -9,7 +8,7 @@ on:
   push:
     paths:
       - 'services/astro_highlights/**'
-      - '.github/workflows/build-canaries.yml'
+      - '.github/workflows/astro_canaries.yml'
 
 permissions:
   contents: read
@@ -58,14 +57,24 @@ jobs:
       - name: Build canaries
         env:
           PYTHONUNBUFFERED: '1'
+          GITHUB_ACTIONS: 'true'
         run: |
           mkdir -p ../out
+          echo "🚀 Starting canaries build..."
+          echo "Python executable: $(which python)"
+          
           # If your entrypoint is a module, prefer `-m`. Otherwise call the script.
           if python -c "import run_canaries" 2>/dev/null; then
+            echo "📦 Running as module..."
             python -m run_canaries
           else
+            echo "📜 Running as script..."
             python run_canaries.py
           fi
+          
+          echo "✅ Canaries build completed!"
+          echo "📁 Output directory contents:"
+          ls -la ../out/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -1,6 +1,11 @@
 // next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable Babel completely (SWC is used by default in Next.js 15+)
+  experimental: {
+    forceSwcTransforms: true,
+  },
+  
   images: {
     remotePatterns: [
       {

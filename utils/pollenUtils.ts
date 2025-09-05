@@ -14,12 +14,14 @@ export type PollenSummary = {
   grass?: number;
   tree?: number; 
   weed?: number;
+  olive?: number;
 };
 
 export type PollenAssessment = {
   grass: PollenLevel;
   tree: PollenLevel;
   weed: PollenLevel;
+  olive: PollenLevel;
   overall: PollenLevel;
   warnings: string[];
 };
@@ -55,12 +57,13 @@ export function getPollenLevelDescription(level: PollenLevel): string {
 /**
  * Get pollen type icon path
  */
-export function getPollenIcon(type: 'grass' | 'tree' | 'weed' | 'overall'): string {
+export function getPollenIcon(type: 'grass' | 'tree' | 'weed' | 'olive' | 'overall'): string {
   const basePath = '/weather-icons/design/fill/final';
   switch (type) {
     case 'grass': return `${basePath}/pollen-grass.svg`;
     case 'tree': return `${basePath}/pollen-tree.svg`;
     case 'weed': return `${basePath}/pollen-flower.svg`; // Using flower for weed
+    case 'olive': return `${basePath}/pollen-olive.svg`;
     case 'overall': return `${basePath}/pollen.svg`;
     default: return `${basePath}/pollen.svg`;
   }
@@ -76,6 +79,7 @@ export function assessPollenConditions(pollen?: PollenSummary): PollenAssessment
       grass: PollenLevel.NONE,
       tree: PollenLevel.NONE,
       weed: PollenLevel.NONE,
+      olive: PollenLevel.NONE,
       overall: PollenLevel.NONE,
       warnings: []
     };
@@ -84,9 +88,10 @@ export function assessPollenConditions(pollen?: PollenSummary): PollenAssessment
   const grass = classifyPollenLevel(pollen.grass);
   const tree = classifyPollenLevel(pollen.tree);
   const weed = classifyPollenLevel(pollen.weed);
+  const olive = classifyPollenLevel(pollen.olive);
   
   // Overall level is the highest of the three
-  const overall = Math.max(grass, tree, weed) as PollenLevel;
+  const overall = Math.max(grass, tree, weed, olive) as PollenLevel;
   
   const warnings: string[] = [];
   
@@ -114,6 +119,14 @@ export function assessPollenConditions(pollen?: PollenSummary): PollenAssessment
       warnings.push('Moderate weed pollen levels detected');
     }
   }
+
+  if (pollen.olive != null && olive >= PollenLevel.MODERATE) {
+    if (olive >= PollenLevel.HIGH) {
+      warnings.push('High olive pollen');
+    } else {
+      warnings.push('Moderate olive pollen levels detected');
+    }
+  }
   
   // Overall activity advice
   if (overall >= PollenLevel.VERY_HIGH) {
@@ -124,7 +137,7 @@ export function assessPollenConditions(pollen?: PollenSummary): PollenAssessment
     warnings.push('Moderate pollen levels');
   }
 
-  return { grass, tree, weed, overall, warnings };
+  return { grass, tree, weed, olive, overall, warnings };
 }
 
 /**

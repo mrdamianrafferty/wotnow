@@ -1,260 +1,234 @@
-// src/components/WeatherAnimationLayer.tsx
-// WotNow Weather Animation Layer – with fog, clouds, hysteresis smoothing,
-// Beaufort-scale marine effects (optional inland via applyBeaufort flag)
+// components/WeatherAnimationLayer.tsx
+// British English. DaisyUI-friendly background layer that maps live weather → CSS layers.
+// Uses utils/weatherBackground.ts (clouds/waves) and your windwave.css classes.
+// This component is weather-aware but does NOT fetch; pass in unified fields from your data layer.
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
+import { pickBackgroundClasses, type Condition } from '../utils/weatherBackground';
 
-// ===== Types =====
+// Local unified weather shape to support a single `weather` prop without circular imports
 export interface UnifiedWeatherData {
-  condition: string; // 'clear', 'cloudy', 'rain', 'snow', 'fog', 'marine_calm', 'marine_choppy', 'marine_storm'
-  temperatureC: number;
-  windSpeedMS: number;
-  windDirectionDeg: number;
-  humidity: number;
-  visibilityKM: number;
-  precipitationMMph: number;
-  isCoastal: boolean;
-  applyBeaufort?: boolean; // NEW: opt-in for inland waters
-  localTimeISO: string;
+  condition: Condition | 'clear' | 'cloudy' | 'overcast' | 'drizzle' | 'rain' | 'storm' | 'snow' | 'fog' | 'marine_calm' | 'marine_choppy' | 'marine_storm';
+  temperatureC?: number;
+  windSpeedMS?: number;
+  windDirectionDeg?: number;
+  humidity?: number;
+  visibilityKM?: number;
+  precipitationMMph?: number;
+  isCoastal?: boolean;
+  applyBeaufort?: boolean;
+  localTimeISO?: string;
+  cloudPct?: number;
+  waveHeightM?: number;
 }
 
-// ===== Hysteresis Helper =====
-let lastCondition: string | null = null;
-let lastChangeTime = 0;
-const HYSTERESIS_MS = 5000; // require 5s stable before flipping
-
-function smoothCondition(newCondition: string): string {
-  const now = Date.now();
-  if (!lastCondition) {
-    lastCondition = newCondition;
-    lastChangeTime = now;
-    return newCondition;
-  }
-  if (newCondition !== lastCondition) {
-    if (now - lastChangeTime < HYSTERESIS_MS) {
-      return lastCondition;
-    }
-    lastCondition = newCondition;
-    lastChangeTime = now;
-  }
-  return lastCondition;
+// Props accepted by WeatherAnimationLayer
+export interface WeatherBackplateProps {
+  weather?: UnifiedWeatherData;
+  condition?: Condition;
+  cloudPct?: number;
+  waveHeightM?: number;
+  windSpeedMS?: number;
+  isMarine?: boolean;
+  applyBeaufortToInland?: boolean;
+  showPrecipOverlay?: boolean;
+  mode?: string; // accepted for backward-compat; unused
+  className?: string;
+  children?: React.ReactNode;
+  ambient?: number; // 0..1 multiplier for animation brightness
+  blurPx?: number;  // optional blur applied to background layers
+  opacity?: number; // 0..1 master opacity for background layers
 }
 
-// ===== Beaufort Helper =====
-// Formula: B ≈ (v/0.836)^(2/3)
-function beaufortForce(windMS: number): number {
-  return Math.round(Math.pow(windMS / 0.836, 2 / 3));
-}
-
-// ===== Texture Selector Helper =====
-function selectTexture(weather: UnifiedWeatherData): string {
-  const condition = weather.condition;
-  if (condition === 'cloudy') {
-    if (weather.humidity > 80) {
-      return "/skies/Cloudy Sky/Cloudy_Sky-Gray_Heavy.png";
-    } else {
-      return "/skies/Cloudy Sky/Cloudy_Sky-Light.png";
-    }
-  }
-  if (condition === 'clear') {
-    return "/skies/Simple Sky/Simple_Sky.png";
-  }
-  if (condition.startsWith('marine_') && (weather.isCoastal || weather.applyBeaufort)) {
-    const beaufort = beaufortForce(weather.windSpeedMS);
-    if (beaufort <= 2) return "/waves/waves1/00.png";
-    if (beaufort <= 5) return "/waves/waves2/00.png";
-    return "/waves/waves3/00.png";
-  }
-  return "";
-}
-
-// ===== Simple Background (CSS layers) =====
-const SimpleBackground = ({ condition, weather }: { condition: string; weather: UnifiedWeatherData }) => {
-  const c = smoothCondition(condition);
-
-  if (c === 'clear') {
-    const tex = selectTexture(weather);
-    return <div className="wa-bg wa-clear wa-lit" aria-hidden style={{ backgroundImage: `url(${tex})`, backgroundSize: 'cover' }} />;
-  }
-  if (c === 'rain') return <div className="wa-bg wa-rain wa-lit" aria-hidden />;
-  if (c === 'snow') return <div className="wa-bg wa-snow wa-lit" aria-hidden />;
-  if (c === 'fog') return <div className="wa-bg wa-fog wa-lit" aria-hidden />;
-  if (c === 'cloudy') {
-    const tex = selectTexture(weather);
-    return <div className="wa-bg wa-clouds wa-lit" aria-hidden style={{ backgroundImage: `url(${tex})`, backgroundSize: 'cover' }} />;
-  }
-  if (c.startsWith('marine_')) {
-    const tex = selectTexture(weather);
-    return (
-      <>
-        <div
-          className="wa-bg wa-waves wa-lit"
-          aria-hidden
-          style={{ backgroundImage: `url(${tex})`, backgroundSize: 'cover' }}
-        />
-        {(weather.applyBeaufort || weather.isCoastal) && beaufortForce(weather.windSpeedMS) >= 5 && (
-          <div className="wa-bg wa-spray wa-lit" aria-hidden />
-        )}
-      </>
-    );
-  }
-  return null;
-};
-
-// ===== Advanced Canvas Animation (rain/fog/clouds) =====
-const AdvancedCanvas = ({ condition, weather }: { condition: string; weather: UnifiedWeatherData }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = canvas.offsetWidth * dpr;
-      canvas.height = canvas.offsetHeight * dpr;
-      ctx.scale(dpr, dpr);
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    let raf = 0;
-    const drops: { x: number; y: number; len: number; speed: number }[] = [];
-    for (let i = 0; i < 200; i++) {
-      drops.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        len: 10 + Math.random() * 20,
-        speed: 2 + Math.random() * 4,
-      });
-    }
-
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (condition === 'rain') {
-        ctx.strokeStyle = 'rgba(174,194,224,0.5)';
-        ctx.lineWidth = 1;
-        for (const d of drops) {
-          ctx.beginPath();
-          ctx.moveTo(d.x, d.y);
-          ctx.lineTo(d.x, d.y + d.len);
-          ctx.stroke();
-          d.y += d.speed;
-          if (d.y > canvas.height) d.y = -20;
-        }
-      }
-      if (condition === 'fog') {
-        ctx.fillStyle = 'rgba(200,200,200,0.05)';
-        for (let i = 0; i < 50; i++) {
-          ctx.beginPath();
-          const x = Math.random() * canvas.width;
-          const y = Math.random() * canvas.height;
-          ctx.arc(x, y, 60, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      if (condition === 'cloudy') {
-        ctx.fillStyle = 'rgba(180,180,200,0.15)';
-        for (let i = 0; i < 8; i++) {
-          ctx.beginPath();
-          const x = (performance.now() / 1000 * 10 + i * 100) % canvas.width;
-          const y = 50 + i * 10;
-          ctx.arc(x, y, 40, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      raf = requestAnimationFrame(render);
-    }
-    render();
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resizeCanvas);
-    };
-  }, [condition]);
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
-};
-
-// ===== Main Weather Animation Layer =====
-export default function WeatherAnimationLayer({
-  weather,
-  mode = 'auto',
+// SVG waves with simple horizontal looping animation
+function WaveSVG({
+  amplitude = 18,
+  wavelength = 180,
+  baseline = 220,
+  colorTop = 'rgba(0,120,200,0.55)',
+  colorMid = 'rgba(0,120,200,0.35)',
+  colorBot = 'rgba(0,120,200,0.15)',
+  speedSec = 14,
 }: {
-  weather: UnifiedWeatherData | null;
-  mode?: 'auto' | 'simple' | 'advanced';
+  amplitude?: number;
+  wavelength?: number;
+  baseline?: number;
+  colorTop?: string;
+  colorMid?: string;
+  colorBot?: string;
+  speedSec?: number;
 }) {
-  const [effective, setEffective] = useState<'simple' | 'advanced'>('simple');
-
-  useEffect(() => {
-    if (mode === 'auto') {
-      if (typeof window !== 'undefined' && 'WebGLRenderingContext' in window) {
-        setEffective('advanced');
-      } else {
-        setEffective('simple');
-      }
-    } else {
-      setEffective(mode);
+  // Build a smooth wave path across 1200px using cubic curves
+  const buildPath = (phase: number) => {
+    const width = 1200;
+    const steps = Math.ceil(width / wavelength);
+    let d = `M ${-phase} ${baseline}`;
+    for (let i = 0; i <= steps + 2; i++) {
+      const x = i * wavelength - phase;
+      const cp1x = x + wavelength * 0.25;
+      const cp2x = x + wavelength * 0.75;
+      const y1 = baseline - amplitude;
+      const y2 = baseline + amplitude;
+      d += ` C ${cp1x} ${y1}, ${cp2x} ${y2}, ${x + wavelength} ${baseline}`;
     }
-  }, [mode]);
+    // Close to bottom of viewBox to create a filled shape
+    d += ` L ${width * 2} 300 L -${width} 300 Z`;
+    return d;
+  };
 
-  if (!weather) return null;
-
-  const c = smoothCondition(weather.condition);
+  const pathTop = buildPath(0);
+  const pathMid = buildPath(wavelength / 2);
+  const pathBot = buildPath(wavelength);
+  const duration = `${Math.max(6, Math.min(40, speedSec))}s`;
 
   return (
-    <>
-      {effective === 'simple' && <SimpleBackground condition={c} weather={weather} />}
-      {effective === 'advanced' && <AdvancedCanvas condition={c} weather={weather} />}
-      {/* Marine Beaufort spray overlay in advanced mode */}
-      {effective === 'advanced' && (weather.applyBeaufort || weather.isCoastal) && (() => {
-        const b = beaufortForce(weather.windSpeedMS);
-        return b >= 5 ? <div className="wa-bg wa-spray wa-lit" aria-hidden /> : null;
-      })()}
-    </>
+    <svg className="absolute inset-0" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={colorTop} />
+          <stop offset="60%" stopColor={colorMid} />
+          <stop offset="100%" stopColor={colorBot} />
+        </linearGradient>
+      </defs>
+
+      <g className="wa-wave-layer" style={{ animationDuration: duration }}>
+        <path d={pathBot} fill="url(#waveGrad)" />
+        <path d={pathMid} fill="url(#waveGrad)" />
+        <path d={pathTop} fill="url(#waveGrad)" />
+      </g>
+      {/* duplicate group for seamless loop */}
+      <g className="wa-wave-layer" style={{ animationDuration: duration, transform: 'translateX(1200px)' }}>
+        <path d={pathBot} fill="url(#waveGrad)" />
+        <path d={pathMid} fill="url(#waveGrad)" />
+        <path d={pathTop} fill="url(#waveGrad)" />
+      </g>
+    </svg>
   );
 }
 
-// ===== CSS (inject via globals.css or module) =====
-/*
-.wa-bg { position:absolute; inset:0; pointer-events:none; }
-.wa-lit { mix-blend-mode:screen; opacity:.7; }
-.wa-rain { background-image: linear-gradient(rgba(255,255,255,.3) 50%, transparent 50%); background-size:2px 20px; animation:wa-rainfall 0.5s linear infinite; }
-.wa-snow { background-image: radial-gradient(white 1px, transparent 1px); background-size:6px 6px; animation:wa-snowfall 5s linear infinite; }
-.wa-fog { background: rgba(200,200,200,0.15); backdrop-filter: blur(6px); }
-.wa-clouds { background-image: url('/cloud-texture.png'); background-size: cover; opacity:0.4; animation:wa-cloudscroll 60s linear infinite; }
-.wa-waves { background: linear-gradient(to top, rgba(0,40,80,0.6), transparent); }
-.wa-spray { background-image: radial-gradient(rgba(255,255,255,.25) 0 1px, transparent 2px); background-size:6px 6px; animation:wa-sprayDrift 3s linear infinite; }
+export default function WeatherAnimationLayer(props: WeatherBackplateProps) {
+  const {
+    weather,
+    condition: condProp,
+    cloudPct: cloudProp,
+    waveHeightM: waveProp,
+    windSpeedMS: windProp,
+    isMarine: marineProp,
+    applyBeaufortToInland: inlandProp,
+    showPrecipOverlay = true,
+    className = '',
+    children,
+    ambient,
+    blurPx,
+    opacity,
+  } = props;
 
-@keyframes wa-rainfall { from{background-position:0 -20px} to{background-position:0 0} }
-@keyframes wa-snowfall { from{background-position:0 0} to{background-position:0 6px} }
-@keyframes wa-cloudscroll { from{background-position:0 0} to{background-position:1000px 0} }
-@keyframes wa-sprayDrift { from{background-position:0 0} to{background-position:-60px 120px} }
+  // Derive effective inputs from unified object or individual props
+  const condition = (weather?.condition ?? condProp ?? 'clear') as Condition;
+  const cloudPct = weather?.cloudPct ?? cloudProp ?? 0;
+  const waveHeightM = weather?.waveHeightM ?? waveProp;
+  const windSpeedMS = weather?.windSpeedMS ?? windProp;
+  const isMarine = weather?.isCoastal ?? marineProp ?? false;
+  const applyBeaufortToInland = weather?.applyBeaufort ?? inlandProp ?? false;
+
+  // Decide which CSS classes to render (clouds/waves)
+  const bg = useMemo(() => pickBackgroundClasses({
+    condition,
+    cloudPct,
+    waveHeightM,
+    windSpeedMS,
+    isMarine,
+    applyBeaufortToInland,
+  }), [condition, cloudPct, waveHeightM, windSpeedMS, isMarine, applyBeaufortToInland]);
+
+  // Optional gentle precip layer purely in CSS (no particles)
+  const wantsCssPrecip =
+    showPrecipOverlay && (condition === 'drizzle' || condition === 'rain' || condition === 'snow');
+
+  // Inline CSS variables allow per-instance tuning while remaining theme-aware
+  const cssVars: Partial<Record<'--wa-anim-ambient' | '--wa-anim-blur' | '--wa-anim-opacity', string>> = {};
+  if (typeof ambient === 'number') cssVars['--wa-anim-ambient'] = String(ambient);
+  if (typeof blurPx === 'number') cssVars['--wa-anim-blur'] = `${blurPx}px`;
+  if (typeof opacity === 'number') cssVars['--wa-anim-opacity'] = String(opacity);
+  const styleVars: React.CSSProperties = cssVars as React.CSSProperties;
+
+  return (
+    <div className={`relative w-full h-full overflow-hidden ${className}`} style={styleVars}>
+      {/* Background layers (order: clouds then waves). Each is absolutely positioned via .wa-bg */}
+      {bg.showClouds && bg.cloudsClass && (
+        <div className={`wa-bg ${bg.cloudsClass} wa-lit`} aria-hidden />
+      )}
+
+      {bg.showWaves && (
+        <div className="wa-bg wa-waves-svg wa-lit" aria-hidden>
+          <WaveSVG
+            amplitude={Math.max(12, Math.min(36, (weather?.waveHeightM ?? waveHeightM ?? 0.8) * 18))}
+            wavelength={160}
+            baseline={230}
+            speedSec={Math.max(8, 30 - Math.round((weather?.windSpeedMS ?? windSpeedMS ?? 4) * 2))}
+          />
+        </div>
+      )}
+
+      {/* Optional CSS-only precip hint */}
+      {wantsCssPrecip && (
+        <div
+          className={`wa-bg ${condition === 'snow' ? 'wa-snow' : 'wa-rain'} wa-lit`}
+          aria-hidden
+        />
+      )}
+
+      {/* Contrast gradient behind text to safeguard readability in all themes */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-base-100/70 via-base-100/30 to-transparent" />
+
+      {/* Foreground content */}
+      <div className="relative z-[1]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Usage examples
+   =========================
+
+import WeatherAnimationLayer from '@/components/WeatherAnimationLayer';
+import { setBeaufortResolver } from '@/utils/weatherBackground';
+import { getBeaufortNumber } from '@/utils/beaufort';
+
+// Wire your own Beaufort converter once (e.g. _app.tsx)
+setBeaufortResolver(getBeaufortNumber);
+
+// In a header/hero:
+<WeatherAnimationLayer
+  condition={weather.condition as any}          // 'cloudy' | 'overcast' | 'drizzle' | 'rain' | 'storm' | 'snow' | 'fog' | 'clear' | 'marine_*'
+  cloudPct={weather.cloudPct}
+  waveHeightM={weather.waveHeightM}
+  windSpeedMS={weather.windSpeedMS}
+  isMarine={isMarineLocation}
+  applyBeaufortToInland={activity.applyBeaufortToInland === true}
+  showPrecipOverlay
+  className="h-64"
+>
+  <div className="p-4">
+    <h1 className="text-3xl font-semibold">Today in {locationName}</h1>
+    <p className="opacity-70">{Math.round(weather.temperatureC)}°, {(weather.condition as string).replace('_',' ')}</p>
+  </div>
+</WeatherAnimationLayer>
+
+Notes:
+- CSS classes (wa-clouds.*, wa-waves.*, wa-rain, wa-snow, wa-bg, wa-lit) come from your windwave.css.
+- DaisyUI theme controls colours; this layer stays subtle via opacity + blur.
+- Reduced-motion users are respected by your CSS @media rule (animations disabled).
 */
 
-// ===== Remaining Tasks =====
-/*
-1. Source visuals:
-   - High-quality cloud texture (`/cloud-texture.png`) or procedural clouds - see /public/skies
-   - Optional wave textures if not relying on gradients - see /public/waves and subfolders
-2. Update CSS:
-   - Fine-tune opacity, blend modes, and motion speeds for realism
-   - Mobile performance: consider lower-density particle patterns
-3. Update `activityTypes.ts`:
-   - Add `applyBeaufort: true` flag for inland water activities (e.g. lake sailing)
-4. Data integration:
-   - Ensure OpenWeather OneCall 3.0 + Stormglass map cleanly into UnifiedWeatherData
-   - Pass `applyBeaufort` where relevant
-5. Pages integration:
-   - Import `WeatherAnimationLayer` in main weather card/page layouts
-   - Toggle `mode="auto"` unless user preferences override
-6. Optimisation:
-   - Consider offscreen canvas for performance
-   - Expand fog and cloud systems with WebGL when ready
-7. Future polish:
-   - Add lightning flashes in thunderstorms
-   - Night/day tinting via gradient overlay
-   - More Beaufort states: tree movement, flags, etc.
+/* =========================
+   Remaining Tasks (short)
+   =========================
+1) Ensure windwave.css is loaded globally (has .wa-bg, .wa-lit, .wa-clouds.*, .wa-waves.*, keyframes).
+2) Map your unified weather data → props above (condition, cloudPct, waveHeightM, windSpeedMS, isMarine).
+3) Call setBeaufortResolver(getBeaufortNumber) once during app boot (e.g. _app.tsx).
+4) Optionally tune per-instance with props: ambient/blurPx/opacity/showPrecipOverlay.
+5) Later: if you want WebGL fog/clouds or particle rain, we can extend this same component.
 */

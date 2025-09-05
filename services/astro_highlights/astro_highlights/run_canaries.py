@@ -17,7 +17,19 @@ out_dir = os.path.abspath(data["vars"]["out_dir"])
 days = int(data["vars"].get("days", 7))
 start_date = data["vars"].get("start_date") or None
 date_arg = ["--date", start_date] if start_date else []
-py = os.path.join(venv, "bin", "python")
+
+# Determine Python executable
+# In GitHub Actions, use the system python; locally use venv if it exists
+if os.environ.get('GITHUB_ACTIONS'):
+    py = sys.executable  # Use the current Python interpreter
+    print(f"🔧 Running in GitHub Actions, using system Python: {py}")
+elif os.path.exists(os.path.join(venv, "bin", "python")):
+    py = os.path.join(venv, "bin", "python")
+    print(f"🔧 Using virtual environment Python: {py}")
+else:
+    py = sys.executable  # Fallback to system Python
+    print(f"🔧 Virtual environment not found, using system Python: {py}")
+
 cmd_base = [py, "-m", "astro_highlights.build_highlights", "--days", str(days)]
 os.makedirs(out_dir, exist_ok=True)
 manifest = []

@@ -31,9 +31,10 @@ export function evaluateConditionScore(condition: string, weather: WeatherData):
     case '<': return weatherValue < parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
     case '<=': return weatherValue <= parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
     case '=':
-    case '==': 
+    case '==': {
       const tolerance = Math.max(parsed.value * 0.1, 1);
       return Math.max(0, 1 - Math.abs(weatherValue - parsed.value) / tolerance);
+    }
     default: 
       return parsed.value === weatherValue ? 1 : 0;
   }

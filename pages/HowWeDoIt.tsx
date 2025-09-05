@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export default function HowWeDoIt() {
   return (
@@ -8,12 +9,13 @@ export default function HowWeDoIt() {
 
         {/* Placeholder for custom illustration */}
         <div className="w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justify-center">
-  <img
-    src="/howwedo.png"
-    alt="Illustration of a person with many measuring devices watched by Bruno"
-    className="object-contain h-full"
-  />
-
+          <Image
+            src="/howwedo.png"
+            alt="Illustration of a person with many measuring devices watched by Bruno"
+            width={400}
+            height={256}
+            className="object-contain h-full"
+          />
         </div>
 
         <p className="mb-6 text-base-content leading-relaxed">

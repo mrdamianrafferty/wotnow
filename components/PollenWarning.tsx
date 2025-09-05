@@ -1,4 +1,5 @@
 import React from 'react';
+import OptimizedImage from './OptimizedImage';
 import { PollenLevel, PollenAssessment, getPollenLevelDescription, assessPollenConditions, PollenSummary, getPollenIndex } from '../utils/pollenUtils';
 
 interface PollenWarningProps {
@@ -94,15 +95,12 @@ function PollenTypeIndicator({
       aria-label={tooltipText}
       title={tooltipText}
     >
-      <img 
+      <OptimizedImage 
         src={getPollenTypeIcon(type)}
         alt=""
-        style={{ 
-          width: '15px', // Increased from 10px (50% larger)
-          height: '15px', // Increased from 10px (50% larger)
-          objectFit: 'contain' // Ensure proper scaling
-        }}
-        aria-hidden="true"
+        width={15}
+        height={15}
+        style={{ objectFit: 'contain' }}
       />
     </div>
   );
@@ -162,15 +160,12 @@ function OverallPollenIndicator({
       aria-label={tooltipText}
       title={tooltipText}
     >
-      <img 
+      <OptimizedImage 
         src={getPollenTypeIcon(iconType)}
         alt=""
-        style={{ 
-          width: '15px', // Increased from 12px (25% larger to fit in 18px container)
-          height: '15px', // Increased from 12px (25% larger to fit in 18px container)
-          objectFit: 'contain' // Ensure proper scaling
-        }}
-        aria-hidden="true"
+        width={15}
+        height={15}
+        style={{ objectFit: 'contain' }}
       />
     </div>
   );
@@ -247,15 +242,12 @@ export default function PollenWarning({
               : 'all'; // Use generic icon if multiple types or none
             
             return (
-              <img 
+              <OptimizedImage 
                 src={getPollenTypeIcon(iconType)}
                 alt=""
-                style={{ 
-                  width: '14px', 
-                  height: '14px',
-                  objectFit: 'contain'
-                }}
-                aria-hidden="true"
+                width={14}
+                height={14}
+                style={{ objectFit: 'contain' }}
               />
             );
           })()}

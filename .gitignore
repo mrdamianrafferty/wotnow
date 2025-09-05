@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # Optional: TypeScript build output
 *.tsbuildinfo
+
+# Prevent Babel config files from being committed
+babel.config.*
+.babelrc*

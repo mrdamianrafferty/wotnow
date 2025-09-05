@@ -77,10 +77,9 @@ interface UserPreferencesContextType {
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
 
 export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Lazy-load preferences synchronously on first render (client only)
   const [preferences, setPreferences] = useState<Preferences>(() => {
-    if (typeof window === 'undefined') {
-      return defaultPreferences;
-    }
+    if (typeof window === 'undefined') return defaultPreferences;
     const stored = localStorage.getItem('preferences');
     if (!stored) return defaultPreferences;
     try {
@@ -112,7 +111,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
         ? parsed.locations
         : [DEFAULT_HOME_LOCATION];
 
-      return parsed;
+      return parsed as Preferences;
     } catch (e) {
       console.warn('Failed to parse preferences from localStorage, using defaults.', e);
       return defaultPreferences;
@@ -179,10 +178,14 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences.interests]);
 
-  // --- Persist preferences to localStorage ---
+  // --- Persist preferences to localStorage with debounce ---
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('preferences', JSON.stringify(preferences));
+      const timeoutId = setTimeout(() => {
+        localStorage.setItem('preferences', JSON.stringify(preferences));
+      }, 500); // 500ms debounce
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [preferences]);
 

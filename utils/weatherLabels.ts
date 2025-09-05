@@ -173,14 +173,33 @@ export function getSwellMessage({
   return null; // No additional message needed
 }
 
-// Visibility (km) to description, omitting moderate/good ranges
+// Visibility (km) to description, with a Go Daisy / WotNow friendly voice
 export function getVisibilityDescription(visibilityKm: number): string | null {
-  if (visibilityKm < 0.1) return '⚠️ Dense fog – extremely limited visibility';
-  if (visibilityKm < 0.5) return '⚠️ Thick fog – very difficult to see';
-  if (visibilityKm < 1) return 'Fog – take extra care';
-  if (visibilityKm < 2) return 'Poor visibility – reduced awareness';
-  if (visibilityKm > 20) return ' Excellent visibility – see for miles and miles';
-  return null; // Skip for moderate/good
+  if (visibilityKm < 0.1) return 'Can’t see a thing – wrapped in dense fog!';
+  if (visibilityKm < 0.5) return 'Thick fog – shapes just drift out of nowhere';
+  if (visibilityKm < 1) return 'Foggy out there – take it steady';
+  if (visibilityKm < 4) return 'Hazy view – the world feels a bit blurry';
+  if (visibilityKm < 10) return 'Decent visibility – look sharp';
+  if (visibilityKm < 20) return 'Clear view – horizons looking good';
+  if (visibilityKm >= 20) return 'Crystal clear – see for miles and miles!';
+  return null; // Skip if in-between ranges we don’t need to call out
+}
+
+// Visibility log-scale helpers
+export function visibilityPercentLog(valueKm: number, maxKm: number): number {
+  const v = Math.max(0, Math.min(maxKm, Number(valueKm) || 0));
+  const pct = (Math.log(1 + v) / Math.log(1 + maxKm)) * 100;
+  return Math.round(Math.max(0, Math.min(100, pct)));
+}
+
+export function visibilityPercentLand(valueKm: number): number {
+  // OpenWeather typically caps at 10 km
+  return visibilityPercentLog(valueKm, 10);
+}
+
+export function visibilityPercentMarine(valueKm: number): number {
+  // Stormglass commonly reports up to ~24 km
+  return visibilityPercentLog(valueKm, 24);
 }
 
 export function getWindMessage({
