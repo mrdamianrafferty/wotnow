@@ -723,8 +723,22 @@ function getOpenWeatherAssistantUrl(apiKey: string) {
  * @param lon Longitude
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
+ * 
+ * ⚠️ CRITICAL: Open-Meteo has a 5-day forecast limit ⚠️
+ * The time between startDate and endDate must not exceed 5 days or the API will return errors.
+ * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
+ * calling this function directly from other places.
  */
 async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+  // Validate the date range doesn't exceed 5 days
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays > 5) {
+    throw new Error(`Open-Meteo API ERROR: Date range exceeds 5 days (${diffDays} days requested). Limit requests to 5 days or less.`);
+  }
+  
   const url = new URL('https://api.open-meteo.com/v1/forecast');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));
@@ -763,8 +777,22 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
  * @param lon Longitude
  * @param startDate Start date (YYYY-MM-DD)
  * @param endDate End date (YYYY-MM-DD)
+ * 
+ * ⚠️ CRITICAL: Open-Meteo has a 5-day forecast limit ⚠️
+ * The time between startDate and endDate must not exceed 5 days or the API will return errors.
+ * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
+ * calling this function directly from other places.
  */
 async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+  // Validate the date range doesn't exceed 5 days
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays > 5) {
+    throw new Error(`Open-Meteo API ERROR: Date range exceeds 5 days (${diffDays} days requested). Limit requests to 5 days or less.`);
+  }
+  
   const url = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
   url.searchParams.set('latitude', String(lat));
   url.searchParams.set('longitude', String(lon));

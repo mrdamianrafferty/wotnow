@@ -1,5 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+/*
+ * ████████████████████████████████████████████████████████████████████████████████████
+ * ██                                                                                ██
+ * ██  IMPORTANT API LIMITATION:                                                     ██
+ * ██  Open-Meteo API has a strict 5-day limit for forecasts                         ██
+ * ██  DO NOT modify this file to request more than 5 days or it will cause errors   ██
+ * ██  This limitation is enforced in multiple places in this file                   ██
+ * ██                                                                                ██
+ * ████████████████████████████████████████████████████████████████████████████████████
+ */
+
 // Lightweight in-memory caches to avoid hammering Stormglass on fast reloads
 const sgTideCache = new Map<string, { ts: number; data: any }>();
 const sgMarineCache = new Map<string, { ts: number; data: any }>();
@@ -349,13 +360,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const startDate = dates[0];
       let endDate = dates[dates.length - 1];
-      // Clamp window to max 7 days to avoid API issues
+      
+      // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      // CRITICAL: Open-Meteo API has a strict 5-day limit for forecasts
+      // NEVER change this to request more than 5 days or the API will return errors
+      // This has been fixed multiple times - DO NOT REVERT to 7 days
+      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
       if (startDate && endDate) {
         const s = new Date(startDate);
         const e = new Date(endDate);
-        const maxEnd = new Date(s.getTime() + 6 * 24 * 60 * 60 * 1000);
+        // Calculate maximum end date (start date + 4 days = 5 days total)
+        const maxEnd = new Date(s.getTime() + 4 * 24 * 60 * 60 * 1000); 
         if (e.getTime() > maxEnd.getTime()) {
           endDate = maxEnd.toISOString().split('T')[0];
+          console.log(`Limiting Open-Meteo forecast window to 5 days: ${startDate} to ${endDate}`);
         }
       }
       if (startDate && endDate) {
@@ -404,6 +422,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Optional: Soil snapshot (Open-Meteo) — take a midday snapshot to avoid night-bias
     try {
       const today = new Date();
+      
+      // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+      // IMPORTANT: We only request the current day's soil data
+      // Open-Meteo API has a strict 5-day limit for all forecasts
+      // Keep this as a single day request to avoid API errors
+      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
       const startDate = today.toISOString().split('T')[0];
       const endDate = startDate; // same-day window is sufficient for latest snapshot
       const om: any = await fetchOpenMeteoWeather(latNum, lonNum, startDate, endDate);
