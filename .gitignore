@@ -35,3 +35,4 @@ babel.config.*
 .next/
 out/
 .DS_Store
+coverage/
