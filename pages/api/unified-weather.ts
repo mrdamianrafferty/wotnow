@@ -11,11 +11,22 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * ████████████████████████████████████████████████████████████████████████████████████
  */
 
-// Lightweight in-memory caches to avoid hammering Stormglass on fast reloads
+// Lightweight in-memory caches to avoid hammering APIs on fast reloads
 const sgTideCache = new Map<string, { ts: number; data: unknown }>();
 const sgMarineCache = new Map<string, { ts: number; data: unknown }>();
+const owWeatherCache = new Map<string, { ts: number; data: unknown }>();
+const owAirQualityCache = new Map<string, { ts: number; data: unknown }>();
+const omPollenCache = new Map<string, { ts: number; data: unknown }>();
+const omSoilCache = new Map<string, { ts: number; data: unknown }>();
+
+// Cache TTL settings
 const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
+const WEATHER_TTL_MS = 5 * 60 * 1000;   // 5 minutes for main weather data
+const AIR_QUALITY_TTL_MS = 15 * 60 * 1000; // 15 minutes for air quality
+const POLLEN_TTL_MS = 60 * 60 * 1000;   // 1 hour for pollen data
+const SOIL_TTL_MS = 30 * 60 * 1000;     // 30 minutes for soil data
+
 const keyLL = (lat: number, lon: number) => `${lat.toFixed(3)},${lon.toFixed(3)}`;
 
 // Stormglass API types
@@ -100,6 +111,7 @@ type UnifiedWeather = {
   feelsLikeC?: number
   dewPointC?: number
   humidityPct?: number
+  humidity?: number  // for component compatibility
   pressureHpa?: number
   windSpeedMS?: number
   windGustMS?: number
@@ -145,32 +157,60 @@ function transformWeatherData(rawData: any, lat: number, lon: number, mode: stri
   const current = rawData.current || {};
   const city = rawData.city || {};
   
+  // Handle different data structures (One Call 3.0 vs 2.5 forecast)
+  const isForecast25 = rawData.source === 'forecast2.5';
+  
+  // For forecast2.5, use the first item in list as current weather
+  let currentWeather = current;
+  if (isForecast25 && rawData.list && rawData.list.length > 0) {
+    const firstItem = rawData.list[0];
+    currentWeather = {
+      temp: firstItem.main?.temp,
+      feels_like: firstItem.main?.feels_like,
+      humidity: firstItem.main?.humidity,
+      pressure: firstItem.main?.pressure,
+      wind_speed: firstItem.wind?.speed,
+      wind_gust: firstItem.wind?.gust,
+      wind_deg: firstItem.wind?.deg,
+      visibility: firstItem.visibility,
+      clouds: firstItem.clouds?.all,
+      weather: firstItem.weather,
+      // 2.5 API doesn't have these fields
+      dew_point: undefined,
+      uvi: undefined,
+      sunrise: city.sunrise,
+      sunset: city.sunset,
+    };
+  }
+  
   // Current weather data
   const result: UnifiedWeather = {
     name: city.name || 'Location',
     lat,
     lon,
     isMarine: mode === 'marine',
-    temperatureC: current.temp,
-    feelsLikeC: current.feels_like,
-    dewPointC: current.dew_point,
-    humidityPct: current.humidity,
-    pressureHpa: current.pressure,
-    windSpeedMS: current.wind_speed,
-    windGustMS: current.wind_gust,
-    windDeg: current.wind_deg,
-    visibilityKm: current.visibility ? current.visibility / 1000 : undefined,
-    uvi: current.uvi,
-    cloudsPct: current.clouds,
-    description: current.weather?.[0]?.description,
-    icon: current.weather?.[0]?.icon,
-    // OpenWeather current includes sunrise/sunset timestamps for the current day
-    sunriseISO: current.sunrise ? new Date(current.sunrise * 1000).toISOString() : undefined,
-    sunsetISO: current.sunset ? new Date(current.sunset * 1000).toISOString() : undefined,
+    temperatureC: currentWeather.temp,
+    feelsLikeC: currentWeather.feels_like,
+    dewPointC: currentWeather.dew_point,
+    humidityPct: currentWeather.humidity,
+    humidity: currentWeather.humidity,  // compatibility mapping for components
+    pressureHpa: currentWeather.pressure,
+    windSpeedMS: currentWeather.wind_speed,
+    windGustMS: currentWeather.wind_gust,
+    windDeg: currentWeather.wind_deg,
+    visibilityKm: currentWeather.visibility ? currentWeather.visibility / 1000 : undefined,
+    uvi: currentWeather.uvi,
+    cloudsPct: currentWeather.clouds,
+    description: currentWeather.weather?.[0]?.description,
+    icon: currentWeather.weather?.[0]?.icon,
+    // Handle sunrise/sunset for both structures
+    sunriseISO: (currentWeather.sunrise || city.sunrise) ? new Date((currentWeather.sunrise || city.sunrise) * 1000).toISOString() : undefined,
+    sunsetISO: (currentWeather.sunset || city.sunset) ? new Date((currentWeather.sunset || city.sunset) * 1000).toISOString() : undefined,
   };
 
   // Transform hourly data
   if (rawData.hourly && Array.isArray(rawData.hourly)) {
+    // One Call 3.0 hourly data
     result.hourly = rawData.hourly.slice(0, 48).map((hour: any) => ({
       timeISO: new Date(hour.dt * 1000).toISOString(),
       tempC: hour.temp,
@@ -182,10 +222,24 @@ function transformWeatherData(rawData: any, lat: number, lon: number, mode: stri
       pressureHpa: hour.pressure,
       waveHeightM: undefined,
     }));
+  } else if (isForecast25 && rawData.list && Array.isArray(rawData.list)) {
+    // 2.5 forecast data - use as 3-hourly "hourly" data
+    result.hourly = rawData.list.slice(0, 16).map((item: any) => ({ // 16 items = 48 hours of 3-hourly data
+      timeISO: new Date(item.dt * 1000).toISOString(),
+      tempC: item.main?.temp,
+      pop: item.pop || 0, // 0-1
+      windMS: item.wind?.speed,
+      windDeg: item.wind?.deg,
+      precipMM: item.rain?.['3h'] || item.snow?.['3h'] || 0, // Note: 3h accumulation for 2.5 API
+      icon: item.weather?.[0]?.icon,
+      pressureHpa: item.main?.pressure,
+      waveHeightM: undefined,
+    }));
   }
 
   // Transform daily data
   if (rawData.daily && Array.isArray(rawData.daily)) {
+    // One Call 3.0 daily data
     result.daily = rawData.daily.slice(0, 8).map((day: any) => ({
       dateISO: new Date(day.dt * 1000).toISOString().split('T')[0],
       minC: day.temp?.min,
@@ -201,6 +255,53 @@ function transformWeatherData(rawData: any, lat: number, lon: number, mode: stri
       moonsetISO: day.moonset ? new Date(day.moonset * 1000).toISOString() : undefined,
       moonPhase: typeof day.moon_phase === 'number' ? day.moon_phase : undefined,
     }));
+  } else if (isForecast25 && rawData.list && Array.isArray(rawData.list)) {
+    // 2.5 forecast data - aggregate into daily data (group by date)
+    const dailyGroups: Record<string, any[]> = {};
+    
+    rawData.list.forEach((item: any) => {
+      const date = new Date(item.dt * 1000).toISOString().split('T')[0];
+      if (!dailyGroups[date]) {
+        dailyGroups[date] = [];
+      }
+      dailyGroups[date].push(item);
+    });
+    
+    result.daily = Object.entries(dailyGroups).slice(0, 5).map(([date, items]) => { // 2.5 API only has 5 days
+      // Aggregate daily values from 3-hourly items
+      const temps = items.map(item => item.main?.temp).filter(t => t !== undefined);
+      const pops = items.map(item => item.pop || 0);
+      const pressures = items.map(item => item.main?.pressure).filter(p => p !== undefined);
+      const winds = items.map(item => item.wind?.speed).filter(w => w !== undefined);
+      const windDirs = items.map(item => item.wind?.deg).filter(d => d !== undefined);
+      
+      // Use the most common weather condition for the day
+      const weatherCounts: Record<string, number> = {};
+      items.forEach(item => {
+        const desc = item.weather?.[0]?.description;
+        if (desc) {
+          weatherCounts[desc] = (weatherCounts[desc] || 0) + 1;
+        }
+      });
+      const mostCommonWeather = Object.entries(weatherCounts).sort((a, b) => b[1] - a[1])[0];
+      const dayWeather = items.find(item => item.weather?.[0]?.description === mostCommonWeather?.[0])?.weather?.[0];
+      
+      return {
+        dateISO: date,
+        minC: temps.length > 0 ? Math.min(...temps) : undefined,
+        maxC: temps.length > 0 ? Math.max(...temps) : undefined,
+        pop: pops.length > 0 ? Math.max(...pops) : undefined, // Max precipitation probability
+        summary: dayWeather?.description,
+        icon: dayWeather?.icon,
+        windMS: winds.length > 0 ? winds.reduce((a, b) => a + b, 0) / winds.length : undefined, // Average wind
+        windDeg: windDirs.length > 0 ? windDirs.reduce((a, b) => a + b, 0) / windDirs.length : undefined, // Average direction
+        pressureHpa: pressures.length > 0 ? pressures.reduce((a, b) => a + b, 0) / pressures.length : undefined, // Average pressure
+        uvi: undefined, // Not available in 2.5 API
+        moonriseISO: undefined, // Not available in 2.5 API
+        moonsetISO: undefined, // Not available in 2.5 API  
+        moonPhase: undefined, // Not available in 2.5 API
+      };
+    });
   }
 
   // For marine mode, add marine-specific data if available
@@ -268,13 +369,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Base weather (OpenWeather One Call)
-    const weatherData = await getFullWeather({
-      lat: latNum,
-      lon: lonNum,
-      apiKey,
-      options: { units, exclude }
-    });
+    const latlonKey = keyLL(latNum, lonNum);
+    
+    // Base weather (OpenWeather One Call) with cache
+    const weatherCacheKey = `${latlonKey}_${units}_${exclude}`;
+    const weatherCached = owWeatherCache.get(weatherCacheKey);
+    let weatherData: any;
+    
+    if (weatherCached && Date.now() - weatherCached.ts < WEATHER_TTL_MS) {
+      weatherData = weatherCached.data;
+    } else {
+      weatherData = await getFullWeather({
+        lat: latNum,
+        lon: lonNum,
+        apiKey,
+        options: { units, exclude }
+      });
+      if (weatherData) owWeatherCache.set(weatherCacheKey, { ts: Date.now(), data: weatherData });
+    }
+    
     // Transform to normalized structure
     const normalizedData = transformWeatherData(weatherData, latNum, lonNum, weatherMode);
 
@@ -361,9 +474,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Optional: Air Quality (OpenWeather)
+    // Optional: Air Quality (OpenWeather) with cache
     try {
-      const aq = await getAirPollution({ lat: latNum, lon: lonNum, apiKey });
+      const aqCached = owAirQualityCache.get(latlonKey);
+      let aq: any;
+      
+      if (aqCached && Date.now() - aqCached.ts < AIR_QUALITY_TTL_MS) {
+        aq = aqCached.data;
+      } else {
+        aq = await getAirPollution({ lat: latNum, lon: lonNum, apiKey });
+        if (aq) owAirQualityCache.set(latlonKey, { ts: Date.now(), data: aq });
+      }
+      
       const list = (aq as any)?.list;
       if (Array.isArray(list) && list.length) {
         const first = list[0];
@@ -412,7 +534,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       if (startDate && endDate) {
-        const polRaw: any = await fetchOpenMeteoAirPollen(latNum, lonNum, startDate, endDate);
+        const pollenCacheKey = `${latlonKey}_${startDate}_${endDate}`;
+        const pollenCached = omPollenCache.get(pollenCacheKey);
+        let polRaw: any;
+        
+        if (pollenCached && Date.now() - pollenCached.ts < POLLEN_TTL_MS) {
+          polRaw = pollenCached.data;
+        } else {
+          polRaw = await fetchOpenMeteoAirPollen(latNum, lonNum, startDate, endDate);
+          if (polRaw) omPollenCache.set(pollenCacheKey, { ts: Date.now(), data: polRaw });
+        }
+        
         const times: string[] = polRaw?.hourly?.time || [];
         const grassArr: number[] = polRaw?.hourly?.grass_pollen || [];
         const alderArr: number[] = polRaw?.hourly?.alder_pollen || [];
@@ -465,7 +597,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
       const startDate = today.toISOString().split('T')[0];
       const endDate = startDate; // same-day window is sufficient for latest snapshot
-      const om: any = await fetchOpenMeteoWeather(latNum, lonNum, startDate, endDate);
+      
+      const soilCacheKey = `${latlonKey}_${startDate}`;
+      const soilCached = omSoilCache.get(soilCacheKey);
+      let om: any;
+      
+      if (soilCached && Date.now() - soilCached.ts < SOIL_TTL_MS) {
+        om = soilCached.data;
+      } else {
+        om = await fetchOpenMeteoWeather(latNum, lonNum, startDate, endDate);
+        if (om) omSoilCache.set(soilCacheKey, { ts: Date.now(), data: om });
+      }
+      
       const H = om?.hourly || {};
       const times: string[] = H.time || [];
       let idx = -1;

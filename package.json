@@ -26,7 +26,6 @@
     "@turf/turf": "^7.2.0",
     "axios": "^1.10.0",
     "cally": "^0.8.0",
-    "caniuse-lite": "^1.0.30001739",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.23.12",
     "html2canvas": "^1.4.1",

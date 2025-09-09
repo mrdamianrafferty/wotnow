@@ -475,21 +475,54 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
     exclude: options?.exclude || '',
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
+  
+  console.log('🌡️ OneCall Debug: Attempting One Call 3.0');
+  console.log('  URL:', url.replace(apiKey, 'API_KEY'));
+  
   try {
     const response = await fetch(url);
     const data = await response.json();
+    
+    console.log('🌡️ OneCall Debug: One Call 3.0 Response');
+    console.log('  Status:', response.status);
+    console.log('  OK:', response.ok);
+    
     if (!response.ok) {
+      // Log specific error details for rate limiting
+      if (response.status === 429) {
+        console.log('⚠️ Rate limit exceeded - API key needs upgrade or wait for reset');
+      }
+      console.log('  Error data:', data);
       throw { status: response.status, data };
     }
+    
+    console.log('  Success! Has current:', !!data.current);
+    console.log('  Has hourly:', !!data.hourly);
+    console.log('  Has daily:', !!data.daily);
+    
     return { source: 'onecall3', data };
-  } catch {
+  } catch (error) {
+    const errorStatus = (error as any)?.status;
+    if (errorStatus === 429) {
+      console.log('❌ OneCall Debug: Rate limit exceeded (429) - falling back to 2.5');
+    } else {
+      console.log('❌ OneCall Debug: One Call 3.0 failed, falling back to 2.5');
+      console.log('  Error:', error);
+    }
+    
     // Fallback to 2.5 API
     const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
+    console.log('  Fallback URL:', url2.replace(apiKey, 'API_KEY'));
+    
     const response2 = await fetch(url2);
     const data2 = await response2.json();
     if (!response2.ok) {
+      console.log('❌ 2.5 fallback also failed:', { status: response2.status, data: data2 });
       throw { status: response2.status, data: data2 };
     }
+    
+    console.log('✅ OneCall Debug: 2.5 fallback successful');
+    
     return { source: 'forecast2.5', data: data2 };
   }
 }

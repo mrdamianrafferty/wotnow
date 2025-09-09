@@ -479,19 +479,20 @@ export default function NewWeatherPage() {
           />
 
           <PollenCard 
-            pollen={{
-              types: {
-                grass: { level: 2, text: "Moderate" },
-                tree: { level: 1, text: "Low" },
-                weed: { level: 3, text: "High" }
-              },
-              overall: { level: 3, text: "High" }
+            pollenAssess={{
+              description: "Overall pollen level: High",
+              advice: "Consider limiting outdoor activities during peak pollen hours"
+            }}
+            pollenIdx={3}
+            pollenToday={{
+              grass_pollen: "2",
+              tree_pollen: "1", 
+              weed_pollen: "3"
             }}
           />
           
           <SoilCard 
-            soil={weather?.soil || sampleWeatherData.soil}
-            timeISO={weather?.soilTimeISO || sampleWeatherData.soilTimeISO}
+            weather={weather || sampleWeatherData}
           />
           
           <TestCard />

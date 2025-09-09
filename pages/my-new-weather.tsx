@@ -17,7 +17,6 @@ import { assessPollenConditions, getPollenIndex, getPollenLevelDescription, Poll
 import { getSoilCondition } from "../utils/getSoilCondition";
 import { getTideTips, type TidePhase } from "@/data/tideTips";
 import { getWaveDescription, getWindMessage, getVisibilityDescription, visibilityPercentLand } from "../utils/weatherLabels";
-import { AirQualityCardV2 } from "../components/weather-cards/AirQualityCard";
 import { AirQualityCardV3 } from "../components/weather-cards/AirQualityCardV3";
 import { PollenCard } from "../components/weather-cards/PollenCard";
 import { UVCard } from "../components/weather-cards/UVCard";
@@ -804,6 +803,11 @@ const WeatherDemoPage: React.FC = () => {
   }, [weather?.airQuality]);
 
   const pollenAssess = useMemo(() => assessPollenConditions(pollenToday as any), [pollenToday]);
+  const pollenAssessForCard = useMemo(() => ({
+    description: `Overall pollen level: ${getPollenLevelDescription(pollenAssess.overall)}`,
+    advice: pollenAssess.warnings?.[0] || "Consider limiting outdoor activities during peak pollen hours"
+  }), [pollenAssess]);
+  
   const pollenIdx = useMemo(() => {
     const p = pollenToday as any;
     if (!p) return 0;
@@ -1554,7 +1558,8 @@ const WeatherDemoPage: React.FC = () => {
                 {/* Pollen */}
                 <PollenCard
                   pollenToday={pollenToday}
-                  pollenAssess={pollenAssess}
+                  pollenAssess={pollenAssessForCard}
+                  pollenIdx={pollenIdx}
                 />
               </div>
             </section>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AirQualityCardV2 } from '../components/weather-cards/AirQualityCard';
+import { AirQualityCard } from '../components/weather-cards/AirQualityCard';
 import { TestCard } from '../components/TestCard';
 import Link from 'next/link';
 
@@ -34,7 +34,7 @@ export default function TestPage() {
       
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">AirQualityCard Component</h2>
-        <AirQualityCardV2 
+        <AirQualityCard 
           weather={mockWeather} 
           aqiAssess={mockAssess}
         />

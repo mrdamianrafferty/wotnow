@@ -23,6 +23,13 @@ const marineNow = {
 };
 
 // Helper functions (temporarily inline)
+const formatTimeConsistent = (date: Date): string => {
+  // Use UTC to ensure consistent formatting across server/client
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
+
 const getWaveDescription = (height: number): string => {
   if (height < 0.5) return 'Calm seas';
   if (height < 1.0) return 'Light waves';
@@ -84,7 +91,7 @@ const Compass: React.FC<{
     
     return (
       <g>
-        <title>{label} coming from {Math.round(degrees)}°</title>
+        <title>{`${label} coming from ${Math.round(degrees)}°`}</title>
         
         {/* Arrow shaft */}
         <line
@@ -342,7 +349,7 @@ export const WaveCard: React.FC<WaveCardProps> = ({
         // Legacy format - generate approximate times
         const now = new Date();
         const time = new Date(now.getTime() + i * 60 * 60 * 1000); // Hourly intervals
-        return { height: item, time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        return { height: item, time: formatTimeConsistent(time) };
       }
       return item; // New format with time data
     }).filter(item => item.height !== null) as Array<{height: number; time: string}> : [];
@@ -431,7 +438,7 @@ export const WaveCard: React.FC<WaveCardProps> = ({
                   {(series.length ? series.slice(0, 12) : Array.from({ length: 12 }, (_, i) => {
                     const now = new Date();
                     const time = new Date(now.getTime() + i * 60 * 60 * 1000);
-                    return { height: null, time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+                    return { height: null, time: formatTimeConsistent(time) };
                   })).map((item, i) => {
                     const pct = (maxH && item.height !== null) ? 
                       Math.max(6, Math.min(100, Math.round((item.height / maxH) * 100))) : 10;
@@ -447,7 +454,7 @@ export const WaveCard: React.FC<WaveCardProps> = ({
                 </div>
               </div>
               <div className="mt-1 text-xs opacity-70">
-                Forecast updated: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                Forecast updated: {formatTimeConsistent(new Date())}
               </div>
             </div>
           </div>

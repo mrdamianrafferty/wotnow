@@ -100,7 +100,8 @@ export default function PrettyTideWaveRolling({
     setIsClient(true);
   }, []);
 
-  const now = nowTs ?? Date.now();
+  // Only calculate these values on the client to avoid hydration issues
+  const now = isClient ? (nowTs ?? Date.now()) : 0;
   const in24h = now + 24 * 60 * 60 * 1000;
 
   const {
@@ -111,8 +112,8 @@ export default function PrettyTideWaveRolling({
     baseY,
     markers,
   } = useMemo(() => {
-    // Guard
-    if (!samples?.length) {
+    // Guard - return empty state if not client or no samples
+    if (!isClient || !samples?.length) {
       const noop = (n: number) => n;
       return {
         path: "",
@@ -173,7 +174,7 @@ export default function PrettyTideWaveRolling({
       : findExtrema(samples, now, in24h, 2);
 
     return { path, fillPath, xScale, yScale, minH, maxH, firstX, lastX, baseY, markers };
-  }, [samples, extrema, now, in24h, width, height]);
+  }, [samples, extrema, now, in24h, width, height, isClient]);
 
   // Show loading state during server-side rendering to prevent hydration mismatch
   if (!isClient) {
