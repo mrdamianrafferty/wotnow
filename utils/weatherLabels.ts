@@ -46,6 +46,55 @@ export function getRainfallDescription(mm: number, hours: number = 1): string {
   return '⚠️ Violent rain';
 }
 
+// Combined rainfall description with hourly fallback
+export function getRainfallDescriptionWithHourly(
+  dailyMm: number, 
+  hourlyData?: Array<{ time?: string; dt?: number; rain?: number; precipitation?: number }>
+): string {
+  // If significant daily rain, use regular description
+  if (dailyMm >= 10) {
+    return getRainfallDescription(dailyMm, 24);
+  }
+  
+  // If no hourly data provided, fall back to simple description
+  if (!hourlyData || hourlyData.length === 0) {
+    return getRainfallDescription(dailyMm, 24);
+  }
+  
+  // Check for any rain in hourly data
+  const hourlyRain = hourlyData.find(hour => {
+    const rain = hour.rain ?? hour.precipitation ?? 0;
+    return rain > 0;
+  });
+  
+  if (!hourlyRain) {
+    return 'No rain';
+  }
+  
+  // Find the time with rain
+  const rainValue = hourlyRain.rain ?? hourlyRain.precipitation ?? 0;
+  let timeStr = '';
+  
+  if (hourlyRain.time) {
+    // Parse ISO time string to get hour
+    const hour = new Date(hourlyRain.time).getHours();
+    timeStr = ` around ${hour}:00`;
+  } else if (hourlyRain.dt) {
+    // Parse Unix timestamp to get hour
+    const hour = new Date(hourlyRain.dt * 1000).getHours();
+    timeStr = ` around ${hour}:00`;
+  }
+  
+  // Determine intensity with "Mostly dry" prefix
+  if (rainValue < 2.5) {
+    return `Mostly dry, chance of light showers${timeStr}`;
+  } else if (rainValue < 7.6) {
+    return `Mostly dry, chance of rain${timeStr}`;
+  } else {
+    return `Mostly dry, chance of heavy rain${timeStr}`;
+  }
+}
+
 // Wave/swell height (meters) to description
 export function getWaveDescription(meters: number): string {
   if (meters < 0.1) return 'Flat – like glass (perfect for SUP)';
