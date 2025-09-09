@@ -1,19 +1,14 @@
 {
   "version": 2,
   "framework": "nextjs",
-  "buildCommand": "./vercel-build.sh",
-  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
   "functions": {
-    "pages/api/**/*.ts": {
-      "maxDuration": 30
-    },
-    "app/api/**/*.ts": {
-      "maxDuration": 30
-    }
+    "pages/api/**/*.ts": { "maxDuration": 30 },
+    "app/api/**/*.ts": { "maxDuration": 30 }
   },
-  "routes": [
-    { "src": "/api/python/(.*)", "dest": "/api/python/$1" },
-    { "src": "/(.*)", "dest": "/" }
+  "rewrites": [
+    { "source": "/api/python/(.*)", "destination": "/api/python/$1" }
   ],
   "crons": [
     {
@@ -25,45 +20,27 @@
     {
       "source": "/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=43200" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     },
     {
       "source": "/api/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=60, s-maxage=300, stale-while-revalidate=600" }
       ]
     },
     {
       "source": "/_next/image(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
       "source": "/weather-icons/(.*)",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
   ]
