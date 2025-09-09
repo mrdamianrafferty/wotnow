@@ -12,13 +12,40 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  */
 
 // Lightweight in-memory caches to avoid hammering Stormglass on fast reloads
-const sgTideCache = new Map<string, { ts: number; data: any }>();
-const sgMarineCache = new Map<string, { ts: number; data: any }>();
+const sgTideCache = new Map<string, { ts: number; data: unknown }>();
+const sgMarineCache = new Map<string, { ts: number; data: unknown }>();
 const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
 const keyLL = (lat: number, lon: number) => `${lat.toFixed(3)},${lon.toFixed(3)}`;
 
-// Types matching what my-weather.tsx expects
+// Stormglass API types
+interface StormglassTidePoint {
+  time: string;
+  height: number;
+  type: 'high' | 'low';
+}
+
+interface StormglassTidesResponse {
+  data: StormglassTidePoint[];
+}
+
+interface StormglassMarineHour {
+  time: string;
+  windSpeed?: { sg?: number };
+  windDirection?: { sg?: number };
+  gust?: { sg?: number };
+  waveHeight?: { sg?: number };
+  waveDirection?: { sg?: number };
+  wavePeriod?: { sg?: number };
+  swellHeight?: { sg?: number };
+  swellDirection?: { sg?: number };
+  swellPeriod?: { sg?: number };
+  waterTemperature?: { sg?: number };
+}
+
+interface StormglassMarineResponse {
+  hours: StormglassMarineHour[];
+}
 type Hour = {
   timeISO: string
   tempC?: number
@@ -210,7 +237,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     fetchOpenMeteoWeather,
   } = svc;
 
-  const { lat, lon, mode = 'land' } = req.query as { lat?: string; lon?: string; mode?: string };
+  const { lat, lon, mode, coastal } = req.query as { 
+    lat?: string; 
+    lon?: string; 
+    mode?: string; 
+    coastal?: string; 
+  };
+  
+  // Determine mode: prefer explicit mode, fallback to coastal flag, default to land
+  const weatherMode = mode || (coastal === 'true' ? 'marine' : 'land');
   const units = (req.query.units as string) || 'metric';
   const exclude = (req.query.exclude as string) || '';
 
@@ -241,7 +276,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       options: { units, exclude }
     });
     // Transform to normalized structure
-    const normalizedData = transformWeatherData(weatherData, latNum, lonNum, mode);
+    const normalizedData = transformWeatherData(weatherData, latNum, lonNum, weatherMode);
 
     // Optional: Tides and Marine (Stormglass), if key available
     const sgKey = process.env.STORMGLASS_SECRET_KEY || process.env.STORMGLASS_API_KEY;

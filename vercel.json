@@ -11,10 +11,6 @@
       "maxDuration": 30
     }
   },
-  "builds": [
-    { "src": "package.json", "use": "@vercel/next" },
-    { "src": "api/python/**/*.py", "use": "@vercel/python" }
-  ],
   "routes": [
     { "src": "/api/python/(.*)", "dest": "/api/python/$1" },
     { "src": "/(.*)", "dest": "/" }

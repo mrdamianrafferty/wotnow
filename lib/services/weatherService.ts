@@ -815,14 +815,15 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: stri
     const data = await response.json();
     if (!response.ok) throw { status: response.status, statusText: response.statusText, data, url: reqUrl };
     return data;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Surface detailed information for debugging
     if (err && typeof err === 'object' && 'status' in err) {
+      const errorObj = err as { status: number; statusText: string; url: string; data: unknown };
       const details = {
-        status: err.status,
-        statusText: err.statusText,
-        url: err.url,
-        data: err.data,
+        status: errorObj.status,
+        statusText: errorObj.statusText,
+        url: errorObj.url,
+        data: errorObj.data,
       };
       throw new Error('Open-Meteo air/pollen fetch failed: ' + JSON.stringify(details));
     }
@@ -856,7 +857,7 @@ async function fetchStormglassMarine(
     });
   const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
-  const url = new URL('https://api.stormglass.io/v2/marine/point');
+  const url = new URL('https://api.stormglass.io/v2/weather/point');
   url.searchParams.set('lat', String(lat));
   url.searchParams.set('lng', String(lon));
   url.searchParams.set('start', startISO);
@@ -866,7 +867,7 @@ async function fetchStormglassMarine(
     'swellHeight','swellDirection','swellPeriod',
     'windWaveHeight','windWaveDirection','windWavePeriod',
     'waterTemperature','currentSpeed','currentDirection',
-    'windSpeed','windDirection','gust'
+    'windSpeed','windDirection','gust','visibility'
   ].join(','));
 
   try {

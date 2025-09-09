@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Sea icon – wave with 18s period</title>
+  <desc id="desc">A round blue icon with a single white wave travelling horizontally, animation duration 18 seconds.</desc>
+
+  <defs>
+    <clipPath id="roundClip">
+      <circle cx="80" cy="80" r="70"/>
+    </clipPath>
+    <style><![CDATA[
+      :root { --blue:#0A66CC; --white:#FFFFFF; }
+      .wave { stroke: var(--white); stroke-width: 10; fill: none; stroke-linecap: round; opacity: 0.95; }
+      @media (prefers-reduced-motion: reduce) { .anim { animation: none !important; } }
+    ]]></style>
+  </defs>
+
+  <circle cx="80" cy="80" r="70" fill="var(--blue)" />
+
+  <g clip-path="url(#roundClip)">
+    <g class="anim">
+      <path class="wave" d="
+        M -360 100
+        C -320 78, -280 56, -240 78
+        C -200 100, -160 122, -120 100
+        C -80 78, -40 56, 0 78
+        C 40 100, 80 122, 120 100
+        C 160 78, 200 56, 240 78
+        C 280 100, 320 122, 360 100
+        C 400 78, 440 56, 480 78
+        C 520 100, 560 122, 600 100" />
+      <animateTransform attributeName="transform" type="translate"
+                        values="0 0; 160 0; 320 0"
+                        keyTimes="0; 0.5; 1"
+                        dur="18s" repeatCount="indefinite" />
+    </g>
+  </g>
+</svg>

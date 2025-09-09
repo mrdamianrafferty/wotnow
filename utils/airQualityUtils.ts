@@ -156,3 +156,27 @@ export function shouldExcludeForAirQuality(
 
   return false;
 }
+
+/**
+ * Convert CO value from μg/m³ to ppm
+ * OpenWeather API returns CO in μg/m³, but we display in ppm
+ * Conversion factor: 1ppm ≈ 1145 μg/m³
+ */
+export function convertCOtoPPM(coMicrogramsPerM3: number | undefined): number | undefined {
+  if (coMicrogramsPerM3 === undefined) return undefined;
+  return coMicrogramsPerM3 / 1145;
+}
+
+/**
+ * Format pollutant value to 2 decimal places, rounding up
+ * Example: 0.08901310043668123 -> 0.09
+ */
+export function formatPollutantValue(value: number | undefined): string {
+  if (value === undefined) return 'N/A';
+  
+  // Multiply by 100, ceil, then divide by 100 to round up to 2 decimal places
+  const roundedUp = Math.ceil(value * 100) / 100;
+  
+  // Ensure we always display 2 decimal places
+  return roundedUp.toFixed(2);
+}

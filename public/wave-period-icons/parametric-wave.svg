@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"
+     role="img" aria-labelledby="title desc"
+     style="--period: 6s; --height-m: 1.5;">
+  <title id="title">Parametric Sea Icon – Period &amp; Height</title>
+  <desc id="desc">Set CSS variables on the root: period in seconds and height in metres. At 3 m the crest nearly fills the icon.</desc>
+
+  <defs>
+    <clipPath id="clip">
+      <circle cx="80" cy="80" r="70"/>
+    </clipPath>
+    <style><![CDATA[
+      :root { --blue:#0A66CC; --white:#FFFFFF; }
+      .amp {
+        transform-box: view-box;
+        transform-origin: 80px 100px;
+        transform: scaleY(clamp(0.25, calc(var(--height-m, 1.5) * 1.0666667), 3.2));
+      }
+      .phase {
+        animation: phase var(--period, 6s) linear infinite;
+        will-change: transform;
+      }
+      @keyframes phase {
+        0%   { transform: translateX(0); }
+        50%  { transform: translateX(160px); }
+        100% { transform: translateX(320px); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .phase { animation: none !important; }
+      }
+      .wave { stroke: var(--white); stroke-width: 10; fill: none; stroke-linecap: round; opacity: 0.98; }
+    ]]></style>
+  </defs>
+
+  <circle cx="80" cy="80" r="70" fill="var(--blue)"/>
+
+  <g clip-path="url(#clip)">
+    <g class="amp">
+      <g class="phase">
+        <path class="wave" vector-effect="non-scaling-stroke" d="
+          M -360 100
+          C -320 76, -280 52, -240 76
+          C -200 100, -160 124, -120 100
+          C -80 76, -40 52, 0 76
+          C 40 100, 80 124, 120 100
+          C 160 76, 200 52, 240 76
+          C 280 100, 320 124, 360 100
+          C 400 76, 440 52, 480 76
+          C 520 100, 560 124, 600 100"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -10,15 +10,41 @@ type Props = {
   locationId?: string; // Optional locationId prop to identify the location - will fallback to default location if not provided
 };
 
-const colourFor = (light: "green" | "amber" | "red") =>
-  light === "green" ? "badge-success" : light === "amber" ? "badge-warning" : "badge-error";
+const colourFor = (light: "green" | "amber" | "red", isBeginnerFriendly = false) =>
+  isBeginnerFriendly ? "badge-info text-white" : // Changed to white text for better contrast on blue background
+  light === "green" ? "badge-success" : 
+  light === "amber" ? "badge-warning" : 
+  "badge-error";
 
-const textFor = (light: "green" | "amber" | "red") =>
-  light === "green" ? "Good" : light === "amber" ? "Fair" : "Poor";
+// Modified text function that takes skill level into account
+const textFor = (light: "green" | "amber" | "red", skill: "novice" | "intermediate" | "advanced" = "intermediate", waveHeight?: number) => {
+  // For small waves that are still rideable (under 1m)
+  const isSmallWaves = typeof waveHeight === 'number' && waveHeight < 1 && waveHeight >= 0.3;
+  
+  if (light === "green") {
+    return "Good";
+  } else if (light === "amber") {
+    return "Fair";
+  } else if (light === "red" && skill === "novice" && isSmallWaves) {
+    return "Beginner friendly";
+  } else {
+    return "Poor";
+  }
+};
+
+// Helper to check if conditions are beginner-friendly
+const isBeginnerFriendly = (light: "green" | "amber" | "red", skill: "novice" | "intermediate" | "advanced" = "intermediate", waveHeight?: number) => {
+  // Skip lengthy calculation if it's not a novice or not red
+  if (light !== "red" || skill !== "novice") return false;
+  
+  // Check if wave height is in the beginner-friendly range
+  return typeof waveHeight === 'number' && waveHeight < 1 && waveHeight >= 0.3;
+};
 
 export default function SurfDayGrade({ data, locationId = "default-location" }: Props) {
   // State for user override
   const [orientationOverride, setOrientationOverride] = useState<number | null>(null);
+  const [skillOverride, setSkillOverride] = useState<"novice" | "intermediate" | "advanced" | null>(null);
   
   // Load any existing override on mount
   useEffect(() => {
@@ -28,12 +54,85 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
   
   // Apply override if it exists
   const effectiveData = React.useMemo(() => {
-    if (orientationOverride === null) return data;
-    return { ...data, beachFacingDeg: orientationOverride };
-  }, [data, orientationOverride]);
+    let updatedData = data;
+    
+    // Apply orientation override if it exists
+    if (orientationOverride !== null) {
+      updatedData = { ...updatedData, beachFacingDeg: orientationOverride };
+    }
+    
+    // Apply skill level override if it exists
+    if (skillOverride !== null) {
+      updatedData = { ...updatedData, skill: skillOverride };
+    }
+    
+    return updatedData;
+  }, [data, orientationOverride, skillOverride]);
   
-  const day = gradeDay(effectiveData);
+  // Modify gradeDay result to filter out night hours from best hour
+  const day = React.useMemo(() => {
+    const rawDayResult = gradeDay(effectiveData);
+    
+    // If the best hour is during nighttime (before 6 AM or after 8 PM), find the best daytime hour instead
+    if (rawDayResult.bestHour) {
+      const bestHourTime = new Date(rawDayResult.bestHour.ts);
+      const hour = bestHourTime.getHours();
+      const isNightHour = hour < 6 || hour >= 20;
+      
+      if (isNightHour) {
+        // Find the best daytime hour instead
+        const daytimeHours = rawDayResult.hours.filter(h => {
+          const hourTime = new Date(h.ts);
+          const hourNum = hourTime.getHours();
+          return hourNum >= 6 && hourNum < 20; // Only consider hours between 6 AM and 8 PM
+        });
+        
+        // Sort by light (green > amber > red) then by score
+        const byLight = (l: "green" | "amber" | "red") => (l === "green" ? 2 : l === "amber" ? 1 : 0);
+        const bestDaytimeHour = daytimeHours.length > 0 
+          ? daytimeHours.sort((a, b) => byLight(b.light) - byLight(a.light) || b.score - a.score)[0] 
+          : null;
+        
+        return {
+          ...rawDayResult,
+          bestHour: bestDaytimeHour
+        };
+      }
+    }
+    
+    return rawDayResult;
+  }, [effectiveData]);
+  
   const best = day.bestHour;
+
+  // Calculate average wave height once to avoid recalculations
+  const avgWaveHeight = React.useMemo(() => {
+    return effectiveData.hours.length > 0 
+      ? effectiveData.hours.reduce((sum, h) => sum + h.primary.heightM, 0) / effectiveData.hours.length
+      : undefined;
+  }, [effectiveData.hours]);
+
+  // Get badge text and color once to avoid recalculations
+  const badgeInfo = React.useMemo(() => {
+    return {
+      color: colourFor(day.dayLight, isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight)),
+      text: textFor(day.dayLight, effectiveData.skill, avgWaveHeight)
+    };
+  }, [day.dayLight, effectiveData.skill, avgWaveHeight]);
+
+  // Debug: Log hour-by-hour grades to console
+  React.useEffect(() => {
+    console.log('Surf hour-by-hour grades:');
+    day.hours.forEach(h => {
+      const hourTime = new Date(h.ts);
+      console.log(`${hourTime.toLocaleTimeString()}: ${h.light} (score: ${h.score})`);
+    });
+    
+    // Log if there are mixed grades
+    const uniqueLights = [...new Set(day.hours.map(h => h.light))];
+    console.log('Unique grade types:', uniqueLights);
+    console.log('Has mixed grades:', uniqueLights.length > 1);
+  }, [day]);
 
   // Find the best hour data
   const bestHourData = best ? effectiveData.hours.find(h => h.ts === best.ts) : null;
@@ -69,8 +168,8 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
             height={24} 
           />
           <h2 className="card-title">Surf Outlook</h2>
-          <div className={`badge ${colourFor(day.dayLight)} text-base-100`}>
-            {textFor(day.dayLight)}
+          <div className={`badge ${badgeInfo.color} text-base-100`}>
+            {badgeInfo.text}
           </div>
         </div>
 
@@ -79,6 +178,7 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
             <div className="flex items-center justify-between">
               <div className="font-semibold">Best slot</div>
               <div className="flex items-center gap-1">
+                <div className="text-xs rounded-md bg-base-200 px-1.5 py-0.5">Daylight hours only</div>
                 {bestHourData && bestHourData.primary && (
                   <div className="relative">
                     <Image 
@@ -119,27 +219,51 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
         {/* Surf Advice Section */}
         <div className="mt-2">
           <h3 className={`font-medium text-sm mb-2 ${
-            day.dayLight === "green" ? "text-success-content bg-success" : 
-            day.dayLight === "amber" ? "text-warning-content bg-warning" : 
-            "text-error-content bg-error"
-          } px-2 py-0.5 rounded inline-block`}>Surf Advice</h3>
+            isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ? 
+              "text-info-content bg-info" :
+              day.dayLight === "green" ? "text-success-content bg-success" : 
+              day.dayLight === "amber" ? "text-warning-content bg-warning" : 
+              "text-error-content bg-error"
+          } px-2 py-0.5 rounded inline-block`}>
+            {isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ?
+              "Beginner-Friendly Surf" :
+              "Surf Advice"
+            }
+          </h3>
           <p className="text-sm">
             {day.dayLight === "green" 
               ? "Good conditions for surfing! Check the best times above for optimal experience."
               : day.dayLight === "amber"
                 ? "Fair conditions with some challenges. Be careful and check the forecast details."
-                : "Poor conditions today. Consider alternative activities or check back tomorrow."
+                : (() => {
+                    // Check if this is beginner-friendly small waves
+                    if (avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 && effectiveData.skill === "novice") {
+                      return "Small waves today - perfect for beginners, bodyboards, and learning! Experienced surfers may want to check other spots.";
+                    } else {
+                      return "Poor conditions today. Consider alternative activities or check back tomorrow.";
+                    }
+                  })()
             }
           </p>
-          {best && (
+          {best ? (
             <p className="text-sm mt-2">
               <strong>Best time to go:</strong> {new Date(best.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              {best.light === "green" ? " - excellent conditions!" : best.light === "amber" ? " - acceptable conditions" : " - challenging conditions"}
+              {best.light === "green" ? " - excellent conditions!" : 
+               best.light === "amber" ? " - acceptable conditions" : 
+               isBeginnerFriendly(best.light, effectiveData.skill, bestHourData?.primary?.heightM) ? 
+                " - good for beginners" : " - challenging conditions"}
+            </p>
+          ) : (
+            <p className="text-sm mt-2">
+              <strong>Best time to go:</strong> No suitable surfing hours found during daylight. Check back tomorrow or choose a different location.
             </p>
           )}
           
           <p className="text-xs mt-3 italic opacity-80">
-            We blend wave size, period, wind strength, relative direction, and tide status into a simple traffic-light — with safety gates to keep intermediates out of dangerous surf. Advanced surfers can read the raw data. Hang tight and be safe!
+            {effectiveData.skill === "novice" && avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 ?
+              "For novice surfers, we show small waves (0.3-1.0m) as beginner-friendly even when other conditions may not be ideal. More experienced surfers may prefer larger waves and better overall conditions." :
+              "We blend wave size, period, wind strength, relative direction, and tide status into a simple traffic-light — with safety gates to keep intermediates out of dangerous surf. Advanced surfers can read the raw data. Hang tight and be safe!"
+            }
           </p>
         </div>
 
@@ -149,13 +273,28 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 opacity-60" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
+            {day.hours.length > 0 && 
+              (() => {
+                // Get unique light types for daytime hours only - wrapped in a function to avoid recalculation
+                const daytimeHours = day.hours.filter(h => {
+                  const hourTime = new Date(h.ts);
+                  const hour = hourTime.getHours();
+                  return hour >= 6 && hour < 20; // Only consider daytime hours
+                });
+                const uniqueLights = new Set(daytimeHours.map(h => h.light));
+                return uniqueLights.size === 1 && 
+                  <span className="ml-2 text-xs opacity-70">(all hours graded similarly)</span>;
+              })()
+            }
           </summary>
           <div className="collapse-content">
-            <div className="grid grid-cols-1 gap-3">
-              {day.hours.map((h, index, array) => {
+            <div className="grid grid-cols-1 gap-3">{
+              // Memoize the hours rendering to prevent excessive recalculation
+              React.useMemo(() => day.hours.map((h, index, array) => {
                 const hourTime = new Date(h.ts);
                 const hour = hourTime.getHours();
                 const isNight = hour < 6 || hour >= 20;
+                const hourData = effectiveData.hours.find(hData => hData.ts === h.ts);
                 
                 // Logic to show only the first night hour
                 // If it's night time, check if it's the first one after sunset or if there's
@@ -179,57 +318,110 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
                   }
                 }
                 
+                // Determine if conditions are beginner-friendly for this hour
+                const hourBeginnerFriendly = isBeginnerFriendly(
+                  h.light, 
+                  effectiveData.skill, 
+                  hourData?.primary?.heightM
+                );
+                
                 return (
-                <div key={h.ts} className="flex items-center justify-between border rounded-lg p-2">
-                  <div>
-                    <div className="font-medium">
-                      {hourTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                <div key={h.ts} className="border rounded-lg p-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">
+                        {hourTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                      <div className="text-xs opacity-80">Score {h.score}</div>
                     </div>
-                    <div className="text-xs opacity-80">Score {h.score}</div>
+                    {isNight ? (
+                      <div className="text-xl p-1" title="Night time - not suitable for surfing">
+                        🌙
+                      </div>
+                    ) : (
+                      <div className={`badge ${colourFor(h.light, hourBeginnerFriendly)} text-base-100`}>
+                        {textFor(h.light, effectiveData.skill, hourData?.primary?.heightM)}
+                      </div>
+                    )}
                   </div>
-                  {isNight ? (
-                    <div className="text-xl p-1" title="Night time - not suitable for surfing">
-                      🌙
-                    </div>
-                  ) : (
-                    <div className={`badge ${colourFor(h.light)} text-base-100`}>
-                      {textFor(h.light)}
+                  {!isNight && (
+                    <div className="mt-1 text-xs">
+                      <div className="opacity-75">
+                        {h.reasons[0]?.includes('Safety') ? (
+                          <span className="text-error font-medium">{h.reasons[0]}</span>
+                        ) : (
+                          h.reasons.slice(0, 2).map((r, i) => (
+                            <div key={i}>{r}</div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              )})}
-            </div>
+              )}), [day.hours, effectiveData.hours, effectiveData.skill])
+            }</div>
           </div>
         </details>
 
         {/* Beach Orientation Selector */}
         <div className="mt-2 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Beach Orientation:</span>
-            <select 
-              className="select select-xs select-bordered" 
-              value={orientationOverride !== null ? orientationOverride : (data.beachFacingDeg ? Math.round(data.beachFacingDeg / 45) * 45 : "")}
-              onChange={handleOrientationChange}
-            >
-              <option value="">Auto-detect</option>
-              <option value="0">North (0°)</option>
-              <option value="45">Northeast (45°)</option>
-              <option value="90">East (90°)</option>
-              <option value="135">Southeast (135°)</option>
-              <option value="180">South (180°)</option>
-              <option value="225">Southwest (225°)</option>
-              <option value="270">West (270°)</option>
-              <option value="315">Northwest (315°)</option>
-            </select>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Beach Orientation:</span>
+              <select 
+                className="select select-xs select-bordered text-base-content" 
+                value={orientationOverride !== null ? orientationOverride : (data.beachFacingDeg ? Math.round(data.beachFacingDeg / 45) * 45 : "")}
+                onChange={handleOrientationChange}
+              >
+                <option value="" className="text-base-content">Auto-detect</option>
+                <option value="0" className="text-base-content">North (0°)</option>
+                <option value="45" className="text-base-content">Northeast (45°)</option>
+                <option value="90" className="text-base-content">East (90°)</option>
+                <option value="135" className="text-base-content">Southeast (135°)</option>
+                <option value="180" className="text-base-content">South (180°)</option>
+                <option value="225" className="text-base-content">Southwest (225°)</option>
+                <option value="270" className="text-base-content">West (270°)</option>
+                <option value="315" className="text-base-content">Northwest (315°)</option>
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Experience Level:</span>
+              <select 
+                className="select select-xs select-bordered text-base-content" 
+                value={skillOverride !== null ? skillOverride : (data.skill || "intermediate")}
+                onChange={(e) => {
+                  const value = e.target.value as "novice" | "intermediate" | "advanced" | "";
+                  setSkillOverride(value === "" ? null : value);
+                }}
+              >
+                <option value="" className="text-base-content">Default (Intermediate)</option>
+                <option value="novice" className="text-base-content">Beginner/Novice</option>
+                <option value="intermediate" className="text-base-content">Intermediate</option>
+                <option value="advanced" className="text-base-content">Advanced</option>
+              </select>
+            </div>
           </div>
-          {orientationOverride !== null && (
+          
+          {(orientationOverride !== null || skillOverride !== null) && (
             <div className="mt-1 flex items-center gap-1">
-              <span className="text-info">Using your custom orientation.</span>
+              <span className="text-info">
+                {orientationOverride !== null && skillOverride !== null 
+                  ? "Using custom orientation and experience level." 
+                  : orientationOverride !== null 
+                    ? "Using custom orientation." 
+                    : "Using custom experience level."}
+              </span>
               <button 
                 className="btn btn-xs btn-ghost" 
                 onClick={() => {
-                  setOrientationOverride(null);
-                  saveBeachOrientationOverride(locationId, null);
+                  if (orientationOverride !== null) {
+                    setOrientationOverride(null);
+                    saveBeachOrientationOverride(locationId, null);
+                  }
+                  if (skillOverride !== null) {
+                    setSkillOverride(null);
+                  }
                 }}
               >
                 Reset

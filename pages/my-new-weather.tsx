@@ -17,6 +17,12 @@ import { assessPollenConditions, getPollenIndex, getPollenLevelDescription, Poll
 import { getSoilCondition } from "../utils/getSoilCondition";
 import { getTideTips, type TidePhase } from "@/data/tideTips";
 import { getWaveDescription, getWindMessage, getVisibilityDescription, visibilityPercentLand } from "../utils/weatherLabels";
+import { AirQualityCardV2 } from "../components/weather-cards/AirQualityCard";
+import { AirQualityCardV3 } from "../components/weather-cards/AirQualityCardV3";
+import { PollenCard } from "../components/weather-cards/PollenCard";
+import { UVCard } from "../components/weather-cards/UVCard";
+import { SoilCard } from "../components/weather-cards/SoilCard";
+import { TestCard } from "../components/TestCard";
 
 // Local type to avoid named-type import (prevents circular import edge cases)
 interface UnifiedWeatherData {
@@ -218,7 +224,9 @@ const SoilConditionsPanel: React.FC<{
         </span>
       </div>
       {timeISO && (
-        <div className="text-xs opacity-60 mt-1">Snapshot as of {new Date(timeISO).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        <div className="text-xs opacity-60 mt-1">
+          Snapshot as of <span suppressHydrationWarning>{new Date(timeISO).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
       )}
       {advice.length > 0 && (
         <ul className="mt-2 text-sm opacity-80 pl-5">
@@ -1525,48 +1533,29 @@ const WeatherDemoPage: React.FC = () => {
             {/* Row 3: AQI | UVI | Pollen */}
             <section className="bg-transparent section-plate-none px-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {/* Test Card */}
+                <TestCard />
+                
                 {/* AQI */}
-                <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
-                  <div className="card-body">
-                    <div className="flex items-center justify-between">
-                      <h3 className="card-title">Air Quality</h3>
-                      {aqiAssess ? (
-                        <span className="badge badge-warning">{getAirQualityLevelDescription(aqiAssess.overall)}</span>
-                      ) : (
-                        <span className="badge badge-ghost">No data</span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className={`radial-progress ${aqiRingClass}`} style={{ ["--value" as any]: Math.min(100, getAirQualityIndex(weather?.airQuality?.aqi || 0)) }} aria-label="AQI">{getAirQualityIndex(weather?.airQuality?.aqi || 0)}</div>
-                      <div className="text-sm opacity-80">{aqiAssess ? 'Keep an eye if sensitive' : '—'}</div>
-                    </div>
-                  </div>
-                </div>
+                <AirQualityCardV3 />
 
                 {/* UVI */}
-                <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
-                  <div className="card-body">
-                    <h3 className="card-title flex items-center gap-2"><img src="/weather-icons/design/fill/final/uv-index.svg" alt="UV" className="w-5 h-5" /> UV Index</h3>
-                    <div className="flex items-center gap-6">
-                      <div className={`radial-progress ${uvRingClass}`} style={{ ["--value" as any]: Math.min(100, ((weather?.uvi || 0) / 11) * 100) }}>{uvNow != null ? uvNow : '—'}</div>
-                      <div className="text-sm opacity-80">Peak today {uvPeak != null ? uvPeak : '—'}</div>
-                    </div>
-                  </div>
-                </div>
+                <UVCard 
+                  weather={{
+                    uvi: weather?.uvi,
+                    sunriseISO: weather?.sunriseISO,
+                    sunsetISO: weather?.sunsetISO
+                  }}
+                  today={{
+                    uvi: today?.uvi
+                  }}
+                />
 
                 {/* Pollen */}
-                <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
-                  <div className="card-body">
-                    <div className="flex items-center justify-between">
-                      <h3 className="card-title">Pollen</h3>
-                      <span className={`badge ${pollenBadgeClass}`}>{getPollenLevelDescription(pollenAssess.overall)}</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className={`radial-progress ${pollenRingClass}`} style={{ ["--value" as any]: pollenIdx }} aria-label="Pollen Index">{pollenIdx}</div>
-                      <div className="text-sm opacity-80">Grass · Tree · Weed</div>
-                    </div>
-                  </div>
-                </div>
+                <PollenCard
+                  pollenToday={pollenToday}
+                  pollenAssess={pollenAssess}
+                />
               </div>
             </section>
 

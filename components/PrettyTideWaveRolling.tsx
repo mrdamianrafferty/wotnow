@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 type TideSample = { ts: number; height: number }; // ts = epoch ms, height in metres
 type Extremum = { ts: number; height: number; type: "high" | "low" };
@@ -37,14 +37,14 @@ function catmullRomToBezierPath(points: { x: number; y: number }[]): string {
   pts.unshift(points[0]);
   pts.push(points[points.length - 1]);
 
-  let d = `M ${points[0].x} ${points[0].y}`;
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
   for (let i = 1; i < pts.length - 2; i++) {
     const p0 = pts[i - 1], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2];
     const c1x = p1.x + (p2.x - p0.x) / 6;
     const c1y = p1.y + (p2.y - p0.y) / 6;
     const c2x = p2.x - (p3.x - p1.x) / 6;
     const c2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
   }
   return d;
 }
@@ -93,6 +93,13 @@ export default function PrettyTideWaveRolling({
   showBaseline = true,
   className = "",
 }: Props) {
+  const [isClient, setIsClient] = useState(false);
+
+  // Only render on client to avoid hydration mismatches
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const now = nowTs ?? Date.now();
   const in24h = now + 24 * 60 * 60 * 1000;
 
@@ -101,10 +108,6 @@ export default function PrettyTideWaveRolling({
     fillPath,
     xScale,
     yScale,
-    minH,
-    maxH,
-    firstX,
-    lastX,
     baseY,
     markers,
   } = useMemo(() => {
@@ -172,11 +175,20 @@ export default function PrettyTideWaveRolling({
     return { path, fillPath, xScale, yScale, minH, maxH, firstX, lastX, baseY, markers };
   }, [samples, extrema, now, in24h, width, height]);
 
-  const currentX = useMemo(() => {
-    const padX = 16;
-    const plotW = width - padX * 2;
-    return padX + ((now - now) / (in24h - now)) * plotW; // = padX
-  }, [now, in24h, width]);
+  // Show loading state during server-side rendering to prevent hydration mismatch
+  if (!isClient) {
+    return (
+      <div
+        className={`rounded-2xl p-4 bg-base-200 shadow-xl ${className}`}
+        role="img"
+        aria-label="Loading tide chart..."
+      >
+        <div className="flex items-center justify-center h-32">
+          <div className="text-sm text-gray-500">Loading tide chart...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -228,26 +240,25 @@ export default function PrettyTideWaveRolling({
                     stroke="rgba(255,255,255,0.6)"
                     strokeWidth={1}
                   />
-                  {
-                    (() => {
-                      const label = new Date(ts).toLocaleTimeString([], { hour: '2-digit' });
-                      const tx = xScale(ts);
-                      const ty = baseY - 16; // place further above baseline for larger text
-                      return (
-                        <text
-                          x={tx}
-                          y={ty}
-                          textAnchor="middle"
-                          fontSize={24}
-                          fill="#ffffff"
-                          stroke="#000000"
-                          strokeWidth={0.5}
-                        >
-                          {label}
-                        </text>
-                      );
-                    })()
-                  }
+                  {(() => {
+                    // Use UTC to ensure consistent formatting across server/client
+                    const date = new Date(ts);
+                    const hours = date.getUTCHours();
+                    const label = hours === 0 ? '12 AM' : hours === 12 ? '12 PM' : hours < 12 ? `${hours} AM` : `${hours - 12} PM`;
+                    return (
+                      <text
+                        x={xScale(ts)}
+                        y={baseY - 16}
+                        textAnchor="middle"
+                        fontSize={24}
+                        fill="#ffffff"
+                        stroke="#000000"
+                        strokeWidth={0.5}
+                      >
+                        {label}
+                      </text>
+                    );
+                  })()}
                 </g>
               ))}
             </g>
@@ -297,7 +308,13 @@ export default function PrettyTideWaveRolling({
             ? Math.min(height - size / 2 - 4, baseY + size / 2 + 8) // below axis
             : Math.max(size / 2 + 4, yCurve - size / 2 - 8); // above the curve, clamped inside viewBox
           // Build caption content: show the local time for both LOW and HIGH
-          const captionText = new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          // Use UTC to ensure consistent formatting across server/client
+          const date = new Date(m.ts);
+          const hours = date.getUTCHours();
+          const minutes = date.getUTCMinutes();
+          const hourStr = hours === 0 ? '12' : hours === 12 ? '12' : hours < 12 ? `${hours}` : `${hours - 12}`;
+          const ampm = hours < 12 ? 'AM' : 'PM';
+          const captionText = `${hourStr}:${minutes.toString().padStart(2, '0')} ${ampm}`;
           const fontSize = 24; // unified label size
           const bubbleWidth = 110;
           const bubbleHeight = 34;

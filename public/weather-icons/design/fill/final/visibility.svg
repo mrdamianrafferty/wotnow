@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <title>Visibility / Binoculars with Eyes</title>
+  <desc>Comic-style binoculars icon showing eyes in the lenses. Transparent background, strokes inherit currentColor.</desc>
+
+  <!-- Styling: inherit from currentColor so CSS can set colour -->
+  <g stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- Head/cheeks suggestion -->
+    <path d="M18 88c8 10 22 16 46 16s38-6 46-16" opacity="0.0"/>
+    <!-- Hands -->
+    <path d="M18 76l-8 6" />
+    <path d="M110 76l8 6" />
+
+    <!-- Binocular body bridge -->
+    <path d="M52 62h24" />
+
+    <!-- Left housing outer -->
+    <circle cx="40" cy="64" r="24" fill="none"/>
+    <!-- Right housing outer -->
+    <circle cx="88" cy="64" r="24" fill="none"/>
+
+    <!-- Eyepiece hint on both sides -->
+    <path d="M24 56l-8 -2" />
+    <path d="M104 56l8 -2" />
+
+    <!-- Left hand holding -->
+    <path d="M20 70c-6 6-10 10-10 16" />
+    <!-- Right hand holding -->
+    <path d="M108 70c6 6 10 10 10 16" />
+
+    <!-- Eyes (use fills that inherit currentColor with thin stroke; pupils cut with white) -->
+  </g>
+
+  <!-- Eyes with outline (stroke currentColor) and white highlights; pupils filled currentColor -->
+  <g stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left eye outline -->
+    <ellipse cx="40" cy="64" rx="14" ry="10"/>
+    <!-- Right eye outline -->
+    <ellipse cx="88" cy="64" rx="14" ry="10"/>
+  </g>
+
+  <!-- Pupils -->
+  <g fill="currentColor">
+    <circle cx="40" cy="64" r="4"/>
+    <circle cx="88" cy="64" r="4"/>
+  </g>
+
+  <!-- White glint highlights -->
+  <g fill="#ffffff" stroke="#ffffff">
+    <circle cx="36" cy="60" r="2"/>
+    <circle cx="84" cy="60" r="2"/>
+  </g>
+
+  <!-- Nose/bridge detail subtle -->
+  <g stroke="currentColor" stroke-width="4" stroke-linecap="round">
+    <path d="M64 62v6"/>
+  </g>
+
+  <!-- Optional shoulder/neck (very faint, using currentColor at low opacity) -->
+  <g stroke="currentColor" stroke-width="6" opacity="0.0">
+    <path d="M40 98c8 2 16 4 24 4s16-2 24-4"/>
+  </g>
+</svg>
