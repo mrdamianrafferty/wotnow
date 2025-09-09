@@ -31,4 +31,7 @@ pnpm-debug.log*
 
 # Prevent Babel config files from being committed
 babel.config.*
-.babelrc*
+.babelrc*node_modules/
+.next/
+out/
+.DS_Store
