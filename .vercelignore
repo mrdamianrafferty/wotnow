@@ -101,12 +101,10 @@ public/weather-icons/pnpm-lock.yaml
 public/weather-icons/README.md
 public/weather-icons/LICENSE
 
-# --- Duplicate font files (keep only woff2 for modern browsers) ---
+# --- Duplicate font files (keep modern formats + fallbacks) ---
 public/font/*.eot
-public/font/*.ttf
 public/font/*.svg
-public/font/*.woff
-# Keep woff2 only: public/font/*.woff2
+# Keep: woff2 (modern), woff (fallback), ttf (old browsers)
 
 # --- Oxanium font extras (if using system fonts instead) ---
 public/Oxanium/README.txt
