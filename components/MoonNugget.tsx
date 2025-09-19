@@ -9,7 +9,7 @@
 // - `data/moonLore.ts` present from previous step (exports MoonPhase, Culture, getMoonLoreDistinct)
 
 import * as React from 'react';
-import type { MoonPhase, Culture } from '@/data/moonLore';
+import type { MoonPhase } from '@/data/moonLore';
 import { getMoonLoreDistinct } from '@/data/moonLore';
 
 // ---- Lunar phase helpers ----------------------------------------------------

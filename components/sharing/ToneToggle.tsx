@@ -1,5 +1,4 @@
-// Toggle component for selecting DM vs Group tone
-import React from 'react';
+"use client";
 
 interface ToneToggleProps {
   value: 'dm' | 'group';

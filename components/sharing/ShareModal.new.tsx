@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import { useState, useEffect } from 'react';
 import { X, Check, Calendar, MapPin, Share2 } from 'lucide-react';
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activityId: string;
+  activityId: string; // kept for compatibility, not used
   activityName: string;
 }
 
 const ShareModal: React.FC<ShareModalProps> = ({
   isOpen,
   onClose,
-  activityId,
   activityName
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +31,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
       }
       
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Sharing:', { activityId, activityName, selectedDate, selectedVenue });
+      console.log('Sharing:', { activityName, selectedDate, selectedVenue });
       setShareSuccess(true);
       
       setTimeout(() => {

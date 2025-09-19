@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getWaveDescription } from '../../utils/weatherLabels';
 
 interface WaveCardProps {
   waveHeightM?: number | null;
@@ -9,7 +10,7 @@ interface WaveCardProps {
   swellDir?: number | null;
   windSpeedMS?: number | null;
   windDir?: number | null;
-  seaTemp?: number | null;
+  seaTemp?: number | null; // Pass Stormglass SST (°C); displayed as-is (clamped 0–40°C)
   waveSeries?: Array<{height: number | null; time?: string}> | Array<number | null>;
   lat?: number;
   lon?: number;
@@ -24,18 +25,10 @@ const marineNow = {
 
 // Helper functions (temporarily inline)
 const formatTimeConsistent = (date: Date): string => {
-  // Use UTC to ensure consistent formatting across server/client
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
+  // Use LOCAL time for UI tooltips and labels
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-};
-
-const getWaveDescription = (height: number): string => {
-  if (height < 0.5) return 'Calm seas';
-  if (height < 1.0) return 'Light waves';
-  if (height < 2.0) return 'Moderate waves';
-  if (height < 4.0) return 'Rough seas';
-  return 'Very rough seas';
 };
 
 const periodClass = (period: number): string => {
@@ -48,6 +41,13 @@ const degToCompass = (deg: number): string => {
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   return directions[Math.round(deg / 22.5) % 16];
 };
+
+// Type guard for wave series object items
+function isWaveSeriesObj(item: unknown): item is { height: number | null; time?: string } {
+  if (typeof item !== 'object' || item === null) return false;
+  const maybe = item as { height?: unknown };
+  return typeof maybe.height === 'number' || maybe.height === null;
+}
 
 // Enhanced compass component with directional arrows and clear labels
 const Compass: React.FC<{
@@ -174,16 +174,16 @@ const Compass: React.FC<{
       </div>
       <div className="flex flex-col w-full text-xs mt-2">
         <div className="flex justify-center gap-4 mb-2">
-          <div className="flex items-center gap-1 opacity-80 bg-black/20 px-3 py-1 rounded">
+          <div className="flex items-center gap-1 opacity-80 bg-slate-800/30 px-3 py-1 rounded">
             <span style={{ display:'inline-block', width:12, height:2, background:'white', borderRadius:2 }} />
             <span>Wind: {windDirName} {Math.round(windDir)}° ({Math.round(windMag)} km/h)</span>
           </div>
-          <div className="flex items-center gap-1 bg-black/20 px-3 py-1 rounded">
+          <div className="flex items-center gap-1 bg-slate-800/30 px-3 py-1 rounded">
             <span style={{ display:'inline-block', width:12, height:4, background:'rgb(59,130,246)', borderRadius:2 }} />
             <span>Swell: {swellDirName} {Math.round(swellDir)}° ({swellMag.toFixed(1)}m)</span>
           </div>
         </div>
-        <div className="text-center opacity-70 text-[10px] bg-black/10 py-1 rounded">
+        <div className="text-center opacity-70 text-[10px] bg-slate-800/25 py-1 rounded">
           <span>Example: "NW" means waves/wind coming <strong>from</strong> northwest <strong>toward</strong> shore</span>
         </div>
       </div>
@@ -202,126 +202,46 @@ export const WaveCard: React.FC<WaveCardProps> = ({
   windDir,
   seaTemp,
   waveSeries,
-  lat,
-  lon,
+  lat: _lat,
+  lon: _lon,
 }) => {
-  // Check if we have any marine data loaded (to prevent flash from fallback to real data)
-  const hasMarineData = typeof waveHeightM === 'number' || 
-                       typeof swellHeightM === 'number' || 
-                       typeof seaTemp === 'number';
-  
-  // Get wave height with fallback
-  const h = hasMarineData && typeof waveHeightM === 'number' ? waveHeightM : marineNow.wave.height;
-  const p = hasMarineData && typeof wavePeriodS === 'number' ? wavePeriodS : marineNow.wave.period;
-  const wdir = hasMarineData && typeof waveDir === 'number' ? waveDir : marineNow.wave.dir;
-  const ws = hasMarineData && typeof windSpeedMS === 'number' ? windSpeedMS : (marineNow.wind.speed / 3.6);
-  const wdeg = hasMarineData && typeof windDir === 'number' ? windDir : marineNow.wind.dir;
-  const explanationSentence = getWaveDescription(h);
-  
-  // Use parametric wave SVG with period and height values
-  const parametricWaveIconSrc = '/wave-period-icons/parametric-wave.svg';
-  
-  // Water temperature badge colour from cold (blue) → hot (red)
-  // Enhanced sea temperature validation with location and seasonal awareness
-  const seaTempRaw = (typeof seaTemp === 'number' ? seaTemp : marineNow.seaTemp);
-  
-  // Location-aware sea temperature validation
-  // Dynamic location detection for coastal areas
-  const isNorthernSpainCoast = lat !== undefined && lon !== undefined && 
-    lat >= 43.0 && lat <= 44.0 && lon >= -6.0 && lon <= -4.0; // Asturias, Cantabria region
-  const isMediterraneanSpain = lat !== undefined && lon !== undefined && 
-    lat >= 36.0 && lat <= 42.0 && lon >= -1.0 && lon <= 4.0; // Mediterranean coast
-  const isSouthernSpainCoast = lat !== undefined && lon !== undefined && 
-    lat >= 35.0 && lat <= 37.0 && lon >= -7.0 && lon <= -5.0; // Andalusia coast
-  const currentMonth = new Date().getMonth(); // 0-11, September = 8
-  
-  // Expected sea temperature ranges by season and region
-  const getExpectedSeaTempRange = (month: number, region: string) => {
-    const ranges = {
-      northernSpain: {
-        summer: { min: 16, max: 22, typical: 18 }, // June-Sep
-        spring: { min: 12, max: 18, typical: 15 }, // Mar-May
-        autumn: { min: 14, max: 18, typical: 16 }, // Oct-Dec
-        winter: { min: 10, max: 14, typical: 12 }, // Dec-Feb
-      },
-      mediterranean: {
-        summer: { min: 22, max: 28, typical: 25 },
-        spring: { min: 16, max: 22, typical: 18 },
-        autumn: { min: 18, max: 24, typical: 20 },
-        winter: { min: 12, max: 16, typical: 14 },
-      },
-      southernSpain: {
-        summer: { min: 20, max: 26, typical: 23 },
-        spring: { min: 16, max: 20, typical: 18 },
-        autumn: { min: 18, max: 22, typical: 20 },
-        winter: { min: 14, max: 18, typical: 16 },
-      },
-      generic: {
-        summer: { min: 18, max: 30, typical: 22 },
-        spring: { min: 12, max: 20, typical: 16 },
-        autumn: { min: 14, max: 22, typical: 18 },
-        winter: { min: 8, max: 16, typical: 12 },
-      }
-    };
-    
-    const regionRanges = ranges[region as keyof typeof ranges] || ranges.generic;
-    
-    if (month >= 5 && month <= 8) return regionRanges.summer; // June-Sep
-    if (month >= 2 && month <= 4) return regionRanges.spring; // Mar-May
-    if (month >= 9 && month <= 11) return regionRanges.autumn; // Oct-Dec
-    return regionRanges.winter; // Dec-Feb
-  };
-  
-  const region = isNorthernSpainCoast ? 'northernSpain' : 
-                 isMediterraneanSpain ? 'mediterranean' : 
-                 isSouthernSpainCoast ? 'southernSpain' : 'generic';
-  const expectedRange = getExpectedSeaTempRange(currentMonth, region);
-  const isSuspiciousTemp = seaTempRaw > expectedRange.max + 5 || seaTempRaw < expectedRange.min - 3;
-  
-  // Only use valid temperatures, don't fall back to hardcoded values for suspicious readings
-  let sea: number | null;
-  if (isSuspiciousTemp && typeof seaTemp === 'number') {
-    // Log suspicious temperature but don't display it
-    sea = null;
-    console.warn(`Suspicious sea temperature ${seaTempRaw}°C for ${currentMonth === 8 ? 'September' : 'current season'} in ${region}. Expected: ${expectedRange.min}-${expectedRange.max}°C. Not displaying temperature.`);
-  } else {
-    sea = typeof seaTemp === 'number' ? Math.max(0, Math.min(35, seaTempRaw)) : null; // Clamp to realistic range
-  }
-  
-  // Debug logging for sea temperature
-  if (seaTemp !== null && sea !== seaTemp) {
-    console.warn(`Sea temperature ${seaTempRaw}°C ${sea === null ? 'rejected (suspicious reading)' : `adjusted to ${sea}°C (clamped to valid range)`}`);
-  }
-  // Remove excessive console.log statements to prevent unnecessary re-renders
-  // if (typeof seaTemp !== 'number') {
-  //   console.info(`No sea temperature data available for this location`);
-  // } else if (!isSuspiciousTemp) {
-  //   console.info(`Using API sea temperature: ${seaTemp}°C (validated to ${sea}°C)`);
-  // }
-  
+  // Check if we have Stormglass-like marine data
+  const hasMarineData = (
+    typeof waveHeightM === 'number' ||
+    typeof swellHeightM === 'number' ||
+    (Array.isArray(waveSeries) && waveSeries.some(item => {
+      if (typeof item === 'number') return Number.isFinite(item);
+      if (item === null) return false;
+      if (isWaveSeriesObj(item)) return typeof item.height === 'number' && Number.isFinite(item.height);
+      return false;
+    }))
+  );
+
   // State to hold the displayed temperature, preventing flash from fallback to API data
   const [displayTemp, setDisplayTemp] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof seaTemp === 'number') {
-      const region = isNorthernSpainCoast ? 'northernSpain' : 
-                     isMediterraneanSpain ? 'mediterranean' : 
-                     isSouthernSpainCoast ? 'southernSpain' : 'generic';
-      const expectedRange = getExpectedSeaTempRange(new Date().getMonth(), region);
-      const isSuspiciousTemp = seaTemp > expectedRange.max + 5 || seaTemp < expectedRange.min - 3;
-      
-      if (isSuspiciousTemp) {
-        setDisplayTemp(null);
-        console.warn(`Suspicious sea temperature ${seaTemp}°C detected. Not displaying temperature.`);
-      } else {
-        const validated = Math.max(0, Math.min(35, seaTemp));
-        setDisplayTemp(validated);
-        console.info(`Sea temperature set to: ${validated}°C (API validated)`);
-      }
+      const validated = Math.max(0, Math.min(40, seaTemp));
+      setDisplayTemp(validated);
     } else {
       setDisplayTemp(null);
     }
-  }, [seaTemp, isNorthernSpainCoast, isMediterraneanSpain, isSouthernSpainCoast]);
+  }, [seaTemp]);
+
+  // Hide the card entirely for inland locations (no marine data)
+  if (!hasMarineData) return null;
+
+  // Prefer primary swell metrics for surf alignment; fall back to significant wave state
+  const baseHeightM = typeof swellHeightM === 'number' ? swellHeightM : (typeof waveHeightM === 'number' ? waveHeightM : marineNow.wave.height);
+  const basePeriodS = typeof swellPeriodS === 'number' ? swellPeriodS : (typeof wavePeriodS === 'number' ? wavePeriodS : marineNow.wave.period);
+  const baseDirDeg = typeof swellDir === 'number' ? swellDir : (typeof waveDir === 'number' ? waveDir : marineNow.wave.dir);
+  const ws = typeof windSpeedMS === 'number' ? windSpeedMS : (marineNow.wind.speed / 3.6);
+  const wdeg = typeof windDir === 'number' ? windDir : marineNow.wind.dir;
+  const explanationSentence = getWaveDescription(baseHeightM);
+  
+  // Use parametric wave SVG with period and height values
+  const parametricWaveIconSrc = '/wave-period-icons/parametric-wave.svg';
   
   // Water temperature badge colour based on precise temperature ranges
   const getSeaTempColor = (temp: number): string => {
@@ -354,18 +274,19 @@ export const WaveCard: React.FC<WaveCardProps> = ({
       return item; // New format with time data
     }).filter(item => item.height !== null) as Array<{height: number; time: string}> : [];
   const maxH = series.length ? Math.max(...series.map(s => s.height)) : null;
+  const chartMaxM = Math.max(1, Math.ceil((maxH ?? baseHeightM)));
 
   // Prepare wave data for table
   const waveData = [
-    { id: 'p', kind: 'Wave', height: h, period: p, direction: wdir },
+    { id: 'p', kind: 'Wave', height: (typeof waveHeightM === 'number' ? waveHeightM : baseHeightM), period: (typeof wavePeriodS === 'number' ? wavePeriodS : basePeriodS), direction: (typeof waveDir === 'number' ? waveDir : baseDirDeg) },
     (typeof swellHeightM === 'number' && typeof swellPeriodS === 'number' && typeof swellDir === 'number') ? 
       { id: 's1', kind: 'Swell', height: swellHeightM, period: swellPeriodS, direction: swellDir } : null,
   ].filter(Boolean) as Array<{ id: string; kind: string; height: number; period: number; direction: number }>;
 
   return (
-    <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm h-full">
+    <div className="card weather-card-bg text-base-content h-full">
       <div className="card-body p-4">
-        <div className="card-title mb-2 flex flex-col items-start">
+        <div className="card__header-title mb-2 flex flex-col items-start">
           <span>Waves</span>
           {explanationSentence && (
             <span className="text-sm font-normal opacity-80">{explanationSentence}</span>
@@ -379,13 +300,13 @@ export const WaveCard: React.FC<WaveCardProps> = ({
                 type="image/svg+xml"
                 data={parametricWaveIconSrc}
                 className="w-full h-full object-contain"
-                style={{ '--period': `${p}s`, '--height-m': h.toFixed(1) } as React.CSSProperties}
-                aria-label={`${p.toFixed(1)}s period, ${h.toFixed(1)}m height wave`}
+                style={{ '--period': `${basePeriodS}s`, '--height-m': baseHeightM.toFixed(1) } as React.CSSProperties}
+                aria-label={`${basePeriodS.toFixed(1)}s period, ${baseHeightM.toFixed(1)}m height wave`}
               />
             </div>
             <div className="flex flex-col">
-              <span className="text-3xl font-bold">{h.toFixed(1)} m</span>
-              <span className="text-sm opacity-80">Waves every {Math.round(p)} seconds</span>
+              <span className="text-3xl font-bold">{baseHeightM.toFixed(1)} m</span>
+              <span className="text-sm opacity-80">Waves every {Math.round(basePeriodS)} seconds</span>
             </div>
           </div>
         </div>
@@ -397,34 +318,34 @@ export const WaveCard: React.FC<WaveCardProps> = ({
           )}
         </div>
 
+        {/* Wave Details moved to unexpanded card */}
+        <div className="mt-3 bg-slate-800/25 p-3 rounded-lg">
+          <h4 className="text-sm font-medium mb-2">Wave Details</h4>
+          <div className="flex flex-col gap-2">
+            {waveData.map((s) => (
+              <div key={s.id} className="flex items-center gap-2">
+                <span className="font-medium">{s.kind}:</span>
+                <span>{s.height.toFixed(1)}m</span>
+                <span className={`badge badge-sm ${periodClass(s.period)}`}>
+                  {s.period.toFixed(1)}s
+                </span>
+                <span className="opacity-70">
+                  {degToCompass(s.direction)} ({Math.round(s.direction)}°)
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <details className="collapse collapse-arrow mt-2">
           <summary className="collapse-title text-sm opacity-80">Details</summary>
           <div className="collapse-content">
             <div className="flex flex-col gap-3">
-              {/* Wave details row */}
-              <div className="bg-black/10 p-3 rounded-lg">
-                <h4 className="text-sm font-medium mb-2">Wave Details</h4>
-                <div className="flex flex-col gap-2">
-                  {waveData.map((s) => (
-                    <div key={s.id} className="flex items-center gap-2">
-                      <span className="font-medium">{s.kind}:</span>
-                      <span>{s.height.toFixed(1)}m</span>
-                      <span className={`badge badge-sm ${periodClass(s.period)}`}>
-                        {s.period.toFixed(1)}s
-                      </span>
-                      <span className="opacity-70">
-                        {degToCompass(s.direction)} ({Math.round(s.direction)}°)
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
               {/* Direction compass row */}
-              <div className="bg-black/10 p-2 rounded-lg flex justify-center">
+              <div className="bg-slate-800/25 p-2 rounded-lg flex justify-center">
                 <Compass 
-                  swellDir={wdir} 
-                  swellMag={h} 
+                  swellDir={typeof swellDir === 'number' ? swellDir : baseDirDeg} 
+                  swellMag={typeof swellHeightM === 'number' ? swellHeightM : baseHeightM} 
                   windDir={wdeg} 
                   windMag={(ws || 0) * 3.6} 
                 />
@@ -432,25 +353,55 @@ export const WaveCard: React.FC<WaveCardProps> = ({
             </div>
 
             <div className="mt-3">
-              <h4 className="text-sm mb-1">Next 12h wave height</h4>
-              <div className="rounded-box bg-black/25 backdrop-blur-sm p-3">
-                <div className="flex items-end gap-1 h-16">
-                  {(series.length ? series.slice(0, 12) : Array.from({ length: 12 }, (_, i) => {
-                    const now = new Date();
-                    const time = new Date(now.getTime() + i * 60 * 60 * 1000);
-                    return { height: null, time: formatTimeConsistent(time) };
-                  })).map((item, i) => {
-                    const pct = (maxH && item.height !== null) ? 
-                      Math.max(6, Math.min(100, Math.round((item.height / maxH) * 100))) : 10;
-                    return (
-                      <div 
-                        key={i} 
-                        className="tooltip w-3 bg-base-content/40 rounded-t hover:bg-base-content/60 transition-colors" 
-                        style={{ height: `${pct}%` }} 
-                        data-tip={item.height !== null ? `${item.time}: ${item.height.toFixed(1)}m` : `${item.time}: No data`}
-                      />
-                    );
-                  })}
+              <h4 className="text-sm mb-1">Next 18h wave height</h4>
+              <div className="rounded-box bg-slate-800/32 backdrop-blur-sm p-3">
+                <div className="relative h-16">
+                  {/* 1m interval grid lines */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {Array.from({ length: chartMaxM }, (_, idx) => {
+                      const m = idx + 1; // 1m..chartMaxM
+                      const bottom = (m / chartMaxM) * 100;
+                      return (
+                        <div
+                          key={m}
+                          className="absolute left-0 right-0 border-t border-base-100/20"
+                          style={{ bottom: `${bottom}%` }}
+                        >
+                          <span className="absolute right-0 -translate-y-1/2 pr-1 text-[10px] opacity-60">{m}m</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Bars */}
+                  <div className="relative flex items-end gap-1 h-full">
+                    {(series.length ? series.slice(0, 18) : Array.from({ length: 18 }, (_, i) => {
+                      const now = new Date();
+                      const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+                      return { height: null, time: formatTimeConsistent(time) } as {height: number | null; time: string};
+                    })).map((item, i) => {
+                      const pct = item.height != null 
+                        ? Math.max(6, Math.min(100, Math.round((item.height / chartMaxM) * 100)))
+                        : 10;
+                      // Format tooltip time as local time if ISO-like, otherwise use given label
+                      const tipTime = (() => {
+                        const t = item.time;
+                        const d = new Date(t);
+                        if (!Number.isNaN(d.getTime())) {
+                          return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                        }
+                        return t;
+                      })();
+                      return (
+                        <div 
+                          key={i} 
+                          className="tooltip w-3 bg-base-content/40 rounded-t hover:bg-base-content/60 transition-colors" 
+                          style={{ height: `${pct}%` }} 
+                          data-tip={item.height !== null ? `${tipTime}: ${item.height.toFixed(1)}m` : `${tipTime}: No data`}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="mt-1 text-xs opacity-70">

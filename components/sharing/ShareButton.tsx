@@ -1,18 +1,18 @@
-// Share button component that triggers invite/poll creation
-import React, { useState } from 'react';
+"use client";
+
+import { useState } from 'react';
 import { ShareModal } from './ShareModal';
 
 interface ShareButtonProps {
-  activityId: string;
+  activityId: string; // kept in the public type for compatibility, not used here
   activityName: string;
   className?: string;
 }
 
-export const ShareButton: React.FC<ShareButtonProps> = ({
-  activityId,
+export function ShareButton({
   activityName,
   className = ''
-}) => {
+}: ShareButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -27,13 +27,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         Share
       </button>
       
-      {isModalOpen && (
-        <ShareModal
-          activityId={activityId}
-          activityName={activityName}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
+      <ShareModal
+        isOpen={isModalOpen}
+        activityName={activityName}
+        onClose={() => setIsModalOpen(false)}
+      />
     </>
   );
-};
+}

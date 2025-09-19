@@ -1,13 +1,15 @@
 import React from 'react';
+import Image from 'next/image';
+import { WeatherBundle } from '../../types/weather';
 
 interface PressureCardProps {
-  weather: any;
+  weather: Pick<WeatherBundle,'pressureHpa'|'pressureTrend'> | null | undefined;
   pressureTrend: string | null;
   pressure: number | null;
 }
 
 export const PressureCard: React.FC<PressureCardProps> = ({
-  weather,
+  // weather (reserved for future detailed usage)
   pressureTrend,
   pressure
 }) => {
@@ -26,10 +28,10 @@ export const PressureCard: React.FC<PressureCardProps> = ({
   };
 
   return (
-    <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
+    <div className="card weather-card-bg text-base-content">
       <div className="card-body">
         <h3 className="card-title flex items-center gap-2">
-          <img src="/weather-icons/design/fill/final/barometer.svg" alt="Pressure" className="w-5 h-5" />
+          <Image src="/weather-icons/design/fill/final/barometer.svg" alt="Pressure" width={20} height={20} className="w-5 h-5" />
           Pressure
         </h3>
         <div className="flex items-center gap-6">

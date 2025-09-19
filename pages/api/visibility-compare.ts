@@ -30,10 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // OpenWeather current visibility (meters)
-    const owm = await fetchOpenWeatherOneCall(latNum, lonNum, owmKey, { units: 'metric' });
+    type OneCallLike = {
+      current?: { visibility?: number };
+      hourly?: Array<{ visibility?: number }>;
+    };
+    const owm = (await fetchOpenWeatherOneCall(latNum, lonNum, owmKey, { units: 'metric' })) as unknown as OneCallLike;
     const owmVisM: number | null = typeof owm?.current?.visibility === 'number'
-      ? owm.current.visibility
-      : (Array.isArray(owm?.hourly) && typeof owm.hourly[0]?.visibility === 'number' ? owm.hourly[0].visibility : null);
+      ? owm.current!.visibility!
+      : (Array.isArray(owm?.hourly) && typeof owm.hourly[0]?.visibility === 'number' ? owm.hourly[0]!.visibility! : null);
     const owmVisKm = owmVisM != null ? owmVisM / 1000 : null;
 
     // Stormglass weather/point with visibility, take the next hour matching now
@@ -43,13 +47,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const params = ['visibility'].join(',');
     const sgUrl = `${STORMGLASS_WEATHER_API}?lat=${latNum}&lng=${lonNum}&params=${params}&start=${startISO}&end=${endISO}`;
     const sgRes = await fetch(sgUrl, { headers: { Authorization: sgKey } });
-    const sgJson: any = await sgRes.json();
+    const sgJson: unknown = await sgRes.json();
     if (!sgRes.ok) throw new Error(`Stormglass error ${sgRes.status}: ${JSON.stringify(sgJson)}`);
-    const hours: any[] = Array.isArray(sgJson?.hours) ? sgJson.hours : [];
-    const pickNum = (v: any) => (typeof v === 'number' ? v : Number(v));
+
+    type SgHour = { time: string; visibility?: { sg?: number; noaa?: number } };
+    const hours: SgHour[] = Array.isArray((sgJson as { hours?: unknown })?.hours)
+      ? ((sgJson as { hours: unknown[] }).hours as SgHour[])
+      : [];
 
     // Choose the first hour >= now
-    let sgEntry: any = null;
+    let sgEntry: SgHour | null = null;
     for (const h of hours) {
       const ht = new Date(h.time);
       if (ht >= now) { sgEntry = h; break; }
@@ -58,8 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Prefer 'sg' then 'noaa'
     const rawSg = sgEntry?.visibility;
-    const sgProvider = rawSg?.sg != null ? 'sg' : (rawSg?.noaa != null ? 'noaa' : null);
-    const sgVisRaw: number | null = sgProvider ? pickNum(rawSg[sgProvider]) : null;
+    const sgProvider: 'sg' | 'noaa' | null = rawSg?.sg != null ? 'sg' : (rawSg?.noaa != null ? 'noaa' : null);
+    const sgVisRaw: number | null = sgProvider ? Number(rawSg?.[sgProvider]) : null;
     // Normalize to km: if clearly meters, convert; otherwise assume km
     const sgVisKm: number | null = sgVisRaw != null
       ? (sgVisRaw > 200 ? sgVisRaw / 1000 : sgVisRaw)
@@ -83,9 +90,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       note: 'Values normalized to km where possible; units inferred when ambiguous.'
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('visibility-compare error', err);
-    return res.status(500).json({ error: err?.message || String(err) });
+    return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }
 

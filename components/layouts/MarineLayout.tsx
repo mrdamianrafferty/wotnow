@@ -7,24 +7,74 @@ import SurfDayGrade from '../weather-cards/SurfDayGrade';
 import NextFewDaysCard from '../weather-cards/NextFewDaysCard';
 import { getWindMessage } from '../../utils/weatherLabels';
 import { resolveBeachOrientationAsync } from '../../utils/orientation';
+import type { HourlyWithEventsItem, WeatherBundle, TideEvent } from '../../types/weather';
+import type { AirQualityAssessment } from '../../utils/airQualityUtils';
+
+// Local flexible provider value type for Stormglass-like sources
+type ProviderValue = { noaa?: number; sg?: number; meto?: number };
+
+// Local marine hour type allowing multiple providers
+interface MarineHourLike {
+  time: string; // ISO
+  waveHeight?: ProviderValue;
+  waterTemperature?: ProviderValue;
+  swellHeight?: ProviderValue;
+  swellPeriod?: ProviderValue;
+  windSpeed?: ProviderValue; // m/s
+  windDirection?: ProviderValue;
+  windGust?: ProviderValue;
+  swellDirection?: ProviderValue;
+  visibility?: ProviderValue;
+  precipitation?: ProviderValue;
+  currentSpeed?: ProviderValue;
+  currentDirection?: ProviderValue;
+  [key: string]: unknown;
+}
+
+// Narrow shape for pieces of weather used by this layout
+interface WeatherLike extends Partial<WeatherBundle> {
+  lat?: number;
+  lon?: number;
+  windSpeedMS?: number;
+  windGustMS?: number;
+  windDeg?: number;
+  name?: string;
+  marine?: {
+    windSpeed?: number;
+    windDirection?: number;
+    waterTemperature?: number;
+    waveHeight?: number;
+    wavePeriod?: number;
+    waveDirection?: number;
+    swellHeight?: number;
+    swellPeriod?: number;
+    swellDirection?: number;
+  } | null;
+  hourly?: Array<{ timeISO: string; waveHeightM?: number | null; swellHeightM?: number | null }>;
+  tides?: TideEvent[] | Array<{ time: string; type?: string; height?: number | null }>;
+}
+
+// Replicated subset used by WeatherCardGrid
+interface TodaySubset { uvi?: number; moonPhase?: number; moonriseISO?: string; moonsetISO?: string }
+interface PollenTodayDetail { grass_pollen?: string; tree_pollen?: string; weed_pollen?: string; olive_pollen?: string; alder_pollen?: string; birch_pollen?: string; ragweed_pollen?: string; mugwort_pollen?: string }
 
 interface MarineLayoutProps {
-  weather: any;
-  today: any;
+  weather: WeatherLike | null;
+  today: TodaySubset;
   hasMarine: boolean;
-  hourlyWithEvents: any[];
+  hourlyWithEvents: HourlyWithEventsItem[];
   uvRingClass: string;
-  aqiAssess: any;
-  pollenAssess: any;
+  aqiAssess: AirQualityAssessment | null;
+  pollenAssess: { description?: string; advice?: string } | null;
   pollenIdx: number;
   pollenBadgeClass: string;
-  pollenToday: any;
+  pollenToday: PollenTodayDetail;
   visibilityKm: number | null;
   humidity: number | null;
   pressureTrend: string | null;
   pressure: number | null;
-  marineHours: any[];
-  currentMarine: any;
+  marineHours: MarineHourLike[];
+  currentMarine: MarineHourLike | null;
   tideState: {
     text: string;
     icon?: string | null;
@@ -83,6 +133,28 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
     fetchBeachOrientation();
   }, [weather?.lat, weather?.lon]);
   
+  // Coerce pollen level for hourly card (expects { overall: number })
+  const pollenAssessForHourly = { overall: Math.max(1, Math.min(4, typeof pollenIdx === 'number' ? pollenIdx : 1)) };
+
+  // Tide list normalized to TideEvent[] for typed consumers
+  const tideList: TideEvent[] = React.useMemo(() => {
+    const direct = weather?.tide;
+    if (Array.isArray(direct)) return direct;
+    const legacy = weather?.tides;
+    if (Array.isArray(legacy)) {
+      return legacy
+        .map((t) => {
+          const raw = (t as { time: string }).time;
+          const timeISO = raw;
+          const typeRaw = String((t as { type?: string }).type || '').toUpperCase();
+          const type = (typeRaw === 'HIGH' || typeRaw === 'LOW') ? (typeRaw as 'HIGH' | 'LOW') : (typeRaw === 'H' ? 'HIGH' : typeRaw === 'L' ? 'LOW' : 'HIGH');
+          const heightM = (t as { height?: number | null }).height ?? null;
+          return { timeISO, type, heightM } as TideEvent;
+        });
+    }
+    return [];
+  }, [weather?.tide, weather?.tides]);
+  
   return (
     <div>
       {/* Marine layout with hourly, wind/tides, waves */}
@@ -95,8 +167,8 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
           </h2>
           <HourlyMarineCard
             hourlyWithEvents={hourlyWithEvents}
-            aqiAssess={aqiAssess}
-            pollenAssess={pollenAssess}
+            aqiAssess={aqiAssess ?? undefined}
+            pollenAssess={pollenAssessForHourly}
             pollenBadgeClass={pollenBadgeClass}
             hasMarine={hasMarine}
           />
@@ -136,9 +208,9 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
 
           {/* Tides Card */}
           <TidesCard
-            weather={weather}
+            weather={weather as { tides?: TideEvent[] }}
             tideState={tideState}
-            remMs={remMs}
+            remMs={remMs ?? null}
             remH={remH}
             remM={remM}
             remS={remS}
@@ -168,15 +240,20 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
                 const now = new Date();
                 const time = new Date(now.getTime() + i * 60 * 60 * 1000);
                 return {
-                  height: typeof m?.waveHeight?.noaa === 'number' ? m.waveHeight.noaa : null,
+                  // Prefer swell height for surf alignment; fallback to wave height
+                  height: typeof m?.swellHeight?.noaa === 'number' ? m.swellHeight.noaa : (
+                    typeof m?.waveHeight?.noaa === 'number' ? m.waveHeight.noaa : null
+                  ),
                   time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 };
               }) : 
-              (weather?.hourly || []).map((h: any, i: number) => {
+              (weather?.hourly || []).map((h, i: number) => {
                 const now = new Date();
                 const time = new Date(now.getTime() + i * 60 * 60 * 1000);
                 return {
-                  height: typeof h.waveHeightM === 'number' ? h.waveHeightM : null,
+                  height: typeof h.swellHeightM === 'number' ? h.swellHeightM : (
+                    typeof h.waveHeightM === 'number' ? h.waveHeightM : null
+                  ),
                   time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 };
               })
@@ -206,11 +283,14 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
         <NextFewDaysCard
           daily={weather?.daily || []}
           maxDays={8}
+          isMarine={true}
+          marineHourly={weather?.marineHourly || []}
+          tide={tideList}
         />
       </div>
 
       {/* SurfDayGrade Card */}
-      {weather?.tides && weather?.tides.length > 0 && marineHours.length > 0 && (
+      {tideList.length > 0 && marineHours.length > 0 && (
         <div className="mt-4">
           <SurfDayGrade 
             data={{
@@ -221,14 +301,18 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
                 'novice',       // Default to novice for safety
               tideProfile: {
                 // Use dynamic tide range if available
-                minM: weather?.tides && Array.isArray(weather.tides) && weather.tides.length > 0 ? 
-                  Math.min(...weather.tides
-                    .filter((event: any) => typeof event.height === 'number')
-                    .map((event: any) => event.height)) : 0,
-                maxM: weather?.tides && Array.isArray(weather.tides) && weather.tides.length > 0 ? 
-                  Math.max(...weather.tides
-                    .filter((event: any) => typeof event.height === 'number')
-                    .map((event: any) => event.height)) : 4,
+                minM: tideList.length > 0 ? 
+                  Math.min(
+                    ...tideList
+                      .filter((event) => typeof event.heightM === 'number')
+                      .map((event) => event.heightM as number)
+                  ) : 0,
+                maxM: tideList.length > 0 ? 
+                  Math.max(
+                    ...tideList
+                      .filter((event) => typeof event.heightM === 'number')
+                      .map((event) => event.heightM as number)
+                  ) : 4,
                 name: weather?.name || 'Generic Beach',
               },
               hours: marineHours.map((m) => {
@@ -238,28 +322,28 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
                   tideRangeM: 4 
                 }; // Default values
                 
-                if (weather?.tides && Array.isArray(weather.tides) && weather.tides.length > 0) {
-                  // Try to calculate actual tide data from available tide events
-                  const tideEvents = weather.tides;
-                  const tideHeights = tideEvents
-                    .filter((event: any) => typeof event.height === 'number')
-                    .map((event: any) => event.height);
+                if (tideList.length > 0) {
+                  // Calculate actual tide data from available tide events
+                  const tideHeights = tideList
+                    .filter((event) => typeof event.heightM === 'number')
+                    .map((event) => event.heightM as number);
                   
                   if (tideHeights.length > 0) {
                     const minTide = Math.min(...tideHeights);
                     const maxTide = Math.max(...tideHeights);
                     const tideRange = maxTide - minTide;
                     
-                    // Look for the tide height at this time
+                    // Look for the tide height nearest to this hour
                     const timeMs = new Date(m.time).getTime();
-                    const nearestTide = tideEvents
-                      .sort((a: any, b: any) => {
-                        const aTime = new Date(a.time).getTime();
-                        const bTime = new Date(b.time).getTime();
+                    const nearestTide = tideList
+                      .slice()
+                      .sort((a, b) => {
+                        const aTime = new Date(a.timeISO).getTime();
+                        const bTime = new Date(b.timeISO).getTime();
                         return Math.abs(aTime - timeMs) - Math.abs(bTime - timeMs);
                       })[0];
                     
-                    const currentHeight = nearestTide?.height || (minTide + maxTide) / 2;
+                    const currentHeight = (nearestTide?.heightM ?? (minTide + maxTide) / 2) as number;
                     
                     tideInput = {
                       tideHeightM: currentHeight,
@@ -271,23 +355,30 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
                 return {
                   ts: m.time,
                   wind: { 
-                    speedKt: m.windSpeed?.noaa ? m.windSpeed.noaa * 1.94384 : 0, // Convert m/s to knots
+                    speedKt: m.windSpeed?.noaa ? (m.windSpeed.noaa as number) * 1.94384 : 0, // Convert m/s to knots
                     // Use the same wind direction source as the Wind Card for consistency
                     directionDeg: (weather?.marine?.windDirection as number | undefined) ?? 
                       (weather?.windDeg as number | undefined) ?? 
-                      (m.windDirection?.noaa || 0)
+                      ((m.windDirection?.noaa as number) || 0)
                   },
                   primary: {
-                    // Use the *exact* same wave height source as WaveCard for consistency
-                    heightM: (currentMarine?.waveHeight?.noaa as number | undefined) ?? 
-                      (weather?.marine?.waveHeight as number | undefined) ?? 
-                      0,
-                    periodS: (currentMarine?.swellPeriod?.noaa as number | undefined) ?? 
-                      (weather?.marine?.wavePeriod as number | undefined) ?? 
-                      (m.wavePeriod?.noaa || m.swellPeriod?.noaa || 0),
-                    directionDeg: (currentMarine?.swellDirection?.noaa as number | undefined) ?? 
-                      (weather?.marine?.waveDirection as number | undefined) ?? 
-                      (m.waveDirection?.noaa || m.swellDirection?.noaa || 0)
+                    // Prefer swell height for surf; fallback to wave height
+                    heightM: (typeof m?.swellHeight?.noaa === 'number' ? (m.swellHeight.noaa as number) : (
+                      typeof m?.waveHeight?.noaa === 'number' ? (m.waveHeight.noaa as number) : (
+                        (currentMarine?.swellHeight?.noaa as number | undefined) ?? 
+                        (currentMarine?.waveHeight?.noaa as number | undefined) ?? 
+                        (weather?.marine?.swellHeight as number | undefined) ?? 
+                        (weather?.marine?.waveHeight as number | undefined) ?? 0
+                      )
+                    )),
+                    periodS: (typeof m?.swellPeriod?.noaa === 'number' ? (m.swellPeriod.noaa as number) : (
+                      (currentMarine?.swellPeriod?.noaa as number | undefined) ?? 
+                      (weather?.marine?.swellPeriod as number | undefined) ?? 0
+                    )),
+                    directionDeg: (typeof m?.swellDirection?.noaa === 'number' ? (m.swellDirection.noaa as number) : (
+                      (currentMarine?.swellDirection?.noaa as number | undefined) ?? 
+                      (weather?.marine?.swellDirection as number | undefined) ?? 0
+                    ))
                   },
                   tide: tideInput
                 };

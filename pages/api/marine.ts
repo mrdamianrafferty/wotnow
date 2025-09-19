@@ -5,7 +5,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const STORMGLASS_API = 'https://api.stormglass.io/v2/weather/point';
 
 // In-memory cache: key = lat_lon_bucket, for up to 12hrs, split into AM/PM
-const cache = new Map<string, { timestamp: number; data: any }>();
+const cache = new Map<string, { timestamp: number; data: unknown }>();
 // Returns "am" or "pm" to split bucket windows
 const getTimeBucket = () => {
   const hour = new Date().getHours();
@@ -74,9 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = await sgRes.json();
 
-    if (data.errors || data.message) {
-      console.error('❌ Stormglass API returned an error:', data.errors || data.message);
-      return res.status(500).json({ error: data.errors || data.message });
+    if ((data as { errors?: unknown; message?: unknown })?.errors || (data as { message?: unknown })?.message) {
+      console.error('❌ Stormglass API returned an error:', (data as { errors?: unknown; message?: unknown }).errors || (data as { message?: unknown }).message);
+      return res.status(500).json({ error: (data as { errors?: unknown; message?: unknown }).errors || (data as { message?: unknown }).message });
     }
 
     // ✅ Cache and return

@@ -2,7 +2,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { SharingService } from '../../../lib/services/sharingService';
 import { db } from '../../../lib/db/sharing';
-import { generateDeviceFingerprint } from '../../../lib/utils/idGenerator';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -56,18 +55,21 @@ async function createInvite(req: NextApiRequest, res: NextApiResponse) {
   });
 
   // Generate share message
-  const shareMessage = SharingService.generateShareMessage(invite.messageTemplate, {
-    activityName: invite.activityName,
-    venueName: invite.placeName || 'TBD',
-    startTime: new Date(invite.startTime).toLocaleTimeString('en-GB', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    }),
-    directionsLink: invite.placeLatLng ? 
-      `https://maps.google.com/?q=${invite.placeLatLng.lat},${invite.placeLatLng.lng}` : 
-      '#',
-    shortUrl: invite.shortUrl
-  });
+    const shareMessage = SharingService.generateShareMessage(
+      invite.messageTemplate as Parameters<typeof SharingService.generateShareMessage>[0],
+      {
+        activityName: invite.activityName,
+        venueName: invite.placeName || 'TBD',
+        startTime: new Date(invite.startTime).toLocaleTimeString('en-GB', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        directionsLink: invite.placeLatLng ? 
+          `https://maps.google.com/?q=${invite.placeLatLng.lat},${invite.placeLatLng.lng}` : 
+          '#',
+        shortUrl: invite.shortUrl
+      }
+    );
 
   return res.status(201).json({
     invite,

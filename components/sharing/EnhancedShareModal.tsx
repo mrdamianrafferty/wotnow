@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, MapPin, Calendar, Clock, Share2, Check } from 'lucide-react';
 import { loadGoogleMaps } from '../../lib/googleMaps';
 import { useUserPreferences } from '../../context/UserPreferencesContext';
@@ -24,7 +26,7 @@ interface EnhancedShareModalProps {
 export default function EnhancedShareModal({
   isOpen,
   onClose,
-  activityId,
+  activityId: _activityId,
   activityName,
   activityDescription = "",
   activityMessage = ""
@@ -47,8 +49,7 @@ export default function EnhancedShareModal({
     { label: 'This weekend', value: 'This weekend' }
   ];
   
-  // Quick time options based on current time
-  const currentHour = new Date().getHours();
+  // Quick time options
   const timeOptions = [
     { label: 'Morning', value: '09:00' },
     { label: 'Afternoon', value: '14:00' },
@@ -172,12 +173,12 @@ export default function EnhancedShareModal({
     
     // Add the activity message if available
     if (activityMessage) {
-      message += `\\n\\n${activityMessage}`;
+      message += `\n\n${activityMessage}`;
     }
     
     // Add weather snippet if applicable
     if (activityDescription) {
-      message += `\\n\\nToday's conditions: ${activityDescription}`;
+      message += `\n\nToday's conditions: ${activityDescription}`;
     }
     
     const shareData = {
@@ -212,7 +213,7 @@ export default function EnhancedShareModal({
         e.preventDefault();
         onClose();
       }}
-      data-theme="wotnow" // Ensures use of custom WotNow theme
+      data-theme="light"
     >
       <div className="modal-box bg-base-200 text-base-content max-w-md mx-auto">
         <button 

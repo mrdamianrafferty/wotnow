@@ -7,7 +7,6 @@ interface SmartBackgroundImageProps {
   className?: string;
   children?: React.ReactNode;
   style?: React.CSSProperties;
-  priority?: boolean;
 }
 
 /**
@@ -22,7 +21,6 @@ export default function SmartBackgroundImage({
   className = '',
   children,
   style = {},
-  priority = false,
 }: SmartBackgroundImageProps) {
   const [backgroundImage, setBackgroundImage] = React.useState<string>('');
   const [isLoading, setIsLoading] = React.useState(true);
@@ -53,8 +51,8 @@ export default function SmartBackgroundImage({
             // Test if WebP loads successfully
             await new Promise((resolve, reject) => {
               const img = new Image();
-              img.onload = resolve;
-              img.onerror = reject;
+              img.onload = resolve as () => void;
+              img.onerror = reject as () => void;
               img.src = webpSrc;
             });
             
@@ -82,7 +80,7 @@ export default function SmartBackgroundImage({
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
     ...style,
-  };
+  } as React.CSSProperties;
 
   return (
     <div 

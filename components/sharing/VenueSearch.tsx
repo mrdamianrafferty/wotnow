@@ -1,5 +1,6 @@
-// Venue search component for selecting places
-import React, { useState, useEffect, useCallback } from 'react';
+"use client";
+
+import { useState, useEffect, useCallback } from 'react';
 import { loadGoogleMaps } from '../../lib/googleMaps';
 import { useUserPreferences } from '../../context/UserPreferencesContext';
 
@@ -111,30 +112,6 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
     });
   };
 
-  const renderStars = (rating?: number) => {
-    if (!rating) return null;
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <span key={i} className={i <= rating ? 'text-yellow-400' : 'text-gray-300'}>
-          ★
-        </span>
-      );
-    }
-    return <div className="flex text-sm">{stars}</div>;
-  };
-
-  const renderPriceLevel = (priceLevel?: number) => {
-    if (!priceLevel) return null;
-    return (
-      <div className="text-sm text-gray-600">
-        {'£'.repeat(priceLevel)}{'£'.repeat(Math.max(0, 3 - priceLevel)).split('').map((_, i) => (
-          <span key={i} className="text-gray-300">£</span>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -208,7 +185,14 @@ export const VenueSearch: React.FC<VenueSearchProps> = ({
                             <span className="text-gray-700">{venue.rating}</span>
                           </div>
                         )}
-                        {venue.priceLevel && renderPriceLevel(venue.priceLevel)}
+                        {venue.priceLevel && (
+                          <div className="text-sm text-gray-600">
+                            {'£'.repeat(venue.priceLevel)}
+                            {Array.from({ length: Math.max(0, 3 - venue.priceLevel) }).map((_, i) => (
+                              <span key={i} className="text-gray-300">£</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {isSelected && (

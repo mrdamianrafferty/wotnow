@@ -121,7 +121,7 @@ export function composeGoingOutTonight(i: TonightInputs, style: 'short'|'bullets
  * Optionally restrict to a window and apply a small smoothing to avoid spiky minutes.
  */
 export function describeClearestSkiesFromHourly(
-  hourly: { time?: string[]; cloudcover?: any[] },
+  hourly: { time?: string[]; cloudcover?: number[] },
   tz: string,
   opts?: { windowStartISO?: string; windowEndISO?: string; smooth?: number; goodPct?: number; okPct?: number }
 ): string | null {
@@ -148,7 +148,7 @@ export function describeClearestSkiesFromHourly(
   for (const i of idxs) {
     const a = Math.max(0, i - half);
     const b = Math.min(ccRaw.length - 1, i + half);
-    const slice = ccRaw.slice(a, b + 1).filter(Number.isFinite);
+    const slice = ccRaw.slice(a, b + 1).filter(Number.isFinite) as number[];
     smoothed.push(slice.length ? slice.reduce((s, v) => s + v, 0) / slice.length : ccRaw[i]);
   }
 
@@ -169,3 +169,5 @@ export function describeClearestSkiesFromHourly(
   if (localMinVal <= ok)   return `Best break in the cloud near ${hhmm}.`;
   return `Cloud breaks look limited; your best chance is around ${hhmm}.`;
 }
+
+// NOTE: This module exports only the hook. Page components live under pages/.

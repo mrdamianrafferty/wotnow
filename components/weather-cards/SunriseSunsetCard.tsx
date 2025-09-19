@@ -32,45 +32,50 @@ export const SunriseSunsetCard: React.FC<SunriseSunsetCardProps> = ({
   const sunset = weather?.sunsetISO ? new Date(weather.sunsetISO).getTime() / 1000 : null;
 
   return (
-    <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
+    <div className="card weather-card-bg text-base-content">
       <div className="card-body">
-        <h3 className="card-title flex items-center gap-2">
-          <Image src="/weather-icons/design/fill/final/sunrise.svg" alt="Sun" width={20} height={20} className="w-5 h-5" />
+        <h3 className="card__header-title flex items-center gap-2">
+          <Image src="/weather-icons/design/fill/final/sunrise.svg" alt="Sun" width={24} height={24} className="w-12 h-12" />
           Sun Times
         </h3>
         
         {/* Big icons side by side */}
-        <div className="flex items-center justify-center gap-8 my-4">
-          <div className="text-center">
+        <div className="flex items-center justify-center gap-6 my-2 flex-wrap">
+          <div className="flex flex-col items-center w-20">
             <Image 
               src="/weather-icons/design/fill/final/sunrise.svg" 
               alt="Sunrise" 
-              width={96} 
-              height={96} 
-              className="w-24 h-24 mx-auto mb-2" 
+              width={64} 
+              height={64} 
+              className="w-12 h-12 mx-auto mb-1" 
             />
-            <div className="text-lg font-bold">{formatTime(sunrise)}</div>
-            <div className="text-sm opacity-70">Sunrise</div>
+            <div className="text-base font-semibold leading-tight">{formatTime(sunrise)}</div>
+            <div className="text-xs opacity-70 leading-tight">Sunrise</div>
           </div>
           
-          <div className="text-center">
+          <div className="flex flex-col items-center w-20">
             <Image 
               src="/weather-icons/design/fill/final/sunset.svg" 
               alt="Sunset" 
-              width={96} 
-              height={96} 
-              className="w-24 h-24 mx-auto mb-2" 
+              width={64} 
+              height={64} 
+              className="w-12 h-12 mx-auto mb-1" 
             />
-            <div className="text-lg font-bold">{formatTime(sunset)}</div>
-            <div className="text-sm opacity-70">Sunset</div>
+            <div className="text-base font-semibold leading-tight">{formatTime(sunset)}</div>
+            <div className="text-xs opacity-70 leading-tight">Sunset</div>
           </div>
-        </div>
 
-        <div className="divider my-2"></div>
-        
-        <div className="text-center">
-          <div className="text-sm opacity-70">Day length</div>
-          <div className="text-lg font-semibold">{getDayLength(sunrise, sunset)}</div>
+          <div className="flex flex-col items-center w-20">
+            <Image 
+              src="/weather-icons/design/fill/final/horizon.svg"
+              alt="Day length"
+              width={64}
+              height={64}
+              className="w-12 h-12 mx-auto mb-1"
+            />
+            <div className="text-base font-medium leading-tight">{getDayLength(sunrise, sunset)}</div>
+            <div className="text-xs opacity-70 leading-tight">Day length</div>
+          </div>
         </div>
       </div>
     </div>

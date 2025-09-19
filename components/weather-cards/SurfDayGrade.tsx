@@ -1,9 +1,24 @@
 // SurfDayGrade.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DayMarine, gradeDay } from "../../utils/surfScoring";
 import { getWaveDescription } from "../../utils/weatherLabels";
 import { saveBeachOrientationOverride, getBeachOrientationOverride } from "../../utils/beachOrientationOverride";
 import Image from "next/image";
+
+// --- Persist skill selection in localStorage ---
+const SKILL_STORAGE_KEY = "surfSkillOverride";
+
+function loadSavedSkill(): "novice" | "intermediate" | "advanced" | null {
+  if (typeof window === "undefined") return null;
+  const v = window.localStorage.getItem(SKILL_STORAGE_KEY);
+  return v === "novice" || v === "intermediate" || v === "advanced" ? v : null;
+}
+
+function saveSavedSkill(v: "novice" | "intermediate" | "advanced" | null) {
+  if (typeof window === "undefined") return;
+  if (v) window.localStorage.setItem(SKILL_STORAGE_KEY, v);
+  else window.localStorage.removeItem(SKILL_STORAGE_KEY);
+}
 
 type Props = {
   data: DayMarine; // includes hourly Stormglass marine + separate Stormglass tides + (optional) beachFacingDeg
@@ -41,10 +56,32 @@ const isBeginnerFriendly = (light: "green" | "amber" | "red", skill: "novice" | 
   return typeof waveHeight === 'number' && waveHeight < 1 && waveHeight >= 0.3;
 };
 
+// Local helper to get simple wind regime label relative to beach orientation
+const getWindRegimeLabel = (beachFacingDeg?: number | null, windDirDeg?: number) => {
+  if (typeof beachFacingDeg !== 'number' || typeof windDirDeg !== 'number') return null;
+  const angDiff = (a: number, b: number) => Math.abs(((a - b + 540) % 360) - 180);
+  const toSea = beachFacingDeg;
+  const fromLand = (beachFacingDeg + 180) % 360;
+  const dOn = angDiff(windDirDeg, toSea);
+  const dOff = angDiff(windDirDeg, fromLand);
+  if (dOff <= 45) return 'Offshore';
+  if (dOn <= 45) return 'Onshore';
+  return 'Cross-shore';
+};
+
 export default function SurfDayGrade({ data, locationId = "default-location" }: Props) {
   // State for user override
   const [orientationOverride, setOrientationOverride] = useState<number | null>(null);
   const [skillOverride, setSkillOverride] = useState<"novice" | "intermediate" | "advanced" | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  // Load any saved skill on mount
+  useEffect(() => {
+    const saved = loadSavedSkill();
+    if (saved) setSkillOverride(saved);
+  }, []);
   
   // Load any existing override on mount
   useEffect(() => {
@@ -112,6 +149,24 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
       : undefined;
   }, [effectiveData.hours]);
 
+  // Provide hours for carousel: prefer daytime hours, fall back to all hours if none, sort by timestamp, and be defensive
+  const hoursForCarousel = React.useMemo(() => {
+    const src = Array.isArray(day.hours) ? day.hours : [];
+    if (src.length === 0) return [] as typeof day.hours;
+    const daytime = src.filter(h => {
+      const d = new Date(h.ts);
+      const hr = Number.isFinite(d.getTime()) ? d.getHours() : 12; // default noon if bad date
+      return hr >= 6 && hr < 20;
+    });
+    const list = (daytime.length ? daytime : src).slice().sort((a, b) => {
+      const ta = typeof a.ts === 'number' ? a.ts : new Date(a.ts).getTime();
+      const tb = typeof b.ts === 'number' ? b.ts : new Date(b.ts).getTime();
+      return ta - tb;
+    });
+    return list;
+  }, [day]);
+
+
   // Get badge text and color once to avoid recalculations
   const badgeInfo = React.useMemo(() => {
     return {
@@ -136,6 +191,13 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
 
   // Find the best hour data
   const bestHourData = best ? effectiveData.hours.find(h => h.ts === best.ts) : null;
+  // Compute wind regime for best hour
+  const bestRegimeLabel = bestHourData
+    ? getWindRegimeLabel(
+        typeof effectiveData.beachFacingDeg === 'number' ? effectiveData.beachFacingDeg : null,
+        bestHourData?.wind?.directionDeg
+      )
+    : null;
 
   // Get wave description for best hour if available
   const getBestWaveDescription = () => {
@@ -158,7 +220,7 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
   };
 
   return (
-    <div className="card bg-base-100 shadow-xl max-w-sm">
+    <div className="card weather-card-bg shadow-xl max-w-sm">
       <div className="card-body gap-3">
         <div className="flex items-center gap-3">
           <Image 
@@ -167,7 +229,7 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
             width={24} 
             height={24} 
           />
-          <h2 className="card-title">Surf Outlook</h2>
+          <h2 className="card__header-title">Surf Outlook</h2>
           <div className={`badge ${badgeInfo.color} text-base-100`}>
             {badgeInfo.text}
           </div>
@@ -175,10 +237,26 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
 
         {best ? (
           <div className="border rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <div className="font-semibold">Best slot</div>
-              <div className="flex items-center gap-1">
-                <div className="text-xs rounded-md bg-base-200 px-1.5 py-0.5">Daylight hours only</div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col">
+                <div className="font-semibold">Best time</div>
+                <div className="mt-1 inline-flex items-center rounded-full bg-black/10 bg-base-200/70 px-3 py-1 text-sm">
+                  {new Date(best.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {bestRegimeLabel && (
+                  <Image
+                    src={bestRegimeLabel === 'Offshore'
+                      ? '/weather-icons/design/fill/final/wind-offshore.svg'
+                      : bestRegimeLabel === 'Onshore'
+                        ? '/weather-icons/design/fill/final/wind-onshore.svg'
+                        : '/weather-icons/design/fill/final/wind-cross.svg'}
+                    alt={`${bestRegimeLabel} wind`}
+                    width={80}
+                    height={80}
+                  />
+                )}
                 {bestHourData && bestHourData.primary && (
                   <div className="relative">
                     <Image 
@@ -196,9 +274,9 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
                 )}
               </div>
             </div>
-            <div className="text-sm opacity-80">
+            {/* <div className="text-sm opacity-80">
               {new Date(best.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </div>
+            </div> */}
             
             {waveDescription && (
               <div className="mt-2 text-sm">
@@ -216,225 +294,247 @@ export default function SurfDayGrade({ data, locationId = "default-location" }: 
           <div className="alert alert-info">No hourly data available.</div>
         )}
 
-        {/* Surf Advice Section */}
-        <div className="mt-2">
-          <h3 className={`font-medium text-sm mb-2 ${
-            isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ? 
-              "text-info-content bg-info" :
-              day.dayLight === "green" ? "text-success-content bg-success" : 
-              day.dayLight === "amber" ? "text-warning-content bg-warning" : 
-              "text-error-content bg-error"
-          } px-2 py-0.5 rounded inline-block`}>
-            {isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ?
-              "Beginner-Friendly Surf" :
-              "Surf Advice"
-            }
-          </h3>
-          <p className="text-sm">
-            {day.dayLight === "green" 
-              ? "Good conditions for surfing! Check the best times above for optimal experience."
-              : day.dayLight === "amber"
-                ? "Fair conditions with some challenges. Be careful and check the forecast details."
-                : (() => {
-                    // Check if this is beginner-friendly small waves
-                    if (avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 && effectiveData.skill === "novice") {
-                      return "Small waves today - perfect for beginners, bodyboards, and learning! Experienced surfers may want to check other spots.";
-                    } else {
-                      return "Poor conditions today. Consider alternative activities or check back tomorrow.";
-                    }
-                  })()
-            }
-          </p>
-          {best ? (
-            <p className="text-sm mt-2">
-              <strong>Best time to go:</strong> {new Date(best.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              {best.light === "green" ? " - excellent conditions!" : 
-               best.light === "amber" ? " - acceptable conditions" : 
-               isBeginnerFriendly(best.light, effectiveData.skill, bestHourData?.primary?.heightM) ? 
-                " - good for beginners" : " - challenging conditions"}
-            </p>
-          ) : (
-            <p className="text-sm mt-2">
-              <strong>Best time to go:</strong> No suitable surfing hours found during daylight. Check back tomorrow or choose a different location.
-            </p>
-          )}
-          
-          <p className="text-xs mt-3 italic opacity-80">
-            {effectiveData.skill === "novice" && avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 ?
-              "For novice surfers, we show small waves (0.3-1.0m) as beginner-friendly even when other conditions may not be ideal. More experienced surfers may prefer larger waves and better overall conditions." :
-              "We blend wave size, period, wind strength, relative direction, and tide status into a simple traffic-light — with safety gates to keep intermediates out of dangerous surf. Advanced surfers can read the raw data. Hang tight and be safe!"
-            }
-          </p>
-        </div>
-
-        <details className="collapse collapse-arrow">
-          <summary className="collapse-title text-sm font-medium flex items-center">
+        {/* Hour-by-hour (always visible) */}
+        <div className="mt-1">
+          <div className="text-sm font-medium mb-1 flex items-center">
             Hour-by-hour
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1 opacity-60" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-            {day.hours.length > 0 && 
-              (() => {
-                // Get unique light types for daytime hours only - wrapped in a function to avoid recalculation
-                const daytimeHours = day.hours.filter(h => {
-                  const hourTime = new Date(h.ts);
-                  const hour = hourTime.getHours();
-                  return hour >= 6 && hour < 20; // Only consider daytime hours
-                });
-                const uniqueLights = new Set(daytimeHours.map(h => h.light));
-                return uniqueLights.size === 1 && 
-                  <span className="ml-2 text-xs opacity-70">(all hours graded similarly)</span>;
-              })()
-            }
-          </summary>
-          <div className="collapse-content">
-            <div className="grid grid-cols-1 gap-3">{
-              // Memoize the hours rendering to prevent excessive recalculation
-              React.useMemo(() => day.hours.map((h, index, array) => {
+            {day.hours.length > 0 && (() => {
+              const daytimeHours = day.hours.filter(h => {
                 const hourTime = new Date(h.ts);
                 const hour = hourTime.getHours();
-                const isNight = hour < 6 || hour >= 20;
-                const hourData = effectiveData.hours.find(hData => hData.ts === h.ts);
-                
-                // Logic to show only the first night hour
-                // If it's night time, check if it's the first one after sunset or if there's
-                // a previous hour that's also night time
-                if (isNight) {
-                  // Get the previous hour's night status (if available)
-                  const prevHour = index > 0 ? array[index - 1] : null;
-                  const prevHourTime = prevHour ? new Date(prevHour.ts) : null;
-                  const prevIsNight = prevHourTime ? 
-                    (prevHourTime.getHours() < 6 || prevHourTime.getHours() >= 20) : false;
-                  
-                  // Skip if it's not the first night hour (except after dawn)
-                  if (prevIsNight) {
-                    // Show if it's the first hour after dawn (i.e., previous was night, this is day)
-                    if (hour >= 6 && hour < 20) {
-                      // This is day time after night - show it
-                    } else {
-                      // This is another night hour - skip it
-                      return null;
-                    }
+                return hour >= 6 && hour < 20;
+              });
+              const uniqueLights = new Set(daytimeHours.map(h => h.light));
+              return uniqueLights.size === 1 && (
+                <span className="ml-2 text-xs opacity-70"></span>
+              );
+            })()}
+          </div>
+
+          {hoursForCarousel.length === 0 ? (
+            <div className="text-xs opacity-70">No hourly breakdown available.</div>
+          ) : (
+            <div>
+
+              <div
+                ref={scrollerRef}
+                className="overflow-x-auto no-scrollbar w-full px-6 pb-2 touch-pan-x overscroll-x-contain"
+                style={{ scrollSnapType: 'none', WebkitOverflowScrolling: 'touch' }}
+                onWheel={(e) => {
+                  const el = scrollerRef.current;
+                  if (!el) return;
+                  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                    el.scrollLeft += e.deltaY;
+                    e.preventDefault();
                   }
-                }
-                
-                // Determine if conditions are beginner-friendly for this hour
-                const hourBeginnerFriendly = isBeginnerFriendly(
-                  h.light, 
-                  effectiveData.skill, 
-                  hourData?.primary?.heightM
-                );
-                
-                return (
-                <div key={h.ts} className="border rounded-lg p-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">
-                        {hourTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <div className="text-xs opacity-80">Score {h.score}</div>
-                    </div>
-                    {isNight ? (
-                      <div className="text-xl p-1" title="Night time - not suitable for surfing">
-                        🌙
-                      </div>
-                    ) : (
-                      <div className={`badge ${colourFor(h.light, hourBeginnerFriendly)} text-base-100`}>
-                        {textFor(h.light, effectiveData.skill, hourData?.primary?.heightM)}
-                      </div>
-                    )}
-                  </div>
-                  {!isNight && (
-                    <div className="mt-1 text-xs">
-                      <div className="opacity-75">
-                        {h.reasons[0]?.includes('Safety') ? (
-                          <span className="text-error font-medium">{h.reasons[0]}</span>
-                        ) : (
-                          h.reasons.slice(0, 2).map((r, i) => (
-                            <div key={i}>{r}</div>
-                          ))
+                }}
+              >
+                <div className="flex gap-1.5 min-w-max">
+                  {hoursForCarousel.map(h => {
+                    const hourTime = new Date(h.ts);
+                    const hourData = effectiveData.hours.find(hData => {
+                      const a = typeof hData.ts === 'number' ? hData.ts : new Date(hData.ts).getTime();
+                      const b = typeof h.ts === 'number' ? h.ts : new Date(h.ts).getTime();
+                      return a === b;
+                    });
+                    const beginnerFriendly = isBeginnerFriendly(
+                      h.light,
+                      effectiveData.skill,
+                      hourData?.primary?.heightM
+                    );
+                    const regimeLabel = getWindRegimeLabel(
+                      typeof effectiveData.beachFacingDeg === 'number' ? effectiveData.beachFacingDeg : null,
+                      hourData?.wind?.directionDeg
+                    );
+                    const isBest = best && h.ts === best.ts;
+
+                    return (
+                      <div key={h.ts} className={`border rounded-lg p-2 w-[110px] shrink-0 snap-start ${isBest ? 'ring ring-primary/60' : ''}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-medium text-xs">
+                            {Number.isFinite(hourTime.getTime())
+                              ? hourTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                              : '--:--'}
+                          </div>
+                          <div className={`badge badge-xs ${colourFor(h.light, beginnerFriendly)} text-base-100`}>{textFor(h.light, effectiveData.skill, hourData?.primary?.heightM)}</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-1">
+                          <Image src="/wave-period-icons/parametric-wave.svg" alt="" aria-hidden width={54} height={54} />
+                          {hourData?.primary && (
+                            <div className="flex flex-col text-[10px] font-medium text-left">
+                              <span>{hourData.primary.heightM.toFixed(1)}m</span>
+                              <span>{Math.round(hourData.primary.periodS)}s</span>
+                            </div>
+                          )}
+                        </div>
+                        {regimeLabel && (
+                          <div className="mt-1 flex flex-col items-center justify-center text-[11px]">
+                            {regimeLabel === 'Offshore' && (
+                              <>
+                                <Image src="/weather-icons/design/fill/final/wind-offshore.svg" alt="" aria-hidden width={80} height={80} />
+                                <span className="mt-0.5">Offshore</span>
+                              </>
+                            )}
+                            {regimeLabel === 'Onshore' && (
+                              <>
+                                <Image src="/weather-icons/design/fill/final/wind-onshore.svg" alt="" aria-hidden width={80} height={80} />
+                                <span className="mt-0.5">Onshore</span>
+                              </>
+                            )}
+                            {regimeLabel === 'Cross-shore' && (
+                              <>
+                                <Image src="/weather-icons/design/fill/final/wind.svg" alt="" aria-hidden width={80} height={80} />
+                                <span className="mt-0.5">Cross-shore</span>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
-              )}), [day.hours, effectiveData.hours, effectiveData.skill])
-            }</div>
-          </div>
-        </details>
+              </div>
 
-        {/* Beach Orientation Selector */}
-        <div className="mt-2 text-xs">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Beach Orientation:</span>
-              <select 
-                className="select select-xs select-bordered text-base-content" 
-                value={orientationOverride !== null ? orientationOverride : (data.beachFacingDeg ? Math.round(data.beachFacingDeg / 45) * 45 : "")}
-                onChange={handleOrientationChange}
-              >
-                <option value="" className="text-base-content">Auto-detect</option>
-                <option value="0" className="text-base-content">North (0°)</option>
-                <option value="45" className="text-base-content">Northeast (45°)</option>
-                <option value="90" className="text-base-content">East (90°)</option>
-                <option value="135" className="text-base-content">Southeast (135°)</option>
-                <option value="180" className="text-base-content">South (180°)</option>
-                <option value="225" className="text-base-content">Southwest (225°)</option>
-                <option value="270" className="text-base-content">West (270°)</option>
-                <option value="315" className="text-base-content">Northwest (315°)</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Experience Level:</span>
-              <select 
-                className="select select-xs select-bordered text-base-content" 
-                value={skillOverride !== null ? skillOverride : (data.skill || "intermediate")}
-                onChange={(e) => {
-                  const value = e.target.value as "novice" | "intermediate" | "advanced" | "";
-                  setSkillOverride(value === "" ? null : value);
-                }}
-              >
-                <option value="" className="text-base-content">Default (Intermediate)</option>
-                <option value="novice" className="text-base-content">Beginner/Novice</option>
-                <option value="intermediate" className="text-base-content">Intermediate</option>
-                <option value="advanced" className="text-base-content">Advanced</option>
-              </select>
-            </div>
-          </div>
-          
-          {(orientationOverride !== null || skillOverride !== null) && (
-            <div className="mt-1 flex items-center gap-1">
-              <span className="text-info">
-                {orientationOverride !== null && skillOverride !== null 
-                  ? "Using custom orientation and experience level." 
-                  : orientationOverride !== null 
-                    ? "Using custom orientation." 
-                    : "Using custom experience level."}
-              </span>
-              <button 
-                className="btn btn-xs btn-ghost" 
-                onClick={() => {
-                  if (orientationOverride !== null) {
-                    setOrientationOverride(null);
-                    saveBeachOrientationOverride(locationId, null);
-                  }
-                  if (skillOverride !== null) {
-                    setSkillOverride(null);
-                  }
-                }}
-              >
-                Reset
-              </button>
             </div>
           )}
         </div>
 
-        <div className="text-xs opacity-70 mt-2">
-          <p>Note: Uses stored beach orientation if available; falls back gracefully when unknown. Tides come from the
-          separate Stormglass Tides API.</p>
-          <p className="mt-1">For better accuracy, use the map picker to precisely select your surf spot or set the beach orientation above to match your specific break.</p>
-        </div>
+        {/* More details (expander for the rest of the card) */}
+        <details className="collapse collapse-arrow mt-2">
+          <summary className="collapse-title text-sm font-medium">More details</summary>
+          <div className="collapse-content">
+            {/* Surf Advice Section */}
+            <div className="mt-2">
+              <h3 className={`font-medium text-sm mb-2 ${
+                isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ? 
+                  'text-info-content bg-info' :
+                  day.dayLight === 'green' ? 'text-success-content bg-success' : 
+                  day.dayLight === 'amber' ? 'text-warning-content bg-warning' : 
+                  'text-error-content bg-error'
+              } px-2 py-0.5 rounded inline-block`}>
+                {isBeginnerFriendly(day.dayLight, effectiveData.skill, avgWaveHeight) ?
+                  'Beginner-Friendly Surf' :
+                  'Surf Advice'
+                }
+              </h3>
+              <p className="text-sm">
+                {day.dayLight === 'green' 
+                  ? 'Good conditions for surfing! Check the best times above for optimal experience.'
+                  : day.dayLight === 'amber'
+                    ? 'Fair conditions with some challenges. Be careful and check the forecast details.'
+                    : (() => {
+                        if (avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 && effectiveData.skill === 'novice') {
+                          return 'Small waves today - perfect for beginners, bodyboards, and learning! Experienced surfers may want to check other spots.';
+                        } else {
+                          return 'Poor conditions today. Consider alternative activities or check back tomorrow.';
+                        }
+                      })()
+                }
+              </p>
+              {best ? (
+                <p className="text-sm mt-2">
+                  <strong>Best time to go:</strong> {new Date(best.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {best.light === 'green' ? ' - excellent conditions!' : 
+                   best.light === 'amber' ? ' - acceptable conditions' : 
+                   isBeginnerFriendly(best.light, effectiveData.skill, bestHourData?.primary?.heightM) ? 
+                    ' - good for beginners' : ' - challenging conditions'}
+                </p>
+              ) : (
+                <p className="text-sm mt-2">
+                  <strong>Best time to go:</strong> No suitable surfing hours found during daylight. Check back tomorrow or choose a different location.
+                </p>
+              )}
+              
+              <p className="text-xs mt-3 italic opacity-80">
+                {effectiveData.skill === 'novice' && avgWaveHeight !== undefined && avgWaveHeight >= 0.3 && avgWaveHeight < 1 ?
+                  'For novice surfers, we show small waves (0.3-1.0m) as beginner-friendly even when other conditions may not be ideal. More experienced surfers may prefer larger waves and better overall conditions.' :
+                  'We blend wave size, period, wind strength, relative direction, and tide status into a simple traffic-light — with safety gates to keep intermediates out of dangerous surf. Advanced surfers can read the raw data. Hang tight and be safe!'
+                }
+              </p>
+            </div>
+
+            {/* Beach Orientation Selector */}
+            <div className="mt-2 text-xs">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Beach Orientation:</span>
+                  <select 
+                    className="select select-xs select-bordered text-base-content" 
+                    value={orientationOverride !== null ? orientationOverride : (data.beachFacingDeg ? Math.round(data.beachFacingDeg / 45) * 45 : '')}
+                    onChange={handleOrientationChange}
+                  >
+                    <option value="" className="text-base-content">Auto-detect</option>
+                    <option value="0" className="text-base-content">North (0°)</option>
+                    <option value="45" className="text-base-content">Northeast (45°)</option>
+                    <option value="315" className="text-base-content">Northwest (315°)</option>
+                    <option value="90" className="text-base-content">East (90°)</option>
+                    <option value="135" className="text-base-content">Southeast (135°)</option>
+                    <option value="225" className="text-base-content">Southwest (225°)</option>
+                    <option value="180" className="text-base-content">South (180°)</option>
+                    <option value="270" className="text-base-content">West (270°)</option>
+                    
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div role="group" aria-label="Experience level" className="flex gap-1">
+                    {([
+                      { key: 'novice',       label: 'Novice' },
+                      { key: 'intermediate', label: 'Intermediate' },
+                      { key: 'advanced',     label: 'Advanced' },
+                    ] as const).map(({ key, label }) => {
+                      const current = (skillOverride ?? data.skill ?? 'intermediate');
+                      const isActive = current === key;
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => { setSkillOverride(key); saveSavedSkill(key); }}
+                          className={`px-2 py-1 rounded-full border text-xs flex items-center gap-1 transition 
+                            ${isActive ? 'border-base-content bg-base-200' : 'border-base-300 hover:border-base-content/60'}`}
+                          aria-pressed={isActive}
+                        >
+                          {isActive && <span className="badge badge-xs"></span>}
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {(orientationOverride !== null || skillOverride !== null) && (
+                <div className="mt-1 flex items-center gap-1">
+                  <span className="text-info">
+                    {orientationOverride !== null && skillOverride !== null 
+                      ? 'Using custom orientation and experience level.' 
+                      : orientationOverride !== null 
+                        ? 'Using custom orientation.' 
+                        : 'Using custom experience level.'}
+                  </span>
+                  <button 
+                    className="btn btn-xs btn-ghost" 
+                    onClick={() => {
+                      if (orientationOverride !== null) {
+                        setOrientationOverride(null);
+                        saveBeachOrientationOverride(locationId, null);
+                      }
+                      if (skillOverride !== null) {
+                        setSkillOverride(null);
+                        saveSavedSkill(null);
+                      }
+                    }}
+                  >
+                    Reset
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="text-xs opacity-70 mt-2">
+              <p>Note: Uses stored beach orientation if available; falls back gracefully when unknown.</p>
+              <p className="mt-1">To check beach orientation, use the map picker to precisely select your surf spot or set the beach orientation above to match your specific break.</p>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
   );

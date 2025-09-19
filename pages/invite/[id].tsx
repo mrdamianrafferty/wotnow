@@ -44,8 +44,11 @@ export default function InvitePage({ invite }: InvitePageProps) {
     const title = encodeURIComponent(`${invite.activityName} at ${invite.placeName || 'TBD'}`);
     const details = encodeURIComponent(`Created with WotNow\n${invite.placeAddress || ''}`);
     const location = encodeURIComponent(invite.placeAddress || '');
-    
-    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}&details=${details}&location=${location}`;
+
+    // Use both start and end for Google Calendar event
+    const startStr = start.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const endStr = end.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startStr}/${endStr}&details=${details}&location=${location}`;
     window.open(googleCalUrl, '_blank');
   };
 

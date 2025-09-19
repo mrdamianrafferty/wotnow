@@ -1,7 +1,7 @@
 // Core sharing service with utilities from share.yml spec
-import { db, Invite, Poll, Vote, ShareToken } from '../db/sharing';
+import { db, Invite, Poll, Vote, ShareToken, PollCandidate } from '../db/sharing';
 import { generateId, generateShortId } from '../utils/idGenerator';
-import { signData, verifySignature } from '../utils/crypto';
+import { signData } from '../utils/crypto';
 
 // Emoji helpers from share.yml
 export const emojiHelpers = {
@@ -44,30 +44,44 @@ export const emojiHelpers = {
   }
 };
 
+// Shared variables required by message templates
+export interface MessageVars {
+  activityName: string;
+  startTime: string;
+  venueName?: string;
+  addressArea?: string;
+  directionsLink?: string;
+  shortUrl?: string;
+  activityId?: string;
+  spotName?: string;
+  reasons?: string[];
+  ratingWord?: string;
+}
+
 // Message templates from share.yml
 export const messageTemplates = {
-  A_short: (vars: any) => 
+  A_short: (vars: MessageVars) => 
     `Fancy ${vars.activityName}?\n${vars.venueName} • ${vars.startTime}\n${vars.directionsLink}`,
   
-  B_detail: (vars: any) => 
+  B_detail: (vars: MessageVars) => 
     `${vars.activityName} tonight?\n${vars.venueName} (${vars.addressArea})\nStarts ${vars.startTime} • ${vars.directionsLink}`,
   
-  C_emoji: (vars: any) => 
+  C_emoji: (vars: MessageVars) => 
     `${vars.activityName} 🗓️ ${vars.startTime}\n📍 ${vars.venueName}\n${vars.directionsLink}`,
   
-  DM_invite: (vars: any) => 
+  DM_invite: (vars: MessageVars) => 
     `Fancy ${vars.activityName} at ${vars.venueName}?\n${vars.startTime} • ${vars.directionsLink}\n${vars.shortUrl}`,
   
-  GROUP_invite: (vars: any) => 
+  GROUP_invite: (vars: MessageVars) => 
     `Fancy ${vars.activityName}?\n${vars.venueName} • ${vars.startTime}\nConfirm here:\n${vars.shortUrl}`,
   
-  conditions_invite: (vars: any) => 
-    `${vars.activityName}? ${vars.ratingWord} today ${emojiHelpers.emojiFor(vars.activityId)}\n${vars.spotName} • ${vars.startTime}\n${emojiHelpers.reasonsLine(vars.reasons, 2)}\n${vars.shortUrl}`
+  conditions_invite: (vars: MessageVars) => 
+    `${vars.activityName}? ${vars.ratingWord} today ${emojiHelpers.emojiFor(vars.activityId!)}\n${vars.spotName} • ${vars.startTime}\n${emojiHelpers.reasonsLine(vars.reasons || [], 2)}\n${vars.shortUrl}`
 };
 
 export class SharingService {
   // Create shortlink (placeholder - implement with actual service)
-  static async createShortlink(longUrl: string, campaign: string, tags: string[]): Promise<string> {
+  static async createShortlink(_longUrl: string, _campaign: string, _tags: string[]): Promise<string> {
     const shortId = generateShortId();
     // TODO: Implement actual shortlink service
     return `https://wtn.to/${shortId}`;
@@ -222,8 +236,8 @@ export class SharingService {
   // Get poll results and determine winner
   static async getPollResults(pollId: string): Promise<{
     poll: Poll;
-    winner?: any;
-    fairnessScore?: any;
+    winner?: PollCandidate;
+    fairnessScore?: { medianETA: number; maxETA: number; accessibilityFlags: number };
   } | null> {
     const poll = await db.getPoll(pollId);
     if (!poll) return null;
@@ -257,8 +271,8 @@ export class SharingService {
   }
 
   // Generate share message
-  static generateShareMessage(template: string, vars: any): string {
-    const templateFn = messageTemplates[template as keyof typeof messageTemplates];
+  static generateShareMessage(template: keyof typeof messageTemplates, vars: MessageVars): string {
+    const templateFn = messageTemplates[template];
     return templateFn ? templateFn(vars) : '';
   }
 }

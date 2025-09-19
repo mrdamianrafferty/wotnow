@@ -17,7 +17,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const localDate = date || `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
   try {
-    const om: any = await fetchOpenMeteoWeather(latNum, lonNum, localDate, localDate);
+    // Minimal Open-Meteo hourly shape used in this endpoint
+    type OpenMeteoHourly = {
+      time?: string[];
+      soil_temperature_0cm?: number[];
+      soil_temperature_6cm?: number[];
+      soil_temperature_18cm?: number[];
+      soil_temperature_54cm?: number[];
+      soil_moisture_0_to_1cm?: number[];
+      soil_moisture_1_to_3cm?: number[];
+      soil_moisture_3_to_9cm?: number[];
+      soil_moisture_9_to_27cm?: number[];
+    };
+    type OpenMeteoResponse = { hourly?: OpenMeteoHourly };
+
+    const om = (await fetchOpenMeteoWeather(latNum, lonNum, localDate, localDate)) as OpenMeteoResponse;
     const H = om?.hourly || {};
     return res.status(200).json({
       date: localDate,
@@ -31,8 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       soil_moisture_3_to_9cm: H.soil_moisture_3_to_9cm || [],
       soil_moisture_9_to_27cm: H.soil_moisture_9_to_27cm || [],
     });
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || String(e) });
+  } catch (e: unknown) {
+    return res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
   }
 }
 

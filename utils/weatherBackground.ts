@@ -1,5 +1,3 @@
-
-
 // utils/weatherBackground.ts
 // Minimal, dependency‑free resolver that maps unified weather inputs → CSS class hints.
 // Works with components/WeatherAnimationLayer.tsx and your windwave.css helpers.
@@ -83,7 +81,8 @@ export function pickBackgroundClasses(args: BackgroundPickArgs): BackgroundPick 
   const showClouds = cloudsByCond || cloudPct >= 20;
 
   // Decide on waves (explicit marine_* OR thresholds)
-  let waves = false;
+  // Change: if isMarine, always show waves to indicate sea context and trigger animation automatically.
+  let waves = isMarine;
   if (condition === 'marine_calm' || condition === 'marine_choppy' || condition === 'marine_storm') {
     waves = true;
   }

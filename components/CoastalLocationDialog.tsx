@@ -1,840 +1,427 @@
-import React, { useEffect, useState } from 'react';
-import countryNameToFlagEmoji from '../utils/flags';
-import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
+import React, { useEffect, useRef, useState } from 'react';
+import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import dynamic from 'next/dynamic';
-import { computeSimulatedOrientation } from '../utils/orientation';
-import { runComprehensiveDiagnostics } from '../utils/diagnostics';
-import { advancedGeolocation, LocationResult } from '../utils/advancedGeolocation';
-import ModernLocationSearch from './ModernLocationSearch';
-
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
 
-// Define the component interface
-const CoastalLocationDialog: React.FC<{
+// Remove complex inferred types to avoid mismatches with library typings
+
+type NominatimResponse = {
+  name?: string;
+  display_name?: string;
+  address?: {
+    beach?: string;
+    water?: string;
+    amenity?: string;
+    road?: string;
+    neighbourhood?: string;
+    suburb?: string;
+    village?: string;
+    town?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    region?: string;
+  };
+};
+
+// Minimal type for Google Places suggestion items we use
+interface SuggestionItem {
+  place_id?: string;
+  description?: string;
+  structured_formatting?: {
+    main_text?: string;
+    secondary_text?: string;
+  };
+}
+
+// Location-like shape used across components
+export type LocationLike = { name: string; lat: number; lon: number; type?: 'home' | 'coastal' };
+
+/**
+ * CoastalLocationDialog — DaisyUI modal with Google Places autocomplete wired in.
+ * - Solid light theme (scoped) to avoid white-on-white from global styles
+ * - Focus management (trap, restore, Esc/Backdrop close)
+ * - Renders its own suggestion list INSIDE the modal (no pac-container styling battles)
+ */
+
+export type BasicLocation = { name: string; lat: number; lon: number };
+
+interface CoastalLocationDialogProps {
   open: boolean;
   onClose: () => void;
   title?: string;
-  onSave: (loc: { name: string; lat: number; lon: number }) => void;
-  homeLocation?: { name: string; lat: number; lon: number };
-  coastalLocation?: { name: string; lat: number; lon: number };
-  setHomeLocation?: (loc: { name: string; lat: number; lon: number }) => void;
-  setCoastalLocation?: (loc: { name: string; lat: number; lon: number }) => void;
-  recentLocations?: { name: string; lat: number; lon: number }[];
-}> = ({ 
-  open, 
-  onClose, 
-  title = "Pick your coastal location",
-  onSave, 
+  onSave: (loc: BasicLocation) => void;
+  homeLocation?: LocationLike;
+  recentLocations?: BasicLocation[];
+  // optional extras for backwards compatibility with callers
+  coastalLocation?: LocationLike;
+  setHomeLocation?: (loc: LocationLike) => void;
+  setCoastalLocation?: (loc: LocationLike) => void;
+}
+
+const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
+  open,
+  onClose,
+  title = 'Pick your coastal location',
+  onSave,
   homeLocation,
+  recentLocations: _recentLocations = [],
 }) => {
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
   const [showMapPicker, setShowMapPicker] = useState(false);
-  const [useModernSearch, setUseModernSearch] = useState(false);
-  const [geolocationAbortController, setGeolocationAbortController] = useState<AbortController | null>(null);
-
-  const [recentLocationsState, setRecentLocationsState] = useState<{ name: string; lat: number; lon: number }[]>([]);
-
-  // Added new state hooks as per instructions
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [selectedName, setSelectedName] = useState<string>('Pinned location');
 
+  const [selectedName, setSelectedName] = useState<string | null>(null);
+
+  const [isLocating, setIsLocating] = useState(false);
+  const [confirmLocate, setConfirmLocate] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  const RECENT_KEY = 'coastal_recent_locations_v1';
+  const LEGACY_KEY = 'recentCoastalLocations';
+  const [recent, setRecent] = useState<BasicLocation[]>([]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const rawNew = localStorage.getItem(RECENT_KEY);
+      const rawLegacyLocal = localStorage.getItem(LEGACY_KEY);
+      const rawLegacySession = sessionStorage.getItem(LEGACY_KEY);
+      const fromNew = rawNew ? (JSON.parse(rawNew) as BasicLocation[]) : [];
+      const fromLegacyLocal = rawLegacyLocal ? (JSON.parse(rawLegacyLocal) as BasicLocation[]) : [];
+      const fromLegacySession = rawLegacySession ? (JSON.parse(rawLegacySession) as BasicLocation[]) : [];
+
+      const merged = [...fromNew, ...fromLegacyLocal, ...fromLegacySession];
+      const keyOf = (l: BasicLocation) => `${l.name}|${Number(l.lat).toFixed(4)},${Number(l.lon).toFixed(4)}`;
+      const dedup: Record<string, BasicLocation> = {};
+      merged.forEach((l) => { if (l && typeof l.lat !== 'undefined' && typeof l.lon !== 'undefined') dedup[keyOf(l)] = { ...l, lat: Number(l.lat), lon: Number(l.lon) }; });
+      const list = Object.values(dedup).slice(0, 8);
+      if (list.length) setRecent(list);
+
+      // write back to new key for future reads
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch (err) { void err; }
+    } catch (err) { void err; }
+  }, []);
+  // Reload recents from storage every time dialog opens, and listen for storage events
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+    const load = () => {
+      try {
+        const rawNew = localStorage.getItem(RECENT_KEY);
+        const rawLegacyLocal = localStorage.getItem(LEGACY_KEY);
+        const rawLegacySession = sessionStorage.getItem(LEGACY_KEY);
+        const fromNew = rawNew ? (JSON.parse(rawNew) as BasicLocation[]) : [];
+        const fromLegacyLocal = rawLegacyLocal ? (JSON.parse(rawLegacyLocal) as BasicLocation[]) : [];
+        const fromLegacySession = rawLegacySession ? (JSON.parse(rawLegacySession) as BasicLocation[]) : [];
+        const merged = [...fromNew, ...fromLegacyLocal, ...fromLegacySession];
+        const keyOf = (l: BasicLocation) => `${l.name}|${Number(l.lat).toFixed(4)},${Number(l.lon).toFixed(4)}`;
+        const dedup: Record<string, BasicLocation> = {};
+        merged.forEach((l) => { if (l && typeof l.lat !== 'undefined' && typeof l.lon !== 'undefined') dedup[keyOf(l)] = { ...l, lat: Number(l.lat), lon: Number(l.lon) }; });
+        const list = Object.values(dedup).slice(0, 8);
+        if (list.length) setRecent(list);
+      } catch (err) { void err; }
+    };
+    load();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === RECENT_KEY || e.key === LEGACY_KEY) load();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [open]);
+  const addRecent = (loc: BasicLocation) => {
+    setRecent((prev) => {
+      const list = Array.isArray(prev) ? [...prev] : [];
+      const keyOf = (l: BasicLocation) => `${l.name}|${Number(l.lat).toFixed(4)},${Number(l.lon).toFixed(4)}`;
+      const idx = list.findIndex((r) => keyOf(r) === keyOf(loc));
+      if (idx !== -1) list.splice(idx, 1);
+      list.unshift({ ...loc, lat: Number(loc.lat), lon: Number(loc.lon) });
+      const trimmed = list.slice(0, 8);
+      const payload = JSON.stringify(trimmed);
+      try { if (typeof window !== 'undefined') localStorage.setItem(RECENT_KEY, payload); } catch (err) { void err; }
+      try { if (typeof window !== 'undefined') sessionStorage.setItem(RECENT_KEY, payload); } catch (err) { void err; }
+      // also write legacy keys for compatibility with older code paths
+      try { if (typeof window !== 'undefined') localStorage.setItem(LEGACY_KEY, payload); } catch (err) { void err; }
+      try { if (typeof window !== 'undefined') sessionStorage.setItem(LEGACY_KEY, payload); } catch (err) { void err; }
+      return trimmed;
+    });
+  };
+
+  // Google Places hook (we render our own suggestions list)
   const {
     ready,
     value,
-    setValue,
     suggestions: { status, data },
+    setValue,
     clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      locationBias: {
-        center: {
-          lat: homeLocation?.lat || 43.48,
-          lng: homeLocation?.lon || -5.27,
-        },
-        radius: 100000, // 100 km in metres
-      }
-    },
-    debounce: 300,
-  });
+  } = usePlacesAutocomplete({ debounce: 300 });
 
+  // Lock scroll + set/restore focus when opened/closed
   useEffect(() => {
-    const saved = localStorage.getItem("recentCoastalLocations");
-    if (saved) {
-      try {
-        setRecentLocationsState(JSON.parse(saved));
-      } catch (e) {
-        console.error("Error parsing recent locations", e);
-      }
-    }
-    
-    // Run diagnostics in development (only once)
-    if (process.env.NODE_ENV === 'development') {
-      const hasRunDiagnostics = sessionStorage.getItem('hasRunLocationDiagnostics');
-      if (!hasRunDiagnostics) {
-        setTimeout(() => {
-          console.log('🔧 Running enhanced location diagnostics...');
-          runComprehensiveDiagnostics();
-          sessionStorage.setItem('hasRunLocationDiagnostics', 'true');
-        }, 2000);
-      }
-      
-      // Check if Google Places API fails to load and switch to modern search
-      setTimeout(() => {
-        if (!ready && !useModernSearch) {
-          console.warn("Google Places API took too long to load, switching to alternative search");
-          // No need to show error message - just switch silently
-          setUseModernSearch(true);
-        }
-      }, 5000);
-    }
-
-    // Check for macOS CoreLocation issues and suggest alternative search silently
-    const isMacOS = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-    if (isMacOS) {
-      const hasLocationIssues = localStorage.getItem('hasLocationIssues');
-      if (hasLocationIssues === 'true') {
-        setTimeout(() => {
-          // Skip the warning message - just enable alternative search
-          setUseModernSearch(true);
-        }, 1000);
-      }
-    }
-  }, [ready, useModernSearch]);
-
-  // Cancel geolocation when switching to modern search
-  useEffect(() => {
-    if (useModernSearch) {
-      cancelGpsButAllowIpFallback();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useModernSearch]);
-
-  // Cleanup geolocation on unmount
-  useEffect(() => {
+    if (!open) return;
+    previousFocusRef.current = (document.activeElement as HTMLElement) || null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const id = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => {
-      if (geolocationAbortController) {
-        geolocationAbortController.abort();
-      }
+      window.clearTimeout(id);
+      document.body.style.overflow = prevOverflow;
+      previousFocusRef.current?.focus?.();
     };
-  }, [geolocationAbortController]);
+  }, [open]);
 
-  // Advanced geolocation function with multiple fallback strategies
+  // Simple focus trap + Esc close
+  const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
+    if (e.key === 'Escape') { e.stopPropagation(); onClose(); return; }
+    if (e.key === 'Tab' && dialogRef.current) {
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+      const nodes = Array.from(focusable);
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement as HTMLElement;
+      if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+      if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+    }
+  };
+
+  const reverseGeocodeName = async (lat: number, lon: number): Promise<string | null> => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=14`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'GoDaisy/1.0 (contact: app)'
+        }
+      });
+      if (!res.ok) return null;
+      const json: NominatimResponse = await res.json();
+      // Prefer beach/amenity/road + town/region where available
+      const nameParts: string[] = [];
+      const disp = json?.name || json?.display_name;
+      if (disp) return disp as string;
+      const addr = json?.address || {};
+      const name = addr.beach || addr.water || addr.amenity || addr.road || addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || addr.county;
+      const region = addr.state || addr.region || addr.county;
+      if (name) nameParts.push(name);
+      if (region) nameParts.push(region);
+      return nameParts.length ? nameParts.join(', ') : null;
+    } catch {
+      return null;
+    }
+  };
+
   const getCurrentLocation = async () => {
     setLocationError(null);
-    setIsGettingLocation(true);
-    
-    // Create new abort controller for this geolocation request
-    const controller = new AbortController();
-    setGeolocationAbortController(controller);
-    
+    setConfirmLocate(false);
+    if (!('geolocation' in navigator)) {
+      setLocationError('Geolocation is not available in this browser.');
+      return;
+    }
     try {
-      console.log('Starting advanced geolocation...');
-      
-      // Use advanced geolocation service with all fallback strategies
-      const result: LocationResult = await advancedGeolocation.getLocation({
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 300000, // 5 minutes
-        useWatchPosition: true, // Enable watchPosition for macOS
-        enableIpFallback: true, // Enable IP fallback
-        ipApiKey: undefined, // Could add IP geolocation API key here if available
-        abortSignal: controller.signal
-      });
-      
-      console.log('Advanced geolocation result:', result);
-      
-      // Clear any previous error messages since we got a successful result
-      setLocationError(null);
-      
-      // Create location object
-      const location = {
-        name: result.name || `${result.method} Location (${result.lat.toFixed(4)}, ${result.lon.toFixed(4)})`,
-        lat: result.lat,
-        lon: result.lon
-      };
-      
-      // Call onSave with the location data
-      onSave(location);
-      
-      // Update recent locations
-      const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-      const updated = [location, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== location.name)].slice(0, 5);
-      localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
-      
-      // Add likely beach caching logic if it looks like a coastal location
-      const isLikelyBeach = (name: string) =>
-        /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal|bay|coast|shore|marina|harbor|harbour|pier|wharf)\b/i.test(name);
-      
-      if (isLikelyBeach(location.name)) {
-        const orientation = computeSimulatedOrientation(location.lat, location.lon);
-        const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
-        const exists = cached.some((b: { name: string; lat: number; lon: number }) => 
-          b.name === location.name || (Math.abs(b.lat - location.lat) < 0.005 && Math.abs(b.lon - location.lon) < 0.005)
+      setIsLocating(true);
+      const { lat, lon } = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            resolve({ lat: latitude, lon: longitude });
+          },
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
-        
-        if (!exists) {
-          const newBeach = {
-            name: location.name,
-            lat: location.lat,
-            lon: location.lon,
-            orientation,
-            added: new Date().toISOString(),
-            source: 'advancedGeolocation',
-            method: result.method,
-            confidence: result.confidence,
-            sourceCoords: { lat: location.lat, lon: location.lon }
-          };
-          const updated = [newBeach, ...cached].slice(0, 100);
-          localStorage.setItem("cachedBeaches", JSON.stringify(updated));
-        }
+      });
+
+      // update local state for UI (optional)
+      setSelectedCoords({ lat, lon });
+      setSelectedName(null);
+
+      const friendly = await reverseGeocodeName(lat, lon);
+      const friendlyName = friendly || `Current location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      const saved = { name: friendlyName, lat, lon } as BasicLocation;
+      addRecent(saved);
+      onSave(saved);
+      onClose();
+    } catch (e: unknown) {
+      let msg = 'Unable to get your location.';
+      const errObj = (e as { code?: number } | Error | undefined) || undefined;
+      if (errObj && typeof errObj === 'object' && 'code' in errObj && typeof errObj.code === 'number') {
+        const code = errObj.code as number;
+        if (code === 1) msg = 'Location permission denied.';
+        if (code === 2) msg = 'Position unavailable.';
+        if (code === 3) msg = 'Location timeout.';
+      } else if (errObj instanceof Error) {
+        msg = errObj.message;
       }
-      
-      // Display success message with method used
-      let successMessage = `Location found`;
-      if (result.method === 'gps-high' || result.method === 'gps-low') {
-        successMessage += ` using GPS (${result.confidence} confidence)`;
-      } else if (result.method === 'watch') {
-        successMessage += ` using continuous location tracking`;
-      } else if (result.method === 'ip') {
-        successMessage += ` using your internet connection`;
-      }
-      
-      if (result.accuracy) {
-        successMessage += ` - accuracy: ${Math.round(result.accuracy)}m`;
-      }
-      
-      console.log(successMessage);
-      
-    } catch (error) {
-      console.error("Advanced geolocation failed:", error);
-      
-      // Don't show error if it was aborted by user (they likely started typing)
-      if (error instanceof Error && error.message.includes('aborted')) {
-        console.log('Geolocation was aborted by user action');
-        return;
-      }
-      
-      // Handle graceful automatic location unavailable (don't show error message)
-      if (error instanceof Error && error.message === 'automatic_location_unavailable') {
-        console.log('Automatic location unavailable, user can use manual search');
-        // Don't set any error message - just let them use the search interface
-        return;
-      }
-      
-      let errorMessage = "Failed to get your location. ";
-      
-      // Detect if we're on macOS for better error messaging
-      const isMacOS = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-      
-      if (error instanceof Error) {
-        if (error.message.includes('not supported')) {
-          errorMessage += "Your browser doesn't support location services. Please search for your location manually.";
-        } else if (error.message.includes('denied')) {
-          errorMessage += "Location access was denied. Please enable location permissions in your browser settings and try again.";
-        } else if (error.message.includes('unavailable') || error.message.includes('CoreLocation')) {
-          if (isMacOS) {
-            errorMessage += "macOS CoreLocation is having issues. This is common and usually related to system location settings. ";
-            errorMessage += "Try: System Preferences > Security & Privacy > Location Services, ensure it's enabled for your browser.";
-          } else {
-            errorMessage += "Location services are currently unavailable. This might be due to poor signal or system settings.";
-          }
-        } else if (error.message.includes('timeout')) {
-          if (isMacOS) {
-            errorMessage += "Location request timed out - this is very common on macOS due to CoreLocation limitations. ";
-            errorMessage += "The app will remember this and use alternative methods next time.";
-          } else {
-            errorMessage += "Location request timed out. Please check your network connection and try again.";
-          }
-          // Remember that this device has location issues
-          localStorage.setItem('hasLocationIssues', 'true');
-        } else if (error.message.includes('IP geolocation')) {
-          errorMessage += "All location methods failed including internet-based location. Please search manually.";
-        } else {
-          errorMessage += error.message;
-        }
-      } else {
-        errorMessage += "Unknown error occurred.";
-      }
-      
-      errorMessage += " Please try searching manually or using the map picker.";
-      setLocationError(errorMessage);
+      setLocationError(msg);
     } finally {
-      setIsGettingLocation(false);
-      setGeolocationAbortController(null);
+      setIsLocating(false);
     }
   };
 
-  // Handle location selection from modern search
-  const handleModernSearchSelect = (location: { name: string; lat: number; lon: number }) => {
-    onSave(location);
-    
-    // Update recent locations
-    const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-    const updated = [location, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== location.name)].slice(0, 5);
-    localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
-    
-    // Add likely beach caching logic
-    const isLikelyBeach = (name: string) =>
-      /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal|bay|coast|shore|marina|harbor|harbour|pier|wharf)\b/i.test(name);
-    if (isLikelyBeach(location.name)) {
-      const orientation = computeSimulatedOrientation(location.lat, location.lon);
-      const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
-      const exists = cached.some((b: { name: string; lat: number; lon: number }) => b.name === location.name || (Math.abs(b.lat - location.lat) < 0.005 && Math.abs(b.lon - location.lon) < 0.005));
-      if (!exists) {
-        const newBeach = {
-          name: location.name,
-          lat: location.lat,
-          lon: location.lon,
-          orientation,
-          added: new Date().toISOString(),
-          source: 'modernSearch',
-          sourceCoords: { lat: location.lat, lon: location.lon }
-        };
-        const updated = [newBeach, ...cached].slice(0, 100);
-        localStorage.setItem("cachedBeaches", JSON.stringify(updated));
-      }
+  const saveAndClose = (loc: BasicLocation) => {
+    addRecent(loc);
+    onSave(loc);
+    clearSuggestions();
+    setValue('');
+    setSelectedCoords(null);
+    setSelectedName(null);
+    onClose();
+  };
+
+  // Handle click on a Google Places suggestion
+  const handleSuggestionClick = async (
+    suggestion: SuggestionItem
+  ) => {
+    try {
+      const placeId: string | undefined = suggestion?.place_id;
+      const label: string = suggestion?.structured_formatting?.main_text || suggestion?.description || 'Selected place';
+      if (!placeId) return;
+      const results = await getGeocode({ placeId });
+      if (!results?.length) return;
+      const { lat, lng } = await getLatLng(results[0]);
+      const loc: BasicLocation = { name: label, lat, lon: lng };
+      saveAndClose(loc);
+    } catch (err) {
+      // swallow
+      void err;
     }
   };
 
-  // Cancel any ongoing geolocation when user starts typing
-  const cancelGeolocation = () => {
-    if (geolocationAbortController) {
-      console.log('🚫 Cancelling geolocation due to user input');
-      geolocationAbortController.abort();
-      setGeolocationAbortController(null);
-      setIsGettingLocation(false);
-      setLocationError(null);
-    }
+  const handleRecentClick = (loc: BasicLocation) => {
+    saveAndClose(loc);
   };
 
-  // Smart cancellation that allows IP fallback to continue
-  const cancelGpsButAllowIpFallback = () => {
-    if (geolocationAbortController && isGettingLocation) {
-      console.log('🚫 Cancelling GPS geolocation but allowing IP fallback');
-      // Don't abort the controller immediately - let the geolocation service handle IP fallback
-      // Just update UI state - no need to show a warning message
-      // Don't set isGettingLocation to false - let the geolocation complete naturally
-    }
+  const handleMapSelect = async (lat: number, lon: number) => {
+    setSelectedCoords({ lat, lon });
+    const friendly = await reverseGeocodeName(lat, lon);
+    const name = friendly || `Selected point (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    setSelectedName(name);
+    saveAndClose({ name, lat, lon });
   };
 
-  // If dialog is not open, don't render anything
   if (!open) return null;
 
-  // Show map picker modal
-  if (showMapPicker) {
-    return (
-      <div className="coastal-dialog-backdrop coastal-dialog-modal">
-        <div className="coastal-dialog coastal-dialog-content" style={{ padding: '24px', borderRadius: '12px' }}>
-          <button className="coastal-dialog-close" onClick={() => setShowMapPicker(false)}>&times;</button>
-          <h3 className="coastal-dialog-title" style={{ fontSize: '1.5rem', marginBottom: '12px' }}>
-            📍 Pick location from map
-          </h3>
-          <MapPicker
-            homeLocation={homeLocation}
-            onSelect={async (lat: number, lon: number) => {
-              setSelectedCoords({ lat, lon });
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
+      <div
+        className="force-light bg-base-100 text-base-content shadow-xl rounded-box w-[min(92vw,48rem)] p-6 pointer-events-auto !bg-white"
+        style={{ backgroundColor: 'white', opacity: 1, zIndex: 10000, backdropFilter: 'none' }}
+        ref={dialogRef}
+        onKeyDown={onKeyDown}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="coastal-dialog-title"
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h2 id="coastal-dialog-title" className="text-lg font-semibold">{title}</h2>
+          <button aria-label="Close" className="btn btn-ghost btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <p className="text-sm text-base-content/60 mb-3">
+          {/(home|Home)/.test(title) ? 'Search for your town or postcode, or drop a pin on the map.' : 'Search for a beach or coastal spot, or drop a pin on the map.'}
+        </p>
 
-              try {
-                const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-                if (!apiKey) {
-                  setSelectedName('Pinned location');
-                  return;
-                }
-                
-                const response = await fetch(
-                  `https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${apiKey}`,
-                  { 
-                    headers: { 'Accept': 'application/json' },
-                    signal: AbortSignal.timeout(5000)
-                  }
-                );
-                
-                if (!response.ok) {
-                  throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const data = await response.json();
-                if (data && data.length > 0) {
-                  const location = data[0];
-                  
-                  // Build a more descriptive location name
-                  let locationName = '';
-                  
-                  // Try to build a meaningful name using available components
-                  if (location.name && location.name !== location.country) {
-                    locationName = location.name;
-                  } else if (location.local_names && location.local_names.en) {
-                    locationName = location.local_names.en;
-                  } else {
-                    locationName = 'Pinned location';
-                  }
-                  
-                  // Add state/region if available and different from name
-                  if (location.state && location.state !== locationName) {
-                    locationName += `, ${location.state}`;
-                  }
-                  
-                  // Add country if it's not already obvious and we have a specific local name
-                  if (location.country && locationName !== 'Pinned location' && !locationName.includes(location.country)) {
-                    locationName += `, ${location.country}`;
-                  }
-                  
-                  setSelectedName(locationName);
-                } else {
-                  setSelectedName('Pinned location');
-                }
-              } catch (err) {
-                console.error("Reverse geocoding failed", err);
-                setSelectedName('Pinned location');
-              }
-            }}
+        <div className="form-control relative">
+          <input
+            ref={inputRef}
+            type="text"
+            className="input input-bordered w-full"
+            placeholder={ready ? 'Search a place…' : 'Loading…'}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            aria-autocomplete="list"
           />
-          {selectedCoords && (
-            <>
-              <div style={{ margin: '12px 0', fontSize: '0.95rem', fontWeight: '500' }}>
-                📍 Selected: {selectedName}
-              </div>
-              <button
-                onClick={() => {
-                  if (selectedCoords) {
-                    const { lat, lon } = selectedCoords;
-                    onSave({ name: selectedName, lat, lon });
-                    const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                    const updated = [{ name: selectedName, lat, lon }, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== selectedName)].slice(0, 5);
-                    localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
-                    // Add likely beach caching logic
-                    const isLikelyBeach = (name: string) =>
-                      /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal)\b/i.test(name);
-                    if (isLikelyBeach(selectedName)) {
-                      const orientation = computeSimulatedOrientation(lat, lon);
-                      const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
-                      const exists = cached.some((b: { name: string; lat: number; lon: number }) => b.name === selectedName || (Math.abs(b.lat - lat) < 0.005 && Math.abs(b.lon - lon) < 0.005));
-                      if (!exists) {
-                        const updated = [{
-                          name: selectedName,
-                          lat,
-                          lon,
-                          orientation,
-                          added: new Date().toISOString(),
-                          source: 'userSearch',
-                          sourceCoords: { lat, lon }
-                        }, ...cached].slice(0, 100);
-                        localStorage.setItem("cachedBeaches", JSON.stringify(updated));
-                      }
-                    }
-                    setShowMapPicker(false);
-                  }
-                }}
-                style={{
-                  background: '#4ade80',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '6px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  color: '#fff',
-                  marginBottom: '12px'
-                }}
-              >
-                ✅ Save this location
-              </button>
-            </>
+
+          {status === 'OK' && data?.length > 0 && (
+            <ul
+              className="absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ring-base-300/60 max-h-64 overflow-auto shadow-lg"
+              role="listbox"
+            >
+              {data.map((s: unknown, idx: number) => {
+                const sug = (s as SuggestionItem);
+                const key = sug.place_id || idx.toString();
+                const main = sug?.structured_formatting?.main_text || sug?.description;
+                const secondary = sug?.structured_formatting?.secondary_text;
+                return (
+                  <li key={key}>
+                    <button
+                      className="w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200"
+                      onClick={() => handleSuggestionClick(sug)}
+                    >
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium leading-tight">{main}</span>
+                        {secondary ? <span className="text-xs opacity-70 leading-tight">{secondary}</span> : null}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           )}
-          <button
-            onClick={() => setShowMapPicker(false)}
-            style={{
-              background: '#e5e7eb',
-              border: 'none',
-              padding: '10px 16px',
-              borderRadius: '6px',
-              fontWeight: '500',
-              cursor: 'pointer'
-            }}
-          >
-            Cancel
+        </div>
+
+        <div className="flex gap-2 mt-3">
+          <button className="btn btn-primary" onClick={getCurrentLocation} disabled={isLocating}>
+            {isLocating ? 'Locating…' : 'Use current location'}
+          </button>
+          <button className="btn btn-outline" onClick={() => setShowMapPicker((s) => !s)}>
+            {showMapPicker ? 'Hide map' : 'Pick from map'}
           </button>
         </div>
-      </div>
-    );
-  }
 
-  // Use CSS classes from index.css for styling
-  return (
-    <div className="coastal-dialog-backdrop">
-      <div className="coastal-dialog">
-        {/* Close button */}
-        <button className="coastal-dialog-close" onClick={onClose}>&times;</button>
-        
-        {/* Dialog title */}
-        <h3 className="coastal-dialog-title">
-          <span className="coastal-dialog-icon">📍</span> {title}
-        </h3>
-        
-        {/* Search input at the top */}
-        {useModernSearch ? (
-          <ModernLocationSearch
-            onSelect={(location) => {
-              // Cancel any ongoing geolocation when user selects from modern search
-              cancelGeolocation();
-              handleModernSearchSelect(location);
-            }}
-            homeLocation={homeLocation}
-            placeholder="Search for location"
-            onInputFocus={cancelGeolocation}
-          />
-        ) : (
-          <div className="coastal-dialog-search-container">
-            <input
-              type="text"
-              value={value}
-              autoFocus
-              disabled={!ready}
-              placeholder={!ready ? "Loading..." : "Search for location"}
-              onChange={(e) => {
-                // Cancel any ongoing geolocation immediately when user starts typing
-                cancelGeolocation();
-                setValue(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setValue('');
-                  clearSuggestions();
-                }
-              }}
-              onFocus={() => {
-                // Also cancel geolocation when user focuses on input (in case they click to type)
-                cancelGeolocation();
-              }}
-              className="coastal-dialog-input"
-            />
-            {value && (
-              <button
-                className="coastal-dialog-search-clear"
-                onClick={() => {
-                  setValue('');
-                  clearSuggestions();
-                }}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
+        {locationError ? (
+          <div className="alert alert-error mt-3">
+            <span>{locationError}</span>
           </div>
-        )}
+        ) : null}
 
-        {/* Two action buttons side by side */}
-        <div className="coastal-dialog-actions">
-          {isGettingLocation ? (
-            // Show cancel button when geolocation is in progress
-            <button
-              className="coastal-dialog-action-btn coastal-dialog-cancel-btn"
-              onClick={cancelGeolocation}
-              style={{ 
-                backgroundColor: '#ff6b6b', 
-                color: 'white',
-                border: 'none'
-              }}
-            >
-              ✕ Cancel location search
-            </button>
-          ) : (
-            <>
-              {(() => {
-                const isMacOS = /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
-                return (
-                  <button
-                    className={`coastal-dialog-action-btn ${isMacOS ? 'coastal-dialog-location-btn-secondary' : 'coastal-dialog-location-btn'}`}
-                    onClick={() => {
-                      // Clear any previous errors
-                      setLocationError(null);
-                      
-                      // No confirmation needed - we handle failures gracefully
-                      getCurrentLocation();
-                    }}
-                    disabled={isGettingLocation}
-                    title={isMacOS 
-                      ? "Try automatic location (may fall back to manual search)" 
-                      : "Advanced location detection: GPS, WiFi positioning, network location, and IP-based fallback"
-                    }
-                  >
-                    <span style={{ marginRight: '6px' }}>📍</span>
-                    <span>{isMacOS ? 'Try my location' : 'Use my location'}</span>
-                  </button>
-                );
-              })()}
-              
-              <button
-                className="coastal-dialog-action-btn coastal-dialog-map-btn"
-                onClick={() => setShowMapPicker(true)}
-              >
-                🗺️ Find on map
-              </button>
-            </>
-          )}
-        </div>
-        
-        {/* Show error message if there is one */}
-        {locationError && (
-          <div 
-            style={{ 
-              color: '#dc2626', 
-              marginBottom: '16px', 
-              padding: '8px', 
-              background: '#fee2e2', 
-              borderRadius: '6px',
-              fontSize: '0.9rem',
-              position: 'relative'
-            }}
-          >
-            {locationError}
-            {(locationError.includes('timed out') || locationError.includes('taking too long') || locationError.includes('timeout')) && !useModernSearch ? (
-              <div style={{ marginTop: '8px' }}>
+        {confirmLocate ? (
+          <div className="alert mt-3">
+            <span>Allow your browser to access location to auto-detect your position.</span>
+          </div>
+        ) : null}
+
+        {showMapPicker ? (
+          <div className="mt-3 rounded-box overflow-hidden ring-1 ring-base-300/60">
+            <MapPicker homeLocation={homeLocation || undefined} onSelect={handleMapSelect} />
+          </div>
+        ) : null}
+
+        {recent?.length ? (
+          <div className="mt-4">
+            <div className="text-sm font-semibold mb-2">Recent</div>
+            <div className="flex flex-wrap gap-2">
+              {recent.map((r, i) => (
                 <button
-                  onClick={() => {
-                    setLocationError(null);
-                    setUseModernSearch(true);
-                  }}
-                  style={{
-                    background: '#dc2626',
-                    border: 'none',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    marginRight: '8px'
-                  }}
+                  key={`${r.name}-${i}`}
+                  className="btn btn-sm btn-outline rounded-full"
+                  onClick={() => handleRecentClick(r)}
+                  aria-label={`Use recent location ${r.name}`}
                 >
-                  Use manual search instead
+                  <span className="truncate max-w-[14rem]">{r.name}</span>
                 </button>
-              </div>
-            ) : null}
-            <button
-              onClick={() => setLocationError(null)}
-              style={{
-                position: 'absolute',
-                top: '4px',
-                right: '8px',
-                background: 'none',
-                border: 'none',
-                color: '#dc2626',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '1rem'
-              }}
-              title="Dismiss error"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Show helpful message when Places API is not ready */}
-        {!ready && !locationError && !useModernSearch && (
-          <div 
-            style={{ 
-              color: '#7c2d12', 
-              marginBottom: '16px', 
-              padding: '8px', 
-              background: '#fef3c7', 
-              borderRadius: '6px',
-              fontSize: '0.9rem'
-            }}
-          >
-            🔄 Loading search functionality...
-            <button
-              onClick={() => setUseModernSearch(true)}
-              style={{
-                marginLeft: '8px',
-                background: 'none',
-                border: '1px solid #d97706',
-                borderRadius: '4px',
-                padding: '2px 6px',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                color: '#d97706'
-              }}
-            >
-              Use alternative search
-            </button>
-          </div>
-        )}
-
-        {/* Show suggestion to use alternative search if geolocation keeps failing */}
-        {!useModernSearch && (
-          <div 
-            style={{ 
-              color: '#7c2d12', 
-              marginBottom: '16px', 
-              padding: '8px', 
-              background: '#fef3c7', 
-              borderRadius: '6px',
-              fontSize: '0.9rem'
-            }}
-          >
-            💡 Tip: If location detection isn't working on your device, try the alternative search below
-            <button
-              onClick={() => setUseModernSearch(true)}
-              style={{
-                marginLeft: '8px',
-                background: '#d97706',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '4px 8px',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                color: 'white'
-              }}
-            >
-              Use alternative search
-            </button>
-          </div>
-        )}
-
-        {recentLocationsState && recentLocationsState.length > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <h4>Recent Locations</h4>
-            <ul className="coastal-dialog-recent-list">
-              {recentLocationsState.map((loc, index) => (
-                <li key={index} className="coastal-dialog-recent-item coastal-location-item">
-                  <button
-                    onClick={() => {
-                      onSave(loc);
-                    }}
-                    title={loc.name} // Show full name on hover
-                    className="coastal-dialog-recent-btn"
-                  >
-                    <span className="location-icon">🏖️</span>
-                    <span>{loc.name.split(',')[0]}</span>
-                  </button>
-                </li>
               ))}
-            </ul>
+            </div>
           </div>
-        )}
+        ) : null}
 
-        {/* Show home location as a recent option if available */}
-        {homeLocation && (
-          <div style={{ marginBottom: '16px' }}>
-            <h4>Quick Options</h4>
-            <ul className="coastal-dialog-recent-list">
-              <li className="coastal-dialog-recent-item home-location-item">
-                <button
-                  onClick={() => {
-                    onSave(homeLocation);
-                  }}
-                  title={homeLocation.name}
-                  className="coastal-dialog-recent-btn home-location-btn"
-                >
-                  <span className="location-icon">🏡</span>
-                  <span>{homeLocation.name.split(',')[0]} (Home)</span>
-                </button>
-              </li>
-            </ul>
+        {(selectedCoords && selectedName) ? (
+          <div className="mt-3 text-sm opacity-80">
+            Selected: <span className="font-medium">{selectedName}</span>
+            <span className="ml-2 badge badge-ghost">{selectedCoords.lat.toFixed(4)}, {selectedCoords.lon.toFixed(4)}</span>
           </div>
-        )}
-        
-        {status === "OK" && !useModernSearch && (
-          <ul className="coastal-dialog-list">
-            {data.map((suggestion) => {
-              const { place_id, description } = suggestion;
+        ) : null}
 
-              return (
-                <li key={place_id} className="coastal-dialog-list-item">
-                  <button
-                    className="coastal-dialog-list-btn"
-                    onClick={async () => {
-                      try {
-                        setValue(description, false);
-                        clearSuggestions();
-
-                        const results = await getGeocode({ address: description });
-                        if (!results || results.length === 0) {
-                          throw new Error("No geocoding results found");
-                        }
-                        
-                        const { lat, lng } = await getLatLng(results[0]);
-
-                        onSave({
-                          name: description,
-                          lat,
-                          lon: lng,
-                        });
-                        const existing = JSON.parse(localStorage.getItem("recentCoastalLocations") || "[]");
-                        const updated = [ { name: description, lat, lon: lng }, ...existing.filter((l: { name: string; lat: number; lon: number }) => l.name !== description) ].slice(0, 5);
-                        localStorage.setItem("recentCoastalLocations", JSON.stringify(updated));
-                        // Add likely beach caching logic
-                        const isLikelyBeach = (name: string) =>
-                          /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal)\b/i.test(name);
-                        if (isLikelyBeach(description)) {
-                          const orientation = computeSimulatedOrientation(lat, lng);
-                          const cached = JSON.parse(localStorage.getItem("cachedBeaches") || "[]");
-                          const exists = cached.some((b: { name: string; lat: number; lon: number }) => b.name === description || (Math.abs(b.lat - lat) < 0.005 && Math.abs(b.lon - lng) < 0.005));
-                          if (!exists) {
-                            // Save new beach with placeId and sourceCoords
-                            const newBeach = {
-  name: description,
-  lat,
-  lon: lng,
-  orientation,
-  added: new Date().toISOString(),
-  source: 'userSearch',
-  placeId: place_id,
-  sourceCoords: { lat, lon: lng }
-};
-                            const updated = [newBeach, ...cached].slice(0, 100);
-                            localStorage.setItem("cachedBeaches", JSON.stringify(updated));
-                          }
-                        }
-                      } catch (error) {
-                        console.error("Error selecting place:", error);
-                        setLocationError(`Failed to select location: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or use a different search term.`);
-                        setValue('', false);
-                        clearSuggestions();
-                      }
-                    }}
-                  >
-                    <div className="coastal-dialog-search-result">
-                      {(() => {
-                        const parts = description.split(',');
-                        if (parts.length < 2) {
-                          return (
-                            <>
-                              <span className="coastal-dialog-result-type">🏖️</span>
-                              <span className="coastal-dialog-result-main">{description}</span>
-                            </>
-                          );
-                        }
-
-                        const mainLocation = parts[0].trim();
-                        const countryName = parts[parts.length - 1].trim();
-                        const flag = countryNameToFlagEmoji(countryName);
-                        const details = parts.slice(1).join(',').trim();
-                        
-                        // Detect if this looks like a coastal/beach location
-                        const isLikelyBeach = /\b(playa|beach|strand|baie|spiaggia|praia|plage|plaja|kumsal|bay|coast|shore|marina|harbor|harbour|pier|wharf)\b/i.test(description);
-                        const locationIcon = isLikelyBeach ? '🏖️' : '📍';
-                        
-                        return (
-                          <>
-                            <span className="coastal-dialog-result-type">{locationIcon}</span>
-                            <div className="coastal-dialog-result-content">
-                              <span className="coastal-dialog-result-main">{mainLocation} {flag}</span>
-                              <span className="coastal-dialog-result-details">{details}</span>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <div className="modal-action mt-6">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+        </div>
       </div>
+      {open ? (
+        <style jsx global>{`
+          .pac-container { display: none !important; }
+        `}</style>
+      ) : null}
     </div>
   );
 };

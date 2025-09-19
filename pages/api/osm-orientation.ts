@@ -1,14 +1,25 @@
 // /api/osm-orientation.ts (Next.js API route or Vite serverless function)
 import type { NextApiRequest, NextApiResponse } from 'next';
 import * as turf from '@turf/turf';
+import type { Feature, LineString, Polygon, Point, Position } from 'geojson';
 
 function norm360(d: number) { return ((d % 360) + 360) % 360; }
 function snap5(d: number) { return (Math.round(norm360(d) / 5) * 5) % 360; }
 
 // ---- Minimal in‑memory cache to reduce Overpass hits ----
 const ORIENT_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const orientCache = new Map<string, { ts: number; payload: any }>();
+const orientCache = new Map<string, { ts: number; payload: unknown }>();
 const cacheKey = (lat: number, lon: number, radius: number) => `${lat.toFixed(5)}:${lon.toFixed(5)}:${radius}`;
+
+// Types for Overpass API response elements used here
+type OverpassGeometry = { lat: number; lon: number };
+type OverpassElement = {
+  type: 'way' | 'relation';
+  tags?: Record<string, string>;
+  geometry?: OverpassGeometry[];
+};
+
+type NearestPoint = Feature<Point> & { properties: { index: number; dist: number } };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const lat = parseFloat(String(req.query.lat));
@@ -51,18 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!resp.ok) {
     res.status(502).json({ error: 'Overpass upstream error' }); return;
   }
-  const data = await resp.json();
+  const data = await resp.json() as { elements?: OverpassElement[] };
 
   // Separate features
-  const coastLines: any[] = [];
-  const waterPolys: any[] = [];
+  const coastLines: Feature<LineString>[] = [];
+  const waterPolys: Feature<Polygon>[] = [];
 
   for (const el of data.elements || []) {
-    if (el.type === 'way' && el.tags?.natural === 'coastline' && el.geometry?.length >= 2) {
-      coastLines.push(turf.lineString(el.geometry.map((g: any) => [g.lon, g.lat])));
-    } else if ((el.type === 'way' || el.type === 'relation') && el.geometry?.length >= 3) {
+    if (el.type === 'way' && el.tags?.natural === 'coastline' && Array.isArray(el.geometry) && el.geometry.length >= 2) {
+      coastLines.push(turf.lineString(el.geometry.map((g: OverpassGeometry) => [g.lon, g.lat])));
+    } else if ((el.type === 'way' || el.type === 'relation') && Array.isArray(el.geometry) && el.geometry.length >= 3) {
       // treat as polygon if closed
-      const coords = el.geometry.map((g: any) => [g.lon, g.lat]);
+      const coords = el.geometry.map((g: OverpassGeometry) => [g.lon, g.lat]);
       const last = coords[coords.length - 1];
       if (coords.length >= 4 && coords[0][0] === last[0] && coords[0][1] === last[1]) {
         waterPolys.push(turf.polygon([coords]));
@@ -77,17 +88,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const pt = turf.point([lon, lat]);
 
   // Find nearest coastline + nearest vertex index on that line
-  let best = { line: coastLines[0], nearest: turf.nearestPointOnLine(coastLines[0], pt) as any, dist: Infinity };
+  let best: { line: Feature<LineString>; nearest: NearestPoint; dist: number } = {
+    line: coastLines[0],
+    nearest: turf.nearestPointOnLine(coastLines[0], pt) as NearestPoint,
+    dist: Infinity,
+  };
   for (const line of coastLines) {
-    const n = turf.nearestPointOnLine(line, pt, { units: 'meters' }) as any;
+    const n = turf.nearestPointOnLine(line, pt, { units: 'meters' }) as NearestPoint;
     const d = n.properties.dist as number;
     if (d < best.dist) best = { line, nearest: n, dist: d };
   }
 
   // Get an approximate local segment around the nearest point
-  const idx = Math.max(1, Math.min(best.nearest.properties.index, best.line.geometry.coordinates.length - 2));
-  const A = best.line.geometry.coordinates[idx - 1];
-  const B = best.line.geometry.coordinates[idx + 0];
+  const idx = Math.max(1, Math.min(best.nearest.properties.index, (best.line.geometry.coordinates.length - 2)));
+  const A: Position = best.line.geometry.coordinates[idx - 1];
+  const B: Position = best.line.geometry.coordinates[idx + 0];
 
   // Alongshore bearing
   const segBearing = turf.bearing(turf.point(A), turf.point(B)); // -180..+180
@@ -118,7 +133,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const payload = {
     orientation: snap5(seaFacing),        // 0–359, snapped to 5°
-    source: 'osm',
+    source: 'osm' as const,
     debug: { segBearing: Math.round(norm360(segBearing)), leftNormal, rightNormal }
   };
   orientCache.set(key, { ts: Date.now(), payload });

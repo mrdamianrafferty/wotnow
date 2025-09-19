@@ -1,1 +1,16 @@
-{"projectId":"prj_uNcv8ApFFLa1tFbfGpwjUQRIhRFm","orgId":"team_XCySSWWNBkon1NcvTI5cGGel","projectName":"wotnow"}
+{
+  "projectId": "prj_uNcv8ApFFLa1tFbfGpwjUQRIhRFm",
+  "orgId": "team_XCySSWWNBkon1NcvTI5cGGel",
+  "projectName": "wotnow",
+  "settings": {
+    "createdAt": 1752162574403,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}

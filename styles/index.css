@@ -1,23 +1,79 @@
 @import "tailwindcss";
-@plugin "daisyui";
+/* Tailwind v4 loaded. DaisyUI v5 is provided via tailwind.config.js plugin; no direct CSS import needed. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
 
 /* ------ GLOBAL STYLES ------ */
 
 
-
+html, body { 
+  min-height: 100%;
+}
 body {
-  font-family: Roboto, sans-serif;
-  background: linear-gradient(135deg, #f7f7f7 0%, #e3f0ff 100%);
-  color: #333;
+  font-family: Roboto, system-ui, -apple-system, Segoe UI, sans-serif;
   margin: 0;
   padding: 0;
+  /* Fallback colours if CSS variables are unavailable */
+  background-color: #121212;
+  color: #E5E7EB;
+  /* Prefer DaisyUI theme tokens */
+  background-color: oklch(var(--b1)) !important; /* DaisyUI base background */
+  color: oklch(var(--bc)) !important;            /* DaisyUI base content */
 }
 
+/* Scoped light mode: any subtree wrapped in .force-light should render with light surfaces */
+.force-light {
+  background-color: oklch(var(--b1)) !important; /* solid light surface for wrapper */
+  color: oklch(var(--bc)) !important;            /* readable text */
+}
+
+/* DaisyUI buttons inside light-scoped pages should use theme tokens, not the global button rule */
+.force-light button.btn,
+.force-light .btn {
+  background-color: oklch(var(--p)) !important;   /* primary background */
+  color: oklch(var(--pc)) !important;             /* on-primary text */
+  border-color: oklch(var(--p)) !important;
+}
+.force-light .btn.btn-outline {
+  background-color: transparent !important;
+  color: oklch(var(--p)) !important;
+  border-color: oklch(var(--p)) !important;
+}
+
+.force-light .btn.btn-ghost {
+  background-color: transparent !important;
+  color: oklch(var(--bc)) !important;
+  border-color: transparent !important;
+}
+
+/* Ensure readable default text inside light-scoped onboarding */
+.force-light,
+.force-light .card,
+.force-light .card :where(p, li, span, div, h1, h2, h3, h4, small, label) {
+  color: oklch(var(--bc)) !important;
+}
+
+/* Links should use the primary token in light scope */
+.force-light .link,
+.force-light a.link {
+  color: oklch(var(--p)) !important;
+}
+
+/* Helper: force dark background on specific legacy pages if needed */
+.page-dark {
+  background-color: hsl(var(--b1));
+  color: hsl(var(--bc));
+  min-height: 100vh;
+}
+
+/* Remove any unexpected light backgrounds on main containers */
+main { background: transparent; }
+
+/* ------ HEADER STYLES ------ */
+
 header {
-  background-color: #4a90e2;
-  color: #fff;
+  background-color: #fff;
+  color: hsl(var(--bc)); /* readable text on light header */
   padding: 1rem;
   text-align: center;
 }
@@ -31,6 +87,8 @@ a:hover {
   text-decoration: underline;
 }
 
+/* ------ MAIN CONTENT STYLES ------ */
+
 main,
 .page {
   max-width: 1200px;
@@ -39,11 +97,13 @@ main,
 }
 
 .page {
-  background-color: #fff;
+  /* Was: background-color: #fff; -> causes white-on-white in dark theme */
+  background-color: oklch(var(--b1)); /* match the app background */
   border-radius: 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   padding: 2rem 2vw;
   max-width: 1100px;
+  color: oklch(var(--bc));
 }
 
 h1, h2, h3 {
@@ -51,7 +111,7 @@ h1, h2, h3 {
   color: #222;
 }
 
-button {
+button:not(.btn) {
   background-color: #4a90e2;
   color: #fff;
   border: none;
@@ -62,11 +122,11 @@ button {
   transition: box-shadow 0.2s, background 0.2s;
 }
 
-button:hover {
+button:not(.btn):hover {
   background-color: #555;
 }
 
-button:active {
+button:not(.btn):active {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
@@ -77,7 +137,9 @@ button:active {
   align-items: center;
   justify-content: space-between;
   padding: 16px 32px;
-  background: #fff;
+  /* Was: background: #fff; -> causes light strip in dark theme */
+  background: oklch(var(--b2));
+  color: oklch(var(--bc));
   border-radius: 18px 18px 0 0;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
   margin-bottom: 2rem;
@@ -158,7 +220,9 @@ button:active {
 
 .homepage-banner__subtitle {
   font-size: 1rem;
-  color: #555;
+  /* Was: color: #555; */
+  color: oklch(var(--bc));
+  opacity: 0.8;
 }
 
 /* ------ LOCATION BANNER ------ */
@@ -249,7 +313,7 @@ button:active {
   .mobile-location-banner {
     display: block !important;
     position: static;
-    background: #fff;
+    background: oklch(var(--b2)); /* themed surface for mobile banner */
     box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.07);
     z-index: 1200;
     padding: 10px 8px !important;
@@ -263,7 +327,7 @@ section {
   padding: 2rem 1.5rem;
   border-radius: 14px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-  background: #fff;
+  background: transparent; /* Changed from #fff to transparent for weather animations */
   transition: box-shadow 0.2s;
 }
 
@@ -397,25 +461,29 @@ section[hidden] {
 
 .interest-card {
   padding: 1rem;
-  background-color: #fff;
-  border: 1px solid #ddd;
+  /* Was: background-color: #fff; border: 1px solid #ddd; */
+  background-color: oklch(var(--b2));
+  border: 1px solid oklch(var(--b3));
   border-radius: 8px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 0 0 transparent;
+  color: oklch(var(--bc)); /* ensure readable on themed bg */
 }
 
 .interest-card:hover {
-  background-color: #eef4fb;
-  border-color: #bbb;
+  /* Was: background-color: #eef4fb; border-color: #bbb; */
+  background-color: oklch(var(--b3));
+  border-color: oklch(var(--b3));
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 }
 
 .interest-card.selected {
-  background-color: #4a90e2;
-  color: #fff;
-  border-color: #4a90e2;
+  /* Was: background-color: #4a90e2; color: #fff; border-color: #4a90e2; */
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
+  border-color: oklch(var(--p));
   position: relative;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 }
@@ -430,8 +498,9 @@ section[hidden] {
   top: 8px;
   right: 8px;
   font-size: 1rem;
-  color: #fff;
+  color: oklch(var(--pc));
 }
+
 .selected-activities-container {
   display: flex;
   flex-wrap: wrap;
@@ -439,9 +508,11 @@ section[hidden] {
   margin-top: 28px;
   justify-content: center;
 }
+
 .selected-activity-btn {
-  background-color: #3b82f6;
-  color: white;
+  /* Prefer theme primary for consistency */
+  background-color: oklch(var(--p));
+  color: oklch(var(--pc));
   border-radius: 16px;
   padding: 6px 14px;
   font-weight: 600;
@@ -451,6 +522,7 @@ section[hidden] {
   align-items: center;
   gap: 6px;
 }
+
 .selected-activity-btn span {
   font-weight: 700;
   font-size: 1.2em;
@@ -467,22 +539,25 @@ section[hidden] {
 }
 
 .main-category-card {
-  border: 2px solid #e5e7eb;
+  /* Was just a light border; add themed surface */
+  background-color: oklch(var(--b2));
+  border: 2px solid oklch(var(--b3));
   border-radius: 12px;
   padding: 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  color: oklch(var(--bc));
 }
 
 .main-category-card:hover {
-  border-color: #3b82f6;
+  border-color: hsl(var(--p));
   transform: translateY(-2px);
 }
 
 .main-category-card.seasonal {
-  border-color: #06b6d4;
+  border-color: hsl(var(--s));
 }
 
 .category-icon {
@@ -493,15 +568,15 @@ section[hidden] {
 .category-name {
   font-size: 1.2rem;
   font-weight: 600;
-  color: #1f2937;
+  color: oklch(var(--bc));
 }
 
 .seasonal-badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #0891b2;
-  color: white;
+  background: oklch(var(--s));
+  color: oklch(var(--sc));
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -870,7 +945,7 @@ abbr[title] {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(30, 58, 138, 0.35);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -879,8 +954,11 @@ abbr[title] {
 
 .coastal-dialog {
   background: #fff;
+  /* background: hsl(var(--b2)); */
+  color: hsl(var(--bc));
   border-radius: 12px;
   padding: 24px;
+  color: #6b7280;
   max-width: 500px;
   width: 90vw;
   max-height: 80vh;
@@ -907,10 +985,11 @@ abbr[title] {
 }
 
 .coastal-dialog-title {
+  /* keep sizing, adapt color */
   margin: 0 0 20px 0;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #000000;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -924,24 +1003,27 @@ abbr[title] {
   width: 100%;
   padding: 12px 40px 12px 12px;
   margin-bottom: 12px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #e5e7eb; background: #fff; color: #000000; 
+  
   border-radius: 8px;
+  color: #6b7280;
   font-size: 1rem;
   box-sizing: border-box;
-  color: #1f2937;
-  background: #fff;
+  /* color: hsl(var(--bc)); */
+  /* background: hsl(var(--b1)); */
   transition: all 0.3s ease;
   position: relative;
 }
 
 .coastal-dialog-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: hsl(var(--p));
+  box-shadow: 0 0 0 3px hsla(var(--p)/0.15);
 }
 
 .coastal-dialog-input::placeholder {
-  color: #9ca3af;
+  /* color: hsla(var(--bc)/0.6); */
+  color: #6b7280;
   opacity: 1;
 }
 
@@ -1092,14 +1174,18 @@ abbr[title] {
 .coastal-dialog-search-result {
   display: flex;
   align-items: center;
+  
   gap: 10px;
   width: 100%;
+  
 }
 
 .coastal-dialog-result-type {
   font-size: 1.1em;
+  color: #000000;
   flex-shrink: 0;
   opacity: 0.8;
+  
 }
 
 .coastal-dialog-result-content {
@@ -1111,15 +1197,38 @@ abbr[title] {
 
 .coastal-dialog-result-main {
   font-weight: 600;
-  color: #1f2937;
+  color: #000000;
   line-height: 1.3;
 }
 
 .coastal-dialog-result-details {
   font-size: 0.85em;
-  color: #6b7280;
+  color: #000000;
   line-height: 1.2;
   margin-top: 2px;
+}
+
+/* --- Minimal fix: force readable text & solid surfaces only inside our light-themed modal --- */
+.modal .modal-box[data-theme="light"],
+.modal .modal-box[data-theme="light"] * {
+  color: oklch(var(--bc)) !important;
+}
+
+/* Suggestions panel and items: solid, readable */
+.modal .modal-box[data-theme="light"] .menu,
+.modal .modal-box[data-theme="light"] .menu * {
+  background-color: oklch(var(--b1)) !important;
+  color: oklch(var(--bc)) !important;
+}
+
+.modal .modal-box[data-theme="light"] .suggestion-item {
+  background-color: oklch(var(--b1)) !important;
+  border: 1px solid oklch(var(--b3)) !important;
+}
+
+.modal .modal-box[data-theme="light"] .suggestion-item:hover,
+.modal .modal-box[data-theme="light"] .suggestion-item:focus {
+  background-color: oklch(var(--b2)) !important;
 }
 
 /* ------ MOBILE RESPONSIVE ------ */
@@ -1691,335 +1800,105 @@ abbr[title] {
 
 /* ------ END HEADER LAYOUT STYLES ------ */
 
-/* Recent locations list styling */
-.coastal-dialog-recent-list {
-  list-style: none;
-  padding: 0;
-  margin: 8px 0 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* Weather card backgrounds - match the old code style with darker, more blue-tinted backgrounds */
+.weather-card-bg {
+  background: rgba(30, 58, 138, 0.3) !important; /* Navy blue, much more transparent - was 0.6 */
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important; /* Force white text */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
-.coastal-dialog-recent-list li {
-  padding: 0;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-  font-weight: 500;
-  flex: 0 0 auto;
+/* Variant for cards that need slightly more opacity */
+.weather-card-bg-enhanced {
+  background: rgba(30, 58, 138, 0.35) !important; /* Navy blue, much more transparent - was 0.7 */
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: white !important; /* Force white text */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Default styling for coastal locations */
-.coastal-dialog-recent-list .coastal-location-item {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  color: #1e40af;
+/* For small hourly/detail cards that need good contrast */
+.weather-card-bg-small {
+  background: rgba(30, 58, 138, 0.3) !important; /* Navy blue, much more transparent - was 0.6 */
+  backdrop-filter: blur(6px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important; /* Force white text */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.coastal-dialog-recent-list .coastal-location-item:hover {
-  background: #e0f2fe;
-  border-color: #0284c7;
-  color: #1e3a8a;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-.coastal-dialog-recent-list li button {
-  padding: 8px 14px;
-  background: none;
-  border: none;
-  text-align: center;
-  cursor: pointer;
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-  border-radius: inherit;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.coastal-dialog-recent-list .location-icon {
-  font-size: 1em;
-  flex-shrink: 0;
-}
-
-/* Recent locations section header */
-.coastal-dialog h4 {
-  margin: 16px 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-/* Improve button styling inside dialogs */
-.coastal-dialog button {
-  color: inherit;
-  font-weight: inherit;
-}
-
-.coastal-dialog-list-btn,
-.coastal-dialog-recent-list button {
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-  font-size: inherit;
-  font-weight: inherit;
-}
-
-/* Subtle background patterns for location distinction */
-.coastal-dialog-recent-list .home-location-item {
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-  border: 1px solid #bbf7d0;
-  color: #166534;
-  position: relative;
-}
-
-.coastal-dialog-recent-list .home-location-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: radial-gradient(circle at 1px 1px, rgba(34, 197, 94, 0.1) 1px, transparent 0);
-  background-size: 8px 8px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0.3;
-}
-
-.coastal-dialog-recent-list li:not(.home-location-item) {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  position: relative;
-}
-
-.coastal-dialog-recent-list li:not(.home-location-item)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.1) 1px, transparent 0);
-  background-size: 6px 6px;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0.2;
-}
-
-/* ===== Weather Animation Layer (final) ===== */
-/* All layers are absolute, non-interactive and span the viewport */
-.wa-bg,
-.wa-layer { 
-  position: absolute; 
-  inset: 0; 
-  pointer-events: none; 
-}
-
-/* Add light boost for highlights */
-.wa-lit { 
-  mix-blend-mode: screen; 
-  opacity: 0.65; 
-}
-
-/* Precipitation */
-.wa-rain { 
-  background-image: linear-gradient(rgba(255,255,255,.32) 50%, transparent 50%); 
-  background-size: 2px 20px; 
-  animation: wa-rainfall 0.5s linear infinite; 
-  will-change: background-position;
-}
-
-.wa-snow { 
-  background-image: radial-gradient(white 1px, transparent 1px); 
-  background-size: 6px 6px; 
-  animation: wa-snowfall 5s linear infinite; 
-  will-change: background-position;
-}
-
-/* Atmospherics */
-.wa-fog { 
-  background: rgba(200,200,200,0.14); 
-  backdrop-filter: blur(6px); 
-}
-
-/* Clouds: subtle so content remains readable; also works if texture missing */
-.wa-clouds {
-  background-image:
-    url('/cloud-texture.png'),
-    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.15), rgba(240,244,255,0.06) 60%, transparent 75%);
-  background-size: cover, cover;
-  background-position: center, center;
-  opacity: 0.22; /* dimmer clouds */
-  filter: brightness(0.9) saturate(0.9);
-  animation: wa-cloudscroll 60s linear infinite;
-  will-change: background-position;
-}
-
-/* Waves: high-contrast body, no vertical stripe overlay */
-.wa-waves {
-  position: absolute;
-  inset: 0;
-  opacity: 1;                 /* fully visible */
-  mix-blend-mode: normal;     /* don’t wash out */
-  background:
-    /* deep body */
-    radial-gradient(ellipse at 50% 120%, rgba(3,88,158,0.98), rgba(3,88,158,0.58) 60%, transparent 72%),
-    /* gentle horizon fade */
-    linear-gradient(to top, rgba(5,54,94,0.55), rgba(5,54,94,0.25) 40%, transparent 70%);
-  animation: wa-waveflow 10s linear infinite;
-  background-size: 2400px 100%, 1400px 100%;
-  will-change: background-position;
-}
-
-/* REMOVE strobing white vertical lines by eliminating ::before stripes */
-.wa-waves::before{ content: none; }
-
-/* keep subtle trough shading, slightly stronger for contrast */
-.wa-waves::after{
-  content:"";
-  position:absolute; inset:0;
-  pointer-events:none;
-  background: linear-gradient(to top, rgba(0,0,0,0.18), transparent 55%);
-  mix-blend-mode: multiply;
-  opacity:.6;
-}
-
-/* Sea spray (for windy seas) */
-.wa-spray { 
-  background-image: radial-gradient(rgba(255,255,255,.25) 0 1px, transparent 2px); 
-  background-size: 6px 6px; 
-  animation: wa-sprayDrift 3s linear infinite; 
-  will-change: background-position;
-}
-
-/* Clear day tint, kept subtle */
-.wa-clear {
-  background: linear-gradient(to bottom, rgba(135,206,250,0.22), rgba(255,255,255,0.08));
-}
-
-/* Core keyframes */
-@keyframes wa-rainfall { from { background-position: 0 -20px; } to { background-position: 0 0; } }
-@keyframes wa-snowfall { from { background-position: 0 0; } to { background-position: 0 6px; } }
-@keyframes wa-cloudscroll { from { background-position: 0 0; } to { background-position: 1000px 0; } }
-@keyframes wa-sprayDrift { from { background-position: 0 0; } to { background-position: -60px 120px; } }
-@keyframes wa-waveflow { from { background-position: 0 0, 0 0; } to { background-position: 2400px 0, -1400px 0; } }
-@keyframes wa-crestshift { from { transform: translateX(0); } to { transform: translateX(-160px); } }
-
-/* ===== UI Micro-interactions & Safety Fallbacks ===== */
-
-/* Smooth entrance animations */
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
-
-/* Weather card animations */
-.weather-card-enter { animation: fadeInScale 0.6s ease-out; }
-.weather-card-enter:nth-child(2) { animation-delay: 0.1s; }
-.weather-card-enter:nth-child(3) { animation-delay: 0.2s; }
-.weather-card-enter:nth-child(4) { animation-delay: 0.3s; }
-.weather-card-enter:nth-child(5) { animation-delay: 0.4s; }
-.weather-card-enter:nth-child(6) { animation-delay: 0.5s; }
-
-/* Enhanced hourly strip */
-.hourly-item { transition: all 0.3s ease; }
-.hourly-item:hover { transform: translateY(-2px); }
-
-/* Temperature gradient */
-.temp-gradient { background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 25%, #10b981 50%, #f59e0b 75%, #ef4444 100%); }
-
-/* Glassmorphism effect */
-.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1); }
-
-/* Loading shimmer */
-.shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 1000px 100%; animation: shimmer 2s infinite linear; }
-
-/* DaisyUI 5 carousel safety fallback */
-.carousel { display: flex; flex-wrap: nowrap; gap: 0.75rem; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 0.25rem; }
-.carousel-item { flex: 0 0 auto; width: 7rem; scroll-snap-align: start; }
-.carousel::-webkit-scrollbar { height: 8px; }
-.carousel::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 8px; }
-.carousel { scrollbar-width: thin; }
-.carousel-item .card { height: 100%; }
-.carousel-item .card:hover { transform: translateY(-2px); transition: transform .2s ease; }
-.section-plate-none {
-  background: transparent !important;
-  box-shadow: none !important;
-}
-.section-plate-none::before,
-.section-plate-none::after {
+/* Override DaisyUI card defaults to force transparency - but not weather cards, only inside weather-translucent context */
+.weather-translucent .card:not(.weather-card-bg):not(.weather-card-bg-enhanced):not(.weather-card-bg-small) {
+  background-color: transparent !important;
   background: transparent !important;
 }
-/* Marine glass utilities (blue-tinted) */
-.marine-card{
-  /* deep marine blue glass */
-  background:
-    linear-gradient(180deg, rgba(0,56,94,0.55), rgba(0,56,94,0.38) 55%, rgba(0,56,94,0.25)),
-    radial-gradient(80% 120% at 50% 120%, rgba(2,132,199,0.28), transparent 60%);
-  backdrop-filter: blur(8px) saturate(1.05);
-  border: 1px solid rgba(56,189,248,0.22); /* sky-400 */
-  border-radius: 1rem;
-  box-shadow: 0 10px 24px rgba(2, 44, 77, 0.35);
+
+
+/* Apply transparent background to all weather cards */
+.card.bg-black\/35 {
+  background: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.marine-subplate{
-  background:
-    linear-gradient(180deg, rgba(3,105,161,0.35), rgba(3,105,161,0.22)),
-    radial-gradient(100% 140% at 50% 110%, rgba(56,189,248,0.18), transparent 60%);
-  backdrop-filter: blur(6px) saturate(1.03);
-  border: 1px solid rgba(56,189,248,0.18);
-  border-radius: .75rem;
+/* Opt-in: make base surfaces transparent only inside .weather-translucent wrapper */
+.weather-translucent .bg-base-100,
+.weather-translucent .bg-base-200,
+.weather-translucent .bg-base-300 {
+  background: transparent !important;
 }
 
-.marine-heading{
-  font-weight: 600;
-  font-size: 1rem;
-  line-height: 1.25rem;
+/* Only sections inside translucent contexts should be see-through */
+.weather-translucent main section {
+  background: transparent !important;
 }
 
-/* Apply marine blue filter to all non-transparent cards on the marine layout
-   (keeps layout wrappers that use bg-transparent untouched) */
-.marine-layout .card:not(.bg-transparent) {
-  background:
-    linear-gradient(180deg, rgba(0,56,94,0.52), rgba(0,56,94,0.34) 55%, rgba(0,56,94,0.22)),
-    radial-gradient(80% 120% at 50% 120%, rgba(14,165,233,0.22), transparent 60%);
-  border-color: rgba(56,189,248,0.2) !important;
-  color: #e6f6ff;
+/* Only containers inside translucent contexts should be transparent */
+.weather-translucent .container,
+.weather-translucent .grid {
+  background: transparent !important;
+}
+/* --- Minimal fix for Google Places Autocomplete dropdown (appended to <body>) --- */
+.pac-container {
+  background-color: oklch(var(--b1)) !important; /* solid surface */
+  color: oklch(var(--bc)) !important;            /* readable text */
+  border: 1px solid oklch(var(--b3));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 9999 !important; /* ensure it sits above the modal content */
+}
+.pac-item,
+.pac-item span,
+.pac-item .pac-item-query {
+  background-color: oklch(var(--b1)) !important;
+  color: oklch(var(--bc)) !important;
+}
+.pac-item:hover,
+.pac-item-selected {
+  background-color: oklch(var(--b2)) !important; /* hover/keyboard focus */
+}
+.pac-icon {
+  filter: none !important; /* prevent accidental colour inversion */
 }
 
-/* Slightly brighter titles for contrast */
-.marine-layout .card-title { color: #fff !important; }
-
-/* Make stat blocks readable over blue glass */
-.marine-layout .stat-title { color: rgba(232, 246, 255, 0.85); }
-.marine-layout .stat-value { color: #ffffff; }
-.marine-layout .stat-desc { color: rgba(232, 246, 255, 0.75); }
-/* ==== Marine layout spacing clamps ==== */
-.marine-layout section {
-  margin: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  margin-bottom: 1.5rem !important;
+/* --- Final, minimal fix: ensure readable INPUTS inside light-themed modal --- */
+.modal .modal-box[data-theme="light"] .input,
+.modal .modal-box[data-theme="light"] input,
+.modal .modal-box[data-theme="light"] textarea,
+.modal .modal-box[data-theme="light"] select {
+  color: oklch(var(--bc)) !important;              /* dark text */
+  background-color: oklch(var(--b1)) !important;   /* solid surface */
+  -webkit-text-fill-color: oklch(var(--bc)) !important; /* Safari */
 }
-.marine-layout .card { margin: 0 !important; }
-/* stack utility: ensure a single controlled vertical rhythm when using a wrapper */
-.marine-stack > * + * { margin-top: 1rem !important; }
 
-/* Force card header titles in marine layout to white */
-.marine-layout .card-title {
-  color: #fff !important;
+.modal .modal-box[data-theme="light"] .input::placeholder,
+.modal .modal-box[data-theme="light"] input::placeholder {
+  color: color-mix(in oklch, oklch(var(--bc)) 60%, transparent) !important;
+  opacity: 1 !important;
+}
+
+/* Base surfaces inside the modal must stay solid even if globals force transparency */
+.modal .modal-box[data-theme="light"] .bg-base-100,
+.modal .modal-box[data-theme="light"] .bg-base-200,
+.modal .modal-box[data-theme="light"] .bg-base-300 {
+  background-color: oklch(var(--b1)) !important;
 }

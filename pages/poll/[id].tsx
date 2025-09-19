@@ -47,7 +47,7 @@ export default function PollPage({ poll }: PollPageProps) {
         const error = await response.json();
         alert(error.error || 'Failed to submit vote');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to submit vote');
     }
   };

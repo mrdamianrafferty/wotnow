@@ -1,9 +1,25 @@
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { getSoilCondition } from '../../utils/getSoilCondition';
 
 interface SoilCardProps {
-  weather: any;
+  weather: {
+    soil?: {
+      temp0cm?: number;
+      temp6cm?: number;
+      temp18cm?: number;
+      temp54cm?: number;
+      moisture0to1?: number;
+      moisture1to3?: number;
+      moisture3to9?: number;
+      moisture9to27?: number;
+    };
+    tempC?: number;
+    humidity?: number;
+    main?: {
+      temp?: number;
+      humidity?: number;
+    };
+  };
 }
 
 // SoilConditionsPanel component from main file
@@ -20,8 +36,8 @@ const SoilConditionsPanel: React.FC<{
   };
 }> = ({ soil }) => {
   const depths = [0, 6, 18, 54] as const;
-  const [depthIdx, setDepthIdx] = useState(0);
-  const depth = depths[depthIdx] as (0|6|18|54);
+  const [depthIdx, setDepthIdx] = useState<0|1|2|3>(0);
+  const depth = depths[depthIdx];
   const tempMap: Record<0|6|18|54, number | undefined> = {
     0: soil.temp0cm,
     6: soil.temp6cm,
@@ -79,7 +95,7 @@ const SoilConditionsPanel: React.FC<{
     <div>
       {/* Selected depth badge - moved above slider and left-aligned */}
       <div className="mb-3 flex justify-start">
-        <div className="border border-white/20 px-4 py-2 rounded-full text-white bg-white/10 inline-flex items-center justify-center">
+        <div className="border border-white/20 px-4 py-2 rounded-full text-white bg-slate-800/20 inline-flex items-center justify-center">
           {depth === 0 ? 'Surface' : `${depth} cm`}
         </div>
       </div>
@@ -91,7 +107,7 @@ const SoilConditionsPanel: React.FC<{
           min={0}
           max={3}
           value={depthIdx}
-          onChange={(e) => setDepthIdx(Number(e.target.value))}
+          onChange={(e) => setDepthIdx(Number(e.target.value) as 0|1|2|3)}
           className="soil-brown-slider range range-xs w-full"
         />
         <div 
@@ -210,16 +226,16 @@ export const SoilCard: React.FC<SoilCardProps> = ({
     const humidity = weather?.humidity || weather?.main?.humidity;
 
     return (
-      <div className="card rounded-xl overflow-hidden soil-gradient-bg text-white shadow-md">
+      <div className="card weather-card-bg text-base-content shadow-md rounded-xl overflow-hidden">
         <div className="card-body p-4">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xl text-white font-medium">Soil Conditions</h3>
+            <h2 className="card__header-title">Soil Conditions</h2>
           </div>
           <div className="text-sm text-white/90 mb-3">{soilCondition}</div>
           
           {/* Selected depth badge - above slider and left-aligned */}
           <div className="mb-3 flex justify-start">
-            <div className="border border-white/20 px-4 py-2 rounded-full text-white bg-white/10 inline-flex items-center justify-center">
+            <div className="border border-white/20 px-4 py-2 rounded-full text-white bg-slate-800/20 inline-flex items-center justify-center">
               Surface
             </div>
           </div>
@@ -280,56 +296,12 @@ export const SoilCard: React.FC<SoilCardProps> = ({
             <span>💧 Dry: soil retains some moisture; shallow-rooted plants may struggle.</span>
           </div>
         </div>
-        <style jsx>{`
-          .soil-gradient-bg {
-            background: linear-gradient(135deg, #62a0ea 0%, #1c71d8 100%);
-          }
-          .soil-brown-slider::-webkit-slider-runnable-track {
-            height: 0.5rem;
-            border-radius: 9999px;
-            background: linear-gradient(to right,
-              #ead7bb 0%,
-              #c8a27a 25%,
-              #8b5e34 50%,
-              #4a2f1b 75%,
-              #18120f 100%
-            );
-          }
-          .soil-brown-slider::-moz-range-track {
-            height: 0.5rem;
-            border-radius: 9999px;
-            background: linear-gradient(to right,
-              #ead7bb 0%,
-              #c8a27a 25%,
-              #8b5e34 50%,
-              #4a2f1b 75%,
-              #18120f 100%
-            );
-          }
-          .soil-brown-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 0.5rem;
-            height: 1rem;
-            background: transparent;
-            cursor: pointer;
-            border: none;
-            opacity: 0;
-          }
-          .soil-brown-slider::-moz-range-thumb {
-            width: 0.5rem;
-            height: 1rem;
-            background: transparent;
-            cursor: pointer;
-            border: none;
-            opacity: 0;
-          }
-        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="card rounded-xl overflow-hidden soil-gradient-bg text-white shadow-md">
+    <div className="card weather-card-bg text-base-content rounded-xl overflow-hidden shadow-md">
       <div className="card-body p-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-xl font-medium text-white">Soil Conditions</h3>
@@ -338,11 +310,6 @@ export const SoilCard: React.FC<SoilCardProps> = ({
         
         <SoilConditionsPanel soil={soil} />
       </div>
-      <style jsx>{`
-        .soil-gradient-bg {
-          background: linear-gradient(135deg, #8eb9eb 0%, #5a8cc8 100%);
-        }
-      `}</style>
     </div>
   );
 };

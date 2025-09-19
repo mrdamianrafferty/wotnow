@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // Simple in-memory cooldown to avoid hammering Stormglass when quota is hit
 let lastLimitedAt: number | null = null;
 // Basic in-memory cache to reduce duplicate requests during fast reloads
-const tideCache = new Map<string, { ts: number; data: any }>();
+const tideCache = new Map<string, { ts: number; data: unknown }>();
 const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 function cacheKey(lat: number, lon: number) {
   // Round to ~100m to coalesce nearby points
@@ -51,23 +51,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (response.status === 402 || response.status === 429) {
         lastLimitedAt = Date.now();
       }
-      const payload = { success: true, data: [], limited: true, status: response.status };
+      const payload = { success: true, data: [] as unknown[], limited: true as const, status: response.status };
       tideCache.set(key, { ts: now, data: payload });
       return res.status(200).json(payload);
     }
 
-    const data = await response.json();
-    console.log('🌊 Tide data received', { count: data?.data?.length || 0 });
+    const data: unknown = await response.json();
+    const items = (data as { data?: unknown[] })?.data;
+    console.log('🌊 Tide data received', { count: Array.isArray(items) ? items.length : 0 });
 
-    if (data && Array.isArray(data.data)) {
-      const payload = { success: true, data: data.data };
+    if (Array.isArray(items)) {
+      const payload = { success: true, data: items };
       tideCache.set(key, { ts: now, data: payload });
       return res.status(200).json(payload);
     } else {
       return res.status(500).json({ success: false, error: 'Invalid tide data from Stormglass', details: data });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('🌊 Tide fetch failed', err);
-    return res.status(500).json({ success: false, error: 'Tide fetch failed', details: String(err?.message || err) });
+    const message = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ success: false, error: 'Tide fetch failed', details: message });
   }
 }

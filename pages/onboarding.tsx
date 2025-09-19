@@ -1,5 +1,233 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import type { CSSProperties } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import CoastalLocationDialog from "@/components/CoastalLocationDialog";
+// DaisyUI Light tokens applied inline so they win the cascade inside this page
+const LIGHT_INLINE_VARS: CSSProperties & Record<string, string> = {
+  // Base surfaces/content (Light)
+  '--b1': '0 0% 100%',   // white
+  '--b2': '0 0% 95%',
+  '--b3': '0 0% 90%',
+  '--bc': '215 28% 17%', // slate-800-ish text
+
+  // Brand accents (roughly DaisyUI light defaults)
+  '--p':  '262 92% 58%', // primary
+  '--pc': '0 0% 100%',
+  '--s':  '316 80% 49%', // secondary
+  '--sc': '0 0% 100%',
+  '--a':  '173 64% 47%', // accent (teal)
+  '--ac': '0 0% 100%',
+  '--n':  '220 13% 46%', // neutral
+  '--nc': '0 0% 100%',
+
+  // State colours
+  '--in': '204 86% 53%',
+  '--su': '166 100% 34%',
+  '--wa': '37 100% 50%',
+  '--er': '14 100% 50%',
+};
+// ──────────────────────────────────────────────────────────────────────────────
+// Small components and helpers for the improved onboarding UX
+
+type CategoryHeaderProps = {
+  title: string;
+  subtitle?: string;
+  onSkip?: () => void;
+};
+
+function CategoryHeader({ title, subtitle, onSkip }: CategoryHeaderProps) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-2">
+      <div>
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {subtitle && (
+          <p className="text-sm text-base-content/60">{subtitle}</p>
+        )}
+      </div>
+      {onSkip && (
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          onClick={onSkip}
+          aria-label={`Skip ${title}`}
+        >
+          Skip this category
+        </button>
+      )}
+    </div>
+  );
+}
+
+type InterestPillProps = {
+  id: string;
+  label: string;
+  selected: boolean;
+  icon?: React.ReactNode;
+  onToggle: (id: string) => void;
+};
+
+function InterestPill({ id, label, selected, icon, onToggle }: InterestPillProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(id)}
+      className={[
+        "btn btn-sm rounded-xl normal-case transition-shadow",
+        selected
+          ? "btn-primary ring-2 ring-offset-1 ring-primary/60"
+          : "btn-outline hover:bg-base-200"
+      ].join(" ")}
+      aria-pressed={selected}
+    >
+      {selected && <span className="mr-1">✓</span>}
+      {icon && <span className="mr-2 inline-flex items-center">{icon}</span>}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function ClusterPill({ id, label, icon, selected, onToggle }: { id: string; label: string; icon?: React.ReactNode; selected: boolean; onToggle: (id: string) => void; }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(id)}
+      className={[
+        "btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex flex-col gap-1",
+        selected
+          ? "btn-primary ring-2 ring-offset-1 ring-primary/60"
+          : "btn-outline hover:bg-base-200"
+      ].join(" ")}
+      aria-pressed={selected}
+    >
+      <span className="text-2xl">{icon}</span>
+      <span className="text-sm font-semibold">{label}</span>
+    </button>
+  );
+}
+
+function OnboardingFooter({ onBack, onNext, isLast, totalSelected, nextDisabled }: {
+  onBack: () => void;
+  onNext: () => void;
+  isLast?: boolean;
+  totalSelected: number;
+  nextDisabled?: boolean;
+}) {
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3">
+      <button type="button" className="btn btn-ghost" onClick={onBack}>Back</button>
+      <div className="text-sm text-base-content/60">
+        You can edit your interests any time in <Link className="link" href="/settings/interests">Settings → Interests</Link>.
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-sm">Total selected: {totalSelected}</span>
+        <button type="button" className="btn btn-primary" onClick={onNext} disabled={!!nextDisabled}>
+          {isLast ? "Complete Setup" : "Next Category"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Fallback emoji-based icon map (replace with custom SVGs later)
+const activityIcon: Record<string, React.ReactNode> = {
+  hiking: "🥾",
+  birdwatching: "🦉",
+  photography: "📷",
+  foraging: "🧺",
+  mushroom_hunting: "🍄",
+  stargazing: "🔭",
+  fly_fishing_freshwater: "🎣",
+  coarse_fishing: "🎣",
+  sea_fishing_shore: "🎣",
+  sea_fishing_boat: "🚤",
+  kayaking: "🛶",
+  sea_kayaking: "🛶",
+  canoeing: "🛶",
+  surfing: "🏄‍♂️",
+  stand_up_paddleboarding: "🏄",
+  sup_sea: "🏄",
+  snorkeling: "🤿",
+  swimming: "🏊",
+  indoor_swimming: "🏊",
+  sea_swimming: "🏊",
+  windsurfing: "🏄",
+  kitesurfing: "🪁",
+  jet_skiing: "🌊",
+  scuba_diving: "🤿",
+  sailing: "⛵",
+  sailing_inland: "⛵",
+  windsurfing_inland: "🏄",
+  tennis: "🎾",
+  tennis_indoor: "🎾",
+  squash: "🎾",
+  badminton: "🏸",
+  table_tennis: "🏓",
+  golf: "⛳",
+  rugby: "🏉",
+  cricket: "🏏",
+  football_soccer: "⚽",
+  basketball_outdoor: "🏀",
+  beach_volleyball: "🏐",
+  american_football: "🏈",
+  baseball: "⚾",
+  hurling_camogie: "🏑",
+  gaelic_football: "🏐",
+  hockey: "🏒",
+  netball: "🟣",
+  padel: "🎾",
+  archery: "🏹",
+  pickleball: "🥒",
+  indoor_climbing: "🧗",
+  rock_climbing: "🧗",
+  mountain_biking: "🚵",
+  gravel_biking: "🚴",
+  road_cycling: "🚴",
+  trail_running: "🥾",
+  yoga: "🧘",
+  outdoor_yoga: "🧘",
+  meditation: "🧘",
+  outdoor_meditation: "🧘",
+  pilates: "🧍",
+  tai_chi: "🌬️",
+  running: "🏃",
+  cycling: "🚴",
+  urban_exploring: "🏙️",
+  gym_workout: "🏋️",
+  outdoor_gym: "🏋️",
+  zumba: "💃",
+  boxing: "🥊",
+  spinning: "🚴",
+  martial_arts: "🥋",
+  painting: "🎨",
+  outdoor_painting: "🎨",
+  crafts: "🧵",
+  knitting: "🧶",
+  diy: "🛠️",
+  playing_records: "📀",
+  make_music: "🎸",
+  dance: "💃",
+  gallery: "🖼️",
+  reading: "📚",
+  cooking: "🍳",
+  gaming: "🎮",
+  online: "🌐",
+  watch_a_movie: "🎬",
+  going_to_pub: "🍺",
+  playing_cards: "🃏",
+  cafe: "☕",
+  cinema: "🎞️",
+  museum: "🏛️",
+  shopping: "🛍️",
+  bowling: "🎳",
+  bbq: "🍖",
+  beach: "🏖️",
+  outdoor_reading: "📖",
+  dog_walking: "🐕",
+  outdoor_playground: "🛝",
+  outdoor_chess: "♟️",
+  outdoor_music: "🎷",
+};
 // Removed unused imports to reduce lint noise
 
 // DaisyUI version of the hybrid onboarding flow
@@ -250,19 +478,89 @@ const TAXONOMY = [
   },
 ];
 
+
+
 export default function OnboardingFlowDaisyUI() {
-  const [tab, setTab] = useState<'live' | 'mock'>('mock');
+  // Force DaisyUI theme to light on this page and restore after
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const html = document.documentElement;
+    const previous = html.getAttribute('data-theme');
+    html.classList.add('force-light-scope');
+    html.setAttribute('data-theme', 'light');
+    return () => {
+      html.classList.remove('force-light-scope');
+      if (previous) html.setAttribute('data-theme', previous);
+      else html.removeAttribute('data-theme');
+    };
+  }, []);
 
   return (
-    <div data-theme="wotnow" className="min-h-screen bg-gradient-to-b from-sky-100 to-base-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl">
-        {/* Tabs to switch between Mock screens and Live demo */}
-        <div role="tablist" className="tabs tabs-bordered mb-4">
-          <a role="tab" className={`tab ${tab === 'mock' ? 'tab-active' : ''}`} onClick={() => setTab('mock')}>Mock screens</a>
-          <a role="tab" className={`tab ${tab === 'live' ? 'tab-active' : ''}`} onClick={() => setTab('live')}>Live demo</a>
-        </div>
+    <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content p-4" style={LIGHT_INLINE_VARS}>
+      <div className="w-full">
+        <LiveDemo />
+      </div>
+      <style jsx global>{`
+        /* Force DaisyUI Light palette within .force-light scope (overrides app theme) */
+        .force-light { color-scheme: light; }
+        .force-light,
+        [data-theme] .force-light,
+        html.force-light-scope .force-light {
+          --p: 262 92% 58% !important;
+          --pc: 0 0% 100% !important;
+          --s: 316 80% 49% !important;
+          --sc: 0 0% 100% !important;
+          --a: 173 64% 47% !important;
+          --ac: 0 0% 100% !important;
+          --n: 220 13% 46% !important;
+          --nc: 0 0% 100% !important;
+          --b1: 0 0% 100% !important;
+          --b2: 0 0% 95% !important;
+          --b3: 0 0% 90% !important;
+          --bc: 215 28% 17% !important;
+          --in: 204 86% 53% !important;
+          --su: 166 100% 34% !important;
+          --wa: 37 100% 50% !important;
+          --er: 14 100% 50% !important;
 
-        {tab === 'mock' ? <MockScreens /> : <LiveDemo />}
+          /* Optional radius & animation tokens to stabilise visuals */
+          --rounded-box: 0.75rem;
+          --rounded-btn: 0.5rem;
+          --rounded-badge: 1.9rem;
+          --animation-btn: 0.25s;
+          --animation-input: 0.2s;
+        }
+      `}</style>
+    </div>
+  );
+}
+// Compact, visible bar for selected activities
+function SelectedBar({ items, onRemove, onClear }: {
+  items: string[];
+  onRemove: (id: string) => void;
+  onClear: () => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="bg-base-200 rounded-box p-2 mt-2">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium">Selected ({items.length})</span>
+        <button type="button" className="btn btn-ghost btn-xs text-base-content" onClick={onClear}>Clear all</button>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {items.map(id => (
+          <span key={id} className="badge bg-base-200 text-base-content border border-base-300 gap-1">
+            {id.replaceAll('_', ' ')}
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={() => onRemove(id)}
+              aria-label={`Remove ${id.replaceAll('_',' ')}`}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -272,7 +570,9 @@ export default function OnboardingFlowDaisyUI() {
 // Live demo (previous interactive flow in one card)
 function LiveDemo() {
   return (
-    <div className="card bg-base-100 shadow-xl max-w-md mx-auto">
+    <div data-theme="light"
+         className="card bg-base-100 shadow-xl w-full"
+         style={LIGHT_INLINE_VARS}>
       <div className="card-body">
         <OnboardingCardInteractive />
       </div>
@@ -283,12 +583,16 @@ function LiveDemo() {
 // Extracted interactive card from previous implementation
 function OnboardingCardInteractive() {
   const [step, setStep] = useState(1);
-  const [selectedClusters, setSelectedClusters] = useState<string[]>([]);
+  const [selectedClusters, setSelectedClusters] = useState<string[]>(TAXONOMY.map(c => c.key));
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [homeLocation, setHomeLocation] = useState("");
+  const [openHomeModal, setOpenHomeModal] = useState(false);
+  const [homeSpot, setHomeSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
   const [marineLocation, setMarineLocation] = useState("");
-  const [showToast, setShowToast] = useState(false);
   const [openCoastalModal, setOpenCoastalModal] = useState(false);
   const [coastalSpot, setCoastalSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
+  const [showRegisterNudge, setShowRegisterNudge] = useState(true);
+  const router = useRouter();
 
   const clusterMap = useMemo(() => new Map(TAXONOMY.map(c => [c.key, c])), []);
 
@@ -333,7 +637,8 @@ function OnboardingCardInteractive() {
   const useCombined = selectedSubcats.length > 0 && selectedSubcats.length <= 3;
 
   const activityScreens = useCombined ? 1 : Math.max(1, subcatChunks.length);
-  const totalSteps = 1 + activityScreens + (isMarineChosen ? 1 : 0) + 1;
+  // clusters → activities (1..N) → home → (marine?) → confirm
+  // const totalSteps = 1 + activityScreens + 1 + (isMarineChosen ? 1 : 0) + 1; // removed unused
 
   const phase = useMemo(() => {
     if (step === 1) return { type: "clusters" as const };
@@ -343,109 +648,161 @@ function OnboardingCardInteractive() {
       return { type: "activities-chunk" as const, chunkIndex };
     }
     const afterActivities = 1 + activityScreens;
-    if (isMarineChosen && step === afterActivities + 1) return { type: "marine" as const };
+    if (step === afterActivities + 1) return { type: "home" as const };
+    if (isMarineChosen && step === afterActivities + 2) return { type: "marine" as const };
     return { type: "confirm" as const };
   }, [step, useCombined, activityScreens, isMarineChosen]);
 
   const toggleCluster = (key: string) => setSelectedClusters(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   const toggleActivity = (name: string) => setSelectedActivities(prev => prev.includes(name) ? prev.filter(a => a !== name) : [...prev, name]);
 
-  const preselectPopular = () => {
-    const picks: string[] = [];
-    selectedSubcats.forEach(sc => { const list = activitiesBySubcat[sc.key] || []; if (list[0]) picks.push(list[0]); });
-    setSelectedActivities(prev => Array.from(new Set([...prev, ...picks])));
-  };
-
-  const next = () => setStep(s => Math.min(s + 1, totalSteps));
-  const back = () => setStep(s => Math.max(1, s - 1));
-
-  const items = ["Choose areas", "Activities", ...(isMarineChosen ? ["Location"] : []), "Done"];
+  const items = ["Choose areas", "Activities", "Home", ...(isMarineChosen ? ["Marine"] : []), "Done"];
   const currentIndex = (() => {
     if (phase.type === 'clusters') return 0;
     if (phase.type === 'activities-combined' || phase.type === 'activities-chunk') return 1;
-    if (phase.type === 'marine') return isMarineChosen ? 2 : 1;
+    if (phase.type === 'home') return 2;
+    if (phase.type === 'marine') return isMarineChosen ? 3 : 2;
     return items.length - 1;
   })();
 
   return (
     <>
-      <ul className="steps w-full">
-        {items.map((label, i) => (<li key={label} className={`step ${i <= currentIndex ? 'step-primary' : ''}`}>{label}</li>))}
-      </ul>
+      <div className="sticky top-0 z-10 bg-base-100/95 backdrop-blur pt-1">
+        <ul className="steps w-full">
+          {items.map((label, i) => (<li key={label} className={`step ${i <= currentIndex ? 'step-primary' : ''}`}>{label}</li>))}
+        </ul>
+        <div className="text-center space-y-1 mt-2">
+          <h1 className="card-title justify-center text-2xl">
+            {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? 'Set your home location 📍' : phase.type === 'marine' ? 'Set a coastal spot 🌊' : phase.type === 'confirm' ? '🎉 All set!' : 'Fine-tune 🎯'}
+          </h1>
+          <p className="text-base-content/70 text-sm">
+            {phase.type === 'clusters' && "Deselect any areas you’re not into. You can change this any time."}
+            {phase.type === 'activities-combined' && "Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started."}
+            {phase.type === 'activities-chunk' && "Short lists, better choices. You can add more later."}
+            {phase.type === 'home' && "Set your home location so we can personalise local recommendations and forecasts."}
+            {phase.type === 'marine' && "Because you chose sea activities, adding a coastal spot helps us give you seaside advice."}
+            {phase.type === 'confirm' && "We’ve saved your activities. You can always add more later."}
+          </p>
 
-      <div className="text-center space-y-1 mt-2">
-        <h1 className="card-title justify-center text-2xl">
-          {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'marine' ? 'Set a coastal spot 🌊' : phase.type === 'confirm' ? '🎉 All set!' : 'Fine‑tune 🎯'}
-        </h1>
-        <p className="text-base-content/70 text-sm">
-          {phase.type === 'clusters' && "Choose a few areas you’re into — we’ll tailor the rest. You can change these anytime."}
-          {phase.type === 'activities-combined' && "Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started."}
-          {phase.type === 'activities-chunk' && "Short lists, better choices. You can add more later."}
-          {phase.type === 'marine' && "Helps us personalise tides, swell, and wind for sea activities."}
-          {phase.type === 'confirm' && "We’ve saved your activities. You can always add more later."}
-        </p>
+      {phase.type === 'home' && (
+        <div className="space-y-3 mt-2">
+          <CategoryHeader
+            title="Home location"
+            subtitle="Helps us tailor forecasts and nearby suggestions."
+          />
+          <input
+            className="input input-bordered w-full"
+            placeholder="Enter a town, postcode, or click Use current location"
+            value={homeLocation}
+            onChange={(e) => setHomeLocation(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <button className="btn btn-outline" onClick={() => setHomeLocation('Use current location')}>Use current location</button>
+            <button className="btn btn-outline" onClick={() => setOpenHomeModal(true)}>Use map</button>
+          </div>
+          {homeSpot && (
+            <div className="alert alert-info">
+              <span>Home: {homeSpot.name}</span>
+            </div>
+          )}
+          <CoastalLocationDialog
+            open={openHomeModal}
+            onClose={() => setOpenHomeModal(false)}
+            title="Set your home location 📍"
+            onSave={(loc) => {
+              setHomeSpot(loc);
+              setHomeLocation(loc.name);
+              setOpenHomeModal(false);
+            }}
+          />
+          <p className="text-xs text-base-content/60">You can change this any time in Settings → Location.</p>
+        </div>
+      )}
+        </div>
       </div>
+
+      <SelectedBar
+        items={selectedActivities}
+        onRemove={(id) => toggleActivity(id)}
+        onClear={() => setSelectedActivities([])}
+      />
 
       {/* Screens */}
       {phase.type === 'clusters' && (
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {TAXONOMY.map(c => {
-            const active = selectedClusters.includes(c.key);
-            return (
-              <button key={c.key} className={`btn ${active ? 'btn-primary' : 'btn-outline'} h-20 flex flex-col gap-1 tooltip`} data-tip={active ? 'Selected' : 'Tap to select'} onClick={() => toggleCluster(c.key)}>
-                <span className="text-2xl">{c.icon}</span>
-                <span className="text-xs">{c.key}</span>
-              </button>
-            );
-          })}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 mt-2">
+          {TAXONOMY.map(c => (
+            <ClusterPill
+              key={c.key}
+              id={c.key}
+              label={c.key}
+              icon={c.icon}
+              selected={selectedClusters.includes(c.key)}
+              onToggle={toggleCluster}
+            />
+          ))}
         </div>
       )}
 
       {phase.type === 'activities-combined' && (
         <>
-          <div className="flex items-center justify-between -mb-1 mt-2">
-            <span className="badge badge-ghost">All chosen subcategories</span>
-            <button className="btn btn-ghost btn-sm" onClick={preselectPopular}>Preselect popular</button>
-          </div>
+          <CategoryHeader
+            title="Activities"
+            subtitle="Deselect anything that’s not your vibe."
+            onSkip={() => setStep(s => s + 1)}
+          />
           <div className="divider my-1"></div>
-          <div className="grid grid-cols-2 gap-2">
-            {combinedActivities.map(a => {
-              const active = selectedActivities.includes(a);
-              return (
-                <button key={a} className={`btn ${active ? 'btn-primary' : 'btn-outline'} h-16`} onClick={() => toggleActivity(a)}>
-                  {a.replaceAll('_', ' ')}
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2">
+            {combinedActivities.map(a => (
+              <InterestPill
+                key={a}
+                id={a}
+                label={a.replaceAll('_', ' ')}
+                icon={activityIcon[a]}
+                selected={selectedActivities.includes(a)}
+                onToggle={(id) => toggleActivity(id)}
+              />
+            ))}
           </div>
         </>
       )}
 
       {phase.type === 'activities-chunk' && (
         <>
-          <div className="flex flex-wrap gap-1 -mb-1 mt-2">
-            {(subcatChunks[phase.chunkIndex] || []).map(sc => (<span key={sc} className="badge badge-outline">{sc}</span>))}
+          <CategoryHeader
+            title="Activities"
+            subtitle="Short lists, better choices. You can add more later."
+            onSkip={() => setStep(s => s + 1)}
+          />
+          <div className="flex flex-wrap gap-1 -mb-1 mt-1">
+            {(subcatChunks[phase.chunkIndex] || []).map(sc => (
+              <span key={sc} className="badge badge-outline">{sc}</span>
+            ))}
           </div>
           <div className="divider my-1"></div>
-          <div className="grid grid-cols-2 gap-2">
-            {(subcatChunks[phase.chunkIndex] || []).flatMap(scKey => activitiesBySubcat[scKey] || []).map(a => {
-              const active = selectedActivities.includes(a);
-              return (
-                <button key={a} className={`btn ${active ? 'btn-primary' : 'btn-outline'} h-16`} onClick={() => toggleActivity(a)}>
-                  {a.replaceAll('_', ' ')}
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2">
+            {Array.from(new Set((subcatChunks[phase.chunkIndex] || [])
+              .flatMap(scKey => activitiesBySubcat[scKey] || [])))
+              .map(a => (
+                <InterestPill
+                  key={a}
+                  id={a}
+                  label={a.replaceAll('_', ' ')}
+                  icon={activityIcon[a]}
+                  selected={selectedActivities.includes(a)}
+                  onToggle={(id) => toggleActivity(id)}
+                />
+              ))}
           </div>
         </>
       )}
 
       {phase.type === 'marine' && (
         <div className="space-y-3 mt-2">
+          <p className="text-sm text-base-content/70">Because you chose sea activities, setting a coastal spot lets us give tide, swell and wind‑aware advice.</p>
           <input className="input input-bordered w-full" placeholder="Search or enter a coastal location" value={marineLocation} onChange={(e) => setMarineLocation(e.target.value)} />
           <div className="grid grid-cols-3 gap-2">
             <button className="btn btn-outline" onClick={() => setMarineLocation('Use current location')}>Use current location</button>
-            <button className="btn" onClick={() => setOpenCoastalModal(true)}>Use map</button>
+            <button className="btn btn-outline" onClick={() => setOpenCoastalModal(true)}>Use map</button>
             <button className="btn btn-primary" onClick={() => setStep(s => s + 1)} disabled={!marineLocation && !coastalSpot}>Save & Continue</button>
           </div>
           {coastalSpot && (
@@ -469,167 +826,67 @@ function OnboardingCardInteractive() {
 
       {phase.type === 'confirm' && (
         <div className="space-y-3 mt-2">
-          <div>
-            <p className="text-sm text-base-content/70">Your activities:</p>
-            <ul className="text-sm list-disc list-inside">
-              {selectedActivities.length > 0 ? (
-                selectedActivities.map(a => <li key={a}>{a.replaceAll('_', ' ')}</li>)
-              ) : (
-                <li>No activities chosen yet — we’ll suggest a few to start.</li>
-              )}
-            </ul>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div className="card bg-base-200">
+              <div className="card-body py-3">
+                <h3 className="card-title text-sm">Home location</h3>
+                <p className="text-sm">{homeSpot?.name || homeLocation}</p>
+              </div>
+            </div>
+            {isMarineChosen && (
+              <div className="card bg-base-200">
+                <div className="card-body py-3">
+                  <h3 className="card-title text-sm">Coastal spot</h3>
+                  <p className="text-sm">{coastalSpot?.name || marineLocation || 'Not set'}</p>
+                </div>
+              </div>
+            )}
           </div>
+          <p className="text-xs text-base-content/60">Tip: you can edit locations any time in <Link className="link" href="/account">Account → Locations</Link>.</p>
+          {/* Registration nudge */}
+          {showRegisterNudge ? (
+            <div className="alert bg-base-200 border border-base-300 flex items-center gap-3 mt-2">
+              <div>
+                <div className="font-medium">Save these to your account?</div>
+                <div className="text-sm opacity-70">Register to sync your interests and locations across devices.</div>
+              </div>
+              <Link href="/login" className="btn btn-primary btn-sm ml-auto">Register</Link>
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowRegisterNudge(false)}>Maybe later</button>
+            </div>
+          ) : (
+            <p className="text-xs text-base-content/60 mt-2">We’ll use your locally saved preferences on this device for now.</p>
+          )}
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 mt-4">
-        <button className="btn" onClick={() => {
+      <OnboardingFooter
+        onBack={() => {
           if (phase.type === 'clusters') {
-            if (selectedClusters.length === 0) (setSelectedClusters(["Active Sports", "Fitness & Wellness"]));
+            setSelectedClusters(["Active Sports"]);
             setStep(2);
-          } else if (phase.type === 'confirm') {
-            alert('✅ Saved! Your personalised feed is ready.');
           } else {
-            setStep(s => s + 1);
+            setStep(s => Math.max(1, s - 1));
           }
-        }}>{phase.type === 'confirm' ? 'Start Exploring' : 'Next'}</button>
-        <button className="btn btn-outline" onClick={() => {
-          if (phase.type === 'clusters') { setSelectedClusters(["Active Sports"]); setStep(2); } else { setStep(s => Math.max(1, s - 1)); }
-        }}>{phase.type === 'clusters' ? 'Skip (quick start)' : 'Back'}</button>
-      </div>
+        }}
+        onNext={() => {
+          if (phase.type === 'clusters') {
+            if (selectedClusters.length === 0) setSelectedClusters(["Active Sports", "Fitness & Wellness"]);
+            setStep(2);
+          } else if (phase.type === 'activities-combined' || phase.type === 'activities-chunk') {
+            setStep(s => s + 1);
+          } else if (phase.type === 'home') {
+            if (homeLocation || homeSpot) setStep(s => s + 1);
+          } else if (phase.type === 'marine') {
+            setStep(s => s + 1);
+          } else if (phase.type === 'confirm') {
+            router.push('/');
+          }
+        }}
+        isLast={phase.type === 'confirm'}
+        totalSelected={selectedActivities.length}
+        nextDisabled={phase.type === 'home' && !homeLocation && !homeSpot}
+      />
     </>
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// MOCK SCREENS GALLERY
-function MockScreens() {
-  // Precomputed selections for mocks
-  const mockCombinedSubcats = ["Outdoor Sports", "Indoor Sports", "Water Sports"]; // ≤3 → combined
-  const mockChunkedSubcats = ["Outdoor Sports", "Indoor Sports", "Water Sports", "Action Sports", "Winter Sports"]; // >3 → chunked
-  const activitiesBySubcat: Record<string, string[]> = {};
-  TAXONOMY.forEach(c => c.subcategories.forEach(sc => (activitiesBySubcat[sc.key] = sc.acts)));
-
-  const combinedActivities = Array.from(new Set(mockCombinedSubcats.flatMap(sc => activitiesBySubcat[sc] || []))).slice(0, 12);
-  const chunk1 = mockChunkedSubcats.slice(0, 3);
-  const chunk1Activities = chunk1.flatMap(sc => activitiesBySubcat[sc] || []).slice(0, 12);
-
-  return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {/* Screen A: Welcome / Clusters */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body gap-3">
-          <ul className="steps w-full">
-            <li className="step step-primary">Choose areas</li>
-            <li className="step">Activities</li>
-            <li className="step">Done</li>
-          </ul>
-          <h2 className="card-title justify-center text-2xl">👋 Welcome to GoDaisy!</h2>
-          <p className="text-sm text-base-content/70 text-center">Choose a few areas you’re into — we’ll tailor the rest.</p>
-          <div className="grid grid-cols-2 gap-2">
-            {TAXONOMY.map(c => (
-              <button key={c.key} className="btn btn-outline h-20 flex flex-col gap-1">
-                <span className="text-2xl">{c.icon}</span>
-                <span className="text-xs">{c.key}</span>
-              </button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="btn">Next</button>
-            <button className="btn btn-outline">Skip (quick start)</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Screen B: Activities (Combined) */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body gap-3">
-          <ul className="steps w-full">
-            <li className="step step-primary">Choose areas</li>
-            <li className="step step-primary">Activities</li>
-            <li className="step">Done</li>
-          </ul>
-          <div className="flex items-center justify-between -mb-1 mt-1">
-            <span className="badge badge-ghost">Outdoor • Indoor • Water</span>
-            <button className="btn btn-ghost btn-sm">Preselect popular</button>
-          </div>
-          <div className="divider my-1"></div>
-          <div className="grid grid-cols-2 gap-2">
-            {combinedActivities.map(a => (
-              <button key={a} className="btn btn-outline h-16">{a.replaceAll('_',' ')}</button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="btn">Next</button>
-            <button className="btn btn-outline">Back</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Screen C: Activities (Chunk 1 of N) */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body gap-3">
-          <ul className="steps w-full">
-            <li className="step step-primary">Choose areas</li>
-            <li className="step step-primary">Activities</li>
-            <li className="step">Location</li>
-            <li className="step">Done</li>
-          </ul>
-          <div className="flex flex-wrap gap-1 -mb-1 mt-1">
-            {chunk1.map(sc => (<span key={sc} className="badge badge-outline">{sc}</span>))}
-          </div>
-          <div className="divider my-1"></div>
-          <div className="grid grid-cols-2 gap-2">
-            {chunk1Activities.map(a => (
-              <button key={a} className="btn btn-outline h-16">{a.replaceAll('_',' ')}</button>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="btn">Next</button>
-            <button className="btn btn-outline">Back</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Screen D: Marine Location */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body gap-3">
-          <ul className="steps w-full">
-            <li className="step step-primary">Choose areas</li>
-            <li className="step step-primary">Activities</li>
-            <li className="step step-primary">Location</li>
-            <li className="step">Done</li>
-          </ul>
-          <h3 className="card-title justify-center">Set a coastal spot 🌊</h3>
-          <input className="input input-bordered w-full" placeholder="Search or enter a coastal location" />
-          <div className="grid grid-cols-3 gap-2">
-            <button className="btn btn-outline">Use current location</button>
-            <button className="btn">Use map</button>
-            <button className="btn btn-primary">Save & Continue</button>
-          </div>
-          <button className="btn btn-ghost btn-sm">Skip for now</button>
-        </div>
-      </div>
-
-      {/* Screen E: Confirmation */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body gap-3">
-          <ul className="steps w-full">
-            <li className="step step-primary">Choose areas</li>
-            <li className="step step-primary">Activities</li>
-            <li className="step step-primary">Done</li>
-          </ul>
-          <h3 className="card-title justify-center">🎉 All set!</h3>
-          <p className="text-sm text-base-content/70 text-center">We’ve saved your activities. You can always add more later.</p>
-          <ul className="text-sm list-disc list-inside">
-            {combinedActivities.slice(0,6).map(a => (<li key={a}>{a.replaceAll('_',' ')}</li>))}
-          </ul>
-          <div className="grid grid-cols-2 gap-2">
-            <button className="btn">Start Exploring</button>
-            <button className="btn btn-outline">Back</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

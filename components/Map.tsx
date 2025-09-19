@@ -11,7 +11,7 @@ export default function Map() {
     loadGoogleMaps().then((g) => {
       if (cancelled || !ref.current) return;
 
-      const map = new g.maps.Map(ref.current, {
+      new g.maps.Map(ref.current, {
         center: { lat: 43.4743, lng: -5.2132 },
         zoom: 12,
         mapId: 'YOUR_MAP_ID', // optional

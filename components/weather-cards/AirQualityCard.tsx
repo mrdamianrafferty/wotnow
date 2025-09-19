@@ -1,10 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { 
-  getAirQualityLevelDescription, 
   getAirQualityIndex, 
-  AirQualityLevel,
-  AirQualitySummary,
   AirQualityAssessment,
   convertCOtoPPM,
   formatPollutantValue
@@ -33,6 +30,16 @@ interface AirQualityCardProps {
   };
   aqiAssess: AirQualityAssessment | null;
 }
+
+// Helper to get AQI icon based on index value
+const getAqiIcon = (aqi: number): string => {
+  if (aqi <= 50) return '/weather-icons/design/fill/final/aqi-index-1.svg'; // Good
+  if (aqi <= 100) return '/weather-icons/design/fill/final/aqi-index-2.svg'; // Moderate
+  if (aqi <= 150) return '/weather-icons/design/fill/final/aqi-index-3.svg'; // Unhealthy for Sensitive Groups
+  if (aqi <= 200) return '/weather-icons/design/fill/final/aqi-index-4.svg'; // Unhealthy
+  if (aqi <= 300) return '/weather-icons/design/fill/final/aqi-index-5.svg'; // Very Unhealthy
+  return '/weather-icons/design/fill/final/aqi-index-6.svg'; // Hazardous
+};
 
 // Helper to get AQI color based on index value
 const getAqiColor = (aqi: number): string => {
@@ -152,7 +159,7 @@ const PollutantCard: React.FC<{
                      currentRange?.level === '🟣 Very Unhealthy' ? '🟣' : '🟤';
 
   return (
-    <div className="bg-black/10 rounded-lg p-3 mb-3">
+    <div className="bg-slate-800/25 rounded-lg p-3 mb-3">
       <div className="flex justify-between items-center mb-2">
         <h4 className="font-medium flex items-center gap-1">
           {emoji} {name} <span className="text-xs opacity-70">({unit})</span>
@@ -186,7 +193,6 @@ const PollutantCard: React.FC<{
 
 export const AirQualityCard: React.FC<AirQualityCardProps> = ({ weather, aqiAssess }) => {
   const aqi = weather?.airQuality?.aqi || 0;
-  const aqiColor = getAqiColor(aqi);
   const aqiLevel = getAqiLevelText(aqi);
   const aqiAdvice = getAqiAdvice(aqi);
   
@@ -253,7 +259,7 @@ export const AirQualityCard: React.FC<AirQualityCardProps> = ({ weather, aqiAsse
       description: 'Formed when sunlight reacts with traffic fumes; classic "summer smog".',
       ranges: [
         { min: 0, max: 54, level: '🟢 Good', description: 'No concern.', cause: 'Clean, cool air.' },
-        { min: 55, max: 70, level: '🟡 Moderate', description: 'Irritates lungs if exercising.', cause: 'Sunny weather + light traffic emissions.' },
+        { min: 55, max: 70, level: '🟡 Moderate', description: 'Irritates lungs if exercising, avoid the road if you can.', cause: 'Sunny weather + light traffic emissions.' },
         { min: 71, max: 85, level: '🟠 UFS', description: 'Chest tightness, cough in sensitive groups.', cause: 'Warm sunny days, rush-hour precursors.' },
         { min: 86, max: 105, level: '🔴 Unhealthy', description: 'Affects everyone, reduces lung function.', cause: 'Hot sunny smog episode.' },
         { min: 106, max: 200, level: '🟣 Very Unhealthy', description: 'Strong airway irritation.', cause: 'Severe urban photochemical smog.' },
@@ -303,25 +309,26 @@ export const AirQualityCard: React.FC<AirQualityCardProps> = ({ weather, aqiAsse
   ];
   
   return (
-    <div className="card bg-base-100 shadow-xl max-w-sm">
+    <div className="card weather-card-bg shadow-xl max-w-sm">
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
-          <h3 className="card-title flex items-center gap-2">
+          <h3 className="card__header-title flex items-center gap-2">
             <Image 
               src="/weather-icons/design/fill/final/dust.svg" 
               alt="Air Quality" 
               width={20}
               height={20}
-              className="w-5 h-5" 
+              className="w-12 h-12" 
             />
             Air Quality
           </h3>
-          <div 
-            className="badge badge-lg" 
-            style={{ backgroundColor: aqiColor, color: aqi <= 100 ? 'black' : 'white' }}
-          >
-            {getAirQualityIndex(aqi)} - {aqiLevel}
-          </div>
+          <Image 
+            src={getAqiIcon(aqi)} 
+            alt={`AQI ${getAirQualityIndex(aqi)} - ${aqiLevel}`} 
+            width={80}
+            height={80}
+            className="w-20 h-20" 
+          />
         </div>
         
         <div className="my-2">
@@ -351,7 +358,7 @@ export const AirQualityCard: React.FC<AirQualityCardProps> = ({ weather, aqiAsse
         </div>
         
         {/* Collapsible detailed pollutant section */}
-        <details className="collapse collapse-arrow bg-black/10 rounded-lg">
+        <details className="collapse collapse-arrow bg-slate-800/25 rounded-lg">
           <summary className="collapse-title text-sm py-2">Air Pollutants</summary>
           <div className="collapse-content">
             {pollutantData.map((pollutant, index) => (

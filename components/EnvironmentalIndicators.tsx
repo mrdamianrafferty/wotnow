@@ -1,16 +1,14 @@
 import React from 'react';
 import PollenWarning from './PollenWarning';
 import AirQualityWarning from './AirQualityWarning';
-import { PollenSummary, assessPollenConditions } from '../utils/pollenUtils';
-import { AirQualitySummary, assessAirQualityConditions } from '../utils/airQualityUtils';
+import { PollenSummary } from '../utils/pollenUtils';
+import { AirQualitySummary } from '../utils/airQualityUtils';
 
 interface EnvironmentalIndicatorsProps {
   pollen?: PollenSummary;
   airQuality?: AirQualitySummary;
   mode?: 'compact' | 'full';
   className?: string;
-  showPollenFor?: string; // activity type for exclusion logic
-  showAirQualityFor?: string; // activity type for exclusion logic
 }
 
 /**
@@ -21,13 +19,8 @@ export default function EnvironmentalIndicators({
   pollen, 
   airQuality, 
   mode = 'compact', 
-  className = '',
-  showPollenFor,
-  showAirQualityFor
+  className = ''
 }: EnvironmentalIndicatorsProps) {
-  const pollenAssessment = pollen ? assessPollenConditions(pollen) : null;
-  const airQualityAssessment = airQuality ? assessAirQualityConditions(airQuality) : null;
-  
   const hasPollenData = pollen && Object.values(pollen).some(value => value !== undefined && value > 0);
   const hasAirQualityData = airQuality && Object.values(airQuality).some(value => value !== undefined && value > 0);
   

@@ -1,31 +1,76 @@
 import React from 'react';
 import { WeatherCardGrid } from '../weather-cards/WeatherCardGrid';
 import { WaveCard } from '../weather-cards/WaveCard';
+import type { WeatherBundle } from '../../types/weather';
+import type { AirQualityAssessment } from '../../utils/airQualityUtils';
+
+// Local flexible provider value type for Stormglass-like sources
+type ProviderValue = { noaa?: number; sg?: number; meto?: number };
+
+// Local marine hour type allowing multiple providers
+interface MarineHourLike {
+  time: string; // ISO
+  waveHeight?: ProviderValue;
+  waterTemperature?: ProviderValue;
+  swellHeight?: ProviderValue;
+  swellPeriod?: ProviderValue;
+  windSpeed?: ProviderValue; // m/s
+  windDirection?: ProviderValue;
+  windGust?: ProviderValue;
+  swellDirection?: ProviderValue;
+  [key: string]: unknown;
+}
+
+// Narrow shape for pieces of weather used by this layout
+interface WeatherLike extends Partial<WeatherBundle> {
+  lat?: number;
+  lon?: number;
+  windSpeedMS?: number;
+  windGustMS?: number;
+  windDeg?: number;
+  marine?: {
+    windSpeed?: number;
+    windDirection?: number;
+    waterTemperature?: number;
+    waveHeight?: number;
+    wavePeriod?: number;
+    waveDirection?: number;
+    swellHeight?: number;
+    swellPeriod?: number;
+    swellDirection?: number;
+  } | null;
+  hourly?: Array<{ timeISO: string; waveHeightM?: number | null; swellHeightM?: number | null }>;
+}
+
+// Replicated subset used by WeatherCardGrid
+interface TodaySubset { uvi?: number; moonPhase?: number; moonriseISO?: string; moonsetISO?: string }
+interface PollenAssessmentLite { description?: string; advice?: string }
+interface PollenTodayDetail { grass_pollen?: string; tree_pollen?: string; weed_pollen?: string; olive_pollen?: string; alder_pollen?: string; birch_pollen?: string; ragweed_pollen?: string; mugwort_pollen?: string }
 
 interface MarineLayoutProps {
-  weather: any;
-  today: any;
+  weather: WeatherLike | null;
+  today: TodaySubset;
   hasMarine: boolean;
-  hourlyWithEvents: any[];
+  hourlyWithEvents: unknown[]; // not rendered in this simplified layout
   uvRingClass: string;
-  aqiAssess: any;
-  pollenAssess: any;
+  aqiAssess: AirQualityAssessment | null;
+  pollenAssess: PollenAssessmentLite | null;
   pollenIdx: number;
   pollenBadgeClass: string;
-  pollenToday: any;
+  pollenToday: PollenTodayDetail;
   visibilityKm: number | null;
   humidity: number | null;
   pressureTrend: string | null;
   pressure: number | null;
-  marineHours: any[];
-  currentMarine: any;
+  marineHours: MarineHourLike[];
+  currentMarine: MarineHourLike | null;
 }
 
 export const MarineLayout: React.FC<MarineLayoutProps> = ({
   weather,
   today,
   hasMarine,
-  hourlyWithEvents,
+  hourlyWithEvents: _hourlyWithEvents,
   uvRingClass,
   aqiAssess,
   pollenAssess,
@@ -109,8 +154,34 @@ export const MarineLayout: React.FC<MarineLayoutProps> = ({
             swellDir={(currentMarine?.swellDirection?.noaa as number | undefined) ?? (weather?.marine?.swellDirection as number | undefined)}
             windSpeedMS={(weather?.marine?.windSpeed as number | undefined) ?? (weather?.windSpeedMS as number | undefined)}
             windDir={(weather?.marine?.windDirection as number | undefined) ?? (weather?.windDeg as number | undefined)}
-            seaTemp={(currentMarine?.waterTemperature?.noaa as number | undefined) ?? (weather?.marine?.waterTemperature as number | undefined)}
-            waveSeries={(marineHours.length ? marineHours.map((m) => (typeof m?.waveHeight?.noaa === 'number' ? m.waveHeight.noaa : null)) : (weather?.hourly || []).map((h: any) => (typeof h.waveHeightM === 'number' ? h.waveHeightM : null)))}
+            seaTemp={(currentMarine?.waterTemperature?.sg as number | undefined) ?? 
+                     (currentMarine?.waterTemperature?.meto as number | undefined) ?? 
+                     (currentMarine?.waterTemperature?.noaa as number | undefined) ?? 
+                     (weather?.marine?.waterTemperature as number | undefined)}
+            lat={weather?.lat}
+            lon={weather?.lon}
+            waveSeries={(marineHours.length ? 
+              marineHours.map((m, i) => {
+                const now = new Date();
+                const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+                return {
+                  height: typeof m?.swellHeight?.noaa === 'number' ? m.swellHeight.noaa : (
+                    typeof m?.waveHeight?.noaa === 'number' ? m.waveHeight.noaa : null
+                  ),
+                  time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+              }) : 
+              (weather?.hourly || []).map((h, i: number) => {
+                const now = new Date();
+                const time = new Date(now.getTime() + i * 60 * 60 * 1000);
+                return {
+                  height: typeof h.swellHeightM === 'number' ? h.swellHeightM : (
+                    typeof h.waveHeightM === 'number' ? h.waveHeightM : null
+                  ),
+                  time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                };
+              })
+            )}
           />
         </div>
       </div>

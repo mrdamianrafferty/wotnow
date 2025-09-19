@@ -1,6 +1,6 @@
 // /src/hooks/useCoastalOrientation.ts
 import { useEffect, useState } from 'react';
-import { getCachedOrientation, setCachedOrientation } from '../utils/coastOrientationCache';
+import { getCachedOrientation, setCachedOrientation } from '../../utils/coastOrientationCache';
 
 type Result = { orientation?: number; loading: boolean; error?: string; source: 'cache' | 'live' | 'none' };
 
@@ -31,8 +31,9 @@ export function useCoastalOrientation(coast?: { lat: number; lon: number }): Res
         } else {
           setState({ loading: false, source: 'none', error: 'No orientation found' });
         }
-      } catch (e: any) {
-        if (!cancelled) setState({ loading: false, source: 'none', error: e?.message || 'Failed to fetch orientation' });
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Failed to fetch orientation';
+        if (!cancelled) setState({ loading: false, source: 'none', error: message });
       }
     })();
 

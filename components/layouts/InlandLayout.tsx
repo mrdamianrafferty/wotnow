@@ -1,21 +1,46 @@
 import React from 'react';
 import { WeatherCardGrid } from '../weather-cards/WeatherCardGrid';
 import NextFewDaysCard from '../weather-cards/NextFewDaysCard';
+import { HourlyCard } from '../weather-cards/HourlyCard';
+import type { WeatherBundle, HourlyWithEventsItem, HourlyWithEventsHour } from '../../types/weather';
+import type { AirQualityAssessment } from '../../utils/airQualityUtils';
+
+// Narrow shapes reused by WeatherCardGrid and local UI
+interface TodaySubset {
+  uvi?: number;
+  moonPhase?: number;
+  moonriseISO?: string;
+  moonsetISO?: string;
+}
+
+interface PollenAssessmentLite { description?: string; advice?: string }
+
+interface PollenTodayDetail {
+  grass_pollen?: string; tree_pollen?: string; weed_pollen?: string; olive_pollen?: string;
+  alder_pollen?: string; birch_pollen?: string; ragweed_pollen?: string; mugwort_pollen?: string;
+}
+
+// Weather shape accepted by this layout (subset of WeatherBundle plus optional root temps)
+ type WeatherLike = Partial<WeatherBundle> & {
+  // Some callers may pass temps at root; prefer header when available
+  tempC?: number;
+  feelsLike?: number;
+};
 
 interface InlandLayoutProps {
-  weather: any;
-  today: any;
+  weather: WeatherLike | null;
+  today: TodaySubset;
   uvRingClass: string;
-  aqiAssess: any;
-  pollenAssess: any;
+  aqiAssess: AirQualityAssessment | null;
+  pollenAssess: PollenAssessmentLite | null;
   pollenIdx: number;
   pollenBadgeClass: string;
-  pollenToday: any;
+  pollenToday: PollenTodayDetail;
   visibilityKm: number | null;
   humidity: number | null;
   pressureTrend: string | null;
   pressure: number | null;
-  hourlyWithEvents: any[];
+  hourlyWithEvents: HourlyWithEventsItem[];
 }
 
 export const InlandLayout: React.FC<InlandLayoutProps> = ({
@@ -33,45 +58,57 @@ export const InlandLayout: React.FC<InlandLayoutProps> = ({
   pressure,
   hourlyWithEvents,
 }) => {
+  // Normalize values for HourlyCard (expects compact assessments)
+  const aqiAssessForHourly = { overall: aqiAssess?.overall };
+  const pollenAssessForHourly = { overall: Math.max(1, Math.min(4, typeof pollenIdx === 'number' ? pollenIdx : 1)) };
+
+  // Map unified hourly events to HourlyCard's expected shape (hours only)
+  const hourlyEvents = React.useMemo(() => (
+    hourlyWithEvents
+      .filter((it): it is HourlyWithEventsHour => it.kind === 'hour' && !!(it as HourlyWithEventsHour).hour)
+      .map((it) => ({
+        kind: 'hour' as const,
+        key: it.key,
+        timeISO: it.hour.timeISO,
+        hour: {
+          label: it.hour.label,
+          temp: it.hour.temp,
+          icon: it.hour.icon,
+          weatherCode: it.hour.weatherCode,
+          description: it.hour.description,
+          precipMM: it.hour.precipMM,
+          windMS: it.hour.windMS,
+          wind: it.hour.wind,
+          windDeg: it.hour.windDeg,
+          gust: it.hour.gust,
+          uvi: it.hour.uvi,
+          pollenOverall: it.hour.pollenOverall,
+          aqiOverall: it.hour.aqiOverall,
+        },
+      }))
+  ), [hourlyWithEvents]);
+
+  // Feels-like and actual temps (prefer header when present)
+  const feelsLikeNow = typeof weather?.header?.feelsLikeC === 'number'
+    ? weather.header.feelsLikeC
+    : (typeof weather?.feelsLike === 'number' ? weather.feelsLike : undefined);
+  const tempNow = typeof weather?.header?.tempC === 'number'
+    ? weather.header.tempC
+    : (typeof weather?.tempC === 'number' ? weather.tempC : undefined);
+
   return (
     <div>
       {/* Inland layout */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 xl:gap-8 auto-rows-fr">
-        
         {/* Row 1: Hourly */}
         <div className="flex flex-col h-full">
           <h2 className="text-sm opacity-70 mb-2">Hourly</h2>
-          <div className="card bg-transparent shadow-none h-full">
-            <div className="card-body p-0 h-full">
-              <div className="carousel rounded-box space-x-2 bg-transparent h-full">
-                {hourlyWithEvents.map((it) => (
-                  <div className="carousel-item" key={it.key}>
-                    {it.kind === 'hour' ? (
-                      <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm w-40 h-full">
-                        <div className="card-body p-3 items-center text-center h-full flex flex-col justify-between">
-                          <div className="w-full">
-                            <div className="text-xs opacity-70">{it.hour.label}</div>
-                            <img src={it.hour.iconUrl} alt="" className="w-10 h-10 mx-auto my-1" />
-                            <div className="text-3xl font-bold leading-none">{it.hour.temp}°</div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="card bg-amber-500/35 backdrop-blur-sm text-base-content border border-amber-400/60 shadow-sm w-32 h-full">
-                        <div className="card-body p-3 items-center text-center h-full flex flex-col justify-between">
-                          <div>
-                            <div className="text-[11px] opacity-70">{it.hour?.label || '—'}</div>
-                            <img src={it.sub === 'sunrise' ? '/weather-icons/design/fill/final/sunrise.svg' : '/weather-icons/design/fill/final/sunset.svg'} alt="" className="w-16 h-16 mx-auto my-2" />
-                            <div className="text-sm font-semibold capitalize">{it.sub}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <HourlyCard
+            hourlyWithEvents={hourlyEvents}
+            aqiAssess={aqiAssessForHourly}
+            pollenAssess={pollenAssessForHourly}
+            pollenBadgeClass={pollenBadgeClass}
+          />
         </div>
 
         {/* Feels Like */}
@@ -82,10 +119,10 @@ export const InlandLayout: React.FC<InlandLayoutProps> = ({
               <div className="stat">
                 <div className="stat-title">Now</div>
                 <div className="stat-value text-2xl">
-                  {weather?.feelsLike != null ? `${Math.round(weather.feelsLike)}°` : '—'}
+                  {typeof feelsLikeNow === 'number' ? `${Math.round(feelsLikeNow)}°` : '—'}
                 </div>
                 <div className="stat-desc">
-                  Actual {weather?.tempC != null ? `${Math.round(weather.tempC)}°` : '—'}
+                  Actual {typeof tempNow === 'number' ? `${Math.round(tempNow)}°` : '—'}
                 </div>
               </div>
             </div>
@@ -96,6 +133,7 @@ export const InlandLayout: React.FC<InlandLayoutProps> = ({
         <NextFewDaysCard
           daily={weather?.daily || []}
           maxDays={8}
+          isMarine={false}
         />
       </div>
 
@@ -104,6 +142,7 @@ export const InlandLayout: React.FC<InlandLayoutProps> = ({
         <NextFewDaysCard
           daily={weather?.daily || []}
           maxDays={8}
+          isMarine={false}
         />
       </div>
 

@@ -14,6 +14,9 @@ interface IssPass {
   source: "open-notify" | "prediction";
 }
 
+// Minimal shape from Open Notify
+interface OpenNotifyPass { risetime: number; duration: number }
+
 interface IssVisibleResponse {
   ok: boolean;
   results: IssPass[];
@@ -62,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Calculate night windows for each night
     // For this demo, we'll use a simplified approach to generate night windows
     // In a real implementation, you'd use actual sunset/sunrise calculations
-    const nightWindows = [];
+    const nightWindows: NightWindow[] = [];
     const now = new Date();
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
     
@@ -94,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
-    const data = await response.json();
+    const data = await response.json() as { response?: OpenNotifyPass[] };
     
     if (!data?.response || !Array.isArray(data.response)) {
       return res.status(502).json({ 
@@ -104,6 +107,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       });
     }
 
+    const passes = data.response as OpenNotifyPass[];
+
     // Process each night window
     let allVisiblePasses: IssPass[] = [];
     
@@ -112,15 +117,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const windowEnd = new Date(window.endISO).getTime();
       
       // Filter passes that occur during this night window
-      const nightPasses = data.response
-        .filter((pass: any) => {
+      const nightPasses = passes
+        .filter((pass: OpenNotifyPass) => {
           const passStartTime = pass.risetime * 1000; // Convert from Unix timestamp to milliseconds
-          const passEndTime = passStartTime + (pass.duration * 1000);
-          
           // Pass must start during the night window
           return passStartTime >= windowStart && passStartTime <= windowEnd;
         })
-        .map((pass: any) => {
+        .map((pass: OpenNotifyPass) => {
           const passStartTime = pass.risetime * 1000;
           const passEndTime = passStartTime + (pass.duration * 1000);
           
@@ -171,12 +174,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       results: allVisiblePasses
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in ISS visible API:', error);
+    const message = typeof error === 'object' && error && 'message' in error ? String((error as { message?: unknown }).message) : 'Internal server error';
     res.status(500).json({ 
       ok: false, 
       results: [],
-      error: error?.message || 'Internal server error' 
+      error: message 
     });
   }
 }

@@ -78,7 +78,7 @@ interface FullWeather {
 }
 
 async function getWeatherData(lat: number, lon: number): Promise<FullWeather> {
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
   
   if (!apiKey) {
     throw new Error('OpenWeather API key not configured');
@@ -502,7 +502,8 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
     
     return { source: 'onecall3', data };
   } catch (error) {
-    const errorStatus = (error as any)?.status;
+    const errObj = (error && typeof error === 'object') ? error as { status?: number } : {};
+    const errorStatus = typeof errObj.status === 'number' ? errObj.status : undefined;
     if (errorStatus === 429) {
       console.log('❌ OneCall Debug: Rate limit exceeded (429) - falling back to 2.5');
     } else {
@@ -656,7 +657,7 @@ function transformCity(oneCallData: unknown, lat: number|string, lon: number|str
 async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }): Promise<FullWeather> {
   const result = await getOneCallData({ lat, lon, apiKey, options });
   if (result.source === 'onecall3') {
-    return {
+    const ret = {
       cod: "200",
       message: 0,
       cnt: result.data.daily?.length || 8,
@@ -668,7 +669,26 @@ async function getFullWeather({ lat, lon, apiKey, options = {} }: { lat: number|
       minutely: result.data.minutely || [],
       daily: result.data.daily || [], // Preserve original daily array for moon data
       source: 'onecall3',
-    };
+    } as FullWeather;
+
+    // If One Call payload lacks hourly (plan limits/exclude), supplement with 2.5 forecast
+    try {
+      const hourArr = Array.isArray((ret as { hourly?: unknown[] }).hourly) ? (ret as { hourly?: unknown[] }).hourly! : [];
+      if (!hourArr.length) {
+        const f25 = await fetchOpenWeatherForecast25(Number(lat), Number(lon), apiKey, options);
+        if (f25 && Array.isArray((f25 as { list?: unknown[] }).list)) {
+          (ret as Record<string, unknown>).list = (f25 as { list?: unknown[] }).list;
+          // provide city meta if missing
+          if (!(ret as { city?: unknown }).city && (f25 as { city?: unknown }).city) {
+            (ret as Record<string, unknown>).city = (f25 as { city?: unknown }).city;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('OpenWeather 2.5 supplement failed:', e);
+    }
+
+    return ret;
   } else {
     // Return 2.5 API data as-is
     return { ...result.data, source: 'forecast2.5' };
@@ -792,7 +812,9 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
     'soil_moisture_9_to_27cm',
     'snowfall',
     'snow_depth',
-    'freezing_level_height'
+    'freezing_level_height',
+    // Add pressure for reliable per-hour pressure series (hPa)
+    'pressure_msl'
   ].join(','));
   try {
     const response = await fetch(url.toString());
@@ -834,13 +856,24 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: stri
   url.searchParams.set('end_date', endDate);
   // Keep this list minimal and in parity with pages/api/weather-with-pollen.ts
   // Some regions or time windows may fail if too many metrics are requested
+  // Note: Open-Meteo air quality API has specific parameter limitations
   url.searchParams.set('hourly', [
+    // Pollen types (these are confirmed to work)
     'alder_pollen',
     'birch_pollen',
     'grass_pollen',
-    'ragweed_pollen',
+    'mugwort_pollen',
     'olive_pollen',
-    'us_aqi'
+    'ragweed_pollen',
+    // Air quality - individual pollutants and indices (correct Open-Meteo parameter names)
+    'pm2_5',
+    'pm10',
+    'nitrogen_dioxide', // Open-Meteo uses 'nitrogen_dioxide' not 'no2'
+    'ozone',           // Open-Meteo uses 'ozone' not 'o3'
+    'sulphur_dioxide', // Open-Meteo uses 'sulphur_dioxide' not 'so2'
+    'carbon_monoxide', // Open-Meteo uses 'carbon_monoxide' not 'co'
+    'us_aqi',
+    'european_aqi'
   ].join(','));
   try {
     const reqUrl = url.toString();

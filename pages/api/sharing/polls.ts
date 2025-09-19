@@ -2,7 +2,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { SharingService } from '../../../lib/services/sharingService';
 import { db } from '../../../lib/db/sharing';
-import { generateDeviceFingerprint } from '../../../lib/utils/idGenerator';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -63,7 +62,6 @@ async function createPoll(req: NextApiRequest, res: NextApiResponse) {
   let shareMessage = `Vote a spot for ${activityName} (${startTimeFormatted}):\n`;
   
   candidates.forEach((candidate, index) => {
-    const optionUrl = `${poll.longUrl}?vote=${candidate.placeId}`;
     shareMessage += `${index + 1}) ${candidate.name} — ${candidate.address.split(',')[0]}\n`;
   });
   

@@ -1,39 +1,224 @@
-.wa-clouds {
-  background-image: url('/skies/Cloudy Sky/Cloudy_Sky-Blue_04-1024x512.png');
-  background-size: cover;
-  opacity: 0.5;
-  mix-blend-mode: screen;
+/* Weather animation styles: clouds, waves, precip, lightning */
+
+/* Cloud textures using real PNG assets (tileable horizontally) */
+.wa-clouds, .wa-clouds-light, .wa-clouds-overcast, .wa-clouds-dark, .wa-clouds-sunny {
+  position: absolute; inset: 0; pointer-events: none;
+  /* Ensure clouds tile in both axes so they cover full page height */
+  background-repeat: repeat; /* was repeat-x */
+  background-size: 1024px 512px; /* matches asset native size */
+  background-position: 0 0;
+  mix-blend-mode: normal; /* was screen; normal to avoid over-brightening content */
   animation: wa-cloudscroll 90s linear infinite;
+  /* Stability/perf hints to prevent Safari/iOS mask flicker and stalling */
+  will-change: background-position, transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
 }
 
-.wa-waves {
-  background-image: url('/waves/waves1/00.png');
-  background-size: cover;
-  opacity: 0.7;
-  mix-blend-mode: overlay;
-  animation: wa-waveScroll 6s steps(44) infinite;
+/* Variants mapped to available assets */
+.wa-clouds-light {
+  background-image: url('/skies/Wispy%20Sky/Wispy_Sky-Blue_02-1024x512.png');
+  opacity: 0.25;
+}
+.wa-clouds {
+  background-image: url('/skies/Cloudy%20Sky/Cloudy_Sky-Blue_03-1024x512.png');
+  opacity: 0.35;
+}
+/* NEW: clear-sky sunny texture */
+.wa-clouds-sunny {
+  background-image: url('/skies/Cloudy%20Sky/Sunny.png');
+  /* Cover full height to avoid gaps showing dark base on tall pages */
+  background-repeat: repeat; /* override base repeat-x: repeat both axes */
+  opacity: 0.34; /* was 0.28: slightly stronger so base never looks black */
+  background-color: #b9ddff; /* pale-sky fallback under PNG transparency */
+}
+.wa-clouds-overcast {
+  background-image: url('/skies/Cloudy%20Sky/Overcast.png');
+  opacity: 0.50;
+  /* Slight softness to ease transitions between hero and content */
+  filter: saturate(0.85) blur(3px); /* was blur(2px) */
+}
+.wa-clouds-dark {
+  background-image: url('/skies/Cloudy%20Sky/Cloudy_Sky-Night_02-1024x512.png');
+  opacity: 0.35;
+  filter: brightness(0.7) saturate(0.8);
 }
 
-@keyframes wa-waveScroll {
+/* Smooth cloud scroll (used by cloud layers) */
+@keyframes wa-cloudscroll {
   from { background-position: 0 0; }
   to { background-position: -1024px 0; }
 }
 
-@media (max-width: 768px) {
-  .wa-clouds {
-    opacity: 0.35;
-  }
-  .wa-waves {
-    opacity: 0.5;
-    animation: wa-waveScroll 8s steps(22) infinite;
-  }
-}
-.wa-bg { position:absolute; inset:0; pointer-events:none; }
-.wa-lit { mix-blend-mode:screen; }
+/* Add a harmless clear class so clear background div never renders as black */
+.wa-clear { position: absolute; inset: 0; pointer-events: none; background: transparent; }
 
-.SceneLayers {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  contain: paint;
+/* SVG wave layer translate (pairs of groups slide left for seamless loop) */
+@keyframes wa-waveTranslate {
+  from { transform: translateX(0); }
+  to { transform: translateX(-1200px); }
+}
+
+/* Atmospheric tints for conditions */
+.wa-storm-bg { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(20,24,34,0.55), rgba(20,24,34,0.35) 40%, rgba(20,24,34,0)); }
+.wa-rain-bg { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(38,60,94,0.35), rgba(38,60,94,0.18) 40%, rgba(38,60,94,0)); }
+.wa-overcast-bg { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(70,74,84,0.35), rgba(70,74,84,0.2) 40%, rgba(70,74,84,0)); }
+.wa-drizzle-bg { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(120,160,200,0.25), rgba(120,160,200,0.12) 40%, rgba(120,160,200,0)); }
+/* .wa-clear remains gentle */
+
+/* SVG wave container + moving layer */
+.wa-waves-svg { position: absolute; inset: 0; pointer-events: none; opacity: 0.75; mix-blend-mode: overlay; }
+.wa-waves-svg .wa-wave-layer { animation: wa-waveTranslate 14s linear infinite; will-change: transform; }
+
+/* CSS rain overlay */
+.wa-rain { position: absolute; inset: 0; pointer-events: none; overflow: hidden; transform: rotate(var(--rain-angle, 12deg)); }
+.wa-rain-drop {
+  position: absolute;
+  top: -10%;
+  width: 1.5px;
+  height: 120%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.9) 60%, rgba(255,255,255,0));
+  opacity: 0.45;
+  animation-name: wa-rainFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes wa-rainFall {
+  0%   { transform: translateY(-110%) rotate(var(--rain-angle, 12deg)); opacity: 0; }
+  10%  { opacity: 0.5; }
+  100% { transform: translateY(110%) rotate(var(--rain-angle, 12deg)); opacity: 0; }
+}
+
+/* CSS snow overlay (subtle) */
+.wa-snow {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(circle at 20% 0%, rgba(255,255,255,0.9) 1px, transparent 2px),
+                    radial-gradient(circle at 80% 10%, rgba(255,255,255,0.8) 1.5px, transparent 3px),
+                    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.75) 1px, transparent 2px);
+  background-size: 200px 200px, 260px 260px, 180px 180px;
+  animation: wa-snowFall 12s linear infinite;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+@keyframes wa-snowFall {
+  from { background-position: 0 -200px, 0 -260px, 0 -180px; }
+  to   { background-position: 30px 200px, -30px 260px, 20px 180px; }
+}
+
+/* Occasional lightning flash for storms */
+.wa-lightning {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.9), rgba(255,255,255,0) 60%),
+              radial-gradient(ellipse at 70% 15%, rgba(255,255,255,0.8), rgba(255,255,255,0) 60%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: wa-lightningFlash 6s linear infinite;
+}
+@keyframes wa-lightningFlash {
+  0%, 92%, 100% { opacity: 0; }
+  94% { opacity: 0.9; }
+  96% { opacity: 0; }
+  97% { opacity: 0.6; }
+  98% { opacity: 0; }
+}
+
+/* Subtle puddles/gloss at the bottom when raining */
+.wa-puddles {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(60% 20% at 50% 110%, rgba(255,255,255,0.06), rgba(255,255,255,0) 40%),
+    radial-gradient(40% 15% at 25% 115%, rgba(255,255,255,0.05), rgba(255,255,255,0) 35%),
+    radial-gradient(40% 15% at 75% 115%, rgba(255,255,255,0.05), rgba(255,255,255,0) 35%);
+  mix-blend-mode: screen;
+}
+
+/* Honour runtime tuning vars from component */
+.wa-bg { position: absolute; inset: 0; pointer-events: none; filter: brightness(var(--wa-anim-ambient, 1)) blur(var(--wa-anim-blur, 0px)); opacity: var(--wa-anim-opacity, 1); }
+
+/* Reduced motion: keep visuals but stop movement */
+@media (prefers-reduced-motion: reduce) {
+  .wa-clouds, .wa-clouds-light, .wa-clouds-overcast, .wa-clouds-dark, .wa-clouds-sunny,
+  .wa-waves, .wa-waves-svg .wa-wave-layer,
+  .wa-rain-drop, .wa-snow, .wa-lightning { animation: none !important; }
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .wa-waves-svg { opacity: 0.55; }
+  .wa-clouds, .wa-clouds-light, .wa-clouds-overcast, .wa-clouds-dark, .wa-clouds-sunny { opacity: 0.4; }
+}
+
+/* Bottom fade to keep lower UI unobscured */
+:root {
+  --wa-fade-bottom-keep: 98%; /* keep visuals until near bottom; subtle fade only at the end */
+}
+
+/* Apply fade mask to moving visual layers */
+.wa-clouds, .wa-clouds-light, .wa-clouds-overcast, .wa-clouds-dark, .wa-clouds-sunny,
+.wa-waves-svg, .wa-rain, .wa-snow {
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-fade-bottom-keep), rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-fade-bottom-keep), rgba(0,0,0,0) 100%);
+}
+
+/* Constrain puddle sheen to the very bottom and reduce strength */
+.wa-puddles {
+  opacity: 0.18;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 90%, rgba(0,0,0,1) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 90%, rgba(0,0,0,1) 100%);
+}
+
+/* Attenuate clouds after hero area so content rows stay readable, while keeping full-page motion */
+:root { --wa-attenuate-start: 34%; }
+.wa-clouds, .wa-clouds-light, .wa-clouds-overcast, .wa-clouds-dark, .wa-clouds-sunny {
+  -webkit-mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,1) var(--wa-attenuate-start),
+    rgba(0,0,0,0.35) 100%);
+  mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,1) var(--wa-attenuate-start),
+    rgba(0,0,0,0.35) 100%);
+}
+
+/* Make sunny attenuation gentler so lower rows don't look dark */
+.wa-clouds-sunny {
+  -webkit-mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,1) var(--wa-attenuate-start),
+    rgba(0,0,0,0.15) 100%);
+  mask-image: linear-gradient(to bottom,
+    rgba(0,0,0,1) 0%,
+    rgba(0,0,0,1) var(--wa-attenuate-start),
+    rgba(0,0,0,0.15) 100%);
+}
+
+/* Keep a bottom-only fade for waves/precip layers to avoid hard edges */
+.wa-waves-svg, .wa-rain, .wa-snow {
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-fade-bottom-keep), rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-fade-bottom-keep), rgba(0,0,0,0) 100%);
+}
+
+/* Limit atmospheric background tints to hero area and soften */
+:root { --wa-atmo-end: 36%; }
+
+.wa-storm-bg, .wa-rain-bg, .wa-overcast-bg, .wa-drizzle-bg, .wa-clear {
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-atmo-end), rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) var(--wa-atmo-end), rgba(0,0,0,0) 100%);
+}
+
+/* Diurnal colour cycle (fallback). Component may override with dynamic keyframes aligned to real sunrise/sunset. */
+@keyframes wa-temperateDayCycle {
+  0%   { filter: brightness(0.8) saturate(0.8) hue-rotate(-10deg); }
+  10%  { filter: brightness(1)   saturate(1)   hue-rotate(0deg); }
+  55%  { filter: brightness(1)   saturate(1)   hue-rotate(0deg); }
+  65%  { filter: brightness(0.8) saturate(0.75) hue-rotate(15deg); }
+  80%  { filter: brightness(0.5) saturate(0.6) hue-rotate(-30deg); }
+  100% { filter: brightness(0.8) saturate(0.8) hue-rotate(-10deg); }
+}
+
+/* Optional quick demo class (not used when dynamic is active) */
+.wa-diurnal-default {
+  position: absolute; inset: 0; pointer-events: none;
+  animation: wa-temperateDayCycle 24s linear infinite;
 }

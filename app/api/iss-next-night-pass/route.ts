@@ -8,14 +8,27 @@ const DEFAULT_ALT = 0; // meters above sea level
 const DEFAULT_DAYS = 2; // how many days ahead to check
 const DEFAULT_MIN_VIS = 1; // minimum visibility in minutes
 
+// Types for N2YO response
+interface N2yoPassRaw {
+  startUTC: number;
+  duration: number;
+  mag: number;
+  direction: string;
+  maxEl: number;
+  endUTC: number;
+}
+interface N2yoResponse {
+  passes?: N2yoPassRaw[];
+}
+
 // Helper: fetch ISS passes for a location using N2YO
 async function fetchIssPassesN2yo(lat: number, lon: number, alt: number, days: number, minVis: number, apiKey: string) {
   const url = `${N2YO_API_URL}/${ISS_SAT_ID}/${lat}/${lon}/${alt}/${days}/${minVis}?apiKey=${apiKey}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`N2YO error ${res.status}`);
-  const data = await res.json();
+  const data = (await res.json()) as N2yoResponse;
   if (!data?.passes || !Array.isArray(data.passes)) throw new Error("Unexpected N2YO response");
-  return data.passes.map((p: any) => ({
+  return data.passes.map((p: N2yoPassRaw) => ({
     risetime: new Date(p.startUTC * 1000),
     duration: p.duration,
     mag: p.mag,
@@ -98,8 +111,9 @@ export async function GET(req: NextRequest) {
       sunset: sunset.toISOString(),
       nextSunrise: nextSunrise.toISOString(),
     });
-  } catch (err: any) {
-    return Response.json({ ok: false, error: err?.message ?? String(err) }, { status: 500 });
+  } catch (err) {
+    const message = (typeof err === 'object' && err && 'message' in err) ? String((err as { message?: unknown }).message) : String(err);
+    return Response.json({ ok: false, error: message }, { status: 500 });
   }
 }
 

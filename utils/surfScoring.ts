@@ -94,7 +94,8 @@ function scorePeriod(periodS: number): number {
 
 function scoreHeight(h: number, skill: Skill = "intermediate"): number {
   const bands = {
-    novice:        { low: 0.4, mid: 0.9, high: 1.4 },
+    // Soften novice: treat 0.3–0.8 m as viable
+    novice:        { low: 0.3, mid: 0.85, high: 1.3 },
     intermediate:  { low: 0.6, mid: 1.3, high: 2.1 },
     advanced:      { low: 1.0, mid: 2.0, high: 3.0 },
   }[skill];
@@ -108,10 +109,11 @@ function scoreHeight(h: number, skill: Skill = "intermediate"): number {
 
 function scoreAlignment(swellDir: number, beachFacingDeg: number): number {
   const d = angDiff(swellDir, beachFacingDeg);
-  if (d >= 110) return 0;
+  // Allow more oblique swell before zeroing alignment
+  if (d >= 120) return 0;
   if (d <= 30) return 1;
   if (d <= 70) return 0.7 + (1 - (d - 30) / 40) * 0.3;
-  return clamp(1 - (d - 70) / 40);
+  return clamp(1 - (d - 70) / 50);
 }
 
 type WindRegime = "offshore" | "onshore" | "cross";
@@ -129,32 +131,34 @@ function windRegime(beachFacingDeg: number, windDir: number): WindRegime {
 function scoreWind(regime: WindRegime, speedKt: number): number {
   switch (regime) {
     case "offshore":
-      if (speedKt <= 8)  return 1;
-      if (speedKt <= 12) return 0.9;
-      if (speedKt <= 18) return 0.75;
-      if (speedKt <= 22) return 0.55;
-      if (speedKt <= 28) return 0.35;
-      return 0.2;
+      if (speedKt <= 10) return 1;
+      if (speedKt <= 15) return 0.92;
+      if (speedKt <= 20) return 0.8;
+      if (speedKt <= 25) return 0.65;
+      if (speedKt <= 30) return 0.5;
+      return 0.35;
     case "cross":
-      if (speedKt <= 6)  return 0.8;
-      if (speedKt <= 12) return 0.6;
-      if (speedKt <= 18) return 0.4;
-      return 0.2;
+      if (speedKt <= 8)  return 0.75;
+      if (speedKt <= 12) return 0.65;
+      if (speedKt <= 18) return 0.5;
+      if (speedKt <= 24) return 0.35;
+      return 0.25;
     case "onshore":
-      if (speedKt <= 5)  return 0.45;
-      if (speedKt <= 10) return 0.3;
-      if (speedKt <= 15) return 0.15;
-      return 0.05;
+      if (speedKt <= 5)  return 0.5;
+      if (speedKt <= 10) return 0.35;
+      if (speedKt <= 15) return 0.2;
+      if (speedKt <= 20) return 0.12;
+      return 0.08;
   }
 }
 
 function scoreWindUnknown(speedKt: number): number {
-  // Fallback when beach orientation is unknown (speed-only, conservative)
-  if (speedKt <= 6)  return 0.75;
-  if (speedKt <= 12) return 0.6;
-  if (speedKt <= 18) return 0.45;
-  if (speedKt <= 24) return 0.3;
-  return 0.18;
+  // Fallback when beach orientation is unknown (speed-only, slightly friendlier)
+  if (speedKt <= 6)  return 0.8;
+  if (speedKt <= 12) return 0.65;
+  if (speedKt <= 18) return 0.5;
+  if (speedKt <= 24) return 0.35;
+  return 0.25;
 }
 
 // Combine multiple swells by energy proxy H²·T
@@ -229,16 +233,18 @@ function assessSafety(
   const E = eff.heightM * eff.heightM * eff.periodS; // H²·T proxy
 
   const limits = {
-    novice:       { maxH: 1.5, maxE: 35, maxWindOn: 22, maxWindOther: 30 },
-    intermediate: { maxH: 2.5, maxE: 55, maxWindOn: 25, maxWindOther: 32 },
-    advanced:     { maxH: 4.0, maxE: 95, maxWindOn: 30, maxWindOther: 38 },
+    // Slightly higher wind limits; keep heights conservative
+    novice:       { maxH: 1.5, maxE: 35, maxWindOn: 24, maxWindOther: 32 },
+    intermediate: { maxH: 2.5, maxE: 55, maxWindOn: 27, maxWindOther: 34 },
+    advanced:     { maxH: 4.0, maxE: 95, maxWindOn: 32, maxWindOther: 40 },
   }[skill];
 
   if (eff.heightM > limits.maxH) r.push(`Waves too large for ${skill} (≈ ${eff.heightM.toFixed(1)} m)`);
   if (E > limits.maxE) r.push(`Long-period power too high (H²·T ≈ ${Math.round(E)})`);
-  if (eff.periodS >= 14 && eff.heightM >= (skill === "intermediate" ? 1.8 : 1.4)) {
-    r.push("Powerful shorebreak risk (≥14 s and decent height)");
-  }
+  // Removed: hard shorebreak risk that forced red on many decent long-period days
+  // if (eff.periodS >= 14 && eff.heightM >= (skill === "intermediate" ? 1.8 : 1.4)) {
+  //   r.push("Powerful shorebreak risk (≥14 s and decent height)");
+  // }
 
   const maxWind = regime === "onshore" ? limits.maxWindOn : limits.maxWindOther;
   if (regime !== "unknown" && wind.speedKt > maxWind) {
@@ -291,7 +297,7 @@ export function gradeHour(
 
   const W = hasOrientation
     ? { period: 0.24, height: 0.24, alignment: 0.20, wind: 0.22, tide: 0.10 }
-    : { period: 0.30, height: 0.40, alignment: 0.05, wind: 0.15, tide: 0.10 };
+    : { period: 0.35, height: 0.30, alignment: 0.05, wind: 0.20, tide: 0.10 };
 
   const tideEval = tideProfile ? scoreTide(hour.tide, tideProfile) : { score: 0.6, reasons: [] as string[] };
 
@@ -299,6 +305,15 @@ export function gradeHour(
   let score = 100 * clamp(
     0.5 * swellQ + 0.5 * (W.period * p + W.height * h + W.alignment * align + W.wind * windQ + W.tide * tideEval.score)
   );
+
+  // Soft penalty for potential powerful shorebreak instead of automatic unsafe
+  let softPenalty = 0;
+  if (eff.periodS >= 15 && eff.heightM >= (skill === "intermediate" ? 1.7 : skill === "novice" ? 1.3 : 2.0)) {
+    softPenalty = eff.periodS >= 16 ? 12 : 8;
+  }
+  if (softPenalty > 0) {
+    score = clamp((score - softPenalty) / 100) * 100; // clamp in 0..100
+  }
 
   const safety = assessSafety(
     skill, eff, hour.wind, hasOrientation ? (regime as WindRegime) : "unknown",
@@ -324,6 +339,9 @@ export function gradeHour(
     reasons.push(`Wind ${formatWindInfo(hour.wind.speedKt, hour.wind.directionDeg)}`);
   }
   reasons.push(...tideEval.reasons);
+  if (softPenalty > 0) {
+    reasons.push(`Long-period shorebreak risk – soft penalty applied (−${softPenalty})`);
+  }
 
   let light: GradeResult["light"];
   if (safety.unsafe) {
@@ -331,7 +349,8 @@ export function gradeHour(
     score = Math.min(score, 30);
     reasons.unshift("⚠️ Safety: " + safety.reasons.join("; "));
   } else {
-    light = score >= 70 ? "green" : score >= 45 ? "amber" : "red";
+    // Slightly easier cutoffs
+    light = score >= 65 ? "green" : score >= 40 ? "amber" : "red";
   }
 
   return {
@@ -364,7 +383,7 @@ export function gradeDay(input: DayMarine): DayResult {
   // Day light: median of top 3 hours (robust)
   const sorted = hours.slice().sort((a, b) => b.score - a.score).slice(0, 3);
   const med = sorted.length ? Math.round(sorted.reduce((s, x) => s + x.score, 0) / sorted.length) : 0;
-  const dayLight: DayResult["dayLight"] = med >= 70 ? "green" : med >= 45 ? "amber" : "red";
+  const dayLight: DayResult["dayLight"] = med >= 65 ? "green" : med >= 40 ? "amber" : "red";
 
   return { dayLight, bestHour: best, hours };
 }

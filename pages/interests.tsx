@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import Link from 'next/link';
+import React, { useState, useEffect, useMemo } from "react";
+// Removed unused Link import
 import { activityTypes } from "../data/activityTypes";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import { useHasMounted } from "../utils/useHasMounted";
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
+import AppHeader, { LocationLite } from '../components/AppHeader';
 
 // The full set of activity IDs for each grouping—synchronize these with activityTypes!
 const mainCategories = [
@@ -277,10 +278,10 @@ const mainCategories = [
 
 // These are the activity IDs that should trigger a coastal spot dialog if chosen
 const waterActivityIds = [
-    "kayaking",
+
     "canoeing",
     "surfing",
-    "stand_up_paddleboarding",
+    
     "snorkeling",
     "kitesurfing",
     "windsurfing",
@@ -292,13 +293,15 @@ const waterActivityIds = [
     "beach",
     "beach_volleyball",
     "sea_swimming",
+    "sup_sea",
+    "sea_kayaking"
 ];
 
 // ------------- BREADCRUMB -------------
 const Breadcrumb: React.FC<{ path: string[]; onBack: () => void }> = ({ path, onBack }) => (
     <div className="breadcrumb" style={{ marginBottom: 23 }}>
         {path.length > 1 && (
-            <button className="back-button" onClick={onBack}>
+            <button className="btn btn-primary" onClick={onBack}>
                 ← Back
             </button>
         )}
@@ -313,14 +316,13 @@ const Interests: React.FC = () => {
     const [subCat, setSubCat] = useState<string | null>(null);
     const [showCoastDialog, setShowCoastDialog] = useState(false);
     const [showToast, setShowToast] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
     const hasMounted = useHasMounted();
 
     // Path for breadcrumb
     const path = [mainCat, subCat].filter(Boolean) as string[];
 
     // Use the up-to-date interests from preferences
-    const interests: string[] = preferences.interests || [];
+    const interests: string[] = useMemo(() => preferences.interests || [], [preferences.interests]);
 
     // Dialog logic for coastal activities
     useEffect(() => {
@@ -366,7 +368,7 @@ const Interests: React.FC = () => {
                 {mainCategories.map((cat) => (
                     <div
                         key={cat.key}
-                        className="main-category-card"
+                        className="btn btn-primary"
                         onClick={() => setMainCat(cat.key)}
                     >
                         <span className="category-icon">{cat.icon}</span>
@@ -382,10 +384,10 @@ const Interests: React.FC = () => {
                 {mainObj.subcategories.map((sub) => (
                     <div
                         key={sub.key}
-                        className="subcategory-card"
+                        className="btn btn-primary"
                         onClick={() => setSubCat(sub.key)}
                     >
-                        <span className="category-icon">{sub.icon}</span>
+                        <span className="btn btn-primary">{sub.icon}</span>
                         <h3
                             style={{
                                 display: "inline-block",
@@ -396,7 +398,7 @@ const Interests: React.FC = () => {
                         </h3>
                         <span
                             style={{
-                                color: "#6b7280",
+                                color: "#000000",
                                 fontSize: 14,
                             }}
                         >
@@ -415,17 +417,19 @@ const Interests: React.FC = () => {
             .sort((a, b) => a!.name.localeCompare(b!.name));
         content = (
             <div className="interests-grid">
-                {acts.map((act) => (
-                    <div
-                        key={act!.id}
-                        className={`interest-card${
-                            interests.includes(act!.id) ? " selected" : ""
-                        }`}
-                        onClick={() => toggleInterest(act!.id)}
-                    >
-                        {act!.name}
-                    </div>
-                ))}
+                {acts.map((act) => {
+                    const selected = interests.includes(act!.id);
+                    return (
+                        <button
+                            key={act!.id}
+                            type="button"
+                            className={`btn w-full normal-case ${selected ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                            onClick={() => toggleInterest(act!.id)}
+                        >
+                            {act!.name}
+                        </button>
+                    );
+                })}
             </div>
         );
     }
@@ -445,71 +449,12 @@ const Interests: React.FC = () => {
         return (
             <>
                 {/* Header banner */}
-                <header
-                    className="homepage-banner"
-                    style={{
-                        position: 'relative',
-                        minHeight: 60,
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '8px 0 8px 0',
-                        background: '#fff',
-                        borderBottom: '1px solid #e5e7eb',
-                    }}
-                >
-                    {/* Hamburger icon: left */}
-                    <img
-                        src="/burger-menu-svgrepo-com.svg"
-                        alt="Open menu"
-                        className="burger-menu-icon"
-                        style={{
-                            width: 36,
-                            height: 36,
-                            cursor: 'pointer',
-                            marginLeft: 12,
-                            marginRight: 12,
-                            zIndex: 10,
-                            display: 'block',
-                        }}
-                        onClick={() => setMenuOpen(true)}
-                    />
-
-                    {/* Logo: left-aligned, next to hamburger */}
-                    <Link href="/" style={{ display: 'block' }}>
-                        <img
-                            src="/wotnow-horizontal.png"
-                            alt="WotNow Logo"
-                            className="homepage-banner__logo"
-                            style={{
-                                display: 'block',
-                                maxWidth: 180,
-                                height: 'auto',
-                            }}
-                        />
-                    </Link>
-
-                    {/* Spacer to push content to right */}
-                    <div style={{ flex: 1 }} />
-
-                    {/* Page-specific text */}
-                    <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
-                        <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
-                            Choose Your Interests
-                        </h2>
-                        <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
-                            Pick activities you love
-                        </p>
-                    </div>
-
-                    <style>{`
-                        @media (max-width: 800px) {
-                            .homepage-banner__text {
-                                display: none !important;
-                            }
-                        }
-                    `}</style>
-                </header>
-                
+                <AppHeader
+                  homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
+                  coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
+                  onOpenHomeDialog={() => setShowCoastDialog(true)}
+                  onOpenCoastDialog={() => setShowCoastDialog(true)}
+                />
                 {/* Loading state */}
                 <div className="interests-page" style={{ maxWidth: 650, margin: "0 auto", padding: "32px 18px" }}>
                     <div style={{ textAlign: 'center', padding: '2rem' }}>
@@ -524,166 +469,12 @@ const Interests: React.FC = () => {
     return (
         <>
             {/* Header banner */}
-            <header
-                className="homepage-banner"
-                style={{
-                    position: 'relative',
-                    minHeight: 60,
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '8px 0 8px 0',
-                    background: '#fff',
-                    borderBottom: '1px solid #e5e7eb',
-                }}
-            >
-                {/* Hamburger icon: left */}
-                <img
-                    src="/burger-menu-svgrepo-com.svg"
-                    alt="Open menu"
-                    className="burger-menu-icon"
-                    style={{
-                        width: 36,
-                        height: 36,
-                        cursor: 'pointer',
-                        marginLeft: 12,
-                        marginRight: 12,
-                        zIndex: 10,
-                        display: 'block',
-                    }}
-                    onClick={() => setMenuOpen(true)}
-                />
-
-                {/* Logo: left-aligned, next to hamburger */}
-                <Link href="/" style={{ display: 'block' }}>
-                    <img
-                        src="/wotnow-horizontal.png"
-                        alt="WotNow Logo"
-                        className="homepage-banner__logo"
-                        style={{
-                            display: 'block',
-                            maxWidth: 180,
-                            height: 'auto',
-                        }}
-                    />
-                </Link>
-
-                {/* Spacer to push content to right */}
-                <div style={{ flex: 1 }} />
-
-                {/* Page-specific text */}
-                <div className="homepage-banner__text" style={{ textAlign: 'right', paddingRight: '12px' }}>
-                    <h2 className="homepage-banner__title" style={{ fontSize: '1.5rem', margin: 0, color: '#1f2937' }}>
-                        Choose Your Interests
-                    </h2>
-                    <p className="homepage-banner__subtitle" style={{ fontSize: '0.9rem', margin: 0, color: '#6b7280' }}>
-                        Pick activities you love
-                    </p>
-                </div>
-
-                <style>{`
-                    @media (max-width: 800px) {
-                        .homepage-banner__text {
-                            display: none !important;
-                        }
-                    }
-                `}</style>
-            </header>
-
-            {/* Mobile Navigation Menu */}
-            {menuOpen && (
-                <>
-                  {/* Invisible overlay to detect clicks outside the menu */}
-                  <div 
-                    className="menu-overlay"
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 999,
-                      cursor: 'default'
-                    }}
-                    onClick={() => setMenuOpen(false)}
-                  />
-                  
-                  {/* Menu container */}
-                  <nav
-                    className="navigation-menu"
-                    style={{
-                      position: 'fixed',
-                      zIndex: 1000,
-                      top: 0,
-                      left: 0
-                    }}
-                  >
-                    {/* Menu content with properly rounded corners */}
-                    <div 
-                      className="menu-content"
-                      style={{
-                        background: '#2b323c',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                        padding: '12px 24px',
-                        minWidth: '220px',
-                        maxWidth: '280px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        margin: '12px'
-                      }}
-                      onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
-                    >
-                      <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</Link>
-        <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</Link>
-        <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</Link>
-        <Link href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</Link>
-        <button
-                        onClick={() => setMenuOpen(false)}
-                        style={{
-                          marginTop: 24,
-                          background: '#fff',
-                          border: 'none',
-                          padding: '8px 16px',
-                          borderRadius: 6,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          color: '#000'
-                        }}
-                      >
-                        Close
-                      </button>
-                    </div>
-
-                    <style jsx>{`
-                      @media (min-width: 800px) {
-                        .navigation-menu {
-                          top: 60px; /* Position below header on desktop */
-                        }
-                        
-                        .menu-content {
-                          margin: 0 0 0 12px;
-                          border-radius: 0 0 12px 12px !important; /* Only round bottom corners on desktop */
-                        }
-                        
-                        .menu-content a:hover {
-                          text-decoration: underline;
-                        }
-                        
-                        .menu-content button {
-                          display: none; /* Hide close button on desktop */
-                        }
-                      }
-                      
-                      @media (max-width: 799px) {
-                        .menu-overlay {
-                          background: rgba(0,0,0,0.7);
-                        }
-                      }
-                    `}</style>
-                  </nav>
-                </>
-            )}
+            <AppHeader
+              homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
+              coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
+              onOpenHomeDialog={() => setShowCoastDialog(true)}
+              onOpenCoastDialog={() => setShowCoastDialog(true)}
+            />
 
         <div
             className="interests-page"
@@ -711,7 +502,7 @@ const Interests: React.FC = () => {
                             <button
                                 key={act!.id}
                                 onClick={() => toggleInterest(act!.id)}
-                                className="selected-activity-btn"
+                                className="btn btn-outline btn-primary btn-sm rounded-full"
                                 aria-label={`Remove ${act!.name} from selected interests`}
                             >
                                 {act!.name}
@@ -731,18 +522,19 @@ const Interests: React.FC = () => {
                 }}
             >
                 {(mainCat || subCat) && (
-                    <button
+                    <button className="btn btn-primary"
                         onClick={() => {
                             setMainCat(null);
                             setSubCat(null);
                         }}
+                        
                         style={{
                             padding: "12px 28px",
                             borderRadius: 9,
                             fontSize: "1.08rem",
-                            background: "#3b82f6",
-                            border: "none",
-                            color: "#fff",
+                            // background handled by class
+                            // background: "#3b82f6",
+                            // color: "#fff",
                             fontWeight: 700,
                             cursor: "pointer",
                         }}
@@ -752,13 +544,12 @@ const Interests: React.FC = () => {
                 )}
                 <button
                     onClick={handleDone}
+                    className="btn-outline"
                     style={{
                         padding: "12px 28px",
                         borderRadius: 9,
                         fontSize: "1.08rem",
-                        background: "#059669",
-                        border: "none",
-                        color: "#fff",
+
                         fontWeight: 700,
                         cursor: "pointer",
                     }}
@@ -815,4 +606,3 @@ const Interests: React.FC = () => {
 };
 
 export default Interests;
-/* eslint-disable @next/next/no-img-element */

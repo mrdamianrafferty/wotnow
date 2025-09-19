@@ -1,6 +1,14 @@
 import React from 'react';
 import Image from 'next/image';
 
+// Helper to get pollen icon based on index value
+const getPollenIcon = (index: number): string => {
+  if (index <= 1) return '/weather-icons/design/fill/final/pollen-index-1.svg'; // Low
+  if (index <= 2) return '/weather-icons/design/fill/final/pollen-index-2.svg'; // Moderate 
+  if (index <= 3) return '/weather-icons/design/fill/final/pollen-index-3.svg'; // High
+  return '/weather-icons/design/fill/final/pollen-index-4.svg'; // Very High
+};
+
 interface PollenCardProps {
   pollenAssess: {
     description?: string;
@@ -33,42 +41,55 @@ export const PollenCard: React.FC<PollenCardProps> = ({
     return 'Very High';
   };
 
-  // Get color based on pollen index
-  const getPollenColor = (index: number): string => {
-    if (index <= 1) return '#4ade80'; // Green
-    if (index <= 3) return '#facc15'; // Yellow
-    if (index <= 4) return '#fb923c'; // Orange
-    return '#ef4444'; // Red
-  };
-
-  // Helper to get pollen level color from string
-  const getPollenLevelColor = (level: string): string => {
-    if (level?.toLowerCase().includes('low')) return '#4ade80'; // Green
-    if (level?.toLowerCase().includes('moderate')) return '#facc15'; // Yellow
-    if (level?.toLowerCase().includes('high') && !level?.toLowerCase().includes('very')) return '#fb923c'; // Orange
-    if (level?.toLowerCase().includes('very high')) return '#ef4444'; // Red
+  // Helper to get pollen level color from string or numeric value
+  const getPollenLevelColor = (level: string | number): string => {
+    if (!level && level !== 0) return '#9ca3af'; // Default gray
+    
+    // Handle numeric values (Open-Meteo API format)
+    if (typeof level === 'number') {
+      if (level <= 0.5) return '#4ade80'; // Green - Very Low
+      if (level <= 1.0) return '#4ade80'; // Green - Low
+      if (level <= 2.0) return '#facc15'; // Yellow - Moderate
+      if (level <= 4.0) return '#fb923c'; // Orange - High
+      return '#ef4444'; // Red - Very High
+    }
+    
+    // Handle string descriptions (legacy format)
+    const levelStr = String(level).toLowerCase();
+    if (levelStr.includes('low')) return '#4ade80'; // Green
+    if (levelStr.includes('moderate')) return '#facc15'; // Yellow
+    if (levelStr.includes('high') && !levelStr.includes('very')) return '#fb923c'; // Orange
+    if (levelStr.includes('very high')) return '#ef4444'; // Red
     return '#9ca3af'; // Default gray
   };
 
-  // Helper to get position on scale from string level
-  const getPollenLevelPosition = (level: string): number => {
-    if (!level) return 0;
-    if (level?.toLowerCase().includes('none')) return 0;
-    if (level?.toLowerCase().includes('low')) return 15;
-    if (level?.toLowerCase().includes('moderate')) return 40;
-    if (level?.toLowerCase().includes('high') && !level?.toLowerCase().includes('very')) return 70;
-    if (level?.toLowerCase().includes('very high')) return 90;
-    if (level?.toLowerCase().includes('extreme')) return 95;
+  // Helper to get position on scale from string level or numeric value
+  const getPollenLevelPosition = (level: string | number): number => {
+    if (!level && level !== 0) return 0;
+    
+    // Handle numeric values (Open-Meteo API format)
+    if (typeof level === 'number') {
+      if (level <= 0.5) return 15;   // Very Low
+      if (level <= 1.0) return 30;   // Low  
+      if (level <= 2.0) return 50;   // Moderate
+      if (level <= 4.0) return 75;   // High
+      return 90;                     // Very High
+    }
+    
+    // Handle string descriptions (legacy format)
+    const levelStr = String(level).toLowerCase();
+    if (levelStr.includes('none')) return 0;
+    if (levelStr.includes('low')) return 15;
+    if (levelStr.includes('moderate')) return 40;
+    if (levelStr.includes('high') && !levelStr.includes('very')) return 70;
+    if (levelStr.includes('very high')) return 90;
+    if (levelStr.includes('extreme')) return 95;
     return 0;
   };
 
-  // Calculate position on the scale (0-5)
-  const _pollenScalePosition = (index: number): number => {
-    // Scale to 0-100% where 5 is 100%
-    return Math.min(100, Math.max(0, (index / 5) * 100));
-  };
-  
-  // Helper to get gradient background - version used by the PollenBar component
+  const pollenRiskLevel = getPollenRiskLevel(pollenIdx);
+
+// Helper to get gradient background - version used by the PollenBar component
   const getPollenGradient = () => {
     return `linear-gradient(to right, 
       #4ade80 0%, 
@@ -86,9 +107,6 @@ export const PollenCard: React.FC<PollenCardProps> = ({
     )`;
   };
 
-  const pollenColor = getPollenColor(pollenIdx);
-  const pollenRiskLevel = getPollenRiskLevel(pollenIdx);
-
 // Helper to get pollen descriptions in Go Daisy tone
 const getPollenDescription = (level: string): string => {
   switch(level) {
@@ -105,9 +123,53 @@ const getPollenDescription = (level: string): string => {
   }
 };
 
-// Helper component for rendering pollen bars
+// Helper component for rendering pollen bars with numeric index
+const PollenBarNumeric: React.FC<{
+  index: number;
+  size?: 'sm' | 'md';
+}> = ({ index, size = 'sm' }) => {
+  const height = size === 'sm' ? 'h-1.5' : 'h-2';
+  const markerSize = size === 'sm' ? 'w-3 h-3' : 'w-4 h-4';
+  const markerTop = size === 'sm' ? '-4px' : '-8px';
+  const markerBorder = size === 'sm' ? 'border' : 'border-2';
+  
+  // Calculate position on the scale (0-5) with proper label alignment
+  const pollenScalePosition = (idx: number): number => {
+    // Map to the actual label positions: 0, 1, 3, 4, 5
+    // 0 = 0%, 1 = 25%, 3 = 50%, 4 = 75%, 5 = 100%
+    if (idx <= 1) return (idx / 1) * 25; // 0-1 maps to 0-25%
+    if (idx <= 3) return 25 + ((idx - 1) / 2) * 25; // 1-3 maps to 25-50%
+    if (idx <= 4) return 50 + ((idx - 3) / 1) * 25; // 3-4 maps to 50-75%
+    return 75 + Math.min(25, ((idx - 4) / 1) * 25); // 4-5 maps to 75-100%
+  };
+
+  return (
+    <div className="relative">
+      <div className={`w-full ${height} rounded-full overflow-hidden`}>
+        <div 
+          className="h-full w-full"
+          style={{ background: getPollenGradient() }}
+        />
+      </div>
+      <div 
+        className="absolute pointer-events-none"
+        style={{
+          top: markerTop,
+          left: `calc(${pollenScalePosition(index)}% - 4px)`,
+        }}
+      >
+        <div 
+          className={`${markerSize} bg-white rounded-full ${markerBorder} shadow-sm`}
+          style={{ borderColor: getPollenLevelColor(getPollenRiskLevel(index)) }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Helper component for rendering pollen bars with string or numeric levels
 const PollenBar: React.FC<{
-  level?: string;
+  level?: string | number;
   size?: 'sm' | 'md';
 }> = ({ level, size = 'sm' }) => {
   const height = size === 'sm' ? 'h-1.5' : 'h-2';
@@ -140,22 +202,26 @@ const PollenBar: React.FC<{
 };
 
   return (
-    <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
+    <div className="card weather-card-bg text-base-content">
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
-          <h3 className="card-title flex items-center gap-2">
+          <h3 className="card__header-title flex items-center gap-2">
             <Image 
               src="/weather-icons/design/fill/final/pollen.svg" 
               alt="Pollen" 
               width={20}
               height={20}
-              className="w-5 h-5" 
+              className="w-12 h-12" 
             />
             Pollen
           </h3>
-          <div className="badge badge-lg" style={{ backgroundColor: pollenColor, color: pollenIdx <= 3 ? 'black' : 'white' }}>
-            {pollenIdx} - {pollenRiskLevel}
-          </div>
+          <Image 
+            src={getPollenIcon(pollenIdx)} 
+            alt={`Pollen ${pollenIdx} - ${pollenRiskLevel}`} 
+            width={80}
+            height={80}
+            className="w-20 h-20" 
+          />
         </div>
         
         <div className="my-2">
@@ -166,7 +232,7 @@ const PollenBar: React.FC<{
         
         {/* Pollen Scale bar with marker */}
         <div className="mt-3 mb-1">
-          <PollenBar level={pollenRiskLevel} size="md" />
+          <PollenBarNumeric index={pollenIdx} size="md" />
           
           {/* Scale labels */}
           <div className="flex justify-between text-xs opacity-80 mt-1">
@@ -185,7 +251,7 @@ const PollenBar: React.FC<{
         </div>
         
         {/* Collapsible detailed pollen types section */}
-        <details className="collapse collapse-arrow bg-black/10 rounded-lg">
+        <details className="collapse collapse-arrow bg-slate-800/25 rounded-lg">
           <summary className="collapse-title text-sm py-2">Pollen Types</summary>
           <div className="collapse-content">
             {/* Grass Pollen */}

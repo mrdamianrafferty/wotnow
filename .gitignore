@@ -43,3 +43,4 @@ test-scripts/
 
 # Build artifacts and temporary files
 coverage/
+.vercel

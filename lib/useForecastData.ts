@@ -30,7 +30,7 @@ export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?:
       fetch(`/api/marine?lat=${coastalLat}&lon=${coastalLon}`)
         .then(r => r.json())
         .then(d => {
-          const rows: MarineRow[] = mapStormglass(d);
+          const rows: MarineRow[] = mapStormglass(d as unknown);
           const grouped: MarineRow[][] = [[], [], [], [], [], [], [], []];
           rows.forEach(r => {
             const diff = dayjs(r.iso).startOf("day")
@@ -50,16 +50,24 @@ export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?:
   return { slots, marine, loading };
 }
 
-function mapStormglass(json: any): MarineRow[] {
-  const hours: any[] = json.hours ?? [];
-  return hours.map((h: any) => {
-    const iso = h.time as string;
+function mapStormglass(json: unknown): MarineRow[] {
+  const hours = (json as { hours?: unknown[] })?.hours;
+  const arr: unknown[] = Array.isArray(hours) ? hours : [];
+  return arr.map((hUnknown): MarineRow => {
+    const h = hUnknown as Record<string, unknown>;
+    const iso = String(h.time ?? "");
     const local = new Date(iso).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
 
-    const pick = (p: string) => Number(h[p]?.sg ?? h[p]?.noaa ?? 0);
+    const pick = (p: string) => {
+      const slot = h[p] as Record<string, unknown> | undefined;
+      const sg = typeof slot?.sg === 'number' ? slot?.sg as number : Number(slot?.sg);
+      const noaa = typeof slot?.noaa === 'number' ? slot?.noaa as number : Number(slot?.noaa);
+      const val = Number.isFinite(sg) ? sg : (Number.isFinite(noaa) ? noaa : 0);
+      return val;
+    };
 
     const water = pick("waterTemperature");
     const classify = (v: number) =>

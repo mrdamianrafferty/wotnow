@@ -24,7 +24,7 @@ interface FormField {
   label: string;
   required?: boolean;
   options?: { label: string; value: string }[];
-  default?: any;
+  default?: unknown;
 }
 
 interface SharingAction {
@@ -78,7 +78,7 @@ export class SharingFlowService {
     return Array.from(this.flows.values());
   }
 
-  public async executeStep(flowId: string, stepId: string, data: Record<string, any>) {
+  public async executeStep(flowId: string, stepId: string, data: Record<string, unknown>) {
     const flow = this.getFlow(flowId);
     if (!flow) {
       throw new Error(`Flow ${flowId} not found`);
@@ -98,7 +98,7 @@ export class SharingFlowService {
     };
   }
 
-  private getNextStep(flow: SharingFlow, currentStepId: string, data: any): string | null {
+  private getNextStep(flow: SharingFlow, currentStepId: string, _data: unknown): string | null {
     const currentIndex = flow.steps.findIndex(step => step.id === currentStepId);
     if (currentIndex === -1 || currentIndex === flow.steps.length - 1) {
       return null;

@@ -62,9 +62,7 @@ export default async function handler(
     params.set('q', keywords.trim());
   }
 
-    const apiUrl = `https://www.eventbriteapi.com/v3/events/search?${params.toString()}`;
-  
-    // You likely want to fetch data from Eventbrite here and return a response.
-    // For now, just return the constructed URL for demonstration.
-    return res.status(200).json({ events: [] });
-  }
+  // You likely want to fetch data from Eventbrite here and return a response.
+  // For now, just return an empty events array.
+  return res.status(200).json({ events: [] });
+}

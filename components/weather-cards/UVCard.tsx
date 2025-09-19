@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 
-interface UVCardProps {
+export interface UVCardProps {  // exported for external typing
   weather: {
     uvi?: number;
     sunriseISO?: string;
@@ -60,11 +60,15 @@ export const UVCard: React.FC<UVCardProps> = ({ weather, today }) => {
     return '#a855f7'; // Purple
   };
 
-  // Calculate position on the scale (0-11+)
+  // Calculate position on the scale with proper label alignment
   const uvScalePosition = (uvi: number | null): number => {
     if (uvi == null) return 0;
-    // Scale to 0-100% where 11+ is 100%
-    return Math.min(100, Math.max(0, (uvi / 11) * 100));
+    // Map to the actual label positions: 0, 3, 6, 8, 11+
+    // 0 = 0%, 3 = 25%, 6 = 50%, 8 = 75%, 11+ = 100%
+    if (uvi <= 3) return (uvi / 3) * 25; // 0-3 maps to 0-25%
+    if (uvi <= 6) return 25 + ((uvi - 3) / 3) * 25; // 3-6 maps to 25-50%
+    if (uvi <= 8) return 50 + ((uvi - 6) / 2) * 25; // 6-8 maps to 50-75%
+    return 75 + Math.min(25, ((uvi - 8) / 3) * 25); // 8-11+ maps to 75-100%
   };
 
   const uvColor = getUVColor(uvNow, isNightTime);
@@ -72,16 +76,16 @@ export const UVCard: React.FC<UVCardProps> = ({ weather, today }) => {
   const uvDescription = getUVDescription(uvNow, isNightTime);
 
   return (
-    <div className="card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm">
+    <div className="card weather-card-bg text-base-content">
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
-          <h3 className="card-title flex items-center gap-2">
+          <h3 className="card__header-title flex items-center gap-2">
             <Image 
               src="/weather-icons/design/fill/final/uv-index.svg" 
               alt="UV" 
               width={20} 
               height={20} 
-              className="w-5 h-5" 
+              className="w-12 h-12" 
             />
             UV Index
           </h3>

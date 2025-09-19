@@ -13,6 +13,23 @@ type VenueResult = {
   url?: string;
 };
 
+// Minimal subset of Eventbrite venue payload used here
+interface EventbriteVenue {
+  id: string;
+  name: string;
+  address?: {
+    address_1?: string;
+    address_2?: string;
+    city?: string;
+    country?: string;
+    latitude?: string;
+    longitude?: string;
+  };
+  resource_uri?: string;
+}
+
+interface EventbriteVenueResponse { venues?: EventbriteVenue[] }
+
 type ApiResponse =
   | { venues: VenueResult[] }
   | { error: string };
@@ -61,22 +78,24 @@ export default async function handler(
       return res.status(502).json({ error: 'Failed to fetch venues from Eventbrite' });
     }
 
-    const json = await resp.json();
+    const json = (await resp.json()) as unknown as EventbriteVenueResponse;
 
     // Map venues to normalized structure
-    const venues: VenueResult[] = (json.venues || []).map((venue: any) => ({
-      id: venue.id,
-      name: venue.name,
-      address: [
-        venue.address?.address_1,
-        venue.address?.address_2
-      ].filter(Boolean).join(', '),
-      city: venue.address?.city || '',
-      country: venue.address?.country || '',
-      lat: venue.address?.latitude ? parseFloat(venue.address.latitude) : undefined,
-      lon: venue.address?.longitude ? parseFloat(venue.address.longitude) : undefined,
-      url: venue.resource_uri // Not always present
-    }));
+    const venues: VenueResult[] = Array.isArray(json.venues)
+      ? json.venues.map((venue: EventbriteVenue): VenueResult => ({
+          id: venue.id,
+          name: venue.name,
+          address: [
+            venue.address?.address_1,
+            venue.address?.address_2
+          ].filter(Boolean).join(', '),
+          city: venue.address?.city || '',
+          country: venue.address?.country || '',
+          lat: venue.address?.latitude ? parseFloat(venue.address.latitude) : undefined,
+          lon: venue.address?.longitude ? parseFloat(venue.address.longitude) : undefined,
+          url: venue.resource_uri // Not always present
+        }))
+      : [];
 
     return res.status(200).json({ venues });
   } catch (err) {

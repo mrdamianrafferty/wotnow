@@ -116,3 +116,6 @@ public/Oxanium/static/
 venv/
 __pycache__/
 *.pyc
+
+# --- Exclude large PNGs ---
+public/PNGS

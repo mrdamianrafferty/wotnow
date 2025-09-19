@@ -78,7 +78,7 @@ export function languageForCountry(countryCode?: string): string {
   };
   
   // 3) Pull keywords for the country’s language, then fall back to English
-  import { ACTIVITY_KEYWORDS } from '@/keywords/ACTIVITY_KEYWORDS';
+  import { ACTIVITY_KEYWORDS } from '../activitykeywords/ACTIVITY_KEYWORDS';
   
   export function getKeywords(activityId: string, countryCode?: string): string[] {
     const lang = languageForCountry(countryCode);
@@ -120,13 +120,19 @@ export function languageForCountry(countryCode?: string): string {
   }
   
   // 5) Do sequential tries: first phrase, then next, etc. Fallback to Text Search at the end.
+  export type PlacesApiResult = {
+    status?: string;
+    statusCode?: string | number;
+    results?: unknown[];
+  };
+  
   export type PlacesClient = {
-    nearbySearch: (params: Record<string, string>) => Promise<any>;  // return Google response JSON
-    textSearch: (params: Record<string, string>) => Promise<any>;
+    nearbySearch: (params: Record<string, string>) => Promise<PlacesApiResult>;
+    textSearch: (params: Record<string, string>) => Promise<PlacesApiResult>;
   };
   
   // Define what “has results” means (treat ZERO_RESULTS & empty as fail)
-  function hasResults(res: any): boolean {
+  function hasResults(res: PlacesApiResult): boolean {
     const status = (res?.status || res?.statusCode || '').toString();
     const results = Array.isArray(res?.results) ? res.results : [];
     if (results.length > 0) return true;

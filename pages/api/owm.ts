@@ -1,13 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { getFullWeather } from '../../lib/services/weatherService';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Support both ESM and CommonJS exports from the service module
-  const mod = await import('../../lib/services/weatherService');
-  const svc: any = (mod as any).default ?? mod;
-  const { getFullWeather } = svc;
-  
+  // Use the unified weather service directly
   const { lat, lon } = req.query as { lat?: string; lon?: string };
-  const units = (req.query.units as string) || 'metric';
+  type Units = 'metric' | 'imperial' | 'standard';
+  const unitsParam = Array.isArray(req.query.units) ? req.query.units[0] : req.query.units;
+  const units: Units =
+    unitsParam === 'metric' || unitsParam === 'imperial' || unitsParam === 'standard'
+      ? unitsParam
+      : 'metric';
   const exclude = (req.query.exclude as string) || '';
 
   const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
@@ -32,9 +34,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json(weatherData);
-  } catch (err: any) {
+  } catch (err) {
+    const message = err && typeof err === 'object' && 'message' in err ? String((err as { message?: unknown }).message) : String(err);
     console.error('Unified Weather API error (/api/owm):', err);
-    const message = typeof err?.message === 'string' ? err.message : String(err);
     return res.status(500).json({ error: `Failed to fetch weather data: ${message}` });
   }
 }

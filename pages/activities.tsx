@@ -26,6 +26,8 @@ import { WeatherForecastDay, MarineHour } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
+import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
+import AppHeader, { LocationLite } from '../components/AppHeader';
 import { useHasMounted } from '../utils/useHasMounted';
 import { getActivityMessage } from '../data/activityMessages';
 import { buildReasons, isOutdoor, isOutOfSeason } from '../utils/activityHelpers';
@@ -37,6 +39,8 @@ import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import WindDirectionIcon from '../components/WindDirectionIcon';
 import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import { resolveBeachOrientationAsync, computeSimulatedOrientation } from '../utils/orientation';
+import Footer from '../components/footer'; // <-- add this import
+
 // TODO: Uncomment when the sharing feature is merged
 // import { ShareModal } from '../components/sharing/NewShareModal';
 
@@ -185,7 +189,9 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
   // Get activity data and styling
   const activity = activityTypes.find(a => a.id === activityId);
   const assessment = getAssessmentCategory(score, activityId);
-  const bgUrl = getActivityBg(activityId);
+  const bgUrl = isImageOptimized(activityId)
+    ? getOptimizedImageSrc(activityId, 'webpMobile')
+    : getActivityBg(activityId);
   const isMarine = activityId ? MARINE_ACTIVITY_IDS.includes(activityId) : false;
   // TODO: Uncomment when the sharing feature is merged
   // const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
@@ -570,7 +576,6 @@ export default function ActivitiesPage() {
   const [activeDay, setActiveDay] = useState(0);
   type TimeInfo = { serverTime: Date; isEvening: boolean } | null;
   const [timeInfo, setTimeInfo] = useState<TimeInfo>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Weather & marine data (same as homepage pipeline)
@@ -683,8 +688,9 @@ export default function ActivitiesPage() {
     if (!weatherData || !weatherData.list) return [];
 
     // Group OpenWeather forecast data by date (same logic as homepage)
-    const grouped: Record<string, NonNullable<WeatherWithPollen>['list']> = {} as any;
-    weatherData.list.forEach((item) => {
+    type ForecastEntry = NonNullable<WeatherWithPollen>['list'][number];
+    const grouped: Record<string, ForecastEntry[]> = {};
+    weatherData.list.forEach((item: ForecastEntry) => {
       const date = item.dt_txt.split(' ')[0]; // YYYY-MM-DD
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(item);
@@ -695,10 +701,10 @@ export default function ActivitiesPage() {
       .slice(0, 5)
       .map(([dateStr, dayEntries], dayIndex) => {
         // Use noon entry as representative for the day, or first if noon not available
-        const noonEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
+        const noonEntry: ForecastEntry = dayEntries.find((e: ForecastEntry) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
         
         // Calculate min/max temps across all hours of the day
-        const allTemps = dayEntries.map(entry => entry.main.temp);
+        const allTemps = dayEntries.map((entry: ForecastEntry) => entry.main.temp);
         const minTemp = Math.min(...allTemps);
         const maxTemp = Math.max(...allTemps);
         
@@ -727,22 +733,17 @@ export default function ActivitiesPage() {
           description: noonEntry.weather[0].description,
           icon: noonEntry.weather[0].icon,
           rain: Math.round(noonEntry.rain?.['3h'] || 0),
-          wind_speed: noonEntry.wind.speed,        
-          gust_speed: noonEntry.wind.gust || noonEntry.wind.speed,
+          wind_speed: noonEntry.wind.speed, // OpenWeather provides m/s - keep in m/s for consistency
           wind_direction: noonEntry.wind.deg,
-          wind_directions_today: [noonEntry.wind.deg],
           clouds: noonEntry.clouds.all,
           humidity: noonEntry.main.humidity,
           visibility: noonEntry.visibility ?? 10000,
-          pressure: noonEntry.main.pressure,
-          waveHeight: marineForDay.length > 0 ? marineForDay[0].waveHeight?.noaa : undefined,
-          waterTemperature: marineForDay.length > 0 ? marineForDay[0].waterTemperature?.noaa : undefined,
-          swellHeight: marineForDay.length > 0 ? marineForDay[0].swellHeight?.noaa : undefined,
-          swellPeriod: marineForDay.length > 0 ? marineForDay[0].swellPeriod?.noaa : undefined,
+          waveHeight: undefined,
+          waterTemperature: undefined,
           marine: marineForDay,
-          pollen: pollenForDate, // Include pollen data from API response
-          airQuality: airQualityForDate, // Include air quality data from API response
-        };
+          pollen: pollenForDate,
+          airQuality: airQualityForDate,
+        } as WeatherForecastDay;
       });
   }, [weatherData, marineHours]);
 
@@ -859,40 +860,19 @@ export default function ActivitiesPage() {
   if (!hasMounted) {
     return (
       <>
-        {/* ✅ ADD HEADER BANNER TO LOADING STATE */}
-        <header className="homepage-banner activities-header">
-          <Image
-            src="/burger-menu-svgrepo-com.svg"
-            alt="Open menu"
-            className="burger-menu-icon activities-header__burger"
-            onClick={() => setMenuOpen(true)}
-            width={24}
-            height={24}
-          />
-          <Image
-            src="/wotnow-horizontal.png"
-            alt="WotNow Logo"
-            className="homepage-banner__logo activities-header__logo"
-            width={120}
-            height={40}
-          />
-          <div className="flex-spacer" />
-          <div className="homepage-banner__text text-right padding-right-12">
-            <h2 className="homepage-banner__title font-size-15 margin-0 color-gray-800">
-              All Activities
-            </h2>
-            <p className="homepage-banner__subtitle font-size-09 margin-0 color-gray-500">
-              Your outdoor forecast
-            </p>
-          </div>
-        </header>
-
+        <AppHeader
+          homeLocation={homeLocation as LocationLite | undefined}
+          coastalLocation={coastalLocation as LocationLite | undefined}
+          onOpenHomeDialog={() => { /* optional: open home dialog from activities if you have one */ }}
+          onOpenCoastDialog={() => { /* optional: open coast dialog from activities if you have one */ }}
+        />
         <section className="activities-loading">
           <div className="activities-loading__content">
             <div className="activities-loading__emoji">⏳</div>
             <div>Loading your activities...</div>
           </div>
         </section>
+        <Footer /> {/* <-- add footer in loading state */}
       </>
     );
   }
@@ -900,136 +880,12 @@ export default function ActivitiesPage() {
   return (
     <>
       {/* ✅ ADD HEADER BANNER */}
-      <header className="homepage-banner activities-header">
-        {/* Hamburger icon: left */}
-        <Image
-          src="/burger-menu-svgrepo-com.svg"
-          alt="Open menu"
-          className="burger-menu-icon activities-header__burger"
-          onClick={() => setMenuOpen(true)}
-          width={24}
-          height={24}
-        />
-
-        {/* Logo: left-aligned, next to hamburger */}
-        <Link href="/" className="display-block">
-          <Image
-            src="/wotnow-horizontal.png"
-            alt="WotNow Logo"
-            className="homepage-banner__logo activities-header__logo"
-            width={120}
-            height={40}
-          />
-        </Link>
-
-        {/* Spacer to push content to right */}
-        <div className="flex-spacer" />
-
-        {/* Page-specific text */}
-        <div className="homepage-banner__text text-right padding-right-12">
-          <h2 className="homepage-banner__title font-size-15 margin-0 color-gray-800">
-            All Activities
-          </h2>
-          <p className="homepage-banner__subtitle font-size-09 margin-0 color-gray-500">
-            Your outdoor forecast
-          </p>
-        </div>
-
-        <style>{`
-          @media (max-width: 800px) {
-            .homepage-banner__text {
-              display: none !important;
-            }
-          }
-        `}</style>
-      </header>
-
-      {/* ✅ ADD MOBILE NAVIGATION MENU */}
-      {menuOpen && (
-        <>
-          {/* Invisible overlay to detect clicks outside the menu */}
-          <div 
-            className="menu-overlay activities-menu-overlay"
-            onClick={() => setMenuOpen(false)}
-          />
-          
-          {/* Menu container */}
-          <nav
-            className="navigation-menu"
-            style={{
-              position: 'fixed',
-              zIndex: 1000,
-              top: 0,
-              left: 0
-            }}
-          >
-            {/* Menu content with properly rounded corners */}
-            <div 
-              className="menu-content"
-              style={{
-                background: '#2b323c',
-                borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                padding: '12px 24px',
-                minWidth: '220px',
-                maxWidth: '280px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                margin: '12px'
-              }}
-              onClick={(e) => e.stopPropagation()} // Prevent clicks from closing menu
-            >
-              <Link href="/" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Home</Link>
-        <Link href="/interests" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Manage my interests</Link>
-        <Link href="/activities" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Scan my interests</Link>
-        <Link href="/weather" onClick={() => setMenuOpen(false)} style={{ color: '#fff', fontSize: '1.5rem', margin: '16px 0', textDecoration: 'none' }}>Local weather in detail</Link>
-        <button
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  marginTop: 24,
-                  background: '#fff',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: 6,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  color: '#000'
-                }}
-              >
-                Close
-              </button>
-            </div>
-
-            <style jsx>{`
-              @media (min-width: 800px) {
-                .navigation-menu {
-                  top: 60px; /* Position below header on desktop */
-                }
-                
-                .menu-content {
-                  margin: 0 0 0 12px;
-                  border-radius: 0 0 12px 12px !important; /* Only round bottom corners on desktop */
-                }
-                
-                .menu-content a:hover {
-                  text-decoration: underline;
-                }
-                
-                .menu-content button {
-                  display: none; /* Hide close button on desktop */
-                }
-              }
-              
-              @media (max-width: 799px) {
-                .menu-overlay {
-                  background: rgba(0,0,0,0.7);
-                }
-              }
-            `}</style>
-          </nav>
-        </>
-      )}
+      <AppHeader
+        homeLocation={homeLocation as LocationLite | undefined}
+        coastalLocation={coastalLocation as LocationLite | undefined}
+        onOpenHomeDialog={() => { /* optional: open home dialog from activities if you have one */ }}
+        onOpenCoastDialog={() => { /* optional: open coast dialog from activities if you have one */ }}
+      />
 
       {/* EXISTING ACTIVITIES CONTENT */}
       <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -1193,6 +1049,8 @@ export default function ActivitiesPage() {
           </>
         )}
       </section>
+
+      <Footer /> {/* <-- add footer in main state */}
     </>
   );
 }

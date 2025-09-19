@@ -28,10 +28,10 @@ export const VisibilityCard: React.FC<VisibilityCardProps> = ({
   };
 
   return (
-    <div className="card bg-blue-900/90 text-white rounded-xl overflow-hidden border border-blue-700/50 shadow-lg">
+    <div className="card weather-card-bg text-white rounded-xl overflow-hidden border border-white/10 shadow-lg">
       <div className="card-body p-4">
         <div className="flex justify-between items-center">
-          <h3 className="card-title text-lg font-medium flex items-center gap-2">
+          <h3 className="card__header-title text-lg font-medium flex items-center gap-2">
             <Image 
               src="/weather-icons/design/fill/final/visibility.svg" 
               alt="Visibility" 
@@ -49,20 +49,20 @@ export const VisibilityCard: React.FC<VisibilityCardProps> = ({
         </div>
         
         <div className="my-3">
-          <p className="text-sm text-blue-100">
+          <p className="text-sm text-white/90">
             {getVisibilityDescription(visibilityKm)}
           </p>
         </div>
         
         {/* Log scale visibility bar */}
         <div className="mt-3 mb-1">
-          <div className="w-full bg-blue-950/50 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-blue-200 to-blue-400 h-full rounded-full"
+              className="bg-gradient-to-r from-white/60 to-white/80 h-full rounded-full"
               style={{ width: `${logScalePosition(visibilityKm)}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-blue-300/80 mt-1">
+          <div className="flex justify-between text-xs text-white/70 mt-1">
             <span>0</span>
             <span>0-10 km (log scale)</span>
             <span>10</span>

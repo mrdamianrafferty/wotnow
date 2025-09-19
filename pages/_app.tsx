@@ -10,8 +10,41 @@ import 'leaflet/dist/leaflet.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
+import { useRouter } from 'next/router'
+import { useEffect } from 'react'
+import Footer from '../components/footer';
 
-export default function App({ Component, pageProps }: AppProps) {
+type ThemeName = 'light' | 'wotnow' | string;
+
+type PagePropsWithTheme = {
+  theme?: ThemeName;
+  [key: string]: unknown;
+};
+
+export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
+  const router = useRouter();
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const { pathname, search, hash } = window.location;
+
+    // Avoid loops on the callback page itself
+    if (pathname.startsWith('/auth/callback')) return;
+
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('code');
+    const type = url.searchParams.get('type');
+    const hasOauthFragment = /(?:^#|&)(access_token|refresh_token|provider_token|expires_in|token_type)=/i.test(hash || '');
+
+    if (code || type === 'recovery' || hasOauthFragment) {
+      // Preserve query and any OAuth hash
+      window.location.replace(`/auth/callback${search}${hash || ''}`);
+    }
+  }, []);
+  // Use Light theme on onboarding, otherwise default to wotnow
+  const chosenTheme = router.pathname.startsWith('/onboarding') ? 'light' : 'wotnow';
+  // If a page explicitly passes a theme via pageProps, honour it
+  const theme = (pageProps?.theme as ThemeName | undefined) ?? chosenTheme;
+
   return (
     <UserPreferencesProvider>
       <Head>
@@ -20,8 +53,9 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="theme-color" content="#111827" />
       </Head>
       {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-      <div data-theme="wotnow" className="min-h-screen bg-base-100 text-base-content">
+      <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content">
         <Component {...pageProps} />
+        <Footer />
       </div>
     </UserPreferencesProvider>
   )

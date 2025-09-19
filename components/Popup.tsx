@@ -4,22 +4,18 @@ import React, { useEffect, useState, useRef } from 'react';
 import OptimizedImage from './OptimizedImage';
 import '../styles/Popup.css';
 import { getActivityEmoji, getAssessmentEmoji } from '../data/emojiMap';
-import { getActivityMessage } from '../data/activityMessages';
 import { MARINE_ACTIVITY_IDS, isOutdoor } from '../utils/activityHelpers';
 import bgMap from '../data/bgMap';
 import SwellArrow from './SwellArrow';
 import WindDirectionIcon from './WindDirectionIcon';
-import PollenWarning from './PollenWarning';
-import AirQualityWarning from './AirQualityWarning';
 import EnvironmentalIndicators from './EnvironmentalIndicators';
-import html2canvas from 'html2canvas';
 import { getCompassDirection } from '../utils/weatherLabels';
 import { classifyWindRelative, computeSimulatedOrientation, resolveBeachOrientationAsync } from '../utils/orientation';
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
-import { assessPollenConditions, PollenSummary } from '../utils/pollenUtils';
-import { assessAirQualityConditions, AirQualitySummary } from '../utils/airQualityUtils';
+import type { PollenSummary } from '../utils/pollenUtils';
+import type { AirQualitySummary } from '../utils/airQualityUtils';
 
 // --- Types ---
 // All windSpeed fields are in meters per second (m/s) throughout the pipeline.
@@ -32,6 +28,7 @@ interface MarineData {
   swellPeriod?: number;
   gust?: number;
   windDir?: number;
+  windDirection?: number; // some sources use windDirection
   swellDir?: number;
   vis?: number;
   beachOrientation?: number;
@@ -50,6 +47,19 @@ interface WeatherData {
   precipitation?: number;
   beachOrientation?: number;
   icon?: string;
+}
+
+// Tide types to avoid any
+type TideType = 'high' | 'low';
+interface TideEntry { time: string; height: number; type: TideType }
+function isTideEntry(v: unknown): v is TideEntry {
+  if (typeof v !== 'object' || v === null) return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.time === 'string' &&
+    typeof o.height === 'number' &&
+    (o.type === 'high' || o.type === 'low')
+  );
 }
 
 type Category = 'perfect' | 'good' | 'fair' | 'poor';
@@ -98,7 +108,7 @@ async function imageUrlToFile(imageUrl?: string): Promise<File | undefined> {
   }
 }
 
-function buildMessage({ title, text, url }: SharePayload) {
+function buildMessage({ text, url }: SharePayload) {
   return [text, url].filter(Boolean).join('\n\n');
 }
 
@@ -117,13 +127,30 @@ function buildWhatsAppUrl(payload: SharePayload) {
   return `https://wa.me/?text=${encoded}`;
 }
 
+type NavigatorWithCanShare = Navigator & { canShare?: (data: { files?: File[] }) => boolean };
+function getErrorName(e: unknown): string | undefined {
+  if (typeof e === 'object' && e && 'name' in e) {
+    const n = (e as { name?: unknown }).name;
+    if (typeof n === 'string') return n;
+  }
+  return undefined;
+}
+function getErrorMessage(e: unknown): string | undefined {
+  if (typeof e === 'object' && e && 'message' in e) {
+    const m = (e as { message?: unknown }).message;
+    if (typeof m === 'string') return m;
+  }
+  return undefined;
+}
+
 async function shareToWhatsApp(payload: SharePayload): Promise<string> {
   const hasNavigatorShare = typeof navigator !== 'undefined' && !!navigator.share;
   const textWithLinks = [payload.text, payload.url, payload.imageUrl].filter(Boolean).join('\n');
 
   if (hasNavigatorShare && _isSecure && payload.imageUrl) {
     const file = await imageUrlToFile(payload.imageUrl);
-    if (file && (navigator as any).canShare?.({ files: [file] })) {
+    const n = navigator as NavigatorWithCanShare;
+    if (file && n.canShare?.({ files: [file] })) {
       try {
         await navigator.share({
           title: payload.title,
@@ -131,8 +158,10 @@ async function shareToWhatsApp(payload: SharePayload): Promise<string> {
           files: [file],
         });
         return 'Shared via system sheet';
-      } catch (err: any) {
-        if (err?.name === 'AbortError' || err?.message?.includes('Abort')) return 'Share cancelled';
+      } catch (err: unknown) {
+        const nm = getErrorName(err) || '';
+        const msg = getErrorMessage(err) || '';
+        if (/Abort/i.test(nm) || /Abort/i.test(msg)) return 'Share cancelled';
       }
     }
   }
@@ -143,28 +172,29 @@ async function shareToWhatsApp(payload: SharePayload): Promise<string> {
         text: textWithLinks,
       });
       return 'Shared via system sheet';
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || err?.message?.includes('Abort')) return 'Share cancelled';
+    } catch (err: unknown) {
+      const nm = getErrorName(err) || '';
+      const msg = getErrorMessage(err) || '';
+      if (/Abort/i.test(nm) || /Abort/i.test(msg)) return 'Share cancelled';
     }
   }
   try {
     const href = buildWhatsAppUrl({ ...payload, text: textWithLinks, url: undefined });
     const w = window.open(href, '_blank', 'noopener,noreferrer');
     if (w) return 'Opened WhatsApp';
-  } catch (_err) {
+  } catch {
     void 0; // swallow and continue to next strategy
   }
   try {
     const toCopy = [payload.title, textWithLinks].filter(Boolean).join('\n\n');
     await navigator.clipboard.writeText(toCopy);
     return 'Copied message to clipboard';
-  } catch (_err) {
+  } catch {
     return 'Unable to share';
   }
 }
 // ---- end helpers ----
 
-const thermometerIcon = '/weather-icons/design/fill/final/thermometer-celsius.svg';
 const humidityIcon = '/weather-icons/design/fill/final/humidity.svg';
 const rainIcon = '/weather-icons/design/fill/final/raindrop-measure.svg';
 
@@ -208,19 +238,6 @@ function formatTideTime(timeString: string): string {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function getTimeUntil(timeString: string): string {
-  const tideTime = new Date(timeString).getTime();
-  const now = Date.now();
-  const diffMs = tideTime - now;
-  if (diffMs < 0) return 'now';
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  if (diffMinutes < 60) return `in ${diffMinutes} min`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  const remainingMinutes = diffMinutes % 60;
-  if (remainingMinutes === 0) return `in ${diffHours}h`;
-  return `in ${diffHours}h ${remainingMinutes}m`;
-}
-
 const Popup: React.FC<PopupProps> = ({
   activityId,
   title,
@@ -243,7 +260,6 @@ const Popup: React.FC<PopupProps> = ({
     secondLowTide?: { time: string; height: number };
   }>({});
   const [isToday, setIsToday] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
   const popupRef = useRef<HTMLDivElement | null>(null);
 
   const isMarine = !!marineData && Object.keys(marineData).length > 1;
@@ -269,10 +285,10 @@ const Popup: React.FC<PopupProps> = ({
       if (isImageOptimized(activityId)) {
         const webpSrc = getOptimizedImageSrc(activityId, isMobile ? 'webpMobile' : 'webp');
         try {
-          await new Promise((resolve, reject) => {
+          await new Promise<void>((resolve, reject) => {
             const img = new Image();
-            img.onload = resolve;
-            img.onerror = reject;
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('Image failed to load'));
             img.src = webpSrc;
           });
           setBackgroundImage(webpSrc);
@@ -307,36 +323,8 @@ const Popup: React.FC<PopupProps> = ({
 
   // --- Wind speed display helpers ---
   // Always use m/s internally, convert for display only
-  const windSpeedMs = marineData?.windSpeed ?? weatherData?.windSpeed ?? null;
-  const windSpeedKnots = windSpeedMs != null ? mpsToKnots(windSpeedMs) : null;
-  const windSpeedKmh = windSpeedMs != null ? mpsToKmh(windSpeedMs) : null;
-
-  // Example usage in render:
-  // <span>{windSpeedMs?.toFixed(1)} m/s</span>
-  // <span>{windSpeedKnots?.toFixed(1)} knots</span>
-  // <span>{windSpeedKmh?.toFixed(1)} km/h</span>
 
   // Document: All wind speed logic, scoring, and messaging should use m/s internally.
-
-  // Export PNG (only main content, no footer/buttons)
-const handleDownload = async () => {
-  setIsExporting(true);
-  await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for class/UI update
-  try {
-    if (popupRef.current) {
-      const canvas = await html2canvas(popupRef.current, { useCORS: true });
-      const dataUrl = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'popup-capture.png';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  } finally {
-    setIsExporting(false);
-  }
-};
 
   const handleShare = async () => {
     const shareUrl = `${PUBLIC_SITE_URL}?activity=${encodeURIComponent(activityId)}`;
@@ -379,9 +367,10 @@ const handleDownload = async () => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await resolveBeachOrientationAsync({ lat, lon });
+        type OrientationResult = { orientation?: number; source?: string; via?: string };
+        const res = (await resolveBeachOrientationAsync({ lat, lon })) as OrientationResult;
         if (cancelled) return;
-        const via = (res as any).via || res.source;
+        const via = res.via || res.source;
         // Fallback to simulated only if resolver couldn't find anything
         const o = typeof res.orientation === 'number' ? res.orientation : computeSimulatedOrientation(lat, lon);
         setResolvedOrientation(o);
@@ -404,22 +393,19 @@ const handleDownload = async () => {
       const res = await fetch(`/api/tides?lat=${lat}&lon=${lon}`);
       if (!res.ok) return;
       const data = await res.json();
-      if (!data || !Array.isArray(data.data)) return;
+      const entries: TideEntry[] = Array.isArray(data?.data) ? (data.data as unknown[]).filter(isTideEntry) : [];
       const targetDateStr = targetDay.toISOString().split('T')[0];
-      const dayTides = data.data.filter((tide: any) => {
+      const dayTides = entries.filter((tide) => {
         const tideDateStr = new Date(tide.time).toISOString().split('T')[0];
         return tideDateStr === targetDateStr;
       });
       if (isCurrentDay) {
         const currentTime = new Date();
-        const highTides = dayTides
-          .filter((t: any) => t.type === 'high')
-          .sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime());
-        const lowTides = dayTides
-          .filter((t: any) => t.type === 'low')
-          .sort((a: any, b: any) => new Date(a.time).getTime() - new Date(b.time).getTime());
-        const nextHighTide = highTides.find((t: any) => new Date(t.time) > currentTime);
-        const nextLowTide = lowTides.find((t: any) => new Date(t.time) > currentTime);
+        const byTime = (a: TideEntry, b: TideEntry) => new Date(a.time).getTime() - new Date(b.time).getTime();
+        const highTides = dayTides.filter((t) => t.type === 'high').sort(byTime);
+        const lowTides = dayTides.filter((t) => t.type === 'low').sort(byTime);
+        const nextHighTide = highTides.find((t) => new Date(t.time) > currentTime);
+        const nextLowTide = lowTides.find((t) => new Date(t.time) > currentTime);
         setTideData({
           nextHighTide: nextHighTide
             ? { time: nextHighTide.time, height: nextHighTide.height }
@@ -431,10 +417,10 @@ const handleDownload = async () => {
           secondLowTide: undefined,
         });
       } else {
-        const firstHighTide = dayTides.find((e: any) => e.type === 'high');
-        const firstLowTide = dayTides.find((e: any) => e.type === 'low');
-        const secondHighTide = dayTides.filter((e: any) => e.type === 'high')[1];
-        const secondLowTide = dayTides.filter((e: any) => e.type === 'low')[1];
+        const firstHighTide = dayTides.find((e) => e.type === 'high');
+        const firstLowTide = dayTides.find((e) => e.type === 'low');
+        const secondHighTide = dayTides.filter((e) => e.type === 'high')[1];
+        const secondLowTide = dayTides.filter((e) => e.type === 'low')[1];
         setTideData({
           nextHighTide: firstHighTide ? { time: firstHighTide.time, height: firstHighTide.height } : undefined,
           nextLowTide: firstLowTide ? { time: firstLowTide.time, height: firstLowTide.height } : undefined,
@@ -442,11 +428,11 @@ const handleDownload = async () => {
           secondLowTide: secondLowTide ? { time: secondLowTide.time, height: secondLowTide.height } : undefined,
         });
       }
-    } catch (_err) { void 0; }
+    } catch { void 0; }
   };
 
   // Build classes/styles for the content export area
-  const exportClass = `popup__export-area${isExporting ? ' popup__exporting' : ''}`;
+  const exportClass = 'popup__export-area';
 
   return (
     <div className="popup" onClick={onClose}>
@@ -511,7 +497,7 @@ const handleDownload = async () => {
                         <strong>{Math.round(mpsToKnots(marineData.windSpeed))}</strong>knots
                         {typeof marineData.gust === 'number' && <> (gust {mpsToKnots(marineData.gust).toFixed(1)} knots)</>}
                         {(() => {
-                          const rawDir: any = (marineData as any).windDir ?? (marineData as any).windDirection;
+                          const rawDir = marineData?.windDir ?? marineData?.windDirection;
                           const dir = typeof rawDir === 'number' ? rawDir : undefined;
                           // Priority: provided orientation -> resolved OSM/cache -> simulated fallback
                           const orientProvided = typeof marineData?.beachOrientation === 'number' 
@@ -535,10 +521,10 @@ const handleDownload = async () => {
                                   {' '}
                                   <span>({classifyWindRelative(orient, dir)})</span>
                                   {orientationVia && orientationVia !== 'computed' && (
-  <em style={{ marginLeft: 6, opacity: 0.75 }}>
-    ({orientationVia === 'simulated' ? 'sim' : orientationVia})
-  </em>
-)}
+                                    <em style={{ marginLeft: 6, opacity: 0.75 }}>
+                                      ({orientationVia === 'simulated' ? 'sim' : orientationVia})
+                                    </em>
+                                  )}
                                 </>
                               )}
                             </>
@@ -576,9 +562,9 @@ const handleDownload = async () => {
                       <li className="tide-info">
                         {tideData.nextHighTide && (
                           <span>
-                            <img src="/weather-icons/design/fill/final/tide-high.svg"
+                            <OptimizedImage src="/weather-icons/design/fill/final/tide-high.svg"
                                  alt="High Tide"
-                                 style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
+                                 width={28} height={28} style={{ verticalAlign: 'middle' }} />{' '}
                             {isToday ? 'Next High Tide ' : 'High '}
                             <strong>{formatTideTime(tideData.nextHighTide.time)}</strong>
                             {!isToday && tideData.secondHighTide && (
@@ -589,9 +575,9 @@ const handleDownload = async () => {
                         {tideData.nextHighTide && tideData.nextLowTide && <span> | </span>}
                         {tideData.nextLowTide && (
                           <span>
-                            <img src="/weather-icons/design/fill/final/tide-low.svg"
+                            <OptimizedImage src="/weather-icons/design/fill/final/tide-low.svg"
                                  alt="Low Tide"
-                                 style={{ width: 28, height: 28, verticalAlign: 'middle' }} />{' '}
+                                 width={28} height={28} style={{ verticalAlign: 'middle' }} />{' '}
                             {isToday ? 'Next Low Tide' : 'Low '}
                             <strong>{formatTideTime(tideData.nextLowTide.time)}</strong>
                             {!isToday && tideData.secondLowTide && (
@@ -694,4 +680,3 @@ const handleDownload = async () => {
 };
 
 export default Popup;
-/* eslint-disable @next/next/no-img-element */

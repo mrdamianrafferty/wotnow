@@ -32,9 +32,9 @@ export const DailyForecastCard: React.FC<DailyForecastCardProps> = ({
   const forecastDays = daily.slice(0, maxDays);
 
   return (
-    <div className={`card bg-black/35 backdrop-blur-sm text-base-content border border-white/10 shadow-sm h-full ${className}`}>
+    <div className={`card weather-card-bg text-base-content h-full ${className}`}>
       <div className="card-body">
-        <h3 className="card-title">Next Few Days</h3>
+        <h3 className="card__header-title">Next Few Days</h3>
         <div className="overflow-x-auto rounded-box bg-transparent">
           <table className="table table-compact bg-transparent">
             <tbody>

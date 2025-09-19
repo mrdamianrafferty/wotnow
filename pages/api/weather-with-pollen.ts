@@ -1,7 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getFullWeather } from '../../lib/services/weatherService';
 
-async function fetchOpenMeteoAirPollen(lat: number, lon: number) {
+interface OpenMeteoAirPollenResponse {
+  hourly?: {
+    time?: string[];
+    alder_pollen?: Array<number | null | undefined>;
+    birch_pollen?: Array<number | null | undefined>;
+    grass_pollen?: Array<number | null | undefined>;
+    ragweed_pollen?: Array<number | null | undefined>;
+    olive_pollen?: Array<number | null | undefined>;
+    us_aqi?: Array<number | null | undefined>;
+  };
+}
+
+async function fetchOpenMeteoAirPollen(lat: number, lon: number): Promise<OpenMeteoAirPollenResponse> {
   const now = new Date();
   const start = now.toISOString().split('T')[0]; // Today YYYY-MM-DD
   
@@ -50,7 +62,7 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number) {
       throw new Error(`Open-Meteo air/pollen ${res.status}: ${errorText}`);
     }
     
-    const data = await res.json();
+    const data = (await res.json()) as OpenMeteoAirPollenResponse;
     console.log('Open-Meteo data received successfully');
     return data;
   } catch (error) {
@@ -98,7 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .catch(err => {
           console.error('Error fetching pollen data:', err);
           // Continue with weather data even if pollen data fails
-          return { hourly: { time: [] } };
+          return { hourly: { time: [] } } as OpenMeteoAirPollenResponse;
         })
     ]);
     
@@ -107,8 +119,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     const transformedData = weatherData;
     // Process pollen and air quality data by day
-    const pollenByDate: Record<string, any> = {};
-    const airQualityByDate: Record<string, any> = {};
+    const pollenByDate: Record<string, { grass?: number; tree?: number; weed?: number; olive?: number }> = {};
+    const airQualityByDate: Record<string, { overall?: number }> = {};
     
     // Check if we have pollen data before processing
     if (pollenResponse?.hourly?.time && pollenResponse.hourly.time.length > 0) {
@@ -116,12 +128,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       const pollenHours = (pollenResponse.hourly.time || []).map((t: string, i: number) => ({
         time: t,
-        alder: pollenResponse.hourly.alder_pollen?.[i],
-        birch: pollenResponse.hourly.birch_pollen?.[i],
-        grass: pollenResponse.hourly.grass_pollen?.[i],
-        ragweed: pollenResponse.hourly.ragweed_pollen?.[i],
-        olive: pollenResponse.hourly.olive_pollen?.[i],
-        aqi: pollenResponse.hourly.us_aqi?.[i],
+        alder: pollenResponse.hourly?.alder_pollen?.[i],
+        birch: pollenResponse.hourly?.birch_pollen?.[i],
+        grass: pollenResponse.hourly?.grass_pollen?.[i],
+        ragweed: pollenResponse.hourly?.ragweed_pollen?.[i],
+        olive: pollenResponse.hourly?.olive_pollen?.[i],
+        aqi: pollenResponse.hourly?.us_aqi?.[i],
       }));
       
       for (const h of pollenHours) {
@@ -133,20 +145,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         
         // Calculate daily maxima for pollen
-        if (h.grass != null) pollenByDate[dateKey].grass = Math.max(pollenByDate[dateKey].grass, Number(h.grass));
+        if (h.grass != null) pollenByDate[dateKey].grass = Math.max(pollenByDate[dateKey].grass ?? -Infinity, Number(h.grass));
         
-        const treeMax = Math.max(Number(h.alder || -Infinity), Number(h.birch || -Infinity));
-        if (treeMax > -Infinity) pollenByDate[dateKey].tree = Math.max(pollenByDate[dateKey].tree, treeMax);
+        const treeMax = Math.max(Number(h.alder ?? -Infinity), Number(h.birch ?? -Infinity));
+        if (treeMax > -Infinity) pollenByDate[dateKey].tree = Math.max(pollenByDate[dateKey].tree ?? -Infinity, treeMax);
         
-        if (h.ragweed != null) pollenByDate[dateKey].weed = Math.max(pollenByDate[dateKey].weed, Number(h.ragweed));
-        if (h.olive != null) pollenByDate[dateKey].olive = Math.max(pollenByDate[dateKey].olive, Number(h.olive));
+        if (h.ragweed != null) pollenByDate[dateKey].weed = Math.max(pollenByDate[dateKey].weed ?? -Infinity, Number(h.ragweed));
+        if (h.olive != null) pollenByDate[dateKey].olive = Math.max(pollenByDate[dateKey].olive ?? -Infinity, Number(h.olive));
         
         // Process air quality data
         if (!airQualityByDate[dateKey]) {
           airQualityByDate[dateKey] = { overall: -Infinity };
         }
         
-        if (h.aqi != null) airQualityByDate[dateKey].overall = Math.max(airQualityByDate[dateKey].overall, Number(h.aqi));
+        if (h.aqi != null) airQualityByDate[dateKey].overall = Math.max(airQualityByDate[dateKey].overall ?? -Infinity, Number(h.aqi));
       }
       
       // Clean up -Infinity values
@@ -186,7 +198,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Check if it's a network error
     if (error && typeof error === 'object' && 'cause' in error) {
-      console.error('Error cause:', error.cause);
+      console.error('Error cause:', (error as { cause?: unknown }).cause);
     }
     
     res.status(500).json({ 

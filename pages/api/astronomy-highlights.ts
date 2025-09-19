@@ -8,7 +8,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // In-memory cache for OpenWeather daily forecast (per lat/lon)
 const openWeatherDailyCache: {
   [key: string]: {
-    days: any[];
+    days: unknown[];
     timestamp: number;
   };
 } = {};
@@ -31,13 +31,26 @@ interface AstronomyHighlight {
     riseIcon?: string;
     setIcon?: string;
   };
-  darkWindow?: {
-    start: string;
-    end: string;
-    durationHours: number;
-  };
+  darkWindow?: DarkWindow;
   events: SpecialEvent[];
   wotnowMessage: string;
+}
+
+interface DarkWindow {
+  start: string;
+  end: string;
+  durationHours: number;
+}
+
+// Minimal shape of Open-Meteo astronomy daily record (fields we read)
+interface OpenMeteoAstronomyDay {
+  date: string;
+  sunrise?: string;
+  sunset?: string;
+  moonrise?: string;
+  moonset?: string;
+  moonphase?: number; // degrees 0–360
+  moonillumination?: number; // percent
 }
 
 interface SpecialEvent {
@@ -97,7 +110,7 @@ class WotNowAstronomyAPI {
         console.error(`[Open-Meteo] Astronomy API error: status=${response.status}, url=${requestUrl}, body=${text}`);
         // If 404, return empty astronomy array for fallback
         if (response.status === 404) {
-          return { astronomy: [] };
+          return { astronomy: [] as unknown[] };
         }
         throw new Error(`Open-Meteo astronomy error: ${response.status}`);
       }
@@ -105,7 +118,7 @@ class WotNowAstronomyAPI {
     } catch (err) {
       console.error('[Open-Meteo] Astronomy API fetch failed:', err);
       // On network error, return empty astronomy array for fallback
-      return { astronomy: [] };
+      return { astronomy: [] as unknown[] };
     }
   }
 
@@ -118,7 +131,17 @@ class WotNowAstronomyAPI {
     const cacheKey = `${lat},${lon}`;
     const cached = openWeatherDailyCache[cacheKey];
     if (cached && (Date.now() - cached.timestamp < 3 * 60 * 60 * 1000) && Array.isArray(cached.days) && cached.days.length >= 2) {
-      return cached.days;
+      return cached.days as Array<{
+        dt: number;
+        sunrise?: number;
+        sunset?: number;
+        moonrise?: number;
+        moonset?: number;
+        moon_phase?: number;
+        temp?: Record<string, unknown>;
+        weather?: unknown[];
+        timezone_offset?: number;
+      }>;
     }
     // Fetch daily forecast (One Call API)
     const { getOneCallData } = await import('lib/services/weatherService');
@@ -127,7 +150,7 @@ class WotNowAstronomyAPI {
     console.log('[WotNowAstronomyAPI] Cache contents before:', openWeatherDailyCache[cacheKey]);
     const result = await getOneCallData({ lat, lon, apiKey: this.openweatherKey, options: { exclude: 'minutely,hourly,current,alerts' } });
     console.log('[WotNowAstronomyAPI] getOneCallData result:', result);
-    let days = result.data?.daily;
+    let days = (result as { data?: { daily?: unknown[] } }).data?.daily;
     console.log('[WotNowAstronomyAPI] OpenWeather One Call daily response:', days);
     if (!Array.isArray(days) || days.length < 2) {
       // Fallback: create mock days if missing or incomplete
@@ -135,10 +158,10 @@ class WotNowAstronomyAPI {
       days = [
         {
           dt: Math.floor(today.getTime() / 1000),
-          sunrise: '',
-          sunset: '',
-          moonrise: '',
-          moonset: '',
+          sunrise: undefined,
+          sunset: undefined,
+          moonrise: undefined,
+          moonset: undefined,
           moon_phase: 0.5,
           temp: {},
           weather: [],
@@ -146,10 +169,10 @@ class WotNowAstronomyAPI {
         },
         {
           dt: Math.floor(today.getTime() / 1000) + 86400,
-          sunrise: '',
-          sunset: '',
-          moonrise: '',
-          moonset: '',
+          sunrise: undefined,
+          sunset: undefined,
+          moonrise: undefined,
+          moonset: undefined,
           moon_phase: 0.5,
           temp: {},
           weather: [],
@@ -160,7 +183,17 @@ class WotNowAstronomyAPI {
     }
     openWeatherDailyCache[cacheKey] = { days, timestamp: Date.now() };
     console.log('[WotNowAstronomyAPI] Cache contents after:', openWeatherDailyCache[cacheKey]);
-    return days;
+    return days as Array<{
+      dt: number;
+      sunrise?: number;
+      sunset?: number;
+      moonrise?: number;
+      moonset?: number;
+      moon_phase?: number;
+      temp?: Record<string, unknown>;
+      weather?: unknown[];
+      timezone_offset?: number;
+    }>;
   }
 
   // Moon phase icons matching WotNow's available assets
@@ -276,7 +309,7 @@ class WotNowAstronomyAPI {
   }
 
   // Calculate optimal dark sky viewing window
-  calculateDarkWindow(sunset?: string, sunrise?: string) {
+  calculateDarkWindow(sunset?: string, sunrise?: string): DarkWindow | undefined {
     if (!sunset || !sunrise) return undefined;
 
     try {
@@ -309,7 +342,7 @@ class WotNowAstronomyAPI {
     date: Date, 
     moonIllumination: number, 
     moonSet?: string, 
-    darkWindow?: any, 
+    darkWindow?: DarkWindow, 
     events: SpecialEvent[] = []
   ): string {
     const lines: string[] = [];
@@ -383,21 +416,21 @@ class WotNowAstronomyAPI {
     );
 
     // If Open-Meteo succeeded, normalise its data
-    if (astronomyData && Array.isArray(astronomyData.astronomy) && astronomyData.astronomy.length > 0) {
+    if (astronomyData && Array.isArray((astronomyData as { astronomy?: unknown[] }).astronomy) && (astronomyData as { astronomy: unknown[] }).astronomy.length > 0) {
       // Fetch OpenWeather daily only for timezone offset
       const dailyWeather = await this.fetchOpenWeatherDaily(lat, lon);
-      const timezoneOffset = dailyWeather[0]?.timezone_offset || 0;
+      const timezoneOffset = (dailyWeather[0] && typeof dailyWeather[0].timezone_offset === 'number') ? dailyWeather[0].timezone_offset : 0;
       const highlights: AstronomyHighlight[] = [];
-      for (let i = 0; i < numDays && i < astronomyData.astronomy.length && i < dailyWeather.length; i++) {
-        const dayData = astronomyData.astronomy[i];
-        const weatherDay = dailyWeather[i];
+      const astronomyArray = (astronomyData as { astronomy: OpenMeteoAstronomyDay[] }).astronomy;
+      for (let i = 0; i < numDays && i < astronomyArray.length && i < dailyWeather.length; i++) {
+        const dayData = astronomyArray[i];
         const date = new Date(dayData.date);
         const sunrise = dayData.sunrise;
         const sunset = dayData.sunset;
         const moonrise = dayData.moonrise;
         const moonset = dayData.moonset;
-        const moonPhaseDeg = dayData.moonphase; // 0–360°
-        const moonIllumination = dayData.moonillumination; // %
+        const moonPhaseDeg = dayData.moonphase ?? 0; // 0–360°
+        const moonIllumination = dayData.moonillumination ?? 0; // %
         // Canonical phase mapping
         const { name: moonPhaseName, icon: moonIcon } = this.phaseFromDegrees(moonPhaseDeg);
         // Calculate dark window
@@ -438,11 +471,10 @@ class WotNowAstronomyAPI {
 
     // Fallback: OpenWeather only (derive illumination and phase)
     const dailyWeather = await this.fetchOpenWeatherDaily(lat, lon);
-    const timezoneOffset = dailyWeather[0]?.timezone_offset || 0;
     const highlights: AstronomyHighlight[] = [];
     for (let i = 0; i < numDays && i < dailyWeather.length; i++) {
       const weatherDay = dailyWeather[i];
-      const date = new Date((weatherDay.dt + (weatherDay.timezone_offset || 0)) * 1000);
+      const date = new Date(((weatherDay.dt ?? 0) + (weatherDay.timezone_offset || 0)) * 1000);
       // OpenWeather moon_phase: 0=new, 0.25=first qtr, 0.5=full, 0.75=last qtr
       const phaseFraction = typeof weatherDay.moon_phase === 'number' ? weatherDay.moon_phase : 0;
       // Map to angle (0–360)
@@ -451,10 +483,10 @@ class WotNowAstronomyAPI {
       const moonIllumination = Math.round(Math.abs(Math.sin(phaseFraction * Math.PI)) * 1000) / 10;
       const { name: moonPhaseName, icon: moonIcon } = this.phaseFromDegrees(moonPhaseDeg);
       // Format times (OpenWeather gives unix seconds)
-      const sunrise = weatherDay.sunrise ? new Date((weatherDay.sunrise + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
-      const sunset = weatherDay.sunset ? new Date((weatherDay.sunset + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
-      const moonrise = weatherDay.moonrise ? new Date((weatherDay.moonrise + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
-      const moonset = weatherDay.moonset ? new Date((weatherDay.moonset + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
+      const sunrise = weatherDay.sunrise ? new Date(((weatherDay.sunrise ?? 0) + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
+      const sunset = weatherDay.sunset ? new Date(((weatherDay.sunset ?? 0) + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
+      const moonrise = weatherDay.moonrise ? new Date(((weatherDay.moonrise ?? 0) + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
+      const moonset = weatherDay.moonset ? new Date(((weatherDay.moonset ?? 0) + (weatherDay.timezone_offset || 0)) * 1000).toISOString() : undefined;
       const sunriseLocal = this.formatTimeLocal(sunrise, 0);
       const sunsetLocal = this.formatTimeLocal(sunset, 0);
       const moonriseLocal = this.formatTimeLocal(moonrise, 0);
@@ -545,11 +577,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     res.status(200).json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Enhanced error logging with more context
+    const err = error as { message?: string; stack?: string } | undefined;
     console.error('Astronomy highlights error:', {
-      message: error?.message || 'Unknown error',
-      stack: error?.stack,
+      message: err?.message || 'Unknown error',
+      stack: err?.stack,
       latitude: lat,
       longitude: lon,
       days: days
@@ -558,7 +591,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // More detailed error response to help with debugging
     res.status(500).json({ 
       error: 'Failed to fetch astronomy highlights',
-      message: error?.message || 'Internal server error',
+      message: err?.message || 'Internal server error',
       requestParams: { lat, lon, days }
     });
   }

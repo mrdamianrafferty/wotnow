@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import OptimizedImage from './OptimizedImage';
 import { AirQualityLevel, AirQualityAssessment, getAirQualityLevelDescription, assessAirQualityConditions, AirQualitySummary, getAirQualityIndex } from '../utils/airQualityUtils';
 
@@ -53,11 +53,9 @@ function getAirQualityIcon(): string {
  */
 function OverallAirQualityIndicator({ 
   level, 
-  assessment,
   aqi
 }: { 
   level: AirQualityLevel; 
-  assessment: AirQualityAssessment;
   aqi?: number;
 }) {
   // Temporarily removed the level check to debug visibility
@@ -130,7 +128,6 @@ export default function AirQualityWarning({
       <div className={`air-quality-warning-compact ${className}`}>
         <OverallAirQualityIndicator 
           level={airQualityAssessment.overall} 
-          assessment={airQualityAssessment}
           aqi={airQuality?.overall}
         />
       </div>

@@ -1,5 +1,6 @@
-// components/sharing/ShareModal.tsx
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ShareModalProps {
@@ -9,12 +10,12 @@ interface ShareModalProps {
   activityDescription?: string;
 }
 
-export const ShareModal: React.FC<ShareModalProps> = ({
+export const ShareModal = ({
   isOpen,
   onClose,
   activityName,
   activityDescription = ""
-}) => {
+}: ShareModalProps) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPlace, setSelectedPlace] = useState("");
