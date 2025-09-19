@@ -17,46 +17,38 @@ const typescript = tseslint.config({
   ],
 });
 
-export default [
-  // Ignore build and vendor directories
-  { ignores: [
-    '**/.next/**',
-    '**/node_modules/**',
-    '**/.vercel/**',
-    '**/dist/**',
-    '**/build/**',
-    '**/public/**',
-    'next-env.d.ts',
-    'debug-*.js',
-    'img-optimizer/**',
-    'services/astro_highlights/astro_highlights/.venv/**',
-    'api/python/.venv/**',
-  ]},
-  // Include recommended JS config
-  js.configs.recommended,
-  
-  // Apply TypeScript configuration
-  ...typescript,
-  
-  // Convert eslint-config-next to flat config format
-  ...compat.extends('eslint-config-next'),
-  
-  // General JS/JSX rules
-  {
-    files: ['**/*.{js,jsx,ts,tsx}'],
-    rules: {
-      'react/no-unescaped-entities': 'off',
-      'react/react-in-jsx-scope': 'off',
-    },
-    settings: { react: { version: 'detect' } },
-    linterOptions: { reportUnusedDisableDirectives: true },
+export default [...compat.extends("next/core-web-vitals", "next/typescript"), {
+  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
+}, // Ignore build and vendor directories
+{ ignores: [
+  '**/.next/**',
+  '**/node_modules/**',
+  '**/.vercel/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/public/**',
+  'next-env.d.ts',
+  'debug-*.js',
+  'img-optimizer/**',
+  'services/astro_highlights/astro_highlights/.venv/**',
+  'api/python/.venv/**',
+]}, // Include recommended JS config
+js.configs.recommended, // Apply TypeScript configuration
+...typescript, // Convert eslint-config-next to flat config format
+...compat.extends('eslint-config-next'), // General JS/JSX rules
+{
+  files: ['**/*.{js,jsx,ts,tsx}'],
+  rules: {
+    'react/no-unescaped-entities': 'off',
+    'react/react-in-jsx-scope': 'off',
   },
-  // TS-specific rules
-  {
-    files: ['**/*.{ts,tsx}'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    },
+  settings: { react: { version: 'detect' } },
+  linterOptions: { reportUnusedDisableDirectives: true },
+}, // TS-specific rules
+{
+  files: ['**/*.{ts,tsx}'],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
   },
-];
+}];
