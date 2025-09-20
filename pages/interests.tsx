@@ -299,14 +299,20 @@ const waterActivityIds = [
 
 // ------------- BREADCRUMB -------------
 const Breadcrumb: React.FC<{ path: string[]; onBack: () => void }> = ({ path, onBack }) => (
-    <div className="breadcrumb" style={{ marginBottom: 23 }}>
-        {path.length > 1 && (
-            <button className="btn btn-primary" onClick={onBack}>
-                ← Back
-            </button>
-        )}
-        <span>{path.join(" / ")}</span>
-    </div>
+  <div className="flex items-center justify-between mb-6">
+    {path.length > 1 ? (
+      <button className="btn btn-sm btn-ghost" onClick={onBack}>
+        ← Back
+      </button>
+    ) : <span />}
+    <nav className="breadcrumbs text-sm" aria-label="breadcrumbs">
+      <ul>
+        {path.map((seg, i) => (
+          <li key={`${seg}-${i}`}>{seg}</li>
+        ))}
+      </ul>
+    </nav>
+  </div>
 );
 
 // ------------- MAIN PAGE COMPONENT -------------
@@ -363,75 +369,66 @@ const Interests: React.FC = () => {
     // Render content according to step
     let content: React.ReactNode;
     if (!mainCat) {
-        content = (
-            <div className="main-categories-grid">
-                {mainCategories.map((cat) => (
-                    <div
-                        key={cat.key}
-                        className="btn btn-primary"
-                        onClick={() => setMainCat(cat.key)}
-                    >
-                        <span className="category-icon">{cat.icon}</span>
-                        <span className="category-name">{cat.key}</span>
-                    </div>
-                ))}
-            </div>
-        );
+      content = (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {mainCategories.map((cat) => (
+            <button
+              key={cat.key}
+              className="btn btn-lg btn-outline justify-start gap-3"
+              onClick={() => setMainCat(cat.key)}
+              type="button"
+            >
+              <span className="text-2xl" aria-hidden>{cat.icon}</span>
+              <span className="font-semibold">{cat.key}</span>
+            </button>
+          ))}
+        </div>
+      );
     } else if (!subCat) {
-        const mainObj = mainCategories.find((c) => c.key === mainCat)!;
-        content = (
-            <div className="subcategories-grid">
-                {mainObj.subcategories.map((sub) => (
-                    <div
-                        key={sub.key}
-                        className="btn btn-primary"
-                        onClick={() => setSubCat(sub.key)}
-                    >
-                        <span className="btn btn-primary">{sub.icon}</span>
-                        <h3
-                            style={{
-                                display: "inline-block",
-                                marginRight: 12,
-                            }}
-                        >
-                            {sub.key}
-                        </h3>
-                        <span
-                            style={{
-                                color: "#000000",
-                                fontSize: 14,
-                            }}
-                        >
-                            {sub.acts.length} activities
-                        </span>
-                    </div>
-                ))}
-            </div>
-        );
+      const mainObj = mainCategories.find((c) => c.key === mainCat)!;
+      content = (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {mainObj.subcategories.map((sub) => (
+            <button
+              key={sub.key}
+              className="btn btn-outline justify-between"
+              onClick={() => setSubCat(sub.key)}
+              type="button"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-2xl" aria-hidden>{sub.icon}</span>
+                <span className="font-semibold">{sub.key}</span>
+              </span>
+              <span className="text-xs opacity-70">{sub.acts.length} activities</span>
+            </button>
+          ))}
+        </div>
+      );
     } else {
-        const mainObj = mainCategories.find((c) => c.key === mainCat)!;
-        const subObj = mainObj.subcategories.find((s) => s.key === subCat)!;
-        const acts = subObj.acts
-            .map((id) => activityTypes.find((a) => a.id === id))
-            .filter(Boolean)
-            .sort((a, b) => a!.name.localeCompare(b!.name));
-        content = (
-            <div className="interests-grid">
-                {acts.map((act) => {
-                    const selected = interests.includes(act!.id);
-                    return (
-                        <button
-                            key={act!.id}
-                            type="button"
-                            className={`btn w-full normal-case ${selected ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                            onClick={() => toggleInterest(act!.id)}
-                        >
-                            {act!.name}
-                        </button>
-                    );
-                })}
-            </div>
-        );
+      const mainObj = mainCategories.find((c) => c.key === mainCat)!;
+      const subObj = mainObj.subcategories.find((s) => s.key === subCat)!;
+      const acts = subObj.acts
+        .map((id) => activityTypes.find((a) => a.id === id))
+        .filter(Boolean)
+        .sort((a, b) => a!.name.localeCompare(b!.name));
+      content = (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {acts.map((act) => {
+            const selected = interests.includes(act!.id);
+            return (
+              <button
+                key={act!.id}
+                type="button"
+                className={`btn w-full normal-case ${selected ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => toggleInterest(act!.id)}
+              >
+                {selected && <span className="mr-1">✓</span>}
+                {act!.name}
+              </button>
+            );
+          })}
+        </div>
+      );
     }
 
     const handleDone = () => {
@@ -446,162 +443,103 @@ const Interests: React.FC = () => {
 
     // Remove the early hydration check that's causing hook ordering issues
     if (!hasMounted) {
-        return (
-            <>
-                {/* Header banner */}
-                <AppHeader
-                  homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
-                  coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
-                  onOpenHomeDialog={() => setShowCoastDialog(true)}
-                  onOpenCoastDialog={() => setShowCoastDialog(true)}
-                />
-                {/* Loading state */}
-                <div className="interests-page" style={{ maxWidth: 650, margin: "0 auto", padding: "32px 18px" }}>
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>
-                        <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>⏳</div>
-                        <div>Loading your interests...</div>
-                    </div>
-                </div>
-            </>
-        );
+      return (
+        <>
+          <AppHeader />
+          <div data-theme="light" className="min-h-[60vh] bg-base-100 text-base-content">
+            <div className="container mx-auto max-w-3xl px-4 py-12">
+              <div className="text-center">
+                <div className="text-3xl mb-2">⏳</div>
+                <p>Loading your interests…</p>
+              </div>
+            </div>
+          </div>
+        </>
+      );
     }
 
     return (
-        <>
-            {/* Header banner */}
-            <AppHeader
-              homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
-              coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
-              onOpenHomeDialog={() => setShowCoastDialog(true)}
-              onOpenCoastDialog={() => setShowCoastDialog(true)}
-            />
+      <>
+        {/* Header banner */}
+        <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
+          <AppHeader
+            homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
+            coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
+            onOpenHomeDialog={() => setShowCoastDialog(true)}
+            onOpenCoastDialog={() => setShowCoastDialog(true)}
+          />
 
-        <div
-            className="interests-page"
-            style={{
-                maxWidth: 650,
-                margin: "0 auto",
-                padding: "32px 18px",
-            }}
-        >
-
+          <div className="container mx-auto max-w-3xl px-4 py-8">
             <Breadcrumb path={["Interests", ...path]} onBack={handleBack} />
             {content}
 
-            {/* Selected activities */}
             {interests.length > 0 && (
-                <section
-                    className="selected-activities-container"
-                    aria-label="Your Selected Activities"
-                    style={{ marginTop: 28, justifyContent: "center" }}
-                >
-                    {interests
-                        .map((id) => activityTypes.find((a) => a.id === id))
-                        .filter(Boolean)
-                        .map((act) => (
-                            <button
-                                key={act!.id}
-                                onClick={() => toggleInterest(act!.id)}
-                                className="btn btn-outline btn-primary btn-sm rounded-full"
-                                aria-label={`Remove ${act!.name} from selected interests`}
-                            >
-                                {act!.name}
-                                <span>×</span>
-                            </button>
-                        ))}
-                </section>
+              <section className="mt-7 flex flex-wrap gap-2 justify-center" aria-label="Your Selected Activities">
+                {interests
+                  .map((id) => activityTypes.find((a) => a.id === id))
+                  .filter(Boolean)
+                  .map((act) => (
+                    <button
+                      key={act!.id}
+                      onClick={() => toggleInterest(act!.id)}
+                      className="btn btn-outline btn-primary btn-sm rounded-full"
+                      aria-label={`Remove ${act!.name} from selected interests`}
+                    >
+                      {act!.name}
+                      <span className="ml-1">×</span>
+                    </button>
+                  ))}
+              </section>
             )}
 
-            {/* Buttons below */}
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    gap: 24,
-                    marginTop: 42,
-                }}
-            >
-                {(mainCat || subCat) && (
-                    <button className="btn btn-primary"
-                        onClick={() => {
-                            setMainCat(null);
-                            setSubCat(null);
-                        }}
-                        
-                        style={{
-                            padding: "12px 28px",
-                            borderRadius: 9,
-                            fontSize: "1.08rem",
-                            // background handled by class
-                            // background: "#3b82f6",
-                            // color: "#fff",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                        }}
-                    >
-                        ➕ Add More Interests
-                    </button>
-                )}
+            <div className="flex justify-center gap-4 mt-10">
+              {(mainCat || subCat) && (
                 <button
-                    onClick={handleDone}
-                    className="btn-outline"
-                    style={{
-                        padding: "12px 28px",
-                        borderRadius: 9,
-                        fontSize: "1.08rem",
-
-                        fontWeight: 700,
-                        cursor: "pointer",
-                    }}
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setMainCat(null);
+                    setSubCat(null);
+                  }}
                 >
-                    ✅ I'm Done
+                  ➕ Add More Interests
                 </button>
+              )}
+              <button onClick={handleDone} className="btn btn-outline">
+                ✅ I&apos;m Done
+              </button>
             </div>
 
             {showToast && (
-                <div
-                    className="custom-toast show"
-                    aria-live="polite"
-                    aria-atomic="true"
-                    style={{
-                        position: "fixed",
-                        bottom: "2.5rem",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        background: "#059669",
-                        color: "#fff",
-                        padding: "1.1rem 2.2rem",
-                        borderRadius: 15,
-                        fontSize: "1.14rem",
-                        zIndex: 1009,
-                        fontWeight: 600,
-                    }}
-                >
-                    You've chosen a fine array of activities. It's good to be you!
+              <div className="toast toast-bottom toast-center">
+                <div className="alert alert-success">
+                  <span>You&apos;ve chosen a fine array of activities. It&apos;s good to be you!</span>
                 </div>
+              </div>
             )}
+
             <CoastalLocationDialog
-                open={showCoastDialog}
-                onClose={() => setShowCoastDialog(false)}
-                title="Pick your beach or coastal spot"
-                onSave={handleCoastSave}
-                homeLocation={preferences.locations?.find((loc) => loc.type === 'home')}
-                coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal')}
-                setHomeLocation={(loc) => {
-                    setPreferences((prev) => ({
-                        ...prev,
-                        locations: [...(prev.locations || []), { ...loc, type: "home" }],
-                    }));
-                }}
-                setCoastalLocation={(loc) => {
-                    setPreferences((prev) => ({
-                        ...prev,
-                        locations: [...(prev.locations || []), { ...loc, type: "coastal" }],
-                    }));
-                }}
+              open={showCoastDialog}
+              onClose={() => setShowCoastDialog(false)}
+              title="Pick your beach or coastal spot"
+              onSave={handleCoastSave}
+              homeLocation={preferences.locations?.find((loc) => loc.type === 'home')}
+              coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal')}
+              setHomeLocation={(loc) => {
+                setPreferences((prev) => ({
+                  ...prev,
+                  locations: [...(prev.locations || []), { ...loc, type: "home" }],
+                }));
+              }}
+              setCoastalLocation={(loc) => {
+                setPreferences((prev) => ({
+                  ...prev,
+                  locations: [...(prev.locations || []), { ...loc, type: "coastal" }],
+                }));
+              }}
             />
+          </div>
         </div>
-        </>
+      </>
     );
 };
 

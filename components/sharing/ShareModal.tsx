@@ -51,7 +51,7 @@ export const ShareModal = ({
           <X size={18} />
         </button>
         
-        <h3 className="text-lg font-bold mb-4">Let's {activityName.toLowerCase()}!</h3>
+        <h3 className="text-lg font-bold mb-4">Let&apos;s {activityName.toLowerCase()}!</h3>
         
         {activityDescription && (
           <div className="chat chat-start mb-4">

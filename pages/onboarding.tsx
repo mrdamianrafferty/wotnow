@@ -1,8 +1,12 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import CoastalLocationDialog from "@/components/CoastalLocationDialog";
+import dynamic from "next/dynamic";
+
+import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
+
+const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 // DaisyUI Light tokens applied inline so they win the cascade inside this page
 const LIGHT_INLINE_VARS: CSSProperties & Record<string, string> = {
   // Base surfaces/content (Light)
@@ -29,6 +33,9 @@ const LIGHT_INLINE_VARS: CSSProperties & Record<string, string> = {
 };
 // ──────────────────────────────────────────────────────────────────────────────
 // Small components and helpers for the improved onboarding UX
+
+// Add preferences context to persist onboarding results
+import { useUserPreferences } from "../context/UserPreferencesContext";
 
 type CategoryHeaderProps = {
   title: string;
@@ -93,7 +100,7 @@ function ClusterPill({ id, label, icon, selected, onToggle }: { id: string; labe
       type="button"
       onClick={() => onToggle(id)}
       className={[
-        "btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex flex-col gap-1",
+        "relative btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex flex-col gap-1",
         selected
           ? "btn-primary ring-2 ring-offset-1 ring-primary/60"
           : "btn-outline hover:bg-base-200"
@@ -101,14 +108,17 @@ function ClusterPill({ id, label, icon, selected, onToggle }: { id: string; labe
       aria-pressed={selected}
     >
       <span className="text-2xl">{icon}</span>
-      <span className="text-sm font-semibold">{label}</span>
+      <span className="text-sm font-semibold">
+        {selected && <span className="mr-1">✓</span>}
+        {label}
+      </span>
     </button>
   );
 }
 
 function OnboardingFooter({ onBack, onNext, isLast, totalSelected, nextDisabled }: {
   onBack: () => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   isLast?: boolean;
   totalSelected: number;
   nextDisabled?: boolean;
@@ -117,12 +127,12 @@ function OnboardingFooter({ onBack, onNext, isLast, totalSelected, nextDisabled 
     <div className="mt-4 flex items-center justify-between gap-3">
       <button type="button" className="btn btn-ghost" onClick={onBack}>Back</button>
       <div className="text-sm text-base-content/60">
-        You can edit your interests any time in <Link className="link" href="/settings/interests">Settings → Interests</Link>.
+        You can edit your interests any time in <Link className="link" href="/interests">Settings → Interests</Link>.
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm">Total selected: {totalSelected}</span>
-        <button type="button" className="btn btn-primary" onClick={onNext} disabled={!!nextDisabled}>
-          {isLast ? "Complete Setup" : "Next Category"}
+        <button type="button" className="btn btn-primary" onClick={() => { void onNext(); }} disabled={!!nextDisabled}>
+          {isLast ? "Complete Setup" : "Nearly there, keep going"}
         </button>
       </div>
     </div>
@@ -580,20 +590,419 @@ function LiveDemo() {
   );
 }
 
+// Inline Location Search (borrows behaviour from CoastalLocationDialog)
+function InlineLocationSearch({
+  initialQuery = "",
+  placeholder = "Search a place…",
+  onSelect,
+  storageKey = 'coastal_recent_locations_v1',
+  legacyKey = 'recentCoastalLocations',
+  showMapToggle = true,
+}: {
+  initialQuery?: string;
+  placeholder?: string;
+  onSelect: (loc: { name: string; lat: number; lon: number }) => void;
+  storageKey?: string;
+  legacyKey?: string;
+  showMapToggle?: boolean;
+}) {
+  // Lightweight types for Google suggestions and recents
+  type GoogleSuggestion = {
+    place_id?: string;
+    description?: string;
+    structured_formatting?: {
+      main_text?: string;
+      secondary_text?: string;
+    };
+  };
+  type BasicLoc = { name: string; lat: number; lon: number };
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [query, setQuery] = useState(initialQuery || "");
+  const [showMap, setShowMap] = useState(false);
+  const [recent, setRecent] = useState<{ name: string; lat: number; lon: number }[]>([]);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [showList, setShowList] = useState(false);
+
+  // use-places-autocomplete with debounce; we render our own list like the dialog
+  const { ready, value, suggestions: { status, data }, setValue, clearSuggestions } = usePlacesAutocomplete({ debounce: 300 });
+
+  useEffect(() => { setValue(initialQuery || ""); setQuery(initialQuery || ""); }, [initialQuery, setValue]);
+
+  // Load recent locations (same merging logic)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const rawNew = localStorage.getItem(storageKey);
+      const rawLegacyLocal = localStorage.getItem(legacyKey);
+      const rawLegacySession = sessionStorage.getItem(legacyKey);
+      const fromNew = rawNew ? JSON.parse(rawNew) : [];
+      const fromLegacyLocal = rawLegacyLocal ? JSON.parse(rawLegacyLocal) : [];
+      const fromLegacySession = rawLegacySession ? JSON.parse(rawLegacySession) : [];
+      const merged = [...fromNew, ...fromLegacyLocal, ...fromLegacySession];
+      const keyOf = (l: BasicLoc) => `${l.name}|${Number(l.lat).toFixed(4)},${Number(l.lon).toFixed(4)}`;
+      const dedup: Record<string, BasicLoc> = {};
+      merged.forEach((l0: unknown) => {
+        const l = l0 as BasicLoc;
+        if (l && l.lat != null && l.lon != null) {
+          dedup[keyOf(l)] = { ...l, lat: Number(l.lat), lon: Number(l.lon) };
+        }
+      });
+      setRecent(Object.values(dedup).slice(0, 8));
+    } catch { /* noop */ }
+  }, [storageKey, legacyKey]);
+
+  const addRecent = (loc: BasicLoc) => {
+    setRecent(prev => {
+      const list = Array.isArray(prev) ? [...prev] : [];
+      const keyOf = (l: BasicLoc) => `${l.name}|${Number(l.lat).toFixed(4)},${Number(l.lon).toFixed(4)}`;
+      const idx = list.findIndex(r => keyOf(r) === keyOf(loc));
+      if (idx !== -1) list.splice(idx, 1);
+      list.unshift({ ...loc, lat: Number(loc.lat), lon: Number(loc.lon) });
+      const trimmed = list.slice(0, 8);
+      const payload = JSON.stringify(trimmed);
+      try { localStorage.setItem(storageKey, payload); } catch {}
+      try { sessionStorage.setItem(storageKey, payload); } catch {}
+      try { localStorage.setItem(legacyKey, payload); } catch {}
+      try { sessionStorage.setItem(legacyKey, payload); } catch {}
+      return trimmed;
+    });
+  };
+
+  // Reverse‑geocode a user‑friendly label from lat/lon (OSM Nominatim)
+  async function reverseGeocodeName(lat: number, lon: number): Promise<string | null> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=14`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'GoDaisy/1.0 (contact: app)'
+        }
+      });
+      if (!res.ok) return null;
+      interface NominatimResponse {
+        name?: string;
+        display_name?: string;
+        address?: {
+          beach?: string;
+          water?: string;
+          amenity?: string;
+          road?: string;
+          neighbourhood?: string;
+          suburb?: string;
+          village?: string;
+          town?: string;
+          city?: string;
+          county?: string;
+          state?: string;
+          region?: string;
+        };
+      }
+      const json = (await res.json()) as NominatimResponse;
+      const disp = json?.name || json?.display_name;
+      if (disp) return String(disp);
+      const addr = json?.address || {};
+      const primary = addr.beach || addr.water || addr.amenity || addr.road || addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || addr.county;
+      const region = addr.state || addr.region || addr.county;
+      const parts = [] as string[];
+      if (primary) parts.push(primary);
+      if (region) parts.push(region);
+      return parts.length ? parts.join(', ') : null;
+    } catch {
+      return null;
+    }
+  }
+  // Gentle geolocation (same as dialog)
+  const getCurrentLocation = async () => {
+    setLocationError(null);
+    if (!('geolocation' in navigator)) { setLocationError('Geolocation is not available in this browser.'); return; }
+    try {
+      setIsLocating(true);
+      const { lat, lon } = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+      const fallback = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      const friendlyName = (await reverseGeocodeName(lat, lon)) || `Current location (${fallback})`;
+      const loc = { name: friendlyName, lat, lon };
+      addRecent(loc);
+      onSelect(loc);
+      // Put the friendly label into the input, close list, and blur so it doesn't reopen
+      setValue(friendlyName);
+      setQuery(friendlyName);
+      setShowList(false);
+      clearSuggestions();
+      inputRef.current?.blur();
+    } catch (e: unknown) {
+      const msg = (typeof e === 'object' && e !== null && 'message' in e) ? String((e as { message?: string }).message) : 'Unable to get your location.';
+      setLocationError(msg);
+    } finally { setIsLocating(false); }
+  };
+
+  // Confirmed selection helpers
+  const choose = (loc: { name: string; lat: number; lon: number }) => {
+    addRecent(loc);
+    onSelect(loc);
+    clearSuggestions();
+    setShowList(false);
+    inputRef.current?.blur();
+  };
+
+  const handleSuggestionClick = async (s: GoogleSuggestion) => {
+    try {
+      const placeId = s?.place_id;
+      const label = s?.structured_formatting?.main_text || s?.description || 'Selected place';
+      if (!placeId) return;
+      const results = await getGeocode({ placeId });
+      if (!results?.length) return;
+      const { lat, lng } = await getLatLng(results[0]);
+      choose({ name: label, lat, lon: lng });
+    } catch { /* noop */ }
+  };
+
+  // Confirm selection helper
+  const confirmSelection = async () => {
+    const text = (value || query || "").trim();
+    if (!text) return;
+    try {
+      // Prefer the first Google suggestion if available
+      if (status === 'OK' && Array.isArray(data) && data.length > 0) {
+        await handleSuggestionClick(data[0]);
+        return;
+      }
+      // Fallback: geocode the free text
+      const results = await getGeocode({ address: text });
+      if (results && results[0]) {
+        const { lat, lng } = await getLatLng(results[0]);
+        choose({ name: text, lat, lon: lng });
+        setValue(text);
+        setQuery(text);
+        setShowList(false);
+        clearSuggestions();
+        inputRef.current?.blur();
+      }
+    } catch {
+      // ignore errors silently for now; could surface a toast later
+    }
+  };
+
+  // Effect to close list when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        setShowList(false);
+        clearSuggestions();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [clearSuggestions]);
+
+  return (
+    <div ref={containerRef} className="w-full">
+      <div className="form-control relative">
+        <input
+          ref={inputRef}
+          type="text"
+          className="input input-bordered w-full pr-24"
+          placeholder={ready ? placeholder : 'Loading…'}
+          value={value}
+          onChange={(e) => { setQuery(e.target.value); setValue(e.target.value); }}
+          onFocus={() => setShowList(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              setShowList(false);
+              clearSuggestions();
+              (e.currentTarget as HTMLInputElement).blur();
+              return;
+            }
+            // Don't auto-select first item on type; only select on Enter when there is a highlighted choice
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              // if only one suggestion, select it; else require click
+              if (status === 'OK' && data?.length === 1) handleSuggestionClick(data[0] as GoogleSuggestion);
+              else {
+                // Confirm free-text selection
+                confirmSelection();
+              }
+            }
+          }}
+          aria-autocomplete="list"
+        />
+        <button
+          type="button"
+          className="btn btn-primary btn-sm absolute right-2 top-1/2 -translate-y-1/2"
+          onClick={confirmSelection}
+          aria-label="Confirm selection"
+        >
+          OK
+        </button>
+
+        {showList && status === 'OK' && data?.length > 0 && query.length >= 2 && !/^current location/i.test(query) && (
+          <ul className="absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ring-base-300/60 max-h-64 overflow-auto shadow-lg" role="listbox">
+            {data.map((s: GoogleSuggestion, idx: number) => {
+              const key = s.place_id || idx.toString();
+              const main = s?.structured_formatting?.main_text || s?.description;
+              const secondary = s?.structured_formatting?.secondary_text;
+              return (
+                <li key={key}>
+                  <button className="w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200" onClick={() => handleSuggestionClick(s)}>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium leading-tight">{main}</span>
+                      {secondary ? <span className="text-xs opacity-70 leading-tight">{secondary}</span> : null}
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button type="button" className="btn btn-outline btn-sm" onClick={getCurrentLocation} disabled={isLocating}>
+          {isLocating ? 'Locating…' : 'Use current location'}
+        </button>
+        {showMapToggle && (
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setShowMap(s => !s)}>
+            {showMap ? 'Hide map' : 'Pick from map'}
+          </button>
+        )}
+      </div>
+      {locationError && <div className="alert alert-error mt-2"><span>{locationError}</span></div>}
+
+      {showMap && (
+        <div className="mt-3 rounded-box overflow-hidden ring-1 ring-base-300/60">
+          <MapPicker onSelect={async (lat: number, lon: number) => {
+            const fallback = `Selected point (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            const friendlyName = (await reverseGeocodeName(lat, lon)) || fallback;
+            choose({ name: friendlyName, lat, lon });
+            // Also show the friendly label in the input without reopening the list
+            setValue(friendlyName);
+            setQuery(friendlyName);
+            setShowList(false);
+            clearSuggestions();
+            inputRef.current?.blur();
+          }} />
+        </div>
+      )}
+
+      {recent.length > 0 && (
+        <div className="mt-3">
+          <div className="text-sm font-semibold mb-2">Recent</div>
+          <div className="flex flex-wrap gap-2">
+            {recent.map((r, i) => (
+              <button key={`${r.name}-${i}`} className="btn btn-sm btn-outline rounded-full" onClick={() => choose(r)} aria-label={`Use recent location ${r.name}`}>
+                <span className="truncate max-w-[14rem]">{r.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Extracted interactive card from previous implementation
 function OnboardingCardInteractive() {
   const [step, setStep] = useState(1);
   const [selectedClusters, setSelectedClusters] = useState<string[]>(TAXONOMY.map(c => c.key));
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [homeLocation, setHomeLocation] = useState("");
-  const [openHomeModal, setOpenHomeModal] = useState(false);
   const [homeSpot, setHomeSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
   const [marineLocation, setMarineLocation] = useState("");
-  const [openCoastalModal, setOpenCoastalModal] = useState(false);
   const [coastalSpot, setCoastalSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
   const [showRegisterNudge, setShowRegisterNudge] = useState(true);
   const router = useRouter();
+  // Use preferences context to persist selections
+  const { preferences, setPreferences } = useUserPreferences();
+  // Local locating states and errors for current-location actions
+  const [homeLocating, setHomeLocating] = useState(false);
+  const [marineLocating, setMarineLocating] = useState(false);
+  const [homeLocateError, setHomeLocateError] = useState<string | null>(null);
+  const [marineLocateError, setMarineLocateError] = useState<string | null>(null);
+  // Filtering tabs for activities-chunk: empty array = "All"
+  const [activeSubTabs, setActiveSubTabs] = useState<string[]>([]);
 
+  // Helper to reverse‑geocode a readable name for lat/lon (OSM Nominatim)
+  async function reverseGeocodeNameInline(lat: number, lon: number): Promise<string | null> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=14`;
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'GoDaisy/1.0 (contact: app)' }
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      const disp = json?.name || json?.display_name;
+      if (disp) return String(disp);
+      const addr = json?.address || {};
+      const primary = addr.beach || addr.water || addr.amenity || addr.road || addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || addr.county;
+      const region = addr.state || addr.region || addr.county;
+      const parts: string[] = [];
+      if (primary) parts.push(primary);
+      if (region) parts.push(region);
+      return parts.length ? parts.join(', ') : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Current location helpers for Home and Marine steps
+  const useCurrentForHome = async () => {
+    setHomeLocateError(null);
+    if (!('geolocation' in navigator)) { setHomeLocateError('Geolocation not available.'); return; }
+    try {
+      setHomeLocating(true);
+      const { lat, lon } = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+      const label = (await reverseGeocodeNameInline(lat, lon)) || `Current location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      setHomeSpot({ name: label, lat, lon });
+      setHomeLocation(label);
+    } catch (e) {
+      const msg = typeof e === 'object' && e && 'message' in e ? String((e as { message?: string }).message) : 'Unable to get your location.';
+      setHomeLocateError(msg);
+    } finally {
+      setHomeLocating(false);
+    }
+  };
+
+  const useCurrentForMarine = async () => {
+    setMarineLocateError(null);
+    if (!('geolocation' in navigator)) { setMarineLocateError('Geolocation not available.'); return; }
+    try {
+      setMarineLocating(true);
+      const { lat, lon } = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+      });
+      const label = (await reverseGeocodeNameInline(lat, lon)) || `Current location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      setCoastalSpot({ name: label, lat, lon });
+      setMarineLocation(label);
+    } catch (e) {
+      const msg = typeof e === 'object' && e && 'message' in e ? String((e as { message?: string }).message) : 'Unable to get your location.';
+      setMarineLocateError(msg);
+    } finally {
+      setMarineLocating(false);
+    }
+  };
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // TAXONOMY (normalised & deduped)
   const clusterMap = useMemo(() => new Map(TAXONOMY.map(c => [c.key, c])), []);
 
   const selectedSubcats = useMemo(() => {
@@ -653,6 +1062,16 @@ function OnboardingCardInteractive() {
     return { type: "confirm" as const };
   }, [step, useCombined, activityScreens, isMarineChosen]);
 
+  useEffect(() => {
+    if (phase && phase.type === 'activities-chunk') {
+      // When we enter a chunk, default to "All" (empty selection)
+      setActiveSubTabs([]);
+    } else {
+      // Leaving activities chunk; clear to avoid leakage
+      setActiveSubTabs([]);
+    }
+  }, [phase]);
+
   const toggleCluster = (key: string) => setSelectedClusters(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   const toggleActivity = (name: string) => setSelectedActivities(prev => prev.includes(name) ? prev.filter(a => a !== name) : [...prev, name]);
 
@@ -690,31 +1109,39 @@ function OnboardingCardInteractive() {
             title="Home location"
             subtitle="Helps us tailor forecasts and nearby suggestions."
           />
-          <input
-            className="input input-bordered w-full"
-            placeholder="Enter a town, postcode, or click Use current location"
-            value={homeLocation}
-            onChange={(e) => setHomeLocation(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <button className="btn btn-outline" onClick={() => setHomeLocation('Use current location')}>Use current location</button>
-            <button className="btn btn-outline" onClick={() => setOpenHomeModal(true)}>Use map</button>
+          {/* Inline picker (autocomplete + map) */}
+          <div className="form-control w-full">
+            <div className="label">
+              <span className="label-text">Search for your home location</span>
+            </div>
+            {/* ...existing InlineLocationSearch... */}
+            <InlineLocationSearch
+              initialQuery={homeSpot?.name || homeLocation}
+              onSelect={(loc: { name: string; lat: number; lon: number }) => {
+                setHomeSpot(loc);
+                setHomeLocation(loc.name);
+              }}
+              placeholder="Type a place, postcode, or address"
+              storageKey="coastal_recent_locations_v1"
+              legacyKey="recentCoastalLocations"
+              showMapToggle={true}
+            />
+            <div className="label">
+              <span className="label-text-alt">Autocomplete + map inline (same logic as header).</span>
+            </div>
+          </div>
+          <div className="flex gap-2 items-center flex-wrap">
+            <button className="btn btn-outline" onClick={useCurrentForHome} disabled={homeLocating}>
+              {homeLocating ? 'Locating…' : 'Use current location'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => { setHomeSpot(null); setHomeLocation(""); }}>Clear</button>
+            {homeLocateError && <span className="text-error text-sm">{homeLocateError}</span>}
           </div>
           {homeSpot && (
             <div className="alert alert-info">
               <span>Home: {homeSpot.name}</span>
             </div>
           )}
-          <CoastalLocationDialog
-            open={openHomeModal}
-            onClose={() => setOpenHomeModal(false)}
-            title="Set your home location 📍"
-            onSave={(loc) => {
-              setHomeSpot(loc);
-              setHomeLocation(loc.name);
-              setOpenHomeModal(false);
-            }}
-          />
           <p className="text-xs text-base-content/60">You can change this any time in Settings → Location.</p>
         </div>
       )}
@@ -773,16 +1200,64 @@ function OnboardingCardInteractive() {
             subtitle="Short lists, better choices. You can add more later."
             onSkip={() => setStep(s => s + 1)}
           />
-          <div className="flex flex-wrap gap-1 -mb-1 mt-1">
-            {(subcatChunks[phase.chunkIndex] || []).map(sc => (
-              <span key={sc} className="badge badge-outline">{sc}</span>
-            ))}
+          {/* Filter tabs (All + per-subcategory). Empty selection = All */}
+          <div className="flex flex-wrap gap-2 mt-1 mb-2">
+            {(() => {
+              const chunkKeys = subcatChunks[phase.chunkIndex] || [];
+              const isAll = activeSubTabs.length === 0;
+              return (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTabs([])}
+                    className={[
+                      "btn btn-sm rounded-xl normal-case",
+                      isAll ? "btn-primary ring-2 ring-offset-1 ring-primary/60" : "btn-outline hover:bg-base-200"
+                    ].join(" ")}
+                    aria-pressed={isAll}
+                  >
+                    {isAll && <span className="mr-1">✓</span>}
+                    All
+                  </button>
+                  {chunkKeys.map((sc) => {
+                    const selected = activeSubTabs.includes(sc);
+                    return (
+                      <button
+                        key={sc}
+                        type="button"
+                        onClick={() => {
+                          setActiveSubTabs((prev) => {
+                            if (prev.length === 0) return [sc]; // from All -> single tab
+                            if (prev.includes(sc)) {
+                              const next = prev.filter((k) => k !== sc);
+                              return next.length ? next : [];
+                            }
+                            return [...prev, sc];
+                          });
+                        }}
+                        className={[
+                          "btn btn-sm rounded-xl normal-case",
+                          selected ? "btn-primary ring-2 ring-offset-1 ring-primary/60" : "btn-outline hover:bg-base-200"
+                        ].join(" ")}
+                        aria-pressed={selected}
+                      >
+                        {selected && <span className="mr-1">✓</span>}
+                        {sc}
+                      </button>
+                    );
+                  })}
+                </>
+              );
+            })()}
           </div>
           <div className="divider my-1"></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2">
-            {Array.from(new Set((subcatChunks[phase.chunkIndex] || [])
-              .flatMap(scKey => activitiesBySubcat[scKey] || [])))
-              .map(a => (
+            {(() => {
+              const chunkKeys = subcatChunks[phase.chunkIndex] || [];
+              const keys = activeSubTabs.length ? activeSubTabs : chunkKeys; // empty = All
+              const acts = Array.from(new Set(keys.flatMap((k) => activitiesBySubcat[k] || [])));
+              return acts;
+            })().map(a => (
                 <InterestPill
                   key={a}
                   id={a}
@@ -799,28 +1274,36 @@ function OnboardingCardInteractive() {
       {phase.type === 'marine' && (
         <div className="space-y-3 mt-2">
           <p className="text-sm text-base-content/70">Because you chose sea activities, setting a coastal spot lets us give tide, swell and wind‑aware advice.</p>
-          <input className="input input-bordered w-full" placeholder="Search or enter a coastal location" value={marineLocation} onChange={(e) => setMarineLocation(e.target.value)} />
-          <div className="grid grid-cols-3 gap-2">
-            <button className="btn btn-outline" onClick={() => setMarineLocation('Use current location')}>Use current location</button>
-            <button className="btn btn-outline" onClick={() => setOpenCoastalModal(true)}>Use map</button>
+          <div className="form-control w-full">
+            <div className="label">
+              <span className="label-text">Search for a coastal spot</span>
+            </div>
+            <InlineLocationSearch
+              initialQuery={coastalSpot?.name || marineLocation}
+              onSelect={(loc: { name: string; lat: number; lon: number }) => {
+                setCoastalSpot(loc);
+                setMarineLocation(loc.name);
+              }}
+              placeholder="Type a beach, harbour, or coastline"
+              storageKey="coastal_recent_locations_v1"
+              legacyKey="recentCoastalLocations"
+              showMapToggle={true}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-2 items-center">
+            <button className="btn btn-outline" onClick={useCurrentForMarine} disabled={marineLocating}>
+              {marineLocating ? 'Locating…' : 'Use current location'}
+            </button>
+            <button className="btn btn-ghost" onClick={() => { setCoastalSpot(null); setMarineLocation(""); }}>Clear</button>
             <button className="btn btn-primary" onClick={() => setStep(s => s + 1)} disabled={!marineLocation && !coastalSpot}>Save & Continue</button>
           </div>
+          {marineLocateError && <div className="alert alert-error mt-2"><span>{marineLocateError}</span></div>}
           {coastalSpot && (
             <div className="alert alert-info">
               <span>Selected: {coastalSpot.name}</span>
             </div>
           )}
           <button className="btn btn-ghost btn-sm" onClick={() => setStep(s => s + 1)}>Skip for now</button>
-          <CoastalLocationDialog
-            open={openCoastalModal}
-            onClose={() => setOpenCoastalModal(false)}
-            title="Set a coastal spot 🌊"
-            onSave={(loc) => {
-              setCoastalSpot(loc);
-              setMarineLocation(loc.name);
-              setOpenCoastalModal(false);
-            }}
-          />
         </div>
       )}
 
@@ -868,7 +1351,7 @@ function OnboardingCardInteractive() {
             setStep(s => Math.max(1, s - 1));
           }
         }}
-        onNext={() => {
+        onNext={async () => {
           if (phase.type === 'clusters') {
             if (selectedClusters.length === 0) setSelectedClusters(["Active Sports", "Fitness & Wellness"]);
             setStep(2);
@@ -879,7 +1362,49 @@ function OnboardingCardInteractive() {
           } else if (phase.type === 'marine') {
             setStep(s => s + 1);
           } else if (phase.type === 'confirm') {
-            router.push('/');
+            // Ensure we have concrete lat/lon for locations; geocode free text if needed
+            let finalHome = homeSpot;
+            if (!finalHome && homeLocation.trim()) {
+              try {
+                const results = await getGeocode({ address: homeLocation.trim() });
+                if (results?.[0]) {
+                  const { lat, lng } = await getLatLng(results[0]);
+                  finalHome = { name: homeLocation.trim(), lat, lon: lng };
+                }
+              } catch { /* ignore */ }
+            }
+            let finalCoast = coastalSpot;
+            if (isMarineChosen && !finalCoast && marineLocation.trim()) {
+              try {
+                const results = await getGeocode({ address: marineLocation.trim() });
+                if (results?.[0]) {
+                  const { lat, lng } = await getLatLng(results[0]);
+                  finalCoast = { name: marineLocation.trim(), lat, lon: lng };
+                }
+              } catch { /* ignore */ }
+            }
+
+            const dedupedInterests = Array.from(new Set(selectedActivities));
+
+            // Build new preferences synchronously so we can also persist immediately
+            const remaining = preferences.locations.filter(l => l.type !== 'home' && l.type !== 'coastal');
+            const newLocations = [...remaining];
+            // Preserve existing if user didn’t set new
+            const prevHome = preferences.locations.find(l => l.type === 'home');
+            const homeToSave = finalHome ? { ...finalHome, type: 'home' as const } : (prevHome ? prevHome : undefined);
+            if (homeToSave) newLocations.push(homeToSave);
+            const prevCoast = preferences.locations.find(l => l.type === 'coastal');
+            const coastToSave = (isMarineChosen && finalCoast) ? { ...finalCoast, type: 'coastal' as const } : (prevCoast ? prevCoast : undefined);
+            if (coastToSave) newLocations.push(coastToSave);
+
+            const newPrefs = {
+              ...preferences,
+              interests: dedupedInterests,
+              locations: newLocations,
+            };
+            setPreferences(newPrefs);
+            try { localStorage.setItem('preferences', JSON.stringify(newPrefs)); } catch { /* noop */ }
+            await router.push('/');
           }
         }}
         isLast={phase.type === 'confirm'}

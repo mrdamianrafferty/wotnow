@@ -4,7 +4,18 @@
  * NOTE: Do not put any top-level "smoke" script logic in this file.
  */
 
-type CacheEntry = { data: any; expires: number };
+// --- Types ---
+export interface StormglassHour {
+  time: string; // ISO
+  [param: string]: unknown;
+}
+
+export interface StormglassResponse {
+  hours?: StormglassHour[];
+  meta?: Record<string, unknown>;
+}
+
+type CacheEntry = { data: StormglassResponse; expires: number };
 
 /** Cache TTLs */
 const TTL_MARINE_MS = 5 * 60 * 1000;        // 5 minutes
@@ -28,7 +39,7 @@ function getStormglassKey(): string {
 }
 
 /** Helper: fetch JSON and include a short text preview for non-200s. */
-async function fetchJsonWithDetail(url: string, headers: Record<string, string> = {}) {
+async function fetchJsonWithDetail<T = unknown>(url: string, headers: Record<string, string> = {}): Promise<T> {
   const resp = await fetch(url, { headers });
   const text = await resp.text();
   if (!resp.ok) {
@@ -36,7 +47,7 @@ async function fetchJsonWithDetail(url: string, headers: Record<string, string> 
     throw new Error(`Stormglass ${resp.status} ${resp.statusText} @ ${url}\n${preview}`);
   }
   try {
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   } catch {
     throw new Error(`Stormglass invalid JSON @ ${url}: ${text.slice(0, 200)}`);
   }
@@ -52,7 +63,7 @@ export async function fetchStormglassMarineForecast(
   startISO: string,
   endISO: string,
   apiKey: string = getStormglassKey()
-): Promise<any> {
+): Promise<StormglassResponse> {
   const url = new URL('https://api.stormglass.io/v2/weather/point');
   url.searchParams.set('lat', String(lat));
   url.searchParams.set('lng', String(lon));
@@ -69,7 +80,7 @@ export async function fetchStormglassMarineForecast(
     ].join(',')
   );
 
-  return fetchJsonWithDetail(url.toString(), { Authorization: apiKey });
+  return fetchJsonWithDetail<StormglassResponse>(url.toString(), { Authorization: apiKey });
 }
 
 /**
@@ -81,7 +92,7 @@ export async function fetchMarineWithCache(
   startISO: string,
   endISO: string,
   apiKey: string = getStormglassKey()
-): Promise<any> {
+): Promise<StormglassResponse> {
   const key = `${lat},${lon},${startISO},${endISO}`;
   const now = Date.now();
   const hit = marineCache[key];
@@ -104,14 +115,14 @@ export async function fetchStormglassBio(
   endISO: string,
   params?: string[],
   apiKey: string = getStormglassKey()
-): Promise<any> {
+): Promise<StormglassResponse> {
   const finalParams = params ?? [
     'chlorophyll',
     'dissolvedOxygen',
     'nitrate',
     'phosphate',
     'salinity',
-    'seaSurfaceTemperature' // <-- this is the SST field
+    'seaSurfaceTemperature'
   ];
 
   // Cache key includes params to avoid collisions across different requests.
@@ -127,7 +138,7 @@ export async function fetchStormglassBio(
   url.searchParams.set('end', endISO);
   url.searchParams.set('params', finalParams.join(','));
 
-  const data = await fetchJsonWithDetail(url.toString(), { Authorization: apiKey });
+  const data = await fetchJsonWithDetail<StormglassResponse>(url.toString(), { Authorization: apiKey });
   bioCache[cacheKey] = { data, expires: now + TTL_BIO_MS };
   return data;
 }
@@ -142,7 +153,7 @@ export async function fetchStormglassAstronomy(
   startISO: string,
   endISO: string,
   apiKey: string = getStormglassKey()
-): Promise<any> {
+): Promise<StormglassResponse> {
   const cacheKey = `astro|${lat},${lon},${startISO},${endISO}`;
   const now = Date.now();
   const hit = astroCache[cacheKey];
@@ -154,7 +165,7 @@ export async function fetchStormglassAstronomy(
   url.searchParams.set('start', startISO);
   url.searchParams.set('end', endISO);
 
-  const data = await fetchJsonWithDetail(url.toString(), { Authorization: apiKey });
+  const data = await fetchJsonWithDetail<StormglassResponse>(url.toString(), { Authorization: apiKey });
   astroCache[cacheKey] = { data, expires: now + TTL_ASTRO_MS };
   return data;
 }

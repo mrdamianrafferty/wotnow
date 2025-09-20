@@ -20,10 +20,28 @@ interface EventPreferences {
   sportsCategories: string[];
 }
 
+// Minimal OpenWeather 3-hour forecast entry
+interface ForecastEntry {
+  dt_txt: string; // e.g. "2025-09-19 12:00:00"
+  // retain other properties without using any
+  [key: string]: unknown;
+}
+
+interface ForecastSlots {
+  date: string; // YYYY-MM-DD
+  morning?: ForecastEntry;
+  afternoon?: ForecastEntry;
+  night?: ForecastEntry;
+}
+
+interface OpenWeatherForecastResponse {
+  list: ForecastEntry[];
+}
+
 interface Preferences {
   locations: Location[];           // Now supports multiple locations!
   interests: string[];
-  forecast?: any[];
+  forecast?: ForecastSlots[];
   category?: string;
   genre?: string;
   eventPreferences?: EventPreferences;
@@ -118,12 +136,6 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     }
   });
 
-  const [coastalLocation, setCoastalLocation] = useState<Location | null>(
-    typeof window !== 'undefined' && localStorage.getItem('coastalLocation')
-      ? JSON.parse(localStorage.getItem('coastalLocation')!)
-      : null
-  );
-
   // --- Auto-detect home location if not set ---
   useEffect(() => {
     const hasHome = preferences.locations.some(l => l.type === 'home');
@@ -208,27 +220,27 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
         console.warn('Failed to fetch forecast:', res.statusText);
         return;
       }
-      const data = await res.json();
+      const data: OpenWeatherForecastResponse = await res.json();
 
       // Structure forecast by day/slot (morning, afternoon, night)
-      const byDay: any[] = [];
+      const byDay: ForecastSlots[] = [];
       for (let i = 0; i < 5; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         const dayStr = date.toISOString().split('T')[0];
-        const daySlots = data.list.filter((entry: any) => entry.dt_txt.startsWith(dayStr));
-        const slots = {
+        const daySlots = data.list.filter((entry: ForecastEntry) => entry.dt_txt.startsWith(dayStr));
+        const slots: ForecastSlots = {
           date: dayStr,
-          morning: daySlots.find((e: any) => {
-            const hour = parseInt(e.dt_txt.slice(11, 13));
+          morning: daySlots.find((e: ForecastEntry) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13), 10);
             return hour >= 6 && hour < 12;
           }),
-          afternoon: daySlots.find((e: any) => {
-            const hour = parseInt(e.dt_txt.slice(11, 13));
+          afternoon: daySlots.find((e: ForecastEntry) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13), 10);
             return hour >= 12 && hour < 18;
           }),
-          night: daySlots.find((e: any) => {
-            const hour = parseInt(e.dt_txt.slice(11, 13));
+          night: daySlots.find((e: ForecastEntry) => {
+            const hour = parseInt(e.dt_txt.slice(11, 13), 10);
             return hour >= 18 || hour < 6;
           }),
         };

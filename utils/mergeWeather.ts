@@ -54,7 +54,7 @@ import { fetchMarineWithCache } from '../utils/fetchStormglass';
 // Extend in your codebase if you already have richer interfaces.
 export type MarineHour = {
   time: string; // ISO timestamp from Stormglass
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type WeatherForecastDay = {
@@ -104,6 +104,58 @@ export type MarineBioSummary = {
   salinityAvg?: number;         // PSU
   sstAvg?: number;              // °C (some bio models expose sst)
 };
+
+// ---- Provider response types (minimal, focused on used fields) ----
+interface StormglassAstronomyRow {
+  time?: string;
+  date?: string;
+  datetime?: string;
+  sunrise?: string;
+  sunset?: string;
+  moonrise?: string;
+  moonset?: string;
+  moonPhase?: string;
+  sun?: { rise?: string; set?: string };
+  moon?: { rise?: string; set?: string; phase?: string };
+}
+interface StormglassAstronomyResponse { data?: StormglassAstronomyRow[] }
+
+interface OpenMeteoAirHourly {
+  time?: string[];
+  alder_pollen?: Array<number | null>;
+  birch_pollen?: Array<number | null>;
+  grass_pollen?: Array<number | null>;
+  ragweed_pollen?: Array<number | null>;
+  pm2_5?: Array<number | null>;
+  pm10?: Array<number | null>;
+  o3?: Array<number | null>;
+  no2?: Array<number | null>;
+  so2?: Array<number | null>;
+  co?: Array<number | null>;
+  european_aqi?: Array<number | null>;
+  us_aqi?: Array<number | null>;
+}
+interface OpenMeteoAirResponse { hourly?: OpenMeteoAirHourly }
+
+interface OpenMeteoForecastHourly {
+  time?: string[];
+  uv_index?: Array<number | null>;
+  uv_index_clear_sky?: Array<number | null>;
+  soil_temperature_0cm?: Array<number | null>;
+  soil_moisture_0_to_1cm?: Array<number | null>;
+  soil_moisture_1_to_3cm?: Array<number | null>;
+  snowfall?: Array<number | null>;
+  freezing_level_height?: Array<number | null>;
+  snow_depth?: Array<number | null>;
+}
+interface OpenMeteoForecastResponse { hourly?: OpenMeteoForecastHourly }
+
+interface StormglassBioHour {
+  time?: string;
+  [k: string]: number | string | Record<string, number> | undefined;
+}
+interface StormglassBioResponse { hours?: StormglassBioHour[] }
+
 /**
  * Fetch Stormglass Bio (biogeochemical) variables for a window.
  * Docs: https://docs.stormglass.io/#/bio
@@ -116,7 +168,7 @@ async function fetchStormglassBio(
   endISO: string,
   params: string
 ) {
-  const key = (process as any)?.env?.STORMGLASS_API_KEY;
+  const key = process.env?.STORMGLASS_API_KEY;
   if (!key) throw new Error('Missing STORMGLASS_API_KEY in environment');
   const url = new URL('https://api.stormglass.io/v2/bio/point');
   url.searchParams.set('lat', String(lat));
@@ -126,7 +178,7 @@ async function fetchStormglassBio(
   url.searchParams.set('end', endISO);
   const res = await fetch(url.toString(), { headers: { Authorization: key } });
   if (!res.ok) throw new Error(`Stormglass bio ${res.status}`);
-  return res.json();
+  return res.json() as Promise<StormglassBioResponse>;
 }
 
 function dateRangeFromForecast(days: WeatherForecastDay[]) {
@@ -181,7 +233,7 @@ function toDateKey(iso: string, timeZone?: string): string {
  * Docs: https://docs.stormglass.io/#/astronomy
  */
 async function fetchStormglassAstronomy(lat: number, lon: number, startDate: string, endDate: string) {
-  const key = (process as any)?.env?.STORMGLASS_API_KEY;
+  const key = process.env?.STORMGLASS_API_KEY;
   if (!key) {
     throw new Error('Missing STORMGLASS_API_KEY in environment');
   }
@@ -195,7 +247,7 @@ async function fetchStormglassAstronomy(lat: number, lon: number, startDate: str
     headers: { Authorization: key },
   });
   if (!res.ok) throw new Error(`Stormglass astronomy ${res.status}`);
-  return res.json();
+  return res.json() as Promise<StormglassAstronomyResponse>;
 }
 
 /**
@@ -226,7 +278,7 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: stri
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Open-Meteo air/pollen ${res.status}`);
-  return res.json();
+  return res.json() as Promise<OpenMeteoAirResponse>;
 }
 
 /**
@@ -253,7 +305,7 @@ async function fetchOpenMeteoUVSoilWinter(lat: number, lon: number, startDate: s
 
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Open-Meteo forecast ${res.status}`);
-  return res.json();
+  return res.json() as Promise<OpenMeteoForecastResponse>;
 }
 
 interface AttachMarineOpts {
@@ -287,7 +339,8 @@ export async function attachMarineToForecast(
   let hours: MarineHour[] = [];
   try {
     const marineData = await fetchMarineWithCache(queryLat, queryLon, startTimeISO, endTimeISO);
-    hours = Array.isArray(marineData?.hours) ? (marineData.hours as MarineHour[]) : [];
+    const maybeHours = (marineData as { hours?: MarineHour[] } | null | undefined)?.hours;
+    hours = Array.isArray(maybeHours) ? maybeHours : [];
   } catch (err) {
     // Keep things resilient—log and continue with empty marine arrays.
     console.error('[attachMarineToForecast] Failed to fetch marine data', err);
@@ -327,6 +380,37 @@ interface AttachOpenMeteoOpts {
   timeZone?: string; // used only for defensive date bucketing via toDateKey
 }
 
+// ---- aggregation helper types to avoid `any` ----
+interface AirAgg {
+  pm25Arr?: number[];
+  pm10Arr?: number[];
+  o3Arr?: number[];
+  no2Arr?: number[];
+  so2Arr?: number[];
+  coArr?: number[];
+  euAqiMax?: number;
+  usAqiMax?: number;
+}
+interface SoilAgg extends SoilSummary {
+  temp0Arr?: number[];
+  m01Arr?: number[];
+  m13Arr?: number[];
+}
+interface WinterAgg extends WinterSummary {
+  snowfallArr?: number[];
+  frzLvlArr?: number[];
+  snowDepthArr?: number[];
+}
+interface DayAgg {
+  uvIndex?: number;
+  uvIndexMax?: number;
+  uvArr?: number[];
+  pollen?: PollenSummary;
+  air?: AirAgg;
+  soil?: SoilAgg;
+  winter?: WinterAgg;
+}
+
 export async function attachOpenMeteoToForecast(
   forecast: WeatherForecastDay[],
   opts: AttachOpenMeteoOpts
@@ -335,8 +419,8 @@ export async function attachOpenMeteoToForecast(
   const { lat, lon, timeZone } = opts;
   const { start, end } = dateRangeFromForecast(forecast);
 
-  let airPollen: any | null = null;
-  let uvSoilWin: any | null = null;
+  let airPollen: OpenMeteoAirResponse | null = null;
+  let uvSoilWin: OpenMeteoForecastResponse | null = null;
 
   try {
     [airPollen, uvSoilWin] = await Promise.all([
@@ -347,46 +431,43 @@ export async function attachOpenMeteoToForecast(
     console.error('[attachOpenMeteoToForecast] fetch failed', e);
   }
 
-  const byDate: Record<string, Partial<WeatherForecastDay>> = {};
+  const byDate: Record<string, DayAgg> = {};
 
   // --- Pollen & Air Quality (hourly → day aggregates) ---
   try {
-    const hours = (airPollen?.hourly?.time || []).map((t: string, i: number) => ({
-      time: t,
-      alder: airPollen.hourly.alder_pollen?.[i],
-      birch: airPollen.hourly.birch_pollen?.[i],
-      grass: airPollen.hourly.grass_pollen?.[i],
-      ragweed: airPollen.hourly.ragweed_pollen?.[i],
-      pm25: airPollen.hourly.pm2_5?.[i],
-      pm10: airPollen.hourly.pm10?.[i],
-      o3: airPollen.hourly.o3?.[i],
-      no2: airPollen.hourly.no2?.[i],
-      so2: airPollen.hourly.so2?.[i],
-      co: airPollen.hourly.co?.[i],
-      euAqi: airPollen.hourly.european_aqi?.[i],
-      usAqi: airPollen.hourly.us_aqi?.[i],
-    }));
-    for (const h of hours) {
-      const key = toDateKey(h.time, timeZone);
-      // --- Pollen daily maxima ---
-      const pol = (byDate[key].pollen ||= {} as PollenSummary);
-      pol.grass = Math.max(pol.grass ?? -Infinity, Number(h.grass ?? -Infinity));
-      const treeNow = Math.max(Number(h.alder ?? -Infinity), Number(h.birch ?? -Infinity));
-      pol.tree = Math.max(pol.tree ?? -Infinity, treeNow);
-      pol.weed = Math.max(pol.weed ?? -Infinity, Number(h.ragweed ?? -Infinity));
+    const H = airPollen?.hourly;
+    const times = H?.time || [];
+    const toNum = (v: number | null | undefined) => (v == null ? NaN : Number(v));
+    for (let i = 0; i < times.length; i++) {
+      const t = String(times[i]);
+      const key = toDateKey(t, timeZone);
+      const bucket = (byDate[key] ||= {});
 
-      // --- Air quality: store arrays to average later; AQI keep daily max ---
-      const air = (byDate[key].air ||= {} as any);
-      if (h.pm25 != null && !Number.isNaN(Number(h.pm25))) air._pm25 = [ ...(air._pm25 || []), Number(h.pm25) ];
-      if (h.pm10 != null && !Number.isNaN(Number(h.pm10))) air._pm10 = [ ...(air._pm10 || []), Number(h.pm10) ];
-      if (h.o3   != null && !Number.isNaN(Number(h.o3)))   air._o3   = [ ...(air._o3   || []), Number(h.o3)   ];
-      if (h.no2  != null && !Number.isNaN(Number(h.no2)))  air._no2  = [ ...(air._no2  || []), Number(h.no2)  ];
-      if (h.so2  != null && !Number.isNaN(Number(h.so2)))  air._so2  = [ ...(air._so2  || []), Number(h.so2)  ];
-      if (h.co   != null && !Number.isNaN(Number(h.co)))   air._co   = [ ...(air._co   || []), Number(h.co)   ];
-      if (h.euAqi!= null && !Number.isNaN(Number(h.euAqi))) air.euAqiMax = Math.max(air.euAqiMax ?? -Infinity, Number(h.euAqi));
-      if (h.usAqi!= null && !Number.isNaN(Number(h.usAqi))) air.usAqiMax = Math.max(air.usAqiMax ?? -Infinity, Number(h.usAqi));
+      // --- Pollen daily maxima ---
+      const pol = (bucket.pollen ||= {} as PollenSummary);
+      const grass = toNum(H?.grass_pollen?.[i]);
+      const alder = toNum(H?.alder_pollen?.[i]);
+      const birch = toNum(H?.birch_pollen?.[i]);
+      const ragweed = toNum(H?.ragweed_pollen?.[i]);
+      if (!Number.isNaN(grass)) pol.grass = Math.max(pol.grass ?? -Infinity, grass);
+      const treeNow = Math.max(alder, birch);
+      if (Number.isFinite(treeNow)) pol.tree = Math.max(pol.tree ?? -Infinity, treeNow);
+      if (!Number.isNaN(ragweed)) pol.weed = Math.max(pol.weed ?? -Infinity, ragweed);
+
+      // --- Air quality: arrays to average later; AQI daily max ---
+      const air = (bucket.air ||= {});
+      const pm25 = toNum(H?.pm2_5?.[i]); if (!Number.isNaN(pm25)) air.pm25Arr = [ ...(air.pm25Arr || []), pm25 ];
+      const pm10 = toNum(H?.pm10?.[i]);  if (!Number.isNaN(pm10)) air.pm10Arr = [ ...(air.pm10Arr || []), pm10 ];
+      const o3   = toNum(H?.o3?.[i]);    if (!Number.isNaN(o3))   air.o3Arr   = [ ...(air.o3Arr   || []), o3   ];
+      const no2  = toNum(H?.no2?.[i]);   if (!Number.isNaN(no2))  air.no2Arr  = [ ...(air.no2Arr  || []), no2  ];
+      const so2  = toNum(H?.so2?.[i]);   if (!Number.isNaN(so2))  air.so2Arr  = [ ...(air.so2Arr  || []), so2  ];
+      const co   = toNum(H?.co?.[i]);    if (!Number.isNaN(co))   air.coArr   = [ ...(air.coArr   || []), co   ];
+      const euAqi = toNum(H?.european_aqi?.[i]);
+      const usAqi = toNum(H?.us_aqi?.[i]);
+      if (!Number.isNaN(euAqi)) air.euAqiMax = Math.max(air.euAqiMax ?? -Infinity, euAqi);
+      if (!Number.isNaN(usAqi)) air.usAqiMax = Math.max(air.usAqiMax ?? -Infinity, usAqi);
     }
-  } catch (e) {
+  } catch {
     // Non-fatal
   }
 
@@ -397,10 +478,10 @@ export async function attachOpenMeteoToForecast(
     for (let i = 0; i < times.length; i++) {
       const t = times[i];
       const key = toDateKey(t, timeZone);
-      const day = (byDate[key] ||= {});
+      const bucket = (byDate[key] ||= {});
 
       const uv = Number(H.uv_index?.[i]);
-      const uvClear = Number(H.uv_index_clear_sky?.[i]);
+      // const uvClear = Number(H.uv_index_clear_sky?.[i]); // currently unused but available
       const soilT = Number(H.soil_temperature_0cm?.[i]);
       const sm01 = Number(H.soil_moisture_0_to_1cm?.[i]);
       const sm13 = Number(H.soil_moisture_1_to_3cm?.[i]);
@@ -408,26 +489,25 @@ export async function attachOpenMeteoToForecast(
       const frzLvl = Number(H.freezing_level_height?.[i]);
       const snowDepth = Number(H.snow_depth?.[i]);
 
-      // UV: we'll keep max and also compute an average later when finalising
+      // UV: keep max and collect values for average later
       if (!Number.isNaN(uv)) {
-        day.uvIndexMax = Math.max(day.uvIndexMax ?? -Infinity, uv);
-        // store rolling average basis via temporary array
-        (day as any)._uvArr = [ ...(day as any)._uvArr || [], uv ];
+        bucket.uvIndexMax = Math.max(bucket.uvIndexMax ?? -Infinity, uv);
+        bucket.uvArr = [ ...(bucket.uvArr || []), uv ];
       }
 
-      // Soil summary: running averages
-      const soil = (day.soil ||= {} as SoilSummary);
-      if (!Number.isNaN(soilT)) (soil as any)._t = [ ...(soil as any)._t || [], soilT ];
-      if (!Number.isNaN(sm01)) (soil as any)._m01 = [ ...(soil as any)._m01 || [], sm01 ];
-      if (!Number.isNaN(sm13)) (soil as any)._m13 = [ ...(soil as any)._m13 || [], sm13 ];
+      // Soil summary: running arrays for averages
+      const soil = (bucket.soil ||= {});
+      if (!Number.isNaN(soilT)) soil.temp0Arr = [ ...(soil.temp0Arr || []), soilT ];
+      if (!Number.isNaN(sm01))  soil.m01Arr   = [ ...(soil.m01Arr   || []), sm01  ];
+      if (!Number.isNaN(sm13))  soil.m13Arr   = [ ...(soil.m13Arr   || []), sm13  ];
 
-      // Winter summary
-      const win = (day.winter ||= {} as WinterSummary);
-      if (!Number.isNaN(snowfall)) (win as any)._sf = [ ...(win as any)._sf || [], snowfall ];
-      if (!Number.isNaN(frzLvl)) (win as any)._fl = [ ...(win as any)._fl || [], frzLvl ];
-      if (!Number.isNaN(snowDepth)) (win as any)._sd = [ ...(win as any)._sd || [], snowDepth ];
+      // Winter summary arrays
+      const win = (bucket.winter ||= {});
+      if (!Number.isNaN(snowfall))  win.snowfallArr  = [ ...(win.snowfallArr  || []), snowfall  ];
+      if (!Number.isNaN(frzLvl))    win.frzLvlArr    = [ ...(win.frzLvlArr    || []), frzLvl    ];
+      if (!Number.isNaN(snowDepth)) win.snowDepthArr = [ ...(win.snowDepthArr || []), snowDepth ];
     }
-  } catch (e) {
+  } catch {
     // Non-fatal
   }
 
@@ -436,26 +516,25 @@ export async function attachOpenMeteoToForecast(
     const extra = byDate[day.date] || {};
 
     // Compute UV representative value (midday-ish average if available)
-    if ((extra as any)._uvArr) {
-      const arr = (extra as any)._uvArr as number[];
-      extra.uvIndex = avg(arr);
-      delete (extra as any)._uvArr;
+    if (extra.uvArr && extra.uvArr.length) {
+      extra.uvIndex = avg(extra.uvArr);
+      delete extra.uvArr;
     }
 
     // Soil averages
     if (extra.soil) {
-      const s: any = extra.soil;
-      if (s._t) { extra.soil.temp0cm = avg(s._t); delete s._t; }
-      if (s._m01) { extra.soil.moisture0to1 = avg(s._m01); delete s._m01; }
-      if (s._m13) { extra.soil.moisture1to3 = avg(s._m13); delete s._m13; }
+      const s = extra.soil;
+      if (s.temp0Arr && s.temp0Arr.length) { extra.soil.temp0cm = avg(s.temp0Arr); delete s.temp0Arr; }
+      if (s.m01Arr && s.m01Arr.length)     { extra.soil.moisture0to1 = avg(s.m01Arr); delete s.m01Arr; }
+      if (s.m13Arr && s.m13Arr.length)     { extra.soil.moisture1to3 = avg(s.m13Arr); delete s.m13Arr; }
     }
 
     // Winter totals/averages
     if (extra.winter) {
-      const w: any = extra.winter;
-      if (w._sf) { extra.winter.snowfallTotal = sum(w._sf); delete w._sf; }
-      if (w._fl) { extra.winter.freezingLevelAvg = avg(w._fl); delete w._fl; }
-      if (w._sd) { extra.winter.snowDepthAvg = avg(w._sd); delete w._sd; }
+      const w = extra.winter;
+      if (w.snowfallArr && w.snowfallArr.length) { extra.winter.snowfallTotal = sum(w.snowfallArr); delete w.snowfallArr; }
+      if (w.frzLvlArr && w.frzLvlArr.length)     { extra.winter.freezingLevelAvg = avg(w.frzLvlArr); delete w.frzLvlArr; }
+      if (w.snowDepthArr && w.snowDepthArr.length){ extra.winter.snowDepthAvg = avg(w.snowDepthArr); delete w.snowDepthArr; }
     }
 
     // Pollen: replace -Infinity placeholders with undefined
@@ -466,18 +545,18 @@ export async function attachOpenMeteoToForecast(
     }
 
     // Air quality: compute daily means and keep max AQI
-    if ((extra as any).air) {
-      const a: any = (extra as any).air;
-      const out: any = {};
-      if (a._pm25) { out.pm2_5Avg = avg(a._pm25); }
-      if (a._pm10) { out.pm10Avg  = avg(a._pm10); }
-      if (a._o3)   { out.o3Avg    = avg(a._o3); }
-      if (a._no2)  { out.no2Avg   = avg(a._no2); }
-      if (a._so2)  { out.so2Avg   = avg(a._so2); }
-      if (a._co)   { out.coAvg    = avg(a._co); }
+    if (extra.air) {
+      const a = extra.air;
+      const out: AQSummary = {};
+      if (a.pm25Arr && a.pm25Arr.length) out.pm2_5Avg = avg(a.pm25Arr);
+      if (a.pm10Arr && a.pm10Arr.length) out.pm10Avg  = avg(a.pm10Arr);
+      if (a.o3Arr   && a.o3Arr.length)   out.o3Avg    = avg(a.o3Arr);
+      if (a.no2Arr  && a.no2Arr.length)  out.no2Avg   = avg(a.no2Arr);
+      if (a.so2Arr  && a.so2Arr.length)  out.so2Avg   = avg(a.so2Arr);
+      if (a.coArr   && a.coArr.length)   out.coAvg    = avg(a.coArr);
       if (Number.isFinite(a.euAqiMax)) out.euAqiMax = a.euAqiMax;
       if (Number.isFinite(a.usAqiMax)) out.usAqiMax = a.usAqiMax;
-      (extra as any).air = out as AQSummary;
+      extra.air = out;
     }
 
     return { ...day, ...extra } as WeatherForecastDay;
@@ -512,7 +591,7 @@ export async function attachAstronomyToForecast(
   const { lat, lon, timeZone } = opts;
   const { start, end } = dateRangeFromForecast(forecast);
 
-  let astro: any | null = null;
+  let astro: StormglassAstronomyResponse | null = null;
   try {
     astro = await fetchStormglassAstronomy(lat, lon, start, end);
   } catch (e) {
@@ -521,7 +600,7 @@ export async function attachAstronomyToForecast(
   }
 
   const byDate: Record<string, AstronomySummary> = {};
-  const rows = Array.isArray(astro?.data) ? astro.data : [];
+  const rows: StormglassAstronomyRow[] = Array.isArray(astro?.data) ? astro!.data! : [];
   for (const r of rows) {
     const t = r.time || r.date || r.datetime;
     if (!t) continue;
@@ -531,7 +610,7 @@ export async function attachAstronomyToForecast(
       sunset: r.sunset || r.sun?.set,
       moonrise: r.moonrise || r.moon?.rise,
       moonset: r.moonset || r.moon?.set,
-      moonPhase: r.moonPhase || r.moon_phase || r.moon?.phase,
+      moonPhase: r.moonPhase || (r as unknown as Record<string, unknown>)["moon_phase"] as string | undefined || r.moon?.phase,
     };
     byDate[key] = { ...(byDate[key] || {}), ...entry };
   }
@@ -574,7 +653,7 @@ export async function attachMarineBioToForecast(
   const startISO = `${start}T00:00:00Z`;
   const endISO = `${end}T23:59:59Z`;
 
-  let data: any | null = null;
+  let data: StormglassBioResponse | null = null;
   try {
     data = await fetchStormglassBio(lat, lon, startISO, endISO, vars.join(','));
   } catch (e) {
@@ -582,18 +661,18 @@ export async function attachMarineBioToForecast(
     return forecast;
   }
 
-  const rows = Array.isArray(data?.hours) ? data.hours : [];
-  const byDate: Record<string, any> = {};
+  const rows: StormglassBioHour[] = Array.isArray(data?.hours) ? data!.hours! : [];
+  const byDate: Record<string, { _chl: number[]; _do: number[]; _no3: number[]; _po4: number[]; _sal: number[]; _sst: number[] }> = {};
   for (const h of rows) {
-    const key = toDateKey(String(h.time), timeZone);
+    const key = toDateKey(String(h.time ?? ''), timeZone);
     const bucket = (byDate[key] ||= { _chl: [], _do: [], _no3: [], _po4: [], _sal: [], _sst: [] });
     // Each variable may be nested per model source; Stormglass usually returns the numeric at top level or per source key.
-    const v = (name: string) => {
+    const v = (name: string): number | undefined => {
       const val = h?.[name];
       if (typeof val === 'number') return val;
       // if per-source object, take mean of numeric entries
       if (val && typeof val === 'object') {
-        const nums = Object.values(val).filter(x => typeof x === 'number') as number[];
+        const nums = Object.values(val as Record<string, unknown>).filter((x): x is number => typeof x === 'number');
         if (nums.length) return nums.reduce((a,b)=>a+b,0)/nums.length;
       }
       return undefined;

@@ -12,7 +12,6 @@ import Head from 'next/head'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
-import Footer from '../components/footer';
 
 type ThemeName = 'light' | 'wotnow' | string;
 
@@ -55,7 +54,6 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
       {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
       <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content">
         <Component {...pageProps} />
-        <Footer />
       </div>
     </UserPreferencesProvider>
   )

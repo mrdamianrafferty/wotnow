@@ -929,7 +929,7 @@ beach_volleyball: {
 export function getActivityMessage(
   activityId: string,
   category: 'perfect' | 'good' | 'fair' | 'poor',
-  reasons: { key: string; value: any; label: string }[] = []
+  reasons: { key: string; value: unknown; label: string }[] = []
 ): string {
   const arr = Array.isArray(reasons) ? reasons : [];
   
@@ -961,7 +961,7 @@ export function getActivityMessage(
   if ((activityId === 'surfing' || activityAliases[activityId] === 'surfing') && category === 'poor') {
     const waveReason = arr.find(r => r.key === 'wave');
     if (waveReason) {
-      const waveHeight = waveReason.value || 0;
+      const waveHeight = (typeof waveReason.value === 'number' ? waveReason.value : Number(waveReason.value)) || 0;
       
       // Prepend specific wave condition information
       if (waveHeight < 0.5) {
@@ -985,7 +985,7 @@ export function getActivityMessage(
 }
 
 // Helper function to extract and format reasons text
-function getReasonText(reasons: { key: string; value: any; label: string }[], omitReasons?: string[]): string {
+function getReasonText(reasons: { key: string; value: unknown; label: string }[], _omitReasons?: string[]): string {
   return reasons
     .filter(r => r && typeof r === 'object' && r.label) // Ensure r and r.label exist
     .map(r => r.label.trim().replace(/\.$/, ''))

@@ -14,10 +14,16 @@
   background-position: center;
   background-repeat: no-repeat;
   border-radius: 22px;
-  color: #fff;
   overflow: hidden;       /* Key for overlay/card radius */
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: hsl(var(--bc));
+}
+
+/* Opt-in white text for dark/image-backed cards */
+.card.text-on-dark,
+.activity-card-enhanced.text-on-dark {
+  color: #fff;
 }
 .card:hover,
 .activity-card-enhanced:hover {
@@ -281,7 +287,7 @@
 .indoor-day-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #fff;
+  color: hsl(var(--bc));
   margin-bottom: 1rem;
   text-align: center;
 }
@@ -307,7 +313,7 @@
 }
 .indoor-day-item .activity-name {
   font-weight: 500;
-  color: #fff;
+  color: hsl(var(--bc));
   font-size: 1rem;
 }
 
@@ -317,7 +323,7 @@
 }
 .indoor-title {
   font-size: 0.95rem;
-  color: #fff;
+  color: hsl(var(--bc));
   margin-bottom: 6px;
   display: block;
 }
@@ -325,7 +331,7 @@
   list-style: none;
   padding-left: 0;
   margin: 0;
-  color: #fff;
+  color: hsl(var(--bc));
 }
 .indoor-item {
   display: flex;
@@ -802,15 +808,9 @@
     width: 36px !important;
     height: 36px !important;
   }
-  @media (max-width: 600px) {
-  .activity-card-enhanced {
-    min-height: 0 !important;
-    height: auto !important;
-    /* other mobile styles */
-  }
-}
-.indie-text {
-  font-family: "Indie Flower", 
+  /* Remove duplicated inner @media (max-width: 600px) and misplaced indie-text */
 }
 
+.indie-text {
+  font-family: "Indie Flower", cursive;
 }

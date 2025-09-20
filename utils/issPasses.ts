@@ -20,6 +20,15 @@ export type GetOpts = {
   baseUrl?: string; // override for server-side calls (e.g., NEXT_PUBLIC_BASE_URL)
 };
 
+// Shape returned from /api/iss-visible
+interface ApiIssPass {
+  risetimeISO: string;
+  endtimeISO: string;
+  durationSec?: number;
+  nightWindow?: { startISO: string; endISO: string };
+  source?: "open-notify" | "prediction";
+}
+
 /**
  * Fetch visible ISS passes (best 1–2 per night by default) using our API route.
  * Works in both client and server contexts.
@@ -51,8 +60,8 @@ export async function getBestLookUpTimes(
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`ISS Visible API error: ${res.status}`);
   const json = await res.json();
-  const results = Array.isArray(json?.results) ? json.results : [];
-  return results.map((p: any) => ({
+  const results = Array.isArray(json?.results) ? (json.results as ApiIssPass[]) : [];
+  return results.map((p: ApiIssPass) => ({
     risetime: new Date(p.risetimeISO),
     endtime: new Date(p.endtimeISO),
     durationSec: Number(p.durationSec) || 0,
@@ -83,8 +92,8 @@ export async function getNightIssPasses(
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`ISS Visible API error: ${res.status}`);
   const json = await res.json();
-  const results = Array.isArray(json?.results) ? json.results : [];
-  return results.map((p: any) => ({
+  const results = Array.isArray(json?.results) ? (json.results as ApiIssPass[]) : [];
+  return results.map((p: ApiIssPass) => ({
     risetime: new Date(p.risetimeISO),
     endtime: new Date(p.endtimeISO),
     durationSec: Number(p.durationSec) || 0,

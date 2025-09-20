@@ -16,7 +16,8 @@ export interface MarineHour {
   precipitation?: { noaa?: number };
   currentSpeed?: { noaa?: number };
   currentDirection?: { noaa?: number };
-  [key: string]: any; // Allow additional fields
+  // Extensible: undocumented provider keys may appear.
+  [key: string]: unknown;
 }
 // ...add any other fields you use
 

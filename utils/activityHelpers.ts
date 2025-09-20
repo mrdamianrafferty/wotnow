@@ -3,10 +3,7 @@ import {
   getRainfallDescription,
   getTemperatureDescription,
   getHumidityDescription,
-  getWaveDescription,
-  getWaterTemperatureDescription,
   getWindMessage,
-  getVisibilityDescription,
 } from './weatherLabels';
 import { activityTypes } from '../data/activityTypes';
 import { getActivityMessage } from '../data/activityMessages';
@@ -29,6 +26,33 @@ export const MARINE_ACTIVITY_IDS = [
   'sup_sea',
 ];
 
+// --- Shared types used throughout this helper ---
+export type Reason = { key: string; value: unknown; label: string };
+
+export interface DayLike {
+  date?: string | number | Date;
+  // temps & general
+  temperature?: number | null; tempMax?: number | null; tempMin?: number | null;
+  description?: string; rain?: number | null; precipitation?: number | null; clouds?: number | null;
+  humidity?: number | null; visibility?: number | null; icon?: string | null;
+  // wind (various shapes)
+  windSpeed?: number | null; wind_speed?: number | null; wind_gust?: number | null; gustSpeed?: number | null;
+  windDirection?: number | string | null; wind_direction?: number | string | null; wind_dir?: number | string | null;
+  windDeg?: number | string | null; winddeg?: number | string | null; wind_deg?: number | string | null;
+  windDirectionDeg?: number | string | null; wind_direction_deg?: number | string | null;
+  wind_direction_degrees?: number | string | null; windDirectionDegrees?: number | string | null;
+  hourly?: Array<Record<string, unknown>>;
+  // marine
+  waterTemperature?: number | null; waveHeight?: number | null; swellHeight?: number | null; swellPeriod?: number | null;
+  // location/orientation
+  beachOrientation?: number | null; beach_orientation?: number | null;
+  lat?: number; lon?: number; latitude?: number; longitude?: number; coords?: { lat?: number; lon?: number };
+  // environment extras
+  pollen?: unknown; airQuality?: unknown;
+  // legacy/supporting fields
+  temp?: number | null;
+}
+
 // Try to infer a beach orientation from cachedBeaches (nearest entry with an orientation)
 const getOrientationFromCachedBeaches = (lat?: number | null, lon?: number | null): number | undefined => {
   if (typeof window === 'undefined') return undefined;
@@ -50,9 +74,10 @@ const getOrientationFromCachedBeaches = (lat?: number | null, lon?: number | nul
     const list = JSON.parse(raw);
     if (!Array.isArray(list)) return undefined;
 
-    let best: any = null;
+    type CachedBeach = { orientation: number; lat?: number | null; lon?: number | null };
+    let best: CachedBeach | null = null;
     let bestDist = Infinity;
-    for (const b of list) {
+    for (const b of list as CachedBeach[]) {
       if (typeof b?.orientation !== 'number') continue;
       const d = Math.hypot((b.lat ?? 0) - targetLat, (b.lon ?? 0) - targetLon);
       if (d < bestDist) { bestDist = d; best = b; }
@@ -69,24 +94,37 @@ const getOrientationFromCachedBeaches = (lat?: number | null, lon?: number | nul
 
 type Coords = { lat: number; lon: number };
 
-function tryExtractCoords(obj: any): Coords | undefined {
+interface CoordLike {
+  lat?: number;
+  lon?: number;
+  latitude?: number;
+  longitude?: number;
+  lng?: number;
+  coords?: CoordLike;
+  location?: CoordLike;
+  center?: CoordLike;
+}
+
+function tryExtractCoords(obj: unknown): Coords | undefined {
   if (!obj || typeof obj !== 'object') return undefined;
   // common shapes
-  const candidates: any[] = [
-    obj,
-    obj.coords,
-    obj.location,
-    obj.center,
+  const base = obj as CoordLike;
+  const candidates: Array<CoordLike | undefined> = [
+    base,
+    base.coords,
+    base.location,
+    base.center,
   ];
   for (const c of candidates) {
-    const lat = typeof c?.lat === 'number' ? c.lat : (typeof c?.latitude === 'number' ? c.latitude : undefined);
-    const lon = typeof c?.lon === 'number' ? c.lon : (typeof c?.lng === 'number' ? c.lng : (typeof c?.longitude === 'number' ? c.longitude : undefined));
+    if (!c || typeof c !== 'object') continue;
+    const lat = typeof c.lat === 'number' ? c.lat : (typeof c.latitude === 'number' ? c.latitude : undefined);
+    const lon = typeof c.lon === 'number' ? c.lon : (typeof c.lng === 'number' ? c.lng : (typeof c.longitude === 'number' ? c.longitude : undefined));
     if (typeof lat === 'number' && typeof lon === 'number') return { lat, lon };
   }
   return undefined;
 }
 
-function getApproximateCoords(day?: any): Coords | undefined {
+function getApproximateCoords(day?: unknown): Coords | undefined {
   // 1) try day object first
   const fromDay = tryExtractCoords(day);
   if (fromDay) return fromDay;
@@ -179,7 +217,7 @@ function toMessageCategory(label: string): 'perfect' | 'good' | 'fair' | 'poor' 
  * Convert a wind direction input (degrees, numeric string, or cardinal like 'NW')
  * to degrees in [0, 360).
  */
-function cardinalToDegrees(card: any): number | undefined {
+function cardinalToDegrees(card: unknown): number | undefined {
   if (card == null) return undefined;
   if (typeof card === 'number' && Number.isFinite(card)) return ((card % 360) + 360) % 360;
   if (typeof card === 'string') {
@@ -206,26 +244,27 @@ function cardinalToDegrees(card: any): number | undefined {
 /**
  * Best-effort extraction of wind direction in degrees from a day object.
  */
-function extractWindDegrees(day: any): number | undefined {
+function extractWindDegrees(day: Partial<DayLike>): number | undefined {
   const candidates = [
     day?.wind_direction,
     day?.windDirection,
     day?.wind_dir,
     day?.windDeg,
     day?.winddeg,
-    (day as any)?.wind_deg,
+    day?.wind_deg,
     day?.windDirectionDeg,
     day?.wind_direction_deg,
     day?.wind_direction_degrees,
     day?.windDirectionDegrees,
   ];
   for (const c of candidates) {
-    const d = cardinalToDegrees(c);
+    const d = cardinalToDegrees(c as unknown);
     if (typeof d === 'number') return d;
   }
   // Sometimes nested
-  if (day?.noon?.wind_direction !== undefined) {
-    const d = cardinalToDegrees(day.noon.wind_direction);
+  const maybeNoon: unknown = (day as Record<string, unknown> | undefined)?.noon;
+  if (maybeNoon && typeof maybeNoon === 'object' && 'wind_direction' in maybeNoon) {
+    const d = cardinalToDegrees((maybeNoon as Record<string, unknown>).wind_direction);
     if (typeof d === 'number') return d;
   }
   return undefined;
@@ -233,9 +272,9 @@ function extractWindDegrees(day: any): number | undefined {
 
 type BuildPopupArgs = {
   activityId: string;
-  day: any;
+  day: DayLike;
   score: number;
-  reasons?: { key: string; value: any; label: string }[]; // array
+  reasons?: Reason[]; // array
 };
 
 export function buildPopupActivityPayload({ activityId, day, score, reasons }: BuildPopupArgs) {
@@ -305,7 +344,7 @@ export function buildPopupActivityPayload({ activityId, day, score, reasons }: B
   const msgCategory = toMessageCategory(uiLabel);
   
   // Create reason objects from string reasons
-  let reasonObjects: { key: string; value: any; label: string }[] = [];
+  let reasonObjects: Reason[] = [];
   
   // Get reasons from buildReasons if not provided
   const reasonsArray = reasons || buildReasons(dayWithOrientation, activityId);
@@ -336,18 +375,19 @@ export function buildPopupActivityPayload({ activityId, day, score, reasons }: B
 }
 
 // Add this function to get wind directions for the day
-function getWindDirectionsForDay(day: any): number[] {
+function getWindDirectionsForDay(day: Partial<DayLike>): number[] {
   const out: number[] = [];
   if (day?.hourly && Array.isArray(day.hourly)) {
     for (const hour of day.hourly) {
+      const h = hour as Record<string, unknown>;
       const cand =
-        hour?.wind_direction ??
-        hour?.windDirection ??
-        hour?.wind_dir ??
-        hour?.windDeg ??
-        hour?.winddeg ??
-        (hour as any)?.wind_deg;
-      const deg = cardinalToDegrees(cand);
+        h?.wind_direction ??
+        h?.windDirection ??
+        h?.wind_dir ??
+        h?.windDeg ??
+        h?.winddeg ??
+        h?.wind_deg;
+      const deg = cardinalToDegrees(cand as unknown);
       if (typeof deg === 'number') out.push(deg);
     }
   }
@@ -378,7 +418,7 @@ function circularMeanDeg(values: number[]): number | undefined {
 
 // Pick a representative wind direction for the day: explicit value if present,
 // otherwise a circular mean of hourly values
-function representativeWindDir(day: any): number | undefined {
+function representativeWindDir(day: Partial<DayLike>): number | undefined {
   const explicit = extractWindDegrees(day);
   if (typeof explicit === 'number') return explicit;
   const list = getWindDirectionsForDay(day);
@@ -387,7 +427,7 @@ function representativeWindDir(day: any): number | undefined {
 
 // Then fix your buildReasons function
 // 1. First, modify buildReasons to return an array of strings instead of a combined string
-export function buildReasons(day: any, activityId: string) {
+export function buildReasons(day: DayLike, activityId: string) {
   // Debug to see what's actually in the day object
   console.log('Day data in buildReasons:', day);
   
@@ -398,11 +438,11 @@ export function buildReasons(day: any, activityId: string) {
   const windDirDeg: number | undefined = extractWindDegrees(day);
   const repWindDeg: number | undefined = representativeWindDir(day);
 
-  let beachOrientationVal: any =
+  let beachOrientationVal: number | undefined =
     typeof day?.beachOrientation === 'number'
       ? day.beachOrientation
-      : (typeof (day as any)?.beach_orientation === 'number'
-          ? (day as any).beach_orientation
+      : (typeof day?.beach_orientation === 'number'
+          ? day.beach_orientation
           : undefined);
 
   // Fallback: try to recover from cached beaches or simulated orientation using approximate coords
@@ -419,18 +459,18 @@ export function buildReasons(day: any, activityId: string) {
   if (day.wind_speed !== undefined) {
     console.log(`Trying to get wind message for speed: ${day.wind_speed}`);
     console.log(`Also available - windSpeed: ${day.windSpeed}`);
-    console.log(`Day object keys:`, Object.keys(day).filter(k => k.toLowerCase().includes('wind')));
+    console.log(`Day object keys:`, Object.keys(day as Record<string, unknown>).filter(k => k.toLowerCase().includes('wind')));
     
     // For marine activities, prefer windSpeed (marine data in m/s) over wind_speed (weather data)
     const effectiveWindSpeed = isMarineActivity && typeof day.windSpeed === 'number' 
       ? day.windSpeed 
-      : day.wind_speed;
+      : day.wind_speed ?? null;
     
     console.log(`Using effective wind speed: ${effectiveWindSpeed} (marine: ${isMarineActivity})`);
     
     let windMessage = getWindMessage({
-      windSpeed: effectiveWindSpeed,
-      gustSpeed: day.wind_gust,
+      windSpeed: effectiveWindSpeed ?? undefined,
+      gustSpeed: day.wind_gust ?? undefined,
       windDirection: repWindDeg,
       windDirectionsToday: getWindDirectionsForDay(day),
       beachOrientation: beachOrientationVal,
@@ -467,12 +507,18 @@ export function buildReasons(day: any, activityId: string) {
       reasons.push(windMessage);
     } else {
       // Fallback to beaufort description if available
-      const beaufortDescription = getBeaufortDescription(day.wind_speed);
+      let beaufortDescription: string | undefined;
+      if (typeof day.wind_speed === 'number') {
+        beaufortDescription = getBeaufortDescription(day.wind_speed);
+      } else if (typeof day.windSpeed === 'number') {
+        beaufortDescription = getBeaufortDescription(day.windSpeed);
+      }
       if (beaufortDescription) {
         reasons.push(beaufortDescription);
       } else {
-        // Ultimate fallback with raw wind speed
-        reasons.push(`Wind speed: ${day.wind_speed} m/s`);
+        // Ultimate fallback with raw wind speed, if any
+        const raw = typeof day.wind_speed === 'number' ? day.wind_speed : (typeof day.windSpeed === 'number' ? day.windSpeed : null);
+        reasons.push(raw != null ? `Wind speed: ${raw} m/s` : 'Wind details unavailable');
       }
     }
   }
@@ -500,26 +546,26 @@ export function buildReasons(day: any, activityId: string) {
   }
   
   if (day.rain !== undefined) {
-    const rainMsg = getRainfallDescription(day.rain);
+    const rainMsg = getRainfallDescription(day.rain ?? 0);
     if (rainMsg) reasons.push(rainMsg);
   }
   
   if (day.temperature !== undefined) {
-    const tempMsg = getTemperatureDescription(day.temperature);
+    const tempMsg = getTemperatureDescription(day.temperature ?? 0);
     if (tempMsg) reasons.push(tempMsg);
   }
   
   if (day.humidity !== undefined) {
-    const humidityMsg = getHumidityDescription(day.humidity);
+    const humidityMsg = getHumidityDescription(day.humidity ?? 0);
     if (humidityMsg) reasons.push(humidityMsg);
   }
 
     // ➕ Add heat stress risk warning
-  const heatRisk = getHeatStressRisk(day.temperature, day.humidity, activityId);
+  const heatRisk = getHeatStressRisk(day.temperature ?? null, day.humidity ?? null, activityId);
   if (heatRisk) reasons.push(heatRisk);
   
   if (day.visibility !== undefined) {
-    reasons.push(`${day.visibility >= 8000 ? 'Excellent' : 'Reduced'} visibility${day.visibility >= 8000 ? '' : ''}`);
+    reasons.push(`${(day.visibility ?? 0) >= 8000 ? 'Excellent' : 'Reduced'} visibility`);
   }
   
   // Add marine-specific reasons for marine activities
@@ -535,7 +581,7 @@ export function buildReasons(day: any, activityId: string) {
     const windSpeed = day.wind_speed ?? day.windSpeed ?? undefined;
     const gustSpeed = day.wind_gust ?? day.gustSpeed ?? undefined;
     const waveHeight = day.waveHeight ?? undefined;
-    const swellPeriod = day.swellPeriod ?? undefined;
+    // removed unused const swellPeriod
 
     let windRelative: string | undefined;
     try {
@@ -564,9 +610,9 @@ export function buildReasons(day: any, activityId: string) {
         break;
       }
       case 'surfing': {
-        if (typeof waveHeight === 'number' && waveHeight > 2.5) {
+        if (typeof day.waveHeight === 'number' && day.waveHeight > 2.5) {
           reasons.push('Large surf conditions - experienced surfers only');
-        } else if (typeof waveHeight === 'number' && waveHeight < 0.3) {
+        } else if (typeof day.waveHeight === 'number' && day.waveHeight < 0.3) {
           reasons.push('Very small waves - may not be worth the paddle out');
         }
         // Wind quality for surfing
@@ -677,10 +723,12 @@ export function buildReasons(day: any, activityId: string) {
   return validReasons.length > 0 ? validReasons : getDefaultReasonForActivity(activityId);
 }
 
+// Track hero activities already used for selection
+const usedHeroActivities = new Set<string>();
+
 export function findHeroActivity(
-  perfectList: any[],
-  goodList: any[],
-  usedHeroActivities: Set<string>,
+  perfectList: Array<{ activityId: string }> ,
+  goodList: Array<{ activityId: string }> ,
   allowRepeats: boolean = false
 ) {
   // Try unused perfect activities first
@@ -783,25 +831,27 @@ const heatSensitiveActivities = new Set([
 /**
  * Add activity-specific reasoning based on weather conditions
  */
-function addActivitySpecificReasons(day: any, activityId: string, reasons: string[]) {
-  const temp = day.temperature;
-  const windSpeed = day.wind_speed ?? day.windSpeed ?? 0;
-  const rain = day.rain ?? day.precipitation ?? 0;
-  const humidity = day.humidity;
-  const clouds = day.clouds;
+function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: string[]) {
+  const temp = day.temperature ?? null;
+  const windSpeed = (day.wind_speed ?? day.windSpeed) ?? 0;
+  const rain = (day.rain ?? day.precipitation) ?? 0;
+  const humidity = day.humidity ?? null;
+  const clouds = day.clouds ?? null;
 
   switch (activityId) {
     case 'basketball_outdoor':
       if (rain > 0) {
-        reasons.push('Wet court makes dribbling and movement dangerous');
+        reasons.push('Rain will spoil outdoor dining');
       } else if (windSpeed > 8) {
-        reasons.push('Strong wind affects shooting accuracy');
+        reasons.push('Strong wind will blow napkins and plates around');
       } else if (temp && temp > 30) {
-        reasons.push('Hot conditions - stay hydrated and take breaks');
-      } else if (temp && temp < 5) {
-        reasons.push('Cold weather affects ball grip and handling');
-      } else if (clouds < 20) {
-        reasons.push('Clear court and good visibility for play');
+        reasons.push('Very hot - food safety concerns in heat');
+      } else if (temp && temp < 10) {
+        reasons.push('Cold weather not comfortable for outdoor eating');
+      } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
+        reasons.push('Partly cloudy - perfect for avoiding harsh sun');
+      } else {
+        reasons.push('Perfect picnic weather');
       }
       break;
 
@@ -828,7 +878,7 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push('Wind will affect ball trajectory and serve');
       } else if (temp && temp > 35) {
         reasons.push('Very hot conditions - heat exhaustion risk');
-      } else if (clouds > 80) {
+      } else if (typeof clouds === 'number' && clouds > 80) {
         reasons.push('Overcast but good for avoiding sun glare');
       } else {
         reasons.push('Great conditions for tennis');
@@ -877,7 +927,7 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push('Moderate wind adds challenge to club selection');
       } else if (temp && temp < 5) {
         reasons.push('Cold affects ball compression and distance');
-      } else if (clouds < 30) {
+      } else if (typeof clouds === 'number' && clouds < 30) {
         reasons.push('Clear skies ideal for reading greens');
       } else {
         reasons.push('Good golfing weather');
@@ -893,7 +943,7 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push('Very cold - hypothermia risk on longer hikes');
       } else if (temp && temp > 30) {
         reasons.push('Hot conditions - carry extra water');
-      } else if (day.visibility && day.visibility < 1000) {
+      } else if (typeof day.visibility === 'number' && day.visibility < 1000) {
         reasons.push('Poor visibility makes navigation difficult');
       } else {
         reasons.push('Great day for exploring trails');
@@ -909,7 +959,7 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push('Very hot - food safety concerns in heat');
       } else if (temp && temp < 10) {
         reasons.push('Cold weather not comfortable for outdoor eating');
-      } else if (clouds >= 20 && clouds <= 70) {
+      } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
         reasons.push('Partly cloudy - perfect for avoiding harsh sun');
       } else {
         reasons.push('Perfect picnic weather');
@@ -931,7 +981,7 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
         reasons.push('Very hot - risk of sunburn and dehydration');
       } else if (temp && temp < 18) {
         reasons.push('Too cold for comfortable beach time');
-      } else if (clouds < 50) {
+      } else if (typeof clouds === 'number' && clouds < 50) {
         reasons.push('Sunny skies perfect for beach day');
       } else {
         reasons.push('Nice beach conditions');
@@ -960,13 +1010,13 @@ function addActivitySpecificReasons(day: any, activityId: string, reasons: strin
     case 'photography':
       if (rain > 2) {
         reasons.push('Heavy rain damages equipment and limits shots');
-      } else if (clouds >= 70 && clouds <= 90) {
+      } else if (typeof clouds === 'number' && clouds >= 70 && clouds <= 90) {
         reasons.push('Overcast provides perfect diffused lighting');
-      } else if (clouds < 30) {
+      } else if (typeof clouds === 'number' && clouds < 30) {
         reasons.push('Clear skies great for landscape shots');
       } else if (windSpeed > 8) {
         reasons.push('Wind makes it hard to keep camera steady');
-      } else if (day.visibility && day.visibility > 10000) {
+      } else if (typeof day.visibility === 'number' && day.visibility > 10000) {
         reasons.push('Excellent visibility for distant subjects');
       } else {
         reasons.push('Good photography conditions');

@@ -1,30 +1,24 @@
-// pages/support.tsx — Next.js (Pages Router) with TypeScript
-// DaisyUI + Tailwind styling. No footer included.
-// Tone: community-forward, British English, light wry humour.
+// pages/support.tsx
 
 import Head from "next/head";
 import { useCallback } from "react";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
+// (Optional) keep this if you also wire theme via _app; not required for the wrapper approach
+export function getStaticProps() {
+  return { props: { theme: "light" } };
+}
 
 export default function SupportPage() {
   const openAppTip = useCallback((amount: number) => {
-    // Open iOS app tip jar via custom scheme; fall back to App Store if not installed.
-    // TODO: replace YOUR_APP_ID with the real App Store ID.
     const scheme = `godaisy://support/tip?amount=${amount}`;
     const fallback = "https://apps.apple.com/app/idYOUR_APP_ID";
     const start = Date.now();
-
-    // Attempt to open the app
     window.location.href = scheme;
-
-    // If the app isn't installed, bounce to the App Store
     const t = setTimeout(() => {
       if (Date.now() - start < 1500) window.location.href = fallback;
     }, 1200);
-
-    // Cleanup timer
     setTimeout(() => clearTimeout(t), 2500);
   }, []);
 
@@ -52,13 +46,9 @@ export default function SupportPage() {
         <meta name="twitter:image" content="/doggy.jpg" />
       </Head>
 
-      <AppHeader
-        onOpenHomeDialog={() => {}}
-        onOpenCoastDialog={() => {}}
-      />
-
-      <div className="min-h-screen bg-base-100 text-base-content">
-        {/* Removed custom header with breadcrumbs */}
+      {/* THEME SCOPE — everything inside uses DaisyUI "light" regardless of the rest of the site */}
+      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
+        <AppHeader onOpenHomeDialog={() => {}} onOpenCoastDialog={() => {}} />
 
         <main className="container mx-auto max-w-3xl px-4 py-10 space-y-10">
           {/* Hero */}
@@ -163,9 +153,9 @@ export default function SupportPage() {
             </div>
           </div>
         </main>
-      </div>
 
-      <Footer />
+        <Footer />
+      </div>
     </>
   );
 }

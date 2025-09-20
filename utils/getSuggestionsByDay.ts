@@ -30,12 +30,13 @@ export interface Suggestion {
   eveningReasons?: EveningBonusResult['reasons'];
 }
 
-import { selectHeroActivity } from './heroSelector';
+// Removed unused imports to satisfy linter
+// import { selectHeroActivity } from './heroSelector';
 import { calculateConditionMatchScore,
          calculatePoorConditionPenalty } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
-import { activityTypes } from '../data/activityTypes';
-import { getActivityMessage } from '../data/activityMessages';
+// import { activityTypes } from '../data/activityTypes';
+// import { getActivityMessage } from '../data/activityMessages';
 
 // Minimum score threshold for activity suggestions (unless includeAllActivities is true)
 const MINIMUM_ACCEPTABLE_SCORE = 40; // Matches your 'fair' threshold in toLevel()
@@ -79,7 +80,7 @@ function calculateActivityScore(
   if (!activity.weatherSensitive) {
     let score = 45;
     const hour = new Date(opts.nowTs).getHours();
-    const eveningResult = applyEveningBonus(activity as any, hour, contextTags, opts);
+    const eveningResult = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
     score *= eveningResult.multiplier;
     return Math.min(95, Math.round(score));
   }
@@ -153,7 +154,7 @@ function calculateActivityScore(
   // Evening adjustments for outdoor
   if (isEveningToday) {
     const hour = new Date(opts.nowTs).getHours();
-    const eveningRes = applyEveningBonus(activity as any, hour, contextTags, opts);
+    const eveningRes = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
     score *= eveningRes.multiplier;
   }
 
@@ -166,7 +167,7 @@ function getScoreEvaluation(score: number): SuitabilityLevel {
   return toLevel(score);
 }
 
-function getReasoningForScore(score: number, activity: ActivityType, weather: WeatherData): string {
+function getReasoningForScore(score: number, activity: ActivityType, _weather: WeatherData): string {
   if (score >= 90) return `Perfect conditions for ${activity.name || activity.id}!`;
   if (score >= 60) return `Good weather for ${activity.name || activity.id}.`;
   if (score >= 40) return `Fair conditions for ${activity.name || activity.id}.`;
@@ -257,7 +258,7 @@ export function getSuggestionsByDay({
         }
         return null;
       });
-    const suggestions: Suggestion[] = (mapped.filter(Boolean) as unknown) as Suggestion[];
+      const suggestions: Suggestion[] = (mapped.filter(Boolean) as unknown) as Suggestion[];
     suggestions.sort((a, b) => b.score - a.score);
       
     console.log(`✅ Finished day with ${suggestions.length} activities`);

@@ -6,6 +6,11 @@ const nextConfig = {
     forceSwcTransforms: true,
   },
   
+  // Disable ESLint during production builds; lint enforced via `prebuild` script
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   images: {
     remotePatterns: [
       {

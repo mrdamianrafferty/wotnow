@@ -10,12 +10,15 @@ import { parseConditionString } from './activitySuitability';
  * @param weather - Weather data object with wind speeds in m/s
  * @returns Score between 0 and 1
  */
-export function evaluateConditionScore(condition: string, weather: any): number {
+export function evaluateConditionScore(condition: string, weather: Record<string, number | string | null | undefined>): number {
   const parsed = parseConditionString(condition);
   if (!parsed) return 0;
 
-  const weatherValue = weather[parsed.key];
-  if (weatherValue === undefined || weatherValue === null) return 0.5; // Neutral for missing data
+  const weatherValueRaw = weather[parsed.key];
+  if (weatherValueRaw === undefined || weatherValueRaw === null) return 0.5; // Neutral for missing data
+
+  const weatherValue = typeof weatherValueRaw === 'number' ? weatherValueRaw : Number(weatherValueRaw);
+  if (Number.isNaN(weatherValue)) return 0.5;
 
   if (parsed.operator === 'range') {
     const { min, max } = parsed as { key: string; operator: 'range'; min: number; max: number };
@@ -35,8 +38,14 @@ export function evaluateConditionScore(condition: string, weather: any): number 
 
   // Handle comparison operators with graduated scoring
   switch (parsed.operator) {
-    case '>': return weatherValue > (parsed as any).value ? 1 : weatherValue / (parsed as any).value;
-    case '<': return weatherValue < (parsed as any).value ? 1 : (parsed as any).value / weatherValue;
+    case '>': {
+      const v = (parsed as { value: number }).value;
+      return weatherValue > v ? 1 : (v === 0 ? 0 : weatherValue / v);
+    }
+    case '<': {
+      const v = (parsed as { value: number }).value;
+      return weatherValue < v ? 1 : (weatherValue === 0 ? 0 : v / weatherValue);
+    }
     default: return 0; // Fallback for unsupported operators
   }
 }

@@ -1020,30 +1020,7 @@ export default function ActivitiesPage() {
                   )}
                 </main>
 
-                {/* Back to Homepage Link */}
-                <div style={{ textAlign: 'center' as const, marginTop: '2rem' }}>
-                  <Link
-                    href="/"
-                    style={{
-                      display: 'inline-block',
-                      padding: '12px 24px',
-                      background: '#3b82f6',
-                      color: 'white',
-                      textDecoration: 'none',
-                      borderRadius: '8px',
-                      fontWeight: 600,
-                      transition: 'background 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#2563eb';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#3b82f6';
-                    }}
-                  >
-                    ← Back to Homepage
-                  </Link>
-                </div>
+               
               </>
             )}
           </>

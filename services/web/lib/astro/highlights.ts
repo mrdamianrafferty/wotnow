@@ -8,7 +8,8 @@ export type AstroNight = {
   dark_sky?: number | null;
   cloud_score?: number | null;
 };
-export type AstroHighlights = { nights: AstroNight[]; eclipses?: any[] };
+export type EclipseEvent = { date?: string; type?: string; visibility?: string; [k: string]: unknown };
+export type AstroHighlights = { nights: AstroNight[]; eclipses?: EclipseEvent[] };
 
 const HIGHLIGHTS_PATH = path.join(
   process.cwd(),

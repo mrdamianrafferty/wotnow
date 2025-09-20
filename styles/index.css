@@ -1,5 +1,6 @@
 @import "tailwindcss";
-/* Tailwind v4 loaded. DaisyUI v5 is provided via tailwind.config.js plugin; no direct CSS import needed. */
+@plugin "daisyui";
+/* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS plugin above. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
 
@@ -1229,6 +1230,12 @@ abbr[title] {
 .modal .modal-box[data-theme="light"] .suggestion-item:hover,
 .modal .modal-box[data-theme="light"] .suggestion-item:focus {
   background-color: oklch(var(--b2)) !important;
+}
+
+/* Prevent global link color from overriding DaisyUI menu links */
+.menu a {
+  color: inherit !important;
+  text-decoration: none;
 }
 
 /* ------ MOBILE RESPONSIVE ------ */

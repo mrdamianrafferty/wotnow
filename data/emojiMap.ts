@@ -1,5 +1,3 @@
-import { The_Girl_Next_Door } from "next/font/google";
-
 const emojiMap: Record<string, string> = {
   beach_volleyball: '🏐',
   cricket: '🏏',

@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 
 export type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
@@ -29,22 +30,34 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   activeLocationType,
   onToggleLocationType,
 }) => {
-  const homeLabel = homeLocation?.name
-    ? `🏡 ${homeLocation.name.split(',')[0]} ✓`
+  // Access user preferences to infer locations when not provided via props
+  const { preferences } = useUserPreferences();
+  const inferredHome = React.useMemo(() => preferences.locations.find(l => l.type === 'home'), [preferences.locations]);
+  const inferredCoast = React.useMemo(() => preferences.locations.find(l => l.type === 'coastal'), [preferences.locations]);
+
+  const effectiveHome = homeLocation ?? inferredHome;
+  const effectiveCoast = coastalLocation ?? inferredCoast;
+
+  // Defer dynamic labels until after mount to avoid hydration mismatches
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+
+  const resolvedHomeLabel = mounted && effectiveHome?.name
+    ? `🏡 ${effectiveHome.name.split(',')[0]} ✓`
     : 'Set home location';
-  const coastLabel = coastalLocation?.name
-    ? `🏖️ ${coastalLocation.name.split(',')[0]} ✓`
+  const resolvedCoastLabel = mounted && effectiveCoast?.name
+    ? `🏖️ ${effectiveCoast.name.split(',')[0]} ✓`
     : 'Set beach location';
 
   // Toggle click handler with fallbacks to open dialogs if missing
   const handleSwapClick = () => {
     const isHome = activeLocationType !== 'coastal';
     const next: 'home' | 'coastal' = isHome ? 'coastal' : 'home';
-    if (next === 'coastal' && !coastalLocation) {
+    if (next === 'coastal' && !effectiveCoast) {
       onOpenCoastDialog?.();
       return;
     }
-    if (next === 'home' && !homeLocation) {
+    if (next === 'home' && !effectiveHome) {
       onOpenHomeDialog?.();
       return;
     }
@@ -77,8 +90,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               {/* Use root path for Home */}
               <li><Link href="/">Home</Link></li>
               <li><Link href="/weather">My Weather</Link></li>
-              <li><Link href="/interests">Set My Activities</Link></li>
-              <li><Link href="/activities">All My Activities</Link></li>
+              <li><Link href="/activities">Activity dashboard</Link></li>
+              <li><Link href="/interests">Set activities</Link></li>
+              
             </ul>
           </div>
 
@@ -90,7 +104,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               width={180}
               height={60}
               priority
-              style={{ height: 'auto' }}
+              style={{ width: 'auto', height: 'auto' }}
             />
           </Link>
         </div>
@@ -115,19 +129,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             type="button"
             className="btn btn-success btn-sm md:btn-md"
             onClick={() => onOpenHomeDialog?.()}
-            aria-label={homeLabel}
-            title={homeLabel}
+            aria-label={resolvedHomeLabel}
+            title={resolvedHomeLabel}
           >
-            {homeLabel}
+            <span suppressHydrationWarning>{resolvedHomeLabel}</span>
           </button>
           <button
             type="button"
             className="btn btn-info btn-sm md:btn-md"
             onClick={() => onOpenCoastDialog?.()}
-            aria-label={coastLabel}
-            title={coastLabel}
+            aria-label={resolvedCoastLabel}
+            title={resolvedCoastLabel}
           >
-            {coastLabel}
+            <span suppressHydrationWarning>{resolvedCoastLabel}</span>
           </button>
         </div>
       </div>

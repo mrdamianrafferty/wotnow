@@ -27,6 +27,16 @@ export interface WeatherData {
   [key: string]: number | undefined | null;
 }
 
+// Minimal activity shape used by suitability helpers
+export type MinimalActivity = {
+  weatherSensitive?: boolean;
+  usesWindRelative?: boolean;
+  poorConditions?: string[];
+  fairConditions?: string[];
+  goodConditions?: string[];
+  perfectConditions?: string[];
+};
+
 // --- Parsing & Evaluation Utilities ---
 
 /**
@@ -311,7 +321,7 @@ export function hasGoodConditions(
  * Treats weatherSensitive=false as indoor.
  */
 export function getActivitySuitability(
-  activity: any,
+  activity: MinimalActivity,
   weather: WeatherData
 ): 'excluded' | 'perfect' | 'good' | 'fair' | 'indoor' {
   if (activity.weatherSensitive === false) {
@@ -333,7 +343,7 @@ export function getActivitySuitability(
  * Computes a 0–100 score for an activity based on weather.
  */
 export function calculateActivityScore(
-  activity: any,
+  activity: MinimalActivity,
   weather: WeatherData
 ): number {
   if (activity.weatherSensitive === false) return 50;
@@ -375,7 +385,7 @@ export function categorizeByScore(
  * Provides a human-readable explanation for the score.
  */
 export function generateScoreReasoning(
-  activity: any,
+  activity: MinimalActivity,
   weather: WeatherData,
   isEvening: boolean,
   finalScore: number
@@ -397,7 +407,7 @@ export function generateScoreReasoning(
     try {
       const rel = classifyWindRelative(weather.beachOrientation, weather.windDirection);
       parts.push(`Wind is ${rel.replace('-', ' ')} vs beach`);
-    } catch (_err) { void 0; }
+    } catch { /* ignore */ }
   }
 
   return parts.length ? parts.join(', ') : `Score: ${finalScore}/100`;

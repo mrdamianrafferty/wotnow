@@ -1,0 +1,13 @@
+#!/bin/sh
+# Pre-push hook: run lint and typecheck before pushing.
+# Skips in CI and when FORCE_PUSH is set.
+
+if [ "$CI" = "true" ] || [ "$GITHUB_ACTIONS" = "true" ] || [ "$FORCE_PUSH" = "true" ]; then
+  exit 0
+fi
+
+printf "\n🔍 Running ESLint (CI)…\n"
+npm run -s lint:ci || exit 1
+
+printf "\n🔎 Running TypeScript typecheck…\n"
+npm run -s typecheck || exit 1

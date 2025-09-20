@@ -224,7 +224,7 @@ export default function EnhancedShareModal({
         </button>
         
         <h3 className="font-bold text-lg mb-4 text-primary-content">
-          Let's {activityName.toLowerCase()}!
+          Let&#39;s {activityName.toLowerCase()}!
         </h3>
 
         {/* Activity description displayed as a chat bubble */}

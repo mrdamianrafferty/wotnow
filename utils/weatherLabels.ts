@@ -295,7 +295,6 @@ function buildWindMessageLand({
   gustSpeed,
   windDirection,
   windDirectionsToday,
-  beachOrientation,
 }: {
   /** Wind speed in m/s (meters per second) */
   windSpeed?: number,
@@ -303,7 +302,6 @@ function buildWindMessageLand({
   gustSpeed?: number,
   windDirection?: number,
   windDirectionsToday?: number[],
-  beachOrientation?: number,
 }): string | null {
   if (!windSpeed) return null;
 

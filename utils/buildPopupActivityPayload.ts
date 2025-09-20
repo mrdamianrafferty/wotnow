@@ -1,26 +1,102 @@
 import { activityTypes } from '../data/activityTypes';
 import { getAssessmentEmoji } from '../data/emojiMap';
-import { buildReasons } from './activityHelpers'; // Adjust the path if needed
+import { buildReasons, MARINE_ACTIVITY_IDS } from './activityHelpers';
 
-import SwellArrow from '../components/SwellArrow';
 import bgMap from '../data/bgMap';
 import { getActivityMessage } from '../data/activityMessages';
-import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
-import { computeSimulatedOrientation } from '../utils/orientation';
-import '../styles/Popup.css';
+import { computeSimulatedOrientation } from './orientation';
+import type { PollenSummary } from './pollenUtils';
+import type { AirQualitySummary } from './airQualityUtils';
+
+// --- Types ---
+interface Coords { lat: number; lon: number }
+
+type MaybeNum = number | null | undefined;
+
+interface DayLike {
+  // identity
+  date?: string | number | Date;
+  // land weather
+  temperature?: MaybeNum;
+  temp?: MaybeNum;
+  tempMin?: MaybeNum;
+  temp_min?: MaybeNum;
+  tempMax?: MaybeNum;
+  temp_max?: MaybeNum;
+  humidity?: MaybeNum;
+  precipitation?: MaybeNum;
+  rain?: MaybeNum;
+  visibility?: MaybeNum;
+  condition?: string | null;
+  icon?: string | null;
+  description?: string; // align with activityHelpers.DayLike (no null)
+  wind_speed?: MaybeNum;
+  windSpeed?: MaybeNum;
+  wind_direction?: MaybeNum;
+  windDir?: MaybeNum;
+  windDirection?: MaybeNum;
+  wind_gust?: MaybeNum;
+  gust?: MaybeNum;
+
+  // marine
+  waterTemperature?: MaybeNum;
+  water_temp?: MaybeNum;
+  waveHeight?: MaybeNum;
+  swellHeight?: MaybeNum;
+  swellPeriod?: MaybeNum;
+  swell_height?: MaybeNum;
+  swell_period?: MaybeNum;
+  swellDir?: MaybeNum;
+  swell_direction?: MaybeNum;
+  vis?: MaybeNum;
+
+  // context
+  beachOrientation?: number | null;
+  coords?: { lat?: number; lon?: number }; // narrowed to match helper type
+  center?: { lat?: number; lng?: number; lon?: number } | null;
+  location?: { lat?: number; lng?: number; lon?: number } | null;
+
+  // health
+  pollen?: PollenSummary;
+  airQuality?: AirQualitySummary;
+
+  // generic coordinate hints
+  lat?: number;
+  lon?: number;
+  latitude?: number;
+  longitude?: number;
+}
+
+type Category = 'perfect' | 'good' | 'fair' | 'poor';
+
+interface ActivityDayPayload {
+  activityId: string;
+  day: DayLike;
+  score: number;
+  reasons?: string[];
+}
+
+// Helper to safely treat unknown as record
+const asRec = (v: unknown): Record<string, unknown> | null =>
+  v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
+
+// Convert various inputs to a finite number or undefined
+const toNum = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 
 // --- Coordinate helpers: extract coords from day or common localStorage keys ---
-const tryExtractCoords = (obj: any): { lat: number; lon: number } | null => {
+const tryExtractCoords = (obj: unknown): Coords | null => {
   if (!obj || typeof obj !== 'object') return null;
-  const candidates = [
-    { lat: (obj as any).lat, lon: (obj as any).lon },
-    { lat: (obj as any).latitude, lon: (obj as any).longitude },
-    { lat: (obj as any).coords?.lat, lon: (obj as any).coords?.lon },
-    { lat: (obj as any).coords?.latitude, lon: (obj as any).coords?.longitude },
-    { lat: (obj as any).center?.lat, lon: (obj as any).center?.lng ?? (obj as any).center?.lon },
-    { lat: (obj as any).location?.lat, lon: (obj as any).location?.lng ?? (obj as any).location?.lon },
+  const o = obj as Record<string, unknown>;
+  const coords: Array<{ lat: unknown; lon: unknown }> = [
+    { lat: o['lat'], lon: o['lon'] },
+    { lat: o['latitude'], lon: o['longitude'] },
+    { lat: asRec(o['coords'])?.['lat'], lon: asRec(o['coords'])?.['lon'] },
+    { lat: asRec(o['coords'])?.['latitude'], lon: asRec(o['coords'])?.['longitude'] },
+    { lat: asRec(o['center'])?.['lat'], lon: asRec(o['center'])?.['lng'] ?? asRec(o['center'])?.['lon'] },
+    { lat: asRec(o['location'])?.['lat'], lon: asRec(o['location'])?.['lng'] ?? asRec(o['location'])?.['lon'] },
   ];
-  for (const c of candidates) {
+  for (const c of coords) {
     if (
       typeof c?.lat === 'number' &&
       typeof c?.lon === 'number' &&
@@ -33,7 +109,7 @@ const tryExtractCoords = (obj: any): { lat: number; lon: number } | null => {
   return null;
 };
 
-const getApproximateCoords = (day?: any): { lat: number; lon: number } | null => {
+const getApproximateCoords = (day?: unknown): Coords | null => {
   // 1) Try the day object itself first
   const fromDay = tryExtractCoords(day);
   if (fromDay) return fromDay;
@@ -52,7 +128,7 @@ const getApproximateCoords = (day?: any): { lat: number; lon: number } | null =>
       try {
         const raw = localStorage.getItem(k);
         if (!raw) continue;
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(raw) as unknown;
         const c = tryExtractCoords(parsed);
         if (c) return c;
       } catch {
@@ -67,7 +143,7 @@ const getApproximateCoords = (day?: any): { lat: number; lon: number } | null =>
         if (!key) continue;
         const raw = localStorage.getItem(key);
         if (!raw) continue;
-        const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(raw) as unknown;
         const c = tryExtractCoords(parsed);
         if (c) return c;
       }
@@ -91,10 +167,10 @@ const getOrientationFromCachedBeaches = (lat?: number | null, lon?: number | nul
 
     const raw = localStorage.getItem('cachedBeaches');
     if (!raw) return undefined;
-    const list = JSON.parse(raw);
+    const list = JSON.parse(raw) as Array<{ lat?: number; lon?: number; orientation?: number }>;
     if (!Array.isArray(list) || typeof lat !== 'number' || typeof lon !== 'number') return undefined;
 
-    let best: any = null;
+    let best: { lat?: number; lon?: number; orientation?: number } | null = null;
     let bestDist = Infinity;
     for (const b of list) {
       if (typeof b?.orientation !== 'number') continue;
@@ -109,15 +185,6 @@ const getOrientationFromCachedBeaches = (lat?: number | null, lon?: number | nul
   return undefined;
 };
 
-type Category = 'perfect' | 'good' | 'fair' | 'poor';
-
-interface ActivityDayPayload {
-  activityId: string;
-  day: any; // Should be typed if possible
-  score: number;
-  reasons?: any[];
-}
-
 export function buildPopupActivityPayload({
   activityId,
   day,
@@ -127,7 +194,7 @@ export function buildPopupActivityPayload({
   const activity = activityTypes.find((a) => a.id === activityId);
   const title = activity?.name ?? activityId.replace(/_/g, ' ');
   const description = activity?.description ?? '';
-  const background = bgMap[activityId] || '/zumba.png';
+  const background = (bgMap as Record<string, string>)[activityId] || '/zumba.png';
   const category: Category =
     score >= 80 ? 'perfect'
     : score >= 60 ? 'good'
@@ -136,11 +203,9 @@ export function buildPopupActivityPayload({
   const categoryEmoji = getAssessmentEmoji ? getAssessmentEmoji(category) : '';
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
 
-  const hasMarineData = day.waveHeight || day.windSpeed || day.waterTemperature || day.swellHeight || day.swellPeriod;
-
-  const hasRealMarineData =
-    (typeof day.waveHeight === 'number' && !isNaN(day.waveHeight)) ||
-    (typeof day.swellHeight === 'number' && !isNaN(day.swellHeight));
+  const hasMarineData = Boolean(
+    day.waveHeight || day.windSpeed || day.waterTemperature || day.swellHeight || day.swellPeriod
+  );
 
   // Determine an effective beach orientation for downstream messaging/scoring
   const approx = getApproximateCoords(day);
@@ -160,72 +225,72 @@ export function buildPopupActivityPayload({
     effectiveBeachOrientation = computeSimulatedOrientation(lat, lon);
   }
 
-  // Create weather and marine data objects now that orientation is available
-  const marineData = hasMarineData ? {
-    waveHeight: day?.waveHeight ?? day?.wave_height ?? null,
-    waterTemperature: day?.waterTemperature ?? day?.water_temp ?? null,
-    swellHeight: day?.swellHeight ?? day?.swell_height ?? null,
-    swellPeriod: day?.swellPeriod ?? day?.swell_period ?? null,
-    windSpeed: day?.windSpeed ?? day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - Stormglass/OpenWeather both provide m/s
-    windDir: day?.windDir ?? day?.windDirection ?? day?.wind_direction ?? null, // coalesce any available direction
-    gust: day?.gust ?? null, // Stormglass if available
-    vis: day?.vis ?? null, // Stormglass if available
-    swellDir: day?.swellDir ?? day?.swell_direction ?? null,
-    temperature: day?.temperature ?? day?.temp ?? null,
-    tempMin: day?.tempMin ?? day?.temp_min ?? null,
-    tempMax: day?.tempMax ?? day?.temp_max ?? null,
-    humidity: day?.humidity ?? null,
-    precipitation: day?.precipitation ?? day?.rain ?? null,
-    visibility: day?.visibility ?? null,
-    condition: day?.condition ?? null,
-    icon: day?.icon ?? null,
-    description: day?.description ?? null,
-    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
-  } : {};
+  // Create weather and marine data objects with safe number coercion (no nulls)
+  type MarineDataOut = {
+    waveHeight?: number;
+    waterTemperature?: number;
+    swellHeight?: number;
+    swellPeriod?: number;
+    windSpeed?: number; // m/s
+    windDir?: number;
+    gust?: number;
+    vis?: number;
+    swellDir?: number;
+    beachOrientation?: number;
+  };
+  const marineData: MarineDataOut | undefined = hasMarineData ? {
+    waveHeight: toNum(day?.waveHeight ?? (day as Record<string, unknown>)?.['wave_height']),
+    waterTemperature: toNum(day?.waterTemperature ?? (day as Record<string, unknown>)?.['water_temp']),
+    swellHeight: toNum(day?.swellHeight ?? (day as Record<string, unknown>)?.['swell_height']),
+    swellPeriod: toNum(day?.swellPeriod ?? (day as Record<string, unknown>)?.['swell_period']),
+    windSpeed: toNum(day?.windSpeed ?? (day as Record<string, unknown>)?.['wind_speed']),
+    windDir: toNum(day?.windDir ?? day?.windDirection ?? (day as Record<string, unknown>)?.['wind_direction']),
+    gust: toNum(day?.gust ?? (day as Record<string, unknown>)?.['wind_gust']),
+    vis: toNum(day?.vis),
+    swellDir: toNum(day?.swellDir ?? (day as Record<string, unknown>)?.['swell_direction']),
+    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : undefined,
+  } : undefined;
 
   const weatherData = {
-    temperature: day?.temperature ?? day?.temp ?? null,
-    tempMin: day?.tempMin ?? day?.temp_min ?? null,
-    tempMax: day?.tempMax ?? day?.temp_max ?? null,
-    humidity: day?.humidity ?? null,
-    windSpeed: day?.wind_speed ?? null, // ALL WIND SPEEDS IN M/S - OpenWeather provides m/s
-    windDir: day?.wind_direction ?? null, // OpenWeather only
-    gust: day?.wind_gust ?? null,
-    precipitation: day?.precipitation ?? day?.rain ?? null,
-    visibility: day?.visibility ?? null,
-    condition: day?.condition ?? null,
-    icon: day?.icon ?? null,
-    description: day?.description ?? null,
+    temperature: toNum(day?.temperature ?? day?.temp),
+    tempMin: toNum(day?.tempMin ?? day?.temp_min),
+    tempMax: toNum(day?.tempMax ?? day?.temp_max),
+    humidity: toNum(day?.humidity),
+    windSpeed: toNum((day as Record<string, unknown>)?.['wind_speed'] ?? day?.windSpeed), // m/s
+    windDir: toNum((day as Record<string, unknown>)?.['wind_direction'] ?? day?.wind_direction ?? day?.windDir),
+    gust: toNum((day as Record<string, unknown>)?.['wind_gust'] ?? day?.gust),
+    precipitation: toNum(day?.precipitation ?? day?.rain),
+    visibility: toNum(day?.visibility),
+    condition: day?.condition ?? undefined,
+    icon: day?.icon ?? undefined,
+    description: day?.description ?? undefined,
   };
 
   // Merge the marine data into the day object for buildReasons
-  const dayWithMarine = {
+  const dayWithMarine: DayLike = {
     ...day,
-    waterTemperature: marineData.waterTemperature,
-    waveHeight: marineData.waveHeight,
-    swellHeight: marineData.swellHeight,
-    swellPeriod: marineData.swellPeriod,
+    waterTemperature: (marineData as Record<string, unknown> | undefined)?.['waterTemperature'] as MaybeNum,
+    waveHeight: (marineData as Record<string, unknown> | undefined)?.['waveHeight'] as MaybeNum,
+    swellHeight: (marineData as Record<string, unknown> | undefined)?.['swellHeight'] as MaybeNum,
+    swellPeriod: (marineData as Record<string, unknown> | undefined)?.['swellPeriod'] as MaybeNum,
     // Keep both naming schemes so downstream helpers (marine vs land) can read either
-    windSpeed: marineData.windSpeed ?? day?.windSpeed ?? null,
-    wind_speed: day?.wind_speed ?? null,
-    windDir: marineData.windDir ?? day?.windDir ?? day?.wind_direction ?? null,
-    wind_direction: day?.wind_direction ?? marineData.windDir ?? null,
+    windSpeed: (marineData as Record<string, unknown> | undefined)?.['windSpeed'] as MaybeNum ?? day?.windSpeed ?? null,
+    wind_speed: (day as Record<string, unknown>)?.['wind_speed'] as MaybeNum ?? null,
+    windDir: (marineData as Record<string, unknown> | undefined)?.['windDir'] as MaybeNum ?? day?.windDir ?? (day as Record<string, unknown>)?.['wind_direction'] as MaybeNum ?? null,
+    wind_direction: (day as Record<string, unknown>)?.['wind_direction'] as MaybeNum ?? (marineData as Record<string, unknown> | undefined)?.['windDir'] as MaybeNum ?? null,
     beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
   };
 
-  const dayForReasons = {
-    ...day,
-    beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : (day?.beachOrientation ?? null),
-  };
-  const reasonsInput = isMarine
-    ? { ...dayWithMarine, beachOrientation: dayForReasons.beachOrientation }
-    : dayForReasons;
+  const reasonsInput: DayLike = isMarine
+    ? { ...dayWithMarine, beachOrientation: dayWithMarine.beachOrientation }
+    : { ...day, beachOrientation: dayWithMarine.beachOrientation };
+
   const reasons = passedReasons || buildReasons(reasonsInput, activityId);
 
   // Create reason objects from strings
   const reasonsObjects = Array.isArray(reasons) 
-    ? reasons.map(reason => ({
-        key: reason.toLowerCase().replace(/\s+/g, '_'),
+    ? reasons.map((reason) => ({
+        key: String(reason).toLowerCase().replace(/\s+/g, '_'),
         value: true,
         label: reason
       }))
@@ -235,23 +300,17 @@ export function buildPopupActivityPayload({
     ? getActivityMessage(activityId, category, reasonsObjects)
     : '';
 
-  if (isMarine) {
-    console.log('Marine activity:', activityId, {
-      waveHeight: day.waveHeight,
-      swellHeight: day.swellHeight,
-      swellPeriod: day.swellPeriod,
-      waterTemperature: day.waterTemperature,
-      windSpeed: day.windSpeed,
-      windDirection: day.windDirection,
-    });
+  // Normalize a numeric day timestamp in seconds if possible
+  let dayTimestamp: number | undefined;
+  if (typeof day?.date === 'number') {
+    dayTimestamp = day.date;
+  } else if (typeof day?.date === 'string') {
+    const d = new Date(day.date);
+    if (!Number.isNaN(d.getTime())) dayTimestamp = Math.floor(d.getTime() / 1000);
+  } else if (day?.date instanceof Date) {
+    const t = day.date.getTime();
+    if (Number.isFinite(t)) dayTimestamp = Math.floor(t / 1000);
   }
-
-  console.log('marineData:', marineData);
-  console.log('Parsed day object:', day);
-
-  // Optionally, add render helpers if you use them
-  // const renderMarineData = () => ...;
-  // const renderFooter = () => ...;
 
   // In the return statement at the bottom of the function
   return {
@@ -262,15 +321,13 @@ export function buildPopupActivityPayload({
     category,
     categoryEmoji,
     reasons,
-    marineData: isMarine ? marineData : undefined,
+    marineData: isMarine ? (marineData ? marineData : undefined) : undefined,
     weatherData: weatherData,
     score,
     message,
-    dayTimestamp: day.date, // Add this line to include the timestamp directly
+    dayTimestamp,
     beachOrientation: typeof effectiveBeachOrientation === 'number' ? effectiveBeachOrientation : null,
-    pollen: day.pollen, // Include pollen data from day
-    airQuality: day.airQuality, // Include air quality data from day
-    // renderMarineData,
-    // renderFooter,
+    pollen: typeof day.pollen === 'object' ? day.pollen : undefined,
+    airQuality: typeof day.airQuality === 'object' ? day.airQuality : undefined,
   };
 }

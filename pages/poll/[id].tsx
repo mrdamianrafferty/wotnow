@@ -84,7 +84,7 @@ export default function PollPage({ poll }: PollPageProps) {
           <div className="p-6 text-center">
             <div className="text-green-600 text-4xl mb-4">✓</div>
             <h2 className="text-lg font-semibold mb-2">Vote submitted!</h2>
-            <p className="text-gray-600">We'll announce the winner soon.</p>
+            <p className="text-gray-600">We&apos;ll announce the winner soon.</p>
           </div>
         ) : (
           <>

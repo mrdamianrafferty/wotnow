@@ -22,14 +22,9 @@ type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coa
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 
-import {
-  getWindMessage as _getWindMessage,
-} from '../utils/weatherLabels';
 import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
 import { getActivityMessage } from '../data/activityMessages';
-import { WeatherData } from '../types/weatherData';
-import AstronomyCard from '../components/AstronomyCard';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
@@ -637,35 +632,32 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 
   if (isFirstTimeUser) {
     return (
-      <div style={{ 
-        textAlign: 'center' as const, 
-        padding: '3rem', 
-        background: '#fefbf2', 
-        borderRadius: '8px',
-        border: '1px solid #fed7aa',
-        margin: '2rem'
-      }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
-        <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected</h2>
-        <p style={{ color: '#92400e' }}>
-          Choose your outdoor interests to see personalised activity recommendations based on the weather.
-        </p>
-        <Link 
-          href="/interests" 
-          style={{ 
-            display: 'inline-block',
-            marginTop: '1rem',
-            padding: '12px 24px',
-            background: '#d97706',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '6px',
-            fontWeight: 600,
-            fontSize: '1.1rem'
-          }}
-        >
-          Choose Activities
-        </Link>
+      <div data-theme="light" className="mx-4 my-8">
+        <div className="card bg-base-200 border border-base-300 shadow-sm">
+          <div className="card-body items-center text-center space-y-3">
+            <div className="text-5xl" aria-hidden>🌼</div>
+            <h2 className="card-title text-2xl">Let’s pick your favourites</h2>
+            <p className="max-w-prose opacity-80">
+              Go Daisy matches your interests to the weather, so we can nudge you towards cracking days out —
+              and steer you round the drizzle.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 text-xs opacity-80">
+              <span className="badge badge-outline">No paywalls</span>
+              <span className="badge badge-outline">Weather‑smart</span>
+              <span className="badge badge-outline">Indie & friendly</span>
+            </div>
+            <div className="card-actions mt-2">
+              <Link
+                href="/onboarding"
+                className="btn btn-primary btn-lg btn-wide gap-2 shadow-md hover:shadow-lg text-primary-content [&_*]:text-primary-content"
+              >
+                <span aria-hidden>🌼</span>
+                <span>Let&apos;s get it on</span>
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -726,62 +718,14 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   </div>
 ) : null}
 <div className="main-grid">
-  {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, suggestionsData: _suggestionsData, dayLabel }, idx) => {
-    const _date = new Date(day.date * 1000);
-    const _isToday = idx === 0;
+  {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, dayLabel }) => {
 
-    // Always show AstronomyCard for users with stargazing interest after today's card
-    const hasStargazing = interests.includes('stargazing');
-    // Pass full One Call 3.0 object if available, else pass summary day with nightTemp fallback
-    let astronomyWeatherData: WeatherData | undefined;
-    if (useOneCall && weatherData && weatherData.daily) {
-      astronomyWeatherData = {
-        daily: weatherData.daily.map(d => ({
-          dt: d.dt,
-          temp: d.temp,
-          weather: d.weather,
-          wind_speed: d.wind_speed,
-          wind_deg: d.wind_deg,
-          clouds: d.clouds,
-          rain: d.rain,
-        })),
-        current: {
-          dt: day.date,
-          temp: day.temperature,
-          wind_speed: day.wind_speed || 0,
-          clouds: day.clouds || 0,
-          visibility: day.visibility,
-        },
-        clouds: day.clouds,
-        visibility: day.visibility,
-        wind_speed: day.wind_speed,
-        rain: day.rain,
-        condition: day.condition,
-        description: day.description,
-      };
-    } else {
-      // Add nightTemp fallback for summary day object
-      astronomyWeatherData = {
-        clouds: day.clouds,
-        visibility: day.visibility,
-        wind_speed: day.wind_speed,
-        rain: day.rain,
-        condition: day.condition,
-        description: day.description,
-        nightTemp: typeof day.tempMin === 'number' ? day.tempMin : day.temperature // fallback to temperature if nightTemp missing
-      };
-    }
-    const astronomyCard = idx === 0 && hasStargazing ? (
-      <AstronomyCard
-        key="astronomy-card"
-        weatherData={astronomyWeatherData}
-      />
-    ) : null;
+    // Removed AstronomyCard on homepage regardless of interests
 
     const dayCard = (
       <div
         key={day.date}
-        className="activity-card-enhanced"
+        className="activity-card-enhanced text-on-dark"
         style={{
           backgroundImage: `url(${heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
             ? getOptimizedImageSrc(heroActivity.activityId, 'webpMobile')
@@ -1040,13 +984,13 @@ const popupPayload = buildPopupActivityPayload({
               href="/interests" 
               className="activity-card-btn"
             >
-              + More activities
+              Set activities
             </Link>
             <Link 
               href="/activities" 
               className="activity-card-btn"
             >
-              👀 All my activities
+              Activity dashboard
             </Link>
           </div>
           
@@ -1054,13 +998,8 @@ const popupPayload = buildPopupActivityPayload({
       </div> 
     );
 
-    // Return both the day card and astronomy card if it's the first day
-    return (
-      <React.Fragment key={`fragment-${day.date}`}>
-        {dayCard}
-        {astronomyCard}
-      </React.Fragment>
-    );
+    // Only return the day card; AstronomyCard is intentionally omitted on the homepage
+    return dayCard;
   })}
 </div> {/* End of main-grid */}
 

@@ -1,23 +1,12 @@
-// eslint.config.js - proper configuration for ESLint 9.x using flat config
+// eslint.config.mjs - ESLint 9 flat config for Next.js
 import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
 
 // Create a compatibility instance with specific paths for Next.js
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
-  recommendedConfig: js.configs.recommended
 });
 
-// Create TypeScript parser config, scoped to TS files only
-const typescript = tseslint.config({
-  files: ['**/*.ts', '**/*.tsx'],
-  extends: [
-    ...tseslint.configs.recommended,
-  ],
-});
-
-const config = [
+const eslintConfig = [
   // Ignore build and vendor directories and non-critical debug/scripts
   { ignores: [
     '**/.next/**',
@@ -44,34 +33,30 @@ const config = [
     'jest.config.js',
   ]},
 
-  // Include recommended JS config
-  js.configs.recommended,
-  
-  // Apply TypeScript configuration
-  ...typescript,
-  
-  // Convert eslint-config-next to flat config format
-  ...compat.extends('eslint-config-next'),
-  
-  // General JS/JSX/TSX rules
+  // Small overrides
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
-      'react/no-unescaped-entities': 'off',
       'react/react-in-jsx-scope': 'off',
+      'react/no-unescaped-entities': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
     settings: { react: { version: 'detect' } },
     linterOptions: { reportUnusedDisableDirectives: true },
   },
 
-  // TS-specific rules
-  {
-    files: ['**/*.{ts,tsx}'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-    },
-  },
+  // IMPORTANT: Next.js config must be last so Next detects the plugin
+  ...compat.config({
+    extends: ['next', 'next/core-web-vitals', 'next/typescript'],
+    settings: { next: { rootDir: ['.'] } },
+  }),
 ];
 
-export default config;
+export default eslintConfig;

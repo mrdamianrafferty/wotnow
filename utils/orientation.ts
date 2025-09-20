@@ -136,18 +136,19 @@ const fetchOSMOrientation = async (
 
   // Server and browser both support global fetch in modern runtimes
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
-  const to = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined as unknown as NodeJS.Timeout;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  if (controller) timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const qs = new URLSearchParams({ lat: String(lat), lon: String(lon) }).toString();
     const res = await fetch(`${endpoint}?${qs}`, { signal: controller?.signal });
     if (!res.ok) return undefined;
-    const data = await res.json().catch(() => undefined) as { orientation?: number } | undefined;
+    const data = (await res.json().catch(() => undefined)) as { orientation?: number } | undefined;
     const o = data && isFiniteNumber(data.orientation) ? snap5(data.orientation as number) : undefined;
     return o;
   } catch {
     return undefined;
   } finally {
-    if (to) clearTimeout(to);
+    if (timeout) clearTimeout(timeout);
   }
 };
 
@@ -208,7 +209,7 @@ export const resolveBeachOrientationAsync = async (
   if (base.source === 'meta') return base; // explicit wins
 
   // If we already have a cached/simulated value but want to try OSM, attempt fetch
-  const { lat, lon, log } = args as any;
+  const { lat, lon, log } = args;
   if (!isFiniteNumber(lat) || !isFiniteNumber(lon)) return base;
 
   // In-memory cache check (server/runtime)
@@ -288,7 +289,7 @@ export const classifyRelativeWindWithFallbackAsync = async (
   orientation: number | undefined;
   orientationSource: OrientationSource;
 }> => {
-  const { windFromDeg, log, endpoint, ...rest } = args as any;
+  const { windFromDeg, log, endpoint, ...rest } = args;
   const { orientation, source } = await resolveBeachOrientationAsync({ ...rest, endpoint, log });
 
   if (!isFiniteNumber(windFromDeg) || !isFiniteNumber(orientation)) {

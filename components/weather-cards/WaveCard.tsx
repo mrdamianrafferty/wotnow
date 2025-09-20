@@ -184,7 +184,7 @@ const Compass: React.FC<{
           </div>
         </div>
         <div className="text-center opacity-70 text-[10px] bg-slate-800/25 py-1 rounded">
-          <span>Example: "NW" means waves/wind coming <strong>from</strong> northwest <strong>toward</strong> shore</span>
+          <span>Example: &quot;NW&quot; means waves/wind coming <strong>from</strong> northwest <strong>toward</strong> shore</span>
         </div>
       </div>
     </div>

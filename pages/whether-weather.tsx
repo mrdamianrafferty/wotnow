@@ -1,7 +1,5 @@
-import React from "react";
 import { motion } from "framer-motion";
-import { Share2, CloudRain, Umbrella, Wind, Cloud, Zap } from "lucide-react";
-// Removed unused Next.js imports to reduce lint noise
+import { Umbrella, Wind, Cloud, Zap } from "lucide-react";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
@@ -17,12 +15,7 @@ import Footer from "../components/footer";
 export default function WeatherExplainerPage() {
   return (
     <>
-      <AppHeader
-        homeLocation={null as unknown as React.ComponentProps<typeof AppHeader>['homeLocation']}
-        coastalLocation={null as unknown as React.ComponentProps<typeof AppHeader>['coastalLocation']}
-        onOpenHomeDialog={() => {}}
-        onOpenCoastDialog={() => {}}
-      />
+      <AppHeader />
 
       <main className="min-h-screen bg-base-200">
         {/* Hero */}
@@ -34,25 +27,13 @@ export default function WeatherExplainerPage() {
               transition={{ duration: 0.4 }}
               className="w-full"
             >
-              <div className="inline-flex items-center gap-2 mb-4">
-                <div className="badge badge-info badge-lg">
-                  <CloudRain className="w-4 h-4" />
-                  <span className="ml-1 hidden sm:inline">Forecast 101</span>
-                </div>
-                <div className="badge badge-outline">Readable • Friendly • British English</div>
-              </div>
+              
               <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight">
                 Why the Weather Forecast Sometimes Gets It Wrong
-                <span className="block text-primary">(And What We Can Do About It)</span>
+              
               </h1>
               
-              <div className="mt-6 flex items-center justify-center gap-3">
-                <button className="btn btn-primary btn-sm">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-                
-              </div>
+             
             </motion.div>
           </div>
         </section>

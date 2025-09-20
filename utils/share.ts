@@ -4,6 +4,7 @@ export type SharePayload = {
   text?: string;         // free text / caption
   url?: string;          // page URL to share
   imageUrl?: string;     // public image URL (for previews + file-share attempt)
+  imageFile?: File;      // Direct image file for sharing
   phone?: string;        // optional: specific recipient, full international number, e.g. "447911123456"
 };
 
@@ -41,6 +42,16 @@ export function buildWhatsAppUrl(payload: SharePayload) {
   return `https://wa.me/?text=${encoded}`;
 }
 
+/** Narrow navigator type to include canShare when present */
+function canNavigatorShareFiles(files: File[]): boolean {
+  const nav = typeof navigator !== 'undefined' ? (navigator as Navigator & { canShare?: (data: { files?: File[] }) => boolean }) : undefined;
+  try {
+    return !!nav?.canShare?.({ files });
+  } catch {
+    return false; // Some browsers throw if files are unacceptable
+  }
+}
+
 /**
  * Primary share function.
  * 1) Web Share with file if possible
@@ -51,15 +62,31 @@ export function buildWhatsAppUrl(payload: SharePayload) {
  * Returns a short status string you can show in a toast/snackbar.
  */
 export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
-  const hasNavigatorShare = typeof navigator !== 'undefined' && !!navigator.share;
+  const hasNavigatorShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // Ensure the text includes image URL in case we end up on the wa.me path
   const textWithImageLink = [payload.text, payload.imageUrl].filter(Boolean).join('\n');
 
-  // Attempt file share (Web Share Level 2)
+  // Prefer provided imageFile if present and supported
+  if (hasNavigatorShare && payload.imageFile && canNavigatorShareFiles([payload.imageFile])) {
+    try {
+      await navigator.share({
+        title: payload.title,
+        text: [payload.title, textWithImageLink].filter(Boolean).join('\n\n'),
+        files: [payload.imageFile],
+      });
+      return 'Shared via system sheet';
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      if (e?.name === 'AbortError' || e?.message?.includes('Abort')) return 'Share cancelled';
+      // fall through to other strategies
+    }
+  }
+
+  // Attempt file share from imageUrl (Web Share Level 2)
   if (hasNavigatorShare && isSecure && payload.imageUrl) {
     const file = await imageUrlToFile(payload.imageUrl);
-    if (file && (navigator as any).canShare?.({ files: [file] })) {
+    if (file && canNavigatorShareFiles([file])) {
       try {
         await navigator.share({
           title: payload.title,
@@ -67,11 +94,10 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
           files: [file],
         });
         return 'Shared via system sheet';
-      } catch (err: any) {
-        // If user cancels, bubble a friendly status; otherwise fall through to next strategies
-        if (err?.name === 'AbortError' || err?.message?.includes('Abort')) {
-          return 'Share cancelled';
-        }
+      } catch (err) {
+        const e = err as { name?: string; message?: string };
+        if (e?.name === 'AbortError' || e?.message?.includes('Abort')) return 'Share cancelled';
+        // fall through
       }
     }
   }
@@ -85,10 +111,9 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
         url: payload.url, // Some platforms prefer url separate
       });
       return 'Shared via system sheet';
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || err?.message?.includes('Abort')) {
-        return 'Share cancelled';
-      }
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      if (e?.name === 'AbortError' || e?.message?.includes('Abort')) return 'Share cancelled';
       // fall through
     }
   }
@@ -96,7 +121,7 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
   // WhatsApp Click-to-Chat fallback
   try {
     const href = buildWhatsAppUrl({ ...payload, text: textWithImageLink });
-    const w = window.open(href, '_blank', 'noopener,noreferrer');
+    const w = typeof window !== 'undefined' ? window.open(href, '_blank', 'noopener,noreferrer') : null;
     if (w) return 'Opened WhatsApp';
   } catch {
     // fall through
@@ -109,56 +134,5 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
     return 'Copied message to clipboard';
   } catch {
     return 'Unable to share';
-  }
-}
-
-export type SharePayload = {
-  title?: string;
-  text?: string;
-  url?: string;
-  imageUrl?: string;    // Absolute URL if you need fallback
-  imageFile?: File;     // Direct image file for sharing
-  phone?: string;
-};
-
-export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
-  const hasNavigatorShare = typeof navigator !== 'undefined' && !!navigator.share;
-  // Prefer imageFile if it's present and supported
-  if (
-    hasNavigatorShare &&
-    payload.imageFile &&
-    (navigator as any).canShare?.({ files: [payload.imageFile] })
-  ) {
-    try {
-      await navigator.share({
-        title: payload.title,
-        text: payload.text,
-        files: [payload.imageFile],
-      });
-      return 'Shared via system sheet';
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || err?.message?.includes('Abort')) return 'Share cancelled';
-      return 'Share failed';
-    }
-  }
-
-  // Fallback: share text/link/imageUrl as before
-  const textWithLinks = [payload.text, payload.url, payload.imageUrl].filter(Boolean).join('\n');
-  try {
-    // WhatsApp web share or fallback - open URL
-    const encoded = encodeURIComponent(textWithLinks);
-    const href = payload.phone
-      ? `https://wa.me/${payload.phone}?text=${encoded}`
-      : `https://wa.me/?text=${encoded}`;
-    window.open(href, '_blank', 'noopener,noreferrer');
-    return 'Opened WhatsApp';
-  } catch {
-    // Fallback: copy to clipboard
-    try {
-      await navigator.clipboard.writeText(textWithLinks);
-      return 'Copied message to clipboard';
-    } catch {
-      return 'Unable to share';
-    }
   }
 }

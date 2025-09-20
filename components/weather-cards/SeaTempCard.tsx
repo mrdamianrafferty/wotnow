@@ -56,7 +56,7 @@ const BAND_DISPLAY: Array<{ band: BandId; label: string }> = [
 const DEFAULT_SHORT_BY_BAND: Record<BandId, string> = {
   hot:       "Swimsuit optional",
   warm:      "Swimsuit",
-  mild:      "Shorty / trunks",
+  mild:      "Shorty / swimwear",
   cool:      "3/2 full suit",
   chilly:    "4/3 + boots",
   very_cold: "6/5 or 5/4 + hood",
@@ -160,7 +160,7 @@ const VARIANTS: Record<ActivityKey, Variant> = {
       very_cold: "🥶 6/5 or 5/4 + hood",
       chilly:    "🐋 4/3 + boots",
       cool:      "🏄🏿‍♀️ 3/2 full suit",
-      mild:      "🩳 Shorty / trunks",
+      mild:      "🩳 Shorty / swimwear",
       warm:      "🩱 Swimsuit",
       hot:       "🧜🏼‍♀️ Swimsuit optional",
     },
