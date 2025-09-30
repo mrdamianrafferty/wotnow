@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Fish, Waves, Thermometer, Droplets, Activity, Clock, TrendingUp, Database, Globe, ChevronDown, ChevronRight } from 'lucide-react';
-import AppHeader from '../../components/AppHeader';
 import { FindrNavigation } from '../../components/findr/FindrNavigation';
 
 const FindrInfoPage = () => {
@@ -44,7 +43,6 @@ const FindrInfoPage = () => {
 
   return (
     <>
-      <AppHeader />
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <style jsx>{`
         @keyframes swim {
