@@ -657,116 +657,116 @@ const FindrFavouritesPage: React.FC = () => {
       <Head>
         <title>Findr favourites | WotNow</title>
       </Head>
-      <main className={`${montserrat.className} min-h-screen bg-base-100`}>
-        <style jsx>{`
-          @keyframes swim {
-            0% { transform: translateX(0) rotate(0deg); }
-            12.5% { transform: translateX(0.5px) rotate(0.2deg); }
-            25% { transform: translateX(2px) rotate(1deg); }
-            37.5% { transform: translateX(1.5px) rotate(0.7deg); }
-            50% { transform: translateX(0) rotate(0deg); }
-            62.5% { transform: translateX(-1.5px) rotate(-0.7deg); }
-            75% { transform: translateX(-2px) rotate(-1deg); }
-            87.5% { transform: translateX(-0.5px) rotate(-0.2deg); }
-            100% { transform: translateX(0) rotate(0deg); }
-          }
+      <style jsx>{`
+        @keyframes swim {
+          0% { transform: translateX(0) rotate(0deg); }
+          12.5% { transform: translateX(0.5px) rotate(0.2deg); }
+          25% { transform: translateX(2px) rotate(1deg); }
+          37.5% { transform: translateX(1.5px) rotate(0.7deg); }
+          50% { transform: translateX(0) rotate(0deg); }
+          62.5% { transform: translateX(-1.5px) rotate(-0.7deg); }
+          75% { transform: translateX(-2px) rotate(-1deg); }
+          87.5% { transform: translateX(-0.5px) rotate(-0.2deg); }
+          100% { transform: translateX(0) rotate(0deg); }
+        }
 
-          @keyframes float {
-            0% { transform: translateY(0px); }
-            25% { transform: translateY(-1.5px); }
-            50% { transform: translateY(-3px); }
-            75% { transform: translateY(-1.5px); }
-            100% { transform: translateY(0px); }
-          }
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          25% { transform: translateY(-1.5px); }
+          50% { transform: translateY(-3px); }
+          75% { transform: translateY(-1.5px); }
+          100% { transform: translateY(0px); }
+        }
 
-          @keyframes shimmer {
-            0% { background-position: -150% 0; }
-            25% { background-position: -75% 0; }
-            50% { background-position: 0% 0; }
-            75% { background-position: 75% 0; }
-            100% { background-position: 150% 0; }
-          }
+        @keyframes shimmer {
+          0% { background-position: -150% 0; }
+          25% { background-position: -75% 0; }
+          50% { background-position: 0% 0; }
+          75% { background-position: 75% 0; }
+          100% { background-position: 150% 0; }
+        }
 
-          .fish-combo {
-            animation: swim 8s cubic-bezier(0.4, 0, 0.6, 1) infinite,
-              float 6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-          }
+        .fish-combo {
+          animation: swim 8s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+            float 6s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+        }
 
-          .fish-shimmer {
-            position: relative;
-            animation: float 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-          }
+        .fish-shimmer {
+          position: relative;
+          animation: float 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+        }
 
-          .fish-shimmer::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-              110deg,
-              transparent 20%,
-              transparent 40%,
-              rgba(192, 192, 192, 0.8) 50%,
-              rgba(255, 255, 255, 0.9) 55%,
-              rgba(192, 192, 192, 0.8) 60%,
-              transparent 70%,
-              transparent 80%
-            );
-            animation: shimmer 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
-            border-radius: 50%;
-            pointer-events: none;
-            mix-blend-mode: overlay;
-          }
+        .fish-shimmer::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            110deg,
+            transparent 20%,
+            transparent 40%,
+            rgba(192, 192, 192, 0.8) 50%,
+            rgba(255, 255, 255, 0.9) 55%,
+            rgba(192, 192, 192, 0.8) 60%,
+            transparent 70%,
+            transparent 80%
+          );
+          animation: shimmer 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+          border-radius: 50%;
+          pointer-events: none;
+          mix-blend-mode: overlay;
+        }
 
-          .swipeable-card {
-            touch-action: none;
-            user-select: none;
-            transition: all 0.2s ease;
-          }
+        .swipeable-card {
+          touch-action: none;
+          user-select: none;
+          transition: all 0.2s ease;
+        }
 
-          .swipeable-card:active {
-            cursor: grabbing;
-          }
+        .swipeable-card:active {
+          cursor: grabbing;
+        }
 
-          .swipe-hint {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-          }
+        .swipe-hint {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 10px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
 
-          .swipeable-card:hover .swipe-hint {
-            opacity: 1;
-          }
-        `}</style>
-
-      {/* Navigation component handles responsive display internally */}
-      <FindrNavigation />        {/* Content container */}
-        <div className="mx-auto px-3 pt-6 sm:px-4 md:px-6 lg:max-w-6xl">
-          <div className="container mx-auto px-0 lg:px-4 pb-8">
-            {/* Auth Loading State */}
-            {authLoading && (
-              <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="text-center space-y-4">
-                  <Loader2 size={48} className="animate-spin text-primary mx-auto" />
-                  <p className="text-base-content/70">Checking authentication...</p>
-                </div>
+        .swipeable-card:hover .swipe-hint {
+          opacity: 1;
+        }
+      `}</style>
+      <main className={`${montserrat.className} min-h-screen bg-base-200 pb-16`}>
+        {/* Navigation component handles responsive display internally */}
+        <FindrNavigation />
+        
+        {/* Content container */}
+        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+          {/* Auth Loading State */}
+          {authLoading && (
+            <div className="flex items-center justify-center min-h-[50vh]">
+              <div className="text-center space-y-4">
+                <Loader2 size={48} className="animate-spin text-primary mx-auto" />
+                <p className="text-base-content/70">Checking authentication...</p>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Main Content - Only show when auth is loaded */}
-            {!authLoading && user && (
-            <>
-            {/* Favourites Loading State */}
-            {isLoadingFavourites && (
-              <div className="alert alert-info mb-6">
-                <Loader2 size={20} className="animate-spin" />
-                <span>Loading your favourites...</span>
+          {/* Main Content - Only show when auth is loaded */}
+          {!authLoading && user && (
+          <>
+          {/* Favourites Loading State */}
+          {isLoadingFavourites && (
+            <div className="alert alert-info mb-6">
+              <Loader2 size={20} className="animate-spin" />
+              <span>Loading your favourites...</span>
               </div>
             )}
             
@@ -1130,9 +1130,8 @@ const FindrFavouritesPage: React.FC = () => {
                 <TranslatedText text={`${missingImageCount} favourite${missingImageCount === 1 ? '' : 's'} are still using emoji stand-ins while we source artwork.`} />
               </p>
             )}
-            </>
-            )}
-          </div>
+          </>
+          )}
         </div>
 
         {/* Fish Detail Modal */}
