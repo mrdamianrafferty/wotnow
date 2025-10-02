@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -32,9 +32,39 @@ const LINKS: NavLink[] = [
 export function FindrNavigation() {
   const router = useRouter();
   const pathname = router?.pathname ?? '';
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Show loading indicator during navigation
+  useEffect(() => {
+    const handleStart = () => setIsNavigating(true);
+    const handleComplete = () => setIsNavigating(false);
+    
+    router.events?.on('routeChangeStart', handleStart);
+    router.events?.on('routeChangeComplete', handleComplete);
+    router.events?.on('routeChangeError', handleComplete);
+    
+    return () => {
+      router.events?.off('routeChangeStart', handleStart);
+      router.events?.off('routeChangeComplete', handleComplete);
+      router.events?.off('routeChangeError', handleComplete);
+    };
+  }, [router]);
 
   return (
     <>
+      {/* Loading indicator during navigation */}
+      {isNavigating && (
+        <div className="fixed top-0 left-0 right-0 h-1 bg-primary/20 z-[100] overflow-hidden">
+          <div className="h-full bg-primary animate-[shimmer_1s_ease-in-out_infinite] w-1/3" 
+               style={{
+                 animation: 'shimmer 1s ease-in-out infinite',
+                 backgroundImage: 'linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.5), transparent)',
+                 transform: 'translateX(0)',
+               }}
+          />
+        </div>
+      )}
+      
       {/* Desktop Navigation - Horizontal Menu */}
       <div className="hidden md:flex items-center justify-between w-full max-w-none">
         <nav className="overflow-x-auto flex-1">
@@ -46,6 +76,8 @@ export function FindrNavigation() {
                 <li key={link.href} className="whitespace-nowrap">
                   <Link
                     href={link.href}
+                    prefetch={true}
+                    onMouseEnter={() => router.prefetch(link.href)}
                     className="px-3 py-2 font-medium transition-colors flex items-center gap-2"
                   >
                     <Icon 
@@ -78,6 +110,7 @@ export function FindrNavigation() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] min-h-[48px] transition-colors"
               >
                 <Icon
