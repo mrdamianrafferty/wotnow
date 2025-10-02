@@ -97,8 +97,8 @@ export function FindrNavigation() {
         </nav>
       </div>
 
-      {/* Mobile Language Selector - Floating Button */}
-      <div className="md:hidden fixed top-4 right-4 z-40 flex items-center gap-2">
+      {/* Mobile Language Selector & User Menu - Static at top of page content */}
+      <div className="md:hidden flex items-center justify-end gap-2 px-3 py-2 bg-base-200">
         <FindrUserMenu />
         <LanguageSelector compact />
       </div>
