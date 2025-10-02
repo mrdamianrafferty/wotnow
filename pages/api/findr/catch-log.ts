@@ -45,6 +45,11 @@ interface CreateCatchRequest {
   photo_urls?: string[];
   followed_findr_advice: boolean;
   environmental_conditions?: EnvironmentalConditions;
+  // Optional precise GPS coordinates
+  gps_latitude?: number;
+  gps_longitude?: number;
+  location_accuracy?: number; // meters
+  location_source?: 'gps' | 'manual' | 'rectangle';
 }
 
 interface CatchResponse {
@@ -58,6 +63,10 @@ interface CatchResponse {
   bait_used: string;
   habitat_type?: string;
   notes?: string;
+  gps_latitude?: number;
+  gps_longitude?: number;
+  location_accuracy?: number;
+  location_source?: string;
   followed_findr_advice: boolean;
   used_recommended_bait: boolean;
   used_recommended_habitat: boolean;
@@ -316,7 +325,12 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
       used_recommended_bait: usedRecommendedBait,
       used_recommended_habitat: usedRecommendedHabitat,
       is_blank_trip: false,
-      environmental_conditions: catchData.environmental_conditions || null
+      environmental_conditions: catchData.environmental_conditions || null,
+      // GPS location data
+      gps_latitude: catchData.gps_latitude || null,
+      gps_longitude: catchData.gps_longitude || null,
+      location_accuracy: catchData.location_accuracy || null,
+      location_source: catchData.location_source || 'rectangle'
     };
 
     const { data: insertedCatch, error: insertError } = await supabase
@@ -336,7 +350,11 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
         followed_findr_advice,
         used_recommended_bait,
         used_recommended_habitat,
-        environmental_conditions
+        environmental_conditions,
+        gps_latitude,
+        gps_longitude,
+        location_accuracy,
+        location_source
       `)
       .single();
 
@@ -365,6 +383,10 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
       bait_used: insertedCatch.bait_used,
       habitat_type: insertedCatch.habitat_type,
       notes: insertedCatch.notes,
+      gps_latitude: insertedCatch.gps_latitude,
+      gps_longitude: insertedCatch.gps_longitude,
+      location_accuracy: insertedCatch.location_accuracy,
+      location_source: insertedCatch.location_source,
       followed_findr_advice: insertedCatch.followed_findr_advice,
       used_recommended_bait: insertedCatch.used_recommended_bait,
       used_recommended_habitat: insertedCatch.used_recommended_habitat,
