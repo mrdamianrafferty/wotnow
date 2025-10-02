@@ -336,7 +336,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
     return (
       <motion.div
         layout
-        className="absolute inset-0 flex h-full w-full select-none items-stretch justify-center p-1 sm:p-2"
+        className="absolute inset-0 flex h-full w-full select-none items-stretch justify-center p-0 sm:p-2"
         style={{
           zIndex: total - index,
           pointerEvents: isTop ? 'auto' : 'none',
@@ -402,7 +402,7 @@ interface DeckActionsProps {
 }
 
 const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) => (
-  <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
+  <div className="flex flex-wrap items-center justify-center gap-4 pt-3 sm:pt-6 px-3 sm:px-0">
     <button
       type="button"
       className="btn btn-outline btn-lg gap-2 min-h-[56px] px-6 w-full sm:w-auto"
@@ -763,7 +763,7 @@ const FindrPage: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="mx-auto px-3 pt-6 sm:px-4 md:px-6 lg:max-w-6xl">
+        <div className="mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-6">
@@ -775,8 +775,8 @@ const FindrPage: React.FC = () => {
             </div>
           )}
 
-          <section className="space-y-6">
-            <div className="space-y-4">
+          <section className="space-y-3 sm:space-y-6">
+            <div className="space-y-2 sm:space-y-4 px-3 sm:px-0">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-2">
                   <h1 className="text-xl font-semibold flex items-center gap-2">
