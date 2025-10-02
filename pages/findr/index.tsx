@@ -763,7 +763,7 @@ const FindrPage: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-6">
