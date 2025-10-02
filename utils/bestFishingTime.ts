@@ -2,6 +2,55 @@
 // Best Fishing Time Calculator for Findr
 // Analyzes tides, species activity, and marine conditions
 
+// Marine data interfaces
+interface MarineDataPoint {
+  noaa?: number;
+  // Add other marine data providers as needed
+}
+
+interface MarineHour {
+  time: string;
+  waterTemperature?: MarineDataPoint;
+  waveHeight?: MarineDataPoint;
+  windSpeed?: MarineDataPoint;
+  tideHeight?: MarineDataPoint;
+}
+
+// Species data interfaces
+interface SpeciesTemperaturePreference {
+  min?: number;
+  max?: number;
+}
+
+interface SpeciesPreferences {
+  temperature?: SpeciesTemperaturePreference;
+}
+
+interface FishSpecies {
+  name?: string;
+  commonName?: string;
+  preferences?: SpeciesPreferences;
+}
+
+// Weather forecast interface
+interface WeatherForecastDay {
+  date: string;
+  // Add other day properties as needed
+}
+
+// Hour score interface for internal calculations
+interface HourScore {
+  hour: number;
+  score: number;
+  time: string;
+  tidePhase: 'high' | 'rising' | 'falling' | 'low';
+  activeSpecies: string[];
+  waterTemp: number;
+  waveHeight: number;
+  windSpeed: number;
+  reason?: string;
+}
+
 export interface FishingWindow {
   startHour: number;
   endHour: number;
@@ -31,9 +80,9 @@ export interface BestFishingTimeResult {
  * @param marineHours - 24 hours of marine data from Stormglass
  */
 export function calculateBestFishingTime(
-  species: any[], // TODO: Replace with your FishSpecies type
-  day: any,       // TODO: Replace with your WeatherForecastDay type
-  marineHours: any[] // TODO: Replace with your MarineHour type
+  species: FishSpecies[],
+  day: WeatherForecastDay,
+  marineHours: MarineHour[]
 ): BestFishingTimeResult {
   if (!marineHours || marineHours.length === 0) {
     return fallbackResult();
@@ -113,15 +162,15 @@ export function calculateBestFishingTime(
 }
 
 function determineTidePhase(
-  current: any,
-  allHours: any[],
+  current: MarineHour,
+  allHours: MarineHour[],
   currentIdx: number
 ): 'high' | 'rising' | 'falling' | 'low' {
-  const currentHeight = current.tideHeight || 2;
+  const currentHeight = current.tideHeight?.noaa || 2;
   
   // Look at previous and next hours to determine trend
-  const prevHeight = currentIdx > 0 ? allHours[currentIdx - 1].tideHeight || 2 : currentHeight;
-  const nextHeight = currentIdx < allHours.length - 1 ? allHours[currentIdx + 1].tideHeight || 2 : currentHeight;
+  const prevHeight = currentIdx > 0 ? allHours[currentIdx - 1].tideHeight?.noaa || 2 : currentHeight;
+  const nextHeight = currentIdx < allHours.length - 1 ? allHours[currentIdx + 1].tideHeight?.noaa || 2 : currentHeight;
   
   // Determine if rising or falling
   const isRising = nextHeight > currentHeight && currentHeight >= prevHeight;
@@ -138,7 +187,7 @@ function determineTidePhase(
 }
 
 function findBestFishingWindows(
-  hourScores: Array<any>
+  hourScores: HourScore[]
 ): FishingWindow[] {
   const windowSize = 3;
   const windows: FishingWindow[] = [];
@@ -166,7 +215,7 @@ function findBestFishingWindows(
   return windows.slice(0, 2);
 }
 
-function generateWindowReason(hour: any): string {
+function generateWindowReason(hour: HourScore): string {
   const reasons: string[] = [];
   
   if (hour.tidePhase === 'rising') reasons.push('rising tide (fish feeding)');
