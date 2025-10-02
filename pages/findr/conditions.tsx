@@ -2,9 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo } from 'react';
 import Head from 'next/head';
-import { MapPin } from 'lucide-react';
-import { FindrNavigation } from '../../components/findr/FindrNavigation';
+import { MapPin, MoonStar } from 'lucide-react';
+import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { SettingsForm } from '../../components/findr/SettingsForm';
+import { TranslatedText } from '../../components/translation/TranslatedFishCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
   useFindrRectangleOptions,
@@ -15,6 +16,7 @@ import { normalizeRectangleCode } from '../../lib/findr/rectangle';
 import { getTodayIso } from '../../lib/date/today';
 import ConditionsDashboard from '../../components/findr/ConditionsDashboard';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
+import MoonWidget from '../../components/findr/MoonWidget';
 
 const FindrConditionsRoute: React.FC = () => {
   const {
@@ -92,6 +94,32 @@ const FindrConditionsRoute: React.FC = () => {
   const noop = useCallback(() => {}, []);
   const conditions = useFindrConditions(activeRectangle);
 
+  const moonCoords = useMemo(() => {
+    const optionLat = typeof activeOption?.centerLat === 'number' ? activeOption.centerLat : undefined;
+    const optionLon = typeof activeOption?.centerLon === 'number' ? activeOption.centerLon : undefined;
+    const fallbackLat = typeof conditions.data?.rectangle?.centerLat === 'number' ? conditions.data.rectangle.centerLat : undefined;
+    const fallbackLon = typeof conditions.data?.rectangle?.centerLon === 'number' ? conditions.data.rectangle.centerLon : undefined;
+
+    const latCandidate = optionLat ?? fallbackLat;
+    const lonCandidate = optionLon ?? fallbackLon;
+
+    if (
+      typeof latCandidate === 'number' &&
+      Number.isFinite(latCandidate) &&
+      typeof lonCandidate === 'number' &&
+      Number.isFinite(lonCandidate)
+    ) {
+      return { lat: latCandidate, lon: lonCandidate };
+    }
+
+    return null;
+  }, [
+    activeOption?.centerLat,
+    activeOption?.centerLon,
+    conditions.data?.rectangle?.centerLat,
+    conditions.data?.rectangle?.centerLon,
+  ]);
+
   const formattedLastUpdated = useMemo(() => {
     if (!conditions.data?.snapshot?.capturedAt) return null;
     try {
@@ -124,9 +152,13 @@ const FindrConditionsRoute: React.FC = () => {
         <title>findr conditions</title>
       </Head>
       <main className="min-h-screen bg-base-200 pb-16">
-        <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
-          <FindrNavigation />
-          <ConditionsDashboard
+        {/* Navigation component handles responsive display internally */}
+        <FindrNavigation />
+
+        {/* Content container */}
+        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+          <div className="space-y-10">
+            <ConditionsDashboard
             data={conditions.data}
             loading={conditions.loading}
             error={conditions.error}
@@ -134,22 +166,33 @@ const FindrConditionsRoute: React.FC = () => {
             onRetry={conditions.reload}
             rectangleCode={activeRectangle ?? undefined}
           />
-          <section className="card bg-base-100 shadow-lg border border-base-200/60">
+          {moonCoords ? (
+            <section className="card bg-base-100 shadow-lg">
+              <div className="card-body space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <MoonStar size={20} /> <TranslatedText text="Moon" />
+                    </h2>
+                    <p className="text-sm text-base-content/60">
+                    
+                    </p>
+                  </div>
+                  <span className="badge badge-ghost text-xs">beta</span>
+                </div>
+                <div className="-mx-3 sm:-mx-4 md:mx-0">
+                  <MoonWidget lat={moonCoords.lat} lon={moonCoords.lon} />
+                </div>
+              </div>
+            </section>
+          ) : null}
+          <section className="card bg-base-100 shadow-lg">
             <div className="card-body space-y-5">
               <div className="space-y-2">
                 <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <MapPin size={20} /> Fishing area & language
+                  <MapPin size={20} /> <TranslatedText text={`Fishing area  ${activeOption ? ` • ${activeOption.region}` : manualNormalized ? ' • ' : ''} (${activeRectangle})`} />
                 </h2>
-                <p className="text-sm text-base-content/60">
-                  {activeRectangle ? (
-                    <>
-                      Fishing area <strong>{activeRectangle}</strong>
-                      {activeOption ? ` • ${activeOption.region}` : manualNormalized ? ' • Custom area' : ''}
-                    </>
-                  ) : (
-                    'Pick a fishing area to power Findr predictions across the app.'
-                  )}
-                </p>
+                
               </div>
               <SettingsForm
                 rectangleOptions={rectangleOptions}
@@ -179,6 +222,7 @@ const FindrConditionsRoute: React.FC = () => {
               />
             </div>
           </section>
+          </div>
         </div>
       </main>
     </>
