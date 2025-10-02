@@ -120,7 +120,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               {/* Heart indicator for favorites */}
               <button
                 type="button"
-                className="absolute top-2 right-2 p-3 rounded-full hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite?.(card.id);
@@ -142,7 +142,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               {/* Heart indicator for favorites */}
               <button
                 type="button"
-                className="absolute top-2 right-2 p-3 rounded-full hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleFavorite?.(card.id);
