@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@plugin "daisyui";
-/* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS plugin above. */
+@import "daisyui";
+/* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS import above. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
 
