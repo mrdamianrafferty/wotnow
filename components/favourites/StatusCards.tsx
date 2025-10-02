@@ -56,7 +56,7 @@ export function ActiveSpeciesCard({
                 src={species.species.imageUrl}
                 alt={species.species.commonName}
                 fill
-                className="object-cover"
+                className="object-contain"
               />
             ) : (
               <div className="w-full h-full bg-base-300 flex items-center justify-center">
@@ -206,7 +206,7 @@ export function GoodSpeciesCard({
                 src={species.species.imageUrl}
                 alt={species.species.commonName}
                 fill
-                className="object-cover"
+                className="object-contain"
               />
             ) : (
               <div className="w-full h-full bg-base-300 flex items-center justify-center">
@@ -314,7 +314,7 @@ export function WaitingSpeciesCard({
                 src={species.species.imageUrl}
                 alt={species.species.commonName}
                 fill
-                className="object-cover opacity-70"
+                className="object-contain"
               />
             ) : (
               <div className="w-full h-full bg-base-300 flex items-center justify-center opacity-70">

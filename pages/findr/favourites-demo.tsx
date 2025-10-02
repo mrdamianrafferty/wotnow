@@ -173,7 +173,7 @@ export default function FavouritesDemoPage() {
                     src={`/images/fish/${sp.species_code.toLowerCase()}.jpg`}
                     alt={sp.name_en}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     onError={(e) => {
                       e.currentTarget.src = '/images/fish/placeholder.jpg';
                     }}
