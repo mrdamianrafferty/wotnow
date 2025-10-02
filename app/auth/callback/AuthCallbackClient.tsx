@@ -4,17 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
-enum Phase { Checking, NeedPassword, Updating, Done, Error }
+// Ultra-lightweight callback handler. It supports:
+// 1) Email OTP links (magic link / signup confirm / recovery / invite / email change)
+// 2) OAuth implicit flow (Google / Apple) – session is already set by Supabase
+//
+// We purposefully avoid complex returnTo / PKCE code-exchange handling
+// to reduce edge cases ("wrong tab", code verifier missing, etc.).
+// On success we always send people to the homepage.
+
+enum Phase { Checking, Done, Error }
 
 type EmailOtpType = 'signup' | 'magiclink' | 'recovery' | 'email_change' | 'invite';
-
-function getErrorMessage(err: unknown): string {
-  if (typeof err === 'object' && err !== null && 'message' in err) {
-    const m = (err as { message?: unknown }).message;
-    if (typeof m === 'string') return m;
-  }
-  return 'Something went wrong';
-}
 
 function asEmailOtpType(t: string | null): EmailOtpType {
   switch ((t || '').toLowerCase()) {
@@ -23,170 +23,98 @@ function asEmailOtpType(t: string | null): EmailOtpType {
     case 'recovery':
     case 'email_change':
     case 'invite':
-      return (t as EmailOtpType) || 'magiclink';
+      return t as EmailOtpType;
     default:
       return 'magiclink';
   }
 }
 
-export default function AuthClient() {
+function getErrorMessage(err: unknown): string {
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    const m = (err as { message?: unknown }).message;
+    if (typeof m === 'string') return m;
+  }
+  return 'That link could not be used. Please start again from the login page.';
+}
+
+export default function AuthCallbackClient() {
   const router = useRouter();
   const sp = useSearchParams();
-  const type = sp?.get('type');
-  const code = sp?.get('code');
+
+  const typeParam = sp?.get('type');
   const tokenHash = sp?.get('token_hash') || sp?.get('token');
-  const wantSetPassword = sp?.get('set_password') === '1';
+  const oauthError = sp?.get('error') || sp?.get('error_description');
 
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
-  const [newPw, setNewPw] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [pkceIssue, setPkceIssue] = useState(false);
-  const [email, setEmail] = useState('');
 
   useEffect(() => {
-    const isPkceVerifierError = (m?: string) =>
-      /code verifier/i.test(m || '') || /both auth code and code verifier/i.test(m || '');
-
     (async () => {
       try {
-        // 1) Email OTP flows first: recovery, magiclink, invite, email change
+        // If the provider redirected with an explicit error, surface it.
+        if (oauthError) {
+          throw new Error(oauthError);
+        }
+
+        // Email OTP / magic link style flows
         if (tokenHash) {
-          const otpType = asEmailOtpType(type);
+          const otpType = asEmailOtpType(typeParam);
           const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash });
           if (error) throw error;
 
-          // If we explicitly asked to set a password after a magic link, show the password form
-          if (wantSetPassword) {
-            setPhase(Phase.NeedPassword);
+          // If this was a recovery flow, send user to reset page after session is established
+          if ((typeParam || '').toLowerCase() === 'recovery') {
+            setPhase(Phase.Done);
+            router.replace('/auth/reset');
             return;
           }
 
-          if ((type || '').toLowerCase() === 'recovery') {
-            // After verifyOtp for recovery, prompt user to set a new password
-            setPhase(Phase.NeedPassword);
-            return;
-          }
-
+          // Success – check for returnTo parameter, otherwise go to findr
           setPhase(Phase.Done);
-          router.replace('/');
+          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+          const destination = returnTo || '/findr';
+          router.replace(destination);
           return;
         }
 
-        // 2) OAuth/PKCE exchange (requires stored code_verifier from same origin/browser)
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            const msg = getErrorMessage(error);
-            if (isPkceVerifierError(msg)) {
-              setPkceIssue(true);
-              setError(
-                "This link can't be completed in this browser tab (missing code verifier). Open it in the same browser you used to start login, or request a fresh link from the login page."
-              );
-              setPhase(Phase.Error);
-              return;
-            }
-            throw error;
-          }
+        // OAuth implicit – session should already be present
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
           setPhase(Phase.Done);
-          router.replace('/');
+          
+          // Check for returnTo parameter, otherwise redirect to /findr for findr users
+          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+          const destination = returnTo || '/findr';
+          
+          router.replace(destination);
           return;
         }
 
-        // No recognised params
-        setError('Nothing to process on this URL. Try starting again from the login page.');
-        setPhase(Phase.Error);
+        // If we get here, parameters are missing or the session isn't ready
+        throw new Error('Missing or invalid parameters.');
       } catch (e: unknown) {
         setError(getErrorMessage(e));
         setPhase(Phase.Error);
       }
     })();
-  }, [tokenHash, code, type, router, wantSetPassword]);
-
-  async function savePassword(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newPw) return;
-    setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: newPw });
-    setSaving(false);
-    if (error) {
-      setError(getErrorMessage(error));
-      setPhase(Phase.Error);
-      return;
-    }
-    setPhase(Phase.Done);
-    router.replace('/');
-  }
-
-  async function resendReset(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email) return;
-    setSaving(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    });
-    setSaving(false);
-    if (error) {
-      setError(getErrorMessage(error));
-      setPhase(Phase.Error);
-      return;
-    }
-    setError("We've sent you a new reset e‑mail. Please open it in this same browser.");
-    setPhase(Phase.Error);
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="max-w-md mx-auto p-6 space-y-4" data-theme="light">
-      <h1 className="text-2xl font-semibold text-center">Finishing sign‑in…</h1>
+      <h1 className="text-2xl font-semibold text-center">Signing you in…</h1>
 
-      {phase === Phase.Checking && <div className="alert alert-info">Working on it…</div>}
-
-      {phase === Phase.NeedPassword && (
-        <form onSubmit={savePassword} className="space-y-3">
-          <div className="alert alert-info">Set a new password to finish your reset.</div>
-          <input
-            className="input input-bordered w-full"
-            type="password"
-            placeholder="New password"
-            minLength={6}
-            value={newPw}
-            onChange={(e) => setNewPw(e.target.value)}
-            autoComplete="new-password"
-            required
-          />
-          <button className="btn btn-primary w-full" disabled={saving}>
-            {saving ? 'Saving…' : 'Save password'}
-          </button>
-        </form>
+      {phase === Phase.Checking && (
+        <div className="flex flex-col items-center gap-3">
+          <span className="loading loading-dots loading-md" aria-hidden="true"></span>
+          <p className="text-sm text-base-content/70">Please wait while we complete your sign-in.</p>
+        </div>
       )}
 
       {phase === Phase.Error && (
-        <div className="space-y-4">
-          <div className="alert alert-error flex items-center justify-between gap-3">
-            <span>{error}</span>
-            <a className="btn btn-sm" href="/login">Back to login</a>
-          </div>
-
-          {pkceIssue && (
-            <form onSubmit={resendReset} className="card bg-base-100 border border-base-300">
-              <div className="card-body gap-2">
-                <p className="text-sm">
-                  If you requested a password reset from another device or browser, the link may not include the required
-                  verifier. Enter your e‑mail below and we’ll send a fresh link — open it <strong>in this browser</strong>.
-                </p>
-                <input
-                  className="input input-bordered w-full"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                />
-                <button className="btn btn-primary" disabled={saving}>{saving ? 'Sending…' : 'Send new reset link'}</button>
-              </div>
-            </form>
-          )}
+        <div className="alert alert-error flex items-center justify-between gap-3" role="alert">
+          <span>{error}</span>
+          <a className="btn btn-sm" href="/login">Back to login</a>
         </div>
       )}
     </main>

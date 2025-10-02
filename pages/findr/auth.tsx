@@ -62,12 +62,13 @@ export default function FindrAuth() {
       setLoading(true);
       setError(null);
       
+      // Determine the final destination after auth
+      const destination = returnTo && returnTo.startsWith('/findr') ? returnTo : '/findr';
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: returnTo && returnTo.startsWith('/findr') 
-            ? `${window.location.origin}${returnTo}`
-            : `${window.location.origin}/findr`,
+          redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(destination)}`,
           queryParams: {
             app: 'findr',
           },
