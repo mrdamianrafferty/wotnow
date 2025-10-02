@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Target, Trash2, Clock, Fish, Waves } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Target, Trash2, Fish, Waves } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 
