@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { TrendingUp, Target, Trash2 } from 'lucide-react';
+import { TrendingUp, Target, Trash2, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
+import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -31,6 +32,12 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
   const trend = getForecastTrend(species.forecast);
+  
+  // Get conservative fishing time data for waiting species
+  const fishingTimeResult = getImmediateFishingTimes([species], 'waiting');
+  const nextBestTime = fishingTimeResult.primaryWindow ? 
+    `${fishingTimeResult.primaryWindow.startHour}:00` : 
+    'Tomorrow 7am';
 
   return (
     <div className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200">
@@ -72,6 +79,10 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
                   <TrendingUp size={12} /> <TranslatedText text="Improving" />
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-1 mt-1">
+              <Clock size={10} className="text-neutral" />
+              <span className="text-xs text-neutral">{nextBestTime}</span>
             </div>
           </div>
 

@@ -218,19 +218,19 @@ CREATE INDEX IF NOT EXISTS idx_moon_cache_date ON moon_cache(local_date);
 CREATE TABLE IF NOT EXISTS public.findr_conditions_snapshots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   rectangle_code text NOT NULL,
-  forecast_date date NOT NULL,
+  snapshot_date date NOT NULL,
   conditions jsonb NOT NULL,
   data_sources text[] DEFAULT '{}',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   
   -- Unique constraint for one snapshot per rectangle per date
-  UNIQUE(rectangle_code, forecast_date)
+  UNIQUE(rectangle_code, snapshot_date)
 );
 
 -- Create indexes for conditions snapshots
-CREATE INDEX IF NOT EXISTS idx_findr_conditions_rectangle_date ON findr_conditions_snapshots(rectangle_code, forecast_date);
-CREATE INDEX IF NOT EXISTS idx_findr_conditions_date ON findr_conditions_snapshots(forecast_date);
+CREATE INDEX IF NOT EXISTS idx_findr_conditions_rectangle_date ON findr_conditions_snapshots(rectangle_code, snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_findr_conditions_date ON findr_conditions_snapshots(snapshot_date);
 CREATE INDEX IF NOT EXISTS idx_findr_conditions_jsonb ON findr_conditions_snapshots USING GIN(conditions);
 
 -- =============================================================================

@@ -3,12 +3,12 @@
 // Analyzes tides, species activity, and marine conditions
 
 // Marine data interfaces
-interface MarineDataPoint {
+export interface MarineDataPoint {
   noaa?: number;
   // Add other marine data providers as needed
 }
 
-interface MarineHour {
+export interface MarineHour {
   time: string;
   waterTemperature?: MarineDataPoint;
   waveHeight?: MarineDataPoint;
@@ -17,23 +17,23 @@ interface MarineHour {
 }
 
 // Species data interfaces
-interface SpeciesTemperaturePreference {
+export interface SpeciesTemperaturePreference {
   min?: number;
   max?: number;
 }
 
-interface SpeciesPreferences {
+export interface SpeciesPreferences {
   temperature?: SpeciesTemperaturePreference;
 }
 
-interface FishSpecies {
+export interface FishSpecies {
   name?: string;
   commonName?: string;
   preferences?: SpeciesPreferences;
 }
 
 // Weather forecast interface
-interface WeatherForecastDay {
+export interface WeatherForecastDay {
   date: string;
   // Add other day properties as needed
 }
