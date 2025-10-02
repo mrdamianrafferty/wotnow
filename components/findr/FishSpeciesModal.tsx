@@ -135,6 +135,10 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   useEffect(() => {
     if (!open) return;
 
+    // Lock body scroll when modal is open
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
@@ -147,6 +151,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     }, 0);
 
     return () => {
+      document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
       window.clearTimeout(focusTimer);
     };
@@ -170,7 +175,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
         aria-labelledby={titleId}
         aria-describedby={contentId}
         tabIndex={-1}
-        className="modal-box w-[calc(100%-1.5rem)] max-w-3xl overflow-hidden rounded-2xl p-0 sm:max-w-4xl"
+        className="modal-box w-[calc(100%-1.5rem)] max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl p-0 sm:max-w-4xl"
       >
         <div className="flex items-start justify-between gap-4 px-4 pt-4 pb-2 md:px-6">
           <div className="space-y-2">
@@ -247,7 +252,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             </div>
           )}
 
-          <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
+          <div className="space-y-5">
             {detail && (
               <>
                 <InfoSection icon={<MapPin size={20} />} title="Where to find them">
@@ -353,7 +358,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
           </div>
         </div>
       </div>
-      <button type="button" className="modal-backdrop" aria-label="Close" onClick={onClose} />
+      <div className="modal-backdrop glass" onClick={onClose} role="button" tabIndex={0} aria-label="Close" onKeyDown={(e) => e.key === 'Enter' && onClose()} />
     </div>
   );
 };
