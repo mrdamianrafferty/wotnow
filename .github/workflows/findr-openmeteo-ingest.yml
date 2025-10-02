@@ -15,6 +15,7 @@ env:
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'mrdamianrafferty/wotnow' }}
     timeout-minutes: 90
     steps:
       - name: Checkout repository
