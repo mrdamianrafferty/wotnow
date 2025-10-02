@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import {
   Fish,
   Star,
@@ -19,8 +20,11 @@ import {
   Trophy,
   HeartOff,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { Montserrat } from 'next/font/google';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabase/client';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
@@ -31,7 +35,6 @@ import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
 
 const TODAY_ISO = getTodayIso();
-const FAVORITES_STORAGE_KEY = 'findrFavorites';
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -251,11 +254,19 @@ function getConfidenceCardClass(confidence: number | null): string {
 }
 
 const FindrFavouritesPage: React.FC = () => {
+  const router = useRouter();
+  
+  // Auth state
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  
+  // UI state
   const [sortBy, setSortBy] = useState<SortOption>('confidence');
   const [selectedFish, setSelectedFish] = useState<FavouriteEntry | null>(null);
   const [swipeStates, setSwipeStates] = useState<Record<string, { x: number; y: number; swiping: boolean }>>({});
   const [favorites, setFavorites] = useState<string[] | null>(null);
   const [priorityIds, setPriorityIds] = useState<string[]>([]);
+  const [isLoadingFavourites, setIsLoadingFavourites] = useState(false);
 
   const { selectedCode, manualCode, predictionDate, language } = usePersistentFindrSettings({
     predictionDate: TODAY_ISO,
@@ -265,41 +276,88 @@ const FindrFavouritesPage: React.FC = () => {
   const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
   const activeRectangle = manualNormalized ?? (selectedCode || null);
 
+  // Check authentication on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        
+        // Redirect to auth if not logged in
+        if (!session?.user) {
+          router.push('/findr/auth?returnTo=/findr/favourites');
+          return;
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push('/findr/auth?returnTo=/findr/favourites');
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (!session?.user) {
+        router.push('/findr/auth?returnTo=/findr/favourites');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  // Load favourites from API when user is authenticated
+  const loadFavourites = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoadingFavourites(true);
     try {
-      const storedFavorites = window.localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (storedFavorites) {
-        const parsed = JSON.parse(storedFavorites);
-        if (Array.isArray(parsed)) {
-          setFavorites(parsed.filter((item): item is string => typeof item === 'string'));
-        } else {
-          setFavorites([]);
+      const response = await fetch('/api/findr/favourites');
+      const data = await response.json();
+      
+      if (data.success && data.favourites) {
+        // Extract species IDs from API response
+        const speciesIds = data.favourites.map((fav: { species_id: string }) => fav.species_id);
+        setFavorites(speciesIds);
+        
+        // TODO: Extract priority flags when we add that to the API
+        // For now, keep local storage for priorities as fallback
+        try {
+          const storedPriorities = window.localStorage.getItem(PRIORITY_STORAGE_KEY);
+          if (storedPriorities) {
+            const parsed = JSON.parse(storedPriorities);
+            if (Array.isArray(parsed)) {
+              setPriorityIds(parsed.filter((item): item is string => typeof item === 'string'));
+            }
+          }
+        } catch (err) {
+          console.warn('Unable to load priority flags:', err);
         }
       } else {
+        console.error('Failed to load favourites:', data.error);
         setFavorites([]);
       }
-
-      const storedPriorities = window.localStorage.getItem(PRIORITY_STORAGE_KEY);
-      if (storedPriorities) {
-        const parsed = JSON.parse(storedPriorities);
-        if (Array.isArray(parsed)) {
-          setPriorityIds(parsed.filter((item): item is string => typeof item === 'string'));
-        }
-      }
     } catch (error) {
-      console.warn('Unable to hydrate Findr favourites data', error);
+      console.error('Failed to load favourites:', error);
       setFavorites([]);
-      setPriorityIds([]);
+    } finally {
+      setIsLoadingFavourites(false);
     }
-  }, []);
+  }, [user]);
 
+  // Load favourites when user is authenticated
   useEffect(() => {
-    if (favorites === null) return;
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+    if (user) {
+      loadFavourites();
+    }
+  }, [user, loadFavourites]);
 
+  // Persist priority flags to localStorage (until we add to API)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(PRIORITY_STORAGE_KEY, JSON.stringify(priorityIds));
@@ -458,15 +516,44 @@ const FindrFavouritesPage: React.FC = () => {
     console.info(`[findr favourites:${type}] ${message}`);
   }, []);
 
-  const removeFavourite = useCallback((fishId: string) => {
-    setFavorites((prev) => {
-      if (prev === null) return prev;
-      return prev.filter((item) => item !== fishId);
-    });
-    setPriorityIds((prev) => prev.filter((item) => item !== fishId));
-  }, []);
+  const removeFavourite = useCallback(async (fishId: string) => {
+    if (!user) return;
+    
+    try {
+      // Optimistically update UI
+      setFavorites((prev) => {
+        if (prev === null) return prev;
+        return prev.filter((item) => item !== fishId);
+      });
+      setPriorityIds((prev) => prev.filter((item) => item !== fishId));
+      
+      // Find the favourite entry to get the ID for deletion
+      const favouriteEntry = favouriteEntries.find(f => f.id === fishId);
+      if (!favouriteEntry) {
+        console.warn('Could not find favourite entry for deletion');
+        return;
+      }
+      
+      // Call API to remove from database
+      const response = await fetch(`/api/findr/favourites?id=${fishId}`, {
+        method: 'DELETE',
+      });
+      
+      const data = await response.json();
+      if (!data.success) {
+        console.error('Failed to remove favourite:', data.error);
+        // Reload favourites to sync with server state
+        await loadFavourites();
+      }
+    } catch (error) {
+      console.error('Failed to remove favourite:', error);
+      // Reload favourites to sync with server state
+      await loadFavourites();
+    }
+  }, [user, favouriteEntries, loadFavourites]);
 
   const togglePriority = useCallback((fishId: string) => {
+    // TODO: Add priority flag to API schema and sync with database
     setPriorityIds((prev) =>
       prev.includes(fishId) ? prev.filter((item) => item !== fishId) : [...prev, fishId]
     );
@@ -662,6 +749,27 @@ const FindrFavouritesPage: React.FC = () => {
       <FindrNavigation />        {/* Content container */}
         <div className="mx-auto px-3 pt-6 sm:px-4 md:px-6 lg:max-w-6xl">
           <div className="container mx-auto px-0 lg:px-4 pb-8">
+            {/* Auth Loading State */}
+            {authLoading && (
+              <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="text-center space-y-4">
+                  <Loader2 size={48} className="animate-spin text-primary mx-auto" />
+                  <p className="text-base-content/70">Checking authentication...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Main Content - Only show when auth is loaded */}
+            {!authLoading && user && (
+            <>
+            {/* Favourites Loading State */}
+            {isLoadingFavourites && (
+              <div className="alert alert-info mb-6">
+                <Loader2 size={20} className="animate-spin" />
+                <span>Loading your favourites...</span>
+              </div>
+            )}
+            
             <header className="text-center mb-8">
               <div className="flex justify-center items-center mb-4">
                 <Heart size={32} className="text-pink-400 mr-3 fish-shimmer" />
@@ -1021,6 +1129,8 @@ const FindrFavouritesPage: React.FC = () => {
               <p className="text-xs text-base-content/40 mt-2 text-center">
                 <TranslatedText text={`${missingImageCount} favourite${missingImageCount === 1 ? '' : 's'} are still using emoji stand-ins while we source artwork.`} />
               </p>
+            )}
+            </>
             )}
           </div>
         </div>
