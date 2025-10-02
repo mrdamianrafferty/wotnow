@@ -243,10 +243,10 @@ export const STATUS_CONFIGS: Record<ConfidenceBand, StatusConfig> = {
   },
   waiting: {
     band: "waiting",
-    label: "Waiting for Better",
+    label: "Unlikely",
     icon: "clock",
     color: "text-warning",
-    description: "Not ideal right now - check back later"
+    description: "Feeling lucky today?"
   }
 };
 

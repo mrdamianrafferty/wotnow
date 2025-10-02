@@ -1,0 +1,1509 @@
+[
+  {
+    "name": "Ballan Wrasse",
+    "normalized": "ballan-wrasse",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea (west), Mediterranean fringe",
+        "bestTime": "Daylight, especially on a flooding tide.",
+        "tideSensitivity": "Moderate; feeds as crabs and prawns shuffle with the tide.",
+        "favouriteBaits": "Crab, prawn, shellfish",
+        "naturalDiet": "raids crevices and kelp fronds.",
+        "temperature": "Best in mild–warm months; sluggish in winter.",
+        "weather": "Clear water is easier; swell pushes them tight to cover.",
+        "distance": "Rocky headlands and kelp gullies right under your feet, 2–15 m.",
+        "edibility": 5,
+        "restrictions": "Conservation measures in some areas (wrasse for aquaculture); many anglers practise catch & release.",
+        "authority": "Regional conservation/fisheries bodies (e.g., UK IFCAs; Norway Fiskeridirektoratet)."
+      }
+    },
+    "conservation": "IUCN: LC (global). Local protections where used as cleaner fish—check rules.",
+    "funFact": "Modern day ‘cleaner fish’ that picks parasites off farmed salmon."
+  },
+  {
+    "name": "Black Seabream",
+    "normalized": "black-seabream",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Atlantic",
+        "bestTime": "Dawn/daylight",
+        "tideSensitivity": "Moderate; likes flowing water",
+        "favouriteBaits": "Shellfish, worms, squid",
+        "naturalDiet": "omnivore",
+        "temperature": "Prefers mild–warm; spawns spring inshore",
+        "weather": "Feeds in calm/light chop",
+        "distance": "Piers, rocky ground 5–15m",
+        "edibility": 8,
+        "restrictions": "Spawning aggregations protected",
+        "authority": "Regional Med fisheries agencies"
+      },
+      "boat": {
+        "regions": "Mediterranean, Atlantic",
+        "bestTime": "Dawn/daylight",
+        "tideSensitivity": "Moderate; likes flowing water",
+        "favouriteBaits": "Shellfish, worms, squid",
+        "naturalDiet": "omnivore",
+        "temperature": "Prefers mild–warm; spawns spring inshore",
+        "weather": "Feeds in calm/light chop",
+        "distance": "Reefs, wrecks 20–50m",
+        "edibility": 8,
+        "restrictions": "Spawning aggregations protected",
+        "authority": "Regional Med fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Spawning aggregations sensitive—respect protections.",
+    "funFact": "Form big spring spawning shoals—hence seasonal protections."
+  },
+  {
+    "name": "Brill",
+    "normalized": "brill",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, North Atlantic",
+        "bestTime": "Dawn/dusk drifts over sandbanks and edges.",
+        "tideSensitivity": "Moderate; moving water over drop-offs and sandbanks fishes best.",
+        "favouriteBaits": "Whole sandeel, fish strips",
+        "naturalDiet": "ambush predator on clean ground.",
+        "temperature": "Best spring–autumn; slows in very cold water.",
+        "weather": "A slight chop is fine; heavy surf buries baits.",
+        "distance": "Clean sand and shell 5–40 m from beaches and boats.",
+        "edibility": 9,
+        "restrictions": "Minimum sizes and protections vary—release undersized fish.",
+        "authority": "North Sea national agencies; UK IFCA/MMO; NL/DE authorities."
+      },
+      "boat": {
+        "regions": "North Sea, North Atlantic",
+        "bestTime": "Dawn/dusk drifts over sandbanks and edges.",
+        "tideSensitivity": "Moderate; moving water over drop-offs and sandbanks fishes best.",
+        "favouriteBaits": "Whole sandeel, fish strips",
+        "naturalDiet": "ambush predator on clean ground.",
+        "temperature": "Best spring–autumn; slows in very cold water.",
+        "weather": "A slight chop is fine; heavy surf buries baits.",
+        "distance": "Sandbanks and sloping edges 10–60 m—classic drift tactics.",
+        "edibility": 9,
+        "restrictions": "Minimum sizes and protections vary—release undersized fish.",
+        "authority": "North Sea national agencies; UK IFCA/MMO; NL/DE authorities."
+      }
+    },
+    "conservation": "IUCN: LC (global). Size/season rules vary—release undersized.",
+    "funFact": "Name comes from Old Norse ‘bryllr’, meaning speckled."
+  },
+  {
+    "name": "Cod (Coastal)",
+    "normalized": "cod",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Baltic, Norwegian waters",
+        "bestTime": "Low light and night; autumn–winter inshore peaks.",
+        "tideSensitivity": "Strong; running tide over rough ground best.",
+        "favouriteBaits": "Lug/ragworm, squid, crab, fish baits",
+        "naturalDiet": "eats crabs, fish, shellfish.",
+        "temperature": "Cold‑water species; moves deeper when warm.",
+        "weather": "Settling after storms good; extreme swell makes it hard to fish effectively.",
+        "distance": "Shallow rough ground 5–20 m from beaches, piers, rocks.",
+        "edibility": 9,
+        "restrictions": "Closed areas/seasons and MLS common, especially Baltic—check locally.",
+        "authority": "Norway Fiskeridirektoratet; Denmark/Sweden agencies; UK IFCA/MMO."
+      },
+      "boat": {
+        "regions": "North Sea, Baltic, Norwegian waters",
+        "bestTime": "Low light and night; autumn–winter inshore peaks.",
+        "tideSensitivity": "Strong; running tide over rough ground best.",
+        "favouriteBaits": "Lug/ragworm, squid, crab, fish baits",
+        "naturalDiet": "eats crabs, fish, shellfish.",
+        "temperature": "Cold‑water species; moves deeper when warm.",
+        "weather": "Settling after storms good; extreme swell makes it hard to fish effectively.",
+        "distance": "Deeper rough ground and wrecks 20–60 m.",
+        "edibility": 9,
+        "restrictions": "Closed areas/seasons and MLS common, especially Baltic—check locally.",
+        "authority": "Norway Fiskeridirektoratet; Denmark/Sweden agencies; UK IFCA/MMO."
+      }
+    },
+    "conservation": "IUCN: VU (global). Many areas have strong restrictions/closures—check locally.",
+    "funFact": "Medieval Europe ran on dried cod (stockfish) traded by the Hanseatic League."
+  },
+  {
+    "name": "Common Cuttlefish",
+    "normalized": "common-cuttlefish",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic (Iberia/France/UK), Mediterranean",
+        "bestTime": "Night with lights; spring runs in many ports.",
+        "tideSensitivity": "Low–moderate; likes a steady drift.",
+        "favouriteBaits": "Squid/cuttle jigs",
+        "naturalDiet": "also takes small fish and prawns.",
+        "temperature": "Most coastal in mild seasons; heat drives them out deeper.",
+        "weather": "Clear water and small swell are best; stirred-up water after storms fishes poorly.",
+        "distance": "Harbour walls, marinas and sandy patches 2–15 m—classic pier species.",
+        "edibility": 9,
+        "restrictions": "Seasonal protections common; respect harbour rules and night-fishing by-laws.",
+        "authority": "Regional fisheries (Spain MAPA/CCAA; France OFB; Italy MIPAAF; Portugal DGRM)."
+      },
+      "boat": {
+        "regions": "Atlantic (Iberia/France/UK), Mediterranean",
+        "bestTime": "Night with lights; spring runs in many ports.",
+        "tideSensitivity": "Low–moderate; likes a steady drift.",
+        "favouriteBaits": "Squid/cuttle jigs",
+        "naturalDiet": "also takes small fish and prawns.",
+        "temperature": "Most coastal in mild seasons; heat drives them out deeper.",
+        "weather": "Clear water and small swell are best; stirred-up water after storms fishes poorly.",
+        "distance": "Sandy bays and reefs 10–40 m; gentle drifts over weed/sand edges.",
+        "edibility": 9,
+        "restrictions": "Seasonal protections common; respect harbour rules and night-fishing by-laws.",
+        "authority": "Regional fisheries (Spain MAPA/CCAA; France OFB; Italy MIPAAF; Portugal DGRM)."
+      }
+    },
+    "conservation": "IUCN: LC (global). Seasonal protections frequent around ports/estuaries.",
+    "funFact": "Sepia ink gets its name from cuttlefish; artists loved the tone."
+  },
+  {
+    "name": "Common Ling",
+    "normalized": "common-ling",
+    "contexts": {
+      "shore": {
+        "regions": "North Atlantic, North Sea, Norwegian waters",
+        "bestTime": "Dusk and dark; year-round over rough ground.",
+        "tideSensitivity": "Moderate; prefers steady flow around wrecks and ledges.",
+        "favouriteBaits": "Large fish baits, squid, cuttle",
+        "naturalDiet": "scavenger-predator among rocks and wrecks.",
+        "temperature": "Cold-tolerant; deep marks fish consistently regardless of season.",
+        "weather": "Big groundswell can shut down shallow rough ground; deep marks keep producing.",
+        "distance": "From deep rock ledges within casting reach to wrecks 50–200 m.",
+        "edibility": 8,
+        "restrictions": "Use strong tackle and safe handling; local size/bag rules may apply.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL national agencies."
+      },
+      "boat": {
+        "regions": "North Atlantic, North Sea, Norwegian waters",
+        "bestTime": "Dusk and dark; year-round over rough ground.",
+        "tideSensitivity": "Moderate; prefers steady flow around wrecks and ledges.",
+        "favouriteBaits": "Large fish baits, squid, cuttle",
+        "naturalDiet": "scavenger-predator among rocks and wrecks.",
+        "temperature": "Cold-tolerant; deep marks fish consistently regardless of season.",
+        "weather": "Big groundswell can shut down shallow rough ground; deep marks keep producing.",
+        "distance": "Wrecks, pinnacles and heavy reef 80–300 m; big baits on strong gear.",
+        "edibility": 8,
+        "restrictions": "Use strong tackle and safe handling; local size/bag rules may apply.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Slow‑growing; release big breeders where possible.",
+    "funFact": "Dried ling skin was used as tough boot leather in medieval Europe."
+  },
+  {
+    "name": "Common Octopus",
+    "normalized": "common-octopus",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic (Iberia), Mediterranean",
+        "bestTime": "Night and low light; autumn–winter peaks in many areas.",
+        "tideSensitivity": "Low–moderate; prefers gentle movement around rocky ground.",
+        "favouriteBaits": "Egi-style octopus jigs, fish/squid baits",
+        "naturalDiet": "hunts crabs, shellfish and small fish.",
+        "temperature": "Prefers mild–warm seasons inshore; cold pushes them deeper.",
+        "weather": "Clear water and light swell help; stirred-up water after storms fishes poorly.",
+        "distance": "Breakwaters, harbour walls and rough patches 2–20 m—classic pier target at night.",
+        "edibility": 9,
+        "restrictions": "Local seasons/limits and gear rules apply; pots/traps regulated in many regions.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; Italy MIPAAF."
+      },
+      "boat": {
+        "regions": "Atlantic (Iberia), Mediterranean",
+        "bestTime": "Night and low light; autumn–winter peaks in many areas.",
+        "tideSensitivity": "Low–moderate; prefers gentle movement around rocky ground.",
+        "favouriteBaits": "Egi-style octopus jigs, fish/squid baits",
+        "naturalDiet": "hunts crabs, shellfish and small fish.",
+        "temperature": "Prefers mild–warm seasons inshore; cold pushes them deeper.",
+        "weather": "Clear water and light swell help; stirred-up water after storms fishes poorly.",
+        "distance": "Reefs and rough ground 10–40 m; slow-drift jigs over boulders and weed.",
+        "edibility": 9,
+        "restrictions": "Local seasons/limits and gear rules apply; pots/traps regulated in many regions.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; Italy MIPAAF."
+      }
+    },
+    "conservation": "IUCN: LC (global). Seasonal limits and gear rules are common—check locally.",
+    "funFact": "Clever escape artists—can unscrew jars and walk briefly on land."
+  },
+  {
+    "name": "Common Squid",
+    "normalized": "common-squid",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Night with lights; peaks on dusk and first dark, autumn–winter many areas.",
+        "tideSensitivity": "Moderate; prefers steady run rather than slack.",
+        "favouriteBaits": "Egi jigs",
+        "naturalDiet": "preys on small fish, prawns.",
+        "temperature": "Most coastal in cool to mild seasons; heat drives them deeper.",
+        "weather": "Clear water & small swell best; stirred-up water after storms fishes poorly.",
+        "distance": "From harbour walls to 5–30 m; over sand/weed beds. (shore accessible range)",
+        "edibility": 9,
+        "restrictions": "Local seasonal closures/limits may apply; respect harbour rules.",
+        "authority": "Regional fisheries (e.g., Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM)."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Night with lights; peaks on dusk and first dark, autumn–winter many areas.",
+        "tideSensitivity": "Moderate; prefers steady run rather than slack.",
+        "favouriteBaits": "Egi jigs",
+        "naturalDiet": "preys on small fish, prawns.",
+        "temperature": "Most coastal in cool to mild seasons; heat drives them deeper.",
+        "weather": "Clear water & small swell best; stirred-up water after storms fishes poorly.",
+        "distance": "From harbour walls to 5–30 m; over sand/weed beds. (boat marks deeper/offshore)",
+        "edibility": 9,
+        "restrictions": "Local seasonal closures/limits may apply; respect harbour rules.",
+        "authority": "Regional fisheries (e.g., Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM)."
+      }
+    },
+    "conservation": "IUCN: Not evaluated globally; widely fished—local seasons/limits apply.",
+    "funFact": "Sepia ink was used as writing dye in Europe for centuries."
+  },
+  {
+    "name": "Conger Eel",
+    "normalized": "conger-eel",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean, English Channel",
+        "bestTime": "Night; over low‑light periods year‑round.",
+        "tideSensitivity": "Low–moderate; prefers steady run around structure.",
+        "favouriteBaits": "Whole fish/squid, fish heads",
+        "naturalDiet": "ambush predator on fish/crustaceans.",
+        "temperature": "Feeds across wide range; slightly better in mild water.",
+        "weather": "Unfazed by swell; dirty water fine if baits are scented.",
+        "distance": "Harbour walls, rocky gullies; 5–30 m.",
+        "edibility": 7,
+        "restrictions": "Handling care; some areas limit retention—check local laws.",
+        "authority": "UK IFCA/MMO; Ireland SFPA; France OFB; Spain MAPA."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean, English Channel",
+        "bestTime": "Night; over low‑light periods year‑round.",
+        "tideSensitivity": "Low–moderate; prefers steady run around structure.",
+        "favouriteBaits": "Whole fish/squid, fish heads",
+        "naturalDiet": "ambush predator on fish/crustaceans.",
+        "temperature": "Feeds across wide range; slightly better in mild water.",
+        "weather": "Unfazed by swell; dirty water fine if baits are scented.",
+        "distance": "Deep wrecks/reefs 30–100 m.",
+        "edibility": 7,
+        "restrictions": "Handling care; some areas limit retention—check local laws.",
+        "authority": "UK IFCA/MMO; Ireland SFPA; France OFB; Spain MAPA."
+      }
+    },
+    "conservation": "IUCN: LC (global). Slow‑growing; handle and release large breeders where possible.",
+    "funFact": "Britain’s record shore fish is a giant conger—over 130 lb."
+  },
+  {
+    "name": "Cuckoo Wrasse",
+    "normalized": "cuckoo-wrasse",
+    "contexts": {
+      "shore": {
+        "regions": "North Atlantic, North Sea (west)",
+        "bestTime": "Daylight; over broken ground with kelp and boulders.",
+        "tideSensitivity": "Moderate; works best with some run.",
+        "favouriteBaits": "Small crab and prawn baits",
+        "naturalDiet": "also takes small lures.",
+        "temperature": "Active in mild–warm months; slows in winter.",
+        "weather": "Clearer seas help; big swell tucks them into holes.",
+        "distance": "Rocky points and reefs in 5–25 m; piers with kelp beds can hold them.",
+        "edibility": 6,
+        "restrictions": "Local protections possible; bright colours make them popular for photos—handle gently.",
+        "authority": "Regional conservation/fisheries bodies; national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Brightly coloured—handle carefully; local protections possible.",
+    "funFact": "Males turn electric blue and orange in breeding season—flashy!"
+  },
+  {
+    "name": "Dab",
+    "normalized": "dab",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Daylight",
+        "tideSensitivity": "Moderate tidal influence",
+        "favouriteBaits": "Small worms, shrimps",
+        "naturalDiet": "bottom feeder",
+        "temperature": "Tolerant to cold, feeds year-round",
+        "weather": "Less impacted by rough seas than other flatfish",
+        "distance": "Beaches, piers, sandy ground 2–20m",
+        "edibility": 6,
+        "restrictions": "No major restrictions; often small, returned",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Daylight",
+        "tideSensitivity": "Moderate tidal influence",
+        "favouriteBaits": "Small worms, shrimps",
+        "naturalDiet": "bottom feeder",
+        "temperature": "Tolerant to cold, feeds year-round",
+        "weather": "Less impacted by rough seas than other flatfish",
+        "distance": "Soft muddy seabeds 20–40m",
+        "edibility": 6,
+        "restrictions": "No major restrictions; often small, returned",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Widespread; often small—return undersized.",
+    "funFact": "Often the most abundant flatfish—Victorians sold ‘dab pie’ by the slice."
+  },
+  {
+    "name": "Dentex",
+    "normalized": "dentex",
+    "contexts": {
+      "boat": {
+        "regions": "Mediterranean",
+        "bestTime": "Daytime",
+        "tideSensitivity": "Moderate tidal effect",
+        "favouriteBaits": "Live fish, squid",
+        "naturalDiet": "predatory",
+        "temperature": "Active in warm Med summers",
+        "weather": "Best in clear calm seas",
+        "distance": "Deep rocky reefs 20–100m",
+        "edibility": 9,
+        "restrictions": "Strict MLS ~30–35cm; local protections",
+        "authority": "Regional Med fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Large breeding fish important—consider release.",
+    "funFact": "Mediterranean spearfishers whisper about its legendary wariness."
+  },
+  {
+    "name": "Dover Sole",
+    "normalized": "dover-sole",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Night/dusk",
+        "tideSensitivity": "Strong on flooding tide",
+        "favouriteBaits": "Worms, ragworm, small crab",
+        "naturalDiet": "bottom-feeder",
+        "temperature": "Prefers warmer summer/autumn; winter slow",
+        "weather": "Settled calm seas best",
+        "distance": "Sandy beaches, shallow mud 2–15m",
+        "edibility": 9,
+        "restrictions": "MLS 24cm+; quotas apply",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Night/dusk",
+        "tideSensitivity": "Strong on flooding tide",
+        "favouriteBaits": "Worms, ragworm, small crab",
+        "naturalDiet": "bottom-feeder",
+        "temperature": "Prefers warmer summer/autumn; winter slow",
+        "weather": "Settled calm seas best",
+        "distance": "Drifting soft grounds 20–40m",
+        "edibility": 9,
+        "restrictions": "MLS 24cm+; quotas apply",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Managed with size/season/gear rules.",
+    "funFact": "Famous for delicate flavour; the ‘Dover’ tag comes from the port that shipped them to London fresh."
+  },
+  {
+    "name": "Flathead Grey Mullet",
+    "normalized": "flathead-grey-mullet",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Dawn/evening; calm days",
+        "tideSensitivity": "Strong in estuaries on flooding tide",
+        "favouriteBaits": "Bread, algae, harbour detritus",
+        "naturalDiet": "filter feeder",
+        "temperature": "Best in mild–warm months; cold snaps shut down",
+        "weather": "After rain in estuaries good; spooked by wind/boat noise",
+        "distance": "Harbours, estuaries, surf zones 0–10m",
+        "edibility": 7,
+        "restrictions": "Often no EU MLS; local rules apply",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Estuary water quality can affect stocks.",
+    "funFact": "Despite humble looks, prized as ‘mugil’ bottarga (cured roe) in the Med."
+  },
+  {
+    "name": "Flounder",
+    "normalized": "flounder",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Baltic, Atlantic",
+        "bestTime": "Dusk/night and daylight in murky water; autumn–winter strong.",
+        "tideSensitivity": "Strong in estuaries/beaches; mid‑flood best.",
+        "favouriteBaits": "Worms, shrimp, small crab",
+        "naturalDiet": "opportunistic scavenger.",
+        "temperature": "Tolerant; feeds in cold but slower in extremes.",
+        "weather": "Coloured water and gentle surf good; heavy weed/swell poor.",
+        "distance": "Very close in on sand/mud; 0–20 m (estuaries to open beaches). (shore accessible range)",
+        "edibility": 7,
+        "restrictions": "Local MLS/seasonal protections in some estuaries—verify.",
+        "authority": "Baltic/North Sea national agencies; UK IFCA/MMO."
+      },
+      "boat": {
+        "regions": "North Sea, Baltic, Atlantic",
+        "bestTime": "Dusk/night and daylight in murky water; autumn–winter strong.",
+        "tideSensitivity": "Strong in estuaries/beaches; mid‑flood best.",
+        "favouriteBaits": "Worms, shrimp, small crab",
+        "naturalDiet": "opportunistic scavenger.",
+        "temperature": "Tolerant; feeds in cold but slower in extremes.",
+        "weather": "Coloured water and gentle surf good; heavy weed/swell poor.",
+        "distance": "Very close in on sand/mud; 0–20 m (estuaries to open beaches). (boat marks deeper/offshore)",
+        "edibility": 7,
+        "restrictions": "Local MLS/seasonal protections in some estuaries—verify.",
+        "authority": "Baltic/North Sea national agencies; UK IFCA/MMO."
+      }
+    },
+    "conservation": "IUCN: LC (global). Estuary protections in some regions.",
+    "funFact": "Can live in nearly fresh water and wander far upriver."
+  },
+  {
+    "name": "Garfish (Needlefish)",
+    "normalized": "garfish",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Daylight & dusk in spring runs; also at night under lights.",
+        "tideSensitivity": "Low–moderate; moving surface water helpful.",
+        "favouriteBaits": "Small surface lures/float baits",
+        "naturalDiet": "eats sprats/sandeels.",
+        "temperature": "Arrives with warming water in spring–summer.",
+        "weather": "Calm/clear or slight chop best; big swell poor for floats.",
+        "distance": "Surface layers 0–5 m; close to piers/headlands. (shore accessible range)",
+        "edibility": 6,
+        "restrictions": "Few restrictions; sharp beak—handle with care.",
+        "authority": "National fisheries agency/harbour by‑laws."
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Daylight & dusk in spring runs; also at night under lights.",
+        "tideSensitivity": "Low–moderate; moving surface water helpful.",
+        "favouriteBaits": "Small surface lures/float baits",
+        "naturalDiet": "eats sprats/sandeels.",
+        "temperature": "Arrives with warming water in spring–summer.",
+        "weather": "Calm/clear or slight chop best; big swell poor for floats.",
+        "distance": "Surface layers 0–5 m; close to piers/headlands. (boat marks deeper/offshore)",
+        "edibility": 6,
+        "restrictions": "Few restrictions; sharp beak—handle with care.",
+        "authority": "National fisheries agency/harbour by‑laws."
+      }
+    },
+    "conservation": "IUCN: LC (global). Few formal restrictions; local rules may apply.",
+    "funFact": "Its bones are green—thanks to bile pigments—spooking diners for ages."
+  },
+  {
+    "name": "Gilthead Seabream",
+    "normalized": "gilthead-seabream",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Southern Atlantic",
+        "bestTime": "Dawn/dusk; warm months",
+        "tideSensitivity": "Strong on flooding tide",
+        "favouriteBaits": "Crabs, prawns, mussels",
+        "naturalDiet": "crushes shellfish with molars",
+        "temperature": "Likes ≥15°C; sluggish in cold",
+        "weather": "Light onshore chop good; too much surf bad",
+        "distance": "Estuaries, harbours 2–10m",
+        "edibility": 9,
+        "restrictions": "MLS ~20–23cm+; bag limits in Med countries",
+        "authority": "Regional Med fisheries agencies"
+      },
+      "boat": {
+        "regions": "Mediterranean, Southern Atlantic",
+        "bestTime": "Dawn/dusk; warm months",
+        "tideSensitivity": "Strong on flooding tide",
+        "favouriteBaits": "Crabs, prawns, mussels",
+        "naturalDiet": "crushes shellfish with molars",
+        "temperature": "Likes ≥15°C; sluggish in cold",
+        "weather": "Light onshore chop good; too much surf bad",
+        "distance": "Reefs, sandy bays 10–30m",
+        "edibility": 9,
+        "restrictions": "MLS ~20–23cm+; bag limits in Med countries",
+        "authority": "Regional Med fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Aquaculture common; wild stocks locally managed.",
+    "funFact": "Farmed widely in the Med since the 1980s boom in aquaculture."
+  },
+  {
+    "name": "Greater Amberjack",
+    "normalized": "greater-amberjack",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Southern Atlantic (Iberia)",
+        "bestTime": "Dawn and late afternoon; summer into autumn.",
+        "tideSensitivity": "Moderate; hunts along current seams around structure.",
+        "favouriteBaits": "Livebaits (mackerel, bogue), big stickbaits and jigs",
+        "naturalDiet": "apex predator on small fish.",
+        "temperature": "Loves warm water; quiet during cold spells.",
+        "weather": "Settled, clear seas favour topwater and livebaiting; lumpy seas push fish deeper.",
+        "distance": "Rocky headlands and harbour mouths from shore when bait is in; offshore reefs/pins 20–80 m.",
+        "edibility": 8,
+        "restrictions": "Size/bag rules vary by country; release big breeders where encouraged.",
+        "authority": "Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM."
+      },
+      "boat": {
+        "regions": "Mediterranean, Southern Atlantic (Iberia)",
+        "bestTime": "Dawn and late afternoon; summer into autumn.",
+        "tideSensitivity": "Moderate; hunts along current seams around structure.",
+        "favouriteBaits": "Livebaits (mackerel, bogue), big stickbaits and jigs",
+        "naturalDiet": "apex predator on small fish.",
+        "temperature": "Loves warm water; quiet during cold spells.",
+        "weather": "Settled, clear seas favour topwater and livebaiting; lumpy seas push fish deeper.",
+        "distance": "Offshore reefs, wrecks and pinnacles 20–150 m; slow-troll or jig.",
+        "edibility": 8,
+        "restrictions": "Size/bag rules vary by country; release big breeders where encouraged.",
+        "authority": "Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM."
+      }
+    },
+    "conservation": "IUCN: LC (global). Highly prized; size/bag limits vary by country.",
+    "funFact": "Name nods to the glowing amber stripe along its flank."
+  },
+  {
+    "name": "Greater Weever",
+    "normalized": "greater-weever",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea, Mediterranean",
+        "bestTime": "Sunny calm days over warm sand; also dusk.",
+        "tideSensitivity": "Low; lies in wait in soft sand.",
+        "favouriteBaits": "Small worms and prawn pieces",
+        "naturalDiet": "ambush predator on sand flats.",
+        "temperature": "Warmer months bring them inshore; cooler water pushes deeper.",
+        "weather": "Calm seas best; stirred-up sand reduces takes.",
+        "distance": "Edges of sandy beaches and estuary bars 1–15 m—watch those spines underfoot!",
+        "edibility": 6,
+        "restrictions": "Venomous spines—handle with care and wear footwear; first-aid is hot-water immersion.",
+        "authority": "National fisheries and beach safety guidance."
+      }
+    },
+    "conservation": "IUCN: LC (global). Venomous spines—handle with care; generally not restricted.",
+    "funFact": "Venomous spines gave rise to ‘wear shoes on the beach’ warnings."
+  },
+  {
+    "name": "Grey Mullet",
+    "normalized": "grey-mullet",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Evening/dawn; sight‑feeding in daylight on calm days.",
+        "tideSensitivity": "Strong in estuaries on flood; when the tide slows right down spotting fish with polarised glasses works.",
+        "favouriteBaits": "Bread, tiny worms, harbour detritus",
+        "naturalDiet": "filter‑grazer.",
+        "temperature": "Best in mild–warm months; cold snaps shut them down.",
+        "weather": "After rain/run‑off they graze hard in estuaries; strong winds spook shoals.",
+        "distance": "Harbours, marinas, surf edges; 0–10 m. (shore accessible range)",
+        "edibility": 7,
+        "restrictions": "Local restrictions possible; avoid polluted harbours for consumption.",
+        "authority": "Municipal/port by‑laws; national fisheries sites."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Evening/dawn; sight‑feeding in daylight on calm days.",
+        "tideSensitivity": "Strong in estuaries on flood; when the tide slows right down spotting fish with polarised glasses works.",
+        "favouriteBaits": "Bread, tiny worms, harbour detritus",
+        "naturalDiet": "filter‑grazer.",
+        "temperature": "Best in mild–warm months; cold snaps shut them down.",
+        "weather": "After rain/run‑off they graze hard in estuaries; strong winds spook shoals.",
+        "distance": "Harbours, marinas, surf edges; 0–10 m. (boat marks deeper/offshore)",
+        "edibility": 7,
+        "restrictions": "Local restrictions possible; avoid polluted harbours for consumption.",
+        "authority": "Municipal/port by‑laws; national fisheries sites."
+      }
+    },
+    "conservation": "IUCN: LC (many species). Urban stocks can be impacted; check local advisories.",
+    "funFact": "Painted on Egyptian tomb walls—4,000 years of mullet culture."
+  },
+  {
+    "name": "Haddock",
+    "normalized": "haddock",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, North Atlantic",
+        "bestTime": "Daylight and dusk; autumn–spring are strongest inshore.",
+        "tideSensitivity": "Moderate; likes a steady run over clean-to-mixed ground.",
+        "favouriteBaits": "Worm baits, clam/mussel, small fish or squid strips",
+        "naturalDiet": "pecks shellfish and small invertebrates.",
+        "temperature": "Prefers cool water; pushes deeper in summer warm spells.",
+        "weather": "A settling sea after wind is ideal; heavy swell makes it hard to fish effectively.",
+        "distance": "Open sandy/mixed ground from beaches and piers 5–30 m; offshore banks and marks 30–100 m.",
+        "edibility": 9,
+        "restrictions": "Minimum sizes and bag/area rules vary by country—check locally before retaining fish.",
+        "authority": "UK IFCA/MMO; Norway/Denmark/Netherlands national agencies."
+      },
+      "boat": {
+        "regions": "North Sea, North Atlantic",
+        "bestTime": "Daylight and dusk; autumn–spring are strongest inshore.",
+        "tideSensitivity": "Moderate; likes a steady run over clean-to-mixed ground.",
+        "favouriteBaits": "Worm baits, clam/mussel, small fish or squid strips",
+        "naturalDiet": "pecks shellfish and small invertebrates.",
+        "temperature": "Prefers cool water; pushes deeper in summer warm spells.",
+        "weather": "A settling sea after wind is ideal; heavy swell makes it hard to fish effectively.",
+        "distance": "Drifts over sandbanks and mixed ground 30–120 m; downtiding at anchor also works.",
+        "edibility": 9,
+        "restrictions": "Minimum sizes and bag/area rules vary by country—check locally before retaining fish.",
+        "authority": "UK IFCA/MMO; Norway/Denmark/Netherlands national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). North Sea stock managed; follow local retention rules.",
+    "funFact": "The dark ‘Devil’s thumbprint’ mark is a fishy folk tale classic."
+  },
+  {
+    "name": "Herring",
+    "normalized": "herring",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Baltic, Atlantic",
+        "bestTime": "𐄳 (Bait fish) Dusk/night; winter–spring runs in many areas.",
+        "tideSensitivity": "Low–moderate; currents concentrate schools.",
+        "favouriteBaits": "Sabiki/small spoons",
+        "naturalDiet": "plankton/small fish.",
+        "temperature": "Cool‑water; seasonal coastal runs.",
+        "weather": "Calm or slight chop best; heavy swell pushes deeper.",
+        "distance": "Mid‑water shoals 5–80 m; piers to offshore banks. (shore accessible range)",
+        "edibility": 9,
+        "restrictions": "Closed seasons/areas common—verify before fishing. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Baltic/North Sea national agencies."
+      },
+      "boat": {
+        "regions": "North Sea, Baltic, Atlantic",
+        "bestTime": "𐄳 (Bait fish) Dusk/night; winter–spring runs in many areas.",
+        "tideSensitivity": "Low–moderate; currents concentrate schools.",
+        "favouriteBaits": "Sabiki/small spoons",
+        "naturalDiet": "plankton/small fish.",
+        "temperature": "Cool‑water; seasonal coastal runs.",
+        "weather": "Calm or slight chop best; heavy swell pushes deeper.",
+        "distance": "Mid‑water shoals 5–80 m; piers to offshore banks. (boat marks deeper/offshore)",
+        "edibility": 9,
+        "restrictions": "Closed seasons/areas common—verify before fishing. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Baltic/North Sea national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Highly managed with seasonal closures in many areas.",
+    "funFact": "The ‘silver darlings’ once powered whole coastal economies."
+  },
+  {
+    "name": "Horse Mackerel",
+    "normalized": "horse-mackerel",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean, North Sea",
+        "bestTime": "Dusk to night under lights; also at first light.",
+        "tideSensitivity": "Low–moderate; harbour tides concentrate plankton.",
+        "favouriteBaits": "Fine sabiki, tiny metals",
+        "naturalDiet": "eats zooplankton, small fish/larvae.",
+        "temperature": "More coastal in mild–warm water; drops deeper in cold.",
+        "weather": "Clear, calm nights best; murky water after storms reduces takes.",
+        "distance": "Harbours, piers, lights; middle depths 5–50 m. (shore accessible range)",
+        "edibility": 7,
+        "restrictions": "Few sport rules; size/bag may apply locally.",
+        "authority": "Port/harbour by‑laws; national fisheries agency."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean, North Sea",
+        "bestTime": "Dusk to night under lights; also at first light.",
+        "tideSensitivity": "Low–moderate; harbour tides concentrate plankton.",
+        "favouriteBaits": "Fine sabiki, tiny metals",
+        "naturalDiet": "eats zooplankton, small fish/larvae.",
+        "temperature": "More coastal in mild–warm water; drops deeper in cold.",
+        "weather": "Clear, calm nights best; murky water after storms reduces takes.",
+        "distance": "Harbours, piers, lights; middle depths 5–50 m. (boat marks deeper/offshore)",
+        "edibility": 7,
+        "restrictions": "Few sport rules; size/bag may apply locally.",
+        "authority": "Port/harbour by‑laws; national fisheries agency."
+      }
+    },
+    "conservation": "IUCN: LC (global). Some regional quotas/size limits.",
+    "funFact": "Called “scad” in old English; long dismissed, now loved as carapau in Portugal."
+  },
+  {
+    "name": "John Dory",
+    "normalized": "john-dory",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Daytime; dawn on reefs/wrecks.",
+        "tideSensitivity": "Low–moderate; ambushes around current seams.",
+        "favouriteBaits": "Livebaits/squid",
+        "naturalDiet": "predator on small fish.",
+        "temperature": "Best in mild–warm settled periods.",
+        "weather": "Prefers calm/clear; big swell drives deeper/off the mark.",
+        "distance": "Reefs/wrecks 20–150 m; occasional inshore. (shore accessible range)",
+        "edibility": 9,
+        "restrictions": "Commercial species; recreational MLS/bag may apply.",
+        "authority": "National marine fisheries (e.g., France OFB; Spain MAPA)."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Daytime; dawn on reefs/wrecks.",
+        "tideSensitivity": "Low–moderate; ambushes around current seams.",
+        "favouriteBaits": "Livebaits/squid",
+        "naturalDiet": "predator on small fish.",
+        "temperature": "Best in mild–warm settled periods.",
+        "weather": "Prefers calm/clear; big swell drives deeper/off the mark.",
+        "distance": "Reefs/wrecks 20–150 m; occasional inshore. (boat marks deeper/offshore)",
+        "edibility": 9,
+        "restrictions": "Commercial species; recreational MLS/bag may apply.",
+        "authority": "National marine fisheries (e.g., France OFB; Spain MAPA)."
+      }
+    },
+    "conservation": "IUCN: LC (global). Often taken as bycatch; local MLS may apply.",
+    "funFact": "Folklore says St Peter’s thumbprint marks its side."
+  },
+  {
+    "name": "Little Tunny",
+    "normalized": "little-tunny",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Atlantic Iberia",
+        "bestTime": "First light and late afternoon; active whenever bait showers on the surface.",
+        "tideSensitivity": "Low–moderate; current lines help concentrate baitfish.",
+        "favouriteBaits": "Fast metals, casting jigs, stickbaits",
+        "naturalDiet": "blitzes anchovy/sardine/sprat shoals.",
+        "temperature": "Loves warm water; pushes south/deeper when it cools.",
+        "weather": "Settled conditions show surface feeds; wind pushes action into current seams.",
+        "distance": "Headlands, harbour mouths and nearshore rips from shore; offshore feeding lanes by boat.",
+        "edibility": 7,
+        "restrictions": "Pay attention to tuna/large pelagic regulations; some areas require release or logbooks.",
+        "authority": "Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM."
+      },
+      "boat": {
+        "regions": "Mediterranean, Atlantic Iberia",
+        "bestTime": "First light and late afternoon; active whenever bait showers on the surface.",
+        "tideSensitivity": "Low–moderate; current lines help concentrate baitfish.",
+        "favouriteBaits": "Fast metals, casting jigs, stickbaits",
+        "naturalDiet": "blitzes anchovy/sardine/sprat shoals.",
+        "temperature": "Loves warm water; pushes south/deeper when it cools.",
+        "weather": "Settled conditions show surface feeds; wind pushes action into current seams.",
+        "distance": "Nearshore to offshore rips and temperature breaks; troll or run-and-gun where birds work.",
+        "edibility": 7,
+        "restrictions": "Pay attention to tuna/large pelagic regulations; some areas require release or logbooks.",
+        "authority": "Spain MAPA/CCAA; Italy MIPAAF; Portugal DGRM."
+      }
+    },
+    "conservation": "IUCN: LC (global). Pelagic rules apply; some areas require release/logbooks.",
+    "funFact": "Anglers sometimes kept its marbled stomach lining as lucky charms."
+  },
+  {
+    "name": "Mackerel",
+    "normalized": "mackerel",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Daylight when shoals are in; dawn/evening peaks in summer.",
+        "tideSensitivity": "Low–moderate; moving water helps push bait inshore.",
+        "favouriteBaits": "Feathers/sabiki, small metals",
+        "naturalDiet": "eats sprats, sandeels, krill/zooplankton.",
+        "temperature": "Stays near the surface in warm seasons; moves offshore/deeper when cold.",
+        "weather": "Stable, settled weather concentrates shoals; heavy swell scatters bait.",
+        "distance": "Shoals close to piers/headlands; middle depths 5–20 m.",
+        "edibility": 8,
+        "restrictions": "Local bag limits in places; observe pier/harbour rules.",
+        "authority": "Local harbour by‑laws; national fisheries sites (e.g., UK IFCA/MMO; Ireland SFPA)."
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Daylight when shoals are in; dawn/evening peaks in summer.",
+        "tideSensitivity": "Low–moderate; moving water helps push bait inshore.",
+        "favouriteBaits": "Feathers/sabiki, small metals",
+        "naturalDiet": "eats sprats, sandeels, krill/zooplankton.",
+        "temperature": "Stays near the surface in warm seasons; moves offshore/deeper when cold.",
+        "weather": "Stable, settled weather concentrates shoals; heavy swell scatters bait.",
+        "distance": "Offshore shoals middle depths 20–60 m; trolling and drift feathers.",
+        "edibility": 8,
+        "restrictions": "Local bag limits in places; observe pier/harbour rules.",
+        "authority": "Local harbour by‑laws; national fisheries sites (e.g., UK IFCA/MMO; Ireland SFPA)."
+      }
+    },
+    "conservation": "IUCN: LC (global). North‑East Atlantic stocks fluctuate; follow local advice.",
+    "funFact": "Their zebra stripes act like natural dazzle-camouflage against predators."
+  },
+  {
+    "name": "Megrim",
+    "normalized": "megrim",
+    "contexts": {
+      "shore": {
+        "regions": "North Atlantic, Celtic/North Sea",
+        "bestTime": "Daytime drifts.",
+        "tideSensitivity": "Low–moderate; happiest on gentle runs over clean ground.",
+        "favouriteBaits": "Small fish strips, sandeel, squid",
+        "naturalDiet": "ambush feeder on sand/mud.",
+        "temperature": "Cool to mild water suits; very cold slows them.",
+        "weather": "Moderate chop is fine; big surf or heavy swell makes it hard to fish effectively.",
+        "distance": "Clean ground within casting reach in deeper beaches 10–30 m; offshore flats 30–120 m.",
+        "edibility": 8,
+        "restrictions": "Local minimum sizes and protections—check before keeping fish.",
+        "authority": "UK IFCA/MMO; Ireland/Spain/France national agencies."
+      },
+      "boat": {
+        "regions": "North Atlantic, Celtic/North Sea",
+        "bestTime": "Daytime drifts.",
+        "tideSensitivity": "Low–moderate; happiest on gentle runs over clean ground.",
+        "favouriteBaits": "Small fish strips, sandeel, squid",
+        "naturalDiet": "ambush feeder on sand/mud.",
+        "temperature": "Cool to mild water suits; very cold slows them.",
+        "weather": "Moderate chop is fine; big surf or heavy swell makes it hard to fish effectively.",
+        "distance": "Wide flats 40–200 m; drift baits a metre off the bottom when dogfish are thick.",
+        "edibility": 8,
+        "restrictions": "Local minimum sizes and protections—check before keeping fish.",
+        "authority": "UK IFCA/MMO; Ireland/Spain/France national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Regionally managed; check local MLS.",
+    "funFact": "Known as ‘gallo’ in Spain—common on Galician menus."
+  },
+  {
+    "name": "Parrotfish",
+    "normalized": "parrotfish",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean (eastern and subtropical pockets)",
+        "bestTime": "Daylight; calm, clear days.",
+        "tideSensitivity": "Low–moderate; mooches around weedy rocks.",
+        "favouriteBaits": "Shellfish, prawns, small crabs",
+        "naturalDiet": "scrapes algae and grazes.",
+        "temperature": "Heat-lover; most active in summer.",
+        "weather": "Best in calm, clear water; swell hides them in crevices.",
+        "distance": "Shallow rocky coves and jetties 1–10 m—right where you can see them.",
+        "edibility": 7,
+        "restrictions": "Local protections in some regions; check rules if planning to retain.",
+        "authority": "Regional Med fisheries agencies."
+      }
+    },
+    "conservation": "IUCN: LC (regional Mediterranean species). Check local protections.",
+    "funFact": "Their ground-up coral ‘sand’ literally helps build beaches."
+  },
+  {
+    "name": "Plaice",
+    "normalized": "plaice",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Daylight",
+        "tideSensitivity": "Better on flooding tide",
+        "favouriteBaits": "Worms, clams, mussels",
+        "naturalDiet": "bottom grazer",
+        "temperature": "Mild/cool best; sluggish in cold winter",
+        "weather": "Clear calm seas favour sight feeding",
+        "distance": "Beaches and estuaries, 2–10m",
+        "edibility": 8,
+        "restrictions": "MLS 27cm in UK/Europe; seasonal closures",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Daylight",
+        "tideSensitivity": "Better on flooding tide",
+        "favouriteBaits": "Worms, clams, mussels",
+        "naturalDiet": "bottom grazer",
+        "temperature": "Mild/cool best; sluggish in cold winter",
+        "weather": "Clear calm seas favour sight feeding",
+        "distance": "Drifting over offshore banks 10–40m",
+        "edibility": 8,
+        "restrictions": "MLS 27cm in UK/Europe; seasonal closures",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Regionally managed; observe size/season rules.",
+    "funFact": "Those orange spots? Likely a fashion statement: they help camouflage on speckled sand."
+  },
+  {
+    "name": "Pollack",
+    "normalized": "pollack",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Dawn/dusk; overcast days with lures",
+        "tideSensitivity": "Moderate; works tide races around reefs/wrecks",
+        "favouriteBaits": "Artificial lures (soft plastics, metals), sandeel, mackerel strip",
+        "naturalDiet": "",
+        "temperature": "Active in mild water; slows in extreme cold/heat",
+        "weather": "Clear settled seas with some tidal run; poor in turbid storm water",
+        "distance": "Kelp beds, reefs 5–30m close to rocks",
+        "edibility": 8,
+        "restrictions": "MLS ~30cm+ locally; check rules",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Dawn/dusk; overcast days with lures",
+        "tideSensitivity": "Moderate; works tide races around wrecks and reefs",
+        "favouriteBaits": "Artificial lures, fish strips",
+        "naturalDiet": "predatory",
+        "temperature": "Active in mild water; slows in extreme cold/heat",
+        "weather": "Clear settled seas; turbid storm water reduces success",
+        "distance": "Wrecks and offshore reefs 20–100m",
+        "edibility": 8,
+        "restrictions": "MLS ~30cm+ locally; check rules",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Inshore stocks pressured in some regions; consider releasing big fish.",
+    "funFact": "Can hang so tight to kelp that divers mistake them for shadows."
+  },
+  {
+    "name": "Red Mullet",
+    "normalized": "red-mullet",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Bay of Biscay",
+        "bestTime": "Daytime; dawn on calm, clear days.",
+        "tideSensitivity": "Moderate; flooding tide over clean sand best.",
+        "favouriteBaits": "Small worms, shrimps",
+        "naturalDiet": "uses barbels to root crustaceans.",
+        "temperature": "Warm‑water preference; summer–autumn peak.",
+        "weather": "Settled, clear water ideal; heavy swell suppresses feeding.",
+        "distance": "Sandy/muddy bays 5–50 m; often close in. (shore accessible range)",
+        "edibility": 9,
+        "restrictions": "Minimum sizes common; verify locally.",
+        "authority": "Spain MAPA/CCAA; France OFB; Portugal DGRM."
+      },
+      "boat": {
+        "regions": "Mediterranean, Bay of Biscay",
+        "bestTime": "Daytime; dawn on calm, clear days.",
+        "tideSensitivity": "Moderate; flooding tide over clean sand best.",
+        "favouriteBaits": "Small worms, shrimps",
+        "naturalDiet": "uses barbels to root crustaceans.",
+        "temperature": "Warm‑water preference; summer–autumn peak.",
+        "weather": "Settled, clear water ideal; heavy swell suppresses feeding.",
+        "distance": "Sandy/muddy bays 5–50 m; often close in. (boat marks deeper/offshore)",
+        "edibility": 9,
+        "restrictions": "Minimum sizes common; verify locally.",
+        "authority": "Spain MAPA/CCAA; France OFB; Portugal DGRM."
+      }
+    },
+    "conservation": "IUCN: LC (global). Regional size limits common.",
+    "funFact": "Romans displayed them alive at banquets before serving."
+  },
+  {
+    "name": "Red Seabream",
+    "normalized": "red-seabream",
+    "contexts": {
+      "boat": {
+        "regions": "Mediterranean, Southern Atlantic",
+        "bestTime": "Daytime",
+        "tideSensitivity": "Moderate tide influence",
+        "favouriteBaits": "Crabs, shellfish, squid",
+        "naturalDiet": "powerful jawed feeder",
+        "temperature": "Prefers warmer Med/Atlantic waters",
+        "weather": "Clear settled seas best",
+        "distance": "Deep rocky reefs 20–100m",
+        "edibility": 9,
+        "restrictions": "Size/bag restrictions vary",
+        "authority": "Regional Med fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Regional declines noted; follow bag/size rules.",
+    "funFact": "In Spain it’s ‘besugo’, a Christmas feast fish in some regions."
+  },
+  {
+    "name": "Saithe (Pollachius virens)",
+    "normalized": "saithe",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Norwegian waters, North Atlantic",
+        "bestTime": "Dawn/dusk; overcast days fish well with lures.",
+        "tideSensitivity": "Moderate; hunts on current edges around structure.",
+        "favouriteBaits": "Metal jigs, shads, sandeel/mackerel strip",
+        "naturalDiet": "chases small fish tightly packed.",
+        "temperature": "Active in cool–mild water; very warm or very cold spells slow them.",
+        "weather": "Clear water with some movement is ideal; big swell pushes them deeper.",
+        "distance": "Kelp fringes and rock pins accessible from shore 5–20 m; harbour mouths and headlands.",
+        "edibility": 8,
+        "restrictions": "Local size/bag rules vary; many anglers release larger breeders.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL/DE national agencies."
+      },
+      "boat": {
+        "regions": "North Sea, Norwegian waters, North Atlantic",
+        "bestTime": "Dawn/dusk; overcast days fish well with lures.",
+        "tideSensitivity": "Moderate; hunts on current edges around structure.",
+        "favouriteBaits": "Metal jigs, shads, sandeel/mackerel strip",
+        "naturalDiet": "chases small fish tightly packed.",
+        "temperature": "Active in cool–mild water; very warm or very cold spells slow them.",
+        "weather": "Clear water with some movement is ideal; big swell pushes them deeper.",
+        "distance": "Deep reefs and wrecks 20–120 m; vertical jigging or long casts down-tide.",
+        "edibility": 8,
+        "restrictions": "Local size/bag rules vary; many anglers release larger breeders.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL/DE national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Generally healthy in the NE Atlantic; observe local limits.",
+    "funFact": "Nickname ‘coal-fish’ for its dark back; youngsters can glow faintly in plankton at night."
+  },
+  {
+    "name": "Saithe/Pollock",
+    "normalized": "saithe-pollock",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Norwegian waters",
+        "bestTime": "Dawn/dusk; overcast days with lures.",
+        "tideSensitivity": "Moderate; hunts on current edges around structure.",
+        "favouriteBaits": "Metals, soft plastics, sandeel/mackerel strip",
+        "naturalDiet": "eats small fish.",
+        "temperature": "Active in cool–mild water; heat or deep winter slows.",
+        "weather": "Clear water with some movement ideal; big swell pushes them deeper.",
+        "distance": "Kelp fringes, reefs, wrecks 5–80 m. (shore accessible range)",
+        "edibility": 8,
+        "restrictions": "Local size/bag rules; some areas encourage releasing larger breeders.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL/DE national agencies."
+      },
+      "boat": {
+        "regions": "North Sea, Norwegian waters",
+        "bestTime": "Dawn/dusk; overcast days with lures.",
+        "tideSensitivity": "Moderate; hunts on current edges around structure.",
+        "favouriteBaits": "Metals, soft plastics, sandeel/mackerel strip",
+        "naturalDiet": "eats small fish.",
+        "temperature": "Active in cool–mild water; heat or deep winter slows.",
+        "weather": "Clear water with some movement ideal; big swell pushes them deeper.",
+        "distance": "Kelp fringes, reefs, wrecks 5–80 m. (boat marks deeper/offshore)",
+        "edibility": 8,
+        "restrictions": "Local size/bag rules; some areas encourage releasing larger breeders.",
+        "authority": "Norway Fiskeridirektoratet; UK/NL/DE national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Healthy in many northern areas; size/bag limits vary.",
+    "funFact": "Sold as ‘Seelachs’ in Germany—‘sea salmon’ despite zero salmon DNA."
+  },
+  {
+    "name": "Sand Eel",
+    "normalized": "sand-eel",
+    "contexts": {
+      "shore": {
+        "regions": "North Atlantic, North Sea",
+        "bestTime": "Daylight and dusk when shoals move along the beach; night with lights in some harbours.",
+        "tideSensitivity": "Low–moderate; moving water helps shoals hug the shore.",
+        "favouriteBaits": "Tiny sabiki or small hooks",
+        "naturalDiet": "feeds on plankton and tiny crustaceans.",
+        "temperature": "Prefers cooler to mild water; summer brings inshore shoals.",
+        "weather": "Settled weather gathers shoals; heavy surf scatters them.",
+        "distance": "Surf edges and shallow sandbars 0–10 m; harbour lights on calm nights.",
+        "edibility": 6,
+        "restrictions": "Often gathered as bait; local rules may restrict netting or livebait transfer—check locally.",
+        "authority": "UK IFCA/MMO; North Sea national agencies."
+      },
+      "boat": {
+        "regions": "North Atlantic, North Sea",
+        "bestTime": "Daylight and dusk when shoals move along the beach; night with lights in some harbours.",
+        "tideSensitivity": "Low–moderate; moving water helps shoals hug the shore.",
+        "favouriteBaits": "Tiny sabiki or small hooks",
+        "naturalDiet": "feeds on plankton and tiny crustaceans.",
+        "temperature": "Prefers cooler to mild water; summer brings inshore shoals.",
+        "weather": "Settled weather gathers shoals; heavy surf scatters them.",
+        "distance": "Nearshore shoals and shallow banks 5–30 m; small-boat drifts find bigger launce.",
+        "edibility": 6,
+        "restrictions": "Often gathered as bait; local rules may restrict netting or livebait transfer—check locally.",
+        "authority": "UK IFCA/MMO; North Sea national agencies."
+      }
+    },
+    "conservation": "IUCN: LC (global). Key forage species; local netting/livebait rules apply.",
+    "funFact": "Not eels at all—burrowing fish that underpin North Sea food webs."
+  },
+  {
+    "name": "Sardine",
+    "normalized": "sardine",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "𐄳 (Bait fish) Night under lights; dawn when bait shoals push in.",
+        "tideSensitivity": "Low; moving water helps schooling behaviour.",
+        "favouriteBaits": "Tiny sabiki",
+        "naturalDiet": "plankton feeder.",
+        "temperature": "Warmer‑water coastal; moves offshore in cold.",
+        "weather": "Settled weather aggregates shoals; storms disperse.",
+        "distance": "Surface–midwater 0–40 m near ports/bays. (shore accessible range)",
+        "edibility": 8,
+        "restrictions": "Commercial controls common; recreational limits vary—check locally. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Spain/Portugal DGRM/MAPA; France OFB."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "𐄳 (Bait fish) Night under lights; dawn when bait shoals push in.",
+        "tideSensitivity": "Low; moving water helps schooling behaviour.",
+        "favouriteBaits": "Tiny sabiki",
+        "naturalDiet": "plankton feeder.",
+        "temperature": "Warmer‑water coastal; moves offshore in cold.",
+        "weather": "Settled weather aggregates shoals; storms disperse.",
+        "distance": "Surface–midwater 0–40 m near ports/bays. (boat marks deeper/offshore)",
+        "edibility": 8,
+        "restrictions": "Commercial controls common; recreational limits vary—check locally. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Spain/Portugal DGRM/MAPA; France OFB."
+      }
+    },
+    "conservation": "IUCN: LC (global). Some regional stock variability; heed local limits.",
+    "funFact": "Likely gave its name to Sardinia—historic hotbed of sardine fishing."
+  },
+  {
+    "name": "Sea Bass",
+    "normalized": "sea-bass",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean, North Sea",
+        "bestTime": "Dawn/dusk; warm months. Night over clean surf or estuary edges in summer.",
+        "tideSensitivity": "Strong; best on flooding (mid–late flood) and first of the ebb around structure.",
+        "favouriteBaits": "Crab, rag/lugworm, sandeel, small fish",
+        "naturalDiet": "hunts sprats, prawns, shore crabs.",
+        "temperature": "Active ≥12–13 °C; slows in cold spells; peak June–Oct in many regions.",
+        "weather": "Feeds after onshore blow that stirs crabs/sandeels; too much swell/silt reduces success.",
+        "distance": "Surf lines, estuaries, rocky headlands; 1–10 m; often within casting range.",
+        "edibility": 9,
+        "restrictions": "Bag limits & seasonal rules common; typical EU/UK MLS ~42 cm—verify locally.",
+        "authority": "Check national authority (e.g., UK IFCA/MMO; Ireland SFPA; Spain MAPA; France OFB)."
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean, North Sea",
+        "bestTime": "Dawn/dusk; warm months. Night over clean surf or estuary edges in summer.",
+        "tideSensitivity": "Strong; best on flooding (mid–late flood) and first of the ebb around structure.",
+        "favouriteBaits": "Crab, rag/lugworm, sandeel, small fish",
+        "naturalDiet": "hunts sprats, prawns, shore crabs.",
+        "temperature": "Active ≥12–13 °C; slows in cold spells; peak June–Oct in many regions.",
+        "weather": "Feeds after onshore blow that stirs crabs/sandeels; too much swell/silt reduces success.",
+        "distance": "Deeper reefs and wrecks 10–30 m offshore; drift fishing productive.",
+        "edibility": 9,
+        "restrictions": "Bag limits & seasonal rules common; typical EU/UK MLS ~42 cm—verify locally.",
+        "authority": "Check national authority (e.g., UK IFCA/MMO; Ireland SFPA; Spain MAPA; France OFB)."
+      }
+    },
+    "conservation": "IUCN: LC (global). North‑East Atlantic stocks tightly managed; observe local bag/season rules.",
+    "funFact": "Roman elites farmed sea bass in coastal ponds; a VIP fish since antiquity."
+  },
+  {
+    "name": "Sea Bream (Dorada)",
+    "normalized": "sea-bream",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Southern Atlantic",
+        "bestTime": "Dawn/dusk; warm months. Night over beaches/estuaries.",
+        "tideSensitivity": "Strong; mid‑flood around bars/holes excellent.",
+        "favouriteBaits": "Crab, prawn, mussel",
+        "naturalDiet": "cracks shellfish with strong molars.",
+        "temperature": "Prefers ≥15 °C; sluggish in cold snaps.",
+        "weather": "Light onshore chop good; heavy surf reduces bites.",
+        "distance": "Beaches/estuaries/rocky reefs; 2–30 m. (shore accessible range)",
+        "edibility": 9,
+        "restrictions": "Common MLS & bag limits; check local regs.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; Italy MIPAAF."
+      },
+      "boat": {
+        "regions": "Mediterranean, Southern Atlantic",
+        "bestTime": "Dawn/dusk; warm months. Night over beaches/estuaries.",
+        "tideSensitivity": "Strong; mid‑flood around bars/holes excellent.",
+        "favouriteBaits": "Crab, prawn, mussel",
+        "naturalDiet": "cracks shellfish with strong molars.",
+        "temperature": "Prefers ≥15 °C; sluggish in cold snaps.",
+        "weather": "Light onshore chop good; heavy surf reduces bites.",
+        "distance": "Beaches/estuaries/rocky reefs; 2–30 m. (boat marks deeper/offshore)",
+        "edibility": 9,
+        "restrictions": "Common MLS & bag limits; check local regs.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; Italy MIPAAF."
+      }
+    },
+    "conservation": "IUCN: LC (global). Heavily managed in the Med; observe bag and size limits.",
+    "funFact": "The ‘gilt-head’ name comes from the golden band between the eyes."
+  },
+  {
+    "name": "Sea Trout",
+    "normalized": "sea-trout",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Dawn/dusk; at night in clear, calm conditions; spring/autumn coastal runs.",
+        "tideSensitivity": "Moderate; moving water around points/bars best.",
+        "favouriteBaits": "Spinners, spoons, flies (sandeel, shrimp patterns)",
+        "naturalDiet": "eats sandeels/shrimps.",
+        "temperature": "Cool–mild water best (5–14 °C); hot bright days are tough.",
+        "weather": "Overcast with light onshore breeze ideal; after storm a settling day fishes well.",
+        "distance": "Very close to surf edges, drop‑offs, river mouths; 0–3 m.",
+        "edibility": 9,
+        "restrictions": "Highly regulated: seasons, bag limits, river/coastal distinctions—check carefully.",
+        "authority": "Baltic/Nordic agencies (e.g., Denmark, Sweden), UK/IE fisheries bodies."
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea, Baltic",
+        "bestTime": "Dawn/dusk; at night in clear, calm conditions; spring/autumn coastal runs.",
+        "tideSensitivity": "Moderate; moving water around points/bars best.",
+        "favouriteBaits": "Spinners, spoons, flies (sandeel, shrimp patterns)",
+        "naturalDiet": "eats sandeels/shrimps.",
+        "temperature": "Cool–mild water best (5–14 °C); hot bright days are tough.",
+        "weather": "Overcast with light onshore breeze ideal; after storm a settling day fishes well.",
+        "distance": "Less targeted by boat; trolling near shorelines 3–10 m depth.",
+        "edibility": 9,
+        "restrictions": "Highly regulated: seasons, bag limits, river/coastal distinctions—check carefully.",
+        "authority": "Baltic/Nordic agencies (e.g., Denmark, Sweden), UK/IE fisheries bodies."
+      }
+    },
+    "conservation": "IUCN: LC (species). Wild runs locally vulnerable—check river/sea‑area rules.",
+    "funFact": "Irish lore calls it the ‘white trout’, an enchanted salmon."
+  },
+  {
+    "name": "Small-spotted Catshark",
+    "normalized": "small-spotted-catshark",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Night",
+        "tideSensitivity": "Not tide sensitive",
+        "favouriteBaits": "Smelly fish/squid baits",
+        "naturalDiet": "scavenger",
+        "temperature": "Active in wide temp range",
+        "weather": "Feeds happily in coloured post-storm water",
+        "distance": "Surf beaches, estuaries 5–20m",
+        "edibility": 6,
+        "restrictions": "Generally no restrictions; often released",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Night",
+        "tideSensitivity": "Not tide sensitive",
+        "favouriteBaits": "Smelly fish/squid baits",
+        "naturalDiet": "scavenger",
+        "temperature": "Active in wide temp range",
+        "weather": "Feeds happily in coloured post-storm water",
+        "distance": "Sandy/mud seabeds 20–100m",
+        "edibility": 6,
+        "restrictions": "Generally no restrictions; often released",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Common locally; many anglers release.",
+    "funFact": "Can rest in piles like sleepy puppies under ledges."
+  },
+  {
+    "name": "Spotted Bass",
+    "normalized": "spotted-bass",
+    "contexts": {
+      "shore": {
+        "regions": "Mediterranean, Atlantic Iberia",
+        "bestTime": "Dawn/dusk; warm months and at night over quiet beaches.",
+        "tideSensitivity": "Moderate–strong; loves a push of tide around bars and holes.",
+        "favouriteBaits": "Crabs, prawns, mussels, sandeel and small fish",
+        "naturalDiet": "takes small lures readily.",
+        "temperature": "More active from ~15 °C upwards; sluggish in cold snaps.",
+        "weather": "Light onshore chop is friendly; heavy surf knocks them off the feed.",
+        "distance": "Small surf beaches, estuary mouths and rocky points 1–10 m.",
+        "edibility": 8,
+        "restrictions": "Often shares protections with European sea bass—check local rules.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; France OFB."
+      },
+      "boat": {
+        "regions": "Mediterranean, Atlantic Iberia",
+        "bestTime": "Dawn/dusk; warm months and at night over quiet beaches.",
+        "tideSensitivity": "Moderate–strong; loves a push of tide around bars and holes.",
+        "favouriteBaits": "Crabs, prawns, mussels, sandeel and small fish",
+        "naturalDiet": "takes small lures readily.",
+        "temperature": "More active from ~15 °C upwards; sluggish in cold snaps.",
+        "weather": "Light onshore chop is friendly; heavy surf knocks them off the feed.",
+        "distance": "Reefs and inshore banks 5–25 m; light-boat lure fishing shines.",
+        "edibility": 8,
+        "restrictions": "Often shares protections with European sea bass—check local rules.",
+        "authority": "Spain MAPA/CCAA; Portugal DGRM; France OFB."
+      }
+    },
+    "conservation": "IUCN: LC (global). Often shares protections with European sea bass.",
+    "funFact": "Easily mistaken for young sea bass—spot pattern gives it away."
+  },
+  {
+    "name": "Sprat",
+    "normalized": "sprat",
+    "contexts": {
+      "shore": {
+        "regions": "Baltic, North Sea",
+        "bestTime": "𐄳 (Bait fish) Night under lights; winter harbours.",
+        "tideSensitivity": "Low; congregates where plankton concentrates.",
+        "favouriteBaits": "Very fine sabiki",
+        "naturalDiet": "plankton feeder.",
+        "temperature": "Prefers cool waters; winter inshore.",
+        "weather": "Calm, clear nights best; storm murky water disperses.",
+        "distance": "Surface shoals 0–30 m in bays/ports. (shore accessible range)",
+        "edibility": 7,
+        "restrictions": "Often regulated with seasonal closures—check locally. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Baltic national agencies; port by‑laws."
+      },
+      "boat": {
+        "regions": "Baltic, North Sea",
+        "bestTime": "𐄳 (Bait fish) Night under lights; winter harbours.",
+        "tideSensitivity": "Low; congregates where plankton concentrates.",
+        "favouriteBaits": "Very fine sabiki",
+        "naturalDiet": "plankton feeder.",
+        "temperature": "Prefers cool waters; winter inshore.",
+        "weather": "Calm, clear nights best; storm murky water disperses.",
+        "distance": "Surface shoals 0–30 m in bays/ports. (boat marks deeper/offshore)",
+        "edibility": 7,
+        "restrictions": "Often regulated with seasonal closures—check locally. Primarily a bait species; check local rules on gathering/using live/fresh bait.",
+        "authority": "Baltic national agencies; port by‑laws."
+      }
+    },
+    "conservation": "IUCN: LC (global). Seasonal/area closures occur—check locally.",
+    "funFact": "Gave rise to the phrase ‘a sprat to catch a mackerel.’"
+  },
+  {
+    "name": "Thornback Ray",
+    "normalized": "thornback-ray",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Dusk/night with moving tide",
+        "tideSensitivity": "Strong tidal run improves feeding",
+        "favouriteBaits": "Whole squid, mackerel, sandeel",
+        "naturalDiet": "small fish/crustaceans",
+        "temperature": "Prefers mild–warm water; sluggish in cold",
+        "weather": "Feeds well after mild storms stirring prey",
+        "distance": "Sandy bays 5–20m",
+        "edibility": 8,
+        "restrictions": "Size/bag restrictions in some countries",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea",
+        "bestTime": "Dusk/night with moving tide",
+        "tideSensitivity": "Strong tidal run improves feeding",
+        "favouriteBaits": "Whole squid, mackerel, sandeel",
+        "naturalDiet": "small fish/crustaceans",
+        "temperature": "Prefers mild–warm water; sluggish in cold",
+        "weather": "Feeds well after mild storms stirring prey",
+        "distance": "Deeper sands/channels 20–60m",
+        "edibility": 8,
+        "restrictions": "Size/bag restrictions in some countries",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: NT or LC region‑dependent. Slow‑growing—support release schemes.",
+    "funFact": "Males ‘drum’ with their spiracles—underwater love songs."
+  },
+  {
+    "name": "Tub Gurnard",
+    "normalized": "tub-gurnard",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Daytime",
+        "tideSensitivity": "Moderate; over sandy/mixed ground",
+        "favouriteBaits": "Small fish, shrimp, crab",
+        "naturalDiet": "hunts on seabed",
+        "temperature": "Feeds in warmer seas; less in cold winters",
+        "weather": "Feeds well in moderate chop",
+        "distance": "Shallows 5–15m",
+        "edibility": 7,
+        "restrictions": "MLS varies; often kept for food",
+        "authority": "National fisheries agencies"
+      },
+      "boat": {
+        "regions": "Atlantic, Mediterranean",
+        "bestTime": "Daytime",
+        "tideSensitivity": "Moderate; over sandy/mixed ground",
+        "favouriteBaits": "Small fish, shrimp, crab",
+        "naturalDiet": "hunts on seabed",
+        "temperature": "Feeds in warmer seas; less in cold winters",
+        "weather": "Feeds well in moderate chop",
+        "distance": "Boat drifts 20–60m over sand/mud",
+        "edibility": 7,
+        "restrictions": "MLS varies; often kept for food",
+        "authority": "National fisheries agencies"
+      }
+    },
+    "conservation": "IUCN: LC (global). Generally stable; check local MLS.",
+    "funFact": "‘Walks’ the seabed on fin rays while drumming audibly—a noisy neighbour."
+  },
+  {
+    "name": "Turbot (Small)",
+    "normalized": "turbot",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Atlantic",
+        "bestTime": "Dawn/dusk drifts over sandbanks.",
+        "tideSensitivity": "Moderate; moving water over drop-offs and sandbanks best.",
+        "favouriteBaits": "Whole sandeel, fish strips",
+        "naturalDiet": "ambush predator.",
+        "temperature": "Active spring–autumn; slows in very cold water.",
+        "weather": "Slight chop good; heavy surf buries baits.",
+        "distance": "Sandbanks 10–70 m; often just off beaches. (shore accessible range)",
+        "edibility": 10,
+        "restrictions": "Strict MLS & protections—release undersized (‘small’) fish.",
+        "authority": "North Sea national agencies; UK IFCA/MMO; NL/DE authorities."
+      },
+      "boat": {
+        "regions": "North Sea, Atlantic",
+        "bestTime": "Dawn/dusk drifts over sandbanks.",
+        "tideSensitivity": "Moderate; moving water over drop-offs and sandbanks best.",
+        "favouriteBaits": "Whole sandeel, fish strips",
+        "naturalDiet": "ambush predator.",
+        "temperature": "Active spring–autumn; slows in very cold water.",
+        "weather": "Slight chop good; heavy surf buries baits.",
+        "distance": "Sandbanks 10–70 m; often just off beaches. (boat marks deeper/offshore)",
+        "edibility": 10,
+        "restrictions": "Strict MLS & protections—release undersized (‘small’) fish.",
+        "authority": "North Sea national agencies; UK IFCA/MMO; NL/DE authorities."
+      }
+    },
+    "conservation": "IUCN: LC (global). Strict MLS and protections; release undersized fish.",
+    "funFact": "A royal favourite—Vikings even paid tribute in turbot."
+  },
+  {
+    "name": "Whiting",
+    "normalized": "whiting",
+    "contexts": {
+      "shore": {
+        "regions": "North Sea, Atlantic",
+        "bestTime": "Night & low‑light; peaks in colder months inshore.",
+        "tideSensitivity": "Moderate–strong; likes run over sand/mixed ground.",
+        "favouriteBaits": "Small strips of mackerel/squid, worms",
+        "naturalDiet": "eats shrimp/small fish.",
+        "temperature": "Cool‑water oriented; less activity in heat.",
+        "weather": "Best in settled or light chop; heavy surf scatters shoals.",
+        "distance": "Inshore 5–50 m over sand/mixed. (shore accessible range)",
+        "edibility": 7,
+        "restrictions": "MLS and bag rules vary—verify locally.",
+        "authority": "National fisheries websites (e.g., UK IFCA/MMO; Ireland SFPA)."
+      },
+      "boat": {
+        "regions": "North Sea, Atlantic",
+        "bestTime": "Night & low‑light; peaks in colder months inshore.",
+        "tideSensitivity": "Moderate–strong; likes run over sand/mixed ground.",
+        "favouriteBaits": "Small strips of mackerel/squid, worms",
+        "naturalDiet": "eats shrimp/small fish.",
+        "temperature": "Cool‑water oriented; less activity in heat.",
+        "weather": "Best in settled or light chop; heavy surf scatters shoals.",
+        "distance": "Inshore 5–50 m over sand/mixed. (boat marks deeper/offshore)",
+        "edibility": 7,
+        "restrictions": "MLS and bag rules vary—verify locally.",
+        "authority": "National fisheries websites (e.g., UK IFCA/MMO; Ireland SFPA)."
+      }
+    },
+    "conservation": "IUCN: LC (global). Regional management applies.",
+    "funFact": "Victorian cooks dubbed it the “chicken of the sea.”"
+  },
+  {
+    "name": "Wrasse (various)",
+    "normalized": "wrasse",
+    "contexts": {
+      "shore": {
+        "regions": "Atlantic, North Sea, Mediterranean",
+        "bestTime": "Daylight, especially flood tide over kelp/rocks.",
+        "tideSensitivity": "Moderate; feeds as crabs/prawns move with tide.",
+        "favouriteBaits": "Crab, prawn, shellfish",
+        "naturalDiet": "picks in kelp/rock crevices.",
+        "temperature": "Best in mild–warm water; lethargic in winter.",
+        "weather": "Clear water preferable; heavy swell pushes them tight to cover.",
+        "distance": "Rocky kelp ground 2–20 m; very close to shore. (shore accessible range)",
+        "edibility": 6,
+        "restrictions": "Conservation measures in some regions (wrasse for aquaculture); many anglers practise C&R.",
+        "authority": "Regional conservation/fisheries bodies (e.g., UK IFCAs; Norway Fiskeridirektoratet)."
+      },
+      "boat": {
+        "regions": "Atlantic, North Sea, Mediterranean",
+        "bestTime": "Daylight, especially flood tide over kelp/rocks.",
+        "tideSensitivity": "Moderate; feeds as crabs/prawns move with tide.",
+        "favouriteBaits": "Crab, prawn, shellfish",
+        "naturalDiet": "picks in kelp/rock crevices.",
+        "temperature": "Best in mild–warm water; lethargic in winter.",
+        "weather": "Clear water preferable; heavy swell pushes them tight to cover.",
+        "distance": "Rocky kelp ground 2–20 m; very close to shore. (boat marks deeper/offshore)",
+        "edibility": 6,
+        "restrictions": "Conservation measures in some regions (wrasse for aquaculture); many anglers practise C&R.",
+        "authority": "Regional conservation/fisheries bodies (e.g., UK IFCAs; Norway Fiskeridirektoratet)."
+      }
+    },
+    "conservation": "Generally LC; local protections where used for aquaculture—check regional guidance.",
+    "funFact": "Norse tales said wrasse nibbled the nails of drowned sailors (grim, but memorable)."
+  }
+]
