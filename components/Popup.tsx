@@ -10,12 +10,16 @@ import SwellArrow from './SwellArrow';
 import WindDirectionIcon from './WindDirectionIcon';
 import EnvironmentalIndicators from './EnvironmentalIndicators';
 import { getCompassDirection } from '../utils/weatherLabels';
+import { classifyCurrentStrength } from '../utils/currentStrength';
 import { classifyWindRelative, computeSimulatedOrientation, resolveBeachOrientationAsync } from '../utils/orientation';
 import { getBeaufortNumber } from '../utils/beaufort';
 import { mpsToKnots, mpsToKmh } from '../utils/weatherUtils';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import type { PollenSummary } from '../utils/pollenUtils';
 import type { AirQualitySummary } from '../utils/airQualityUtils';
+// New imports for snow advisories and activity metadata
+import { getSnowActivityRecommendation } from '../utils/snowRecommendations';
+import { activityTypes } from '../data/activityTypes';
 
 // --- Types ---
 // All windSpeed fields are in meters per second (m/s) throughout the pipeline.
@@ -32,6 +36,9 @@ interface MarineData {
   swellDir?: number;
   vis?: number;
   beachOrientation?: number;
+  currentSpeed?: number;
+  current?: number;
+  currentDir?: number;
 }
 
 // All windSpeed fields are in meters per second (m/s) throughout the pipeline.
@@ -47,6 +54,9 @@ interface WeatherData {
   precipitation?: number;
   beachOrientation?: number;
   icon?: string;
+  // Snow-aware fields injected via buildPopupActivityPayload
+  snowDepthCm?: number;
+  snowfallRateMmH?: number;
 }
 
 // Tide types to avoid any
@@ -262,11 +272,18 @@ const Popup: React.FC<PopupProps> = ({
   const [isToday, setIsToday] = useState(true);
   const popupRef = useRef<HTMLDivElement | null>(null);
 
-  const isMarine = !!marineData && Object.keys(marineData).length > 1;
-  const hasMarineData =
-    isMarine &&
-    marineData?.waveHeight !== undefined &&
-    marineData?.waterTemperature !== undefined;
+  // Use activity type to decide if we should render marine layout
+  const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
+  // Consider ANY available marine metric as sufficient to display marine data
+  const hasMarineData = !!marineData && (
+    typeof marineData.waveHeight === 'number' ||
+    typeof marineData.waterTemperature === 'number' ||
+    typeof marineData.swellHeight === 'number' ||
+    typeof marineData.swellPeriod === 'number' ||
+    typeof marineData.windSpeed === 'number' ||
+    typeof marineData.gust === 'number' ||
+    typeof marineData.vis === 'number'
+  );
   const emoji = getActivityEmoji(activityId);
   
   // Smart background image loading with WebP optimization
@@ -304,7 +321,11 @@ const Popup: React.FC<PopupProps> = ({
     loadOptimalImage();
   }, [activityId, isMobile]);
   
-  const isMarineActivity = MARINE_ACTIVITY_IDS.includes(activityId);
+  // Determine if any valid location exists (coastal preferred, home as fallback)
+  const hasAnyLocation = (
+    (typeof coastalLocation?.lat === 'number' && typeof coastalLocation?.lon === 'number') ||
+    (typeof homeLocation?.lat === 'number' && typeof homeLocation?.lon === 'number')
+  );
   
   // Determine if this activity should show pollen warnings
   // Exclude marine, winter, and indoor activities as specified
@@ -316,6 +337,31 @@ const Popup: React.FC<PopupProps> = ({
   // Determine if this activity should show air quality warnings
   // Use same exclusion logic as pollen
   const shouldShowAirQualityWarning = !isMarineActivity && !isWinterActivity && !isIndoorActivity;
+
+  // --- Snow advisory logic (mirror homepage and activity cards) ---
+  const SNOW_DANGER_LEVELS = new Set([
+    'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'
+  ] as const);
+  const SNOW_AMBER_LEVELS = new Set([
+    'caution', 'difficult', 'uncomfortable', 'impractical', 'requires_winter_gear', 'snowfall_caution'
+  ] as const);
+  type SnowDangerLevel = typeof SNOW_DANGER_LEVELS extends Set<infer T> ? T : never;
+  type SnowAmberLevel = typeof SNOW_AMBER_LEVELS extends Set<infer T> ? T : never;
+  const shouldShowSnowWarning = (aid: string, level?: string) => {
+    if (MARINE_ACTIVITY_IDS.includes(aid)) return false; // no snow pills for watersports
+    if (!level) return false;
+    if (SNOW_DANGER_LEVELS.has(level as SnowDangerLevel)) return true; // always show severe
+    // For team sports and lifestyle (Outdoor Leisure), also show amber levels
+    const a = activityTypes.find(x => x.id === aid);
+    const isTeam = a?.secondaryCategory === 'Team Sports';
+    const isLifestyle = a?.category === 'Outdoor Leisure';
+    if ((isTeam || isLifestyle) && SNOW_AMBER_LEVELS.has(level as SnowAmberLevel)) return true;
+    return false;
+  };
+
+  const snowDepthCm = typeof weatherData?.snowDepthCm === 'number' ? weatherData!.snowDepthCm! : 0;
+  const snowfallRateMmH = typeof weatherData?.snowfallRateMmH === 'number' ? weatherData!.snowfallRateMmH! : 0;
+  const snowRecommendation = getSnowActivityRecommendation(activityId, snowDepthCm, snowfallRateMmH);
 
   // --- Orientation (OSM-backed) ---
   const [resolvedOrientation, setResolvedOrientation] = useState<number | undefined>(undefined);
@@ -456,10 +502,23 @@ const Popup: React.FC<PopupProps> = ({
             <span className={`popup__card-badge popup__badge--${category}`}>{getAssessmentEmoji(category)}</span>
           </header>
           {message && <p className="popup__message">{message}</p>}
+
+          {/* Inline snow advisory pill (mirrors homepage & cards) */}
+          {(!isMarineActivity) && shouldShowSnowWarning(activityId, snowRecommendation?.level) && (
+            <div className={`${
+              (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(snowRecommendation.level)) ? 'bg-red-600 text-white'
+               : /(snowfall_)?(difficult|impractical|uncomfortable|caution|requires_winter_gear)/.test(String(snowRecommendation.level)) ? 'bg-amber-500 text-black'
+               : 'bg-emerald-500 text-white')
+            } mt-2 rounded-md px-2 py-1 text-xs inline-flex items-center gap-2`}>
+              <OptimizedImage src={String(snowRecommendation.level).startsWith('snowfall_') ? '/weather-icons/design/fill/final/overcast-snow.svg' : '/weather-icons/design/fill/final/snowman.svg'} alt="Snow advisory" width={18} height={18} />
+              <span>{snowRecommendation.message}</span>
+            </div>
+          )}
+
           {(marineData || weatherData) && (
             <section className="popup__weather-bar">
               <ul>
-                {isMarine && marineData && (
+                {isMarineActivity && marineData && (
                   <>
                     {typeof weatherData?.temperature === 'number' && (
                       <li>
@@ -543,6 +602,30 @@ const Popup: React.FC<PopupProps> = ({
                         ⏲ <strong>{marineData.swellPeriod.toFixed(1)}</strong>s
                       </li>
                     )}
+                    {(() => {
+                      const rawSpeed = typeof marineData.currentSpeed === 'number'
+                        ? marineData.currentSpeed
+                        : typeof marineData.current === 'number'
+                          ? marineData.current
+                          : undefined;
+                      if (typeof rawSpeed !== 'number') return null;
+                      const strength = classifyCurrentStrength(rawSpeed);
+                      const label = strength?.toLowerCase().includes('current') ? strength : `${strength} current`;
+                      return (
+                        <li>
+                          🧭 Currents: <strong>{label}</strong>
+                          <span className="opacity-70"> ({rawSpeed.toFixed(1)} m/s)</span>
+                          {typeof marineData.currentDir === 'number' && (
+                            <>
+                              {' '}
+                              <span>
+                                {getCompassDirection(marineData.currentDir)} ({Math.round(marineData.currentDir)}°)
+                              </span>
+                            </>
+                          )}
+                        </li>
+                      );
+                    })()}
                     {typeof marineData.vis === 'number' && (
                       <li>
                         👀<strong>
@@ -589,7 +672,7 @@ const Popup: React.FC<PopupProps> = ({
                     )}
                   </>
                 )}
-                {!isMarine && weatherData && (
+                {!isMarineActivity && weatherData && (
                   <>
                     {typeof weatherData?.tempMax === 'number' && (
                       <li>
@@ -646,11 +729,13 @@ const Popup: React.FC<PopupProps> = ({
                         <strong>{weatherData.humidity}%</strong>
                       </li>
                     )}
-                    {(shouldShowPollenWarning && pollen) || (shouldShowAirQualityWarning && airQuality) ? (
+                    {(shouldShowPollenWarning || shouldShowAirQualityWarning || (snowDepthCm > 0 || snowfallRateMmH > 0)) ? (
                       <li>
                         <EnvironmentalIndicators 
                           pollen={shouldShowPollenWarning ? pollen : undefined}
                           airQuality={shouldShowAirQualityWarning ? airQuality : undefined}
+                          snowDepthCm={snowDepthCm}
+                          snowfallRateMmH={snowfallRateMmH}
                           mode="compact"
                         />
                       </li>
@@ -662,7 +747,9 @@ const Popup: React.FC<PopupProps> = ({
           )}
           {isMarineActivity && !hasMarineData && (
             <div className="location-prompt">
-              Please set your beach or coastal location.
+              {hasAnyLocation
+                ? 'Marine conditions are temporarily unavailable.'
+                : 'Please set your beach or coastal location.'}
             </div>
           )}
           <footer className="popup__footer">Score: {typeof score === 'number' ? `${score}%` : '—'}</footer>

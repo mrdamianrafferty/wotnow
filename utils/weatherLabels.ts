@@ -21,74 +21,111 @@ export function getBeaufortDescription(windMs: number): string {
 }
 
 // Rainfall (mm) and period (hours) to intensity description
+// Aligned with WMO, Met Office, and NOAA standards
 export function getRainfallDescription(mm: number, hours: number = 1): string {
-  if (mm === 0) return 'No rain';
-  const mmPerHour = mm / hours;
+  // Guard against invalid inputs and division by zero
+  const validMm = Number.isFinite(mm) ? Math.max(0, mm) : 0;
+  const validHours = Number.isFinite(hours) && hours > 0 ? hours : 1;
+  if (validMm === 0) return 'No rain';
+  const mmPerHour = validMm / validHours;
 
-  // Hourly/short period gradations
-  if (hours <= 3) {
+  // Hourly/short period gradations (aligned with meteorological standards)
+  if (validHours <= 3) {
     if (mmPerHour < 0.1) return 'Drizzle';
-    if (mmPerHour < 1) return 'Very light rain';
+    if (mmPerHour < 0.5) return 'Very light rain';
     if (mmPerHour < 2.5) return 'Light rain';
-    if (mmPerHour < 7.6) return 'Moderate rain';
-    if (mmPerHour < 50) return 'Heavy rain';
+    if (mmPerHour < 10) return 'Moderate rain';        // Extended to WMO upper bound
+    if (mmPerHour < 50) return 'Heavy rain';           // Starts at WMO heavy threshold
     return '⚠️ Violent rain';
   }
 
-  // Daily gradations
-  if (mm < 0.1) return 'No rain';
-  if (mm < 1) return 'Very light rain';
-  if (mm < 10) return 'Light rain';
-  if (mm < 30) return 'Moderate rain';
-  if (mm < 70) return 'Heavy rain';
-  if (mm < 150) return '⚠️ Very heavy rain';
-  if (mm < 151) return '⚠️ Extremely heavy rain';
+  // Daily gradations (scaled proportionally from hourly standards)
+  if (validMm < 2.4) return 'Very light rain';              // 0.1-0.5 mm/h × 24h = 2.4-12mm
+  if (validMm < 12) return 'Light rain';                    // 0.5-2.5 mm/h × 24h = 12-60mm  
+  if (validMm < 60) return 'Moderate rain';                 // 2.5-10 mm/h × 24h = 60-240mm
+  if (validMm < 150) return 'Heavy rain';                   // Practical heavy daily range
+  if (validMm < 240) return '⚠️ Very heavy rain';           // 10-50 mm/h × 24h = 240-1200mm
   return '⚠️ Violent rain';
 }
 
 // Combined rainfall description with hourly fallback
 export function getRainfallDescriptionWithHourly(
   dailyMm: number, 
-  hourlyData?: Array<{ time?: string; dt?: number; rain?: number; precipitation?: number }>
+  hourlyData?: Array<{ time?: string; dt?: number; rain?: number | { '1h'?: number; '3h'?: number }; precipitation?: number }>
 ): string {
-  // If significant daily rain, use regular description
-  if (dailyMm >= 10) {
-    return getRainfallDescription(dailyMm, 24);
+  const validDailyMm = Number.isFinite(dailyMm) ? Math.max(0, dailyMm) : 0;
+  // If significant daily rain (>12mm = light rain threshold), use regular description
+  if (validDailyMm >= 12) {
+    return getRainfallDescription(validDailyMm, 24);
   }
   
-  // If no hourly data provided, fall back to simple description
+  // If no hourly data provided, fall back to daily description
   if (!hourlyData || hourlyData.length === 0) {
-    return getRainfallDescription(dailyMm, 24);
+    return getRainfallDescription(validDailyMm, 24);
   }
   
-  // Check for any rain in hourly data
-  const hourlyRain = hourlyData.find(hour => {
-    const rain = hour.rain ?? hour.precipitation ?? 0;
-    return rain > 0;
-  });
+  const EPS = 0.05; // filter out float noise, keep meaningful drizzle
+
+  // Find all hours with rain and get the maximum intensity
+  const hoursWithRain = hourlyData
+    .map(hour => {
+      const rainField = hour.rain as unknown as number | { '1h'?: number; '3h'?: number } | undefined;
+      let rainAmount: number | undefined;
+
+      if (typeof rainField === 'number' && Number.isFinite(rainField)) {
+        rainAmount = rainField;
+      } else if (rainField && typeof rainField === 'object') {
+        if (typeof rainField['1h'] === 'number' && Number.isFinite(rainField['1h'])) {
+          rainAmount = rainField['1h'];
+        } else if (typeof rainField['3h'] === 'number' && Number.isFinite(rainField['3h'])) {
+          // Normalize 3h total to per-hour average for intensity classification
+          rainAmount = rainField['3h'] / 3;
+        }
+      }
+
+      const precip = typeof hour.precipitation === 'number' && Number.isFinite(hour.precipitation) ? hour.precipitation : 0;
+      const amt = Number.isFinite(rainAmount as number) ? (rainAmount as number) : precip;
+
+      return {
+        ...hour,
+        rainAmount: Math.max(0, amt)
+      };
+    })
+    .filter(hour => hour.rainAmount > EPS);
   
-  if (!hourlyRain) {
-    return 'No rain';
+  if (hoursWithRain.length === 0) {
+    return validDailyMm > 0 ? getRainfallDescription(validDailyMm, 24) : 'No rain';
   }
   
-  // Find the time with rain
-  const rainValue = hourlyRain.rain ?? hourlyRain.precipitation ?? 0;
+  // Get the hour with maximum rainfall for intensity assessment
+  const maxRainHour = hoursWithRain.reduce((max, current) => 
+    current.rainAmount > max.rainAmount ? current : max
+  );
+  
+  // Format time string
   let timeStr = '';
-  
-  if (hourlyRain.time) {
-    // Parse ISO time string to get hour
-    const hour = new Date(hourlyRain.time).getHours();
-    timeStr = ` around ${hour}:00`;
-  } else if (hourlyRain.dt) {
-    // Parse Unix timestamp to get hour
-    const hour = new Date(hourlyRain.dt * 1000).getHours();
-    timeStr = ` around ${hour}:00`;
+  if (maxRainHour.time) {
+    const hour = new Date(maxRainHour.time).getHours();
+    timeStr = ` around ${hour.toString().padStart(2, '0')}:00`;
+  } else if (maxRainHour.dt) {
+    const hour = new Date(maxRainHour.dt * 1000).getHours();
+    timeStr = ` around ${hour.toString().padStart(2, '0')}:00`;
   }
   
-  // Determine intensity with "Mostly dry" prefix
-  if (rainValue < 2.5) {
+  // Use standardized thresholds for intensity classification
+  const intensity = getRainfallDescription(maxRainHour.rainAmount, 1);
+  
+  // If multiple hours have rain, don't use "mostly dry" prefix
+  if (hoursWithRain.length >= 3) {
+    return `Intermittent ${intensity.toLowerCase()}${timeStr ? ` (peak${timeStr})` : ''}`;
+  }
+  
+  // For isolated rain events, use "mostly dry" prefix
+  if (intensity === 'Drizzle' || intensity === 'Very light rain') {
     return `Mostly dry, chance of light showers${timeStr}`;
-  } else if (rainValue < 7.6) {
+  } else if (intensity === 'Light rain') {
+    return `Mostly dry, chance of light rain${timeStr}`;
+  } else if (intensity === 'Moderate rain') {
     return `Mostly dry, chance of rain${timeStr}`;
   } else {
     return `Mostly dry, chance of heavy rain${timeStr}`;
@@ -99,18 +136,117 @@ export function getRainfallDescriptionWithHourly(
 export function getWaveDescription(meters: number): string {
   if (meters < 0.1) return 'Flat – like glass (perfect for SUP)';
   if (meters < 0.3) return 'Ripples – calm and easy';
-  if (meters < 0.6) return 'Tiny waves – good for beginners or easy paddling';
+  if (meters < 0.6) return 'Tiny waves –  easy paddling';
   if (meters < 1) return 'Knee-high waves – mellow surf';
-  if (meters < 1.5) return 'Waist-high waves – small but fun';
-  if (meters < 2) return 'Shoulder-high surf – ideal for many surfers';
-  if (meters < 3) return 'Head-high to overhead waves – powerful and fun';
-  if (meters < 4) return '⚠️ Well overhead – advanced conditions';
+  if (meters < 1.5) return 'Waist-high waves – small but fun for surfing and managable for most other water users';
+  if (meters < 2) return 'Shoulder-high surf – ideal for many surfers but a struggle for other water users';
+  if (meters < 3) return 'Head-high to overhead waves – powerful and fun for advanced surfers but too much for pretty much everyone else';
+  if (meters < 4) return '⚠️ Well overhead – dangerous conditions';
   return '⚠️ Heavy swell – expert only, potentially dangerous';
 }
 
-// Snowfall intensity and winter conditions
+// Complete snow classification system combining depth, active snowfall, and weather conditions
+export function getSnowDescription(
+  snowDepthCm: number = 0, 
+  snowfallRateMmH: number = 0,
+  conditions?: {
+    visibilityKm?: number;
+    windKmh?: number;
+    isFlurry?: boolean;
+    isShower?: boolean;
+    isSquall?: boolean;
+    isBlowing?: boolean;
+    isBlizzard?: boolean;
+  }
+): string {
+  const {
+    visibilityKm = 10,
+    windKmh = 0,
+    isFlurry = false,
+    isShower = false,
+    isSquall = false,
+    isBlowing = false,
+    isBlizzard = false
+  } = conditions || {};
+
+  // Priority 1: Severe weather conditions (override everything else)
+  if (isBlizzard || (windKmh >= 56 && visibilityKm <= 0.4)) {
+    return '⚠️ Blizzard conditions';
+  }
+  if (isSquall || (windKmh >= 40 && snowfallRateMmH > 2.5)) {
+    return '⚠️ Snow squall';
+  }
+  if (isBlowing || (windKmh >= 30 && (snowfallRateMmH > 0 || snowDepthCm > 0))) {
+    return 'Blowing snow';
+  }
+
+  // Priority 2: Active snowfall conditions
+  if (snowfallRateMmH > 0) {
+    let intensityDesc = '';
+    
+    // Determine base intensity
+    if (isFlurry || snowfallRateMmH < 0.5) {
+      intensityDesc = 'Snow flurries';
+    } else if (isShower || (snowfallRateMmH >= 0.5 && snowfallRateMmH < 2.5)) {
+      intensityDesc = 'Light snow showers';
+    } else if (snowfallRateMmH < 2.5) {
+      intensityDesc = 'Light snowfall';
+    } else if (snowfallRateMmH < 10) {
+      intensityDesc = 'Moderate snowfall';
+    } else {
+      intensityDesc = 'Heavy snowfall';
+    }
+
+    // Modify based on visibility if significantly reduced
+    if (visibilityKm <= 0.5) {
+      intensityDesc = intensityDesc.replace('Light', 'Moderate').replace('Moderate', 'Heavy');
+      if (!intensityDesc.includes('Heavy')) {
+        intensityDesc = 'Heavy ' + intensityDesc.toLowerCase();
+      }
+    } else if (visibilityKm <= 1 && !intensityDesc.includes('Light')) {
+      intensityDesc = 'Moderate to heavy snowfall';
+    }
+
+    // Add snow depth context if significant
+    if (snowDepthCm >= 30) {
+      return intensityDesc + ' on deep snow base';
+    } else if (snowDepthCm >= 5) {
+      return intensityDesc + ' on existing snow cover';
+    }
+    
+    return intensityDesc;
+  }
+
+  // Priority 3: Snow depth descriptions (no active snowfall)
+  if (snowDepthCm === 0) {
+    return 'No snow';
+  } else if (snowDepthCm < 1) {
+    return 'Dusting of snow';
+  } else if (snowDepthCm < 5) {
+    return 'Light snow cover';
+  } else if (snowDepthCm < 15) {
+    return 'Moderate snow cover';
+  } else if (snowDepthCm < 30) {
+    return 'Significant snow cover';
+  } else if (snowDepthCm < 50) {
+    return 'Deep snow';
+  } else if (snowDepthCm < 100) {
+    return 'Very deep snow';
+  } else if (snowDepthCm < 200) {
+    return 'Exceptionally deep snow';
+  } else {
+    return '⚠️ Extreme snow depth';
+  }
+}
+
+// Simplified function for backwards compatibility and basic use cases
+export function getSnowDescriptionSimple(snowDepthCm: number, snowfallRateMmH: number = 0): string {
+  return getSnowDescription(snowDepthCm, snowfallRateMmH);
+}
+
+// Enhanced snowfall-specific description with meteorological detail
 export function getSnowfallDescription({
-  mm = 0,
+  snowfallMmH = 0,
   visibilityKm = 10,
   windKmh = 0,
   isFlurry = false,
@@ -119,41 +255,27 @@ export function getSnowfallDescription({
   isBlowing = false,
   isBlizzard = false,
 }: {
-  mm?: number;           // Snowfall amount (mm)
-  visibilityKm?: number; // Visibility in km
-  windKmh?: number;      // Wind speed in km/h
+  snowfallMmH?: number;
+  visibilityKm?: number;
+  windKmh?: number;
   isFlurry?: boolean;
   isShower?: boolean;
   isSquall?: boolean;
   isBlowing?: boolean;
   isBlizzard?: boolean;
 }): string {
-  if (isBlizzard || (windKmh >= 56 && visibilityKm <= 0.4)) {
-    return '⚠️ Blizzard';
-  }
-  if (isSquall || (windKmh >= 40 && mm > 5)) {
-    return 'Snow squall';
-  }
-  if (isBlowing || (windKmh >= 30 && mm > 0)) {
-    return 'Blowing snow';
-  }
-  if (isFlurry || (mm > 0 && mm < 1 && !isShower)) {
-    return 'Snow flurries';
-  }
-  if (isShower || (mm >= 1 && mm < 5)) {
-    return 'Snow showers';
-  }
-  if (visibilityKm > 1) {
-    return 'Light snow';
-  }
-  if (visibilityKm > 0.5) {
-    return 'Moderate snow';
-  }
-  if (visibilityKm <= 0.5) {
-    return '⚠️ Heavy snow';
-  }
-  return mm === 0 ? 'No snow' : 'Snow';
+  return getSnowDescription(0, snowfallMmH, {
+    visibilityKm,
+    windKmh,
+    isFlurry,
+    isShower,
+    isSquall,
+    isBlowing,
+    isBlizzard
+  });
 }
+
+
 
 // Temperature (°C) to comfort description
 export function getTemperatureDescription(tempC: number, feelsLikeC?: number): string {
@@ -176,7 +298,7 @@ export function getHumidityDescription(humidity: number, temperatureC?: number):
   if (humidity >= 85) return isCold ? 'Cold and clammy' : 'Sticky and sweaty';
   if (humidity >= 70) return isCold ? 'Damp and chilly' : 'A bit clammy';
   if (humidity >= 40) return 'Humidity feels fine';
-  if (humidity >= 20) return 'A bit dry';
+  if (humidity >= 20) return 'Air is a bit on the dry side';
   if (humidity < 20) return 'Air is dry as a bone';
   return 'Humidity unknown';
 }

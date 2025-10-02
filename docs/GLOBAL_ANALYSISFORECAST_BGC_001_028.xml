@@ -1,0 +1,1277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<csw:GetRecordByIdResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2">
+  <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:srv="http://www.isotc211.org/2005/srv" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gmi="http://www.isotc211.org/2005/gmi" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:geonet="http://www.fao.org/geonetwork" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
+    <gmd:fileIdentifier>
+      <gco:CharacterString>67544cb7-f839-461d-a598-66ea58b8a91e</gco:CharacterString>
+    </gmd:fileIdentifier>
+    <gmd:language xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="eng" />
+    </gmd:language>
+    <gmd:hierarchyLevel xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_ScopeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="series" />
+    </gmd:hierarchyLevel>
+    <gmd:hierarchyLevelName xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gco:CharacterString>Copernicus Marine Service product specification</gco:CharacterString>
+    </gmd:hierarchyLevelName>
+    <gmd:contact xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:CI_ResponsibleParty>
+        <gmd:organisationName>
+          <gco:CharacterString>CMEMS</gco:CharacterString>
+        </gmd:organisationName>
+        <gmd:contactInfo>
+          <gmd:CI_Contact>
+            <gmd:address>
+              <gmd:CI_Address>
+                <gmd:electronicMailAddress>
+                  <gco:CharacterString>servicedesk.cmems@mercator-ocean.eu</gco:CharacterString>
+                </gmd:electronicMailAddress>
+              </gmd:CI_Address>
+            </gmd:address>
+            <gmd:onlineResource>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://marine.copernicus.eu/</gmd:URL>
+                </gmd:linkage>
+              </gmd:CI_OnlineResource>
+            </gmd:onlineResource>
+          </gmd:CI_Contact>
+        </gmd:contactInfo>
+        <gmd:role>
+          <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact" />
+        </gmd:role>
+      </gmd:CI_ResponsibleParty>
+    </gmd:contact>
+    <gmd:dateStamp xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gco:DateTime>2025-05-22T10:19:49.349317Z</gco:DateTime>
+    </gmd:dateStamp>
+    <gmd:metadataStandardName xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gco:CharacterString>ISO 19139, MyOcean profile</gco:CharacterString>
+    </gmd:metadataStandardName>
+    <gmd:metadataStandardVersion xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gco:CharacterString>0.2</gco:CharacterString>
+    </gmd:metadataStandardVersion>
+    <gmd:spatialRepresentationInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_GridSpatialRepresentation>
+        <gmd:numberOfDimensions>
+          <gco:Integer>2</gco:Integer>
+        </gmd:numberOfDimensions>
+        <gmd:axisDimensionProperties>
+          <gmd:MD_Dimension>
+            <gmd:dimensionName>
+              <gmd:MD_DimensionNameTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="row" />
+            </gmd:dimensionName>
+            <gmd:resolution>
+              <gco:Measure uom="degree">0.25</gco:Measure>
+            </gmd:resolution>
+          </gmd:MD_Dimension>
+        </gmd:axisDimensionProperties>
+        <gmd:axisDimensionProperties>
+          <gmd:MD_Dimension>
+            <gmd:dimensionName>
+              <gmd:MD_DimensionNameTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_DimensionNameTypeCode" codeListValue="column" />
+            </gmd:dimensionName>
+            <gmd:resolution>
+              <gco:Measure uom="degree">0.25</gco:Measure>
+            </gmd:resolution>
+          </gmd:MD_Dimension>
+        </gmd:axisDimensionProperties>
+        <gmd:cellGeometry>
+          <gmd:MD_CellGeometryCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_CellGeometryCode" codeListValue="area" />
+        </gmd:cellGeometry>
+        <gmd:transformationParameterAvailability>
+          <gco:Boolean>false</gco:Boolean>
+        </gmd:transformationParameterAvailability>
+      </gmd:MD_GridSpatialRepresentation>
+    </gmd:spatialRepresentationInfo>
+    <gmd:referenceSystemInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_ReferenceSystem>
+        <gmd:referenceSystemIdentifier>
+          <gmd:RS_Identifier>
+            <gmd:code>
+              <gco:CharacterString>equirectangular</gco:CharacterString>
+            </gmd:code>
+            <gmd:codeSpace>
+              <gco:CharacterString>EPSG</gco:CharacterString>
+            </gmd:codeSpace>
+          </gmd:RS_Identifier>
+        </gmd:referenceSystemIdentifier>
+      </gmd:MD_ReferenceSystem>
+    </gmd:referenceSystemInfo>
+    <gmd:identificationInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_DataIdentification>
+        <gmd:citation>
+          <gmd:CI_Citation>
+            <gmd:title>
+              <gco:CharacterString>Global Ocean Biogeochemistry Analysis and Forecast</gco:CharacterString>
+            </gmd:title>
+            <gmd:alternateTitle>
+              <gco:CharacterString>GLOBAL_ANALYSISFORECAST_BGC_001_028</gco:CharacterString>
+            </gmd:alternateTitle>
+            <gmd:date>
+              <gmd:CI_Date>
+                <gmd:date>
+                  <gco:Date>2016-10-13</gco:Date>
+                </gmd:date>
+                <gmd:dateType>
+                  <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="creation" />
+                </gmd:dateType>
+              </gmd:CI_Date>
+            </gmd:date>
+            <gmd:edition>
+              <gco:CharacterString>2.3</gco:CharacterString>
+            </gmd:edition>
+            <gmd:editionDate>
+              <gco:Date>2023-11-30</gco:Date>
+            </gmd:editionDate>
+            <gmd:identifier>
+              <gmd:MD_Identifier>
+                <gmd:code>
+                  <gco:CharacterString>b09312b0-1b4d-4cac-b585-eeb4089ba8a1</gco:CharacterString>
+                </gmd:code>
+              </gmd:MD_Identifier>
+            </gmd:identifier>
+          </gmd:CI_Citation>
+        </gmd:citation>
+        <gmd:abstract>
+          <gco:CharacterString>'''Short description:'''
+
+The Operational Mercator Ocean biogeochemical global ocean analysis and forecast system  at 1/4 degree is providing 10 days of 3D global ocean forecasts updated weekly. The time series is aggregated in time, in order to reach a two full year’s time series sliding window. This product includes daily and monthly mean files of biogeochemical parameters (chlorophyll, nitrate, phosphate, silicate, dissolved oxygen, dissolved iron, primary production, phytoplankton, zooplankton, PH, and surface partial pressure of carbon dioxyde) over the global ocean. The global ocean output files are displayed with a 1/4 degree horizontal resolution with regular longitude/latitude equirectangular projection. 50 vertical levels are ranging from 0 to 5700 meters.
+
+* NEMO version (v3.6_STABLE)
+* Forcings: GLOBAL_ANALYSIS_FORECAST_PHYS_001_024 at daily frequency.                                                                           
+* Outputs mean fields are interpolated on a standard regular grid in NetCDF format.
+* Initial conditions: World Ocean Atlas 2013 for nitrate, phosphate, silicate and dissolved oxygen, GLODAPv2 for DIC and Alkalinity, and climatological model outputs for Iron and DOC 
+* Quality/Accuracy/Calibration information: See the related QuID[https://documentation.marine.copernicus.eu/QUID/CMEMS-GLO-QUID-001-028.pdf]
+
+'''DOI (product) :'''   
+https://doi.org/10.48670/moi-00015</gco:CharacterString>
+        </gmd:abstract>
+        <gmd:credit>
+          <gco:CharacterString>E.U. Copernicus Marine Service Information</gco:CharacterString>
+        </gmd:credit>
+        <gmd:pointOfContact>
+          <gmd:CI_ResponsibleParty>
+            <gmd:individualName gco:nilReason="missing">
+              <gco:CharacterString />
+            </gmd:individualName>
+            <gmd:organisationName>
+              <gco:CharacterString>GLO-NRT-MERCATOR-TOULOUSE-FR</gco:CharacterString>
+            </gmd:organisationName>
+            <gmd:contactInfo>
+              <gmd:CI_Contact>
+                <gmd:address>
+                  <gmd:CI_Address>
+                    <gmd:electronicMailAddress gco:nilReason="missing">
+                      <gco:CharacterString />
+                    </gmd:electronicMailAddress>
+                  </gmd:CI_Address>
+                </gmd:address>
+              </gmd:CI_Contact>
+            </gmd:contactInfo>
+            <gmd:role>
+              <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="resourceProvider" />
+            </gmd:role>
+          </gmd:CI_ResponsibleParty>
+        </gmd:pointOfContact>
+        <gmd:resourceMaintenance>
+          <gmd:MD_MaintenanceInformation>
+            <gmd:maintenanceAndUpdateFrequency>
+              <gmd:MD_MaintenanceFrequencyCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="weekly" />
+            </gmd:maintenanceAndUpdateFrequency>
+            <gmd:updateScopeDescription>
+              <gmd:MD_ScopeDescription>
+                <gmd:other>
+                  <gco:CharacterString>P0M0DT0H/P0M0DT0H</gco:CharacterString>
+                </gmd:other>
+              </gmd:MD_ScopeDescription>
+            </gmd:updateScopeDescription>
+            <gmd:maintenanceNote>
+              <gco:CharacterString>Thursdays at 12:00 UTC; 15th day of month at 12:00 UTC</gco:CharacterString>
+            </gmd:maintenanceNote>
+          </gmd:MD_MaintenanceInformation>
+        </gmd:resourceMaintenance>
+        <gmd:resourceMaintenance>
+          <gmd:MD_MaintenanceInformation>
+            <gmd:maintenanceAndUpdateFrequency>
+              <gmd:MD_MaintenanceFrequencyCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="monthly" />
+            </gmd:maintenanceAndUpdateFrequency>
+          </gmd:MD_MaintenanceInformation>
+        </gmd:resourceMaintenance>
+        <gmd:graphicOverview>
+          <gmd:MD_BrowseGraphic>
+            <gmd:fileName>
+              <gco:CharacterString>https://documentation.marine.copernicus.eu/IMG/GLOBAL_ANALYSISFORECAST_BGC_001_028.png</gco:CharacterString>
+            </gmd:fileName>
+          </gmd:MD_BrowseGraphic>
+        </gmd:graphicOverview>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/theme/of">Oceanographic geographical features</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gco:CharacterString>GEMET - INSPIRE themes, version 1.0</gco:CharacterString>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2009-09-22</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="creation" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.discipline/24f7deec-a807-4e24-b91a-2b4e72ed2247">numerical-model</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="discipline" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.discipline">Discipline</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2024-07-26</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.discipline.myocean.discipline">geonetwork.thesaurus.local.discipline.myocean.discipline</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N7/">mass_concentration_of_chlorophyll_a_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N55/">sea_water_alkalinity_expressed_as_mole_equivalent</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N28/">mole_concentration_of_dissolved_iron_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N27/">mole_concentration_of_dissolved_inorganic_carbon_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/B5891AKR/">net_primary_production_of_biomass_expressed_as_carbon_per_unit_volume_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N41/">mole_concentration_of_phytoplankton_expressed_as_carbon_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFSN0806/">mole_concentration_of_nitrate_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N29/">mole_concentration_of_dissolved_molecular_oxygen_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF14N56/">sea_water_ph_reported_on_total_scale</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFSN0244/">surface_partial_pressure_of_carbon_dioxide_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFSN0810/">mole_concentration_of_silicate_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF12N502/">mole_concentration_of_phosphate_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFSN0420/">sea_floor_depth_below_geoid</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFV10N21/">model_level_number_at_sea_floor</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CF12N190/">cell_thickness</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/CFSN0064/">volume_attenuation_coefficient_of_downwelling_radiative_flux_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor>cell_width</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor>cell_height</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor>sea_binary_mask</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor>mole_concentration_of_zooplankton_expressed_as_carbon_in_sea_water</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="parameter" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="http://vocab.nerc.ac.uk/collection/P07/current/">Climate and Forecast Standard Names</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2017-04-04</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/external.parameter.myocean.ocean-variables">geonetwork.thesaurus.external.parameter.myocean.ocean-variables</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.temporal-scale/3fee7ba0-0a1f-4558-a9d1-7a8078a26ee2">near-real-time</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.temporal-scale/e0465645-474c-4726-91c2-8a1ac08a1591">forecast</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="temporal-scale" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.temporal-scale">Temporal scale</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2024-07-26</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.temporal-scale.myocean.temporal-scale">geonetwork.thesaurus.local.temporal-scale.myocean.temporal-scale</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit/361657b6-6b9e-40f5-b75f-0d50e6ccd2fe https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit/361657b6-6b9e-40f5-b75f-0d50e6ccd2fe">marine-resources</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit/8c77fb97-7415-45d6-8cf2-a90686ef7032">weather-climate-and-seasonal-forecasting</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit/440849d3-a62f-428e-b679-c815afd74084">coastal-marine-environment</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit/2e1374cd-3cce-4955-abc7-aa448a4e8c53">marine-safety</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="area-of-benefit" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.area-of-benefit">Area of benefit</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2024-07-26</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.area-of-benefit.myocean.area-of-benefit">geonetwork.thesaurus.local.area-of-benefit.myocean.area-of-benefit</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.reference-geographical-area/0ea3d280-b1f1-4d12-9037-6acb6104b4b3">global-ocean</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="reference-geographical-area" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.reference-geographical-area">Reference Geographical Areas</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2024-07-26</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.reference-geographical-area.myocean.reference-geographical-area">geonetwork.thesaurus.local.reference-geographical-area.myocean.reference-geographical-area</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.processing-level/78a4ba97-b2b9-4a16-8680-1eef0bdf8481">Level 4</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="processing-level" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="https://vocab.ifremer.fr/scheme/SXT/myocean.processing-level">Processing level</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2024-07-26</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.processing-level.myocean.processing-level">geonetwork.thesaurus.local.processing-level.myocean.processing-level</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gmx:Anchor xlink:href="http://purl.org/myocean/ontology/vocabulary/model-assimilation#satellite-chlorophyll">Satellite Chlorophyll</gmx:Anchor>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gmx:Anchor xlink:href="http://purl.org/myocean/ontology/vocabulary/model-assimilation#">Model assimilation</gmx:Anchor>
+                </gmd:title>
+                <gmd:date>
+                  <gmd:CI_Date>
+                    <gmd:date>
+                      <gco:Date>2016-02-03</gco:Date>
+                    </gmd:date>
+                    <gmd:dateType>
+                      <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                    </gmd:dateType>
+                  </gmd:CI_Date>
+                </gmd:date>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/external.theme.myocean.model-assimilation">geonetwork.thesaurus.external.theme.myocean.model-assimilation</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:descriptiveKeywords>
+          <gmd:MD_Keywords>
+            <gmd:keyword>
+              <gco:CharacterString>Brest</gco:CharacterString>
+            </gmd:keyword>
+            <gmd:type>
+              <gmd:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" />
+            </gmd:type>
+            <gmd:thesaurusName>
+              <gmd:CI_Citation>
+                <gmd:title>
+                  <gco:CharacterString>Ocean Hackathon - Ville</gco:CharacterString>
+                </gmd:title>
+                <gmd:identifier>
+                  <gmd:MD_Identifier>
+                    <gmd:code>
+                      <gmx:Anchor xlink:href="https://sextant.ifremer.fr/geonetwork/srv/api/registries/vocabularies/local.place.oh_ville">geonetwork.thesaurus.local.place.oh_ville</gmx:Anchor>
+                    </gmd:code>
+                  </gmd:MD_Identifier>
+                </gmd:identifier>
+              </gmd:CI_Citation>
+            </gmd:thesaurusName>
+          </gmd:MD_Keywords>
+        </gmd:descriptiveKeywords>
+        <gmd:resourceConstraints>
+          <gmd:MD_LegalConstraints>
+            <gmd:useLimitation>
+              <gco:CharacterString>See Copernicus Marine Environment Monitoring Service Data commitments and licence at: http://marine.copernicus.eu/web/27-service-commitments-and-licence.php</gco:CharacterString>
+            </gmd:useLimitation>
+            <gmd:accessConstraints>
+              <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="otherRestrictions" />
+            </gmd:accessConstraints>
+            <gmd:useConstraints>
+              <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="license" />
+            </gmd:useConstraints>
+            <gmd:otherConstraints>
+              <gco:CharacterString>No limitations on public access</gco:CharacterString>
+            </gmd:otherConstraints>
+          </gmd:MD_LegalConstraints>
+        </gmd:resourceConstraints>
+        <gmd:aggregationInfo>
+          <gmd:MD_AggregateInformation />
+        </gmd:aggregationInfo>
+        <gmd:aggregationInfo>
+          <gmd:MD_AggregateInformation>
+            <gmd:associationType>
+              <gmd:DS_AssociationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_AssociationTypeCode" codeListValue="crossReference" />
+            </gmd:associationType>
+          </gmd:MD_AggregateInformation>
+        </gmd:aggregationInfo>
+        <gmd:aggregationInfo>
+          <gmd:MD_AggregateInformation>
+            <gmd:aggregateDataSetIdentifier>
+              <gmd:MD_Identifier>
+                <gmd:code>
+                  <gco:CharacterString>6f01aaa8-278f-4258-84ad-cc550b759045</gco:CharacterString>
+                </gmd:code>
+              </gmd:MD_Identifier>
+            </gmd:aggregateDataSetIdentifier>
+            <gmd:associationType>
+              <gmd:DS_AssociationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_AssociationTypeCode" codeListValue="crossReference" />
+            </gmd:associationType>
+            <gmd:initiativeType>
+              <gmd:DS_InitiativeTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_InitiativeTypeCode" codeListValue="document" />
+            </gmd:initiativeType>
+          </gmd:MD_AggregateInformation>
+        </gmd:aggregationInfo>
+        <gmd:aggregationInfo>
+          <gmd:MD_AggregateInformation>
+            <gmd:aggregateDataSetIdentifier>
+              <gmd:MD_Identifier>
+                <gmd:code>
+                  <gco:CharacterString>10568d8e-7bcb-4566-974a-f7ce0b9f4beb</gco:CharacterString>
+                </gmd:code>
+              </gmd:MD_Identifier>
+            </gmd:aggregateDataSetIdentifier>
+            <gmd:associationType>
+              <gmd:DS_AssociationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_AssociationTypeCode" codeListValue="crossReference" />
+            </gmd:associationType>
+            <gmd:initiativeType>
+              <gmd:DS_InitiativeTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_InitiativeTypeCode" codeListValue="document" />
+            </gmd:initiativeType>
+          </gmd:MD_AggregateInformation>
+        </gmd:aggregationInfo>
+        <gmd:aggregationInfo>
+          <gmd:MD_AggregateInformation>
+            <gmd:aggregateDataSetIdentifier>
+              <gmd:MD_Identifier>
+                <gmd:code>
+                  <gco:CharacterString>0e978fac-57c1-4162-918b-0d7230986387</gco:CharacterString>
+                </gmd:code>
+              </gmd:MD_Identifier>
+            </gmd:aggregateDataSetIdentifier>
+            <gmd:associationType>
+              <gmd:DS_AssociationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_AssociationTypeCode" codeListValue="crossReference" />
+            </gmd:associationType>
+            <gmd:initiativeType>
+              <gmd:DS_InitiativeTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#DS_InitiativeTypeCode" codeListValue="document" />
+            </gmd:initiativeType>
+          </gmd:MD_AggregateInformation>
+        </gmd:aggregationInfo>
+        <gmd:language>
+          <gco:CharacterString>eng</gco:CharacterString>
+        </gmd:language>
+        <gmd:topicCategory>
+          <gmd:MD_TopicCategoryCode>oceans</gmd:MD_TopicCategoryCode>
+        </gmd:topicCategory>
+        <gmd:extent>
+          <gmd:EX_Extent>
+            <gmd:description>
+              <gco:CharacterString>bounding box</gco:CharacterString>
+            </gmd:description>
+            <gmd:geographicElement>
+              <gmd:EX_GeographicBoundingBox>
+                <gmd:westBoundLongitude>
+                  <gco:Decimal>-180.00</gco:Decimal>
+                </gmd:westBoundLongitude>
+                <gmd:eastBoundLongitude>
+                  <gco:Decimal>180.00</gco:Decimal>
+                </gmd:eastBoundLongitude>
+                <gmd:southBoundLatitude>
+                  <gco:Decimal>-80.00</gco:Decimal>
+                </gmd:southBoundLatitude>
+                <gmd:northBoundLatitude>
+                  <gco:Decimal>90.00</gco:Decimal>
+                </gmd:northBoundLatitude>
+              </gmd:EX_GeographicBoundingBox>
+            </gmd:geographicElement>
+            <gmd:temporalElement>
+              <gmd:EX_TemporalExtent>
+                <gmd:extent>
+                  <gml:TimePeriod gml:id="d63821344e813a1053982">
+                    <gml:description />
+                    <gml:beginPosition>2023-11-29</gml:beginPosition>
+                    <gml:endPosition indeterminatePosition="unknown" />
+                  </gml:TimePeriod>
+                </gmd:extent>
+              </gmd:EX_TemporalExtent>
+            </gmd:temporalElement>
+            <gmd:verticalElement>
+              <gmd:EX_VerticalExtent>
+                <gmd:minimumValue>
+                  <gco:Real>-5500</gco:Real>
+                </gmd:minimumValue>
+                <gmd:maximumValue>
+                  <gco:Real>0</gco:Real>
+                </gmd:maximumValue>
+                <gmd:verticalCRS uuidref="urn:ogc:def:crs:EPSG:5714" />
+              </gmd:EX_VerticalExtent>
+            </gmd:verticalElement>
+          </gmd:EX_Extent>
+        </gmd:extent>
+        <gmd:supplementalInformation>
+          <gco:CharacterString>display priority: 01200</gco:CharacterString>
+        </gmd:supplementalInformation>
+      </gmd:MD_DataIdentification>
+    </gmd:identificationInfo>
+    <gmd:contentInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_CoverageDescription>
+        <gmd:attributeDescription>
+          <gco:RecordType>observation</gco:RecordType>
+        </gmd:attributeDescription>
+        <gmd:contentType>
+          <gmd:MD_CoverageContentTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_CoverageContentTypeCode" codeListValue="physicalMeasurement" />
+        </gmd:contentType>
+        <gmd:dimension>
+          <gmd:MD_RangeDimension />
+        </gmd:dimension>
+        <gmd:dimension>
+          <gmd:MD_RangeDimension>
+            <gmd:descriptor>
+              <gco:CharacterString>vertical level number: 50</gco:CharacterString>
+            </gmd:descriptor>
+          </gmd:MD_RangeDimension>
+        </gmd:dimension>
+        <gmd:dimension>
+          <gmd:MD_RangeDimension />
+        </gmd:dimension>
+        <gmd:dimension>
+          <gmd:MD_RangeDimension>
+            <gmd:descriptor>
+              <gco:CharacterString>temporal resolution: daily mean</gco:CharacterString>
+            </gmd:descriptor>
+          </gmd:MD_RangeDimension>
+        </gmd:dimension>
+        <gmd:dimension>
+          <gmd:MD_RangeDimension>
+            <gmd:descriptor>
+              <gco:CharacterString>temporal resolution: monthly mean</gco:CharacterString>
+            </gmd:descriptor>
+          </gmd:MD_RangeDimension>
+        </gmd:dimension>
+      </gmd:MD_CoverageDescription>
+    </gmd:contentInfo>
+    <gmd:contentInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_FeatureCatalogueDescription>
+        <gmd:includedWithDataset>
+          <gco:Boolean>false</gco:Boolean>
+        </gmd:includedWithDataset>
+        <gmd:featureTypes>
+          <gco:LocalName codeSpace="http://purl.org/myocean/ontology/vocabulary/feature-type#Grid">Grid</gco:LocalName>
+        </gmd:featureTypes>
+        <gmd:featureCatalogueCitation />
+      </gmd:MD_FeatureCatalogueDescription>
+    </gmd:contentInfo>
+    <gmd:distributionInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:MD_Distribution>
+        <gmd:distributionFormat>
+          <gmd:MD_Format>
+            <gmd:name>
+              <gco:CharacterString>NetCDF-4</gco:CharacterString>
+            </gmd:name>
+            <gmd:version gco:nilReason="unknown">
+              <gco:CharacterString />
+            </gmd:version>
+          </gmd:MD_Format>
+        </gmd:distributionFormat>
+        <gmd:transferOptions>
+          <gmd:MD_DigitalTransferOptions>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc_anfc_0.25deg_static_202311--ext--coords/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc_anfc_0.25deg_static</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc_anfc_0.25deg_static_202311--ext--coords</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc_anfc_0.25deg_static</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc_anfc_0.25deg_static_202311--ext--mask/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc_anfc_0.25deg_static</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc_anfc_0.25deg_static_202311--ext--mask</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc_anfc_0.25deg_static</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-optics_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-optics_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-optics_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-optics_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-bio_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-bio_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-bio_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-bio_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-car_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-car_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-car_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-car_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-co2_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-co2_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-co2_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-co2_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-nut_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-nut_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-nut_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-nut_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-pft_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-pft_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-pft_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-pft_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-optics_anfc_0.25deg_P1M-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-optics_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-optics_anfc_0.25deg_P1M-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-optics_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-co2_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-co2_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-co2_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-co2_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m_202311/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m_202311</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-car_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m_202411/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m_202411</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1D-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>http://stac.marine.copernicus.eu/metadata/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1M-m_202411/dataset.stac.json</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>WWW:STAC</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+                <gmd:description>
+                  <gco:CharacterString>For accessing native data and Analysis-ready Cloud-optimized data services, consult this STAC metadata endpoint</gco:CharacterString>
+                </gmd:description>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+            <gmd:onLine>
+              <gmd:CI_OnlineResource>
+                <gmd:linkage>
+                  <gmd:URL>https://wmts.marine.copernicus.eu/teroWmts/GLOBAL_ANALYSISFORECAST_BGC_001_028/cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1M-m_202411</gmd:URL>
+                </gmd:linkage>
+                <gmd:protocol>
+                  <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                </gmd:protocol>
+                <gmd:name>
+                  <gco:CharacterString>cmems_mod_glo_bgc-plankton_anfc_0.25deg_P1M-m</gco:CharacterString>
+                </gmd:name>
+              </gmd:CI_OnlineResource>
+            </gmd:onLine>
+          </gmd:MD_DigitalTransferOptions>
+        </gmd:transferOptions>
+      </gmd:MD_Distribution>
+    </gmd:distributionInfo>
+    <gmd:dataQualityInfo xmlns:dct2="http://www.purl.org/dc/terms/" xmlns:date="http://exslt.org/dates-and-times" xmlns:ns16="http://www.opengis.net/ows/1.1" xmlns:ows="http://www.opengis.net/ows" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:fra="http://www.cnig.gouv.fr/2005/fra" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:dct="http://purl.org/dc/terms/" xmlns:ins="http://www.inspire.org" xmlns:cat="http://www.opengis.net/cat/csw" xmlns:gfc="http://www.isotc211.org/2005/gfc" xmlns:dc2="http://www.purl.org/dc/elements/1.1/" xmlns:ogc="http://www.opengis.net/ogc">
+      <gmd:DQ_DataQuality>
+        <gmd:scope>
+          <gmd:DQ_Scope>
+            <gmd:level>
+              <gmd:MD_ScopeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="series" />
+            </gmd:level>
+          </gmd:DQ_Scope>
+        </gmd:scope>
+        <gmd:report>
+          <gmd:DQ_DomainConsistency>
+            <gmd:result>
+              <gmd:DQ_ConformanceResult>
+                <gmd:specification>
+                  <gmd:CI_Citation>
+                    <gmd:title>
+                      <gco:CharacterString>COMMISSION REGULATION (EU) No 1089/2010 of 23 November 2010 implementing Directive 2007/2/EC of the European Parliament and of the Council as regards interoperability of spatial data sets and services</gco:CharacterString>
+                    </gmd:title>
+                    <gmd:date>
+                      <gmd:CI_Date>
+                        <gmd:date>
+                          <gco:Date>2010-12-08</gco:Date>
+                        </gmd:date>
+                        <gmd:dateType>
+                          <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" />
+                        </gmd:dateType>
+                      </gmd:CI_Date>
+                    </gmd:date>
+                  </gmd:CI_Citation>
+                </gmd:specification>
+                <gmd:explanation>
+                  <gco:CharacterString>See the referenced specification</gco:CharacterString>
+                </gmd:explanation>
+                <gmd:pass gco:nilReason="unknown" />
+              </gmd:DQ_ConformanceResult>
+            </gmd:result>
+          </gmd:DQ_DomainConsistency>
+        </gmd:report>
+        <gmd:lineage>
+          <gmd:LI_Lineage>
+            <gmd:statement>
+              <gco:CharacterString>The myOcean products depends on other products for production or validation. The detailed list of dependencies is given in ISO19115's aggregationInfo (ISO19139 Xpath = "gmd:MD_Metadata/gmd:identificationInfo/gmd:aggregationInfo[./gmd:MD_AggregateInformation/gmd:initiativeType/gmd:DS_InitiativeTypeCode/@codeListValue='upstream-validation' or 'upstream-production']")</gco:CharacterString>
+            </gmd:statement>
+          </gmd:LI_Lineage>
+        </gmd:lineage>
+      </gmd:DQ_DataQuality>
+    </gmd:dataQualityInfo>
+  </gmd:MD_Metadata>
+</csw:GetRecordByIdResponse>
+

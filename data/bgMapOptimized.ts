@@ -64,6 +64,12 @@ const bgMapOptimized: Record<string, ImageVariants> = {
     webpThumb: '/webp/gaelic-thumb.webp',
     fallback: '/gaelic.png'
   },
+  outdoor_gardening: {
+    webp: '/webp/gardening.jpg',
+    webpMobile: '/webp/gardening-mobile.jpg',
+    webpThumb: '/webp/gardening-thumb.jpg',
+    fallback: '/gardening.jpg'
+  },
   hockey: {
     webp: '/webp/fieldhockey.webp',
     webpMobile: '/webp/fieldhockey-mobile.webp',
@@ -237,6 +243,12 @@ const bgMapOptimized: Record<string, ImageVariants> = {
     webpMobile: '/webp/mountainy-mobile.webp',
     webpThumb: '/webp/mountainy-thumb.webp',
     fallback: '/mountainy.png'
+  },
+  rock_hopping: {
+    webp: '/webp/rocky.jpg',
+    webpMobile: '/webp/rocky-mobile.jpg',
+    webpThumb: '/webp/rocky-thumb.jpg',
+    fallback: '/rocky.png'
   },
   hiking: {
     webp: '/webp/walky.webp',

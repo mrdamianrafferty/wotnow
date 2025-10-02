@@ -1,6 +1,6 @@
 // src/utils/eveningScoring.ts
 
-import { ActivityType } from '../data/activityTypes';
+import type { ActivityType } from '../data/activities/types';
 
 // Public return type for explainability in UI
 export type EveningBonusResult = {
@@ -222,7 +222,7 @@ export function applyEveningBonus(
   }
 
   // 4) Tag-match bonus (weekday/social): avoid boosting outdoor at night unless allowed
-  const tagMatches = tags.filter(t => contextTags.includes(t)).length;
+  const tagMatches = tags.filter((t: string) => contextTags.includes(t)).length;
   const tagBonus = 1.0 + Math.min(tagMatches * 0.1, 0.5); // up to +50%
   const allowTagBonusForOutdoorNight = !isOutdoor || !isEvening || hasFloodlit || hasEveningOk;
 

@@ -4,11 +4,15 @@ import {
   getTemperatureDescription,
   getHumidityDescription,
   getWindMessage,
+  getSnowDescription,
 } from './weatherLabels';
 import { activityTypes } from '../data/activityTypes';
 import { getActivityMessage } from '../data/activityMessages';
 import { classifyWindRelative, computeSimulatedOrientation } from '../utils/orientation';
 import { assessPollenConditions, getPollenAdviceForActivity, getPollenTimingAdvice } from './pollenUtils';
+import { getWindActivityRecommendation } from './windRecommendations';
+import { assessSoilCondition, getMudMessage, isMudSensitive } from './soilMoistureUtils';
+import { assessAirQualityConditions, buildAirQualityAdvice, shouldExcludeForAirQuality, AirQualityLevel, type AirQualitySummary } from './airQualityUtils';
 
 export const MARINE_ACTIVITY_IDS = [
   'surfing',
@@ -49,6 +53,11 @@ export interface DayLike {
   lat?: number; lon?: number; latitude?: number; longitude?: number; coords?: { lat?: number; lon?: number };
   // environment extras
   pollen?: unknown; airQuality?: unknown;
+  // snow (optional, used for generic outdoor reasoning)
+  snowDepthCm?: number;            // cm
+  snowfallRateMmH?: number;        // mm/h
+  // ➕ soil moisture (0–1 or 0–100)
+  soilMoisture?: number | null;
   // legacy/supporting fields
   temp?: number | null;
 }
@@ -489,8 +498,17 @@ export function buildReasons(day: DayLike, activityId: string) {
           'offshore': 'offshore',
         };
         const note = relToNote[rel];
-        if (note) {
-          windMessage = `${windMessage} (${note})`;
+        if (note && windMessage) {
+          const orientationRegex = /\((onshore|offshore|cross-shore)\)$/i;
+          const existing = windMessage.match(orientationRegex);
+          if (existing) {
+            const current = existing[1].toLowerCase();
+            if (current !== note) {
+              windMessage = windMessage.replace(orientationRegex, `(${note})`);
+            }
+          } else {
+            windMessage = `${windMessage} (${note})`;
+          }
           console.log('➕ Appended orientation note to wind message:', { repWindDeg, beachOrientation: beachOrientationVal, rel, note });
         } else {
           console.log('ℹ️ No orientation note (unmapped rel):', { repWindDeg, beachOrientation: beachOrientationVal, rel });
@@ -519,6 +537,19 @@ export function buildReasons(day: DayLike, activityId: string) {
         // Ultimate fallback with raw wind speed, if any
         const raw = typeof day.wind_speed === 'number' ? day.wind_speed : (typeof day.windSpeed === 'number' ? day.windSpeed : null);
         reasons.push(raw != null ? `Wind speed: ${raw} m/s` : 'Wind details unavailable');
+      }
+    }
+
+    // ➕ High-severity wind recommendation (activity-specific)
+    if (typeof effectiveWindSpeed === 'number') {
+      try {
+        const rec = getWindActivityRecommendation(activityId, effectiveWindSpeed);
+        const highSeverity = new Set(['dangerous','unsafe','unplayable','impossible','impractical','difficult']);
+        if (highSeverity.has(rec.level)) {
+          reasons.push(`${rec.emoji ?? ''} ${rec.message}`.trim());
+        }
+      } catch (e) {
+        console.warn('Wind recommendation lookup failed:', e);
       }
     }
   }
@@ -689,12 +720,18 @@ export function buildReasons(day: DayLike, activityId: string) {
       } else if (day.waveHeight < 1.5) {
         waveMsg = `Decent waves at ${day.waveHeight.toFixed(1)}m`;
       } else if (day.waveHeight < 2.5) {
-        waveMsg = `Good sized waves at ${day.waveHeight.toFixed(1)}m`;
+        // Threshold adjusted: classify 1.5m+ as 'Large waves'
+        waveMsg = `Large waves at ${day.waveHeight.toFixed(1)}m`;
       } else {
         waveMsg = `Large waves at ${day.waveHeight.toFixed(1)}m - for experienced only`;
       }
       
       reasons.push(waveMsg);
+
+      // Add an explicit rough seas warning for very large waves across all marine activities
+      if (day.waveHeight >= 2.5) {
+        reasons.push('Rough seas — dangerous for small craft and swimmers');
+      }
     }
     
     // Swell period
@@ -715,6 +752,44 @@ export function buildReasons(day: DayLike, activityId: string) {
   
   // Add activity-specific reasons based on conditions
   addActivitySpecificReasons(day, activityId, reasons);
+
+  // ➕ Soil moisture / mud sensitivity
+  if (typeof day.soilMoisture === 'number' && isMudSensitive(activityId)) {
+    try {
+      const soil = assessSoilCondition(day.soilMoisture);
+      const mudMsg = getMudMessage(activityId, soil);
+      if (mudMsg) reasons.push(mudMsg);
+    } catch (e) {
+      console.warn('Soil moisture processing failed:', e);
+    }
+  }
+  
+  // ➕ Air quality context for outdoor activities
+  try {
+    const isOutdoors = isOutdoor(activityId);
+    const hasAQ = day && typeof (day as Record<string, unknown>)?.airQuality === 'object';
+    if (isOutdoors && hasAQ) {
+      const aqSummary = (day as Record<string, unknown>).airQuality as AirQualitySummary;
+      const assessment = assessAirQualityConditions(aqSummary);
+      // Respect exclusion helper (indoor/irrelevant)
+      if (!shouldExcludeForAirQuality(assessment, activityId)) {
+        if (assessment.overall >= AirQualityLevel.MODERATE) {
+          if (assessment.overall === AirQualityLevel.MODERATE) {
+            reasons.push('Air quality is moderate — sensitive people may want to limit strenuous outdoor activity');
+          } else {
+            const advice = buildAirQualityAdvice(assessment);
+            if (Array.isArray(advice) && advice.length) reasons.push(...advice);
+            // Add the most relevant pollutant/overall warning as an extra hint
+            if (assessment.warnings && assessment.warnings.length) {
+              reasons.push(assessment.warnings[0]);
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Air quality reasoning failed:', e);
+  }
   
   // Filter out empty strings, null, undefined
   const validReasons = reasons.filter(r => r && r.trim() !== '');
@@ -839,37 +914,37 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
   const clouds = day.clouds ?? null;
 
   switch (activityId) {
-    case 'basketball_outdoor':
-      if (rain > 0) {
-        reasons.push('Rain will spoil outdoor dining');
-      } else if (windSpeed > 8) {
-        reasons.push('Strong wind will blow napkins and plates around');
-      } else if (temp && temp > 30) {
-        reasons.push('Very hot - food safety concerns in heat');
-      } else if (temp && temp < 10) {
-        reasons.push('Cold weather not comfortable for outdoor eating');
-      } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
-        reasons.push('Partly cloudy - perfect for avoiding harsh sun');
-      } else {
-        reasons.push('Perfect picnic weather');
-      }
-      break;
+case 'basketball_outdoor':
+  if (rain > 0) {
+    reasons.push("🌧️ Rain on the blacktop — game’s called till it dries up");
+  } else if (windSpeed > 8) {
+    reasons.push("💨 Wind’s got the ball drifting — outside shots get tricky");
+  } else if (temp && temp > 30) {
+    reasons.push("🥵 Court’s hot — hydrate or you’ll be cooked out here");
+  } else if (temp && temp < 10) {
+    reasons.push("🧥 Too cold for smooth handles — stiff fingers, brick city");
+  } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
+    reasons.push("⛅ Chill vibe — shade on deck, game goes on");
+  } else {
+    reasons.push("🏀");
+  }
+  break;
 
-    case 'football_soccer':
-      if (rain > 5) {
-        reasons.push('Heavy rain makes pitch slippery and unsafe');
-      } else if (rain > 0) {
-        reasons.push('Light rain adds challenge but still playable');
-      } else if (windSpeed > 10) {
-        reasons.push('Strong wind affects passing and ball control');
-      } else if (temp && temp > 32) {
-        reasons.push('Very hot - increased risk of heat exhaustion');
-      } else if (temp && temp < 0) {
-        reasons.push('Freezing conditions may make pitch hard');
-      } else {
-        reasons.push('Good conditions for a proper match');
-      }
-      break;
+case 'football_soccer':
+  if (rain > 5) {
+    reasons.push("🌧️ Chucking it down — pitch like a mud bath, studs only");
+  } else if (rain > 0) {
+    reasons.push("☔ Bit of drizzle — slippery ball, watch those dodgy tackles");
+  } else if (windSpeed > 10) {
+    reasons.push("💨 Windy — long balls could end up in Row Z");
+  } else if (temp && temp > 32) {
+    reasons.push("🥵 Scorching — water breaks every five minutes please");
+  } else if (temp && temp < 0) {
+    reasons.push("❄️ Frozen pitch — ball will sting like a cannon shot");
+  } else {
+    reasons.push('');
+  }
+  break;
 
     case 'tennis':
       if (rain > 0) {
@@ -881,7 +956,7 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (typeof clouds === 'number' && clouds > 80) {
         reasons.push('Overcast but good for avoiding sun glare');
       } else {
-        reasons.push('Great conditions for tennis');
+        reasons.push('');
       }
       break;
 
@@ -897,7 +972,7 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (temp && temp >= 15 && temp <= 20) {
         reasons.push('Perfect running temperature');
       } else {
-        reasons.push('Good conditions for a run');
+        reasons.push('');
       }
       break;
 
@@ -905,6 +980,8 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
     case 'road_cycling':
       if (rain > 2) {
         reasons.push('Wet roads increase crash risk significantly');
+      } else if (rain > 1) {
+        reasons.push('Roads are damp; braking distance increases — ride cautiously');
       } else if (windSpeed > 15) {
         reasons.push('Very strong wind makes cycling exhausting');
       } else if (windSpeed > 8) {
@@ -914,7 +991,7 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (temp && temp > 35) {
         reasons.push('Very hot - increased dehydration risk');
       } else {
-        reasons.push('Good cycling conditions');
+        reasons.push('');
       }
       break;
 
@@ -924,13 +1001,13 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (windSpeed > 10) {
         reasons.push('Strong wind will significantly affect ball flight');
       } else if (windSpeed > 5) {
-        reasons.push('Moderate wind adds challenge to club selection');
+        reasons.push('Select your clubs carefully to take windy conditions into account');
       } else if (temp && temp < 5) {
         reasons.push('Cold affects ball compression and distance');
       } else if (typeof clouds === 'number' && clouds < 30) {
         reasons.push('Clear skies ideal for reading greens');
       } else {
-        reasons.push('Good golfing weather');
+        reasons.push('');
       }
       break;
 
@@ -946,47 +1023,47 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (typeof day.visibility === 'number' && day.visibility < 1000) {
         reasons.push('Poor visibility makes navigation difficult');
       } else {
-        reasons.push('Great day for exploring trails');
+        reasons.push('');
       }
       break;
 
-    case 'picnicking':
-      if (rain > 0) {
-        reasons.push('Rain will spoil outdoor dining');
-      } else if (windSpeed > 8) {
-        reasons.push('Strong wind will blow napkins and plates around');
-      } else if (temp && temp > 30) {
-        reasons.push('Very hot - food safety concerns in heat');
-      } else if (temp && temp < 10) {
-        reasons.push('Cold weather not comfortable for outdoor eating');
-      } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
-        reasons.push('Partly cloudy - perfect for avoiding harsh sun');
-      } else {
-        reasons.push('Perfect picnic weather');
-      }
-      break;
+case 'picnicking':
+  if (rain > 0) {
+    reasons.push("🌧️ Rain showers — tricky to keep the sandwiches dry");
+  } else if (windSpeed > 8) {
+    reasons.push("💨 Gusty winds — napkins on the run, hold your plates!");
+  } else if (temp && temp > 30) {
+    reasons.push("🥵 Hot weather — shade up and keep food cool");
+  } else if (temp && temp < 10) {
+    reasons.push("🧣 A bit chilly — better for a flask than a picnic spread");
+  } else if (clouds !== null && clouds >= 20 && clouds <= 70) {
+    reasons.push("⛅ Pleasant mix of sun and cloud — comfy for a picnic");
+  } else {
+    reasons.push('');
+  }
+  break;
 
-    case 'beach':
-      if (rain > 5) {
-        reasons.push('Heavy rain ruins beach relaxation');
-      } else if (rain > 2) {
-        reasons.push('Moderate rain not ideal for beach activities');
-      } else if (rain > 0 && rain <= 2) {
-        reasons.push('Light rain might interrupt beach time occasionally');
-      } else if (windSpeed > 12) {
-        reasons.push('Very windy - sand will blow everywhere');
-      } else if (windSpeed > 6) {
-        reasons.push('Moderate wind keeps things fresh');
-      } else if (temp && temp > 35) {
-        reasons.push('Very hot - risk of sunburn and dehydration');
-      } else if (temp && temp < 18) {
-        reasons.push('Too cold for comfortable beach time');
-      } else if (typeof clouds === 'number' && clouds < 50) {
-        reasons.push('Sunny skies perfect for beach day');
-      } else {
-        reasons.push('Nice beach conditions');
-      }
-      break;
+case 'beach':
+  if (rain > 5) {
+    reasons.push("🌧️ Heavy rain — not a day for sandcastles");
+  } else if (rain > 2) {
+    reasons.push("🌦️ Showery skies — beach fun will be on and off");
+  } else if (rain > 0 && rain <= 2) {
+    reasons.push("🌂 A few drops — might pause the sandcastle building");
+  } else if (windSpeed > 12) {
+    reasons.push("💨 Super windy — expect sand in your sandwiches");
+  } else if (windSpeed > 6) {
+    reasons.push("🍃 Breezy beach — kites will love it");
+  } else if (temp && temp > 35) {
+    reasons.push("🥵 Scorching — hats, shade, and ice creams essential");
+  } else if (temp && temp < 18) {
+    reasons.push("🧥 Chilly for swimsuits — paddling may be enough");
+  } else if (typeof clouds === 'number' && clouds < 50) {
+    reasons.push("☀️ Sunny skies — perfect for a family beach day");
+  } else {
+    reasons.push('');
+  }
+  break;
 
     case 'gardening':
     case 'outdoor_gardening':
@@ -1003,7 +1080,7 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (temp && temp >= 15 && temp <= 25) {
         reasons.push('Perfect temperature for gardening');
       } else {
-        reasons.push('Good conditions for garden work');
+        reasons.push('');
       }
       break;
 
@@ -1019,25 +1096,39 @@ function addActivitySpecificReasons(day: DayLike, activityId: string, reasons: s
       } else if (typeof day.visibility === 'number' && day.visibility > 10000) {
         reasons.push('Excellent visibility for distant subjects');
       } else {
-        reasons.push('Good photography conditions');
+        reasons.push('Whatver the weather, grab your camera');
       }
       break;
 
-    default:
-      // Generic outdoor activity reasoning
-      if (rain > 5) {
-        reasons.push('Heavy rain makes outdoor activities unpleasant');
-      } else if (windSpeed > 15) {
-        reasons.push('Very strong wind makes outdoor activities difficult');
-      } else if (temp && temp > 35) {
-        reasons.push('Very hot conditions - heat safety concerns');
-      } else if (temp && temp < -5) {
-        reasons.push('Very cold conditions may be uncomfortable');
-      } else {
-        reasons.push("It's a good day to be outside");
+default:
+  // Generic outdoor activity reasoning (Go Daisy style 🌼)
+  if (rain > 5) {
+    reasons.push("🌧️ Bucketing down — most outdoor plans will be a wash-out");
+  } else if (windSpeed > 15) {
+    reasons.push("💨 Very blustery — tough going outdoors today");
+  } else if (temp && temp > 35) {
+    reasons.push("🥵 Scorching heat — take it easy, shade and water essential");
+  } else if (temp && temp < -5) {
+    reasons.push("🥶 Bitterly cold — layers and short stints outside only");
+  } else {
+    reasons.push('');
+  }
+
+      // Add snow awareness for outdoor activities when data is available (exclude marine/watersports)
+      if (
+        isOutdoor(activityId) && !MARINE_ACTIVITY_IDS.includes(activityId) && (
+          (typeof day.snowDepthCm === 'number' && day.snowDepthCm > 0) ||
+          (typeof day.snowfallRateMmH === 'number' && day.snowfallRateMmH > 0)
+        )
+      ) {
+        const sd = typeof day.snowDepthCm === 'number' ? day.snowDepthCm : 0;
+        const sr = typeof day.snowfallRateMmH === 'number' ? day.snowfallRateMmH : 0;
+        const desc = getSnowDescription(sd, sr);
+        reasons.push(`${desc} — keep warm and take care on icy surfaces`);
       }
-      break;
-  }  // ➕ Add pollen-related reasons for outdoor activities
+  }
+
+  // ➕ Add pollen-related reasons for outdoor activities (after switch(activityId))
   if (isOutdoor(activityId) && day.pollen) {
     try {
       console.log('🌸 Processing pollen for activity:', activityId, 'Pollen data:', day.pollen);
@@ -1076,20 +1167,20 @@ function getDefaultReasonForActivity(activityId: string): string[] {
   const activity = activityTypes.find(a => a.id === activityId);
   const activityName = activity?.name || activityId.replace(/_/g, ' ');
   
-  // Activity-specific defaults
-  const defaults: Record<string, string> = {
-    'basketball_outdoor': 'Courts are available for a game',
-    'football_soccer': 'Pitch conditions allow for play',
-    'tennis': 'Courts are in good condition',
-    'running': 'Good conditions for a run',
-    'cycling': 'Roads are clear for cycling',
-    'golf': 'Course is playable',
-    'hiking': 'Trails are accessible',
-    'picnicking': 'Suitable for outdoor dining',
-    'beach': 'Beach conditions are reasonable',
-    'gardening': 'Garden work is possible',
-    'photography': 'Lighting conditions are workable'
-  };
+// Activity-specific defaults (neutral Go Daisy style 🌼)
+const defaults: Record<string, string> = {
+  basketball_outdoor: "🏀 Courts are playable — fine for a game",
+  football_soccer:   "⚽ Pitch is usable — good enough for a match",
+  tennis:            "🎾 Courts are serviceable — playable conditions",
+  running:           "👟 Conditions are steady — suitable for a run",
+  cycling:           "🚴 Roads are passable — okay for cycling",
+  golf:              "⛳ Course is open — playable today",
+  hiking:            "🥾 Trails are accessible — fair for a walk",
+  picnicking:        "🧺 Decent day for an outdoor bite",
+  beach:             "🏖️ Beach is fine — not perfect, not poor",
+  gardening:         "🌱 Conditions are workable — garden tasks possible",
+  photography:       "📸 Lighting is adequate — fine for a few shots",
+};
 
   return [defaults[activityId] || `Conditions are suitable for ${activityName.toLowerCase()}`];
 }

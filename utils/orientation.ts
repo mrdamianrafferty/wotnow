@@ -16,7 +16,7 @@ const hasLocalStorage = (): boolean => {
   }
 };
 
-const roundCoord = (v: number) => +v.toFixed(5);
+import { roundCoord } from './coordinatePrecision';
 
 /** Read cached orientation synchronously if available */
 const getCachedOrientation = (lat?: number | null, lon?: number | null): number | undefined => {

@@ -82,8 +82,81 @@ const defaultPreferences: Preferences = {
   forecast: [],
   category: 'Music',
   genre: '',
-  eventPreferences: defaultEventPreferences,
+  eventPreferences: { ...defaultEventPreferences },
 };
+
+const toStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+function normalisePreferences(value: unknown): Preferences {
+  if (!value || typeof value !== 'object') {
+    return { ...defaultPreferences };
+  }
+
+  const parsed = value as Partial<Preferences>;
+  const validIds = new Set(activityTypes.map(a => a.id));
+  const interests = Array.isArray(parsed.interests)
+    ? parsed.interests.filter((id): id is string => typeof id === 'string' && validIds.has(id))
+    : [];
+
+  const rawLocations = Array.isArray(parsed.locations) ? parsed.locations : [];
+  const locations: Location[] = rawLocations
+    .map((loc) => {
+      if (!loc || typeof loc !== 'object') return null;
+      const { name, lat, lon, type } = loc as Location;
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+      return {
+        name: typeof name === 'string' && name.trim() ? name : 'Saved place',
+        lat: latNum,
+        lon: lonNum,
+        type: type === 'coastal' ? 'coastal' : 'home',
+      } as Location;
+    })
+    .filter((loc): loc is Location => !!loc);
+
+  const forecast = Array.isArray(parsed.forecast) ? parsed.forecast : [];
+
+  const rawEventPreferences = parsed.eventPreferences && typeof parsed.eventPreferences === 'object'
+    ? parsed.eventPreferences as Partial<EventPreferences>
+    : undefined;
+
+  const eventPreferences: EventPreferences = rawEventPreferences
+    ? {
+        sport: !!rawEventPreferences.sport,
+        music: !!rawEventPreferences.music,
+        arts: !!rawEventPreferences.arts,
+        musicCategories: toStringArray(rawEventPreferences.musicCategories),
+        artsCategories: toStringArray(rawEventPreferences.artsCategories),
+        sportsCategories: toStringArray(rawEventPreferences.sportsCategories),
+      }
+    : { ...defaultEventPreferences };
+
+  const base: Preferences = {
+    locations: locations.length ? locations : [DEFAULT_HOME_LOCATION],
+    interests,
+    forecast,
+    category: typeof parsed.category === 'string' ? parsed.category : 'Music',
+    genre: typeof parsed.genre === 'string' ? parsed.genre : '',
+    eventPreferences,
+  };
+
+  return base;
+}
+
+function loadPreferencesFromStorage(): Preferences | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem('preferences');
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as unknown;
+    return normalisePreferences(parsed);
+  } catch (err) {
+    console.warn('Failed to load preferences from storage', err);
+    return null;
+  }
+}
 
 // --- Context/Provider ---
 interface UserPreferencesContextType {
@@ -98,43 +171,46 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
   // Lazy-load preferences synchronously on first render (client only)
   const [preferences, setPreferences] = useState<Preferences>(() => {
     if (typeof window === 'undefined') return defaultPreferences;
-    const stored = localStorage.getItem('preferences');
-    if (!stored) return defaultPreferences;
-    try {
-      const parsed = JSON.parse(stored);
-
-      // --- Interests validation
-      const validIds = new Set(activityTypes.map(a => a.id));
-      parsed.interests = Array.isArray(parsed.interests)
-        ? parsed.interests.filter((id: string) => validIds.has(id))
-        : [];
-
-      // --- Event Preferences validation
-      if (!parsed.eventPreferences || typeof parsed.eventPreferences !== 'object') {
-        parsed.eventPreferences = { ...defaultEventPreferences };
-      } else {
-        const ep = parsed.eventPreferences;
-        parsed.eventPreferences = {
-          sport: !!ep.sport,
-          music: !!ep.music,
-          arts: !!ep.arts,
-          musicCategories: Array.isArray(ep.musicCategories) ? ep.musicCategories : [],
-          artsCategories: Array.isArray(ep.artsCategories) ? ep.artsCategories : [],
-          sportsCategories: Array.isArray(ep.sportsCategories) ? ep.sportsCategories : [],
-        };
-      }
-
-      // --- Locations validation
-      parsed.locations = Array.isArray(parsed.locations) && parsed.locations.length > 0
-        ? parsed.locations
-        : [DEFAULT_HOME_LOCATION];
-
-      return parsed as Preferences;
-    } catch (e) {
-      console.warn('Failed to parse preferences from localStorage, using defaults.', e);
-      return defaultPreferences;
-    }
+    return loadPreferencesFromStorage() ?? defaultPreferences;
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const syncFromStorage = () => {
+      const stored = loadPreferencesFromStorage();
+      if (!stored) return;
+      setPreferences((prev) => {
+        const sameInterests = prev.interests.length === stored.interests.length && prev.interests.every((id, idx) => id === stored.interests[idx]);
+        const sameLocations = prev.locations.length === stored.locations.length && prev.locations.every((loc, idx) => {
+          const other = stored.locations[idx];
+          if (!other) return false;
+          return (
+            loc.type === other.type &&
+            loc.name === other.name &&
+            Number(loc.lat).toFixed(4) === Number(other.lat).toFixed(4) &&
+            Number(loc.lon).toFixed(4) === Number(other.lon).toFixed(4)
+          );
+        });
+        if (sameInterests && sameLocations) return prev;
+        return { ...prev, ...stored };
+      });
+    };
+
+    // Hydrate immediately after mount
+    syncFromStorage();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'preferences') {
+        syncFromStorage();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   // --- Auto-detect home location if not set ---
   useEffect(() => {

@@ -3,6 +3,18 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
   const url = req.nextUrl;
+  const hostname = req.headers.get('host') || '';
+  
+  // Redirect fishfindr.eu to /findr
+  if (hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') {
+    // If not already on /findr path, redirect to /findr
+    if (!url.pathname.startsWith('/findr')) {
+      const findrUrl = url.clone();
+      findrUrl.pathname = '/findr';
+      return NextResponse.redirect(findrUrl);
+    }
+  }
+  
   const hasCode = url.searchParams.has('code');
   const hasTokenHash = url.searchParams.has('token_hash') || url.searchParams.has('token');
 

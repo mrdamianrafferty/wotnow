@@ -46,5 +46,6 @@
 
   // 👁 UI/UX
   "workbench.editor.enablePreview": false,
-  "workbench.startupEditor": "none"
+  "workbench.startupEditor": "none",
+  "chat.agent.maxRequests": 150
 }

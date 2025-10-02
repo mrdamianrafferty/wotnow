@@ -1,0 +1,16 @@
+table_name
+species_meta_staging
+species_meta
+species_meta_staging_raw
+species_advice_staging_raw
+species_meta_staging_by_name
+species_name_scientific_staging
+species_advice_staging_clean
+species_name_alias
+ices_rectangles
+regions
+species_frequency
+species
+weather_predictions
+fishing_reports
+species_advice_staging

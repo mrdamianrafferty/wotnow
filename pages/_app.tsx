@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
-import { useRouter } from 'next/router'
+import { LanguageProvider } from '../context/LanguageContext'
 import { useEffect } from 'react'
 
 type ThemeName = 'light' | 'wotnow' | string;
@@ -21,7 +21,6 @@ type PagePropsWithTheme = {
 };
 
 export default function App({ Component, pageProps }: AppProps<PagePropsWithTheme>) {
-  const router = useRouter();
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const { pathname, search, hash } = window.location;
@@ -39,22 +38,38 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
       window.location.replace(`/auth/callback${search}${hash || ''}`);
     }
   }, []);
-  // Use Light theme on onboarding, otherwise default to wotnow
-  const chosenTheme = router.pathname.startsWith('/onboarding') ? 'light' : 'wotnow';
-  // If a page explicitly passes a theme via pageProps, honour it
-  const theme = (pageProps?.theme as ThemeName | undefined) ?? chosenTheme;
+  // Use Light theme as universal default unless explicitly overridden at page level
+  const defaultTheme = 'light';
+  // If a page explicitly passes a theme via pageProps, honour it, otherwise use light
+  const theme = (pageProps?.theme as ThemeName | undefined) ?? defaultTheme;
 
   return (
-    <UserPreferencesProvider>
-      <Head>
-        {/* Ensure proper scaling and colour on iPad/phones */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#111827" />
-      </Head>
-      {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-      <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content">
-        <Component {...pageProps} />
-      </div>
-    </UserPreferencesProvider>
+    <LanguageProvider>
+      <UserPreferencesProvider>
+        <Head>
+          {/* Ensure proper scaling and colour on iPad/phones */}
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+          <meta name="theme-color" content="#111827" />
+          
+          {/* PWA Manifest */}
+          <link rel="manifest" href="/manifest.json" />
+          
+          {/* Apple Touch Icons */}
+          <link rel="apple-touch-icon" href="/findr-favicon/apple-touch-icon.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Findr" />
+          
+          {/* Favicons */}
+          <link rel="icon" type="image/svg+xml" href="/findr-favicon/favicon.svg" />
+          <link rel="icon" type="image/png" sizes="96x96" href="/findr-favicon/favicon-96x96.png" />
+          <link rel="icon" type="image/x-icon" href="/findr-favicon/favicon.ico" />
+        </Head>
+        {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
+        <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content">
+          <Component {...pageProps} />
+        </div>
+      </UserPreferencesProvider>
+    </LanguageProvider>
   )
 }

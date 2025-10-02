@@ -8,6 +8,8 @@ const ORIENTATION_PREFS_KEY = 'wotnow.beach.user.orientation.v1';
 /**
  * Save user-selected beach orientation for a specific location
  */
+import { roundCoord } from './coordinatePrecision';
+
 export function saveBeachOrientation(locationId: string, orientationDeg: number | null): void {
   try {
     const stored = localStorage.getItem(ORIENTATION_PREFS_KEY);
@@ -48,8 +50,10 @@ export function getBeachOrientation(locationId: string): number | null {
  */
 export function generateLocationId(lat: number, lon: number): string {
   // Round to 5 decimal places for consistent IDs
-  const roundedLat = Math.round(lat * 100000) / 100000;
-  const roundedLon = Math.round(lon * 100000) / 100000;
+// Update generateLocationId function (line ~48):
+
+const roundedLat = roundCoord(lat);
+const roundedLon = roundCoord(lon);
   return `${roundedLat},${roundedLon}`;
 }
 

@@ -113,7 +113,7 @@ h1, h2, h3 {
 }
 
 button:not(.btn) {
-  background-color: #4a90e2;
+  /* background-color: #4a90e2; */
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;

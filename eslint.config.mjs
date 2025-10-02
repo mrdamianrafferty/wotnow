@@ -24,6 +24,7 @@ const eslintConfig = [
     'img-optimizer/**',
     'services/astro_highlights/astro_highlights/.venv/**',
     'api/python/.venv/**',
+    'datras-fetcher/**',
     // Ignore config files to avoid parser/sourceType mismatches
     '**/*.config.js',
     '**/*.config.cjs',

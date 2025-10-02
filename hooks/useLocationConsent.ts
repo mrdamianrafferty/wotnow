@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useAuth } from './useRequireAuth';
+import { supabase } from '../lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 export interface LocationPreferences {
   // Core preferences
@@ -43,13 +44,30 @@ export function useLocationConsent(): LocationConsentState & {
   updatePreferences: (prefs: Partial<LocationPreferences>) => Promise<void>;
   dismissModal: () => void;
 } {
-  const { user } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
   const [state, setState] = useState<LocationConsentState>({
     hasConsent: false,
     preferences: null,
     showConsentModal: false,
     loading: true
   });
+
+  // Check auth state
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    
+    checkAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Load preferences on mount
   useEffect(() => {

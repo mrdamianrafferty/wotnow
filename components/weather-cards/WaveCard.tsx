@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getWaveDescription } from '../../utils/weatherLabels';
+import { classifyCurrentStrength } from '../../utils/currentStrength';
 
 interface WaveCardProps {
   waveHeightM?: number | null;
@@ -14,6 +15,8 @@ interface WaveCardProps {
   waveSeries?: Array<{height: number | null; time?: string}> | Array<number | null>;
   lat?: number;
   lon?: number;
+  currentSpeedMS?: number | null;
+  currentDirectionDeg?: number | null;
 }
 
 // Temporary fallback data for standalone component
@@ -204,6 +207,8 @@ export const WaveCard: React.FC<WaveCardProps> = ({
   waveSeries,
   lat: _lat,
   lon: _lon,
+  currentSpeedMS,
+  currentDirectionDeg,
 }) => {
   // Check if we have Stormglass-like marine data
   const hasMarineData = (
@@ -239,6 +244,10 @@ export const WaveCard: React.FC<WaveCardProps> = ({
   const ws = typeof windSpeedMS === 'number' ? windSpeedMS : (marineNow.wind.speed / 3.6);
   const wdeg = typeof windDir === 'number' ? windDir : marineNow.wind.dir;
   const explanationSentence = getWaveDescription(baseHeightM);
+  const currentSpeed = typeof currentSpeedMS === 'number' ? currentSpeedMS : null;
+  const currentDir = typeof currentDirectionDeg === 'number' ? currentDirectionDeg : null;
+  const currentStrengthLabel = currentSpeed != null ? classifyCurrentStrength(currentSpeed) : null;
+  const currentDirectionLabel = currentDir != null ? `${degToCompass(currentDir)} (${Math.round(currentDir)}°)` : null;
   
   // Use parametric wave SVG with period and height values
   const parametricWaveIconSrc = '/wave-period-icons/parametric-wave.svg';
@@ -334,6 +343,16 @@ export const WaveCard: React.FC<WaveCardProps> = ({
                 </span>
               </div>
             ))}
+            {currentSpeed != null && (
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium">Currents:</span>
+                <span>{currentStrengthLabel?.toLowerCase().includes('current') ? currentStrengthLabel : `${currentStrengthLabel} current`}</span>
+                <span className="opacity-70">({currentSpeed.toFixed(1)} m/s)</span>
+                {currentDirectionLabel && (
+                  <span className="opacity-70">{currentDirectionLabel}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

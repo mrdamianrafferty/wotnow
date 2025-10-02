@@ -65,6 +65,10 @@ export interface WeatherForecastDay {
     co?: number;         // Carbon monoxide
   };
 
+  // Optional snow inputs surfaced by APIs/UI
+  snowDepthCm?: number;       // cm
+  snowfallRateMmH?: number;   // mm/h
+
   marine?: MarineHour[];
 }
 

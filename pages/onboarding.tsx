@@ -31,11 +31,18 @@ const LIGHT_INLINE_VARS: CSSProperties & Record<string, string> = {
   '--wa': '37 100% 50%',
   '--er': '14 100% 50%',
 };
+// LocalStorage key used by demo page to hand off the selected place
+const DEMO_PLACE_LS_KEY = 'godaisy.demo.place';
 // ──────────────────────────────────────────────────────────────────────────────
 // Small components and helpers for the improved onboarding UX
 
 // Add preferences context to persist onboarding results
 import { useUserPreferences } from "../context/UserPreferencesContext";
+import { CLUSTERS, buildUiTaxonomyFromActivities } from "../data/taxonomy";
+import { activityTypes } from "../data/activityTypes";
+
+// Build a UI taxonomy that only contains real activities and guarantees coverage
+const UI_TAXONOMY = buildUiTaxonomyFromActivities(activityTypes);
 
 type CategoryHeaderProps = {
   title: string;
@@ -190,6 +197,7 @@ const activityIcon: Record<string, React.ReactNode> = {
   pickleball: "🥒",
   indoor_climbing: "🧗",
   rock_climbing: "🧗",
+  rock_hopping: "🪨",
   mountain_biking: "🚵",
   gravel_biking: "🚴",
   road_cycling: "🚴",
@@ -250,245 +258,6 @@ const activityIcon: Record<string, React.ReactNode> = {
 
 // ──────────────────────────────────────────────────────────────────────────────
 // TAXONOMY (normalised & deduped)
-const TAXONOMY = [
-  {
-    key: "Active Sports",
-    icon: "🏃‍♂️",
-    subcategories: [
-      {
-        key: "Outdoor Sports",
-        icon: "🤾‍♂️",
-        acts: [
-          "football_soccer",
-          "cricket",
-          "rugby",
-          "basketball_outdoor",
-          "beach_volleyball",
-          "american_football",
-          "baseball",
-          "hurling_camogie",
-          "gaelic_football",
-          "hockey",
-          "netball",
-          "padel",
-          "archery",
-          "pickleball",
-          "golf",
-          "tennis",
-        ],
-      },
-      {
-        key: "Indoor Sports",
-        icon: "🎾",
-        acts: [
-          "tennis_indoor",
-          "squash",
-          "badminton",
-          "table_tennis",
-          "volleyball_indoor",
-          "indoor_climbing",
-        ],
-      },
-      {
-        key: "Water Sports",
-        icon: "🛶",
-        acts: [
-          "kayaking",
-        "sea_kayaking",
-                    "canoeing",
-                    "surfing",
-                    "stand_up_paddleboarding",
-                    "sup_sea",
-                    "snorkeling",
-                    "swimming",
-                    "indoor_swimming",
-                    "sea_swimming",
-                    "sea_fishing_shore",
-                    "sea_fishing_boat",
-                    "windsurfing",
-                    "kitesurfing",
-                    "jet_skiing",
-                    "scuba_diving",
-					"sailing",
-                    "sailing_inland",
-                    "windsurfing_inland",
-        ],
-      },
-      {
-        key: "Action Sports",
-        icon: "🚵‍♂️",
-        acts: [
-          "mountain_biking",
-          "road_cycling",
-          "trail_running",
-          "gravel_biking",
-          "rock_climbing",
-          "indoor_climbing",
-          "skateboarding",
-          "rollerblading",
-          "riding_motorbike",
-          "geocaching",
-        ],
-      },
-      {
-        key: "Winter Sports",
-        icon: "⛷️",
-        acts: [
-          "skiing",
-          "snowboarding",
-          "cross_country_skiing",
-          "ice_skating",
-          "curling",
-          "ice_hockey",
-          "ice_fishing",
-          "ice_hockey_indoor",
-          "ice_hockey_us",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Fitness & Wellness",
-    icon: "💪",
-    subcategories: [
-      {
-        key: "Mindfulness",
-        icon: "🧘‍♂️",
-        acts: [
-          "yoga",
-          "outdoor_yoga",
-          "meditation",
-          "outdoor_meditation",
-          "pilates",
-          "tai_chi",
-          "outdoor_gym",
-        ],
-      },
-      {
-        key: "Keeping Fit",
-        icon: "🏃",
-        acts: [
-          "running",
-          "cycling",
-          "urban_exploring",
-          "gym_workout",
-          "outdoor_gym",
-          "zumba",
-          "boxing",
-          "spinning",
-          "martial_arts",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Outdoor Activities",
-    icon: "🌲",
-    subcategories: [
-      {
-        key: "Nature Activities",
-        icon: "🌳",
-        acts: [
-          "hiking",
-          "birdwatching",
-          "photography",
-          "foraging",
-          "mushroom_hunting",
-          "stargazing",
-        ],
-      },
-      {
-        key: "Fishing",
-        icon: "🎣",
-        acts: [
-          "fly_fishing_freshwater",
-          "coarse_fishing",
-          "sea_fishing_shore",
-          "sea_fishing_boat",
-          "ice_fishing",
-        ],
-      },
-      {
-        key: "Kicking Back and Relaxing",
-        icon: "🍔",
-        acts: [
-          "picnicking",
-          "bbq",
-          "beach",
-          "camping",
-          "outdoor_reading",
-          "dog_walking",
-          "outdoor_playground",
-          "outdoor_chess",
-          "outdoor_painting",
-          "outdoor_music",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Creative & Arts",
-    icon: "🎨",
-    subcategories: [
-      {
-        key: "Visual Arts",
-        icon: "🎨",
-        acts: [
-          "painting",
-          "outdoor_painting",
-          "crafts",
-          "photography",
-          "knitting",
-          "diy",
-          "playing_records",
-          "make_music",
-          "dance",
-          "outdoor_music",
-          "gallery",
-        ],
-      },
-    ],
-  },
-  {
-    key: "Indoor Activities",
-    icon: "🏠",
-    subcategories: [
-      {
-        key: "Relaxing at Home",
-        icon: "🧶",
-        acts: [
-          "crafts",
-          "knitting",
-          "reading",
-          "diy",
-          "playing_records",
-          "cooking",
-          "painting",
-          "gaming",
-          "online",
-          "watch_a_movie",
-        ],
-      },
-      {
-        key: "Going Out",
-        icon: "🍻",
-        acts: [
-          "going_to_pub",
-          "playing_cards",
-          "cafe",
-          "cinema",
-          "museum",
-          "shopping",
-          "dance",
-          "gallery",
-          "bowling",
-        ],
-      },
-    ],
-  },
-];
-
-
 
 export default function OnboardingFlowDaisyUI() {
   // Force DaisyUI theme to light on this page and restore after
@@ -913,7 +682,7 @@ function InlineLocationSearch({
 // Extracted interactive card from previous implementation
 function OnboardingCardInteractive() {
   const [step, setStep] = useState(1);
-  const [selectedClusters, setSelectedClusters] = useState<string[]>(TAXONOMY.map(c => c.key));
+  const [selectedClusters, setSelectedClusters] = useState<string[]>(CLUSTERS.map(c => c.key));
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [homeLocation, setHomeLocation] = useState("");
   const [homeSpot, setHomeSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
@@ -921,6 +690,51 @@ function OnboardingCardInteractive() {
   const [coastalSpot, setCoastalSpot] = useState<null | { name: string; lat: number; lon: number }>(null);
   const [showRegisterNudge, setShowRegisterNudge] = useState(true);
   const router = useRouter();
+  // Prefill Home location from demo → onboarding handoff (URL or localStorage)
+  useEffect(() => {
+    if (!router.isReady) return;
+    // If user already set something in this session, don't override
+    if (homeSpot || (homeLocation && homeLocation.trim().length > 0)) return;
+
+    // 1) Try URL parameters
+    const getParam = (k: string): string | undefined => {
+      const v = router.query[k];
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v) && v.length) return v[0];
+      return undefined;
+    };
+    const qLat = getParam('lat');
+    const qLon = getParam('lon');
+    const qName = getParam('name');
+
+    const latNum = qLat != null ? Number(qLat) : NaN;
+    const lonNum = qLon != null ? Number(qLon) : NaN;
+
+    if (Number.isFinite(latNum) && Number.isFinite(lonNum) && qName && qName.trim()) {
+      const loc = { name: qName, lat: latNum, lon: lonNum } as const;
+      setHomeSpot(loc);
+      setHomeLocation(loc.name);
+      return;
+    }
+
+    // 2) Fallback to localStorage set by /demo
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(DEMO_PLACE_LS_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as { name?: string; lat?: unknown; lon?: unknown } | null;
+        const name = (parsed?.name && String(parsed.name)) || '';
+        const lat = Number(parsed?.lat);
+        const lon = Number(parsed?.lon);
+        if (name && Number.isFinite(lat) && Number.isFinite(lon)) {
+          const loc = { name, lat, lon } as const;
+          setHomeSpot(loc);
+          setHomeLocation(loc.name);
+        }
+      }
+    } catch { /* ignore storage errors */ }
+  // We only want to run this once on entry (after router is ready) unless user had already set a value
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
   // Use preferences context to persist selections
   const { preferences, setPreferences } = useUserPreferences();
   // Local locating states and errors for current-location actions
@@ -1003,7 +817,7 @@ function OnboardingCardInteractive() {
 
   // ──────────────────────────────────────────────────────────────────────────────
   // TAXONOMY (normalised & deduped)
-  const clusterMap = useMemo(() => new Map(TAXONOMY.map(c => [c.key, c])), []);
+  const clusterMap = useMemo(() => new Map(CLUSTERS.map(c => [c.key, c])), []);
 
   const selectedSubcats = useMemo(() => {
     const subs: { key: string; icon: string }[] = [];
@@ -1016,7 +830,7 @@ function OnboardingCardInteractive() {
 
   const activitiesBySubcat = useMemo(() => {
     const map: Record<string, string[]> = {};
-    TAXONOMY.forEach(cluster => {
+    UI_TAXONOMY.forEach(cluster => {
       cluster.subcategories.forEach(sc => {
         map[sc.key] = Array.from(new Set(sc.acts));
       });
@@ -1157,7 +971,7 @@ function OnboardingCardInteractive() {
       {/* Screens */}
       {phase.type === 'clusters' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 mt-2">
-          {TAXONOMY.map(c => (
+          {CLUSTERS.map(c => (
             <ClusterPill
               key={c.key}
               id={c.key}

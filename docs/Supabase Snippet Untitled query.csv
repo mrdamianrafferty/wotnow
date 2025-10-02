@@ -1,0 +1,428 @@
+markdown
+"## VIEW **public.activities_catalog_v1**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`slug`|text|YES|||
+|  2|`title`|text|YES|||
+## TABLE **public.bio_parameter_bands**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`parameter`|text|NO|||
+|  2|`level`|USER-DEFINED|NO|||
+|  3|`threshold`|double precision|NO|||
+|  4|`angler_interpretation`|text|NO|||
+## TABLE **public.bio_parameter_bands_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`parameter`|text|YES|||
+|  2|`level`|text|YES|||
+|  3|`threshold`|double precision|YES|||
+|  4|`angler_interpretation`|text|YES|||
+## TABLE **public.fishing_reports**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`user_id`|uuid|YES|||
+|  3|`rectangle_id`|uuid|YES|||
+|  4|`fishing_date`|date|NO|||
+|  5|`fishing_duration_hours`|numeric|YES|||
+|  6|`species_caught`|ARRAY|YES|'{}'::uuid[]||
+|  7|`total_fish_count`|integer|YES|0||
+|  8|`fishing_success_rating`|integer|YES|||
+|  9|`weather_rating`|integer|YES|||
+| 10|`gear_used`|ARRAY|YES|'{}'::text[]||
+| 11|`depth_fished`|integer|YES|||
+| 12|`notes`|text|YES|||
+| 13|`created_at`|timestamp with time zone|YES|now()||
+## VIEW **public.geography_columns**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`f_table_catalog`|name|YES|||
+|  2|`f_table_schema`|name|YES|||
+|  3|`f_table_name`|name|YES|||
+|  4|`f_geography_column`|name|YES|||
+|  5|`coord_dimension`|integer|YES|||
+|  6|`srid`|integer|YES|||
+|  7|`type`|text|YES|||
+## VIEW **public.geometry_columns**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`f_table_catalog`|character varying(256)|YES|||
+|  2|`f_table_schema`|name|YES|||
+|  3|`f_table_name`|name|YES|||
+|  4|`f_geometry_column`|name|YES|||
+|  5|`coord_dimension`|integer|YES|||
+|  6|`srid`|integer|YES|||
+|  7|`type`|character varying(30)|YES|||
+## TABLE **public.ices_coastal_samples_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`rectangle_code`|text|NO|||
+|  2|`center_lat`|numeric|YES|||
+|  3|`center_lon`|numeric|YES|||
+|  4|`distance_to_shore_km`|numeric|YES|||
+|  5|`is_coastal`|boolean|YES|||
+|  6|`sample_wkt`|text|YES|||
+## TABLE **public.ices_rectangles**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`rectangle_code`|character varying(10)|NO|||
+|  3|`lat_south`|numeric|NO|||
+|  4|`lat_north`|numeric|NO|||
+|  5|`lon_west`|numeric|NO|||
+|  6|`lon_east`|numeric|NO|||
+|  7|`center_lat`|numeric|NO|||
+|  8|`center_lon`|numeric|NO|||
+|  9|`region`|character varying(50)|NO|||
+| 10|`country_codes`|ARRAY|YES|'{}'::text[]||
+| 11|`is_coastal`|boolean|YES|true||
+| 12|`distance_to_shore_km`|numeric|YES|||
+| 13|`created_at`|timestamp with time zone|YES|now()||
+| 14|`bio_data_available`|boolean|YES|||
+| 15|`bio_data_sources`|ARRAY|YES|||
+| 16|`bio_data_checked_at`|timestamp without time zone|YES|||
+| 17|`available_bio_params`|ARRAY|YES|||
+| 18|`bio_data_quality`|text|YES|||
+| 19|`coastal_point`|USER-DEFINED|YES|||
+| 20|`coastal_sample_point`|USER-DEFINED|YES|||
+## TABLE **public.interests**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|bigint|NO|||
+|  2|`slug`|text|NO|||
+|  3|`title`|text|NO|||
+## VIEW **public.interests_view**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`slug`|text|YES|||
+|  2|`title`|text|YES|||
+## VIEW **public.latest_bio_bands**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`rectangle_id`|uuid|YES|||
+|  2|`observed_at`|timestamp with time zone|YES|||
+|  3|`bands`|jsonb|YES|||
+## TABLE **public.pgrst_probe**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|bigint|NO|||
+|  2|`label`|text|NO|||
+## TABLE **public.profiles**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|||
+|  2|`name`|text|YES|||
+|  3|`email`|text|YES|||
+|  4|`home_lat`|numeric|YES|||
+|  5|`home_lon`|numeric|YES|||
+|  6|`coast_lat`|numeric|YES|||
+|  7|`coast_lon`|numeric|YES|||
+|  8|`activities`|ARRAY|YES|'{}'::text[]||
+|  9|`preferences_json`|jsonb|YES|'{}'::jsonb||
+| 10|`updated_at`|timestamp with time zone|YES|now()||
+## TABLE **public.rectangle_coastal_sample**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`rectangle_id`|uuid|NO|||
+|  2|`rectangle_code`|text|NO|||
+|  3|`pt`|USER-DEFINED|NO|||
+|  4|`chosen_offset_m`|integer|NO|||
+|  5|`created_at`|timestamp with time zone|NO|now()||
+## TABLE **public.regions**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`name`|character varying(50)|NO|||
+|  3|`description`|text|YES|||
+|  4|`primary_language`|character varying(5)|YES|'en'::character varying||
+|  5|`countries`|ARRAY|YES|'{}'::text[]||
+|  6|`species_count`|integer|YES|0||
+|  7|`rectangle_count`|integer|YES|0||
+## TABLE **public.spatial_ref_sys**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`srid`|integer|NO|||
+|  2|`auth_name`|character varying(256)|YES|||
+|  3|`auth_srid`|integer|YES|||
+|  4|`srtext`|character varying(2048)|YES|||
+|  5|`proj4text`|character varying(2048)|YES|||
+## TABLE **public.species**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`species_code`|character varying(10)|NO|||
+|  3|`scientific_name`|character varying(100)|NO|||
+|  4|`name_en`|character varying(100)|NO|||
+|  5|`name_es`|character varying(100)|YES|||
+|  6|`name_fr`|character varying(100)|YES|||
+|  7|`name_de`|character varying(100)|YES|||
+|  8|`name_it`|character varying(100)|YES|||
+|  9|`name_pt`|character varying(100)|YES|||
+| 10|`typical_gear`|ARRAY|YES|'{}'::text[]||
+| 11|`max_boat_size`|integer|YES|8||
+| 12|`is_night_species`|boolean|YES|false||
+| 13|`is_seasonal`|boolean|YES|false||
+| 14|`eating_quality`|integer|YES|3||
+| 15|`min_depth`|integer|YES|0||
+| 16|`max_depth`|integer|YES|50||
+| 17|`preferred_habitat`|ARRAY|YES|'{}'::text[]||
+| 18|`wind_sensitivity`|numeric|YES|0.5||
+| 19|`temperature_sensitivity`|numeric|YES|0.5||
+| 20|`pressure_sensitivity`|numeric|YES|0.3||
+| 21|`tide_sensitivity`|numeric|YES|0.4||
+| 22|`created_at`|timestamp with time zone|YES|now()||
+| 23|`updated_at`|timestamp with time zone|YES|now()||
+| 24|`advice`|jsonb|YES|'[]'::jsonb||
+| 25|`conservation_status`|text|YES|((advice -> 0) ->> 'conservation_status'::text)||
+| 26|`fun_fact`|text|YES|((advice -> 0) ->> 'fun_fact'::text)||
+## TABLE **public.species_advice_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`species`|text|YES|||
+|  2|`regions`|text|YES|||
+|  3|`best_time`|text|YES|||
+|  4|`tide_sensitivity`|text|YES|||
+|  5|`favourite_baits_and_natural_diet`|text|YES|||
+|  6|`effect_of_temperature`|text|YES|||
+|  7|`effect_of_weather`|text|YES|||
+|  8|`typical_distance_depth`|text|YES|||
+|  9|`edibility_10`|text|YES|||
+| 10|`restrictions_notes`|text|YES|||
+| 11|`trusted_authority_rules`|text|YES|||
+| 12|`context`|text|YES|||
+| 13|`conservation_status`|text|YES|||
+| 14|`fun_fact`|text|YES|||
+## TABLE **public.species_advice_staging_clean**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`scientific_name`|text|YES|||
+|  2|`species`|text|YES|||
+|  3|`regions`|text|YES|||
+|  4|`best_time`|text|YES|||
+|  5|`tide_sensitivity`|text|YES|||
+|  6|`favourite_baits_and_natural_diet`|text|YES|||
+|  7|`effect_of_temperature`|text|YES|||
+|  8|`effect_of_weather`|text|YES|||
+|  9|`typical_distance_depth`|text|YES|||
+| 10|`edibility_10`|text|YES|||
+| 11|`restrictions_notes`|text|YES|||
+| 12|`trusted_authority_rules`|text|YES|||
+| 13|`context`|text|YES|||
+| 14|`conservation_status`|text|YES|||
+| 15|`fun_fact`|text|YES|||
+## TABLE **public.species_advice_staging_raw**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`Species`|text|YES|||
+|  2|`Regions`|text|YES|||
+|  3|`Best Time`|text|YES|||
+|  4|`Tide Sensitivity`|text|YES|||
+|  5|`Favourite Baits & Natural Diet`|text|YES|||
+|  6|`Effect of Temperature`|text|YES|||
+|  7|`Effect of Weather`|text|YES|||
+|  8|`Typical Distance/Depth`|text|YES|||
+|  9|`Edibility (/10)`|text|YES|||
+| 10|`Restrictions/Notes`|text|YES|||
+| 11|`Trusted Authority (rules)`|text|YES|||
+| 12|`Context`|text|YES|||
+| 13|`Conservation Status`|text|YES|||
+| 14|`Fun Fact`|text|YES|||
+## TABLE **public.species_bio_bands**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`species_id`|uuid|NO|||
+|  2|`parameter`|text|NO|||
+|  3|`happy_bands`|ARRAY|NO|||
+|  4|`unhappy_bands`|ARRAY|NO|||
+## TABLE **public.species_bio_bands_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`scientific_name`|text|YES|||
+|  2|`parameter`|text|YES|||
+|  3|`happy_bands`|text|YES|||
+|  4|`unhappy_bands`|text|YES|||
+## TABLE **public.species_frequency**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`species_id`|uuid|YES|||
+|  3|`rectangle_id`|uuid|YES|||
+|  4|`week_of_year`|integer|NO|||
+|  5|`quarter`|integer|NO|||
+|  6|`base_frequency`|numeric|NO|||
+|  7|`confidence_level`|numeric|YES|0.5||
+|  8|`optimal_temp_min`|numeric|YES|||
+|  9|`optimal_temp_max`|numeric|YES|||
+| 10|`optimal_wind_max`|integer|YES|||
+| 11|`optimal_depth_min`|integer|YES|||
+| 12|`optimal_depth_max`|integer|YES|||
+| 13|`data_source`|character varying(50)|YES|'ICES_DATRAS'::character varying||
+| 14|`last_survey_year`|integer|YES|||
+| 15|`sample_size`|integer|YES|||
+| 16|`created_at`|timestamp with time zone|YES|now()||
+| 17|`updated_at`|timestamp with time zone|YES|now()||
+| 18|`user_reported_count`|integer|YES|0||
+| 19|`last_user_report`|timestamp without time zone|YES|||
+| 20|`community_confidence`|numeric|YES|||
+## TABLE **public.species_meta**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`scientific_name`|text|NO|||
+|  2|`conservation_status`|text|YES|||
+|  3|`fun_fact`|text|YES|||
+|  4|`updated_at`|timestamp with time zone|NO|now()||
+## TABLE **public.species_meta_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`scientific_name`|text|NO|||
+|  2|`conservation_status`|text|YES|||
+|  3|`fun_fact`|text|YES|||
+## TABLE **public.species_meta_staging_by_name**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`name_en`|text|NO|||
+|  2|`conservation_status`|text|YES|||
+|  3|`fun_fact`|text|YES|||
+## TABLE **public.species_meta_staging_raw**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`scientific_name`|text|YES|||
+|  2|`conservation_status`|text|YES|||
+|  3|`fun_fact`|text|YES|||
+## TABLE **public.species_name_alias**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`name_en_alias`|text|NO|||
+|  2|`scientific_name`|text|NO|||
+## TABLE **public.species_name_scientific_staging**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`name_en`|text|YES|||
+|  2|`scientific_name`|text|YES|||
+|  3|`conservation_status`|text|YES|||
+|  4|`fun_fact`|text|YES|||
+## TABLE **public.stormglass_bio_readings**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|gen_random_uuid()||
+|  2|`rectangle_id`|uuid|NO|||
+|  3|`observed_at`|timestamp with time zone|NO|||
+|  4|`chlorophyll`|double precision|YES|||
+|  5|`nitrate`|double precision|YES|||
+|  6|`oxygen`|double precision|YES|||
+|  7|`phosphate`|double precision|YES|||
+|  8|`salinity`|double precision|YES|||
+|  9|`phytoplankton`|double precision|YES|||
+| 10|`surfaceTemperature`|double precision|YES|||
+| 11|`source`|text|NO|'stormglass'::text||
+| 12|`payload`|jsonb|YES|||
+| 13|`created_at`|timestamp with time zone|NO|now()||
+| 14|`observed_day`|date|NO|||
+## TABLE **public.user_catches**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|gen_random_uuid()||
+|  2|`user_id`|uuid|YES|||
+|  3|`species_id`|uuid|YES|||
+|  4|`rectangle_id`|uuid|YES|||
+|  5|`quantity`|integer|YES|||
+|  6|`caught_at`|timestamp without time zone|YES|||
+|  7|`conditions`|jsonb|YES|||
+|  8|`created_at`|timestamp without time zone|YES|now()||
+|  9|`gps_lat`|numeric|YES|||
+| 10|`gps_lon`|numeric|YES|||
+| 11|`avg_size_cm`|numeric|YES|||
+| 12|`api_weather_conditions`|jsonb|YES|||
+| 13|`weather_api_source`|text|YES|||
+| 14|`weather_retrieved_at`|timestamp without time zone|YES|||
+| 15|`weather_confidence`|numeric|YES|||
+## TABLE **public.users**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|gen_random_uuid()||
+|  2|`email`|text|YES|||
+|  3|`username`|text|YES|||
+|  4|`created_at`|timestamp without time zone|YES|now()||
+## VIEW **public.v_coastal_sampling_points**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`rectangle_id`|uuid|YES|||
+|  2|`rectangle_code`|character varying(10)|YES|||
+|  3|`lat`|double precision|YES|||
+|  4|`lon`|double precision|YES|||
+## VIEW **public.v_species_bio_bands**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`name_en`|character varying(100)|YES|||
+|  2|`scientific_name`|character varying(100)|YES|||
+|  3|`parameter`|text|YES|||
+|  4|`happy_bands`|ARRAY|YES|||
+|  5|`unhappy_bands`|ARRAY|YES|||
+## TABLE **public.weather_predictions**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|uuid|NO|uuid_generate_v4()||
+|  2|`species_id`|uuid|YES|||
+|  3|`rectangle_id`|uuid|YES|||
+|  4|`prediction_date`|date|NO|||
+|  5|`sea_temp_c`|numeric|YES|||
+|  6|`air_temp_c`|numeric|YES|||
+|  7|`wind_speed_knots`|integer|YES|||
+|  8|`wind_direction`|integer|YES|||
+|  9|`pressure_hpa`|integer|YES|||
+| 10|`tide_phase`|character varying(20)|YES|||
+| 11|`tide_height_m`|numeric|YES|||
+| 12|`adjusted_probability`|numeric|YES|||
+| 13|`weather_modifier`|numeric|YES|1.0||
+| 14|`confidence`|numeric|YES|0.5||
+| 15|`expires_at`|timestamp with time zone|NO|||
+| 16|`created_at`|timestamp with time zone|YES|now()||
+## TABLE **public.world_coastline**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|bigint|NO|nextval('world_coastline_id_seq'::regclass)||
+|  2|`geom`|USER-DEFINED|YES|||
+## TABLE **public.world_land**
+
+| # | column | type | nullable | default | comment |
+|---:|---|---|:---:|---|---|
+|  1|`id`|bigint|NO|nextval('world_land_id_seq'::regclass)||
+|  2|`name`|text|YES|||
+|  3|`geom`|USER-DEFINED|YES|||"

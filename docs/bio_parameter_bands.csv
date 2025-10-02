@@ -1,0 +1,36 @@
+parameter,level,threshold,angler_interpretation
+chlorophyll,very_low,0.0,Water too clear; little food chain action
+chlorophyll,low,0.5,"Slight activity, bait scarce"
+chlorophyll,normal,1.5,Balanced; predators can hunt
+chlorophyll,high,3.0,"Plankton bloom, prey fish active"
+chlorophyll,very_high,5.0,Bloom overload; can lower oxygen locally
+oxygen,very_low,0.0,Hypoxic – fish struggle to survive
+oxygen,low,2.0,"Stressed fish, poor feeding"
+oxygen,normal,4.0,Comfortable for most coastal fish
+oxygen,high,7.0,"Healthy, lively feeding"
+oxygen,very_high,10.0,"Excellent oxygenation, very active fish"
+nitrate,very_low,0.0,"Nutrient desert, weak food chain"
+nitrate,low,1.0,"Low nutrients, limited growth"
+nitrate,normal,3.0,Balanced nutrient level
+nitrate,high,6.0,"Nutrient surge, prey increase likely"
+nitrate,very_high,10.0,"Overload, algal bloom risk"
+phosphate,very_low,0.0,Nutrient-poor water
+phosphate,low,0.1,"Low nutrients, modest growth"
+phosphate,normal,0.3,Balanced nutrient level
+phosphate,high,0.6,"Nutrient boost, prey increase"
+phosphate,very_high,1.0,"Too much nutrient, algal bloom risk"
+salinity,very_low,20.0,"Estuarine, too fresh for many marine species"
+salinity,low,28.0,"Brackish, fewer saltwater predators"
+salinity,normal,32.0,Typical coastal salinity
+salinity,high,36.0,"Open sea levels, stable"
+salinity,very_high,40.0,"Unusually saline, stressful for fish"
+surfaceTemperature,very_low,0.0,"Freezing, marine activity minimal"
+surfaceTemperature,low,8.0,"Cold, only hardy species feed"
+surfaceTemperature,normal,14.0,Comfortable for most temperate fish
+surfaceTemperature,high,20.0,"Warm, high fish activity"
+surfaceTemperature,very_high,26.0,"Hot, some fish stressed or go deep"
+phytoplankton,very_low,0.0,"No base food, poor chain"
+phytoplankton,low,1000.0,"Sparse plankton, prey limited"
+phytoplankton,normal,5000.0,Healthy food chain
+phytoplankton,high,20000.0,"Strong bloom, baitfish abundant"
+phytoplankton,very_high,50000.0,"Over-bloom, oxygen stress possible"

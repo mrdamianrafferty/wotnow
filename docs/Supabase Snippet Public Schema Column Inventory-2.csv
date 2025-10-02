@@ -1,0 +1,463 @@
+table_name,column_name,data_type,character_maximum_length,is_nullable,column_default
+activities_catalog_v1,slug,text,null,YES,null
+activities_catalog_v1,title,text,null,YES,null
+bio_parameter_bands,parameter,text,null,NO,null
+bio_parameter_bands,level,USER-DEFINED,null,NO,null
+bio_parameter_bands,threshold,double precision,null,NO,null
+bio_parameter_bands,angler_interpretation,text,null,NO,null
+bio_parameter_bands_staging,parameter,text,null,YES,null
+bio_parameter_bands_staging,level,text,null,YES,null
+bio_parameter_bands_staging,threshold,double precision,null,YES,null
+bio_parameter_bands_staging,angler_interpretation,text,null,YES,null
+datras_monthly_abundance_long,datras_row_id,uuid,null,YES,null
+datras_monthly_abundance_long,rectangle_id,uuid,null,YES,null
+datras_monthly_abundance_long,species_id,uuid,null,YES,null
+datras_monthly_abundance_long,month_number,integer,null,YES,null
+datras_monthly_abundance_long,month_name,text,null,YES,null
+datras_monthly_abundance_long,abundance_value,numeric,null,YES,null
+datras_monthly_abundance_long,data_source,text,null,YES,null
+datras_monthly_abundance_long,last_updated,timestamp with time zone,null,YES,null
+datras_monthly_abundance_long,created_at,timestamp with time zone,null,YES,null
+findr_catch_entries,id,uuid,null,NO,gen_random_uuid()
+findr_catch_entries,user_id,uuid,null,NO,null
+findr_catch_entries,species_id,text,null,NO,null
+findr_catch_entries,species_common_name,text,null,YES,null
+findr_catch_entries,scientific_name,text,null,YES,null
+findr_catch_entries,rectangle_code,text,null,NO,null
+findr_catch_entries,prediction_impression_id,uuid,null,YES,null
+findr_catch_entries,caught_at,timestamp with time zone,null,NO,null
+findr_catch_entries,logged_at,timestamp with time zone,null,NO,now()
+findr_catch_entries,quantity,integer,null,YES,1
+findr_catch_entries,size_category,text,null,YES,null
+findr_catch_entries,weight_kg,numeric,null,YES,null
+findr_catch_entries,length_cm,numeric,null,YES,null
+findr_catch_entries,bait_used,text,null,YES,null
+findr_catch_entries,method,text,null,YES,null
+findr_catch_entries,habitat_type,text,null,YES,null
+findr_catch_entries,depth_range,text,null,YES,null
+findr_catch_entries,notes,text,null,YES,null
+findr_catch_entries,photo_urls,ARRAY,null,YES,null
+findr_catch_entries,followed_findr_advice,boolean,null,YES,null
+findr_catch_entries,used_recommended_bait,boolean,null,YES,null
+findr_catch_entries,used_recommended_habitat,boolean,null,YES,null
+findr_catch_entries,is_blank_trip,boolean,null,YES,false
+findr_catch_entries,environmental_conditions,jsonb,null,YES,null
+findr_catch_entries,created_at,timestamp with time zone,null,YES,now()
+findr_catch_entries,updated_at,timestamp with time zone,null,YES,now()
+findr_catch_entries,session_id,uuid,null,YES,null
+findr_conditions_latest,rectangle_code,text,null,YES,null
+findr_conditions_latest,id,uuid,null,YES,null
+findr_conditions_latest,captured_at,timestamp with time zone,null,YES,null
+findr_conditions_latest,sea_temp_c,numeric,null,YES,null
+findr_conditions_latest,chlorophyll_mg_m3,numeric,null,YES,null
+findr_conditions_latest,dissolved_oxygen_mg_l,numeric,null,YES,null
+findr_conditions_latest,salinity_psu,numeric,null,YES,null
+findr_conditions_latest,nitrate_umol_l,numeric,null,YES,null
+findr_conditions_latest,phosphate_umol_l,numeric,null,YES,null
+findr_conditions_latest,wave_height_m,numeric,null,YES,null
+findr_conditions_latest,wind_speed_kts,numeric,null,YES,null
+findr_conditions_latest,wind_direction_deg,numeric,null,YES,null
+findr_conditions_latest,next_high_tide_iso,timestamp with time zone,null,YES,null
+findr_conditions_latest,next_low_tide_iso,timestamp with time zone,null,YES,null
+findr_conditions_latest,hourly_marine_json,jsonb,null,YES,null
+findr_conditions_latest,daily_marine_json,jsonb,null,YES,null
+findr_conditions_latest,source,text,null,YES,null
+findr_conditions_latest,created_at,timestamp with time zone,null,YES,null
+findr_conditions_snapshots,id,uuid,null,NO,gen_random_uuid()
+findr_conditions_snapshots,rectangle_code,text,null,NO,null
+findr_conditions_snapshots,captured_at,timestamp with time zone,null,NO,null
+findr_conditions_snapshots,sea_temp_c,numeric,null,YES,null
+findr_conditions_snapshots,chlorophyll_mg_m3,numeric,null,YES,null
+findr_conditions_snapshots,dissolved_oxygen_mg_l,numeric,null,YES,null
+findr_conditions_snapshots,salinity_psu,numeric,null,YES,null
+findr_conditions_snapshots,nitrate_umol_l,numeric,null,YES,null
+findr_conditions_snapshots,phosphate_umol_l,numeric,null,YES,null
+findr_conditions_snapshots,wave_height_m,numeric,null,YES,null
+findr_conditions_snapshots,wind_speed_kts,numeric,null,YES,null
+findr_conditions_snapshots,wind_direction_deg,numeric,null,YES,null
+findr_conditions_snapshots,next_high_tide_iso,timestamp with time zone,null,YES,null
+findr_conditions_snapshots,next_low_tide_iso,timestamp with time zone,null,YES,null
+findr_conditions_snapshots,hourly_marine_json,jsonb,null,YES,null
+findr_conditions_snapshots,daily_marine_json,jsonb,null,YES,null
+findr_conditions_snapshots,source,text,null,NO,'fallback'::text
+findr_conditions_snapshots,created_at,timestamp with time zone,null,NO,now()
+findr_fishing_sessions,id,uuid,null,NO,gen_random_uuid()
+findr_fishing_sessions,user_id,uuid,null,NO,null
+findr_fishing_sessions,rectangle_code,text,null,NO,null
+findr_fishing_sessions,prediction_impression_id,uuid,null,YES,null
+findr_fishing_sessions,started_at,timestamp with time zone,null,NO,null
+findr_fishing_sessions,ended_at,timestamp with time zone,null,YES,null
+findr_fishing_sessions,target_species_ids,ARRAY,null,YES,null
+findr_fishing_sessions,outcome,text,null,YES,null
+findr_fishing_sessions,notes,text,null,YES,null
+findr_fishing_sessions,created_at,timestamp with time zone,null,YES,now()
+findr_prediction_impressions,id,uuid,null,NO,gen_random_uuid()
+findr_prediction_impressions,user_id,uuid,null,NO,null
+findr_prediction_impressions,rectangle_code,text,null,NO,null
+findr_prediction_impressions,viewed_at,timestamp with time zone,null,NO,now()
+findr_prediction_impressions,prediction_date,date,null,NO,null
+findr_prediction_impressions,ranked_species,jsonb,null,NO,null
+findr_prediction_impressions,environmental_snapshot,jsonb,null,YES,null
+findr_prediction_impressions,urgency_level,text,null,YES,null
+findr_prediction_impressions,source,text,null,YES,null
+findr_prediction_impressions,created_at,timestamp with time zone,null,YES,now()
+findr_prediction_sessions,rectangle_code,text,null,NO,null
+findr_prediction_sessions,prediction_date,date,null,NO,null
+findr_prediction_sessions,language,text,null,NO,'en'::text
+findr_prediction_sessions,payload,jsonb,null,NO,null
+findr_prediction_sessions,fetched_at,timestamp with time zone,null,NO,now()
+findr_prediction_sessions,expires_at,timestamp with time zone,null,YES,null
+findr_rectangles,rectangle_code,text,null,NO,null
+findr_rectangles,region,text,null,YES,null
+findr_rectangles,center_lat,double precision,null,YES,null
+findr_rectangles,center_lon,double precision,null,YES,null
+findr_rectangles,distance_to_shore_km,numeric,null,YES,null
+findr_rectangles,is_coastal,boolean,null,YES,false
+findr_rectangles,created_at,timestamp with time zone,null,YES,now()
+fishing_reports,id,uuid,null,NO,uuid_generate_v4()
+fishing_reports,user_id,uuid,null,YES,null
+fishing_reports,rectangle_id,uuid,null,YES,null
+fishing_reports,fishing_date,date,null,NO,null
+fishing_reports,fishing_duration_hours,numeric,null,YES,null
+fishing_reports,species_caught,ARRAY,null,YES,'{}'::uuid[]
+fishing_reports,total_fish_count,integer,null,YES,0
+fishing_reports,fishing_success_rating,integer,null,YES,null
+fishing_reports,weather_rating,integer,null,YES,null
+fishing_reports,gear_used,ARRAY,null,YES,'{}'::text[]
+fishing_reports,depth_fished,integer,null,YES,null
+fishing_reports,notes,text,null,YES,null
+fishing_reports,created_at,timestamp with time zone,null,YES,now()
+geography_columns,f_table_catalog,name,null,YES,null
+geography_columns,f_table_schema,name,null,YES,null
+geography_columns,f_table_name,name,null,YES,null
+geography_columns,f_geography_column,name,null,YES,null
+geography_columns,coord_dimension,integer,null,YES,null
+geography_columns,srid,integer,null,YES,null
+geography_columns,type,text,null,YES,null
+geometry_columns,f_table_catalog,character varying,256,YES,null
+geometry_columns,f_table_schema,name,null,YES,null
+geometry_columns,f_table_name,name,null,YES,null
+geometry_columns,f_geometry_column,name,null,YES,null
+geometry_columns,coord_dimension,integer,null,YES,null
+geometry_columns,srid,integer,null,YES,null
+geometry_columns,type,character varying,30,YES,null
+ices_coastal_samples_staging,rectangle_code,text,null,NO,null
+ices_coastal_samples_staging,center_lat,numeric,null,YES,null
+ices_coastal_samples_staging,center_lon,numeric,null,YES,null
+ices_coastal_samples_staging,distance_to_shore_km,numeric,null,YES,null
+ices_coastal_samples_staging,is_coastal,boolean,null,YES,null
+ices_coastal_samples_staging,sample_wkt,text,null,YES,null
+ices_rectangles,id,uuid,null,NO,uuid_generate_v4()
+ices_rectangles,rectangle_code,character varying,10,NO,null
+ices_rectangles,lat_south,numeric,null,NO,null
+ices_rectangles,lat_north,numeric,null,NO,null
+ices_rectangles,lon_west,numeric,null,NO,null
+ices_rectangles,lon_east,numeric,null,NO,null
+ices_rectangles,center_lat,numeric,null,NO,null
+ices_rectangles,center_lon,numeric,null,NO,null
+ices_rectangles,region,character varying,50,NO,null
+ices_rectangles,country_codes,ARRAY,null,YES,'{}'::text[]
+ices_rectangles,is_coastal,boolean,null,YES,true
+ices_rectangles,distance_to_shore_km,numeric,null,YES,null
+ices_rectangles,created_at,timestamp with time zone,null,YES,now()
+ices_rectangles,bio_data_available,boolean,null,YES,null
+ices_rectangles,bio_data_sources,ARRAY,null,YES,null
+ices_rectangles,bio_data_checked_at,timestamp without time zone,null,YES,null
+ices_rectangles,available_bio_params,ARRAY,null,YES,null
+ices_rectangles,bio_data_quality,text,null,YES,null
+ices_rectangles,coastal_point,USER-DEFINED,null,YES,null
+ices_rectangles,coastal_sample_point,USER-DEFINED,null,YES,null
+interests,id,bigint,null,NO,null
+interests,slug,text,null,NO,null
+interests,title,text,null,NO,null
+interests_view,slug,text,null,YES,null
+interests_view,title,text,null,YES,null
+latest_bio_bands,rectangle_id,uuid,null,YES,null
+latest_bio_bands,observed_at,timestamp with time zone,null,YES,null
+latest_bio_bands,bands,jsonb,null,YES,null
+moon_cache,id,uuid,null,NO,gen_random_uuid()
+moon_cache,lat_bucket,numeric,null,NO,null
+moon_cache,lon_bucket,numeric,null,NO,null
+moon_cache,local_date,date,null,NO,null
+moon_cache,timezone,text,null,NO,null
+moon_cache,sunrise_iso,timestamp with time zone,null,YES,null
+moon_cache,sunset_iso,timestamp with time zone,null,YES,null
+moon_cache,day_length_minutes,integer,null,YES,null
+moon_cache,moonrise_iso,timestamp with time zone,null,YES,null
+moon_cache,moonset_iso,timestamp with time zone,null,YES,null
+moon_cache,moon_phase_name,text,null,YES,null
+moon_cache,moon_phase_fraction,numeric,null,YES,null
+moon_cache,moon_illumination_pct,numeric,null,YES,null
+moon_cache,source,text,null,NO,'ipgeolocation'::text
+moon_cache,raw,jsonb,null,YES,null
+moon_cache,cached_at,timestamp with time zone,null,NO,now()
+moon_cache,expires_at,timestamp with time zone,null,NO,null
+pgrst_probe,id,bigint,null,NO,null
+pgrst_probe,label,text,null,NO,null
+profiles,id,uuid,null,NO,null
+profiles,name,text,null,YES,null
+profiles,email,text,null,YES,null
+profiles,home_lat,numeric,null,YES,null
+profiles,home_lon,numeric,null,YES,null
+profiles,coast_lat,numeric,null,YES,null
+profiles,coast_lon,numeric,null,YES,null
+profiles,activities,ARRAY,null,YES,'{}'::text[]
+profiles,preferences_json,jsonb,null,YES,'{}'::jsonb
+profiles,updated_at,timestamp with time zone,null,YES,now()
+rectangle_coastal_sample,rectangle_id,uuid,null,NO,null
+rectangle_coastal_sample,rectangle_code,text,null,NO,null
+rectangle_coastal_sample,pt,USER-DEFINED,null,NO,null
+rectangle_coastal_sample,chosen_offset_m,integer,null,NO,null
+rectangle_coastal_sample,created_at,timestamp with time zone,null,NO,now()
+regions,id,uuid,null,NO,uuid_generate_v4()
+regions,name,character varying,50,NO,null
+regions,description,text,null,YES,null
+regions,primary_language,character varying,5,YES,'en'::character varying
+regions,countries,ARRAY,null,YES,'{}'::text[]
+regions,species_count,integer,null,YES,0
+regions,rectangle_count,integer,null,YES,0
+schema_catalog,catalog,jsonb,null,YES,null
+spatial_ref_sys,srid,integer,null,NO,null
+spatial_ref_sys,auth_name,character varying,256,YES,null
+spatial_ref_sys,auth_srid,integer,null,YES,null
+spatial_ref_sys,srtext,character varying,2048,YES,null
+spatial_ref_sys,proj4text,character varying,2048,YES,null
+species,id,uuid,null,NO,uuid_generate_v4()
+species,species_code,character varying,10,NO,null
+species,scientific_name,character varying,100,NO,null
+species,name_en,character varying,100,NO,null
+species,name_es,character varying,100,YES,null
+species,name_fr,character varying,100,YES,null
+species,name_de,character varying,100,YES,null
+species,name_it,character varying,100,YES,null
+species,name_pt,character varying,100,YES,null
+species,typical_gear,ARRAY,null,YES,'{}'::text[]
+species,max_boat_size,integer,null,YES,8
+species,is_night_species,boolean,null,YES,false
+species,is_seasonal,boolean,null,YES,false
+species,eating_quality,integer,null,YES,3
+species,min_depth,integer,null,YES,0
+species,max_depth,integer,null,YES,50
+species,preferred_habitat,ARRAY,null,YES,'{}'::text[]
+species,wind_sensitivity,numeric,null,YES,0.5
+species,temperature_sensitivity,numeric,null,YES,0.5
+species,pressure_sensitivity,numeric,null,YES,0.3
+species,tide_sensitivity,numeric,null,YES,0.4
+species,created_at,timestamp with time zone,null,YES,now()
+species,updated_at,timestamp with time zone,null,YES,now()
+species,advice,jsonb,null,YES,'[]'::jsonb
+species,conservation_status,text,null,YES,null
+species,fun_fact,text,null,YES,null
+species_advice_staging,species,text,null,YES,null
+species_advice_staging,regions,text,null,YES,null
+species_advice_staging,best_time,text,null,YES,null
+species_advice_staging,tide_sensitivity,text,null,YES,null
+species_advice_staging,favourite_baits_and_natural_diet,text,null,YES,null
+species_advice_staging,effect_of_temperature,text,null,YES,null
+species_advice_staging,effect_of_weather,text,null,YES,null
+species_advice_staging,typical_distance_depth,text,null,YES,null
+species_advice_staging,edibility_10,text,null,YES,null
+species_advice_staging,restrictions_notes,text,null,YES,null
+species_advice_staging,trusted_authority_rules,text,null,YES,null
+species_advice_staging,context,text,null,YES,null
+species_advice_staging,conservation_status,text,null,YES,null
+species_advice_staging,fun_fact,text,null,YES,null
+species_advice_staging_clean,scientific_name,text,null,YES,null
+species_advice_staging_clean,species,text,null,YES,null
+species_advice_staging_clean,regions,text,null,YES,null
+species_advice_staging_clean,best_time,text,null,YES,null
+species_advice_staging_clean,tide_sensitivity,text,null,YES,null
+species_advice_staging_clean,favourite_baits_and_natural_diet,text,null,YES,null
+species_advice_staging_clean,effect_of_temperature,text,null,YES,null
+species_advice_staging_clean,effect_of_weather,text,null,YES,null
+species_advice_staging_clean,typical_distance_depth,text,null,YES,null
+species_advice_staging_clean,edibility_10,text,null,YES,null
+species_advice_staging_clean,restrictions_notes,text,null,YES,null
+species_advice_staging_clean,trusted_authority_rules,text,null,YES,null
+species_advice_staging_clean,context,text,null,YES,null
+species_advice_staging_clean,conservation_status,text,null,YES,null
+species_advice_staging_clean,fun_fact,text,null,YES,null
+species_advice_staging_raw,Species,text,null,YES,null
+species_advice_staging_raw,Regions,text,null,YES,null
+species_advice_staging_raw,Best Time,text,null,YES,null
+species_advice_staging_raw,Tide Sensitivity,text,null,YES,null
+species_advice_staging_raw,Favourite Baits & Natural Diet,text,null,YES,null
+species_advice_staging_raw,Effect of Temperature,text,null,YES,null
+species_advice_staging_raw,Effect of Weather,text,null,YES,null
+species_advice_staging_raw,Typical Distance/Depth,text,null,YES,null
+species_advice_staging_raw,Edibility (/10),text,null,YES,null
+species_advice_staging_raw,Restrictions/Notes,text,null,YES,null
+species_advice_staging_raw,Trusted Authority (rules),text,null,YES,null
+species_advice_staging_raw,Context,text,null,YES,null
+species_advice_staging_raw,Conservation Status,text,null,YES,null
+species_advice_staging_raw,Fun Fact,text,null,YES,null
+species_bio_bands,species_id,uuid,null,NO,null
+species_bio_bands,parameter,text,null,NO,null
+species_bio_bands,happy_bands,ARRAY,null,NO,null
+species_bio_bands,unhappy_bands,ARRAY,null,NO,null
+species_bio_bands_staging,scientific_name,text,null,YES,null
+species_bio_bands_staging,parameter,text,null,YES,null
+species_bio_bands_staging,happy_bands,text,null,YES,null
+species_bio_bands_staging,unhappy_bands,text,null,YES,null
+species_datras_quarterly_support,rectangle_id,uuid,null,YES,null
+species_datras_quarterly_support,species_id,uuid,null,YES,null
+species_datras_quarterly_support,quarter,integer,null,YES,null
+species_datras_quarterly_support,mean_abundance,numeric,null,YES,null
+species_datras_quarterly_support,peak_abundance,numeric,null,YES,null
+species_datras_quarterly_support,has_datras,boolean,null,YES,null
+species_frequency,id,uuid,null,NO,uuid_generate_v4()
+species_frequency,species_id,uuid,null,YES,null
+species_frequency,rectangle_id,uuid,null,YES,null
+species_frequency,week_of_year,integer,null,NO,null
+species_frequency,quarter,integer,null,NO,null
+species_frequency,base_frequency,numeric,null,NO,null
+species_frequency,confidence_level,numeric,null,YES,0.5
+species_frequency,optimal_temp_min,numeric,null,YES,null
+species_frequency,optimal_temp_max,numeric,null,YES,null
+species_frequency,optimal_wind_max,integer,null,YES,null
+species_frequency,optimal_depth_min,integer,null,YES,null
+species_frequency,optimal_depth_max,integer,null,YES,null
+species_frequency,data_source,character varying,50,YES,'ICES_DATRAS'::character varying
+species_frequency,last_survey_year,integer,null,YES,null
+species_frequency,sample_size,integer,null,YES,null
+species_frequency,created_at,timestamp with time zone,null,YES,now()
+species_frequency,updated_at,timestamp with time zone,null,YES,now()
+species_frequency,user_reported_count,integer,null,YES,0
+species_frequency,last_user_report,timestamp without time zone,null,YES,null
+species_frequency,community_confidence,numeric,null,YES,null
+species_frequency_with_datras,id,uuid,null,YES,null
+species_frequency_with_datras,species_id,uuid,null,YES,null
+species_frequency_with_datras,rectangle_id,uuid,null,YES,null
+species_frequency_with_datras,week_of_year,integer,null,YES,null
+species_frequency_with_datras,quarter,integer,null,YES,null
+species_frequency_with_datras,base_frequency,numeric,null,YES,null
+species_frequency_with_datras,confidence_level,numeric,null,YES,null
+species_frequency_with_datras,optimal_temp_min,numeric,null,YES,null
+species_frequency_with_datras,optimal_temp_max,numeric,null,YES,null
+species_frequency_with_datras,optimal_wind_max,integer,null,YES,null
+species_frequency_with_datras,optimal_depth_min,integer,null,YES,null
+species_frequency_with_datras,optimal_depth_max,integer,null,YES,null
+species_frequency_with_datras,data_source,character varying,50,YES,null
+species_frequency_with_datras,last_survey_year,integer,null,YES,null
+species_frequency_with_datras,sample_size,integer,null,YES,null
+species_frequency_with_datras,created_at,timestamp with time zone,null,YES,null
+species_frequency_with_datras,updated_at,timestamp with time zone,null,YES,null
+species_frequency_with_datras,user_reported_count,integer,null,YES,null
+species_frequency_with_datras,last_user_report,timestamp without time zone,null,YES,null
+species_frequency_with_datras,community_confidence,numeric,null,YES,null
+species_frequency_with_datras,datras_mean_abundance,numeric,null,YES,null
+species_frequency_with_datras,datras_peak_abundance,numeric,null,YES,null
+species_frequency_with_datras,datras_supported,boolean,null,YES,null
+species_frequency_with_datras,presence_qualifier,text,null,YES,null
+species_meta,scientific_name,text,null,NO,null
+species_meta,conservation_status,text,null,YES,null
+species_meta,fun_fact,text,null,YES,null
+species_meta,updated_at,timestamp with time zone,null,NO,now()
+species_meta_staging,scientific_name,text,null,NO,null
+species_meta_staging,conservation_status,text,null,YES,null
+species_meta_staging,fun_fact,text,null,YES,null
+species_meta_staging_by_name,name_en,text,null,NO,null
+species_meta_staging_by_name,conservation_status,text,null,YES,null
+species_meta_staging_by_name,fun_fact,text,null,YES,null
+species_monthly_abundance,id,uuid,null,NO,gen_random_uuid()
+species_monthly_abundance,rectangle_code,text,null,NO,null
+species_monthly_abundance,species_id,text,null,NO,null
+species_monthly_abundance,jan,numeric,null,YES,0
+species_monthly_abundance,feb,numeric,null,YES,0
+species_monthly_abundance,mar,numeric,null,YES,0
+species_monthly_abundance,apr,numeric,null,YES,0
+species_monthly_abundance,may,numeric,null,YES,0
+species_monthly_abundance,jun,numeric,null,YES,0
+species_monthly_abundance,jul,numeric,null,YES,0
+species_monthly_abundance,aug,numeric,null,YES,0
+species_monthly_abundance,sep,numeric,null,YES,0
+species_monthly_abundance,oct,numeric,null,YES,0
+species_monthly_abundance,nov,numeric,null,YES,0
+species_monthly_abundance,dec,numeric,null,YES,0
+species_monthly_abundance,data_source,text,null,YES,'DATRAS'::text
+species_monthly_abundance,last_updated,timestamp with time zone,null,YES,now()
+species_monthly_abundance,created_at,timestamp with time zone,null,YES,now()
+species_name_alias,name_en_alias,text,null,NO,null
+species_name_alias,scientific_name,text,null,NO,null
+species_name_scientific_staging,name_en,text,null,YES,null
+species_name_scientific_staging,scientific_name,text,null,YES,null
+species_name_scientific_staging,conservation_status,text,null,YES,null
+species_name_scientific_staging,fun_fact,text,null,YES,null
+stormglass_bio_readings,id,uuid,null,NO,gen_random_uuid()
+stormglass_bio_readings,rectangle_id,uuid,null,NO,null
+stormglass_bio_readings,observed_at,timestamp with time zone,null,NO,null
+stormglass_bio_readings,chlorophyll,double precision,null,YES,null
+stormglass_bio_readings,nitrate,double precision,null,YES,null
+stormglass_bio_readings,oxygen,double precision,null,YES,null
+stormglass_bio_readings,phosphate,double precision,null,YES,null
+stormglass_bio_readings,salinity,double precision,null,YES,null
+stormglass_bio_readings,phytoplankton,double precision,null,YES,null
+stormglass_bio_readings,surfaceTemperature,double precision,null,YES,null
+stormglass_bio_readings,source,text,null,NO,'stormglass'::text
+stormglass_bio_readings,payload,jsonb,null,YES,null
+stormglass_bio_readings,created_at,timestamp with time zone,null,NO,now()
+stormglass_bio_readings,observed_day,date,null,NO,null
+translation_cache,id,uuid,null,NO,gen_random_uuid()
+translation_cache,source_text,text,null,NO,null
+translation_cache,target_language,text,null,NO,null
+translation_cache,translated_text,text,null,NO,null
+translation_cache,translation_source,text,null,NO,'auto'::text
+translation_cache,source_content_hash,text,null,YES,null
+translation_cache,needs_review,boolean,null,YES,false
+translation_cache,has_fishing_terminology,boolean,null,YES,false
+translation_cache,quality_issues,ARRAY,null,YES,null
+translation_cache,access_count,integer,null,YES,0
+translation_cache,last_accessed_at,timestamp with time zone,null,YES,null
+translation_cache,created_at,timestamp with time zone,null,YES,now()
+translation_cache,reviewed_at,timestamp with time zone,null,YES,null
+translation_cache,reviewed_by,text,null,YES,null
+translation_cache,notes,text,null,YES,null
+user_catches,id,uuid,null,NO,gen_random_uuid()
+user_catches,user_id,uuid,null,YES,null
+user_catches,species_id,uuid,null,YES,null
+user_catches,rectangle_id,uuid,null,YES,null
+user_catches,quantity,integer,null,YES,null
+user_catches,caught_at,timestamp without time zone,null,YES,null
+user_catches,conditions,jsonb,null,YES,null
+user_catches,created_at,timestamp without time zone,null,YES,now()
+user_catches,gps_lat,numeric,null,YES,null
+user_catches,gps_lon,numeric,null,YES,null
+user_catches,avg_size_cm,numeric,null,YES,null
+user_catches,api_weather_conditions,jsonb,null,YES,null
+user_catches,weather_api_source,text,null,YES,null
+user_catches,weather_retrieved_at,timestamp without time zone,null,YES,null
+user_catches,weather_confidence,numeric,null,YES,null
+users,id,uuid,null,NO,gen_random_uuid()
+users,email,text,null,YES,null
+users,username,text,null,YES,null
+users,created_at,timestamp without time zone,null,YES,now()
+v_coastal_sampling_points,rectangle_id,uuid,null,YES,null
+v_coastal_sampling_points,rectangle_code,character varying,10,YES,null
+v_coastal_sampling_points,lat,double precision,null,YES,null
+v_coastal_sampling_points,lon,double precision,null,YES,null
+v_species_bio_bands,name_en,character varying,100,YES,null
+v_species_bio_bands,scientific_name,character varying,100,YES,null
+v_species_bio_bands,parameter,text,null,YES,null
+v_species_bio_bands,happy_bands,ARRAY,null,YES,null
+v_species_bio_bands,unhappy_bands,ARRAY,null,YES,null
+weather_predictions,id,uuid,null,NO,uuid_generate_v4()
+weather_predictions,species_id,uuid,null,YES,null
+weather_predictions,rectangle_id,uuid,null,YES,null
+weather_predictions,prediction_date,date,null,NO,null
+weather_predictions,sea_temp_c,numeric,null,YES,null
+weather_predictions,air_temp_c,numeric,null,YES,null
+weather_predictions,wind_speed_knots,integer,null,YES,null
+weather_predictions,wind_direction,integer,null,YES,null
+weather_predictions,pressure_hpa,integer,null,YES,null
+weather_predictions,tide_phase,character varying,20,YES,null
+weather_predictions,tide_height_m,numeric,null,YES,null
+weather_predictions,adjusted_probability,numeric,null,YES,null
+weather_predictions,weather_modifier,numeric,null,YES,1.0
+weather_predictions,confidence,numeric,null,YES,0.5
+weather_predictions,expires_at,timestamp with time zone,null,NO,null
+weather_predictions,created_at,timestamp with time zone,null,YES,now()
+world_coastline,id,bigint,null,NO,nextval('world_coastline_id_seq'::regclass)
+world_coastline,geom,USER-DEFINED,null,YES,null
+world_land,id,bigint,null,NO,nextval('world_land_id_seq'::regclass)
+world_land,name,text,null,YES,null
+world_land,geom,USER-DEFINED,null,YES,null

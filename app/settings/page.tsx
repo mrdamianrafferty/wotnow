@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '../../lib/supabase/server';
 import SettingsForm from './settings-form';
+import AppHeader from '../../components/AppHeader';
+import Footer from '../../components/footer';
 
 export default async function SettingsPage() {
   const supabase = await createClient(); // await the Promise
@@ -14,5 +16,13 @@ export default async function SettingsPage() {
     .eq('id', user.id)
     .maybeSingle();
 
-  return <SettingsForm initial={data ?? null} />;
+  return (
+    <div data-theme="light" className="min-h-screen flex flex-col bg-base-100 text-base-content">
+      <AppHeader />
+      <div className="flex-1">
+        <SettingsForm initial={data ?? null} />
+      </div>
+      <Footer />
+    </div>
+  );
 }

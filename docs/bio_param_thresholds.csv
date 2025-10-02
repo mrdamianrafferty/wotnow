@@ -1,0 +1,8 @@
+parameter,unit,very_low,low,normal,high,very_high,angler_note
+chlorophyll,mg/m³,<0.2,0.2–0.5,0.5–2.0,2.0–5.0,>5.0,"Indicates plankton productivity. Higher = more baitfish and predators, but extreme blooms may reduce oxygen."
+oxygen,mg/L,<2,2–4,4–7,7–10,>10,Fish need oxygen to thrive; best fishing in 4–10 mg/L. Very high often means mixing after storms.
+nitrate,µmol/L,<0.5,0.5–2.0,2.0–8.0,8.0–20,>20,"Nutrients fuel productivity. Balanced levels support good food chains, extreme highs may trigger blooms."
+phosphate,µmol/L,<0.1,0.1–0.3,0.3–1.0,1.0–2.0,>2.0,"Another key nutrient. Balanced levels mean good fishing waters, very high can signal eutrophication."
+salinity,PSU,<10,10–25,25–35,35–37,>37,Normal sea salinity (~35 PSU) is best for most marine fish; low salinity favours estuary species.
+surfaceTemperature,°C,<5,5–10,10–18,18–24,>24,"Temperature drives seasonal activity. 10–18°C suits mixed fisheries; warmer waters favour bass, tuna, mackerel."
+phytoplankton,mg/m³ biomass,<0.1,0.1–0.5,0.5–2.0,2.0–5.0,>5.0,"Like chlorophyll, it signals food chain strength. Higher levels attract baitfish and predators."
