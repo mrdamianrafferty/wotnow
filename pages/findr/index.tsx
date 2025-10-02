@@ -10,21 +10,24 @@ import React, {
 } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion';
 import {
   Anchor,
   Fish as FishIcon,
   Heart,
   ListChecks,
-  Settings,
   Sparkles,
   Info,
   X,
 } from 'lucide-react';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
-import { FindrNavigation } from '../../components/findr/FindrNavigation';
+import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
+import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { FindrModal } from '../../components/findr/Modal';
+import { FishSpeciesModal } from '../../components/findr/FishSpeciesModal';
 import { SettingsForm } from '../../components/findr/SettingsForm';
+import { SkeletonCard } from '../../components/findr/SkeletonCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
   useFindrRectangleOptions,
@@ -57,14 +60,18 @@ interface PredictionCardContentProps {
   regionName?: string;
   isFavorite: boolean;
   interactive: boolean;
+  onShowSpeciesInfo?: (card: CardData) => void;
+  onToggleFavorite?: (cardId: string) => void;
 }
 
 const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
   card,
-  rectangleCode,
-  regionName,
-  isFavorite,
+  rectangleCode: _rectangleCode,
+  regionName: _regionName,
+  isFavorite: _isFavorite,
   interactive,
+  onShowSpeciesInfo,
+  onToggleFavorite,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -76,13 +83,15 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
 
   const sections = useMemo(
     () => [
-      { title: 'Why it works', items: card.rationale, icon: <Sparkles size={16} /> },
-      { title: 'Bait & presentation', items: card.baitSuggestions, icon: <FishIcon size={16} /> },
-      { title: 'Tide & timing', items: card.tideTips, icon: <Anchor size={16} /> },
-      { title: 'Status & notes', items: card.statusNotes, icon: <ListChecks size={16} /> },
+      { title: 'Why it works', translationKey: 'why-it-works', items: card.rationale, icon: <Sparkles size={16} /> },
+      { title: 'Bait & presentation', translationKey: 'bait-presentation', items: card.baitSuggestions, icon: <FishIcon size={16} /> },
+      { title: 'Tide & timing', translationKey: 'tide-timing', items: card.tideTips, icon: <Anchor size={16} /> },
+      { title: 'Status & notes', translationKey: 'status-notes', items: card.statusNotes, icon: <ListChecks size={16} /> },
     ],
     [card.baitSuggestions, card.rationale, card.statusNotes, card.tideTips]
   );
+
+
 
   const hasHiddenSections = sections.some((section) => section.items.length > 3);
   const displaySections = sections.map((section) => ({
@@ -90,109 +99,141 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
     displayItems: expanded || !interactive ? section.items : section.items.slice(0, 3),
   }));
 
+  const detailStackClass = interactive
+    ? 'flex-1 overflow-y-auto pr-1 space-y-4'
+    : 'space-y-4';
+
   return (
     <div className="card h-full bg-base-100 shadow-xl">
-      <div className="card-body space-y-5">
+      <div className="card-body flex h-full flex-col gap-4 sm:gap-5">
         <div className="space-y-4">
           {card.image ? (
-            <div
-              className="relative w-full overflow-hidden rounded-2xl bg-base-200"
-              style={{ aspectRatio: '4 / 3' }}
-            >
+            <div className="relative mx-auto w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[3/2] sm:aspect-[4/3]">
               <Image
                 src={card.image.src}
                 alt={card.image.alt}
                 fill
-                sizes="(min-width: 1024px) 480px, 100vw"
+                sizes="(min-width: 1024px) 400px, 90vw"
                 className="object-contain"
                 priority={false}
               />
+              {/* Heart indicator for favorites */}
+              <button
+                type="button"
+                className="absolute top-2 right-2 p-3 rounded-full hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite?.(card.id);
+                }}
+                aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {_isFavorite ? (
+                  <Heart size={20} className="fill-red-500 text-red-500" />
+                ) : (
+                  <Heart size={20} className="text-gray-700 stroke-2" />
+                )}
+              </button>
             </div>
           ) : (
-            <div
-              className="flex w-full items-center justify-center rounded-2xl bg-base-200"
-              style={{ aspectRatio: '4 / 3' }}
-            >
-              <span className="text-7xl" aria-hidden>
+            <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl bg-base-200 sm:aspect-[4/3] relative">
+              <span className="text-6xl" aria-hidden>
                 {card.emoji}
               </span>
+              {/* Heart indicator for favorites */}
+              <button
+                type="button"
+                className="absolute top-2 right-2 p-3 rounded-full hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite?.(card.id);
+                }}
+                aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {_isFavorite ? (
+                  <Heart size={20} className="fill-red-500 text-red-500" />
+                ) : (
+                  <Heart size={20} className="text-gray-700 stroke-2" />
+                )}
+              </button>
             </div>
           )}
 
           <div className="flex items-start justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs uppercase tracking-wide text-base-content/60">
-                {regionName ?? 'Prediction summary'}
-                {rectangleCode ? ` • ${rectangleCode}` : ''}
-              </p>
-              <div className="space-y-1">
-                <h2 className="card-title text-2xl sm:text-3xl">{card.commonName}</h2>
-                {card.speciesCode && (
-                  <p className="text-xs uppercase tracking-wide text-base-content/50">{card.speciesCode}</p>
+            <div className="space-y-2 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="card-title text-2xl sm:text-3xl leading-tight">
+                  <TranslatedFishName name={card.commonName} />
+                  {card.scientificName && (
+                    <span className="text-base italic font-normal text-base-content/70 ml-2">({card.scientificName})</span>
+                  )}
+                </h2>
+                {card.confidence !== null && (
+                  <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
+                    {card.confidence}% <TranslatedText text="fish activity" />
+                  </span>
                 )}
               </div>
-              {card.scientificName && (
-                <p className="text-sm italic text-base-content/70">{card.scientificName}</p>
-              )}
-              {isFavorite && (
-                <span className="badge badge-sm badge-primary text-primary-content">Saved</span>
-              )}
             </div>
             <button
               type="button"
-              className={`btn btn-circle ${interactive ? 'btn-ghost border-base-300 btn-md md:btn-sm' : 'btn-ghost border-transparent opacity-60 pointer-events-none btn-sm'}`}
+              className={`btn btn-circle ${interactive ? 'btn-ghost border-base-300 btn-lg md:btn-md' : 'btn-ghost border-transparent opacity-60 pointer-events-none btn-sm'}`}
               onClick={interactive ? () => setExpanded((prev) => !prev) : undefined}
               aria-label={expanded ? 'Hide fishing details' : 'Show fishing details'}
             >
               <Info size={18} />
             </button>
           </div>
+          {card.summary && (
+            <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>
+          )}
+          {onShowSpeciesInfo && (
+            <button
+              type="button"
+              className="btn btn-xs btn-outline gap-1"
+              onClick={() => onShowSpeciesInfo(card)}
+            >
+              <Sparkles size={14} /> <TranslatedText text="Get to know me" />
+            </button>
+          )}
         </div>
 
-        {card.confidence !== null && (
-          <div className={confidenceBadgeClasses(card.confidence)}>{card.confidence}% fish activity</div>
-        )}
-
-        {card.summary && (
-          <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>
-        )}
-
         {card.playfulBio && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2 shadow-sm">
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary flex items-center gap-2">
-              <Heart size={14} /> Findr bio
+              <Heart size={14} /> <TranslatedText text="Findr bio" />
             </p>
-            <p className="text-sm leading-relaxed text-base-content/80">{card.playfulBio}</p>
+            <TranslatedFishBio bio={card.playfulBio} className="text-sm leading-relaxed text-base-content/80" />
           </div>
         )}
 
-        {displaySections.map((section) => {
-          if (section.items.length === 0) return null;
-          return (
-            <div key={section.title} className="space-y-2">
-              <h3 className="font-semibold flex items-center gap-2 text-base">
-                {section.icon}
-                <span>{section.title}</span>
-              </h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
-                {section.displayItems.map((item, idx) => (
-                  <li key={`${section.title}-${idx}`}>{item}</li>
-                ))}
-              </ul>
-              {interactive &&
-                !expanded &&
-                section.items.length > section.displayItems.length && (
-                  <p className="text-xs text-base-content/60">
-                    + {section.items.length - section.displayItems.length} more insight
-                    {section.items.length - section.displayItems.length === 1 ? '' : 's'}
-                  </p>
-                )}
-            </div>
-          );
-        })}
+        <div className={detailStackClass}>
+          {displaySections.map((section) => {
+            if (section.items.length === 0) return null;
+            return (
+              <div key={section.title} className="space-y-2">
+                <h3 className="font-semibold flex items-center gap-2 text-base">
+                  {section.icon}
+                  <TranslatedText text={section.title} />
+                </h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
+                  {section.displayItems.map((item, idx) => (
+                    <li key={`${section.title}-${idx}`}>{item}</li>
+                  ))}
+                </ul>
+                {interactive &&
+                  !expanded &&
+                  section.items.length > section.displayItems.length && (
+                    <p className="text-xs text-base-content/60">
+                      + {section.items.length - section.displayItems.length} <TranslatedText text={section.items.length - section.displayItems.length === 1 ? 'more insight' : 'more insights'} />
+                    </p>
+                  )}
+              </div>
+            );
+          })}
+        </div>
 
         {interactive && !expanded && hasHiddenSections && (
-          <p className="text-xs text-base-content/60 pt-1">Tap the info button to reveal full guidance.</p>
+          <p className="text-xs text-base-content/60 pt-1"><TranslatedText text="Tap the info button to reveal full guidance." /></p>
         )}
       </div>
     </div>
@@ -211,6 +252,8 @@ interface SwipeableCardProps {
   onSwipedLeft: () => void;
   onSwipedRight: (card: CardData) => void;
   isFavorite: boolean;
+  onShowSpeciesInfo?: (card: CardData) => void;
+  onToggleFavorite?: (cardId: string) => void;
 }
 
 interface SwipeCardHandle {
@@ -230,6 +273,8 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
       onSwipedLeft,
       onSwipedRight,
       isFavorite,
+      onShowSpeciesInfo,
+      onToggleFavorite,
     },
     ref
   ) => {
@@ -340,6 +385,8 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           regionName={regionName}
           isFavorite={isFavorite}
           interactive={isTop}
+          onShowSpeciesInfo={isTop ? onShowSpeciesInfo : undefined}
+          onToggleFavorite={isTop ? onToggleFavorite : undefined}
         />
       </motion.div>
     );
@@ -363,7 +410,7 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
       disabled={disabled}
     >
       <X size={20} />
-      Not interested
+      <TranslatedText text="Next!" />
     </button>
     <button
       type="button"
@@ -372,7 +419,7 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
       disabled={disabled}
     >
       <Heart size={20} />
-      Add to trip
+      <TranslatedText text="Fave" />
     </button>
   </div>
 );
@@ -397,7 +444,7 @@ const QueuePreview: React.FC<QueuePreviewProps> = ({ cards, rectangleCode }) => 
     <div className="card bg-base-100 shadow-md">
       <div className="card-body space-y-4">
         <h3 className="card-title text-base flex items-center gap-2">
-          <Sparkles size={18} /> Up next
+          <Sparkles size={18} /> <TranslatedText text="Up next" />
         </h3>
         <ul className="space-y-3">
           {cards.map((card) => (
@@ -408,7 +455,7 @@ const QueuePreview: React.FC<QueuePreviewProps> = ({ cards, rectangleCode }) => 
                     <span className="text-lg" aria-hidden>
                       {card.emoji}
                     </span>
-                    {card.commonName}
+                    <TranslatedFishName name={card.commonName} />
                   </p>
                   {card.scientificName && (
                     <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
@@ -432,9 +479,10 @@ const QueuePreview: React.FC<QueuePreviewProps> = ({ cards, rectangleCode }) => 
 interface FavoritesListProps {
   cards: CardData[];
   onToggleFavorite: (cardId: string) => void;
+  onShowSpeciesInfo?: (card: CardData) => void;
 }
 
-const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite }) => {
+const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, onShowSpeciesInfo }) => {
   if (cards.length === 0) {
     return <p className="text-sm text-base-content/70">No saved fish yet. Swipe right on the deck to add some.</p>;
   }
@@ -449,7 +497,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite }
                 <span className="text-xl" aria-hidden>
                   {card.emoji}
                 </span>
-                {card.commonName}
+                <TranslatedFishName name={card.commonName} />
               </p>
               {card.scientificName && (
                 <p className="text-xs italic text-base-content/70">{card.scientificName}</p>
@@ -465,6 +513,15 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite }
             </button>
           </div>
           {card.summary && <p className="text-sm text-base-content/70 leading-snug">{card.summary}</p>}
+          {onShowSpeciesInfo && (
+            <button
+              type="button"
+              className="btn btn-xs btn-outline gap-1"
+              onClick={() => onShowSpeciesInfo(card)}
+            >
+              <Sparkles size={14} /> <TranslatedText text="Get to know me" />
+            </button>
+          )}
           {card.rationale.length > 0 && (
             <ul className="list-disc pl-4 text-xs space-y-1 text-base-content/60">
               {card.rationale.slice(0, 2).map((item, idx) => (
@@ -482,6 +539,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite }
 };
 
 const FindrPage: React.FC = () => {
+  const router = useRouter();
   const {
     options: rectangleOptions,
     loading: rectangleOptionsLoading,
@@ -503,7 +561,22 @@ const FindrPage: React.FC = () => {
   const [cardQueue, setCardQueue] = useState<CardData[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [speciesModalCard, setSpeciesModalCard] = useState<CardData | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
+
+  // Check for password_updated query param
+  useEffect(() => {
+    if (router.query.password_updated === 'true') {
+      setShowSuccessMessage(true);
+      // Remove query param from URL
+      router.replace('/findr', undefined, { shallow: true });
+      // Hide message after 5 seconds
+      const timer = setTimeout(() => setShowSuccessMessage(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [router]);
 
   const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
   const activeRectangle = manualNormalized ?? (selectedCode || null);
@@ -645,6 +718,18 @@ const FindrPage: React.FC = () => {
     );
   }, []);
 
+  const handleShowSpeciesInfo = useCallback(
+    (card: CardData) => {
+      setSpeciesModalCard(card);
+      setFavoritesOpen(false);
+    },
+    [setFavoritesOpen, setSpeciesModalCard]
+  );
+
+  const handleCloseSpeciesModal = useCallback(() => {
+    setSpeciesModalCard(null);
+  }, [setSpeciesModalCard]);
+
   const resetDeck = useCallback(() => {
     setCardQueue(cards);
   }, [cards]);
@@ -671,83 +756,70 @@ const FindrPage: React.FC = () => {
   return (
     <>
       <Head>
-        <title>Findr predictions | WotNow</title>
+        <title>findr | catch the fish of your life</title>
       </Head>
       <main className="min-h-screen bg-base-200 pb-16">
-        <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
-          <FindrNavigation />
+        {/* Navigation component handles responsive display internally */}
+        <FindrNavigation />
 
-          <header className="text-center space-y-3">
-            <div className="flex justify-center">
-              <FishIcon size={42} className="text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold">Findr fishing predictions</h1>
-            <p className="text-base-content/70 max-w-3xl mx-auto">
-              Swipe through live Supabase predictions for the fishing spots around you. Save the species you love,
-              refresh as conditions shift, and keep a shortlist of targets ready for your next session.
-            </p>
-            {rectangleOptionsError && (
-              <div className="alert alert-warning max-w-3xl mx-auto text-sm">
-                <span>
-                  Couldn’t reach the live fishing areas service, so we’re showing a trusted offline list instead.
-                </span>
-              </div>
-            )}
-            {activeRectangle && (
-              <p className="text-sm text-base-content/60">
-                Fishing area: <strong>{activeRectangle}</strong>
-                {activeOption ? ` • ${activeOption.region}` : manualNormalized ? ' • Custom area' : ''}
-              </p>
-            )}
-            <div className="flex flex-wrap justify-center gap-3 pt-3">
-              <button
-                type="button"
-                className="btn btn-outline btn-sm gap-2"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings size={16} /> Area settings
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline btn-sm gap-2"
-                onClick={() => setFavoritesOpen(true)}
-              >
-                <Heart size={16} /> Saved fish
+        {/* Content container */}
+        <div className="mx-auto px-3 pt-6 sm:px-4 md:px-6 lg:max-w-6xl">
+          {/* Success message */}
+          {showSuccessMessage && (
+            <div className="alert alert-success mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span>Password updated successfully!</span>
+              <button className="btn btn-sm btn-ghost" onClick={() => setShowSuccessMessage(false)}>
+                <X size={16} />
               </button>
             </div>
-          </header>
+          )}
 
           <section className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Sparkles size={20} /> Today’s fish lineup
-              </h2>
-              <span className="text-sm text-base-content/60">
-                {activeRectangle ? `Fishing area ${activeRectangle}` : 'Choose a fishing area to begin'}
-              </span>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <h1 className="text-xl font-semibold flex items-center gap-2">
+                    <Sparkles size={20} /> <TranslatedText text="Catch of the day" />
+                  </h1>
+
+                </div>
+              </div>
+              {rectangleOptionsError && (
+                <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
+                  <span>
+                    <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
+                  </span>
+                </div>
+              )}
             </div>
 
             {!activeRectangle && (
-              <div className="alert alert-info">
-                <span>Pick a fishing area to see today’s activity.</span>
+                            <div className="alert alert-info">
+                <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
               </div>
             )}
 
             {activeRectangle && loading && (
-              <div className="alert alert-info">
-                <span className="loading loading-spinner loading-sm" aria-hidden />
-                <span>
-                  Looking for fish activity near {regionLabel ?? `area ${activeRectangle}`}…
-                </span>
+              <div className="space-y-4">
+                <div className="alert alert-info">
+                  <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
+                  <span>
+                    <TranslatedText text="Looking for fish activity near" /> {regionLabel ?? `area ${activeRectangle}`}…
+                  </span>
+                </div>
+                <div className="relative h-[460px] sm:h-[520px] w-full">
+                  <SkeletonCard />
+                </div>
               </div>
             )}
 
             {activeRectangle && !loading && error && (
               <div className="alert alert-error">
                 <div>
-                  <p>We couldn’t reel in today’s predictions. Try refreshing in a moment.</p>
+                  <p><TranslatedText text="We couldn't reel in today's predictions. Try refreshing in a moment." /></p>
                   <details className="mt-1 text-xs opacity-80">
-                    <summary className="cursor-pointer">View technical details</summary>
+                    <summary className="cursor-pointer"><TranslatedText text="View technical guff if you must" /></summary>
                     <pre className="whitespace-pre-wrap break-words">{error}</pre>
                   </details>
                 </div>
@@ -757,7 +829,7 @@ const FindrPage: React.FC = () => {
             {activeRectangle && !loading && !error && currentCard && (
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(0,260px)]">
                 <div className="space-y-4">
-                  <div className="relative h-[520px] w-full">
+                  <div className="relative h-[460px] sm:h-[520px] w-full">
                     <AnimatePresence initial={false}>
                       {visibleCards.map((card, index) => (
                         <SwipeableCard
@@ -771,6 +843,8 @@ const FindrPage: React.FC = () => {
                           onSwipedLeft={handleSkip}
                           onSwipedRight={handleLike}
                           isFavorite={favoritesSet.has(card.id)}
+                          onShowSpeciesInfo={handleShowSpeciesInfo}
+                          onToggleFavorite={handleToggleFavorite}
                           ref={index === 0 ? swipeCardRef : undefined}
                         />
                       ))}
@@ -805,10 +879,14 @@ const FindrPage: React.FC = () => {
             <section className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <ListChecks size={18} /> Full species lineup
+                  <ListChecks size={18} /> <TranslatedText text="Full species lineup" />
                 </h3>
                 <span className="text-sm text-base-content/60">
-                  Sorted by confidence for {regionLabel ?? `area ${activeRectangle}`}
+                  <TranslatedText text="Sorted by confidence for" /> {regionLabel ?? (
+                    <>
+                      <TranslatedText text="area" /> {activeRectangle}
+                    </>
+                  )}
                 </span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -817,27 +895,24 @@ const FindrPage: React.FC = () => {
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <p className="flex items-center gap-2 text-sm text-base-content/70">
+                          <div className="flex items-center gap-2 text-base-content">
                             <span className="text-2xl" aria-hidden>
                               {card.emoji}
                             </span>
-                            <span className="font-semibold text-base-content">{card.commonName}</span>
-                          </p>
+                            <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
+                            {card.confidence !== null ? (
+                              <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
+                                {card.confidence}%
+                              </span>
+                            ) : (
+                              <span className="badge badge-outline badge-sm">n/a</span>
+                            )}
+                          </div>
                           {card.scientificName && (
                             <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
                           )}
-                          {card.speciesCode && (
-                            <p className="text-xs uppercase tracking-wide text-base-content/50">{card.speciesCode}</p>
-                          )}
                         </div>
                         <div className="flex flex-col items-end gap-2">
-                          {card.confidence !== null ? (
-                            <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
-                              {card.confidence}%
-                            </span>
-                          ) : (
-                            <span className="badge badge-outline badge-sm">n/a</span>
-                          )}
                           <span className="text-xs text-base-content/50">#{index + 1}</span>
                         </div>
                       </div>
@@ -847,14 +922,14 @@ const FindrPage: React.FC = () => {
                         </p>
                       )}
                       {card.playfulBio && (
-                        <p className="text-xs text-base-content/60 bg-base-200/60 rounded-lg p-3">
-                          {card.playfulBio}
-                        </p>
+                        <div className="text-xs text-base-content/60 bg-base-200/60 rounded-lg p-3">
+                          <TranslatedFishBio bio={card.playfulBio} />
+                        </div>
                       )}
                       <div className="grid gap-2 text-xs text-base-content/70">
                         {card.rationale.length > 0 && (
                           <div>
-                            <p className="font-semibold text-base-content/80">Why they’re active</p>
+                                                        <p className="font-semibold text-base-content/80"><TranslatedText text="Why they're active" /></p>
                             <ul className="list-disc pl-4 space-y-1">
                               {card.rationale.slice(0, 3).map((item, idx) => (
                                 <li key={`${card.id}-rationale-${idx}`}>{item}</li>
@@ -864,13 +939,13 @@ const FindrPage: React.FC = () => {
                         )}
                         {card.baitSuggestions.length > 0 && (
                           <div>
-                            <p className="font-semibold text-base-content/80">Bait & presentation</p>
+                            <p className="font-semibold text-base-content/80"><TranslatedText text="Bait & presentation" /></p>
                             <p>{card.baitSuggestions.slice(0, 2).join(', ')}</p>
                           </div>
                         )}
                         {card.tideTips.length > 0 && (
                           <div>
-                            <p className="font-semibold text-base-content/80">Tide & timing</p>
+                            <p className="font-semibold text-base-content/80"><TranslatedText text="Tide & timing" /></p>
                             <p>{card.tideTips[0]}</p>
                           </div>
                         )}
@@ -921,18 +996,28 @@ const FindrPage: React.FC = () => {
             </p>
             <div className="flex flex-wrap gap-2">
               <select className="select select-bordered select-sm" aria-label="Sort saved fish">
-                <option value="activity">Sort by activity</option>
-                <option value="recent">Sort by newest</option>
-                <option value="name">Sort alphabetically</option>
+                <option value="activity"><TranslatedText text="Sort by activity" /></option>
+                <option value="recent"><TranslatedText text="Sort by newest" /></option>
+                <option value="name"><TranslatedText text="Sort alphabetically" /></option>
               </select>
               <button type="button" className="btn btn-sm btn-outline gap-1" disabled>
                 <Sparkles size={14} /> Plan trip
               </button>
             </div>
           </div>
-          <FavoritesList cards={favoriteCards} onToggleFavorite={handleToggleFavorite} />
+          <FavoritesList
+            cards={favoriteCards}
+            onToggleFavorite={handleToggleFavorite}
+            onShowSpeciesInfo={handleShowSpeciesInfo}
+          />
         </div>
       </FindrModal>
+
+      <FishSpeciesModal
+        open={speciesModalOpen}
+        card={speciesModalCard}
+        onClose={handleCloseSpeciesModal}
+      />
     </>
   );
 };
