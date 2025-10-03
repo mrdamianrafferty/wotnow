@@ -44,6 +44,11 @@ export default function AuthCallbackClient() {
   const typeParam = sp?.get('type');
   const tokenHash = sp?.get('token_hash') || sp?.get('token');
   const oauthError = sp?.get('error') || sp?.get('error_description');
+  
+  // Check for additional Supabase parameters
+  const code = sp?.get('code');
+  const access_token = sp?.get('access_token');
+  const refresh_token = sp?.get('refresh_token');
 
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +56,68 @@ export default function AuthCallbackClient() {
   useEffect(() => {
     (async () => {
       try {
+        // Debug: Log all search parameters
+        console.log('Auth callback params:', {
+          type: typeParam,
+          token_hash: tokenHash,
+          code: code,
+          access_token: access_token ? '[PRESENT]' : null,
+          refresh_token: refresh_token ? '[PRESENT]' : null,
+          error: oauthError,
+          all_params: Object.fromEntries(sp?.entries() || [])
+        });
+
         // If the provider redirected with an explicit error, surface it.
         if (oauthError) {
           throw new Error(oauthError);
         }
 
-        // Email OTP / magic link style flows
+        // Handle PKCE flow (newer Supabase magic links)
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          
+          // Success - redirect based on type or domain
+          setPhase(Phase.Done);
+          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
+          
+          if ((typeParam || '').toLowerCase() === 'recovery') {
+            router.replace(isFindrDomain ? '/findr/update-password' : '/auth/reset');
+            return;
+          }
+          
+          let destination = returnTo;
+          if (!destination) {
+            destination = isFindrDomain ? '/findr' : '/';
+          }
+          
+          router.replace(destination);
+          return;
+        }
+
+        // Handle implicit flow tokens (older style)
+        if (access_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token: refresh_token || ''
+          });
+          if (error) throw error;
+          
+          setPhase(Phase.Done);
+          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
+          
+          let destination = returnTo;
+          if (!destination) {
+            destination = isFindrDomain ? '/findr' : '/';
+          }
+          
+          router.replace(destination);
+          return;
+        }
+
+        // Email OTP / magic link style flows (legacy token_hash)
         if (tokenHash) {
           const otpType = asEmailOtpType(typeParam);
           const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash });
@@ -65,14 +126,28 @@ export default function AuthCallbackClient() {
           // If this was a recovery flow, send user to reset page after session is established
           if ((typeParam || '').toLowerCase() === 'recovery') {
             setPhase(Phase.Done);
-            router.replace('/auth/reset');
+            // Check if this is a findr user by looking at returnTo or app context
+            const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+            const isFindrUser = returnTo?.includes('/findr') || window.location.origin.includes('fishfindr.eu');
+            
+            if (isFindrUser) {
+              router.replace('/findr/update-password');
+            } else {
+              router.replace('/auth/reset');
+            }
             return;
           }
 
-          // Success – check for returnTo parameter, otherwise go to findr
+          // Success – check for returnTo parameter, otherwise go to findr for findr domain
           setPhase(Phase.Done);
           const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const destination = returnTo || '/findr';
+          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
+          
+          let destination = returnTo;
+          if (!destination) {
+            destination = isFindrDomain ? '/findr' : '/';
+          }
+          
           router.replace(destination);
           return;
         }
@@ -84,7 +159,12 @@ export default function AuthCallbackClient() {
           
           // Check for returnTo parameter, otherwise redirect to /findr for findr users
           const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const destination = returnTo || '/findr';
+          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
+          
+          let destination = returnTo;
+          if (!destination) {
+            destination = isFindrDomain ? '/findr' : '/';
+          }
           
           router.replace(destination);
           return;

@@ -7,7 +7,7 @@
  * DELETE: Remove favourite
  */
 
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createServerSupabaseClient } from '../../../lib/supabase/pages-api';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const SUPABASE_REST_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -5,12 +5,25 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hasCode = url.searchParams.has('code');
   const hasTokenHash = url.searchParams.has('token_hash') || url.searchParams.has('token');
+  
+  // Only redirect to findr magic link if this appears to be a findr-related auth flow
+  const isFindrFlow = url.searchParams.get('app') === 'findr' || 
+                      url.pathname.startsWith('/findr') ||
+                      req.headers.get('referer')?.includes('/findr') ||
+                      req.headers.get('host')?.includes('fishfindr.eu');
 
-  if ((hasCode || hasTokenHash) && url.pathname !== '/auth/callback') {
-    const to = url.clone();
-    to.pathname = '/auth/callback';
-    return NextResponse.redirect(to);
+  if ((hasCode || hasTokenHash)) {
+    if (isFindrFlow && url.pathname !== '/findr/magic-link') {
+      const to = url.clone();
+      to.pathname = '/findr/magic-link';
+      return NextResponse.redirect(to);
+    } else if (!isFindrFlow && url.pathname !== '/auth/callback') {
+      const to = url.clone();
+      to.pathname = '/auth/callback';
+      return NextResponse.redirect(to);
+    }
   }
+  
   return NextResponse.next();
 }
 

@@ -22,6 +22,7 @@ const bgMap: Record<string, string> = {
   table_tennis:           '/pingpongy.png',
   archery:                '/archery.png',
   pickleball:             '/pickley.png',
+  park_visiting:          '/parky.png',
   padel:                  '/tennisy.png',
   kayaking:               '/kayaky2.png',
   sea_kayaking:            '/kayaky.png',

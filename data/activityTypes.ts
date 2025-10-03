@@ -2042,6 +2042,44 @@ export const activityTypes: ActivityType[] = [
   seasonalMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   indoorAlternative: 'Stretch, do light yoga, or walk laps indoors at a mall or gym'
 },
+{
+  id: 'park_visiting',
+  name: 'Go to the park',
+  category: 'Outdoor Activities',
+  secondaryCategory: 'Outdoor Recreation',
+  weatherSensitive: true,
+  tags: ['wellbeing', 'leisure', 'fitness', 'outdoors', 'urban', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  poorConditions: [
+    'temperature<-5',                // freezing & icy
+    'temperature>35',               // heat exhaustion risk
+    'windSpeed>40',                 // strong gales
+    'precipitation>3',             // torrential rain
+    'visibility<2'                  // fog, unsafe
+  ],
+  fairConditions: [
+    'temperature=-5..5',            // cold but tolerable
+    'temperature=25..30',           // warm for brisk walking
+    'windSpeed=15..30',             // breezy but manageable
+    'precipitation=0..3',          // light to moderate rain
+    'visibility=2..5'               // reduced visibility but acceptable
+  ],
+  goodConditions: [
+    'temperature=6..25',
+    'windSpeed<15',
+    'cloudCover=0-90',
+    'precipitation=0',
+    'visibility>5'
+  ],
+  perfectConditions: [
+    'temperature=12..20',
+    'windSpeed<8',
+    'cloudCover=20-60',
+    'precipitation=0',
+    'visibility>10'
+  ],
+  seasonalMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  indoorAlternative: 'Stretch, do light yoga, or walk laps indoors at a mall or gym'
+},
  {
   id: 'mushroom_hunting',
   name: 'Mushroom Hunting',

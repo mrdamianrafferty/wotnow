@@ -41,6 +41,7 @@ const emojiMap: Record<string, string> = {
   outdoor_gym: '💪',
   yoga: '🧘',
   outdoor_yoga: '🧘',
+  park_visiting: '🏞️',
   meditation: '🧘',
   outdoor_meditation: '🧘',
   pilates: '🤸',

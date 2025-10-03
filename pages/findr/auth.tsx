@@ -29,7 +29,7 @@ export default function FindrAuth() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/findr`,
+            emailRedirectTo: `${window.location.origin}/findr/magic-link`,
             data: {
               app: 'findr',
             },
@@ -62,13 +62,10 @@ export default function FindrAuth() {
       setLoading(true);
       setError(null);
       
-      // Determine the final destination after auth
-      const destination = returnTo && returnTo.startsWith('/findr') ? returnTo : '/findr';
-      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(destination)}`,
+          redirectTo: `${window.location.origin}/findr/magic-link`,
           queryParams: {
             app: 'findr',
           },
@@ -163,9 +160,15 @@ export default function FindrAuth() {
                 <label className="label">
                   <span className="label-text">Password</span>
                   {mode === 'signin' && (
-                    <Link href="/findr/reset-password" className="label-text-alt link link-hover">
-                      Forgot password?
-                    </Link>
+                    <div className="label-text-alt space-x-2">
+                      <Link href="/findr/reset-password" className="link link-hover">
+                        Reset password
+                      </Link>
+                      <span>|</span>
+                      <Link href="/findr/quick-reset" className="link link-hover">
+                        Magic link 🪄
+                      </Link>
+                    </div>
                   )}
                 </label>
                 <input

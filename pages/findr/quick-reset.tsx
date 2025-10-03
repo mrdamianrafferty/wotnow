@@ -1,23 +1,27 @@
 import { useState } from 'react';
-import Link from 'next/link';
 import Head from 'next/head';
+import Link from 'next/link';
 import { Fish } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 
-export default function ResetPassword() {
+export default function QuickReset() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/findr/magic-link`,
+      // Send magic link instead of password reset
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/findr/magic-link`,
+        },
       });
 
       if (error) throw error;
@@ -33,7 +37,7 @@ export default function ResetPassword() {
   return (
     <>
       <Head>
-        <title>findr - Reset Password</title>
+        <title>findr - Sign In</title>
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
@@ -44,17 +48,21 @@ export default function ResetPassword() {
                 <Fish className="w-16 h-16 text-primary" />
               </div>
               <h1 className="text-3xl font-bold text-primary">findr</h1>
-              <p className="text-base-content/70 mt-2">Reset your password</p>
+              <p className="text-base-content/70 mt-2">Quick sign in with email link</p>
             </div>
 
             {success ? (
-              <div className="alert alert-success mb-4">
-                <div className="flex flex-col gap-2 w-full">
-                  <span className="font-bold">Check your email!</span>
-                  <span className="text-sm">
-                    We&apos;ve sent you a password reset link. Click the link in the email to set a new password.
-                  </span>
+              <div className="text-center">
+                <div className="alert alert-success mb-4">
+                  <span>✓ Check your email for a sign-in link!</span>
                 </div>
+                <p className="text-sm text-base-content/70 mb-4">
+                  We sent you a magic link to <strong>{email}</strong>. 
+                  Click the link in your email to sign in instantly - no password needed!
+                </p>
+                <Link href="/findr" className="btn btn-outline btn-sm">
+                  ← Back to findr
+                </Link>
               </div>
             ) : (
               <>
@@ -64,18 +72,14 @@ export default function ResetPassword() {
                   </div>
                 )}
 
-                <p className="text-sm text-base-content/70 mb-4">
-                  Enter your email address and we&apos;ll send you a link to reset your password.
-                </p>
-
-                <form onSubmit={handleResetPassword} className="space-y-4">
+                <form onSubmit={handleMagicLink} className="space-y-4">
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text">Email</span>
+                      <span className="label-text">Email Address</span>
                     </label>
                     <input
                       type="email"
-                      placeholder="fisher@example.com"
+                      placeholder="your@email.com"
                       className="input input-bordered"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -91,19 +95,24 @@ export default function ResetPassword() {
                     {loading ? (
                       <span className="loading loading-spinner"></span>
                     ) : (
-                      'Send Reset Link'
+                      '🪄 Send Magic Link'
                     )}
                   </button>
                 </form>
+
+                <div className="text-center mt-4">
+                  <Link href="/findr/auth" className="link link-primary text-sm">
+                    ← Back to sign in
+                  </Link>
+                </div>
+
+                <div className="divider text-xs">How it works</div>
+                <p className="text-xs text-base-content/60 text-center">
+                  Magic links let you sign in instantly without remembering passwords. 
+                  Just click the link in your email and you&apos;re in! 🎣
+                </p>
               </>
             )}
-
-            {/* Back to sign in */}
-            <div className="text-center mt-4">
-              <Link href="/findr/auth" className="btn btn-ghost btn-sm">
-                ← Back to sign in
-              </Link>
-            </div>
           </div>
         </div>
       </div>

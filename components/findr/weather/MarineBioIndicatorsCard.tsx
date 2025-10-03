@@ -156,9 +156,6 @@ function MarineBioIndicatorCard({
     if (typeof indicator.value === 'number' && Number.isFinite(indicator.value)) {
       return `${indicator.value.toFixed(1)}${indicator.unit ? ` ${indicator.unit}` : ''}`;
     }
-    if (typeof indicator.value === 'string' && indicator.value.trim().length > 0) {
-      return indicator.unit ? `${indicator.value} ${indicator.unit}` : indicator.value;
-    }
     return null;
   }, [indicator.unit, indicator.value]);
 
@@ -179,12 +176,9 @@ function MarineBioIndicatorCard({
             <span className={`badge ${levelBadges[indicator.level]} badge-xs sm:badge-sm whitespace-nowrap`}>{levelLabels[indicator.level]}</span>
           </div>
           {valueText ? (
-            <div className="text-xs font-medium text-base-content/70" title={indicator.hint ?? undefined}>
+            <div className="text-xs font-medium text-base-content/70">
               {valueText}
             </div>
-          ) : null}
-          {indicator.hint && !valueText ? (
-            <div className="text-[11px] uppercase tracking-wide text-base-content/50">{indicator.hint}</div>
           ) : null}
         </div>
       </div>

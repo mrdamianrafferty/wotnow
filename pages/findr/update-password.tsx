@@ -12,16 +12,57 @@ export default function UpdatePassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isValidSession, setIsValidSession] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
-    // Check if user has a valid session from the password reset link
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsValidSession(true);
-      } else {
+    // Handle the auth state change when user clicks password reset link
+    const handleAuthStateChange = async () => {
+      try {
+        // Get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+        }
+
+        // If we have a session, user is authenticated via password reset link
+        if (session) {
+          setIsValidSession(true);
+        } else {
+          // Check if there are auth tokens in the URL hash (from email link)
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
+          const type = hashParams.get('type');
+
+          if (accessToken && type === 'recovery') {
+            // Set the session using the tokens from the URL
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+
+            if (error) {
+              console.error('Error setting session:', error);
+              setError('Invalid or expired reset link. Please request a new one.');
+            } else if (data.session) {
+              setIsValidSession(true);
+              // Clean up the URL hash
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          } else {
+            setError('Invalid or expired reset link. Please request a new one.');
+          }
+        }
+      } catch (err) {
+        console.error('Auth error:', err);
         setError('Invalid or expired reset link. Please request a new one.');
+      } finally {
+        setIsCheckingSession(false);
       }
-    });
+    };
+
+    handleAuthStateChange();
   }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -79,7 +120,12 @@ export default function UpdatePassword() {
               </div>
             )}
 
-            {isValidSession ? (
+            {isCheckingSession ? (
+              <div className="text-center">
+                <span className="loading loading-spinner loading-lg"></span>
+                <p className="mt-2 text-base-content/70">Verifying reset link...</p>
+              </div>
+            ) : isValidSession ? (
               <form onSubmit={handleUpdatePassword} className="space-y-4">
                 <div className="form-control">
                   <label className="label">

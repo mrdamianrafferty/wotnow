@@ -5,7 +5,7 @@
  * PATCH: Update notification settings
  */
 
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createServerSupabaseClient } from '../../../../lib/supabase/pages-api';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

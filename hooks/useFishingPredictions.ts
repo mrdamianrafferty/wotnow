@@ -71,7 +71,12 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     const controller = new AbortController();
 
     try {
-      const response = await fetch('/api/findr/predictions', {
+      // Use absolute URL for fishfindr.eu to avoid redirect issues
+      const apiUrl = typeof window !== 'undefined' && window.location.hostname === 'fishfindr.eu' 
+        ? 'https://www.fishfindr.eu/api/findr/predictions'
+        : '/api/findr/predictions';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,6 +100,12 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
       }
 
       const typed = json as PredictionResponse;
+      console.log('[useFishingPredictions] Response:', {
+        rectangleCode: typed.rectangleCode,
+        predictionDate: typed.predictionDate,
+        predictionsCount: Array.isArray(typed.predictions) ? typed.predictions.length : 0,
+        firstPrediction: Array.isArray(typed.predictions) && typed.predictions.length > 0 ? typed.predictions[0] : null,
+      });
       setPredictions(Array.isArray(typed.predictions) ? typed.predictions : []);
       setLastUpdated(typed.metadata?.requestedAt);
       setError(null);

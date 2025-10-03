@@ -27,8 +27,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     if (typeof window === 'undefined') return;
     const { pathname, search, hash } = window.location;
 
-    // Avoid loops on the callback page itself
-    if (pathname.startsWith('/auth/callback')) return;
+    // Avoid loops on auth pages
+    if (pathname.startsWith('/findr/magic-link') || pathname.startsWith('/auth/callback')) return;
 
     const url = new URL(window.location.href);
     const code = url.searchParams.get('code');
@@ -36,8 +36,18 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     const hasOauthFragment = /(?:^#|&)(access_token|refresh_token|provider_token|expires_in|token_type)=/i.test(hash || '');
 
     if (code || type === 'recovery' || hasOauthFragment) {
-      // Preserve query and any OAuth hash
-      window.location.replace(`/auth/callback${search}${hash || ''}`);
+      // Check if this is a findr-related auth flow
+      const isFindrFlow = url.searchParams.get('app') === 'findr' || 
+                          pathname.startsWith('/findr') ||
+                          window.location.host.includes('fishfindr.eu');
+      
+      if (isFindrFlow) {
+        // Preserve query and any OAuth hash for findr flows
+        window.location.replace(`/findr/magic-link${search}${hash || ''}`);
+      } else {
+        // Preserve query and any OAuth hash for GoDaisy flows
+        window.location.replace(`/auth/callback${search}${hash || ''}`);
+      }
     }
   }, []);
   // Use Light theme on onboarding, otherwise default to wotnow

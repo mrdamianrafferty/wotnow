@@ -152,6 +152,7 @@ const mainCategories = [
                     "beach",
                     "geocaching",
                     "camping",
+                    'park_visiting',
                     "outdoor_reading",
                     "dog_walking",
                     "outdoor_playground",

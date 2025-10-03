@@ -178,8 +178,6 @@ export function EnvironmentalSummaryCard({
           <EnvironmentalIndicators
             pollen={pollen}
             airQuality={airQuality}
-            snowDepthCm={snowDepthCm}
-            snowfallRateMmH={snowfallRateMmH}
             mode="full"
           />
         </div>

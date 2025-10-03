@@ -63,7 +63,12 @@ export default function FavouritesDemoPage() {
       setError(null);
 
       try {
-        const response = await fetch('/api/findr/predictions', {
+        // Use absolute URL for fishfindr.eu to avoid redirect issues
+        const apiUrl = typeof window !== 'undefined' && window.location.hostname === 'fishfindr.eu' 
+          ? 'https://www.fishfindr.eu/api/findr/predictions'
+          : '/api/findr/predictions';
+          
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

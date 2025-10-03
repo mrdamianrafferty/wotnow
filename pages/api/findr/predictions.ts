@@ -6,9 +6,9 @@ interface PredictionRequestBody {
   rectangleCode?: string;
   predictionDate?: string;
   language?: string;
+  bypassCache?: boolean; // Debug flag to skip cache
 }
 
-const SUPABASE_REST_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const CACHE_TABLE = 'findr_prediction_sessions';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 3; // 3 hours
@@ -35,14 +35,6 @@ interface SpeciesLocalizationRow {
 }
 
 type LocalizedNameMap = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
-
-function buildRpcUrl(path: string) {
-  if (!SUPABASE_REST_URL) {
-    throw new Error('Supabase REST URL missing: set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.');
-  }
-  const trimmed = SUPABASE_REST_URL.replace(/\/?$/, '');
-  return `${trimmed}${trimmed.endsWith('/rest/v1') ? '' : '/rest/v1'}${path.startsWith('/') ? path : `/${path}`}`;
-}
 
 function validateDate(input?: string): string | null {
   if (!input) return null;
@@ -74,47 +66,53 @@ async function readCachedPredictions(params: {
 
   const { rectangleCode, predictionDate, language } = params;
 
-  const { data, error } = await supabase
-    .from(CACHE_TABLE)
-    .select('*')
-    .eq('rectangle_code', rectangleCode)
-    .eq('prediction_date', predictionDate)
-    .eq('language', language)
-    .order('fetched_at', { ascending: false })
-    .limit(1)
-  .maybeSingle<CachedPredictionRow>();
+  try {
+    const { data, error } = await supabase
+      .from(CACHE_TABLE)
+      .select('*')
+      .eq('rectangle_code', rectangleCode)
+      .eq('prediction_date', predictionDate)
+      .eq('language', language)
+      .order('fetched_at', { ascending: false })
+      .limit(1)
+    .maybeSingle<CachedPredictionRow>();
 
-  if (error) {
-    if (isMissingRelationError(error)) {
-      console.warn('[findr] Prediction cache table missing; continuing without cache');
+    if (error) {
+      if (isMissingRelationError(error)) {
+        console.warn('[findr] Prediction cache table missing; continuing without cache');
+        return { data: null, source: null };
+      }
+
+      console.error('[findr] Failed to read prediction cache', error);
+      // Don't let cache errors block the API - return null to force fresh fetch
       return { data: null, source: null };
     }
 
-    console.error('[findr] Failed to read prediction cache', error);
+    if (!data) {
+      return { data: null, source: null };
+    }
+
+    const expiresAt = data.expires_at ? new Date(data.expires_at).getTime() : null;
+    const now = Date.now();
+
+    if (expiresAt && expiresAt <= now) {
+      console.log('[Findr Cache] Cache expired:', { rectangleCode, predictionDate, expiresAt: new Date(expiresAt), now: new Date(now) });
+      return { data: null, source: null };
+    }
+
+    console.log('[Findr Cache] Returning cached data:', {
+      rectangleCode,
+      predictionDate,
+      language,
+      payloadType: Array.isArray(data.payload) ? 'array' : typeof data.payload,
+      payloadLength: Array.isArray(data.payload) ? data.payload.length : 'N/A',
+    });
+
+    return { data: data.payload, source: 'cache' as const };
+  } catch (cacheError) {
+    console.warn('[findr] Cache read failed, bypassing cache:', (cacheError as Error).message);
     return { data: null, source: null };
   }
-
-  if (!data) {
-    return { data: null, source: null };
-  }
-
-  const expiresAt = data.expires_at ? new Date(data.expires_at).getTime() : null;
-  const now = Date.now();
-
-  if (expiresAt && expiresAt <= now) {
-    console.log('[Findr Cache] Cache expired:', { rectangleCode, predictionDate, expiresAt: new Date(expiresAt), now: new Date(now) });
-    return { data: null, source: null };
-  }
-
-  console.log('[Findr Cache] Returning cached data:', {
-    rectangleCode,
-    predictionDate,
-    language,
-    payloadType: Array.isArray(data.payload) ? 'array' : typeof data.payload,
-    payloadLength: Array.isArray(data.payload) ? data.payload.length : 'N/A',
-  });
-
-  return { data: data.payload, source: 'cache' as const };
 }
 
 async function writeCachedPredictions(params: {
@@ -134,26 +132,30 @@ async function writeCachedPredictions(params: {
   const expiresAt = new Date(Date.now() + CACHE_TTL_MS).toISOString();
   const fetchedAt = new Date().toISOString();
 
-  const { error } = await supabase.from(CACHE_TABLE).upsert(
-    {
-      rectangle_code: params.rectangleCode,
-      prediction_date: params.predictionDate,
-      language: params.language,
-      payload: params.payload,
-      fetched_at: fetchedAt,
-      expires_at: expiresAt,
-    },
-    {
-      onConflict: 'rectangle_code,prediction_date,language',
-    }
-  );
+  try {
+    const { error } = await supabase.from(CACHE_TABLE).upsert(
+      {
+        rectangle_code: params.rectangleCode,
+        prediction_date: params.predictionDate,
+        language: params.language,
+        payload: params.payload,
+        fetched_at: fetchedAt,
+        expires_at: expiresAt,
+      },
+      {
+        onConflict: 'rectangle_code,prediction_date,language',
+      }
+    );
 
-  if (error) {
-    if (isMissingRelationError(error)) {
-      console.warn('[findr] Prediction cache table missing during write');
-      return;
+    if (error) {
+      if (isMissingRelationError(error)) {
+        console.warn('[findr] Prediction cache table missing during write');
+        return;
+      }
+      console.error('[findr] Failed to cache predictions', error);
     }
-    console.error('[findr] Failed to cache predictions', error);
+  } catch (cacheError) {
+    console.warn('[findr] Cache write failed, continuing without cache:', (cacheError as Error).message);
   }
 }
 
@@ -382,12 +384,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const rectangleCode = body.rectangleCode?.trim();
   const predictionDate = validateDate(body.predictionDate) ?? new Date().toISOString().slice(0, 10);
   const language = body.language?.trim() || 'en';
+  const bypassCache = Boolean(body.bypassCache);
 
   if (!rectangleCode) {
     return res.status(400).json({ error: 'rectangleCode is required' });
   }
 
-  const cached = await readCachedPredictions({ rectangleCode, predictionDate, language });
+  // Skip cache if bypass flag is set
+  const cached = bypassCache ? { data: null, source: null } : await readCachedPredictions({ rectangleCode, predictionDate, language });
 
   if (cached.data) {
     const cacheControl = 's-maxage=600, stale-while-revalidate=1800';
@@ -406,43 +410,71 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const rpcUrl = buildRpcUrl('/rpc/get_fishing_predictions');
+  console.log('[Findr API] Calling RPC with params:', {
+    rectangle_code_input: rectangleCode,
+    prediction_date_input: predictionDate,
+    user_language: language,
+  });
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
+  // Use Supabase client instead of raw fetch to call the RPC
+  let supabase;
+  try {
+    supabase = getSupabaseServerClient();
+    
+    // Ensure no auth state pollution - create a fresh anonymous session
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('[Findr API] Failed to get Supabase client:', error);
+    return res.status(500).json({ error: 'Supabase client unavailable' });
+  }
 
   try {
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        Prefer: 'return=representation',
-        'Accept-Profile': 'public',
-      },
-      body: JSON.stringify({
-        rectangle_code_input: rectangleCode,
-        prediction_date_input: predictionDate,
-        user_language: language,
-      }),
-      signal: controller.signal,
+    // Add timeout to the RPC call for Vercel
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
+    );
+
+    const rpcPromise = supabase.rpc('get_fishing_predictions', {
+      rectangle_code_input: rectangleCode,
+      prediction_date_input: predictionDate,
+      user_language: language,
     });
 
-    clearTimeout(timeout);
+    const { data, error: rpcError } = await Promise.race([
+      rpcPromise, 
+      timeoutPromise
+    ]) as { data: unknown; error: PostgrestError | null };
 
-    const text = await response.text();
-    const isJson = text.trim().startsWith('{') || text.trim().startsWith('[');
-    const data = isJson ? JSON.parse(text) : text;
+    console.log('[Findr API] RPC response via client:', {
+      hasError: Boolean(rpcError),
+      errorMessage: rpcError?.message,
+      dataType: Array.isArray(data) ? 'array' : typeof data,
+      dataLength: Array.isArray(data) ? data.length : 'N/A',
+      firstItem: Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]).substring(0, 200) : null,
+    });
 
-    if (!response.ok) {
-      const errorPayload = typeof data === 'string' ? { message: data } : data;
-      const error = {
-        error: 'Supabase RPC failed',
-        status: response.status,
-        details: errorPayload,
-      };
-      return res.status(response.status).json(error);
+    if (rpcError) {
+      console.error('[Findr API] RPC error:', rpcError);
+      return res.status(500).json({ 
+        error: 'RPC call failed', 
+        details: rpcError 
+      });
+    }
+
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.warn('[Findr API] RPC returned no data for:', { rectangleCode, predictionDate, language });
+      return res.status(200).json({
+        rectangleCode,
+        predictionDate,
+        language,
+        predictions: [],
+        metadata: {
+          cacheControl: 's-maxage=300, stale-while-revalidate=600', // Shorter cache for empty results
+          requestedAt: new Date().toISOString(),
+          source: 'live' as const,
+          warning: 'No predictions available for this area and date'
+        },
+      });
     }
 
     const cacheControl = 's-maxage=900, stale-while-revalidate=3600';
@@ -464,13 +496,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
   } catch (error) {
-    clearTimeout(timeout);
-
-    if ((error as Error).name === 'AbortError') {
-      return res.status(504).json({ error: 'Supabase RPC timeout' });
-    }
-
     console.error('Findr predictions RPC error', error);
     return res.status(500).json({ error: 'Unexpected server error', details: (error as Error).message });
   }
 }
+
