@@ -585,16 +585,15 @@ const FindrPage: React.FC = () => {
     [manualNormalized, rectangleOptions, selectedCode]
   );
 
+  // Auto-select first rectangle if none selected
   useEffect(() => {
-    if (selectedCode || manualNormalized) return;
+    // Don't auto-select if manual code is being used
+    if (manualNormalized) return;
+    // Don't auto-select if valid rectangle already selected
+    if (selectedCode && rectangleOptions.some(opt => opt.code === selectedCode)) return;
+    // Don't auto-select if rectangles not loaded yet
     if (rectangleOptions.length === 0) return;
-    setSelectedCode(rectangleOptions[0].code);
-  }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
-
-  useEffect(() => {
-    if (!selectedCode || manualNormalized) return;
-    if (rectangleOptions.some((option) => option.code === selectedCode)) return;
-    if (rectangleOptions.length === 0) return;
+    // Auto-select first rectangle
     setSelectedCode(rectangleOptions[0].code);
   }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
 
