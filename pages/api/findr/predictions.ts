@@ -102,8 +102,17 @@ async function readCachedPredictions(params: {
   const now = Date.now();
 
   if (expiresAt && expiresAt <= now) {
+    console.log('[Findr Cache] Cache expired:', { rectangleCode, predictionDate, expiresAt: new Date(expiresAt), now: new Date(now) });
     return { data: null, source: null };
   }
+
+  console.log('[Findr Cache] Returning cached data:', {
+    rectangleCode,
+    predictionDate,
+    language,
+    payloadType: Array.isArray(data.payload) ? 'array' : typeof data.payload,
+    payloadLength: Array.isArray(data.payload) ? data.payload.length : 'N/A',
+  });
 
   return { data: data.payload, source: 'cache' as const };
 }
