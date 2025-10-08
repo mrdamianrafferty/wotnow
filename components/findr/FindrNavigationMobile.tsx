@@ -13,6 +13,7 @@ import {
 import { LanguageSelector } from '../LanguageSelector';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import FindrUserMenu from './FindrUserMenu';
+import { LocationDisplay } from './LocationDisplay';
 
 interface NavLink {
   href: string;
@@ -95,6 +96,7 @@ export function FindrNavigation() {
           </ul>
         </nav>
         <div className="ml-4 flex-shrink-0 flex items-center gap-3">
+          <LocationDisplay />
           <FindrUserMenu />
           <LanguageSelector compact />
         </div>
@@ -131,9 +133,12 @@ export function FindrNavigation() {
       </div>
 
       {/* Mobile Language Selector & User Menu - Static at top of page content */}
-      <div className="md:hidden flex items-center justify-end gap-2 px-3 py-2 bg-base-200">
-        <FindrUserMenu />
-        <LanguageSelector compact />
+      <div className="md:hidden flex items-center justify-between gap-2 px-3 py-2 bg-base-200">
+        <LocationDisplay />
+        <div className="flex items-center gap-2">
+          <FindrUserMenu />
+          <LanguageSelector compact />
+        </div>
       </div>
     </>
   );

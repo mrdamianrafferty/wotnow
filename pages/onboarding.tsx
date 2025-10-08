@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 
-import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete";
+import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from "../lib/hooks/usePlacesAutocompleteNew";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 // DaisyUI Light tokens applied inline so they win the cascade inside this page
