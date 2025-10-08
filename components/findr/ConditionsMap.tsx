@@ -402,7 +402,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
             url="http://drive.emodnet-geology.eu/geoserver/gtk/ows"
             params={{
               service: 'WMS',
-              layers: 'gtk:seabed_substrate_100k',
+              layers: 'gtk:seabed_substrate_1k5_multiscale',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
