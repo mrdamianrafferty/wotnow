@@ -1,5 +1,21 @@
 @import "tailwindcss";
 @import "daisyui";
+/* ⚠️ IMPORTANT: This "incorrect" setup is what actually works! ⚠️
+ * 
+ * DaisyUI 5 + Tailwind CSS 3.4.x WORKING CONFIGURATION:
+ * ======================================================
+ * Despite official docs saying to use either:
+ *   1. @plugin "daisyui" (for Tailwind 4.x) OR
+ *   2. plugins: [require('daisyui')] in tailwind.config.js (for Tailwind 3.x)
+ * 
+ * The ONLY configuration that actually works for this project is:
+ *   - @import "tailwindcss" + @import "daisyui" in CSS
+ *   - plugins: [require('daisyui')] in tailwind.config.js
+ *   - postcss.config.js must use module.exports (CommonJS) with tailwindcss plugin
+ * 
+ * DO NOT change this to @tailwind directives - it breaks the layout!
+ * Last verified working: October 8, 2025
+ */
 /* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS import above. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
