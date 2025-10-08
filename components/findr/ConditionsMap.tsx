@@ -383,7 +383,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           <WMSTileLayer
             url="https://ows.emodnet-seabedhabitats.eu/geoserver/wms"
             params={{
-              layers: 'eusm:folk_7',
+              layers: 'eusm:folk_5',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
