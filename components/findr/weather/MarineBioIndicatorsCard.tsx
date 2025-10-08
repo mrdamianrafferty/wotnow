@@ -12,6 +12,7 @@ import {
   Hexagon,
   AlertCircle,
   Info,
+  HatGlasses,
 } from 'lucide-react';
 import WeatherStatCard from './WeatherStatCard';
 import { formatRelativeTime } from '../../../lib/findr/weatherFormatting';
@@ -59,6 +60,11 @@ const indicatorConfigs: Record<MarineBioIndicatorType, IndicatorConfig> = {
     icon: Droplets,
     label: 'Phosphate',
     colorClass: 'text-indigo-600',
+  },
+  stealth: {
+    icon: HatGlasses,
+    label: 'Stealth',
+    colorClass: 'text-amber-600',
   },
   salinity: {
     icon: Hexagon,
@@ -137,6 +143,13 @@ const indicatorDescriptions: Record<MarineBioIndicatorType, Record<MarineBioIndi
     high: 'Strong plankton – baitfish schools likely, predators nearby.',
     very_high: 'Over-bloom – possible cloudy water, predators may shift to clearer areas.',
   },
+  stealth: {
+    very_low: 'Excellent low-light conditions. Fish feel secure and actively feeding with minimal wariness. Darker lures work well.',
+    low: 'Low light favors the angler. Fish less spooky and feed confidently. Good for topwater and aggressive presentations.',
+    normal: 'Moderate light. Fish somewhat cautious but feeding. Standard stealth tactics and natural colors recommended.',
+    high: 'High light makes fish cautious. Use longer leaders (9-12ft), subdued colors, and careful approach.',
+    very_high: 'Extreme light penetration. Fish extremely wary. Use very long leaders (12-15ft+), natural baits, minimal movement. Consider early/late fishing.',
+  },
 };
 
 function MarineBioIndicatorCard({
@@ -155,6 +168,9 @@ function MarineBioIndicatorCard({
   const valueText = useMemo(() => {
     if (typeof indicator.value === 'number' && Number.isFinite(indicator.value)) {
       return `${indicator.value.toFixed(1)}${indicator.unit ? ` ${indicator.unit}` : ''}`;
+    }
+    if (typeof indicator.value === 'string' && indicator.value.trim().length > 0) {
+      return indicator.unit ? `${indicator.value} ${indicator.unit}` : indicator.value;
     }
     return null;
   }, [indicator.unit, indicator.value]);
@@ -179,6 +195,9 @@ function MarineBioIndicatorCard({
             <div className="text-xs font-medium text-base-content/70">
               {valueText}
             </div>
+          ) : null}
+          {indicator.hint && !valueText ? (
+            <div className="text-[11px] uppercase tracking-wide text-base-content/50">{indicator.hint}</div>
           ) : null}
         </div>
       </div>

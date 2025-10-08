@@ -5,6 +5,12 @@ export interface FallbackConditionPayload {
     region: string;
     centerLat: number;
     centerLon: number;
+    bounds?: {
+      south: number;
+      north: number;
+      west: number;
+      east: number;
+    };
   };
   snapshot: {
     capturedAt: string;

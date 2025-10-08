@@ -33,6 +33,12 @@ interface RectangleMeta {
   region: string;
   centerLat: number;
   centerLon: number;
+  bounds?: {
+    south: number;
+    north: number;
+    west: number;
+    east: number;
+  };
 }
 
 function cloneFallbackPayload(): FallbackConditionPayload {
@@ -213,7 +219,7 @@ async function fetchRectangleMeta(supabase: ReturnType<typeof getSupabaseServerC
   for (const table of sources) {
     const { data, error } = await supabase
       .from(table)
-      .select('rectangle_code, region, center_lat, center_lon')
+      .select('rectangle_code, region, center_lat, center_lon, lat_south, lat_north, lon_west, lon_east')
       .eq('rectangle_code', code)
       .maybeSingle();
 
@@ -230,15 +236,31 @@ async function fetchRectangleMeta(supabase: ReturnType<typeof getSupabaseServerC
       const region = typeof data.region === 'string' && data.region.trim() ? data.region.trim() : code;
       const centerLat = normaliseNumber(data.center_lat);
       const centerLon = normaliseNumber(data.center_lon);
+      const latSouth = normaliseNumber(data.lat_south);
+      const latNorth = normaliseNumber(data.lat_north);
+      const lonWest = normaliseNumber(data.lon_west);
+      const lonEast = normaliseNumber(data.lon_east);
 
       if (centerLat !== undefined && centerLon !== undefined) {
-        return {
+        const result: RectangleMeta = {
           code,
           name: region,
           region,
           centerLat,
           centerLon,
         };
+        
+        // Add bounds if all coordinates are available
+        if (latSouth !== undefined && latNorth !== undefined && lonWest !== undefined && lonEast !== undefined) {
+          result.bounds = {
+            south: latSouth,
+            north: latNorth,
+            west: lonWest,
+            east: lonEast,
+          };
+        }
+        
+        return result;
       }
     }
   }
@@ -262,6 +284,7 @@ function buildResponsePayload(code: string, meta: RectangleMeta): FallbackCondit
   payload.rectangle.region = meta.region;
   payload.rectangle.centerLat = meta.centerLat;
   payload.rectangle.centerLon = meta.centerLon;
+  payload.rectangle.bounds = meta.bounds;
   payload.snapshot.capturedAt = new Date().toISOString();
   return payload;
 }

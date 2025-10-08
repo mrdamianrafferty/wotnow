@@ -49,6 +49,12 @@ interface ConditionsMapProps {
   showICESRectangle?: boolean;
   className?: string;
   rectangleCode?: string;
+  rectangleBounds?: {
+    south: number;
+    north: number;
+    west: number;
+    east: number;
+  } | null;
 }
 
 interface GeoJSONFeature {
@@ -154,12 +160,14 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
   showDepthContours = true,
   showICESRectangle = true,
   className = "",
-  rectangleCode
+  rectangleCode,
+  rectangleBounds
 }) => {
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [realContours, setRealContours] = useState<RealDepthContour[]>([]);
   const [loadingContours, setLoadingContours] = useState<boolean>(false);
   const [showSubstrate, setShowSubstrate] = useState<boolean>(true);
+  const [showShallows, setShowShallows] = useState<boolean>(false);
   const mapRef = useRef<LeafletMap | null>(null);
   const { lat, lon } = centerLocation;
 
@@ -295,21 +303,16 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
     }
   }, [lat, lon, showDepthContours, generateEnhancedFallbackContours]);
 
-  const getICESRectangleBounds = (code?: string): LatLngBoundsLiteral | null => {
-    if (!code) return null;
-    
-    const rectWidth = 1.0;
-    const rectHeight = 0.5;
-    const baseLat = centerLocation.lat;
-    const baseLon = centerLocation.lon;
+  const getICESRectangleBounds = (bounds?: typeof rectangleBounds): LatLngBoundsLiteral | null => {
+    if (!bounds) return null;
     
     return [
-      [baseLat - rectHeight/2, baseLon - rectWidth/2],
-      [baseLat + rectHeight/2, baseLon + rectWidth/2]
+      [bounds.south, bounds.west],
+      [bounds.north, bounds.east]
     ];
   };
 
-  const icesRectangle = getICESRectangleBounds(rectangleCode);
+  const icesRectangle = getICESRectangleBounds(rectangleBounds);
 
   useEffect(() => {
     setMapReady(true);
@@ -331,11 +334,11 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
       <div className="absolute top-2 right-2 flex items-center gap-2 z-[1000]">
         <button 
           className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
-          onClick={() => setShowSubstrate(!showSubstrate)}
+          onClick={() => setShowShallows(!showShallows)}
           type="button"
         >
-          <span className={showSubstrate ? "text-green-400" : "text-red-400"}>●</span>
-          <span>Shallows: Off</span>
+          <span className={showShallows ? "text-green-400" : "text-red-400"}>●</span>
+          <span>Shallows: {showShallows ? 'On' : 'Off'}</span>
         </button>
         
         <button 
@@ -361,6 +364,20 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
           maxZoom={18}
         />
+
+        {showShallows && (
+          <WMSTileLayer
+            url="https://ows.emodnet-bathymetry.eu/wms"
+            params={{
+              layers: 'emodnet:mean_atlas_land',
+              format: 'image/png',
+              transparent: true,
+              version: '1.3.0'
+            }}
+            opacity={0.4}
+            attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
+          />
+        )}
 
         {showSubstrate && (
           <WMSTileLayer
@@ -395,7 +412,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
             <Popup>
               <div className="text-sm">
                 <strong>ICES Rectangle {rectangleCode || 'Area'}</strong><br />
-                Fishing management zone
+                
               </div>
             </Popup>
           </Rectangle>
@@ -493,7 +510,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
                   <div className="w-2 h-2 rounded-full bg-orange-400"></div>
                 </div>
                 <span className="font-medium">Mixed</span>
-                <span className="text-white/60">• varied species</span>
+                <span className="text-white/60">• bass, pollack</span>
               </div>
               
               <div className="flex items-center gap-2">
@@ -501,7 +518,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
                   <div className="w-2 h-2 rounded-full bg-gray-400"></div>
                 </div>
                 <span className="font-medium">Rocky</span>
-                <span className="text-white/60">• bass, pollack, wrasse</span>
+                <span className="text-white/60">• conger, wrasse</span>
               </div>
               
               <div className="text-xs text-green-400 mt-2">
