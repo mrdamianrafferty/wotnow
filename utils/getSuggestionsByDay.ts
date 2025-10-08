@@ -2,7 +2,8 @@
 
 // Lightweight types used here
 type SuitabilityLevel = 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative';
-import type { ActivityType } from '../data/activityTypes';
+import type { ActivityType } from '../data/activities/types';
+import type { SnowRecommendationLevel } from './snowRecommendations';
 
 export interface WeatherData {
   temperature?: number;
@@ -16,6 +17,11 @@ export interface WeatherData {
   swellHeight?: number;               // m
   swellPeriod?: number;               // s
   sunsetTs?: number | null;
+  // Snow inputs (optional)
+  snowDepthCm?: number;               // cm
+  snowfallRateMmH?: number;           // mm/h
+  // ➕ Soil moisture (0–1 m3/m3 or 0–100 %)
+  soilMoisture?: number;
 }
 
 export interface EveningBonusResult {
@@ -27,14 +33,23 @@ export interface Suggestion {
   activityId: string;
   score: number;
   evaluation: SuitabilityLevel;
+  reasoning?: string;
+  outOfSeason?: boolean;
   eveningReasons?: EveningBonusResult['reasons'];
+  snow?: { level: SnowRecommendationLevel; message: string };
 }
 
 // Removed unused imports to satisfy linter
 // import { selectHeroActivity } from './heroSelector';
 import { calculateConditionMatchScore,
-         calculatePoorConditionPenalty } from './activitySuitability';
+         calculatePoorConditionPenalty,
+         applySnowRecommendationScoring,
+         applyWindRecommendationScoring,
+         adjustScoreForMud } from './activitySuitability';
+import type { WeatherData as SuitabilityWeather, MinimalActivity } from './activitySuitability';
 import { applyEveningBonus } from './eveningScoring';
+import { getWindActivityRecommendation } from './windRecommendations';
+import { assessSoilCondition, isMudSensitive, getMudMessage } from './soilMoistureUtils';
 // import { activityTypes } from '../data/activityTypes';
 // import { getActivityMessage } from '../data/activityMessages';
 
@@ -64,15 +79,15 @@ function toLevel(score: number): SuitabilityLevel | 'poor' {
   return 'poor';
 }
 
-// Unified scoring function
-function calculateActivityScore(
+// Unified scoring function that returns both score and optional snow details
+function calculateActivityScoreWithSnow(
   activity: ActivityType,
   weather: WeatherData,
   isWeatherGood: boolean,
   isEveningToday: boolean,
   contextTags: string[],
   opts: { nowTs: number; sunsetTs?: number | null; month?: number }
-): number {
+): { score: number; snow?: { level: SnowRecommendationLevel; message: string } } {
   console.log(`🎯 Scoring ${activity.id}...`);
   console.log(`🌦️ Raw weather input:`, JSON.stringify(weather, null, 2));
   
@@ -82,11 +97,11 @@ function calculateActivityScore(
     const hour = new Date(opts.nowTs).getHours();
     const eveningResult = applyEveningBonus(activity as unknown as ActivityType, hour, contextTags, opts);
     score *= eveningResult.multiplier;
-    return Math.min(95, Math.round(score));
+    return { score: Math.min(95, Math.round(score)) };
   }
 
-  // Normalize weather
-  const w = {
+  // Normalize weather to the suitability engine WeatherData
+  const w: SuitabilityWeather = {
     temperature: weather.temperature,
     precipitation: weather.precipitation,
     windSpeed: weather.windspeed ? weather.windspeed / 3.6 : 0, // Convert km/h back to m/s for activity conditions
@@ -97,42 +112,56 @@ function calculateActivityScore(
     waveHeight: weather.waveHeight,
     swellHeight: weather.swellHeight,
     swellPeriod: weather.swellPeriod,
+    // Snow passthrough
+    snowDepthCm: weather.snowDepthCm,
+    snowfallRateMmH: weather.snowfallRateMmH,
+    // ➕ soil moisture passthrough
+    soilMoisture: weather.soilMoisture,
   };
 
-  console.log(`🌤️ ${activity.id} normalized weather:`, JSON.stringify(w, null, 2));
+  // Heuristic: most non-water outdoor activities should not be marked good/perfect in rain
+  const isWaterActivity = (activity.category?.toLowerCase().includes('water') || activity.secondaryCategory?.toLowerCase().includes('water') || activity.tags?.includes('water')) ?? false;
+  const rainMm = typeof w.precipitation === 'number' ? w.precipitation : 0;
 
   let score = 50; // Start with neutral score instead of 20
-  let cl = 'fair';
+  let cl: 'poor' | 'fair' | 'good' | 'perfect' = 'fair';
 
-  // Dangerous conditions
+  // Dangerous conditions — make hazard veto sticky
+  let penalty = 0;
   if (activity.poorConditions?.length) {
-    const penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
-    console.log(`💀 ${activity.id} poor condition penalty: ${penalty.toFixed(3)}`);
-    if (penalty > 0.7) {
-      score = 8 + Math.random() * 12;
-      cl = 'poor';
-      console.log(`❌ ${activity.id} marked as poor due to dangerous conditions`);
+    penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
+    if (penalty >= 0.7) {
+      // Hard veto: cap and return early to avoid any later upgrades
+      const hardCapped = Math.max(5, Math.min(40, 20 + Math.round(Math.random() * 10)));
+      return { score: hardCapped };
     }
   }
 
   // Perfect
   if (activity.perfectConditions?.length) {
     const perfectScore = calculateConditionMatchScore(activity.perfectConditions, w);
-    console.log(`✨ ${activity.id} perfect match score: ${perfectScore.toFixed(3)}`);
     if (perfectScore > 0.8) {
-      score = 90 + Math.random() * 8;
-      cl = 'perfect';
-      console.log(`🌟 ${activity.id} marked as perfect`);
+      // Disallow perfect if notable rain for non-water activities or moderate risk present
+      if (!isWaterActivity && rainMm > 0) {
+        // skip perfect upgrade
+      } else if (penalty < 0.3) {
+        score = 90 + Math.random() * 8;
+        cl = 'perfect';
+        console.log(`🌟 ${activity.id} marked as perfect`);
+      }
     }
   }
   // Good
   if (cl !== 'perfect' && activity.goodConditions?.length) {
     const goodScore = calculateConditionMatchScore(activity.goodConditions, w);
-    console.log(`👍 ${activity.id} good match score: ${goodScore.toFixed(3)}`);
     if (goodScore > 0.5) {
-      score = 68 + Math.random() * 15;
-      cl = 'good';
-      console.log(`✅ ${activity.id} marked as good`);
+      // Require essentially dry conditions for non-water activities
+      const allowGood = isWaterActivity || rainMm <= 0.5;
+      if (allowGood) {
+        score = 68 + Math.random() * 15;
+        cl = 'good';
+        console.log(`✅ ${activity.id} marked as good`);
+      }
     }
   }
   // Fair
@@ -158,8 +187,39 @@ function calculateActivityScore(
     score *= eveningRes.multiplier;
   }
 
+  // Risk-aware finalization: subtract poor penalty and cap categories by risk
+  if (!penalty && activity.poorConditions?.length) {
+    penalty = calculatePoorConditionPenalty(activity.poorConditions, w);
+  }
+
+  // Subtract penalty (40pt full-scale impact)
+  score = score - Math.round(penalty * 40);
+
+  // Additional rain caps for non-water activities
+  if (!isWaterActivity) {
+    if (rainMm >= 3) score = Math.min(score, 40); // heavy rain -> poor
+    else if (rainMm >= 1) score = Math.min(score, 59); // light-moderate rain -> at most fair
+  }
+
+  // ➕ Apply wind-aware adjustment
+  const windAdjusted = applyWindRecommendationScoring(activity as MinimalActivity, w, score);
+  score = windAdjusted.score;
+
+  // ➕ Apply soil moisture adjustment for mud-sensitive activities
+  const mudAdjusted = adjustScoreForMud(activity as MinimalActivity, w, score);
+  score = mudAdjusted.score;
+
+  // Apply snow-aware adjustment
+  const snowAdjusted = applySnowRecommendationScoring(activity as MinimalActivity, w, score);
+  score = snowAdjusted.score;
+
+  // Risk caps to prevent high categories under risk
+  if (penalty >= 0.5) score = Math.min(score, 59); // at most fair
+  else if (penalty >= 0.3) score = Math.min(score, 89); // block perfect
+
+  // Clamp and round
   score = Math.max(5, Math.min(95, score));
-  return Math.round(score);
+  return { score: Math.round(score), snow: snowAdjusted.snow ? { level: snowAdjusted.snow.level, message: snowAdjusted.snow.message } : undefined };
 }
 
 // Define these helper functions if they don't exist elsewhere
@@ -167,11 +227,35 @@ function getScoreEvaluation(score: number): SuitabilityLevel {
   return toLevel(score);
 }
 
-function getReasoningForScore(score: number, activity: ActivityType, _weather: WeatherData): string {
-  if (score >= 90) return `Perfect conditions for ${activity.name || activity.id}!`;
-  if (score >= 60) return `Good weather for ${activity.name || activity.id}.`;
-  if (score >= 40) return `Fair conditions for ${activity.name || activity.id}.`;
-  return `Not ideal weather for ${activity.name || activity.id}, but still an option.`;
+function getReasoningForScore(score: number, activity: ActivityType, weather: WeatherData): string {
+  let base: string;
+  if (score >= 90) base = `Perfect conditions for ${activity.name || activity.id}!`;
+  else if (score >= 60) base = `Good weather for ${activity.name || activity.id}.`;
+  else if (score >= 40) base = `Fair conditions for ${activity.name || activity.id}.`;
+  else base = `Not ideal weather for ${activity.name || activity.id}, but still an option.`;
+
+  // ➕ Wind context
+  const windMs = typeof weather.windspeed === 'number' ? weather.windspeed / 3.6 : undefined;
+  if (typeof windMs === 'number') {
+    const rec = getWindActivityRecommendation(activity.id, windMs);
+    if (['dangerous','unsafe','impractical','unplayable','difficult','uncomfortable','caution','min_wind_needed','optimal','beneficial'].includes(rec.level)) {
+      base += ` ${rec.emoji ?? ''} ${rec.message}`.trim();
+    }
+  }
+
+  // ➕ Humidity context for poor scores
+  if (score < 40 && typeof weather.humidity === 'number' && weather.humidity >= 90) {
+    base += ` High humidity (${Math.round(weather.humidity)}%) is making it feel oppressive.`;
+  }
+
+  // ➕ Soil/mud context
+  if (typeof weather.soilMoisture === 'number' && isMudSensitive(activity.id)) {
+    const soil = assessSoilCondition(weather.soilMoisture);
+    const msg = getMudMessage(activity.id, soil);
+    if (msg) base += ` — ${msg}`;
+  }
+
+  return base;
 }
 
 // Main function
@@ -235,7 +319,7 @@ export function getSuggestionsByDay({
 
         console.log(`🏷️ Using context tags:`, contextTags);
 
-        const score = calculateActivityScore(
+        const { score, snow } = calculateActivityScoreWithSnow(
           activity, 
           day.weather,
           (day.weather.precipitation ?? 0) < 5, // isWeatherGood
@@ -253,7 +337,8 @@ export function getSuggestionsByDay({
             score,
             evaluation: getScoreEvaluation(score),
             reasoning: getReasoningForScore(score, activity, day.weather),
-            outOfSeason
+            outOfSeason,
+            snow: snow ? { level: snow.level, message: snow.message } : undefined,
           };
         }
         return null;

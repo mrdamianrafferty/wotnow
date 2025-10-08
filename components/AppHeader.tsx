@@ -4,6 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUserPreferences } from '../context/UserPreferencesContext';
+import { supabase } from '../lib/supabase/client';
+import { LocationPicker } from './LocationPicker';
 
 export type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
@@ -16,6 +18,13 @@ interface AppHeaderProps {
   activeLocationType?: 'home' | 'coastal';
   onToggleLocationType?: (next: 'home' | 'coastal') => void;
 }
+
+const toFirstName = (input?: string | null) => {
+  if (!input) return null;
+  const first = input.trim().split(/\s+/)[0];
+  if (!first) return null;
+  return first.charAt(0).toUpperCase() + first.slice(1);
+};
 
 /**
  * Go Daisy header using DaisyUI navbar + dropdown menu.
@@ -32,6 +41,63 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   // Access user preferences to infer locations when not provided via props
   const { preferences } = useUserPreferences();
+
+  const [authReady, setAuthReady] = React.useState(false);
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [displayName, setDisplayName] = React.useState<string | null>(null);
+
+  // Resolve display name from (in order): profile.name, preferences (if present), email local-part
+  const resolveName = React.useCallback(async (uid: string | null) => {
+    try {
+      // 2) Try profile.name from DB
+      if (uid) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('name, email')
+          .eq('id', uid)
+          .maybeSingle();
+        if (data?.name) {
+          const n = toFirstName(data.name);
+          if (n) { setDisplayName(n); return; }
+        }
+        if (data?.email) {
+          const local = String(data.email).split('@')[0] || '';
+          const n = toFirstName(local.replace(/[._-]+/g, ' '));
+          if (n) { setDisplayName(n); return; }
+        }
+      }
+      // 3) Fallback to auth user email
+      const { data: { user } } = await supabase.auth.getUser();
+      const email = user?.email || '';
+      if (email) {
+        const local = email.split('@')[0] || '';
+        const n = toFirstName(local.replace(/[._-]+/g, ' '));
+        if (n) { setDisplayName(n); return; }
+      }
+      setDisplayName(null);
+    } catch {
+      setDisplayName(null);
+    }
+  }, []);
+
+  // Initial auth check + subscribe to auth state changes
+  React.useEffect(() => {
+    let unsub: (() => void) | null = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id ?? null);
+      await resolveName(user?.id ?? null);
+      setAuthReady(true);
+      const { data: authSub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const uid = session?.user?.id ?? null;
+        setUserId(uid);
+        await resolveName(uid);
+      });
+      unsub = () => authSub.subscription.unsubscribe();
+    })();
+    return () => { if (unsub) unsub(); };
+  }, [resolveName]);
+
   const inferredHome = React.useMemo(() => preferences.locations.find(l => l.type === 'home'), [preferences.locations]);
   const inferredCoast = React.useMemo(() => preferences.locations.find(l => l.type === 'coastal'), [preferences.locations]);
 
@@ -92,7 +158,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <li><Link href="/weather">My Weather</Link></li>
               <li><Link href="/activities">Activity dashboard</Link></li>
               <li><Link href="/interests">Set activities</Link></li>
-              
+              <li className="mt-1 border-t border-base-200" />
+              {authReady && userId ? (
+                <li><Link href="/settings">🤾 My Account</Link></li>
+              ) : (
+                <li><Link href="/login">🪵 Log in / Register</Link></li>
+              )}
             </ul>
           </div>
 
@@ -109,8 +180,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </Link>
         </div>
 
-        {/* Right: Location buttons + Home/Beach switch */}
+        {/* Right: Location picker + Location buttons + Home/Beach switch */}
         <div className="navbar-end gap-2 items-center">
+          {/* Findr Location Picker */}
+          <LocationPicker />
+          
           {/* DaisyUI swap-text toggle (render only when controlled) */}
           {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
             <button
@@ -143,6 +217,30 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           >
             <span suppressHydrationWarning>{resolvedCoastLabel}</span>
           </button>
+          {/* Auth badge: shows Log in/Register or user's name, and links appropriately */}
+          {authReady && (
+            userId ? (
+              <Link
+                href="/settings"
+                className="badge badge-outline badge-success gap-1 whitespace-nowrap"
+                title="Go to settings"
+                aria-label="Go to settings"
+              >
+                <span aria-hidden="true">🤾</span>
+                <span>{displayName ?? 'My Account'}</span>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="badge badge-outline badge-info gap-1 whitespace-nowrap"
+                title="Log in or register"
+                aria-label="Log in or register"
+              >
+                <span aria-hidden="true">🪵</span>
+                <span>Log in / Register</span>
+              </Link>
+            )
+          )}
         </div>
       </div>
 

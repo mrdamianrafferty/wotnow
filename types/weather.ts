@@ -53,6 +53,8 @@ export interface MarineHourlyPoint {
   swellHeightM?: number | null;
   swellPeriodS?: number | null;
   swellDirectionDeg?: number | null;
+  currentSpeedMS?: number | null;
+  currentDirectionDeg?: number | null;
   windKts?: number; // unified (no null)
   windDirection?: number; // unified (no null)
   windGustKts?: number; // unified (no null)
@@ -72,6 +74,9 @@ export interface DailyPoint {
   moonPhase?: number;
   moonriseISO?: string;
   moonsetISO?: string;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  dayLengthMinutes?: number;
   // extended optional fields used in UI
   precipMM?: number;
   summary?: string;
@@ -96,7 +101,25 @@ export interface PollenInfo {
 
 export interface SoilInfo { vwc?: number; label?: string }
 
-export interface MoonInfo { phaseName: string; illuminationPct: number; nextFullISO?: string; nextNewISO?: string }
+export interface MoonInfo {
+  phaseName?: string;
+  phaseFraction?: number;
+  illuminationPct?: number;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  moonriseISO?: string;
+  moonsetISO?: string;
+  dayLengthMinutes?: number;
+  timezone?: string;
+  source?: string;
+  cachedAt?: string;
+  expiresAt?: string;
+  latBucket?: number;
+  lonBucket?: number;
+  localDate?: string;
+  nextFullISO?: string;
+  nextNewISO?: string;
+}
 
 export interface AirQualityFull {
   aqi?: number | null;
@@ -124,9 +147,11 @@ export interface UnifiedWeatherAPIResponse {
   description?: string;
   temperatureC?: number;
   feelsLikeC?: number;
-  daily?: Array<{ dateISO: string; minC?: number; maxC?: number; pop?: number; icon?: string; moonPhase?: number; moonriseISO?: string; moonsetISO?: string; precipMM?: number; summary?: string; windMS?: number; windDeg?: number; uvi?: number; }>;
-  hourly?: Array<{ timeISO: string; tempC?: number; pop?: number; windMS?: number; windDeg?: number; precipMM?: number; icon?: string; weatherCode?: number; weatherDescription?: string; waveHeightM?: number | null; wavePeriodS?: number | null; uvi?: number; pressureHpa?: number; }>;
-  marineHourly?: Array<{ timeISO: string; waveHeightM?: number | null; wavePeriodS?: number | null; waveDirectionDeg?: number | null; swellHeightM?: number | null; swellPeriodS?: number | null; swellDirectionDeg?: number | null; waterTempC?: number | null; windSpeedMS?: number | null; windDirectionDeg?: number | null; windGustMS?: number | null; }>;
+  daily?: Array<{ dateISO: string; minC?: number; maxC?: number; pop?: number; icon?: string; moonPhase?: number; moonriseISO?: string; moonsetISO?: string; sunriseISO?: string; sunsetISO?: string; dayLengthMinutes?: number; precipMM?: number; summary?: string; windMS?: number; windDeg?: number; uvi?: number; }>;
+  hourly?: Array<{ timeISO: string; tempC?: number; pop?: number; windMS?: number; windDeg?: number; precipMM?: number; icon?: string; weatherCode?: number; weatherDescription?: string; waveHeightM?: number | null; wavePeriodS?: number | null; uvi?: number; pressureHpa?: number; 
+    // NEW snow-aware fields
+    snowDepthCm?: number; snowfallRateMmH?: number; }>;
+  marineHourly?: Array<{ timeISO: string; waveHeightM?: number | null; wavePeriodS?: number | null; waveDirectionDeg?: number | null; swellHeightM?: number | null; swellPeriodS?: number | null; swellDirectionDeg?: number | null; waterTempC?: number | null; windSpeedMS?: number | null; windDirectionDeg?: number | null; windGustMS?: number | null; currentSpeedMS?: number | null; currentDirectionDeg?: number | null; }>;
   tides?: Array<{ time: string; type: 'high'|'low'; height: number | null }>;
   seaTemp?: number | null;
   hasMarineData?: boolean;
@@ -163,6 +188,7 @@ export interface UnifiedWeatherAPIResponse {
   humidity?: number;
   sunriseISO?: string;
   sunsetISO?: string;
+  dayLengthMinutes?: number;
   windSpeedMS?: number;
   visibilityKm?: number;
   pressureHpa?: number;
@@ -188,6 +214,7 @@ export interface WeatherBundle {
   humidityPct?: number;
   sunriseISO?: string;
   sunsetISO?: string;
+  dayLengthMinutes?: number;
   uvi?: number;
   aqi?: AQIInfo;
   airQuality?: AQIInfo | AirQualityFull; // widened to allow full structure

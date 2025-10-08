@@ -118,7 +118,12 @@ const MainOpenWeatherForecast = ({ location }: { location: LocationLite }) => {
     fetchForecast();
   }, [location, apiKey]);
 
-  if (loading) return <div>Loading forecast...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-8">
+      <span className="loading loading-dots loading-md text-primary" aria-hidden="true"></span>
+      <span className="ml-3 text-base-content/80">Communing with the weather gods</span>
+    </div>
+  );
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   const toggleDay = (date: string) => setExpandedDays((p) => ({ ...p, [date]: !p[date] }));
@@ -259,7 +264,12 @@ const StormglassMarineWeather = ({
     fetchMarine();
   }, [location, start, end]);
 
-  if (loading) return <div>Loading marine forecast...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-8">
+      <span className="loading loading-dots loading-md text-primary" aria-hidden="true"></span>
+      <span className="ml-3 text-base-content/80">Communing with the weather gods</span>
+    </div>
+  );
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   const groupedByDay = slots.reduce<Record<string, MarineSlot[]>>((acc, slot) => {

@@ -6,9 +6,10 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { useEnhancedFavouriteInsights } from '../../../hooks/useEnhancedFavouriteInsights';
-import { upgradeWithICESData, ICESEnhancedFavouriteEntry } from '../../../lib/findr/icesEnhancement';
+import { useEnhancedFavouriteInsights, EnhancedFavouriteInsight } from '../../../hooks/useEnhancedFavouriteInsights';
+import { upgradeWithICESData } from '../../../lib/findr/icesEnhancement';
 import { FALLBACK_RECTANGLE_OPTIONS } from '../../../lib/findr/fallbackRectangles';
+import type { ICESEnhancedFavouriteEntry } from '../../../lib/findr/icesEnhancement';
 
 // Example component showing the integration
 export const EnhancedFavouritesExample: React.FC = () => {
@@ -26,10 +27,10 @@ export const EnhancedFavouritesExample: React.FC = () => {
 
   // Example of upgrading existing favourite entries with ICES data
   const existingFavourites = useMemo(() => [
-    { id: 'sea-bass', name: 'European Sea Bass', card: null },
-    { id: 'atlantic-mackerel', name: 'Atlantic Mackerel', card: null },
-    { id: 'cod', name: 'Atlantic Cod', card: null },
-    { id: 'pollock', name: 'Pollock', card: null },
+    { id: 'sea-bass', name: 'European Sea Bass', card: undefined },
+    { id: 'atlantic-mackerel', name: 'Atlantic Mackerel', card: undefined },
+    { id: 'cod', name: 'Atlantic Cod', card: undefined },
+    { id: 'pollock', name: 'Pollock', card: undefined },
   ], []);
 
   const upgradedEntries = useMemo(() => 
@@ -43,18 +44,18 @@ export const EnhancedFavouritesExample: React.FC = () => {
     []
   );
 
-  const renderDataQualityBadge = (entry: ICESEnhancedFavouriteEntry) => {
+  const renderDataQualityBadge = (entry: EnhancedFavouriteInsight) => {
     const badgeClasses = {
       user: 'badge badge-success',
       ices: 'badge badge-info', 
       mock: 'badge badge-warning',
-    };
+    } as const;
 
     const badgeText = {
       user: 'User Data',
       ices: 'ICES Baseline',
       mock: 'Mock Data',
-    };
+    } as const;
 
     return (
       <span className={badgeClasses[entry.dataQuality]}>
@@ -63,20 +64,38 @@ export const EnhancedFavouritesExample: React.FC = () => {
     );
   };
 
-  const renderConfidenceScore = (entry: ICESEnhancedFavouriteEntry) => {
-    if (entry.confidence === null) return null;
+  const renderDataQualityBadgeForEntry = (entry: ICESEnhancedFavouriteEntry) => {
+    const badgeClasses = {
+      user: 'badge badge-success',
+      ices: 'badge badge-info', 
+      mock: 'badge badge-warning',
+    } as const;
+
+    const badgeText = {
+      user: 'User Data',
+      ices: 'ICES Baseline',
+      mock: 'Mock Data',
+    } as const;
+
+    return (
+      <span className={badgeClasses[entry.baselineSource]}>
+        {badgeText[entry.baselineSource]}
+      </span>
+    );
+  };
+
+  const renderConfidenceScore = (entry: EnhancedFavouriteInsight) => {
+    if (!entry.recencyScore) return null;
     
-    const confidenceClass = entry.confidence >= 80 ? 'text-success' : 
-                           entry.confidence >= 60 ? 'text-warning' : 'text-error';
+    const confidenceClass = entry.recencyScore >= 80 ? 'text-success' : 
+                           entry.recencyScore >= 60 ? 'text-warning' : 'text-error';
     
     return (
       <div className={`text-sm ${confidenceClass}`}>
-        Confidence: {entry.confidence}%
-        {entry.isICESEnhanced && (
-          <div className="text-xs opacity-70">
-            Location: {entry.locationConfidence}% | Season: {entry.seasonalConfidence}%
-          </div>
-        )}
+        Score: {entry.recencyScore}%
+        <div className="text-xs opacity-70">
+          Data Quality: {entry.dataQuality}
+        </div>
       </div>
     );
   };
@@ -238,7 +257,7 @@ export const EnhancedFavouritesExample: React.FC = () => {
               {upgradedEntries.map(entry => (
                 <tr key={entry.id}>
                   <td>{entry.name}</td>
-                  <td>{renderDataQualityBadge(entry)}</td>
+                  <td>{renderDataQualityBadgeForEntry(entry)}</td>
                   <td>{entry.season}</td>
                   <td>
                     <div className="flex items-center gap-2">

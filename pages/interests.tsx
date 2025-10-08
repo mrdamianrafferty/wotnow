@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 // Removed unused Link import
-import { activityTypes } from "../data/activityTypes";
+import { activityTypes, getActivityName } from "../data/activityTypes";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import { useHasMounted } from "../utils/useHasMounted";
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
@@ -57,7 +57,6 @@ const mainCategories = [
                     "stand_up_paddleboarding",
                     "sup_sea",
                     "snorkeling",
-                    "swimming",
                     "indoor_swimming",
                     "sea_swimming",
                     "sea_fishing_shore",
@@ -79,6 +78,7 @@ const mainCategories = [
                     "road_cycling",
                     "gravel_biking",
                     "rock_climbing",
+                    "rock_hopping",
                     "indoor_climbing",
                     "skateboarding",
                     "rollerblading",
@@ -129,6 +129,8 @@ const mainCategories = [
                     "photography",
                     "foraging",
                     "mushroom_hunting",
+                    "wild_swimming",
+                    "outdoor_gardening",
                     "stargazing",
                 ],
             },
@@ -144,25 +146,24 @@ const mainCategories = [
                 ],
             },
             {
-                key: "Recreation",
+                key: "Kicking Back and Relaxing",
                 icon: "🍔",
                 acts: [
-                    "picnicking",
-                    "bbq",
-                    "beach",
-                    "geocaching",
-                    "camping",
-                    'park_visiting',
-                    "outdoor_reading",
-                    "dog_walking",
-                    "outdoor_playground",
-                    "outdoor_chess",
-                    "outdoor_painting",
-                    "outdoor_music",
-                    "outdoor_gym",
-                    "outdoor_meditation",
-                    "outdoor_yoga",
-                ],
+          "picnicking",
+          "bbq",
+          "beach",
+          "camping",
+          "outdoor_gardening",
+          "gaming",
+          "reading",
+          "going_to_pub",
+          "outdoor_reading",
+          "dog_walking",
+          "outdoor_playground",
+          "outdoor_chess",
+          "outdoor_painting",
+          "outdoor_music",
+        ],
             },
         ],
     },
@@ -408,23 +409,26 @@ const Interests: React.FC = () => {
     } else {
       const mainObj = mainCategories.find((c) => c.key === mainCat)!;
       const subObj = mainObj.subcategories.find((s) => s.key === subCat)!;
+      // Build a list that always includes every id from taxonomy, even if missing from activityTypes
       const acts = subObj.acts
-        .map((id) => activityTypes.find((a) => a.id === id))
-        .filter(Boolean)
-        .sort((a, b) => a!.name.localeCompare(b!.name));
+        .map((id) => {
+          const found = activityTypes.find((a) => a.id === id);
+          return { id, name: found?.name ?? getActivityName(id) };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name));
       content = (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {acts.map((act) => {
-            const selected = interests.includes(act!.id);
+            const selected = interests.includes(act.id);
             return (
               <button
-                key={act!.id}
+                key={act.id}
                 type="button"
                 className={`btn w-full normal-case ${selected ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => toggleInterest(act!.id)}
+                onClick={() => toggleInterest(act.id)}
               >
                 {selected && <span className="mr-1">✓</span>}
-                {act!.name}
+                {act.name}
               </button>
             );
           })}
@@ -477,16 +481,15 @@ const Interests: React.FC = () => {
             {interests.length > 0 && (
               <section className="mt-7 flex flex-wrap gap-2 justify-center" aria-label="Your Selected Activities">
                 {interests
-                  .map((id) => activityTypes.find((a) => a.id === id))
-                  .filter(Boolean)
+                  .map((id) => ({ id, name: getActivityName(id) }))
                   .map((act) => (
                     <button
-                      key={act!.id}
-                      onClick={() => toggleInterest(act!.id)}
+                      key={act.id}
+                      onClick={() => toggleInterest(act.id)}
                       className="btn btn-outline btn-primary btn-sm rounded-full"
-                      aria-label={`Remove ${act!.name} from selected interests`}
+                      aria-label={`Remove ${act.name} from selected interests`}
                     >
-                      {act!.name}
+                      {act.name}
                       <span className="ml-1">×</span>
                     </button>
                   ))}

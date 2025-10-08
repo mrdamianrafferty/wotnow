@@ -1,0 +1,101 @@
+schema,function,args,returns,comment
+public,_postgis_deprecate,"oldname text, newname text, version text",void,null
+public,_postgis_index_extent,"tbl regclass, col text",box2d,null
+public,_postgis_join_selectivity,"regclass, text, regclass, text, text",double precision,null
+public,_postgis_pgsql_version,,text,null
+public,_postgis_scripts_pgsql_version,,text,null
+public,_postgis_selectivity,"tbl regclass, att_name text, geom geometry, mode text",double precision,null
+public,_postgis_stats,"tbl regclass, att_name text, text",text,null
+public,_st_3ddfullywithin,"geom1 geometry, geom2 geometry, double precision",boolean,null
+public,_st_3ddwithin,"geom1 geometry, geom2 geometry, double precision",boolean,null
+public,_st_3dintersects,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_asgml,"integer, geometry, integer, integer, text, text",text,null
+public,_st_asx3d,"integer, geometry, integer, integer, text",text,null
+public,_st_bestsrid,geography,integer,null
+public,_st_bestsrid,"geography, geography",integer,null
+public,_st_contains,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_containsproperly,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_coveredby,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_coveredby,"geog1 geography, geog2 geography",boolean,null
+public,_st_covers,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_covers,"geog1 geography, geog2 geography",boolean,null
+public,_st_crosses,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_dfullywithin,"geom1 geometry, geom2 geometry, double precision",boolean,null
+public,_st_distancetree,"geography, geography",double precision,null
+public,_st_distancetree,"geography, geography, double precision, boolean",double precision,null
+public,_st_distanceuncached,"geography, geography, boolean",double precision,null
+public,_st_distanceuncached,"geography, geography, double precision, boolean",double precision,null
+public,_st_distanceuncached,"geography, geography",double precision,null
+public,_st_dwithin,"geom1 geometry, geom2 geometry, double precision",boolean,null
+public,_st_dwithin,"geog1 geography, geog2 geography, tolerance double precision, use_spheroid boolean",boolean,null
+public,_st_dwithinuncached,"geography, geography, double precision",boolean,null
+public,_st_dwithinuncached,"geography, geography, double precision, boolean",boolean,null
+public,_st_equals,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_expand,"geography, double precision",geography,null
+public,_st_geomfromgml,"text, integer",geometry,null
+public,_st_intersects,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_linecrossingdirection,"line1 geometry, line2 geometry",integer,null
+public,_st_longestline,"geom1 geometry, geom2 geometry",geometry,null
+public,_st_maxdistance,"geom1 geometry, geom2 geometry",double precision,null
+public,_st_orderingequals,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_overlaps,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_pointoutside,geography,geography,null
+public,_st_sortablehash,geom geometry,bigint,null
+public,_st_touches,"geom1 geometry, geom2 geometry",boolean,null
+public,_st_voronoi,"g1 geometry, clip geometry, tolerance double precision, return_polygons boolean",geometry,null
+public,_st_within,"geom1 geometry, geom2 geometry",boolean,null
+public,addauth,text,boolean,args: auth_token - Adds an authorization token to be used in the current transaction.
+public,addgeometrycolumn,"table_name character varying, column_name character varying, new_srid integer, new_type character varying, new_dim integer, use_typmod boolean",text,"args: table_name, column_name, srid, type, dimension, use_typmod=true - Adds a geometry column to an existing table."
+public,addgeometrycolumn,"schema_name character varying, table_name character varying, column_name character varying, new_srid integer, new_type character varying, new_dim integer, use_typmod boolean",text,"args: schema_name, table_name, column_name, srid, type, dimension, use_typmod=true - Adds a geometry column to an existing table."
+public,addgeometrycolumn,"catalog_name character varying, schema_name character varying, table_name character varying, column_name character varying, new_srid_in integer, new_type character varying, new_dim integer, use_typmod boolean",text,"args: catalog_name, schema_name, table_name, column_name, srid, type, dimension, use_typmod=true - Adds a geometry column to an existing table."
+public,band_bio_readings,readings jsonb,jsonb,null
+public,band_for,"parameter text, val numeric",bio_level,null
+public,band_for,"p_parameter text, p_value double precision",bio_level,null
+public,bio_band,"param text, val double precision",bio_level,null
+public,bio_default_weights,,jsonb,null
+public,box,geometry,box,null
+public,box,box3d,box,null
+public,box2d,geometry,box2d,args: geom - Returns a BOX2D representing the 2D extent of a geometry.
+public,box2d,box3d,box2d,null
+public,box2d_in,cstring,box2d,null
+public,box2d_out,box2d,cstring,null
+public,box2df_in,cstring,box2df,null
+public,box2df_out,box2df,cstring,null
+public,box3d,geometry,box3d,args: geom - Returns a BOX3D representing the 3D extent of a geometry.
+public,box3d,box2d,box3d,null
+public,box3d_in,cstring,box3d,null
+public,box3d_out,box3d,cstring,null
+public,box3dtobox,box3d,box,null
+public,bytea,geometry,bytea,null
+public,bytea,geography,bytea,null
+public,bytea_to_text,data bytea,text,null
+public,checkauth,"text, text",integer,"args: a_table_name, a_key_column_name - Creates a trigger on a table to prevent/allow updates and deletes of rows based on authorization token."
+public,checkauth,"text, text, text",integer,"args: a_schema_name, a_table_name, a_key_column_name - Creates a trigger on a table to prevent/allow updates and deletes of rows based on authorization token."
+public,checkauthtrigger,,trigger,null
+public,contains_2d,"box2df, geometry",boolean,null
+public,contains_2d,"geometry, box2df",boolean,null
+public,contains_2d,"box2df, box2df",boolean,null
+public,disablelongtransactions,,text,Disables long transaction support.
+public,dropgeometrycolumn,"table_name character varying, column_name character varying",text,"args: table_name, column_name - Removes a geometry column from a spatial table."
+public,dropgeometrycolumn,"schema_name character varying, table_name character varying, column_name character varying",text,"args: schema_name, table_name, column_name - Removes a geometry column from a spatial table."
+public,dropgeometrycolumn,"catalog_name character varying, schema_name character varying, table_name character varying, column_name character varying",text,"args: catalog_name, schema_name, table_name, column_name - Removes a geometry column from a spatial table."
+public,dropgeometrytable,table_name character varying,text,args: table_name - Drops a table and all its references in geometry_columns.
+public,dropgeometrytable,"schema_name character varying, table_name character varying",text,"args: schema_name, table_name - Drops a table and all its references in geometry_columns."
+public,dropgeometrytable,"catalog_name character varying, schema_name character varying, table_name character varying",text,"args: catalog_name, schema_name, table_name - Drops a table and all its references in geometry_columns."
+public,enablelongtransactions,,text,Enables long transaction support.
+public,equals,"geom1 geometry, geom2 geometry",boolean,null
+public,find_srid,"character varying, character varying, character varying",integer,"args: a_schema_name, a_table_name, a_geomfield_name - Returns the SRID defined for a geometry column."
+public,geog_brin_inclusion_add_value,"internal, internal, internal, internal",boolean,null
+public,geography,"geography, integer, boolean",geography,null
+public,geography,bytea,geography,null
+public,geography,geometry,geography,null
+public,geography_analyze,internal,boolean,null
+public,geography_cmp,"geography, geography",integer,null
+public,geography_distance_knn,"geography, geography",double precision,null
+public,geography_eq,"geography, geography",boolean,null
+public,geography_ge,"geography, geography",boolean,null
+public,geography_gist_compress,internal,internal,null
+public,geography_gist_consistent,"internal, geography, integer",boolean,null
+public,geography_gist_decompress,internal,internal,null
+public,geography_gist_distance,"internal, geography, integer",double precision,null
+public,geography_gist_penalty,"internal, internal, internal",internal,null

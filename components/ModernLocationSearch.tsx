@@ -22,6 +22,20 @@ interface LocationSuggestion {
   local_names?: Record<string, string>;
 }
 
+// Nominatim response minimal shape
+interface NominatimResult {
+  lat: string;
+  lon: string;
+  display_name?: string;
+  name?: string;
+}
+
+function isNominatimResultArray(data: unknown): data is NominatimResult[] {
+  return Array.isArray(data) && data.every((item) => {
+    return typeof item === 'object' && item !== null && 'lat' in item && 'lon' in item;
+  });
+}
+
 // Alternative implementation that doesn't rely on deprecated Google Places APIs
 const ModernLocationSearch: React.FC<{
   onSelect: (location: { name: string; lat: number; lon: number }) => void;
@@ -35,10 +49,10 @@ const ModernLocationSearch: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Use OpenWeather Geocoding API as fallback
+  // Use OpenWeather Geocoding API with fallback to OpenStreetMap Nominatim
   const searchLocations = useCallback((searchQuery: string) => {
     const debouncedSearch = debounce(async () => {
-      if (!searchQuery.trim() || searchQuery.length < 3) {
+      if (!searchQuery.trim() || searchQuery.length < 4) {
         setSuggestions([]);
         return;
       }
@@ -54,67 +68,79 @@ const ModernLocationSearch: React.FC<{
       setLoading(true);
       setError(null);
 
+      const fetchNominatim = async () => {
+        const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(searchQuery)}&addressdetails=1&limit=5`;
+        const resp = await fetch(nominatimUrl, {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+        if (!resp.ok) throw new Error(`Nominatim failed: ${resp.status}`);
+        const data: unknown = await resp.json();
+        const transformed: LocationSuggestion[] = isNominatimResultArray(data)
+          ? data.map((item) => {
+              const lat = Number(item.lat);
+              const lon = Number(item.lon);
+              const name = item.display_name || item.name || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+              return { name, lat, lon };
+            })
+          : [];
+        setSuggestions(transformed);
+      };
+
       try {
         const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
         if (!apiKey) {
-          throw new Error('API key not configured');
+          // Fallback immediately if no key configured
+          await fetchNominatim();
+          return;
         }
 
         // Use OpenWeather Geocoding API for location search
         const response = await fetch(
           `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=${apiKey}`,
-          { 
+          {
             signal: controller.signal,
             headers: { 'Accept': 'application/json' }
           }
         );
 
         if (!response.ok) {
-          throw new Error(`Search failed: ${response.status}`);
+          // Try fallback when OW fails (e.g., 401 or 429)
+          await fetchNominatim();
+          return;
         }
 
-        const data = await response.json();
+        const data: unknown = await response.json();
         
         // Transform to consistent format
-        const transformedSuggestions = data.map((item: {
-          name: string;
-          lat: number;
-          lon: number;
-          country?: string;
-          state?: string;
-          local_names?: Record<string, string>;
-        }) => {
-          let displayName = item.name;
-          
-          if (item.state && item.state !== item.name) {
-            displayName += `, ${item.state}`;
-          }
-          
-          if (item.country) {
-            displayName += `, ${item.country}`;
-          }
-
-          return {
-            name: displayName,
-            lat: item.lat,
-            lon: item.lon,
-            country: item.country,
-            state: item.state,
-            local_names: item.local_names
-          };
-        });
+        const transformedSuggestions: LocationSuggestion[] = Array.isArray(data) ? data.map((item) => {
+          // OpenWeather returns numbers already
+          const anyItem = item as { name?: string; lat?: number; lon?: number; country?: string; state?: string };
+          const lat = Number(anyItem.lat);
+          const lon = Number(anyItem.lon);
+          let displayName = anyItem.name ?? '';
+          if (anyItem.state && anyItem.state !== anyItem.name) displayName += displayName ? `, ${anyItem.state}` : anyItem.state;
+          if (anyItem.country) displayName += displayName ? `, ${anyItem.country}` : anyItem.country;
+          return { name: displayName || `${lat.toFixed(3)}, ${lon.toFixed(3)}`, lat, lon };
+        }) : [];
 
         setSuggestions(transformedSuggestions);
       } catch (err: unknown) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Location search error:', err);
+        if (err instanceof Error && err.name === 'AbortError') return;
+        try {
+          // Final fallback
+          await fetchNominatim();
+        } catch (fallbackErr) {
+          console.error('Location search error:', err, fallbackErr);
           setError('Search temporarily unavailable. Please try again.');
           setSuggestions([]);
         }
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 500);
     
     debouncedSearch();
   }, []);
@@ -154,7 +180,7 @@ const ModernLocationSearch: React.FC<{
           onFocus={onInputFocus}
           placeholder={loading ? "Searching..." : placeholder}
           className="coastal-dialog-input"
-          disabled={loading}
+          aria-busy={loading}
         />
         {query && (
           <button

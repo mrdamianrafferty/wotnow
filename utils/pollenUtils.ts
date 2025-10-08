@@ -169,42 +169,42 @@ export function getPollenAdviceForActivity(
     case 'running':
     case 'trail_running':
       if (overall >= PollenLevel.HIGH) {
-        return `${levelDesc} pollen - consider treadmill or postpone until evening`;
+        return `Expect ${levelDesc} pollen - consider treadmill or postpone until evening`;
       }
-      return `${levelDesc} pollen - avoid early morning runs`;
+      return `Expect ${levelDesc} pollen - avoid early morning runs`;
       
     case 'cycling':
     case 'road_cycling':
       if (overall >= PollenLevel.HIGH) {
-        return `${levelDesc} pollen`;
+        return `Expect ${levelDesc} pollen`;
       }
-      return `${levelDesc} pollen`;
+      return `Expect ${levelDesc} pollen`;
       
     case 'gardening':
     case 'outdoor_gardening':
       if (grass >= PollenLevel.HIGH || tree >= PollenLevel.HIGH) {
-        return `${levelDesc} pollen - wear mask and gloves, shower after gardening`;
+        return `Expect ${levelDesc} pollen - wear mask and gloves, shower after gardening`;
       }
-      return `${levelDesc} pollen - limit time outdoors and avoid lawn mowing`;
+      return `Expect ${levelDesc} pollen - limit time outdoors and avoid lawn mowing`;
       
     case 'outdoor_gym':
     case 'outdoor_yoga':
       if (overall >= PollenLevel.HIGH) {
-        return `${levelDesc} pollen`;
+        return `Expect ${levelDesc} pollen`;
       }
-      return `${levelDesc} pollen - consider indoor alternatives if you're sensitive`;
+      return `Expect ${levelDesc} pollen - consider indoor alternatives if you're sensitive`;
       
     case 'golf':
       if (grass >= PollenLevel.HIGH) {
-        return `${levelDesc} grass pollen`;
+        return `Expect ${levelDesc} grass pollen`;
       }
-      return `${levelDesc} pollen`;
+      return `Expect ${levelDesc} pollen`;
       
     default:
       if (overall >= PollenLevel.HIGH) {
-        return `${levelDesc} pollen`;
+        return `Expect ${levelDesc} pollen`;
       }
-      return `${levelDesc} pollen`;
+      return `Expect ${levelDesc} pollen`;
   }
 }
 

@@ -40,6 +40,9 @@ import WindDirectionIcon from '../components/WindDirectionIcon';
 import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import { resolveBeachOrientationAsync, computeSimulatedOrientation } from '../utils/orientation';
 import Footer from '../components/footer'; // <-- add this import
+import type { SnowRecommendationLevel } from '../utils/snowRecommendations';
+import { useRouter } from 'next/router';
+
 
 // TODO: Uncomment when the sharing feature is merged
 // import { ShareModal } from '../components/sharing/NewShareModal';
@@ -53,7 +56,7 @@ import Footer from '../components/footer'; // <-- add this import
 // Marine activities that get special marine data display (waves, water temp, etc.)
 const MARINE_ACTIVITY_IDS = [
   'surfing', 'kitesurfing', 'windsurfing', 'sea_kayaking', 'canoeing', 
-  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sea_swimming',
+  'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea', 'sea_swimming',
   'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'
 ];
 
@@ -176,9 +179,10 @@ interface ActivityCardProps {
   dayLabel: string;
   coastalLocation?: { lat: number; lon: number } | null;
   homeLocation?: { lat: number; lon: number } | null;
+  snow?: { level: SnowRecommendationLevel; message: string };
 }
 
-function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _reasoning, day, dayLabel: _dayLabel, coastalLocation, homeLocation }: ActivityCardProps) {
+function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _reasoning, day, dayLabel: _dayLabel, coastalLocation, homeLocation, snow }: ActivityCardProps) {
   console.log('🎯 ActivityCard for:', activityId, 'with day data:', { 
     pollen: day.pollen, 
     airQuality: day.airQuality,
@@ -258,6 +262,25 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
     return () => { cancelled = true; };
   }, [isMarine, coastalLocation?.lat, coastalLocation?.lon, homeLocation?.lat, homeLocation?.lon]);
 
+  // Helper: show severe snow warnings for all non‑marine; and amber warnings for lifestyle/team
+  const SNOW_DANGER_LEVELS = new Set([
+    'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'
+  ] as const);
+  // Amber-levels to optionally show for lifestyle (Outdoor Leisure) and team sports
+  // const SNOW_AMBER_LEVELS = new Set([
+  //   'caution', 'difficult', 'uncomfortable', 'impractical', 'requires_winter_gear', 'snowfall_caution'
+  // ] as const);
+  type SnowDangerLevel = typeof SNOW_DANGER_LEVELS extends Set<infer T> ? T : never;
+  // type SnowAmberLevel = typeof SNOW_AMBER_LEVELS extends Set<infer T> ? T : never;
+  const shouldShowSnowWarning = (aid: string, level?: string) => {
+    if (MARINE_ACTIVITY_IDS.includes(aid)) return false; // drop for watersports
+    if (!level) return false;
+    // Only show banners for severe/dangerous levels
+    if (SNOW_DANGER_LEVELS.has(level as SnowDangerLevel)) return true;
+    // Previously showed amber levels for lifestyle/team; this is now suppressed to reduce noise
+    return false;
+  };
+
   return (
     <article
       className="activity-card activity-card__bg-image"
@@ -314,6 +337,17 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
             `Not ideal weather for ${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}, but still an option if you're interested.` : 
             message
           )}
+        </div>
+      )}
+
+      {/* Inline snow advisory pill */}
+      {snow && shouldShowSnowWarning(activityId, snow.level as unknown as string) && (
+        <div className={`mt-2 rounded-md px-2 py-1 text-xs inline-flex items-center gap-2 ${
+          (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(snow.level)) ? 'bg-red-600 text-white'
+           : 'bg-emerald-500 text-white')
+        }`}>
+          <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/fill/final/overcast-snow.svg' : '/weather-icons/design/fill/final/snowman.svg'} alt="Snow advisory" width={18} height={18} />
+          <span>{snow.message}</span>
         </div>
       )}
 
@@ -406,14 +440,14 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
                     <li className="activity-card__data-item">
                       <Image src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="High Temperature"
                            className="activity-card__data-icon" width={24} height={24} />
-                      <strong>High: {day.tempMax.toFixed(1)}°</strong>
+                      <strong>High: {Math.round(day.tempMax)}°</strong>
                     </li>
                   )}
                   {typeof day.tempMin === 'number' && (
                     <li className="activity-card__data-item">
                       <Image src="/weather-icons/design/fill/final/thermometer-colder.svg" alt="Low Temperature"
                            className="activity-card__data-icon" width={24} height={24} />
-                      <strong>Low: {day.tempMin.toFixed(1)}°</strong>
+                      <strong>Low: {Math.round(day.tempMin)}°</strong>
                     </li>
                   )}
                 </>
@@ -423,7 +457,7 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
                 <li className="activity-card__data-item">
                   <Image src="/weather-icons/design/fill/final/thermometer-celsius.svg" alt="Temperature"
                        className="activity-card__data-icon" width={24} height={24} />
-                  <strong>{day.temperature.toFixed(1)}°</strong>
+                  <strong>{Math.round(day.temperature)}°</strong>
                 </li>
               )}
               {day.icon && (
@@ -478,9 +512,21 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
                     pollen={shouldShowPollenWarning ? day.pollen : undefined}
                     airQuality={shouldShowAirQualityWarning ? day.airQuality : undefined}
                     mode="compact"
+                    snowDepthCm={day.snowDepthCm}
+                    snowfallRateMmH={day.snowfallRateMmH}
                   />
                 </li>
-              ) : null}
+              ) : (
+                ((typeof day.snowDepthCm === 'number' && day.snowDepthCm > 0) || (typeof day.snowfallRateMmH === 'number' && day.snowfallRateMmH > 0)) ? (
+                  <li className="activity-card__data-item">
+                    <EnvironmentalIndicators 
+                      mode="compact"
+                      snowDepthCm={day.snowDepthCm}
+                      snowfallRateMmH={day.snowfallRateMmH}
+                    />
+                  </li>
+                ) : null
+              )}
             </>
           )}
         </ul>
@@ -572,6 +618,20 @@ export default function ActivitiesPage() {
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
   const interests = preferences.interests ?? [];
 
+  // Router/query-based preview overrides
+  const router = useRouter();
+  const previewSnowCmRaw = typeof router.query.previewSnowCm === 'string'
+    ? router.query.previewSnowCm
+    : (typeof router.query.snowDepthCm === 'string' ? router.query.snowDepthCm : undefined);
+  const previewSnowCm = previewSnowCmRaw !== undefined ? Number(previewSnowCmRaw) : undefined;
+  const previewSnowfallRaw = typeof router.query.previewSnowfallMmH === 'string'
+    ? router.query.previewSnowfallMmH
+    : (typeof router.query.previewSnowfall === 'string' ? router.query.previewSnowfall
+       : (typeof router.query.snowfallRateMmH === 'string' ? router.query.snowfallRateMmH : undefined));
+  const previewSnowfallMmH = previewSnowfallRaw !== undefined ? Number(previewSnowfallRaw) : undefined;
+  const useAllActivities = router.query.allActivities === '1' || router.query.all === '1';
+  const selectedInterests = useAllActivities ? activityTypes.map(a => a.id) : interests;
+
   // UI state
   const [activeDay, setActiveDay] = useState(0);
   type TimeInfo = { serverTime: Date; isEvening: boolean } | null;
@@ -582,9 +642,10 @@ export default function ActivitiesPage() {
   type WeatherWithPollen = {
     list: Array<{
       dt_txt: string;
-      main: { temp: number; humidity: number; pressure: number };
+      main: { temp: number; humidity: number; pressure: number; temp_min?: number; temp_max?: number };
       weather: Array<{ main: string; description: string; icon: string }>;
       rain?: { '3h'?: number };
+      snow?: { '3h'?: number };
       wind: { speed: number; deg: number; gust?: number };
       clouds: { all: number };
       visibility?: number;
@@ -597,7 +658,7 @@ export default function ActivitiesPage() {
   const [loading, setLoading] = useState(true);
 
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
-  const needsInterests = interests.length === 0;
+  const needsInterests = selectedInterests.length === 0;
 
   // =============================================================================
   // DATA FETCHING (Same pipeline as homepage)
@@ -703,10 +764,16 @@ export default function ActivitiesPage() {
         // Use noon entry as representative for the day, or first if noon not available
         const noonEntry: ForecastEntry = dayEntries.find((e: ForecastEntry) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
         
-        // Calculate min/max temps across all hours of the day
-        const allTemps = dayEntries.map((entry: ForecastEntry) => entry.main.temp);
-        const minTemp = Math.min(...allTemps);
-        const maxTemp = Math.max(...allTemps);
+        // Calculate min/max temps across the day
+        // Prefer main.temp_min/max (present when list is derived from One Call daily)
+        const minCandidates = dayEntries
+          .map((entry: ForecastEntry) => (typeof entry.main.temp_min === 'number' ? entry.main.temp_min : entry.main.temp))
+          .filter((n) => Number.isFinite(n));
+        const maxCandidates = dayEntries
+          .map((entry: ForecastEntry) => (typeof entry.main.temp_max === 'number' ? entry.main.temp_max : entry.main.temp))
+          .filter((n) => Number.isFinite(n));
+        const minTemp = minCandidates.length ? Math.min(...minCandidates) : Math.min(...dayEntries.map((e: ForecastEntry) => e.main.temp));
+        const maxTemp = maxCandidates.length ? Math.max(...maxCandidates) : Math.max(...dayEntries.map((e: ForecastEntry) => e.main.temp));
         
         // Get marine data for this day
         const marineForDay = marineHours.filter((h) => h.time && h.time.slice(0, 10) === dateStr);
@@ -723,6 +790,8 @@ export default function ActivitiesPage() {
           hasPollenData: !!pollenForDate && Object.values(pollenForDate).some((v) => Number(v) > 0),
           hasAirQualityData: !!airQualityForDate && Object.values(airQualityForDate).some((v) => Number(v) > 0)
         });
+        
+        const snowfallRateMmH = noonEntry?.snow?.['3h'] ? Math.max(0, Math.round(((noonEntry.snow['3h'] as number) / 3) * 10) / 10) : 0;
         
         return {
           date: Math.floor(new Date(noonEntry.dt_txt).getTime() / 1000),
@@ -743,9 +812,12 @@ export default function ActivitiesPage() {
           marine: marineForDay,
           pollen: pollenForDate,
           airQuality: airQualityForDate,
+          ...(snowfallRateMmH > 0 ? { snowfallRateMmH } : {}),
+          ...(Number.isFinite(previewSnowfallMmH) && (previewSnowfallMmH as number) > 0 ? { snowfallRateMmH: previewSnowfallMmH as number } : {}),
+          ...(Number.isFinite(previewSnowCm) && (previewSnowCm as number) > 0 ? { snowDepthCm: previewSnowCm as number } : {}),
         } as WeatherForecastDay;
       });
-  }, [weatherData, marineHours]);
+  }, [weatherData, marineHours, previewSnowCm, previewSnowfallMmH]);
 
   // =============================================================================
   // ACTIVITY ASSESSMENT (Same scoring logic as homepage)
@@ -762,12 +834,12 @@ export default function ActivitiesPage() {
   console.log('🗓️ Out-of-season check:', {
     currentDate: new Date(),
     currentMonth: new Date().getMonth() + 1,
-    interests: interests,
-    outOfSeasonActivities: interests.filter(id => isOutOfSeason(id))
+    interests: selectedInterests,
+    outOfSeasonActivities: selectedInterests.filter(id => isOutOfSeason(id))
   });
   
   // Debug logging for scoring issues
-  if (currentDayData && interests.includes('basketball_outdoor')) {
+  if (currentDayData && selectedInterests.includes('basketball_outdoor')) {
     console.log('🏀 Basketball scoring debug:', {
       temperature: currentDayData.temperature,
       rain: currentDayData.rain,
@@ -792,23 +864,26 @@ export default function ActivitiesPage() {
         waterTemperature: currentDayData.waterTemperature,
         waveHeight: currentDayData.waveHeight,
         swellHeight: currentDayData.swellHeight,
-        swellPeriod: currentDayData.swellPeriod
+        swellPeriod: currentDayData.swellPeriod,
+        // Snow-aware fields (optional)
+        snowDepthCm: currentDayData.snowDepthCm,
+        snowfallRateMmH: currentDayData.snowfallRateMmH,
       }
     }],
-    interests,
-    activities: activityTypes.filter(a => interests.includes(a.id)),
+    interests: selectedInterests,
+    activities: activityTypes.filter(a => selectedInterests.includes(a.id)),
     now: timeInfo?.serverTime || new Date(),
     includeAllActivities: true,
     isEveningToday: isEveningToday
   })[0] : null;
 
-  type ActivitySuggestion = { activityId: string; score: number; evaluation?: string; reasoning?: string; outOfSeason?: boolean };
+  type ActivitySuggestion = { activityId: string; score: number; evaluation?: string; reasoning?: string; outOfSeason?: boolean; snow?: { level: SnowRecommendationLevel; message: string } };
   const activities: ActivitySuggestion[] = (dayAssessments?.suggestions as ActivitySuggestion[]) || [];
 
   // Make sure ALL selected interests appear in the activities list
-  if (interests.length > 0 && currentDayData) {
+  if (selectedInterests.length > 0 && currentDayData) {
     const existingActivityIds = activities.map((a) => a.activityId);
-    const missingInterests = interests.filter((id: string) => !existingActivityIds.includes(id));
+    const missingInterests = selectedInterests.filter((id: string) => !existingActivityIds.includes(id));
     
     if (missingInterests.length > 0) {
       const missingActivities = missingInterests.map(id => {
@@ -866,10 +941,10 @@ export default function ActivitiesPage() {
           onOpenHomeDialog={() => { /* optional: open home dialog from activities if you have one */ }}
           onOpenCoastDialog={() => { /* optional: open coast dialog from activities if you have one */ }}
         />
-        <section className="activities-loading">
-          <div className="activities-loading__content">
-            <div className="activities-loading__emoji">⏳</div>
-            <div>Loading your activities...</div>
+        <section className="flex items-center justify-center py-16">
+          <div className="flex items-center">
+            <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
+            <span className="ml-3 text-base-content/80">Planning perfect days</span>
           </div>
         </section>
         <Footer /> {/* <-- add footer in loading state */}
@@ -889,12 +964,6 @@ export default function ActivitiesPage() {
 
       {/* EXISTING ACTIVITIES CONTENT */}
       <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* ✅ REMOVE the old page header since it's now in the banner */}
-        {/* <header style={{ marginBottom: '2rem', textAlign: 'center' as const }}>
-          <h1>All My Outdoor Activities</h1>
-          <p>View personalised assessments...</p>
-        </header> */}
-
         {/* Error States */}
         {needsLocation && (
           <div style={{ 
@@ -962,9 +1031,9 @@ export default function ActivitiesPage() {
         {!needsLocation && !needsInterests && (
           <>
             {loading ? (
-              <div style={{ textAlign: 'center' as const, padding: '3rem' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
-                <div>Loading weather data...</div>
+              <div className="flex items-center justify-center py-16">
+                <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
+                <span className="ml-3 text-base-content/80">Planning perfect days</span>
               </div>
             ) : error ? (
               <div style={{ 
@@ -1005,20 +1074,21 @@ export default function ActivitiesPage() {
                     sortedActivities
                       .filter((activity) => activity && activity.activityId) // Filter out any activities with undefined activityId
                       .map((activity) => (
-                      <ActivityCard
-                        key={activity.activityId}
-                        activityId={activity.activityId}
-                        score={activity.score}
-                        evaluation={activity.evaluation}
-                        reasoning={activity.reasoning}
-                        day={currentDayData}
-                        dayLabel={getDayLabel(currentDayData?.date || 0, activeDay, timeInfo?.serverTime)}
-                        coastalLocation={coastalLocation}
-                        homeLocation={homeLocation}
-                      />
-                    ))
-                  )}
-                </main>
+                       <ActivityCard
+                         key={activity.activityId}
+                         activityId={activity.activityId}
+                         score={activity.score}
+                         evaluation={activity.evaluation}
+                         reasoning={activity.reasoning}
+                         day={currentDayData}
+                         dayLabel={getDayLabel(currentDayData?.date || 0, activeDay, timeInfo?.serverTime)}
+                         coastalLocation={coastalLocation}
+                         homeLocation={homeLocation}
+                         snow={activity.snow}
+                       />
+                     ))
+                   )}
+                 </main>
 
                
               </>

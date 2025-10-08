@@ -8,6 +8,7 @@
  * - Smart caching and retry logic
  * - macOS-specific optimizations
  */
+import { roundCoord } from './coordinatePrecision';
 
 export interface LocationResult {
   lat: number;
@@ -412,7 +413,7 @@ class AdvancedGeolocationService {
         accuracy,
         method,
         confidence: accuracy && accuracy < 100 ? 'high' : accuracy && accuracy < 1000 ? 'medium' : 'low',
-        name: `Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+        name: `Location (${roundCoord(latitude)}, ${roundCoord(longitude)})`
       };
     }
   }
@@ -461,7 +462,7 @@ class AdvancedGeolocationService {
       city,
       region,
       country,
-      name: name || `IP Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`
+      name: name || `IP Location (${roundCoord(lat)}, ${roundCoord(lon)})`
     };
   }
 

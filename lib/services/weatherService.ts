@@ -1,3 +1,5 @@
+import { fetchWeatherApi } from 'openmeteo';
+
 /**
  * Normalize and merge core weather fields (clouds, rain, snow, etc.) with fallback logic
  *
@@ -12,6 +14,441 @@
  */
 type Json = Record<string, unknown>;
 type Source = Json | null | undefined;
+
+/** Coordinate precision + grouping (free tier: 3 decimal places ≈ 110 m) */
+const round3dp = (n: number) => Math.round(n * 1e3) / 1e3;
+const coordKey3dp = (lat: number, lon: number) => `${round3dp(lat).toFixed(3)},${round3dp(lon).toFixed(3)}`;
+const round4dp = (n: number) => Math.round(n * 1e4) / 1e4;
+
+type Spot = { id: string; name: string; lat: number; lon: number };
+
+type MetNoInstantDetails = {
+  sea_surface_wave_height?: number;
+  sea_surface_wave_from_direction?: number;
+  sea_water_temperature?: number;
+  sea_water_speed?: number;
+  sea_water_to_direction?: number;
+  wind_speed?: number;
+  wind_from_direction?: number;
+};
+
+interface MetNoOceanTimeseriesEntry {
+  time?: string;
+  data?: {
+    instant?: {
+      details?: MetNoInstantDetails;
+    };
+  };
+}
+
+interface MetNoOceanForecastResponse {
+  properties?: {
+    timeseries?: MetNoOceanTimeseriesEntry[];
+  };
+}
+
+interface MetNoLocationForecastResponse {
+  properties?: {
+    timeseries?: MetNoOceanTimeseriesEntry[];
+  };
+}
+
+interface MetNoMarineSeriesHour {
+  timeISO: string;
+  waveHeightM: number | null;
+  waveDirectionDeg: number | null;
+  seaTemperatureC: number | null;
+  windSpeedMS: number | null;
+  windSpeedKts: number | null;
+  windDirectionDeg: number | null;
+  currentSpeedMS: number | null;
+  currentDirectionDeg: number | null;
+}
+
+interface MetNoMarineSeriesResult {
+  hours: MetNoMarineSeriesHour[];
+  firstHour: MetNoMarineSeriesHour;
+}
+
+type MetNoMarineOptions = MetNoFetchOptions & {
+  startISO?: string;
+  endISO?: string;
+  maxHours?: number;
+};
+
+function groupAndLimitByCell<T extends { lat: number; lon: number }>(items: T[], maxCells = 3) {
+  const byKey = new Map<string, { key: string; lat: number; lon: number; items: T[] }>();
+  for (const it of items) {
+    const key = coordKey3dp(it.lat, it.lon);
+    if (!byKey.has(key)) byKey.set(key, { key, lat: round3dp(it.lat), lon: round3dp(it.lon), items: [] });
+    byKey.get(key)!.items.push(it);
+  }
+  return [...byKey.values()].sort((a, b) => b.items.length - a.items.length).slice(0, maxCells);
+}
+
+const DEFAULT_METNO_AGENT = 'WotNow/1.0 (hello@wotnow.app)';
+
+type MetNoFetchOptions = {
+  signal?: AbortSignal;
+  userAgent?: string;
+};
+
+function buildMetNoHeaders(options?: MetNoFetchOptions): Record<string, string> {
+  const ua = options?.userAgent
+    ?? process.env.METNO_USER_AGENT
+    ?? process.env.NEXT_PUBLIC_METNO_USER_AGENT
+    ?? DEFAULT_METNO_AGENT;
+  return {
+    'User-Agent': ua,
+    Accept: 'application/json',
+  };
+}
+
+async function fetchMetNoOceanForecast(
+  lat: number,
+  lon: number,
+  options?: MetNoFetchOptions
+): Promise<MetNoOceanForecastResponse | null> {
+  const url = new URL('https://api.met.no/weatherapi/oceanforecast/2.0/complete');
+  url.searchParams.set('lat', round4dp(lat).toFixed(4));
+  url.searchParams.set('lon', round4dp(lon).toFixed(4));
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: buildMetNoHeaders(options),
+      signal: options?.signal,
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data || typeof data !== 'object') return null;
+    return data as MetNoOceanForecastResponse;
+  } catch (error) {
+    console.warn('Met Norway ocean forecast fetch failed', error);
+    return null;
+  }
+}
+
+async function fetchMetNoLocationForecast(
+  lat: number,
+  lon: number,
+  options?: MetNoFetchOptions
+): Promise<MetNoLocationForecastResponse | null> {
+  const url = new URL('https://api.met.no/weatherapi/locationforecast/2.0/compact');
+  url.searchParams.set('lat', round4dp(lat).toFixed(4));
+  url.searchParams.set('lon', round4dp(lon).toFixed(4));
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers: buildMetNoHeaders(options),
+      signal: options?.signal,
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!data || typeof data !== 'object') return null;
+    return data as MetNoLocationForecastResponse;
+  } catch (error) {
+    console.warn('Met Norway location forecast fetch failed', error);
+    return null;
+  }
+}
+
+const MS_TO_KTS = 1.94384;
+
+function toKnots(speedMs: number | null | undefined): number | null {
+  if (speedMs == null || !Number.isFinite(speedMs)) return null;
+  const converted = speedMs * MS_TO_KTS;
+  return Number.isFinite(converted) ? Number(converted.toFixed(1)) : null;
+}
+
+function toFixedOrNull(value: number | null | undefined, digits: number): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  return Number(value.toFixed(digits));
+}
+
+function withinRange(timestamp: number, start: number, end: number): boolean {
+  if (!Number.isFinite(timestamp)) return false;
+  if (Number.isFinite(start) && timestamp < start) return false;
+  if (Number.isFinite(end) && timestamp > end) return false;
+  return true;
+}
+
+async function fetchMetNoMarineSeries(
+  lat: number,
+  lon: number,
+  startISO: string,
+  endISO: string,
+  options?: MetNoMarineOptions
+): Promise<MetNoMarineSeriesResult | null> {
+  const startMs = Date.parse(startISO);
+  const endMs = Date.parse(endISO);
+  const maxHours = options?.maxHours ?? 24;
+
+  const [ocean, location] = await Promise.all([
+    fetchMetNoOceanForecast(lat, lon, options),
+    fetchMetNoLocationForecast(lat, lon, options),
+  ]);
+
+  const oceanEntries = ocean?.properties?.timeseries ?? [];
+  if (!oceanEntries.length) return null;
+
+  const locEntries = location?.properties?.timeseries ?? [];
+  const locationByTime = new Map<string, MetNoInstantDetails>();
+  for (const entry of locEntries) {
+    if (!entry?.time) continue;
+    const ts = Date.parse(entry.time);
+    if (!withinRange(ts, startMs, endMs)) continue;
+    const details = entry?.data?.instant?.details;
+    if (details) locationByTime.set(new Date(entry.time).toISOString(), details);
+  }
+
+  const hours: MetNoMarineSeriesHour[] = [];
+  for (const entry of oceanEntries) {
+    if (!entry?.time) continue;
+    const ts = Date.parse(entry.time);
+    if (!withinRange(ts, startMs, endMs)) continue;
+    const details = entry?.data?.instant?.details ?? {};
+    const timeISO = new Date(entry.time).toISOString();
+
+    const waveHeight = typeof details.sea_surface_wave_height === 'number' ? details.sea_surface_wave_height : null;
+  const waveDirection = typeof details.sea_surface_wave_from_direction === 'number' ? details.sea_surface_wave_from_direction : null;
+    const seaTemp = typeof details.sea_water_temperature === 'number' ? details.sea_water_temperature : null;
+    const currentSpeed = typeof details.sea_water_speed === 'number' ? details.sea_water_speed : null;
+    const currentDirection = typeof details.sea_water_to_direction === 'number' ? details.sea_water_to_direction : null;
+
+    const loc = locationByTime.get(timeISO);
+    const windSpeedMs = loc && typeof loc.wind_speed === 'number' ? loc.wind_speed : null;
+    const windDirectionDeg = loc && typeof loc.wind_from_direction === 'number' ? loc.wind_from_direction : null;
+
+    hours.push({
+      timeISO,
+      waveHeightM: toFixedOrNull(waveHeight, 2),
+  waveDirectionDeg: toFixedOrNull(waveDirection, 0),
+      seaTemperatureC: toFixedOrNull(seaTemp, 2),
+      currentSpeedMS: currentSpeed,
+      currentDirectionDeg: currentDirection,
+      windSpeedMS: windSpeedMs,
+      windSpeedKts: toKnots(windSpeedMs),
+      windDirectionDeg: toFixedOrNull(windDirectionDeg, 0),
+    });
+  }
+
+  if (!hours.length) return null;
+
+  hours.sort((a, b) => a.timeISO.localeCompare(b.timeISO));
+  const limited = hours.slice(0, Math.max(1, maxHours));
+  const firstHour = limited[0];
+
+  return {
+    hours: limited,
+    firstHour,
+  };
+}
+
+// Open-Meteo marine endpoint does not expose 10 m wind variables; request only supported fields.
+const OPEN_METEO_MARINE_VARS = [
+  'wave_height',
+  'wave_direction',
+  'wave_period',
+  'swell_wave_height',
+  'swell_wave_direction',
+  'sea_level_height_msl',
+  'sea_surface_temperature',
+  'ocean_current_velocity',
+  'ocean_current_direction',
+] as const;
+
+type OpenMeteoMarineVarId = (typeof OPEN_METEO_MARINE_VARS)[number];
+
+interface OpenMeteoMarineSeriesHour {
+  timeISO: string;
+  waveHeightM: number | null;
+  waveDirectionDeg: number | null;
+  wavePeriodSeconds: number | null;
+  swellHeightM: number | null;
+  swellDirectionDeg: number | null;
+  seaLevelMeters: number | null;
+  seaTemperatureC: number | null;
+  currentSpeedMS: number | null;
+  currentDirectionDeg: number | null;
+  windSpeedMS: number | null;
+  windSpeedKts: number | null;
+  windDirectionDeg: number | null;
+}
+
+interface OpenMeteoMarineSeriesResult {
+  hours: OpenMeteoMarineSeriesHour[];
+  firstHour: OpenMeteoMarineSeriesHour;
+}
+
+const toNullableNumber = (value: number | undefined): number | null => (Number.isFinite(value) ? Number(value) : null);
+
+async function fetchOpenMeteoMarineSeries(
+  lat: number,
+  lon: number,
+  startISO: string,
+  endISO: string,
+  options?: { maxHours?: number }
+): Promise<OpenMeteoMarineSeriesResult | null> {
+  const maxHours = options?.maxHours ?? 24;
+  const startMs = Date.parse(startISO);
+  const endMs = Date.parse(endISO);
+
+  try {
+    const params: Record<string, unknown> = {
+      latitude: lat,
+      longitude: lon,
+      hourly: OPEN_METEO_MARINE_VARS,
+      current: OPEN_METEO_MARINE_VARS,
+      timezone: 'UTC',
+      wind_speed_unit: 'ms',
+      timeformat: 'unixtime',
+      past_days: 0,
+      forecast_days: 7,
+    };
+
+    const responses = await fetchWeatherApi('https://marine-api.open-meteo.com/v1/marine', params);
+    const response = responses?.[0];
+    if (!response) return null;
+
+    const hourly = response.hourly();
+    if (!hourly) return null;
+
+    const interval = hourly.interval();
+    if (!Number.isFinite(interval) || interval <= 0) return null;
+
+    const toArray = (index: number) => {
+      const variable = hourly.variables(index);
+      if (!variable) return [] as number[];
+      const values = variable.valuesArray();
+      return values ? Array.from(values) : [];
+    };
+
+    const data: Record<OpenMeteoMarineVarId, number[]> = OPEN_METEO_MARINE_VARS.reduce((acc, key, idx) => {
+      acc[key] = toArray(idx);
+      return acc;
+    }, {} as Record<OpenMeteoMarineVarId, number[]>);
+
+    const timeStart = Number(hourly.time());
+    const timeEnd = Number(hourly.timeEnd());
+    if (!Number.isFinite(timeStart) || !Number.isFinite(timeEnd)) return null;
+
+    const hours: OpenMeteoMarineSeriesHour[] = [];
+    for (
+      let unix = timeStart, idx = 0;
+      unix < timeEnd && hours.length < maxHours;
+      unix += interval, idx += 1
+    ) {
+      const timestampMs = unix * 1000;
+      if (!Number.isFinite(timestampMs)) continue;
+      if (timestampMs < startMs || timestampMs > endMs) continue;
+
+      const pushNumber = (arrKey: OpenMeteoMarineVarId, digits: number | null) => {
+        const arr = data[arrKey];
+        const raw = arr?.[idx];
+        if (!Number.isFinite(raw)) return null;
+        if (digits == null) return Number(raw);
+        return Number((raw as number).toFixed(digits));
+      };
+
+      const waveHeightM = pushNumber('wave_height', 2);
+      const waveDirectionDeg = pushNumber('wave_direction', 0);
+      const wavePeriodSeconds = pushNumber('wave_period', 1);
+      const swellHeightM = pushNumber('swell_wave_height', 2);
+      const swellDirectionDeg = pushNumber('swell_wave_direction', 0);
+      const seaLevelMeters = pushNumber('sea_level_height_msl', 2);
+      const seaTemperatureC = pushNumber('sea_surface_temperature', 2);
+      const currentSpeedMS = pushNumber('ocean_current_velocity', 2);
+      const currentDirectionDeg = pushNumber('ocean_current_direction', 0);
+  const windSpeedMS: number | null = null;
+  const windDirectionDeg: number | null = null;
+
+      hours.push({
+        timeISO: new Date(timestampMs).toISOString(),
+        waveHeightM,
+        waveDirectionDeg,
+        wavePeriodSeconds,
+        swellHeightM,
+        swellDirectionDeg,
+        seaLevelMeters,
+        seaTemperatureC,
+        currentSpeedMS,
+        currentDirectionDeg,
+        windSpeedMS,
+        windSpeedKts: toKnots(windSpeedMS),
+        windDirectionDeg,
+      });
+    }
+
+    if (!hours.length) return null;
+
+    const firstHour = hours[0];
+
+    const current = response.current();
+    if (current) {
+      const currentVars = OPEN_METEO_MARINE_VARS.map((_, idx) => current.variables(idx)?.value());
+
+      const override = (key: OpenMeteoMarineVarId, digits: number | null) => {
+        const value = toNullableNumber(currentVars[OPEN_METEO_MARINE_VARS.indexOf(key)] ?? undefined);
+        if (value == null) return null;
+        return digits == null ? value : Number(value.toFixed(digits));
+      };
+
+      firstHour.waveHeightM = override('wave_height', 2) ?? firstHour.waveHeightM;
+      firstHour.waveDirectionDeg = override('wave_direction', 0) ?? firstHour.waveDirectionDeg;
+      firstHour.wavePeriodSeconds = override('wave_period', 1) ?? firstHour.wavePeriodSeconds;
+      firstHour.swellHeightM = override('swell_wave_height', 2) ?? firstHour.swellHeightM;
+      firstHour.swellDirectionDeg = override('swell_wave_direction', 0) ?? firstHour.swellDirectionDeg;
+      firstHour.seaLevelMeters = override('sea_level_height_msl', 2) ?? firstHour.seaLevelMeters;
+      firstHour.seaTemperatureC = override('sea_surface_temperature', 2) ?? firstHour.seaTemperatureC;
+      firstHour.currentSpeedMS = override('ocean_current_velocity', 2) ?? firstHour.currentSpeedMS;
+      firstHour.currentDirectionDeg = override('ocean_current_direction', 0) ?? firstHour.currentDirectionDeg;
+  firstHour.windSpeedKts = toKnots(firstHour.windSpeedMS);
+    }
+
+    return { hours, firstHour } satisfies OpenMeteoMarineSeriesResult;
+  } catch (error) {
+    console.warn('Open-Meteo marine fetch failed', error);
+    return null;
+  }
+}
+/**
+ * Fetch Stormglass marine data for many user spots while capping to 3 unique 3‑dp cells.
+ * Reuses one cell's response for all member spots in that cell.
+ */
+export async function fetchMarineForUserSpots(
+  spots: Spot[],
+  startISO: string,
+  endISO: string,
+  params?: string,
+): Promise<{ cells: Array<{ key: string; lat: number; lon: number; spotIds: string[] }>; resultsBySpotId: Record<string, unknown | null> }>
+{
+  const apiKey = process.env.STORMGLASS_SECRET_KEY || '';
+  if (!apiKey) throw new Error('Stormglass API key not configured');
+
+  const cells = groupAndLimitByCell(spots, 3);
+
+  // Fetch one response per cell (in parallel)
+  const cellResults = await Promise.all(
+    cells.map(async (c) => ({
+      key: c.key,
+      lat: c.lat,
+      lon: c.lon,
+      data: await fetchStormglassMarine(c.lat, c.lon, startISO, endISO, params, apiKey),
+      spotIds: (c.items as Spot[]).map(s => s.id)
+    }))
+  );
+
+  // Fan out to original spots
+  const resultsBySpotId: Record<string, unknown | null> = {};
+  for (const cr of cellResults) {
+    for (const id of cr.spotIds) resultsBySpotId[id] = cr.data ?? null;
+  }
+
+  return {
+    cells: cellResults.map(cr => ({ key: cr.key, lat: cr.lat, lon: cr.lon, spotIds: cr.spotIds })),
+    resultsBySpotId
+  };
+}
 
 function normalizeCoreWeatherFields(
   openWeatherData: Source,
@@ -1174,6 +1611,10 @@ export {
   getOpenWeatherAssistantUrl,
   fetchOpenMeteoWeather,
   fetchOpenMeteoAirPollen,
+  fetchOpenMeteoMarineSeries,
+  fetchMetNoOceanForecast,
+  fetchMetNoLocationForecast,
+  fetchMetNoMarineSeries,
   fetchStormglassMarine,
   fetchStormglassTides,
   normalizeWeatherFeatures,

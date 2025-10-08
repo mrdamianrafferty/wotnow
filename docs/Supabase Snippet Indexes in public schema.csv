@@ -1,0 +1,2 @@
+schema,enum_name,labels
+public,bio_level,"very_low, low, normal, high, very_high"

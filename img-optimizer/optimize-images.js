@@ -19,38 +19,44 @@ async function optimizeImage(inputPath, fileName) {
         const originalStats = await fs.stat(inputFile);
         const originalSizeMB = (originalStats.size / 1024 / 1024).toFixed(2);
         
-        // Desktop version (1024x1536) - WebP with 85% quality
-        const desktopPath = path.join(WEBP_DIR, `${baseName}.webp`);
-        await sharp(inputFile)
-            .resize(1024, 1536, { fit: 'cover' })
-            .webp({ quality: 85 })
-            .toFile(desktopPath);
-        
-        // Mobile version (512x768) - WebP with 85% quality  
-        const mobilePath = path.join(WEBP_DIR, `${baseName}-mobile.webp`);
-        await sharp(inputFile)
-            .resize(512, 768, { fit: 'cover' })
-            .webp({ quality: 85 })
-            .toFile(mobilePath);
-            
-        // Thumbnail version (256x384) - WebP with 80% quality
-        const thumbPath = path.join(WEBP_DIR, `${baseName}-thumb.webp`);
-        await sharp(inputFile)
-            .resize(256, 384, { fit: 'cover' })
-            .webp({ quality: 80 })
-            .toFile(thumbPath);
-        
+        const variants = [
+            { suffix: '', width: 1024, quality: 85 },
+            { suffix: '-mobile', width: 512, quality: 85 },
+            { suffix: '-thumb', width: 256, quality: 80 },
+        ];
+
+        const generated = [];
+        for (const variant of variants) {
+            const outputPath = path.join(WEBP_DIR, `${baseName}${variant.suffix}.webp`);
+            await sharp(inputFile)
+                .resize({
+                    width: variant.width,
+                    fit: 'inside',
+                    withoutEnlargement: true,
+                    background: { r: 0, g: 0, b: 0, alpha: 0 },
+                })
+                .webp({ quality: variant.quality })
+                .toFile(outputPath);
+
+            const stats = await fs.stat(outputPath);
+            generated.push({
+                path: outputPath,
+                size: stats.size,
+                label: variant.suffix || 'desktop',
+            });
+        }
+
         // Get optimized file sizes
-        const desktopStats = await fs.stat(desktopPath);
-        const mobileStats = await fs.stat(mobilePath);
-        const thumbStats = await fs.stat(thumbPath);
+        const desktopStats = generated.find((f) => f.label === 'desktop');
+        const mobileStats = generated.find((f) => f.label === '-mobile' || f.label === 'mobile');
+        const thumbStats = generated.find((f) => f.label === '-thumb' || f.label === 'thumb');
         
-        const desktopSizeMB = (desktopStats.size / 1024 / 1024).toFixed(2);
-        const mobileSizeMB = (mobileStats.size / 1024 / 1024).toFixed(2);
-        const thumbSizeMB = (thumbStats.size / 1024 / 1024).toFixed(2);
+    const desktopSizeMB = (desktopStats.size / 1024 / 1024).toFixed(2);
+    const mobileSizeMB = (mobileStats.size / 1024 / 1024).toFixed(2);
+    const thumbSizeMB = (thumbStats.size / 1024 / 1024).toFixed(2);
         
-        const totalOptimizedMB = (desktopStats.size + mobileStats.size + thumbStats.size) / 1024 / 1024;
-        const savings = ((originalStats.size - (desktopStats.size + mobileStats.size + thumbStats.size)) / originalStats.size * 100).toFixed(1);
+    const totalOptimizedMB = generated.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024;
+    const savings = ((originalStats.size - generated.reduce((sum, f) => sum + f.size, 0)) / originalStats.size * 100).toFixed(1);
         
         console.log(`  Original: ${originalSizeMB}MB`);
         console.log(`  Desktop WebP: ${desktopSizeMB}MB`);
@@ -60,7 +66,7 @@ async function optimizeImage(inputPath, fileName) {
         
         return {
             original: originalStats.size,
-            optimized: desktopStats.size + mobileStats.size + thumbStats.size,
+            optimized: generated.reduce((sum, f) => sum + f.size, 0),
             fileName
         };
         

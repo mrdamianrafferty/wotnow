@@ -61,7 +61,8 @@ export default function CookiePolicy() {
           <p>
             This page explains how Go Daisy uses cookies and similar technologies. You can manage your consent using the banner below.
           </p>
-          {/* Add your full cookie policy content here */}
+                  We use cookies to personalise the content, so it&apos;s actually useful to you. And if we get round to it, we&apos;ll analyse our traffic. We aren&apos;t sharing any data with anyone else right now, but we&apos;ll update this if that changes. See our{" "}
+
         </div>
       </main>
 

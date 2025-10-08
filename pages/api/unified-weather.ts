@@ -1,4 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import {
+  buildRectangleCacheKey,
+  getRectangleAnchorForLocation,
+  getRectangleDayKey,
+} from '../../lib/weather/rectangleAnchors';
+import { getMoonSunData } from '../../lib/astro/moonService';
 
 /*
  * ████████████████████████████████████████████████████████████████████████████████████
@@ -16,7 +22,87 @@ type CacheEntry<T> = { ts: number; data: T };
 // Strengthen cache maps with generics
 const sgTideCache = new Map<string, CacheEntry<StormglassTidesResponse>>();
 const sgMarineCache = new Map<string, CacheEntry<StormglassMarineResponse>>();
+const sgBioCache = new Map<string, CacheEntry<StormglassBioResponse>>();
 const owWeatherCache = new Map<string, CacheEntry<OpenWeatherOneCall3 | OpenWeatherForecast25>>();
+
+// Generalized caches for free providers and NOAA grid resolution
+const weatherCache = new Map<string, CacheEntry<UnifiedWeather>>();
+const gridCache = new Map<string, CacheEntry<NwsPointProperties>>();
+
+// ============================================================================
+// COORDINATE PRECISION CONFIGURATION
+// ============================================================================
+/**
+ * Standardized precision strategy for maximum cache efficiency:
+ * - FREE PROVIDERS: Use recommended precision (4dp for MET Norway)
+ * - OPENWEATHER: 2dp (1.1km) for maximum caching when used as fallback
+ * - STORMGLASS: 3dp (111m) for marine/coastal data
+ * - ENVIRONMENTAL: 2dp for air quality, pollen (regional data)
+ * 
+ * This gives us ~10,000x better caching than 5dp
+ */
+const PRECISION = {
+  METNO: 4,        // MET Norway recommendation (11m)
+  NOAA: 3,         // NOAA grid precision (111m)
+  EC: 3,           // Environment Canada (111m)
+  OPENWEATHER: 2,  // Maximum caching (1.1km) - rarely used
+  STORMGLASS: 3,   // Marine data (111m)
+  ENVIRONMENTAL: 2 // Air quality, pollen (1.1km)
+} as const;
+
+// ============================================================================
+// UPDATED CACHE KEY FUNCTIONS
+// ============================================================================
+/**
+ * Generate standardized cache keys based on data type and provider
+ */
+function getCacheKey(lat: number, lon: number, provider: string, dataType?: string): string {
+  let precision: number;
+  
+  // Determine precision based on provider and data type
+  if (dataType === 'environmental' || dataType === 'pollen' || dataType === 'air') {
+    precision = PRECISION.ENVIRONMENTAL;
+  } else if (provider === 'metno') {
+    precision = PRECISION.METNO;
+  } else if (provider === 'noaa') {
+    precision = PRECISION.NOAA;
+  } else if (provider === 'ec') {
+    precision = PRECISION.EC;
+  } else if (provider === 'stormglass' || dataType === 'marine') {
+    precision = PRECISION.STORMGLASS;
+  } else if (provider === 'openweather') {
+    precision = PRECISION.OPENWEATHER;
+  } else {
+    // Default fallback
+    precision = 3;
+  }
+  
+  const roundedLat = roundNdp(lat, precision);
+  const roundedLon = roundNdp(lon, precision);
+  
+  return `${roundedLat.toFixed(precision)},${roundedLon.toFixed(precision)}`;
+}
+
+/**
+ * Provider-specific coordinate rounding
+ */
+function roundForProvider(lat: number, lon: number, provider: string): { lat: number; lon: number; precision: number } {
+  const precisionMap: Record<string, number> = {
+    'metno': PRECISION.METNO,
+    'noaa': PRECISION.NOAA,
+    'ec': PRECISION.EC,
+    'openweather': PRECISION.OPENWEATHER,
+    'stormglass': PRECISION.STORMGLASS,
+  };
+  
+  const precision = precisionMap[provider] || 3;
+  
+  return {
+    lat: roundNdp(lat, precision),
+    lon: roundNdp(lon, precision),
+    precision
+  };
+}
 // Add proper interfaces for optional API payloads used in caches
 interface OpenWeatherAirQuality {
   coord?: { lon?: number; lat?: number };
@@ -68,6 +154,79 @@ interface OpenMeteoGeneralHourly {
     time?: string[];
     pressure_msl?: number[];
     temperature_2m?: number[];
+    // NEW: include snow arrays so we can map them into unified hourly
+    snowfall?: number[]; // cm per hour
+    snow_depth?: number[]; // cm
+  };
+}
+
+// Minimal response typings for NOAA/NWS endpoints used in this handler
+interface NwsPointProperties {
+  forecast?: string;
+  forecastHourly?: string;
+}
+
+interface NwsPointsResponse {
+  properties?: NwsPointProperties;
+}
+
+interface NwsProbabilityValue {
+  value?: number;
+}
+
+interface NwsForecastPeriod {
+  startTime?: string;
+  endTime?: string;
+  isDaytime?: boolean;
+  temperature?: number;
+  temperatureUnit?: string;
+  windSpeed?: string | number;
+  windGust?: string | number;
+  shortForecast?: string;
+  detailedForecast?: string;
+  probabilityOfPrecipitation?: NwsProbabilityValue;
+  icon?: string;
+}
+
+interface NwsForecastResponse {
+  properties?: {
+    periods?: NwsForecastPeriod[];
+  };
+}
+
+// MET Norway locationforecast minimal typing
+interface MetNoDetailsInstant {
+  air_temperature?: number;
+  wind_speed?: number;
+  wind_from_direction?: number;
+  air_pressure_at_sea_level?: number;
+  dew_point_temperature?: number;
+  relative_humidity?: number;
+  cloud_area_fraction?: number;
+  wind_speed_of_gust?: number;
+}
+
+interface MetNoNextHours {
+  summary?: { symbol_code?: string };
+  details?: {
+    precipitation_amount?: number;
+  };
+  probability_of_precipitation?: number;
+}
+
+interface MetNoTimeseriesEntry {
+  time: string;
+  data?: {
+    instant?: { details?: MetNoDetailsInstant };
+    next_1_hours?: MetNoNextHours;
+    next_6_hours?: MetNoNextHours;
+    next_12_hours?: MetNoNextHours;
+  };
+}
+
+interface MetNoForecastResponse {
+  properties?: {
+    timeseries?: MetNoTimeseriesEntry[];
   };
 }
 const owAirQualityCache = new Map<string, CacheEntry<OpenWeatherAirQuality>>();
@@ -75,15 +234,473 @@ const omPollenCache = new Map<string, CacheEntry<OpenMeteoPollenHourly>>();
 const omSoilCache = new Map<string, CacheEntry<OpenMeteoSoilHourly>>();
 const omWeatherCache = new Map<string, CacheEntry<OpenMeteoGeneralHourly>>();
 
+// Cache statistics helper (moved top-level to avoid "used before declaration" errors)
+class CacheMetrics {
+  private static hits = 0;
+  private static misses = 0;
+  private static providers: Record<string, number> = {};
+
+  static recordHit(provider: string) {
+    this.hits++;
+    this.providers[provider] = (this.providers[provider] || 0) + 1;
+  }
+
+  static recordMiss(provider: string) {
+    this.misses++;
+    if (!(provider in this.providers)) {
+      this.providers[provider] = 0;
+    }
+  }
+
+  static getStats() {
+    const total = this.hits + this.misses;
+    return {
+      hitRate: total > 0 ? ((this.hits / total) * 100).toFixed(1) + '%' : '0%',
+      hits: this.hits,
+      misses: this.misses,
+      byProvider: this.providers,
+      estimatedSavings: `$${(this.hits * 0.0005).toFixed(2)}`
+    };
+  }
+}
+
 // Cache TTL settings
 const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
+const RECT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours per rectangle/day
 const WEATHER_TTL_MS = 5 * 60 * 1000;   // 5 minutes for main weather data
 const AIR_QUALITY_TTL_MS = 15 * 60 * 1000; // 15 minutes for air quality
 const POLLEN_TTL_MS = 60 * 60 * 1000;   // 1 hour for pollen data
 const SOIL_TTL_MS = 30 * 60 * 1000;     // 30 minutes for soil data
 
 const keyLL = (lat: number, lon: number) => `${lat.toFixed(3)},${lon.toFixed(3)}`;
+// Provider-aware coordinate precision
+function roundNdp(n: number, dp: number) {
+  const f = Math.pow(10, dp);
+  return Math.round(n * f) / f;
+}
+
+// Free-provider feature flags (server + optional NEXT_PUBLIC_* fallbacks)
+const FREE_PROVIDERS_ENABLED = (() => {
+  const v = process.env.FREE_PROVIDERS_ENABLED ?? process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED;
+  if (v == null) return false; // default off unless explicitly enabled
+  const s = String(v).toLowerCase();
+  return s === '1' || s === 'true';
+})();
+
+const isFreeProviderName = (value: string): value is FreeProviderName =>
+  value === 'metno' || value === 'noaa' || value === 'ec';
+
+const CONFIGURED_FREE_PROVIDER_ORDER: FreeProviderName[] | null = (() => {
+  const raw = (process.env.FREE_PROVIDER_ORDER ?? process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? 'auto')
+    .trim()
+    .toLowerCase();
+  if (!raw || raw === 'auto') {
+    return null;
+  }
+  const parts = raw.split(',').map((s) => s.trim()).filter(isFreeProviderName);
+  return parts.length ? parts : null;
+})();
+
+type FreeProviderName = 'metno' | 'noaa' | 'ec';
+
+type FreeProviderResult = {
+  provider: FreeProviderName;
+  unified: UnifiedWeather;
+} | null;
+
+// --- Real MET Norway and NOAA implementations ---
+// Helper: minimal MET Norway icon mapping (should be imported from a helper in real code)
+function mapMetNoIcon(symbol?: string): { icon?: string; description?: string } {
+  // Simplified: just pass through for now, can expand for more robust mapping
+  if (!symbol) return { icon: undefined, description: undefined };
+  // Example: "clearsky_day", "cloudy", "lightrain", etc.
+  // Map to OpenWeather-like icon codes if desired, or just use MET Norway's
+  return { icon: symbol, description: undefined };
+}
+// Helper: minimal NWS icon mapping (should be imported from a helper in real code)
+function mapNwsIcon(iconUrl?: string): { icon?: string; description?: string } {
+  if (!iconUrl) return { icon: undefined, description: undefined };
+  // NOAA/NWS icon URLs look like: https://api.weather.gov/icons/land/day/few?size=medium
+  // We'll extract the main code after /icons/land/(day|night)/ and before ? or /
+  try {
+    const m = iconUrl.match(/\/icons\/[^/]+\/(day|night)\/([^/?]+)/);
+    if (m) {
+      // For example, "few", "bkn", "rain", etc.
+      return { icon: m[2], description: undefined };
+    }
+  } catch {}
+  return { icon: undefined, description: undefined };
+}
+// Helper: compute sunrise/sunset times for a given date/lat/lon
+function computeSunTimes(date: Date, _lat: number, _lon: number): { sunriseISO?: string; sunsetISO?: string } {
+  // Placeholder: in production use a library like suncalc, here just return undefined
+  // Or approximate with 6:00 and 18:00 local time for demo
+  try {
+    const y = date.getUTCFullYear(), m = date.getUTCMonth(), d = date.getUTCDate();
+    const sunrise = new Date(Date.UTC(y, m, d, 6, 0, 0));
+    const sunset = new Date(Date.UTC(y, m, d, 18, 0, 0));
+    return { sunriseISO: sunrise.toISOString(), sunsetISO: sunset.toISOString() };
+  } catch {
+    return { sunriseISO: undefined, sunsetISO: undefined };
+  }
+}
+
+async function fetchFromMetNo(lat: number, lon: number, units: string, mode: string): Promise<UnifiedWeather | null> {
+  try {
+    // Use MET Norway's recommended precision and cache results
+    const { lat: metLat, lon: metLon } = roundForProvider(lat, lon, 'metno');
+    const cacheKey = `metno:${getCacheKey(lat, lon, 'metno')}:${units}:${mode}`;
+    const cached = weatherCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
+      return cached.data as UnifiedWeather;
+    }
+    const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${metLat}&lon=${metLon}`;
+    const ua = process.env.METNO_USER_AGENT || 'Go Daisy/1.0 (hello@godaisy.io)';
+    const r = await fetch(url, { headers: { 'User-Agent': ua, 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error(`MET Norway ${r.status}`);
+    const metPayload = await r.json() as MetNoForecastResponse;
+    const ts = metPayload.properties?.timeseries ?? [];
+    if (!ts.length) return null;
+
+    const HOURLY_LIMIT = Math.min(ts.length, 24 * 5); // up to ~5 days of hourly clarity
+    const DAILY_LIMIT_HOURS = Math.min(ts.length, 24 * 7); // aim for a full week of day buckets
+
+    const pickNumber = (...values: Array<number | null | undefined>): number | undefined => {
+      for (const value of values) {
+        if (value !== undefined && value !== null) {
+          const num = Number(value);
+          if (Number.isFinite(num)) return num;
+        }
+      }
+      return undefined;
+    };
+
+    const pickString = (...values: Array<string | null | undefined>): string | undefined => {
+      for (const value of values) {
+        if (typeof value === 'string' && value.trim().length) return value.trim();
+      }
+      return undefined;
+    };
+
+    const deriveNextBlock = (entry: MetNoTimeseriesEntry) => {
+      const next1 = entry.data?.next_1_hours;
+      const next6 = entry.data?.next_6_hours;
+      const next12 = entry.data?.next_12_hours;
+      const probability = pickNumber(next1?.probability_of_precipitation, next6?.probability_of_precipitation, next12?.probability_of_precipitation);
+      const precipAmount = pickNumber(next1?.details?.precipitation_amount, next6?.details?.precipitation_amount, next12?.details?.precipitation_amount);
+      const symbol = pickString(next1?.summary?.symbol_code, next6?.summary?.symbol_code, next12?.summary?.symbol_code);
+      return {
+        pop: probability !== undefined ? probability / 100 : undefined,
+        precipMM: precipAmount,
+        symbol,
+      } as const;
+    };
+
+    // Build hourly series with extended lookahead for aggregation while keeping payload reasonable
+    const hourly: Hour[] = [];
+    for (const p of ts.slice(0, HOURLY_LIMIT)) {
+      const tISO = p.time;
+      if (typeof tISO !== 'string') continue;
+      const instDetails = p.data?.instant?.details;
+      const { pop, precipMM, symbol } = deriveNextBlock(p);
+      const tempC = typeof instDetails?.air_temperature === 'number' ? instDetails.air_temperature : undefined;
+      const windMS = typeof instDetails?.wind_speed === 'number' ? instDetails.wind_speed : undefined;
+      const windDeg = typeof instDetails?.wind_from_direction === 'number' ? instDetails.wind_from_direction : undefined;
+      const pressureHpa = typeof instDetails?.air_pressure_at_sea_level === 'number' ? instDetails.air_pressure_at_sea_level : undefined;
+      const mappedH = mapMetNoIcon(symbol);
+      hourly.push({ timeISO: tISO, tempC, pop, windMS, windDeg, precipMM, icon: mappedH.icon, pressureHpa });
+    }
+
+    // Current from first entry
+    const first = ts[0];
+    const inst0 = first?.data?.instant?.details;
+    const symNow = first?.data?.next_1_hours?.summary?.symbol_code
+      || first?.data?.next_6_hours?.summary?.symbol_code
+      || '';
+    const mappedNow = mapMetNoIcon(symNow);
+    const sun = computeSunTimes(new Date(), lat, lon);
+    const current: UnifiedWeather = {
+      name: 'MET Norway',
+      lat, lon,
+      isMarine: mode === 'marine',
+      temperatureC: inst0?.air_temperature,
+      feelsLikeC: undefined,
+      dewPointC: inst0?.dew_point_temperature,
+      humidityPct: inst0?.relative_humidity,
+      humidity: inst0?.relative_humidity,
+      pressureHpa: inst0?.air_pressure_at_sea_level,
+      windSpeedMS: inst0?.wind_speed,
+      windGustMS: undefined,
+      windDeg: inst0?.wind_from_direction,
+      visibilityKm: undefined,
+      uvi: undefined,
+      cloudsPct: inst0?.cloud_area_fraction,
+      description: mappedNow.description,
+      icon: mappedNow.icon,
+      sunriseISO: sun.sunriseISO,
+      sunsetISO: sun.sunsetISO,
+      hourly,
+    };
+
+    // Daily aggregation (min/max temp, wind, precip, representative icon)
+    const byDate: Record<string, {
+      temps: number[];
+      winds: number[];
+      windDirs: number[];
+      pops: number[];
+      precip: number;
+      icons: Record<string, number>;
+      summary?: string;
+    }> = {};
+
+    for (const entry of ts.slice(0, DAILY_LIMIT_HOURS)) {
+      const tISO = entry.time;
+      if (typeof tISO !== 'string') continue;
+      const key = tISO.slice(0, 10);
+      const bucket = (byDate[key] ||= { temps: [], winds: [], windDirs: [], pops: [], precip: 0, icons: {} });
+
+      const inst = entry.data?.instant?.details;
+      const temp = typeof inst?.air_temperature === 'number' ? inst.air_temperature : undefined;
+      const wind = typeof inst?.wind_speed === 'number' ? inst.wind_speed : undefined;
+      const windDir = typeof inst?.wind_from_direction === 'number' ? inst.wind_from_direction : undefined;
+      if (typeof temp === 'number') bucket.temps.push(temp);
+      if (typeof wind === 'number') bucket.winds.push(wind);
+      if (typeof windDir === 'number') bucket.windDirs.push(windDir);
+
+      const { pop, precipMM, symbol } = deriveNextBlock(entry);
+      if (typeof pop === 'number') bucket.pops.push(pop);
+      if (typeof precipMM === 'number') bucket.precip += precipMM;
+      if (symbol) {
+        bucket.icons[symbol] = (bucket.icons[symbol] || 0) + 1;
+        if (!bucket.summary) {
+          const mapped = mapMetNoIcon(symbol);
+          if (mapped.description) bucket.summary = mapped.description;
+        }
+      }
+    }
+
+    const daily: Day[] = Object.entries(byDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(0, 7)
+      .map(([dateISO, agg]) => {
+        const rawIcon = Object.entries(agg.icons).sort((a, b) => b[1] - a[1])[0]?.[0];
+        const mappedDay = rawIcon ? mapMetNoIcon(rawIcon) : { icon: undefined, description: undefined };
+        const minTemp = agg.temps.length ? Math.min(...agg.temps) : undefined;
+        const maxTemp = agg.temps.length ? Math.max(...agg.temps) : undefined;
+        const windAvg = agg.winds.length ? agg.winds.reduce((a, b) => a + b, 0) / agg.winds.length : undefined;
+        const windDirAvg = agg.windDirs.length ? agg.windDirs.reduce((a, b) => a + b, 0) / agg.windDirs.length : undefined;
+        return {
+          dateISO,
+          minC: minTemp,
+          maxC: maxTemp,
+          pop: agg.pops.length ? Math.max(...agg.pops) : undefined,
+          summary: agg.summary ?? mappedDay.description,
+          icon: mappedDay.icon,
+          windMS: windAvg,
+          windDeg: windDirAvg,
+          pressureHpa: undefined,
+          uvi: undefined,
+          precipMM: agg.precip || undefined,
+          moonriseISO: undefined,
+          moonsetISO: undefined,
+          moonPhase: undefined,
+        } as Day;
+      });
+
+    current.daily = daily;
+    // Cache MET Norway unified result
+    weatherCache.set(cacheKey, { ts: Date.now(), data: current });
+    return current;
+  } catch (e) {
+    console.warn('MET Norway fetch failed', e);
+    return null;
+  }
+}
+
+async function fetchFromNoaa(lat: number, lon: number, units: string, mode: string): Promise<UnifiedWeather | null> {
+  try {
+    // Use NOAA 3dp grid precision and cache both grid lookup and unified result
+    const { lat: noaaLat, lon: noaaLon } = roundForProvider(lat, lon, 'noaa');
+    const cacheKey = `noaa:${getCacheKey(lat, lon, 'noaa')}:${units}:${mode}`;
+    const cached = weatherCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
+      return cached.data as UnifiedWeather;
+    }
+    const ua = process.env.NWS_USER_AGENT || 'Go Daisy/1.0 (hello@godaisy.io)';
+    // Step 1: resolve gridpoint
+    const gridCacheKey = `grid:${getCacheKey(lat, lon, 'noaa')}`;
+    const gridEntry = gridCache.get(gridCacheKey);
+    let props: NwsPointProperties;
+    if (gridEntry && Date.now() - gridEntry.ts < 7 * 24 * 60 * 60 * 1000) {
+      props = gridEntry.data;
+    } else {
+      const p = await fetch(`https://api.weather.gov/points/${noaaLat},${noaaLon}`, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
+      if (!p.ok) throw new Error(`NWS points ${p.status}`);
+      const pj = await p.json() as NwsPointsResponse;
+      props = pj?.properties ?? {};
+      gridCache.set(gridCacheKey, { ts: Date.now(), data: props });
+    }
+    const hourlyUrl = props.forecastHourly;
+    const gridUrl = props.forecast;
+    if (!hourlyUrl && !gridUrl) return null;
+
+    // Step 2: hourly periods
+    let hResp: NwsForecastResponse | null = null;
+    if (hourlyUrl) {
+      const hr = await fetch(hourlyUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
+      if (hr.ok) hResp = await hr.json() as NwsForecastResponse;
+    }
+
+    // Step 3: daily periods (zone forecast)
+    let dResp: NwsForecastResponse | null = null;
+    if (gridUrl) {
+      const dr = await fetch(gridUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
+      if (dr.ok) dResp = await dr.json() as NwsForecastResponse;
+    }
+
+    const hPeriods: NwsForecastPeriod[] = hResp?.properties?.periods ?? [];
+    const dPeriods: NwsForecastPeriod[] = dResp?.properties?.periods ?? [];
+    if (!hPeriods.length && !dPeriods.length) return null;
+
+    // helpers
+    const mphToMs = (v?: number | string) => {
+      if (typeof v === 'string') { const m = v.match(/([\d.]+)/); return m ? Number(m[1]) * 0.44704 : undefined; }
+      if (typeof v === 'number') return v * 0.44704;
+      return undefined;
+    };
+    const FtoC = (v?: number) => (typeof v === 'number' ? (v - 32) * (5/9) : undefined);
+
+    // Build hourly (limit 48)
+    const hourly: Hour[] = hPeriods.slice(0,48).map((p): Hour => ({
+      timeISO: p.startTime ?? p.endTime ?? new Date().toISOString(),
+      tempC: FtoC(p.temperature),
+      pop: typeof p.probabilityOfPrecipitation?.value === 'number' ? p.probabilityOfPrecipitation.value / 100 : undefined,
+      windMS: mphToMs(p.windSpeed),
+      windDeg: undefined, // NWS supplies compass dir; mapping to degrees can be added later
+      precipMM: undefined,
+      icon: mapNwsIcon(p.icon).icon,
+      pressureHpa: undefined,
+      windGustMS: mphToMs(p.windGust),
+    }));
+
+    // Current from first hourly
+  const first = hPeriods[0];
+  const mappedNow = mapNwsIcon(first?.icon);
+    const sunNws = computeSunTimes(new Date(), lat, lon);
+    const current: UnifiedWeather = {
+      name: 'NOAA NWS',
+      lat, lon,
+      isMarine: mode === 'marine',
+      temperatureC: FtoC(first?.temperature),
+      feelsLikeC: undefined,
+      dewPointC: undefined,
+      humidityPct: undefined,
+      humidity: undefined,
+      pressureHpa: undefined,
+      windSpeedMS: mphToMs(first?.windSpeed),
+      windGustMS: mphToMs(first?.windGust),
+      windDeg: undefined,
+      visibilityKm: undefined,
+      uvi: undefined,
+      cloudsPct: undefined,
+      description: mappedNow.description || first?.shortForecast,
+      icon: mappedNow.icon,
+      sunriseISO: sunNws.sunriseISO,
+      sunsetISO: sunNws.sunsetISO,
+      hourly,
+    };
+
+    // Daily from zone forecast periods (NWS alternates day/night)
+    const days: Record<string, Day> = {};
+    for (const p of dPeriods.slice(0,12)) {
+      const dateISO = String(p.startTime).slice(0,10);
+      const entry = (days[dateISO] ||= { dateISO } as Day);
+      const tC = FtoC(p.temperature);
+      if (typeof tC === 'number') {
+        if (p.isDaytime) entry.maxC = Math.max(entry.maxC ?? -Infinity, tC);
+        else entry.minC = Math.min(entry.minC ?? Infinity, tC);
+      }
+      if (!entry.summary) entry.summary = p.shortForecast;
+      const mappedDay = mapNwsIcon(p.icon);
+      entry.icon = mappedDay.icon || entry.icon;
+    }
+    current.daily = Object.values(days).slice(0,5).map(d => {
+      if (d.minC === Infinity) d.minC = undefined;
+      if (d.maxC === -Infinity) d.maxC = undefined;
+      return d;
+    });
+
+    // Cache NOAA unified result
+    weatherCache.set(cacheKey, { ts: Date.now(), data: current });
+    return current;
+  } catch (e) {
+    console.warn('NOAA NWS fetch failed:', e);
+    return null;
+  }
+}
+async function fetchFromEC(_lat: number, _lon: number, _units: string, _mode: string): Promise<UnifiedWeather | null> {
+  // TODO: implement Environment Canada (MSC) mapping
+  return null;
+}
+
+// --- Region routing helpers ---------------------------------------------------
+function inBBox(lat: number, lon: number, bbox: [number, number, number, number]) {
+  const [minLat, minLon, maxLat, maxLon] = bbox;
+  return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon;
+}
+// Very coarse bounding boxes; safe over‑inclusion is fine for fallback order.
+const BBOX = {
+  // Includes NO, SE, FI, DK, IS, FO, and Svalbard area generously
+  NORDIC_ARCTIC: [54, -30, 84, 45] as [number, number, number, number],
+  // Continental US incl. AK (partial) & HI (partial) — coarse
+  USA: [18, -178, 72, -60] as [number, number, number, number],
+  // Canada broad box
+  CANADA: [41, -141, 84, -52] as [number, number, number, number],
+  // Europe broad (Azores to Urals-ish, N Africa band included but later boxes win first)
+  EUROPE: [34, -31, 72, 45] as [number, number, number, number],
+};
+
+type Region = 'nordic_arctic' | 'usa' | 'canada' | 'europe' | 'global';
+
+function detectRegion(lat: number, lon: number): Region {
+  if (inBBox(lat, lon, BBOX.NORDIC_ARCTIC)) return 'nordic_arctic';
+  if (inBBox(lat, lon, BBOX.USA)) return 'usa';
+  if (inBBox(lat, lon, BBOX.CANADA)) return 'canada';
+  if (inBBox(lat, lon, BBOX.EUROPE)) return 'europe';
+  return 'global';
+}
+
+function planForRegion(r: Region): FreeProviderName[] {
+  switch (r) {
+    case 'nordic_arctic':
+      return ['metno']; // Always MET Norway (free), SG for marine downstream
+    case 'usa':
+      return ['noaa']; // NOAA primary
+    case 'canada':
+      return ['ec'];   // Environment Canada primary
+    case 'europe':
+      return ['metno']; // MET Norway primary across Europe
+    default:
+      return ['metno', 'noaa', 'ec']; // Global: try any free source that works
+  }
+}
+
+async function tryFreeProvidersOrder(order: FreeProviderName[], lat: number, lon: number, units: string, mode: string): Promise<FreeProviderResult> {
+  for (const p of order) {
+    try {
+      let unified: UnifiedWeather | null = null;
+      if (p === 'metno') unified = await fetchFromMetNo(lat, lon, units, mode);
+      else if (p === 'noaa') unified = await fetchFromNoaa(lat, lon, units, mode);
+      else if (p === 'ec') unified = await fetchFromEC(lat, lon, units, mode);
+      if (unified) return { provider: p, unified };
+    } catch (e) {
+      console.warn(`[free-provider:${p}] failed, continuing`, e);
+    }
+  }
+  return null;
+}
+// -----------------------------------------------------------------------------
 
 // Stormglass API types
 interface StormglassTidePoint {
@@ -108,10 +725,26 @@ interface StormglassMarineHour {
   swellDirection?: { sg?: number };
   swellPeriod?: { sg?: number };
   waterTemperature?: { sg?: number };
+  currentSpeed?: { sg?: number };
+  currentDirection?: { sg?: number };
 }
 
 interface StormglassMarineResponse {
   hours: StormglassMarineHour[];
+}
+
+// --- Stormglass Bio types ---
+interface StormglassBioHour {
+  time: string;
+  chlorophyll?: { sg?: number } | number;
+  turbidity?: { sg?: number } | number;
+  dissolvedOxygen?: { sg?: number } | number;
+  seaTemperature?: { sg?: number } | number;
+  nitrate?: { sg?: number } | number;
+  phosphate?: { sg?: number } | number;
+}
+interface StormglassBioResponse {
+  hours: StormglassBioHour[];
 }
 type Hour = {
   timeISO: string
@@ -128,6 +761,9 @@ type Hour = {
   windGustMS?: number
   // Optional hourly UVI when available in payload
   uvi?: number
+  // NEW: snow fields mapped from Open-Meteo
+  snowDepthCm?: number
+  snowfallRateMmH?: number
 }
 
 type Day = {
@@ -146,6 +782,9 @@ type Day = {
   moonriseISO?: string
   moonsetISO?: string
   moonPhase?: number // 0..1 (0=new, 0.5=full) from OpenWeather
+  sunriseISO?: string
+  sunsetISO?: string
+  dayLengthMinutes?: number
   pollen?: { 
     grass?: number; 
     tree?: number; 
@@ -174,6 +813,41 @@ type Marine = {
   swellPeriod?: number | null
 }
 
+type MetNoMarineSeriesHour = {
+  timeISO: string;
+  waveHeightM: number | null;
+  waveDirectionDeg: number | null;
+  seaTemperatureC: number | null;
+  windSpeedMS: number | null;
+  windSpeedKts: number | null;
+  windDirectionDeg: number | null;
+  currentSpeedMS: number | null;
+  currentDirectionDeg: number | null;
+};
+
+type MetNoMarineSeriesResult = {
+  hours: MetNoMarineSeriesHour[];
+  firstHour: MetNoMarineSeriesHour;
+};
+
+type MoonSnapshot = {
+  timezone?: string;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  dayLengthMinutes?: number;
+  moonriseISO?: string;
+  moonsetISO?: string;
+  phaseName?: string;
+  phaseFraction?: number;
+  illuminationPct?: number;
+  source?: string;
+  cachedAt?: string;
+  expiresAt?: string;
+  latBucket?: number;
+  lonBucket?: number;
+  localDate?: string;
+};
+
 type UnifiedWeather = {
   // core current
   name?: string
@@ -196,6 +870,7 @@ type UnifiedWeather = {
   icon?: string
   sunriseISO?: string
   sunsetISO?: string
+  dayLengthMinutes?: number
 
   // series
   hourly?: Hour[]
@@ -203,6 +878,12 @@ type UnifiedWeather = {
 
   // marine
   marine?: Marine
+  marineAnchor?: {
+    rectangleCode?: string;
+    lat: number;
+    lon: number;
+    source?: string;
+  }
   tides?: Tides
   marineHourly?: Array<{
     timeISO: string;
@@ -216,6 +897,8 @@ type UnifiedWeather = {
     windSpeedMS?: number | null;
     windDirectionDeg?: number | null;
     windGustMS?: number | null;
+    currentSpeedMS?: number | null;
+    currentDirectionDeg?: number | null;
   }>
   seaTemp?: number | null
   hasMarineData?: boolean // ← new flag
@@ -278,6 +961,18 @@ type UnifiedWeather = {
     sulphur_dioxide?: number[];
     carbon_monoxide?: number[];
   }
+  // optional: marine bio/water-quality snapshot
+  bio?: {
+    chlorophyll?: number | null;
+    turbidity?: number | null;
+    dissolvedOxygen?: number | null;
+    seaTemperature?: number | null;
+    nitrate?: number | null;
+    phosphate?: number | null;
+    updatedAt?: string;
+    missing?: boolean;
+  }
+  moon?: MoonSnapshot;
 }
 
 // Define refined internal types to eliminate 'any'
@@ -301,9 +996,22 @@ interface WeatherServiceModule {
   getFullWeather: (args: { lat: number; lon: number; apiKey: string; options?: { units?: string; exclude?: string } }) => Promise<OpenWeatherOneCall3 | OpenWeatherForecast25>;
   fetchStormglassTides: (lat: number, lon: number, key: string) => Promise<StormglassTidesResponse>;
   fetchStormglassMarine: (lat: number, lon: number, startISO: string, endISO: string, params: string | undefined, key: string) => Promise<StormglassMarineResponse>;
+  fetchStormglassBio: (lat: number, lon: number, startISO: string, endISO: string, params: string | undefined, key: string) => Promise<StormglassBioResponse>;
+  fetchMetNoMarineSeries: (lat: number, lon: number, startISO: string, endISO: string, options?: { maxHours?: number }) => Promise<MetNoMarineSeriesResult | null>;
   getAirPollution: (args: { lat: number; lon: number; apiKey: string }) => Promise<unknown>;
   fetchOpenMeteoAirPollen: (lat: number, lon: number, start: string, end: string) => Promise<unknown>;
   fetchOpenMeteoWeather: (lat: number, lon: number, start: string, end: string) => Promise<unknown>;
+}
+// Helper for Stormglass Bio TTL
+function computeBioTTLMs(startISO: string, endISO: string): number {
+  const now = Date.now();
+  const end = Date.parse(endISO);
+  if (!isNaN(end)) {
+    const hours = (end - now) / 3_600_000;
+    if (hours <= 48) return 3 * 60 * 60 * 1000;   // 3h near-term
+    if (hours <= 168) return 6 * 60 * 60 * 1000;  // 6h up to 7d
+  }
+  return 12 * 60 * 60 * 1000; // 12h long-range/default
 }
 
 // Transform OpenWeather data to our normalized format
@@ -559,53 +1267,69 @@ function buildMockUnifiedWeather(lat: number, lon: number, variant: 'inland' | '
 
 // Canonical unified weather endpoint.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const mod = await import('../../lib/services/weatherService');
-  const svcModule = (mod as unknown as WeatherServiceModule);
-  const {
-    getFullWeather,
-    fetchStormglassTides,
-    fetchStormglassMarine,
-    getAirPollution,
-    fetchOpenMeteoAirPollen,
-    fetchOpenMeteoWeather,
-  } = svcModule;
-
+  // Parse request query early so we can set headers even if imports fail
   const { lat, lon, mode, coastal } = req.query as { 
     lat?: string; 
     lon?: string; 
     mode?: string; 
     coastal?: string; 
   };
-  // Support mock fixtures for development/tests via ?mock=inland|marine
+  const activityId = Array.isArray(req.query.activityId) ? req.query.activityId[0] : (req.query.activityId as string | undefined);
+  const includeBioFlag = Array.isArray(req.query.includeBio) ? req.query.includeBio[0] : (req.query.includeBio as string | undefined);
+  const wantsBio = includeBioFlag === '1' || includeBioFlag === 'true';
+  const isSeaFishing = activityId === 'sea_fishing_shore' || activityId === 'sea_fishing_boat';
   const mockParam = Array.isArray(req.query.mock) ? req.query.mock[0] : req.query.mock;
   const mock = (mockParam === 'inland' || mockParam === 'marine') ? mockParam : undefined;
 
-  // Determine mode: prefer explicit mode, fallback to coastal flag, default to land
+  // Determine mode & options
   const weatherMode = mode || (coastal === 'true' ? 'marine' : 'land');
   const units = (req.query.units as string) || 'metric';
   const exclude = (req.query.exclude as string) || '';
 
+
   const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 
-  // Always attach minimal debug headers (no secrets) so failures still carry diagnostics
+  // Precompute region and intended provider order (for debug headers)
+  const preRegion = detectRegion(Number(lat || 0), Number(lon || 0));
+  const preDefaultOrder = planForRegion(preRegion);
+  const envOrderRaw = (process.env.FREE_PROVIDER_ORDER || '').trim().toLowerCase();
+  const preOrder = envOrderRaw && envOrderRaw !== 'auto'
+    ? (envOrderRaw.split(',').map(s => s.trim()).filter(Boolean) as FreeProviderName[])
+    : preDefaultOrder;
+
+  // Attach debug headers as early as possible so even early failures include them
   try {
     res.setHeader('X-Mode', weatherMode);
     res.setHeader('X-Has-OW-Key', apiKey ? '1' : '0');
     const sgKeyEarly = process.env.STORMGLASS_SECRET_KEY || process.env.STORMGLASS_API_KEY;
     res.setHeader('X-Has-SG-Key', sgKeyEarly ? '1' : '0');
+    res.setHeader('X-Region', preRegion);
+    res.setHeader('X-Provider-Plan', preOrder.join(','));
+    // Provide safe defaults so grepping works even on failures
+    res.setHeader('X-Weather-Source', 'none');
+    if (lat != null && lon != null) {
+      const latNumEarly = Number(lat);
+      const lonNumEarly = Number(lon);
+      if (Number.isFinite(latNumEarly) && Number.isFinite(lonNumEarly)) {
+        const { precision: owPrecE } = roundForProvider(latNumEarly, lonNumEarly, 'openweather');
+        res.setHeader('X-OW-Precision-DP', String(owPrecE));
+        res.setHeader('X-OW-Precision', String(owPrecE));
+        res.setHeader('X-OW-Coord-Key', getCacheKey(latNumEarly, lonNumEarly, 'openweather'));
+      }
+    }
   } catch {
-    // ignore
+    // ignore header errors
     void 0;
   }
 
-  if (lat === undefined || lon === undefined || !apiKey) {
-    try { res.setHeader('X-Error-Reason', 'missing-params-or-api-key'); } catch { void 0; }
-    return res.status(400).json({ 
-      error: 'Missing parameters or API key',
-      received: { lat, lon, hasApiKey: !!apiKey }
+  // Early validation for coordinates before importing services
+  if (lat === undefined || lon === undefined) {
+    try { res.setHeader('X-Error-Reason', 'missing-params'); } catch { void 0; }
+    return res.status(400).json({
+      error: 'Missing parameters',
+      received: { lat, lon }
     });
   }
-
   const latNum = Number(lat);
   const lonNum = Number(lon);
   if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) {
@@ -616,6 +1340,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
+  // Defer import until after headers and validation so failures still include headers
+  let getFullWeather: WeatherServiceModule['getFullWeather'];
+  let fetchStormglassTides: WeatherServiceModule['fetchStormglassTides'];
+  let fetchStormglassMarine: WeatherServiceModule['fetchStormglassMarine'];
+  let fetchStormglassBio: WeatherServiceModule['fetchStormglassBio'];
+  let fetchMetNoMarineSeries: WeatherServiceModule['fetchMetNoMarineSeries'];
+  let getAirPollution: WeatherServiceModule['getAirPollution'];
+  let fetchOpenMeteoAirPollen: WeatherServiceModule['fetchOpenMeteoAirPollen'];
+  let fetchOpenMeteoWeather: WeatherServiceModule['fetchOpenMeteoWeather'];
+  try {
+    const mod = await import('../../lib/services/weatherService');
+    const svcModule = (mod as unknown as WeatherServiceModule);
+    getFullWeather = svcModule.getFullWeather;
+    fetchStormglassTides = svcModule.fetchStormglassTides;
+    fetchStormglassMarine = svcModule.fetchStormglassMarine;
+    fetchStormglassBio = svcModule.fetchStormglassBio;
+    fetchMetNoMarineSeries = svcModule.fetchMetNoMarineSeries;
+    getAirPollution = svcModule.getAirPollution;
+    fetchOpenMeteoAirPollen = svcModule.fetchOpenMeteoAirPollen;
+    fetchOpenMeteoWeather = svcModule.fetchOpenMeteoWeather;
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    try {
+      res.setHeader('X-Error-Reason', 'service-import-failed');
+      res.setHeader('X-Error-Detail', msg.slice(0, 200));
+      // Ensure our debug headers remain visible on error
+      if (!res.getHeader('X-Weather-Source')) res.setHeader('X-Weather-Source', 'none');
+    } catch { void 0; }
+    return res.status(500).json({ error: `Failed to load weather service module: ${msg}` });
+  }
+
   // Early return mock payloads if requested
   if (mock === 'inland' || mock === 'marine') {
     const payload = buildMockUnifiedWeather(latNum, lonNum, mock);
@@ -623,50 +1378,215 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const latlonKey = keyLL(latNum, lonNum);
-    
-    // Base weather (OpenWeather One Call) with cache
-    const weatherCacheKey = `${latlonKey}_${units}_${exclude}`;
-    const weatherCached = owWeatherCache.get(weatherCacheKey);
-    let weatherData: OpenWeatherOneCall3 | OpenWeatherForecast25;
-    
-    if (weatherCached && Date.now() - weatherCached.ts < WEATHER_TTL_MS) {
-      weatherData = weatherCached.data as OpenWeatherOneCall3 | OpenWeatherForecast25;
-    } else {
-      weatherData = await getFullWeather({
-        lat: latNum,
-        lon: lonNum,
-        apiKey,
-        options: { units, exclude }
-      });
-      if (weatherData) owWeatherCache.set(weatherCacheKey, { ts: Date.now(), data: weatherData });
+    const latlonKey = keyLL(latNum, lonNum); // 3‑dp key for SG & others
+
+    // First, attempt free providers if enabled
+    let normalizedData: UnifiedWeather | null = null;
+    if (FREE_PROVIDERS_ENABLED) {
+      const region = detectRegion(latNum, lonNum);
+      const defaultOrder = planForRegion(region);
+      const configuredOrder = CONFIGURED_FREE_PROVIDER_ORDER;
+      const order = configuredOrder ?? defaultOrder;
+      const free = await tryFreeProvidersOrder(order, latNum, lonNum, units, weatherMode);
+      if (free && free.unified) {
+        normalizedData = free.unified;
+        try {
+          res.setHeader('X-Weather-Source', `free:${free.provider}`);
+        } catch { /* noop */ }
+      }
     }
-    // Attach minimal debug headers (no secrets)
+
+    // Base weather (OpenWeather One Call) with provider-specific precision (fallback)
+    if (!normalizedData) {
+      if (!apiKey) {
+        try {
+          res.setHeader('X-Weather-Source', 'none');
+          res.setHeader('X-Error-Reason', 'no-free-provider-and-no-ow-key');
+        } catch { /* noop */ }
+        return res.status(502).json({
+          error: 'No free provider returned data and no OpenWeather API key is configured',
+        });
+      }
+
+      // Always use 2dp for OpenWeather (maximum caching for fallback)
+      const { lat: owLat, lon: owLon, precision: owPrecision } = roundForProvider(latNum, lonNum, 'openweather');
+      const owCacheKey = `ow:${getCacheKey(latNum, lonNum, 'openweather')}_${units}_${exclude}`;
+      const weatherCached = owWeatherCache.get(owCacheKey);
+      let weatherData: OpenWeatherOneCall3 | OpenWeatherForecast25;
+
+      if (weatherCached && Date.now() - weatherCached.ts < WEATHER_TTL_MS) {
+        weatherData = weatherCached.data as OpenWeatherOneCall3 | OpenWeatherForecast25;
+        try {
+          res.setHeader('X-Cache-Hit', 'true');
+          res.setHeader('X-OW-Precision', String(owPrecision));
+          res.setHeader('X-OW-Precision-DP', String(owPrecision));
+        } catch { /* noop */ }
+        try { CacheMetrics.recordHit('openweather'); } catch {}
+      } else {
+        weatherData = await getFullWeather({
+          lat: owLat,
+          lon: owLon,
+          apiKey,
+          options: { units, exclude }
+        });
+        if (weatherData) {
+          owWeatherCache.set(owCacheKey, { ts: Date.now(), data: weatherData });
+          try {
+            res.setHeader('X-Cache-Hit', 'false');
+            res.setHeader('X-OW-Precision', String(owPrecision));
+            res.setHeader('X-OW-Precision-DP', String(owPrecision));
+          } catch { /* noop */ }
+          try { CacheMetrics.recordMiss('openweather'); } catch {}
+        }
+      }
+      // Attach minimal debug headers (no secrets)
+      try {
+        let src = (weatherData as { source?: string })?.source;
+        if (!src) {
+          if ((weatherData as OpenWeatherOneCall3)?.hourly || (weatherData as OpenWeatherOneCall3)?.daily) {
+            src = 'onecall3';
+          } else if ((weatherData as OpenWeatherForecast25)?.list) {
+            src = 'forecast2.5';
+          } else {
+            src = 'openweather';
+          }
+        }
+        res.setHeader('X-Weather-Source', src);
+        res.setHeader('X-OW-Coord-Key', getCacheKey(latNum, lonNum, 'openweather'));
+        // also echo precision for consistency
+        res.setHeader('X-OW-Precision', String(owPrecision));
+        res.setHeader('X-OW-Precision-DP', String(owPrecision));
+      } catch { /* noop */ }
+
+      normalizedData = transformWeatherData(weatherData, latNum, lonNum, weatherMode);
+    }
+
+    // Enrich with moon & sun metadata (cached via Supabase)
     try {
-      // X-Mode/X-Has-* already set above; just set source once available
-      const src = (weatherData as { source?: string })?.source;
-      if (src) res.setHeader('X-Weather-Source', src);
-    } catch {
-      // ignore header set failures (e.g., during tests)
-      void 0;
+      const moonData = await getMoonSunData({ lat: latNum, lon: lonNum });
+      if (moonData) {
+        (normalizedData as UnifiedWeather).moon = {
+          timezone: moonData.timezone,
+          sunriseISO: moonData.sunriseISO,
+          sunsetISO: moonData.sunsetISO,
+          dayLengthMinutes: moonData.dayLengthMinutes,
+          moonriseISO: moonData.moonriseISO,
+          moonsetISO: moonData.moonsetISO,
+          phaseName: moonData.moonPhaseName,
+          phaseFraction: moonData.moonPhaseFraction,
+          illuminationPct: moonData.moonIlluminationPct,
+          source: moonData.source,
+          cachedAt: moonData.cachedAt,
+          expiresAt: moonData.expiresAt,
+          latBucket: moonData.latBucket,
+          lonBucket: moonData.lonBucket,
+          localDate: moonData.localDate,
+        } satisfies MoonSnapshot;
+
+        if (moonData.sunriseISO) {
+          (normalizedData as UnifiedWeather).sunriseISO = moonData.sunriseISO;
+        }
+        if (moonData.sunsetISO) {
+          (normalizedData as UnifiedWeather).sunsetISO = moonData.sunsetISO;
+        }
+        if (typeof moonData.dayLengthMinutes === 'number') {
+          (normalizedData as UnifiedWeather).dayLengthMinutes = moonData.dayLengthMinutes;
+        }
+
+        if (Array.isArray(normalizedData.daily) && normalizedData.daily.length) {
+          const matchDateISO = (() => {
+            if (moonData.localDate) return moonData.localDate;
+            const isoFrom = (value?: string) => (value ? new Date(value).toISOString().split('T')[0] : undefined);
+            return isoFrom(moonData.sunriseISO) ?? isoFrom(moonData.moonriseISO);
+          })();
+
+          let targetDay = matchDateISO
+            ? normalizedData.daily.find((day) => day.dateISO === matchDateISO)
+            : undefined;
+          if (!targetDay) {
+            targetDay = normalizedData.daily[0];
+          }
+          if (targetDay) {
+            if (moonData.moonriseISO) targetDay.moonriseISO = moonData.moonriseISO;
+            if (moonData.moonsetISO) targetDay.moonsetISO = moonData.moonsetISO;
+            if (typeof moonData.moonPhaseFraction === 'number') {
+              targetDay.moonPhase = moonData.moonPhaseFraction;
+            } else if (targetDay.moonPhase == null && typeof moonData.moonIlluminationPct === 'number') {
+              targetDay.moonPhase = Number((moonData.moonIlluminationPct / 100).toFixed(4));
+            }
+            if (moonData.sunriseISO) targetDay.sunriseISO = moonData.sunriseISO;
+            if (moonData.sunsetISO) targetDay.sunsetISO = moonData.sunsetISO;
+            if (typeof moonData.dayLengthMinutes === 'number') {
+              targetDay.dayLengthMinutes = moonData.dayLengthMinutes;
+            }
+          }
+        }
+
+        try {
+          if (moonData.source) {
+            res.setHeader('X-Moon-Source', moonData.source);
+          }
+          if (moonData.latBucket != null) {
+            res.setHeader('X-Moon-Lat-Bucket', String(moonData.latBucket));
+          }
+          if (moonData.lonBucket != null) {
+            res.setHeader('X-Moon-Lon-Bucket', String(moonData.lonBucket));
+          }
+          if (moonData.expiresAt) {
+            res.setHeader('X-Moon-Expires', moonData.expiresAt);
+          }
+        } catch { /* noop */ }
+      }
+    } catch (moonErr) {
+      console.warn('Moon data fetch failed:', moonErr);
     }
-    
-    // Transform to normalized structure
-    const normalizedData = transformWeatherData(weatherData, latNum, lonNum, weatherMode);
 
     // Optional: Tides and Marine (Stormglass), if key available
     const sgKey = process.env.STORMGLASS_SECRET_KEY || process.env.STORMGLASS_API_KEY;
-    if (sgKey) {
+    // Only fetch Stormglass for explicit marine contexts (mode=marine or coastal=true)
+    const shouldFetchMarine = (weatherMode === 'marine' || coastal === 'true');
+    if (sgKey && shouldFetchMarine) {
       try {
-        const latlonKey = keyLL(latNum, lonNum);
+        const rectangleResult = await getRectangleAnchorForLocation(latNum, lonNum, {
+          includeNonCoastal: true,
+        });
+        const rectangleAnchor = rectangleResult?.anchor;
+        const sgAnchorLat = rectangleAnchor?.anchorLat ?? latNum;
+        const sgAnchorLon = rectangleAnchor?.anchorLon ?? lonNum;
+        const rectangleCode = rectangleAnchor?.rectangleCode;
+        const sgDayKey = getRectangleDayKey();
+
+        if (rectangleCode) {
+          try {
+            res.setHeader('X-Rectangle-Code', rectangleCode);
+            res.setHeader('X-Rectangle-Source', rectangleAnchor?.source ?? 'unknown');
+          } catch { /* noop */ }
+        }
+
+        const { lat: sgLat, lon: sgLon } = roundForProvider(sgAnchorLat, sgAnchorLon, 'stormglass');
+        if (rectangleAnchor) {
+          (normalizedData as UnifiedWeather).marineAnchor = {
+            rectangleCode,
+            lat: sgLat,
+            lon: sgLon,
+            source: rectangleAnchor.source,
+          };
+        }
+        const tideCacheKey = rectangleCode
+          ? buildRectangleCacheKey(rectangleCode, 'tides', sgDayKey)
+          : getCacheKey(latNum, lonNum, 'stormglass', 'tides');
+        const marineCacheKey = rectangleCode
+          ? buildRectangleCacheKey(rectangleCode, 'marine', sgDayKey)
+          : getCacheKey(latNum, lonNum, 'stormglass', 'marine');
         // Tides with cache
-        const tideCached = sgTideCache.get(latlonKey);
+        const tideCached = sgTideCache.get(tideCacheKey);
         let tidesRaw: StormglassTidesResponse | null = null;
-        if (tideCached && Date.now() - tideCached.ts < TIDE_TTL_MS) {
+        const tideTtl = rectangleCode ? RECT_TTL_MS : TIDE_TTL_MS;
+        if (tideCached && Date.now() - tideCached.ts < tideTtl) {
           tidesRaw = tideCached.data as StormglassTidesResponse;
         } else {
-          tidesRaw = await fetchStormglassTides(latNum, lonNum, sgKey);
-          if (tidesRaw) sgTideCache.set(latlonKey, { ts: Date.now(), data: tidesRaw });
+          tidesRaw = await fetchStormglassTides(sgLat, sgLon, sgKey);
+          if (tidesRaw) sgTideCache.set(tideCacheKey, { ts: Date.now(), data: tidesRaw });
         }
         if (tidesRaw && Array.isArray(tidesRaw.data)) {
           const tides = tidesRaw.data.map((t): { time: string; type: 'high' | 'low'; height: number | null } => ({
@@ -677,103 +1597,256 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           normalizedData.tides = tides;
         }
 
-        // Marine (next ~24h) with cache
-        const nowD = new Date();
-        const end = new Date(nowD.getTime() + 24 * 60 * 60 * 1000);
-        const marineCached = sgMarineCache.get(latlonKey);
-        let marineRaw: StormglassMarineResponse | null = null;
-        if (marineCached && Date.now() - marineCached.ts < MARINE_TTL_MS) {
-          marineRaw = marineCached.data as StormglassMarineResponse;
-        } else {
-          marineRaw = await fetchStormglassMarine(
-            latNum,
-            lonNum,
+  // Marine (multi-day) with MET Norway primary and Stormglass fallback
+  const nowD = new Date();
+  const MARINE_LOOKAHEAD_HOURS = 5 * 24;
+  const end = new Date(nowD.getTime() + MARINE_LOOKAHEAD_HOURS * 60 * 60 * 1000);
+
+        let marinePopulatedFromMet = false;
+        try {
+          const metMarine = await fetchMetNoMarineSeries(
+            sgLat,
+            sgLon,
             nowD.toISOString(),
             end.toISOString(),
-            undefined,
-            sgKey
+            { maxHours: MARINE_LOOKAHEAD_HOURS }
           );
-          if (marineRaw) sgMarineCache.set(latlonKey, { ts: Date.now(), data: marineRaw });
+          if (metMarine && Array.isArray(metMarine.hours) && metMarine.hours.length) {
+            const metMarineHourly = metMarine.hours.map(h => ({
+              timeISO: h.timeISO,
+              waveHeightM: h.waveHeightM ?? undefined,
+              wavePeriodS: undefined,
+              waveDirectionDeg: h.waveDirectionDeg ?? undefined,
+              swellHeightM: undefined,
+              swellPeriodS: undefined,
+              swellDirectionDeg: undefined,
+              waterTempC: h.seaTemperatureC ?? undefined,
+              windSpeedMS: h.windSpeedMS ?? undefined,
+              windDirectionDeg: h.windDirectionDeg ?? undefined,
+              windGustMS: undefined,
+              currentSpeedMS: h.currentSpeedMS ?? undefined,
+              currentDirectionDeg: h.currentDirectionDeg ?? undefined,
+            }));
+            (normalizedData as UnifiedWeather).marineHourly = metMarineHourly;
+            (normalizedData as UnifiedWeather).hasMarineData = metMarineHourly.some(m =>
+              typeof m.waveHeightM === 'number' ||
+              typeof m.waterTempC === 'number' ||
+              typeof m.currentSpeedMS === 'number'
+            );
+
+            const first = metMarine.firstHour;
+            if (first) {
+              if (typeof first.seaTemperatureC === 'number') {
+                (normalizedData as UnifiedWeather).seaTemp = first.seaTemperatureC;
+              }
+              if (!(normalizedData as UnifiedWeather).marine) {
+                (normalizedData as UnifiedWeather).marine = {
+                  waveHeight: first.waveHeightM,
+                  waveDirection: first.waveDirectionDeg,
+                  wavePeriod: null,
+                  swellHeight: null,
+                  swellDirection: null,
+                  swellPeriod: null,
+                };
+              }
+            }
+
+            // Attach marine metrics to existing hourly by nearest-time match (<= 90 min)
+            if (Array.isArray(normalizedData.hourly)) {
+              const ms90 = 90 * 60 * 1000;
+              for (const h of normalizedData.hourly) {
+                const ht = new Date(h.timeISO).getTime();
+                let best: MetNoMarineSeriesHour | null = null;
+                let bestDiff = Infinity;
+                for (const metHour of metMarine.hours) {
+                  const diff = Math.abs(new Date(metHour.timeISO).getTime() - ht);
+                  if (diff < bestDiff) { bestDiff = diff; best = metHour; }
+                }
+                if (best && bestDiff <= ms90) {
+                  if (typeof best.waveHeightM === 'number') h.waveHeightM = best.waveHeightM;
+                  if (typeof best.seaTemperatureC === 'number' && (normalizedData.seaTemp == null)) {
+                    (normalizedData as UnifiedWeather).seaTemp = best.seaTemperatureC;
+                  }
+                }
+              }
+            }
+
+            marinePopulatedFromMet = true;
+          }
+        } catch (metErr) {
+          console.warn('MET Norway marine enrich failed:', metErr);
         }
-        const firstHour = marineRaw?.hours?.[0];
-        if (firstHour) {
-          const hours = marineRaw?.hours as StormglassMarineHour[];
-          const sgVal = (obj: StormglassMarineHour, key: keyof StormglassMarineHour): number | null => {
-            const raw = obj[key] as unknown;
-            if (typeof raw === 'number') return raw as number;
-            if (raw && typeof (raw as { sg?: unknown }).sg === 'number') return (raw as { sg?: number }).sg!;
-            return null;
-          };
-          // Build full marineHourly series
-          const marineSeries = hours.map(h => ({
-            timeISO: new Date(h.time).toISOString(),
-            waveHeightM: sgVal(h, 'waveHeight'),
-            wavePeriodS: sgVal(h, 'wavePeriod'),
-            waveDirectionDeg: sgVal(h, 'waveDirection'),
-            swellHeightM: sgVal(h, 'swellHeight'),
-            swellPeriodS: sgVal(h, 'swellPeriod'),
-            swellDirectionDeg: sgVal(h, 'swellDirection'),
-            waterTempC: sgVal(h, 'waterTemperature'),
-            windSpeedMS: sgVal(h, 'windSpeed'),
-            windDirectionDeg: sgVal(h, 'windDirection'),
-            windGustMS: sgVal(h, 'gust'),
-          }));
-          if (marineSeries.length) {
-            (normalizedData as UnifiedWeather).marineHourly = marineSeries;
-            const firstTemp = marineSeries.find(m => typeof m.waterTempC === 'number')?.waterTempC ?? null;
-            if (firstTemp != null) (normalizedData as UnifiedWeather).seaTemp = firstTemp;
-            (normalizedData as UnifiedWeather).hasMarineData = marineSeries.some(m => typeof m.waveHeightM === 'number' || typeof m.swellHeightM === 'number' || typeof m.waterTempC === 'number');
+
+        let marineRaw: StormglassMarineResponse | null = null;
+        if (!marinePopulatedFromMet) {
+          const marineCached = sgMarineCache.get(marineCacheKey);
+          const marineTtl = rectangleCode ? RECT_TTL_MS : MARINE_TTL_MS;
+          if (marineCached && Date.now() - marineCached.ts < marineTtl) {
+            marineRaw = marineCached.data as StormglassMarineResponse;
           } else {
-            (normalizedData as UnifiedWeather).hasMarineData = false;
+            marineRaw = await fetchStormglassMarine(
+              sgLat,
+              sgLon,
+              nowD.toISOString(),
+              end.toISOString(),
+              undefined,
+              sgKey
+            );
+            if (marineRaw) sgMarineCache.set(marineCacheKey, { ts: Date.now(), data: marineRaw });
           }
 
-          const sgNumber = (k: keyof StormglassMarineHour) => sgVal(firstHour, k);
-          normalizedData.marine = {
-            waveHeight: sgNumber('waveHeight'),
-            waveDirection: sgNumber('waveDirection'),
-            wavePeriod: sgNumber('wavePeriod'),
-            swellHeight: sgNumber('swellHeight'),
-            swellDirection: sgNumber('swellDirection'),
-            swellPeriod: sgNumber('swellPeriod'),
-          };
+          const firstHour = marineRaw?.hours?.[0];
+          if (firstHour) {
+            const hours = marineRaw?.hours as StormglassMarineHour[];
+            const sgVal = (obj: StormglassMarineHour, key: keyof StormglassMarineHour): number | null => {
+              const raw = obj[key] as unknown;
+              if (typeof raw === 'number') return raw as number;
+              if (raw && typeof (raw as { sg?: unknown }).sg === 'number') return (raw as { sg?: number }).sg!;
+              return null;
+            };
+            const marineSeries = hours.map(h => ({
+              timeISO: new Date(h.time).toISOString(),
+              waveHeightM: sgVal(h, 'waveHeight'),
+              wavePeriodS: sgVal(h, 'wavePeriod'),
+              waveDirectionDeg: sgVal(h, 'waveDirection'),
+              swellHeightM: sgVal(h, 'swellHeight'),
+              swellPeriodS: sgVal(h, 'swellPeriod'),
+              swellDirectionDeg: sgVal(h, 'swellDirection'),
+              waterTempC: sgVal(h, 'waterTemperature'),
+              windSpeedMS: sgVal(h, 'windSpeed'),
+              windDirectionDeg: sgVal(h, 'windDirection'),
+              windGustMS: sgVal(h, 'gust'),
+              currentSpeedMS: sgVal(h, 'currentSpeed'),
+              currentDirectionDeg: sgVal(h, 'currentDirection'),
+            }));
+            if (marineSeries.length) {
+              (normalizedData as UnifiedWeather).marineHourly = marineSeries;
+              const firstTemp = marineSeries.find(m => typeof m.waterTempC === 'number')?.waterTempC ?? null;
+              if (firstTemp != null) (normalizedData as UnifiedWeather).seaTemp = firstTemp;
+              (normalizedData as UnifiedWeather).hasMarineData = marineSeries.some(m => typeof m.waveHeightM === 'number' || typeof m.swellHeightM === 'number' || typeof m.waterTempC === 'number');
+            } else {
+              (normalizedData as UnifiedWeather).hasMarineData = false;
+            }
 
-          // Attach marine data to existing hourly by nearest-time match (<= 90 min)
-          if (Array.isArray(normalizedData.hourly) && Array.isArray(hours)) {
-            for (const h of normalizedData.hourly) {
-              const ht = new Date(h.timeISO).getTime();
-              let best: StormglassMarineHour | null = null;
-              let bestDiff = Infinity;
-              for (const sgHour of hours) {
-                const diff = Math.abs(new Date(sgHour.time).getTime() - ht);
-                if (diff < bestDiff) { bestDiff = diff; best = sgHour; }
-              }
-              if (best && bestDiff <= 90 * 60 * 1000) {
-                const waveH = sgVal(best, 'waveHeight'); if (waveH != null) h.waveHeightM = waveH;
-                const waveP = sgVal(best, 'wavePeriod'); if (waveP != null) h.wavePeriodS = waveP;
-                const waterT = sgVal(best, 'waterTemperature');
-                if (waterT != null && (normalizedData.seaTemp == null)) normalizedData.seaTemp = waterT;
-                const wavePer = sgVal(best, 'wavePeriod'); if (wavePer != null && (h.wavePeriodS == null)) h.wavePeriodS = wavePer;
+            const sgNumber = (k: keyof StormglassMarineHour) => sgVal(firstHour, k);
+            if (!(normalizedData as UnifiedWeather).marine) {
+              normalizedData.marine = {
+                waveHeight: sgNumber('waveHeight'),
+                waveDirection: sgNumber('waveDirection'),
+                wavePeriod: sgNumber('wavePeriod'),
+                swellHeight: sgNumber('swellHeight'),
+                swellDirection: sgNumber('swellDirection'),
+                swellPeriod: sgNumber('swellPeriod'),
+              };
+            }
+
+            if (Array.isArray(normalizedData.hourly) && Array.isArray(hours)) {
+              for (const h of normalizedData.hourly) {
+                const ht = new Date(h.timeISO).getTime();
+                let best: StormglassMarineHour | null = null;
+                let bestDiff = Infinity;
+                for (const sgHour of hours) {
+                  const diff = Math.abs(new Date(sgHour.time).getTime() - ht);
+                  if (diff < bestDiff) { bestDiff = diff; best = sgHour; }
+                }
+                if (best && bestDiff <= 90 * 60 * 1000) {
+                  const waveH = sgVal(best, 'waveHeight'); if (waveH != null) h.waveHeightM = waveH;
+                  const waveP = sgVal(best, 'wavePeriod'); if (waveP != null) h.wavePeriodS = waveP;
+                  const waterT = sgVal(best, 'waterTemperature');
+                  if (waterT != null && (normalizedData.seaTemp == null)) normalizedData.seaTemp = waterT;
+                  const wavePer = sgVal(best, 'wavePeriod'); if (wavePer != null && (h.wavePeriodS == null)) h.wavePeriodS = wavePer;
+                }
               }
             }
           }
+        }
+
+        const marineHourlySeries = (normalizedData as UnifiedWeather).marineHourly;
+        if (!Array.isArray(marineHourlySeries) || marineHourlySeries.length === 0) {
+          (normalizedData as UnifiedWeather).hasMarineData = false;
+        }
+
+        // --- Conditional Stormglass Bio (only for sea fishing or explicit flag) ---
+        try {
+          const shouldFetchBio = (weatherMode === 'marine' || coastal === 'true') && (isSeaFishing || wantsBio);
+          if (shouldFetchBio) {
+            const startISO = nowD.toISOString();
+            const endISO = end.toISOString();
+            const bioParams = 'chlorophyll,turbidity,dissolvedOxygen,seaTemperature';
+            const bioKeyBase = rectangleCode
+              ? buildRectangleCacheKey(rectangleCode, 'bio', sgDayKey)
+              : getCacheKey(latNum, lonNum, 'stormglass', 'marine');
+            const bioKey = `${bioKeyBase}|bio|${bioParams}|${startISO}|${endISO}`;
+            const bioTtlBase = computeBioTTLMs(startISO, endISO);
+            const bioTtl = rectangleCode ? Math.max(bioTtlBase, RECT_TTL_MS) : bioTtlBase;
+
+            let bioRaw: StormglassBioResponse | null = null;
+            const cachedBio = sgBioCache.get(bioKey);
+            if (cachedBio && Date.now() - cachedBio.ts < bioTtl) {
+              bioRaw = cachedBio.data;
+            } else {
+              bioRaw = await fetchStormglassBio(
+                sgLat,
+                sgLon,
+                startISO,
+                endISO,
+                bioParams,
+                sgKey as string
+              );
+              if (bioRaw) sgBioCache.set(bioKey, { ts: Date.now(), data: bioRaw });
+            }
+
+            const pick = (v: unknown): number | null => {
+              if (typeof v === 'number') return v;
+              if (v && typeof (v as { sg?: unknown }).sg === 'number') return (v as { sg?: number }).sg!;
+              return null;
+            };
+
+            const latest = Array.isArray(bioRaw?.hours) && bioRaw!.hours.length ? bioRaw!.hours[bioRaw!.hours.length - 1] : undefined;
+            (normalizedData as UnifiedWeather).bio = {
+              chlorophyll: latest ? pick(latest.chlorophyll) : null,
+              turbidity: latest ? pick(latest.turbidity) : null,
+              dissolvedOxygen: latest ? pick(latest.dissolvedOxygen) : null,
+              seaTemperature: latest ? pick(latest.seaTemperature) : null,
+              nitrate: latest ? pick(latest.nitrate) : null,
+              phosphate: latest ? pick(latest.phosphate) : null,
+              updatedAt: latest?.time ? new Date(latest.time).toISOString() : undefined,
+              missing: !latest,
+            };
+          }
+        } catch (bioErr) {
+          console.warn('Stormglass Bio enrich skipped/failed:', bioErr);
         }
       } catch (e) {
         // Swallow marine/tide errors gracefully
         console.warn('Stormglass enrich failed:', e);
       }
     }
+    else {
+      // Not a marine context: ensure marine fields are absent/false
+      (normalizedData as UnifiedWeather).hasMarineData = false;
+      delete (normalizedData as UnifiedWeather).tides;
+      delete (normalizedData as UnifiedWeather).marineHourly;
+      delete (normalizedData as UnifiedWeather).seaTemp;
+      delete (normalizedData as UnifiedWeather).marine;
+    }
 
     // Optional: Air Quality (OpenWeather) with cache
     try {
-      const aqCached = owAirQualityCache.get(latlonKey);
-      let aq: OpenWeatherAirQuality;
+      const aqCacheKey = getCacheKey(latNum, lonNum, 'openweather', 'air');
+      let aq: OpenWeatherAirQuality | null = null;
+      const aqCached = owAirQualityCache.get(aqCacheKey);
       
       if (aqCached && Date.now() - aqCached.ts < AIR_QUALITY_TTL_MS) {
         aq = aqCached.data as OpenWeatherAirQuality;
-      } else {
-        const raw = await getAirPollution({ lat: latNum, lon: lonNum, apiKey });
+      } else if (apiKey) {
+        const { lat: aqLat, lon: aqLon } = roundForProvider(latNum, lonNum, 'openweather');
+        const safeApiKey = apiKey;
+        const raw = await getAirPollution({ lat: aqLat, lon: aqLon, apiKey: safeApiKey });
         aq = (raw || {}) as OpenWeatherAirQuality;
-        if (aq) owAirQualityCache.set(latlonKey, { ts: Date.now(), data: aq });
+        if (aq) owAirQualityCache.set(aqCacheKey, { ts: Date.now(), data: aq });
+      } else {
+        console.warn('Skipping air quality fetch: missing OpenWeather API key');
       }
       
       const list = aq?.list;
@@ -824,14 +1897,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
       if (startDate && endDate) {
-        const pollenCacheKey = `${latlonKey}_${startDate}_${endDate}`;
+        const { lat: pollenLat, lon: pollenLon } = roundForProvider(latNum, lonNum, 'openweather'); // environmental precision (2dp)
+        const pollenCacheKey = `${getCacheKey(latNum, lonNum, 'openmeteo', 'pollen')}_${startDate}_${endDate}`;
         const pollenCached = omPollenCache.get(pollenCacheKey);
         let polRaw: OpenMeteoPollenHourly;
         
         if (pollenCached && Date.now() - pollenCached.ts < POLLEN_TTL_MS) {
           polRaw = pollenCached.data as OpenMeteoPollenHourly;
         } else {
-          const raw = await fetchOpenMeteoAirPollen(latNum, lonNum, startDate, endDate);
+          const raw = await fetchOpenMeteoAirPollen(pollenLat, pollenLon, startDate, endDate);
           polRaw = (raw || {}) as OpenMeteoPollenHourly;
           if (polRaw) omPollenCache.set(pollenCacheKey, { ts: Date.now(), data: polRaw });
         }
@@ -975,44 +2049,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const t: string[] = H.time || [];
       const p: number[] = H.pressure_msl || [];
       const tc: number[] = H.temperature_2m || [];
+      // NEW: snow arrays (Open-Meteo units: snowfall is cm over last hour; snow_depth is cm)
+      const snowDepth: number[] = H.snow_depth || [];
+      const snowfallCm: number[] = H.snowfall || [];
 
       // Build UTC ms for OM times by subtracting offset from the naive-UTC parse
-      const omSamples: Array<{ ms: number; pressure: number | undefined; temp: number | undefined }> = [];
+      const omSamples: Array<{ ms: number; pressure?: number; temp?: number; snowDepthCm?: number; snowfallRateMmH?: number }> = [];
       for (let i = 0; i < t.length; i++) {
         const parsed = Date.parse(String(t[i]) + 'Z'); // interpret string as UTC first
         const utcMs = Number.isFinite(parsed) ? (parsed - offset * 1000) : NaN;
         const pr = typeof p[i] === 'number' ? Number(p[i]) : undefined;
         const tm = typeof tc[i] === 'number' ? Number(tc[i]) : undefined;
-        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm });
+        const sd = typeof snowDepth[i] === 'number' ? Number(snowDepth[i]) : undefined;
+        const sfCm = typeof snowfallCm[i] === 'number' ? Number(snowfallCm[i]) : undefined;
+        // Convert snowfall cm to mm/h for unified naming consistency
+        const sfMmH = typeof sfCm === 'number' && Number.isFinite(sfCm) ? sfCm * 10 : undefined;
+        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm, snowDepthCm: sd, snowfallRateMmH: sfMmH });
       }
 
       if (omSamples.length) {
         // Helper to find nearest OM sample to a given ms
-        const nearestPressure = (ms: number): number | undefined => {
+        const nearestOM = (ms: number) => {
           let bestIdx = -1; let best = Infinity;
           for (let i = 0; i < omSamples.length; i++) {
             const d = Math.abs(omSamples[i].ms - ms);
             if (d < best) { best = d; bestIdx = i; }
           }
-          return bestIdx >= 0 ? omSamples[bestIdx].pressure : undefined;
+          return bestIdx >= 0 ? omSamples[bestIdx] : undefined;
         };
 
-        // Prefer OM pressure for hourly series
+        // Prefer OM pressure and enrich snow fields for hourly series
         if (Array.isArray(normalizedData.hourly) && normalizedData.hourly.length) {
           for (const h of normalizedData.hourly) {
             const ht = Date.parse(h.timeISO);
             if (!Number.isFinite(ht)) continue;
-            const pr = nearestPressure(ht);
-            if (typeof pr === 'number' && Number.isFinite(pr)) {
-              h.pressureHpa = pr;
+            const nearest = nearestOM(ht);
+            if (!nearest) continue;
+            if (typeof nearest.pressure === 'number' && Number.isFinite(nearest.pressure)) {
+              h.pressureHpa = nearest.pressure;
+            }
+            if (typeof nearest.snowDepthCm === 'number') {
+              (h as Hour).snowDepthCm = nearest.snowDepthCm;
+            }
+            if (typeof nearest.snowfallRateMmH === 'number') {
+              (h as Hour).snowfallRateMmH = nearest.snowfallRateMmH;
             }
           }
         } else {
-          // If we don't have any hourly yet, synthesize minimal series from OM
+          // If we don't have any hourly yet, synthesize minimal series from OM (including snow)
           const hours: Hour[] = omSamples.map(s => ({
             timeISO: new Date(s.ms).toISOString(),
             tempC: typeof s.temp === 'number' ? s.temp : undefined,
             pressureHpa: typeof s.pressure === 'number' ? s.pressure : undefined,
+            snowDepthCm: typeof s.snowDepthCm === 'number' ? s.snowDepthCm : undefined,
+            snowfallRateMmH: typeof s.snowfallRateMmH === 'number' ? s.snowfallRateMmH : undefined,
           }));
           if (hours.length) (normalizedData as UnifiedWeather).hourly = hours;
         }
@@ -1020,14 +2110,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Also set current pressure if missing, using nearest OM sample to now
         if (normalizedData.pressureHpa == null) {
           const nowMs = Date.now();
-          const prNow = nearestPressure(nowMs);
+          const nearest = nearestOM(nowMs);
+          const prNow = nearest?.pressure;
           if (typeof prNow === 'number' && Number.isFinite(prNow)) {
             (normalizedData as UnifiedWeather).pressureHpa = prNow;
           }
         }
       }
     } catch (e) {
-      console.warn('Open-Meteo hourly pressure supplement failed:', e);
+      console.warn('Open-Meteo hourly pressure/snow supplement failed:', e);
     }
 
     // Optional: Soil snapshot (Open-Meteo) — take a midday snapshot to avoid night-bias
@@ -1066,33 +2157,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         for (let i = 0; i < times.length; i++) {
           const dt = new Date(times[i]); // parsed as local time
           if (dt.getFullYear() === todayY && dt.getMonth() === todayM && dt.getDate() === todayD) {
-            const diff = Math.abs(dt.getHours() + dt.getMinutes()/60 - 12);
-            if (diff < bestDiff) { bestDiff = diff; idx = i; }
+            const diff = Math.abs(dt.getHours() + dt.getMinutes() / 60 - 12);
+            if (diff < bestDiff) {
+              bestDiff = diff;
+              idx = i;
+            }
           }
         }
-        // Fallback: if none match today (edge case), use last index
+        // Fallback: if we didn't find a same-day entry, pick the last available reading
         if (idx < 0) idx = times.length - 1;
       }
+
       if (idx >= 0) {
-        const pickNum = (arr?: number[]) => (Array.isArray(arr) && typeof arr[idx] === 'number') ? Number(arr[idx]) : undefined;
-        normalizedData.soil = {
-          temp0cm: pickNum(H.soil_temperature_0cm),
-          temp6cm: pickNum(H.soil_temperature_6cm),
-          temp18cm: pickNum(H.soil_temperature_18cm),
-          temp54cm: pickNum(H.soil_temperature_54cm),
-          moisture0to1: pickNum(H.soil_moisture_0_to_1cm),
-          moisture1to3: pickNum(H.soil_moisture_1_to_3cm),
-          moisture3to9: pickNum(H.soil_moisture_3_to_9cm),
-          moisture9to27: pickNum(H.soil_moisture_9_to_27cm),
+        const valueAt = (arr: number[] | undefined) => {
+          if (!Array.isArray(arr)) return undefined;
+          const raw = arr[idx];
+          return typeof raw === 'number' && Number.isFinite(raw) ? raw : undefined;
         };
-        const picked = times[idx];
-        if (picked) {
-          const d = new Date(picked);
-          normalizedData.soilTimeISO = Number.isNaN(d.getTime()) ? String(picked) : d.toISOString();
+
+        const snapshot = {
+          temp0cm: valueAt(H.soil_temperature_0cm),
+          temp6cm: valueAt(H.soil_temperature_6cm),
+          temp18cm: valueAt(H.soil_temperature_18cm),
+          temp54cm: valueAt(H.soil_temperature_54cm),
+          moisture0to1: valueAt(H.soil_moisture_0_to_1cm),
+          moisture1to3: valueAt(H.soil_moisture_1_to_3cm),
+          moisture3to9: valueAt(H.soil_moisture_3_to_9cm),
+          moisture9to27: valueAt(H.soil_moisture_9_to_27cm)
+        };
+
+        const hasData = Object.values(snapshot).some(v => typeof v === 'number');
+        if (hasData) {
+          (normalizedData as UnifiedWeather).soil = snapshot;
+          const rawTime = times[idx];
+          if (rawTime) {
+            const parsed = new Date(rawTime);
+            if (!Number.isNaN(parsed.getTime())) {
+              (normalizedData as UnifiedWeather).soilTimeISO = parsed.toISOString();
+            }
+          }
         }
       }
-    } catch (e) {
-      console.warn('Soil fetch failed:', e);
+    } catch (err) {
+      console.warn('Open-Meteo soil snapshot request failed', err);
     }
 
     return res.status(200).json(normalizedData);

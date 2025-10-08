@@ -43,7 +43,15 @@ interface WeatherLike extends Partial<WeatherBundle> {
 }
 
 // Replicated subset used by WeatherCardGrid
-interface TodaySubset { uvi?: number; moonPhase?: number; moonriseISO?: string; moonsetISO?: string }
+interface TodaySubset {
+  uvi?: number;
+  moonPhase?: number;
+  moonriseISO?: string;
+  moonsetISO?: string;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  dayLengthMinutes?: number;
+}
 interface PollenAssessmentLite { description?: string; advice?: string }
 interface PollenTodayDetail { grass_pollen?: string; tree_pollen?: string; weed_pollen?: string; olive_pollen?: string; alder_pollen?: string; birch_pollen?: string; ragweed_pollen?: string; mugwort_pollen?: string }
 

@@ -48,11 +48,11 @@
  * })));
  */
 
-import { fetchMarineWithCache } from '../utils/fetchStormglass';
+import { fetchMarineHoursWithFallback, type MarineProviderHour } from '../utils/marineProviders';
 
 // Lightweight types to avoid importing app-wide types.
 // Extend in your codebase if you already have richer interfaces.
-export type MarineHour = { time: string } & Record<string, unknown>;
+export type MarineHour = MarineProviderHour;
 
 export type WeatherForecastDay = {
   date: string; // YYYY-MM-DD (local app date key)
@@ -458,8 +458,11 @@ export async function attachMarineToForecast(
 
   let hours: MarineHour[] = [];
   try {
-    const marineData = await fetchMarineWithCache(queryLat, queryLon, startTimeISO, endTimeISO);
-    hours = Array.isArray(asRec(marineData)?.['hours']) ? (asRec(marineData)?.['hours'] as MarineHour[]) : [];
+    const { hours: resolvedHours } = await fetchMarineHoursWithFallback(queryLat, queryLon, startTimeISO, endTimeISO);
+    hours = Array.isArray(resolvedHours) ? resolvedHours : [];
+    if (!hours.length) {
+      console.warn('[attachMarineToForecast] No marine data available from MET Norway, Open-Meteo, or Stormglass for requested window');
+    }
   } catch (err) {
     // Keep things resilient—log and continue with empty marine arrays.
     console.error('[attachMarineToForecast] Failed to fetch marine data', err);

@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@plugin "daisyui";
-/* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS plugin above. */
+@import "daisyui";
+/* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS import above. */
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
 
@@ -113,7 +113,7 @@ h1, h2, h3 {
 }
 
 button:not(.btn) {
-  background-color: #4a90e2;
+  /* background-color: #4a90e2; */
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;

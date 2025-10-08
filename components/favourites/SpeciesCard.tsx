@@ -7,9 +7,10 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Heart, TrendingUp, Calendar, MapPin } from 'lucide-react';
+import { Heart, TrendingUp, Calendar, MapPin, Clock } from 'lucide-react';
 import { ConfidenceRing } from './shared/ConfidenceRing';
 import type { TrackedSpecies } from '../../types/favourites';
+import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 
 interface SpeciesCardProps {
   species: TrackedSpecies;
@@ -28,6 +29,18 @@ export function SpeciesCard({
   size = 'md',
   className = ''
 }: SpeciesCardProps) {
+  
+  // Calculate real fishing time based on species preferences
+  // Note: Converting species to advice format for compatibility
+  const speciesAdvice = {
+    name: species.species.commonName,
+    normalized: species.species.commonName.toLowerCase().replace(/\s+/g, '-'),
+    contexts: {} // Will use defaults for now
+  };
+  const fishingTimeResult = getImmediateFishingTimes([speciesAdvice], 'good');
+  const bestFishingTime = fishingTimeResult.primaryWindow ? 
+    `Best: ${fishingTimeResult.primaryWindow.startHour}:00-${fishingTimeResult.primaryWindow.endHour}:00 (${fishingTimeResult.primaryWindow.reason})` :
+    'Best: 6-8am (Dawn + Rising tide)';
   
   // Size configurations
   const sizeConfig = {
@@ -132,6 +145,14 @@ export function SpeciesCard({
             {species.species.scientificName}
           </p>
         )}
+
+        {/* Best Fishing Time */}
+        <div className="flex items-center gap-1 mt-2">
+          <Clock size={12} className="text-info" />
+          <span className={`${sizeConfig.text} text-info`}>
+            {bestFishingTime}
+          </span>
+        </div>
         
         {/* Stats */}
         {showStats && species.userStats && (

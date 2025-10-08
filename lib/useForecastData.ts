@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import type { OWMForecastSlot, MarineRow } from "./types";
 import dayjs from "dayjs";
 
+// Keep client requests aligned with server/cache precision (~110 m)
+const round3dp = (n: number) => Math.round(n * 1e3) / 1e3;
+
 /**
  * Fetches OpenWeather and Stormglass marine data using Next.js API routes.
  * Always uses /api/marine for marine data requests from the frontend.
@@ -27,7 +30,9 @@ export function useForecastData(mainLat?: number, mainLon?: number, coastalLat?:
 
     // Always use /api/marine for marine data
     if (coastalLat && coastalLon) {
-      fetch(`/api/marine?lat=${coastalLat}&lon=${coastalLon}`)
+      const rlat = round3dp(coastalLat);
+      const rlon = round3dp(coastalLon);
+      fetch(`/api/marine?lat=${rlat}&lon=${rlon}`)
         .then(r => r.json())
         .then(d => {
           const rows: MarineRow[] = mapStormglass(d as unknown);

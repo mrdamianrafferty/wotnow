@@ -1,10 +1,18 @@
 import React from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import type { MoonInfo } from '../../types/weather';
 
-// Define props locally to avoid missing type errors
 export type MoonCardProps = {
-  today: { moonPhase?: number; moonriseISO?: string; moonsetISO?: string };
+  moon?: MoonInfo | null;
+  today?: {
+    moonPhase?: number;
+    moonriseISO?: string;
+    moonsetISO?: string;
+    sunriseISO?: string;
+    sunsetISO?: string;
+    dayLengthMinutes?: number;
+  };
 };
 
 const MoonNugget = dynamic(() => import('../MoonNugget').then(m => m.default), { ssr: false });
@@ -37,7 +45,7 @@ function moonIconForPhase(phase?: number): string {
   return '/weather-icons/design/fill/final/moon-waning-crescent.svg';
 }
 
-function moonIlluminationPct(phase?: number): number {
+function calcIlluminationPct(phase?: number): number {
   if (phase == null) return 0;
   // Approximate illuminated fraction from phase (0=new, 0.5=full)
   const frac = (1 - Math.cos(2 * Math.PI * phase)) / 2; // 0..1
@@ -69,7 +77,8 @@ const IlluminationDonut: React.FC<{ pct: number; label?: string }> = ({ pct, lab
 };
 
 export const MoonCard: React.FC<MoonCardProps> = ({
-  today
+  moon,
+  today = {}
 }) => {
   const [detailsOpen, setDetailsOpen] = React.useState(false);
 
@@ -86,6 +95,13 @@ export const MoonCard: React.FC<MoonCardProps> = ({
       return '—';
     }
   };
+
+  const phaseFraction = moon?.phaseFraction ?? today?.moonPhase;
+  const moonriseISO = moon?.moonriseISO ?? today?.moonriseISO;
+  const moonsetISO = moon?.moonsetISO ?? today?.moonsetISO;
+  const sunriseISO = moon?.sunriseISO ?? today?.sunriseISO;
+  const sunsetISO = moon?.sunsetISO ?? today?.sunsetISO;
+  const dayLengthMinutes = moon?.dayLengthMinutes ?? today?.dayLengthMinutes;
 
   const getNightLength = (moonrise?: string, moonset?: string): string => {
     if (!moonrise || !moonset) return '—';
@@ -119,15 +135,18 @@ export const MoonCard: React.FC<MoonCardProps> = ({
     return 'Waning crescent';
   };
 
-  const phaseName = getMoonPhaseName(today?.moonPhase);
-  const illumPct = moonIlluminationPct(today?.moonPhase);
+  const inferredPhaseName = getMoonPhaseName(phaseFraction);
+  const phaseName = moon?.phaseName ?? inferredPhaseName;
+  const illumPct = typeof moon?.illuminationPct === 'number'
+    ? Math.round(moon.illuminationPct)
+    : calcIlluminationPct(phaseFraction);
 
   return (
     <div className="card weather-card-bg text-base-content">
       <div className="card-body">
         <h3 className="card__header-title flex items-center gap-2">
           <Image 
-            src={moonIconForPhase(today?.moonPhase)} 
+            src={moonIconForPhase(phaseFraction)} 
             alt="Moon Phase" 
             width={60} 
             height={60} 
@@ -146,7 +165,7 @@ export const MoonCard: React.FC<MoonCardProps> = ({
               height={64} 
               className="w-12 h-12 mx-auto mb-2" 
             />
-            <div className="text-lg font-bold">{formatTime(today?.moonriseISO)}</div>
+            <div className="text-lg font-bold">{formatTime(moonriseISO)}</div>
             <div className="text-sm opacity-70">Moonrise</div>
           </div>
           
@@ -158,7 +177,7 @@ export const MoonCard: React.FC<MoonCardProps> = ({
               height={64} 
               className="w-12 h-12 mx-auto mb-2" 
             />
-            <div className="text-lg font-bold">{formatTime(today?.moonsetISO)}</div>
+            <div className="text-lg font-bold">{formatTime(moonsetISO)}</div>
             <div className="text-sm opacity-70">Moonset</div>
           </div>
         </div>
@@ -185,7 +204,7 @@ export const MoonCard: React.FC<MoonCardProps> = ({
               <div className="flex items-center gap-4 mb-3">
                 <div className="relative">
                   <Image
-                    src={nasaMoonImageForPhase(today?.moonPhase)}
+                    src={nasaMoonImageForPhase(phaseFraction)}
                     alt={phaseName}
                     width={200}
                     height={200}
@@ -194,6 +213,32 @@ export const MoonCard: React.FC<MoonCardProps> = ({
                   />
                 </div>
                 <IlluminationDonut pct={illumPct} label="Illuminated" />
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                <div>
+                  <div className="opacity-60 text-[11px] uppercase tracking-wide">Sunrise</div>
+                  <div className="font-semibold">{formatTime(sunriseISO)}</div>
+                </div>
+                <div>
+                  <div className="opacity-60 text-[11px] uppercase tracking-wide">Sunset</div>
+                  <div className="font-semibold">{formatTime(sunsetISO)}</div>
+                </div>
+                <div>
+                  <div className="opacity-60 text-[11px] uppercase tracking-wide">Moonrise</div>
+                  <div className="font-semibold">{formatTime(moonriseISO)}</div>
+                </div>
+                <div>
+                  <div className="opacity-60 text-[11px] uppercase tracking-wide">Moonset</div>
+                  <div className="font-semibold">{formatTime(moonsetISO)}</div>
+                </div>
+                <div className="col-span-2">
+                  <div className="opacity-60 text-[11px] uppercase tracking-wide">Day length</div>
+                  <div className="font-semibold">
+                    {typeof dayLengthMinutes === 'number'
+                      ? `${Math.floor(dayLengthMinutes / 60)}h ${dayLengthMinutes % 60}m`
+                      : '—'}
+                  </div>
+                </div>
               </div>
               <div className="text-sm leading-relaxed text-base-content/90 px-0 py-0 [&_*]:!bg-transparent [&_*]:!shadow-none [&_*]:!backdrop-blur-0 [&_*]:!border-0 [&_.badge]:hidden [&_.chip]:hidden [&_span.rounded-full]:hidden">
                 <div className="font-medium mb-2">Moon folklore — <span className="capitalize">{(phaseName || '').toLowerCase()}</span></div>
@@ -208,12 +253,12 @@ export const MoonCard: React.FC<MoonCardProps> = ({
         <div className="flex justify-between items-center md:hidden">
           <div className="text-center">
             <div className="text-sm opacity-70">Moon visible</div>
-            <div className="text-lg font-semibold">{getNightLength(today?.moonriseISO, today?.moonsetISO)}</div>
+            <div className="text-lg font-semibold">{getNightLength(moonriseISO, moonsetISO)}</div>
           </div>
           
           <div className="text-center">
             <div className="text-sm opacity-70">Phase</div>
-            <div className="text-lg font-semibold">{getMoonPhaseName(today?.moonPhase)}</div>
+            <div className="text-lg font-semibold">{phaseName}</div>
           </div>
         </div>
 
@@ -221,7 +266,7 @@ export const MoonCard: React.FC<MoonCardProps> = ({
         <div className="flex items-center justify-center gap-6 mt-4 md:hidden">
           <div className="relative">
             <Image
-              src={nasaMoonImageForPhase(today?.moonPhase)}
+              src={nasaMoonImageForPhase(phaseFraction)}
               alt={phaseName}
               width={200}
               height={200}

@@ -9,7 +9,7 @@ function snap5(d: number) { return (Math.round(norm360(d) / 5) * 5) % 360; }
 // ---- Minimal in‑memory cache to reduce Overpass hits ----
 const ORIENT_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const orientCache = new Map<string, { ts: number; payload: unknown }>();
-const cacheKey = (lat: number, lon: number, radius: number) => `${lat.toFixed(5)}:${lon.toFixed(5)}:${radius}`;
+const cacheKey = (lat: number, lon: number, radius: number) => `${lat.toFixed(4)}:${lon.toFixed(4)}:${radius}`;
 
 // Types for Overpass API response elements used here
 type OverpassGeometry = { lat: number; lon: number };

@@ -2,9 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
+import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 
 interface GoodSpeciesCardProps {
   species: {
@@ -37,6 +38,15 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   const [expanded, setExpanded] = useState(false);
 
   const nextPeakDay = getNextPeakDay(species.forecast);
+  // Get real fishing time data based on species preferences
+  const fishingTimeResult = getImmediateFishingTimes([species], 'good');
+  const fishingTime = {
+    time: fishingTimeResult.primaryWindow ? 
+      `${fishingTimeResult.primaryWindow.startHour}:00-${fishingTimeResult.primaryWindow.endHour}:00` :
+      'Dawn/Dusk',
+    emoji: fishingTimeResult.emoji,
+    reason: fishingTimeResult.recommendation
+  };
 
   return (
     <div className="card bg-gradient-to-br from-warning/10 via-warning/5 to-base-100 border border-warning/30 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -81,6 +91,17 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
                 </div>
                 <span className="text-xs font-semibold text-warning uppercase">
                   ⚡ <TranslatedText text="Good conditions" />
+                </span>
+              </div>
+
+              {/* Best Fishing Time */}
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                <div className="badge badge-info gap-1 py-2 px-3">
+                  <Clock size={12} />
+                  <span className="font-semibold text-xs">{fishingTime.time}</span>
+                </div>
+                <span className="text-xs text-info">
+                  {fishingTime.emoji} {fishingTime.reason}
                 </span>
               </div>
             </div>

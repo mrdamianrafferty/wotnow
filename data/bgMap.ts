@@ -49,6 +49,7 @@ const bgMap: Record<string, string> = {
   running:                '/running.png',
   road_cycling:           '/roadcycling.png',
   cycling:                '/cycling.png',
+  outdoor_gardening:      '/gardening.png',
   gravel_biking:          '/gravelbikey.png',
   urban_exploring:        '/walk.png',
   outdoor_gym:            '/outdoorgym.png',
@@ -98,6 +99,7 @@ const bgMap: Record<string, string> = {
   cafe:                   '/cafe.png',
   cinema:                 '/cinema.png',
   museum:                 '/museumy.png',
+  rock_hopping:          '/rocky.png',
   shopping:               '/shoppy.png',
   jetskiing:              '/watery.png',
   sailing_inland:         '/sailing.png',
@@ -117,11 +119,13 @@ const bgMap: Record<string, string> = {
   comedy:                '/comedy.png',
   live_music:           '/livemusic.png',
   theatre:              '/theatrey.png',
+  // Add a safe default image that exists in /public
+  default:               '/indoorsy.jpg',
 };
 
 export default bgMap;
 
-// Utility: get image path for given activity ID, fallback to indoorsy
+// Utility: get image path for given activity ID, fallback to a safe default that exists
 export function getActivityBg(id: string): string {
-  return bgMap[id] || '/zumba.png';
+  return bgMap[id] || bgMap.default || '/indoorsy.jpg';
 }

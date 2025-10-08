@@ -11,6 +11,9 @@ interface TodaySubset {
   moonPhase?: number;
   moonriseISO?: string;
   moonsetISO?: string;
+  sunriseISO?: string;
+  sunsetISO?: string;
+  dayLengthMinutes?: number;
 }
 
 interface PollenAssessmentLite { description?: string; advice?: string }

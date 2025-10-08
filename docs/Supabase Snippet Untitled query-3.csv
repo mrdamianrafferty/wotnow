@@ -1,0 +1,54 @@
+schema,table_name,index_name,index_def,is_unique
+public,bio_parameter_bands,idx_bands_param_threshold,"CREATE INDEX idx_bands_param_threshold ON public.bio_parameter_bands USING btree (parameter, threshold)",false
+public,bio_parameter_bands,pk_bio_parameter_bands,"CREATE UNIQUE INDEX pk_bio_parameter_bands ON public.bio_parameter_bands USING btree (parameter, level)",true
+public,fishing_reports,fishing_reports_pkey,CREATE UNIQUE INDEX fishing_reports_pkey ON public.fishing_reports USING btree (id),true
+public,ices_coastal_samples_staging,ices_coastal_samples_staging_pkey,CREATE UNIQUE INDEX ices_coastal_samples_staging_pkey ON public.ices_coastal_samples_staging USING btree (rectangle_code),true
+public,ices_rectangles,ices_rectangles_pkey,CREATE UNIQUE INDEX ices_rectangles_pkey ON public.ices_rectangles USING btree (id),true
+public,ices_rectangles,ices_rectangles_rectangle_code_key,CREATE UNIQUE INDEX ices_rectangles_rectangle_code_key ON public.ices_rectangles USING btree (rectangle_code),true
+public,ices_rectangles,idx_ices_rectangles_sample_geom,CREATE INDEX idx_ices_rectangles_sample_geom ON public.ices_rectangles USING gist (coastal_sample_point),false
+public,ices_rectangles,idx_rectangle_code,CREATE INDEX idx_rectangle_code ON public.ices_rectangles USING btree (rectangle_code),false
+public,ices_rectangles,idx_rectangles_location,"CREATE INDEX idx_rectangles_location ON public.ices_rectangles USING btree (center_lat, center_lon)",false
+public,ices_rectangles,idx_rectangles_region,CREATE INDEX idx_rectangles_region ON public.ices_rectangles USING btree (region),false
+public,interests,interests_pkey,CREATE UNIQUE INDEX interests_pkey ON public.interests USING btree (id),true
+public,interests,interests_slug_key,CREATE UNIQUE INDEX interests_slug_key ON public.interests USING btree (slug),true
+public,interests,interests_title_idx,CREATE INDEX interests_title_idx ON public.interests USING btree (title),false
+public,pgrst_probe,pgrst_probe_pkey,CREATE UNIQUE INDEX pgrst_probe_pkey ON public.pgrst_probe USING btree (id),true
+public,profiles,profiles_email_key,CREATE UNIQUE INDEX profiles_email_key ON public.profiles USING btree (email),true
+public,profiles,profiles_pkey,CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id),true
+public,rectangle_coastal_sample,idx_rectangle_coastal_sample_geom,CREATE INDEX idx_rectangle_coastal_sample_geom ON public.rectangle_coastal_sample USING gist (pt),false
+public,rectangle_coastal_sample,rectangle_coastal_sample_pkey,CREATE UNIQUE INDEX rectangle_coastal_sample_pkey ON public.rectangle_coastal_sample USING btree (rectangle_id),true
+public,regions,regions_name_key,CREATE UNIQUE INDEX regions_name_key ON public.regions USING btree (name),true
+public,regions,regions_pkey,CREATE UNIQUE INDEX regions_pkey ON public.regions USING btree (id),true
+public,spatial_ref_sys,spatial_ref_sys_pkey,CREATE UNIQUE INDEX spatial_ref_sys_pkey ON public.spatial_ref_sys USING btree (srid),true
+public,species,idx_species_advice,CREATE INDEX idx_species_advice ON public.species USING gin (advice),false
+public,species,idx_species_code,CREATE INDEX idx_species_code ON public.species USING btree (species_code),false
+public,species,idx_species_name_en,CREATE INDEX idx_species_name_en ON public.species USING btree (name_en),false
+public,species,idx_species_name_es,CREATE INDEX idx_species_name_es ON public.species USING btree (name_es),false
+public,species,species_pkey,CREATE UNIQUE INDEX species_pkey ON public.species USING btree (id),true
+public,species,species_species_code_key,CREATE UNIQUE INDEX species_species_code_key ON public.species USING btree (species_code),true
+public,species,ux_species_scientific_name,CREATE UNIQUE INDEX ux_species_scientific_name ON public.species USING btree (scientific_name),true
+public,species_bio_bands,pk_species_bio_bands,"CREATE UNIQUE INDEX pk_species_bio_bands ON public.species_bio_bands USING btree (species_id, parameter)",true
+public,species_frequency,idx_species_frequency_lookup,"CREATE INDEX idx_species_frequency_lookup ON public.species_frequency USING btree (rectangle_id, week_of_year)",false
+public,species_frequency,idx_species_frequency_species,CREATE INDEX idx_species_frequency_species ON public.species_frequency USING btree (species_id),false
+public,species_frequency,species_frequency_pkey,CREATE UNIQUE INDEX species_frequency_pkey ON public.species_frequency USING btree (id),true
+public,species_frequency,species_frequency_species_id_rectangle_id_week_of_year_key,"CREATE UNIQUE INDEX species_frequency_species_id_rectangle_id_week_of_year_key ON public.species_frequency USING btree (species_id, rectangle_id, week_of_year)",true
+public,species_meta,species_meta_pkey,CREATE UNIQUE INDEX species_meta_pkey ON public.species_meta USING btree (scientific_name),true
+public,species_meta_staging,species_meta_staging_pkey,CREATE UNIQUE INDEX species_meta_staging_pkey ON public.species_meta_staging USING btree (scientific_name),true
+public,species_meta_staging_by_name,species_meta_staging_by_name_pkey,CREATE UNIQUE INDEX species_meta_staging_by_name_pkey ON public.species_meta_staging_by_name USING btree (name_en),true
+public,species_name_alias,species_name_alias_pkey,CREATE UNIQUE INDEX species_name_alias_pkey ON public.species_name_alias USING btree (name_en_alias),true
+public,stormglass_bio_readings,idx_sg_bio_obsday,CREATE INDEX idx_sg_bio_obsday ON public.stormglass_bio_readings USING btree (observed_day),false
+public,stormglass_bio_readings,idx_sg_bio_rect_time,"CREATE INDEX idx_sg_bio_rect_time ON public.stormglass_bio_readings USING btree (rectangle_id, observed_at DESC)",false
+public,stormglass_bio_readings,stormglass_bio_readings_pkey,"CREATE UNIQUE INDEX stormglass_bio_readings_pkey ON public.stormglass_bio_readings USING btree (rectangle_id, observed_day)",true
+public,stormglass_bio_readings,stormglass_bio_readings_rectangle_id_observed_at_key,"CREATE UNIQUE INDEX stormglass_bio_readings_rectangle_id_observed_at_key ON public.stormglass_bio_readings USING btree (rectangle_id, observed_at)",true
+public,user_catches,user_catches_pkey,CREATE UNIQUE INDEX user_catches_pkey ON public.user_catches USING btree (id),true
+public,users,users_email_key,CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email),true
+public,users,users_pkey,CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id),true
+public,users,users_username_key,CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username),true
+public,weather_predictions,idx_weather_predictions_current,"CREATE INDEX idx_weather_predictions_current ON public.weather_predictions USING btree (rectangle_id, prediction_date)",false
+public,weather_predictions,idx_weather_predictions_expires,CREATE INDEX idx_weather_predictions_expires ON public.weather_predictions USING btree (expires_at),false
+public,weather_predictions,weather_predictions_pkey,CREATE UNIQUE INDEX weather_predictions_pkey ON public.weather_predictions USING btree (id),true
+public,weather_predictions,weather_predictions_species_id_rectangle_id_prediction_date_key,"CREATE UNIQUE INDEX weather_predictions_species_id_rectangle_id_prediction_date_key ON public.weather_predictions USING btree (species_id, rectangle_id, prediction_date)",true
+public,world_coastline,idx_world_coastline_geom,CREATE INDEX idx_world_coastline_geom ON public.world_coastline USING gist (geom),false
+public,world_coastline,world_coastline_pkey,CREATE UNIQUE INDEX world_coastline_pkey ON public.world_coastline USING btree (id),true
+public,world_land,idx_world_land_geom,CREATE INDEX idx_world_land_geom ON public.world_land USING gist (geom),false
+public,world_land,world_land_pkey,CREATE UNIQUE INDEX world_land_pkey ON public.world_land USING btree (id),true
