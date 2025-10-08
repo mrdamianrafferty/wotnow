@@ -317,6 +317,16 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
     setMapReady(true);
   }, []);
 
+  // Recenter map when location changes
+  useEffect(() => {
+    if (mapRef.current && mapReady) {
+      mapRef.current.setView([lat, lon], 10, {
+        animate: true,
+        duration: 0.5
+      });
+    }
+  }, [lat, lon, mapReady]);
+
   if (!mapReady) {
     return (
       <div className={`bg-base-200/40 rounded-xl animate-pulse border border-base-200 ${className}`}>
