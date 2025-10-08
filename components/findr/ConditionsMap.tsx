@@ -399,10 +399,10 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
         {layerMode === 'seabed' && (
           <WMSTileLayer
-            url="http://drive.emodnet-geology.eu/geoserver/gtk/ows"
+            url="https://drive.emodnet-geology.eu/geoserver/wms"
             params={{
-              service: 'WMS',
-              layers: 'gtk:seabed_substrate_1k5_multiscale',
+              layers: 'seabed_substrate_1m',
+              styles: 'folk_7_substrate_class',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
