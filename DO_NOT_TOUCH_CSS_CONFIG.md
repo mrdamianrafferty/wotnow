@@ -12,11 +12,12 @@ This project uses a **non-standard but WORKING** CSS configuration that took mul
 ### 1. `styles/index.css`
 ```css
 @import "tailwindcss";
-@import "daisyui";
+@plugin "daisyui";
 ```
-- Uses `@import` directives (Tailwind v4 style)
+- Uses `@import` for Tailwind (Tailwind v4 style)
+- Uses `@plugin` for DaisyUI (Tailwind v4 plugin syntax)
 - **DO NOT** change to `@tailwind` directives - breaks layout completely
-- DaisyUI must be imported via CSS, not via postcss plugin
+- **DO NOT** change `@plugin "daisyui"` to `@import "daisyui"` - won't work!
 
 ### 2. `postcss.config.js` (Tailwind v4)
 ```js
