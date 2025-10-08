@@ -393,15 +393,16 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
         {showSubstrate && (
           <WMSTileLayer
-            url="https://ows.emodnet-seabedhabitats.eu/geoserver/wms"
+            url="http://drive.emodnet-geology.eu/geoserver/gtk/ows"
             params={{
-              layers: 'eusm:folk_5',
+              service: 'WMS',
+              layers: 'gtk:seabed_substrate_1m',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
             }}
             opacity={0.6}
-            attribution='<a href="https://www.emodnet-seabedhabitats.eu/">EMODnet Seabed Habitats</a>'
+            attribution='<a href="https://emodnet.ec.europa.eu/en/geology">EMODnet Geology</a>'
           />
         )}
 
