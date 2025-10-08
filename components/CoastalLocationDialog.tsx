@@ -352,12 +352,12 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
                 return (
                   <li key={key}>
                     <button
-                      className="w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200"
+                      className="w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200 text-base-content"
                       onClick={() => handleSuggestionClick(sug)}
                     >
                       <div className="flex flex-col items-start">
-                        <span className="font-medium leading-tight">{main}</span>
-                        {secondary ? <span className="text-xs opacity-70 leading-tight">{secondary}</span> : null}
+                        <span className="font-medium leading-tight text-base-content">{main}</span>
+                        {secondary ? <span className="text-xs opacity-70 leading-tight text-base-content">{secondary}</span> : null}
                       </div>
                     </button>
                   </li>
