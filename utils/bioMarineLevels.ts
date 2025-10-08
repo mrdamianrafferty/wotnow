@@ -5,7 +5,8 @@ export type MarineBioIndicatorType =
   | 'phosphate'
   | 'salinity'
   | 'surfaceTemperature'
-  | 'phytoplankton';
+  | 'phytoplankton'
+  | 'stealth';
 
 export type MarineBioIndicatorLevel = 'very_low' | 'low' | 'normal' | 'high' | 'very_high';
 
@@ -25,6 +26,7 @@ export interface MarineBioIndicatorInputs {
   salinity?: number | null;
   surfaceTemperature?: number | null;
   phytoplankton?: number | null;
+  stealth?: number | null;
 }
 
 export const MARINE_BIO_INDICATOR_ORDER: MarineBioIndicatorType[] = [
@@ -32,6 +34,7 @@ export const MARINE_BIO_INDICATOR_ORDER: MarineBioIndicatorType[] = [
   'oxygen',
   'nitrate',
   'phosphate',
+  'stealth',
   'salinity',
   'surfaceTemperature',
   'phytoplankton',
@@ -50,6 +53,7 @@ const LEVEL_THRESHOLDS: Record<MarineBioIndicatorType, { very_low: number; low: 
   oxygen: { very_low: 2, low: 4, normal: 7, high: 10 },
   nitrate: { very_low: 0.5, low: 2.0, normal: 8.0, high: 20 },
   phosphate: { very_low: 0.1, low: 0.3, normal: 1.0, high: 2.0 },
+  stealth: { very_low: 20, low: 35, normal: 55, high: 75 }, // Light penetration index (0-100)
   salinity: { very_low: 10, low: 25, normal: 35, high: 37 },
   surfaceTemperature: { very_low: 5, low: 10, normal: 18, high: 24 },
   phytoplankton: { very_low: 0.1, low: 0.5, normal: 2.0, high: 5.0 },
@@ -60,6 +64,7 @@ const LEVEL_UNITS: Record<MarineBioIndicatorType, string> = {
   oxygen: 'mg/L',
   nitrate: 'µmol/L',
   phosphate: 'µmol/L',
+  stealth: '% light',
   salinity: 'PSU',
   surfaceTemperature: '°C',
   phytoplankton: 'mg/m³',
@@ -70,6 +75,7 @@ const LEVEL_HINTS: Record<MarineBioIndicatorType, string> = {
   oxygen: 'Fish stay active when oxygen holds in mid bands.',
   nitrate: 'Nutrient levels feed plankton chains.',
   phosphate: 'Extra nutrients can flip water quality.',
+  stealth: 'Light penetration affects fish wariness.',
   salinity: 'Most marine fish crave ~35 PSU.',
   surfaceTemperature: 'Comfort zone for mixed fisheries is 10–18°C.',
   phytoplankton: 'Tracks biomass underpinning bait abundance.',
@@ -141,3 +147,33 @@ export function describeMarineBioDominant(levels: MarineBioIndicatorState[]) {
       return null;
   }
 }
+
+/**
+ * Calculate stealth/light penetration index from UVI and cloud cover
+ * @param uvi - UV Index (0-11+)
+ * @param cloudCover - Cloud cover percentage (0-100)
+ * @param waterClarity - Optional water clarity adjustment ('clear' | 'normal' | 'murky')
+ * @returns Light penetration index (0-100), where higher = more light = fish more wary
+ */
+export function calculateStealthIndex(
+  uvi?: number | null,
+  cloudCover?: number | null,
+  waterClarity: 'clear' | 'normal' | 'murky' = 'normal'
+): number | null {
+  if (typeof uvi !== 'number' || !Number.isFinite(uvi)) return null;
+  if (typeof cloudCover !== 'number' || !Number.isFinite(cloudCover)) return null;
+
+  // Clamp values to valid ranges
+  const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+  const normalisedUVI = clamp(uvi, 0, 11) / 11;
+  const cloudFrac = clamp(cloudCover, 0, 100) / 100;
+  
+  // Water clarity nudge: clear water = more light penetration, murky = less
+  const clarityNudge = waterClarity === 'clear' ? +0.08 : waterClarity === 'murky' ? -0.08 : 0;
+  
+  // Calculate light index: less cloud = more light penetration
+  const lightIndex = clamp(((1 - cloudFrac) * normalisedUVI + clarityNudge) * 100, 0, 100);
+  
+  return Math.round(lightIndex);
+}
+

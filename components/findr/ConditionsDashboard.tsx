@@ -5,15 +5,15 @@ import dynamic from 'next/dynamic';
 import type { ConditionsSource } from '../../hooks/useFindrConditions';
 import type { FallbackConditionPayload } from '../../lib/findr/fallbackConditions';
 import { useFindrEnvironmentalSignals } from '../../hooks/useFindrEnvironmentalSignals';
+import { useFindrMarineWeather } from '../../hooks/useFindrMarineWeather';
 import WindSummaryCard from './weather/WindSummaryCard';
 import WaveSummaryCard from './weather/WaveSummaryCard';
 import TideSummaryCard from './weather/TideSummaryCard';
-import EnvironmentalSummaryCard from './weather/EnvironmentalSummaryCard';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
 import DailyMarineCarousel from './weather/DailyMarineCarousel';
 import NextFewDaysCard from '../weather-cards/NextFewDaysCard';
-import { buildMarineBioIndicators } from '../../utils/bioMarineLevels';
+import { buildMarineBioIndicators, calculateStealthIndex } from '../../utils/bioMarineLevels';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
@@ -108,6 +108,50 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
 
 type NextFewDaysCardProps = ComponentProps<typeof NextFewDaysCard>;
 
+/**
+ * ConditionsDashboard Component
+ * 
+ * ==============================================================================
+ * 🚨 CRITICAL DATA ARCHITECTURE - READ BEFORE MODIFYING
+ * ==============================================================================
+ * 
+ * This component displays marine fishing conditions using TWO SEPARATE data sources:
+ * 
+ * 1️⃣ LIVE WEATHER DATA (useFindrMarineWeather hook)
+ *    Source: MET Norway → Open-Meteo APIs (priority fallback)
+ *    Contains: Wave height, wind speed/direction, hourly/daily forecasts
+ *    Update frequency: Fetched fresh on every page load (changes hourly)
+ *    Why live: Weather changes rapidly - cached data is dangerous for maritime safety
+ *    
+ *    Usage: marineWeather.current, marineWeather.hourly, marineWeather.daily
+ * 
+ * 2️⃣ MARINE BIO + TIDE DATA (data.snapshot from Supabase)
+ *    Source: Copernicus Marine Service (via ingestion script)
+ *    Contains: Chlorophyll, oxygen, nutrients, salinity, tides
+ *    Update frequency: Daily ingestion (slow-changing data, safe to cache)
+ *    Why cached: These indicators change slowly and don't affect immediate safety
+ *    
+ *    Usage: data.snapshot.marine (bio indicators), data.snapshot.tides
+ * 
+ * ⚠️  IMPORTANT RULES:
+ * ✅ USE marineWeather FOR: waves, wind, hourly forecasts, daily forecasts
+ * ✅ USE data.snapshot FOR: marine bio (chlorophyll, oxygen), tides, water temp
+ * ❌ NEVER USE data.snapshot.hourly or data.snapshot.daily for wave/wind display
+ * ❌ DO NOT revert to marine.windSpeedKts or marine.waveHeightM directly
+ * 
+ * 🐛 HISTORICAL BUG FIXED:
+ * - fetchMetNoMarineSeries/fetchOpenMeteoMarineSeries defaulted to maxHours:24
+ * - This limited data to ~2 days instead of 7
+ * - Fixed by passing maxHours:192 in the API endpoint
+ * - DO NOT remove maxHours parameter without understanding this bug
+ * 
+ * 📚 Related Documentation:
+ * - LIVE_MARINE_WEATHER_IMPLEMENTATION.md - Implementation details
+ * - CRITICAL_DATA_ARCHITECTURE_FIX.md - Architecture explanation
+ * - hooks/useFindrMarineWeather.ts - Live weather hook
+ * - pages/api/findr/marine-weather.ts - Weather API endpoint
+ * ==============================================================================
+ */
 export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   data,
   loading,
@@ -135,10 +179,60 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     }
   }, [data.snapshot.capturedAt, loading, isClient]);
 
+  // ==================================================================================
+  // LIVE MARINE WEATHER DATA
+  // ==================================================================================
+  // 🚨 CRITICAL: This hook fetches LIVE wave, wind, and forecast data from weather APIs.
+  // 
+  // DATA ARCHITECTURE:
+  // - This hook provides: Wave height, wind speed/direction, hourly/daily forecasts
+  // - Data source: MET Norway → Open-Meteo (priority fallback)
+  // - Update frequency: Fetched fresh on every page load (changes hourly)
+  // - ⚠️ DO NOT use data.snapshot.hourly or data.snapshot.daily for wave/wind!
+  //
+  // WHY THIS MATTERS:
+  // - Weather conditions change rapidly (hourly)
+  // - Cached/stale data is dangerous for maritime safety
+  // - Anglers need current conditions to make safe decisions
+  //
+  // WHAT TO USE FROM WHERE:
+  // ✅ USE marineWeather FOR: waves, wind, hourly forecasts, daily forecasts
+  // ✅ USE data.snapshot FOR: marine bio indicators (chlorophyll, oxygen), tides
+  // ❌ NEVER USE data.snapshot FOR: wave height, wind speed, hourly/daily weather
+  //
+  // The maxHours bug (defaulting to 24h) has been fixed in the API endpoint.
+  // We now request maxHours=192 to get full 7-day forecasts.
+  // ==================================================================================
+  const marineWeatherLat = Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null;
+  const marineWeatherLon = Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null;
+  
+  const marineWeather = useFindrMarineWeather(marineWeatherLat, marineWeatherLon);
+
+  // Debug logging
+  console.log('[ConditionsDashboard] marineWeather state:', {
+    loading: marineWeather.loading,
+    error: marineWeather.error,
+    source: marineWeather.source,
+    hasCurrent: !!marineWeather.current,
+    hourlyCount: marineWeather.hourly?.length ?? 0,
+    dailyCount: marineWeather.daily?.length ?? 0,
+    dailySample: marineWeather.daily?.[0],
+  });
+
+  const environmentalSignals = useFindrEnvironmentalSignals(
+    Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null,
+    Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null
+  );
+
   const marine = data.snapshot.marine;
   const marineBio = data.snapshot.marineBio;
+  
+  // ⚠️ DEPRECATED: These use stale Supabase data. Kept ONLY for tideMeters extraction.
+  // DO NOT use hourly/daily for wave/wind data - use marineWeather instead!
   const hourly = useMemo(() => data.snapshot.hourly.slice(0, 12), [data.snapshot.hourly]);
   const daily = useMemo(() => data.snapshot.daily.slice(0, 7), [data.snapshot.daily]);
+  
+  // Note: Tide data still comes from Supabase hourly (slow-changing, safe to cache)
   const tideExtrema = useMemo(() => {
     const heights = data.snapshot.hourly
       .map((entry) => entry.tideMeters)
@@ -154,7 +248,24 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     } as const;
   }, [data.snapshot.hourly]);
 
+  // ==================================================================================
+  // TIDE EVENTS - NOW USING 7-DAY WORLDTIDES DATA
+  // ==================================================================================
+  // 🔵 Uses marineWeather.tides (7 days of high/low tides from WorldTides API)
+  // ✅ Provides complete tide schedule for the week
+  // ⚠️ Falls back to data.snapshot.tides if live tide data fails
+  // ==================================================================================
   const tideEvents = useMemo<TideEvent[]>(() => {
+    // Prefer live tide data from WorldTides (7 days of high/low)
+    if (marineWeather.tides && marineWeather.tides.length > 0) {
+      return marineWeather.tides.map(tide => ({
+        timeISO: tide.timeISO,
+        type: tide.type,
+        heightM: tide.height,
+      }));
+    }
+    
+    // Fallback to Supabase snapshot (just next high/low)
     const events: TideEvent[] = [];
     if (data.snapshot.tides.nextHighIso) {
       events.push({ timeISO: data.snapshot.tides.nextHighIso, type: 'HIGH' });
@@ -163,9 +274,38 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
       events.push({ timeISO: data.snapshot.tides.nextLowIso, type: 'LOW' });
     }
     return events;
-  }, [data.snapshot.tides.nextHighIso, data.snapshot.tides.nextLowIso]);
+  }, [marineWeather.tides, data.snapshot.tides.nextHighIso, data.snapshot.tides.nextLowIso]);
 
+  // ==================================================================================
+  // DAILY FORECAST - NOW USING LIVE WEATHER DATA
+  // ==================================================================================
+  // 🔵 Uses marineWeather.daily (live from MET Norway/Open-Meteo)
+  // ✅ Provides accurate 7-day forecasts with real wave/wind data
+  // ⚠️ Falls back to data.snapshot.daily if live weather API fails
+  // ==================================================================================
   const nextFewDaysDaily = useMemo<NextFewDaysCardProps['daily']>(() => {
+    // Prefer live weather data
+    if (marineWeather.daily && marineWeather.daily.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+      
+      const mapped = marineWeather.daily.map((day, index) => ({
+        dateISO: new Date(today.getTime() + index * 24 * 60 * 60 * 1000).toISOString(),
+        icon: day.icon ?? undefined,
+        minC: day.minTempC ?? undefined,
+        maxC: day.maxTempC ?? undefined,
+        pop: day.precipProbability ?? undefined,
+        precipMM: day.precipMM ?? undefined,
+        summary: day.summary,
+        windMS: typeof day.windSpeedKts === 'number' ? day.windSpeedKts * KTS_TO_MS : undefined,
+        windDeg: day.windDirectionDeg ?? undefined,
+        uvi: undefined,
+      }));
+      
+      return mapped;
+    }
+
+    // Fallback to Supabase data if live weather unavailable
     const entries = data.snapshot.daily || [];
     if (!entries.length) return [];
     const captured = new Date(data.snapshot.capturedAt);
@@ -189,9 +329,31 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         uvi: undefined,
       };
     });
-  }, [data.snapshot.daily, data.snapshot.capturedAt]);
+  }, [marineWeather.daily, data.snapshot.daily, data.snapshot.capturedAt]);
 
+  // ==================================================================================
+  // 🌊 MARINE HOURLY DATA FOR NEXT FEW DAYS CARD
+  // ==================================================================================
+  // ✅ Uses LIVE weather data from marineWeather.hourly (real-time wave heights)
+  // ⚠️ Falls back to cached Supabase data if live weather fails
+  // 📊 NextFewDaysCard uses this to show wave heights for each day
+  // ==================================================================================
   const marineHourlyForCard = useMemo<MarineHourlyPoint[]>(() => {
+    // Prefer live marine weather data
+    if (marineWeather.hourly && marineWeather.hourly.length > 0) {
+      return marineWeather.hourly.map((hour) => ({
+        timeISO: hour.time,
+        waveM: hour.waveHeightM ?? null,
+        waterTempC: hour.seaTemperatureC ?? null,
+        windKts: hour.windSpeedKts ?? null,
+        waveHeightM: hour.waveHeightM ?? null, // NextFewDaysCard expects this field
+        swellHeightM: hour.waveHeightM ?? null,
+        wavePeriodS: hour.wavePeriodS ?? null,
+        swellPeriodS: hour.wavePeriodS ?? null,
+      } as MarineHourlyPoint));
+    }
+
+    // Fallback to Supabase cached data
     const entries = data.snapshot.hourly || [];
     if (!entries.length) return [];
     const captured = new Date(data.snapshot.capturedAt);
@@ -210,7 +372,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         windKts: toFiniteNumber(entry.windSpeedKts),
       } as MarineHourlyPoint;
     });
-  }, [data.snapshot.hourly, data.snapshot.capturedAt]);
+  }, [marineWeather.hourly, data.snapshot.hourly, data.snapshot.capturedAt]);
 
   const mapLocation = useMemo<MapLocation>(() => {
     const { centerLat, centerLon, name } = data.rectangle;
@@ -224,21 +386,33 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     return DEFAULT_MAP_LOCATION;
   }, [data.rectangle]);
 
-  const environmentalSignals = useFindrEnvironmentalSignals(
-    Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null,
-    Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null
-  );
-
+  // ==================================================================================
+  // DATA SOURCE MAPPING
+  // ==================================================================================
+  // 🔵 LIVE WEATHER DATA (from marineWeather hook - MET Norway/Open-Meteo)
+  // These values change hourly and MUST be fetched live for safety:
+  // 
+  // Fallback chain (only used if live API fails):
+  // 1. marineWeather.current (LIVE from MET Norway/Open-Meteo) ← PREFERRED
+  // 2. marine.* (cached in Supabase from last ingestion) ← EMERGENCY FALLBACK ONLY
+  //
+  // The fallback is INTENTIONAL but should rarely happen. If it does, users see
+  // slightly stale data rather than no data. This is acceptable for safety.
+  const waveHeightM = marineWeather.current?.waveHeightM ?? marine.waveHeightM;
+  const windSpeedKts = marineWeather.current?.windSpeedKts ?? marine.windSpeedKts;
+  const windDirectionDeg = marineWeather.current?.windDirectionDeg ?? marine.windDirectionDeg;
+  
+  // 🟢 MARINE BIO DATA (from data.snapshot - Supabase/Copernicus)
+  // These values change daily and are safely cached in database:
   const {
-    waveHeightM,
-    seaTemperatureC,
-    windSpeedKts,
-    chlorophyllMgM3,
-    dissolvedOxygenMgL,
-    nitrateUmolL,
-    phosphateUmolL,
-    salinityPsu,
+    seaTemperatureC, // From Copernicus (daily update)
+    chlorophyllMgM3, // From Copernicus (daily update)
+    dissolvedOxygenMgL, // From Copernicus (daily update)
+    nitrateUmolL, // From Copernicus (daily update)
+    phosphateUmolL, // From Copernicus (daily update)
+    salinityPsu, // From Copernicus (daily update)
   } = marine;
+  // ==================================================================================
 
   const marineBioIndicators = useMemo(
     () =>
@@ -250,6 +424,10 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         salinity: marineBio?.salinityAvg ?? salinityPsu,
         surfaceTemperature: marineBio?.seaSurfaceTemperatureAvg ?? seaTemperatureC,
         phytoplankton: marineBio?.phytoplanktonAvg ?? null,
+        stealth: calculateStealthIndex(
+          environmentalSignals.uvIndex,
+          environmentalSignals.cloudCover ?? 50 // Fallback to 50% if cloud data unavailable
+        ),
       }),
     [
       marineBio,
@@ -259,6 +437,8 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
       phosphateUmolL,
       salinityPsu,
       seaTemperatureC,
+      environmentalSignals.uvIndex,
+      environmentalSignals.cloudCover,
     ]
   );
 
@@ -395,31 +575,48 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
 
           <div className="divider" />
 
+          {/* ========================================================================
+              SUMMARY CARDS - LIVE DATA ONLY
+              ========================================================================
+              These three cards show the most critical marine conditions for anglers:
+              
+              1️⃣ WIND (Live)
+                 🔵 Source: marineWeather.current (MET Norway → Open-Meteo)
+                 🔄 Updated: Every page load (hourly data)
+                 📊 Shows: Speed (kts), Direction (deg), Current conditions
+              
+              2️⃣ WAVES (Live)
+                 🔵 Source: marineWeather.current (MET Norway → Open-Meteo)
+                 🔄 Updated: Every page load (hourly data)
+                 📊 Shows: Wave height (m), Chlorophyll (mg/m³ from DB)
+              
+              3️⃣ TIDES (Cached - OK for daily changes)
+                 🟢 Source: data.snapshot.tides (Supabase - daily ingestion)
+                 🔄 Updated: Daily (tides are predictable, change slowly)
+                 📊 Shows: Next high/low times, Tide heights
+              
+              ⚠️ SAFETY: Wind & wave data MUST be live - stale data endangers lives!
+              ⚠️ NEVER revert to marine.windSpeedKts or marine.waveHeightM directly!
+              ✅ Always use the variables with fallback logic (windSpeedKts, waveHeightM)
+              
+              Environmental card (pollen/AQI/UV) removed - not relevant for marine fishing.
+              ======================================================================== */}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <WindSummaryCard
-              speedKts={marine.windSpeedKts}
-              directionDeg={marine.windDirectionDeg}
-              updatedAt={data.snapshot.capturedAt}
+              speedKts={windSpeedKts}
+              directionDeg={windDirectionDeg}
+              updatedAt={marineWeather.updatedAt ?? data.snapshot.capturedAt}
             />
             <WaveSummaryCard
-              waveHeightM={marine.waveHeightM}
+              waveHeightM={waveHeightM}
               chlorophyllMgM3={marine.chlorophyllMgM3}
-              updatedAt={data.snapshot.capturedAt}
+              updatedAt={marineWeather.updatedAt ?? data.snapshot.capturedAt}
             />
             <TideSummaryCard
               nextHighIso={data.snapshot.tides.nextHighIso}
               nextLowIso={data.snapshot.tides.nextLowIso}
               lastTideHeight={tideExtrema.max}
               upcomingTideHeight={tideExtrema.min}
-            />
-            <EnvironmentalSummaryCard
-              pollen={environmentalSignals.pollen}
-              airQuality={environmentalSignals.airQuality}
-              uvIndex={environmentalSignals.uvIndex}
-              loading={environmentalSignals.loading}
-              error={environmentalSignals.error}
-              updatedAt={environmentalSignals.updatedAt}
-              onRetry={environmentalSignals.reload}
             />
             <MarineBioIndicatorsCard
               indicators={marineBioIndicators}

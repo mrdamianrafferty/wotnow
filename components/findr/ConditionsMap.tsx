@@ -1,7 +1,7 @@
 // components/ConditionsMap.tsx
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   MapContainer, 
   TileLayer, 
@@ -302,16 +302,14 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
     }
   }, [lat, lon, showDepthContours, generateEnhancedFallbackContours]);
 
-  const getICESRectangleBounds = (bounds?: typeof rectangleBounds): LatLngBoundsLiteral | null => {
-    if (!bounds) return null;
+  const icesRectangle = useMemo((): LatLngBoundsLiteral | null => {
+    if (!rectangleBounds) return null;
     
     return [
-      [bounds.south, bounds.west],
-      [bounds.north, bounds.east]
+      [rectangleBounds.south, rectangleBounds.west],
+      [rectangleBounds.north, rectangleBounds.east]
     ];
-  };
-
-  const icesRectangle = getICESRectangleBounds(rectangleBounds);
+  }, [rectangleBounds]);
 
   useEffect(() => {
     setMapReady(true);

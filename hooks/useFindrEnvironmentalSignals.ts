@@ -5,6 +5,7 @@ import type { AirQualitySummary } from '../utils/airQualityUtils';
 interface WeatherWithPollenResponse {
   current?: {
     uvi?: number | null;
+    clouds?: number | null;
   } | null;
   daily?: Array<{
     uvi?: number | null;
@@ -17,6 +18,7 @@ interface EnvironmentalSignalsState {
   pollen?: PollenSummary;
   airQuality?: AirQualitySummary;
   uvIndex?: number | null;
+  cloudCover?: number | null;
   loading: boolean;
   error: string | null;
   reload: () => void;
@@ -57,6 +59,14 @@ function extractUvIndex(payload: WeatherWithPollenResponse): number | null | und
   return typeof forecastUv === 'number' && Number.isFinite(forecastUv) ? forecastUv : null;
 }
 
+function extractCloudCover(payload: WeatherWithPollenResponse): number | null | undefined {
+  const currentClouds = payload.current?.clouds;
+  if (typeof currentClouds === 'number' && Number.isFinite(currentClouds)) {
+    return currentClouds;
+  }
+  return null;
+}
+
 function makeTodayKey(reference: Date = new Date()): string {
   return reference.toISOString().split('T')[0] ?? '';
 }
@@ -67,6 +77,7 @@ export function useFindrEnvironmentalSignals(lat?: number | null, lon?: number |
   const [pollen, setPollen] = useState<PollenSummary | undefined>(undefined);
   const [airQuality, setAirQuality] = useState<AirQualitySummary | undefined>(undefined);
   const [uvIndex, setUvIndex] = useState<number | null | undefined>(undefined);
+  const [cloudCover, setCloudCover] = useState<number | null | undefined>(undefined);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
@@ -87,6 +98,7 @@ export function useFindrEnvironmentalSignals(lat?: number | null, lon?: number |
       setPollen(undefined);
       setAirQuality(undefined);
       setUvIndex(undefined);
+      setCloudCover(undefined);
       setUpdatedAt(null);
       return;
     }
@@ -122,10 +134,12 @@ export function useFindrEnvironmentalSignals(lat?: number | null, lon?: number |
         const normalizedPollen = normalizePollen(payload.pollenByDate?.[todayKey]);
         const normalizedAir = normalizeAirQuality(payload.airQualityByDate?.[todayKey]);
         const uv = extractUvIndex(payload);
+        const clouds = extractCloudCover(payload);
 
         setPollen(normalizedPollen);
         setAirQuality(normalizedAir);
         setUvIndex(typeof uv === 'number' ? uv : null);
+        setCloudCover(typeof clouds === 'number' ? clouds : null);
         setUpdatedAt(new Date().toISOString());
       } catch (err) {
         if ((err as Error).name === 'AbortError' || cancelled) {
@@ -136,6 +150,7 @@ export function useFindrEnvironmentalSignals(lat?: number | null, lon?: number |
         setPollen(undefined);
         setAirQuality(undefined);
         setUvIndex(null);
+        setCloudCover(null);
         setUpdatedAt(null);
       } finally {
         if (!cancelled) {
@@ -156,6 +171,7 @@ export function useFindrEnvironmentalSignals(lat?: number | null, lon?: number |
     pollen,
     airQuality,
     uvIndex,
+    cloudCover,
     loading,
     error,
     reload,

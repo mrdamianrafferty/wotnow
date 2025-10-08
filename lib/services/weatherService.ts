@@ -1621,3 +1621,86 @@ export {
   fetchStormglassAstronomy,
   fetchStormglassBio
 };
+
+// ============================================================================
+// WorldTides API
+// ============================================================================
+// Tides are astronomically predictable and change very slowly:
+// - Tide times shift by only ~50 minutes per day
+// - Predictions are stable for weeks ahead
+// - Nearby locations (within ~11km) have identical tide times
+// ✅ Safe to cache aggressively: 24 hours, 1dp location precision
+
+export interface WorldTidesExtreme {
+  dt: number; // Unix timestamp
+  date: string; // ISO 8601 date
+  height: number; // Height in meters
+  type: 'High' | 'Low';
+}
+
+export interface WorldTidesResponse {
+  status: number;
+  extremes: WorldTidesExtreme[];
+  responseTime?: number;
+  copyright?: string;
+  stationDistance?: number;
+}
+
+/**
+ * Fetch tide extremes (high/low) from WorldTides API
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param days Number of days to fetch (default 7)
+ * @returns WorldTides response with extremes array
+ */
+async function fetchWorldTides(
+  lat: number,
+  lon: number,
+  days: number = 7
+): Promise<WorldTidesResponse | null> {
+  const WORLDTIDES_API_KEY = process.env.WORLDTIDES_API_KEY;
+  
+  if (!WORLDTIDES_API_KEY) {
+    console.warn('[WorldTides] API key not configured');
+    return null;
+  }
+
+  try {
+    const now = Math.floor(Date.now() / 1000);
+
+    const url = new URL('https://www.worldtides.info/api/v3');
+    url.searchParams.set('extremes', '');
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lon));
+    url.searchParams.set('start', String(now));
+    url.searchParams.set('length', String(days * 24 * 60 * 60)); // Length in seconds
+    url.searchParams.set('key', WORLDTIDES_API_KEY);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'User-Agent': 'WotNow/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`[WorldTides] API error: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
+    const data = await response.json() as WorldTidesResponse;
+    
+    if (!data.extremes || data.extremes.length === 0) {
+      console.warn('[WorldTides] No tide extremes returned');
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('[WorldTides] Fetch failed:', error);
+    return null;
+  }
+}
+
+export {
+  fetchWorldTides,
+};

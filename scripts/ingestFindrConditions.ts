@@ -446,7 +446,7 @@ function summariseDaily(hourly: ReturnType<typeof buildHourlySeries>) {
 
   const formatter = new Intl.DateTimeFormat('en', { weekday: 'short', day: 'numeric', month: 'short' });
 
-  return [...days.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).slice(0, 5).map(([date, bucket]) => {
+  return [...days.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).slice(0, 7).map(([date, bucket]) => {
     const waveAvg = average(bucket.waves);
     const tempAvg = average(bucket.temps);
     const windAvg = average(bucket.winds);
