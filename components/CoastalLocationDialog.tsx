@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
+import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from '../lib/hooks/usePlacesAutocompleteNew';
 import dynamic from 'next/dynamic';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
@@ -156,7 +156,12 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     suggestions: { status, data },
     setValue,
     clearSuggestions,
-  } = usePlacesAutocomplete({ debounce: 300 });
+  } = usePlacesAutocomplete({ 
+    debounce: 300,
+    requestOptions: {
+      types: ['geocode'],
+    }
+  });
 
   // Lock scroll + set/restore focus when opened/closed
   useEffect(() => {
@@ -331,6 +336,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             aria-autocomplete="list"
+            disabled={!ready}
           />
 
           {status === 'OK' && data?.length > 0 && (

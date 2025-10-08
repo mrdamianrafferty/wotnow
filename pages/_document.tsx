@@ -1,5 +1,4 @@
 import Document, { Html, Head, Main, NextScript } from 'next/document';
-import Script from 'next/script';
 
 export default class MyDocument extends Document {
   render() {
@@ -22,9 +21,10 @@ export default class MyDocument extends Document {
   {/* Optional: Safari pinned tab (supply a monochrome SVG if you want this) */}
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0f766e" />
   
-  <Script
+  {/* Google Maps API - loaded with new async method */}
+  <script
+    async
     src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async&v=weekly`}
-    strategy="beforeInteractive"
   />
 </Head>
         <body>
