@@ -402,12 +402,12 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
             url="http://drive.emodnet-geology.eu/geoserver/gtk/ows"
             params={{
               service: 'WMS',
-              layers: 'gtk:seabed_substrate_1m',
+              layers: 'gtk:seabed_substrate_100k',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
             }}
-            opacity={0.6}
+            opacity={0.7}
             attribution='<a href="https://emodnet.ec.europa.eu/en/geology">EMODnet Geology</a>'
           />
         )}
@@ -493,41 +493,36 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
           <div className="border-t border-white/20 my-3 pt-3">
             <div className="font-semibold mb-2">Seabed Substrate</div>
-            <div className="text-xs text-white/80 mb-2">Folk classification • Zoom 8+</div>
+            <div className="text-xs text-white/80 mb-2">Folk 5-class • EMODnet Geology</div>
             
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-orange-700"></div>
-                <span className="font-medium">Mud</span>
-                <span className="text-white/60">• flatfish, rays, sole</span>
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
+                <span className="font-medium text-xs">Mud to muddy Sand</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-yellow-500"></div>
-                <span className="font-medium">Sand</span>
-                <span className="text-white/60">• bass, plaice, dab</span>
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
+                <span className="font-medium text-xs">Sand</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-amber-600"></div>
-                <span className="font-medium">Coarse</span>
-                <span className="text-white/60">• bream, gurnard</span>
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
+                <span className="font-medium text-xs">Coarse substrate</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-green-600"></div>
-                <span className="font-medium">Mixed</span>
-                <span className="text-white/60">• varied species</span>
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
+                <span className="font-medium text-xs">Mixed sediment</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm bg-gray-500"></div>
-                <span className="font-medium">Rock</span>
-                <span className="text-white/60">• bass, pollack, wrasse</span>
+                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
+                <span className="font-medium text-xs">Rock & Boulders</span>
               </div>
               
-              <div className="text-xs text-green-400 mt-2">
-                Mixed sediment = best variety of fishing
+              <div className="text-xs text-white/60 mt-2">
+                Mixed sediment areas offer best variety of species
               </div>
             </div>
           </div>
