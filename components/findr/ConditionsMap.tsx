@@ -478,51 +478,37 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
             
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-600"></div>
-                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                </div>
-                <span className="font-medium">Muddy</span>
-                <span className="text-white/60">• flatfish, rays</span>
+                <div className="w-3 h-3 rounded-sm bg-orange-700"></div>
+                <span className="font-medium">Mud</span>
+                <span className="text-white/60">• flatfish, rays, sole</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-yellow-600"></div>
-                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                </div>
+                <div className="w-3 h-3 rounded-sm bg-yellow-500"></div>
                 <span className="font-medium">Sand</span>
-                <span className="text-white/60">• bass, bream</span>
+                <span className="text-white/60">• bass, plaice, dab</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-600"></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                </div>
-                <span className="font-medium">Stones</span>
-                <span className="text-white/60">• bass, wrasse</span>
+                <div className="w-3 h-3 rounded-sm bg-amber-600"></div>
+                <span className="font-medium">Coarse</span>
+                <span className="text-white/60">• bream, gurnard</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-600"></div>
-                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
-                </div>
+                <div className="w-3 h-3 rounded-sm bg-green-600"></div>
                 <span className="font-medium">Mixed</span>
-                <span className="text-white/60">• bass, pollack</span>
+                <span className="text-white/60">• varied species</span>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                </div>
-                <span className="font-medium">Rocky</span>
-                <span className="text-white/60">• conger, wrasse</span>
+                <div className="w-3 h-3 rounded-sm bg-gray-500"></div>
+                <span className="font-medium">Rock</span>
+                <span className="text-white/60">• bass, pollack, wrasse</span>
               </div>
               
               <div className="text-xs text-green-400 mt-2">
-                Mixed = best variety of fishing opportunities
+                Mixed sediment = best variety of fishing
               </div>
             </div>
           </div>
