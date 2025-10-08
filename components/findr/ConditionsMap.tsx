@@ -166,9 +166,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [realContours, setRealContours] = useState<RealDepthContour[]>([]);
   const [loadingContours, setLoadingContours] = useState<boolean>(false);
-  const [showSubstrate, setShowSubstrate] = useState<boolean>(true);
-  const [showShallows, setShowShallows] = useState<boolean>(false);
-  const [bathymetryStyle, setBathymetryStyle] = useState<'atlas' | 'rainbow'>('atlas');
+  const [layerMode, setLayerMode] = useState<'clear' | 'depth' | 'seabed'>('clear');
   const mapRef = useRef<LeafletMap | null>(null);
   const { lat, lon } = centerLocation;
 
@@ -331,35 +329,43 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>
-      {/* Layer toggles - top right */}
-      <div className="absolute top-2 right-2 flex items-center gap-2 z-[1000]">
-        <button 
-          className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
-          onClick={() => setShowShallows(!showShallows)}
-          type="button"
-        >
-          <span className={showShallows ? "text-green-400" : "text-red-400"}>●</span>
-          <span>Shallows: {showShallows ? 'On' : 'Off'}</span>
-        </button>
-        
-        {showShallows && (
+      {/* Layer mode selector - top right */}
+      <div className="absolute top-2 right-2 flex items-center gap-1 z-[1000]">
+        {layerMode !== 'clear' && (
           <button 
-            className="bg-black/75 hover:bg-black/90 rounded px-2 py-1 text-xs text-white transition-colors"
-            onClick={() => setBathymetryStyle(bathymetryStyle === 'atlas' ? 'rainbow' : 'atlas')}
+            className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white transition-colors"
+            onClick={() => setLayerMode('clear')}
             type="button"
-            title={bathymetryStyle === 'atlas' ? 'Switch to rainbow colors' : 'Switch to atlas colors'}
+            title="Clear all layers"
           >
-            <span>{bathymetryStyle === 'atlas' ? '🌈' : '🗺️'}</span>
+            Clear
           </button>
         )}
         
         <button 
-          className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
-          onClick={() => setShowSubstrate(!showSubstrate)}
+          className={`rounded px-3 py-1 text-xs text-white transition-colors ${
+            layerMode === 'depth' 
+              ? 'bg-blue-600 hover:bg-blue-700' 
+              : 'bg-black/75 hover:bg-black/90'
+          }`}
+          onClick={() => setLayerMode('depth')}
           type="button"
+          title="Show depth visualization"
         >
-          <span className={showSubstrate ? "text-green-400" : "text-red-400"}>●</span>
-          <span>Substrate: {showSubstrate ? 'On' : 'Off'}</span>
+          Depth
+        </button>
+        
+        <button 
+          className={`rounded px-3 py-1 text-xs text-white transition-colors ${
+            layerMode === 'seabed' 
+              ? 'bg-green-600 hover:bg-green-700' 
+              : 'bg-black/75 hover:bg-black/90'
+          }`}
+          onClick={() => setLayerMode('seabed')}
+          type="button"
+          title="Show seabed substrate"
+        >
+          Seabed
         </button>
       </div>
       
@@ -377,11 +383,11 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           maxZoom={18}
         />
 
-        {showShallows && (
+        {layerMode === 'depth' && (
           <WMSTileLayer
             url="https://ows.emodnet-bathymetry.eu/wms"
             params={{
-              layers: bathymetryStyle === 'rainbow' ? 'emodnet:mean_rainbowcolour' : 'emodnet:mean_atlas_land',
+              layers: 'emodnet:mean_rainbowcolour',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
@@ -391,7 +397,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           />
         )}
 
-        {showSubstrate && (
+        {layerMode === 'seabed' && (
           <WMSTileLayer
             url="http://drive.emodnet-geology.eu/geoserver/gtk/ows"
             params={{
