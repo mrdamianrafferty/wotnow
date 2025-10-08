@@ -7,7 +7,6 @@ import {
   TileLayer, 
   Marker, 
   Popup, 
-  Circle, 
   Polyline, 
   Rectangle, 
   WMSTileLayer,
@@ -50,7 +49,6 @@ interface ConditionsMapProps {
   showICESRectangle?: boolean;
   className?: string;
   rectangleCode?: string;
-  onSpotClick?: (spot: FishingSpot) => void;
 }
 
 interface GeoJSONFeature {
@@ -153,16 +151,15 @@ const DepthLabel: React.FC<{ position: [number, number]; depth: number }> = ({ p
 
 const ConditionsMap: React.FC<ConditionsMapProps> = ({
   centerLocation, 
-  fishingSpots = [], 
   showDepthContours = true,
   showICESRectangle = true,
   className = "",
-  rectangleCode,
-  onSpotClick
+  rectangleCode
 }) => {
   const [mapReady, setMapReady] = useState<boolean>(false);
   const [realContours, setRealContours] = useState<RealDepthContour[]>([]);
   const [loadingContours, setLoadingContours] = useState<boolean>(false);
+  const [showSubstrate, setShowSubstrate] = useState<boolean>(true);
   const mapRef = useRef<LeafletMap | null>(null);
   const { lat, lon } = centerLocation;
 
@@ -314,21 +311,6 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
   const icesRectangle = getICESRectangleBounds(rectangleCode);
 
-  const getSpotMarker = (spot: FishingSpot): { color: string; radius: number } => {
-    const colors = { hot: '#10B981', ok: '#F59E0B', poor: '#EF4444' };
-    const sizes = { hot: 600, ok: 400, poor: 300 };
-    return { color: colors[spot.status], radius: sizes[spot.status] };
-  };
-
-  const defaultSpots: FishingSpot[] = [
-    { id: '1', lat: centerLocation.lat + 0.02, lon: centerLocation.lon + 0.05, status: 'hot', species: ['Sea Bass', 'Mackerel'], depth: 25 },
-    { id: '2', lat: centerLocation.lat - 0.01, lon: centerLocation.lon + 0.08, status: 'hot', species: ['Tuna', 'Bonito'], depth: 45 },
-    { id: '3', lat: centerLocation.lat + 0.05, lon: centerLocation.lon - 0.02, status: 'ok', species: ['Sardine'], depth: 15 },
-    { id: '4', lat: centerLocation.lat - 0.03, lon: centerLocation.lon - 0.05, status: 'hot', species: ['Sea Bream'], depth: 35 },
-  ];
-
-  const spotsToShow = fishingSpots.length > 0 ? fishingSpots : defaultSpots;
-
   useEffect(() => {
     setMapReady(true);
   }, []);
@@ -345,6 +327,27 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>
+      {/* Layer toggles - top right */}
+      <div className="absolute top-2 right-2 flex items-center gap-2 z-[1000]">
+        <button 
+          className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
+          onClick={() => setShowSubstrate(!showSubstrate)}
+          type="button"
+        >
+          <span className={showSubstrate ? "text-green-400" : "text-red-400"}>●</span>
+          <span>Shallows: Off</span>
+        </button>
+        
+        <button 
+          className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
+          onClick={() => setShowSubstrate(!showSubstrate)}
+          type="button"
+        >
+          <span className={showSubstrate ? "text-green-400" : "text-red-400"}>●</span>
+          <span>Substrate: {showSubstrate ? 'On' : 'Off'}</span>
+        </button>
+      </div>
+      
       <MapContainer
         ref={mapRef}
         center={[centerLocation.lat, centerLocation.lon] as LatLngExpression}
@@ -359,17 +362,19 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           maxZoom={18}
         />
 
-        <WMSTileLayer
-          url="https://ows.emodnet-bathymetry.eu/wms"
-          params={{
-            layers: 'emodnet:mean_atlas_land',
-            format: 'image/png',
-            transparent: true,
-            version: '1.3.0'
-          }}
-          opacity={0.3}
-          attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
-        />
+        {showSubstrate && (
+          <WMSTileLayer
+            url="https://ows.emodnet-seabedhabitats.eu/geoserver/wms"
+            params={{
+              layers: 'eusm:folk_7',
+              format: 'image/png',
+              transparent: true,
+              version: '1.3.0'
+            }}
+            opacity={0.6}
+            attribution='<a href="https://www.emodnet-seabedhabitats.eu/">EMODnet Seabed Habitats</a>'
+          />
+        )}
 
         <LocationMarker 
           position={[centerLocation.lat, centerLocation.lon]} 
@@ -427,79 +432,17 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           </React.Fragment>
         ))}
 
-        {spotsToShow.map((spot) => {
-          const marker = getSpotMarker(spot);
-          return (
-            <Circle
-              key={spot.id}
-              center={[spot.lat, spot.lon]}
-              radius={marker.radius}
-              pathOptions={{
-                color: marker.color,
-                fillColor: marker.color,
-                weight: 2,
-                opacity: 0.8,
-                fillOpacity: 0.4
-              }}
-              eventHandlers={{
-                click: () => {
-                  if (onSpotClick) {
-                    onSpotClick(spot);
-                  }
-                }
-              }}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: marker.color }}
-                    />
-                    <strong className="capitalize">{spot.status} Fishing Spot</strong>
-                  </div>
-                  {spot.depth && <div>📊 Depth: {spot.depth}m</div>}
-                  {spot.species && spot.species.length > 0 && (
-                    <div>🐟 Species: {spot.species.join(', ')}</div>
-                  )}
-                  <div className="text-xs text-gray-600 mt-1">
-                    {spot.lat.toFixed(4)}, {spot.lon.toFixed(4)}
-                  </div>
-                </div>
-              </Popup>
-            </Circle>
-          );
-        })}
-
         <MapControls />
       </MapContainer>
 
-      <div className="absolute bottom-2 left-2 bg-black/75 rounded-lg px-3 py-2 text-xs text-white z-[1000] max-w-[180px]">
+      <div className="absolute bottom-2 left-2 bg-black/75 rounded-lg px-3 py-2 text-xs text-white z-[1000] max-w-[200px]">
         <div className="space-y-1">
-          <div className="font-semibold mb-2 text-sm">Legend</div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>Hot spots</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <span>OK spots</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-            <span>Poor spots</span>
-          </div>
-          {showICESRectangle && (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-blue-400"></div>
-              <span>ICES {rectangleCode || 'Area'}</span>
-            </div>
-          )}
-          {showDepthContours && (
+          <div className="font-semibold mb-2 text-sm">Depth contours</div>
+          <div className="text-xs text-white/80 mb-2">Bathymetry depth lines</div>
+          <div className="text-xs text-white/80 mb-3">Updates on map movement</div>
+          
+          {showDepthContours && realContours.length > 0 && (
             <>
-              <div className="border-t border-white/20 my-2 pt-2">
-                <div className="font-semibold mb-1">Depth Contours:</div>
-              </div>
               {realContours.slice(0, 5).map(contour => (
                 <div key={contour.depth} className="flex items-center gap-2">
                   <div className="w-3 h-0.5" style={{ backgroundColor: contour.color, borderTop: '2px dashed' }}></div>
@@ -510,6 +453,70 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
                 <div className="text-xs text-yellow-300 mt-1">Loading real data...</div>
               )}
             </>
+          )}
+
+          <div className="border-t border-white/20 my-3 pt-3">
+            <div className="font-semibold mb-2">Seabed Substrate</div>
+            <div className="text-xs text-white/80 mb-2">Folk classification • Zoom 8+</div>
+            
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-orange-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                </div>
+                <span className="font-medium">Muddy</span>
+                <span className="text-white/60">• flatfish, rays</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-yellow-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                </div>
+                <span className="font-medium">Sand</span>
+                <span className="text-white/60">• bass, bream</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                </div>
+                <span className="font-medium">Stones</span>
+                <span className="text-white/60">• bass, wrasse</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                  <div className="w-2 h-2 rounded-full bg-orange-400"></div>
+                </div>
+                <span className="font-medium">Mixed</span>
+                <span className="text-white/60">• varied species</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                </div>
+                <span className="font-medium">Rocky</span>
+                <span className="text-white/60">• bass, pollack, wrasse</span>
+              </div>
+              
+              <div className="text-xs text-green-400 mt-2">
+                Mixed = best variety of fishing opportunities
+              </div>
+            </div>
+          </div>
+          
+          {showICESRectangle && (
+            <div className="border-t border-white/20 mt-3 pt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-0.5 bg-blue-400"></div>
+                <span>ICES {rectangleCode || 'Area'}</span>
+              </div>
+            </div>
           )}
         </div>
       </div>
