@@ -55,12 +55,12 @@ function formatDateTime(value: string | null | undefined) {
   try {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: 'numeric',
-      month: 'short',
-    });
+    // Use UTC to avoid hydration mismatches
+    const day = date.getUTCDate();
+    const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${day} ${month}, ${hours}:${minutes}`;
   } catch (error) {
     console.warn('Failed to format datetime', { value, error });
     return value;
@@ -118,13 +118,22 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
 }) => {
   const [showMap, setShowMap] = useState(true);
   const [_capturedDisplay, setCapturedDisplay] = useState('—');
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
   useEffect(() => {
     if (loading) {
       setCapturedDisplay('—');
       return;
     }
-    setCapturedDisplay(formatDateTime(data.snapshot.capturedAt));
-  }, [data.snapshot.capturedAt, loading]);
+    // Only format time on client to avoid hydration mismatch
+    if (isClient) {
+      setCapturedDisplay(formatDateTime(data.snapshot.capturedAt));
+    }
+  }, [data.snapshot.capturedAt, loading, isClient]);
 
   const marine = data.snapshot.marine;
   const marineBio = data.snapshot.marineBio;
