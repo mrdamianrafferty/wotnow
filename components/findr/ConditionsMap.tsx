@@ -329,8 +329,8 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${className}`}>
-      {/* Layer mode selector - top right */}
-      <div className="absolute top-2 right-2 flex items-center gap-1 z-[1000]">
+      {/* Layer mode selector - top left */}
+      <div className="absolute top-2 left-2 flex items-center gap-1 z-[1000]">
         {layerMode !== 'clear' && (
           <button 
             className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white transition-colors"
@@ -473,59 +473,97 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
       <div className="absolute bottom-2 left-2 bg-black/75 rounded-lg px-3 py-2 text-xs text-white z-[1000] max-w-[200px]">
         <div className="space-y-1">
-          <div className="font-semibold mb-2 text-sm">Depth contours</div>
-          <div className="text-xs text-white/80 mb-2">Bathymetry depth lines</div>
-          <div className="text-xs text-white/80 mb-3">Updates on map movement</div>
-          
-          {showDepthContours && realContours.length > 0 && (
+          {layerMode === 'depth' && (
             <>
-              {realContours.slice(0, 5).map(contour => (
-                <div key={contour.depth} className="flex items-center gap-2">
-                  <div className="w-3 h-0.5" style={{ backgroundColor: contour.color, borderTop: '2px dashed' }}></div>
-                  <span>{contour.depth}m</span>
+              <div className="font-semibold mb-2 text-sm">Depth</div>
+              <div className="text-xs text-white/80 mb-2">Bathymetry</div>
+              
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#8B0000' }}></div>
+                  <span className="text-xs">0-50m</span>
                 </div>
-              ))}
-              {loadingContours && (
-                <div className="text-xs text-yellow-300 mt-1">Loading real data...</div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#FF4500' }}></div>
+                  <span className="text-xs">50-100m</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#FFD700' }}></div>
+                  <span className="text-xs">100-200m</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#90EE90' }}></div>
+                  <span className="text-xs">200-500m</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#4169E1' }}></div>
+                  <span className="text-xs">500-1000m</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#000080' }}></div>
+                  <span className="text-xs">1000m+</span>
+                </div>
+              </div>
+            </>
+          )}
+          
+          {layerMode === 'clear' && (
+            <>
+
+              
+              {showDepthContours && realContours.length > 0 && (
+                <>
+                  {realContours.slice(0, 5).map(contour => (
+                    <div key={contour.depth} className="flex items-center gap-2">
+                      <div className="w-3 h-0.5" style={{ backgroundColor: contour.color, borderTop: '2px dashed' }}></div>
+                      <span>{contour.depth}m</span>
+                    </div>
+                  ))}
+                  {loadingContours && (
+                    <div className="text-xs text-yellow-300 mt-1">Loading real data...</div>
+                  )}
+                </>
               )}
             </>
           )}
 
-          <div className="border-t border-white/20 my-3 pt-3">
-            <div className="font-semibold mb-2">Seabed Substrate</div>
-            <div className="text-xs text-white/80 mb-2">Folk 5-class • EMODnet Geology</div>
-            
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
-                <span className="font-medium text-xs">Mud to muddy Sand</span>
-              </div>
+          {layerMode === 'seabed' && (
+            <>
+              <div className="font-semibold mb-2 text-sm">Seabed</div>
+              <div className="text-xs text-white/80 mb-2">What is down below</div>
               
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
-                <span className="font-medium text-xs">Sand</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
+                  <span className="font-medium text-xs">Muddy</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
+                  <span className="font-medium text-xs">Sandy</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
+                  <span className="font-medium text-xs">Stony</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
+                  <span className="font-medium text-xs">Mixed</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
+                  <span className="font-medium text-xs">Rocky</span>
+                </div>
+                
+                <div className="text-xs text-white/60 mt-2">
+                  EMODnet Geology
+                </div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
-                <span className="font-medium text-xs">Coarse substrate</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
-                <span className="font-medium text-xs">Mixed sediment</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
-                <span className="font-medium text-xs">Rock & Boulders</span>
-              </div>
-              
-              <div className="text-xs text-white/60 mt-2">
-                Mixed sediment areas offer best variety of species
-              </div>
-            </div>
-          </div>
+            </>
+          )}
           
           {showICESRectangle && (
             <div className="border-t border-white/20 mt-3 pt-3">
