@@ -168,6 +168,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
   const [loadingContours, setLoadingContours] = useState<boolean>(false);
   const [showSubstrate, setShowSubstrate] = useState<boolean>(true);
   const [showShallows, setShowShallows] = useState<boolean>(false);
+  const [bathymetryStyle, setBathymetryStyle] = useState<'atlas' | 'rainbow'>('atlas');
   const mapRef = useRef<LeafletMap | null>(null);
   const { lat, lon } = centerLocation;
 
@@ -341,6 +342,17 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           <span>Shallows: {showShallows ? 'On' : 'Off'}</span>
         </button>
         
+        {showShallows && (
+          <button 
+            className="bg-black/75 hover:bg-black/90 rounded px-2 py-1 text-xs text-white transition-colors"
+            onClick={() => setBathymetryStyle(bathymetryStyle === 'atlas' ? 'rainbow' : 'atlas')}
+            type="button"
+            title={bathymetryStyle === 'atlas' ? 'Switch to rainbow colors' : 'Switch to atlas colors'}
+          >
+            <span>{bathymetryStyle === 'atlas' ? '🌈' : '🗺️'}</span>
+          </button>
+        )}
+        
         <button 
           className="bg-black/75 hover:bg-black/90 rounded px-3 py-1 text-xs text-white flex items-center gap-2 transition-colors"
           onClick={() => setShowSubstrate(!showSubstrate)}
@@ -369,12 +381,12 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           <WMSTileLayer
             url="https://ows.emodnet-bathymetry.eu/wms"
             params={{
-              layers: 'emodnet:mean_atlas_land',
+              layers: bathymetryStyle === 'rainbow' ? 'emodnet:mean_rainbowcolour' : 'emodnet:mean_atlas_land',
               format: 'image/png',
               transparent: true,
               version: '1.3.0'
             }}
-            opacity={0.4}
+            opacity={0.5}
             attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
           />
         )}
