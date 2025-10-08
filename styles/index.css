@@ -1,3 +1,16 @@
+/* ⚠️ CRITICAL: Do NOT change these first two lines! ⚠️
+ * 
+ * CORRECT (what's below):
+ *   @import "tailwindcss";
+ *   @plugin "daisyui";
+ * 
+ * WRONG (breaks everything):
+ *   @import "tailwindcss";
+ *   @import "daisyui";  ← NO! This doesn't work!
+ * 
+ * DaisyUI MUST use @plugin, not @import
+ * See DO_NOT_TOUCH_CSS_CONFIG.md for full explanation
+ */
 @import "tailwindcss";
 @plugin "daisyui";
 /* Tailwind v4 loaded. DaisyUI v5 is provided via the CSS plugin above. */

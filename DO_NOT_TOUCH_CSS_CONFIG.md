@@ -2,6 +2,22 @@
 
 ## ⚠️ WARNING: Days were spent getting this to work!
 
+## Quick Reference - The Most Common Mistake
+
+**CORRECT:**
+```css
+@import "tailwindcss";
+@plugin "daisyui";  /* ← Use @plugin for DaisyUI */
+```
+
+**WRONG (breaks layout completely):**
+```css
+@import "tailwindcss";
+@import "daisyui";  /* ← DON'T DO THIS! */
+```
+
+**The issue:** DaisyUI must be loaded as a plugin (`@plugin`), not as a CSS import (`@import`).
+
 This project uses a **non-standard but WORKING** CSS configuration that took multiple days to debug. DO NOT "fix" or "modernize" it based on official documentation.
 
 ## Working Configuration (October 2025)
