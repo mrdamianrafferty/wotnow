@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import type { UnifiedLocationRecord } from '../../../context/UnifiedLocationContext';
 
 type ApiResponse =
@@ -73,7 +73,7 @@ function buildHomeCoordinatesPayload(record: UnifiedLocationRecord | null) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-  const supabase = getSupabaseServerClient();
+  const supabase = createServerSupabaseClient({ req, res });
   const {
     data: { session },
     error: sessionError,

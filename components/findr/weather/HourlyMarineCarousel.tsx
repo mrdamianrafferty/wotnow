@@ -58,6 +58,12 @@ function HourlyCard({ entry }: HourlyCardProps) {
           <span className="text-2xl font-semibold">
             {entry.airTempC != null ? `${Math.round(entry.airTempC)}°` : '—'}
           </span>
+          {/* Debug: show raw value */}
+          {entry.airTempC != null && (
+            <span className="text-xs text-base-content/50">
+              ({entry.airTempC.toFixed(1)}°)
+            </span>
+          )}
         </div>
         
         {/* Precipitation toggle */}
