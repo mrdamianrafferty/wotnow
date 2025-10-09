@@ -227,13 +227,66 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   const marine = data.snapshot.marine;
   const marineBio = data.snapshot.marineBio;
   
-  // ⚠️ DEPRECATED: These use stale Supabase data. Kept ONLY for tideMeters extraction.
-  // DO NOT use hourly/daily for wave/wind data - use marineWeather instead!
-  const hourly = useMemo(() => data.snapshot.hourly.slice(0, 12), [data.snapshot.hourly]);
-  const daily = useMemo(() => data.snapshot.daily.slice(0, 7), [data.snapshot.daily]);
+  // ==================================================================================
+  // HOURLY & DAILY FORECASTS - NOW USING LIVE WEATHER DATA
+  // ==================================================================================
+  // 🔵 Uses marineWeather.hourly and marineWeather.daily (live from APIs)
+  // ✅ Provides accurate real-time wave/wind/temperature data
+  // ⚠️ Falls back to data.snapshot if live weather API fails
+  // ⚠️ tideMeters still comes from Supabase (not in marine weather API)
+  // ==================================================================================
+  
+  const hourly = useMemo(() => {
+    // Prefer live weather data from marine-weather API
+    if (marineWeather.hourly && marineWeather.hourly.length > 0) {
+      return marineWeather.hourly.slice(0, 12).map(h => ({
+        time: h.time,
+        waveHeightM: h.waveHeightM ?? 0,
+        windSpeedKts: h.windSpeedKts ?? 0,
+        seaTemperatureC: h.seaTemperatureC ?? 0,
+        waveDirectionDeg: h.waveDirectionDeg,
+        wavePeriodS: h.wavePeriodS,
+        windDirectionDeg: h.windDirectionDeg,
+        tideMeters: null, // Not available in marine weather API
+      }));
+    }
+    // Fallback to cached Supabase snapshot (with safety check)
+    if (data.snapshot?.hourly && Array.isArray(data.snapshot.hourly)) {
+      return data.snapshot.hourly.slice(0, 12);
+    }
+    // Return empty array if no data available
+    return [];
+  }, [marineWeather.hourly, data.snapshot?.hourly]);
+
+  const daily = useMemo(() => {
+    // Prefer live weather data from marine-weather API
+    if (marineWeather.daily && marineWeather.daily.length > 0) {
+      return marineWeather.daily.slice(0, 7).map(d => ({
+        label: d.label,
+        dateLabel: d.dateLabel || d.label,
+        waveHeightM: d.waveHeightM ?? 0,
+        seaTemperatureC: d.seaTemperatureC ?? 0,
+        windSpeedKts: d.windSpeedKts ?? 0,
+        windDirectionDeg: d.windDirectionDeg,
+        fishingScore: d.fishingScore ?? 0,
+        summary: d.summary || '',
+      }));
+    }
+    // Fallback to cached Supabase snapshot (with safety check)
+    if (data.snapshot?.daily && Array.isArray(data.snapshot.daily)) {
+      return data.snapshot.daily.slice(0, 7);
+    }
+    // Return empty array if no data available
+    return [];
+  }, [marineWeather.daily, data.snapshot?.daily]);
   
   // Note: Tide data still comes from Supabase hourly (slow-changing, safe to cache)
   const tideExtrema = useMemo(() => {
+    // Safety check for snapshot.hourly
+    if (!data.snapshot?.hourly || !Array.isArray(data.snapshot.hourly)) {
+      return { max: null, min: null } as const;
+    }
+    
     const heights = data.snapshot.hourly
       .map((entry) => entry.tideMeters)
       .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
@@ -246,7 +299,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
       max: Math.max(...heights),
       min: Math.min(...heights),
     } as const;
-  }, [data.snapshot.hourly]);
+  }, [data.snapshot?.hourly]);
 
   // ==================================================================================
   // TIDE EVENTS - NOW USING 7-DAY WORLDTIDES DATA

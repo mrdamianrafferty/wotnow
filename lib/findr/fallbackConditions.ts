@@ -43,7 +43,10 @@ export interface FallbackConditionPayload {
       waveHeightM: number;
       windSpeedKts: number;
       seaTemperatureC: number;
-      tideMeters: number;
+      tideMeters?: number | null; // Optional - not available in live weather APIs
+      waveDirectionDeg?: number | null;
+      wavePeriodS?: number | null;
+      windDirectionDeg?: number | null;
     }>;
     daily: Array<{
       label: string;
@@ -51,8 +54,9 @@ export interface FallbackConditionPayload {
       waveHeightM: number;
       seaTemperatureC: number;
       windSpeedKts: number;
-      fishingScore: number;
-      summary: string;
+      windDirectionDeg?: number | null;
+      fishingScore?: number;
+      summary?: string;
     }>;
   };
 }
