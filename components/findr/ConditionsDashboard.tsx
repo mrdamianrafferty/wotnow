@@ -240,7 +240,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   const hourly = useMemo(() => {
     // Prefer live weather data from marine-weather API
     if (marineWeather.hourly && marineWeather.hourly.length > 0) {
-      return marineWeather.hourly.slice(0, 12).map(h => ({
+      const mapped = marineWeather.hourly.slice(0, 12).map(h => ({
         time: h.time,
         waveHeightM: h.waveHeightM ?? 0,
         windSpeedKts: h.windSpeedKts ?? 0,
@@ -254,12 +254,16 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         precipMM: h.precipMM ?? null,
         precipProbability: h.precipProbability ?? null,
       }));
+      console.log('[ConditionsDashboard] Mapped hourly data (first 3):', mapped.slice(0, 3));
+      return mapped;
     }
     // Fallback to cached Supabase snapshot (with safety check)
     if (data.snapshot?.hourly && Array.isArray(data.snapshot.hourly)) {
+      console.log('[ConditionsDashboard] Using fallback Supabase hourly data');
       return data.snapshot.hourly.slice(0, 12);
     }
     // Return empty array if no data available
+    console.log('[ConditionsDashboard] No hourly data available');
     return [];
   }, [marineWeather.hourly, data.snapshot?.hourly]);
 

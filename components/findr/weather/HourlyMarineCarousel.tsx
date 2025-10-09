@@ -30,6 +30,14 @@ function HourlyCard({ entry }: HourlyCardProps) {
   const precipPct = entry.precipProbability != null ? Math.round(entry.precipProbability * 100) : null;
   const hasPrecipData = precipMM != null || precipPct != null;
   
+  // Debug: log the temperature for this entry
+  console.log('[HourlyCard]', {
+    time: entry.time,
+    airTempC: entry.airTempC,
+    seaTemperatureC: entry.seaTemperatureC,
+    weatherIcon: entry.weatherIcon,
+  });
+  
   return (
     <div className="card bg-base-100 border border-base-200/80 shadow-sm h-full">
       <div className="card-body gap-3">
