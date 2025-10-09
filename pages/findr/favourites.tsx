@@ -298,6 +298,7 @@ const FindrFavouritesPage: React.FC = () => {
   const [selectedFish, setSelectedFish] = useState<FavouriteEntry | null>(null);
   const [swipeStates, setSwipeStates] = useState<Record<string, { x: number; y: number; swiping: boolean }>>({});
   const [favorites, setFavorites] = useState<string[] | null>(null);
+  const [favouriteIdMap, setFavouriteIdMap] = useState<Map<string, string>>(new Map()); // Map species_id -> favourite_id
   const [priorityIds, setPriorityIds] = useState<string[]>([]);
   const [isLoadingFavourites, setIsLoadingFavourites] = useState(false);
 
@@ -354,9 +355,17 @@ const FindrFavouritesPage: React.FC = () => {
       const data = await response.json();
       
       if (data.success && data.favourites) {
-        // Extract species IDs from API response
-        const speciesIds = data.favourites.map((fav: { species_id: string }) => fav.species_id);
+        // Extract species IDs and build mapping to favourite IDs
+        const speciesIds: string[] = [];
+        const idMap = new Map<string, string>();
+        
+        data.favourites.forEach((fav: { id: string; speciesId: string }) => {
+          speciesIds.push(fav.speciesId);
+          idMap.set(fav.speciesId, fav.id); // Map species_id -> favourite_id
+        });
+        
         setFavorites(speciesIds);
+        setFavouriteIdMap(idMap);
         
         // TODO: Extract priority flags when we add that to the API
         // For now, keep local storage for priorities as fallback
@@ -374,10 +383,12 @@ const FindrFavouritesPage: React.FC = () => {
       } else {
         console.error('Failed to load favourites:', data.error);
         setFavorites([]);
+        setFavouriteIdMap(new Map());
       }
     } catch (error) {
       console.error('Failed to load favourites:', error);
       setFavorites([]);
+      setFavouriteIdMap(new Map());
     } finally {
       setIsLoadingFavourites(false);
     }
@@ -571,26 +582,28 @@ const FindrFavouritesPage: React.FC = () => {
     console.info(`[findr favourites:${type}] ${message}`);
   }, []);
 
-  const removeFavourite = useCallback(async (fishId: string) => {
+  const removeFavourite = useCallback(async (speciesId: string) => {
     if (!user) return;
     
     try {
       // Optimistically update UI
       setFavorites((prev) => {
         if (prev === null) return prev;
-        return prev.filter((item) => item !== fishId);
+        return prev.filter((item) => item !== speciesId);
       });
-      setPriorityIds((prev) => prev.filter((item) => item !== fishId));
+      setPriorityIds((prev) => prev.filter((item) => item !== speciesId));
       
-      // Find the favourite entry to get the ID for deletion
-      const favouriteEntry = favouriteEntries.find(f => f.id === fishId);
-      if (!favouriteEntry) {
-        console.warn('Could not find favourite entry for deletion');
+      // Get the favourite ID from the map
+      const favouriteId = favouriteIdMap.get(speciesId);
+      if (!favouriteId) {
+        console.warn('Could not find favourite ID for species:', speciesId);
+        // Reload favourites to sync with server state
+        await loadFavourites();
         return;
       }
       
-      // Call API to remove from database
-      const response = await fetch(`/api/findr/favourites?id=${fishId}`, {
+      // Call API to remove from database using the favourite ID
+      const response = await fetch(`/api/findr/favourites?id=${favouriteId}`, {
         method: 'DELETE',
       });
       
@@ -599,13 +612,20 @@ const FindrFavouritesPage: React.FC = () => {
         console.error('Failed to remove favourite:', data.error);
         // Reload favourites to sync with server state
         await loadFavourites();
+      } else {
+        // Remove from map
+        setFavouriteIdMap((prev) => {
+          const next = new Map(prev);
+          next.delete(speciesId);
+          return next;
+        });
       }
     } catch (error) {
       console.error('Failed to remove favourite:', error);
       // Reload favourites to sync with server state
       await loadFavourites();
     }
-  }, [user, favouriteEntries, loadFavourites]);
+  }, [user, favouriteIdMap, loadFavourites]);
 
   const togglePriority = useCallback((fishId: string) => {
     // TODO: Add priority flag to API schema and sync with database

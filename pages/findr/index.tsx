@@ -22,6 +22,7 @@ import {
   X,
 } from 'lucide-react';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
+import { useFavourites } from '../../hooks/useFavourites';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { FindrModal } from '../../components/findr/Modal';
@@ -505,7 +506,15 @@ const FindrPage: React.FC = () => {
     language,
     setLanguage,
   } = usePersistentFindrSettings({ predictionDate: TODAY_ISO, language: 'en' });
-  const [favorites, setFavorites] = useState<string[]>([]);
+  
+  // Use favourites hook for hybrid localStorage + Supabase sync
+  const {
+    favourites: favorites,
+    toggleFavourite,
+    isFavourited: _isFavourited,
+    loading: _favouritesLoading,
+  } = useFavourites({ autoSync: true });
+  
   const [cardQueue, setCardQueue] = useState<CardData[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
@@ -582,25 +591,7 @@ const FindrPage: React.FC = () => {
     setCardQueue(cards);
   }, [cards]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = window.localStorage.getItem('findrFavorites');
-      if (!stored) return;
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        setFavorites(parsed.filter((item): item is string => typeof item === 'string'));
-      }
-    } catch (err) {
-      console.warn('Unable to load saved Findr favourites', err);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('findrFavorites', JSON.stringify(favorites));
-  }, [favorites]);
-
+  // Favorites are now managed by useFavourites hook
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
 
   const currentCard = cardQueue[0] ?? null;
@@ -655,16 +646,16 @@ const FindrPage: React.FC = () => {
   }, []);
 
   const handleLike = useCallback((card: CardData) => {
-    setFavorites((prev) => (prev.includes(card.id) ? prev : [...prev, card.id]));
+    // Add to favourites (syncs to Supabase if authenticated)
+    toggleFavourite(card.id);
     // Move card to back of queue for infinite looping
     setCardQueue((queue) => (queue.length === 0 ? queue : [...queue.slice(1), queue[0]]));
-  }, []);
+  }, [toggleFavourite]);
 
   const handleToggleFavorite = useCallback((cardId: string) => {
-    setFavorites((prev) =>
-      prev.includes(cardId) ? prev.filter((item) => item !== cardId) : [...prev, cardId]
-    );
-  }, []);
+    // Toggle favourite (syncs to Supabase if authenticated)
+    toggleFavourite(cardId);
+  }, [toggleFavourite]);
 
   const handleShowSpeciesInfo = useCallback(
     (card: CardData) => {
