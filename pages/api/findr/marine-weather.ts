@@ -48,6 +48,10 @@ interface MarineWeatherResponse {
     waveDirectionDeg?: number | null;
     wavePeriodS?: number | null;
     windDirectionDeg?: number | null;
+    airTempC?: number | null;
+    weatherIcon?: string | null;
+    precipMM?: number | null;
+    precipProbability?: number | null;
   }>;
   daily: Array<{
     label: string;
@@ -300,15 +304,22 @@ export default async function handler(
         timestamp: currentHour.timeISO,
       };
 
-      const hourly = metResult.hours.slice(0, 48).map((h: MarineHour) => ({
-        time: h.timeISO,
-        waveHeightM: h.waveHeightM ?? 0,
-        windSpeedKts: h.windSpeedKts ?? 0,
-        seaTemperatureC: h.seaTemperatureC ?? 0,
-        waveDirectionDeg: h.waveDirectionDeg,
-        wavePeriodS: null,
-        windDirectionDeg: h.windDirectionDeg,
-      }));
+      const hourly = metResult.hours.slice(0, 48).map((h: MarineHour) => {
+        const weather = weatherByHour.get(h.timeISO);
+        return {
+          time: h.timeISO,
+          waveHeightM: h.waveHeightM ?? 0,
+          windSpeedKts: h.windSpeedKts ?? 0,
+          seaTemperatureC: h.seaTemperatureC ?? 0,
+          waveDirectionDeg: h.waveDirectionDeg,
+          wavePeriodS: null,
+          windDirectionDeg: h.windDirectionDeg,
+          airTempC: weather?.airTempC ?? null,
+          weatherIcon: weather?.symbol ? (mapMetNoSymbolToIcon(weather.symbol) ?? null) : null,
+          precipMM: weather?.precipMM ?? null,
+          precipProbability: weather?.precipProb ?? null,
+        };
+      });
 
       const dailyMap = new Map<string, typeof metResult.hours>();
       for (const hour of metResult.hours) {
@@ -394,6 +405,7 @@ export default async function handler(
         timestamp: currentHour.timeISO,
       };
 
+      // First build hourly without weather data
       const hourly = openMeteoResult.hours.slice(0, 48).map((h: MarineHour) => ({
         time: h.timeISO,
         waveHeightM: h.waveHeightM ?? 0,
@@ -402,6 +414,10 @@ export default async function handler(
         waveDirectionDeg: h.waveDirectionDeg,
         wavePeriodS: null,
         windDirectionDeg: h.windDirectionDeg,
+        airTempC: null as number | null,
+        weatherIcon: null as string | null,
+        precipMM: null as number | null,
+        precipProbability: null as number | null,
       }));
 
       // Fetch MET Norway location forecast for weather icons, temps, and precipitation
@@ -458,6 +474,17 @@ export default async function handler(
           }
         } catch (err) {
           console.warn('[Marine Weather] Open-Meteo weather API failed', err);
+        }
+      }
+
+      // Populate hourly array with weather data (air temp, icon, precipitation)
+      for (const hour of hourly) {
+        const weather = weatherByHour.get(hour.time);
+        if (weather) {
+          hour.airTempC = weather.airTempC ?? null;
+          hour.weatherIcon = weather.symbol ? (mapMetNoSymbolToIcon(weather.symbol) ?? null) : null;
+          hour.precipMM = weather.precipMM ?? null;
+          hour.precipProbability = weather.precipProb ?? null;
         }
       }
 

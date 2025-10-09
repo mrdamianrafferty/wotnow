@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WiDayWindy, WiHot, WiBarometer } from 'react-icons/wi';
 import { Waves } from 'lucide-react';
+import Image from 'next/image';
 import WeatherCarousel from './WeatherCarousel';
 import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature, formatTideHeight } from '../../../lib/findr/weatherFormatting';
 import type { FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
@@ -9,14 +10,80 @@ interface HourlyMarineCarouselProps {
   entries: FallbackConditionPayload['snapshot']['hourly'];
 }
 
-export function HourlyMarineCarousel({ entries }: HourlyMarineCarouselProps) {
-  const cards = entries.map((entry) => (
-    <div className="card bg-base-100 border border-base-200/80 shadow-sm h-full" key={`${entry.time}-${entry.waveHeightM}`}>
+function getWeatherIconUrl(code?: string | null): string {
+  if (!code) return '/weather-icons/design/fill/final/sun.svg';
+  return `/weather-icons/design/fill/final/${code}.svg`;
+}
+
+interface HourlyCardProps {
+  entry: FallbackConditionPayload['snapshot']['hourly'][0];
+}
+
+function HourlyCard({ entry }: HourlyCardProps) {
+  const [showPrecipAmount, setShowPrecipAmount] = useState(false);
+  
+  const iconUrl = getWeatherIconUrl(entry.weatherIcon);
+  const precipMM = entry.precipMM != null ? Math.round(entry.precipMM) : null;
+  const precipPct = entry.precipProbability != null ? Math.round(entry.precipProbability * 100) : null;
+  const hasPrecipData = precipMM != null || precipPct != null;
+  
+  return (
+    <div className="card bg-base-100 border border-base-200/80 shadow-sm h-full">
       <div className="card-body gap-3">
         <div>
           <p className="text-sm font-semibold">{formatDisplayTime(entry.time)}</p>
           <p className="text-xs text-base-content/60">Hourly outlook</p>
         </div>
+        
+        {/* Weather icon with air temperature */}
+        <div className="flex items-center gap-2 pb-2 border-b border-base-200/60">
+          <Image 
+            src={iconUrl} 
+            alt="Weather" 
+            width={40} 
+            height={40} 
+            className="opacity-90" 
+          />
+          <span className="text-2xl font-semibold">
+            {entry.airTempC != null ? `${Math.round(entry.airTempC)}°` : '—'}
+          </span>
+        </div>
+        
+        {/* Precipitation toggle */}
+        {hasPrecipData && (
+          <label 
+            className="swap swap-rotate cursor-pointer text-sky-400 text-sm"
+            title="Toggle rain amount / probability"
+          >
+            <input 
+              type="checkbox" 
+              checked={showPrecipAmount}
+              onChange={(e) => setShowPrecipAmount(e.target.checked)}
+              aria-label="Toggle precipitation view"
+            />
+            <span className="swap-off flex items-center gap-1.5">
+              <Image 
+                src="/weather-icons/design/fill/final/raindrop.svg" 
+                alt="Rain" 
+                width={20} 
+                height={20} 
+                className="opacity-80" 
+              />
+              <span>{precipPct != null ? `${precipPct}%` : '—'}</span>
+            </span>
+            <span className="swap-on flex items-center gap-1.5">
+              <Image 
+                src="/weather-icons/design/fill/final/raindrop.svg" 
+                alt="Rain amount" 
+                width={20} 
+                height={20} 
+                className="opacity-80" 
+              />
+              <span>{precipMM != null ? `${precipMM}mm` : '—'}</span>
+            </span>
+          </label>
+        )}
+        
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
@@ -45,6 +112,12 @@ export function HourlyMarineCarousel({ entries }: HourlyMarineCarouselProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function HourlyMarineCarousel({ entries }: HourlyMarineCarouselProps) {
+  const cards = entries.map((entry) => (
+    <HourlyCard key={`${entry.time}-${entry.waveHeightM}`} entry={entry} />
   ));
 
   return (

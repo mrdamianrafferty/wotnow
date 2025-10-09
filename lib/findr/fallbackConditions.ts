@@ -47,6 +47,10 @@ export interface FallbackConditionPayload {
       waveDirectionDeg?: number | null;
       wavePeriodS?: number | null;
       windDirectionDeg?: number | null;
+      airTempC?: number | null;
+      weatherIcon?: string | null;
+      precipMM?: number | null;
+      precipProbability?: number | null;
     }>;
     daily: Array<{
       label: string;
