@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
 import type { BasicLocation } from '../CoastalLocationDialog';
+import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
+import { getTodayIso } from '../../lib/date/today';
 
 // Dynamically import CoastalLocationDialog with no SSR
 const CoastalLocationDialog = dynamic(
@@ -10,22 +13,84 @@ const CoastalLocationDialog = dynamic(
 );
 
 export function LocationDisplay() {
+  const router = useRouter();
+  const { setSelectedCode, setManualCode } = usePersistentFindrSettings({
+    predictionDate: getTodayIso(),
+    language: 'en',
+  });
+  
   const [locationName, setLocationName] = useState('Set location');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
 
-  const handleLocationSave = (location: BasicLocation) => {
-    setLocationName(location.name);
-    setShowLocationPicker(false);
+  const handleLocationSave = async (location: BasicLocation) => {
+    setIsLookingUp(true);
+    
+    try {
+      // Look up which ICES rectangle contains this location
+      const res = await fetch(
+        `/api/findr/rectangle-lookup?lat=${location.lat}&lon=${location.lon}`
+      );
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to find fishing area');
+      }
+      
+      const { rectangleCode, region, distance } = await res.json();
+      
+      console.log('[LocationDisplay] Found rectangle:', {
+        rectangleCode,
+        region,
+        distance,
+        location,
+      });
+      
+      // Update selected code (triggers data refetch via usePersistentFindrSettings)
+      setSelectedCode(rectangleCode);
+      setManualCode(''); // Clear manual input
+      
+      // Update display name
+      const displayName = distance && distance > 10
+        ? `${location.name} (~${Math.round(distance)}km to ${region})`
+        : `${location.name} (${region})`;
+      setLocationName(displayName);
+      
+      // Navigate to conditions page with new rectangle
+      // This ensures the URL reflects the current location
+      if (router.pathname === '/findr/conditions') {
+        // Just reload the page with new rectangle in state
+        // usePersistentFindrSettings will pick it up automatically
+        router.reload();
+      } else {
+        // Navigate to conditions page
+        await router.push('/findr/conditions');
+      }
+      
+      setShowLocationPicker(false);
+    } catch (error) {
+      console.error('[LocationDisplay] Failed to look up rectangle:', error);
+      alert(`Could not find fishing area for this location: ${(error as Error).message}`);
+    } finally {
+      setIsLookingUp(false);
+    }
   };
 
   return (
     <>
       <button
         onClick={() => setShowLocationPicker(true)}
-        className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors"
+        disabled={isLookingUp}
+        className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <MapPin size={16} className="text-cyan-500" />
-        <span className="text-sm font-medium">{locationName}</span>
+        {isLookingUp ? (
+          <Loader2 size={16} className="text-cyan-500 animate-spin" />
+        ) : (
+          <MapPin size={16} className="text-cyan-500" />
+        )}
+        <span className="text-sm font-medium">
+          {isLookingUp ? 'Finding area...' : locationName}
+        </span>
       </button>
 
       {showLocationPicker && (
