@@ -74,12 +74,10 @@ export function LocationDisplay() {
       // Close the picker
       setShowLocationPicker(false);
       
-      // Navigate to conditions page if not already there
-      // Don't use router.reload() - it causes race condition with localStorage
-      // The useFindrConditions hook will automatically refetch when selectedCode changes
-      if (router.pathname !== '/findr/conditions') {
-        await router.push('/findr/conditions');
-      }
+      // Navigate to conditions page with rectangle code in URL
+      // This ensures the page re-reads the selected code
+      // Use replace to avoid adding to browser history
+      await router.push(`/findr/conditions?rectangle=${rectangleCode}`, undefined, { shallow: false });
       
       console.log('[LocationDisplay] Location updated successfully:', {
         rectangleCode,

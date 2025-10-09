@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { MapPin, MoonStar } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { SettingsForm } from '../../components/findr/SettingsForm';
@@ -19,6 +20,8 @@ import { useFindrConditions } from '../../hooks/useFindrConditions';
 import MoonWidget from '../../components/findr/MoonWidget';
 
 const FindrConditionsRoute: React.FC = () => {
+  const router = useRouter();
+  
   const {
     options: rectangleOptions,
     loading: rectangleOptionsLoading,
@@ -36,6 +39,18 @@ const FindrConditionsRoute: React.FC = () => {
     language,
     setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
+
+  // Read rectangle from URL query param if present
+  const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
+  
+  // Sync URL rectangle to selectedCode
+  useEffect(() => {
+    if (rectangleFromUrl && rectangleFromUrl !== selectedCode) {
+      console.log('[Conditions] Syncing rectangle from URL:', rectangleFromUrl);
+      setSelectedCode(rectangleFromUrl);
+      setManualCode(''); // Clear manual input when changing location
+    }
+  }, [rectangleFromUrl, selectedCode, setSelectedCode, setManualCode]);
 
   const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
   const activeRectangle = manualNormalized ?? (selectedCode || null);
