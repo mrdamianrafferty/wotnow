@@ -14,14 +14,28 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { setSelectedCode, setManualCode } = usePersistentFindrSettings({
+  const { selectedCode: _selectedCode, setSelectedCode, setManualCode } = usePersistentFindrSettings({
     predictionDate: getTodayIso(),
     language: 'en',
   });
   
-  const [locationName, setLocationName] = useState('Set location');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
+  
+  // Store location name in localStorage so it persists across component instances
+  // (LocationDisplay is rendered twice: once for desktop, once for mobile)
+  const [locationName, setLocationName] = useState(() => {
+    if (typeof window === 'undefined') return 'Set location';
+    return localStorage.getItem('findr_location_name') || 'Set location';
+  });
+  
+  // Sync locationName to localStorage whenever it changes
+  const updateLocationName = (name: string) => {
+    setLocationName(name);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('findr_location_name', name);
+    }
+  };
 
   const handleLocationSave = async (location: BasicLocation) => {
     setIsLookingUp(true);
@@ -51,11 +65,11 @@ export function LocationDisplay() {
       setSelectedCode(rectangleCode);
       setManualCode(''); // Clear manual input
       
-      // Update display name
+      // Update display name and persist to localStorage
       const displayName = distance && distance > 10
         ? `${location.name} (~${Math.round(distance)}km to ${region})`
         : `${location.name} (${region})`;
-      setLocationName(displayName);
+      updateLocationName(displayName);
       
       // Close the picker
       setShowLocationPicker(false);
