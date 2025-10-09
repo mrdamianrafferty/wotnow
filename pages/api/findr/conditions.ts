@@ -100,10 +100,13 @@ function parseHourlySeries(input: unknown): FallbackConditionPayload['snapshot']
         waveHeightM: waveHeight ?? 0,
         windSpeedKts: windSpeed ?? 0,
         seaTemperatureC: seaTemp ?? 0,
-        tideMeters: tideMeters ?? 0,
+        tideMeters: tideMeters ?? null, // Optional field, null if not available
+        waveDirectionDeg: normaliseNumber(record.waveDirectionDeg),
+        wavePeriodS: normaliseNumber(record.wavePeriodS),
+        windDirectionDeg: normaliseNumber(record.windDirectionDeg),
       };
     })
-    .filter((entry): entry is FallbackConditionPayload['snapshot']['hourly'][number] => entry !== null);
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 }
 
 function parseDailySeries(input: unknown): FallbackConditionPayload['snapshot']['daily'] | undefined {
@@ -142,11 +145,12 @@ function parseDailySeries(input: unknown): FallbackConditionPayload['snapshot'][
         waveHeightM: waveHeight ?? 0,
         seaTemperatureC: seaTemp ?? 0,
         windSpeedKts: windSpeed ?? 0,
-        fishingScore: Math.round(fishingScore ?? 0),
-        summary,
+        windDirectionDeg: normaliseNumber(record.windDirectionDeg),
+        fishingScore: fishingScore !== undefined ? Math.round(fishingScore) : undefined,
+        summary: summary || undefined,
       };
     })
-    .filter((entry): entry is FallbackConditionPayload['snapshot']['daily'][number] => entry !== null);
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 }
 
 function applyConditionsRow(base: FallbackConditionPayload, row: ConditionsRow): void {
