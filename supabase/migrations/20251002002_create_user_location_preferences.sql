@@ -44,6 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_user_location_preferences_preferred_rectangles ON
 CREATE INDEX IF NOT EXISTS idx_user_location_preferences_home_region ON user_location_preferences(home_region);
 
 -- Create updated_at trigger
+DROP TRIGGER IF EXISTS update_user_location_preferences_updated_at ON user_location_preferences;
 CREATE OR REPLACE FUNCTION update_user_location_preferences_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
