@@ -13,6 +13,22 @@ export interface CardImage {
 
 export type LocalizedSpeciesNames = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
 
+export interface SpeciesAdvice {
+  type?: string;
+  regions?: string;
+  best_time?: string;
+  tide_sensitivity?: string;
+  favourite_baits_and_natural_diet?: string;
+  effect_of_temperature?: string;
+  effect_of_weather?: string;
+  typical_distance_depth?: string;
+  edibility_10?: string;
+  restrictions_notes?: string;
+  trusted_authority_rules?: string;
+  conservation_status?: string;
+  fun_fact?: string;
+}
+
 export interface CardData {
   id: string;
   commonName: string;
@@ -28,6 +44,7 @@ export interface CardData {
   image?: CardImage;
   playfulBio?: string;
   localizedNames?: LocalizedSpeciesNames;
+  advice?: SpeciesAdvice[];
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
@@ -323,6 +340,11 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     parseLocalizedSpeciesNames(prediction.localized_names as JsonValue | undefined) ||
     parseLocalizedSpeciesNames(prediction.localizedNames as JsonValue | undefined);
 
+  // Extract advice array from prediction
+  const advice = Array.isArray(prediction.advice) 
+    ? prediction.advice as SpeciesAdvice[]
+    : undefined;
+
   return {
     id,
     commonName,
@@ -345,6 +367,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
       : undefined,
     playfulBio,
     localizedNames,
+    advice,
   };
 }
 

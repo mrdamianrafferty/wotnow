@@ -30,7 +30,7 @@ import { WaitingSpeciesCard } from '../../components/findr/WaitingSpeciesCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { normalizeRectangleCode } from '../../lib/findr/rectangle';
-import { mapPrediction, type CardData, type CardImage } from '../../lib/findr/mapPrediction';
+import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
 
@@ -127,6 +127,7 @@ interface FavouriteEntry {
   image?: CardImage;
   imageSource: 'prediction' | 'fallback';
   recencyScore: number;
+  advice?: SpeciesAdvice[];
 }
 
 function hashString(input: string): number {
@@ -465,6 +466,7 @@ const FindrFavouritesPage: React.FC = () => {
         image: card?.image,
         imageSource: card?.image ? 'prediction' : 'fallback',
         recencyScore: insight?.recencyScore ?? mock.recencyScore,
+        advice: card?.advice,
       } satisfies FavouriteEntry;
     });
   }, [favorites, cards, prioritySet, insightMap]);
@@ -1072,6 +1074,7 @@ const FindrFavouritesPage: React.FC = () => {
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
                                 : null,
                               isPriority: entry.isPriority,
+                              advice: entry.advice,
                             }}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}

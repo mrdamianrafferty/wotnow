@@ -7,6 +7,22 @@ import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 
+interface SpeciesAdvice {
+  type?: string;
+  regions?: string;
+  best_time?: string;
+  edibility_10?: string;
+  tide_sensitivity?: string;
+  effect_of_weather?: string;
+  effect_of_temperature?: string;
+  typical_distance_depth?: string;
+  favourite_baits_and_natural_diet?: string;
+  restrictions_notes?: string;
+  fun_fact?: string;
+  conservation_status?: string;
+  trusted_authority_rules?: string;
+}
+
 interface ActiveSpeciesCardProps {
   species: {
     id: string;
@@ -19,6 +35,7 @@ interface ActiveSpeciesCardProps {
     season: string;
     bestBait: string;
     isPriority: boolean;
+    advice?: SpeciesAdvice[];
   };
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
@@ -190,10 +207,41 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               <h4 className="font-semibold flex items-center gap-2 text-base-content">
                 <Waves size={16} /> <TranslatedText text="Tactical advice" />
               </h4>
-              <div className="text-sm text-base-content/70 space-y-1">
-                <p>• <TranslatedText text="Fish the tide turns for best results" /></p>
-                <p>• <TranslatedText text="Focus on structure and current breaks" /></p>
-                <p>• <TranslatedText text="Be ready to move if action slows" /></p>
+              <div className="text-sm text-base-content/70 space-y-2">
+                {species.advice && species.advice.length > 0 ? (
+                  <>
+                    {species.advice.map((adviceItem, index) => (
+                      <div key={index} className="space-y-1">
+                        {adviceItem.type && (
+                          <p className="font-semibold text-base-content/90">
+                            {adviceItem.type === 'Shore' ? '🏖️' : '🚤'} {adviceItem.type}
+                          </p>
+                        )}
+                        {adviceItem.best_time && (
+                          <p>• <TranslatedText text={`Best time: ${adviceItem.best_time}`} /></p>
+                        )}
+                        {adviceItem.favourite_baits_and_natural_diet && (
+                          <p>• <TranslatedText text={`Bait: ${adviceItem.favourite_baits_and_natural_diet}`} /></p>
+                        )}
+                        {adviceItem.tide_sensitivity && (
+                          <p>• <TranslatedText text={`Tide: ${adviceItem.tide_sensitivity}`} /></p>
+                        )}
+                        {adviceItem.typical_distance_depth && (
+                          <p>• <TranslatedText text={`Depth: ${adviceItem.typical_distance_depth}`} /></p>
+                        )}
+                        {adviceItem.effect_of_weather && (
+                          <p>• <TranslatedText text={`Weather: ${adviceItem.effect_of_weather}`} /></p>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <p>• <TranslatedText text="Fish the tide turns for best results" /></p>
+                    <p>• <TranslatedText text="Focus on structure and current breaks" /></p>
+                    <p>• <TranslatedText text="Be ready to move if action slows" /></p>
+                  </>
+                )}
               </div>
             </div>
           </div>
