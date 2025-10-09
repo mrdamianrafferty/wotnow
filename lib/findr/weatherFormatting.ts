@@ -84,16 +84,15 @@ export function formatWindSpeed(value?: number | null, unit: 'kts' | 'kmh' = 'kt
     return '—';
   }
   const speed = unit === 'kmh' ? value * 1.852 : value;
-  const precision = speed < 10 ? 1 : 0;
   const suffix = unit === 'kmh' ? 'km/h' : 'kts';
-  return `${speed.toFixed(precision)}\u00a0${suffix}`;
+  return `${Math.round(speed)}\u00a0${suffix}`;
 }
 
 export function formatTemperature(value?: number | null): string {
   if (value == null || Number.isNaN(value)) {
     return '—';
   }
-  return `${value.toFixed(1)}\u00a0°C`;
+  return `${Math.round(value)}\u00a0°C`;
 }
 
 export function formatTideHeight(value?: number | null): string {
