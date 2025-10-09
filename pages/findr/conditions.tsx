@@ -41,7 +41,7 @@ const FindrConditionsRoute: React.FC = () => {
     setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
-  const { location, updateLocation } = useUnifiedLocation();
+  const { location, updateLocation, loading: locationLoading } = useUnifiedLocation();
   const locationRectangle = location?.rectangleCode ?? null;
   const hasAppliedDefault = useRef(false);
 
@@ -59,13 +59,15 @@ const FindrConditionsRoute: React.FC = () => {
   );
 
   useEffect(() => {
+    if (locationLoading) return;
     if (manualNormalized) return;
     if (!locationRectangle) return;
     if (selectedCode === locationRectangle) return;
     setSelectedCode(locationRectangle);
-  }, [locationRectangle, manualNormalized, selectedCode, setSelectedCode]);
+  }, [locationRectangle, locationLoading, manualNormalized, selectedCode, setSelectedCode]);
 
   useEffect(() => {
+    if (locationLoading) return;
     if (manualNormalized) return;
     if (locationRectangle) return;
     if (rectangleOptions.length === 0) return;
@@ -80,9 +82,10 @@ const FindrConditionsRoute: React.FC = () => {
       source: 'manual',
     });
     setSelectedCode(fallbackOption.code);
-  }, [manualNormalized, locationRectangle, rectangleOptions, setSelectedCode, updateLocation]);
+  }, [manualNormalized, locationLoading, locationRectangle, rectangleOptions, setSelectedCode, updateLocation]);
 
   useEffect(() => {
+    if (locationLoading) return;
     if (!router.isReady) return;
     if (manualNormalized) return;
     if (!rectangleFromUrl) return;
@@ -97,9 +100,10 @@ const FindrConditionsRoute: React.FC = () => {
       source: location?.source ?? 'manual',
     });
     setSelectedCode(rectangle.code);
-  }, [rectangleFromUrl, manualNormalized, locationRectangle, rectangleOptions, router.isReady, location?.source, setSelectedCode, updateLocation]);
+  }, [rectangleFromUrl, locationLoading, manualNormalized, locationRectangle, rectangleOptions, router.isReady, location?.source, setSelectedCode, updateLocation]);
 
   useEffect(() => {
+    if (locationLoading) return;
     if (!router.isReady) return;
     if (manualNormalized) return;
     if (!locationRectangle) return;
@@ -113,14 +117,15 @@ const FindrConditionsRoute: React.FC = () => {
       undefined,
       { shallow: true }
     );
-  }, [locationRectangle, manualNormalized, router]);
+  }, [locationRectangle, locationLoading, manualNormalized, router]);
 
   useEffect(() => {
+    if (locationLoading) return;
     if (!locationRectangle) return;
     if (!manualNormalized) return;
     if (manualNormalized === locationRectangle) return;
     setManualCode('');
-  }, [locationRectangle, manualNormalized, setManualCode]);
+  }, [locationRectangle, locationLoading, manualNormalized, setManualCode]);
 
   const manualInvalid = manualCode.trim().length > 0 && !manualNormalized;
 
