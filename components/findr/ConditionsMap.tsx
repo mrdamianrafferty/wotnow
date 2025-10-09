@@ -290,7 +290,9 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
 
         setRealContours(contours);
       } catch (error) {
-        console.error('Failed to fetch EMODnet contours:', error);
+        if ((error as Error)?.name !== 'AbortError') {
+          console.warn('[ConditionsMap] Falling back to synthetic depth contours', error);
+        }
         setRealContours(generateEnhancedFallbackContours({ lat, lon }));
       } finally {
         setLoadingContours(false);

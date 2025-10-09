@@ -123,6 +123,9 @@ export function useFindrMarineWeather(
         setLoading(true);
         setError(null);
 
+        // Add 15 second timeout to prevent hanging
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         const response = await fetch(
           `/api/findr/marine-weather?lat=${latValue}&lon=${lonValue}`,
           {
@@ -130,6 +133,8 @@ export function useFindrMarineWeather(
             signal: controller.signal,
           }
         );
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           const message = `Marine weather request failed (${response.status})`;

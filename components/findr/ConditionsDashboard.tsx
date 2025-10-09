@@ -451,9 +451,18 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   //
   // The fallback is INTENTIONAL but should rarely happen. If it does, users see
   // slightly stale data rather than no data. This is acceptable for safety.
-  const waveHeightM = marineWeather.current?.waveHeightM ?? marine.waveHeightM;
-  const windSpeedKts = marineWeather.current?.windSpeedKts ?? marine.windSpeedKts;
-  const windDirectionDeg = marineWeather.current?.windDirectionDeg ?? marine.windDirectionDeg;
+  const waveHeightM = marineWeather.current?.waveHeightM ?? marine.waveHeightM ?? null;
+  const windSpeedKts = marineWeather.current?.windSpeedKts ?? marine.windSpeedKts ?? null;
+  const windDirectionDeg = marineWeather.current?.windDirectionDeg ?? marine.windDirectionDeg ?? null;
+  
+  // Log when falling back to database values
+  if (!marineWeather.current && (marine.waveHeightM || marine.windSpeedKts)) {
+    console.warn('[ConditionsDashboard] Using fallback database values:', {
+      wave: marine.waveHeightM,
+      wind: marine.windSpeedKts,
+      reason: marineWeather.loading ? 'Still loading' : 'API failed'
+    });
+  }
   
   // 🟢 MARINE BIO DATA (from data.snapshot - Supabase/Copernicus)
   // These values change daily and are safely cached in database:

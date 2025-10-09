@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MapPin, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import type { BasicLocation } from '../CoastalLocationDialog';
-import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { getTodayIso } from '../../lib/date/today';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 
 // Dynamically import CoastalLocationDialog with no SSR
 const CoastalLocationDialog = dynamic(
@@ -14,32 +13,25 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { selectedCode: _selectedCode, setSelectedCode, setManualCode } = usePersistentFindrSettings({
-    predictionDate: getTodayIso(),
-    language: 'en',
-  });
-  
+  const { location, updateLocation, syncing } = useUnifiedLocation();
+
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
-  
-  // Store location name in localStorage so it persists across component instances
-  // (LocationDisplay is rendered twice: once for desktop, once for mobile)
-  const [locationName, setLocationName] = useState(() => {
-    if (typeof window === 'undefined') return 'Set location';
-    return localStorage.getItem('findr_location_name') || 'Set location';
-  });
-  
-  // Sync locationName to localStorage whenever it changes
-  const updateLocationName = (name: string) => {
-    setLocationName(name);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('findr_location_name', name);
+  const [locationName, setLocationName] = useState('Set location');
+
+  useEffect(() => {
+    if (location?.rectangleLabel) {
+      setLocationName(location.rectangleLabel);
+    } else if (location?.rectangleCode) {
+      setLocationName(location.rectangleCode);
     }
-  };
+  }, [location?.rectangleCode, location?.rectangleLabel]);
+
+  const loadingState = useMemo(() => isLookingUp || syncing, [isLookingUp, syncing]);
 
   const handleLocationSave = async (location: BasicLocation) => {
     setIsLookingUp(true);
-    
+
     try {
       // Look up which ICES rectangle contains this location
       const res = await fetch(
@@ -51,7 +43,7 @@ export function LocationDisplay() {
         throw new Error(errorData.error || 'Failed to find fishing area');
       }
       
-      const { rectangleCode, region, distance } = await res.json();
+      const { rectangleCode, region, distance, centerLat, centerLon } = await res.json();
       
       console.log('[LocationDisplay] Found rectangle:', {
         rectangleCode,
@@ -59,28 +51,33 @@ export function LocationDisplay() {
         distance,
         location,
       });
-      
-      // Update selected code (triggers data refetch via usePersistentFindrSettings)
-      // This updates localStorage and the selectedCode state
-      setSelectedCode(rectangleCode);
-      setManualCode(''); // Clear manual input
-      
-      // Update display name and persist to localStorage
+
       const displayName = distance && distance > 10
         ? `${location.name} (~${Math.round(distance)}km to ${region})`
         : `${location.name} (${region})`;
-      updateLocationName(displayName);
-      
+
+      const unified = await updateLocation({
+        coordinates: { lat: centerLat, lon: centerLon },
+        rectangleCode,
+        rectangleRegion: region,
+        rectangleLabel: displayName,
+        source: 'manual',
+        accuracy: typeof distance === 'number' ? distance : null,
+      });
+
+      setLocationName(displayName);
+
       // Close the picker
       setShowLocationPicker(false);
       
       // Navigate to conditions page with rectangle code in URL
       // This ensures the page re-reads the selected code
       // Use replace to avoid adding to browser history
-      await router.push(`/findr/conditions?rectangle=${rectangleCode}`, undefined, { shallow: false });
+      const targetRectangle = unified?.rectangleCode ?? rectangleCode;
+      await router.push(`/findr/conditions?rectangle=${targetRectangle}`, undefined, { shallow: false });
       
       console.log('[LocationDisplay] Location updated successfully:', {
-        rectangleCode,
+        rectangleCode: targetRectangle,
         region,
         pathname: router.pathname,
       });
@@ -96,16 +93,16 @@ export function LocationDisplay() {
     <>
       <button
         onClick={() => setShowLocationPicker(true)}
-        disabled={isLookingUp}
+        disabled={loadingState}
         className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isLookingUp ? (
+        {loadingState ? (
           <Loader2 size={16} className="text-cyan-500 animate-spin" />
         ) : (
           <MapPin size={16} className="text-cyan-500" />
         )}
         <span className="text-sm font-medium">
-          {isLookingUp ? 'Finding area...' : locationName}
+          {loadingState ? 'Finding area...' : locationName}
         </span>
       </button>
 

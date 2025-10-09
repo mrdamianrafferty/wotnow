@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS user_favourites (
 CREATE INDEX IF NOT EXISTS idx_user_favourites_user_id ON user_favourites(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_favourites_species_id ON user_favourites(species_id);
 CREATE INDEX IF NOT EXISTS idx_user_favourites_added_at ON user_favourites(added_at DESC);
-CREATE INDEX IF NOT EXISTS idx_user_favourites_notifications ON user_favourites(user_id) WHERE notifications_enabled = true;
+-- CREATE INDEX IF NOT EXISTS idx_user_favourites_notifications ON user_favourites(user_id) WHERE notifications_enabled = true;
 
 -- Enable Row Level Security
 ALTER TABLE user_favourites ENABLE ROW LEVEL SECURITY;

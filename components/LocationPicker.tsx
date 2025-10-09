@@ -1,146 +1,118 @@
 // components/LocationPicker.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { detectUserLocation, findNearestRectangles } from '../lib/findr/locationDetection';
 import { useFindrRectangleOptions } from '../hooks/useFindrRectangleOptions';
-
-interface LocationState {
-  selectedRectangle: string | null;
-  detectedLocation: { lat: number; lon: number } | null;
-  isLoading: boolean;
-  source: 'ip' | 'gps' | 'manual' | null;
-}
+import { useUnifiedLocation } from '../context/UnifiedLocationContext';
 
 export function LocationPicker() {
   const [isOpen, setIsOpen] = useState(false);
-  const [location, setLocation] = useState<LocationState>({
-    selectedRectangle: null,
-    detectedLocation: null,
-    isLoading: false,
-    source: null
-  });
+  const [isDetecting, setIsDetecting] = useState(false);
+  const autodetectAttempted = useRef(false);
 
   const { options: rectangleOptions } = useFindrRectangleOptions([]);
+  const { location, updateLocation, syncing } = useUnifiedLocation();
 
-  // Auto-detect IP location on mount
+  const currentRectangle = location?.rectangleCode ?? null;
+  const currentSource = location?.source ?? null;
+
+  const currentLabel = useMemo(() => {
+    if (location?.rectangleLabel) return location.rectangleLabel;
+    if (!currentRectangle) return null;
+    const match = rectangleOptions.find(option => option.code === currentRectangle);
+    if (match) {
+      return `${match.code} - ${match.region}`;
+    }
+    return currentRectangle;
+  }, [currentRectangle, location?.rectangleLabel, rectangleOptions]);
+
+  // Auto-detect IP location if no location has been stored yet
   useEffect(() => {
-    const autoDetectLocation = async () => {
-      try {
-        setLocation(prev => ({ ...prev, isLoading: true }));
-        
-        // Try to get stored location first
-        const stored = localStorage.getItem('findr-user-location');
-        if (stored) {
-          const storedLocation = JSON.parse(stored);
-          setLocation(prev => ({
-            ...prev,
-            selectedRectangle: storedLocation.rectangleCode,
-            detectedLocation: storedLocation.coordinates,
-            source: storedLocation.source,
-            isLoading: false
-          }));
-          return;
-        }
+    if (autodetectAttempted.current) return;
+    if (currentRectangle) return;
+    if (rectangleOptions.length === 0) return;
 
-        // Fallback to IP detection
+    autodetectAttempted.current = true;
+
+    const autoDetect = async () => {
+      try {
+        setIsDetecting(true);
         const ipLocation = await detectUserLocation('ip');
-        if (ipLocation && rectangleOptions.length > 0) {
-          const nearest = findNearestRectangles(ipLocation, rectangleOptions);
-          if (nearest) {
-            const locationData = {
-              rectangleCode: nearest.primary.code,
-              coordinates: { lat: ipLocation.latitude, lon: ipLocation.longitude },
-              source: 'ip',
-              timestamp: new Date().toISOString()
-            };
-            
-            localStorage.setItem('findr-user-location', JSON.stringify(locationData));
-            setLocation({
-              selectedRectangle: nearest.primary.code,
-              detectedLocation: { lat: ipLocation.latitude, lon: ipLocation.longitude },
-              source: 'ip',
-              isLoading: false
-            });
-          }
-        }
+        if (!ipLocation) return;
+
+        const nearest = findNearestRectangles(ipLocation, rectangleOptions);
+        if (!nearest) return;
+
+          await updateLocation({
+            coordinates: { lat: ipLocation.latitude, lon: ipLocation.longitude },
+            rectangleCode: nearest.primary.code,
+            rectangleRegion: nearest.primary.region,
+            rectangleLabel: `${nearest.primary.code} - ${nearest.primary.region}`,
+            source: 'ip',
+            accuracy: ipLocation.accuracy ?? 10000,
+          });
       } catch (error) {
-        console.warn('Auto location detection failed:', error);
+        console.warn('[LocationPicker] Auto-detect failed', error);
       } finally {
-        setLocation(prev => ({ ...prev, isLoading: false }));
+        setIsDetecting(false);
       }
     };
 
-    if (rectangleOptions.length > 0) {
-      autoDetectLocation();
-    }
-  }, [rectangleOptions]);
+    void autoDetect();
+  }, [currentRectangle, rectangleOptions, updateLocation]);
 
-  const requestGPSLocation = async () => {
+  const requestGPSLocation = useCallback(async () => {
     try {
-      setLocation(prev => ({ ...prev, isLoading: true }));
+      setIsDetecting(true);
       const gpsLocation = await detectUserLocation('gps');
-      
+
       if (gpsLocation && rectangleOptions.length > 0) {
         const nearest = findNearestRectangles(gpsLocation, rectangleOptions);
         if (nearest) {
-          const locationData = {
-            rectangleCode: nearest.primary.code,
+          await updateLocation({
             coordinates: { lat: gpsLocation.latitude, lon: gpsLocation.longitude },
+            rectangleCode: nearest.primary.code,
+            rectangleRegion: nearest.primary.region,
+            rectangleLabel: `${nearest.primary.code} - ${nearest.primary.region}`,
             source: 'gps',
-            timestamp: new Date().toISOString()
-          };
-          
-          localStorage.setItem('findr-user-location', JSON.stringify(locationData));
-          setLocation({
-            selectedRectangle: nearest.primary.code,
-            detectedLocation: { lat: gpsLocation.latitude, lon: gpsLocation.longitude },
-            source: 'gps',
-            isLoading: false
+            accuracy: gpsLocation.accuracy ?? 10,
           });
           setIsOpen(false);
         }
       }
     } catch (error) {
-      console.error('GPS location failed:', error);
+      console.error('[LocationPicker] GPS location failed', error);
       alert('Location access denied or unavailable');
     } finally {
-      setLocation(prev => ({ ...prev, isLoading: false }));
+      setIsDetecting(false);
     }
-  };
+  }, [rectangleOptions, updateLocation]);
 
-  const selectRectangle = (rectangleCode: string) => {
+  const selectRectangle = useCallback(async (rectangleCode: string) => {
     const rectangle = rectangleOptions.find(r => r.code === rectangleCode);
     if (rectangle) {
-      const locationData = {
-        rectangleCode,
-        coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
-        source: 'manual',
-        timestamp: new Date().toISOString()
-      };
-      
-      localStorage.setItem('findr-user-location', JSON.stringify(locationData));
-      setLocation({
-        selectedRectangle: rectangleCode,
-        detectedLocation: { lat: rectangle.centerLat, lon: rectangle.centerLon },
-        source: 'manual',
-        isLoading: false
-      });
+        await updateLocation({
+          coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
+          rectangleCode: rectangle.code,
+          rectangleRegion: rectangle.region,
+          rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
+          source: 'manual',
+          accuracy: rectangle.distanceToShoreKm ?? null,
+        });
       setIsOpen(false);
     }
-  };
+  }, [rectangleOptions, updateLocation]);
 
-  const getLocationDisplay = () => {
-    if (!location.selectedRectangle) return 'Location';
-    
-    const rectangle = rectangleOptions.find(r => r.code === location.selectedRectangle);
-    return rectangle ? `${rectangle.code} - ${rectangle.region}` : location.selectedRectangle;
-  };
+  const getLocationDisplay = useMemo(() => {
+    if (currentLabel) return currentLabel;
+    return currentRectangle ?? 'Location';
+  }, [currentLabel, currentRectangle]);
 
   const getLocationIcon = () => {
-    if (location.isLoading) return '⏳';
-    
-    switch (location.source) {
+    if (isDetecting || syncing) return '⏳';
+
+    switch (currentSource) {
       case 'gps': return '📍'; // Precise GPS
       case 'manual': return '🗺️'; // User selected
       case 'ip': return '🌐'; // IP detected
@@ -154,11 +126,11 @@ export function LocationPicker() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
-        title={`Current location: ${getLocationDisplay()}`}
+        title={`Current location: ${getLocationDisplay}`}
       >
         <span className="text-lg">{getLocationIcon()}</span>
         <span className="hidden sm:block truncate max-w-32">
-          {location.selectedRectangle || 'Location'}
+          {currentRectangle || 'Location'}
         </span>
         <span className="text-xs text-gray-500">▼</span>
       </button>
@@ -170,15 +142,15 @@ export function LocationPicker() {
             <h3 className="font-medium text-gray-900 mb-3">Choose Your Fishing Area</h3>
             
             {/* Current Location Display */}
-            {location.selectedRectangle && (
+            {currentRectangle && (
               <div className="mb-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-blue-900">{getLocationDisplay()}</p>
+                    <p className="font-medium text-blue-900">{getLocationDisplay}</p>
                     <p className="text-xs text-blue-600">
-                      {location.source === 'gps' && 'GPS detected'}
-                      {location.source === 'ip' && 'IP detected'}
-                      {location.source === 'manual' && 'Manually selected'}
+                      {currentSource === 'gps' && 'GPS detected'}
+                      {currentSource === 'ip' && 'IP detected'}
+                      {currentSource === 'manual' && 'Manually selected'}
                     </p>
                   </div>
                   <span className="text-xl">{getLocationIcon()}</span>
@@ -189,7 +161,7 @@ export function LocationPicker() {
             {/* GPS Option */}
             <button
               onClick={requestGPSLocation}
-              disabled={location.isLoading}
+              disabled={isDetecting || syncing}
               className="w-full p-3 mb-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-left disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
@@ -197,7 +169,7 @@ export function LocationPicker() {
                   <p className="font-medium">📍 Use GPS Location</p>
                   <p className="text-xs text-gray-600">Most accurate for your current position</p>
                 </div>
-                {location.isLoading && <span className="text-sm">⏳</span>}
+                {(isDetecting || syncing) && <span className="text-sm">⏳</span>}
               </div>
             </button>
 
@@ -210,7 +182,7 @@ export function LocationPicker() {
                     key={rectangle.code}
                     onClick={() => selectRectangle(rectangle.code)}
                     className={`w-full p-2 text-left rounded hover:bg-gray-50 ${
-                      location.selectedRectangle === rectangle.code ? 'bg-blue-50 border border-blue-200' : ''
+                      currentRectangle === rectangle.code ? 'bg-blue-50 border border-blue-200' : ''
                     }`}
                   >
                     <div className="flex items-center justify-between">

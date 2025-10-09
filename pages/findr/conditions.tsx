@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { MapPin, MoonStar } from 'lucide-react';
@@ -18,6 +18,7 @@ import { getTodayIso } from '../../lib/date/today';
 import ConditionsDashboard from '../../components/findr/ConditionsDashboard';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
 import MoonWidget from '../../components/findr/MoonWidget';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 
 const FindrConditionsRoute: React.FC = () => {
   const router = useRouter();
@@ -40,45 +41,106 @@ const FindrConditionsRoute: React.FC = () => {
     setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
-  // Read rectangle from URL query param if present
+  const { location, updateLocation } = useUnifiedLocation();
+  const locationRectangle = location?.rectangleCode ?? null;
+  const hasAppliedDefault = useRef(false);
+
   const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
-  
-  // Sync URL rectangle to selectedCode
-  useEffect(() => {
-    if (rectangleFromUrl && rectangleFromUrl !== selectedCode) {
-      console.log('[Conditions] Syncing rectangle from URL:', rectangleFromUrl);
-      setSelectedCode(rectangleFromUrl);
-      setManualCode(''); // Clear manual input when changing location
-    }
-  }, [rectangleFromUrl, selectedCode, setSelectedCode, setManualCode]);
 
   const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
-  const activeRectangle = manualNormalized ?? (selectedCode || null);
+  const activeRectangle = manualNormalized ?? locationRectangle ?? (selectedCode || null);
   const activeOption = useMemo<RectangleOption | null>(
-    () => rectangleOptions.find((option) => option.code === (manualNormalized ?? selectedCode)) ?? null,
-    [manualNormalized, rectangleOptions, selectedCode]
+    () => {
+      const code = manualNormalized ?? locationRectangle ?? selectedCode ?? null;
+      if (!code) return null;
+      return rectangleOptions.find((option) => option.code === code) ?? null;
+    },
+    [manualNormalized, locationRectangle, rectangleOptions, selectedCode]
   );
 
   useEffect(() => {
-    if (selectedCode || manualNormalized) return;
-    if (rectangleOptions.length === 0) return;
-    setSelectedCode(rectangleOptions[0].code);
-  }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
+    if (manualNormalized) return;
+    if (!locationRectangle) return;
+    if (selectedCode === locationRectangle) return;
+    setSelectedCode(locationRectangle);
+  }, [locationRectangle, manualNormalized, selectedCode, setSelectedCode]);
+
   useEffect(() => {
-    if (!selectedCode || manualNormalized) return;
-    if (rectangleOptions.some((option) => option.code === selectedCode)) return;
+    if (manualNormalized) return;
+    if (locationRectangle) return;
     if (rectangleOptions.length === 0) return;
-    setSelectedCode(rectangleOptions[0].code);
-  }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
+    if (hasAppliedDefault.current) return;
+    const fallbackOption = rectangleOptions[0];
+    hasAppliedDefault.current = true;
+    void updateLocation({
+      coordinates: { lat: fallbackOption.centerLat, lon: fallbackOption.centerLon },
+      rectangleCode: fallbackOption.code,
+      rectangleRegion: fallbackOption.region,
+      rectangleLabel: `${fallbackOption.code} - ${fallbackOption.region}`,
+      source: 'manual',
+    });
+    setSelectedCode(fallbackOption.code);
+  }, [manualNormalized, locationRectangle, rectangleOptions, setSelectedCode, updateLocation]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (manualNormalized) return;
+    if (!rectangleFromUrl) return;
+    if (rectangleFromUrl === locationRectangle) return;
+    const rectangle = rectangleOptions.find(option => option.code === rectangleFromUrl);
+    if (!rectangle) return;
+    void updateLocation({
+      coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
+      rectangleCode: rectangle.code,
+      rectangleRegion: rectangle.region,
+      rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
+      source: location?.source ?? 'manual',
+    });
+    setSelectedCode(rectangle.code);
+  }, [rectangleFromUrl, manualNormalized, locationRectangle, rectangleOptions, router.isReady, location?.source, setSelectedCode, updateLocation]);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (manualNormalized) return;
+    if (!locationRectangle) return;
+    const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
+    if (current === locationRectangle) return;
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, rectangle: locationRectangle },
+      },
+      undefined,
+      { shallow: true }
+    );
+  }, [locationRectangle, manualNormalized, router]);
+
+  useEffect(() => {
+    if (!locationRectangle) return;
+    if (!manualNormalized) return;
+    if (manualNormalized === locationRectangle) return;
+    setManualCode('');
+  }, [locationRectangle, manualNormalized, setManualCode]);
 
   const manualInvalid = manualCode.trim().length > 0 && !manualNormalized;
 
   const handleSelectOption = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedCode(event.target.value);
+    async (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const nextCode = event.target.value;
+      setSelectedCode(nextCode);
       setManualCode('');
+      const rectangle = rectangleOptions.find(r => r.code === nextCode);
+      if (rectangle) {
+        await updateLocation({
+          coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
+          rectangleCode: rectangle.code,
+          rectangleRegion: rectangle.region,
+          rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
+          source: 'manual',
+        });
+      }
     },
-    [setManualCode, setSelectedCode]
+    [rectangleOptions, setManualCode, setSelectedCode, updateLocation]
   );
 
   const handleManualCodeChange = useCallback(
@@ -161,6 +223,8 @@ const FindrConditionsRoute: React.FC = () => {
     });
   }, [activeRectangle, conditions.source]);
 
+  const selectedForForm = selectedCode || locationRectangle || '';
+
   return (
     <>
       <Head>
@@ -214,7 +278,7 @@ const FindrConditionsRoute: React.FC = () => {
                 optionsLoading={rectangleOptionsLoading}
                 optionsError={rectangleOptionsError}
                 usingFallback={rectangleOptionsUsingFallback}
-                selectedCode={selectedCode}
+                selectedCode={selectedForForm}
                 manualCode={manualCode}
                 manualNormalized={manualNormalized}
                 manualInvalid={manualInvalid}
