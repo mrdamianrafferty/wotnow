@@ -13,8 +13,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const SUPABASE_REST_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-// Match YOUR actual species table structure
-interface SpeciesRow {
+// Match YOUR actual species table structure (for documentation)
+interface _SpeciesRow {
   id: string;
   species_code: string;
   scientific_name: string;
@@ -61,13 +61,6 @@ interface PredictionResponse {
   weather_summary?: string;
 }
 
-interface FavouriteRow {
-  id: string;
-  added_at: string;
-  last_checked: string;
-  species: SpeciesRow[];
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Create authenticated Supabase client
   const supabase = createServerSupabaseClient({ req, res });
@@ -86,51 +79,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Get user's location/rectangle from query params
         const rectangleCode = req.query.rectangleCode as string | undefined;
 
-        // Fetch user's favourites with FULL species data
-        const { data: favourites, error } = await supabase
+        // Fetch user's favourites first (without JOIN since species_id is TEXT, not FK)
+        const { data: favourites, error: favError } = await supabase
           .from('user_favourites')
-          .select(`
-            id,
-            added_at,
-            last_checked,
-            species:species_id (
-              id,
-              species_code,
-              scientific_name,
-              name_en,
-              name_es,
-              name_fr,
-              name_de,
-              name_it,
-              name_pt,
-              typical_gear,
-              eating_quality,
-              min_depth,
-              max_depth,
-              wind_sensitivity,
-              temperature_sensitivity,
-              pressure_sensitivity,
-              tide_sensitivity,
-              conservation_status,
-              fun_fact,
-              advice
-            )
-          `)
+          .select('id, species_id, added_at, last_checked')
           .eq('user_id', userId)
           .order('added_at', { ascending: false });
 
-        if (error) {
-          console.error('Supabase error:', error);
-          throw error;
+        if (favError) {
+          console.error('Supabase error fetching favourites:', favError);
+          throw favError;
         }
 
         if (!favourites || favourites.length === 0) {
           return res.status(200).json({ success: true, favourites: [] });
         }
 
+        // Get unique species IDs
+        const speciesIds = [...new Set(favourites.map(f => f.species_id))];
+
+        // Fetch species data separately
+        const { data: speciesData, error: speciesError } = await supabase
+          .from('species')
+          .select(`
+            id,
+            species_code,
+            scientific_name,
+            name_en,
+            name_es,
+            name_fr,
+            name_de,
+            name_it,
+            name_pt,
+            typical_gear,
+            eating_quality,
+            min_depth,
+            max_depth,
+            wind_sensitivity,
+            temperature_sensitivity,
+            pressure_sensitivity,
+            tide_sensitivity,
+            conservation_status,
+            fun_fact,
+            advice
+          `)
+          .in('id', speciesIds);
+
+        if (speciesError) {
+          console.error('Supabase error fetching species:', speciesError);
+          throw speciesError;
+        }
+
+        // Create species lookup map
+        const speciesMap = new Map(
+          (speciesData || []).map(s => [s.id, s])
+        );
+
         // Extract species codes for live prediction lookup
-        const speciesCodes = (favourites as unknown as FavouriteRow[])
-          .map(fav => fav.species[0]?.species_code?.toUpperCase())
+        const speciesCodes = (speciesData || [])
+          .map(s => s.species_code?.toUpperCase())
           .filter(Boolean) as string[];
 
         // Fetch live confidence scores using get_fishing_predictions RPC
@@ -139,8 +146,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           : new Map();
 
         // Build response with live confidence scores
-        const favouritesWithConfidence = (favourites as unknown as FavouriteRow[]).map((fav) => {
-          const species = fav.species[0]; // Supabase returns species as array
+        const favouritesWithConfidence = favourites.map((fav) => {
+          const species = speciesMap.get(fav.species_id);
+          
+          // Skip if species not found (shouldn't happen)
+          if (!species) {
+            console.warn(`Species not found for id: ${fav.species_id}`);
+            return null;
+          }
+          
           const speciesCode = species.species_code.toUpperCase();
           
           // Use live prediction if available, otherwise default to 50
@@ -174,7 +188,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             funFact: species.fun_fact,
             conservationStatus: species.conservation_status
           };
-        });
+        }).filter(Boolean); // Remove any nulls
 
         return res.status(200).json({ success: true, favourites: favouritesWithConfidence });
       } catch (error: unknown) {
