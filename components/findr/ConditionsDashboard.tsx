@@ -217,6 +217,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     hourlyCount: marineWeather.hourly?.length ?? 0,
     dailyCount: marineWeather.daily?.length ?? 0,
     dailySample: marineWeather.daily?.[0],
+    hourlySample: marineWeather.hourly?.[0],
   });
 
   const environmentalSignals = useFindrEnvironmentalSignals(
@@ -248,6 +249,10 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         wavePeriodS: h.wavePeriodS,
         windDirectionDeg: h.windDirectionDeg,
         tideMeters: null, // Not available in marine weather API
+        airTempC: h.airTempC ?? null,
+        weatherIcon: h.weatherIcon ?? null,
+        precipMM: h.precipMM ?? null,
+        precipProbability: h.precipProbability ?? null,
       }));
     }
     // Fallback to cached Supabase snapshot (with safety check)
@@ -505,60 +510,8 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   );
 
   const fishingSpots = useMemo<FishingSpot[]>(() => {
-    const evaluateSpot = (modifier: number): FishingSpot['status'] => {
-      let score = 50;
-
-      if (waveHeightM >= 0.5 && waveHeightM <= 2) score += 20;
-      else if (waveHeightM > 3) score -= 20;
-
-      if (seaTemperatureC >= 14 && seaTemperatureC <= 18) score += 20;
-      else if (seaTemperatureC < 10 || seaTemperatureC > 22) score -= 15;
-
-      if (windSpeedKts < 15) score += 15;
-      else if (windSpeedKts > 25) score -= 20;
-
-      score += modifier;
-
-      if (score >= 70) return 'hot';
-      if (score >= 50) return 'ok';
-      return 'poor';
-    };
-
-    return [
-      {
-        id: '1',
-        lat: mapLocation.lat + 0.02,
-        lon: mapLocation.lon + 0.05,
-        status: evaluateSpot(10),
-        species: ['Sea Bass', 'Mackerel'],
-        depth: 25,
-      },
-      {
-        id: '2',
-        lat: mapLocation.lat - 0.01,
-        lon: mapLocation.lon + 0.08,
-        status: evaluateSpot(15),
-        species: ['Tuna', 'Bonito'],
-        depth: 45,
-      },
-      {
-        id: '3',
-        lat: mapLocation.lat + 0.05,
-        lon: mapLocation.lon - 0.02,
-        status: evaluateSpot(-5),
-        species: ['Sardine'],
-        depth: 15,
-      },
-      {
-        id: '4',
-        lat: mapLocation.lat - 0.03,
-        lon: mapLocation.lon - 0.05,
-        status: evaluateSpot(5),
-        species: ['Sea Bream'],
-        depth: 35,
-      },
-    ];
-  }, [mapLocation, waveHeightM, seaTemperatureC, windSpeedKts]);
+    return [];
+  }, []);
 
   return (
     <section className="space-y-6">
@@ -612,12 +565,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
               />
 
               <div className="p-4 bg-base-200/20 border-t border-base-200">
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
-                  <div>
-                    <span className="font-medium"><TranslatedText text="Active spots:" /></span>{' '}
-                    {fishingSpots.filter((spot) => spot.status === 'hot').length} <TranslatedText text="hot" />,{' '}
-                    {fishingSpots.filter((spot) => spot.status === 'ok').length} <TranslatedText text="ok" />
-                  </div>
+                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
                   <div>
                     <span className="font-medium"><TranslatedText text="Area:" /></span> {data.rectangle.name}
                   </div>

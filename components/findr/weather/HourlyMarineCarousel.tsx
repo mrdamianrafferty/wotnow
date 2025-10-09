@@ -11,8 +11,11 @@ interface HourlyMarineCarouselProps {
 }
 
 function getWeatherIconUrl(code?: string | null): string {
-  if (!code) return '/weather-icons/design/fill/final/sun.svg';
-  return `/weather-icons/design/fill/final/${code}.svg`;
+  if (!code) return '/weather-icons/design/fill/final/na.svg';
+  // Support standard weather icon codes (01d, 02d, etc.)
+  const supported = new Set(['01d','01n','02d','02n','03d','03n','04d','04n','09d','09n','10d','10n','11d','11n','13d','13n','50d','50n','na']);
+  const iconCode = supported.has(code) ? code : 'na';
+  return `/weather-icons/design/fill/final/${iconCode}.svg`;
 }
 
 interface HourlyCardProps {

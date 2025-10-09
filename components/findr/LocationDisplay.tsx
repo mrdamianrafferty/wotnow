@@ -21,7 +21,8 @@ export function LocationDisplay() {
 
   useEffect(() => {
     if (location?.rectangleLabel) {
-      setLocationName(location.rectangleLabel);
+      const cleaned = location.rectangleLabel.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      setLocationName(cleaned || location.rectangleLabel);
     } else if (location?.rectangleCode) {
       setLocationName(location.rectangleCode);
     }
@@ -52,9 +53,10 @@ export function LocationDisplay() {
         location,
       });
 
-      const displayName = distance && distance > 10
-        ? `${location.name} (~${Math.round(distance)}km to ${region})`
-        : `${location.name} (${region})`;
+      const displayName =
+        typeof distance === 'number' && distance > 10
+          ? `${location.name} (~${Math.round(distance)}km away)`
+          : location.name;
 
       const unified = await updateLocation({
         coordinates: { lat: centerLat, lon: centerLon },

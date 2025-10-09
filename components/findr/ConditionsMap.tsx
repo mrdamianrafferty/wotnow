@@ -320,7 +320,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
   // Recenter map when location changes
   useEffect(() => {
     if (mapRef.current && mapReady) {
-      mapRef.current.setView([lat, lon], 10, {
+      mapRef.current.setView([lat, lon], 8, {
         animate: true,
         duration: 0.5
       });

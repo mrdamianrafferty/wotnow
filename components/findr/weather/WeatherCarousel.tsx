@@ -85,7 +85,7 @@ export function WeatherCarousel({
         </div>
         <div
           ref={scrollRef}
-          className="carousel carousel-center w-full space-x-2 overflow-x-auto scroll-smooth pb-2"
+          className="carousel carousel-center w-full space-x-1 overflow-x-auto scroll-smooth pb-2"
         >
           {items.map((item, index) => (
             <div key={index} className="carousel-item w-[200px] max-w-[75vw]">
