@@ -94,6 +94,10 @@ function parseHourlySeries(input: unknown): FallbackConditionPayload['snapshot']
       const windSpeed = normaliseNumber(record.windSpeedKts);
       const seaTemp = normaliseNumber(record.seaTemperatureC);
       const tideMeters = normaliseNumber(record.tideMeters);
+      const airTemp = normaliseNumber(record.airTempC);
+      const weatherIcon = typeof record.weatherIcon === 'string' ? record.weatherIcon : null;
+      const precipMM = normaliseNumber(record.precipMM);
+      const precipProbability = normaliseNumber(record.precipProbability);
 
       return {
         time,
@@ -104,6 +108,10 @@ function parseHourlySeries(input: unknown): FallbackConditionPayload['snapshot']
         waveDirectionDeg: normaliseNumber(record.waveDirectionDeg),
         wavePeriodS: normaliseNumber(record.wavePeriodS),
         windDirectionDeg: normaliseNumber(record.windDirectionDeg),
+        airTempC: airTemp ?? null,
+        weatherIcon: weatherIcon,
+        precipMM: precipMM ?? null,
+        precipProbability: precipProbability ?? null,
       };
     })
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
