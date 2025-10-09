@@ -7,7 +7,7 @@
  * DELETE: Remove favourite
  */
 
-import { createServerSupabaseClient } from '../../../lib/supabase/pages-api';
+import { createServerSupabaseClient } from '../../../../lib/supabase/pages-api';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const SUPABASE_REST_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -61,6 +61,50 @@ interface PredictionResponse {
   weather_summary?: string;
 }
 
+interface FavouriteRecord {
+  id: string;
+  species_id: string;
+  added_at: string;
+  last_checked: string;
+}
+
+interface SpeciesRecord {
+  id: string;
+  species_code: string;
+  scientific_name: string;
+  name_en: string;
+  name_es: string | null;
+  name_fr: string | null;
+  name_de: string | null;
+  name_it: string | null;
+  name_pt: string | null;
+  typical_gear: string[];
+  eating_quality: number;
+  min_depth: number;
+  max_depth: number;
+  wind_sensitivity: string;
+  temperature_sensitivity: string;
+  pressure_sensitivity: string;
+  tide_sensitivity: string;
+  conservation_status: string | null;
+  fun_fact: string | null;
+  advice: Array<{
+    type: string;
+    regions: string;
+    best_time: string;
+    edibility_10: string;
+    tide_sensitivity: string;
+    effect_of_weather: string;
+    effect_of_temperature: string;
+    typical_distance_depth: string;
+    favourite_baits_and_natural_diet: string;
+    restrictions_notes: string;
+    fun_fact?: string;
+    conservation_status?: string;
+    trusted_authority_rules?: string;
+  }>;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Create authenticated Supabase client
   const supabase = createServerSupabaseClient({ req, res });
@@ -96,7 +140,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Get unique species IDs
-        const speciesIds = [...new Set(favourites.map(f => f.species_id))];
+        const typedFavourites = favourites as FavouriteRecord[];
+        const speciesIds = [...new Set(typedFavourites.map(f => f.species_id))];
 
         // Fetch species data separately
         const { data: speciesData, error: speciesError } = await supabase
@@ -131,12 +176,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Create species lookup map
+        const typedSpeciesData = (speciesData || []) as SpeciesRecord[];
         const speciesMap = new Map(
-          (speciesData || []).map(s => [s.id, s])
+          typedSpeciesData.map(s => [s.id, s])
         );
 
         // Extract species codes for live prediction lookup
-        const speciesCodes = (speciesData || [])
+        const speciesCodes = typedSpeciesData
           .map(s => s.species_code?.toUpperCase())
           .filter(Boolean) as string[];
 
@@ -146,7 +192,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           : new Map();
 
         // Build response with live confidence scores
-        const favouritesWithConfidence = favourites.map((fav) => {
+        const favouritesWithConfidence = typedFavourites.map((fav) => {
           const species = speciesMap.get(fav.species_id);
           
           // Skip if species not found (shouldn't happen)
