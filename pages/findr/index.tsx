@@ -169,7 +169,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 </h2>
                 {card.confidence !== null && (
                   <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
-                    {card.confidence}% <TranslatedText text="fish activity" />
+                    {card.confidence}% <TranslatedText text="biting" />
                   </span>
                 )}
               </div>
@@ -424,58 +424,6 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
   </div>
 );
 
-interface QueuePreviewProps {
-  cards: CardData[];
-  rectangleCode: string | null;
-}
-
-const QueuePreview: React.FC<QueuePreviewProps> = ({ cards, rectangleCode }) => {
-  if (cards.length === 0) {
-    return (
-      <div className="card bg-base-100 shadow-md">
-        <div className="card-body text-sm text-base-content/70">
-          <p>Swipe right to stash the fish you want to chase. We’ll list upcoming cards here once the deck fills.</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="card bg-base-100 shadow-md">
-      <div className="card-body space-y-4">
-        <h3 className="card-title text-base flex items-center gap-2">
-          <Sparkles size={18} /> <TranslatedText text="Up next" />
-        </h3>
-        <ul className="space-y-3">
-          {cards.map((card) => (
-            <li key={card.id} className="rounded-lg border border-base-200 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold flex items-center gap-2">
-                    <span className="text-lg" aria-hidden>
-                      {card.emoji}
-                    </span>
-                    <TranslatedFishName name={card.commonName} />
-                  </p>
-                  {card.scientificName && (
-                    <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
-                  )}
-                  <p className="text-xs text-base-content/50 mt-1">{rectangleCode ?? 'Fishing area TBD'}</p>
-                </div>
-                {card.confidence !== null && (
-                  <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
-                    {card.confidence}%
-                  </span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
 interface FavoritesListProps {
   cards: CardData[];
   onToggleFavorite: (cardId: string) => void;
@@ -657,7 +605,6 @@ const FindrPage: React.FC = () => {
 
   const currentCard = cardQueue[0] ?? null;
   const visibleCards = useMemo(() => cardQueue.slice(0, 3), [cardQueue]);
-  const upNext = useMemo(() => cardQueue.slice(1, 4), [cardQueue]);
   const regionLabel = activeOption?.region ?? (manualNormalized ? 'Custom area' : undefined);
 
   const favoriteCards = useMemo(
@@ -703,12 +650,14 @@ const FindrPage: React.FC = () => {
   }, [setPredictionDate]);
 
   const handleSkip = useCallback(() => {
-    setCardQueue((queue) => queue.slice(1));
+    // Move card to back of queue for infinite looping
+    setCardQueue((queue) => (queue.length === 0 ? queue : [...queue.slice(1), queue[0]]));
   }, []);
 
   const handleLike = useCallback((card: CardData) => {
     setFavorites((prev) => (prev.includes(card.id) ? prev : [...prev, card.id]));
-    setCardQueue((queue) => queue.slice(1));
+    // Move card to back of queue for infinite looping
+    setCardQueue((queue) => (queue.length === 0 ? queue : [...queue.slice(1), queue[0]]));
   }, []);
 
   const handleToggleFavorite = useCallback((cardId: string) => {
@@ -826,8 +775,7 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && !loading && !error && currentCard && (
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(0,260px)]">
-                <div className="space-y-4">
+              <div className="space-y-4 max-w-xl mx-auto">
                   <div className="relative h-[460px] sm:h-[520px] w-full">
                     <AnimatePresence initial={false}>
                       {visibleCards.map((card, index) => (
@@ -854,16 +802,9 @@ const FindrPage: React.FC = () => {
                     onLike={handleProgrammaticLike}
                     disabled={!currentCard}
                   />
-                </div>
-                <QueuePreview cards={upNext} rectangleCode={activeRectangle} />
               </div>
             )}
 
-            {activeRectangle && !loading && !error && !currentCard && totalPredictions > 0 && (
-              <div className="alert alert-success">
-                <span>You’ve scouted every fish for this spot today. Reset or refresh to check again later.</span>
-              </div>
-            )}
 
             {activeRectangle && !loading && !error && totalPredictions === 0 && (
               <div className="alert alert-warning">
