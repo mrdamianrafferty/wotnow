@@ -47,6 +47,7 @@ export function LocationDisplay() {
       });
       
       // Update selected code (triggers data refetch via usePersistentFindrSettings)
+      // This updates localStorage and the selectedCode state
       setSelectedCode(rectangleCode);
       setManualCode(''); // Clear manual input
       
@@ -56,18 +57,21 @@ export function LocationDisplay() {
         : `${location.name} (${region})`;
       setLocationName(displayName);
       
-      // Navigate to conditions page with new rectangle
-      // This ensures the URL reflects the current location
-      if (router.pathname === '/findr/conditions') {
-        // Just reload the page with new rectangle in state
-        // usePersistentFindrSettings will pick it up automatically
-        router.reload();
-      } else {
-        // Navigate to conditions page
+      // Close the picker
+      setShowLocationPicker(false);
+      
+      // Navigate to conditions page if not already there
+      // Don't use router.reload() - it causes race condition with localStorage
+      // The useFindrConditions hook will automatically refetch when selectedCode changes
+      if (router.pathname !== '/findr/conditions') {
         await router.push('/findr/conditions');
       }
       
-      setShowLocationPicker(false);
+      console.log('[LocationDisplay] Location updated successfully:', {
+        rectangleCode,
+        region,
+        pathname: router.pathname,
+      });
     } catch (error) {
       console.error('[LocationDisplay] Failed to look up rectangle:', error);
       alert(`Could not find fishing area for this location: ${(error as Error).message}`);
