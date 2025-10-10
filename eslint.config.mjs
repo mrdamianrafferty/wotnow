@@ -32,6 +32,11 @@ const eslintConfig = [
     'next.config.*',
     'postcss.config.js',
     'jest.config.js',
+    // WIP catch logging files (incomplete/experimental)
+    'lib/findr/enrichCatchData.ts',
+    'pages/api/findr/log-catch-enriched.ts',
+    'hooks/useCatchLogger.ts',
+    'types/findr-enrichment.ts',
   ]},
 
   // Small overrides
