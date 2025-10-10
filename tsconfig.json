@@ -33,6 +33,10 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "lib/findr/enrichCatchData.ts",
+    "pages/api/findr/log-catch-enriched.ts",
+    "hooks/useCatchLogger.ts",
+    "types/findr-enrichment.ts"
   ]
 }
