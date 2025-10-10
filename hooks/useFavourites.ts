@@ -48,7 +48,9 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       if (user && autoSync) {
         // Authenticated: Load from Supabase
         try {
-          const response = await fetch('/api/findr/favourites');
+          const response = await fetch('/api/findr/favourites', {
+            credentials: 'include', // Send cookies for authentication
+          });
           const data = await response.json();
           
           if (data.success && data.favourites) {
@@ -115,6 +117,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           await fetch('/api/findr/favourites', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Send cookies for authentication
             body: JSON.stringify({ speciesId }),
           });
         } catch (error) {
@@ -143,6 +146,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         const response = await fetch('/api/findr/favourites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Send cookies for authentication
           body: JSON.stringify({ speciesId }),
         });
 
@@ -178,6 +182,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         
         const response = await fetch(`/api/findr/favourites?id=${idToDelete}`, {
           method: 'DELETE',
+          credentials: 'include', // Send cookies for authentication
         });
 
         const data = await response.json();
