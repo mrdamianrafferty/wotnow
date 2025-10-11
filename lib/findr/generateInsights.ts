@@ -223,6 +223,9 @@ function analyzeLocationPatterns(catches: CatchRecord[], speciesName?: string): 
 
   return insights;
 }
+
+/**
+ * Analyze timing patterns (seasonal trends)
  */
 function analyzeTimingPatterns(catches: CatchRecord[], speciesName?: string): FishingInsight[] {
   const insights: FishingInsight[] = [];

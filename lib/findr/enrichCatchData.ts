@@ -270,7 +270,9 @@ export async function queryEMODnetSubstrate(
 /**
  * Map EMODnet substrate classification to our types
  */
-function mapSubstrateType(raw: string): SubstrateType {
+function mapSubstrateType(raw: string | null): SubstrateType {
+  if (!raw) return 'unknown';
+  
   const normalized = raw.toLowerCase();
   
   if (normalized.includes('rock') || normalized.includes('bedrock')) {
@@ -300,8 +302,7 @@ export async function enrichCatchData(
   catchData: {
     latitude: number | null;
     longitude: number | null;
-    depth_meters?: number | null;
-    substrate?: SubstrateType | null;
+    exifData?: ExifGPSData;
   }
 ): Promise<EnrichedCatchData> {
   const enriched: EnrichedCatchData = {
@@ -319,35 +320,17 @@ export async function enrichCatchData(
     return enriched;
   }
 
-  // Query bathymetry if not provided
-  if (!catchData.depth_meters) {
-    enriched.bathymetry = await queryEMODnetBathymetry(
-      catchData.latitude,
-      catchData.longitude
-    );
-  } else {
-    enriched.bathymetry = {
-      depth_meters: catchData.depth_meters,
-      data_source: 'fallback',
-      confidence: 'medium',
-      query_time: new Date().toISOString(),
-    };
-  }
+  // Query bathymetry
+  enriched.bathymetry = await queryEMODnetBathymetry(
+    catchData.latitude,
+    catchData.longitude
+  );
 
-  // Query substrate if not provided
-  if (!catchData.substrate) {
-    enriched.substrate = await queryEMODnetSubstrate(
-      catchData.latitude,
-      catchData.longitude
-    );
-  } else {
-    enriched.substrate = {
-      substrate: catchData.substrate,
-      data_source: 'fallback',
-      confidence: 'medium',
-      query_time: new Date().toISOString(),
-    };
-  }
+  // Query substrate
+  enriched.substrate = await queryEMODnetSubstrate(
+    catchData.latitude,
+    catchData.longitude
+  );
 
   return enriched;
 }

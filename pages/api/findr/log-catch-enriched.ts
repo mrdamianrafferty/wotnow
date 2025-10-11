@@ -10,11 +10,10 @@ import { calculateDataQualityScore, calculateCatchPoints } from '@/lib/findr/dat
 import type {
   CatchLogRequest,
   CatchLogResponse,
-  CatchEntry,
   CatchEnrichmentResult,
-  LocationSource,
   SubstrateType,
   LogCatchEnrichedResponse,
+  CatchLocationSource,
 } from '@/types/findr-enrichment';
 
 // Disable Next.js body parser for file uploads
@@ -24,7 +23,7 @@ export const config = {
   },
 };
 
-const SUBSTRATE_TYPES: ReadonlySet<SubstrateType> = new Set([
+const SUBSTRATE_TYPES: ReadonlySet<string> = new Set([
   'rock',
   'sand',
   'mud',
@@ -34,9 +33,9 @@ const SUBSTRATE_TYPES: ReadonlySet<SubstrateType> = new Set([
 ]);
 
 const isSubstrateType = (value: string | null): value is SubstrateType =>
-  Boolean(value && SUBSTRATE_TYPES.has(value as SubstrateType));
+  Boolean(value && SUBSTRATE_TYPES.has(value));
 
-const normalizeSubstrate = (value: string | null): SubstrateType | null => {
+const _normalizeSubstrate = (value: string | null): SubstrateType | null => {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
   return isSubstrateType(normalized) ? (normalized as SubstrateType) : null;
@@ -137,7 +136,7 @@ export default async function handler(
       longitude: null as number | null,
       hasGPS: false,
     };
-    let locationSource: LocationSource = 'rectangle_center';
+    let locationSource: CatchLocationSource = 'rectangle_center';
 
     const photoFile = files.photo as FormidableFile | FormidableFile[] | undefined;
     
@@ -193,6 +192,9 @@ export default async function handler(
           });
 
         photoThumbnailUrl = thumbnailData.publicUrl ?? null;
+
+        // Note: photoThumbnailUrl is for future use in UI optimization
+        void photoThumbnailUrl;
       }
     } else {
       warnings.push('No photo provided; some enrichment signals may be unavailable.');
@@ -225,8 +227,13 @@ export default async function handler(
     const enrichedData = await enrichCatchData({
       latitude: finalLatitude,
       longitude: finalLongitude,
-      depth_meters: getNumberValue(fields.depth_meters),
-      substrate: normalizeSubstrate(getFieldValue(fields.substrate)),
+      exifData: {
+        latitude: exifGPS.latitude,
+        longitude: exifGPS.longitude,
+        altitude: null,
+        timestamp: null,
+        hasGPS: exifGPS.hasGPS,
+      },
     });
 
     // Prepare catch entry data
@@ -240,13 +247,13 @@ export default async function handler(
       hasGPS: exifGPS.hasGPS,
       hasUserLocation,
       hasDepth: !!enrichedData.bathymetry?.depth_meters,
-      hasSubstrate: !!enrichedData.substrate?.substrate,
+      hasSubstrate: !!enrichedData.substrate?.substrate && enrichedData.substrate.substrate !== 'unknown',
       hasNotes,
       hasEnvironmentalData: hasEnvironmentalConditions,
       entryType,
     });
 
-    const catchEntry: Omit<CatchEntry, 'id' | 'created_at' | 'updated_at'> = {
+    const catchEntry: Record<string, unknown> = {
       user_id: userId,
       species_name: speciesName,
       quantity,
@@ -320,7 +327,6 @@ export default async function handler(
       catchId: insertedCatch?.id ?? null,
       photoUrl,
       photoStoragePath,
-      photoThumbnailUrl,
       enrichment: enrichmentStatus,
       warnings,
       message: 'Catch logged successfully',
@@ -332,8 +338,20 @@ export default async function handler(
     const response: CatchLogResponse = {
       success: true,
       message: 'Catch logged successfully',
-      catch: insertedCatch as CatchEntry & { id: string; created_at: string },
-      enrichment: enrichmentStatus,
+      catch: {
+        id: insertedCatch?.id ?? null,
+        depth_meters: enrichedData.bathymetry?.depth_meters ?? null,
+        substrate: enrichedData.substrate?.substrate ?? null,
+      },
+      enrichment: {
+        has_exif_gps: exifGPS.hasGPS,
+        depth_found: !!enrichedData.bathymetry?.depth_meters,
+        substrate_found: !!enrichedData.substrate?.substrate && enrichedData.substrate.substrate !== 'unknown',
+        conditions_found: hasEnvironmentalConditions,
+        enrichment_timestamp: enrichedData.enrichment_timestamp,
+        depth_meters: enrichedData.bathymetry?.depth_meters ?? null,
+        substrate: enrichedData.substrate?.substrate ?? null,
+      },
       points_earned: pointsEarned,
       warnings,
       raw: rawResponse,

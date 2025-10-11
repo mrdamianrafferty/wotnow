@@ -6,6 +6,7 @@ import { FALLBACK_CONDITIONS, type FallbackConditionPayload } from '../../../lib
 import { FALLBACK_RECTANGLE_OPTIONS } from '../../../lib/findr/fallbackRectangles';
 import { normalizeRectangleCode } from '../../../lib/findr/rectangle';
 
+
 type ConditionsSource = 'supabase' | 'fallback';
 
 interface ConditionsRow {

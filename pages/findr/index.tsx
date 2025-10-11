@@ -39,6 +39,8 @@ import { normalizeRectangleCode } from '../../lib/findr/rectangle';
 import { getTodayIso } from '../../lib/date/today';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 import '../../lib/buildInfo'; // Log build metadata on mount
+import { CatchEntry as _CatchEntry } from '../../types/aiRecommendations';
+import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFishDeck';
 
 const TODAY_ISO = getTodayIso();
 

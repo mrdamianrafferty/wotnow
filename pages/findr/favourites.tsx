@@ -34,6 +34,7 @@ import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
+import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 
 const TODAY_ISO = getTodayIso();
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
