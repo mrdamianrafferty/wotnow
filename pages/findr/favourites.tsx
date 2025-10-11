@@ -33,6 +33,7 @@ import { normalizeRectangleCode } from '../../lib/findr/rectangle';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
+import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 
 const TODAY_ISO = getTodayIso();
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
@@ -128,6 +129,45 @@ interface FavouriteEntry {
   imageSource: 'prediction' | 'fallback';
   recencyScore: number;
   advice?: SpeciesAdvice[];
+  forecast?: number[] | null;
+}
+
+interface FavouriteMetadata {
+  id: string;
+  speciesId: string;
+  speciesCode?: string;
+  name?: string;
+  scientificName?: string;
+  image?: CardImage | null;
+  confidence?: number | null;
+  forecast?: number[] | null;
+  catches?: number | null;
+  baitTips?: string[];
+  addedAt?: string;
+}
+
+interface FavouritesApiResponseItem {
+  id: string;
+  speciesId?: string;
+  species_id?: string;
+  speciesCode?: string;
+  species_code?: string;
+  name?: string;
+  name_en?: string;
+  scientificName?: string;
+  scientific_name?: string;
+  image?: string | null;
+  confidence?: number | null;
+  forecast?: number[] | null;
+  advice?: Array<{
+    favourite_baits_and_natural_diet?: string | null;
+  }> | null;
+  stats?: {
+    catches?: number | null;
+    lastCaught?: string | null;
+  } | null;
+  addedAt?: string;
+  added_at?: string;
 }
 
 function hashString(input: string): number {
@@ -203,6 +243,35 @@ function generate7DayForecast(currentConfidence: number | null, fishId: string):
   }
   
   return forecast;
+}
+
+function buildFallbackCardImage(
+  speciesCode?: string | null,
+  explicitUrl?: string | null,
+  fallbackName?: string | null
+): CardImage | null {
+  if (speciesCode) {
+    const info = SPECIES_IMAGE_MAP[speciesCode.toUpperCase()];
+    if (info) {
+      return {
+        src: info.image,
+        alt: info.name,
+        mobile: info.mobile ?? null,
+        thumb: info.thumb ?? null,
+      };
+    }
+  }
+
+  if (explicitUrl) {
+    return {
+      src: explicitUrl,
+      alt: fallbackName ?? 'Fish illustration',
+      mobile: null,
+      thumb: null,
+    };
+  }
+
+  return null;
 }
 
 
@@ -304,6 +373,7 @@ const FindrFavouritesPage: React.FC = () => {
   const [swipeStates, setSwipeStates] = useState<Record<string, { x: number; y: number; swiping: boolean }>>({});
   const [favorites, setFavorites] = useState<string[] | null>(null);
   const [favouriteIdMap, setFavouriteIdMap] = useState<Map<string, string>>(new Map()); // Map species_id -> favourite_id
+  const [favouriteMetadata, setFavouriteMetadata] = useState<Map<string, FavouriteMetadata>>(new Map());
   const [priorityIds, setPriorityIds] = useState<string[]>([]);
   const [isLoadingFavourites, setIsLoadingFavourites] = useState(false);
 
@@ -374,18 +444,67 @@ const FindrFavouritesPage: React.FC = () => {
       const response = await fetch('/api/findr/favourites');
       const data = await response.json();
       
-      if (data.success && data.favourites) {
+      if (data.success && Array.isArray(data.favourites)) {
         // Extract species IDs and build mapping to favourite IDs
         const speciesIds: string[] = [];
         const idMap = new Map<string, string>();
+        const metadataMap = new Map<string, FavouriteMetadata>();
         
-        data.favourites.forEach((fav: { id: string; speciesId: string }) => {
-          speciesIds.push(fav.speciesId);
-          idMap.set(fav.speciesId, fav.id); // Map species_id -> favourite_id
+        (data.favourites as FavouritesApiResponseItem[]).forEach((fav) => {
+          const rawSpeciesId = fav.speciesId ?? fav.species_id ?? '';
+          const speciesId = rawSpeciesId.trim();
+          if (!speciesId) {
+            return;
+          }
+
+          const speciesCodeRaw = fav.speciesCode ?? fav.species_code ?? '';
+          const speciesCode = speciesCodeRaw ? speciesCodeRaw.toUpperCase() : undefined;
+          const speciesImage = buildFallbackCardImage(
+            speciesCode,
+            fav.image ?? null,
+            fav.name ?? fav.name_en ?? null
+          );
+          const adviceEntries = Array.isArray(fav.advice) ? fav.advice : [];
+          const baitTips = adviceEntries
+            .map((advice) => advice?.favourite_baits_and_natural_diet?.trim())
+            .filter((value): value is string => Boolean(value && value.length > 0));
+
+          const nameHint =
+            fav.name ??
+            fav.name_en ??
+            (speciesCode && SPECIES_IMAGE_MAP[speciesCode]?.name) ??
+            null;
+          const scientificHint =
+            fav.scientificName ??
+            fav.scientific_name ??
+            (speciesCode && SPECIES_IMAGE_MAP[speciesCode]?.scientificName) ??
+            undefined;
+
+          speciesIds.push(speciesId);
+          idMap.set(speciesId, fav.id); // Map species_id -> favourite_id
+          metadataMap.set(speciesId, {
+            id: fav.id,
+            speciesId,
+            speciesCode,
+            name: nameHint ?? undefined,
+            scientificName: scientificHint ?? undefined,
+            image: speciesImage,
+            confidence: typeof fav.confidence === 'number' ? fav.confidence : null,
+            forecast: Array.isArray(fav.forecast) && fav.forecast.length > 0 ? fav.forecast : null,
+            catches:
+              typeof fav.stats?.catches === 'number'
+                ? fav.stats.catches
+                : Number.isFinite(Number(fav.stats?.catches))
+                  ? Number(fav.stats?.catches)
+                  : null,
+            baitTips: baitTips && baitTips.length > 0 ? baitTips : undefined,
+            addedAt: fav.addedAt ?? fav.added_at,
+          });
         });
         
         setFavorites(speciesIds);
         setFavouriteIdMap(idMap);
+        setFavouriteMetadata(metadataMap);
         
         // TODO: Extract priority flags when we add that to the API
         // For now, keep local storage for priorities as fallback
@@ -404,11 +523,13 @@ const FindrFavouritesPage: React.FC = () => {
         console.error('Failed to load favourites:', data.error);
         setFavorites([]);
         setFavouriteIdMap(new Map());
+        setFavouriteMetadata(new Map());
       }
     } catch (error) {
       console.error('Failed to load favourites:', error);
       setFavorites([]);
       setFavouriteIdMap(new Map());
+      setFavouriteMetadata(new Map());
     } finally {
       setIsLoadingFavourites(false);
     }
@@ -464,43 +585,60 @@ const FindrFavouritesPage: React.FC = () => {
     return list.map((id) => {
       const card = cards.find((item) => item.id === id) ?? null;
       const insight = insightMap.get(id);
+      const metadata = favouriteMetadata.get(id);
       const mock = generateMockDetail(id);
       const bestBaitFromPrediction = card?.baitSuggestions.find((item) => item.trim().length > 0);
       const bestBaitFromInsights = insight?.bestBait?.trim();
+      const bestBaitFromMetadata = metadata?.baitTips?.find((item) => item.trim().length > 0);
+      const derivedConfidence =
+        card?.confidence ?? (typeof metadata?.confidence === 'number' ? metadata.confidence : null);
       const bestBait =
         bestBaitFromPrediction ??
-        (bestBaitFromInsights && bestBaitFromInsights.length > 0 ? bestBaitFromInsights : pickFrom(BAIT_FALLBACKS, id, 'bait'));
+        (bestBaitFromInsights && bestBaitFromInsights.length > 0
+          ? bestBaitFromInsights
+          : bestBaitFromMetadata && bestBaitFromMetadata.length > 0
+            ? bestBaitFromMetadata
+            : pickFrom(BAIT_FALLBACKS, id, 'bait'));
       const bestBaitSource: FavouriteEntry['bestBaitSource'] = bestBaitFromPrediction
         ? 'prediction'
         : bestBaitFromInsights
           ? insight?.bestBaitSource ?? 'supabase'
-          : 'mock';
+          : bestBaitFromMetadata
+            ? 'supabase'
+            : 'mock';
+      const image = card?.image ?? metadata?.image ?? undefined;
+      const imageSource: FavouriteEntry['imageSource'] = card?.image ? 'prediction' : 'fallback';
+      const name = card?.commonName ?? metadata?.name ?? 'Saved fish';
+      const scientificName = card?.scientificName ?? metadata?.scientificName;
+      const catches = insight?.catches ?? metadata?.catches ?? mock.catches;
+      const forecast = metadata?.forecast ?? null;
 
       return {
         id,
         card,
-        name: card?.commonName ?? 'Saved fish',
-        scientificName: card?.scientificName,
+        name,
+        scientificName,
         emoji: card?.emoji ?? '🐟',
-        confidence: card?.confidence ?? null,
+        confidence: derivedConfidence,
         bestBait,
         bestBaitSource,
-        season: deriveSeasonLabel(card?.confidence ?? null, insight?.seasonLabel ?? mock.seasonFallback),
+        season: deriveSeasonLabel(derivedConfidence, insight?.seasonLabel ?? mock.seasonFallback),
         lastPerfectConditions: insight?.lastPerfectConditions ?? mock.lastPerfectConditions,
         swipedDate: insight?.swipedDateLabel ?? mock.swipedDate,
-        catches: insight?.catches ?? mock.catches,
+        catches,
         recentActivity: insight?.recentActivity ?? card?.summary ?? mock.recentActivity,
         nextBestDay: insight?.nextBestDay ?? mock.nextBestDay,
         isPriority: prioritySet.has(id),
-        isMockOnly: card === null,
+        isMockOnly: card === null && typeof metadata?.confidence !== 'number' && !metadata?.forecast,
         playfulBio: card?.playfulBio,
-        image: card?.image,
-        imageSource: card?.image ? 'prediction' : 'fallback',
+        image,
+        imageSource,
         recencyScore: insight?.recencyScore ?? mock.recencyScore,
         advice: card?.advice,
+        forecast,
       } satisfies FavouriteEntry;
     });
-  }, [favorites, cards, prioritySet, insightMap]);
+  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap]);
 
   useEffect(() => {
     console.info('[Findr Favourites] Using hard-coded engagement datasets until Supabase integrations land.', {
@@ -612,6 +750,11 @@ const FindrFavouritesPage: React.FC = () => {
         return prev.filter((item) => item !== speciesId);
       });
       setPriorityIds((prev) => prev.filter((item) => item !== speciesId));
+      setFavouriteMetadata((prev) => {
+        const next = new Map(prev);
+        next.delete(speciesId);
+        return next;
+      });
       
       // Get the favourite ID from the map
       const favouriteId = favouriteIdMap.get(speciesId);
@@ -635,6 +778,11 @@ const FindrFavouritesPage: React.FC = () => {
       } else {
         // Remove from map
         setFavouriteIdMap((prev) => {
+          const next = new Map(prev);
+          next.delete(speciesId);
+          return next;
+        });
+        setFavouriteMetadata((prev) => {
           const next = new Map(prev);
           next.delete(speciesId);
           return next;
@@ -1097,7 +1245,7 @@ const FindrFavouritesPage: React.FC = () => {
                     </p>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {groupedFavourites.active.map((entry) => {
-                        const forecast = generate7DayForecast(entry.confidence, entry.id);
+                        const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
                         return (
                                                     <ActiveSpeciesCard
                             key={entry.id}
@@ -1143,7 +1291,7 @@ const FindrFavouritesPage: React.FC = () => {
                     </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {groupedFavourites.good.map((entry) => {
-                        const forecast = generate7DayForecast(entry.confidence, entry.id);
+                        const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
                         return (
                           <GoodSpeciesCard
                             key={entry.id}
@@ -1188,7 +1336,7 @@ const FindrFavouritesPage: React.FC = () => {
                     </p>
                                         <div className="space-y-2">
                       {groupedFavourites.waiting.map((entry) => {
-                        const forecast = generate7DayForecast(entry.confidence, entry.id);
+                        const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
                         return (
                           <WaitingSpeciesCard
                             key={entry.id}

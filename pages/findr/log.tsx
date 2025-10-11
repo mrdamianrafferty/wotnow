@@ -1173,7 +1173,7 @@ export default function FindrCatchLogPage() {
         toast.success(`🌊 Depth: ${response.enrichment.depth_meters ?? 'unknown'} m`);
       }
       if (response.enrichment.substrate_found && response.enrichment.substrate) {
-        toast.success(`🪨 Substrate: ${response.enrichment.substrate}`);
+        toast.success(`🪨 Seabed type: ${response.enrichment.substrate}`);
       }
 
       void fetchLoggedSessions();

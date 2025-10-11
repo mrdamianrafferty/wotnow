@@ -304,11 +304,15 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
         const targetX = direction === 'right' ? viewportWidth * 0.75 : -viewportWidth * 0.75;
         const controls = animate(x, targetX, { duration: 0.28, ease: 'easeInOut' });
         await controls.finished;
+        // Trigger handlers which update card queue
         if (direction === 'right') {
           onSwipedRight(card);
         } else {
           onSwipedLeft();
         }
+        // Small delay to allow React to process the state update
+        // This ensures the next card is properly positioned before allowing interaction
+        await new Promise(resolve => setTimeout(resolve, 50));
         swiping.current = false;
       },
       [card, isTop, onSwipedLeft, onSwipedRight, x]
