@@ -38,6 +38,7 @@ import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettin
 import { normalizeRectangleCode } from '../../lib/findr/rectangle';
 import { getTodayIso } from '../../lib/date/today';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
+import '../../lib/buildInfo'; // Log build metadata on mount
 
 const TODAY_ISO = getTodayIso();
 
