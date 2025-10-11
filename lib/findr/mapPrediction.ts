@@ -342,7 +342,13 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
   ]);
 
   const imageInfo = resolveSpeciesImage(speciesCode, commonName);
-  const playfulBio = getFindrFishBio(commonName);
+  
+  // Prefer bio from prediction data (Supabase), fallback to hardcoded bios
+  const bioFromPrediction = typeof prediction.playful_bio === 'string' && prediction.playful_bio.trim().length > 0
+    ? prediction.playful_bio.trim()
+    : null;
+  const playfulBio = bioFromPrediction || getFindrFishBio(commonName);
+  
   const localizedNames =
     parseLocalizedSpeciesNames(prediction.localized_names as JsonValue | undefined) ||
     parseLocalizedSpeciesNames(prediction.localizedNames as JsonValue | undefined);

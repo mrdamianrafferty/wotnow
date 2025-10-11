@@ -41,14 +41,26 @@ import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 
 const TODAY_ISO = getTodayIso();
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeFavouriteKey(value?: string | null): string {
+  if (!value) return '';
+  const trimmed = value.trim();
+  if (!trimmed) return trimmed;
+  if (UUID_PATTERN.test(trimmed)) {
+    return trimmed;
+  }
+  return trimmed.toUpperCase();
+}
+
 function getFavouriteKeyFromCard(card: CardData): string {
   if (card.speciesId && card.speciesId.trim().length > 0) {
-    return card.speciesId.trim();
+    return normalizeFavouriteKey(card.speciesId);
   }
   if (card.speciesCode && card.speciesCode.trim().length > 0) {
-    return card.speciesCode.trim().toUpperCase();
+    return normalizeFavouriteKey(card.speciesCode);
   }
-  return card.id.trim().toUpperCase();
+  return normalizeFavouriteKey(card.id);
 }
 
 function confidenceBadgeClasses(confidence: number | null, size: 'lg' | 'sm' = 'lg'): string {

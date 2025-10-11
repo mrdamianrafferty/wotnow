@@ -32,6 +32,7 @@ interface SpeciesLocalizationRow {
   name_de: string | null;
   name_it: string | null;
   name_pt: string | null;
+  playful_bio_en: string | null;
 }
 
 type LocalizedNameMap = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
@@ -265,7 +266,7 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
   if (speciesCodes.size > 0) {
     const { data, error } = await supabase
       .from('species')
-      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt')
+      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
       .in('species_code', Array.from(speciesCodes));
 
     if (error) {
@@ -288,7 +289,7 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
   if (remainingScientific.length > 0) {
     const { data, error } = await supabase
       .from('species')
-      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt')
+      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
       .in('scientific_name', remainingScientific);
 
     if (error) {
@@ -358,6 +359,11 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 
     if (!result.species_scientific_name && match.scientific_name) {
       result.species_scientific_name = match.scientific_name as unknown as JsonValue;
+    }
+
+    // Add playful bio from Supabase if available
+    if (match.playful_bio_en && typeof match.playful_bio_en === 'string' && match.playful_bio_en.trim().length > 0) {
+      result.playful_bio = match.playful_bio_en.trim() as unknown as JsonValue;
     }
 
     return result;
