@@ -847,7 +847,7 @@ const FindrPage: React.FC = () => {
                 </span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {cards.map((card, index) => (
+                {cards.map((card) => (
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -869,9 +869,25 @@ const FindrPage: React.FC = () => {
                             <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
                           )}
                         </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className="text-xs text-base-content/50">#{index + 1}</span>
-                        </div>
+                        <button
+                          type="button"
+                          className={`btn btn-ghost btn-sm ${
+                            favoritesSet.has(getFavouriteKeyFromCard(card))
+                              ? 'text-error hover:text-error'
+                              : 'text-base-content/60 hover:text-error'
+                          }`}
+                          onClick={() => handleToggleFavorite(card)}
+                          aria-label={
+                            favoritesSet.has(getFavouriteKeyFromCard(card))
+                              ? 'Remove from favourites'
+                              : 'Add to favourites'
+                          }
+                        >
+                          <Heart
+                            size={16}
+                            fill={favoritesSet.has(getFavouriteKeyFromCard(card)) ? 'currentColor' : 'none'}
+                          />
+                        </button>
                       </div>
                       {card.summary && (
                         <p className="text-sm leading-relaxed text-base-content/80">

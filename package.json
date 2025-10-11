@@ -16,6 +16,8 @@
     "test": "jest",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "vercel-build": "./vercel-build.sh",
+    "deploy": "./deploy.sh",
+    "deploy:quick": "./quick-deploy.sh",
     "astro:canaries": "cd services/astro_highlights/astro_highlights && .venv/bin/python run_canaries.py",
     "test:wind": "jest __tests__/windRecommendations.test.ts",
     "demo:wind": "tsx test-scripts/demo-wind.ts",

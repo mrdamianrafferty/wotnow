@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { activityTypes } from '../data/activityTypes';
 
 // --- Types ---
@@ -54,18 +54,33 @@ const waterActivityIds = [
 ];
 
 const DEFAULT_HOME_LOCATION: Location = {
-  name: "Colunga, Asturias",
-  lat: 43.4667,
-  lon: -5.45,
+  name: 'London, UK',
+  lat: 51.5074,
+  lon: -0.1278,
   type: 'home',
 };
 
 const DEFAULT_COASTAL_LOCATION: Location = {
-  name: "Playa de La Griega", // You can customize for your region!
-  lat: 43.4898,
-  lon: -5.2716,
+  name: 'Brighton Beach',
+  lat: 50.8198,
+  lon: -0.1367,
   type: 'coastal',
 };
+
+const DEFAULT_INTEREST_IDS = [
+  'hiking',
+  'running',
+  'cycling',
+  'dog_walking',
+  'gym_workout',
+  'yoga',
+  'picnicking',
+  'bbq',
+  'cinema',
+  'museum',
+  'cafe',
+  'going_to_pub',
+] as const;
 
 const defaultEventPreferences: EventPreferences = {
   sport: false,
@@ -78,7 +93,7 @@ const defaultEventPreferences: EventPreferences = {
 
 const defaultPreferences: Preferences = {
   locations: [DEFAULT_HOME_LOCATION],
-  interests: [],
+  interests: [...DEFAULT_INTEREST_IDS],
   forecast: [],
   category: 'Music',
   genre: '',
@@ -173,6 +188,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (typeof window === 'undefined') return defaultPreferences;
     return loadPreferencesFromStorage() ?? defaultPreferences;
   });
+  const ipBootstrapAttempted = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -211,6 +227,58 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
       window.removeEventListener('storage', handleStorage);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (ipBootstrapAttempted.current) return;
+    const stored = loadPreferencesFromStorage();
+    if (stored) return;
+    ipBootstrapAttempted.current = true;
+
+    void (async () => {
+      let bootstrapSource: 'ip' | 'fallback' = 'fallback';
+      try {
+        const response = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
+        if (response.ok) {
+          const payload = await response.json();
+          const latitude = Number(payload?.latitude);
+          const longitude = Number(payload?.longitude);
+          if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+            bootstrapSource = 'ip';
+            const city = typeof payload?.city === 'string' && payload.city.trim().length > 0 ? payload.city.trim() : null;
+            const region = typeof payload?.region === 'string' && payload.region.trim().length > 0 ? payload.region.trim() : null;
+            const country = typeof payload?.country_name === 'string' && payload.country_name.trim().length > 0 ? payload.country_name.trim() : null;
+            const displayName = [city, region].filter(Boolean).join(', ') || country || 'Your area';
+
+            setPreferences((prev) => {
+              const withoutHome = Array.isArray(prev.locations) ? prev.locations.filter((loc) => loc?.type !== 'home') : [];
+              return {
+                ...prev,
+                locations: [
+                  {
+                    name: displayName,
+                    lat: latitude,
+                    lon: longitude,
+                    type: 'home' as const,
+                  },
+                  ...withoutHome,
+                ],
+              };
+            });
+          }
+        }
+      } catch (error) {
+        console.info('IP bootstrap failed, falling back to default London location', error);
+      } finally {
+        try {
+          localStorage.setItem('godaisy.bootstrap-applied', '1');
+          localStorage.setItem('godaisy.bootstrap-source', bootstrapSource);
+        } catch (err) {
+          console.warn('Failed to persist bootstrap metadata', err);
+        }
+      }
+    })();
+  }, [setPreferences]);
 
   // --- Auto-detect home location if not set ---
   useEffect(() => {
