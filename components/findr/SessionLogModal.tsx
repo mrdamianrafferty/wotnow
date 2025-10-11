@@ -19,15 +19,16 @@ import {
   X, Calendar, Clock, MapPin, Camera, Plus, Trash2, 
   Fish, Target, AlertCircle, Check 
 } from 'lucide-react';
-import { useCatchLog, type CatchEntry, type CreateCatchData } from '../../hooks/useCatchLog';
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import type { CatchLogInput } from '@/types/findr-enrichment';
 
 // Types
 interface SessionLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (catchEntries: CatchEntry[]) => void;
+  onSuccess: (catchCount: number) => void;
+  onSubmitCatch: (input: CatchLogInput) => Promise<unknown>;
   rectangleCode?: string;
 }
 
@@ -80,7 +81,54 @@ const TIME_PERIODS: { value: TimePeriod; label: string; hours: string }[] = [
   { value: 'night', label: 'Night', hours: '10PM - 5AM' },
 ];
 
-export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E8' }: SessionLogModalProps) {
+const HABITAT_LABELS: Record<HabitatType, string> = {
+  rocky_shore: 'Rocky Shore',
+  sandy_beach: 'Sandy Beach',
+  pier_harbor: 'Pier/Harbor',
+  estuary: 'Estuary',
+  shallow_water: 'Shallow Water',
+  deep_water: 'Deep Water',
+  wreck_reef: 'Wreck/Reef',
+  open_sea: 'Open Sea',
+};
+
+const TIME_PERIOD_TO_TIME: Record<TimePeriod, string> = {
+  morning: '08:00:00',
+  afternoon: '14:00:00',
+  evening: '19:00:00',
+  night: '23:00:00',
+};
+
+async function requestUserLocation(): Promise<{ lat: number; lon: number } | null> {
+  if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+    return null;
+  }
+
+  return await new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      () => resolve(null),
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
+export function SessionLogModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  onSubmitCatch,
+  rectangleCode = '31E8',
+}: SessionLogModalProps) {
   // Form state
   const [sessionDate, setSessionDate] = useState(() => {
     const today = new Date();
@@ -88,6 +136,7 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
   });
   const [timePeriods, setTimePeriods] = useState<TimePeriod[]>(['afternoon']);
   const [habitat, setHabitat] = useState<HabitatType>('rocky_shore');
+  const [durationHours, setDurationHours] = useState(2);
   const [catches, setCatches] = useState<CatchFormEntry[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
   
@@ -95,9 +144,6 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Hooks
-  const { logCatch } = useCatchLog();
   
   // Helper to get species info
   const getSpeciesInfo = useCallback((speciesCode: string): SpeciesImageInfo | null => {
@@ -177,13 +223,13 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
   // Form validation
   const canProceedFromStep = useCallback((step: number): boolean => {
     switch (step) {
-      case 1: return sessionDate.length > 0 && timePeriods.length > 0;
+      case 1: return sessionDate.length > 0 && timePeriods.length > 0 && durationHours > 0;
       case 2: return habitat.length > 0;
       case 3: return catches.length > 0 && catches.every(c => c.species_id && c.quantity > 0);
       case 4: return true; // Photos are optional
       default: return false;
     }
-  }, [sessionDate, timePeriods, habitat, catches]);
+  }, [sessionDate, timePeriods, durationHours, habitat, catches]);
   
   // Submit the session
   const handleSubmit = useCallback(async () => {
@@ -197,47 +243,85 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
     
     try {
       // Convert session date to ISO timestamp for each catch
-      const sessionDateTime = new Date(`${sessionDate}T12:00:00.000Z`).toISOString();
-      
-      // Create catch entries for each species
-      const catchPromises = catches.map(async (catch_) => {
+      const representativeTime = timePeriods.length
+        ? TIME_PERIOD_TO_TIME[timePeriods[0]]
+        : null;
+
+      const userLocation = await requestUserLocation();
+      const primaryPhoto = photos[0] ?? null;
+
+      for (const [index, catch_] of catches.entries()) {
         const speciesInfo = getSpeciesInfo(catch_.species_id);
         if (!speciesInfo) {
           throw new Error(`Species information not found for ${catch_.species_id}`);
         }
-        
-        const catchData: CreateCatchData = {
-          species_id: catch_.species_id,
-          species_common_name: speciesInfo.name,
-          scientific_name: speciesInfo.scientificName || undefined,
-          rectangle_code: rectangleCode,
-          caught_at: sessionDateTime,
-          quantity: catch_.quantity,
-          size_category: catch_.size_category,
+
+        const notesSegments = [
+          `Bait: ${catch_.bait_used}`,
+          `Habitat: ${HABITAT_LABELS[habitat] ?? habitat}`,
+          timePeriods.length ? `Time: ${timePeriods.map(period => period.replace('_', ' ')).join(' & ')}` : null,
+          catch_.notes ? `Notes: ${catch_.notes}` : null,
+        ].filter(Boolean);
+
+        const env: Record<string, string | number> = {
+          session_time_periods: timePeriods.join(', '),
+          session_duration_hours: durationHours,
+          session_habitat: habitat,
           bait_used: catch_.bait_used,
-          habitat_type: habitat,
-          method: 'shore', // Default for session logs
-          notes: catch_.notes,
-          followed_findr_advice: true,
-          // TODO: Add photo URLs when photo upload is implemented
-          photo_urls: [], 
         };
-        
-        return logCatch(catchData);
-      });
-      
-      const results = await Promise.all(catchPromises);
-      
+
+        if (photos.length > 0) {
+          env.session_photo_count = photos.length;
+        };
+
+        const result = await onSubmitCatch({
+          speciesId: catch_.species_id,
+          speciesCommonName: speciesInfo.name,
+          scientificName: speciesInfo.scientificName ?? null,
+          rectangleCode,
+          catchDate: sessionDate,
+          catchTime: representativeTime,
+          quantity: catch_.quantity,
+          sizeCategory: catch_.size_category,
+          baitUsed: catch_.bait_used,
+          habitatType: habitat,
+          method: 'shore',
+          notes: notesSegments.join(' | ') || undefined,
+          entryType: 'detailed',
+          photo: index === 0 ? primaryPhoto : null,
+          userLocation: userLocation ?? undefined,
+          environmentalConditions: env,
+        });
+
+        if (result == null) {
+          throw new Error('Session catch failed to log; please try again.');
+        }
+      }
+
       // Success
-      onSuccess(results);
+      onSuccess(catches.length);
       handleClose();
       
     } catch (err) {
       console.error('[SessionLogModal] Failed to log session:', err);
       setError(err instanceof Error ? err.message : 'Failed to log session');
+    } finally {
       setIsSubmitting(false);
     }
-  }, [catches, sessionDate, habitat, rectangleCode, getSpeciesInfo, logCatch, onSuccess, handleClose, canProceedFromStep]);
+  }, [
+    catches,
+    sessionDate,
+    timePeriods,
+    habitat,
+    rectangleCode,
+    photos,
+    durationHours,
+    getSpeciesInfo,
+    onSubmitCatch,
+    onSuccess,
+    handleClose,
+    canProceedFromStep,
+  ]);
   
   if (!isOpen) return null;
   
@@ -343,6 +427,26 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Duration */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">
+                  <Clock className="w-4 h-4 inline mr-2" />
+                  <TranslatedText text="Duration (hours)" />
+                </span>
+              </label>
+              <input
+                type="number"
+                min="0.5"
+                max="24"
+                step="0.5"
+                value={durationHours}
+                onChange={(e) => setDurationHours(Math.max(0.5, Number(e.target.value) || 0.5))}
+                className="input input-bordered"
+                disabled={isSubmitting}
+              />
             </div>
             
             {/* Navigation */}
@@ -586,6 +690,7 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
               <input
                 type="file"
                 accept="image/*"
+                capture="environment"
                 multiple
                 onChange={handlePhotoAdd}
                 className="file-input file-input-bordered"
@@ -622,6 +727,7 @@ export function SessionLogModal({ isOpen, onClose, onSuccess, rectangleCode = '3
               </h4>
               <div className="text-xs space-y-1 text-base-content/80">
                 <div>📅 {sessionDate} • {timePeriods.join(', ')}</div>
+                <div>⏱️ {durationHours} h</div>
                 <div>🎯 {HABITAT_OPTIONS.find(h => h.value === habitat)?.label}</div>
                 <div>🐟 {catches.length} catch{catches.length !== 1 ? 'es' : ''} • {catches.reduce((sum, c) => sum + c.quantity, 0)} fish total</div>
                 {photos.length > 0 && <div>📸 {photos.length} photo{photos.length !== 1 ? 's' : ''}</div>}

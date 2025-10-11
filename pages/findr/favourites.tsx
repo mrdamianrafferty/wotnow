@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -288,6 +288,11 @@ function getConfidenceCardClass(confidence: number | null): string {
 
 const FindrFavouritesPage: React.FC = () => {
   const router = useRouter();
+  const routerRef = useRef(router);
+
+  useEffect(() => {
+    routerRef.current = router;
+  }, [router]);
   
   // Auth state
   const [user, setUser] = useState<User | null>(null);
@@ -309,45 +314,60 @@ const FindrFavouritesPage: React.FC = () => {
 
   const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
   const activeRectangle = manualNormalized ?? (selectedCode || null);
+  const userId = user?.id ?? null;
 
   // Check authentication on mount
   useEffect(() => {
+    let isMounted = true;
+
+    const redirectToAuth = () => {
+      void routerRef.current.push('/findr/auth?returnTo=/findr/favourites');
+    };
+
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
         setUser(session?.user ?? null);
-        
-        // Redirect to auth if not logged in
+
         if (!session?.user) {
-          router.push('/findr/auth?returnTo=/findr/favourites');
+          redirectToAuth();
           return;
         }
       } catch (error) {
         console.error('Auth check failed:', error);
-        router.push('/findr/auth?returnTo=/findr/favourites');
+        if (!isMounted) return;
+        redirectToAuth();
       } finally {
+        if (!isMounted) return;
         setAuthLoading(false);
       }
     };
 
-    checkAuth();
+    void checkAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) {
+        return;
+      }
+
       setUser(session?.user ?? null);
       if (!session?.user) {
-        router.push('/findr/auth?returnTo=/findr/favourites');
+        redirectToAuth();
       }
     });
 
     return () => {
       subscription.unsubscribe();
+      isMounted = false;
     };
-  }, [router]);
+  }, []);
 
   // Load favourites from API when user is authenticated
   const loadFavourites = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     
     setIsLoadingFavourites(true);
     try {
@@ -392,14 +412,14 @@ const FindrFavouritesPage: React.FC = () => {
     } finally {
       setIsLoadingFavourites(false);
     }
-  }, [user]);
+  }, [userId]);
 
   // Load favourites when user is authenticated
   useEffect(() => {
-    if (user) {
-      loadFavourites();
+    if (userId) {
+      void loadFavourites();
     }
-  }, [user, loadFavourites]);
+  }, [userId, loadFavourites]);
 
   // Persist priority flags to localStorage (until we add to API)
   useEffect(() => {
@@ -583,7 +603,7 @@ const FindrFavouritesPage: React.FC = () => {
   }, []);
 
   const removeFavourite = useCallback(async (speciesId: string) => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       // Optimistically update UI
@@ -625,7 +645,7 @@ const FindrFavouritesPage: React.FC = () => {
       // Reload favourites to sync with server state
       await loadFavourites();
     }
-  }, [user, favouriteIdMap, loadFavourites]);
+  }, [userId, favouriteIdMap, loadFavourites]);
 
   const togglePriority = useCallback((fishId: string) => {
     // TODO: Add priority flag to API schema and sync with database

@@ -913,7 +913,7 @@ useEffect(() => { saveCoastPref(coastalPlace); }, [coastalPlace]);
             {demoForecastByDay.map((d, idx) => (
               <button
                 key={idx}
-                className={`tab tab-bordered rounded-xl px-4 py-2 ${activeDay === idx ? 'tab-active' : ''}`}
+                className={`tab tab-bordered rounded-xl px-4 py-2 ${activeDay === idx ? 'tab-active' : 'text-base-content'}`}
                 onClick={() => setActiveDay(idx)}
               >
                 <div className="text-center">

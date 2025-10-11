@@ -41,6 +41,16 @@ import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 
 const TODAY_ISO = getTodayIso();
 
+function getFavouriteKeyFromCard(card: CardData): string {
+  if (card.speciesId && card.speciesId.trim().length > 0) {
+    return card.speciesId.trim();
+  }
+  if (card.speciesCode && card.speciesCode.trim().length > 0) {
+    return card.speciesCode.trim().toUpperCase();
+  }
+  return card.id.trim().toUpperCase();
+}
+
 function confidenceBadgeClasses(confidence: number | null, size: 'lg' | 'sm' = 'lg'): string {
   const base = size === 'lg' ? 'badge badge-lg py-3 px-4' : 'badge badge-sm px-2';
   if (confidence === null) {
@@ -62,7 +72,7 @@ interface PredictionCardContentProps {
   isFavorite: boolean;
   interactive: boolean;
   onShowSpeciesInfo?: (card: CardData) => void;
-  onToggleFavorite?: (cardId: string) => void;
+  onToggleFavorite?: (card: CardData) => void;
 }
 
 const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
@@ -124,7 +134,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleFavorite?.(card.id);
+                  onToggleFavorite?.(card);
                 }}
                 aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
@@ -146,7 +156,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onToggleFavorite?.(card.id);
+                  onToggleFavorite?.(card);
                 }}
                 aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               >
@@ -254,7 +264,7 @@ interface SwipeableCardProps {
   onSwipedRight: (card: CardData) => void;
   isFavorite: boolean;
   onShowSpeciesInfo?: (card: CardData) => void;
-  onToggleFavorite?: (cardId: string) => void;
+  onToggleFavorite?: (card: CardData) => void;
 }
 
 interface SwipeCardHandle {
@@ -427,7 +437,7 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
 
 interface FavoritesListProps {
   cards: CardData[];
-  onToggleFavorite: (cardId: string) => void;
+  onToggleFavorite: (card: CardData) => void;
   onShowSpeciesInfo?: (card: CardData) => void;
 }
 
@@ -455,7 +465,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
             <button
               type="button"
               className="btn btn-ghost btn-sm text-error"
-              onClick={() => onToggleFavorite(card.id)}
+              onClick={() => onToggleFavorite(card)}
               aria-label="Remove from favourites"
             >
               <Heart size={14} fill="currentColor" />
@@ -599,7 +609,7 @@ const FindrPage: React.FC = () => {
   const regionLabel = activeOption?.region ?? (manualNormalized ? 'Custom area' : undefined);
 
   const favoriteCards = useMemo(
-    () => cards.filter((card) => favoritesSet.has(card.id)),
+    () => cards.filter((card) => favoritesSet.has(getFavouriteKeyFromCard(card))),
     [cards, favoritesSet]
   );
 
@@ -646,15 +656,15 @@ const FindrPage: React.FC = () => {
   }, []);
 
   const handleLike = useCallback((card: CardData) => {
-    // Add to favourites (syncs to Supabase if authenticated)
-    toggleFavourite(card.id);
+    const favouriteKey = getFavouriteKeyFromCard(card);
+    toggleFavourite(favouriteKey, { speciesCode: card.speciesCode, speciesName: card.commonName });
     // Move card to back of queue for infinite looping
     setCardQueue((queue) => (queue.length === 0 ? queue : [...queue.slice(1), queue[0]]));
   }, [toggleFavourite]);
 
-  const handleToggleFavorite = useCallback((cardId: string) => {
-    // Toggle favourite (syncs to Supabase if authenticated)
-    toggleFavourite(cardId);
+  const handleToggleFavorite = useCallback((card: CardData) => {
+    const favouriteKey = getFavouriteKeyFromCard(card);
+    toggleFavourite(favouriteKey, { speciesCode: card.speciesCode, speciesName: card.commonName });
   }, [toggleFavourite]);
 
   const handleShowSpeciesInfo = useCallback(
@@ -780,7 +790,7 @@ const FindrPage: React.FC = () => {
                           regionName={regionLabel}
                           onSwipedLeft={handleSkip}
                           onSwipedRight={handleLike}
-                          isFavorite={favoritesSet.has(card.id)}
+                          isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
                           onShowSpeciesInfo={handleShowSpeciesInfo}
                           onToggleFavorite={handleToggleFavorite}
                           ref={index === 0 ? swipeCardRef : undefined}

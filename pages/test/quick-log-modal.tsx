@@ -9,15 +9,21 @@
 
 import React, { useState } from 'react';
 import { QuickLogModal } from '../../components/findr/QuickLogModal';
-import type { CatchEntry } from '../../hooks/useCatchLog';
+import type { QuickLogParams } from '@/hooks/useCatchLogger';
 
 export default function QuickLogModalTest() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lastCatch, setLastCatch] = useState<CatchEntry | null>(null);
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
 
-  const handleSuccess = (catchEntry: CatchEntry) => {
-    console.log('Catch logged successfully:', catchEntry);
-    setLastCatch(catchEntry);
+  const handleQuickLog = async (params: QuickLogParams) => {
+    console.log('Mock quick log submitted:', params);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return { success: true };
+  };
+
+  const handleSuccess = () => {
+    setLastMessage('Quick log succeeded (mock handler).');
+    setIsModalOpen(false);
   };
 
   return (
@@ -32,12 +38,10 @@ export default function QuickLogModalTest() {
           Test Quick Log Modal
         </button>
         
-        {lastCatch && (
+        {lastMessage && (
           <div className="bg-base-200 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">Last Catch Logged:</h3>
-            <pre className="text-xs overflow-auto">
-              {JSON.stringify(lastCatch, null, 2)}
-            </pre>
+            <h3 className="font-semibold mb-2">Last Result:</h3>
+            <p className="text-sm">{lastMessage}</p>
           </div>
         )}
       </div>
@@ -45,6 +49,7 @@ export default function QuickLogModalTest() {
       <QuickLogModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onQuickLog={handleQuickLog}
         onSuccess={handleSuccess}
         rectangleCode="31E8"
       />

@@ -7,23 +7,24 @@
  * Step 3: Photo option (Take photo or skip)
  * 
  * Auto-captures: current time, location, weather conditions
- * Integrates with existing useCatchLog hook and infrastructure
+ * Integrates with new catch logging hook infrastructure
  */
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Camera, AlertCircle, Zap, Plus } from 'lucide-react';
-import { useCatchLog, type CatchEntry } from '../../hooks/useCatchLog';
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import type { QuickLogParams } from '@/hooks/useCatchLogger';
 
 // Types for the component
 interface QuickLogModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (catchEntry: CatchEntry) => void;
+  onQuickLog: (params: QuickLogParams) => Promise<unknown>;
+  onSuccess?: () => void;
   rectangleCode?: string; // Current ICES rectangle from context
 }
 
@@ -39,7 +40,36 @@ const REGIONAL_QUICK_PICKS = [
   'WHI', // Whiting
 ] as const;
 
-export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E8' }: QuickLogModalProps) {
+async function requestUserLocation(): Promise<{ lat: number; lon: number } | null> {
+  if (typeof window === 'undefined' || !('geolocation' in navigator)) {
+    return null;
+  }
+
+  return await new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      () => resolve(null),
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
+export function QuickLogModal({
+  isOpen,
+  onClose,
+  onQuickLog,
+  onSuccess,
+  rectangleCode = '31E8',
+}: QuickLogModalProps) {
   // Progressive disclosure steps
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   
@@ -48,12 +78,14 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
   const [selectedQuantity, setSelectedQuantity] = useState<QuantityOption | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
   
   // Show full species list when regional picks aren't enough
   const [showAllSpecies, setShowAllSpecies] = useState(false);
-  
-  // Catch logging hook
-  const { logCatch } = useCatchLog();
+
+  const submissionDisabled = isSubmitting;
   
   // Get species info for display
   const getSpeciesInfo = useCallback((speciesCode: string): SpeciesImageInfo | null => {
@@ -68,6 +100,14 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
     setIsSubmitting(false);
     setError(null);
     setShowAllSpecies(false);
+    setSelectedPhoto(null);
+    setPhotoPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
+    }
     onClose();
   }, [onClose]);
   
@@ -85,7 +125,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
   }, []);
   
   // Submit the catch log entry
-  const handleSubmit = useCallback(async (addPhoto: boolean) => {
+  const handleSubmit = useCallback(async (photoFile: File | null) => {
     if (!selectedSpecies || !selectedQuantity) {
       setError('Missing required information');
       return;
@@ -97,38 +137,88 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
       return;
     }
     
+    if (!photoFile) {
+      setSelectedPhoto(null);
+    }
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
-      // Prepare catch data
-      const catchData = {
-        species_id: selectedSpecies,
-        species_common_name: speciesInfo.name,
-        scientific_name: speciesInfo.scientificName || undefined,
-        rectangle_code: rectangleCode,
-        caught_at: new Date().toISOString(),
-        quantity: selectedQuantity === 'loads' ? 15 : selectedQuantity, // "Loads" = 15+ fish
-        size_category: 'mixed' as const, // Quick log assumes mixed sizes
-        bait_used: 'Quick log - bait not specified', // Can be enhanced later
-        method: 'shore' as const, // Default assumption for quick logs
-        followed_findr_advice: true, // Assume they're using the app predictions
-        photo_urls: addPhoto ? [] : undefined, // Photos handled separately if needed
-      };
-      
-      // Log the catch
-      const result = await logCatch(catchData);
-      
-      // Success - notify parent and close modal
-      onSuccess(result);
+      const quantityValue = selectedQuantity === 'loads' ? 15 : selectedQuantity;
+
+      let userLocation: QuickLogParams['userLocation'];
+      try {
+        userLocation = await requestUserLocation() ?? undefined;
+      } catch (locationError) {
+        console.warn('[QuickLogModal] Geolocation failed, continuing without coordinates:', locationError);
+      }
+
+      const outcome = await onQuickLog({
+        speciesId: selectedSpecies,
+        speciesCommonName: speciesInfo.name,
+        scientificName: speciesInfo.scientificName ?? null,
+        rectangleCode,
+        quantity: quantityValue,
+        photo: photoFile ?? null,
+        userLocation,
+      });
+
+      if (outcome == null) {
+        throw new Error('Quick log did not complete. Please try again.');
+      }
+
+      onSuccess?.();
       handleClose();
-      
+
     } catch (err) {
       console.error('[QuickLogModal] Failed to log catch:', err);
       setError(err instanceof Error ? err.message : 'Failed to log catch');
+    } finally {
       setIsSubmitting(false);
     }
-  }, [selectedSpecies, selectedQuantity, rectangleCode, getSpeciesInfo, logCatch, onSuccess, handleClose]);
+  }, [selectedSpecies, selectedQuantity, rectangleCode, getSpeciesInfo, onQuickLog, onSuccess, handleClose]);
+
+  const triggerPhotoCapture = useCallback(() => {
+    if (submissionDisabled) return;
+    setSelectedPhoto(null);
+    setPhotoPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (photoInputRef.current) {
+      photoInputRef.current.click();
+    }
+  }, [submissionDisabled]);
+
+  const handlePhotoChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0] ?? null;
+      // Allow selecting the same file again by resetting the input value immediately
+      event.target.value = '';
+      if (!file) {
+        return;
+      }
+      setSelectedPhoto(file);
+      void handleSubmit(file);
+    },
+    [handleSubmit]
+  );
+
+  useEffect(() => {
+    if (!selectedPhoto) {
+      setPhotoPreviewUrl(prev => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+    const url = URL.createObjectURL(selectedPhoto);
+    setPhotoPreviewUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [selectedPhoto]);
   
   // Get regional species for quick-pick buttons
   const regionalSpecies = REGIONAL_QUICK_PICKS.map(code => ({
@@ -168,7 +258,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
           <button 
             onClick={handleClose} 
             className="btn btn-sm btn-circle btn-ghost"
-            disabled={isSubmitting}
+            disabled={submissionDisabled}
           >
             <X className="w-4 h-4" />
           </button>
@@ -211,7 +301,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
                   key={code}
                   onClick={() => handleSpeciesSelect(code)}
                   className="btn btn-outline h-auto p-3 flex flex-col gap-2 hover:btn-primary transition-colors"
-                  disabled={isSubmitting}
+                  disabled={submissionDisabled}
                 >
                   {info?.thumb && (
                     <div className="w-12 h-12 relative rounded-lg overflow-hidden bg-base-200">
@@ -240,7 +330,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
               <button
                 onClick={() => setShowAllSpecies(true)}
                 className="btn btn-ghost btn-block"
-                disabled={isSubmitting}
+                disabled={submissionDisabled}
               >
                 <Plus className="w-4 h-4" />
                 <TranslatedText text="Show all species" />
@@ -253,7 +343,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
                       key={code}
                       onClick={() => handleSpeciesSelect(code)}
                       className="btn btn-sm btn-ghost justify-start w-full h-auto p-2 normal-case hover:btn-primary"
-                      disabled={isSubmitting}
+                      disabled={submissionDisabled}
                     >
                       {info?.thumb && (
                         <div className="w-8 h-8 relative rounded overflow-hidden flex-shrink-0 bg-base-200">
@@ -273,7 +363,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
                 <button
                   onClick={() => setShowAllSpecies(false)}
                   className="btn btn-ghost btn-sm btn-block"
-                  disabled={isSubmitting}
+                  disabled={submissionDisabled}
                 >
                   <TranslatedText text="Show less" />
                 </button>
@@ -316,7 +406,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
                   key={num}
                   onClick={() => handleQuantitySelect(num as QuantityOption)}
                   className="btn btn-lg btn-outline hover:btn-primary h-16"
-                  disabled={isSubmitting}
+                  disabled={submissionDisabled}
                 >
                   <span className="text-2xl font-bold">{num}</span>
                 </button>
@@ -324,7 +414,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
               <button
                 onClick={() => handleQuantitySelect('loads')}
                 className="btn btn-lg btn-primary h-16 col-span-1"
-                disabled={isSubmitting}
+                disabled={submissionDisabled}
               >
                 <div className="flex flex-col">
                   <span className="text-lg font-bold">Loads!</span>
@@ -337,7 +427,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
             <button 
               onClick={() => setCurrentStep(1)} 
               className="btn btn-ghost btn-sm"
-              disabled={isSubmitting}
+              disabled={submissionDisabled}
             >
               ← <TranslatedText text="Back" />
             </button>
@@ -382,38 +472,62 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
             
             {/* Photo Action Buttons */}
             <div className="space-y-3">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
               <button
-                onClick={() => handleSubmit(true)}
+                onClick={triggerPhotoCapture}
                 className="btn btn-lg btn-primary w-full gap-2"
-                disabled={isSubmitting}
+                disabled={submissionDisabled}
               >
                 <Camera className="w-5 h-5" />
                 {isSubmitting ? (
                   <>
                     <span className="loading loading-spinner loading-sm"></span>
-                    <TranslatedText text="Logging..." />
+                    <TranslatedText text="Saving..." />
                   </>
                 ) : (
-                  <TranslatedText text="Take Photo & Save" />
+                  <TranslatedText text="Capture Photo & Save" />
                 )}
               </button>
-              
+
               <button
-                onClick={() => handleSubmit(false)}
+                onClick={() => void handleSubmit(null)}
                 className="btn btn-lg btn-outline w-full"
-                disabled={isSubmitting}
+                disabled={submissionDisabled}
               >
                 {isSubmitting ? (
                   <>
                     <span className="loading loading-spinner loading-sm"></span>
-                    <TranslatedText text="Logging..." />
+                    <TranslatedText text="Saving..." />
                   </>
                 ) : (
-                  <TranslatedText text="Skip Photo - Save Now" />
+                  <TranslatedText text="Skip Photo - Save" />
                 )}
               </button>
             </div>
-            
+
+            {photoPreviewUrl && !isSubmitting && (
+              <div className="bg-base-200 rounded-lg p-3">
+                <p className="text-xs font-medium mb-2">
+                  <TranslatedText text="Preview" />
+                </p>
+                <div className="aspect-video w-full bg-base-300 rounded overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoPreviewUrl}
+                    alt="Selected catch preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Auto-capture Info */}
             <div className="alert alert-info">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -426,7 +540,7 @@ export function QuickLogModal({ isOpen, onClose, onSuccess, rectangleCode = '31E
             <button 
               onClick={() => setCurrentStep(2)} 
               className="btn btn-ghost btn-sm"
-              disabled={isSubmitting}
+              disabled={submissionDisabled}
             >
               ← <TranslatedText text="Back" />
             </button>

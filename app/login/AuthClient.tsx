@@ -25,9 +25,14 @@ function mapSupabaseError(err: unknown): string {
 
 // ——————————————————————————————————————————————
 // Config
-const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (typeof window !== "undefined" ? window.location.origin : "");
+const BASE_URL = (() => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (!envUrl) return "";
+  return envUrl.startsWith("http") ? envUrl : `https://${envUrl}`;
+})();
 
 type Mode = "signin" | "register" | "link";
 

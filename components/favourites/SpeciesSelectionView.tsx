@@ -87,7 +87,7 @@ export function SpeciesSelectionView({
       <div className="tabs tabs-boxed bg-base-200 p-1 max-w-2xl mx-auto">
         <button
           onClick={() => setSelectedCategory('hot')}
-          className={`tab ${selectedCategory === 'hot' ? 'tab-active' : ''}`}
+          className={`tab ${selectedCategory === 'hot' ? 'tab-active' : 'text-base-content'}`}
         >
           <TrendingUp className="w-4 h-4 mr-2" />
           Hot Right Now
@@ -97,7 +97,7 @@ export function SpeciesSelectionView({
         {counts.youveCaught > 0 && (
           <button
             onClick={() => setSelectedCategory('caught')}
-            className={`tab ${selectedCategory === 'caught' ? 'tab-active' : ''}`}
+            className={`tab ${selectedCategory === 'caught' ? 'tab-active' : 'text-base-content'}`}
           >
             <Fish className="w-4 h-4 mr-2" />
             You&apos;ve Caught
@@ -107,7 +107,7 @@ export function SpeciesSelectionView({
         
         <button
           onClick={() => setSelectedCategory('local')}
-          className={`tab ${selectedCategory === 'local' ? 'tab-active' : ''}`}
+          className={`tab ${selectedCategory === 'local' ? 'tab-active' : 'text-base-content'}`}
         >
           <Users className="w-4 h-4 mr-2" />
           Local Favorites
@@ -116,7 +116,7 @@ export function SpeciesSelectionView({
         
         <button
           onClick={() => setSelectedCategory('all')}
-          className={`tab ${selectedCategory === 'all' ? 'tab-active' : ''}`}
+          className={`tab ${selectedCategory === 'all' ? 'tab-active' : 'text-base-content'}`}
         >
           All Species
           <span className="ml-2 badge badge-sm">{counts.allRegional}</span>

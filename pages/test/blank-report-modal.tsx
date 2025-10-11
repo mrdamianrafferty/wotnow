@@ -13,6 +13,11 @@ export default function BlankReportModalTestPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lastReportData, setLastReportData] = useState<BlankReportData | null>(null);
 
+  const handleReportSubmit = async (reportData: BlankReportData) => {
+    console.log('[TEST] Mock submitting blank report:', reportData);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  };
+
   const handleReportSuccess = (reportData: BlankReportData) => {
     console.log('[TEST] Blank report submitted successfully:', reportData);
     setLastReportData(reportData);
@@ -185,6 +190,7 @@ export default function BlankReportModalTestPage() {
       <BlankReportModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSubmit={handleReportSubmit}
         onSuccess={handleReportSuccess}
         rectangleCode="31E8" // Test rectangle
       />

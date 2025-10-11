@@ -15,6 +15,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
+const CATCH_PHOTO_BUCKETS = ['catch-photos', 'findr-catch-photos'] as const;
+const SUPABASE_PUBLIC_PATH_REGEX = /\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/;
+
 interface EnvironmentalConditions {
   sea_temp?: number;
   tide_phase?: string;
@@ -52,6 +55,14 @@ interface CreateCatchRequest {
   location_source?: 'gps' | 'manual' | 'rectangle';
 }
 
+interface CatchPhotoAsset {
+  original: string;
+  bucket: string | null;
+  path: string | null;
+  url: string;
+  thumbnail_url: string | null;
+}
+
 interface CatchResponse {
   id: string;
   species_common_name: string;
@@ -72,6 +83,10 @@ interface CatchResponse {
   used_recommended_habitat: boolean;
   prediction_matched: boolean;
   environmental_conditions?: EnvironmentalConditions;
+  photo_urls?: string[] | null;
+  photo_public_urls?: string[] | null;
+  photo_thumbnail_urls?: string[] | null;
+  photo_assets?: CatchPhotoAsset[] | null;
 }
 
 /**
@@ -185,28 +200,43 @@ async function handleGetCatches(req: NextApiRequest, res: NextApiResponse, userI
     }
 
     // Transform data for response
-    const response: CatchResponse[] = catches.map(catchEntry => ({
-      id: catchEntry.id,
-      species_common_name: catchEntry.species_common_name,
-      caught_at: catchEntry.caught_at,
-      logged_at: catchEntry.logged_at,
-      rectangle_code: catchEntry.rectangle_code,
-      quantity: catchEntry.quantity,
-      size_category: catchEntry.size_category,
-      bait_used: catchEntry.bait_used,
-      habitat_type: catchEntry.habitat_type,
-      notes: catchEntry.notes,
-      followed_findr_advice: catchEntry.followed_findr_advice,
-      used_recommended_bait: catchEntry.used_recommended_bait || false,
-      used_recommended_habitat: catchEntry.used_recommended_habitat || false,
-      prediction_matched: !!catchEntry.prediction_impression_id,
-      environmental_conditions: catchEntry.environmental_conditions
-    }));
+    const response: CatchResponse[] = catches.map((catchEntry) => {
+      const photoUrlsRaw = Array.isArray(catchEntry.photo_urls) ? catchEntry.photo_urls : null;
+      const assets = buildPhotoAssets(photoUrlsRaw);
+
+      return {
+        id: catchEntry.id,
+        species_common_name: catchEntry.species_common_name,
+        caught_at: catchEntry.caught_at,
+        logged_at: catchEntry.logged_at,
+        rectangle_code: catchEntry.rectangle_code,
+        quantity: catchEntry.quantity,
+        size_category: catchEntry.size_category,
+        bait_used: catchEntry.bait_used,
+        habitat_type: catchEntry.habitat_type,
+        notes: catchEntry.notes,
+        followed_findr_advice: catchEntry.followed_findr_advice,
+        used_recommended_bait: catchEntry.used_recommended_bait || false,
+        used_recommended_habitat: catchEntry.used_recommended_habitat || false,
+        prediction_matched: !!catchEntry.prediction_impression_id,
+        environmental_conditions: catchEntry.environmental_conditions,
+        photo_urls: photoUrlsRaw,
+        photo_public_urls: assets.length > 0 ? assets.map((asset) => asset.url) : null,
+        photo_thumbnail_urls:
+          assets.length > 0
+            ? assets
+                .map((asset) => asset.thumbnail_url)
+                .filter((value): value is string => Boolean(value))
+            : null,
+        photo_assets: assets.length > 0 ? assets : null,
+      };
+    });
 
     console.info('[Catch Log GET] Retrieved catches', {
       user_id: userId,
       count: catches.length,
-      filters: { species_id, rectangle_code, start_date, end_date }
+      filters: { species_id, rectangle_code, start_date, end_date },
+      photo_assets_transformed: response.reduce((acc, entry) => acc + (entry.photo_assets?.length ?? 0), 0),
     });
 
     res.status(200).json({
@@ -222,6 +252,103 @@ async function handleGetCatches(req: NextApiRequest, res: NextApiResponse, userI
   } catch (error) {
     console.error('[Catch Log GET] Error:', error);
     res.status(500).json({ error: 'Failed to retrieve catches' });
+  }
+}
+
+function buildPhotoAssets(photoUrls: string[] | null): CatchPhotoAsset[] {
+  if (!photoUrls || photoUrls.length === 0) {
+    return [];
+  }
+
+  const assets: CatchPhotoAsset[] = [];
+
+  for (const raw of photoUrls) {
+    if (typeof raw !== 'string') continue;
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      const parsed = parsePublicUrl(trimmed);
+      if (!parsed) {
+        assets.push({
+          original: trimmed,
+          bucket: null,
+          path: null,
+          url: trimmed,
+          thumbnail_url: null,
+        });
+        continue;
+      }
+
+      assets.push({
+        original: trimmed,
+        bucket: parsed.bucket,
+        path: parsed.path,
+        url: trimmed,
+        thumbnail_url: getTransformedUrl(parsed.bucket, parsed.path),
+      });
+      continue;
+    }
+
+    const resolved = resolveBucketAndPath(trimmed);
+    if (!resolved) continue;
+
+    const { data: publicData } = supabase.storage
+      .from(resolved.bucket)
+      .getPublicUrl(resolved.path);
+    const publicUrl = publicData.publicUrl;
+
+    if (!publicUrl) continue;
+
+    assets.push({
+      original: trimmed,
+      bucket: resolved.bucket,
+      path: resolved.path,
+      url: publicUrl,
+      thumbnail_url: getTransformedUrl(resolved.bucket, resolved.path),
+    });
+  }
+
+  return assets;
+}
+
+function getTransformedUrl(bucket: string, path: string): string | null {
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path, {
+    transform: {
+      width: 320,
+      height: 320,
+      resize: 'cover',
+      quality: 80,
+    },
+  });
+
+  return data.publicUrl ?? null;
+}
+
+function resolveBucketAndPath(reference: string): { bucket: string; path: string } | null {
+  if (!reference) return null;
+
+  for (const bucket of CATCH_PHOTO_BUCKETS) {
+    if (reference.startsWith(`${bucket}/`)) {
+      return { bucket, path: reference.slice(bucket.length + 1) };
+    }
+  }
+
+  return { bucket: CATCH_PHOTO_BUCKETS[0], path: reference };
+}
+
+function parsePublicUrl(urlString: string): { bucket: string; path: string } | null {
+  try {
+    const url = new URL(urlString);
+    const match = url.pathname.match(SUPABASE_PUBLIC_PATH_REGEX);
+    if (!match) return null;
+
+    return {
+      bucket: match[1],
+      path: match[2],
+    };
+  } catch {
+    return null;
   }
 }
 

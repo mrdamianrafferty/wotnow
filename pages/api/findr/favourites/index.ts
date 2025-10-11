@@ -8,10 +8,33 @@
  */
 
 import { createServerSupabaseClient } from '../../../../lib/supabase/pages-api';
+import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const SUPABASE_REST_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_REST_URL = SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabaseServiceClient =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
+
+const supabaseAnonClient =
+  SUPABASE_URL && SUPABASE_ANON_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
 
 // Match YOUR actual species table structure (for documentation)
 interface _SpeciesRow {
@@ -105,6 +128,163 @@ interface SpeciesRecord {
   }>;
 }
 
+const normalizeSpeciesCode = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.toUpperCase() : null;
+};
+
+const normalizeSpeciesName = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const normalizeScientificName = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
+};
+
+const isLikelyUuid = (value?: string | null): boolean => {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+};
+
+const SPECIES_SELECT_COLUMNS = `
+  id,
+  species_code,
+  scientific_name,
+  name_en,
+  name_es,
+  name_fr,
+  name_de,
+  name_it,
+  name_pt,
+  typical_gear,
+  eating_quality,
+  min_depth,
+  max_depth,
+  wind_sensitivity,
+  temperature_sensitivity,
+  pressure_sensitivity,
+  tide_sensitivity,
+  conservation_status,
+  fun_fact,
+  advice
+`;
+
+const getSpeciesClient = () => {
+  if (supabaseServiceClient) return supabaseServiceClient;
+
+  if (supabaseAnonClient) return supabaseAnonClient;
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase configuration missing for species lookup');
+  }
+
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+};
+
+async function selectSpeciesBy(
+  column: keyof SpeciesRecord,
+  value: string,
+  logContext: Record<string, unknown>
+): Promise<SpeciesRecord | null> {
+  const client = getSpeciesClient();
+
+  const { data, error } = await client
+    .from('species')
+    .select(SPECIES_SELECT_COLUMNS)
+    .eq(column as string, value)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('[favourites] Species lookup failed', {
+      column,
+      value,
+      error: error.message,
+      ...logContext,
+    });
+    return null;
+  }
+
+  return (data as SpeciesRecord | null) ?? null;
+}
+
+async function selectSpeciesIlike(
+  column: keyof SpeciesRecord,
+  value: string,
+  logContext: Record<string, unknown>
+): Promise<SpeciesRecord | null> {
+  const client = getSpeciesClient();
+
+  const { data, error } = await client
+    .from('species')
+    .select(SPECIES_SELECT_COLUMNS)
+    .ilike(column as string, value)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('[favourites] Species lookup (ILIKE) failed', {
+      column,
+      value,
+      error: error.message,
+      ...logContext,
+    });
+    return null;
+  }
+
+  return (data as SpeciesRecord | null) ?? null;
+}
+
+async function resolveSpeciesRecord(params: {
+  speciesId?: string | null;
+  speciesCode?: string | null;
+  speciesName?: string | null;
+  scientificName?: string | null;
+  userId: string;
+}): Promise<SpeciesRecord | null> {
+  const { speciesId, speciesCode, speciesName, scientificName, userId } = params;
+  const logContext = { userId, speciesId, speciesCode, speciesName, scientificName };
+
+  if (speciesId && isLikelyUuid(speciesId)) {
+    const record = await selectSpeciesBy('id', speciesId.trim(), logContext);
+    if (record) return record;
+  }
+
+  const codeCandidates = new Set<string>();
+  const normalizedIdAsCode = normalizeSpeciesCode(speciesId);
+  const normalizedCode = normalizeSpeciesCode(speciesCode);
+  if (normalizedIdAsCode) codeCandidates.add(normalizedIdAsCode);
+  if (normalizedCode) codeCandidates.add(normalizedCode);
+
+  for (const code of codeCandidates) {
+    const record = await selectSpeciesBy('species_code', code, logContext);
+    if (record) return record;
+  }
+
+  const normalizedScientific = normalizeScientificName(scientificName);
+  if (normalizedScientific) {
+    const record = await selectSpeciesIlike('scientific_name', `%${normalizedScientific}%`, logContext);
+    if (record) return record;
+  }
+
+  const normalizedName = normalizeSpeciesName(speciesName);
+  if (normalizedName) {
+    const record = await selectSpeciesIlike('name_en', `%${normalizedName}%`, logContext);
+    if (record) return record;
+  }
+
+  return null;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Create authenticated Supabase client
   const supabase = createServerSupabaseClient({ req, res });
@@ -144,7 +324,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const speciesIds = [...new Set(typedFavourites.map(f => f.species_id))];
 
         // Fetch species data separately
-        const { data: speciesData, error: speciesError } = await supabase
+        const speciesClient = getSpeciesClient();
+
+        const { data: speciesData, error: speciesError } = await speciesClient
           .from('species')
           .select(`
             id,
@@ -244,35 +426,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'POST':
       try {
-        const { speciesId } = req.body;
+        const rawSpeciesId =
+          typeof req.body?.speciesId === 'string' ? req.body.speciesId.trim() : '';
+        const rawSpeciesCodeInput =
+          typeof req.body?.speciesCode === 'string' ? req.body.speciesCode.trim() : '';
+        const speciesNameHint =
+          typeof req.body?.speciesName === 'string' ? req.body.speciesName.trim() : '';
+        const scientificNameHint =
+          typeof req.body?.scientificName === 'string' ? req.body.scientificName.trim() : '';
 
-        if (!speciesId) {
-          return res.status(400).json({ error: 'speciesId required' });
+        if (!rawSpeciesId && !rawSpeciesCodeInput && !speciesNameHint && !scientificNameHint) {
+          return res.status(400).json({ error: 'speciesId, speciesCode or speciesName required' });
         }
 
-        // Verify species exists
-        const { data: species, error: speciesError } = await supabase
-          .from('species')
-          .select('id, species_code, name_en')
-          .eq('id', speciesId)
-          .single();
+        const species = await resolveSpeciesRecord({
+          speciesId: rawSpeciesId || null,
+          speciesCode: rawSpeciesCodeInput || null,
+          speciesName: speciesNameHint || null,
+          scientificName: scientificNameHint || null,
+          userId,
+        });
 
-        if (speciesError || !species) {
+        if (!species) {
+          console.warn('[favourites] Species not found during favourite add', {
+            userId,
+            rawSpeciesId,
+            rawSpeciesCode: rawSpeciesCodeInput,
+            speciesNameHint,
+          });
           return res.status(404).json({ error: 'Species not found' });
         }
 
-        // Add to favourites
         const { data, error } = await supabase
           .from('user_favourites')
           .insert({
             user_id: userId,
-            species_id: speciesId
+            species_id: species.id,
           })
           .select()
           .single();
 
         if (error) {
-          // Handle duplicate (already favourited)
           if (error.code === '23505') {
             return res.status(409).json({ error: 'Species already favourited' });
           }
@@ -286,32 +480,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             speciesId: species.id,
             speciesCode: species.species_code,
             name: species.name_en,
-            addedAt: data.added_at
-          }
+            addedAt: data.added_at,
+          },
         });
       } catch (error: unknown) {
         console.error('Error adding favourite:', error);
-        return res.status(500).json({ error: 'Failed to add favourite', details: error instanceof Error ? error.message : 'Unknown error' });
+        return res
+          .status(500)
+          .json({
+            error: 'Failed to add favourite',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          });
       }
 
     case 'DELETE':
       try {
-        const { id } = req.query;
+        const { id, speciesId: speciesIdQuery } = req.query;
 
-        if (!id || typeof id !== 'string') {
-          return res.status(400).json({ error: 'Favourite ID required' });
+        const normalizedId = typeof id === 'string' ? id.trim() : '';
+        const normalizedSpeciesId =
+          typeof speciesIdQuery === 'string' ? speciesIdQuery.trim() : '';
+
+        if (!normalizedId && !normalizedSpeciesId) {
+          return res.status(400).json({ error: 'Favourite identifier required' });
         }
 
-        // Delete (RLS ensures user can only delete their own)
-        const { error } = await supabase
-          .from('user_favourites')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', userId);
+        let lastError: Error | null = null;
 
-        if (error) throw error;
+        if (normalizedId) {
+          const { error, count } = await supabase
+            .from('user_favourites')
+            .delete({ count: 'exact' })
+            .eq('id', normalizedId)
+            .eq('user_id', userId);
 
-        return res.status(200).json({ success: true });
+          if (error) {
+            lastError = error;
+          } else if ((count ?? 0) > 0) {
+            return res.status(200).json({ success: true });
+          }
+        }
+
+        if (normalizedSpeciesId) {
+          const { error, count } = await supabase
+            .from('user_favourites')
+            .delete({ count: 'exact' })
+            .eq('species_id', normalizedSpeciesId)
+            .eq('user_id', userId);
+
+          if (error) {
+            lastError = error;
+          } else if ((count ?? 0) > 0) {
+            return res.status(200).json({ success: true });
+          }
+        }
+
+        if (lastError) {
+          throw lastError;
+        }
+
+        return res.status(404).json({ error: 'Favourite not found' });
+
       } catch (error: unknown) {
         console.error('Error deleting favourite:', error);
         return res.status(500).json({ error: 'Failed to delete favourite', details: error instanceof Error ? error.message : 'Unknown error' });

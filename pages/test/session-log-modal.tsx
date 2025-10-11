@@ -8,15 +8,21 @@
 import React, { useState } from 'react';
 import { Calendar, CheckCircle } from 'lucide-react';
 import { SessionLogModal } from '../../components/findr/SessionLogModal';
-import type { CatchEntry } from '../../hooks/useCatchLog';
+import type { CatchLogInput } from '@/types/findr-enrichment';
 
 export default function SessionLogModalTestPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lastSessionData, setLastSessionData] = useState<CatchEntry[] | null>(null);
+  const [submittedCatches, setSubmittedCatches] = useState<CatchLogInput[]>([]);
 
-  const handleSessionSuccess = (catchEntries: CatchEntry[]) => {
-    console.log('[TEST] Session logged successfully:', catchEntries);
-    setLastSessionData(catchEntries);
+  const handleSubmitCatch = async (input: CatchLogInput) => {
+    console.log('[TEST] Mock session catch submitted:', input);
+    setSubmittedCatches((prev) => [...prev, input]);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    return { success: true };
+  };
+
+  const handleSessionSuccess = (catchCount: number) => {
+    console.log('[TEST] Session logged successfully with', catchCount, 'catches');
     setIsModalOpen(false);
   };
 
@@ -47,7 +53,10 @@ export default function SessionLogModalTestPage() {
               </p>
               <div className="card-actions">
                 <button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setSubmittedCatches([]);
+                    setIsModalOpen(true);
+                  }}
                   className="btn btn-secondary btn-lg"
                 >
                   <Calendar className="w-5 h-5" />
@@ -58,7 +67,7 @@ export default function SessionLogModalTestPage() {
           </div>
 
           {/* Results Display */}
-          {lastSessionData && (
+          {submittedCatches.length > 0 && (
             <div className="card bg-success/10 border border-success/20">
               <div className="card-body">
                 <h2 className="card-title text-success flex items-center gap-2">
@@ -68,28 +77,28 @@ export default function SessionLogModalTestPage() {
                 
                 <div className="space-y-3 text-sm">
                   <div>
-                    <span className="font-medium">Total Catches:</span> {lastSessionData.length}
+                    <span className="font-medium">Total Catches:</span> {submittedCatches.length}
                   </div>
                   <div>
-                    <span className="font-medium">Total Fish:</span> {lastSessionData.reduce((sum, entry) => sum + entry.quantity, 0)}
+                    <span className="font-medium">Total Fish:</span> {submittedCatches.reduce((sum, entry) => sum + entry.quantity, 0)}
                   </div>
                   
                   {/* Catch Details */}
                   <div className="space-y-2">
                     <span className="font-medium">Catch Details:</span>
-                    {lastSessionData.map((entry, index) => (
-                      <div key={entry.id} className="bg-base-100 rounded-lg p-3 border">
+                    {submittedCatches.map((entry, index) => (
+                      <div key={`${entry.speciesId}-${index}`} className="bg-base-100 rounded-lg p-3 border">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium">Catch #{index + 1}</span>
-                          <span className="badge badge-outline">{entry.species_common_name}</span>
+                          <span className="badge badge-outline">{entry.speciesCommonName}</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div><strong>Species:</strong> {entry.species_common_name}</div>
+                          <div><strong>Species:</strong> {entry.speciesCommonName}</div>
                           <div><strong>Quantity:</strong> {entry.quantity}</div>
-                          <div><strong>Size:</strong> {entry.size_category}</div>
-                          <div><strong>Bait:</strong> {entry.bait_used}</div>
-                          <div><strong>Habitat:</strong> {entry.habitat_type}</div>
-                          <div><strong>Rectangle:</strong> {entry.rectangle_code}</div>
+                          <div><strong>Size:</strong> {entry.sizeCategory ?? '—'}</div>
+                          <div><strong>Bait:</strong> {entry.baitUsed ?? '—'}</div>
+                          <div><strong>Habitat:</strong> {entry.habitatType ?? '—'}</div>
+                          <div><strong>Rectangle:</strong> {entry.rectangleCode ?? '—'}</div>
                           {entry.notes && (
                             <div className="col-span-2"><strong>Notes:</strong> {entry.notes}</div>
                           )}
@@ -102,7 +111,7 @@ export default function SessionLogModalTestPage() {
                 {/* Clear Results */}
                 <div className="card-actions">
                   <button
-                    onClick={() => setLastSessionData(null)}
+                    onClick={() => setSubmittedCatches([])}
                     className="btn btn-sm btn-outline"
                   >
                     Clear Results
@@ -153,6 +162,7 @@ export default function SessionLogModalTestPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleSessionSuccess}
+        onSubmitCatch={handleSubmitCatch}
         rectangleCode="31E8" // Test rectangle
       />
     </div>

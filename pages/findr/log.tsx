@@ -21,24 +21,31 @@ import {
   Users,
   FileText,
   BarChart3,
+  Loader2,
+  TrendingUp,
+  Target,
 } from 'lucide-react';
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
-import { useCatchLog } from '../../hooks/useCatchLog';
+import { useCatchLogger, useQuickCatchLog } from '@/hooks/useCatchLogger';
 import { useImpressionTracking } from '../../hooks/useImpressionTracking';
 import { useContextualTranslation } from '../../context/LanguageContext';
 import { compressImage } from '../../lib/storage/photoStorage';
 import { TranslatedText } from '../../components/translation/TranslatedFishCard';
+import { supabase } from '@/lib/supabase/client';
+import { toast } from 'react-hot-toast';
+import type { CatchLogInput, CatchLoggerTelemetryEvent } from '@/types/findr-enrichment';
+import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
+import { normaliseCatchPhotoAssets, type CatchPhotoAsset } from '@/utils/catchPhotoAssets';
 
-// New enhanced modal components
+// Enhanced modal components
 import { QuickLogModal } from '../../components/findr/QuickLogModal';
 import { SessionLogModal } from '../../components/findr/SessionLogModal';
 import { BlankReportModal } from '../../components/findr/BlankReportModal';
 import { ReferenceDataTables } from '../../components/findr/ReferenceDataTables';
-import type { CatchEntry as NewCatchEntry } from '../../hooks/useCatchLog';
 import type { BlankReportData } from '../../components/findr/BlankReportModal';
 
-// Translation components for better code organization
+// Translation components
 const LogCatchHeading = () => {
   const { translated } = useContextualTranslation('Log your catch');
   return <span className="text-lg font-semibold">{translated}</span>;
@@ -62,11 +69,6 @@ const AllBaitOptionsLabel = () => {
 const ChooseBaitOption = () => {
   const { translated } = useContextualTranslation('Choose your bait...');
   return <option value="">{translated}</option>;
-};
-
-const PickBaitHint = () => {
-  const { translated } = useContextualTranslation('Pick a bait to enable logging.');
-  return <p className="text-xs text-base-content/60">{translated}</p>;
 };
 
 const HowManyLabel = () => {
@@ -94,6 +96,7 @@ const CloseButton = () => {
   return <>{translated}</>;
 };
 
+// Types
 interface Location {
   name: string;
   lat: number;
@@ -133,9 +136,10 @@ interface CatchEntry {
   marineBio: MarineBioData;
   weatherSummary: string;
   notes?: string;
-  photo?: string; // Backward compatibility - first photo
-  photos?: string[]; // Multiple photos support
-  // Validation fields
+  photo?: string;
+  photos?: string[];
+  photoAssets?: CatchPhotoAsset[];
+  photoThumbnails?: (string | null)[];
   usingFindrPredictions?: boolean | null;
   followedBaitAdvice?: boolean | null;
   followedHabitatAdvice?: boolean | null;
@@ -169,8 +173,10 @@ interface CatchLoggerProps {
 
 interface CatchHistoryProps {
   catches: CatchEntry[];
+  onViewPredictions: () => void;
 }
 
+// Constants
 const baitOptions = [
   'lugworm',
   'ragworm',
@@ -202,7 +208,122 @@ const habitatOptions = [
   'open sea',
 ];
 
+const TIME_PERIOD_TO_TIME: Record<string, string> = {
+  morning: '08:00:00',
+  afternoon: '14:00:00',
+  evening: '19:00:00',
+  night: '23:00:00',
+};
+
+const HABITAT_LABEL_LOOKUP: Record<string, string> = {
+  rocky_shore: 'Rocky Shore',
+  'rocky shore': 'Rocky Shore',
+  sandy_beach: 'Sandy Beach',
+  'sandy beach': 'Sandy Beach',
+  pier_harbor: 'Pier/Harbor',
+  'pier/harbor': 'Pier/Harbor',
+  estuary: 'Estuary',
+  shallow_water: 'Shallow Water',
+  'shallow water': 'Shallow Water',
+  deep_water: 'Deep Water',
+  'deep water': 'Deep Water',
+  wreck_reef: 'Wreck/Reef',
+  'wreck/reef': 'Wreck/Reef',
+  open_sea: 'Open Sea',
+  'open sea': 'Open Sea',
+};
+
 const FALLBACK_FISH_IMAGE = '/webp/beachfishy.webp';
+const TOAST_DURATION_MS = 3000;
+
+// Mock data (fallback)
+const mockLocation: Location = {
+  name: 'Gijón Beach, Asturias',
+  lat: 43.5322,
+  lon: -5.6611,
+};
+
+const mockIcesGrid: ICESGrid = {
+  rectangle: 'VIIIc',
+  lat: 43.5,
+  lon: -6.0,
+  area: 'Bay of Biscay',
+  subdivision: 'VIIIc',
+};
+
+const mockMarineBio: MarineBioData = {
+  chlorophyllAvg: 2.1,
+  dissolvedOxygenAvg: 8.3,
+  nitrateAvg: 4.2,
+  phosphateAvg: 0.3,
+  salinityAvg: 35.2,
+  sstAvg: 16.8,
+  waveHeight: 1.2,
+  windSpeed: 12,
+};
+
+// Utility functions
+const formatTimePeriods = (periods: string[]): string =>
+  periods.map((period) => period.replace(/_/g, ' ')).join(' & ');
+
+const cleanEnvironment = (env: Record<string, string | number | undefined | null>) => {
+  const entries = Object.entries(env).filter(
+    ([, value]) => value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && value.length === 0)
+  );
+  return Object.fromEntries(entries) as Record<string, string | number>;
+};
+
+function buildEnvironmentalConditions(marineBio: MarineBioData): Record<string, number> | undefined {
+  const payload: Record<string, number> = {};
+
+  if (marineBio.sstAvg != null) payload.sea_temp = marineBio.sstAvg;
+  if (marineBio.windSpeed != null) payload.wind_speed = marineBio.windSpeed;
+  if (marineBio.waveHeight != null) payload.wave_height = marineBio.waveHeight;
+  if (marineBio.salinityAvg != null) payload.salinity = marineBio.salinityAvg;
+  if (marineBio.chlorophyllAvg != null) payload.chlorophyll = marineBio.chlorophyllAvg;
+  if (marineBio.dissolvedOxygenAvg != null) payload.dissolved_oxygen = marineBio.dissolvedOxygenAvg;
+
+  return Object.keys(payload).length > 0 ? payload : undefined;
+}
+
+function mapApiCatchToEntry(apiCatch: Record<string, unknown>, defaultRectangle: string): CatchEntry {
+  const id = apiCatch.id != null ? String(apiCatch.id) : `temp-${Date.now()}`;
+  const speciesCommonName =
+    apiCatch.species_common_name != null
+      ? String(apiCatch.species_common_name)
+      : apiCatch.species_id != null
+      ? String(apiCatch.species_id)
+      : 'Unknown species';
+  const rectangle = apiCatch.rectangle_code != null ? String(apiCatch.rectangle_code) : defaultRectangle;
+  const caughtAt = apiCatch.caught_at != null ? String(apiCatch.caught_at) : new Date().toISOString();
+  const quantityRaw = Number(apiCatch.quantity ?? 0);
+  const sizeCategory = apiCatch.size_category != null ? String(apiCatch.size_category) : 'mixed';
+  const photoAssets = normaliseCatchPhotoAssets(apiCatch);
+  const photoUrls = photoAssets.map((asset) => asset.url).filter(Boolean);
+
+  return {
+    id,
+    fishId: apiCatch.species_id != null ? String(apiCatch.species_id) : speciesCommonName,
+    fishName: speciesCommonName,
+    location: mockLocation,
+    icesGrid: rectangle,
+    date: caughtAt,
+    bait: apiCatch.bait_used != null ? String(apiCatch.bait_used) : 'Unknown bait',
+    quantity: Number.isFinite(quantityRaw) ? quantityRaw : 0,
+    size: sizeCategory,
+    habitat: apiCatch.habitat_type != null ? String(apiCatch.habitat_type) : undefined,
+    marineBio: mockMarineBio,
+    weatherSummary: `Sea temp: ${mockMarineBio?.sstAvg?.toFixed(1) ?? 'N/A'}°C`,
+    notes: apiCatch.notes != null ? String(apiCatch.notes) : undefined,
+    photo: photoUrls.length > 0 ? photoUrls[0] : undefined,
+    photos: photoUrls.length > 0 ? photoUrls : undefined,
+    photoAssets: photoAssets.length > 0 ? photoAssets : undefined,
+    photoThumbnails: photoAssets.length > 0 ? photoAssets.map((asset) => asset.thumbnailUrl ?? null) : undefined,
+    usingFindrPredictions: apiCatch.followed_findr_advice === true,
+    followedBaitAdvice: apiCatch.used_recommended_bait === true,
+    followedHabitatAdvice: apiCatch.used_recommended_habitat === true,
+  };
+}
 
 const speciesImagesByScientificName = new Map<string, SpeciesImageInfo>(
   Object.values(SPECIES_IMAGE_MAP)
@@ -229,209 +350,75 @@ const resolveSpeciesImageAssets = (scientificName: string) => {
   };
 };
 
-type FishMatchSeed = Omit<FishMatch, 'image' | 'imageMobile' | 'imageThumb'>;
-
-const mockLocation: Location = {
-  name: 'Gijón Beach, Asturias',
-  lat: 43.5322,
-  lon: -5.6611,
-};
-
-const mockIcesGrid: ICESGrid = {
-  rectangle: 'VIIIc',
-  lat: 43.5,
-  lon: -6.0,
-  area: 'Bay of Biscay',
-  subdivision: 'VIIIc',
-};
-
-const mockMarineBio: MarineBioData = {
-  chlorophyllAvg: 2.1,
-  dissolvedOxygenAvg: 8.3,
-  nitrateAvg: 4.2,
-  phosphateAvg: 0.3,
-  salinityAvg: 35.2,
-  sstAvg: 16.8,
-  waveHeight: 1.2,
-  windSpeed: 12,
-};
-
-const mockFishMatchSeed: FishMatchSeed[] = [
-  {
-    id: '1',
-    name: 'Dicentrarchus labrax',
-    commonName: 'Sea Bass',
-    confidence: 92,
-    season: 'Year-round',
-    depth: '0-30m',
-    habitat: 'Rocky shores, estuaries',
-    baitSuggestions: ['ragworm', 'lugworm', 'live shrimp', 'small spinners'],
-    tips: ['Dawn and dusk are prime times', 'Look for structure like rocks or piers'],
-    tinderBio:
-      'Find me on the prowl at dawn/dusk; warm months. I love a good chase, especially if it ends with crab.',
-  },
-  {
-    id: '2',
-    name: 'Scomber scombrus',
-    commonName: 'Mackerel',
-    confidence: 88,
-    season: 'Spring-Autumn',
-    depth: '0-200m',
-    habitat: 'Open water, schools',
-    baitSuggestions: ['mackerel feathers', 'sabiki rigs', 'small spinners'],
-    tips: ['Schools move fast', 'Best during feeding frenzies'],
-    tinderBio:
-      'Love a bit of sunlight when shoals are in; dawn/evening peaks in summer. Sucker for fishnets.',
-  },
-  {
-    id: '3',
-    name: 'Merlangius merlangus',
-    commonName: 'Whiting',
-    confidence: 82,
-    season: 'Autumn-Winter',
-    depth: '5-50m',
-    habitat: 'Sandy/muddy bottoms',
-    baitSuggestions: ['ragworm', 'lugworm', 'fish strips'],
-    tips: ['Night fishing often more productive', 'Found over sandy ground'],
-    tinderBio:
-      'Catch me at night & low-light; peaks in colder months inshore. Not into small talk, only small strips of mackerel/squid.',
-  },
-  {
-    id: '4',
-    name: 'Pollachius pollachius',
-    commonName: 'Pollack',
-    confidence: 78,
-    season: 'Year-round',
-    depth: '10-100m',
-    habitat: 'Rocky reefs, wrecks',
-    baitSuggestions: ['ragworm', 'small spinners', 'lures', 'sandeels'],
-    tips: ['Active hunters, try moving baits', 'Found around structure'],
-    tinderBio:
-      'Find me on the prowl at dawn/dusk; overcast days with lures. Lure me with soft plastic and I\'m yours.',
-  },
-  {
-    id: '5',
-    name: 'Gadus morhua',
-    commonName: 'Atlantic Cod',
-    confidence: 71,
-    season: 'Autumn-Spring',
-    depth: '20-200m',
-    habitat: 'Rocky bottoms, wrecks',
-    baitSuggestions: ['lugworm', 'ragworm', 'fish strips', 'crab'],
-    tips: ['Deeper water in winter', 'Bottom fishing preferred'],
-    tinderBio:
-      'Catch me at low light and night; autumn-winter inshore peaks. Bring lug/ragworm and I\'m yours.',
-  },
-];
-
-const mockFishMatches: FishMatch[] = mockFishMatchSeed.map((fish) => {
-  const assets = resolveSpeciesImageAssets(fish.name);
-
-  return {
-    ...fish,
-    image: assets.image,
-    imageMobile: assets.mobile,
-    imageThumb: assets.thumb,
-  };
-});
-
-const _CATCH_STORAGE_KEY = 'findr-demo-catches';
-const TOAST_DURATION_MS = 3000;
-
-function CatchLogger({
-  fish,
-  location,
-  icesGrid,
-  marineBio,
-  onLogCatch,
-  onCancel,
-  catches,
-}: CatchLoggerProps) {
+// CatchLogger Component
+function CatchLogger({ fish, location, icesGrid, marineBio, onLogCatch, onCancel, catches }: CatchLoggerProps) {
   const [selectedBait, setSelectedBait] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [quantity, setQuantity] = useState<number>(1);
   const [size, setSize] = useState<'small' | 'average' | 'large' | 'mixed'>('average');
   const [habitat, setHabitat] = useState<string>('');
   const [phReading] = useState(() => (8.05 + Math.random() * 0.25).toFixed(1));
-  
-  // New validation fields
   const [catchTime, setCatchTime] = useState<string>(() => {
     const now = new Date();
-    return now.toISOString().slice(0, 16); // Format for datetime-local input
+    return now.toISOString().slice(0, 16);
   });
   const [usingFindrPredictions, setUsingFindrPredictions] = useState<boolean | null>(null);
   const [followedBaitAdvice, setFollowedBaitAdvice] = useState<boolean | null>(null);
   const [followedHabitatAdvice, setFollowedHabitatAdvice] = useState<boolean | null>(null);
-  
-  // Photo handling
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
-  // Handle photo upload
-  const handlePhotoUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    // Limit to 3 photos max
-    if (photos.length >= 3) {
-      setPhotoError('Maximum 3 photos allowed per catch');
-      return;
-    }
-    
-    const file = files[0];
-    
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Please select an image file');
-      return;
-    }
-    
-    // Validate file size (max 10MB original)
-    if (file.size > 10 * 1024 * 1024) {
-      setPhotoError('Image too large. Please select an image under 10MB.');
-      return;
-    }
-    
-    setUploadingPhoto(true);
-    setPhotoError(null);
-    
-    try {
-      // Process and compress image
-      const compressedBlob = await compressImage(file);
-      
-      // Create a preview URL for immediate display
-      const previewUrl = URL.createObjectURL(compressedBlob);
-      setPhotos(prev => [...prev, previewUrl]);
-      
-      // TODO: Upload to Supabase Storage
-      // For now, we'll just store the preview URL
-      // In production, you'd upload the compressed blob to Supabase Storage
-      
-    } catch (error) {
-      console.error('Photo processing failed:', error);
-      setPhotoError('Failed to process image. Please try again.');
-    } finally {
-      setUploadingPhoto(false);
-      // Clear the input
-      event.target.value = '';
-    }
-  }, [photos]);
-  
+  const handlePhotoUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      if (photos.length >= 3) {
+        setPhotoError('Maximum 3 photos allowed per catch');
+        return;
+      }
+
+      const file = files[0];
+
+      if (!file.type.startsWith('image/')) {
+        setPhotoError('Please select an image file');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setPhotoError('Image too large. Please select an image under 10MB.');
+        return;
+      }
+
+      setUploadingPhoto(true);
+      setPhotoError(null);
+
+      try {
+        const compressedBlob = await compressImage(file);
+        const previewUrl = URL.createObjectURL(compressedBlob);
+        setPhotos((prev) => [...prev, previewUrl]);
+      } catch (error) {
+        console.error('Photo processing failed:', error);
+        setPhotoError('Failed to process image. Please try again.');
+      } finally {
+        setUploadingPhoto(false);
+        event.target.value = '';
+      }
+    },
+    [photos]
+  );
+
   const removePhoto = useCallback((index: number) => {
-    setPhotos(prev => {
+    setPhotos((prev) => {
       const updated = [...prev];
-      // Revoke object URL to free memory
       URL.revokeObjectURL(updated[index]);
       updated.splice(index, 1);
       return updated;
     });
   }, []);
 
-  const previousCatches = useMemo(
-    () => catches.filter((entry) => entry.fishId === fish.id).length,
-    [catches, fish.id]
-  );
+  const previousCatches = useMemo(() => catches.filter((entry) => entry.fishId === fish.id).length, [catches, fish.id]);
 
   const handleLogCatch = () => {
     if (!selectedBait) return;
@@ -455,9 +442,8 @@ function CatchLogger({
         marineBio?.windSpeed ?? 'N/A'
       } knots, Waves: ${marineBio?.waveHeight?.toFixed(1) ?? 'N/A'}m`,
       notes: notes || undefined,
-      photo: photos.length > 0 ? photos[0] : undefined, // For backward compatibility
+      photo: photos.length > 0 ? photos[0] : undefined,
       photos: photos.length > 0 ? photos : undefined,
-      // Pass validation data
       usingFindrPredictions,
       followedBaitAdvice,
       followedHabitatAdvice,
@@ -496,11 +482,17 @@ function CatchLogger({
             <div className="flex-1 space-y-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-semibold"><TranslatedText text={fish.commonName} /></h3>
-                  <p className="text-sm italic text-primary/80"><TranslatedText text={fish.name} /></p>
+                  <h3 className="text-lg font-semibold">
+                    <TranslatedText text={fish.commonName} />
+                  </h3>
+                  <p className="text-sm italic text-primary/80">
+                    <TranslatedText text={fish.name} />
+                  </p>
                 </div>
                 {previousCatches > 0 && (
-                  <span className="badge badge-secondary">{previousCatches} <TranslatedText text="logged" /></span>
+                  <span className="badge badge-secondary">
+                    {previousCatches} <TranslatedText text="logged" />
+                  </span>
                 )}
               </div>
               <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
@@ -529,9 +521,7 @@ function CatchLogger({
                   key={bait}
                   type="button"
                   onClick={() => setSelectedBait(bait)}
-                  className={`btn btn-sm sm:btn-md ${
-                    selectedBait === bait ? 'btn-primary' : 'btn-outline btn-primary'
-                  }`}
+                  className={`btn btn-sm sm:btn-md ${selectedBait === bait ? 'btn-primary' : 'btn-outline btn-primary'}`}
                 >
                   <TranslatedText text={bait} />
                 </button>
@@ -545,11 +535,7 @@ function CatchLogger({
             <AllBaitOptionsLabel />
             <span className="text-xs text-error">*</span>
           </label>
-          <select
-            className="select select-bordered w-full"
-            value={selectedBait}
-            onChange={(event) => setSelectedBait(event.target.value)}
-          >
+          <select className="select select-bordered w-full" value={selectedBait} onChange={(event) => setSelectedBait(event.target.value)}>
             <ChooseBaitOption />
             {baitOptions.map((bait) => (
               <option key={bait} value={bait}>
@@ -558,7 +544,9 @@ function CatchLogger({
             ))}
           </select>
           {selectedBait === '' && (
-            <PickBaitHint />
+            <p className="text-xs text-base-content/60">
+              <TranslatedText text="Pick a bait to enable logging." />
+            </p>
           )}
         </div>
 
@@ -570,9 +558,7 @@ function CatchLogger({
                 key={value}
                 type="button"
                 onClick={() => setQuantity(value)}
-                className={`btn btn-sm sm:btn-md flex-1 ${
-                  quantity === value ? 'btn-primary' : 'btn-outline'
-                }`}
+                className={`btn btn-sm sm:btn-md flex-1 ${quantity === value ? 'btn-primary' : 'btn-outline'}`}
               >
                 {value}
               </button>
@@ -580,9 +566,7 @@ function CatchLogger({
             <button
               type="button"
               onClick={() => setQuantity(5)}
-              className={`btn btn-sm sm:btn-md flex-1 ${
-                quantity === 5 ? 'btn-primary' : 'btn-outline'
-              }`}
+              className={`btn btn-sm sm:btn-md flex-1 ${quantity === 5 ? 'btn-primary' : 'btn-outline'}`}
             >
               <LoadsButton />
             </button>
@@ -608,7 +592,7 @@ function CatchLogger({
             <AlertTriangle className="w-4 h-4" />
             <TranslatedText text="Help us improve predictions" />
           </h4>
-          
+
           <div className="space-y-3">
             <label className="text-sm font-medium">
               <TranslatedText text="Were you using Findr predictions to decide where/when to fish?" />
@@ -617,18 +601,14 @@ function CatchLogger({
               <button
                 type="button"
                 onClick={() => setUsingFindrPredictions(true)}
-                className={`btn btn-sm flex-1 ${
-                  usingFindrPredictions === true ? 'btn-success' : 'btn-outline'
-                }`}
+                className={`btn btn-sm flex-1 ${usingFindrPredictions === true ? 'btn-success' : 'btn-outline'}`}
               >
                 <TranslatedText text="Yes" />
               </button>
               <button
                 type="button"
                 onClick={() => setUsingFindrPredictions(false)}
-                className={`btn btn-sm flex-1 ${
-                  usingFindrPredictions === false ? 'btn-error' : 'btn-outline'
-                }`}
+                className={`btn btn-sm flex-1 ${usingFindrPredictions === false ? 'btn-error' : 'btn-outline'}`}
               >
                 <TranslatedText text="No" />
               </button>
@@ -645,18 +625,14 @@ function CatchLogger({
                   <button
                     type="button"
                     onClick={() => setFollowedBaitAdvice(true)}
-                    className={`btn btn-sm flex-1 ${
-                      followedBaitAdvice === true ? 'btn-success' : 'btn-outline'
-                    }`}
+                    className={`btn btn-sm flex-1 ${followedBaitAdvice === true ? 'btn-success' : 'btn-outline'}`}
                   >
                     <TranslatedText text="Yes" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setFollowedBaitAdvice(false)}
-                    className={`btn btn-sm flex-1 ${
-                      followedBaitAdvice === false ? 'btn-error' : 'btn-outline'
-                    }`}
+                    className={`btn btn-sm flex-1 ${followedBaitAdvice === false ? 'btn-error' : 'btn-outline'}`}
                   >
                     <TranslatedText text="No" />
                   </button>
@@ -671,18 +647,14 @@ function CatchLogger({
                   <button
                     type="button"
                     onClick={() => setFollowedHabitatAdvice(true)}
-                    className={`btn btn-sm flex-1 ${
-                      followedHabitatAdvice === true ? 'btn-success' : 'btn-outline'
-                    }`}
+                    className={`btn btn-sm flex-1 ${followedHabitatAdvice === true ? 'btn-success' : 'btn-outline'}`}
                   >
                     <TranslatedText text="Yes" />
                   </button>
                   <button
                     type="button"
                     onClick={() => setFollowedHabitatAdvice(false)}
-                    className={`btn btn-sm flex-1 ${
-                      followedHabitatAdvice === false ? 'btn-error' : 'btn-outline'
-                    }`}
+                    className={`btn btn-sm flex-1 ${followedHabitatAdvice === false ? 'btn-error' : 'btn-outline'}`}
                   >
                     <TranslatedText text="No" />
                   </button>
@@ -699,16 +671,16 @@ function CatchLogger({
         </div>
 
         <div className="space-y-3">
-          <label className="text-sm font-semibold"><TranslatedText text="What size were they?" /></label>
+          <label className="text-sm font-semibold">
+            <TranslatedText text="What size were they?" />
+          </label>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
             {(['small', 'average', 'large', 'mixed'] as const).map((value) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => setSize(value)}
-                className={`btn btn-sm sm:btn-md flex-1 ${
-                  size === value ? 'btn-primary' : 'btn-outline'
-                }`}
+                className={`btn btn-sm sm:btn-md flex-1 ${size === value ? 'btn-primary' : 'btn-outline'}`}
               >
                 {value.charAt(0).toUpperCase() + value.slice(1)}
               </button>
@@ -719,7 +691,9 @@ function CatchLogger({
         <div className="space-y-3">
           <label className="flex items-center justify-between text-sm font-semibold">
             <TranslatedText text="Where did you catch it?" />
-            <span className="text-xs text-base-content/60"><TranslatedText text="Optional" /></span>
+            <span className="text-xs text-base-content/60">
+              <TranslatedText text="Optional" />
+            </span>
           </label>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {habitatOptions.map((option) => (
@@ -727,34 +701,23 @@ function CatchLogger({
                 key={option}
                 type="button"
                 onClick={() => setHabitat(habitat === option ? '' : option)}
-                className={`btn btn-xs sm:btn-sm ${
-                  habitat === option ? 'btn-primary' : 'btn-outline'
-                }`}
+                className={`btn btn-xs sm:btn-sm ${habitat === option ? 'btn-primary' : 'btn-outline'}`}
               >
                 {option.charAt(0).toUpperCase() + option.slice(1)}
               </button>
             ))}
           </div>
-          {habitat && (
-            <div className="text-xs text-base-content/60">
-              <TranslatedText text={`Selected: ${habitat}`} />
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs ml-2"
-                onClick={() => setHabitat('')}
-              >
-                <TranslatedText text="Clear" />
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-semibold">
-            <TranslatedText text="Notes to self" /> <span className="text-xs text-base-content/60">(<TranslatedText text="tips for next visit" />)</span>
+            <TranslatedText text="Notes to self" />{' '}
+            <span className="text-xs text-base-content/60">
+              (<TranslatedText text="tips for next visit" />)
+            </span>
           </label>
           <textarea
-            className="textarea textarea-bordered"
+            className="textarea textarea-bordered w-full"
             placeholder="Best marks, tides, time of day..."
             rows={4}
             value={notes}
@@ -765,9 +728,11 @@ function CatchLogger({
         <div className="space-y-3">
           <label className="text-sm font-semibold flex items-center gap-2">
             📸 <TranslatedText text="Add photos" />
-            <span className="text-xs text-base-content/60">(<TranslatedText text="optional, max 3" />)</span>
+            <span className="text-xs text-base-content/60">
+              (<TranslatedText text="optional, max 3" />)
+            </span>
           </label>
-          
+
           {photos.length > 0 && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {photos.map((photo, index) => (
@@ -778,7 +743,7 @@ function CatchLogger({
                     width={120}
                     height={96}
                     className="w-full h-24 object-cover rounded-lg border border-base-300"
-                    unoptimized // Since these are blob URLs
+                    unoptimized
                   />
                   <button
                     type="button"
@@ -791,7 +756,7 @@ function CatchLogger({
               ))}
             </div>
           )}
-          
+
           {photos.length < 3 && (
             <div className="space-y-2">
               <input
@@ -806,14 +771,14 @@ function CatchLogger({
               </p>
             </div>
           )}
-          
+
           {uploadingPhoto && (
             <div className="flex items-center gap-2 text-sm">
               <span className="loading loading-ring loading-sm text-blue-500"></span>
               <TranslatedText text="Processing image..." />
             </div>
           )}
-          
+
           {photoError && (
             <div className="alert alert-error alert-sm">
               <span className="text-sm">{photoError}</span>
@@ -829,32 +794,44 @@ function CatchLogger({
           <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div className="flex items-center gap-2">
               <Thermometer className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="Sea temp:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="Sea temp:" />
+              </span>
               <span>{marineBio.sstAvg?.toFixed(1) ?? 'N/A'}°C</span>
             </div>
             <div className="flex items-center gap-2">
               <Droplets className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="Oxygen:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="Oxygen:" />
+              </span>
               <span>{marineBio.dissolvedOxygenAvg?.toFixed(1) ?? 'N/A'} mg/L</span>
             </div>
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="Salinity:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="Salinity:" />
+              </span>
               <span>{marineBio.salinityAvg?.toFixed(1) ?? 'N/A'}‰</span>
             </div>
             <div className="flex items-center gap-2">
               <CloudSun className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="pH:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="pH:" />
+              </span>
               <span>{phReading}</span>
             </div>
             <div className="flex items-center gap-2">
               <Waves className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="Wave height:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="Wave height:" />
+              </span>
               <span>{marineBio.waveHeight?.toFixed(1) ?? '1.2'}m</span>
             </div>
             <div className="flex items-center gap-2">
               <CloudSun className="w-4 h-4" />
-              <span className="font-medium"><TranslatedText text="Wind:" /></span>
+              <span className="font-medium">
+                <TranslatedText text="Wind:" />
+              </span>
               <span>{marineBio.windSpeed ?? '12'} knots</span>
             </div>
           </div>
@@ -864,12 +841,7 @@ function CatchLogger({
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
             <TranslatedText text="Cancel" />
           </button>
-          <button
-            type="button"
-            onClick={handleLogCatch}
-            disabled={!selectedBait}
-            className="btn btn-success gap-2"
-          >
+          <button type="button" onClick={handleLogCatch} disabled={!selectedBait} className="btn btn-success gap-2">
             <Fish className="w-4 h-4" />
             <TranslatedText text="Log catch" />
           </button>
@@ -879,12 +851,69 @@ function CatchLogger({
   );
 }
 
-const CatchHistory: React.FC<CatchHistoryProps> = ({ catches }) => {
+// CatchHistory Component with improved empty state
+const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions }) => {
   if (catches.length === 0) {
     return (
-      <div className="space-y-4 py-12 text-center">
-        <div className="text-6xl">🎣</div>
-        <p className="text-lg text-base-content/70"><TranslatedText text="No catches logged yet. Go fishing!" /></p>
+      <div className="text-center py-12 space-y-6">
+        <div className="relative inline-block">
+          <div className="text-8xl animate-bounce">🎣</div>
+          <div className="absolute -top-2 -right-2 text-4xl animate-pulse">✨</div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-2xl font-bold text-base-content">
+            <TranslatedText text="Your Fishing Journey Starts Here" />
+          </h2>
+          <p className="text-base-content/70 max-w-md mx-auto">
+            <TranslatedText text="No catches logged yet, but that's about to change! Every catch you log helps improve predictions for the entire fishing community." />
+          </p>
+        </div>
+
+        <div className="grid gap-4 max-w-2xl mx-auto sm:grid-cols-3 pt-6">
+          <div className="card bg-base-200">
+            <div className="card-body items-center text-center p-4">
+              <Target className="w-8 h-8 text-primary mb-2" />
+              <h3 className="font-semibold text-sm">
+                <TranslatedText text="Smart Predictions" />
+              </h3>
+              <p className="text-xs text-base-content/60">
+                <TranslatedText text="AI-powered forecasts based on marine conditions" />
+              </p>
+            </div>
+          </div>
+
+          <div className="card bg-base-200">
+            <div className="card-body items-center text-center p-4">
+              <TrendingUp className="w-8 h-8 text-success mb-2" />
+              <h3 className="font-semibold text-sm">
+                <TranslatedText text="Track Progress" />
+              </h3>
+              <p className="text-xs text-base-content/60">
+                <TranslatedText text="Build your personal catch history and patterns" />
+              </p>
+            </div>
+          </div>
+
+          <div className="card bg-base-200">
+            <div className="card-body items-center text-center p-4">
+              <Users className="w-8 h-8 text-info mb-2" />
+              <h3 className="font-semibold text-sm">
+                <TranslatedText text="Help Others" />
+              </h3>
+              <p className="text-xs text-base-content/60">
+                <TranslatedText text="Your data improves predictions for everyone" />
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-6">
+          <button onClick={onViewPredictions} className="btn btn-primary btn-lg gap-2">
+            <Fish className="w-5 h-5" />
+            <TranslatedText text="View Today's Predictions" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -904,12 +933,12 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches }) => {
             <div className="card-body space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
-                  <h3 className="card-title text-lg"><TranslatedText text={catchEntry.fishName} /></h3>
+                  <h3 className="card-title text-lg">
+                    <TranslatedText text={catchEntry.fishName} />
+                  </h3>
                   <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
                     {catchEntry.quantity > 1 && (
-                      <span className="badge badge-success">
-                        x{catchEntry.quantity === 5 ? 'Loads' : catchEntry.quantity}
-                      </span>
+                      <span className="badge badge-success">x{catchEntry.quantity === 5 ? 'Loads' : catchEntry.quantity}</span>
                     )}
                     <span className="badge badge-info">{sizeDisplay}</span>
                   </div>
@@ -934,24 +963,32 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches }) => {
                 <div className="space-y-2">
                   <p className="flex items-center gap-2">
                     <Navigation className="h-4 w-4" />
-                    <span className="font-medium"><TranslatedText text="Location:" /></span>
+                    <span className="font-medium">
+                      <TranslatedText text="Location:" />
+                    </span>
                     {catchEntry.location.name}
                   </p>
                   <p className="flex items-center gap-2">
                     <Fish className="h-4 w-4" />
-                    <span className="font-medium"><TranslatedText text="Bait:" /></span>
+                    <span className="font-medium">
+                      <TranslatedText text="Bait:" />
+                    </span>
                     <TranslatedText text={catchEntry.bait} />
                   </p>
                   {catchEntry.habitat && (
                     <p className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      <span className="font-medium"><TranslatedText text="Habitat:" /></span>
+                      <span className="font-medium">
+                        <TranslatedText text="Habitat:" />
+                      </span>
                       <TranslatedText text={catchEntry.habitat} />
                     </p>
                   )}
                   {catchEntry.notes && (
                     <p className="flex items-start gap-2">
-                      <span className="font-medium"><TranslatedText text="Notes:" /></span>
+                      <span className="font-medium">
+                        <TranslatedText text="Notes:" />
+                      </span>
                       {catchEntry.notes}
                     </p>
                   )}
@@ -964,34 +1001,39 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches }) => {
                   <p className="text-xs text-base-content/70">{catchEntry.weatherSummary}</p>
                 </div>
               </div>
-              
+
               {(catchEntry.photos?.length || catchEntry.photo) && (
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm flex items-center gap-2">
                     📸 <TranslatedText text="Photos" />
                   </h4>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {/* Handle both new photos array and legacy single photo */}
-                    {catchEntry.photos ? catchEntry.photos.map((photo, index) => (
-                      <Image
-                        key={index}
-                        src={photo}
-                        alt={`${catchEntry.fishName} catch photo ${index + 1}`}
-                        width={120}
-                        height={80}
-                        className="w-full h-20 object-cover rounded-lg border border-base-300"
-                        unoptimized // Since these are blob URLs
-                      />
-                    )) : catchEntry.photo && (
-                      <Image
-                        src={catchEntry.photo}
-                        alt={`${catchEntry.fishName} catch photo`}
-                        width={120}
-                        height={80}
-                        className="w-full h-20 object-cover rounded-lg border border-base-300"
-                        unoptimized // Since these are blob URLs  
-                      />
-                    )}
+                    {catchEntry.photos
+                      ? catchEntry.photos.map((photo, index) => {
+                          const asset = catchEntry.photoAssets?.[index];
+                          const source = asset?.thumbnailUrl ?? asset?.url ?? photo;
+                          return (
+                            <Image
+                              key={index}
+                              src={source}
+                              alt={`${catchEntry.fishName} catch photo ${index + 1}`}
+                              width={120}
+                              height={80}
+                              className="w-full h-20 object-cover rounded-lg border border-base-300"
+                              unoptimized={source.startsWith('blob:')}
+                            />
+                          );
+                        })
+                      : catchEntry.photo && (
+                          <Image
+                            src={catchEntry.photoAssets?.[0]?.thumbnailUrl ?? catchEntry.photoAssets?.[0]?.url ?? catchEntry.photo}
+                            alt={`${catchEntry.fishName} catch photo`}
+                            width={120}
+                            height={80}
+                            className="w-full h-20 object-cover rounded-lg border border-base-300"
+                            unoptimized={catchEntry.photo.startsWith('blob:')}
+                          />
+                        )}
                   </div>
                 </div>
               )}
@@ -1003,76 +1045,216 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches }) => {
   );
 };
 
+// Main Page Component
 export default function FindrCatchLogPage() {
   const [currentPage, setCurrentPage] = useState<'fish' | 'log' | 'history'>('fish');
   const [showCatchLogger, setShowCatchLogger] = useState(false);
   const [selectedFish, setSelectedFish] = useState<FishMatch | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [showBlankTripDialog, setShowBlankTripDialog] = useState(false);
   const [catches, setCatches] = useState<CatchEntry[]>([]);
+  const [liveMatches, setLiveMatches] = useState<FishMatch[]>([]);
+  const [loadingPredictions, setLoadingPredictions] = useState(true);
 
-  // New enhanced modal states
+  // Modal states
   const [showQuickLogModal, setShowQuickLogModal] = useState(false);
   const [showSessionLogModal, setShowSessionLogModal] = useState(false);
   const [showBlankReportModal, setShowBlankReportModal] = useState(false);
   const [showReferenceTablesModal, setShowReferenceTablesModal] = useState(false);
 
-  // Use our new hooks
-  const { logCatch, logBlankTrip } = useCatchLog();
-  const { recordPredictionView } = useImpressionTracking();
+  const defaultPredictionDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { selectedCode } = usePersistentFindrSettings({
+    predictionDate: defaultPredictionDate,
+    language: 'en',
+  });
+  const activeRectangleCode = selectedCode || mockIcesGrid.rectangle;
 
-  const totalSpeciesCaught = useMemo(
-    () => new Set(catches.map((entry) => entry.fishId)).size,
-    [catches]
-  );
-
-  useEffect(() => {
-    console.info('[Findr Catch Log] Using production API endpoints with validation tracking.', {
-      location: mockLocation.name,
-      icesRectangle: mockIcesGrid.rectangle,
-      fishCatalogSize: mockFishMatches.length,
-      marineSignals: Object.keys(mockMarineBio),
-      baitOptionsPreview: baitOptions.slice(0, 3),
-    });
-
-    // Load catches from localStorage for now
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('findr-demo-catches');
-        if (saved) {
-          const parsed = JSON.parse(saved) as CatchEntry[];
-          setCatches(parsed);
-        }
-      } catch (error) {
-        console.warn('Failed to load catch history:', error);
-      }
+  const resolveAccessToken = useCallback(async (): Promise<string | null> => {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn('[Findr Catch Log] Failed to retrieve Supabase session:', error.message);
+      return null;
     }
+    return data.session?.access_token ?? null;
   }, []);
 
-  // Save catches to localStorage when they change
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('findr-demo-catches', JSON.stringify(catches));
+  // Fetch live predictions
+  const fetchLivePredictions = useCallback(async () => {
+    setLoadingPredictions(true);
+    try {
+      const token = await resolveAccessToken();
+      if (!token) {
+        console.warn('[Findr Catch Log] No auth token; using fallback predictions');
+        setLoadingPredictions(false);
+        return;
+      }
+
+      const response = await fetch('/api/findr/predictions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          lat: mockLocation.lat,
+          lon: mockLocation.lon,
+          rectangleCode: activeRectangleCode,
+          date: defaultPredictionDate,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const mappedMatches = data.predictions.map((pred: FishMatch) => {
+          const assets = resolveSpeciesImageAssets(pred.name);
+          return {
+            ...pred,
+            image: assets.image,
+            imageMobile: assets.mobile,
+            imageThumb: assets.thumb,
+          };
+        });
+        setLiveMatches(mappedMatches);
+      }
+    } catch (error) {
+      console.error('[Findr Catch Log] Failed to fetch predictions:', error);
+    } finally {
+      setLoadingPredictions(false);
     }
-  }, [catches]);
+  }, [activeRectangleCode, defaultPredictionDate, resolveAccessToken]);
+
+  // Fetch catch history
+  const fetchLoggedSessions = useCallback(async () => {
+    try {
+      const token = await resolveAccessToken();
+      if (!token) {
+        console.warn('[Findr Catch Log] No auth token available; skipping catch fetch');
+        return;
+      }
+
+      const response = await fetch('/api/findr/catch-log', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch catches: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      if (!payload?.catches || !Array.isArray(payload.catches)) {
+        return;
+      }
+
+      const mapped = (payload.catches as Array<Record<string, unknown>>).map((catchRow) =>
+        mapApiCatchToEntry(catchRow, activeRectangleCode)
+      );
+      setCatches(mapped);
+    } catch (error) {
+      console.error('[Findr Catch Log] Unable to fetch catch history:', error);
+    }
+  }, [activeRectangleCode, resolveAccessToken]);
+
+  const handleCatchLoggerTelemetry = useCallback((event: CatchLoggerTelemetryEvent) => {
+    console.info('[Catch Log Telemetry]', event);
+  }, []);
+
+  const { logCatch } = useCatchLogger({
+    resolveAccessToken,
+    onSuccess: (response) => {
+      toast.success(`Catch logged! +${response.points_earned} points`);
+
+      if (response.enrichment.has_exif_gps) {
+        toast.success('📍 GPS extracted from photo!');
+      }
+      if (response.enrichment.depth_found) {
+        toast.success(`🌊 Depth: ${response.enrichment.depth_meters ?? 'unknown'} m`);
+      }
+      if (response.enrichment.substrate_found && response.enrichment.substrate) {
+        toast.success(`🪨 Substrate: ${response.enrichment.substrate}`);
+      }
+
+      void fetchLoggedSessions();
+    },
+    onError: (error) => {
+      toast.error(`Failed to log catch: ${error.message}`);
+    },
+    onTelemetry: handleCatchLoggerTelemetry,
+  });
+
+  const { quickLog } = useQuickCatchLog({
+    resolveAccessToken,
+    onSuccess: () => {
+      toast.success('Quick log complete!');
+      void fetchLoggedSessions();
+    },
+    onError: (error) => {
+      toast.error(`Quick log failed: ${error.message}`);
+    },
+    onTelemetry: handleCatchLoggerTelemetry,
+  });
+
+  const { recordPredictionView } = useImpressionTracking();
+
+  const totalSpeciesCaught = useMemo(() => new Set(catches.map((entry) => entry.fishId)).size, [catches]);
+
+  const displayMatches = useMemo(() => {
+    if (liveMatches.length > 0) return liveMatches;
+    
+    // Fallback to mock data with proper image assets
+    return [
+      {
+        id: '1',
+        name: 'Dicentrarchus labrax',
+        commonName: 'Sea Bass',
+        confidence: 92,
+        season: 'Year-round',
+        depth: '0-30m',
+        habitat: 'Rocky shores, estuaries',
+        baitSuggestions: ['ragworm', 'lugworm', 'live shrimp', 'small spinners'],
+        tips: ['Dawn and dusk are prime times', 'Look for structure like rocks or piers'],
+        tinderBio: 'Find me on the prowl at dawn/dusk; warm months. I love a good chase, especially if it ends with crab.',
+        ...resolveSpeciesImageAssets('Dicentrarchus labrax'),
+      },
+      {
+        id: '2',
+        name: 'Scomber scombrus',
+        commonName: 'Mackerel',
+        confidence: 88,
+        season: 'Spring-Autumn',
+        depth: '0-200m',
+        habitat: 'Open water, schools',
+        baitSuggestions: ['mackerel feathers', 'sabiki rigs', 'small spinners'],
+        tips: ['Schools move fast', 'Best during feeding frenzies'],
+        tinderBio: 'Love a bit of sunlight when shoals are in; dawn/evening peaks in summer. Sucker for fishnets.',
+        ...resolveSpeciesImageAssets('Scomber scombrus'),
+      },
+    ];
+  }, [liveMatches]);
+
+  useEffect(() => {
+    void fetchLivePredictions();
+    void fetchLoggedSessions();
+  }, [fetchLivePredictions, fetchLoggedSessions]);
 
   // Track impression when fish matches are viewed
   useEffect(() => {
-    if (currentPage === 'fish') {
+    if (currentPage === 'fish' && displayMatches.length > 0) {
       recordPredictionView(
-        mockIcesGrid.rectangle,
-        mockFishMatches.map(fish => ({
+        activeRectangleCode,
+        displayMatches.map((fish) => ({
           id: fish.id,
           name: fish.name,
           commonName: fish.commonName,
           confidence: fish.confidence / 100,
           baitSuggestions: fish.baitSuggestions,
-          habitat: fish.habitat
+          habitat: fish.habitat,
         })),
         {
           sea_temp: mockMarineBio.sstAvg,
-          tide_phase: 'incoming', // Mock data
+          tide_phase: 'incoming',
           wind_speed: mockMarineBio.windSpeed,
           wave_height: mockMarineBio.waveHeight,
           salinity: mockMarineBio.salinityAvg,
@@ -1080,9 +1262,9 @@ export default function FindrCatchLogPage() {
           dissolved_oxygen: mockMarineBio.dissolvedOxygenAvg,
         },
         'high'
-      ).catch(err => console.warn('[Impression Tracking] Failed to record view:', err));
+      ).catch((err) => console.warn('[Impression Tracking] Failed to record view:', err));
     }
-  }, [currentPage, recordPredictionView]);
+  }, [currentPage, displayMatches, recordPredictionView, activeRectangleCode]);
 
   useEffect(() => {
     if (!showToast) return;
@@ -1104,246 +1286,256 @@ export default function FindrCatchLogPage() {
     setShowToast(true);
   }, []);
 
-  const handleLogCatch = useCallback(async (entry: CatchEntry) => {
-    try {
-      await logCatch({
-        species_id: entry.fishId,
-        species_common_name: entry.fishName,
-        rectangle_code: entry.icesGrid,
-        caught_at: entry.date,
-        quantity: entry.quantity,
-        size_category: entry.size as 'small' | 'average' | 'large' | 'mixed',
-        bait_used: entry.bait,
-        habitat_type: entry.habitat,
-        notes: entry.notes,
-        followed_findr_advice: entry.usingFindrPredictions === true,
-        environmental_conditions: {
-          ...(entry.marineBio.sstAvg !== undefined && { sea_temp: entry.marineBio.sstAvg }),
-          ...(entry.marineBio.windSpeed !== undefined && { wind_speed: entry.marineBio.windSpeed }),
-          ...(entry.marineBio.waveHeight !== undefined && { wave_height: entry.marineBio.waveHeight }),
-          ...(entry.marineBio.salinityAvg !== undefined && { salinity: entry.marineBio.salinityAvg }),
-          ...(entry.marineBio.chlorophyllAvg !== undefined && { chlorophyll: entry.marineBio.chlorophyllAvg }),
-          ...(entry.marineBio.dissolvedOxygenAvg !== undefined && { dissolved_oxygen: entry.marineBio.dissolvedOxygenAvg }),
-        },
-      });
-      
-      // Add to local state for immediate UI update
-      setCatches(prev => [entry, ...prev]);
-      
-      setShowCatchLogger(false);
-      setSelectedFish(null);
-      setCurrentPage('history');
-      setToastMessage('🎉 Catch logged successfully!');
-      setShowToast(true);
-    } catch (error) {
-      console.error('[Catch Logging] Failed to log catch:', error);
-      // Still add to local state as fallback
-      setCatches(prev => [entry, ...prev]);
-      setShowCatchLogger(false);
-      setSelectedFish(null);
-      setCurrentPage('history');
-      setToastMessage('📝 Catch saved locally - will sync when online');
-      setShowToast(true);
-    }
-  }, [logCatch, setCatches]);
+  const handleLogCatch = useCallback(
+    async (entry: CatchEntry) => {
+      const [datePart, timePartRaw] = entry.date.includes('T') ? entry.date.split('T') : [entry.date, null];
+      const timePart = timePartRaw ? timePartRaw.slice(0, 8) : null;
+
+      try {
+        const result = await logCatch({
+          speciesId: entry.fishId,
+          speciesCommonName: entry.fishName,
+          rectangleCode: entry.icesGrid,
+          catchDate: datePart,
+          catchTime: timePart,
+          quantity: entry.quantity,
+          sizeCategory: (entry.size as CatchLogInput['sizeCategory']) ?? 'mixed',
+          baitUsed: entry.bait,
+          habitatType: entry.habitat ?? null,
+          notes: entry.notes ?? null,
+          entryType: 'detailed',
+          environmentalConditions: buildEnvironmentalConditions(entry.marineBio),
+        });
+
+        if (!result) {
+          throw new Error('Logger returned no response');
+        }
+
+        setShowCatchLogger(false);
+        setSelectedFish(null);
+        setCurrentPage('history');
+        setToastMessage('🎉 Catch logged successfully!');
+        setShowToast(true);
+      } catch (error) {
+        console.error('[Catch Logging] Failed to log catch:', error);
+        setCatches((prev) => [entry, ...prev]);
+        setShowCatchLogger(false);
+        setSelectedFish(null);
+        setCurrentPage('history');
+        setToastMessage('📝 Catch saved locally - will sync when online');
+        setShowToast(true);
+      }
+    },
+    [logCatch]
+  );
 
   const handleClearCatches = useCallback(() => {
     setCatches([]);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('findr-demo-catches');
-    }
+    toast.success('Catch history cleared for this session.');
   }, []);
 
-  const handleLogBlankTrip = useCallback(async () => {
-    try {
-      await logBlankTrip({
-        rectangle_code: mockIcesGrid.rectangle,
-        latitude: mockLocation.lat,
-        longitude: mockLocation.lon,
-        environmental_conditions: {
-          ...(mockMarineBio.sstAvg !== undefined && { sea_temp: mockMarineBio.sstAvg }),
-          ...(mockMarineBio.windSpeed !== undefined && { wind_speed: mockMarineBio.windSpeed }),
-          ...(mockMarineBio.waveHeight !== undefined && { wave_height: mockMarineBio.waveHeight }),
-          ...(mockMarineBio.salinityAvg !== undefined && { salinity: mockMarineBio.salinityAvg }),
-          ...(mockMarineBio.chlorophyllAvg !== undefined && { chlorophyll: mockMarineBio.chlorophyllAvg }),
-          ...(mockMarineBio.dissolvedOxygenAvg !== undefined && { dissolved_oxygen: mockMarineBio.dissolvedOxygenAvg }),
-        },
-        notes: 'No catches today',
-      });
-      
-      setShowBlankTripDialog(false);
-      setToastMessage('📝 Blank trip logged - thanks for the data!');
-      setShowToast(true);
-    } catch (error) {
-      console.error('[Blank Trip Logging] Failed to log blank trip:', error);
-      setToastMessage('❌ Failed to log blank trip. Please try again.');
-      setShowToast(true);
-    }
-  }, [logBlankTrip]);
+  const submitBlankReport = useCallback(
+    async (report: BlankReportData) => {
+      const primaryTime = report.time_period[0];
+      const catchTime = primaryTime ? TIME_PERIOD_TO_TIME[primaryTime] ?? null : null;
+      const habitatLabel = HABITAT_LABEL_LOOKUP[report.habitat_type] ?? report.habitat_type;
 
-  // New enhanced modal success handlers
-  const handleQuickLogSuccess = useCallback((catchEntry: NewCatchEntry) => {
-    console.log('[Quick Log] Success:', catchEntry);
-    setCatches(prev => [
-      {
-        id: catchEntry.id,
-        fishId: catchEntry.species_common_name, // Map to old structure
-        fishName: catchEntry.species_common_name,
-        location: mockLocation,
-        icesGrid: mockIcesGrid.rectangle,
-        date: catchEntry.caught_at,
-        bait: catchEntry.bait_used,
-        quantity: catchEntry.quantity,
-        size: catchEntry.size_category,
-        habitat: catchEntry.habitat_type,
-        marineBio: mockMarineBio,
-        weatherSummary: `Sea temp: ${mockMarineBio?.sstAvg?.toFixed(1) ?? 'N/A'}°C`,
-        notes: catchEntry.notes,
-      },
-      ...prev
-    ]);
+      const environmental = cleanEnvironment({
+        blank_duration_hours: report.duration_hours,
+        blank_time_periods: report.time_period.join(', '),
+        blank_habitat: habitatLabel,
+        blank_baits: report.bait_attempted.join(', ') || undefined,
+        blank_techniques: report.techniques_used.join(', ') || undefined,
+        blank_weather: report.weather_conditions.conditions.join(', ') || undefined,
+        blank_water_clarity: report.weather_conditions.water_clarity,
+        blank_tide_state: report.weather_conditions.tide_state,
+        blank_possible_reasons: report.possible_reasons.join(', ') || undefined,
+        blank_will_try_again: report.will_try_again ? 'yes' : 'no',
+      });
+
+      const noteSegments = [
+        report.time_period.length ? `Time: ${formatTimePeriods(report.time_period)}` : null,
+        `Habitat: ${habitatLabel}`,
+        report.bait_attempted.length ? `Baits: ${report.bait_attempted.join(', ')}` : null,
+        report.techniques_used.length ? `Techniques: ${report.techniques_used.join(', ')}` : null,
+        report.possible_reasons.length ? `Possible reasons: ${report.possible_reasons.join(', ')}` : null,
+        report.effort_notes ? `Notes: ${report.effort_notes}` : null,
+      ].filter(Boolean);
+
+      const result = await logCatch({
+        speciesId: 'BLANK_TRIP',
+        speciesCommonName: 'Blank Trip',
+        rectangleCode: report.rectangle_code,
+        catchDate: report.date,
+        catchTime,
+        quantity: 0,
+        entryType: 'historical',
+        habitatType: report.habitat_type,
+        method: 'shore',
+        baitUsed: report.bait_attempted.join(', ') || undefined,
+        notes: noteSegments.join(' | ') || undefined,
+        environmentalConditions: environmental,
+      });
+
+      if (!result) {
+        throw new Error('Blank trip could not be logged.');
+      }
+    },
+    [logCatch]
+  );
+
+  const handleQuickLogSuccess = useCallback(() => {
     setCurrentPage('history');
     setToastMessage('🎉 Quick catch logged successfully!');
     setShowToast(true);
   }, []);
 
-  const handleSessionLogSuccess = useCallback((catchEntries: NewCatchEntry[]) => {
-    console.log('[Session Log] Success:', catchEntries);
-    const newCatches = catchEntries.map(entry => ({
-      id: entry.id,
-      fishId: entry.species_common_name,
-      fishName: entry.species_common_name,
-      location: mockLocation,
-      icesGrid: mockIcesGrid.rectangle,
-      date: entry.caught_at,
-      bait: entry.bait_used,
-      quantity: entry.quantity,
-      size: entry.size_category,
-      habitat: entry.habitat_type,
-      marineBio: mockMarineBio,
-      weatherSummary: `Sea temp: ${mockMarineBio?.sstAvg?.toFixed(1) ?? 'N/A'}°C`,
-      notes: entry.notes,
-    }));
-    setCatches(prev => [...newCatches, ...prev]);
-    setCurrentPage('history');
-    setToastMessage(`🎉 Session logged successfully! ${catchEntries.length} catches added.`);
-    setShowToast(true);
-  }, []);
+  const handleSessionLogSuccess = useCallback(
+    (catchCount: number) => {
+      toast.success('Session logged successfully!');
+      setCurrentPage('history');
+      setToastMessage(`🎉 Session logged successfully! ${catchCount} catches added.`);
+      setShowToast(true);
+      void fetchLoggedSessions();
+    },
+    [fetchLoggedSessions]
+  );
 
-  const handleBlankReportSuccess = useCallback((reportData: BlankReportData) => {
-    console.log('[Blank Report] Success:', reportData);
-    setToastMessage('📝 Blank report logged - thanks for the valuable data!');
-    setShowToast(true);
-  }, []);
+  const handleBlankReportSuccess = useCallback(
+    (_: BlankReportData) => {
+      toast.success('Blank report logged - thank you for the data!');
+      void fetchLoggedSessions();
+      setCurrentPage('history');
+      setToastMessage('📝 Blank report logged - thanks for the valuable data!');
+      setShowToast(true);
+    },
+    [fetchLoggedSessions]
+  );
 
   const handleCancelLogger = useCallback(() => {
     setShowCatchLogger(false);
     setSelectedFish(null);
   }, []);
 
-  const renderFishMatches = () => (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <h2 className="text-2xl font-semibold"><TranslatedText text={`🎯 Fish matches for ${mockLocation.name}`} /></h2>
-        <p className="text-base-content/70">
-          <TranslatedText text="Ordered by likelihood - most probable catches first." />
-        </p>
-        <div className="flex justify-center gap-3 pt-3 text-sm">
-          <span className="badge badge-info gap-1">
-            <Thermometer className="h-3 w-3" />
-            {mockMarineBio.sstAvg}°C
-          </span>
-          <span className="badge badge-info gap-1">
-            <Grid3X3 className="h-3 w-3" />
-            ICES {mockIcesGrid.rectangle}
-          </span>
+  const renderFishMatches = () => {
+    if (loadingPredictions) {
+      return (
+        <div className="text-center py-12">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg text-base-content/70">
+            <TranslatedText text="Loading predictions..." />
+          </p>
         </div>
-      </div>
+      );
+    }
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {mockFishMatches.map((fishMatch) => {
-          const speciesCatchCount = catches.filter((entry) => entry.fishId === fishMatch.id).length;
-          return (
-            <div
-              key={fishMatch.id}
-              className="card bg-base-100 shadow-md transition-shadow hover:shadow-lg"
-            >
-              {fishMatch.image && (
-                <figure className="relative h-auto min-h-32 overflow-hidden rounded-t-xl bg-base-100 flex items-center justify-center">
-                  <Image
-                    src={fishMatch.imageThumb ?? fishMatch.image}
-                    alt={fishMatch.commonName}
-                    width={320}
-                    height={240}
-                    className="object-contain max-w-full max-h-full"
-                    sizes="(min-width: 1280px) 320px, (min-width: 768px) 45vw, 100vw"
-                  />
-                  {speciesCatchCount > 0 && (
-                    <span className="badge badge-secondary absolute right-3 top-3">
-                      {speciesCatchCount} <TranslatedText text="caught" />
-                    </span>
-                  )}
-                </figure>
-              )}
-              <div className="card-body space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="card-title text-lg"><TranslatedText text={fishMatch.commonName} /></h3>
-                    <p className="text-sm italic text-base-content/60"><TranslatedText text={fishMatch.name} /></p>
-                  </div>
-                  <span className="badge badge-success">{fishMatch.confidence}%</span>
-                </div>
-                {fishMatch.tinderBio && (
-                  <div className="rounded-lg border-l-4 border-pink-300 bg-pink-50 p-3 text-sm text-pink-800">
-                    <p className="italic">&ldquo;<TranslatedText text={fishMatch.tinderBio} />&rdquo;</p>
-                  </div>
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-semibold">
+            <TranslatedText text={`🎯 Fish matches for ${mockLocation.name}`} />
+          </h2>
+          <p className="text-base-content/70">
+            <TranslatedText text="Ordered by likelihood - most probable catches first." />
+          </p>
+          <div className="flex justify-center gap-3 pt-3 text-sm">
+            <span className="badge badge-info gap-1">
+              <Thermometer className="h-3 w-3" />
+              {mockMarineBio.sstAvg}°C
+            </span>
+            <span className="badge badge-info gap-1">
+              <Grid3X3 className="h-3 w-3" />
+              ICES {activeRectangleCode}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {displayMatches.map((fishMatch) => {
+            const speciesCatchCount = catches.filter((entry) => entry.fishId === fishMatch.id).length;
+            return (
+              <div key={fishMatch.id} className="card bg-base-100 shadow-md transition-shadow hover:shadow-lg">
+                {fishMatch.image && (
+                  <figure className="relative h-auto min-h-32 overflow-hidden rounded-t-xl bg-base-100 flex items-center justify-center">
+                    <Image
+                      src={fishMatch.imageThumb ?? fishMatch.image}
+                      alt={fishMatch.commonName}
+                      width={320}
+                      height={240}
+                      className="object-contain max-w-full max-h-full"
+                      sizes="(min-width: 1280px) 320px, (min-width: 768px) 45vw, 100vw"
+                    />
+                    {speciesCatchCount > 0 && (
+                      <span className="badge badge-secondary absolute right-3 top-3">
+                        {speciesCatchCount} <TranslatedText text="caught" />
+                      </span>
+                    )}
+                  </figure>
                 )}
-                <div className="space-y-1 text-sm">
-                  <p>
-                    <span className="font-medium"><TranslatedText text="Season:" /></span> <TranslatedText text={fishMatch.season} />
-                  </p>
-                  <p>
-                    <span className="font-medium"><TranslatedText text="Depth:" /></span> <TranslatedText text={fishMatch.depth} />
-                  </p>
-                  <p>
-                    <span className="font-medium"><TranslatedText text="Habitat:" /></span> <TranslatedText text={fishMatch.habitat} />
-                  </p>
-                </div>
-                <div className="card-actions justify-end pt-2">
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-sm gap-2"
-                    onClick={() => {
-                      showFishToast(fishMatch.commonName, fishMatch.confidence);
-                      setSelectedFish(fishMatch);
-                      setShowCatchLogger(true);
-                      setCurrentPage('log');
-                    }}
-                  >
-                    <Fish className="h-4 w-4" />
-                    <TranslatedText text="Caught this" />
-                  </button>
+                <div className="card-body space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="card-title text-lg">
+                        <TranslatedText text={fishMatch.commonName} />
+                      </h3>
+                      <p className="text-sm italic text-base-content/60">
+                        <TranslatedText text={fishMatch.name} />
+                      </p>
+                    </div>
+                    <span className="badge badge-success">{fishMatch.confidence}%</span>
+                  </div>
+                  {fishMatch.tinderBio && (
+                    <div className="rounded-lg border-l-4 border-pink-300 bg-pink-50 p-3 text-sm text-pink-800">
+                      <p className="italic">
+                        &ldquo;
+                        <TranslatedText text={fishMatch.tinderBio} />
+                        &rdquo;
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-1 text-sm">
+                    <p>
+                      <span className="font-medium">
+                        <TranslatedText text="Season:" />
+                      </span>{' '}
+                      <TranslatedText text={fishMatch.season} />
+                    </p>
+                    <p>
+                      <span className="font-medium">
+                        <TranslatedText text="Depth:" />
+                      </span>{' '}
+                      <TranslatedText text={fishMatch.depth} />
+                    </p>
+                    <p>
+                      <span className="font-medium">
+                        <TranslatedText text="Habitat:" />
+                      </span>{' '}
+                      <TranslatedText text={fishMatch.habitat} />
+                    </p>
+                  </div>
+                  <div className="card-actions justify-end pt-2">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm gap-2"
+                      onClick={() => {
+                        showFishToast(fishMatch.commonName, fishMatch.confidence);
+                        setSelectedFish(fishMatch);
+                        setShowCatchLogger(true);
+                        setCurrentPage('log');
+                      }}
+                    >
+                      <Fish className="h-4 w-4" />
+                      <TranslatedText text="Caught this" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
-
-  const renderLogPrompt = () => (
-    <div className="space-y-4 py-12 text-center">
-      <div className="text-6xl">📝</div>
-      <h2 className="text-2xl font-semibold"><TranslatedText text="Log a catch" /></h2>
-      <p className="mx-auto max-w-md text-base-content/70">
-        <TranslatedText text="Select a fish from the matches tab to log your catch details." />
-      </p>
-      <button type="button" className="btn btn-primary" onClick={() => setCurrentPage('fish')}>
-        <TranslatedText text="Browse matches" />
-      </button>
-    </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -1351,19 +1543,19 @@ export default function FindrCatchLogPage() {
         <title>Findr catch log | WotNow</title>
       </Head>
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 pb-16">
-        {/* Navigation component handles responsive display internally */}
         <FindrNavigation />
 
-        {/* Content container */}
         <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           <header className="card bg-primary text-primary-content shadow-lg">
             <div className="card-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <ClipboardList className="h-8 w-8" />
                 <div>
-                  <h1 className="text-2xl font-semibold"><TranslatedText text="Findr catch log" /></h1>
+                  <h1 className="text-2xl font-semibold">
+                    <TranslatedText text="Findr catch log" />
+                  </h1>
                   <p className="text-sm text-primary-content/80">
-                    
+                    <TranslatedText text="Smart fishing predictions for your location" />
                   </p>
                 </div>
               </div>
@@ -1380,8 +1572,6 @@ export default function FindrCatchLogPage() {
 
           <section className="card bg-base-100 shadow-xl mt-6">
             <div className="card-body space-y-8">
-              
-              {/* Enhanced Action Buttons Layout */}
               <div className="text-center space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-base-content mb-2">
@@ -1391,11 +1581,8 @@ export default function FindrCatchLogPage() {
                     <TranslatedText text="Choose the option that best describes your fishing experience" />
                   </p>
                 </div>
-                
-                {/* Three Primary Action Buttons */}
+
                 <div className="grid gap-4 md:grid-cols-3">
-                  
-                  {/* Quick Log - Single Catch */}
                   <div className="card bg-gradient-to-br from-secondary/10 to-secondary/5 border border-secondary/20 hover:shadow-lg transition-all duration-200">
                     <div className="card-body text-center p-6">
                       <div className="mx-auto w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-4">
@@ -1407,17 +1594,13 @@ export default function FindrCatchLogPage() {
                       <p className="text-sm text-base-content/70 mb-4">
                         <TranslatedText text="Just landed one? Log it instantly and get back to fishing." />
                       </p>
-                      <button
-                        onClick={() => setShowQuickLogModal(true)}
-                        className="btn btn-secondary btn-block"
-                      >
+                      <button onClick={() => setShowQuickLogModal(true)} className="btn btn-secondary btn-block">
                         <Zap className="w-4 h-4" />
                         <TranslatedText text="Quick Log Catch" />
                       </button>
                     </div>
                   </div>
-                  
-                  {/* Session Log - Multiple Catches */}
+
                   <div className="card bg-gradient-to-br from-success/10 to-success/5 border border-success/20 hover:shadow-lg transition-all duration-200">
                     <div className="card-body text-center p-6">
                       <div className="mx-auto w-16 h-16 bg-success/20 rounded-full flex items-center justify-center mb-4">
@@ -1429,17 +1612,13 @@ export default function FindrCatchLogPage() {
                       <p className="text-sm text-base-content/70 mb-4">
                         <TranslatedText text="Great day? Log multiple catches, photos, and detailed trip information." />
                       </p>
-                      <button
-                        onClick={() => setShowSessionLogModal(true)}
-                        className="btn btn-success btn-block"
-                      >
+                      <button onClick={() => setShowSessionLogModal(true)} className="btn btn-success btn-block">
                         <Users className="w-4 h-4" />
                         <TranslatedText text="Log Full Session" />
                       </button>
                     </div>
                   </div>
-                  
-                  {/* Blank Report - No Luck */}
+
                   <div className="card bg-gradient-to-br from-warning/10 to-warning/5 border border-warning/20 hover:shadow-lg transition-all duration-200">
                     <div className="card-body text-center p-6">
                       <div className="mx-auto w-16 h-16 bg-warning/20 rounded-full flex items-center justify-center mb-4">
@@ -1451,18 +1630,14 @@ export default function FindrCatchLogPage() {
                       <p className="text-sm text-base-content/70 mb-4">
                         <TranslatedText text="No luck today? Your fishing data improves the app for everyone." />
                       </p>
-                      <button
-                        onClick={() => setShowBlankReportModal(true)}
-                        className="btn btn-warning btn-block"
-                      >
+                      <button onClick={() => setShowBlankReportModal(true)} className="btn btn-warning btn-block">
                         <FileText className="w-4 h-4" />
                         <TranslatedText text="Report No Catches" />
                       </button>
                     </div>
                   </div>
                 </div>
-                
-                {/* Secondary Actions */}
+
                 <div className="flex items-center justify-center gap-4 pt-4 border-t border-base-300">
                   <button
                     type="button"
@@ -1476,31 +1651,21 @@ export default function FindrCatchLogPage() {
                     <Calendar className="h-4 w-4" />
                     <TranslatedText text={`View History (${catches.length})`} />
                   </button>
-                  
-                  <button
-                    type="button"
-                    className="btn btn-info btn-outline gap-2"
-                    onClick={() => setShowReferenceTablesModal(true)}
-                  >
+
+                  <button type="button" className="btn btn-info btn-outline gap-2" onClick={() => setShowReferenceTablesModal(true)}>
                     <BarChart3 className="h-4 w-4" />
                     <TranslatedText text="Reference Data" />
                   </button>
-                  
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={handleClearCatches}
-                    disabled={catches.length === 0}
-                  >
+
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearCatches} disabled={catches.length === 0}>
                     <TranslatedText text="Clear demo log" />
                   </button>
                 </div>
               </div>
 
-              {/* Existing Content When Not Using New Modals */}
               {currentPage === 'history' && !showCatchLogger && (
                 <div>
-                  <CatchHistory catches={catches} />
+                  <CatchHistory catches={catches} onViewPredictions={() => setCurrentPage('fish')} />
                 </div>
               )}
 
@@ -1517,8 +1682,21 @@ export default function FindrCatchLogPage() {
               ) : (
                 <>
                   {currentPage === 'fish' && renderFishMatches()}
-                  {currentPage === 'log' && renderLogPrompt()}
-                  {currentPage === 'history' && <CatchHistory catches={catches} />}
+                  {currentPage === 'log' && (
+                    <div className="space-y-4 py-12 text-center">
+                      <div className="text-6xl">📝</div>
+                      <h2 className="text-2xl font-semibold">
+                        <TranslatedText text="Log a catch" />
+                      </h2>
+                      <p className="mx-auto max-w-md text-base-content/70">
+                        <TranslatedText text="Select a fish from the matches tab to log your catch details." />
+                      </p>
+                      <button type="button" className="btn btn-primary" onClick={() => setCurrentPage('fish')}>
+                        <TranslatedText text="Browse matches" />
+                      </button>
+                    </div>
+                  )}
+                  {currentPage === 'history' && <CatchHistory catches={catches} onViewPredictions={() => setCurrentPage('fish')} />}
                 </>
               )}
             </div>
@@ -1534,74 +1712,31 @@ export default function FindrCatchLogPage() {
           </div>
         )}
 
-        {/* Enhanced Modal Components */}
         <QuickLogModal
           isOpen={showQuickLogModal}
           onClose={() => setShowQuickLogModal(false)}
+          onQuickLog={quickLog}
           onSuccess={handleQuickLogSuccess}
-          rectangleCode={mockIcesGrid.rectangle}
+          rectangleCode={activeRectangleCode}
         />
 
         <SessionLogModal
           isOpen={showSessionLogModal}
           onClose={() => setShowSessionLogModal(false)}
           onSuccess={handleSessionLogSuccess}
-          rectangleCode={mockIcesGrid.rectangle}
+          onSubmitCatch={logCatch}
+          rectangleCode={activeRectangleCode}
         />
 
         <BlankReportModal
           isOpen={showBlankReportModal}
           onClose={() => setShowBlankReportModal(false)}
           onSuccess={handleBlankReportSuccess}
-          rectangleCode={mockIcesGrid.rectangle}
+          onSubmit={submitBlankReport}
+          rectangleCode={activeRectangleCode}
         />
 
-        <ReferenceDataTables
-          isOpen={showReferenceTablesModal}
-          onClose={() => setShowReferenceTablesModal(false)}
-          initialView="species"
-        />
-
-        {/* Legacy Blank Trip Dialog (keeping for backward compatibility) */}
-        {showBlankTripDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="card bg-base-100 shadow-xl w-full max-w-md mx-4">
-              <div className="card-body">
-                <h3 className="card-title flex items-center gap-2">
-                  <AlertTriangle className="h-6 w-6 text-warning" />
-                  <TranslatedText text="Log blank trip" />
-                </h3>
-                <p className="text-sm text-base-content/70">
-                  <TranslatedText text="No luck today? That's valuable data too! Logging unsuccessful trips helps us improve our predictions." />
-                </p>
-                <div className="bg-info/10 rounded-lg p-3 mt-4">
-                  <p className="text-sm">
-                    <strong><TranslatedText text="Location:" /></strong> {mockLocation.name}<br />
-                    <strong><TranslatedText text="ICES Rectangle:" /></strong> {mockIcesGrid.rectangle}<br />
-                    <strong><TranslatedText text="Time:" /></strong> {new Date().toLocaleString()}
-                  </p>
-                </div>
-                <div className="card-actions justify-end mt-4">
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    onClick={() => setShowBlankTripDialog(false)}
-                  >
-                    <TranslatedText text="Cancel" />
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-warning gap-2"
-                    onClick={handleLogBlankTrip}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    <TranslatedText text="Log blank trip" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <ReferenceDataTables isOpen={showReferenceTablesModal} onClose={() => setShowReferenceTablesModal(false)} initialView="species" />
       </main>
     </>
   );

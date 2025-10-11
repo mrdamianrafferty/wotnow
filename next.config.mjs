@@ -51,6 +51,15 @@ const nextConfig = {
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
   },
+
+  webpack: (config, { isServer }) => {
+    // Exclude WIP files with syntax errors
+    config.module.rules.push({
+      test: /\/(generateInsights|get-insights)\.ts$/,
+      use: 'null-loader',
+    });
+    return config;
+  },
 }
 
 export default nextConfig

@@ -1,8 +1,14 @@
 import { supabase } from '../supabase/client';
 
+const CATCH_PHOTO_BUCKET = 'catch-photos';
+const LEGACY_BUCKET = 'findr-catch-photos';
+const SUPABASE_PUBLIC_PATH_REGEX = /\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/;
+
 export interface PhotoUploadResult {
   success: boolean;
   url?: string;
+  thumbnailUrl?: string;
+  path?: string;
   error?: string;
 }
 
@@ -27,7 +33,7 @@ export async function uploadCatchPhoto(
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
-      .from('findr-catch-photos')
+      .from(CATCH_PHOTO_BUCKET)
       .upload(fileName, file, {
         cacheControl: '3600',
         upsert: false,
@@ -41,12 +47,30 @@ export async function uploadCatchPhoto(
 
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('findr-catch-photos')
+      .from(CATCH_PHOTO_BUCKET)
       .getPublicUrl(data.path);
+
+    let thumbnailUrl: string | undefined;
+    const { data: thumbnailData } = supabase.storage
+      .from(CATCH_PHOTO_BUCKET)
+      .getPublicUrl(data.path, {
+        transform: {
+          width: 320,
+          height: 320,
+          resize: 'cover',
+          quality: 80,
+        },
+      });
+
+    if (thumbnailData.publicUrl) {
+      thumbnailUrl = thumbnailData.publicUrl;
+    }
 
     return { 
       success: true, 
-      url: urlData.publicUrl 
+      url: urlData.publicUrl,
+      thumbnailUrl,
+      path: data.path,
     };
 
   } catch (error) {
@@ -66,9 +90,15 @@ export async function uploadCatchPhoto(
  */
 export async function deleteCatchPhoto(photoPath: string): Promise<boolean> {
   try {
+    const { bucket, path } = resolveBucketAndPath(photoPath);
+    if (!bucket || !path) {
+      console.error('[Photo Delete] Unable to resolve storage path for', photoPath);
+      return false;
+    }
+
     const { error } = await supabase.storage
-      .from('findr-catch-photos')
-      .remove([photoPath]);
+      .from(bucket)
+      .remove([path]);
 
     if (error) {
       console.error('[Photo Delete] Supabase error:', error);
@@ -89,10 +119,19 @@ export async function deleteCatchPhoto(photoPath: string): Promise<boolean> {
  * @returns The storage path for use with delete operations
  */
 export function extractStoragePath(publicUrl: string): string {
-  // Extract path from URL like: 
-  // https://xyz.supabase.co/storage/v1/object/public/findr-catch-photos/user123/catch456/2024-01-01T12-00-00.jpg
-  const matches = publicUrl.match(/\/findr-catch-photos\/(.+)$/);
-  return matches ? matches[1] : '';
+  try {
+    const url = new URL(publicUrl);
+    const match = url.pathname.match(SUPABASE_PUBLIC_PATH_REGEX);
+    if (!match) return '';
+    const [, bucket, path] = match;
+
+    if (bucket === CATCH_PHOTO_BUCKET || bucket === LEGACY_BUCKET) {
+      return path;
+    }
+    return '';
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -102,7 +141,7 @@ export function extractStoragePath(publicUrl: string): string {
 export async function createPhotoBucket(): Promise<boolean> {
   try {
     // Create bucket with public read access
-    const { error } = await supabase.storage.createBucket('findr-catch-photos', {
+    const { error } = await supabase.storage.createBucket(CATCH_PHOTO_BUCKET, {
       public: true,
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
       fileSizeLimit: 5 * 1024 * 1024, // 5MB limit for processed images
@@ -119,6 +158,37 @@ export async function createPhotoBucket(): Promise<boolean> {
     console.error('[Photo Bucket] Unexpected error:', error);
     return false;
   }
+}
+
+function resolveBucketAndPath(reference: string): { bucket: string | null; path: string | null } {
+  const trimmed = reference.trim();
+
+  if (!trimmed) {
+    return { bucket: null, path: null };
+  }
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const url = new URL(trimmed);
+      const match = url.pathname.match(SUPABASE_PUBLIC_PATH_REGEX);
+      if (match) {
+        return { bucket: match[1], path: match[2] };
+      }
+    } catch {
+      return { bucket: null, path: null };
+    }
+    return { bucket: null, path: null };
+  }
+
+  if (trimmed.startsWith(`${CATCH_PHOTO_BUCKET}/`)) {
+    return { bucket: CATCH_PHOTO_BUCKET, path: trimmed.slice(CATCH_PHOTO_BUCKET.length + 1) };
+  }
+
+  if (trimmed.startsWith(`${LEGACY_BUCKET}/`)) {
+    return { bucket: LEGACY_BUCKET, path: trimmed.slice(LEGACY_BUCKET.length + 1) };
+  }
+
+  return { bucket: CATCH_PHOTO_BUCKET, path: trimmed };
 }
 
 /**

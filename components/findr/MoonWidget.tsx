@@ -506,7 +506,7 @@ export default function MoonWidget({ lat, lon, defaultView = 'summary' }: MoonWi
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`moon-view-${view.key}`}
-                className={`tab whitespace-nowrap ${isActive ? 'tab-active' : ''}`}
+                className={`tab whitespace-nowrap ${isActive ? 'tab-active' : 'text-base-content'}`}
                 onClick={() => setActiveView(view.key)}
               >
                 <TranslatedText text={view.label} />

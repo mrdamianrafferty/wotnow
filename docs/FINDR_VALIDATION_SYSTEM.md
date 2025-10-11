@@ -20,7 +20,7 @@ This document describes the complete catch logging and validation system built f
    - `/api/findr/record-blank-trip`: Records unsuccessful fishing sessions
 
 3. **React Hooks**
-   - `useCatchLog`: Manages catch data with optimistic updates and localStorage fallback
+   - `useCatchLogger`: Handles authenticated catch submission with enrichment pipeline
    - `useImpressionTracking`: Automatically records prediction views for validation
 
 4. **UI Components**
@@ -127,28 +127,22 @@ Records unsuccessful fishing sessions.
 
 ## React Hook Usage
 
-### useCatchLog
+### useCatchLogger
 ```typescript
-const { catches, loading, error, logCatch, logBlankTrip, refreshCatches } = useCatchLog();
+const { logCatch, loading, error, response } = useCatchLogger();
 
 // Log a new catch
 await logCatch({
-  species_id: 'bass-001',
-  species_common_name: 'Sea Bass',
-  rectangle_code: 'VIIIc',
-  caught_at: '2024-01-15T14:30:00Z',
+  speciesId: 'bass-001',
+  speciesCommonName: 'Sea Bass',
+  rectangleCode: 'VIIIc',
+  catchDate: '2024-01-15',
+  catchTime: '14:30:00',
   quantity: 2,
-  size_category: 'average',
-  bait_used: 'ragworm',
-  followed_findr_advice: true,
-});
-
-// Record unsuccessful trip
-await logBlankTrip({
-  rectangle_code: 'VIIIc',
-  latitude: 43.5322,
-  longitude: -5.6611,
-  notes: 'Weather turned bad'
+  sizeCategory: 'average',
+  baitUsed: 'ragworm',
+  entryType: 'detailed',
+  environmentalConditions: { sea_temp: 14.2 },
 });
 ```
 

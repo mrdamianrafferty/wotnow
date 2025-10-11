@@ -8,20 +8,21 @@
  * - Seasonal patterns and timing data
  * - Location-specific insights and statistics
  * 
- * Accessible from the catch log interface to provide valuable
- * reference information for fishing planning and analysis.
+ * Now powered by real catch data with EMODnet enrichment!
  */
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
   Search, Download, BarChart3, TrendingUp,
   Fish, Target, MapPin, Calendar, Clock, Thermometer,
-  ChevronDown, ChevronUp, ExternalLink, Star, Award
+  ChevronDown, ChevronUp, ExternalLink, Star, Award,
+  RefreshCw, Waves
 } from 'lucide-react';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import { useReferenceData } from '../../hooks/useReferenceData';
 
 // Types
 interface SpeciesData {
@@ -38,6 +39,8 @@ interface SpeciesData {
   totalCatches: number;
   bestMonth: string;
   averageWeight?: number;
+  averageDepth?: number;
+  preferredSubstrate?: string;
   tips: string[];
 }
 
@@ -65,6 +68,8 @@ interface HabitatData {
   successRate: number;
   totalSessions: number;
   avgCatchPerSession: number;
+  avgDepth?: number;
+  commonSubstrates?: string[];
   tips: string[];
 }
 
@@ -76,164 +81,28 @@ interface ReferenceDataTablesProps {
   isOpen: boolean;
   onClose: () => void;
   initialView?: TableView;
+  userId?: string;
 }
 
-// Sample data - in production this would come from API/database
-const SAMPLE_SPECIES_DATA: SpeciesData[] = [
-  {
-    id: 'MAC',
-    code: 'MAC',
-    commonName: 'Atlantic Mackerel',
-    scientificName: 'Scomber scombrus',
-    averageSize: '25-35cm',
-    seasonality: ['Spring', 'Summer', 'Early Autumn'],
-    preferredBaits: ['Feather rigs', 'Small spinners', 'Mackerel strip'],
-    habitatTypes: ['Open sea', 'Deep water', 'Pier/Harbor'],
-    successRate: 78,
-    totalCatches: 245,
-    bestMonth: 'July',
-    averageWeight: 0.4,
-    tips: ['Early morning most productive', 'Look for feeding birds', 'Fast retrieval essential']
-  },
-  {
-    id: 'SBA',
-    code: 'SBA',
-    commonName: 'European Sea Bass',
-    scientificName: 'Dicentrarchus labrax',
-    averageSize: '30-50cm',
-    seasonality: ['All year', 'Peak in autumn'],
-    preferredBaits: ['Ragworm', 'Lugworm', 'Prawns', 'Soft plastics'],
-    habitatTypes: ['Rocky shore', 'Estuary', 'Shallow water'],
-    successRate: 45,
-    totalCatches: 127,
-    bestMonth: 'October',
-    averageWeight: 1.2,
-    tips: ['Fish rising tide', 'Target structure', 'Night fishing very effective']
-  },
-  {
-    id: 'COD',
-    code: 'COD',
-    commonName: 'Atlantic Cod',
-    scientificName: 'Gadus morhua',
-    averageSize: '40-70cm',
-    seasonality: ['Autumn', 'Winter', 'Early Spring'],
-    preferredBaits: ['Lugworm', 'Ragworm', 'Crab', 'Squid'],
-    habitatTypes: ['Deep water', 'Wreck/Reef', 'Rocky shore'],
-    successRate: 32,
-    totalCatches: 89,
-    bestMonth: 'November',
-    averageWeight: 2.1,
-    tips: ['Target deeper water', 'Low light conditions', 'Strong tackle essential']
-  },
-  {
-    id: 'PLE',
-    code: 'PLE',
-    commonName: 'European Plaice',
-    scientificName: 'Pleuronectes platessa',
-    averageSize: '25-40cm',
-    seasonality: ['All year', 'Best in winter'],
-    preferredBaits: ['Lugworm', 'Ragworm', 'Peeler crab'],
-    habitatTypes: ['Sandy beach', 'Shallow water', 'Estuary'],
-    successRate: 56,
-    totalCatches: 178,
-    bestMonth: 'February',
-    averageWeight: 0.8,
-    tips: ['Target sandy areas', 'Use light tackle', 'Slow presentation works best']
-  }
-];
+export function ReferenceDataTables({ 
+  isOpen, 
+  onClose, 
+  initialView = 'species',
+  userId 
+}: ReferenceDataTablesProps) {
+  // Fetch real data from API
+  const { data, loading, error, refetch } = useReferenceData({ 
+    userId,
+    autoFetch: false // Only fetch when modal opens
+  });
 
-const SAMPLE_BAIT_DATA: BaitEffectivenessData[] = [
-  {
-    baitName: 'Lugworm',
-    targetSpecies: ['Cod', 'Plaice', 'Whiting', 'Dab', 'Flounder'],
-    successRate: 67,
-    totalUses: 156,
-    bestConditions: ['Calm seas', 'Overcast', 'Low tide'],
-    cost: 'medium',
-    availability: 'common',
-    tips: ['Keep fresh and cool', 'Use whole worms for bigger fish', 'Cast gently to avoid damage']
-  },
-  {
-    baitName: 'Ragworm',
-    targetSpecies: ['Sea Bass', 'Cod', 'Whiting', 'Pollack'],
-    successRate: 72,
-    totalUses: 203,
-    bestConditions: ['Rising tide', 'Rough seas', 'Dawn/dusk'],
-    cost: 'medium',
-    availability: 'common',
-    tips: ['Very versatile bait', 'Thread carefully on hook', 'Combine with other baits']
-  },
-  {
-    baitName: 'Feather rigs',
-    targetSpecies: ['Mackerel', 'Herring', 'Garfish', 'Pollack'],
-    successRate: 84,
-    totalUses: 127,
-    bestConditions: ['Clear water', 'Moving water', 'Bright conditions'],
-    cost: 'low',
-    availability: 'common',
-    tips: ['Fast retrieval essential', 'Vary colors', 'Keep moving to find fish']
-  },
-  {
-    baitName: 'Prawns',
-    targetSpecies: ['Sea Bass', 'Whiting', 'Cod', 'Pollack'],
-    successRate: 58,
-    totalUses: 89,
-    bestConditions: ['Clear water', 'Calm conditions', 'Night time'],
-    cost: 'high',
-    availability: 'common',
-    tips: ['Use fresh if possible', 'Hook through tail', 'Natural presentation important']
-  }
-];
+  // Fetch data when modal opens
+  useEffect(() => {
+    if (isOpen && !data && !loading) {
+      refetch();
+    }
+  }, [isOpen, data, loading, refetch]);
 
-const SAMPLE_HABITAT_DATA: HabitatData[] = [
-  {
-    type: 'Rocky Shore',
-    description: 'Coastline with rocks, boulders, and varied structure providing shelter for fish',
-    bestSpecies: ['Sea Bass', 'Pollack', 'Wrasse', 'Blenny'],
-    optimalConditions: {
-      tideStates: ['Rising', 'High'],
-      timeOfDay: ['Dawn', 'Dusk', 'Night'],
-      seasons: ['Autumn', 'Winter'],
-      weatherConditions: ['Overcast', 'Light rain', 'Calm']
-    },
-    successRate: 64,
-    totalSessions: 78,
-    avgCatchPerSession: 2.3,
-    tips: ['Fish the gullies', 'Target areas with white water', 'Be careful of slippery rocks']
-  },
-  {
-    type: 'Sandy Beach',
-    description: 'Open sandy coastline with consistent depth and bottom composition',
-    bestSpecies: ['Plaice', 'Flounder', 'Dab', 'Sole', 'Whiting'],
-    optimalConditions: {
-      tideStates: ['Low', 'Rising'],
-      timeOfDay: ['Night', 'Early morning'],
-      seasons: ['Winter', 'Spring'],
-      weatherConditions: ['Rough seas', 'Onshore winds']
-    },
-    successRate: 52,
-    totalSessions: 94,
-    avgCatchPerSession: 1.8,
-    tips: ['Look for channels and features', 'Fish the surf line', 'Long casts often better']
-  },
-  {
-    type: 'Pier/Harbor',
-    description: 'Man-made structures providing deep water access and shelter',
-    bestSpecies: ['Mackerel', 'Cod', 'Sea Bass', 'Garfish'],
-    optimalConditions: {
-      tideStates: ['High', 'Falling'],
-      timeOfDay: ['Early morning', 'Evening'],
-      seasons: ['Summer', 'Autumn'],
-      weatherConditions: ['Calm', 'Clear', 'Light winds']
-    },
-    successRate: 71,
-    totalSessions: 156,
-    avgCatchPerSession: 3.1,
-    tips: ['Fish near structure', 'Try different depths', 'Be aware of boat traffic']
-  }
-];
-
-export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }: ReferenceDataTablesProps) {
   // State
   const [currentView, setCurrentView] = useState<TableView>(initialView);
   const [searchTerm, setSearchTerm] = useState('');
@@ -243,11 +112,11 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
   
   // Filtered and sorted data
   const filteredSpeciesData = useMemo(() => {
-    let data = SAMPLE_SPECIES_DATA;
+    let speciesData = data?.species || [];
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      data = data.filter(species => 
+      speciesData = speciesData.filter(species => 
         species.commonName.toLowerCase().includes(term) ||
         species.scientificName.toLowerCase().includes(term) ||
         species.preferredBaits.some(bait => bait.toLowerCase().includes(term)) ||
@@ -255,7 +124,7 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
       );
     }
     
-    return data.sort((a, b) => {
+    return speciesData.sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
       
@@ -283,21 +152,21 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
         return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
       }
     });
-  }, [searchTerm, sortField, sortDirection]);
+  }, [data?.species, searchTerm, sortField, sortDirection]);
   
   const filteredBaitData = useMemo(() => {
-    let data = SAMPLE_BAIT_DATA;
+    let baitData = data?.baits || [];
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      data = data.filter(bait =>
+      baitData = baitData.filter(bait =>
         bait.baitName.toLowerCase().includes(term) ||
         bait.targetSpecies.some(species => species.toLowerCase().includes(term)) ||
         bait.bestConditions.some(condition => condition.toLowerCase().includes(term))
       );
     }
     
-    return data.sort((a, b) => {
+    return baitData.sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
       
@@ -325,21 +194,21 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
         return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
       }
     });
-  }, [searchTerm, sortField, sortDirection]);
+  }, [data?.baits, searchTerm, sortField, sortDirection]);
   
   const filteredHabitatData = useMemo(() => {
-    let data = SAMPLE_HABITAT_DATA;
+    let habitatData = data?.habitats || [];
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      data = data.filter(habitat =>
+      habitatData = habitatData.filter(habitat =>
         habitat.type.toLowerCase().includes(term) ||
         habitat.description.toLowerCase().includes(term) ||
         habitat.bestSpecies.some(species => species.toLowerCase().includes(term))
       );
     }
     
-    return data.sort((a, b) => {
+    return habitatData.sort((a, b) => {
       let aVal: string | number;
       let bVal: string | number;
       
@@ -367,7 +236,7 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
         return sortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
       }
     });
-  }, [searchTerm, sortField, sortDirection]);
+  }, [data?.habitats, searchTerm, sortField, sortDirection]);
   
   // Handlers
   const handleSort = useCallback((field: SortField) => {
@@ -392,6 +261,11 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
   }, []);
   
   const exportData = useCallback(() => {
+    if (!data) {
+      alert('No data to export');
+      return;
+    }
+
     let dataToExport: SpeciesData[] | BaitEffectivenessData[] | HabitatData[] = [];
     let filename = '';
     
@@ -419,7 +293,7 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [currentView, filteredSpeciesData, filteredBaitData, filteredHabitatData]);
+  }, [data, currentView, filteredSpeciesData, filteredBaitData, filteredHabitatData]);
   
   if (!isOpen) return null;
   
@@ -432,7 +306,7 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-primary flex items-center gap-3">
               <BarChart3 className="w-6 h-6" />
-              <TranslatedText text="Reference Data Tables" />
+              <TranslatedText text="Reference Data" />
             </h2>
             <button
               onClick={onClose}
@@ -447,21 +321,21 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
           {/* View Tabs */}
           <div className="tabs tabs-boxed bg-base-200/60 p-1 mb-4">
             <button
-              className={`tab gap-2 ${currentView === 'species' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${currentView === 'species' ? 'tab-active' : 'text-base-content'}`}
               onClick={() => setCurrentView('species')}
             >
               <Fish className="w-4 h-4" />
               <TranslatedText text="Species" />
             </button>
             <button
-              className={`tab gap-2 ${currentView === 'baits' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${currentView === 'baits' ? 'tab-active' : 'text-base-content'}`}
               onClick={() => setCurrentView('baits')}
             >
               <Target className="w-4 h-4" />
               <TranslatedText text="Baits" />
             </button>
             <button
-              className={`tab gap-2 ${currentView === 'habitats' ? 'tab-active' : ''}`}
+              className={`tab gap-2 ${currentView === 'habitats' ? 'tab-active' : 'text-base-content'}`}
               onClick={() => setCurrentView('habitats')}
             >
               <MapPin className="w-4 h-4" />
@@ -482,8 +356,17 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
               />
             </div>
             <button
+              onClick={refetch}
+              className="btn btn-outline gap-2"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <TranslatedText text="Refresh" />
+            </button>
+            <button
               onClick={exportData}
               className="btn btn-outline gap-2"
+              disabled={!data}
             >
               <Download className="w-4 h-4" />
               <TranslatedText text="Export" />
@@ -493,40 +376,132 @@ export function ReferenceDataTables({ isOpen, onClose, initialView = 'species' }
         
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">
-          {currentView === 'species' && (
-            <SpeciesTable 
-              data={filteredSpeciesData}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              expandedRows={expandedRows}
-              onToggleExpansion={toggleRowExpansion}
-            />
+          {/* Loading state */}
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <span className="loading loading-spinner loading-lg mb-4"></span>
+              <span className="text-lg">Loading reference data...</span>
+              <span className="text-sm opacity-70 mt-2">Analyzing your catches...</span>
+            </div>
           )}
           
-          {currentView === 'baits' && (
-            <BaitTable 
-              data={filteredBaitData}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              expandedRows={expandedRows}
-              onToggleExpansion={toggleRowExpansion}
-            />
+          {/* Error state */}
+          {error && !loading && (
+            <div className="alert alert-error">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <span className="font-semibold">Error loading data:</span>
+                <span className="ml-2">{error.message}</span>
+              </div>
+              <button onClick={refetch} className="btn btn-sm">
+                Retry
+              </button>
+            </div>
           )}
           
-          {currentView === 'habitats' && (
-            <HabitatTable 
-              data={filteredHabitatData}
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-              expandedRows={expandedRows}
-              onToggleExpansion={toggleRowExpansion}
-            />
+          {/* Data display */}
+          {!loading && !error && data && (
+            <>
+              {currentView === 'species' && (
+                <>
+                  {filteredSpeciesData.length > 0 ? (
+                    <SpeciesTable 
+                      data={filteredSpeciesData}
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                      expandedRows={expandedRows}
+                      onToggleExpansion={toggleRowExpansion}
+                    />
+                  ) : (
+                    <EmptyState 
+                      icon={Fish}
+                      title="No species data yet"
+                      message="Start logging catches to build your species database!"
+                    />
+                  )}
+                </>
+              )}
+              
+              {currentView === 'baits' && (
+                <>
+                  {filteredBaitData.length > 0 ? (
+                    <BaitTable 
+                      data={filteredBaitData}
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                      expandedRows={expandedRows}
+                      onToggleExpansion={toggleRowExpansion}
+                    />
+                  ) : (
+                    <EmptyState 
+                      icon={Target}
+                      title="No bait data yet"
+                      message="Log catches with bait information in notes to see effectiveness stats!"
+                    />
+                  )}
+                </>
+              )}
+              
+              {currentView === 'habitats' && (
+                <>
+                  {filteredHabitatData.length > 0 ? (
+                    <HabitatTable 
+                      data={filteredHabitatData}
+                      sortField={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                      expandedRows={expandedRows}
+                      onToggleExpansion={toggleRowExpansion}
+                    />
+                  ) : (
+                    <EmptyState 
+                      icon={MapPin}
+                      title="No habitat data yet"
+                      message="Log catches in different habitats to see which are most productive!"
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+          
+          {/* No data fetched yet */}
+          {!loading && !error && !data && (
+            <div className="text-center py-12">
+              <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <h3 className="text-xl font-semibold mb-2">Ready to analyze</h3>
+              <p className="opacity-70 mb-4">Click refresh to load your catch data</p>
+              <button onClick={refetch} className="btn btn-primary gap-2">
+                <RefreshCw className="w-4 h-4" />
+                Load Data
+              </button>
+            </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Empty State Component
+function EmptyState({ 
+  icon: Icon, 
+  title, 
+  message 
+}: { 
+  icon: React.ElementType; 
+  title: string; 
+  message: string;
+}) {
+  return (
+    <div className="text-center py-12">
+      <Icon className="w-16 h-16 mx-auto mb-4 opacity-30" />
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="opacity-70">{message}</p>
     </div>
   );
 }
@@ -609,16 +584,16 @@ function SpeciesTable({
                 <td>
                   <div className="flex items-center gap-3">
                     <div className="avatar">
-                      <div className="w-12 h-12 rounded-lg">
+                      <div className="w-12 h-12 rounded-lg bg-base-200">
                         {SPECIES_IMAGE_MAP[species.code]?.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img 
                             src={SPECIES_IMAGE_MAP[species.code].image} 
                             alt={species.commonName}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                         ) : (
-                          <div className="w-full h-full bg-base-200 flex items-center justify-center">
+                          <div className="w-full h-full flex items-center justify-center">
                             <Fish className="w-6 h-6 text-base-content/50" />
                           </div>
                         )}
@@ -639,6 +614,11 @@ function SpeciesTable({
                     }`}>
                       {species.successRate}%
                     </div>
+                    {species.totalCatches < 5 && (
+                      <div className="badge badge-ghost badge-sm">
+                        Limited data
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
@@ -658,6 +638,38 @@ function SpeciesTable({
                 <tr>
                   <td colSpan={6}>
                     <div className="bg-base-200 rounded-lg p-4 space-y-4">
+                      
+                      {/* Enrichment Data Section */}
+                      {(species.averageDepth || species.preferredSubstrate) && (
+                        <div className="border-b border-base-300 pb-4 mb-4">
+                          <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <Waves className="w-4 h-4 text-info" />
+                            Environmental Insights
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {species.averageDepth && (
+                              <div className="stat bg-base-100 rounded-lg p-3">
+                                <div className="stat-title text-sm">Average Depth</div>
+                                <div className="stat-value text-2xl text-info">
+                                  {species.averageDepth}m
+                                </div>
+                                <div className="stat-desc">From EMODnet data</div>
+                              </div>
+                            )}
+                            
+                            {species.preferredSubstrate && (
+                              <div className="stat bg-base-100 rounded-lg p-3">
+                                <div className="stat-title text-sm">Preferred Substrate</div>
+                                <div className="stat-value text-2xl capitalize text-success">
+                                  {species.preferredSubstrate}
+                                </div>
+                                <div className="stat-desc">From EMODnet data</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         
                         <div>
@@ -666,11 +678,15 @@ function SpeciesTable({
                             Preferred Baits
                           </h4>
                           <div className="space-y-1">
-                            {species.preferredBaits.map((bait, index) => (
-                              <span key={index} className="badge badge-primary badge-sm mr-1">
-                                {bait}
-                              </span>
-                            ))}
+                            {species.preferredBaits.length > 0 ? (
+                              species.preferredBaits.map((bait, index) => (
+                                <span key={index} className="badge badge-primary badge-sm mr-1">
+                                  {bait}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm opacity-50">No bait data yet</span>
+                            )}
                           </div>
                         </div>
                         
@@ -680,11 +696,15 @@ function SpeciesTable({
                             Habitat Types
                           </h4>
                           <div className="space-y-1">
-                            {species.habitatTypes.map((habitat, index) => (
-                              <span key={index} className="badge badge-secondary badge-sm mr-1">
-                                {habitat}
-                              </span>
-                            ))}
+                            {species.habitatTypes.length > 0 ? (
+                              species.habitatTypes.map((habitat, index) => (
+                                <span key={index} className="badge badge-secondary badge-sm mr-1">
+                                  {habitat}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm opacity-50">Detected from catches</span>
+                            )}
                           </div>
                         </div>
                         
@@ -1010,6 +1030,38 @@ function HabitatTable({
                       <div className="mb-4">
                         <p className="text-sm">{habitat.description}</p>
                       </div>
+                      
+                      {/* Environmental Data Section */}
+                      {(habitat.avgDepth || (habitat.commonSubstrates && habitat.commonSubstrates.length > 0)) && (
+                        <div className="border-t border-base-300 pt-4">
+                          <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <Waves className="w-4 h-4 text-info" />
+                            Environmental Data
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {habitat.avgDepth && (
+                              <div className="stat bg-base-100 rounded-lg p-3">
+                                <div className="stat-title text-sm">Average Depth</div>
+                                <div className="stat-value text-2xl text-info">{habitat.avgDepth}m</div>
+                                <div className="stat-desc">From EMODnet data</div>
+                              </div>
+                            )}
+                            
+                            {habitat.commonSubstrates && habitat.commonSubstrates.length > 0 && (
+                              <div className="bg-base-100 rounded-lg p-3">
+                                <div className="text-sm font-semibold mb-2">Common Substrates</div>
+                                <div className="flex gap-2 flex-wrap">
+                                  {habitat.commonSubstrates.map((sub, i) => (
+                                    <span key={i} className="badge badge-outline capitalize">
+                                      {sub}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         

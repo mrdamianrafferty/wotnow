@@ -26,6 +26,7 @@ interface BlankReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (reportData: BlankReportData) => void;
+  onSubmit: (reportData: BlankReportData) => Promise<void>;
   rectangleCode?: string;
 }
 
@@ -106,7 +107,7 @@ const POSSIBLE_REASONS = [
   'Just one of those days',
 ];
 
-export function BlankReportModal({ isOpen, onClose, onSuccess, rectangleCode = '31E8' }: BlankReportModalProps) {
+export function BlankReportModal({ isOpen, onClose, onSuccess, onSubmit, rectangleCode = '31E8' }: BlankReportModalProps) {
   // Form state
   const [date, setDate] = useState(() => {
     const today = new Date();
@@ -221,13 +222,8 @@ export function BlankReportModal({ isOpen, onClose, onSuccess, rectangleCode = '
         logged_at: new Date().toISOString(),
       };
       
-      // TODO: Implement actual API call to save blank report
-      console.log('[BlankReportModal] Submitting blank report:', reportData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Success
+      await onSubmit(reportData);
+
       onSuccess(reportData);
       handleClose();
       
@@ -239,7 +235,7 @@ export function BlankReportModal({ isOpen, onClose, onSuccess, rectangleCode = '
   }, [
     date, timePeriods, durationHours, habitat, rectangleCode, baitsAttempted,
     techniquesUsed, weatherConditions, waterClarity, tideState, possibleReasons,
-    effortNotes, willTryAgain, onSuccess, handleClose, canProceedFromStep
+    effortNotes, willTryAgain, onSubmit, onSuccess, handleClose, canProceedFromStep
   ]);
   
   if (!isOpen) return null;

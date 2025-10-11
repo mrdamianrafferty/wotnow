@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
+    "target": "ES2021",
+    "lib": [
+      "ES2021",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
     "moduleResolution": "node",
     "jsx": "preserve",
     "useDefineForClassFields": true,
@@ -9,15 +14,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
     "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
     "plugins": [
       {
         "name": "next"
@@ -30,13 +31,12 @@
   },
   "include": [
     "src",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "types"
   ],
   "exclude": [
     "node_modules",
-    "lib/findr/enrichCatchData.ts",
-    "pages/api/findr/log-catch-enriched.ts",
-    "hooks/useCatchLogger.ts",
-    "types/findr-enrichment.ts"
+    "lib/findr/generateInsights.ts",
+    "pages/api/findr/get-insights.ts"
   ]
 }

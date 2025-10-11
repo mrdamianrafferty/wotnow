@@ -31,6 +31,7 @@ export interface SpeciesAdvice {
 
 export interface CardData {
   id: string;
+  speciesId?: string | null;
   commonName: string;
   scientificName?: string;
   confidence: number | null;
@@ -274,6 +275,10 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     undefined;
 
   const speciesCode = speciesCodeCandidate ? speciesCodeCandidate.trim().toUpperCase() : undefined;
+  const rawSpeciesId =
+    speciesIdCandidate && typeof speciesIdCandidate === 'string'
+      ? speciesIdCandidate.trim()
+      : undefined;
 
   const commonName =
     firstString(prediction.species_common_name) ||
@@ -283,11 +288,13 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     firstString(prediction.catch_name) ||
     'Unidentified species';
 
+  const fallbackId = speciesCode ?? `species-${index}`;
+  const idSource = rawSpeciesId && rawSpeciesId.length > 0 ? rawSpeciesId : fallbackId;
   const id =
-    (speciesIdCandidate || `species-${index}`)
+    idSource
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || `species-${index}`;
+      .replace(/(^-|-$)/g, '') || fallbackId.toLowerCase();
 
   const scientificName =
     firstString(prediction.species_scientific_name) ||
@@ -356,6 +363,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     tideTips,
     statusNotes,
     emoji: getSpeciesEmoji(commonName),
+    speciesId: rawSpeciesId ?? null,
     speciesCode,
     image: imageInfo
       ? {
