@@ -18,7 +18,6 @@ import Footer from '../components/footer';
 import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
-import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase/client';
 
 type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
@@ -540,9 +539,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      }
    }, []);
   const { preferences, setPreferences } = useUserPreferences();
-  const interests = preferences.interests ?? [];
-  const router = useRouter();
-  const [authStatus, setAuthStatus] = useState<'unknown' | 'signed-in' | 'signed-out'>('unknown');
+  const interests = preferences.interests ?? [];  const [authStatus, setAuthStatus] = useState<'unknown' | 'signed-in' | 'signed-out'>('unknown');
   const [storedSnapshot, setStoredSnapshot] = useState<PreferenceSnapshot>(() => readStoredPreferencesSnapshot());
 
   useEffect(() => {
@@ -590,13 +587,27 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
   const hasMounted = useHasMounted();
   const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
+  const [showDefaultPicksBanner, setShowDefaultPicksBanner] = useState(false);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+    if (typeof window === 'undefined') return;
+    try {
+      const applied = window.localStorage.getItem('godaisy.bootstrap-applied');
+      const dismissed = window.localStorage.getItem('godaisy.bootstrap-banner-dismissed');
+      if (applied === '1' && dismissed !== '1') {
+        setShowDefaultPicksBanner(true);
+      }
+    } catch (error) {
+      console.warn('Failed to read bootstrap banner state', error);
+    }
+  }, [hasMounted]);
 
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
 
   const isAuthenticated = authStatus === 'signed-in';
-  const hasKnownInterests = interests.length > 0 || storedSnapshot.interestCount > 0;
   const hasLocationFromPreferences = Array.isArray(preferences.locations) && preferences.locations.some(l => {
     if (!l) return false;
     const latNum = Number((l as LocationLite).lat);
@@ -604,11 +615,8 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     return Number.isFinite(latNum) && Number.isFinite(lonNum);
   });
   const hasAnyLocation = hasLocationFromPreferences || storedSnapshot.hasLocation;
-  const hasAnyInterest = hasKnownInterests;
   const isHydratingProfile = isAuthenticated && !profileHydrated;
-  const shouldRedirectToDemo = !isHydratingProfile && authStatus === 'signed-out' && !hasAnyLocation && !hasAnyInterest;
   const needsLocation = !isAuthenticated && !hasAnyLocation;
-  const isFirstTimeUser = !isHydratingProfile && authStatus === 'signed-out' && !hasAnyInterest;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -757,22 +765,22 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      });
    };
 
+  const dismissDefaultPicksBanner = () => {
+    setShowDefaultPicksBanner(false);
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('godaisy.bootstrap-banner-dismissed', '1');
+    } catch (error) {
+      console.warn('Failed to persist banner dismissal', error);
+    }
+  };
+
    // MAIN DATA FETCHING LOGIC
    const { forecastByDay, loading, error, marineHours, weatherData, marineError } = useFetchForecastData(
      homeLocation,
      coastalLocation,
      interests
    );
-
-  // Redirect to /demo if both conditions are met
-  useEffect(() => {
-    if (shouldRedirectToDemo) {
-      router.replace('/demo');
-    }
-  }, [shouldRedirectToDemo, router]);
-
-  // If redirecting, render nothing to avoid flicker
-  if (shouldRedirectToDemo) return null;
 
    // Helper: Build forecastByDay from One Call 3.0 if available
    function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
@@ -1028,38 +1036,6 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     );
   }
 
-   if (isFirstTimeUser) {
-     return (
-       <div data-theme="light" className="mx-4 my-8">
-         <div className="card bg-base-200 border border-base-300 shadow-sm">
-           <div className="card-body items-center text-center space-y-3">
-             <div className="text-5xl" aria-hidden>🌼</div>
-             <h2 className="card-title text-2xl">Let’s pick your favourites</h2>
-             <p className="max-w-prose opacity-80">
-               Go Daisy matches your interests to the weather, so we can nudge you towards cracking days out —
-               and steer you round the drizzle.
-             </p>
-             <div className="flex flex-wrap justify-center gap-2 text-xs opacity-80">
-               <span className="badge badge-outline">No paywalls</span>
-               <span className="badge badge-outline">Weather‑smart</span>
-               <span className="badge badge-outline">Indie & friendly</span>
-             </div>
-             <div className="card-actions mt-2">
-               <Link
-                 href="/onboarding"
-                 className="btn btn-primary btn-lg btn-wide gap-2 shadow-md hover:shadow-lg text-primary-content [&_*]:text-primary-content"
-               >
-                 <span aria-hidden>🌼</span>
-                 <span>Let&apos;s get it on</span>
-                 <span aria-hidden>→</span>
-               </Link>
-             </div>
-           </div>
-         </div>
-       </div>
-     );
-   }
-
    if (loading) {
      return (
        <div className="flex items-center justify-center py-16">
@@ -1115,6 +1091,28 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   onOpenHomeDialog={() => setShowHomeDialog(true)}
   onOpenCoastDialog={() => setShowCoastDialog(true)}
 />
+{showDefaultPicksBanner && (
+  <div className="alert alert-info mx-4 my-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h3 className="font-semibold text-base-content">We’ve preloaded some favourites for you</h3>
+      <p className="text-sm text-base-content/80">
+        We picked a starting location and a handful of popular activities to get you going. Head to&nbsp;
+        <Link href="/interests" className="link link-hover font-medium text-primary">
+          /interests
+        </Link>
+        &nbsp;to tailor the list whenever you like.
+      </p>
+    </div>
+    <div className="flex gap-2">
+      <Link href="/interests" className="btn btn-sm btn-primary">
+        Update my picks
+      </Link>
+      <button type="button" className="btn btn-sm btn-ghost" onClick={dismissDefaultPicksBanner}>
+        Dismiss
+      </button>
+    </div>
+  </div>
+)}
 {marineError ? (
   <div className="alert alert-warning mx-4 my-2">
     <span>{marineError}</span>
