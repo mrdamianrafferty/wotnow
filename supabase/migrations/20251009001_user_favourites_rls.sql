@@ -4,6 +4,12 @@
 -- Enable RLS on user_favourites table
 ALTER TABLE user_favourites ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (idempotent migration)
+DROP POLICY IF EXISTS "Users can view own favourites" ON user_favourites;
+DROP POLICY IF EXISTS "Users can create own favourites" ON user_favourites;
+DROP POLICY IF EXISTS "Users can update own favourites" ON user_favourites;
+DROP POLICY IF EXISTS "Users can delete own favourites" ON user_favourites;
+
 -- Policy: Users can view their own favourites
 CREATE POLICY "Users can view own favourites" 
 ON user_favourites

@@ -265,7 +265,6 @@ function generateEnvironmentalRationale(prediction: FishingPrediction): string[]
   // Extract match labels
   const tempMatch = firstString(prediction.temperature_match);
   const salMatch = firstString(prediction.salinity_match);
-  const depthMatch = firstString(prediction.depth_match);
   const substrateMatch = firstString(prediction.substrate_match);
   
   // Get actual values from factors if available
@@ -274,8 +273,6 @@ function generateEnvironmentalRationale(prediction: FishingPrediction): string[]
     ? factors.temperature.actual : null;
   const sal = typeof factors?.salinity === 'object' && factors?.salinity && 'actual' in factors.salinity 
     ? factors.salinity.actual : null;
-  const depth = typeof factors?.depth === 'object' && factors?.depth && 'actual' in factors.depth 
-    ? factors.depth.actual : null;
   const substrate = typeof factors?.substrate === 'object' && factors?.substrate && 'actual' in factors.substrate 
     ? factors.substrate.actual : null;
   

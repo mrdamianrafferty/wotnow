@@ -6,6 +6,8 @@ import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock } from 'l
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
+import { DataFreshnessBadge } from './DataFreshnessBadge';
+import { EnvironmentalInfo } from './EnvironmentalInfo';
 
 interface GoodSpeciesCardProps {
   species: {
@@ -19,6 +21,16 @@ interface GoodSpeciesCardProps {
     season: string;
     bestBait: string;
     isPriority: boolean;
+    // Phase 10: Environmental data
+    data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
+    environmental_factors?: {
+      temperature?: { actual: number; match: string; score: number };
+      salinity?: { actual: number; match: string; score: number };
+      depth?: { actual: number; match: string; score: number };
+      substrate?: { actual: string; match: string; score: number };
+      data_age_hours?: number;
+      data_source?: string;
+    };
   };
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
@@ -104,6 +116,29 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
                   {fishingTime.emoji} {fishingTime.reason}
                 </span>
               </div>
+
+              {/* Environmental Conditions - Compact View */}
+              {species.environmental_factors && (
+                <div className="mt-2">
+                  <EnvironmentalInfo 
+                    factors={species.environmental_factors} 
+                    compact={true}
+                    className="text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Data Freshness Badge */}
+              {species.data_freshness && (
+                <div className="mt-1">
+                  <DataFreshnessBadge 
+                    freshness={species.data_freshness}
+                    dataAgeHours={species.environmental_factors?.data_age_hours}
+                    size="xs"
+                    showLabel={false}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

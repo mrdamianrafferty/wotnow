@@ -64,14 +64,22 @@ export function usePersistentFindrSettings({
     if (stored?.manualCode) {
       setManualCode(stored.manualCode);
     }
+    // Don't load old prediction dates - always use today's date
+    // The stored date might be days/weeks old which would show stale predictions
     if (stored?.predictionDate) {
-      setPredictionDate(stored.predictionDate);
+      const storedDate = new Date(stored.predictionDate);
+      const today = new Date(defaultPredictionDate);
+      // Only use stored date if it's today or in the future
+      if (storedDate >= today) {
+        setPredictionDate(stored.predictionDate);
+      }
+      // Otherwise stick with defaultPredictionDate (today)
     }
     if (stored?.language) {
       setLanguage(stored.language);
     }
     hasHydrated.current = true;
-  }, []);
+  }, [defaultPredictionDate]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

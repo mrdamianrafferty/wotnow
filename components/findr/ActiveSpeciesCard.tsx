@@ -6,6 +6,8 @@ import { Zap, ChevronDown, ChevronUp, Target, Trash2, Fish, Waves, Clock } from 
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
+import { DataFreshnessBadge } from './DataFreshnessBadge';
+import { EnvironmentalInfo } from './EnvironmentalInfo';
 
 interface SpeciesAdvice {
   type?: string;
@@ -36,6 +38,17 @@ interface ActiveSpeciesCardProps {
     bestBait: string;
     isPriority: boolean;
     advice?: SpeciesAdvice[];
+    // Phase 10: Environmental data
+    data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
+    weight_profile?: 'pelagic' | 'surf_estuary' | 'reef_kelp' | 'benthic' | 'cephalopod' | 'default_coastal';
+    environmental_factors?: {
+      temperature?: { actual: number; match: string; score: number };
+      salinity?: { actual: number; match: string; score: number };
+      depth?: { actual: number; match: string; score: number };
+      substrate?: { actual: string; match: string; score: number };
+      data_age_hours?: number;
+      data_source?: string;
+    };
   };
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
@@ -125,6 +138,29 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   {fishingTime.emoji} {fishingTime.reason}
                 </span>
               </div>
+
+              {/* Environmental Conditions - Compact View */}
+              {species.environmental_factors && (
+                <div className="mt-3">
+                  <EnvironmentalInfo 
+                    factors={species.environmental_factors} 
+                    compact={true}
+                    className="text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Data Freshness Badge */}
+              {species.data_freshness && (
+                <div className="mt-2">
+                  <DataFreshnessBadge 
+                    freshness={species.data_freshness}
+                    dataAgeHours={species.environmental_factors?.data_age_hours}
+                    size="xs"
+                    showLabel={false}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

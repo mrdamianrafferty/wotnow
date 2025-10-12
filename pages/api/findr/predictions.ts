@@ -440,10 +440,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
     );
 
-    const rpcPromise = supabase.rpc('get_fishing_predictions', {
-      rectangle_code_input: rectangleCode,
-      prediction_date_input: predictionDate,
-      user_language: language,
+    // Phase 10: Use new function with environmental data
+    const rpcPromise = supabase.rpc('get_environmental_predictions_basic', {
+      p_rectangle_code: rectangleCode,
+      p_date: predictionDate,
     });
 
     const { data, error: rpcError } = await Promise.race([

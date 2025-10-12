@@ -6,6 +6,7 @@ import { TrendingUp, Target, Trash2, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
+import { EnvironmentalInfo } from './EnvironmentalInfo';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -16,6 +17,16 @@ interface WaitingSpeciesCardProps {
     confidence: number;
     forecast: number[];
     isPriority: boolean;
+    // Phase 10: Environmental data
+    data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
+    environmental_factors?: {
+      temperature?: { actual: number; match: string; score: number };
+      salinity?: { actual: number; match: string; score: number };
+      depth?: { actual: number; match: string; score: number };
+      substrate?: { actual: string; match: string; score: number };
+      data_age_hours?: number;
+      data_source?: string;
+    };
   };
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
@@ -115,6 +126,20 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           <div className="mt-2 text-xs text-base-content/60 flex items-center gap-1">
             <TrendingUp size={12} className="text-info" />
             <TranslatedText text={`Conditions improving ${improvingDay}`} />
+          </div>
+        )}
+
+        {/* Environmental Conditions Explanation */}
+        {species.environmental_factors && (
+          <div className="text-xs text-base-content/60 mt-2">
+            <p className="font-semibold mb-1"><TranslatedText text="Current conditions:" /></p>
+            <EnvironmentalInfo 
+              factors={species.environmental_factors} 
+              compact={true}
+            />
+            {species.data_freshness === 'stale' && (
+              <p className="text-warning mt-1">⚠️ <TranslatedText text="Data may be outdated" /></p>
+            )}
           </div>
         )}
       </div>
