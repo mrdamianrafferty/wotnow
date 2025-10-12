@@ -243,6 +243,20 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             </div>
           )}
 
+          {card.rationale && card.rationale.length > 0 && (
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-success mb-3 flex items-center gap-2">
+                <span>✨</span>
+                <TranslatedText text="Why it works right now" />
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-base-content/80">
+                {card.rationale.map((item, idx) => (
+                  <li key={`rationale-${idx}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {!detail && (
             <div className="alert alert-info text-sm">
               <span>
@@ -327,15 +341,6 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               </div>
             )}
 
-            {card.rationale.length > 0 && (
-              <InfoSection icon={<Sparkles size={20} />} title="Why today works">
-                <ul className="list-disc space-y-1 pl-5">
-                  {card.rationale.slice(0, 3).map((item, idx) => (
-                    <li key={`${card.id}-modal-rationale-${idx}`}>{item}</li>
-                  ))}
-                </ul>
-              </InfoSection>
-            )}
             {card.baitSuggestions.length > 0 && (
               <InfoSection icon={<FishIcon size={20} />} title="Top bait calls">
                 {card.baitSuggestions.join(', ')}

@@ -18,6 +18,8 @@ import {
   HeartOff,
   RefreshCw,
   Loader2,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
 import { Montserrat } from 'next/font/google';
 import { User } from '@supabase/supabase-js';
@@ -391,25 +393,16 @@ const FindrFavouritesPage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const redirectToAuth = () => {
-      void routerRef.current.push('/findr/auth?returnTo=/findr/favourites');
-    };
-
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted) return;
 
         setUser(session?.user ?? null);
-
-        if (!session?.user) {
-          redirectToAuth();
-          return;
-        }
       } catch (error) {
         console.error('Auth check failed:', error);
         if (!isMounted) return;
-        redirectToAuth();
+        setUser(null);
       } finally {
         if (!isMounted) return;
         setAuthLoading(false);
@@ -425,9 +418,6 @@ const FindrFavouritesPage: React.FC = () => {
       }
 
       setUser(session?.user ?? null);
-      if (!session?.user) {
-        redirectToAuth();
-      }
     });
 
     return () => {
@@ -541,7 +531,8 @@ const FindrFavouritesPage: React.FC = () => {
     if (userId) {
       void loadFavourites();
     }
-  }, [userId, loadFavourites]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]); // loadFavourites is stable via useCallback, no need to include it
 
   // Persist priority flags to localStorage (until we add to API)
   useEffect(() => {
@@ -997,6 +988,38 @@ const FindrFavouritesPage: React.FC = () => {
               <div className="text-center space-y-4">
                 <Loader2 size={48} className="animate-spin text-primary mx-auto" />
                 <p className="text-base-content/70">Checking authentication...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Not Authenticated State */}
+          {!authLoading && !user && (
+            <div className="flex items-center justify-center min-h-[50vh] px-4">
+              <div className="text-center space-y-6 max-w-md">
+                <div className="flex justify-center">
+                  <Heart size={64} className="text-pink-400/50" />
+                </div>
+                <h2 className="text-2xl font-bold text-base-content">
+                  <TranslatedText text="Sign in to view your favourites" />
+                </h2>
+                <p className="text-base-content/70 text-lg">
+                  <TranslatedText text="Save your favourite species and get personalized fishing predictions" />
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+                  <Link href="/findr/auth" className="btn btn-primary gap-2">
+                    <LogIn size={20} />
+                    <TranslatedText text="Sign In" />
+                  </Link>
+                  <Link href="/findr/auth" className="btn btn-outline gap-2">
+                    <UserPlus size={20} />
+                    <TranslatedText text="Register" />
+                  </Link>
+                </div>
+                <div className="mt-6">
+                  <Link href="/findr" className="link link-primary text-sm">
+                    <TranslatedText text="← Back to Findr" />
+                  </Link>
+                </div>
               </div>
             </div>
           )}

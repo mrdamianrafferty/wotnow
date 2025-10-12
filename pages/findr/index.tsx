@@ -18,7 +18,6 @@ import {
   Heart,
   ListChecks,
   Sparkles,
-  Info,
   X,
 } from 'lucide-react';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
@@ -41,6 +40,8 @@ import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 import '../../lib/buildInfo'; // Log build metadata on mount
 import { CatchEntry as _CatchEntry } from '../../types/aiRecommendations';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFishDeck';
+import { GuildBadge } from '../../components/findr/GuildBadge';
+import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 
 const TODAY_ISO = getTodayIso();
 
@@ -199,27 +200,52 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                   </span>
                 )}
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {onShowSpeciesInfo && (
+                  <button
+                    type="button"
+                    className="btn btn-xs btn-outline gap-1"
+                    onClick={() => onShowSpeciesInfo(card)}
+                  >
+                    <Sparkles size={14} /> <TranslatedText text="Get to know me" />
+                  </button>
+                )}
+                {card.weight_profile && (
+                  <GuildBadge guild={card.weight_profile} size="sm" />
+                )}
+              </div>
             </div>
-            <button
-              type="button"
-              className={`btn btn-circle ${interactive ? 'btn-ghost border-base-300 btn-lg md:btn-md' : 'btn-ghost border-transparent opacity-60 pointer-events-none btn-sm'}`}
-              onClick={interactive ? () => setExpanded((prev) => !prev) : undefined}
-              aria-label={expanded ? 'Hide fishing details' : 'Show fishing details'}
-            >
-              <Info size={18} />
-            </button>
           </div>
           {card.summary && (
             <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>
           )}
-          {onShowSpeciesInfo && (
-            <button
-              type="button"
-              className="btn btn-xs btn-outline gap-1"
-              onClick={() => onShowSpeciesInfo(card)}
-            >
-              <Sparkles size={14} /> <TranslatedText text="Get to know me" />
-            </button>
+        </div>
+
+        <div className={detailStackClass}>
+          {/* Why it works - shown first when expanded */}
+          {(expanded || !interactive) && card.rationale.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-semibold flex items-center gap-2 text-base">
+                <Sparkles size={16} />
+                <TranslatedText text="Why it works" />
+              </h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-base-content/80">
+                {card.rationale.map((item, idx) => (
+                  <li key={`rationale-${idx}`}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Environmental Conditions - shown in expanded view */}
+          {card.environmental_factors && (expanded || !interactive) && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2 flex items-center gap-2">
+                <span role="img" aria-label="Conditions">🌊</span>
+                <span><TranslatedText text="Current Conditions" /></span>
+              </p>
+              <EnvironmentalInfo factors={card.environmental_factors} />
+            </div>
           )}
         </div>
 
@@ -311,24 +337,35 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
     const overlayIntensity = useTransform(x, [-240, 0, 240], [0.35, 0, 0.35]);
     const swiping = useRef(false);
 
+    // Cleanup: reset swiping flag when component unmounts
+    useEffect(() => {
+      return () => {
+        swiping.current = false;
+      };
+    }, []);
+
     const swipe = useCallback(
       async (direction: SwipeDirection) => {
         if (!isTop || swiping.current) return;
         swiping.current = true;
-        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
-        const targetX = direction === 'right' ? viewportWidth * 0.75 : -viewportWidth * 0.75;
-        const controls = animate(x, targetX, { duration: 0.28, ease: 'easeInOut' });
-        await controls.finished;
-        // Trigger handlers which update card queue
-        if (direction === 'right') {
-          onSwipedRight(card);
-        } else {
-          onSwipedLeft();
+        try {
+          const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
+          const targetX = direction === 'right' ? viewportWidth * 0.75 : -viewportWidth * 0.75;
+          const controls = animate(x, targetX, { duration: 0.28, ease: 'easeInOut' });
+          await controls.finished;
+          // Trigger handlers which update card queue
+          if (direction === 'right') {
+            onSwipedRight(card);
+          } else {
+            onSwipedLeft();
+          }
+          // Small delay to allow React to process the state update
+          // This ensures the next card is properly positioned before allowing interaction
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } finally {
+          // Always reset the flag, even if there's an error or component unmounts
+          swiping.current = false;
         }
-        // Small delay to allow React to process the state update
-        // This ensures the next card is properly positioned before allowing interaction
-        await new Promise(resolve => setTimeout(resolve, 50));
-        swiping.current = false;
       },
       [card, isTop, onSwipedLeft, onSwipedRight, x]
     );
@@ -590,6 +627,17 @@ const FindrPage: React.FC = () => {
     enabled: Boolean(activeRectangle),
   });
 
+  // Debug: Log when predictions change
+  useEffect(() => {
+    console.log('[Findr] Predictions updated:', {
+      activeRectangle,
+      predictionCount: predictions?.length ?? 0,
+      loading,
+      error: Boolean(error),
+      firstSpecies: predictions?.[0]?.species_common_name || predictions?.[0]?.common_name,
+    });
+  }, [predictions, activeRectangle, loading, error]);
+
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;
     console.info('[Findr] Using fallback ICES rectangle options. Wire up Supabase rectangles data.', {
@@ -601,6 +649,8 @@ const FindrPage: React.FC = () => {
   useEffect(() => {
     if (loading) return;
     if (predictions && predictions.length > 0) return;
+    // Only log if we have a rectangle selected (otherwise fetch is disabled)
+    if (!activeRectangle) return;
     console.info('[Findr] No dynamic predictions available yet. Replace placeholder deck with Supabase/weather output.', {
       rectangleCode: activeRectangle,
       predictionDate,
@@ -610,15 +660,30 @@ const FindrPage: React.FC = () => {
 
   const cards = useMemo(() => {
     if (!predictions) return [];
-    return predictions
+    const mapped = predictions
       .map((prediction, index) => mapPrediction(prediction, index))
       .filter((card): card is CardData => card !== null)
       .sort((a, b) => (b.confidence ?? -Infinity) - (a.confidence ?? -Infinity));
-  }, [predictions]);
+    
+    console.log('[Findr] Cards computed:', {
+      rectangleCode: activeRectangle,
+      predictionCount: predictions.length,
+      cardCount: mapped.length,
+      firstCardSpecies: mapped[0]?.commonName,
+      firstCardConfidence: mapped[0]?.confidence,
+    });
+    
+    return mapped;
+  }, [predictions, activeRectangle]);
 
   useEffect(() => {
+    console.log('[Findr] Updating cardQueue:', {
+      rectangleCode: activeRectangle,
+      newCardCount: cards.length,
+      firstCard: cards[0]?.commonName,
+    });
     setCardQueue(cards);
-  }, [cards]);
+  }, [cards, activeRectangle]);
 
   // Favorites are now managed by useFavourites hook
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
@@ -709,8 +774,9 @@ const FindrPage: React.FC = () => {
 
   const handleProgrammaticLike = useCallback(() => {
     if (!currentCard) return;
-    swipeCardRef.current?.swipeRight();
-  }, [currentCard]);
+    // Just toggle favorite without swiping the card away
+    handleToggleFavorite(currentCard);
+  }, [currentCard, handleToggleFavorite]);
 
   const formattedLastUpdated = lastUpdated
     ? new Date(lastUpdated).toLocaleString(undefined, {
@@ -866,6 +932,9 @@ const FindrPage: React.FC = () => {
                               </span>
                             ) : (
                               <span className="badge badge-outline badge-sm">n/a</span>
+                            )}
+                            {card.weight_profile && (
+                              <GuildBadge guild={card.weight_profile} size="xs" />
                             )}
                           </div>
                           {card.scientificName && (

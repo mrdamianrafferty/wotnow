@@ -31,13 +31,23 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<'supabase' | 'none' | 'fallback'>('none');
 
-  const uniqueIds = useMemo(() => Array.from(new Set(ids)).filter((value) => value.trim().length > 0), [ids]);
+  // Create stable reference based on actual ID content, not array reference
+  const idsKey = useMemo(() => {
+    const unique = Array.from(new Set(ids)).filter((value) => value.trim().length > 0).sort();
+    return unique.join(',');
+  }, [ids]);
+
+  const uniqueIds = useMemo(() => {
+    if (!idsKey) return [];
+    return idsKey.split(',');
+  }, [idsKey]);
 
   useEffect(() => {
     if (uniqueIds.length === 0) {
-      setInsights([]);
-      setSource('none');
-      setError(null);
+      // Only update state if it's actually different
+      setInsights((prev) => prev.length === 0 ? prev : []);
+      setSource((prev) => prev === 'none' ? prev : 'none');
+      setError((prev) => prev === null ? prev : null);
       return;
     }
 
@@ -51,9 +61,9 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
       // TODO: Disable API calls until findr auth is implemented
       // This prevents 502 errors when backend services aren't running
       console.info('[useFavouriteInsights] Skipping API call - findr authentication not yet implemented');
-      setInsights([]);
-      setSource('fallback');
-      setError('Failed to load favourite insights');
+      setInsights((prev) => prev.length === 0 ? prev : []);
+      setSource((prev) => prev === 'fallback' ? prev : 'fallback');
+      setError((prev) => prev === 'Failed to load favourite insights' ? prev : 'Failed to load favourite insights');
       setLoading(false);
       return;
 
@@ -109,7 +119,9 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
       _active = false;
       controller.abort();
     };
-  }, [uniqueIds]);
+    // Use idsKey instead of uniqueIds to prevent infinite loops from array reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsKey]);
 
   return {
     insights,
