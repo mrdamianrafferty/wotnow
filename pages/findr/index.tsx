@@ -306,6 +306,7 @@ interface SwipeableCardProps {
   isFavorite: boolean;
   onShowSpeciesInfo?: (card: CardData) => void;
   onToggleFavorite?: (card: CardData) => void;
+  swipingRef: React.MutableRefObject<boolean>; // Shared swiping state
 }
 
 interface SwipeCardHandle {
@@ -327,6 +328,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
       isFavorite,
       onShowSpeciesInfo,
       onToggleFavorite,
+      swipingRef, // Use shared swiping ref from parent
     },
     ref
   ) => {
@@ -335,19 +337,18 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
     const catchOpacity = useTransform(x, [80, 140], [0, 1]);
     const nopeOpacity = useTransform(x, [-140, -80], [1, 0]);
     const overlayIntensity = useTransform(x, [-240, 0, 240], [0.35, 0, 0.35]);
-    const swiping = useRef(false);
 
     // Cleanup: reset swiping flag when component unmounts
     useEffect(() => {
       return () => {
-        swiping.current = false;
+        swipingRef.current = false;
       };
-    }, []);
+    }, [swipingRef]);
 
     const swipe = useCallback(
       async (direction: SwipeDirection) => {
-        if (!isTop || swiping.current) return;
-        swiping.current = true;
+        if (!isTop || swipingRef.current) return;
+        swipingRef.current = true;
         try {
           const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 768;
           const targetX = direction === 'right' ? viewportWidth * 0.75 : -viewportWidth * 0.75;
@@ -364,10 +365,10 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           await new Promise(resolve => setTimeout(resolve, 50));
         } finally {
           // Always reset the flag, even if there's an error or component unmounts
-          swiping.current = false;
+          swipingRef.current = false;
         }
       },
-      [card, isTop, onSwipedLeft, onSwipedRight, x]
+      [card, isTop, onSwipedLeft, onSwipedRight, swipingRef, x]
     );
 
     useImperativeHandle(
@@ -588,6 +589,7 @@ const FindrPage: React.FC = () => {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
+  const swipingRef = useRef(false); // Shared swiping state for all cards
 
   // Check for password_updated query param
   useEffect(() => {
@@ -620,7 +622,7 @@ const FindrPage: React.FC = () => {
     setSelectedCode(rectangleOptions[0].code);
   }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
 
-  const { predictions, loading, error, lastUpdated, reload } = useFishingPredictions({
+  const { predictions, loading, error, lastUpdated, region: apiRegion, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
     predictionDate,
     language,
@@ -690,7 +692,8 @@ const FindrPage: React.FC = () => {
 
   const currentCard = cardQueue[0] ?? null;
   const visibleCards = useMemo(() => cardQueue.slice(0, 3), [cardQueue]);
-  const regionLabel = activeOption?.region ?? (manualNormalized ? 'Custom area' : undefined);
+  // Use region from API response if available, otherwise fall back to activeOption
+  const regionLabel = apiRegion ?? activeOption?.region ?? (manualNormalized ? 'Custom area' : undefined);
 
   const favoriteCards = useMemo(
     () => cards.filter((card) => favoritesSet.has(getFavouriteKeyFromCard(card))),
@@ -878,6 +881,7 @@ const FindrPage: React.FC = () => {
                           isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
                           onShowSpeciesInfo={handleShowSpeciesInfo}
                           onToggleFavorite={handleToggleFavorite}
+                          swipingRef={swipingRef}
                           ref={index === 0 ? swipeCardRef : undefined}
                         />
                       ))}

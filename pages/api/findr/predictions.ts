@@ -435,6 +435,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Fetch rectangle region info for the response metadata
+    const { data: rectangleData } = await supabase
+      .from('ices_rectangles')
+      .select('region')
+      .eq('rectangle_code', rectangleCode)
+      .single();
+    
     // Add timeout to the RPC call for Vercel
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
@@ -457,6 +464,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       dataType: Array.isArray(data) ? 'array' : typeof data,
       dataLength: Array.isArray(data) ? data.length : 'N/A',
       firstItem: Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]).substring(0, 200) : null,
+      region: rectangleData?.region,
     });
 
     if (rpcError) {
@@ -499,6 +507,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         cacheControl,
         requestedAt: new Date().toISOString(),
         source: 'live' as const,
+        region: rectangleData?.region || null,
       },
     });
   } catch (error) {

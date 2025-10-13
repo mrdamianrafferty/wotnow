@@ -60,11 +60,13 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   // Load favourites from localStorage or Supabase
   useEffect(() => {
     const loadFavourites = async () => {
+      console.log('[useFavourites] Loading favourites, authenticated:', Boolean(user));
       setLoading(true);
       
       if (user && autoSync) {
         // Authenticated: Load from Supabase
         try {
+          console.log('[useFavourites] Fetching from Supabase...');
           const response = await fetch('/api/findr/favourites', {
             credentials: 'include', // Send cookies for authentication
           });
@@ -80,6 +82,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
                   .filter((id: string | null): id is string => Boolean(id))
               )
             );
+            console.log('[useFavourites] Loaded from Supabase:', speciesIds.length, 'favourites');
             setFavourites(speciesIds);
 
             // Update localStorage to match Supabase
@@ -99,7 +102,8 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     };
 
     loadFavourites();
-  }, [user, autoSync]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, autoSync]); // Only reload when user ID changes, not when user object reference changes
 
   // Helper: Load from localStorage
   const loadFromLocalStorage = () => {
@@ -180,9 +184,16 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   // Add favourite
   const addFavourite = useCallback(async (speciesId: string, options?: ToggleFavouriteOptions) => {
     const normalizedId = normalizeFavouriteId(speciesId);
+    
+    console.log('[useFavourites] Adding favourite:', { speciesId, normalizedId, isAuthenticated: Boolean(user) });
+    
     // Optimistically update UI
     setFavourites((prev) => {
-      if (prev.includes(normalizedId)) return prev;
+      if (prev.includes(normalizedId)) {
+        console.log('[useFavourites] Already favourited, skipping');
+        return prev;
+      }
+      console.log('[useFavourites] Optimistic update: adding to local state');
       return [...prev, normalizedId];
     });
 
@@ -199,6 +210,9 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         if (options?.speciesName) {
           bodyPayload.speciesName = options.speciesName;
         }
+        
+        console.log('[useFavourites] Sending to API:', bodyPayload);
+        
         const response = await fetch('/api/findr/favourites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -207,10 +221,15 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         });
 
         const data = await response.json();
+        
+        console.log('[useFavourites] API response:', { success: data.success, error: data.error });
+        
         if (!data.success) {
           console.error('Failed to add favourite to Supabase:', data.error);
           // Revert optimistic update
           setFavourites((prev) => prev.filter((id) => id !== normalizedId));
+        } else {
+          console.log('[useFavourites] Successfully added to Supabase');
         }
       } catch (error) {
         console.error('Failed to add favourite:', error);
@@ -227,8 +246,14 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   // Remove favourite
   const removeFavourite = useCallback(async (speciesId: string, favouriteId?: string) => {
     const normalizedId = normalizeFavouriteId(speciesId);
+    
+    console.log('[useFavourites] Removing favourite:', { speciesId, normalizedId, favouriteId, isAuthenticated: Boolean(user) });
+    
     // Optimistically update UI
-    setFavourites((prev) => prev.filter((id) => id !== normalizedId));
+    setFavourites((prev) => {
+      console.log('[useFavourites] Optimistic update: removing from local state');
+      return prev.filter((id) => id !== normalizedId);
+    });
 
     // Sync to storage
     if (user && autoSync) {

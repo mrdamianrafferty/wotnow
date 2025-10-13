@@ -24,6 +24,7 @@ export interface UseFishingPredictionsState {
   loading: boolean;
   error: string | null;
   lastUpdated?: string;
+  region?: string | null;
   reload: () => void;
 }
 
@@ -34,6 +35,7 @@ interface PredictionResponse {
   predictions: FishingPrediction[];
   metadata?: {
     requestedAt?: string;
+    region?: string | null;
   };
 }
 
@@ -45,6 +47,7 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | undefined>(undefined);
+  const [region, setRegion] = useState<string | null | undefined>(undefined);
   const requestIdRef = useRef(0);
 
   const params = useMemo(() => {
@@ -105,9 +108,11 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
         predictionDate: typed.predictionDate,
         predictionsCount: Array.isArray(typed.predictions) ? typed.predictions.length : 0,
         firstPrediction: Array.isArray(typed.predictions) && typed.predictions.length > 0 ? typed.predictions[0] : null,
+        region: typed.metadata?.region,
       });
       setPredictions(Array.isArray(typed.predictions) ? typed.predictions : []);
       setLastUpdated(typed.metadata?.requestedAt);
+      setRegion(typed.metadata?.region);
       setError(null);
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
@@ -135,6 +140,7 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     loading,
     error,
     lastUpdated,
+    region,
     reload: fetchPredictions,
   };
 }
