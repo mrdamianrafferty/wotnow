@@ -289,6 +289,62 @@ async function fetchSalinity(
 }
 
 /**
+ * Check if a coordinate appears to be on land by attempting a small ocean data fetch
+ * Returns: { isLand: boolean, message?: string }
+ */
+async function checkIfOnLand(lat: number, lon: number): Promise<{ isLand: boolean; message?: string }> {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cmems-landcheck-'));
+  const outputFile = path.join(tmpDir, 'data.nc');
+  
+  try {
+    // Try to fetch a tiny sample of sea surface height (available globally)
+    const margin = 0.05;
+    const cmd = `copernicusmarine subset \
+      --dataset-id cmems_mod_glo_phy_anfc_0.083deg_P1D-m \
+      --variable zos \
+      --start-datetime 2025-10-01T00:00:00 \
+      --end-datetime 2025-10-01T00:00:00 \
+      --minimum-longitude ${lon - margin} \
+      --maximum-longitude ${lon + margin} \
+      --minimum-latitude ${lat - margin} \
+      --maximum-latitude ${lat + margin} \
+      --output-filename ${outputFile}`;
+    
+    execSync(cmd, { stdio: 'pipe' });
+    
+    // Check if file has any valid data
+    const ncdumpOutput = execSync(`ncdump -v zos ${outputFile}`, { encoding: 'utf-8' });
+    const dataMatch = ncdumpOutput.match(/zos\s*=\s*([\d.eE+\-,\s_]+);/s);
+    
+    if (!dataMatch) {
+      return { isLand: true, message: 'No data in global dataset - likely land' };
+    }
+    
+    const values = dataMatch[1]
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v && v !== '_')
+      .map((v) => parseFloat(v))
+      .filter((v) => !isNaN(v) && isFinite(v) && v > -1000);
+    
+    if (values.length === 0) {
+      return { isLand: true, message: 'All fill values - coordinate on land or too close to coast' };
+    }
+    
+    return { isLand: false };
+  } catch (error) {
+    // If download fails, might be on land
+    return { isLand: true, message: 'Download failed - possibly on land' };
+  } finally {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch (e) {
+      // Ignore cleanup errors
+    }
+  }
+}
+
+/**
  * Core function to fetch data from Copernicus Marine
  * Uses copernicusmarine CLI (already authenticated)
  */
@@ -306,8 +362,9 @@ async function fetchCopernicusVariable(
     // Format date for Copernicus
     const dateStr = date.toISOString().split('T')[0];
     
-    // Build bbox (expand slightly for point extraction)
-    const margin = 0.1;
+    // Build bbox (expand to capture valid data from model grid)
+    // Use larger margin to account for ICES rectangles covering land/masked cells
+    const margin = 0.5; // ~55km, matches ICES rectangle size
     const minLon = rectangle.center_lon - margin;
     const maxLon = rectangle.center_lon + margin;
     const minLat = rectangle.center_lat - margin;
@@ -334,29 +391,108 @@ async function fetchCopernicusVariable(
     cmd += ` \\
       --output-filename ${outputFile}`;
     
-    // Execute download
-    execSync(cmd, { stdio: 'pipe' });
+    // Execute download - ignore stderr warnings, check if file was created
+    try {
+      execSync(cmd, { stdio: 'pipe' });
+    } catch (execError) {
+      // Copernicus CLI writes errors to stderr even on success
+      if (!fs.existsSync(outputFile)) {
+        throw execError; // Real failure
+      }
+      // File exists, download succeeded
+    }
     
     // Extract value using ncdump
     const ncdumpOutput = execSync(`ncdump -v ${variable} ${outputFile}`, {
       encoding: 'utf-8',
     });
     
-    // Parse NetCDF output to extract first valid value
-    const dataMatch = ncdumpOutput.match(new RegExp(`${variable} = ([\\d.,-_ ]+);`));
+    // Parse NetCDF output - handle multiline data
+    const dataMatch = ncdumpOutput.match(new RegExp(`${variable}\\s*=\\s*([\\d.eE+\\-,\\s_]+);`, 's'));
     if (!dataMatch) return null;
     
     const values = dataMatch[1]
       .split(',')
       .map((v) => v.trim())
-      .filter((v) => v !== '_' && !v.includes('_')) // Filter out fill values
+      .filter((v) => v && v !== '_' && !v.includes('_')) // Filter out underscore fill values
       .map((v) => parseFloat(v))
-      .filter((v) => !isNaN(v) && isFinite(v));
+      .filter((v) => !isNaN(v) && isFinite(v))
+      .filter((v) => {
+        // Filter out numeric fill values (IBI uses -32767, some use -999)
+        // Also filter impossible/unrealistic values for ocean data
+        if (v < -100) return false; // Catch numeric fill values like -32767, -999
+        
+        // Variable-specific sanity checks
+        if (variable === 'so' && (v < -1000 || v > 50000)) return false; // Salinity: allow scaled values
+        if (variable === 'thetao' && (v < -5 || v > 40)) return false; // Temp: -5 to 40°C
+        if (variable === 'CHL' && (v < 0 || v > 100)) return false; // Chlorophyll: 0-100 mg/m³
+        if (variable === 'chl' && (v < 0 || v > 100)) return false;
+        if (variable === 'KD490' && (v < 0 || v > 10)) return false; // Clarity: 0-10 m⁻¹
+        if (variable === 'o2' && (v < 0 || v > 500)) return false; // Oxygen: 0-500 mmol/m³
+        if (variable === 'no3' && (v < 0 || v > 50)) return false; // Nitrate: 0-50 mmol/m³
+        if (variable === 'po4' && (v < 0 || v > 5)) return false; // Phosphate: 0-5 mmol/m³
+        
+        return true;
+      })
+      .map((v) => {
+        // Apply descaling for known scaled variables
+        // IBI stores salinity as: (value × 0.001) + 20
+        if (variable === 'so' && v > 100) {
+          // Scaled salinity detected (typical range 15000-18000)
+          // Formula: actual = (stored × 0.001) + 20
+          return (v * 0.001) + 20;
+        }
+        
+        // Detect and fix other common scaling patterns
+        if (variable === 'no3' && Math.abs(v) > 1000) {
+          // Nutrients sometimes scaled by 1000
+          return Math.abs(v) / 1000;
+        }
+        if (variable === 'po4' && Math.abs(v) > 100) {
+          // Phosphate sometimes scaled by 1000
+          return Math.abs(v) / 1000;
+        }
+        if (variable === 'o2' && v > 10000) {
+          // Oxygen sometimes scaled
+          return v / 1000;
+        }
+        
+        return v;
+      });
     
     if (values.length === 0) return null;
     
     // Return mean of available values (handles multiple depth layers)
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    
+    // Final sanity check on the computed mean
+    if (!isFinite(mean) || mean < -100) {
+      console.log(`    ⚠️  Invalid mean value: ${mean} for ${variable}`);
+      return null;
+    }
+    
+    // Variable-specific final validation
+    if (variable === 'so' && (mean < 0 || mean > 50)) {
+      console.log(`    ⚠️  Suspicious salinity: ${mean.toFixed(2)} PSU (expected 0-50)`);
+      return null;
+    }
+    if (variable === 'o2' && (mean < 0 || mean > 500)) {
+      console.log(`    ⚠️  Suspicious oxygen: ${mean.toFixed(2)} mmol/m³ (expected 0-500)`);
+      return null;
+    }
+    if ((variable === 'no3' || variable === 'po4') && (mean < 0 || mean > 100)) {
+      console.log(`    ⚠️  Suspicious nutrient ${variable}: ${mean.toFixed(3)} (expected 0-100)`);
+      return null;
+    }
+    if ((variable === 'CHL' || variable === 'chl') && (mean < 0 || mean > 100)) {
+      console.log(`    ⚠️  Suspicious chlorophyll: ${mean.toFixed(2)} mg/m³ (expected 0-100)`);
+      return null;
+    }
+    if (variable === 'KD490' && (mean < 0 || mean > 10)) {
+      console.log(`    ⚠️  Suspicious clarity: ${mean.toFixed(3)} m⁻¹ (expected 0-10)`);
+      return null;
+    }
+    
     return mean;
   } finally {
     // Cleanup temp files
@@ -444,6 +580,14 @@ async function ingestBiogeochemicalData(testRectangleCode?: string, testDate?: s
   for (const rectangle of rectanglesWithRegion) {
     console.log(`\n🎯 ${rectangle.rectangle_code} (${rectangle.cmems_region})`);
     console.log(`   ${rectangle.center_lat.toFixed(2)}°N, ${rectangle.center_lon.toFixed(2)}°E`);
+    
+    // Check if coordinate is on land
+    const landCheck = await checkIfOnLand(rectangle.center_lat, rectangle.center_lon);
+    if (landCheck.isLand) {
+      console.log(`   ⚠️  WARNING: ${landCheck.message}`);
+      console.log(`   💡 Suggestion: This rectangle center may be on land. Consider adjusting coordinates.`);
+      console.log(`   📍 Try: Slightly offshore from ${rectangle.center_lat.toFixed(2)}°N, ${rectangle.center_lon.toFixed(2)}°E`);
+    }
     
     try {
       // Fetch all biogeochemical variables

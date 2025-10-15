@@ -59,8 +59,16 @@ export function getRegionalProducts(
   // Map individual variables to bundle categories
   switch (variable) {
     case 'temperature':
-    case 'salinity':
       return bundle.temperature;
+    case 'salinity':
+      // MED has separate salinity dataset in nutrients bundle
+      if (region === 'MED') {
+        const salinityProducts = bundle.nutrients.filter(p => p.variables.includes('so'));
+        if (salinityProducts.length > 0) {
+          return salinityProducts;
+        }
+      }
+      return bundle.temperature; // Other regions bundle salinity with temperature
     case 'currents':
       return bundle.currents;
     case 'chlorophyll':
@@ -90,12 +98,12 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     temperature: [
       {
-        datasetId: 'IBI_MULTIYEAR_PHY_005_002',
-        variables: ['thetao', 'so'],  // Temperature, salinity
+        datasetId: 'cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m',  // VERIFIED: ANFC physics with temp + salinity
+        variables: ['thetao', 'so'],  // Temperature, salinity bundled
         source: 'regional-phy',
         quality: 'model',
-        resolution: '0.083deg (~9km)',
-        coverage: 'IBI_MULTIYEAR_PHYSICS',
+        resolution: '0.027deg (~3km)',
+        coverage: 'IBI_ANALYSIS_FORECAST_PHYSICS',
       },
       {
         datasetId: 'cmems_mod_glo_phy_anfc_0.083deg_P1D-m',
@@ -270,12 +278,12 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     temperature: [
       {
-        datasetId: 'cmems_mod_bal_phy_anfc_P1D-m',
-        variables: ['thetao', 'so'],
+        datasetId: 'cmems_mod_bal_phy_anfc_P1D-m',  // VERIFIED: ANFC physics with temp + salinity
+        variables: ['thetao', 'so'],  // Temperature, salinity bundled
         source: 'regional-phy',
         quality: 'model',
-        resolution: 'Variable',
-        coverage: 'BALTICSEA_ANALYSIS_FORECAST',
+        resolution: '0.025deg (~2.8km)',
+        coverage: 'BALTICSEA_ANALYSIS_FORECAST_PHYSICS',
       },
     ],
     
@@ -319,11 +327,11 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     nutrients: [
       {
-        datasetId: 'cmems_mod_bal_bgc_anfc_P1D-m',  // VERIFIED: Multi-depth layers with all BGC vars
+        datasetId: 'cmems_mod_bal_bgc_anfc_P1D-m',  // VERIFIED: ANFC BGC with all nutrients
         variables: ['no3', 'po4', 'o2', 'chl', 'phyc'],  // Nitrate, phosphate, oxygen, chlorophyll, phytoplankton carbon
         source: 'regional-bgc',
         quality: 'model',
-        resolution: 'Variable',
+        resolution: '0.025deg (~2.8km)',
         coverage: 'BALTICSEA_ANALYSIS_FORECAST_BIOGEOCHEMISTRY',
       },
     ],
