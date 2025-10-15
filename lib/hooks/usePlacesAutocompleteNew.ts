@@ -57,41 +57,48 @@ export function usePlacesAutocompleteNew(
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
 
-  // Load Google Maps Places library dynamically
+  // Load Google Maps Places library dynamically using event-based pattern
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const initService = async () => {
       try {
+        console.log('🔄 Initializing Google Places Autocomplete service...');
         // Use dynamic import as recommended
         const { AutocompleteService } = await google.maps.importLibrary('places') as google.maps.PlacesLibrary;
         autocompleteServiceRef.current = new AutocompleteService();
         setReady(true);
+        console.log('✅ Google Places Autocomplete ready');
       } catch (error) {
-        console.error('Failed to load Google Maps Places library:', error);
+        console.error('❌ Failed to load Google Maps Places library:', error);
+        setReady(false);
       }
     };
 
-    // Check if google.maps is already loaded
+    const handleGoogleMapsLoaded = () => {
+      console.log('🎉 Received googleMapsLoaded event');
+      initService();
+    };
+
+    const handleGoogleMapsError = () => {
+      console.error('❌ Google Maps failed to load');
+      setReady(false);
+    };
+
+    // Check if Google Maps is already loaded (fast page loads)
     if (window.google?.maps) {
+      console.log('✅ Google Maps already loaded, initializing immediately');
       initService();
     } else {
-      // Poll for Google Maps to be loaded
-      const interval = setInterval(() => {
-        if (window.google?.maps) {
-          clearInterval(interval);
-          initService();
-        }
-      }, 100);
+      // Not loaded yet - wait for the event from _document.tsx
+      console.log('⏳ Waiting for Google Maps to load via callback...');
+      window.addEventListener('googleMapsLoaded', handleGoogleMapsLoaded);
+      window.addEventListener('googleMapsLoadError', handleGoogleMapsError);
 
-      // Cleanup after 10 seconds
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-      }, 10000);
-
+      // Cleanup listeners on unmount
       return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
+        window.removeEventListener('googleMapsLoaded', handleGoogleMapsLoaded);
+        window.removeEventListener('googleMapsLoadError', handleGoogleMapsError);
       };
     }
   }, []);

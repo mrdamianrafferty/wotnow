@@ -80,6 +80,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
   const [isLocating, setIsLocating] = useState(false);
   const [confirmLocate, setConfirmLocate] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
 
   const RECENT_KEY = 'coastal_recent_locations_v1';
   const LEGACY_KEY = 'recentCoastalLocations';
@@ -279,18 +280,32 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
   const handleSuggestionClick = async (
     suggestion: SuggestionItem
   ) => {
+    setLocationError(null);
+    setIsLoadingSuggestion(true);
+
     try {
       const placeId: string | undefined = suggestion?.place_id;
       const label: string = suggestion?.structured_formatting?.main_text || suggestion?.description || 'Selected place';
-      if (!placeId) return;
+
+      if (!placeId) {
+        throw new Error('No place ID found for this location');
+      }
+
       const results = await getGeocode({ placeId });
-      if (!results?.length) return;
+
+      if (!results?.length) {
+        throw new Error('Unable to find coordinates for this location');
+      }
+
       const { lat, lng } = await getLatLng(results[0]);
       const loc: BasicLocation = { name: label, lat, lon: lng };
       saveAndClose(loc);
     } catch (err) {
-      // swallow
-      void err;
+      console.error('❌ Failed to geocode location:', err);
+      const message = err instanceof Error ? err.message : 'Failed to get location details. Please try again.';
+      setLocationError(message);
+    } finally {
+      setIsLoadingSuggestion(false);
     }
   };
 
@@ -331,13 +346,18 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
           <input
             ref={inputRef}
             type="text"
-            className="input input-bordered w-full"
-            placeholder={ready ? 'Search a place…' : 'Loading…'}
+            className="input input-bordered w-full pr-10"
+            placeholder={ready ? 'Search a place…' : 'Loading Google Maps…'}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             aria-autocomplete="list"
-            disabled={!ready}
+            disabled={!ready || isLoadingSuggestion}
           />
+          {(!ready || isLoadingSuggestion) && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2">
+              <span className="loading loading-spinner loading-sm"></span>
+            </span>
+          )}
 
           {status === 'OK' && data?.length > 0 && (
             <ul
@@ -379,6 +399,12 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
         {locationError ? (
           <div className="alert alert-error mt-3">
             <span>{locationError}</span>
+          </div>
+        ) : null}
+
+        {!ready && !locationError ? (
+          <div className="alert alert-info mt-3">
+            <span>Loading location search service...</span>
           </div>
         ) : null}
 
