@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { supabase } from '../lib/supabase/client';
-import { LocationPicker } from './LocationPicker';
 
 export type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
@@ -180,11 +179,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </Link>
         </div>
 
-        {/* Right: Location picker + Location buttons + Home/Beach switch */}
+        {/* Right: Location buttons + Home/Beach switch */}
         <div className="navbar-end gap-2 items-center">
-          {/* Findr Location Picker */}
-          <LocationPicker />
-          
           {/* DaisyUI swap-text toggle (render only when controlled) */}
           {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
             <button

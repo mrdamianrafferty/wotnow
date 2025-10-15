@@ -31,7 +31,7 @@ import { GoodSpeciesCard } from '../../components/findr/GoodSpeciesCard';
 import { WaitingSpeciesCard } from '../../components/findr/WaitingSpeciesCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { normalizeRectangleCode } from '../../lib/findr/rectangle';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
@@ -45,6 +45,41 @@ const montserrat = Montserrat({
   weight: ['300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
 });
+
+// Species code aliases - maps incorrect database codes to correct SPECIES_IMAGE_MAP codes
+// This fixes legacy data where species were stored with wrong codes
+const SPECIES_CODE_ALIASES: Record<string, string> = {
+  'FLE': 'FLO',  // Flounder (European Flounder)
+  'CSH': 'DOG',  // Common name "Catshark" -> Small-spotted Catshark
+  'BRS': 'BBR',  // Black Bream -> Black Seabream
+  'BLL': 'WRA',  // Possibly Ballan Wrasse
+  'FGM': 'GMU',  // Possibly Grey Mullet (Flathead variant)
+  'SQC': 'SQU',  // Common Squid
+  'RUN': 'GUR',  // Possibly Gurnard species
+};
+
+/**
+ * Normalize species ID using alias mapping to match with live predictions
+ * Favorites may have invalid/legacy species codes (FLE, BLL, etc.)
+ * Live predictions use correct FAO codes (FLO, WRA, etc.)
+ * This function maps invalid codes to correct ones so ID matching works
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function normalizeSpeciesId(id: string, speciesCode?: string | null): string {
+  if (!speciesCode) return id.toLowerCase();
+  
+  const upperCode = speciesCode.toUpperCase();
+  const mappedCode = SPECIES_CODE_ALIASES[upperCode];
+  
+  // If code was mapped, return mapped code as new ID
+  if (mappedCode) {
+    const normalizedId = mappedCode.toLowerCase();
+    console.log(`[normalizeSpeciesId] Normalized ${id} (code: ${upperCode}) -> ${normalizedId} (mapped to: ${mappedCode})`);
+    return normalizedId;
+  }
+  
+  return id.toLowerCase();
+}
 
 const SWIPED_DATE_OPTIONS = [
   'today',
@@ -253,19 +288,33 @@ function buildFallbackCardImage(
   explicitUrl?: string | null,
   fallbackName?: string | null
 ): CardImage | null {
+  // ALWAYS prioritize SPECIES_IMAGE_MAP if we have a species code
   if (speciesCode) {
-    const info = SPECIES_IMAGE_MAP[speciesCode.toUpperCase()];
+    const upperCode = speciesCode.toUpperCase();
+    // Check if we need to use an alias for this code
+    const mappedCode = SPECIES_CODE_ALIASES[upperCode] ?? upperCode;
+    const info = SPECIES_IMAGE_MAP[mappedCode];
     if (info) {
+      if (mappedCode !== upperCode) {
+        console.log(`[buildFallbackCardImage] Mapped code ${upperCode} -> ${mappedCode} -> ${info.image}`);
+      } else {
+        console.log(`[buildFallbackCardImage] Using SPECIES_IMAGE_MAP for code ${upperCode} -> ${info.image}`);
+      }
       return {
         src: info.image,
         alt: info.name,
         mobile: info.mobile ?? null,
         thumb: info.thumb ?? null,
       };
+    } else {
+      console.warn(`[buildFallbackCardImage] Species code ${upperCode} (mapped: ${mappedCode}) not found in SPECIES_IMAGE_MAP`);
     }
   }
 
-  if (explicitUrl) {
+  // Only use explicit URL if it's a valid webp path or external URL
+  // Reject invalid paths like /images/fish/xxx.jpg
+  if (explicitUrl && (explicitUrl.startsWith('/webp/') || explicitUrl.startsWith('http'))) {
+    console.log(`[buildFallbackCardImage] Using explicit URL: ${explicitUrl}`);
     return {
       src: explicitUrl,
       alt: fallbackName ?? 'Fish illustration',
@@ -274,7 +323,56 @@ function buildFallbackCardImage(
     };
   }
 
+  // No valid image found - will trigger GradientFish fallback
+  if (explicitUrl) {
+    console.warn(`[buildFallbackCardImage] Rejected invalid URL: ${explicitUrl}`);
+  }
   return null;
+}
+
+/**
+ * Validates and fixes image URLs from database
+ * If image src is invalid (bare filename or wrong path), try to rebuild from species code
+ */
+function validateAndFixImage(
+  image: CardImage | undefined,
+  speciesCode?: string | null
+): CardImage | undefined {
+  if (!image) return undefined;
+  
+  // Check if image src is a valid webp path (our actual images)
+  // Invalid paths like /images/fish/fle.jpg should be rejected
+  const isValidWebp = image.src.startsWith('/webp/') || image.src.startsWith('http');
+  
+  if (isValidWebp) {
+    return image;
+  }
+  
+  // Invalid path - try to rebuild from species code (with alias mapping)
+  if (speciesCode) {
+    const upperCode = speciesCode.toUpperCase();
+    const mappedCode = SPECIES_CODE_ALIASES[upperCode] ?? upperCode;
+    const info = SPECIES_IMAGE_MAP[mappedCode];
+    if (info) {
+      if (mappedCode !== upperCode) {
+        console.log(`[validateAndFixImage] Fixed invalid image ${image.src} using mapped code ${upperCode} -> ${mappedCode} -> ${info.image}`);
+      } else {
+        console.log(`[validateAndFixImage] Fixed invalid image ${image.src} using code ${upperCode} -> ${info.image}`);
+      }
+      return {
+        src: info.image,
+        alt: info.name,
+        mobile: info.mobile ?? null,
+        thumb: info.thumb ?? null,
+      };
+    } else {
+      console.warn(`[validateAndFixImage] Species code ${upperCode} (mapped: ${mappedCode}) not found in SPECIES_IMAGE_MAP`);
+    }
+  }
+  
+  // Can't fix - return undefined so GradientFish shows
+  console.log(`[validateAndFixImage] Could not fix image ${image.src}, will show GradientFish`);
+  return undefined;
 }
 
 
@@ -380,13 +478,21 @@ const FindrFavouritesPage: React.FC = () => {
   const [priorityIds, setPriorityIds] = useState<string[]>([]);
   const [isLoadingFavourites, setIsLoadingFavourites] = useState(false);
 
-  const { selectedCode, manualCode, predictionDate, language } = usePersistentFindrSettings({
+  const { selectedCode, predictionDate, language } = usePersistentFindrSettings({
     predictionDate: TODAY_ISO,
     language: 'en',
   });
 
-  const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
-  const activeRectangle = manualNormalized ?? (selectedCode || null);
+  const { location } = useUnifiedLocation();
+  const locationRectangle = location?.rectangleCode ?? null;
+  
+  // Create clean location object for fishing time calculations
+  const cleanLocation = (location && location.lat !== null && location.lon !== null) 
+    ? { lat: location.lat, lon: location.lon }
+    : null;
+  
+  // Active rectangle priority: locationRectangle (from context) → selectedCode (persisted)
+  const activeRectangle = locationRectangle ?? (selectedCode || null);
   const userId = user?.id ?? null;
 
   // Check authentication on mount
@@ -565,25 +671,62 @@ const FindrFavouritesPage: React.FC = () => {
 
   const cards = useMemo(() => {
     if (!predictions) return [];
-    return predictions
+    const mapped = predictions
       .map((prediction, index) => mapPrediction(prediction, index))
       .filter((card): card is CardData => card !== null)
       .sort((a, b) => (b.confidence ?? -Infinity) - (a.confidence ?? -Infinity));
+    
+    // Debug: Log what IDs the prediction cards actually have
+    console.log('[Findr Favourites] Prediction card IDs:', mapped.map(c => ({ id: c.id, code: c.speciesCode, name: c.commonName })));
+    
+    return mapped;
   }, [predictions]);
 
   const favouriteEntries = useMemo<FavouriteEntry[]>(() => {
     const list = favorites ?? [];
 
     return list.map((id) => {
-      const card = cards.find((item) => item.id === id) ?? null;
+      // Get metadata to access species code for normalization
       const insight = insightMap.get(id);
       const metadata = favouriteMetadata.get(id);
       const mock = generateMockDetail(id);
+      
+      // Match by species code instead of ID since both predictions and favorites may have invalid codes
+      // Try multiple matching strategies:
+      // 1. Match by species code (direct match)
+      // 2. Match by ID (if IDs happen to match)
+      let card: CardData | null = null;
+      
+      if (metadata?.speciesCode) {
+        // Try matching by species code directly (case-insensitive)
+        const upperCode = metadata.speciesCode.toUpperCase();
+        card = cards.find((item) => item.speciesCode?.toUpperCase() === upperCode) ?? null;
+        
+        if (card) {
+          console.log(`[Findr Favourites] ✅ Matched ${id} by species code: ${upperCode} -> ${card.commonName} (confidence: ${card.confidence}%)`);
+        }
+      }
+      
+      // Fallback: try matching by ID
+      if (!card) {
+        card = cards.find((item) => item.id === id) ?? null;
+        if (card) {
+          console.log(`[Findr Favourites] ✅ Matched ${id} by ID -> ${card.commonName} (confidence: ${card.confidence}%)`);
+        }
+      }
+      
+      if (!card && metadata?.speciesCode) {
+        console.warn(`[Findr Favourites] ❌ No match for ${id} (code: ${metadata.speciesCode}). Available:`, cards.map(c => `${c.speciesCode} (${c.commonName})`).join(', '));
+      }
+      
       const bestBaitFromPrediction = card?.baitSuggestions.find((item) => item.trim().length > 0);
       const bestBaitFromInsights = insight?.bestBait?.trim();
       const bestBaitFromMetadata = metadata?.baitTips?.find((item) => item.trim().length > 0);
-      const derivedConfidence =
-        card?.confidence ?? (typeof metadata?.confidence === 'number' ? metadata.confidence : null);
+      
+      // ONLY use confidence from live prediction card, never from stale database metadata
+      // This ensures we show real-time conditions, not outdated stored values
+      const derivedConfidence = card?.confidence ?? null;
+      
       const bestBait =
         bestBaitFromPrediction ??
         (bestBaitFromInsights && bestBaitFromInsights.length > 0
@@ -598,12 +741,17 @@ const FindrFavouritesPage: React.FC = () => {
           : bestBaitFromMetadata
             ? 'supabase'
             : 'mock';
-      const image = card?.image ?? metadata?.image ?? undefined;
+      
+      // Validate and fix image - if metadata has invalid path, try to rebuild from species code
+      const rawImage = card?.image ?? metadata?.image ?? undefined;
+      const image = validateAndFixImage(rawImage, card?.speciesCode ?? id);
       const imageSource: FavouriteEntry['imageSource'] = card?.image ? 'prediction' : 'fallback';
       const name = card?.commonName ?? metadata?.name ?? 'Saved fish';
       const scientificName = card?.scientificName ?? metadata?.scientificName;
       const catches = insight?.catches ?? metadata?.catches ?? mock.catches;
-      const forecast = metadata?.forecast ?? null;
+      
+      // Generate forecast from live confidence, not stale database metadata
+      const forecast = generate7DayForecast(derivedConfidence, id);
 
       return {
         id,
@@ -1288,6 +1436,7 @@ const FindrFavouritesPage: React.FC = () => {
                               isPriority: entry.isPriority,
                               advice: entry.advice,
                             }}
+                            location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
@@ -1333,6 +1482,7 @@ const FindrFavouritesPage: React.FC = () => {
                                 : null,
                               isPriority: entry.isPriority,
                             }}
+                            location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
@@ -1368,13 +1518,16 @@ const FindrFavouritesPage: React.FC = () => {
                               id: entry.id,
                               name: entry.name,
                               emoji: entry.emoji,
-                              confidence: entry.confidence ?? 0,
+                              // Show null confidence if we don't have live prediction data
+                              // This prevents showing stale database values like "50%"
+                              confidence: entry.card ? (entry.confidence ?? 0) : null,
                               forecast,
                               image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null) 
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
                                 : null,
                               isPriority: entry.isPriority,
                             }}
+                            location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                           />

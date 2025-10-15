@@ -5,6 +5,17 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
+
+  // Configure webpack dev server for better HMR reliability
+  webpackDevMiddleware: (config) => {
+    // Improve file watching reliability
+    config.watchOptions = {
+      poll: 1000, // Check for changes every second
+      aggregateTimeout: 300,
+      ignored: /node_modules/,
+    };
+    return config;
+  },
   
   // Disable ESLint during production builds; lint enforced via `prebuild` script
   eslint: {

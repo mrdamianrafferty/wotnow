@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
-// Removed unused Link import
-import { activityTypes, getActivityName } from "../data/activityTypes";
+import { getActivityName, ACTIVITY_NAME_MAP } from "../data/activityTypes";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import { useHasMounted } from "../utils/useHasMounted";
-import CoastalLocationDialog from '../components/CoastalLocationDialog';
 import AppHeader, { LocationLite } from '../components/AppHeader';
+import { rankRecommendations } from '../app/settings/recommendations';
+import { supabase } from '../lib/supabase/client';
+import { getActivityEmoji } from '../data/emojiMap';
 
-// The full set of activity IDs for each grouping—synchronize these with activityTypes!
+// The full set of activity IDs for each grouping
 const mainCategories = [
     {
         key: "Active Sports",
@@ -239,7 +240,7 @@ const mainCategories = [
                     "painting",
 					"gaming",
 					"online",
-					
+
                 ],
             },
             {
@@ -278,273 +279,576 @@ const mainCategories = [
     },
 ];
 
-// These are the activity IDs that should trigger a coastal spot dialog if chosen
-const waterActivityIds = [
+const RECO_DISMISSED_LS = 'godaisy.reco.dismissed';
 
-    "canoeing",
-    "surfing",
-    
-    "snorkeling",
-    "kitesurfing",
-    "windsurfing",
-    "jet_skiing",
-    "scuba_diving",
-    "sailing",
-    "sea_fishing_shore",
-    "sea_fishing_boat",
-    "beach",
-    "beach_volleyball",
-    "sea_swimming",
-    "sup_sea",
-    "sea_kayaking"
+// Popular activities to suggest when curated recommendations run out
+// These are broad-appeal activities that work for most users
+const POPULAR_FALLBACK_ACTIVITIES = [
+  // Outdoor & Nature (universal appeal)
+  'hiking',
+  'beach',
+  'picnicking',
+  'dog_walking',
+  'camping',
+  'stargazing',
+  'birdwatching',
+
+  // Fitness & Wellness (low barrier to entry)
+  'running',
+  'cycling',
+  'yoga',
+  'gym_workout',
+  'wild_swimming',
+  'pilates',
+
+  // Social & Leisure (broad appeal)
+  'going_to_pub',
+  'cafe',
+  'cinema',
+  'reading',
+  'cooking',
+  'bbq',
+  'picnicking',
+
+  // Sports (popular participation)
+  'football_soccer',
+  'tennis',
+  'golf',
+  'basketball_outdoor',
+  'badminton',
+
+  // Creative (accessible)
+  'painting',
+  'photography',
+  'crafts',
+  'outdoor_painting',
+
+  // Indoor Recreation (weather-independent)
+  'indoor_swimming',
+  'museum',
+  'gaming',
+  'watch_a_movie',
+  'gallery',
 ];
 
-// ------------- BREADCRUMB -------------
-const Breadcrumb: React.FC<{ path: string[]; onBack: () => void }> = ({ path, onBack }) => (
-  <div className="flex items-center justify-between mb-6">
-    {path.length > 1 ? (
-      <button className="btn btn-sm btn-ghost" onClick={onBack}>
-        ← Back
-      </button>
-    ) : <span />}
-    <nav className="breadcrumbs text-sm" aria-label="breadcrumbs">
-      <ul>
-        {path.map((seg, i) => (
-          <li key={`${seg}-${i}`}>{seg}</li>
-        ))}
-      </ul>
-    </nav>
-  </div>
-);
+// Components
+interface SelectedActivitiesBarProps {
+  activities: Array<{ id: string; name: string; icon: React.ReactNode }>;
+  onRemove: (id: string) => void;
+  onClear: () => void;
+}
 
-// ------------- MAIN PAGE COMPONENT -------------
-const Interests: React.FC = () => {
-    const { preferences, setPreferences } = useUserPreferences();
-    const [mainCat, setMainCat] = useState<string | null>(null);
-    const [subCat, setSubCat] = useState<string | null>(null);
-    const [showCoastDialog, setShowCoastDialog] = useState(false);
-    const [showToast, setShowToast] = useState(false);
-    const hasMounted = useHasMounted();
+function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivitiesBarProps) {
+  const [expanded, setExpanded] = useState(false);
+  const displayLimit = 6;
 
-    // Path for breadcrumb
-    const path = [mainCat, subCat].filter(Boolean) as string[];
+  if (activities.length === 0) {
+    return (
+      <div className="alert alert-info">
+        <span>👋 Start by selecting activities from the suggestions below or browse categories</span>
+      </div>
+    );
+  }
 
-    // Use the up-to-date interests from preferences
-    const interests: string[] = useMemo(() => preferences.interests || [], [preferences.interests]);
+  const visibleActivities = expanded ? activities : activities.slice(0, displayLimit);
+  const hiddenCount = activities.length - displayLimit;
 
-    // Dialog logic for coastal activities
-    useEffect(() => {
-        const wantsCoast = interests.some((id) => waterActivityIds.includes(id));
-        const hasCoast = preferences.locations?.some((l) => l.type === "coastal");
-        if (wantsCoast && !hasCoast) setShowCoastDialog(true);
-    }, [interests, preferences.locations]);
-
-    // Add this effect to log current interests
-    useEffect(() => {
-      console.log('Current interests from preferences:', preferences.interests);
-    }, [preferences.interests]);
-
-    const handleCoastSave = (loc: { name: string; lat: number; lon: number }) => {
-        setPreferences((prev) => ({
-            ...prev,
-            locations: [...(prev.locations || []), { ...loc, type: "coastal" }],
-        }));
-        setShowCoastDialog(false);
-    };
-
-    const toggleInterest = (id: string) => {
-        setPreferences((prev) => {
-            const chosen = prev.interests ?? [];
-            const newList = chosen.includes(id)
-                ? chosen.filter((i) => i !== id)
-                : [...chosen, id];
-            console.log('Updated interests list:', newList);
-            return { ...prev, interests: newList };
-        });
-    };
-
-    const handleBack = () => {
-        if (subCat) setSubCat(null);
-        else if (mainCat) setMainCat(null);
-    };
-
-    // Render content according to step
-    let content: React.ReactNode;
-    if (!mainCat) {
-      content = (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {mainCategories.map((cat) => (
+  return (
+    <div className="card bg-base-200/50 border border-base-300">
+      <div className="card-body py-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📌</span>
+            <span className="font-semibold">Your Selected Activities ({activities.length})</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs"
+            onClick={onClear}
+          >
+            Clear all
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {visibleActivities.map(({ id, name, icon }) => (
             <button
-              key={cat.key}
-              className="btn btn-lg btn-outline justify-start gap-3"
-              onClick={() => setMainCat(cat.key)}
+              key={id}
               type="button"
+              onClick={() => onRemove(id)}
+              className="btn btn-sm btn-primary gap-1 normal-case"
+              title={`Remove ${name}`}
             >
-              <span className="text-2xl" aria-hidden>{cat.icon}</span>
-              <span className="font-semibold">{cat.key}</span>
+              <span>{icon}</span>
+              <span>{name}</span>
+              <span className="ml-1">×</span>
             </button>
           ))}
-        </div>
-      );
-    } else if (!subCat) {
-      const mainObj = mainCategories.find((c) => c.key === mainCat)!;
-      content = (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {mainObj.subcategories.map((sub) => (
+          {!expanded && hiddenCount > 0 && (
             <button
-              key={sub.key}
-              className="btn btn-outline justify-between"
-              onClick={() => setSubCat(sub.key)}
               type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setExpanded(true)}
             >
-              <span className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>{sub.icon}</span>
-                <span className="font-semibold">{sub.key}</span>
-              </span>
-              <span className="text-xs opacity-70">{sub.acts.length} activities</span>
+              +{hiddenCount} more
             </button>
-          ))}
+          )}
+          {expanded && activities.length > displayLimit && (
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => setExpanded(false)}
+            >
+              Show less
+            </button>
+          )}
         </div>
-      );
-    } else {
-      const mainObj = mainCategories.find((c) => c.key === mainCat)!;
-      const subObj = mainObj.subcategories.find((s) => s.key === subCat)!;
-      // Build a list that always includes every id from taxonomy, even if missing from activityTypes
-      const acts = subObj.acts
-        .map((id) => {
-          const found = activityTypes.find((a) => a.id === id);
-          return { id, name: found?.name ?? getActivityName(id) };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name));
-      content = (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {acts.map((act) => {
-            const selected = interests.includes(act.id);
+      </div>
+    </div>
+  );
+}
+
+interface RecommendationsSectionProps {
+  suggestions: string[];
+  onAdd: (id: string) => void;
+  onDismiss: (id: string) => void;
+  hasFallbacks?: boolean;
+}
+
+function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = false }: RecommendationsSectionProps) {
+  if (suggestions.length === 0) return null;
+
+  return (
+    <div className="card bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20">
+      <div className="card-body py-4">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-2xl">✨</span>
+          <div>
+            <h3 className="font-semibold text-lg">
+              {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'}
+            </h3>
+            <p className="text-sm opacity-70">
+              {hasFallbacks
+                ? 'These popular activities are enjoyed by people with diverse interests'
+                : "Based on your interests, we think you'd enjoy these activities"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {suggestions.map((id) => {
+            const icon = getActivityEmoji(id);
+            const name = getActivityName(id);
+
             return (
-              <button
-                key={act.id}
-                type="button"
-                className={`btn w-full normal-case ${selected ? 'btn-primary' : 'btn-outline'}`}
-                onClick={() => toggleInterest(act.id)}
-              >
-                {selected && <span className="mr-1">✓</span>}
-                {act.name}
-              </button>
+              <div key={id} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onAdd(id)}
+                  className="btn btn-outline justify-start h-10 normal-case rounded-xl flex items-center gap-2 border-accent text-accent hover:bg-accent/10 flex-1"
+                  title="Add to your interests"
+                >
+                  <span className="text-accent font-bold">+</span>
+                  {icon && <span>{icon}</span>}
+                  <span className="truncate">{name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Dismiss suggestion"
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => onDismiss(id)}
+                  title="Not interested"
+                >
+                  ×
+                </button>
+              </div>
             );
           })}
         </div>
-      );
-    }
 
-    const handleDone = () => {
-        setShowToast(true);
-        setTimeout(() => {
-            setShowToast(false);
-            if (typeof window !== 'undefined') {
-                window.location.href = "/";
-            }
-        }, 2200);
-    };
+        <div className="text-xs opacity-60 mt-2">
+          💡 Tip: Dismiss suggestions you&apos;re not interested in right now - they&apos;ll come back later
+        </div>
+      </div>
+    </div>
+  );
+}
 
-    // Remove the early hydration check that's causing hook ordering issues
-    if (!hasMounted) {
-      return (
-        <>
-          <AppHeader />
-          <div data-theme="light" className="min-h-[60vh] bg-base-100 text-base-content">
-            <div className="container mx-auto max-w-3xl px-4 py-12">
-              <div className="text-center">
-                <div className="text-3xl mb-2">⏳</div>
-                <p>Loading your interests…</p>
-              </div>
+interface CategoryCardProps {
+  category: typeof mainCategories[0];
+  selectedCount: number;
+  expanded: boolean;
+  onToggle: () => void;
+  hasSelections: boolean;
+  children: React.ReactNode;
+}
+
+function CategoryCard({ category, selectedCount, expanded, onToggle, hasSelections, children }: CategoryCardProps) {
+  return (
+    <div className={`card bg-base-100 border ${hasSelections ? 'border-primary/30' : 'border-base-300'}`}>
+      <div className="card-body p-0">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors"
+          style={{ color: 'rgb(31, 41, 55)' }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{category.icon}</span>
+            <div className="text-left">
+              <span className="font-semibold text-lg">{category.key}</span>
+              {selectedCount > 0 && (
+                <span className="ml-2 badge badge-primary badge-sm">
+                  {selectedCount} selected
+                </span>
+              )}
             </div>
           </div>
-        </>
+          <span className="text-xl">{expanded ? '▼' : '▶'}</span>
+        </button>
+
+        {expanded && (
+          <div className="px-4 pb-4">
+            {children}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface SubcategorySectionProps {
+  subcategory: { key: string; icon: string; acts: string[] };
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+}
+
+function SubcategorySection({ subcategory, selectedIds, onToggle }: SubcategorySectionProps) {
+  const selectedSet = new Set(selectedIds);
+
+  return (
+    <div className="mt-3">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">{subcategory.icon}</span>
+        <span className="font-medium" style={{ color: 'rgb(31, 41, 55)' }}>{subcategory.key}</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+        {subcategory.acts.map((actId) => {
+          const selected = selectedSet.has(actId);
+          const icon = getActivityEmoji(actId);
+          const name = getActivityName(actId);
+
+          return (
+            <button
+              key={actId}
+              type="button"
+              onClick={() => onToggle(actId)}
+              className={`btn btn-sm justify-start gap-2 normal-case ${
+                selected ? 'btn-primary' : 'btn-outline'
+              }`}
+              style={!selected ? { color: 'rgb(31, 41, 55)' } : undefined}
+            >
+              {selected && <span>✓</span>}
+              {icon && <span>{icon}</span>}
+              <span className="truncate">{name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Main page component
+const InterestsTest: React.FC = () => {
+  const { preferences, setPreferences } = useUserPreferences();
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [dismissedRecos, setDismissedRecos] = useState<Record<string, number>>({});
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const hasMounted = useHasMounted();
+
+  const interests = useMemo(() => preferences.interests || [], [preferences.interests]);
+
+  // Load dismissed recommendations from localStorage (map of activityId -> timestamp)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECO_DISMISSED_LS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // Handle both old format (array) and new format (object with timestamps)
+        if (Array.isArray(parsed)) {
+          // Convert old format to new format with current timestamp
+          const now = Date.now();
+          const dismissedMap: Record<string, number> = {};
+          parsed.forEach((id: string) => {
+            dismissedMap[id] = now;
+          });
+          setDismissedRecos(dismissedMap);
+          // Update localStorage to new format
+          localStorage.setItem(RECO_DISMISSED_LS, JSON.stringify(dismissedMap));
+        } else if (typeof parsed === 'object' && parsed !== null) {
+          setDismissedRecos(parsed);
+        }
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Generate suggestions using the recommendation engine with fallback to popular activities
+  const { suggestions, hasFallbacks } = useMemo(() => {
+    const selectedSet = new Set(interests);
+    const TARGET_SUGGESTIONS = 6;
+
+    // Sort by dismissal timestamp (not dismissed first, then oldest dismissals first)
+    const sortByDismissal = (items: string[]) => {
+      return [...items].sort((a, b) => {
+        const aTime = dismissedRecos[a] || 0;
+        const bTime = dismissedRecos[b] || 0;
+        // Not dismissed (0) comes before dismissed
+        // Among dismissed, older (smaller timestamp) comes first
+        return aTime - bTime;
+      });
+    };
+
+    // If no interests selected, show popular activities to get started
+    if (interests.length === 0) {
+      const fallbackPool = POPULAR_FALLBACK_ACTIVITIES.filter(
+        id => !selectedSet.has(id)
       );
+      const sorted = sortByDismissal(fallbackPool);
+      return {
+        suggestions: sorted.slice(0, TARGET_SUGGESTIONS),
+        hasFallbacks: true,
+      };
     }
 
+    // First, try curated recommendations based on user's interests
+    const curatedPool = rankRecommendations(interests, {
+      limit: 50, // Get more to work with after sorting
+      labelMap: ACTIVITY_NAME_MAP,
+    });
+
+    const curatedFiltered = curatedPool.filter(
+      id => !selectedSet.has(id)
+    );
+
+    // Sort curated by dismissal (non-dismissed first, then by oldest dismissal)
+    const curatedSorted = sortByDismissal(curatedFiltered);
+
+    // If we have enough curated suggestions, use them
+    if (curatedSorted.length >= TARGET_SUGGESTIONS) {
+      return {
+        suggestions: curatedSorted.slice(0, TARGET_SUGGESTIONS),
+        hasFallbacks: false,
+      };
+    }
+
+    // Not enough curated suggestions - add popular fallbacks
+    const fallbackPool = POPULAR_FALLBACK_ACTIVITIES.filter(
+      id => !selectedSet.has(id) && !curatedFiltered.includes(id)
+    );
+
+    // Sort fallbacks by dismissal
+    const fallbackSorted = sortByDismissal(fallbackPool);
+
+    // Combine curated + fallback, both already sorted
+    const combined = [...curatedSorted, ...fallbackSorted];
+
+    return {
+      suggestions: combined.slice(0, TARGET_SUGGESTIONS),
+      hasFallbacks: fallbackSorted.length > 0 && combined.length > curatedSorted.length,
+    };
+  }, [interests, dismissedRecos]);
+
+  // Calculate selected counts per category
+  const selectedCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    mainCategories.forEach(cat => {
+      const catActivities = cat.subcategories.flatMap(sub => sub.acts);
+      counts[cat.key] = catActivities.filter(id => interests.includes(id)).length;
+    });
+    return counts;
+  }, [interests]);
+
+  const toggleCategory = (key: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const toggleInterest = (id: string) => {
+    setPreferences(prev => {
+      const chosen = prev.interests ?? [];
+      const newList = chosen.includes(id)
+        ? chosen.filter((i) => i !== id)
+        : [...chosen, id];
+      return { ...prev, interests: newList };
+    });
+  };
+
+  const dismissSuggestion = (id: string) => {
+    setDismissedRecos(prev => {
+      const next = { ...prev, [id]: Date.now() };
+      try {
+        localStorage.setItem(RECO_DISMISSED_LS, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const addActivity = (id: string) => {
+    toggleInterest(id);
+    dismissSuggestion(id); // Move to back of queue after adding
+    showSuccessToast(`Added ${getActivityName(id)}!`);
+  };
+
+  const showSuccessToast = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const handleSave = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // User is signed in - save to Supabase profiles table
+        const { error } = await supabase
+          .from('profiles')
+          .update({ activities: interests })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('Error saving to Supabase:', error);
+          showSuccessToast('Saved locally! (Supabase sync failed)');
+        } else {
+          showSuccessToast('Your interests have been saved!');
+        }
+      } else {
+        // User not signed in - just localStorage (already handled by setPreferences)
+        showSuccessToast('Your interests have been saved locally!');
+      }
+    } catch (error) {
+      console.error('Error in handleSave:', error);
+      showSuccessToast('Your interests have been saved locally!');
+    }
+
+    // Redirect after toast
+    setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.location.href = "/";
+      }
+    }, 1500);
+  };
+
+  if (!hasMounted) {
     return (
       <>
-        {/* Header banner */}
-        <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
-          <AppHeader
-            homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
-            coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
-            onOpenHomeDialog={() => setShowCoastDialog(true)}
-            onOpenCoastDialog={() => setShowCoastDialog(true)}
-          />
-
-          <div className="container mx-auto max-w-3xl px-4 py-8">
-            <Breadcrumb path={["Interests", ...path]} onBack={handleBack} />
-            {content}
-
-            {interests.length > 0 && (
-              <section className="mt-7 flex flex-wrap gap-2 justify-center" aria-label="Your Selected Activities">
-                {interests
-                  .map((id) => ({ id, name: getActivityName(id) }))
-                  .map((act) => (
-                    <button
-                      key={act.id}
-                      onClick={() => toggleInterest(act.id)}
-                      className="btn btn-outline btn-primary btn-sm rounded-full"
-                      aria-label={`Remove ${act.name} from selected interests`}
-                    >
-                      {act.name}
-                      <span className="ml-1">×</span>
-                    </button>
-                  ))}
-              </section>
-            )}
-
-            <div className="flex justify-center gap-4 mt-10">
-              {(mainCat || subCat) && (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    setMainCat(null);
-                    setSubCat(null);
-                  }}
-                >
-                  ➕ Add More Interests
-                </button>
-              )}
-              <button onClick={handleDone} className="btn btn-outline">
-                ✅ I&apos;m Done
-              </button>
+        <AppHeader />
+        <div data-theme="light" className="min-h-[60vh] bg-base-100 text-base-content">
+          <div className="container mx-auto max-w-3xl px-4 py-12">
+            <div className="text-center">
+              <div className="text-3xl mb-2">⏳</div>
+              <p>Loading your interests…</p>
             </div>
-
-            {showToast && (
-              <div className="toast toast-bottom toast-center">
-                <div className="alert alert-success">
-                  <span>You&apos;ve chosen a fine array of activities. It&apos;s good to be you!</span>
-                </div>
-              </div>
-            )}
-
-            <CoastalLocationDialog
-              open={showCoastDialog}
-              onClose={() => setShowCoastDialog(false)}
-              title="Pick your beach or coastal spot"
-              onSave={handleCoastSave}
-              homeLocation={preferences.locations?.find((loc) => loc.type === 'home')}
-              coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal')}
-              setHomeLocation={(loc) => {
-                setPreferences((prev) => ({
-                  ...prev,
-                  locations: [...(prev.locations || []), { ...loc, type: "home" }],
-                }));
-              }}
-              setCoastalLocation={(loc) => {
-                setPreferences((prev) => ({
-                  ...prev,
-                  locations: [...(prev.locations || []), { ...loc, type: "coastal" }],
-                }));
-              }}
-            />
           </div>
         </div>
       </>
     );
+  }
+
+  return (
+    <>
+      <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
+        <AppHeader
+          homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}
+          coastalLocation={preferences.locations?.find((loc) => loc.type === 'coastal') as LocationLite | undefined}
+          onOpenHomeDialog={() => {}}
+          onOpenCoastDialog={() => {}}
+        />
+
+        <div className="container mx-auto max-w-4xl px-4 py-8">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Your Interests</h1>
+            <p className="text-base-content/70">
+              Select activities you enjoy or want to try. We&apos;ll suggest the best days for each.
+            </p>
+          </div>
+
+          {/* Sticky Selected Bar */}
+          <div className="sticky top-16 z-10 bg-base-100/95 backdrop-blur pb-4">
+            <SelectedActivitiesBar
+              activities={interests.map(id => ({
+                id,
+                name: getActivityName(id),
+                icon: getActivityEmoji(id),
+              }))}
+              onRemove={toggleInterest}
+              onClear={() => setPreferences(prev => ({ ...prev, interests: [] }))}
+            />
+          </div>
+
+          {/* Recommendations Section */}
+          <div className="mt-4">
+            <RecommendationsSection
+              suggestions={suggestions}
+              onAdd={addActivity}
+              onDismiss={dismissSuggestion}
+              hasFallbacks={hasFallbacks}
+            />
+          </div>
+
+          {/* Category Accordion */}
+          <div className="space-y-3 mt-6">
+            {mainCategories.map(category => {
+              const isExpanded = expandedCategories.includes(category.key);
+              const selectedCount = selectedCountByCategory[category.key] || 0;
+              const hasSelections = selectedCount > 0;
+
+              return (
+                <CategoryCard
+                  key={category.key}
+                  category={category}
+                  selectedCount={selectedCount}
+                  expanded={isExpanded}
+                  onToggle={() => toggleCategory(category.key)}
+                  hasSelections={hasSelections}
+                >
+                  {category.subcategories.map(sub => (
+                    <SubcategorySection
+                      key={sub.key}
+                      subcategory={sub}
+                      selectedIds={interests}
+                      onToggle={toggleInterest}
+                    />
+                  ))}
+                </CategoryCard>
+              );
+            })}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-center mt-8">
+            <button onClick={handleSave} className="btn btn-primary btn-lg">
+              ✅ Save Changes
+            </button>
+          </div>
+        </div>
+
+        {/* Toast */}
+        {showToast && (
+          <div className="toast toast-top toast-center z-50">
+            <div className="alert alert-success">
+              <span>{toastMessage}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
 };
 
-export default Interests;
+export default InterestsTest;
