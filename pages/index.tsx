@@ -341,7 +341,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     });
 
     const forecast: WeatherForecastDay[] = Object.entries(grouped)
-      .slice(0, 5)
+      .slice(0, 8)
       .map(([dateStr, dayEntries], dayIndex) => {
         // Different handling for today vs future days
         const isToday = dayIndex === 0;
@@ -786,7 +786,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
    function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
      if (!weatherData?.daily) return [];
      const hourly = Array.isArray(weatherData.hourly) ? weatherData.hourly : [];
-     return weatherData.daily.slice(0, 5).map((day) => {
+     return weatherData.daily.slice(0, 8).map((day) => {
        // OpenWeather OneCall daily doesn't include snow depth; snowfall may be in snow field (mm)
        // Inject hourly snowfall rate where possible using One Call hourly (snow['1h'] in mm/h)
        const dayDate = new Date(day.dt * 1000);
