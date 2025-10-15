@@ -15,32 +15,47 @@ export interface ExifGPSData {
 
 // EMODnet bathymetry API response
 export interface EMODnetBathymetryResponse {
-  depthMeters: number | null;
-  source: 'emodnet_wms' | 'emodnet_wfs';
+  depthMeters?: number | null;
+  depth_meters?: number | null; // Snake case alias
+  source?: 'emodnet_wms' | 'emodnet_wfs';
+  data_source?: string; // Additional source field
   quality?: 'high' | 'medium' | 'low';
+  confidence?: string;
+  query_time?: string;
+  error?: string;
 }
 
 // EMODnet substrate API response
 export interface EMODnetSubstrateResponse {
-  category: string | null;
+  category?: string | null;
+  substrate?: string | null; // Substrate field
   description?: string | null;
-  source: 'emodnet_geology';
+  source?: 'emodnet_geology';
+  data_source?: string; // Additional source field
+  confidence?: string;
+  query_time?: string;
+  raw_classification?: string;
+  error?: string;
 }
 
 // Final enriched catch data structure
 export interface EnrichedCatchData {
-  locationSource: 'exif_gps' | 'user_location' | 'rectangle_center' | 'fallback';
-  finalLat: number | null;
-  finalLon: number | null;
-  depthAtLocationM: number | null;
-  substrateType: string | null;
-  isStructure: boolean | null;
-  structureType: string | null;
-  exif: ExifGPSData;
+  locationSource?: 'exif_gps' | 'user_location' | 'rectangle_center' | 'fallback';
+  finalLat?: number | null;
+  finalLon?: number | null;
+  depthAtLocationM?: number | null;
+  substrateType?: string | null;
+  isStructure?: boolean | null;
+  structureType?: string | null;
+  exif?: ExifGPSData;
+  location?: LocationResolution | { latitude: number | null; longitude: number | null };
+  bathymetry?: BathymetrySample | EMODnetBathymetryResponse | null;
+  substrate?: SubstrateSample | EMODnetSubstrateResponse | null;
+  enrichment_timestamp?: string;
 }
 
 // Substrate types
-export type SubstrateType = 'rock' | 'sand' | 'mud' | 'gravel' | 'mixed' | null;
+export type SubstrateType = 'rock' | 'sand' | 'mud' | 'gravel' | 'mixed' | 'unknown' | null;
 
 // Data source indicators
 export type DataSource = 'emodnet_bathymetry' | 'emodnet_geology' | 'user' | 'fallback';
@@ -72,6 +87,7 @@ export interface ExifMetadata {
 
 export interface BathymetrySample {
   depthMeters: number | null;
+  depth_meters?: number | null; // Snake case alias
   source: 'emodnet_bathymetry' | 'unknown';
   quality?: 'high' | 'medium' | 'low' | null;
   distanceMeters?: number | null;
@@ -80,6 +96,7 @@ export interface BathymetrySample {
 
 export interface SubstrateSample {
   category: string | null;
+  substrate?: string | null; // Alias for category
   description?: string | null;
   source: 'emodnet_geology' | 'unknown';
   raw?: Record<string, unknown>;
@@ -94,12 +111,18 @@ export interface LocationResolution {
 }
 
 export interface CatchEnrichmentResult {
-  location: LocationResolution;
-  exif: ExifMetadata;
-  bathymetry: BathymetrySample | null;
-  substrate: SubstrateSample | null;
-  warnings: string[];
+  location?: LocationResolution;
+  exif?: ExifMetadata;
+  bathymetry?: BathymetrySample | null;
+  substrate?: SubstrateSample | string | null; // Allow string for simple substrate values
+  warnings?: string[];
   debug?: Record<string, unknown>;
+  enrichment_timestamp?: string;
+  depth_meters?: number | null;
+  has_exif_gps?: boolean;
+  depth_found?: boolean;
+  substrate_found?: boolean;
+  conditions_found?: boolean;
 }
 
 export interface CatchConditionsSnapshot {
@@ -206,6 +229,8 @@ export interface CatchLogResponse {
     has_exif_gps: boolean;
     depth_found: boolean;
     substrate_found: boolean;
+    conditions_found?: boolean;
+    enrichment_timestamp?: string;
     depth_meters: number | null;
     substrate: string | null;
   };
@@ -219,13 +244,17 @@ export interface CatchLogResponse {
 }
 
 export type CatchLoggerTelemetryEvent =
-  | { type: 'auth_missing'; reason: 'no_token' | 'resolver_returned_null' | 'session_unavailable' }
-  | { type: 'api_error'; status: number; message: string }
-  | { type: 'network_error'; message: string };
+  | { type: 'auth_missing'; reason: 'no_token' | 'resolver_returned_null' | 'session_unavailable'; context?: string; anonymous?: boolean; visible?: boolean }
+  | { type: 'auth_anonymous'; context?: string; anonymous?: boolean; userId?: string | null; provider?: string | null }
+  | { type: 'api_error'; status: number; message: string; context?: string; visible?: boolean }
+  | { type: 'network_error'; message: string; context?: string; visible?: boolean }
+  | { type: 'error_visibility'; context?: string; visible?: boolean; surface?: string; message?: string };
 
 export interface UseCatchLoggerOptions {
   onSuccess?: (response: CatchLogResponse) => void;
   onError?: (error: Error) => void;
   resolveAccessToken?: () => Promise<string | null>;
   onTelemetry?: (event: CatchLoggerTelemetryEvent) => void;
+  telemetryContext?: string;
+  errorSurface?: string;
 }

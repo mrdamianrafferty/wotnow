@@ -176,8 +176,8 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     temperature: [
       {
-        datasetId: 'cmems_mod_med_phy-sal_anfc_4.2km_P1D-m',  // VERIFIED: 141 depth layers, includes temp + salinity
-        variables: ['thetao', 'so'],  // Temperature, salinity in PSU
+        datasetId: 'cmems_mod_med_phy-tem_anfc_4.2km_P1D-m',  // VERIFIED WORKING: Physics temperature model
+        variables: ['thetao'],  // Temperature only (salinity in separate dataset)
         source: 'regional-phy',
         quality: 'model',
         resolution: '4.2km',
@@ -203,12 +203,12 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
         coverage: 'MEDITERRANEAN_OCEANCOLOUR_L4_GAPFREE',
       },
       {
-        datasetId: 'cmems_mod_med_bgc-bio_anfc_4.2km_P1D-m',  // BGC model fallback
-        variables: ['chl'],
+        datasetId: 'cmems_mod_med_bgc-pft_anfc_4.2km_P1D-m',  // BGC model fallback with phytoplankton functional types
+        variables: ['chl'],  // Chlorophyll model (lowercase!)
         source: 'regional-bgc',
         quality: 'model',
         resolution: '4.2km',
-        coverage: 'MEDSEA_ANALYSIS_FORECAST_BIOGEOCHEMISTRY',
+        coverage: 'MEDSEA_ANALYSIS_FORECAST_PHYTOPLANKTON',
       },
     ],
     
@@ -225,15 +225,7 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     nutrients: [
       {
-        datasetId: 'cmems_mod_med_bgc-nut_anfc_4.2km_P1D-m',  // VERIFIED: Nutrients with 125 depth layers!
-        variables: ['no3', 'po4'],  // Nitrate, phosphate in mmol/m³
-        source: 'regional-bgc',
-        quality: 'model',
-        resolution: '4.2km',
-        coverage: 'MEDSEA_ANALYSIS_FORECAST_NUTRIENTS',
-      },
-      {
-        datasetId: 'cmems_mod_med_bgc-bio_anfc_4.2km_P1D-m',  // VERIFIED: Dissolved oxygen with 125 depth layers!
+        datasetId: 'cmems_mod_med_bgc-bio_anfc_4.2km_P1D-m',  // VERIFIED WORKING: BGC biological model with oxygen
         variables: ['o2'],  // Dissolved oxygen in mmol/m³
         source: 'regional-bgc',
         quality: 'model',
@@ -241,7 +233,15 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
         coverage: 'MEDSEA_ANALYSIS_FORECAST_BIOGEOCHEMISTRY',
       },
       {
-        datasetId: 'cmems_mod_med_phy-sal_anfc_4.2km_P1D-m',  // VERIFIED: Salinity with 141 depth layers!
+        datasetId: 'cmems_mod_med_bgc-nut_anfc_4.2km_P1D-m',  // VERIFIED WORKING: BGC nutrients model
+        variables: ['no3', 'po4'],  // Nitrate, phosphate in mmol/m³
+        source: 'regional-bgc',
+        quality: 'model',
+        resolution: '4.2km',
+        coverage: 'MEDSEA_ANALYSIS_FORECAST_NUTRIENTS',
+      },
+      {
+        datasetId: 'cmems_mod_med_phy-sal_anfc_4.2km_P1D-m',  // VERIFIED WORKING: Physics salinity model
         variables: ['so'],  // Salinity in PSU (practical salinity units)
         source: 'regional-phy',
         quality: 'model',

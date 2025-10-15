@@ -1520,7 +1520,7 @@ const FindrFavouritesPage: React.FC = () => {
                               emoji: entry.emoji,
                               // Show null confidence if we don't have live prediction data
                               // This prevents showing stale database values like "50%"
-                              confidence: entry.card ? (entry.confidence ?? 0) : null,
+                              confidence: entry.card ? (entry.confidence ?? 0) : 0,
                               forecast,
                               image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null) 
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
