@@ -1118,7 +1118,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     <span>{marineError}</span>
   </div>
 ) : null}
-<div className="main-grid">
+<main id="main-content" className="main-grid">
   {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, dayLabel }) => {
 
     // Removed AstronomyCard on homepage regardless of interests
@@ -1439,7 +1439,7 @@ const popupPayload = buildPopupActivityPayload({
     // Only return the day card; AstronomyCard is intentionally omitted on the homepage
     return dayCard;
   })}
-</div> {/* End of main-grid */}
+</main> {/* End of main-grid */}
 
 {/* Popup for activity details */}
 {popupActivity && (
