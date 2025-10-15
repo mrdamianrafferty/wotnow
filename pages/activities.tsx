@@ -752,9 +752,9 @@ export default function ActivitiesPage() {
       grouped[date].push(item);
     });
 
-    // Build forecast for up to 5 days
+    // Build forecast for up to 8 days (OpenWeather provides 8 days)
     return Object.entries(grouped)
-      .slice(0, 5)
+      .slice(0, 8)
       .map(([dateStr, dayEntries], dayIndex) => {
         // Use noon entry as representative for the day, or first if noon not available
         const noonEntry: ForecastEntry = dayEntries.find((e: ForecastEntry) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
