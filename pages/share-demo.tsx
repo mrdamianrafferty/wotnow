@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import EnhancedShareModal from '../components/sharing/EnhancedShareModal';
+import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
 import { Share2 } from 'lucide-react';
 
 export default function ShareModalDemo() {
@@ -36,13 +36,13 @@ export default function ShareModalDemo() {
         </div>
       </div>
       
-      <EnhancedShareModal
+      <SimplifiedShareModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        activityId={activityData.id}
         activityName={activityData.name}
         activityDescription={activityData.description}
         activityMessage={activityData.message}
+        activityEmoji="⚽"
       />
     </div>
   );

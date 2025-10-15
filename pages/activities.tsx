@@ -44,8 +44,7 @@ import type { SnowRecommendationLevel } from '../utils/snowRecommendations';
 import { useRouter } from 'next/router';
 
 
-// TODO: Uncomment when the sharing feature is merged
-// import { ShareModal } from '../components/sharing/NewShareModal';
+import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
 
 
 
@@ -197,8 +196,7 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
     ? getOptimizedImageSrc(activityId, 'webpMobile')
     : getActivityBg(activityId);
   const isMarine = activityId ? MARINE_ACTIVITY_IDS.includes(activityId) : false;
-  // TODO: Uncomment when the sharing feature is merged
-  // const [shareModalData, setShareModalData] = useState<{activityId: string, activityName: string} | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
   // Determine if this activity should show pollen warnings
   // Exclude marine, winter, and indoor activities as specified
@@ -225,15 +223,9 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
     ? `${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')} is out of season right now.`
     : activityId ? getActivityMessage(activityId, assessment.status, reasonsObjects) : "Weather conditions vary - check the details below.";
 
-  // TODO: Uncomment when the sharing feature is merged
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // setShareModalData({
-    //   activityId,
-    //   activityName: activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')
-    // });
-    // For now, just prevent the default action
-    console.log('Sharing feature not yet available');
+    setIsShareModalOpen(true);
   };
 
   // --- Beach orientation (OSM/cache with simulated fallback) ---
@@ -535,16 +527,17 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
       {/* Score Display */}
       <div className="activity-card__score">
         Score: {score}%
-      </div>        {/* Share Modal */}
-        {/* TODO: Uncomment when the sharing feature is merged
-        {shareModalData && (
-          <ShareModal
-            activityId={shareModalData.activityId}
-            activityName={shareModalData.activityName}
-            onClose={() => setShareModalData(null)}
-          />
-        )}
-        */}
+      </div>
+
+      {/* Share Modal */}
+      <SimplifiedShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        activityName={activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}
+        activityMessage={message}
+        activityDescription={assessment.status !== 'offseason' ? reasonsObjects.map(r => r.title).join(', ') : undefined}
+        activityEmoji={activityId ? getActivityEmoji(activityId) : '🎉'}
+      />
       </article>
     );
 }
