@@ -5,10 +5,18 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   
-  // Redirect fishfindr.eu to /findr
+  // Redirect fishfindr.eu to /findr (but NOT for API routes, static assets, or _next)
   if (hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') {
-    // If not already on /findr path, redirect to /findr
-    if (!url.pathname.startsWith('/findr')) {
+    // Skip redirect for:
+    // - API routes (/api/*)
+    // - Next.js internals (/_next/*)
+    // - Static assets (already handled by config.matcher)
+    // - Already on findr paths
+    const isApiRoute = url.pathname.startsWith('/api/');
+    const isNextInternal = url.pathname.startsWith('/_next/');
+    const isFindrPath = url.pathname.startsWith('/findr');
+    
+    if (!isApiRoute && !isNextInternal && !isFindrPath) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
       return NextResponse.redirect(findrUrl);
