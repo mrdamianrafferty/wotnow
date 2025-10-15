@@ -1,0 +1,354 @@
+🌡️  Scraping FishBase for Temperature Data
+
+================================================================================
+
+📊 Processing 62 species...
+
+[1/62] Ballan Wrasse (Labrus bergylta)
+  Fetching summary: https://www.fishbase.se/summary/Labrus-bergylta.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Labrus&SpeciesName=bergylta
+  ✅ Temp: 5-25°C
+  ✅ Substrate: rock, weed
+[2/62] Black Seabream (Spondyliosoma cantharus)
+  Fetching summary: https://www.fishbase.se/summary/Spondyliosoma-cantharus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Spondyliosoma&SpeciesName=cantharus
+  ❌ No temperature data
+  ✅ Substrate: rock, sand, weed
+[3/62] Brill (Scophthalmus rhombus)
+  Fetching summary: https://www.fishbase.se/summary/Scophthalmus-rhombus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Scophthalmus&SpeciesName=rhombus
+  ❌ No temperature data
+[4/62] Bull Huss (Scyliorhinus stellaris)
+  Fetching summary: https://www.fishbase.se/summary/Scyliorhinus-stellaris.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Scyliorhinus&SpeciesName=stellaris
+  ❌ No temperature data
+[5/62] Cod (Coastal) (Gadus morhua)
+  Fetching summary: https://www.fishbase.se/summary/Gadus-morhua.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Gadus&SpeciesName=morhua
+  ✅ Temp: 0-15°C
+  ✅ Substrate: rock, weed
+[6/62] Comber (Serranus cabrilla)
+  Fetching summary: https://www.fishbase.se/summary/Serranus-cabrilla.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Serranus&SpeciesName=cabrilla
+  ❌ No temperature data
+  ✅ Substrate: rock, sand, mud, weed
+[7/62] Common Cuttlefish (Sepia officinalis)
+  Fetching summary: https://www.fishbase.se/summary/Sepia-officinalis.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sepia&SpeciesName=officinalis
+  ❌ No temperature data
+[8/62] Common Ling (Molva molva)
+  Fetching summary: https://www.fishbase.se/summary/Molva-molva.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Molva&SpeciesName=molva
+  ❌ No temperature data
+[9/62] Common Octopus (Octopus vulgaris)
+  Fetching summary: https://www.fishbase.se/summary/Octopus-vulgaris.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Octopus&SpeciesName=vulgaris
+  ❌ No temperature data
+[10/62] Common Smoothhound (Mustelus mustelus)
+  Fetching summary: https://www.fishbase.se/summary/Mustelus-mustelus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Mustelus&SpeciesName=mustelus
+  ❌ No temperature data
+[11/62] Common Squid (Loligo vulgaris)
+  Fetching summary: https://www.fishbase.se/summary/Loligo-vulgaris.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Loligo&SpeciesName=vulgaris
+  ❌ No temperature data
+[12/62] Conger Eel (Conger conger)
+  Fetching summary: https://www.fishbase.se/summary/Conger-conger.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Conger&SpeciesName=conger
+  ❌ No temperature data
+  ✅ Substrate: rock
+[13/62] Corkwing Wrasse (Symphodus melops)
+  Fetching summary: https://www.fishbase.se/summary/Symphodus-melops.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Symphodus&SpeciesName=melops
+  ❌ No temperature data
+  ✅ Substrate: rock, weed
+[14/62] Cuckoo Wrasse (Labrus mixtus)
+  Fetching summary: https://www.fishbase.se/summary/Labrus-mixtus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Labrus&SpeciesName=mixtus
+  ❌ No temperature data
+  ✅ Substrate: weed
+[15/62] Dab (Limanda limanda)
+  Fetching summary: https://www.fishbase.se/summary/Limanda-limanda.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Limanda&SpeciesName=limanda
+  ❌ No temperature data
+[16/62] Dentex (Dentex dentex)
+  Fetching summary: https://www.fishbase.se/summary/Dentex-dentex.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Dentex&SpeciesName=dentex
+  ❌ No temperature data
+  ✅ Substrate: rock, sand, weed
+[17/62] Dover Sole (Solea solea)
+  Fetching summary: https://www.fishbase.se/summary/Solea-solea.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Solea&SpeciesName=solea
+  ✅ Temp: 8-24°C
+  ✅ Substrate: sand
+[18/62] Flathead Grey Mullet (Mugil cephalus)
+  Fetching summary: https://www.fishbase.se/summary/Mugil-cephalus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Mugil&SpeciesName=cephalus
+  ✅ Temp: 8-24°C
+  ✅ Substrate: rock, sand, mud, weed
+[19/62] Flounder (Platichthys flesus)
+  Fetching summary: https://www.fishbase.se/summary/Platichthys-flesus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Platichthys&SpeciesName=flesus
+  ✅ Temp: 5-25°C
+  ✅ Substrate: sand
+[20/62] Garfish (Needlefish) (Belone belone)
+  Fetching summary: https://www.fishbase.se/summary/Belone-belone.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Belone&SpeciesName=belone
+  ❌ No temperature data
+[21/62] Gilthead Seabream (Gilthead Seabream)
+  Fetching summary: https://www.fishbase.se/summary/Gilthead-Seabream.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Gilthead&SpeciesName=Seabream
+  ❌ No temperature data
+[22/62] Goldsinny Wrasse (Ctenolabrus rupestris)
+  Fetching summary: https://www.fishbase.se/summary/Ctenolabrus-rupestris.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Ctenolabrus&SpeciesName=rupestris
+  ❌ No temperature data
+[23/62] Greater Amberjack (Seriola dumerili)
+  Fetching summary: https://www.fishbase.se/summary/Seriola-dumerili.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Seriola&SpeciesName=dumerili
+  ❌ No temperature data
+[24/62] Greater Weever (Trachinus draco)
+  Fetching summary: https://www.fishbase.se/summary/Trachinus-draco.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Trachinus&SpeciesName=draco
+  ❌ No temperature data
+[25/62] Grey Gurnard (Eutrigla gurnardus)
+  Fetching summary: https://www.fishbase.se/summary/Eutrigla-gurnardus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Eutrigla&SpeciesName=gurnardus
+  ❌ No temperature data
+  ✅ Substrate: rock
+[26/62] Grey Mullet (Chelon labrosus)
+  Fetching summary: https://www.fishbase.se/summary/Chelon-labrosus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Chelon&SpeciesName=labrosus
+  ❌ No temperature data
+  ✅ Substrate: weed
+[27/62] Haddock (Melanogrammus aeglefinus)
+  Fetching summary: https://www.fishbase.se/summary/Melanogrammus-aeglefinus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Melanogrammus&SpeciesName=aeglefinus
+  ❌ No temperature data
+  ✅ Substrate: rock
+[28/62] Herring (Clupea harengus)
+  Fetching summary: https://www.fishbase.se/summary/Clupea-harengus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Clupea&SpeciesName=harengus
+  ✅ Temp: 1-18°C
+[29/62] Horse Mackerel (Trachurus trachurus)
+  Fetching summary: https://www.fishbase.se/summary/Trachurus-trachurus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Trachurus&SpeciesName=trachurus
+  ❌ No temperature data
+  ✅ Substrate: sand
+[30/62] John Dory (Zeus faber)
+  Fetching summary: https://www.fishbase.se/summary/Zeus-faber.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Zeus&SpeciesName=faber
+  ❌ No temperature data
+  ✅ Substrate: sand, mud
+[31/62] Little Tunny (Euthynnus alletteratus)
+  Fetching summary: https://www.fishbase.se/summary/Euthynnus-alletteratus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Euthynnus&SpeciesName=alletteratus
+  ❌ No temperature data
+[32/62] Mackerel (Scomber scombrus)
+  Fetching summary: https://www.fishbase.se/summary/Scomber-scombrus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Scomber&SpeciesName=scombrus
+  ❌ No temperature data
+[33/62] Megrim (Lepidorhombus whiffiagonis)
+  Fetching summary: https://www.fishbase.se/summary/Lepidorhombus-whiffiagonis.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Lepidorhombus&SpeciesName=whiffiagonis
+  ❌ No temperature data
+[34/62] Painted Comber (Serranus scriba)
+  Fetching summary: https://www.fishbase.se/summary/Serranus-scriba.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Serranus&SpeciesName=scriba
+  ❌ No temperature data
+  ✅ Substrate: rock, weed
+[35/62] Parrotfish (Sparisoma cretense)
+  Fetching summary: https://www.fishbase.se/summary/Sparisoma-cretense.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sparisoma&SpeciesName=cretense
+  ❌ No temperature data
+  ✅ Substrate: rock, weed
+[36/62] Picarel (Spicara smaris)
+  Fetching summary: https://www.fishbase.se/summary/Spicara-smaris.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Spicara&SpeciesName=smaris
+  ❌ No temperature data
+[37/62] Plaice (Pleuronectes platessa)
+  Fetching summary: https://www.fishbase.se/summary/Pleuronectes-platessa.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Pleuronectes&SpeciesName=platessa
+  ✅ Temp: 2-15°C
+[38/62] Pollack (Pollachius pollachius)
+  Fetching summary: https://www.fishbase.se/summary/Pollachius-pollachius.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Pollachius&SpeciesName=pollachius
+  ❌ No temperature data
+  ✅ Substrate: rock
+[39/62] Red Gurnard (Chelidonichthys cuculus)
+  Fetching summary: https://www.fishbase.se/summary/Chelidonichthys-cuculus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Chelidonichthys&SpeciesName=cuculus
+  ❌ No temperature data
+  ✅ Substrate: rock
+[40/62] Red Mullet (Mullus surmuletus)
+  Fetching summary: https://www.fishbase.se/summary/Mullus-surmuletus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Mullus&SpeciesName=surmuletus
+  ❌ No temperature data
+  ✅ Substrate: rock, sand
+[41/62] Red Seabream (Pagellus bogaraveo)
+  Fetching summary: https://www.fishbase.se/summary/Pagellus-bogaraveo.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Pagellus&SpeciesName=bogaraveo
+  ❌ No temperature data
+  ✅ Substrate: rock, sand, mud, weed
+[42/62] Rock Cook (Centrolabrus exoletus)
+  Fetching summary: https://www.fishbase.se/summary/Centrolabrus-exoletus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Centrolabrus&SpeciesName=exoletus
+  ❌ No temperature data
+  ✅ Substrate: rock, weed
+[43/62] Saithe (Pollachius virens) (Pollachius virens)
+  Fetching summary: https://www.fishbase.se/summary/Pollachius-virens.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Pollachius&SpeciesName=virens
+  ❌ No temperature data
+[44/62] Saithe/Pollock (Saithe/Pollock)
+  Fetching summary: https://www.fishbase.se/summary/Saithe/Pollock.html
+  ⚠️  Error: Request failed with status code 404
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Saithe/Pollock&SpeciesName=undefined
+  ❌ No temperature data
+[45/62] Salema (Saupe) (Sarpa salpa)
+  Fetching summary: https://www.fishbase.se/summary/Sarpa-salpa.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sarpa&SpeciesName=salpa
+  ❌ No temperature data
+  ✅ Substrate: rock, sand, weed
+[46/62] Sand Eel (Ammodytes tobianus)
+  Fetching summary: https://www.fishbase.se/summary/Ammodytes-tobianus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Ammodytes&SpeciesName=tobianus
+  ❌ No temperature data
+  ✅ Substrate: sand
+[47/62] Sardine (Sardina pilchardus)
+  Fetching summary: https://www.fishbase.se/summary/Sardina-pilchardus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sardina&SpeciesName=pilchardus
+  ❌ No temperature data
+[48/62] Sea Bass (Dicentrarchus labrax)
+  Fetching summary: https://www.fishbase.se/summary/Dicentrarchus-labrax.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Dicentrarchus&SpeciesName=labrax
+  ✅ Temp: 8-24°C
+  ✅ Substrate: rock, sand
+[49/62] Sea Bream (Dorada) (Sparus aurata)
+  Fetching summary: https://www.fishbase.se/summary/Sparus-aurata.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sparus&SpeciesName=aurata
+  ❌ No temperature data
+  ✅ Substrate: sand, weed
+[50/62] Sea Trout (Salmo trutta)
+  Fetching summary: https://www.fishbase.se/summary/Salmo-trutta.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Salmo&SpeciesName=trutta
+  ✅ Temp: 18-24°C
+  ✅ Substrate: rock
+[51/62] Small-eyed Ray (Raja microocellata)
+  Fetching summary: https://www.fishbase.se/summary/Raja-microocellata.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Raja&SpeciesName=microocellata
+  ❌ No temperature data
+[52/62] Small-spotted Catshark (Scyliorhinus canicula)
+  Fetching summary: https://www.fishbase.se/summary/Scyliorhinus-canicula.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Scyliorhinus&SpeciesName=canicula
+  ❌ No temperature data
+[53/62] Spotted Bass (Dicentrarchus punctatus)
+  Fetching summary: https://www.fishbase.se/summary/Dicentrarchus-punctatus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Dicentrarchus&SpeciesName=punctatus
+  ❌ No temperature data
+  ✅ Substrate: rock, sand
+[54/62] Spotted Ray (Raja montagui)
+  Fetching summary: https://www.fishbase.se/summary/Raja-montagui.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Raja&SpeciesName=montagui
+  ❌ No temperature data
+[55/62] Sprat (Sprattus sprattus)
+  Fetching summary: https://www.fishbase.se/summary/Sprattus-sprattus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Sprattus&SpeciesName=sprattus
+  ❌ No temperature data
+[56/62] Starry Smoothhound (Mustelus asterias)
+  Fetching summary: https://www.fishbase.se/summary/Mustelus-asterias.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Mustelus&SpeciesName=asterias
+  ❌ No temperature data
+[57/62] Thornback Ray (Raja clavata)
+  Fetching summary: https://www.fishbase.se/summary/Raja-clavata.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Raja&SpeciesName=clavata
+  ❌ No temperature data
+[58/62] Tub Gurnard (Chelidonichthys lucerna)
+  Fetching summary: https://www.fishbase.se/summary/Chelidonichthys-lucerna.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Chelidonichthys&SpeciesName=lucerna
+  ✅ Temp: 8-24°C
+[59/62] Turbot (Small) (Scophthalmus maximus)
+  Fetching summary: https://www.fishbase.se/summary/Scophthalmus-maximus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Scophthalmus&SpeciesName=maximus
+  ❌ No temperature data
+  ✅ Substrate: rock
+[60/62] Undulate Ray (Raja undulata)
+  Fetching summary: https://www.fishbase.se/summary/Raja-undulata.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Raja&SpeciesName=undulata
+  ❌ No temperature data
+  ✅ Substrate: sand
+[61/62] Whiting (Merlangius merlangus)
+  Fetching summary: https://www.fishbase.se/summary/Merlangius-merlangus.html
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Merlangius&SpeciesName=merlangus
+  ❌ No temperature data
+  ✅ Substrate: rock
+[62/62] Wrasse (various) (Labridae spp.)
+  Fetching summary: https://www.fishbase.se/summary/Labridae-spp..html
+  ⚠️  Error: Request failed with status code 404
+  Fetching ecology: https://www.fishbase.se/Ecology/FishEcologySummary.php?GenusName=Labridae&SpeciesName=spp.
+  ⚠️  Ecology error: Request failed with status code 404
+  ❌ No temperature data
+
+================================================================================
+
+📊 SUMMARY:
+
+✅ Success: 10/62 (16%)
+❌ Failed: 52/62
+
+💾 Saved: /Users/damianrafferty/Projects/WotNow/ENVIRONMENTAL_DATA_FISHBASE_SCRAPED.json
+
+❌ Species needing manual temperature research (52):
+   - Black Seabream
+   - Brill
+   - Bull Huss
+   - Comber
+   - Common Cuttlefish
+   - Common Ling
+   - Common Octopus
+   - Common Smoothhound
+   - Common Squid
+   - Conger Eel
+   - Corkwing Wrasse
+   - Cuckoo Wrasse
+   - Dab
+   - Dentex
+   - Garfish (Needlefish)
+   - Gilthead Seabream
+   - Goldsinny Wrasse
+   - Greater Amberjack
+   - Greater Weever
+   - Grey Gurnard
+   - Grey Mullet
+   - Haddock
+   - Horse Mackerel
+   - John Dory
+   - Little Tunny
+   - Mackerel
+   - Megrim
+   - Painted Comber
+   - Parrotfish
+   - Picarel
+   - Pollack
+   - Red Gurnard
+   - Red Mullet
+   - Red Seabream
+   - Rock Cook
+   - Saithe (Pollachius virens)
+   - Saithe/Pollock
+   - Salema (Saupe)
+   - Sand Eel
+   - Sardine
+   - Sea Bream (Dorada)
+   - Small-eyed Ray
+   - Small-spotted Catshark
+   - Spotted Bass
+   - Spotted Ray
+   - Sprat
+   - Starry Smoothhound
+   - Thornback Ray
+   - Turbot (Small)
+   - Undulate Ray
+   - Whiting
+   - Wrasse (various)
+
+✅ Species with substrate data from FishBase: 32

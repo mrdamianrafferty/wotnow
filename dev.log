@@ -1,0 +1,703 @@
+
+> wotnow-web-app@1.0.0 dev
+> next dev
+
+   ▲ Next.js 15.5.0
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.68.53:3000
+   - Environments: .env.local, .env.development, .env
+   - Experiments (use with caution):
+     ✓ forceSwcTransforms
+
+ ✓ Starting...
+ ✓ Ready in 1572ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled /middleware in 262ms (114 modules)
+ ○ Compiling / ...
+/*! 🌼 daisyUI 5.1.6 */
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled / in 2.8s (608 modules)
+🔍 Interest filtering: {
+  rawInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  normalizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  sanitizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  validActivityCount: 117
+}
+marineHours before building forecast: []
+🔍 Interest filtering: {
+  rawInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  normalizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  sanitizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  validActivityCount: 117
+}
+marineHours before building forecast: []
+ GET / 200 in 831ms
+ ✓ Compiled /api/marine in 425ms (239 modules)
+ ✓ Compiled (246 modules)
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.479&lon=-5.302&units=metric&appid=API_KEY&exclude=
+🌍 Incoming request (rounded): { lat: 43.475, lon: -5.215, start: '1760530616', end: '1761221816' }
+Please utilize the `createPagesServerClient` function instead of the deprecated `createServerSupabaseClient` function. Learn more: https://supabase.com/docs/guides/auth/auth-helpers/nextjs-pages
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+ GET /api/user/location 200 in 620ms
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.47854&lon=-5.30242 200 in 921ms
+🌊 Cached Stormglass data for 43.475_-5.215 (pm), ttl=120m
+ GET /api/marine?lat=43.47474&lon=-5.21525&start=1760530616&end=1761221816 200 in 1275ms
+ ⚠ Found a change in next.config.mjs. Restarting the server to apply the changes...
+   ▲ Next.js 15.5.0
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.68.53:3000
+   - Environments: .env.local, .env.development, .env
+   - Experiments (use with caution):
+     ✓ forceSwcTransforms
+
+ ✓ Starting...
+ ✓ Ready in 1338ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /middleware in 307ms (114 modules)
+ ○ Compiling / ...
+/*! 🌼 daisyUI 5.1.6 */
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled / in 3.1s (608 modules)
+🔍 Interest filtering: {
+  rawInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  normalizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  sanitizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  validActivityCount: 117
+}
+marineHours before building forecast: []
+🔍 Interest filtering: {
+  rawInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  normalizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  sanitizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  validActivityCount: 117
+}
+marineHours before building forecast: []
+ GET / 200 in 913ms
+ ✓ Compiled /api/marine in 350ms (239 modules)
+ ✓ Compiled (246 modules)
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.479&lon=-5.302&units=metric&appid=API_KEY&exclude=
+🌍 Incoming request (rounded): { lat: 43.475, lon: -5.215, start: '1760530647', end: '1761221847' }
+Please utilize the `createPagesServerClient` function instead of the deprecated `createServerSupabaseClient` function. Learn more: https://supabase.com/docs/guides/auth/auth-helpers/nextjs-pages
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+ GET /api/user/location 200 in 539ms
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.47854&lon=-5.30242 200 in 806ms
+🌊 Cached Stormglass data for 43.475_-5.215 (pm), ttl=120m
+ GET /api/marine?lat=43.47474&lon=-5.21525&start=1760530647&end=1761221847 200 in 1093ms
+ ✓ Compiled in 761ms (393 modules)
+ ✓ Compiled in 818ms (393 modules)
+ ✓ Compiled /interests in 326ms (614 modules)
+ GET /_next/data/development/interests.json 200 in 644ms
+ GET /_next/data/development/index.json 200 in 276ms
+ ✓ Compiled /api/weather-with-pollen in 35ms (241 modules)
+ ✓ Compiled (246 modules)
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.479&lon=-5.302&units=metric&appid=API_KEY&exclude=
+🌍 Incoming request (rounded): { lat: 43.475, lon: -5.215, start: '1760530898', end: '1761222098' }
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.47854&lon=-5.30242 200 in 461ms
+🌊 Cached Stormglass data for 43.475_-5.215 (pm), ttl=120m
+ GET /api/marine?lat=43.47474&lon=-5.21525&start=1760530898&end=1761222098 200 in 1018ms
+ ○ Compiling /weather ...
+ ✓ Compiled /weather in 1141ms (713 modules)
+ ✓ Compiled in 115ms (713 modules)
+ GET /_next/data/development/weather.json 200 in 1680ms
+ ✓ Compiled /api/unified-weather in 260ms (287 modules)
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47854&lon=-5.30242&mode=basic 200 in 2729ms
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47474&lon=-5.21525&mode=marine 200 in 3266ms
+ ✓ Compiled in 1687ms (407 modules)
+ ✓ Compiled in 59ms (407 modules)
+ ✓ Compiled in 699ms (407 modules)
+ ✓ Compiled in 762ms (407 modules)
+ ✓ Compiled in 716ms (407 modules)
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47474&lon=-5.21525&mode=marine 200 in 1674ms
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47474&lon=-5.21525&mode=marine 200 in 2381ms
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47474&lon=-5.21525&mode=marine 200 in 1425ms
+ ✓ Compiled in 925ms (407 modules)
+ ✓ Compiled in 58ms (407 modules)
+ ✓ Compiled in 857ms (407 modules)
+ ✓ Compiled in 732ms (407 modules)
+Limiting Open-Meteo forecast window to 5 days: 2025-10-15 to 2025-10-19
+ GET /api/unified-weather?lat=43.47854&lon=-5.30242&mode=basic 200 in 1465ms
+ ○ Compiling /activities ...
+ ✓ Compiled /activities in 769ms (739 modules)
+🗓️ Out-of-season check: {
+  currentDate: 2025-10-15T13:02:05.596Z,
+  currentMonth: 10,
+  interests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  outOfSeasonActivities: [ 'picnicking', 'bbq' ]
+}
+ GET /_next/data/development/activities.json 200 in 1126ms
+ ✓ Compiled /api/weather-with-pollen in 62ms (311 modules)
+ ✓ Compiled (314 modules)
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.479&lon=-5.302&units=metric&appid=API_KEY&exclude=
+🌍 Incoming request (rounded): { lat: 43.475, lon: -5.215, start: '1760533325', end: '1760965325' }
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.47854&lon=-5.30242 200 in 481ms
+ ✓ Compiled /api/osm-orientation in 106ms (317 modules)
+🌊 Cached Stormglass data for 43.475_-5.215 (pm), ttl=120m
+ GET /api/marine?lat=43.47474&lon=-5.21525&start=1760533325&end=1760965325 200 in 1176ms
+ GET /api/osm-orientation?lat=43.47474&lon=-5.21525 200 in 2178ms
+ GET /api/osm-orientation?lat=43.47474&lon=-5.21525 200 in 2294ms
+ GET /api/osm-orientation?lat=43.47474&lon=-5.21525 200 in 2439ms
+ ✓ Compiled in 1000ms (427 modules)
+ ✓ Compiled in 61ms (427 modules)
+ ✓ Compiled in 972ms (427 modules)
+ ✓ Compiled in 59ms (427 modules)
+ ✓ Compiled in 861ms (427 modules)
+ ✓ Compiled in 55ms (427 modules)
+ ✓ Compiled in 744ms (427 modules)
+ ✓ Compiled in 661ms (427 modules)
+ ✓ Compiled in 713ms (427 modules)
+ ✓ Compiled in 668ms (427 modules)
+ ✓ Compiled in 859ms (427 modules)
+ ✓ Compiled in 55ms (427 modules)
+ ✓ Compiled in 715ms (427 modules)
+ ✓ Compiled in 51ms (427 modules)
+ ✓ Compiled in 670ms (427 modules)
+ ✓ Compiled in 60ms (427 modules)
+ ✓ Compiled in 56ms (427 modules)
+ ✓ Compiled in 745ms (427 modules)
+ ✓ Compiled in 38ms (427 modules)
+ ✓ Compiled in 732ms (427 modules)
+ ✓ Compiled in 46ms (427 modules)
+ ✓ Compiled in 739ms (427 modules)
+ ✓ Compiled in 56ms (427 modules)
+ ✓ Compiled in 670ms (427 modules)
+ ✓ Compiled in 887ms (427 modules)
+ ✓ Compiled in 51ms (427 modules)
+ ✓ Compiled in 750ms (427 modules)
+ ✓ Compiled in 676ms (427 modules)
+ ✓ Compiled in 727ms (427 modules)
+ ✓ Compiled in 50ms (427 modules)
+ ✓ Compiled in 869ms (427 modules)
+ ✓ Compiled in 53ms (427 modules)
+ ✓ Compiled in 866ms (427 modules)
+ ✓ Compiled in 70ms (427 modules)
+ ✓ Compiled in 703ms (427 modules)
+ ○ Compiling /findr ...
+ ✓ Compiled /findr in 1348ms (1180 modules)
+ ✓ Compiled in 164ms (1180 modules)
+ ✓ Compiled in 89ms (875 modules)
+ GET /findr 200 in 2180ms
+ ✓ Compiled in 256ms (1180 modules)
+ ✓ Compiled /api/findr/predictions in 144ms (330 modules)
+ ✓ Compiled (335 modules)
+Please utilize the `createPagesServerClient` function instead of the deprecated `createServerSupabaseClient` function. Learn more: https://supabase.com/docs/guides/auth/auth-helpers/nextjs-pages
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+ GET /api/user/location 200 in 424ms
+ ✓ Compiled /api/findr/favourites in 98ms (338 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+[Findr API] Calling RPC with params: {
+  rectangle_code_input: '25E0',
+  prediction_date_input: '2025-10-15',
+  user_language: 'en'
+}
+ GET /api/findr/rectangles 200 in 1002ms
+Species not found for id: 34f4c2cd-cf34-4e00-8b51-63033556231d
+Species not found for id: 8dab48a9-497d-4a6c-b5d2-ccb87fa87916
+Species not found for id: b84aa74e-a271-45c9-95a5-757903829b4d
+Species not found for id: f3fdb232-5cf3-4567-89ab-1a8ce1e60f71
+ GET /api/findr/favourites 200 in 835ms
+[Findr API] RPC response via client: {
+  hasError: false,
+  errorMessage: undefined,
+  dataType: 'array',
+  dataLength: 20,
+  firstItem: '{"species_code":"sqc","species_name":"Common Squid","scientific_name":"Loligo vulgaris","environmental_score":10,"confidence":"high","temperature_match":"optimal","salinity_match":"optimal","depth_mat',
+  region: 'Bay of Biscay'
+}
+ POST /api/findr/predictions 200 in 1792ms
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ POST /api/findr/favourites 409 in 542ms
+ GET /_next/data/development/findr.json 200 in 401ms
+ ✓ Compiled in 892ms (841 modules)
+ ✓ Compiled in 691ms (841 modules)
+ ✓ Compiled in 58ms (841 modules)
+ ○ Compiling /findr/auth ...
+ ✓ Compiled /findr/auth in 723ms (1174 modules)
+ ✓ Compiled in 156ms (1174 modules)
+ GET /_next/data/development/findr/auth.json 200 in 1251ms
+ GET /_next/data/development/findr.json 200 in 261ms
+ ✓ Compiled /api/findr/predictions in 93ms (333 modules)
+ ✓ Compiled in 0ms (335 modules)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /api/findr/rectangles 200 in 454ms
+[Findr Cache] Returning cached data: {
+  rectangleCode: '25E0',
+  predictionDate: '2025-10-15',
+  language: 'en',
+  payloadType: 'array',
+  payloadLength: 20
+}
+Species not found for id: 34f4c2cd-cf34-4e00-8b51-63033556231d
+Species not found for id: 8dab48a9-497d-4a6c-b5d2-ccb87fa87916
+Species not found for id: b84aa74e-a271-45c9-95a5-757903829b4d
+Species not found for id: f3fdb232-5cf3-4567-89ab-1a8ce1e60f71
+ GET /api/findr/favourites 200 in 588ms
+ POST /api/findr/predictions 200 in 725ms
+ ✓ Compiled in 720ms (813 modules)
+ GET /findr 200 in 418ms
+ ○ Compiling /api/user/location ...
+ ✓ Compiled /api/user/location in 532ms (305 modules)
+Please utilize the `createPagesServerClient` function instead of the deprecated `createServerSupabaseClient` function. Learn more: https://supabase.com/docs/guides/auth/auth-helpers/nextjs-pages
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /api/user/location 200 in 655ms
+[Findr Cache] Returning cached data: {
+  rectangleCode: '25E0',
+  predictionDate: '2025-10-15',
+  language: 'en',
+  payloadType: 'array',
+  payloadLength: 20
+}
+ GET /api/findr/rectangles 200 in 934ms
+Species not found for id: 34f4c2cd-cf34-4e00-8b51-63033556231d
+Species not found for id: 8dab48a9-497d-4a6c-b5d2-ccb87fa87916
+Species not found for id: b84aa74e-a271-45c9-95a5-757903829b4d
+Species not found for id: f3fdb232-5cf3-4567-89ab-1a8ce1e60f71
+ GET /api/findr/favourites 200 in 885ms
+ POST /api/findr/predictions 200 in 1024ms
+ ✓ Compiled in 854ms (813 modules)
+ ✓ Compiled in 59ms (813 modules)
+ ✓ Compiled in 790ms (813 modules)
+ ✓ Compiled in 68ms (813 modules)
+ ✓ Compiled in 853ms (813 modules)
+ ✓ Compiled in 52ms (813 modules)
+ ✓ Compiled in 857ms (813 modules)
+ ✓ Compiled in 54ms (813 modules)
+ ✓ Compiled in 909ms (813 modules)
+ ✓ Compiled in 48ms (813 modules)
+ ✓ Compiled in 59ms (813 modules)
+ ✓ Compiled in 749ms (813 modules)
+ ✓ Compiled in 850ms (813 modules)
+ ✓ Compiled in 68ms (813 modules)
+ ✓ Compiled in 60ms (813 modules)
+ ✓ Compiled in 797ms (813 modules)
+ ✓ Compiled in 716ms (813 modules)
+ ✓ Compiled in 686ms (813 modules)
+ ✓ Compiled in 720ms (813 modules)
+ ✓ Compiled in 56ms (813 modules)
+ ✓ Compiled in 645ms (813 modules)
+ ✓ Compiled in 740ms (813 modules)
+ ✓ Compiled in 731ms (813 modules)
+ ✓ Compiled in 67ms (813 modules)
+ ✓ Compiled in 42ms (813 modules)
+ ✓ Compiled in 1499ms (1085 modules)
+ GET /_next/data/development/findr.json 200 in 431ms
+ ✓ Compiled in 209ms (813 modules)
+ ✓ Compiled in 143ms (813 modules)
+ ✓ Compiled in 47ms (813 modules)
+ ✓ Compiled in 1246ms (1085 modules)
+ ✓ Compiled in 46ms (813 modules)
+ ✓ Compiled in 1441ms (1085 modules)
+ ✓ Compiled in 40ms (813 modules)
+ ✓ Compiled in 811ms (1085 modules)
+ ✓ Compiled in 67ms (813 modules)
+ ✓ Compiled in 762ms (1085 modules)
+ ✓ Compiled in 66ms (813 modules)
+ ✓ Compiled in 1005ms (1085 modules)
+ ✓ Compiled in 37ms (813 modules)
+ GET /findr 200 in 428ms
+ ○ Compiling /api/findr/favourites ...
+ ✓ Compiled /api/findr/favourites in 542ms (297 modules)
+ ✓ Compiled (305 modules)
+Please utilize the `createPagesServerClient` function instead of the deprecated `createServerSupabaseClient` function. Learn more: https://supabase.com/docs/guides/auth/auth-helpers/nextjs-pages
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Failed to parse cookie string: SyntaxError: Unexpected token 'b', "base64-eyJ"... is not valid JSON
+    at JSON.parse (<anonymous>)
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth server.
+ GET /api/user/location 200 in 748ms
+[Findr Cache] Returning cached data: {
+  rectangleCode: '25E0',
+  predictionDate: '2025-10-15',
+  language: 'en',
+  payloadType: 'array',
+  payloadLength: 20
+}
+ GET /api/findr/rectangles 200 in 1560ms
+Species not found for id: 34f4c2cd-cf34-4e00-8b51-63033556231d
+Species not found for id: 8dab48a9-497d-4a6c-b5d2-ccb87fa87916
+Species not found for id: b84aa74e-a271-45c9-95a5-757903829b4d
+Species not found for id: f3fdb232-5cf3-4567-89ab-1a8ce1e60f71
+ GET /api/findr/favourites 200 in 1851ms
+ POST /api/findr/predictions 200 in 1932ms
+ ✓ Compiled in 786ms (813 modules)
+ ✓ Compiled in 885ms (813 modules)
+ ✓ Compiled in 46ms (813 modules)
+ ✓ Compiled in 704ms (813 modules)
+ ✓ Compiled in 1252ms (1085 modules)
+ GET /_next/data/development/findr.json 200 in 439ms
+ ✓ Compiled in 57ms (813 modules)
+ ✓ Compiled in 52ms (813 modules)
+ ✓ Compiled in 985ms (813 modules)
+ ✓ Compiled in 89ms (813 modules)
+ ✓ Compiled in 510ms (813 modules)
+ ✓ Compiled in 48ms (813 modules)
+ ✓ Compiled in 677ms (813 modules)
+ ✓ Compiled in 41ms (813 modules)
+ ✓ Compiled in 40ms (813 modules)
+ ✓ Compiled in 901ms (813 modules)
+ ✓ Compiled in 51ms (813 modules)
+ ✓ Compiled in 731ms (813 modules)
+ ✓ Compiled in 71ms (813 modules)
+ ✓ Compiled in 1093ms (1085 modules)
+ ✓ Compiled in 48ms (813 modules)
+ ✓ Compiled in 828ms (1085 modules)
+ ✓ Compiled in 54ms (813 modules)
+ ✓ Compiled in 741ms (1085 modules)
+ ✓ Compiled in 1055ms (1088 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1112ms (1133 modules)
+🔍 Interest filtering: {
+  rawInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  normalizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  sanitizedInterests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  validActivityCount: 117
+}
+marineHours before building forecast: []
+ GET / 200 in 1426ms
+ ✓ Compiled in 47ms (850 modules)
+ ✓ Compiled in 55ms (850 modules)
+ ✓ Compiled in 803ms (813 modules)
+ ✓ Compiled in 44ms (813 modules)
+ ✓ Compiled in 702ms (813 modules)
+ ✓ Compiled in 73ms (813 modules)
+ ✓ Compiled in 72ms (813 modules)
+ ✓ Compiled in 851ms (813 modules)
+ ✓ Compiled in 63ms (813 modules)
+ ✓ Compiled in 925ms (813 modules)
+ ✓ Compiled in 47ms (813 modules)
+ ✓ Compiled in 1146ms (1088 modules)
+ ✓ Compiled in 63ms (813 modules)
+ ✓ Compiled in 771ms (1088 modules)
+ ✓ Compiled in 637ms (813 modules)
+ ✓ Compiled in 653ms (813 modules)
+ ✓ Compiled in 1186ms (1088 modules)
+ ✓ Compiled in 64ms (813 modules)
+ ✓ Compiled in 967ms (1088 modules)
+ ✓ Compiled in 51ms (813 modules)
+ ✓ Compiled in 737ms (1088 modules)
+ ✓ Compiled in 59ms (813 modules)
+ ✓ Compiled in 54ms (813 modules)
+ ✓ Compiled in 849ms (1088 modules)
+ ✓ Compiled in 101ms (813 modules)
+ ✓ Compiled in 53ms (813 modules)
+ ✓ Compiled /activities in 415ms (1124 modules)
+🗓️ Out-of-season check: {
+  currentDate: 2025-10-15T15:19:02.405Z,
+  currentMonth: 10,
+  interests: [
+    'hiking',      'running',
+    'cycling',     'dog_walking',
+    'gym_workout', 'yoga',
+    'picnicking',  'bbq',
+    'cinema',      'museum',
+    'cafe',        'going_to_pub'
+  ],
+  outOfSeasonActivities: [ 'picnicking', 'bbq' ]
+}
+ GET /activities 200 in 801ms
+ ✓ Compiled in 193ms (849 modules)
+ ✓ Compiled in 1313ms (1088 modules)
+ ✓ Compiled in 66ms (813 modules)
+ ✓ Compiled in 1516ms (1088 modules)
+ ✓ Compiled in 70ms (813 modules)
+ ✓ Compiled in 941ms (813 modules)
+ ✓ Compiled in 45ms (813 modules)
+ ○ Compiling /findr/conditions ...
+ ✓ Compiled /findr/conditions in 1563ms (1186 modules)
+ ✓ Compiled in 399ms (1186 modules)
+[ConditionsDashboard] marineWeather state: {
+  loading: false,
+  error: null,
+  source: 'fallback',
+  hasCurrent: false,
+  hourlyCount: 0,
+  dailyCount: 0,
+  dailySample: undefined,
+  hourlySample: undefined
+}
+[ConditionsDashboard] Using fallback Supabase hourly data
+[ConditionsDashboard] Using fallback database values: { wave: 1.2, wind: 15, reason: 'API failed' }
+[HourlyCard] {
+  time: '14:00',
+  airTempC: undefined,
+  seaTemperatureC: 16.5,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '15:00',
+  airTempC: undefined,
+  seaTemperatureC: 16.3,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '16:00',
+  airTempC: undefined,
+  seaTemperatureC: 16.1,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '17:00',
+  airTempC: undefined,
+  seaTemperatureC: 15.9,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '18:00',
+  airTempC: undefined,
+  seaTemperatureC: 15.7,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '19:00',
+  airTempC: undefined,
+  seaTemperatureC: 15.5,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '20:00',
+  airTempC: undefined,
+  seaTemperatureC: 15.3,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '21:00',
+  airTempC: undefined,
+  seaTemperatureC: 15.1,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '22:00',
+  airTempC: undefined,
+  seaTemperatureC: 14.9,
+  weatherIcon: undefined
+}
+[HourlyCard] {
+  time: '23:00',
+  airTempC: undefined,
+  seaTemperatureC: 14.7,
+  weatherIcon: undefined
+}
+ GET /_next/data/development/findr/conditions.json 200 in 2458ms
+ ○ Compiling /api/findr/rectangles ...
+ ✓ Compiled /api/findr/rectangles in 632ms (339 modules)
+ ✓ Compiled (358 modules)
+[WorldTides] Fetching fresh tide data for 43.8,-6.5
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.75&lon=-6.5&units=metric&appid=API_KEY&exclude=
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.7500&lon=-6.5000 200 in 1449ms
+ GET /api/findr/rectangles 200 in 1487ms
+ GET /api/moon?lat=43.75&lon=-6.5 200 in 114ms
+ GET /api/findr/conditions?rectangleCode=25E0 200 in 1891ms
+ GET /api/findr/marine-weather?lat=43.75&lon=-6.5 200 in 2658ms
+ GET /api/moon?lat=43.25&lon=-5.5 200 in 2896ms
+🌡️ OneCall Debug: Attempting One Call 3.0
+  URL: https://api.openweathermap.org/data/3.0/onecall?lat=43.25&lon=-5.5&units=metric&appid=API_KEY&exclude=
+[WorldTides] Fetching fresh tide data for 43.3,-5.5
+ GET /api/moon?lat=43.25&lon=-5.5 200 in 110ms
+🌡️ OneCall Debug: One Call 3.0 Response
+  Status: 200
+  OK: true
+  Success! Has current: true
+  Has hourly: true
+  Has daily: true
+ GET /api/weather-with-pollen?lat=43.2500&lon=-5.5000 200 in 153ms
+ ✓ Compiled in 783ms (873 modules)
+ GET /api/findr/marine-weather?lat=43.25&lon=-5.5 200 in 13932ms
+[WorldTides] API error: 503 Service Unavailable
+ ✓ Compiled in 1294ms (456 modules)
+ ✓ Compiled in 58ms (456 modules)
+ ✓ Compiled in 936ms (456 modules)
+ ✓ Compiled in 33ms (456 modules)
+ ✓ Compiled in 757ms (456 modules)
+ ✓ Compiled in 760ms (456 modules)
+ ✓ Compiled in 37ms (456 modules)
+ ✓ Compiled in 50ms (456 modules)
+ ✓ Compiled in 686ms (456 modules)
+ ✓ Compiled in 45ms (456 modules)
+ ✓ Compiled in 1156ms (456 modules)
+ ✓ Compiled in 39ms (456 modules)
+ ✓ Compiled in 926ms (456 modules)
+ ✓ Compiled in 32ms (456 modules)
+ ✓ Compiled in 86ms (456 modules)
+ ✓ Compiled in 1237ms (456 modules)
+ ✓ Compiled in 52ms (456 modules)
+ ✓ Compiled in 692ms (456 modules)
+ ✓ Compiled in 69ms (456 modules)
+ ✓ Compiled in 899ms (456 modules)
+ ✓ Compiled in 34ms (456 modules)
+ ✓ Compiled in 792ms (456 modules)
+ ✓ Compiled in 54ms (456 modules)
+ ✓ Compiled in 754ms (456 modules)
+ ✓ Compiled in 52ms (456 modules)
+ ✓ Compiled in 816ms (456 modules)
+ ✓ Compiled in 45ms (456 modules)
+ ✓ Compiled in 679ms (456 modules)
+ ✓ Compiled in 766ms (456 modules)
+ ✓ Compiled in 39ms (456 modules)
+ ✓ Compiled in 687ms (456 modules)
+ ✓ Compiled in 68ms (456 modules)
+ ✓ Compiled in 768ms (456 modules)
+ ✓ Compiled in 37ms (456 modules)

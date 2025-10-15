@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { MapPin, MoonStar } from 'lucide-react';
+import { MoonStar } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
-import { SettingsForm } from '../../components/findr/SettingsForm';
+import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
 import { TranslatedText } from '../../components/translation/TranslatedFishCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
@@ -13,7 +13,6 @@ import {
   type RectangleOption,
 } from '../../hooks/useFindrRectangleOptions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { normalizeRectangleCode } from '../../lib/findr/rectangle';
 import { getTodayIso } from '../../lib/date/today';
 import ConditionsDashboard from '../../components/findr/ConditionsDashboard';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
@@ -25,135 +24,87 @@ const FindrConditionsRoute: React.FC = () => {
   
   const {
     options: rectangleOptions,
-    loading: rectangleOptionsLoading,
-    error: rectangleOptionsError,
+    loading: _rectangleOptionsLoading,
+    error: _rectangleOptionsError,
     isFallback: rectangleOptionsUsingFallback,
   } = useFindrRectangleOptions(FALLBACK_RECTANGLE_OPTIONS);
 
   const {
     selectedCode,
     setSelectedCode,
-    manualCode,
-    setManualCode,
     predictionDate,
     setPredictionDate,
-    language,
-    setLanguage,
+    language: _language,
+    setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
   const { location, updateLocation, loading: locationLoading } = useUnifiedLocation();
   const locationRectangle = location?.rectangleCode ?? null;
-  const hasAppliedDefault = useRef(false);
 
   const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
 
-  const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
-  const activeRectangle = manualNormalized ?? locationRectangle ?? (selectedCode || null);
+  // Single source of truth priority:
+  // 1. Location from UnifiedLocationContext (from header picker)
+  // 2. selectedCode (persisted fallback)
+  const activeRectangle = locationRectangle ?? (selectedCode || null);
+  
   const activeOption = useMemo<RectangleOption | null>(
     () => {
-      const code = manualNormalized ?? locationRectangle ?? selectedCode ?? null;
+      const code = activeRectangle;
       if (!code) return null;
       return rectangleOptions.find((option) => option.code === code) ?? null;
     },
-    [manualNormalized, locationRectangle, rectangleOptions, selectedCode]
+    [activeRectangle, rectangleOptions]
   );
 
+  // Sync selectedCode when location context changes (for persistence)
   useEffect(() => {
     if (locationLoading) return;
-    if (manualNormalized) return;
     if (!locationRectangle) return;
     if (selectedCode === locationRectangle) return;
+    console.log('[Conditions] Syncing selectedCode to context:', locationRectangle);
     setSelectedCode(locationRectangle);
-  }, [locationRectangle, locationLoading, manualNormalized, selectedCode, setSelectedCode]);
+  }, [locationRectangle, locationLoading, selectedCode, setSelectedCode]);
 
+  // Sync URL to match active rectangle (for sharing/bookmarking)
   useEffect(() => {
-    if (locationLoading) return;
-    if (manualNormalized) return;
-    if (locationRectangle) return;
-    if (rectangleOptions.length === 0) return;
-    if (hasAppliedDefault.current) return;
-    const fallbackOption = rectangleOptions[0];
-    hasAppliedDefault.current = true;
-    void updateLocation({
-      coordinates: { lat: fallbackOption.centerLat, lon: fallbackOption.centerLon },
-      rectangleCode: fallbackOption.code,
-      rectangleRegion: fallbackOption.region,
-      rectangleLabel: `${fallbackOption.code} - ${fallbackOption.region}`,
-      source: 'manual',
-    });
-    setSelectedCode(fallbackOption.code);
-  }, [manualNormalized, locationLoading, locationRectangle, rectangleOptions, setSelectedCode, updateLocation]);
-
-  useEffect(() => {
-    if (locationLoading) return;
     if (!router.isReady) return;
-    if (manualNormalized) return;
+    if (!activeRectangle) return;
+    const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
+    if (current === activeRectangle) return;
+    
+    console.log('[Conditions] Syncing URL to activeRectangle:', { from: current, to: activeRectangle });
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { ...router.query, rectangle: activeRectangle },
+      },
+      undefined,
+      { shallow: true }
+    );
+  }, [activeRectangle, router]);
+
+  // Only update context from URL if:
+  // - We don't have a location in context yet
+  // - URL has a rectangle parameter
+  useEffect(() => {
+    if (locationLoading) return;
+    if (locationRectangle) return; // Already have location, don't override
+    if (!router.isReady) return;
     if (!rectangleFromUrl) return;
-    if (rectangleFromUrl === locationRectangle) return;
+    
     const rectangle = rectangleOptions.find(option => option.code === rectangleFromUrl);
     if (!rectangle) return;
+    
+    console.log('[Conditions] Initializing context from URL:', rectangleFromUrl);
     void updateLocation({
       coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
       rectangleCode: rectangle.code,
       rectangleRegion: rectangle.region,
       rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
-      source: location?.source ?? 'manual',
+      source: 'manual',
     });
-    setSelectedCode(rectangle.code);
-  }, [rectangleFromUrl, locationLoading, manualNormalized, locationRectangle, rectangleOptions, router.isReady, location?.source, setSelectedCode, updateLocation]);
-
-  useEffect(() => {
-    if (locationLoading) return;
-    if (!router.isReady) return;
-    if (manualNormalized) return;
-    if (!locationRectangle) return;
-    const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
-    if (current === locationRectangle) return;
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, rectangle: locationRectangle },
-      },
-      undefined,
-      { shallow: true }
-    );
-  }, [locationRectangle, locationLoading, manualNormalized, router]);
-
-  useEffect(() => {
-    if (locationLoading) return;
-    if (!locationRectangle) return;
-    if (!manualNormalized) return;
-    if (manualNormalized === locationRectangle) return;
-    setManualCode('');
-  }, [locationRectangle, locationLoading, manualNormalized, setManualCode]);
-
-  const manualInvalid = manualCode.trim().length > 0 && !manualNormalized;
-
-  const handleSelectOption = useCallback(
-    async (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const nextCode = event.target.value;
-      setSelectedCode(nextCode);
-      setManualCode('');
-      const rectangle = rectangleOptions.find(r => r.code === nextCode);
-      if (rectangle) {
-        await updateLocation({
-          coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
-          rectangleCode: rectangle.code,
-          rectangleRegion: rectangle.region,
-          rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
-          source: 'manual',
-        });
-      }
-    },
-    [rectangleOptions, setManualCode, setSelectedCode, updateLocation]
-  );
-
-  const handleManualCodeChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setManualCode(event.target.value.toUpperCase());
-    },
-    [setManualCode]
-  );
+  }, [rectangleFromUrl, locationLoading, locationRectangle, rectangleOptions, router.isReady, updateLocation]);
 
   const handleDateChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,19 +113,21 @@ const FindrConditionsRoute: React.FC = () => {
     [setPredictionDate]
   );
 
-  const handleLanguageChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setLanguage(event.target.value);
-    },
-    [setLanguage]
-  );
-
   const handleSetToday = useCallback(() => {
     setPredictionDate(getTodayIso());
   }, [setPredictionDate]);
 
-  const noop = useCallback(() => {}, []);
   const conditions = useFindrConditions(activeRectangle);
+
+  // Debug: Log when activeRectangle changes
+  useEffect(() => {
+    console.log('[Conditions] Active rectangle changed:', {
+      activeRectangle,
+      locationRectangle,
+      selectedCode,
+      source: location?.source,
+    });
+  }, [activeRectangle, locationRectangle, selectedCode, location?.source]);
 
   const moonCoords = useMemo(() => {
     const optionLat = typeof activeOption?.centerLat === 'number' ? activeOption.centerLat : undefined;
@@ -202,17 +155,6 @@ const FindrConditionsRoute: React.FC = () => {
     conditions.data?.rectangle?.centerLon,
   ]);
 
-  const formattedLastUpdated = useMemo(() => {
-    if (!conditions.data?.snapshot?.capturedAt) return null;
-    try {
-      const parsed = new Date(conditions.data.snapshot.capturedAt);
-      if (Number.isNaN(parsed.getTime())) return null;
-      return parsed.toLocaleString();
-    } catch {
-      return null;
-    }
-  }, [conditions.data?.snapshot?.capturedAt]);
-
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;
     console.info('[Findr Conditions] Using fallback ICES rectangle options. Swap in Supabase catalogue.', {
@@ -227,8 +169,6 @@ const FindrConditionsRoute: React.FC = () => {
       rectangle: activeRectangle,
     });
   }, [activeRectangle, conditions.source]);
-
-  const selectedForForm = selectedCode || locationRectangle || '';
 
   return (
     <>
@@ -270,40 +210,36 @@ const FindrConditionsRoute: React.FC = () => {
               </div>
             </section>
           ) : null}
+          
+          {/* Fishing Area Information */}
+          <FishingAreaInfo
+            activeOption={activeOption}
+            activeRectangle={activeRectangle}
+          />
+
+          {/* Date Settings */}
           <section className="card bg-base-100 shadow-lg">
-            <div className="card-body space-y-5">
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  <MapPin size={20} /> <TranslatedText text={`Fishing area  ${activeOption ? ` • ${activeOption.region}` : manualNormalized ? ' • ' : ''} (${activeRectangle})`} />
-                </h2>
-                
+            <div className="card-body">
+              <h2 className="text-lg font-semibold mb-4">
+                <TranslatedText text="Prediction date" />
+              </h2>
+              
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="date"
+                  value={predictionDate}
+                  onChange={handleDateChange}
+                  className="input input-bordered"
+                  aria-label="Prediction date"
+                />
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleSetToday}>
+                  <TranslatedText text="Today" />
+                </button>
               </div>
-              <SettingsForm
-                rectangleOptions={rectangleOptions}
-                optionsLoading={rectangleOptionsLoading}
-                optionsError={rectangleOptionsError}
-                usingFallback={rectangleOptionsUsingFallback}
-                selectedCode={selectedForForm}
-                manualCode={manualCode}
-                manualNormalized={manualNormalized}
-                manualInvalid={manualInvalid}
-                predictionDate={predictionDate}
-                language={language}
-                loading={conditions.loading}
-                deckResetDisabled={true}
-                activeOption={activeOption}
-                activeRectangle={activeRectangle}
-                formattedLastUpdated={formattedLastUpdated}
-                totalPredictions={0}
-                onSelectOption={handleSelectOption}
-                onManualCodeChange={handleManualCodeChange}
-                onDateChange={handleDateChange}
-                onSetToday={handleSetToday}
-                onLanguageChange={handleLanguageChange}
-                onReload={conditions.reload}
-                onResetDeck={noop}
-                showDeckTools={false}
-              />
+              
+              <p className="text-xs text-base-content/60 mt-3">
+                <TranslatedText text="View fishing predictions for any date" />
+              </p>
             </div>
           </section>
           </div>

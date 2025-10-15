@@ -7,7 +7,7 @@
  * - Migrates localStorage favourites to Supabase on auth
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -38,9 +38,16 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   const { autoSync = true } = options;
   
   const [favourites, setFavourites] = useState<string[]>([]);
+  const favouritesRef = useRef<string[]>([]); // Keep track of current favourites for immediate reads
+  const pendingTogglesRef = useRef<Set<string>>(new Set()); // Track pending toggle operations
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+
+  // Sync ref whenever favourites state changes
+  useEffect(() => {
+    favouritesRef.current = favourites;
+  }, [favourites]);
 
   // Load user session
   useEffect(() => {
@@ -222,14 +229,15 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
 
         const data = await response.json();
         
-        console.log('[useFavourites] API response:', { success: data.success, error: data.error });
+        console.log('[useFavourites] API response:', { success: data.success, error: data.error, status: response.status });
         
-        if (!data.success) {
+        // Treat 409 (already favorited) as success - species is in database
+        if (!data.success && response.status !== 409) {
           console.error('Failed to add favourite to Supabase:', data.error);
           // Revert optimistic update
           setFavourites((prev) => prev.filter((id) => id !== normalizedId));
         } else {
-          console.log('[useFavourites] Successfully added to Supabase');
+          console.log('[useFavourites] Successfully added to Supabase (or already exists)');
         }
       } catch (error) {
         console.error('Failed to add favourite:', error);
@@ -238,10 +246,10 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       }
     } else {
       // Not authenticated: Save to localStorage
-      const updated = favourites.includes(normalizedId) ? favourites : [...favourites, normalizedId];
+      const updated = favouritesRef.current.includes(normalizedId) ? favouritesRef.current : [...favouritesRef.current, normalizedId];
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
     }
-  }, [user, autoSync, favourites]);
+  }, [user, autoSync]);
 
   // Remove favourite
   const removeFavourite = useCallback(async (speciesId: string, favouriteId?: string) => {
@@ -288,20 +296,35 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       }
     } else {
       // Not authenticated: Save to localStorage
-      const updated = favourites.filter((id) => id !== normalizedId);
+      const updated = favouritesRef.current.filter((id) => id !== normalizedId);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
     }
-  }, [user, autoSync, favourites]);
+  }, [user, autoSync]);
 
   // Toggle favourite (add if not present, remove if present)
   const toggleFavourite = useCallback(async (speciesId: string, options?: ToggleFavouriteOptions) => {
     const normalizedId = normalizeFavouriteId(speciesId);
-    if (favourites.includes(normalizedId)) {
-      await removeFavourite(normalizedId, options?.favouriteId);
-    } else {
-      await addFavourite(normalizedId, options);
+    
+    // Prevent concurrent toggles of the same species
+    if (pendingTogglesRef.current.has(normalizedId)) {
+      console.log('[useFavourites] Toggle already in progress for', normalizedId);
+      return;
     }
-  }, [favourites, addFavourite, removeFavourite]);
+    
+    pendingTogglesRef.current.add(normalizedId);
+    
+    try {
+      // Use ref to get current state immediately, avoiding stale closure
+      if (favouritesRef.current.includes(normalizedId)) {
+        await removeFavourite(normalizedId, options?.favouriteId);
+      } else {
+        await addFavourite(normalizedId, options);
+      }
+    } finally {
+      // Always clear pending state, even if operation fails
+      pendingTogglesRef.current.delete(normalizedId);
+    }
+  }, [addFavourite, removeFavourite]);
 
   // Check if species is favourited
   const isFavourited = useCallback((speciesId: string) => {

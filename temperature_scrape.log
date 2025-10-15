@@ -1,0 +1,47 @@
+🌡️  Scraping FishBase for Temperature Data
+
+================================================================================
+
+📊 Processing 62 species...
+
+[1/62] Ballan Wrasse (Labrus bergylta)
+  Fetching: https://www.fishbase.se/summary/Labrus-bergylta.html
+  ✅ Found: 5-25°C
+[2/62] Black Seabream (Spondyliosoma cantharus)
+  Fetching: https://www.fishbase.se/summary/Spondyliosoma-cantharus.html
+  ❌ No temperature data found
+[3/62] Brill (Scophthalmus rhombus)
+  Fetching: https://www.fishbase.se/summary/Scophthalmus-rhombus.html
+  ❌ No temperature data found
+[4/62] Bull Huss (Scyliorhinus stellaris)
+  Fetching: https://www.fishbase.se/summary/Scyliorhinus-stellaris.html
+  ❌ No temperature data found
+[5/62] Cod (Coastal) (Gadus morhua)
+  Fetching: https://www.fishbase.se/summary/Gadus-morhua.html
+  ✅ Found: 0-15°C
+[6/62] Comber (Serranus cabrilla)
+  Fetching: https://www.fishbase.se/summary/Serranus-cabrilla.html
+  ❌ No temperature data found
+[7/62] Common Cuttlefish (Sepia officinalis)
+  Fetching: https://www.fishbase.se/summary/Sepia-officinalis.html
+  ❌ No temperature data found
+[8/62] Common Ling (Molva molva)
+  Fetching: https://www.fishbase.se/summary/Molva-molva.html
+  ❌ No temperature data found
+[9/62] Common Octopus (Octopus vulgaris)
+  Fetching: https://www.fishbase.se/summary/Octopus-vulgaris.html
+  ❌ No temperature data found
+[10/62] Common Smoothhound (Mustelus mustelus)
+  Fetching: https://www.fishbase.se/summary/Mustelus-mustelus.html
+  ❌ No temperature data found
+[11/62] Common Squid (Loligo vulgaris)
+  Fetching: https://www.fishbase.se/summary/Loligo-vulgaris.html
+  ❌ No temperature data found
+[12/62] Conger Eel (Conger conger)
+  Fetching: https://www.fishbase.se/summary/Conger-conger.html
+  ❌ No temperature data found
+[13/62] Corkwing Wrasse (Symphodus melops)
+  Fetching: https://www.fishbase.se/summary/Symphodus-melops.html
+  ❌ No temperature data found
+[14/62] Cuckoo Wrasse (Labrus mixtus)
+  Fetching: https://www.fishbase.se/summary/Labrus-mixtus.html

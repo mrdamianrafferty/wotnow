@@ -5,9 +5,11 @@ import Image from 'next/image';
 import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
+import { GradientFish } from '../GradientFish';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { useTideData } from '../../hooks/useTideData';
 
 interface GoodSpeciesCardProps {
   species: {
@@ -32,6 +34,7 @@ interface GoodSpeciesCardProps {
       data_source?: string;
     };
   };
+  location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
@@ -43,15 +46,25 @@ interface GoodSpeciesCardProps {
  */
 export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   species,
+  location,
   onRemove,
   onTogglePriority,
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
+  // Fetch real tide data for location
+  const tideInfo = useTideData(location ?? null);
+
   const nextPeakDay = getNextPeakDay(species.forecast);
-  // Get real fishing time data based on species preferences
-  const fishingTimeResult = getImmediateFishingTimes([species], 'good');
+  // Get real fishing time data based on species preferences, location, and tides
+  const fishingTimeResult = getImmediateFishingTimes(
+    [species], 
+    'good',
+    location?.lat,
+    location?.lon,
+    tideInfo ?? undefined
+  );
   const fishingTime = {
     time: fishingTimeResult.primaryWindow ? 
       `${fishingTimeResult.primaryWindow.startHour}:00-${fishingTimeResult.primaryWindow.endHour}:00` :
@@ -79,8 +92,8 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
                   />
                 </div>
               ) : (
-                <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center text-3xl sm:text-4xl">
-                  {species.emoji}
+                <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center rounded-lg bg-gradient-to-br from-info/10 to-primary/10">
+                  <GradientFish size={40} />
                 </div>
               )}
             </div>

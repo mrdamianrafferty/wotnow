@@ -1,0 +1,1530 @@
+{
+  "created_date": "2025-10-11T17:09:47.065Z",
+  "total_species": 62,
+  "metadata": {
+    "all_biogeographic_zones": [
+      "north_sea",
+      "baltic",
+      "norwegian_sea",
+      "barents_sea",
+      "north_atlantic",
+      "celtic_sea",
+      "irish_sea",
+      "english_channel",
+      "bay_of_biscay",
+      "iberian_atlantic",
+      "mediterranean",
+      "black_sea",
+      "canary_current"
+    ],
+    "zone_descriptions": {
+      "north_sea": "North Sea (temperate, 30-35 PSU)",
+      "baltic": "Baltic Sea (brackish, 6-20 PSU)",
+      "norwegian_sea": "Norwegian Sea (cold, 30-35 PSU)",
+      "barents_sea": "Barents Sea (very cold, 30-35 PSU)",
+      "north_atlantic": "North Atlantic (cool-temperate, 32-36 PSU)",
+      "celtic_sea": "Celtic Sea (temperate, 32-36 PSU)",
+      "irish_sea": "Irish Sea (temperate, 32-35 PSU)",
+      "english_channel": "English Channel (temperate, 32-35 PSU)",
+      "bay_of_biscay": "Bay of Biscay (temperate, 32-36 PSU)",
+      "iberian_atlantic": "Iberian Atlantic (warm-temperate, 32-37 PSU)",
+      "mediterranean": "Mediterranean Sea (warm, 36-39 PSU)",
+      "black_sea": "Black Sea (brackish, 17-18 PSU)",
+      "canary_current": "Canary Current (subtropical, 35-37 PSU)"
+    }
+  },
+  "regional_gates": [
+    {
+      "species_code": "wrb",
+      "name_en": "Ballan Wrasse",
+      "scientific_name": "Labrus bergylta",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "brs",
+      "name_en": "Black Seabream",
+      "scientific_name": "Spondyliosoma cantharus",
+      "allowed_zones": [
+        "mediterranean",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "bll",
+      "name_en": "Brill",
+      "scientific_name": "Scophthalmus rhombus",
+      "allowed_zones": [
+        "north_sea",
+        "north_atlantic",
+        "celtic_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "BUH",
+      "name_en": "Bull Huss",
+      "scientific_name": "Scyliorhinus stellaris",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "cod",
+      "name_en": "Cod (Coastal)",
+      "scientific_name": "Gadus morhua",
+      "allowed_zones": [
+        "north_sea",
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea",
+        "canary_current"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10,
+        "temperature_max_celsius": 20,
+        "salinity_min_psu": 11
+      },
+      "notes": [
+        "Cannot survive sustained temperatures above 20°C",
+        "Baltic populations need ≥11 PSU salinity to successfully spawn",
+        "Cold-water species, absent from Mediterranean",
+        "✅ Expert corrections applied"
+      ],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "CMB",
+      "name_en": "Comber",
+      "scientific_name": "Serranus cabrilla",
+      "allowed_zones": [
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "cut",
+      "name_en": "Common Cuttlefish",
+      "scientific_name": "Sepia officinalis",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "lin",
+      "name_en": "Common Ling",
+      "scientific_name": "Molva molva",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "north_sea",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "oct",
+      "name_en": "Common Octopus",
+      "scientific_name": "Octopus vulgaris",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "CSH",
+      "name_en": "Common Smoothhound",
+      "scientific_name": "Mustelus mustelus",
+      "allowed_zones": [
+        "iberian_atlantic",
+        "mediterranean",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sqc",
+      "name_en": "Common Squid",
+      "scientific_name": "Loligo vulgaris",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "con",
+      "name_en": "Conger Eel",
+      "scientific_name": "Conger conger",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {},
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "WRK",
+      "name_en": "Corkwing Wrasse",
+      "scientific_name": "Symphodus melops",
+      "allowed_zones": [
+        "celtic_sea",
+        "irish_sea",
+        "english_channel",
+        "bay_of_biscay"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "wrc",
+      "name_en": "Cuckoo Wrasse",
+      "scientific_name": "Labrus mixtus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "dab",
+      "name_en": "Dab",
+      "scientific_name": "Limanda limanda",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "dex",
+      "name_en": "Dentex",
+      "scientific_name": "Dentex dentex",
+      "allowed_zones": [
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sol",
+      "name_en": "Dover Sole",
+      "scientific_name": "Solea solea",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "fgm",
+      "name_en": "Flathead Grey Mullet",
+      "scientific_name": "Mugil cephalus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "fle",
+      "name_en": "Flounder",
+      "scientific_name": "Platichthys flesus",
+      "allowed_zones": [
+        "north_sea",
+        "baltic",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "gar",
+      "name_en": "Garfish (Needlefish)",
+      "scientific_name": "Belone belone",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "baltic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sbg",
+      "name_en": "Gilthead Seabream",
+      "scientific_name": "Gilthead Seabream",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic",
+        "canary_current"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "WRG",
+      "name_en": "Goldsinny Wrasse",
+      "scientific_name": "Ctenolabrus rupestris",
+      "allowed_zones": [
+        "north_atlantic",
+        "norwegian_sea",
+        "english_channel"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "gaj",
+      "name_en": "Greater Amberjack",
+      "scientific_name": "Seriola dumerili",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "wee",
+      "name_en": "Greater Weever",
+      "scientific_name": "Trachinus draco",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "GGR",
+      "name_en": "Grey Gurnard",
+      "scientific_name": "Eutrigla gurnardus",
+      "allowed_zones": [
+        "north_sea",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "mug",
+      "name_en": "Grey Mullet",
+      "scientific_name": "Chelon labrosus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "had",
+      "name_en": "Haddock",
+      "scientific_name": "Melanogrammus aeglefinus",
+      "allowed_zones": [
+        "north_sea",
+        "north_atlantic",
+        "celtic_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "her",
+      "name_en": "Herring",
+      "scientific_name": "Clupea harengus",
+      "allowed_zones": [
+        "north_sea",
+        "baltic",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "hom",
+      "name_en": "Horse Mackerel",
+      "scientific_name": "Trachurus trachurus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean",
+        "north_sea"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "jod",
+      "name_en": "John Dory",
+      "scientific_name": "Zeus faber",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "lta",
+      "name_en": "Little Tunny",
+      "scientific_name": "Euthynnus alletteratus",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "mac",
+      "name_en": "Mackerel",
+      "scientific_name": "Scomber scombrus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "baltic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "ldb",
+      "name_en": "Megrim",
+      "scientific_name": "Lepidorhombus whiffiagonis",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "CMP",
+      "name_en": "Painted Comber",
+      "scientific_name": "Serranus scriba",
+      "allowed_zones": [
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "par",
+      "name_en": "Parrotfish",
+      "scientific_name": "Sparisoma cretense",
+      "allowed_zones": [
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "PIC",
+      "name_en": "Picarel",
+      "scientific_name": "Spicara smaris",
+      "allowed_zones": [
+        "mediterranean"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "ple",
+      "name_en": "Plaice",
+      "scientific_name": "Pleuronectes platessa",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "pol",
+      "name_en": "Pollack",
+      "scientific_name": "Pollachius pollachius",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "GUR",
+      "name_en": "Red Gurnard",
+      "scientific_name": "Chelidonichthys cuculus",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "mul",
+      "name_en": "Red Mullet",
+      "scientific_name": "Mullus surmuletus",
+      "allowed_zones": [
+        "mediterranean",
+        "bay_of_biscay"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sbr",
+      "name_en": "Red Seabream",
+      "scientific_name": "Pagellus bogaraveo",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic",
+        "canary_current"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "WRO",
+      "name_en": "Rock Cook",
+      "scientific_name": "Centrolabrus exoletus",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "pok",
+      "name_en": "Saithe (Pollachius virens)",
+      "scientific_name": "Pollachius virens",
+      "allowed_zones": [
+        "north_sea",
+        "norwegian_sea",
+        "barents_sea",
+        "north_atlantic",
+        "celtic_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sai",
+      "name_en": "Saithe/Pollock",
+      "scientific_name": "Saithe/Pollock",
+      "allowed_zones": [
+        "north_sea",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "SAL",
+      "name_en": "Salema (Saupe)",
+      "scientific_name": "Sarpa salpa",
+      "allowed_zones": [
+        "mediterranean",
+        "canary_current"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "san",
+      "name_en": "Sand Eel",
+      "scientific_name": "Ammodytes tobianus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "pil",
+      "name_en": "Sardine",
+      "scientific_name": "Sardina pilchardus",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "bss",
+      "name_en": "Sea Bass",
+      "scientific_name": "Dicentrarchus labrax",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean",
+        "north_sea"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "sba",
+      "name_en": "Sea Bream (Dorada)",
+      "scientific_name": "Sparus aurata",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic",
+        "canary_current"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "trs",
+      "name_en": "Sea Trout",
+      "scientific_name": "Salmo trutta",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "baltic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "RME",
+      "name_en": "Small-eyed Ray",
+      "scientific_name": "Raja microocellata",
+      "allowed_zones": [
+        "english_channel",
+        "celtic_sea",
+        "irish_sea"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "scy",
+      "name_en": "Small-spotted Catshark",
+      "scientific_name": "Scyliorhinus canicula",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {},
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "bsp",
+      "name_en": "Spotted Bass",
+      "scientific_name": "Dicentrarchus punctatus",
+      "allowed_zones": [
+        "mediterranean",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "baltic",
+        "norwegian_sea",
+        "barents_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "RJM",
+      "name_en": "Spotted Ray",
+      "scientific_name": "Raja montagui",
+      "allowed_zones": [
+        "english_channel"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "spr",
+      "name_en": "Sprat",
+      "scientific_name": "Sprattus sprattus",
+      "allowed_zones": [
+        "baltic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "SSH",
+      "name_en": "Starry Smoothhound",
+      "scientific_name": "Mustelus asterias",
+      "allowed_zones": [
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "rjc",
+      "name_en": "Thornback Ray",
+      "scientific_name": "Raja clavata",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "gug",
+      "name_en": "Tub Gurnard",
+      "scientific_name": "Chelidonichthys lucerna",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "tur",
+      "name_en": "Turbot (Small)",
+      "scientific_name": "Scophthalmus maximus",
+      "allowed_zones": [
+        "north_sea",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "RUN",
+      "name_en": "Undulate Ray",
+      "scientific_name": "Raja undulata",
+      "allowed_zones": [
+        "english_channel",
+        "bay_of_biscay"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "whg",
+      "name_en": "Whiting",
+      "scientific_name": "Merlangius merlangus",
+      "allowed_zones": [
+        "north_sea",
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic"
+      ],
+      "excluded_zones": [
+        "mediterranean",
+        "black_sea"
+      ],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "max": 18,
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    },
+    {
+      "species_code": "wra",
+      "name_en": "Wrasse (various)",
+      "scientific_name": "Labridae spp.",
+      "allowed_zones": [
+        "north_atlantic",
+        "celtic_sea",
+        "english_channel",
+        "bay_of_biscay",
+        "iberian_atlantic",
+        "north_sea",
+        "mediterranean"
+      ],
+      "excluded_zones": [],
+      "seasonal_restrictions": {},
+      "absolute_limits": {
+        "min": 10
+      },
+      "notes": [],
+      "data_sources": [
+        "advice.regions",
+        "expert_corrections"
+      ]
+    }
+  ]
+}

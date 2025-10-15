@@ -2,6 +2,7 @@
 // Real data integration for Best Fishing Time predictions
 // Connects to Stormglass marine data and species database
 
+import { getTimes } from 'suncalc';
 import { calculateBestFishingTime } from './bestFishingTime';
 import type { FishSpecies, MarineHour, WeatherForecastDay, BestFishingTimeResult } from './bestFishingTime';
 
@@ -176,12 +177,58 @@ export async function getFishingTimePredictions(
 }
 
 /**
+ * Get actual dawn and dusk times for a given location and date using SunCalc
+ * Falls back to defaults if location not available
+ */
+function getRealDawnDuskTimes(date: Date, lat?: number, lon?: number): { dawn: Date; dusk: Date } {
+  // Default fallback times
+  const defaultDawn = new Date(date);
+  defaultDawn.setHours(6, 0, 0, 0);
+  
+  const defaultDusk = new Date(date);
+  defaultDusk.setHours(18, 0, 0, 0);
+  
+  // If no location provided, use defaults
+  if (lat === undefined || lon === undefined) {
+    return { dawn: defaultDawn, dusk: defaultDusk };
+  }
+  
+  try {
+    // Get sun times for the location
+    const times = getTimes(date, lat, lon);
+    
+    // Use nautical dawn/dusk (when sun is 12° below horizon - best for fishing)
+    // Falls back to dawn/dusk, then sunrise/sunset if nautical times not available
+    const dawn = times.nauticalDawn ?? times.dawn ?? times.sunrise ?? defaultDawn;
+    const dusk = times.nauticalDusk ?? times.dusk ?? times.sunset ?? defaultDusk;
+    
+    return { dawn, dusk };
+  } catch (error) {
+    console.warn('Failed to calculate sun times, using defaults:', error);
+    return { dawn: defaultDawn, dusk: defaultDusk };
+  }
+}
+
+/**
+ * Tide data structure matching what we get from /api/tides
+ */
+export interface TidePhaseInfo {
+  currentPhase: 'rising' | 'falling' | 'high_slack' | 'low_slack';
+  timeToNextChange?: number; // minutes
+  currentStrength?: 'weak' | 'moderate' | 'strong';
+}
+
+/**
  * Get immediate fishing time predictions for species cards
  * Uses simulated data based on time of day and basic patterns
+ * Now enhanced with real astronomical times and optional tide data
  */
 export function getImmediateFishingTimes(
   species: SpeciesAdvice[],
-  context: 'active' | 'good' | 'waiting' = 'good'
+  context: 'active' | 'good' | 'waiting' = 'good',
+  lat?: number,
+  lon?: number,
+  tideInfo?: TidePhaseInfo
 ): BestFishingTimeResult {
   const now = new Date();
   const hour = now.getHours();
@@ -192,10 +239,16 @@ export function getImmediateFishingTimes(
     return bestTime.toLowerCase().includes('dawn') || bestTime.toLowerCase().includes('dusk');
   });
 
-  // Extract tide sensitivity
+  // Extract tide sensitivity and identify tide-critical species
   const isTideSensitive = species.some(s => {
     const tideSensitivity = s.contexts?.shore?.tideSensitivity || s.contexts?.boat?.tideSensitivity || '';
     return tideSensitivity.toLowerCase().includes('strong');
+  });
+
+  // Check for tide-critical species (mullet, bass, flounder)
+  const tideCriticalSpecies = species.find(s => {
+    const name = (s.name || '').toLowerCase();
+    return name.includes('mullet') || name.includes('bass') || name.includes('flounder');
   });
 
   // Calculate base score based on current time and species preferences
@@ -206,11 +259,66 @@ export function getImmediateFishingTimes(
     baseScore += 25;
   }
   
-  // Current tide simulation (simple rotating pattern)
-  const tidePhase = ['rising', 'high', 'falling', 'low'][Math.floor((hour / 6) % 4)];
-  if (isTideSensitive && (tidePhase === 'rising' || tidePhase === 'high')) {
-    baseScore += 20;
+  // ===== TIDE SCORING (Real or Simulated) =====
+  let tidePhase: string;
+  let tideBonus = 0;
+  
+  if (tideInfo) {
+    // Use real tide data from API
+    tidePhase = tideInfo.currentPhase;
+    
+    if (isTideSensitive || tideCriticalSpecies) {
+      const speciesName = tideCriticalSpecies?.name?.toLowerCase() || '';
+      
+      // MULLET: Rising tide is absolutely critical
+      if (speciesName.includes('mullet')) {
+        if (tidePhase === 'rising') {
+          tideBonus = 50; // HUGE bonus - mullet are all about rising tide
+        } else if (tidePhase === 'falling') {
+          tideBonus = -40; // Major penalty - wrong tide
+        } else if (tidePhase === 'high_slack') {
+          tideBonus = 10; // Small bonus - transition period
+        } else {
+          tideBonus = -20; // Low slack is poor
+        }
+      }
+      // BASS/FLOUNDER: Rising and high tides preferred
+      else if (speciesName.includes('bass') || speciesName.includes('flounder')) {
+        if (tidePhase === 'rising' || tidePhase === 'high_slack') {
+          tideBonus = 35; // Large bonus
+        } else if (tidePhase === 'falling' && tideInfo.currentStrength !== 'weak') {
+          tideBonus = 15; // Moderate bonus - active falling tide
+        } else {
+          tideBonus = -10; // Small penalty
+        }
+      }
+      // General tide-sensitive species
+      else if (isTideSensitive) {
+        if (tidePhase === 'rising') {
+          tideBonus = 30; // Strong bonus for rising
+        } else if (tidePhase === 'falling' && tideInfo.currentStrength !== 'weak') {
+          tideBonus = 15; // Moderate bonus for active falling
+        } else if (tidePhase.includes('slack')) {
+          tideBonus = -15; // Penalty for slack water
+        }
+      }
+      
+      // Additional urgency bonus if tide change is imminent
+      if (tideInfo.timeToNextChange && tideInfo.timeToNextChange < 60) {
+        if (tidePhase === 'rising') {
+          tideBonus += 10; // Go now - approaching high tide peak!
+        }
+      }
+    }
+  } else {
+    // Fallback: Simple rotating pattern (old behavior)
+    tidePhase = ['rising', 'high', 'falling', 'low'][Math.floor((hour / 6) % 4)];
+    if (isTideSensitive && (tidePhase === 'rising' || tidePhase === 'high')) {
+      tideBonus = 20;
+    }
   }
+  
+  baseScore += tideBonus;
 
   // Temperature considerations (species specific)
   const hasWarmWaterSpecies = species.some(s => {
@@ -235,19 +343,32 @@ export function getImmediateFishingTimes(
 
   // Context-specific adjustments
   if (context === 'active') {
-    baseScore += 10; // These are already active species
+    // These are 85%+ confidence species - boost significantly!
+    baseScore = Math.max(baseScore + 30, 80); // Minimum 80 for active species
   } else if (context === 'waiting') {
     baseScore = Math.min(baseScore * 0.6, 55); // Conservative for waiting species
   }
 
-  // Generate time windows
-  const nextDawn = new Date(now);
-  nextDawn.setHours(6, 0, 0, 0);
-  if (nextDawn <= now) nextDawn.setDate(nextDawn.getDate() + 1);
+  // Generate time windows using real dawn/dusk times
+  const { dawn: realDawn, dusk: realDusk } = getRealDawnDuskTimes(now, lat, lon);
+  
+  const nextDawn = new Date(realDawn);
+  if (nextDawn <= now) {
+    // If dawn already passed today, get tomorrow's dawn
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowTimes = getRealDawnDuskTimes(tomorrow, lat, lon);
+    nextDawn.setTime(tomorrowTimes.dawn.getTime());
+  }
 
-  const nextDusk = new Date(now);
-  nextDusk.setHours(18, 0, 0, 0);
-  if (nextDusk <= now) nextDusk.setDate(nextDusk.getDate() + 1);
+  const nextDusk = new Date(realDusk);
+  if (nextDusk <= now) {
+    // If dusk already passed today, get tomorrow's dusk
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowTimes = getRealDawnDuskTimes(tomorrow, lat, lon);
+    nextDusk.setTime(tomorrowTimes.dusk.getTime());
+  }
 
   // Determine best times based on species preferences
   const primaryTime = isDawnDuskSpecies ? 
@@ -256,14 +377,28 @@ export function getImmediateFishingTimes(
 
   const secondaryTime = new Date(primaryTime.getTime() + 6 * 60 * 60 * 1000); // 6 hours later
 
-  // Generate recommendation
+  // Generate recommendation with tide context
   let recommendation: string;
   let emoji: string;
 
   if (baseScore >= 75) {
-    recommendation = context === 'waiting' ? 
-      "Best chance in current conditions" : 
-      "🎣 Prime bite conditions!";
+    // Add tide-specific messaging for high scores
+    if (tideCriticalSpecies && tideInfo) {
+      const speciesName = tideCriticalSpecies.name || 'target species';
+      if (tidePhase === 'rising') {
+        recommendation = context === 'waiting' ? 
+          `Perfect tide for ${speciesName}!` : 
+          `GO NOW! Rising tide - perfect for ${speciesName}!`;
+      } else {
+        recommendation = context === 'waiting' ? 
+          "Best chance in current conditions" : 
+          "Prime bite conditions!";
+      }
+    } else {
+      recommendation = context === 'waiting' ? 
+        "Best chance in current conditions" : 
+        "Prime bite conditions!";
+    }
     emoji = "🎣";
   } else if (baseScore >= 60) {
     recommendation = context === 'waiting' ? 
@@ -271,10 +406,17 @@ export function getImmediateFishingTimes(
       "Good fishing conditions";
     emoji = "🌊";
   } else if (baseScore >= 45) {
-    recommendation = context === 'waiting' ? 
-      "Challenging - wait for ideal conditions" : 
-      "Possible with right technique";
-    emoji = "⏳";
+    // Add tide-specific warnings for low scores
+    if (tideCriticalSpecies && tideInfo && tidePhase === 'low_slack') {
+      const speciesName = tideCriticalSpecies.name || 'target species';
+      recommendation = `Wait for rising tide - critical for ${speciesName}`;
+      emoji = "⏳";
+    } else {
+      recommendation = context === 'waiting' ? 
+        "Challenging - wait for ideal conditions" : 
+        "Are you feeling lucky?";
+      emoji = "⏳";
+    }
   } else {
     recommendation = context === 'waiting' ? 
       "Poor conditions - try later" : 

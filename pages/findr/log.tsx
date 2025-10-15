@@ -30,13 +30,17 @@ import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { useCatchLogger, useQuickCatchLog } from '@/hooks/useCatchLogger';
 import { useImpressionTracking } from '../../hooks/useImpressionTracking';
 import { useContextualTranslation } from '../../context/LanguageContext';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { compressImage } from '../../lib/storage/photoStorage';
 import { TranslatedText } from '../../components/translation/TranslatedFishCard';
+import { GradientFish } from '../../components/GradientFish';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'react-hot-toast';
 import type { CatchLogInput, CatchLoggerTelemetryEvent } from '@/types/findr-enrichment';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { normaliseCatchPhotoAssets, type CatchPhotoAsset } from '@/utils/catchPhotoAssets';
+import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
+import type { FishingPrediction } from '../../hooks/useFishingPredictions';
 
 // Enhanced modal components
 import { QuickLogModal } from '../../components/findr/QuickLogModal';
@@ -134,7 +138,7 @@ interface CatchEntry {
   size: string;
   habitat?: string;
   marineBio: MarineBioData;
-  weatherSummary: string;
+  weatherSummary?: string;
   notes?: string;
   photo?: string;
   photos?: string[];
@@ -149,6 +153,7 @@ interface FishMatch {
   id: string;
   name: string;
   commonName: string;
+  scientific_name?: string; // API returns scientific_name for image resolution
   confidence: number;
   season: string;
   depth: string;
@@ -233,34 +238,7 @@ const HABITAT_LABEL_LOOKUP: Record<string, string> = {
   'open sea': 'Open Sea',
 };
 
-const FALLBACK_FISH_IMAGE = '/webp/beachfishy.webp';
 const TOAST_DURATION_MS = 3000;
-
-// Mock data (fallback)
-const mockLocation: Location = {
-  name: 'Gijón Beach, Asturias',
-  lat: 43.5322,
-  lon: -5.6611,
-};
-
-const mockIcesGrid: ICESGrid = {
-  rectangle: 'VIIIc',
-  lat: 43.5,
-  lon: -6.0,
-  area: 'Bay of Biscay',
-  subdivision: 'VIIIc',
-};
-
-const mockMarineBio: MarineBioData = {
-  chlorophyllAvg: 2.1,
-  dissolvedOxygenAvg: 8.3,
-  nitrateAvg: 4.2,
-  phosphateAvg: 0.3,
-  salinityAvg: 35.2,
-  sstAvg: 16.8,
-  waveHeight: 1.2,
-  windSpeed: 12,
-};
 
 // Utility functions
 const formatTimePeriods = (periods: string[]): string =>
@@ -286,7 +264,12 @@ function buildEnvironmentalConditions(marineBio: MarineBioData): Record<string, 
   return Object.keys(payload).length > 0 ? payload : undefined;
 }
 
-function mapApiCatchToEntry(apiCatch: Record<string, unknown>, defaultRectangle: string): CatchEntry {
+function mapApiCatchToEntry(
+  apiCatch: Record<string, unknown>, 
+  defaultRectangle: string,
+  locationData: Location,
+  marineBioData: MarineBioData
+): CatchEntry {
   const id = apiCatch.id != null ? String(apiCatch.id) : `temp-${Date.now()}`;
   const speciesCommonName =
     apiCatch.species_common_name != null
@@ -305,15 +288,15 @@ function mapApiCatchToEntry(apiCatch: Record<string, unknown>, defaultRectangle:
     id,
     fishId: apiCatch.species_id != null ? String(apiCatch.species_id) : speciesCommonName,
     fishName: speciesCommonName,
-    location: mockLocation,
+    location: locationData,
     icesGrid: rectangle,
     date: caughtAt,
     bait: apiCatch.bait_used != null ? String(apiCatch.bait_used) : 'Unknown bait',
     quantity: Number.isFinite(quantityRaw) ? quantityRaw : 0,
     size: sizeCategory,
     habitat: apiCatch.habitat_type != null ? String(apiCatch.habitat_type) : undefined,
-    marineBio: mockMarineBio,
-    weatherSummary: `Sea temp: ${mockMarineBio?.sstAvg?.toFixed(1) ?? 'N/A'}°C`,
+    marineBio: marineBioData,
+    weatherSummary: undefined,
     notes: apiCatch.notes != null ? String(apiCatch.notes) : undefined,
     photo: photoUrls.length > 0 ? photoUrls[0] : undefined,
     photos: photoUrls.length > 0 ? photoUrls : undefined,
@@ -331,22 +314,29 @@ const speciesImagesByScientificName = new Map<string, SpeciesImageInfo>(
     .map((info) => [info.scientificName!.toLowerCase(), info])
 );
 
-const resolveSpeciesImageAssets = (scientificName: string) => {
+const resolveSpeciesImageAssets = (scientificName: string | undefined | null) => {
+  if (!scientificName) {
+    return {
+      image: '',
+      mobile: '',
+      thumb: '',
+    };
+  }
+  
   const assets = speciesImagesByScientificName.get(scientificName.toLowerCase());
 
   if (!assets) {
-    console.warn(`[Findr Catch Log] Missing species image assets for ${scientificName}`);
     return {
-      image: FALLBACK_FISH_IMAGE,
-      mobile: FALLBACK_FISH_IMAGE,
-      thumb: FALLBACK_FISH_IMAGE,
+      image: '',
+      mobile: '',
+      thumb: '',
     };
   }
 
   return {
-    image: assets.image ?? FALLBACK_FISH_IMAGE,
-    mobile: assets.mobile ?? assets.image ?? FALLBACK_FISH_IMAGE,
-    thumb: assets.thumb ?? assets.mobile ?? assets.image ?? FALLBACK_FISH_IMAGE,
+    image: assets.image ?? '',
+    mobile: assets.mobile ?? assets.image ?? '',
+    thumb: assets.thumb ?? assets.mobile ?? assets.image ?? '',
   };
 };
 
@@ -1063,11 +1053,45 @@ export default function FindrCatchLogPage() {
   const [showReferenceTablesModal, setShowReferenceTablesModal] = useState(false);
 
   const defaultPredictionDate = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { location } = useUnifiedLocation();
   const { selectedCode } = usePersistentFindrSettings({
     predictionDate: defaultPredictionDate,
     language: 'en',
   });
-  const activeRectangleCode = selectedCode || mockIcesGrid.rectangle;
+  
+  // Priority: UnifiedLocationContext → selectedCode → fallback to '31F2'
+  const activeRectangleCode = location?.rectangleCode ?? selectedCode ?? '31F2';
+
+  // Debug logging for location
+  useEffect(() => {
+    console.log('[Findr Catch Log] Location state:', {
+      contextRectangle: location?.rectangleCode,
+      selectedCode,
+      activeRectangle: activeRectangleCode,
+      fallbackUsed: !location?.rectangleCode && !selectedCode,
+      locationData: location,
+    });
+  }, [location?.rectangleCode, selectedCode, activeRectangleCode, location]);
+
+  // Create location objects from context
+  const currentLocation: Location = useMemo(() => ({
+    name: location?.rectangleLabel || `ICES ${activeRectangleCode}`,
+    lat: location?.lat ?? 0,
+    lon: location?.lon ?? 0,
+  }), [location?.rectangleLabel, location?.lat, location?.lon, activeRectangleCode]);
+
+  const currentIcesGrid: ICESGrid = useMemo(() => ({
+    rectangle: activeRectangleCode,
+    lat: location?.lat ?? 0,
+    lon: location?.lon ?? 0,
+    area: location?.rectangleRegion || 'Unknown',
+    subdivision: activeRectangleCode,
+  }), [activeRectangleCode, location?.lat, location?.lon, location?.rectangleRegion]);
+
+  const currentMarineBio: MarineBioData = useMemo(() => ({
+    // These would ideally come from environmental data, but we'll use empty object for now
+    // The environmental conditions will be populated from the catch log enrichment API
+  }), []);
 
   const resolveAccessToken = useCallback(async (): Promise<string | null> => {
     const { data, error } = await supabase.auth.getSession();
@@ -1096,8 +1120,8 @@ export default function FindrCatchLogPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          lat: mockLocation.lat,
-          lon: mockLocation.lon,
+          lat: location?.lat,
+          lon: location?.lon,
           rectangleCode: activeRectangleCode,
           date: defaultPredictionDate,
         }),
@@ -1105,15 +1129,41 @@ export default function FindrCatchLogPage() {
 
       if (response.ok) {
         const data = await response.json();
-        const mappedMatches = data.predictions.map((pred: FishMatch) => {
-          const assets = resolveSpeciesImageAssets(pred.name);
-          return {
-            ...pred,
-            image: assets.image,
-            imageMobile: assets.mobile,
-            imageThumb: assets.thumb,
-          };
-        });
+        // Transform raw API predictions using the same mapper as the main predictions page
+        const mappedMatches = data.predictions
+          .map((pred: FishingPrediction, index: number) => mapPrediction(pred, index))
+          .filter((cardData: CardData | null): cardData is CardData => cardData !== null)
+          .map((cardData: CardData) => {
+            // Use real species data instead of placeholders
+            const season = cardData.seasonality || 
+                          cardData.advice?.[0]?.best_time || 
+                          'Year-round';
+            const depth = cardData.depthRange || 
+                         cardData.advice?.[0]?.typical_distance_depth || 
+                         'Coastal waters';
+            const habitat = cardData.habitatType || 
+                           cardData.tideTips?.[0] || 
+                           'Coastal waters';
+            
+            // Convert CardData to FishMatch format for catch logger
+            const fishMatch: FishMatch = {
+              id: cardData.id,
+              name: cardData.commonName,
+              commonName: cardData.commonName,
+              scientific_name: cardData.scientificName,
+              confidence: cardData.confidence ?? 0,
+              season,
+              depth,
+              habitat,
+              baitSuggestions: cardData.baitSuggestions,
+              tips: [...cardData.tideTips, ...cardData.statusNotes],
+              image: cardData.image?.src || '',
+              imageMobile: cardData.image?.mobile ?? undefined,
+              imageThumb: cardData.image?.thumb ?? undefined,
+              tinderBio: cardData.playfulBio,
+            };
+            return fishMatch;
+          });
         setLiveMatches(mappedMatches);
       }
     } catch (error) {
@@ -1121,7 +1171,7 @@ export default function FindrCatchLogPage() {
     } finally {
       setLoadingPredictions(false);
     }
-  }, [activeRectangleCode, defaultPredictionDate, resolveAccessToken]);
+  }, [activeRectangleCode, defaultPredictionDate, location?.lat, location?.lon, resolveAccessToken]);
 
   // Fetch catch history
   const fetchLoggedSessions = useCallback(async () => {
@@ -1149,13 +1199,13 @@ export default function FindrCatchLogPage() {
       }
 
       const mapped = (payload.catches as Array<Record<string, unknown>>).map((catchRow) =>
-        mapApiCatchToEntry(catchRow, activeRectangleCode)
+        mapApiCatchToEntry(catchRow, activeRectangleCode, currentLocation, currentMarineBio)
       );
       setCatches(mapped);
     } catch (error) {
       console.error('[Findr Catch Log] Unable to fetch catch history:', error);
     }
-  }, [activeRectangleCode, resolveAccessToken]);
+  }, [activeRectangleCode, currentLocation, currentMarineBio, resolveAccessToken]);
 
   const handleCatchLoggerTelemetry = useCallback((event: CatchLoggerTelemetryEvent) => {
     console.info('[Catch Log Telemetry]', event);
@@ -1242,6 +1292,7 @@ export default function FindrCatchLogPage() {
   // Track impression when fish matches are viewed
   useEffect(() => {
     if (currentPage === 'fish' && displayMatches.length > 0) {
+      const environmentalData = buildEnvironmentalConditions(currentMarineBio);
       recordPredictionView(
         activeRectangleCode,
         displayMatches.map((fish) => ({
@@ -1252,19 +1303,11 @@ export default function FindrCatchLogPage() {
           baitSuggestions: fish.baitSuggestions,
           habitat: fish.habitat,
         })),
-        {
-          sea_temp: mockMarineBio.sstAvg,
-          tide_phase: 'incoming',
-          wind_speed: mockMarineBio.windSpeed,
-          wave_height: mockMarineBio.waveHeight,
-          salinity: mockMarineBio.salinityAvg,
-          chlorophyll: mockMarineBio.chlorophyllAvg,
-          dissolved_oxygen: mockMarineBio.dissolvedOxygenAvg,
-        },
+        environmentalData || {},
         'high'
       ).catch((err) => console.warn('[Impression Tracking] Failed to record view:', err));
     }
-  }, [currentPage, displayMatches, recordPredictionView, activeRectangleCode]);
+  }, [currentPage, displayMatches, recordPredictionView, activeRectangleCode, currentMarineBio]);
 
   useEffect(() => {
     if (!showToast) return;
@@ -1328,11 +1371,6 @@ export default function FindrCatchLogPage() {
     },
     [logCatch]
   );
-
-  const handleClearCatches = useCallback(() => {
-    setCatches([]);
-    toast.success('Catch history cleared for this session.');
-  }, []);
 
   const submitBlankReport = useCallback(
     async (report: BlankReportData) => {
@@ -1433,16 +1471,12 @@ export default function FindrCatchLogPage() {
       <div className="space-y-6">
         <div className="space-y-2 text-center">
           <h2 className="text-2xl font-semibold">
-            <TranslatedText text={`🎯 Fish matches for ${mockLocation.name}`} />
+            <TranslatedText text={`🎯 Fish matches for ${location?.rectangleLabel || activeRectangleCode}`} />
           </h2>
           <p className="text-base-content/70">
             <TranslatedText text="Ordered by likelihood - most probable catches first." />
           </p>
           <div className="flex justify-center gap-3 pt-3 text-sm">
-            <span className="badge badge-info gap-1">
-              <Thermometer className="h-3 w-3" />
-              {mockMarineBio.sstAvg}°C
-            </span>
             <span className="badge badge-info gap-1">
               <Grid3X3 className="h-3 w-3" />
               ICES {activeRectangleCode}
@@ -1455,8 +1489,8 @@ export default function FindrCatchLogPage() {
             const speciesCatchCount = catches.filter((entry) => entry.fishId === fishMatch.id).length;
             return (
               <div key={fishMatch.id} className="card bg-base-100 shadow-md transition-shadow hover:shadow-lg">
-                {fishMatch.image && (
-                  <figure className="relative h-auto min-h-32 overflow-hidden rounded-t-xl bg-base-100 flex items-center justify-center">
+                <figure className="relative h-48 overflow-hidden rounded-t-xl bg-gradient-to-br from-info/10 to-primary/10 flex items-center justify-center">
+                  {fishMatch.image ? (
                     <Image
                       src={fishMatch.imageThumb ?? fishMatch.image}
                       alt={fishMatch.commonName}
@@ -1465,13 +1499,15 @@ export default function FindrCatchLogPage() {
                       className="object-contain max-w-full max-h-full"
                       sizes="(min-width: 1280px) 320px, (min-width: 768px) 45vw, 100vw"
                     />
-                    {speciesCatchCount > 0 && (
-                      <span className="badge badge-secondary absolute right-3 top-3">
-                        {speciesCatchCount} <TranslatedText text="caught" />
-                      </span>
-                    )}
-                  </figure>
-                )}
+                  ) : (
+                    <GradientFish size={96} />
+                  )}
+                  {speciesCatchCount > 0 && (
+                    <span className="badge badge-secondary absolute right-3 top-3">
+                      {speciesCatchCount} <TranslatedText text="caught" />
+                    </span>
+                  )}
+                </figure>
                 <div className="card-body space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -1656,10 +1692,6 @@ export default function FindrCatchLogPage() {
                     <BarChart3 className="h-4 w-4" />
                     <TranslatedText text="Reference Data" />
                   </button>
-
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={handleClearCatches} disabled={catches.length === 0}>
-                    <TranslatedText text="Clear demo log" />
-                  </button>
                 </div>
               </div>
 
@@ -1672,9 +1704,9 @@ export default function FindrCatchLogPage() {
               {showCatchLogger && selectedFish ? (
                 <CatchLogger
                   fish={selectedFish}
-                  location={mockLocation}
-                  icesGrid={mockIcesGrid}
-                  marineBio={mockMarineBio}
+                  location={currentLocation}
+                  icesGrid={currentIcesGrid}
+                  marineBio={currentMarineBio}
                   catches={catches}
                   onLogCatch={handleLogCatch}
                   onCancel={handleCancelLogger}

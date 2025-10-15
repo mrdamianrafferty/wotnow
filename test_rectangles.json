@@ -1,0 +1,343 @@
+Total rectangles: 325
+
+Rectangles per region:
+  IBI: 165
+  MED: 71
+  NWS: 59
+  BAL: 27
+  ARC: 3
+
+Distance categories:
+  Offshore (>10km): 218
+  Nearshore (5-10km): 46
+  Coastal (<5km): 59
+  Unknown/Zero: 2
+
+
+=== SAMPLE RECTANGLES FOR TESTING ===
+
+
+IBI:
+  Total: 165
+  Offshore: 113, Nearshore: 26, Coastal: 25
+  Test offshore: 38J8, 26S0
+  Test nearshore: 31F2, 31E7
+  Test coastal: 35E5, 26O6
+
+NWS:
+  Total: 59
+  Offshore: 43, Nearshore: 3, Coastal: 13
+  Test offshore: 44F1, 41F2
+  Test nearshore: 24O3, 23M4
+  Test coastal: 34E1, 38F4
+
+BAL:
+  Total: 27
+  Offshore: 18, Nearshore: 4, Coastal: 5
+  Test offshore: 31Q6, 30Q6
+  Test nearshore: 25Q5, 22L5
+  Test coastal: 31N5, 32N5
+
+MED:
+  Total: 71
+  Offshore: 44, Nearshore: 13, Coastal: 14
+  Test offshore: 37W9, 37W8
+  Test nearshore: 40X5, 39Y3
+  Test coastal: 37S4, 37Q0
+
+BLK:
+  Total: 0
+  Offshore: 0, Nearshore: 0, Coastal: 0
+
+ARC:
+  Total: 3
+  Offshore: 0, Nearshore: 0, Coastal: 2
+  Test coastal: 41P1, 42P1
+
+GLO:
+  Total: 0
+  Offshore: 0, Nearshore: 0, Coastal: 0
+{
+  "IBI": {
+    "offshore": [
+      {
+        "id": "503c35de-6b66-4787-a7a7-fdb8532a7645",
+        "rectangle_code": "38J8",
+        "center_lat": 37.25,
+        "center_lon": 1,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 83.56,
+        "is_coastal": true
+      },
+      {
+        "id": "4be76ec2-0874-48ad-b13d-b9bcc4ddd03d",
+        "rectangle_code": "26S0",
+        "center_lat": 51.5,
+        "center_lon": -6.5,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 75.62,
+        "is_coastal": true
+      }
+    ],
+    "nearshore": [
+      {
+        "id": "77391585-0cf7-4694-8bd9-975b499cffc8",
+        "rectangle_code": "31F2",
+        "center_lat": 51.25,
+        "center_lon": 2,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 10,
+        "is_coastal": true
+      },
+      {
+        "id": "e242cf30-75ce-4292-84c5-aa64d491b477",
+        "rectangle_code": "31E7",
+        "center_lat": 49.75,
+        "center_lon": 0.5,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 10,
+        "is_coastal": true
+      }
+    ],
+    "coastal": [
+      {
+        "id": "581dca5d-22da-489e-952b-69aafbf7ecc4",
+        "rectangle_code": "35E5",
+        "center_lat": 54,
+        "center_lon": -6,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 4.81,
+        "is_coastal": true
+      },
+      {
+        "id": "0026ef1c-137a-49a1-bbe1-e4b35df5e69e",
+        "rectangle_code": "26O6",
+        "center_lat": 54.5,
+        "center_lon": -0.5,
+        "cmems_region": "IBI",
+        "distance_to_shore_km": 4.66,
+        "is_coastal": true
+      }
+    ]
+  },
+  "NWS": {
+    "offshore": [
+      {
+        "id": "271da51f-ba85-4424-8cfd-7feffad87d96",
+        "rectangle_code": "44F1",
+        "center_lat": 61.5,
+        "center_lon": -2,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 102.67,
+        "is_coastal": true
+      },
+      {
+        "id": "ef00ce1f-0891-4f94-8908-fa7dade63b70",
+        "rectangle_code": "41F2",
+        "center_lat": 60,
+        "center_lon": -3,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 71.23,
+        "is_coastal": true
+      }
+    ],
+    "nearshore": [
+      {
+        "id": "7e048b9c-50fc-405f-bb6e-75ecd910e189",
+        "rectangle_code": "24O3",
+        "center_lat": 57.75,
+        "center_lon": 11.5,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 8.01,
+        "is_coastal": true
+      },
+      {
+        "id": "2d96baac-a890-40c9-91bd-32664dffeb56",
+        "rectangle_code": "23M4",
+        "center_lat": 55.75,
+        "center_lon": 11.5,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 7.7,
+        "is_coastal": true
+      }
+    ],
+    "coastal": [
+      {
+        "id": "0c1094c0-9c45-4c31-b7d9-daa901e4ee28",
+        "rectangle_code": "34E1",
+        "center_lat": 56.5,
+        "center_lon": -3,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 4.77,
+        "is_coastal": true
+      },
+      {
+        "id": "cacb856d-6955-4fb1-837b-03874bb43fd0",
+        "rectangle_code": "38F4",
+        "center_lat": 58.5,
+        "center_lon": -5,
+        "cmems_region": "NWS",
+        "distance_to_shore_km": 4.67,
+        "is_coastal": true
+      }
+    ]
+  },
+  "BAL": {
+    "offshore": [
+      {
+        "id": "88853fc0-eec5-4b53-8062-4e973fba6310",
+        "rectangle_code": "31Q6",
+        "center_lat": 62.75,
+        "center_lon": 28.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 224.39,
+        "is_coastal": true
+      },
+      {
+        "id": "5ea67cab-3c02-4530-bf0d-e663c36c4e32",
+        "rectangle_code": "30Q6",
+        "center_lat": 62.25,
+        "center_lon": 27.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 179.97,
+        "is_coastal": true
+      }
+    ],
+    "nearshore": [
+      {
+        "id": "419e3ec1-8546-4e31-8f65-0ea575ce6753",
+        "rectangle_code": "25Q5",
+        "center_lat": 59.75,
+        "center_lon": 21.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 8.49,
+        "is_coastal": true
+      },
+      {
+        "id": "0ad86bf2-9b45-4de0-acb7-8e828ed49e22",
+        "rectangle_code": "22L5",
+        "center_lat": 54.25,
+        "center_lon": 15.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 8.36,
+        "is_coastal": true
+      }
+    ],
+    "coastal": [
+      {
+        "id": "0af5fb04-1ad9-42c6-8788-08a8f4c1acf3",
+        "rectangle_code": "31N5",
+        "center_lat": 60.25,
+        "center_lon": 20.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 2.68,
+        "is_coastal": true
+      },
+      {
+        "id": "9bb5e7b3-d000-49db-a29f-c2f51555a9cd",
+        "rectangle_code": "32N5",
+        "center_lat": 60.75,
+        "center_lon": 21.5,
+        "cmems_region": "BAL",
+        "distance_to_shore_km": 2.66,
+        "is_coastal": true
+      }
+    ]
+  },
+  "MED": {
+    "offshore": [
+      {
+        "id": "d9530429-ad2a-4d49-bf65-5f9058afb75a",
+        "rectangle_code": "37W9",
+        "center_lat": 37.5,
+        "center_lon": 33.5,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 122.25,
+        "is_coastal": true
+      },
+      {
+        "id": "9d424732-b6dc-47f2-bb96-faa08a1a8ace",
+        "rectangle_code": "37W8",
+        "center_lat": 37.5,
+        "center_lon": 32.5,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 114.15,
+        "is_coastal": true
+      }
+    ],
+    "nearshore": [
+      {
+        "id": "dc821320-b0b0-4f6b-b458-0ab7ebbc1abe",
+        "rectangle_code": "40X5",
+        "center_lat": 41.5,
+        "center_lon": 28.5,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 9.17,
+        "is_coastal": true
+      },
+      {
+        "id": "bc8be41a-2881-410c-9de4-5cf86b29d837",
+        "rectangle_code": "39Y3",
+        "center_lat": 43,
+        "center_lon": 28,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 8.86,
+        "is_coastal": true
+      }
+    ],
+    "coastal": [
+      {
+        "id": "723d5066-6156-4747-8074-a211ffd1da08",
+        "rectangle_code": "37S4",
+        "center_lat": 37.5,
+        "center_lon": 25,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 4.86,
+        "is_coastal": true
+      },
+      {
+        "id": "c6f81e6d-f3e5-48b3-a529-d31b5771a630",
+        "rectangle_code": "37Q0",
+        "center_lat": 39.5,
+        "center_lon": 20,
+        "cmems_region": "MED",
+        "distance_to_shore_km": 4.71,
+        "is_coastal": true
+      }
+    ]
+  },
+  "BLK": {
+    "offshore": [],
+    "nearshore": [],
+    "coastal": []
+  },
+  "ARC": {
+    "offshore": [],
+    "nearshore": [],
+    "coastal": [
+      {
+        "id": "53f24769-20ee-4c89-9130-81446d957c54",
+        "rectangle_code": "41P1",
+        "center_lat": 66.25,
+        "center_lon": 12.5,
+        "cmems_region": "ARC",
+        "distance_to_shore_km": 4.03,
+        "is_coastal": true
+      },
+      {
+        "id": "a7471bb4-64fd-4ea2-ab54-f7998a14d123",
+        "rectangle_code": "42P1",
+        "center_lat": 66.75,
+        "center_lon": 13.5,
+        "cmems_region": "ARC",
+        "distance_to_shore_km": 2.23,
+        "is_coastal": true
+      }
+    ]
+  },
+  "GLO": {
+    "offshore": [],
+    "nearshore": [],
+    "coastal": []
+  }
+}

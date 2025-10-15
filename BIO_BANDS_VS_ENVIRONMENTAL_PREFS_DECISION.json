@@ -1,0 +1,41 @@
+{
+  "timestamp": "2025-10-11T18:40:40.385Z",
+  "current_bio_bands_records": 50,
+  "recommendation": "USE_BOTH_COMPLEMENTARY",
+  "rationale": {
+    "bio_bands": "Marine chemistry & biological indicators (qualitative bands)",
+    "environmental_preferences": "Physical habitat requirements (quantitative ranges)"
+  },
+  "architecture": {
+    "bio_bands": {
+      "table": "species_bio_bands",
+      "format": "happy_bands[], unhappy_bands[] (bio_level enum)",
+      "parameters": [
+        "chlorophyll",
+        "nitrate",
+        "oxygen",
+        "phosphate",
+        "phytoplankton"
+      ],
+      "weight_in_phase2": "30%"
+    },
+    "environmental_preferences": {
+      "table": "species (new JSONB column)",
+      "format": "numeric ranges + categorical arrays",
+      "parameters": [
+        "temperature",
+        "salinity",
+        "depth",
+        "substrate"
+      ],
+      "weight_in_phase2": "70%"
+    }
+  },
+  "next_steps": [
+    "ALTER TABLE species ADD environmental_preferences JSONB",
+    "Research 62 species physical params (12-17 hours)",
+    "Create migration to populate environmental_preferences",
+    "Update RPC to query both tables",
+    "Validate hybrid scoring algorithm"
+  ]
+}

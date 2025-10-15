@@ -5,9 +5,11 @@ import Image from 'next/image';
 import { Zap, ChevronDown, ChevronUp, Target, Trash2, Fish, Waves, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
+import { GradientFish } from '../GradientFish';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { useTideData } from '../../hooks/useTideData';
 
 interface SpeciesAdvice {
   type?: string;
@@ -50,6 +52,7 @@ interface ActiveSpeciesCardProps {
       data_source?: string;
     };
   };
+  location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
@@ -61,15 +64,25 @@ interface ActiveSpeciesCardProps {
  */
 export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   species,
+  location,
   onRemove,
   onTogglePriority,
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
+  // Fetch real tide data for location
+  const tideInfo = useTideData(location ?? null);
+
   const nextPeakHours = getNextPeakTime(species.forecast);
-  // Get real fishing time data based on species preferences
-  const fishingTimeResult = getImmediateFishingTimes([species], 'active');
+  // Get real fishing time data based on species preferences, location, and tides
+  const fishingTimeResult = getImmediateFishingTimes(
+    [species], 
+    'active',
+    location?.lat,
+    location?.lon,
+    tideInfo ?? undefined
+  );
   const fishingTime = {
     time: fishingTimeResult.primaryWindow ? 
       `${fishingTimeResult.primaryWindow.startHour}:00-${fishingTimeResult.primaryWindow.endHour}:00` :
@@ -79,7 +92,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   };
 
   return (
-    <div className="card bg-gradient-to-br from-error/10 via-error/5 to-base-100 border-2 border-error shadow-xl hover:shadow-2xl transition-all duration-300">
+    <div className="card bg-gradient-to-br from-success/10 via-success/5 to-base-100 border-2 border-success shadow-xl hover:shadow-2xl transition-all duration-300">
       <div className="card-body p-4 sm:p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
@@ -97,8 +110,8 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-4xl sm:text-5xl">
-                  {species.emoji}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-xl bg-gradient-to-br from-info/10 to-primary/10">
+                  <GradientFish size={48} />
                 </div>
               )}
             </div>
@@ -184,7 +197,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         </div>
 
         {/* Urgent Message */}
-        <div className="alert alert-error mt-4">
+        <div className="alert alert-success mt-4">
           <Zap size={20} />
           <div className="flex-1">
             <p className="font-bold">
@@ -286,7 +299,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         {/* Main Action Button */}
         <button
           onClick={() => onAction?.(species.id)}
-          className="btn btn-error btn-lg w-full mt-4 gap-2"
+          className="btn btn-success btn-lg w-full mt-4 gap-2"
         >
           <Zap size={20} fill="currentColor" />
           <TranslatedText text="GO FISH NOW!" />

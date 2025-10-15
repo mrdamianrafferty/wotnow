@@ -1,0 +1,18 @@
+/Users/damianrafferty/Projects/WotNow/node_modules/@supabase/supabase-js/src/lib/helpers.ts:86
+    throw new Error('supabaseUrl is required.')
+          ^
+
+
+Error: supabaseUrl is required.
+    at validateSupabaseUrl (/Users/damianrafferty/Projects/WotNow/node_modules/@supabase/supabase-js/src/lib/helpers.ts:86:11)
+    at new SupabaseClient (/Users/damianrafferty/Projects/WotNow/node_modules/@supabase/supabase-js/src/SupabaseClient.ts:104:40)
+    at createClient (/Users/damianrafferty/Projects/WotNow/node_modules/@supabase/supabase-js/src/index.ts:46:10)
+    at <anonymous> (/Users/damianrafferty/Projects/WotNow/scripts/query-rectangles.ts:3:18)
+    at Object.<anonymous> (/Users/damianrafferty/Projects/WotNow/scripts/query-rectangles.ts:48:17)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+    at Object.transformer (/Users/damianrafferty/Projects/WotNow/node_modules/tsx/dist/register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1275:32)
+    at Module._load (node:internal/modules/cjs/loader:1096:12)
+    at cjsLoader (node:internal/modules/esm/translators:298:15)
+
+Node.js v20.19.4

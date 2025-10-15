@@ -7,6 +7,7 @@ import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { useTideData } from '../../hooks/useTideData';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -28,6 +29,7 @@ interface WaitingSpeciesCardProps {
       data_source?: string;
     };
   };
+  location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
 }
@@ -38,14 +40,24 @@ interface WaitingSpeciesCardProps {
  */
 export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   species,
+  location,
   onRemove,
   onTogglePriority,
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
   const trend = getForecastTrend(species.forecast);
   
-  // Get conservative fishing time data for waiting species
-  const fishingTimeResult = getImmediateFishingTimes([species], 'waiting');
+  // Fetch real tide data for location
+  const tideInfo = useTideData(location ?? null);
+  
+  // Get conservative fishing time data for waiting species with location and tides
+  const fishingTimeResult = getImmediateFishingTimes(
+    [species], 
+    'waiting',
+    location?.lat,
+    location?.lon,
+    tideInfo ?? undefined
+  );
   const nextBestTime = fishingTimeResult.primaryWindow ? 
     `${fishingTimeResult.primaryWindow.startHour}:00` : 
     'Tomorrow 7am';

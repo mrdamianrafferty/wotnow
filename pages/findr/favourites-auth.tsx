@@ -20,12 +20,22 @@ import { FavouritesDashboard } from '../../components/favourites/FavouritesDashb
 import { SpeciesSelectionView } from '../../components/favourites/SpeciesSelectionView';
 import { NotificationSetupModal } from '../../components/favourites/NotificationSetupModal';
 import { LoadingSpinner } from '../../components/favourites/shared/LoadingSpinner';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import type { TrackedSpecies, Species, NotificationPreferences } from '../../types/favourites';
 
 export default function ModernFavouritesPage() {
   // Auth state
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  
+  // Location state
+  const { location } = useUnifiedLocation();
+  const { selectedCode } = usePersistentFindrSettings({
+    predictionDate: new Date().toISOString().split('T')[0],
+    language: 'en',
+  });
+  const rectangleCode = location?.rectangleCode ?? selectedCode ?? '31F2'; // Fallback to Brighton if no location set
   
   // State
   const [favourites, setFavourites] = useState<TrackedSpecies[]>([]);
@@ -65,8 +75,6 @@ export default function ModernFavouritesPage() {
     if (!user) return;
     
     try {
-      // TODO: Get user's location/rectangle code
-      const rectangleCode = '31F2'; // Hardcoded for now
       const response = await fetch(`/api/findr/species/suggestions?userId=${user.id}&icesSquare=${rectangleCode}`);
       const data = await response.json();
       
@@ -78,7 +86,7 @@ export default function ModernFavouritesPage() {
       // Fall back to mock data
       setSuggestions(getMockSuggestions());
     }
-  }, [user]);
+  }, [user, rectangleCode]);
   
   // Fetch favourites when user is authenticated
   const loadFavourites = useCallback(async () => {

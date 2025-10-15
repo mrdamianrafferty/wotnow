@@ -1,0 +1,109 @@
+{
+  "_comment": "PHASE 9.5: Species Guild Classifications - All 62 species assigned to weight profiles",
+  "_profiles": {
+    "pelagic": "Temperature-driven, substrate-independent (38% temp, 15% substrate)",
+    "surf_estuary": "Coastal generalists, salinity-sensitive (33% temp, 22% each)",
+    "reef_kelp": "Substrate-dominant, structure-bound (25% temp, 35% substrate)",
+    "benthic": "Bottom-dwelling, substrate-critical (28% temp, 30% substrate)",
+    "cephalopod": "Temperature & clarity-driven (32% temp, 23% substrate)",
+    "default_coastal": "Balanced generalist (30% temp, 25% substrate)"
+  },
+  "PELAGIC": [
+    {"code": "mac", "name": "Atlantic Mackerel", "rationale": "Pelagic shoaler, temperature-driven migrations"},
+    {"code": "hom", "name": "Horse Mackerel", "rationale": "Pelagic shoaler, follows warm water"},
+    {"code": "gar", "name": "Garfish", "rationale": "Surface hunter, temperature-sensitive"},
+    {"code": "pil", "name": "Sardine/Pilchard", "rationale": "Pelagic filter-feeder"},
+    {"code": "spr", "name": "Sprat", "rationale": "Small pelagic, shoaling species"},
+    {"code": "her", "name": "Herring", "rationale": "Classic pelagic, temperature-driven"},
+    {"code": "scy", "name": "Scad/Horse Mackerel", "rationale": "Pelagic predator"},
+    {"code": "san", "name": "Sandeel", "rationale": "Pelagic when active, substrate for refuge only"},
+    {"code": "lta", "name": "Blue Shark", "rationale": "Open ocean, temperature-driven"}
+  ],
+
+  "SURF_ESTUARY": [
+    {"code": "bss", "name": "Sea Bass", "rationale": "Coastal generalist, estuaries to reefs, salinity-tolerant"},
+    {"code": "mul", "name": "Grey Mullet", "rationale": "Euryhaline, estuaries to harbours"},
+    {"code": "fle", "name": "Flounder", "rationale": "Euryhaline flatfish, estuaries to coastal"},
+    {"code": "mug", "name": "Mullet species", "rationale": "Estuarine specialist"},
+    {"code": "fgm", "name": "Thick-lipped Grey Mullet", "rationale": "Estuarine, salinity-tolerant"}
+  ],
+
+  "REEF_KELP": [
+    {"code": "wrb", "name": "Ballan Wrasse", "rationale": "Rock/reef obligate, structure-bound"},
+    {"code": "wrc", "name": "Cuckoo Wrasse", "rationale": "Reef specialist"},
+    {"code": "WRK", "name": "Corkwing Wrasse", "rationale": "Kelp/rock specialist"},
+    {"code": "WRG", "name": "Goldsinny Wrasse", "rationale": "Small reef wrasse"},
+    {"code": "WRO", "name": "Rock Cook", "rationale": "Rocky shore specialist"},
+    {"code": "pol", "name": "Pollock", "rationale": "Reef/wreck hunter"},
+    {"code": "sai", "name": "Saithe/Coalfish", "rationale": "Reef-associated predator"},
+    {"code": "pok", "name": "Poor Cod/Bib", "rationale": "Pouting, rocky areas"},
+    {"code": "con", "name": "Conger Eel", "rationale": "Rocky crevice dweller"},
+    {"code": "GUR", "name": "Red Gurnard", "rationale": "Rocky bottom feeder"},
+    {"code": "GGR", "name": "Grey Gurnard", "rationale": "Mixed bottom, reef-associated"},
+    {"code": "gug", "name": "Tub Gurnard", "rationale": "Rocky substrate preference"},
+    {"code": "jod", "name": "John Dory", "rationale": "Reef ambush predator"},
+    {"code": "lin", "name": "Ling", "rationale": "Deep reef specialist"},
+    {"code": "bsp", "name": "Black Seabream", "rationale": "Reef schooling species"},
+    {"code": "sbr", "name": "Red Seabream", "rationale": "Rocky substrate"},
+    {"code": "sbg", "name": "Gilthead Seabream", "rationale": "Reef-associated"},
+    {"code": "sba", "name": "Axillary Seabream", "rationale": "Rocky areas"}
+  ],
+
+  "BENTHIC": [
+    {"code": "ple", "name": "Plaice", "rationale": "Sand/gravel obligate flatfish"},
+    {"code": "dab", "name": "Dab", "rationale": "Sandy bottom flatfish"},
+    {"code": "sol", "name": "Dover Sole", "rationale": "Sand/mud specialist (could be surf_estuary)"},
+    {"code": "ldb", "name": "Lemon Sole", "rationale": "Sandy substrate flatfish"},
+    {"code": "bll", "name": "Brill", "rationale": "Sandy bottom flatfish"},
+    {"code": "tur", "name": "Turbot", "rationale": "Sandy/rocky mix flatfish"},
+    {"code": "wee", "name": "Witch Flounder", "rationale": "Deeper sand/mud"},
+    {"code": "RJM", "name": "Thornback Ray", "rationale": "Sandy bottom dweller"},
+    {"code": "rjc", "name": "Blonde Ray", "rationale": "Clean sandy substrate"},
+    {"code": "RME", "name": "Small-eyed Ray", "rationale": "Sandy/muddy bottoms"},
+    {"code": "RUN", "name": "Undulate Ray", "rationale": "Sandy substrate"},
+    {"code": "SSH", "name": "Starry Smoothhound", "rationale": "Sandy bottom shark"},
+    {"code": "CSH", "name": "Common Smoothhound", "rationale": "Sand/shell substrate"},
+    {"code": "gaj", "name": "Tope Shark", "rationale": "Bottom-oriented (could be pelagic)"},
+    {"code": "cod", "name": "Atlantic Cod", "rationale": "Bottom-oriented, various substrates"},
+    {"code": "had", "name": "Haddock", "rationale": "Clean sand/gravel feeder"},
+    {"code": "whg", "name": "Whiting", "rationale": "Sandy/muddy bottoms"},
+    {"code": "par", "name": "Common Dragonet", "rationale": "Sandy bottom dweller"},
+    {"code": "wra", "name": "Lesser-spotted Dogfish", "rationale": "Bottom shark"},
+    {"code": "PIC", "name": "Picarel", "rationale": "Bottom-oriented"},
+    {"code": "dex", "name": "Red Mullet", "rationale": "Sand/mud forager"},
+    {"code": "CMB", "name": "Ballan Wrasse", "rationale": "Bottom-oriented if not reef"},
+    {"code": "trs", "name": "Triggerfish", "rationale": "Bottom-associated"}
+  ],
+
+  "CEPHALOPOD": [
+    {"code": "sqc", "name": "Common Squid", "rationale": "Temperature-sensitive, egg-laying on clean bottom"},
+    {"code": "cut", "name": "Common Cuttlefish", "rationale": "Temperature-driven, substrate for eggs"},
+    {"code": "oct", "name": "Common Octopus", "rationale": "Temperature-sensitive, needs structure/substrate"}
+  ],
+
+  "DEFAULT_COASTAL": [
+    {"code": "brs", "name": "Sea Bream", "rationale": "Generalist if not classified"},
+    {"code": "BUH", "name": "Bass species", "rationale": "Unclassified bass"},
+    {"code": "CMP", "name": "Unclassified", "rationale": "Default if unknown"},
+    {"code": "SAL", "name": "Pollack/Saithe", "rationale": "If unclear reef vs pelagic"}
+  ],
+
+  "NOTES": {
+    "tope": "Could be PELAGIC or BENTHIC - chose BENTHIC (bottom-oriented)",
+    "flounder": "Could be SURF_ESTUARY or BENTHIC - chose SURF_ESTUARY (salinity tolerance)",
+    "dover_sole": "Could be SURF_ESTUARY or BENTHIC - chose BENTHIC (substrate critical)",
+    "bass": "Could be SURF_ESTUARY or REEF_KELP - chose SURF_ESTUARY (more generalist)",
+    "cod": "Could be BENTHIC or DEFAULT_COASTAL - chose BENTHIC (substrate-driven feeding)",
+    "john_dory": "Could be REEF_KELP or DEFAULT_COASTAL - chose REEF_KELP (structure-associated)"
+  },
+
+  "SUMMARY": {
+    "pelagic_count": 9,
+    "surf_estuary_count": 5,
+    "reef_kelp_count": 18,
+    "benthic_count": 23,
+    "cephalopod_count": 3,
+    "default_coastal_count": 4,
+    "total": 62
+  }
+}

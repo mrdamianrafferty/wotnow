@@ -26,7 +26,7 @@ import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { FindrModal } from '../../components/findr/Modal';
 import { FishSpeciesModal } from '../../components/findr/FishSpeciesModal';
-import { SettingsForm } from '../../components/findr/SettingsForm';
+import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
 import { SkeletonCard } from '../../components/findr/SkeletonCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
@@ -34,7 +34,7 @@ import {
   type RectangleOption,
 } from '../../hooks/useFindrRectangleOptions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { normalizeRectangleCode } from '../../lib/findr/rectangle';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { getTodayIso } from '../../lib/date/today';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 import '../../lib/buildInfo'; // Log build metadata on mount
@@ -556,9 +556,10 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 
 const FindrPage: React.FC = () => {
   const router = useRouter();
+  const { location } = useUnifiedLocation();
   const {
     options: rectangleOptions,
-    loading: rectangleOptionsLoading,
+    loading: _rectangleOptionsLoading,
     error: rectangleOptionsError,
     isFallback: rectangleOptionsUsingFallback,
   } = useFindrRectangleOptions(FALLBACK_RECTANGLE_OPTIONS);
@@ -566,12 +567,10 @@ const FindrPage: React.FC = () => {
   const {
     selectedCode,
     setSelectedCode,
-    manualCode,
-    setManualCode,
     predictionDate,
     setPredictionDate,
     language,
-    setLanguage,
+    setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: TODAY_ISO, language: 'en' });
   
   // Use favourites hook for hybrid localStorage + Supabase sync
@@ -603,26 +602,40 @@ const FindrPage: React.FC = () => {
     }
   }, [router]);
 
-  const manualNormalized = useMemo(() => normalizeRectangleCode(manualCode), [manualCode]);
-  const activeRectangle = manualNormalized ?? (selectedCode || null);
+  // Rectangle selection priority:
+  // 1. Rectangle from UnifiedLocationContext (from header picker)
+  // 2. Rectangle from URL query parameter
+  // 3. selectedCode from persisted settings (fallback)
+  const rectangleFromContext = location?.rectangleCode;
+  const rectangleFromQuery = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
+  const effectiveSelectedCode = rectangleFromContext ?? rectangleFromQuery ?? selectedCode;
+  
+  const activeRectangle = effectiveSelectedCode ?? null;
   const activeOption = useMemo<RectangleOption | null>(
-    () => rectangleOptions.find((option) => option.code === (manualNormalized ?? selectedCode)) ?? null,
-    [manualNormalized, rectangleOptions, selectedCode]
+    () => rectangleOptions.find((option) => option.code === activeRectangle) ?? null,
+    [rectangleOptions, activeRectangle]
   );
 
-  // Auto-select first rectangle if none selected
+  // Sync selectedCode when location context changes
   useEffect(() => {
-    // Don't auto-select if manual code is being used
-    if (manualNormalized) return;
+    if (rectangleFromContext && rectangleFromContext !== selectedCode) {
+      setSelectedCode(rectangleFromContext);
+    }
+  }, [rectangleFromContext, selectedCode, setSelectedCode]);
+
+  // Auto-select first rectangle if none selected (fallback only)
+  useEffect(() => {
+    // Don't auto-select if we have a rectangle from context or query
+    if (rectangleFromContext || rectangleFromQuery) return;
     // Don't auto-select if valid rectangle already selected
     if (selectedCode && rectangleOptions.some(opt => opt.code === selectedCode)) return;
     // Don't auto-select if rectangles not loaded yet
     if (rectangleOptions.length === 0) return;
     // Auto-select first rectangle
     setSelectedCode(rectangleOptions[0].code);
-  }, [manualNormalized, rectangleOptions, selectedCode, setSelectedCode]);
+  }, [rectangleFromContext, rectangleFromQuery, rectangleOptions, selectedCode, setSelectedCode]);
 
-  const { predictions, loading, error, lastUpdated, region: apiRegion, reload } = useFishingPredictions({
+  const { predictions, loading, error, lastUpdated, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
     predictionDate,
     language,
@@ -692,45 +705,23 @@ const FindrPage: React.FC = () => {
 
   const currentCard = cardQueue[0] ?? null;
   const visibleCards = useMemo(() => cardQueue.slice(0, 3), [cardQueue]);
-  // Use region from API response if available, otherwise fall back to activeOption
-  const regionLabel = apiRegion ?? activeOption?.region ?? (manualNormalized ? 'Custom area' : undefined);
+  // Use region from user-selected location (matches header display)
+  // This is authoritative as it's what the user chose, not derived from API
+  const regionLabel = activeOption?.region;
 
   const favoriteCards = useMemo(
     () => cards.filter((card) => favoritesSet.has(getFavouriteKeyFromCard(card))),
     [cards, favoritesSet]
   );
 
-  const manualInvalid = manualCode.trim().length > 0 && !manualNormalized;
   const totalPredictions = cards.length;
   const deckResetDisabled = loading || cardQueue.length === cards.length;
-
-  const handleSelectOption = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setSelectedCode(event.target.value);
-      setManualCode('');
-    },
-    [setManualCode, setSelectedCode]
-  );
-
-  const handleManualCodeChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setManualCode(event.target.value.toUpperCase());
-    },
-    [setManualCode]
-  );
 
   const handleDateChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setPredictionDate(event.target.value);
     },
     [setPredictionDate]
-  );
-
-  const handleLanguageChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setLanguage(event.target.value);
-    },
-    [setLanguage]
   );
 
   const handleSetToday = useCallback(() => {
@@ -978,7 +969,7 @@ const FindrPage: React.FC = () => {
                       <div className="grid gap-2 text-xs text-base-content/70">
                         {card.rationale.length > 0 && (
                           <div>
-                                                        <p className="font-semibold text-base-content/80"><TranslatedText text="Why they're active" /></p>
+                                                        <p className="font-semibold text-base-content/80"><TranslatedText text="How are you today, hun?" /></p>
                             <ul className="list-disc pl-4 space-y-1">
                               {card.rationale.slice(0, 3).map((item, idx) => (
                                 <li key={`${card.id}-rationale-${idx}`}>{item}</li>
@@ -1009,32 +1000,76 @@ const FindrPage: React.FC = () => {
         </div>
       </main>
 
-      <FindrModal title="Area settings" open={settingsOpen} onClose={() => setSettingsOpen(false)}>
-        <SettingsForm
-          rectangleOptions={rectangleOptions}
-          optionsLoading={rectangleOptionsLoading}
-          optionsError={rectangleOptionsError}
-          usingFallback={rectangleOptionsUsingFallback}
-          selectedCode={selectedCode}
-          manualCode={manualCode}
-          manualNormalized={manualNormalized}
-          manualInvalid={manualInvalid}
-          predictionDate={predictionDate}
-          language={language}
-          loading={loading}
-          deckResetDisabled={deckResetDisabled}
-          activeOption={activeOption}
-          activeRectangle={activeRectangle}
-          formattedLastUpdated={formattedLastUpdated}
-          totalPredictions={totalPredictions}
-          onSelectOption={handleSelectOption}
-          onManualCodeChange={handleManualCodeChange}
-          onDateChange={handleDateChange}
-          onSetToday={handleSetToday}
-          onLanguageChange={handleLanguageChange}
-          onReload={reload}
-          onResetDeck={resetDeck}
-        />
+      <FindrModal title="Your fishing area" open={settingsOpen} onClose={() => setSettingsOpen(false)}>
+        <div className="space-y-6">
+          <FishingAreaInfo
+            activeOption={activeOption}
+            activeRectangle={activeRectangle}
+          />
+          
+          {/* Prediction Settings */}
+          <div className="card bg-base-100 border border-base-300">
+            <div className="card-body">
+              <h3 className="text-lg font-semibold mb-4">
+                <TranslatedText text="Prediction settings" />
+              </h3>
+              
+              <div className="space-y-6">
+                {/* Prediction Date */}
+                <div className="space-y-3">
+                  <label className="font-semibold text-sm">
+                    <TranslatedText text="Prediction date" />
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="date"
+                      value={predictionDate}
+                      onChange={handleDateChange}
+                      className="input input-bordered"
+                      aria-label="Prediction date"
+                    />
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleSetToday}>
+                      <TranslatedText text="Today" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="divider my-4"></div>
+
+                {/* Tools */}
+                <div className="space-y-3">
+                  <label className="font-semibold text-sm">
+                    <TranslatedText text="Prediction tools" />
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={reload}
+                      disabled={!activeRectangle || loading}
+                    >
+                      <TranslatedText text="Refresh predictions" />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={resetDeck}
+                      disabled={deckResetDisabled}
+                    >
+                      <TranslatedText text="Reset lineup" />
+                    </button>
+                  </div>
+                  <p className="text-xs text-base-content/70">
+                    <TranslatedText text="Last checked" />: {formattedLastUpdated || <TranslatedText text="Waiting on the latest cast" />}
+                  </p>
+                  <p className="text-xs text-base-content/60">
+                    <TranslatedText text="Species loaded" />: {totalPredictions}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </FindrModal>
 
       <FindrModal title="Saved fish" open={favoritesOpen} onClose={() => setFavoritesOpen(false)}>

@@ -1,0 +1,4876 @@
+[
+  {
+    "species_code": "wrb",
+    "scientific_name": "Labrus bergylta",
+    "name_en": "Ballan Wrasse",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 50,
+        "optimal_min": 2,
+        "optimal_max": 30,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 572,
+        "scientific_name_lower": "labrus bergylta",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 50,
+        "DepthRangeComShallow": 2,
+        "DepthRangeComDeep": 30,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 572,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 4.5,
+          "p25": 8,
+          "p50": 14,
+          "p75": 19.5,
+          "p90": 24.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "brs",
+    "scientific_name": "Spondyliosoma cantharus",
+    "name_en": "Black Seabream",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 300,
+        "optimal_min": 13,
+        "optimal_max": 29,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [],
+      "habitat": "benthopelagic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1356,
+        "scientific_name_lower": "spondyliosoma cantharus",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 300,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 1356,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 7,
+          "p25": 13,
+          "p50": 17,
+          "p75": 29,
+          "p90": 46.75
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "bll",
+    "scientific_name": "Scophthalmus rhombus",
+    "name_en": "Brill",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 50,
+        "optimal_min": 9.5,
+        "optimal_max": 30,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 529,
+        "scientific_name_lower": "scophthalmus rhombus",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 50,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 529,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 6.5,
+          "p25": 9.5,
+          "p50": 18,
+          "p75": 30,
+          "p90": 46
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "BUH",
+    "scientific_name": "Scyliorhinus stellaris",
+    "name_en": "Bull Huss",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 400,
+        "optimal_min": 20,
+        "optimal_max": 63,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": "reef-associated",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 854,
+        "scientific_name_lower": "scyliorhinus stellaris",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 400,
+        "DepthRangeComShallow": 20,
+        "DepthRangeComDeep": 63,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 854,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 12.5,
+          "p25": 21,
+          "p50": 38.5,
+          "p75": 58.4,
+          "p90": 97
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "cod",
+    "scientific_name": "Gadus morhua",
+    "name_en": "Cod (Coastal)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 150,
+        "optimal_max": 200,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 69,
+        "scientific_name_lower": "gadus morhua",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 600,
+        "DepthRangeComShallow": 150,
+        "DepthRangeComDeep": 200,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 69,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 16,
+          "p25": 26.5,
+          "p50": 44,
+          "p75": 113,
+          "p90": 251
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "CMB",
+    "scientific_name": "Serranus cabrilla",
+    "name_en": "Comber",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 500,
+        "optimal_min": 15.5,
+        "optimal_max": 80,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "mud",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1353,
+        "scientific_name_lower": "serranus cabrilla",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 500,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1353,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": -1,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": -1,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 2,
+          "p25": 15.5,
+          "p50": 49.04509,
+          "p75": 80,
+          "p90": 116
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "cut",
+    "scientific_name": "Sepia officinalis",
+    "name_en": "Common Cuttlefish",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 8,
+        "typical_max": 101,
+        "optimal_min": 16,
+        "optimal_max": 66,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 8,
+          "p25": 16,
+          "p50": 38,
+          "p75": 65.5,
+          "p90": 101
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "lin",
+    "scientific_name": "Molva molva",
+    "name_en": "Common Ling",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 100,
+        "typical_max": 1000,
+        "optimal_min": 100,
+        "optimal_max": 400,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 33,
+        "scientific_name_lower": "molva molva",
+        "DepthRangeShallow": 100,
+        "DepthRangeDeep": 1000,
+        "DepthRangeComShallow": 100,
+        "DepthRangeComDeep": 400,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 33,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 51.5,
+          "p25": 85.985,
+          "p50": 123.35499999999999,
+          "p75": 153.92000000000002,
+          "p90": 188.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "oct",
+    "scientific_name": "Octopus vulgaris",
+    "name_en": "Common Octopus",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 12,
+        "typical_max": 134,
+        "optimal_min": 37,
+        "optimal_max": 90,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 12,
+          "p25": 37,
+          "p50": 60,
+          "p75": 90,
+          "p90": 134
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "CSH",
+    "scientific_name": "Mustelus mustelus",
+    "name_en": "Common Smoothhound",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 624,
+        "optimal_min": 5,
+        "optimal_max": 50,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed",
+        "sand"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 4996,
+        "scientific_name_lower": "mustelus mustelus",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 624,
+        "DepthRangeComShallow": 5,
+        "DepthRangeComDeep": 50,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 4996,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 22.2,
+          "p25": 33,
+          "p50": 43,
+          "p75": 77.5,
+          "p90": 114.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sqc",
+    "scientific_name": "Loligo vulgaris",
+    "name_en": "Common Squid",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 14,
+        "typical_max": 69,
+        "optimal_min": 16,
+        "optimal_max": 47,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 14,
+          "p25": 16,
+          "p50": 25.5,
+          "p75": 46.5,
+          "p90": 69
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "con",
+    "scientific_name": "Conger conger",
+    "name_en": "Conger Eel",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 29.5,
+        "optimal_max": 104.5,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 301,
+        "scientific_name_lower": "conger conger",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 1171,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 301,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 15,
+          "p25": 29.5,
+          "p50": 64.5,
+          "p75": 104.5,
+          "p90": 211.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "WRK",
+    "scientific_name": "Symphodus melops",
+    "name_en": "Corkwing Wrasse",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 4,
+        "typical_max": 15,
+        "optimal_min": 6,
+        "optimal_max": 9,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 59,
+        "scientific_name_lower": "symphodus melops",
+        "DepthRangeShallow": null,
+        "DepthRangeDeep": null,
+        "DepthRangeComShallow": 1,
+        "DepthRangeComDeep": 30,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 59,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 4,
+          "p25": 6.0999999,
+          "p50": 8,
+          "p75": 9,
+          "p90": 15.0999999
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "wrc",
+    "scientific_name": "Labrus mixtus",
+    "name_en": "Cuckoo Wrasse",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 2,
+        "typical_max": 200,
+        "optimal_min": 40,
+        "optimal_max": 80,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1375,
+        "scientific_name_lower": "labrus mixtus",
+        "DepthRangeShallow": 2,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": 40,
+        "DepthRangeComDeep": 80,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 1375,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 9.5,
+          "p25": 14.25,
+          "p50": 19,
+          "p75": 24,
+          "p90": 32.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "dab",
+    "scientific_name": "Limanda limanda",
+    "name_en": "Dab",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 20,
+        "typical_max": 150,
+        "optimal_min": 21,
+        "optimal_max": 60,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 695,
+        "scientific_name_lower": "limanda limanda",
+        "DepthRangeShallow": 20,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 695,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 10,
+          "p25": 21,
+          "p50": 38,
+          "p75": 60,
+          "p90": 84
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "dex",
+    "scientific_name": "Dentex dentex",
+    "name_en": "Dentex",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 15,
+        "optimal_max": 50,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 439,
+        "scientific_name_lower": "dentex dentex",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": 15,
+        "DepthRangeComDeep": 50,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 439,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": -1,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 5,
+          "p25": 13.1,
+          "p50": 33,
+          "p75": 50,
+          "p90": 87.33
+        },
+        "salinity": null,
+        "sample_size": 488,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sol",
+    "scientific_name": "Solea solea",
+    "name_en": "Dover Sole",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 10,
+        "optimal_max": 60,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "sand"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 525,
+        "scientific_name_lower": "solea solea",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": 10,
+        "DepthRangeComDeep": 60,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 525,
+          "Rocky": 0,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 8.2,
+          "p25": 15,
+          "p50": 22,
+          "p75": 35,
+          "p90": 45
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "fgm",
+    "scientific_name": "Mugil cephalus",
+    "name_en": "Flathead Grey Mullet",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 0.25,
+        "optimal_max": 10,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "mud"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 785,
+        "scientific_name_lower": "mugil cephalus",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 120,
+        "DepthRangeComShallow": 0,
+        "DepthRangeComDeep": 10,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 785,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": -1,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": -1,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 0.15,
+          "p25": 0.25,
+          "p50": 0.4,
+          "p75": 0.6499999999999999,
+          "p90": 1.4
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "fle",
+    "scientific_name": "Platichthys flesus",
+    "name_en": "Flounder",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 100,
+        "optimal_min": 15.5,
+        "optimal_max": 33.5,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1341,
+        "scientific_name_lower": "platichthys flesus",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 100,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1341,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 9.5,
+          "p25": 15.5,
+          "p50": 24,
+          "p75": 33.5,
+          "p90": 40
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "gar",
+    "scientific_name": "Belone belone",
+    "name_en": "Garfish (Needlefish)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 17,
+        "optimal_max": 128,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": "pelagic-oceanic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 47,
+        "scientific_name_lower": "belone belone",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": null,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-oceanic",
+        "ecology": {
+          "SpecCode": 47,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 7.5,
+          "p25": 17,
+          "p50": 36,
+          "p75": 128,
+          "p90": 290.44000000000005
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sbg",
+    "scientific_name": "Gilthead Seabream",
+    "name_en": "Gilthead Seabream",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": null,
+        "optimal_max": null,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": false,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "obis": null
+    }
+  },
+  {
+    "species_code": "WRG",
+    "scientific_name": "Ctenolabrus rupestris",
+    "name_en": "Goldsinny Wrasse",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 50,
+        "optimal_min": 1,
+        "optimal_max": 20,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": "reef-associated",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 61,
+        "scientific_name_lower": "ctenolabrus rupestris",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 50,
+        "DepthRangeComShallow": 1,
+        "DepthRangeComDeep": 20,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 61,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 6,
+          "p25": 8,
+          "p50": 9,
+          "p75": 18.5,
+          "p90": 25.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "gaj",
+    "scientific_name": "Seriola dumerili",
+    "name_en": "Greater Amberjack",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 360,
+        "optimal_min": 18,
+        "optimal_max": 72,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1005,
+        "scientific_name_lower": "seriola dumerili",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 360,
+        "DepthRangeComShallow": 18,
+        "DepthRangeComDeep": 72,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 1005,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": -1,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 10.5,
+          "p25": 15.8,
+          "p50": 23,
+          "p75": 70,
+          "p90": 96
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "wee",
+    "scientific_name": "Trachinus draco",
+    "name_en": "Greater Weever",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 150,
+        "optimal_min": 1,
+        "optimal_max": 30,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1363,
+        "scientific_name_lower": "trachinus draco",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": 1,
+        "DepthRangeComDeep": 30,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1363,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 8.5,
+          "p25": 13,
+          "p50": 20,
+          "p75": 32,
+          "p90": 57.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "GGR",
+    "scientific_name": "Eutrigla gurnardus",
+    "name_en": "Grey Gurnard",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 340,
+        "optimal_min": 10,
+        "optimal_max": 150,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 68,
+        "scientific_name_lower": "eutrigla gurnardus",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 340,
+        "DepthRangeComShallow": 10,
+        "DepthRangeComDeep": 150,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 68,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 28,
+          "p25": 41.5,
+          "p50": 65,
+          "p75": 90,
+          "p90": 130
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "mug",
+    "scientific_name": "Chelon labrosus",
+    "name_en": "Grey Mullet",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 23,
+        "optimal_min": 11,
+        "optimal_max": 21,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 2499,
+        "scientific_name_lower": "chelon labrosus",
+        "DepthRangeShallow": null,
+        "DepthRangeDeep": null,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 2499,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 4.75,
+          "p25": 10.5,
+          "p50": 16,
+          "p75": 21.39166667,
+          "p90": 23
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "had",
+    "scientific_name": "Melanogrammus aeglefinus",
+    "name_en": "Haddock",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 450,
+        "optimal_min": 10,
+        "optimal_max": 200,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1381,
+        "scientific_name_lower": "melanogrammus aeglefinus",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 450,
+        "DepthRangeComShallow": 10,
+        "DepthRangeComDeep": 200,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1381,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 24,
+          "p25": 40,
+          "p50": 82,
+          "p75": 120,
+          "p90": 145
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "her",
+    "scientific_name": "Clupea harengus",
+    "name_en": "Herring",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 24.5,
+        "optimal_max": 200,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": "benthopelagic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 24,
+        "scientific_name_lower": "clupea harengus",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 364,
+        "DepthRangeComShallow": 0,
+        "DepthRangeComDeep": 200,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 24,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 15,
+          "p25": 24.5,
+          "p50": 38,
+          "p75": 75,
+          "p90": 129
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "hom",
+    "scientific_name": "Trachurus trachurus",
+    "name_en": "Horse Mackerel",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 100,
+        "optimal_max": 200,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1365,
+        "scientific_name_lower": "trachurus trachurus",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 1050,
+        "DepthRangeComShallow": 100,
+        "DepthRangeComDeep": 200,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 1365,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": -1,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 23,
+          "p25": 41,
+          "p50": 72.5,
+          "p75": 138,
+          "p90": 376
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "jod",
+    "scientific_name": "Zeus faber",
+    "name_en": "John Dory",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 400,
+        "optimal_min": 50,
+        "optimal_max": 150,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [],
+      "habitat": "benthopelagic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1370,
+        "scientific_name_lower": "zeus faber",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 400,
+        "DepthRangeComShallow": 50,
+        "DepthRangeComDeep": 150,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 1370,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 34.5,
+          "p25": 51.5,
+          "p50": 70,
+          "p75": 100,
+          "p90": 135
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "lta",
+    "scientific_name": "Euthynnus alletteratus",
+    "name_en": "Little Tunny",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 150,
+        "optimal_min": 39,
+        "optimal_max": 642.5,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [],
+      "habitat": "pelagic-oceanic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 97,
+        "scientific_name_lower": "euthynnus alletteratus",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-oceanic",
+        "ecology": {
+          "SpecCode": 97,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 14,
+          "p25": 39,
+          "p50": 215,
+          "p75": 642.5,
+          "p90": 1050
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "mac",
+    "scientific_name": "Scomber scombrus",
+    "name_en": "Mackerel",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 63.5,
+        "optimal_max": 200,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": "pelagic-neritic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 118,
+        "scientific_name_lower": "scomber scombrus",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 1000,
+        "DepthRangeComShallow": 0,
+        "DepthRangeComDeep": 200,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 118,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 33.5,
+          "p25": 63.5,
+          "p50": 114,
+          "p75": 272,
+          "p90": 1000
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "ldb",
+    "scientific_name": "Lepidorhombus whiffiagonis",
+    "name_en": "Megrim",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 100,
+        "typical_max": 700,
+        "optimal_min": 70.5,
+        "optimal_max": 155,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 28,
+        "scientific_name_lower": "lepidorhombus whiffiagonis",
+        "DepthRangeShallow": 100,
+        "DepthRangeDeep": 700,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "bathydemersal",
+        "ecology": {
+          "SpecCode": 28,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 59.5,
+          "p25": 70.5,
+          "p50": 110,
+          "p75": 155,
+          "p90": 180
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "CMP",
+    "scientific_name": "Serranus scriba",
+    "name_en": "Painted Comber",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 150,
+        "optimal_min": 2,
+        "optimal_max": 30,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1761,
+        "scientific_name_lower": "serranus scriba",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": 30,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1761,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 2,
+          "p25": 2,
+          "p50": 7.5,
+          "p75": 15.5,
+          "p90": 25.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "par",
+    "scientific_name": "Sparisoma cretense",
+    "name_en": "Parrotfish",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 20,
+        "typical_max": 50,
+        "optimal_min": 6.5,
+        "optimal_max": 14.5,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 13025,
+        "scientific_name_lower": "sparisoma cretense",
+        "DepthRangeShallow": 20,
+        "DepthRangeDeep": 50,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 13025,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 2,
+          "p25": 6.5,
+          "p50": 11,
+          "p75": 14.5,
+          "p90": 18
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "PIC",
+    "scientific_name": "Spicara smaris",
+    "name_en": "Picarel",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 15,
+        "typical_max": 328,
+        "optimal_min": 46,
+        "optimal_max": 87.05088,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "pelagic-neritic",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1766,
+        "scientific_name_lower": "spicara smaris",
+        "DepthRangeShallow": 15,
+        "DepthRangeDeep": 328,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 1766,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 27.5,
+          "p25": 46,
+          "p50": 63.7032,
+          "p75": 87.05088,
+          "p90": 118.872
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "ple",
+    "scientific_name": "Pleuronectes platessa",
+    "name_en": "Plaice",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 10,
+        "optimal_max": 50,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1342,
+        "scientific_name_lower": "pleuronectes platessa",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": 10,
+        "DepthRangeComDeep": 50,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1342,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 10,
+          "p25": 20,
+          "p50": 30,
+          "p75": 48,
+          "p90": 77
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "pol",
+    "scientific_name": "Pollachius pollachius",
+    "name_en": "Pollack",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 40,
+        "typical_max": 200,
+        "optimal_min": 40,
+        "optimal_max": 100,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 34,
+        "scientific_name_lower": "pollachius pollachius",
+        "DepthRangeShallow": 40,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": 40,
+        "DepthRangeComDeep": 100,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 34,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 7.900000105,
+          "p25": 13.5999999,
+          "p50": 23.75,
+          "p75": 85,
+          "p90": 132
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "GUR",
+    "scientific_name": "Chelidonichthys cuculus",
+    "name_en": "Red Gurnard",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 15,
+        "typical_max": 400,
+        "optimal_min": 30,
+        "optimal_max": 250,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 44,
+        "scientific_name_lower": "chelidonichthys cuculus",
+        "DepthRangeShallow": 15,
+        "DepthRangeDeep": 400,
+        "DepthRangeComShallow": 30,
+        "DepthRangeComDeep": 250,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 44,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 39.5,
+          "p25": 54,
+          "p50": 69,
+          "p75": 91.5,
+          "p90": 135
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "mul",
+    "scientific_name": "Mullus surmuletus",
+    "name_en": "Red Mullet",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 409,
+        "optimal_min": 18.5,
+        "optimal_max": 64,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1327,
+        "scientific_name_lower": "mullus surmuletus",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 409,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1327,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 12,
+          "p25": 18.5,
+          "p50": 35,
+          "p75": 64,
+          "p90": 102
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sbr",
+    "scientific_name": "Pagellus bogaraveo",
+    "name_en": "Red Seabream",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 150,
+        "typical_max": 700,
+        "optimal_min": 150,
+        "optimal_max": 300,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 890,
+        "scientific_name_lower": "pagellus bogaraveo",
+        "DepthRangeShallow": 150,
+        "DepthRangeDeep": 700,
+        "DepthRangeComShallow": 150,
+        "DepthRangeComDeep": 300,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 890,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 44.5,
+          "p25": 80,
+          "p50": 149,
+          "p75": 387,
+          "p90": 571
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "WRO",
+    "scientific_name": "Centrolabrus exoletus",
+    "name_en": "Rock Cook",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 7,
+        "typical_max": 26,
+        "optimal_min": 11,
+        "optimal_max": 21,
+        "unit": "meters",
+        "source": "obis"
+      },
+      "substrate": [
+        "rock",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 55,
+        "scientific_name_lower": "centrolabrus exoletus",
+        "DepthRangeShallow": null,
+        "DepthRangeDeep": null,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "reef-associated",
+        "ecology": {
+          "SpecCode": 55,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": -1,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 7,
+          "p25": 10.5999999,
+          "p50": 16.5,
+          "p75": 21,
+          "p90": 25.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "pok",
+    "scientific_name": "Pollachius virens",
+    "name_en": "Saithe (Pollachius virens)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 37,
+        "typical_max": 364,
+        "optimal_min": 52.5,
+        "optimal_max": 155,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1343,
+        "scientific_name_lower": "pollachius virens",
+        "DepthRangeShallow": 37,
+        "DepthRangeDeep": 364,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1343,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 26.5,
+          "p25": 52.5,
+          "p50": 117,
+          "p75": 155,
+          "p90": 195
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sai",
+    "scientific_name": "Saithe/Pollock",
+    "name_en": "Saithe/Pollock",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": null,
+        "optimal_max": null,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": false,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "obis": null
+    }
+  },
+  {
+    "species_code": "SAL",
+    "scientific_name": "Sarpa salpa",
+    "name_en": "Salema (Saupe)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 70,
+        "optimal_min": 2,
+        "optimal_max": 7.5,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "sand",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 204,
+        "scientific_name_lower": "sarpa salpa",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 70,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 204,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 2,
+          "p25": 2,
+          "p50": 2,
+          "p75": 7.5,
+          "p90": 15.5
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "san",
+    "scientific_name": "Ammodytes tobianus",
+    "name_en": "Sand Eel",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 96,
+        "optimal_min": 8.5,
+        "optimal_max": 35,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 38,
+        "scientific_name_lower": "ammodytes tobianus",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 96,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 38,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 4.1,
+          "p25": 8.5,
+          "p50": 17,
+          "p75": 35,
+          "p90": 62
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "pil",
+    "scientific_name": "Sardina pilchardus",
+    "name_en": "Sardine",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 100,
+        "optimal_min": 25,
+        "optimal_max": 100,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [],
+      "habitat": "pelagic-neritic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1350,
+        "scientific_name_lower": "sardina pilchardus",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 100,
+        "DepthRangeComShallow": 25,
+        "DepthRangeComDeep": 100,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 1350,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 14.1,
+          "p25": 22,
+          "p50": 38.5,
+          "p75": 61.6,
+          "p90": 82
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "bss",
+    "scientific_name": "Dicentrarchus labrax",
+    "name_en": "Sea Bass",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 100,
+        "optimal_min": 14.5,
+        "optimal_max": 43,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock",
+        "sand"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 63,
+        "scientific_name_lower": "dicentrarchus labrax",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 100,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 63,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 6.25,
+          "p25": 14.5,
+          "p50": 32,
+          "p75": 43,
+          "p90": 51
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "sba",
+    "scientific_name": "Sparus aurata",
+    "name_en": "Sea Bream (Dorada)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 1,
+        "typical_max": 150,
+        "optimal_min": 1,
+        "optimal_max": 30,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "sand",
+        "weed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1164,
+        "scientific_name_lower": "sparus aurata",
+        "DepthRangeShallow": 1,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": 1,
+        "DepthRangeComDeep": 30,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1164,
+          "Rocky": 0,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": -1,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 6.2,
+          "p25": 10.5,
+          "p50": 27,
+          "p75": 43,
+          "p90": 60
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "trs",
+    "scientific_name": "Salmo trutta",
+    "name_en": "Sea Trout",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 1,
+        "optimal_max": 2,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 238,
+        "scientific_name_lower": "salmo trutta",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 28,
+        "DepthRangeComShallow": 1,
+        "DepthRangeComDeep": 2,
+        "Fresh": 1,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 238,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": null,
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "RME",
+    "scientific_name": "Raja microocellata",
+    "name_en": "Small-eyed Ray",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 3,
+        "typical_max": 60,
+        "optimal_min": 25,
+        "optimal_max": 41,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "mixed",
+        "sand"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 5492,
+        "scientific_name_lower": "raja microocellata",
+        "DepthRangeShallow": null,
+        "DepthRangeDeep": 100,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 5492,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 16,
+          "p25": 25,
+          "p50": 34.5,
+          "p75": 41,
+          "p90": 49
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "scy",
+    "scientific_name": "Scyliorhinus canicula",
+    "name_en": "Small-spotted Catshark",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 780,
+        "optimal_min": 80,
+        "optimal_max": 100,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 845,
+        "scientific_name_lower": "scyliorhinus canicula",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 780,
+        "DepthRangeComShallow": 80,
+        "DepthRangeComDeep": 100,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 845,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 32,
+          "p25": 47,
+          "p50": 65,
+          "p75": 85,
+          "p90": 130
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "bsp",
+    "scientific_name": "Dicentrarchus punctatus",
+    "name_en": "Spotted Bass",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": 14,
+        "optimal_max": 15,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "rock",
+        "sand"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 394,
+        "scientific_name_lower": "dicentrarchus punctatus",
+        "DepthRangeShallow": 30,
+        "DepthRangeDeep": null,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 394,
+          "Rocky": -1,
+          "Sand": -1,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": -1,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 13.5,
+          "p25": 14,
+          "p50": 14,
+          "p75": 15,
+          "p90": 23
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "RJM",
+    "scientific_name": "Raja montagui",
+    "name_en": "Spotted Ray",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 8,
+        "typical_max": 530,
+        "optimal_min": 36.5,
+        "optimal_max": 74,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed",
+        "sand"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 4329,
+        "scientific_name_lower": "raja montagui",
+        "DepthRangeShallow": 8,
+        "DepthRangeDeep": 530,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 4329,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 30,
+          "p25": 36.5,
+          "p50": 47.5,
+          "p75": 74,
+          "p90": 102
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "spr",
+    "scientific_name": "Sprattus sprattus",
+    "name_en": "Sprat",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 150,
+        "optimal_min": 23.5,
+        "optimal_max": 46,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [],
+      "habitat": "pelagic-neritic",
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1357,
+        "scientific_name_lower": "sprattus sprattus",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 150,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "pelagic-neritic",
+        "ecology": {
+          "SpecCode": 1357,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": -1,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 14.5,
+          "p25": 23.5,
+          "p50": 35,
+          "p75": 46,
+          "p90": 78
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "SSH",
+    "scientific_name": "Mustelus asterias",
+    "name_en": "Starry Smoothhound",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 3,
+        "typical_max": 60,
+        "optimal_min": 32,
+        "optimal_max": 69,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [
+        "mixed",
+        "sand"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 5938,
+        "scientific_name_lower": "mustelus asterias",
+        "DepthRangeShallow": 0,
+        "DepthRangeDeep": 350,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 5938,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 22.25,
+          "p25": 32,
+          "p50": 44,
+          "p75": 69,
+          "p90": 94
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "rjc",
+    "scientific_name": "Raja clavata",
+    "name_en": "Thornback Ray",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 5,
+        "typical_max": 1020,
+        "optimal_min": 22,
+        "optimal_max": 74,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 2059,
+        "scientific_name_lower": "raja clavata",
+        "DepthRangeShallow": 5,
+        "DepthRangeDeep": 1020,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 2059,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 14,
+          "p25": 22,
+          "p50": 42.5,
+          "p75": 74,
+          "p90": 113
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "gug",
+    "scientific_name": "Chelidonichthys lucerna",
+    "name_en": "Tub Gurnard",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 20,
+        "typical_max": 318,
+        "optimal_min": 18,
+        "optimal_max": 40,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1366,
+        "scientific_name_lower": "chelidonichthys lucerna",
+        "DepthRangeShallow": 20,
+        "DepthRangeDeep": 318,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1366,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 10,
+          "p25": 18,
+          "p50": 26,
+          "p75": 40,
+          "p90": 68
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "tur",
+    "scientific_name": "Scophthalmus maximus",
+    "name_en": "Turbot (Small)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 20,
+        "typical_max": 70,
+        "optimal_min": 12,
+        "optimal_max": 27,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 1348,
+        "scientific_name_lower": "scophthalmus maximus",
+        "DepthRangeShallow": 20,
+        "DepthRangeDeep": 70,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 1348,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 9,
+          "p25": 12,
+          "p50": 20,
+          "p75": 27,
+          "p90": 40
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "RUN",
+    "scientific_name": "Raja undulata",
+    "name_en": "Undulate Ray",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 32,
+        "optimal_max": 35,
+        "tolerance_min": 30,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 50,
+        "typical_max": 200,
+        "optimal_min": 14,
+        "optimal_max": 32.5,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "mixed",
+        "sand"
+      ],
+      "habitat": "demersal",
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 7617,
+        "scientific_name_lower": "raja undulata",
+        "DepthRangeShallow": 50,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": null,
+        "DepthRangeComDeep": null,
+        "Fresh": 0,
+        "Brack": 0,
+        "Saltwater": 1,
+        "DemersPelag": "demersal",
+        "ecology": {
+          "SpecCode": 7617,
+          "Rocky": 0,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": 0,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 9.5,
+          "p25": 14,
+          "p50": 20,
+          "p75": 32.5,
+          "p90": 50
+        },
+        "salinity": null,
+        "sample_size": 507,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "whg",
+    "scientific_name": "Merlangius merlangus",
+    "name_en": "Whiting",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": {
+        "optimal_min": 20,
+        "optimal_max": 35,
+        "tolerance_min": 5,
+        "tolerance_max": 38,
+        "unit": "psu",
+        "inferred": true,
+        "source": "fishbase+obis"
+      },
+      "depth": {
+        "typical_min": 10,
+        "typical_max": 200,
+        "optimal_min": 30,
+        "optimal_max": 100,
+        "unit": "meters",
+        "source": "fishbase"
+      },
+      "substrate": [
+        "rock"
+      ],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature"
+      ]
+    },
+    "data_quality": "partial",
+    "sources": {
+      "fishbase": true,
+      "obis": true,
+      "manual_review_needed": true
+    },
+    "raw_data": {
+      "fishbase": {
+        "SpecCode": 29,
+        "scientific_name_lower": "merlangius merlangus",
+        "DepthRangeShallow": 10,
+        "DepthRangeDeep": 200,
+        "DepthRangeComShallow": 30,
+        "DepthRangeComDeep": 100,
+        "Fresh": 0,
+        "Brack": 1,
+        "Saltwater": 1,
+        "DemersPelag": "benthopelagic",
+        "ecology": {
+          "SpecCode": 29,
+          "Rocky": -1,
+          "Sand": 0,
+          "Mud": 0,
+          "Gravel": 0,
+          "Silt": 0,
+          "SoftBottom": -1,
+          "HardBottom": 0,
+          "CoralReefs": 0,
+          "SeaGrassBeds": 0,
+          "Macrophyte": 0,
+          "Demersal": 0,
+          "Pelagic": 0,
+          "Benthic": 0
+        }
+      },
+      "obis": {
+        "temperature": null,
+        "depth": {
+          "p10": 19,
+          "p25": 34,
+          "p50": 58,
+          "p75": 97,
+          "p90": 130
+        },
+        "salinity": null,
+        "sample_size": 1000,
+        "source": "obis"
+      }
+    }
+  },
+  {
+    "species_code": "wra",
+    "scientific_name": "Labridae spp.",
+    "name_en": "Wrasse (various)",
+    "environmental_preferences": {
+      "temperature": null,
+      "salinity": null,
+      "depth": {
+        "typical_min": 0,
+        "typical_max": 50,
+        "optimal_min": null,
+        "optimal_max": null,
+        "unit": "meters",
+        "source": "species_table"
+      },
+      "substrate": [],
+      "habitat": null,
+      "climate": null,
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    "data_quality": "poor",
+    "sources": {
+      "fishbase": false,
+      "obis": false,
+      "manual_review_needed": true,
+      "species_table": true
+    },
+    "raw_data": {
+      "obis": null
+    }
+  }
+]

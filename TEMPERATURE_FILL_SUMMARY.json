@@ -1,0 +1,24 @@
+{
+  "generated_at": "2025-10-11T20:11:22.167Z",
+  "operation": "fill_temperature_from_obis",
+  "results": {
+    "temperature_filled": 0,
+    "temperature_already_present": 0,
+    "no_obis_data": 62,
+    "invalid_obis_data": 0,
+    "total_processed": 62
+  },
+  "coverage_before": {
+    "temperature": "0/62 (0%)",
+    "salinity": "56/62",
+    "depth": "62/62",
+    "substrate": "48/62"
+  },
+  "coverage_after": {
+    "temperature": "0/62 (0%)",
+    "salinity": "56/62 (90%)",
+    "depth": "62/62 (100%)",
+    "substrate": "48/62 (77%)"
+  },
+  "updates": []
+}

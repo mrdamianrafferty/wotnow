@@ -24,6 +24,25 @@ export interface FallbackConditionPayload {
       waveHeightM: number;
       windSpeedKts: number;
       windDirectionDeg: number;
+      waterClarityIndex?: number;
+      waterClarityMethod?: string;
+      // Ocean currents (Phase 2)
+      currentEastSurface?: number;
+      currentNorthSurface?: number;
+      currentSpeedSurface?: number;
+      currentDirectionSurface?: number;
+      // Ocean dynamics (Phase 2)
+      mixedLayerDepth?: number;
+      seaSurfaceHeight?: number;
+      // Food chain indicators (Phase 2)
+      zooplanktonSurface?: number;
+      phytoplanktonSurface?: number;
+      primaryProductionSurface?: number;
+      // Wave details (Phase 2)
+      waveDirection?: number;
+      wavePeriod?: number;
+      windSeaHeight?: number;
+      swellHeight?: number;
     };
     marineBio?: {
       chlorophyllAvg?: number;

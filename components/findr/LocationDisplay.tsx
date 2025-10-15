@@ -72,16 +72,29 @@ export function LocationDisplay() {
       // Close the picker
       setShowLocationPicker(false);
       
-      // Navigate to conditions page with rectangle code in URL
-      // This ensures the page re-reads the selected code
-      // Use replace to avoid adding to browser history
       const targetRectangle = unified?.rectangleCode ?? rectangleCode;
-      await router.push(`/findr/conditions?rectangle=${targetRectangle}`, undefined, { shallow: false });
+      
+      // Only navigate if not already on conditions page
+      // Otherwise the context update will trigger a re-render automatically
+      if (router.pathname !== '/findr/conditions') {
+        await router.push(`/findr/conditions?rectangle=${targetRectangle}`, undefined, { shallow: false });
+      } else {
+        // Already on conditions page - just update URL query parameter
+        await router.replace(
+          {
+            pathname: router.pathname,
+            query: { ...router.query, rectangle: targetRectangle },
+          },
+          undefined,
+          { shallow: true }
+        );
+      }
       
       console.log('[LocationDisplay] Location updated successfully:', {
         rectangleCode: targetRectangle,
         region,
         pathname: router.pathname,
+        navigated: router.pathname !== '/findr/conditions',
       });
     } catch (error) {
       console.error('[LocationDisplay] Failed to look up rectangle:', error);

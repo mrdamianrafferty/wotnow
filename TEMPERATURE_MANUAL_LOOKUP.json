@@ -1,0 +1,887 @@
+[
+  {
+    "species_code": "mac",
+    "scientific_name": "Scomber scombrus",
+    "name_en": "Mackerel",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 20,
+      "optimal_min": 11,
+      "optimal_max": 14,
+      "mean": 12.5,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Atlantic mackerel prefer 11-14°C. Migrate seasonally following temperature gradients. Avoid <8°C and >20°C."
+    }
+  },
+  {
+    "species_code": "had",
+    "scientific_name": "Melanogrammus aeglefinus",
+    "name_en": "Haddock",
+    "temperature": {
+      "tolerance_min": 2,
+      "tolerance_max": 10,
+      "optimal_min": 4,
+      "optimal_max": 7,
+      "mean": 5.5,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Cold-water species. Common in North Sea 4-7°C. Rarely found >10°C."
+    }
+  },
+  {
+    "species_code": "pol",
+    "scientific_name": "Pollachius pollachius",
+    "name_en": "Pollack",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 16,
+      "optimal_min": 10,
+      "optimal_max": 13,
+      "mean": 11.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate species. Prefers 10-13°C. Found in warmer waters than saithe."
+    }
+  },
+  {
+    "species_code": "whg",
+    "scientific_name": "Merlangius merlangus",
+    "name_en": "Whiting",
+    "temperature": {
+      "tolerance_min": 4,
+      "tolerance_max": 15,
+      "optimal_min": 7,
+      "optimal_max": 11,
+      "mean": 9,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Temperate species common in North Sea 7-11°C. Tolerates wide range."
+    }
+  },
+  {
+    "species_code": "dab",
+    "scientific_name": "Limanda limanda",
+    "name_en": "Dab",
+    "temperature": {
+      "tolerance_min": 2,
+      "tolerance_max": 15,
+      "optimal_min": 5,
+      "optimal_max": 12,
+      "mean": 8.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Common flatfish in North Sea. Tolerates 2-15°C, prefers 5-12°C."
+    }
+  },
+  {
+    "species_code": "brs",
+    "scientific_name": "Spondyliosoma cantharus",
+    "name_en": "Black Seabream",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 26,
+      "optimal_min": 15,
+      "optimal_max": 26,
+      "mean": 20.5,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Warm temperate species. Common in southern UK waters. Won't feed well below ~15°C; activity and feeding rate increase significantly in warmer water 15-26°C."
+    }
+  },
+  {
+    "species_code": "bll",
+    "scientific_name": "Scophthalmus rhombus",
+    "name_en": "Brill",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 17,
+      "optimal_min": 10,
+      "optimal_max": 14,
+      "mean": 12,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate flatfish. Prefers 10-14°C. Similar to turbot but slightly warmer preference."
+    }
+  },
+  {
+    "species_code": "BUH",
+    "scientific_name": "Scyliorhinus stellaris",
+    "name_en": "Bull Huss",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 18,
+      "optimal_min": 11,
+      "optimal_max": 15,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Catshark species. Temperate waters 11-15°C. Common around UK."
+    }
+  },
+  {
+    "species_code": "CMB",
+    "scientific_name": "Serranus cabrilla",
+    "name_en": "Comber",
+    "temperature": {
+      "tolerance_min": 12,
+      "tolerance_max": 22,
+      "optimal_min": 15,
+      "optimal_max": 19,
+      "mean": 17,
+      "unit": "celsius",
+      "source": "Marine Biology/Mediterranean",
+      "notes": "Warm water species. Mediterranean and southern European waters 15-19°C."
+    }
+  },
+  {
+    "species_code": "cut",
+    "scientific_name": "Sepia officinalis",
+    "name_en": "Common Cuttlefish",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 13,
+      "optimal_max": 17,
+      "mean": 15,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate cephalopod. Common 13-17°C. Seasonal migrations."
+    }
+  },
+  {
+    "species_code": "lin",
+    "scientific_name": "Molva molva",
+    "name_en": "Common Ling",
+    "temperature": {
+      "tolerance_min": 4,
+      "tolerance_max": 12,
+      "optimal_min": 6,
+      "optimal_max": 9,
+      "mean": 7.5,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Cold-temperate deep water species. Prefers 6-9°C."
+    }
+  },
+  {
+    "species_code": "oct",
+    "scientific_name": "Octopus vulgaris",
+    "name_en": "Common Octopus",
+    "temperature": {
+      "tolerance_min": 12,
+      "tolerance_max": 25,
+      "optimal_min": 16,
+      "optimal_max": 21,
+      "mean": 18.5,
+      "unit": "celsius",
+      "source": "Marine Biology/Mediterranean",
+      "notes": "Warm water cephalopod. Mediterranean and southern waters 16-21°C."
+    }
+  },
+  {
+    "species_code": "smo",
+    "scientific_name": "Mustelus mustelus",
+    "name_en": "Common Smoothhound",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 12,
+      "optimal_max": 20,
+      "mean": 16,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Temperate shark. 'Summer sharks' - appear as water warms (12-20°C). Feeding activity peaks in warmest months."
+    }
+  },
+  {
+    "species_code": "sqd",
+    "scientific_name": "Loligo vulgaris",
+    "name_en": "Common Squid",
+    "temperature": {
+      "tolerance_min": 9,
+      "tolerance_max": 18,
+      "optimal_min": 10,
+      "optimal_max": 18,
+      "mean": 14,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Temperate squid. European waters 10-18°C. Spawning temperature-linked; seasonal movements track thermal boundaries."
+    }
+  },
+  {
+    "species_code": "con",
+    "scientific_name": "Conger conger",
+    "name_en": "Conger Eel",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 22,
+      "optimal_min": 13,
+      "optimal_max": 18,
+      "mean": 15.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate eel. Wide tolerance 10-22°C, prefers 13-18°C."
+    }
+  },
+  {
+    "species_code": "WRC",
+    "scientific_name": "Symphodus melops",
+    "name_en": "Corkwing Wrasse",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 20,
+      "optimal_min": 12,
+      "optimal_max": 16,
+      "mean": 14,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate wrasse. Common around UK 12-16°C."
+    }
+  },
+  {
+    "species_code": "WRU",
+    "scientific_name": "Labrus mixtus",
+    "name_en": "Cuckoo Wrasse",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 18,
+      "optimal_min": 10,
+      "optimal_max": 15,
+      "mean": 12.5,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Activity rises sharply with water warming >10-12°C; winter lethargy common. Not migratory but strongly temperature-modulated feeding."
+    }
+  },
+  {
+    "species_code": "wrb",
+    "scientific_name": "Labrus bergylta",
+    "name_en": "Ballan Wrasse",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 20,
+      "optimal_min": 10,
+      "optimal_max": 16,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Activity rises sharply with water warming >10-12°C; winter lethargy common. Not migratory but strongly temperature-modulated feeding. Largest European wrasse species."
+    }
+  },
+  {
+    "species_code": "dex",
+    "scientific_name": "Dentex dentex",
+    "name_en": "Dentex",
+    "temperature": {
+      "tolerance_min": 14,
+      "tolerance_max": 24,
+      "optimal_min": 17,
+      "optimal_max": 21,
+      "mean": 19,
+      "unit": "celsius",
+      "source": "Mediterranean/Marine Biology",
+      "notes": "Warm water species. Mediterranean 17-21°C. Rare in northern waters."
+    }
+  },
+  {
+    "species_code": "gar",
+    "scientific_name": "Belone belone",
+    "name_en": "Garfish (Needlefish)",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 13,
+      "optimal_max": 17,
+      "mean": 15,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate pelagic species. Seasonal migrant 13-17°C."
+    }
+  },
+  {
+    "species_code": "sbg",
+    "scientific_name": "Sparus aurata",
+    "name_en": "Gilthead Seabream",
+    "temperature": {
+      "tolerance_min": 15,
+      "tolerance_max": 26,
+      "optimal_min": 18,
+      "optimal_max": 24,
+      "mean": 21,
+      "unit": "celsius",
+      "source": "Angler Data/Mediterranean",
+      "notes": "Won't feed well below ~15°C; very responsive to seasonal warming. Excellent correlation between temp and bite rate."
+    }
+  },
+  {
+    "species_code": "WRG",
+    "scientific_name": "Ctenolabrus rupestris",
+    "name_en": "Goldsinny Wrasse",
+    "temperature": {
+      "tolerance_min": 7,
+      "tolerance_max": 18,
+      "optimal_min": 10,
+      "optimal_max": 14,
+      "mean": 12,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Cold-temperate wrasse. Northern European waters 10-14°C."
+    }
+  },
+  {
+    "species_code": "gaj",
+    "scientific_name": "Seriola dumerili",
+    "name_en": "Greater Amberjack",
+    "temperature": {
+      "tolerance_min": 18,
+      "tolerance_max": 28,
+      "optimal_min": 21,
+      "optimal_max": 25,
+      "mean": 23,
+      "unit": "celsius",
+      "source": "Tropical/Subtropical",
+      "notes": "Warm water pelagic species. Subtropical/tropical 21-25°C."
+    }
+  },
+  {
+    "species_code": "wee",
+    "scientific_name": "Trachinus draco",
+    "name_en": "Greater Weever",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 20,
+      "optimal_min": 12,
+      "optimal_max": 16,
+      "mean": 14,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate species. Common in European waters 12-16°C."
+    }
+  },
+  {
+    "species_code": "GGR",
+    "scientific_name": "Eutrigla gurnardus",
+    "name_en": "Grey Gurnard",
+    "temperature": {
+      "tolerance_min": 5,
+      "tolerance_max": 15,
+      "optimal_min": 8,
+      "optimal_max": 12,
+      "mean": 10,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Cold-temperate species. North Sea 8-12°C. Common demersal."
+    }
+  },
+  {
+    "species_code": "mul",
+    "scientific_name": "Chelon labrosus",
+    "name_en": "Grey Mullet",
+    "temperature": {
+      "tolerance_min": 14,
+      "tolerance_max": 24,
+      "optimal_min": 16,
+      "optimal_max": 22,
+      "mean": 19,
+      "unit": "celsius",
+      "source": "Angler Data/Marine Biology",
+      "notes": "Shuts down in cold; comes alive with summer heating and mild estuarine temps. Preferred band 14-24°C."
+    }
+  },
+  {
+    "species_code": "hom",
+    "scientific_name": "Trachurus trachurus",
+    "name_en": "Horse Mackerel",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 18,
+      "optimal_min": 11,
+      "optimal_max": 15,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Temperate pelagic species. Common 11-15°C. Wide distribution."
+    }
+  },
+  {
+    "species_code": "jod",
+    "scientific_name": "Zeus faber",
+    "name_en": "John Dory",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 13,
+      "optimal_max": 17,
+      "mean": 15,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate species. European waters 13-17°C."
+    }
+  },
+  {
+    "species_code": "fry",
+    "scientific_name": "Euthynnus alletteratus",
+    "name_en": "Little Tunny",
+    "temperature": {
+      "tolerance_min": 18,
+      "tolerance_max": 30,
+      "optimal_min": 20,
+      "optimal_max": 28,
+      "mean": 24,
+      "unit": "celsius",
+      "source": "Tropical/Angler Data",
+      "notes": "Warm water tuna. Subtropical/tropical 20-28°C. Tracks temperature fronts and thermal boundaries; highly migratory following warm currents."
+    }
+  },
+  {
+    "species_code": "meg",
+    "scientific_name": "Lepidorhombus whiffiagonis",
+    "name_en": "Megrim",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 14,
+      "optimal_min": 8,
+      "optimal_max": 11,
+      "mean": 9.5,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Cold-temperate flatfish. Deep water 8-11°C."
+    }
+  },
+  {
+    "species_code": "PCO",
+    "scientific_name": "Serranus scriba",
+    "name_en": "Painted Comber",
+    "temperature": {
+      "tolerance_min": 14,
+      "tolerance_max": 24,
+      "optimal_min": 17,
+      "optimal_max": 21,
+      "mean": 19,
+      "unit": "celsius",
+      "source": "Mediterranean",
+      "notes": "Mediterranean species 17-21°C. Warm water preference."
+    }
+  },
+  {
+    "species_code": "par",
+    "scientific_name": "Sparisoma cretense",
+    "name_en": "Parrotfish",
+    "temperature": {
+      "tolerance_min": 16,
+      "tolerance_max": 26,
+      "optimal_min": 19,
+      "optimal_max": 23,
+      "mean": 21,
+      "unit": "celsius",
+      "source": "Mediterranean",
+      "notes": "Mediterranean parrotfish. Warm waters 19-23°C."
+    }
+  },
+  {
+    "species_code": "pic",
+    "scientific_name": "Spicara smaris",
+    "name_en": "Picarel",
+    "temperature": {
+      "tolerance_min": 12,
+      "tolerance_max": 22,
+      "optimal_min": 15,
+      "optimal_max": 19,
+      "mean": 17,
+      "unit": "celsius",
+      "source": "Mediterranean",
+      "notes": "Mediterranean species 15-19°C."
+    }
+  },
+  {
+    "species_code": "gur",
+    "scientific_name": "Chelidonichthys cuculus",
+    "name_en": "Red Gurnard",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 18,
+      "optimal_min": 11,
+      "optimal_max": 15,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate gurnard. European waters 11-15°C."
+    }
+  },
+  {
+    "species_code": "mul",
+    "scientific_name": "Mullus surmuletus",
+    "name_en": "Red Mullet",
+    "temperature": {
+      "tolerance_min": 12,
+      "tolerance_max": 22,
+      "optimal_min": 15,
+      "optimal_max": 19,
+      "mean": 17,
+      "unit": "celsius",
+      "source": "Mediterranean/Marine Biology",
+      "notes": "Warm temperate species 15-19°C. Common Mediterranean."
+    }
+  },
+  {
+    "species_code": "sbr",
+    "scientific_name": "Pagellus bogaraveo",
+    "name_en": "Red Seabream",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 18,
+      "optimal_min": 12,
+      "optimal_max": 15,
+      "mean": 13.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Deep water seabream 12-15°C. Atlantic species."
+    }
+  },
+  {
+    "species_code": "WRK",
+    "scientific_name": "Centrolabrus exoletus",
+    "name_en": "Rock Cook",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 18,
+      "optimal_min": 11,
+      "optimal_max": 15,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate wrasse. Rocky shores 11-15°C."
+    }
+  },
+  {
+    "species_code": "sai",
+    "scientific_name": "Pollachius virens",
+    "name_en": "Saithe (Pollachius virens)",
+    "temperature": {
+      "tolerance_min": 3,
+      "tolerance_max": 14,
+      "optimal_min": 6,
+      "optimal_max": 14,
+      "mean": 10,
+      "unit": "celsius",
+      "source": "ICES/Angler Data/Marine Biology",
+      "notes": "Cold water species. Follows thermoclines 6-14°C. Colder than pollack but more temperature-tolerant than previously thought. Deep-water comfort zone shifts with temperature stratification."
+    }
+  },
+  {
+    "species_code": "sal",
+    "scientific_name": "Sarpa salpa",
+    "name_en": "Salema (Saupe)",
+    "temperature": {
+      "tolerance_min": 14,
+      "tolerance_max": 24,
+      "optimal_min": 17,
+      "optimal_max": 21,
+      "mean": 19,
+      "unit": "celsius",
+      "source": "Mediterranean",
+      "notes": "Warm water herbivore. Mediterranean 17-21°C."
+    }
+  },
+  {
+    "species_code": "sae",
+    "scientific_name": "Ammodytes tobianus",
+    "name_en": "Sand Eel",
+    "temperature": {
+      "tolerance_min": 5,
+      "tolerance_max": 16,
+      "optimal_min": 8,
+      "optimal_max": 16,
+      "mean": 12,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology/Angler Data",
+      "notes": "Cold-temperate species. North Sea 8-16°C. Important forage fish. Buries in sand when water becomes too cold (<8°C) or too hot (>16°C); most active in mid-range temperatures."
+    }
+  },
+  {
+    "species_code": "pil",
+    "scientific_name": "Sardina pilchardus",
+    "name_en": "Sardine",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 13,
+      "optimal_max": 17,
+      "mean": 15,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Temperate pelagic species. European waters 13-17°C."
+    }
+  },
+  {
+    "species_code": "SER",
+    "scientific_name": "Raja microocellata",
+    "name_en": "Small-eyed Ray",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 16,
+      "optimal_min": 10,
+      "optimal_max": 13,
+      "mean": 11.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate ray. UK waters 10-13°C."
+    }
+  },
+  {
+    "species_code": "scy",
+    "scientific_name": "Scyliorhinus canicula",
+    "name_en": "Small-spotted Catshark",
+    "temperature": {
+      "tolerance_min": 8,
+      "tolerance_max": 16,
+      "optimal_min": 10,
+      "optimal_max": 13,
+      "mean": 11.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Common catshark. UK/European waters 10-13°C."
+    }
+  },
+  {
+    "species_code": "bss",
+    "scientific_name": "Dicentrarchus punctatus",
+    "name_en": "Spotted Bass",
+    "temperature": {
+      "tolerance_min": 15,
+      "tolerance_max": 22,
+      "optimal_min": 16,
+      "optimal_max": 20,
+      "mean": 18,
+      "unit": "celsius",
+      "source": "Angler Data/Mediterranean",
+      "notes": "Warmer-water cousin of European bass; feeding and inshore migration highly temp-linked. Preferred band 15-22°C."
+    }
+  },
+  {
+    "species_code": "RJM",
+    "scientific_name": "Raja montagui",
+    "name_en": "Spotted Ray",
+    "temperature": {
+      "tolerance_min": 7,
+      "tolerance_max": 15,
+      "optimal_min": 9,
+      "optimal_max": 12,
+      "mean": 10.5,
+      "unit": "celsius",
+      "source": "Marine Biology",
+      "notes": "Temperate ray. Common in waters 9-12°C."
+    }
+  },
+  {
+    "species_code": "spr",
+    "scientific_name": "Sprattus sprattus",
+    "name_en": "Sprat",
+    "temperature": {
+      "tolerance_min": 4,
+      "tolerance_max": 16,
+      "optimal_min": 7,
+      "optimal_max": 12,
+      "mean": 9.5,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology",
+      "notes": "Cold-temperate small pelagic. Baltic/North Sea 7-12°C."
+    }
+  },
+  {
+    "species_code": "SHO",
+    "scientific_name": "Mustelus asterias",
+    "name_en": "Starry Smoothhound",
+    "temperature": {
+      "tolerance_min": 9,
+      "tolerance_max": 20,
+      "optimal_min": 12,
+      "optimal_max": 20,
+      "mean": 16,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Temperate shark. 'Summer sharks' - appear as water warms (12-20°C). Feeding activity peaks in warmest months. Similar behavior to Common Smoothhound."
+    }
+  },
+  {
+    "species_code": "RJC",
+    "scientific_name": "Raja clavata",
+    "name_en": "Thornback Ray",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 18,
+      "optimal_min": 10,
+      "optimal_max": 18,
+      "mean": 14,
+      "unit": "celsius",
+      "source": "ICES/Marine Biology/Angler Data",
+      "notes": "Common European ray. Wide tolerance 10-18°C optimal. Sluggish and less active in cold water; feeding rate increases with warming."
+    }
+  },
+  {
+    "species_code": "tur",
+    "scientific_name": "Scophthalmus maximus",
+    "name_en": "Turbot (Small)",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 18,
+      "optimal_min": 10,
+      "optimal_max": 14,
+      "mean": 12,
+      "unit": "celsius",
+      "source": "ICES/Aquaculture",
+      "notes": "Temperate flatfish. Prefers 10-14°C. Aquaculture species."
+    }
+  },
+  {
+    "species_code": "RJU",
+    "scientific_name": "Raja undulata",
+    "name_en": "Undulate Ray",
+    "temperature": {
+      "tolerance_min": 10,
+      "tolerance_max": 20,
+      "optimal_min": 12,
+      "optimal_max": 20,
+      "mean": 16,
+      "unit": "celsius",
+      "source": "Marine Biology/Angler Data",
+      "notes": "Warm temperate ray. Southern European waters 12-20°C. Feeding rate drops in cold water; prefers warmer conditions than Thornback Ray."
+    }
+  },
+  {
+    "species_code": "WRA",
+    "scientific_name": "Labridae spp.",
+    "name_en": "Wrasse (various)",
+    "temperature": {
+      "tolerance_min": 5,
+      "tolerance_max": 20,
+      "optimal_min": 10,
+      "optimal_max": 16,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Family Average/Angler Data",
+      "notes": "Generic wrasse family range. Activity rises sharply >10-12°C; winter lethargy common across all European wrasse species. Use specific species data when possible."
+    }
+  },
+  {
+    "species_code": "WRO",
+    "scientific_name": "Centrolabrus exoletus",
+    "name_en": "Rock Cook",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 18,
+      "optimal_min": 9,
+      "optimal_max": 15,
+      "mean": 12,
+      "unit": "celsius",
+      "source": "Wrasse Family/Marine Biology",
+      "notes": "Cold-temperate wrasse. Similar thermal preferences to Corkwing Wrasse. Activity temperature-modulated with winter lethargy typical of wrasse family."
+    }
+  },
+  {
+    "species_code": "GUR",
+    "scientific_name": "Chelidonichthys cuculus",
+    "name_en": "Red Gurnard",
+    "temperature": {
+      "tolerance_min": 7,
+      "tolerance_max": 20,
+      "optimal_min": 10,
+      "optimal_max": 16,
+      "mean": 13,
+      "unit": "celsius",
+      "source": "Gurnard Family/Marine Biology",
+      "notes": "Warmer preference than Grey Gurnard. Summer species in UK waters; appears as temperatures rise. Common in Mediterranean and southern European waters."
+    }
+  },
+  {
+    "species_code": "ldb",
+    "scientific_name": "Lepidorhombus whiffiagonis",
+    "name_en": "Megrim",
+    "temperature": {
+      "tolerance_min": 4,
+      "tolerance_max": 14,
+      "optimal_min": 6,
+      "optimal_max": 11,
+      "mean": 8.5,
+      "unit": "celsius",
+      "source": "Flatfish Family/ICES",
+      "notes": "Deep-water flatfish. Colder preference than Brill/Turbot due to depth range. Common in North Atlantic commercial fisheries."
+    }
+  },
+  {
+    "species_code": "CMP",
+    "scientific_name": "Serranus scriba",
+    "name_en": "Painted Comber",
+    "temperature": {
+      "tolerance_min": 13,
+      "tolerance_max": 24,
+      "optimal_min": 16,
+      "optimal_max": 21,
+      "mean": 18.5,
+      "unit": "celsius",
+      "source": "Serranidae Family/Mediterranean",
+      "notes": "Mediterranean comber species. Slightly warmer preference than Serranus cabrilla. Rocky reef habitat in warm temperate to subtropical waters."
+    }
+  },
+  {
+    "species_code": "PIC",
+    "scientific_name": "Spicara smaris",
+    "name_en": "Picarel",
+    "temperature": {
+      "tolerance_min": 12,
+      "tolerance_max": 22,
+      "optimal_min": 15,
+      "optimal_max": 20,
+      "mean": 17.5,
+      "unit": "celsius",
+      "source": "Sparidae Family/Mediterranean",
+      "notes": "Mediterranean sparid. Temperate to warm water schooling species. Common in eastern Mediterranean and southern European waters."
+    }
+  },
+  {
+    "species_code": "SAL",
+    "scientific_name": "Sarpa salpa",
+    "name_en": "Salema (Saupe)",
+    "temperature": {
+      "tolerance_min": 14,
+      "tolerance_max": 26,
+      "optimal_min": 17,
+      "optimal_max": 23,
+      "mean": 20,
+      "unit": "celsius",
+      "source": "Mediterranean/Marine Biology",
+      "notes": "Warm water herbivorous sparid. Seagrass specialist requiring warm shallow waters. Mediterranean and subtropical eastern Atlantic."
+    }
+  },
+  {
+    "species_code": "RME",
+    "scientific_name": "Raja microocellata",
+    "name_en": "Small-eyed Ray",
+    "temperature": {
+      "tolerance_min": 6,
+      "tolerance_max": 16,
+      "optimal_min": 9,
+      "optimal_max": 14,
+      "mean": 11.5,
+      "unit": "celsius",
+      "source": "Rajidae Family/Marine Biology",
+      "notes": "Cold-temperate ray. Similar to Spotted Ray. Sluggish and less active in cold water; feeding rate increases with warming."
+    }
+  },
+  {
+    "species_code": "bsp",
+    "scientific_name": "Dicentrarchus punctatus",
+    "name_en": "Spotted Bass",
+    "temperature": {
+      "tolerance_min": 15,
+      "tolerance_max": 22,
+      "optimal_min": 16,
+      "optimal_max": 20,
+      "mean": 18,
+      "unit": "celsius",
+      "source": "Angler Data/Mediterranean",
+      "notes": "Warmer-water cousin of European bass; feeding and inshore migration highly temp-linked. Preferred band 15-22°C."
+    }
+  }
+]

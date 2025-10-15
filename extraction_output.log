@@ -1,0 +1,712 @@
+[dotenv@17.2.1] injecting env (19) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+🔍 Starting Automated Environmental Data Extraction (DuckDB + OBIS)
+
+================================================================================
+
+📊 Fetching species from database...
+✅ Found 62 species
+
+🦆 Initializing DuckDB and loading FishBase Parquet data...
+✅ FishBase data loaded for 56 species
+
+================================================================================
+
+[1/62] Processing: Ballan Wrasse (Labrus bergylta)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-50m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[2/62] Processing: Black Seabream (Spondyliosoma cantharus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-300m
+     Habitat: benthopelagic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[3/62] Processing: Brill (Scophthalmus rhombus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-50m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[4/62] Processing: Bull Huss (Scyliorhinus stellaris)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-400m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[5/62] Processing: Cod (Coastal) (Gadus morhua)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-600m
+     Habitat: benthopelagic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[6/62] Processing: Comber (Serranus cabrilla)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-500m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[7/62] Processing: Common Cuttlefish (Sepia officinalis)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, salinity, substrate
+
+[8/62] Processing: Common Ling (Molva molva)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 100-1000m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[9/62] Processing: Common Octopus (Octopus vulgaris)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, salinity, substrate
+
+[10/62] Processing: Common Smoothhound (Mustelus mustelus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-624m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[11/62] Processing: Common Squid (Loligo vulgaris)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, salinity, substrate
+
+[12/62] Processing: Conger Eel (Conger conger)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-1171m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[13/62] Processing: Corkwing Wrasse (Symphodus melops)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-?m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[14/62] Processing: Cuckoo Wrasse (Labrus mixtus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 2-200m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[15/62] Processing: Dab (Limanda limanda)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 20-150m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[16/62] Processing: Dentex (Dentex dentex)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-200m
+     Habitat: benthopelagic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 488 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[17/62] Processing: Dover Sole (Solea solea)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-150m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[18/62] Processing: Flathead Grey Mullet (Mugil cephalus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-120m
+     Habitat: benthopelagic
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[19/62] Processing: Flounder (Platichthys flesus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-100m
+     Habitat: demersal
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[20/62] Processing: Garfish (Needlefish) (Belone belone)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-?m
+     Habitat: pelagic-oceanic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[21/62] Processing: Gilthead Seabream (Gilthead Seabream)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ⚠️  OBIS: No observations found
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, depth, salinity, substrate
+
+[22/62] Processing: Goldsinny Wrasse (Ctenolabrus rupestris)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-50m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[23/62] Processing: Greater Amberjack (Seriola dumerili)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-360m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[24/62] Processing: Greater Weever (Trachinus draco)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-150m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[25/62] Processing: Grey Gurnard (Eutrigla gurnardus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-340m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[26/62] Processing: Grey Mullet (Chelon labrosus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-?m
+     Habitat: demersal
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[27/62] Processing: Haddock (Melanogrammus aeglefinus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-450m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[28/62] Processing: Herring (Clupea harengus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-364m
+     Habitat: benthopelagic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[29/62] Processing: Horse Mackerel (Trachurus trachurus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-1050m
+     Habitat: pelagic-neritic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[30/62] Processing: John Dory (Zeus faber)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-400m
+     Habitat: benthopelagic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[31/62] Processing: Little Tunny (Euthynnus alletteratus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-150m
+     Habitat: pelagic-oceanic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[32/62] Processing: Mackerel (Scomber scombrus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-1000m
+     Habitat: pelagic-neritic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[33/62] Processing: Megrim (Lepidorhombus whiffiagonis)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 100-700m
+     Habitat: bathydemersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[34/62] Processing: Painted Comber (Serranus scriba)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-150m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[35/62] Processing: Parrotfish (Sparisoma cretense)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 20-50m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[36/62] Processing: Picarel (Spicara smaris)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 15-328m
+     Habitat: pelagic-neritic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[37/62] Processing: Plaice (Pleuronectes platessa)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-200m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[38/62] Processing: Pollack (Pollachius pollachius)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 40-200m
+     Habitat: benthopelagic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[39/62] Processing: Red Gurnard (Chelidonichthys cuculus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 15-400m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[40/62] Processing: Red Mullet (Mullus surmuletus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-409m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[41/62] Processing: Red Seabream (Pagellus bogaraveo)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 150-700m
+     Habitat: benthopelagic
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[42/62] Processing: Rock Cook (Centrolabrus exoletus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-?m
+     Habitat: reef-associated
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[43/62] Processing: Saithe (Pollachius virens) (Pollachius virens)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 37-364m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[44/62] Processing: Saithe/Pollock (Saithe/Pollock)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ⚠️  OBIS: No observations found
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, depth, salinity, substrate
+
+[45/62] Processing: Salema (Saupe) (Sarpa salpa)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-70m
+     Habitat: benthopelagic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[46/62] Processing: Sand Eel (Ammodytes tobianus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-96m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[47/62] Processing: Sardine (Sardina pilchardus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-100m
+     Habitat: pelagic-neritic
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[48/62] Processing: Sea Bass (Dicentrarchus labrax)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-100m
+     Habitat: demersal
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[49/62] Processing: Sea Bream (Dorada) (Sparus aurata)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 1-150m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[50/62] Processing: Sea Trout (Salmo trutta)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-28m
+     Habitat: pelagic-neritic
+     Salinity: marine+brackish+fresh
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[51/62] Processing: Small-eyed Ray (Raja microocellata)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-100m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[52/62] Processing: Small-spotted Catshark (Scyliorhinus canicula)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-780m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[53/62] Processing: Spotted Bass (Dicentrarchus punctatus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 30-?m
+     Habitat: pelagic-neritic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[54/62] Processing: Spotted Ray (Raja montagui)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 8-530m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[55/62] Processing: Sprat (Sprattus sprattus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-150m
+     Habitat: pelagic-neritic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature, substrate
+
+[56/62] Processing: Starry Smoothhound (Mustelus asterias)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: ?-350m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[57/62] Processing: Thornback Ray (Raja clavata)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 5-1020m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[58/62] Processing: Tub Gurnard (Chelidonichthys lucerna)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 20-318m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[59/62] Processing: Turbot (Small) (Scophthalmus maximus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 20-70m
+     Habitat: demersal
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[60/62] Processing: Undulate Ray (Raja undulata)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 50-200m
+     Habitat: demersal
+     Salinity: marine
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 507 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[61/62] Processing: Whiting (Merlangius merlangus)
+────────────────────────────────────────────────────────────────────────────────
+  ✅ FishBase: Found data
+     Depth: 10-200m
+     Habitat: benthopelagic
+     Salinity: marine+brackish
+  🌊 Querying OBIS API...
+  ✅ OBIS: Found 1000 observations
+  🟡 Data Quality: PARTIAL
+  📝 Gaps: temperature
+
+[62/62] Processing: Wrasse (various) (Labridae spp.)
+────────────────────────────────────────────────────────────────────────────────
+  ⚠️  FishBase: No data found
+  🌊 Querying OBIS API...
+  ⚠️  OBIS: No observations found
+  🔴 Data Quality: POOR
+  📝 Gaps: temperature, depth, salinity, substrate
+
+================================================================================
+💾 Saving results...
+
+✅ Saved: /Users/damianrafferty/Projects/WotNow/ENVIRONMENTAL_DATA_AUTOMATED.json
+
+================================================================================
+📊 AUTOMATED EXTRACTION REPORT (DuckDB + OBIS)
+================================================================================
+
+✅ Total species processed: 62
+   🟢 Complete profiles: 0 (0%)
+   🟡 Partial profiles: 56 (90%)
+   🔴 Poor/missing data: 6 (10%)
+
+📈 Data sources:
+   FishBase hits: 56/62 (90%)
+   OBIS hits: 59/62 (95%)
+
+📝 Manual review needed: 62 species
+
+📊 Parameter coverage:
+   Temperature: 0/62 (0%)
+   Salinity: 56/62 (90%)
+   Depth: 59/62 (95%)
+   Substrate: 47/62 (76%)
+
+================================================================================
+✅ Automated extraction complete!
+📂 Next: Review ENVIRONMENTAL_DATA_AUTOMATED.json
+📚 Then: Manual ICES research for Tier 1 species
+================================================================================
+
+💾 Summary saved: /Users/damianrafferty/Projects/WotNow/ENVIRONMENTAL_DATA_EXTRACTION_SUMMARY.json
+
+🎉 Process completed successfully

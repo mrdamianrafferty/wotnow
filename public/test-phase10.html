@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phase 10 API Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 10px 0; font-size: 16px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Phase 10 API Test</h1>
+    
+    <button onclick="testAPI()">Test API (31F1)</button>
+    <button onclick="testAPI(true)">Test API (Bypass Cache)</button>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI(bypassCache = false) {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.innerHTML = '⏳ Testing...';
+            results.innerHTML = '';
+            
+            try {
+                const response = await fetch('/api/findr/predictions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        rectangleCode: '31F1',
+                        predictionDate: '2025-10-12',
+                        language: 'en',
+                        bypassCache: bypassCache
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    status.innerHTML = `<p class="error">❌ Error ${response.status}</p>`;
+                    results.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    return;
+                }
+                
+                const firstPrediction = data.predictions[0];
+                
+                // Check for environmental data
+                const hasEnvironmentalData = firstPrediction && (
+                    firstPrediction.data_freshness ||
+                    firstPrediction.weight_profile ||
+                    firstPrediction.factors
+                );
+                
+                if (hasEnvironmentalData) {
+                    status.innerHTML = `<p class="success">✅ Environmental data found!</p>`;
+                } else {
+                    status.innerHTML = `<p class="warning">⚠️ No environmental data (using old function?)</p>`;
+                }
+                
+                results.innerHTML = `
+                    <h3>Response Summary:</h3>
+                    <ul>
+                        <li><strong>Total predictions:</strong> ${data.predictions.length}</li>
+                        <li><strong>Data source:</strong> ${data.metadata?.source || 'unknown'}</li>
+                        <li><strong>Bypass cache:</strong> ${bypassCache ? 'Yes' : 'No'}</li>
+                    </ul>
+                    
+                    <h3>First Prediction:</h3>
+                    <ul>
+                        <li><strong>Species:</strong> ${firstPrediction?.species_common_name || 'N/A'}</li>
+                        <li><strong>Data Freshness:</strong> ${firstPrediction?.data_freshness || '❌ Missing'}</li>
+                        <li><strong>Weight Profile:</strong> ${firstPrediction?.weight_profile || '❌ Missing'}</li>
+                        <li><strong>Has Factors:</strong> ${firstPrediction?.factors ? '✅ Yes' : '❌ No'}</li>
+                    </ul>
+                    
+                    <h3>Full Response:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                status.innerHTML = `<p class="error">❌ Request failed: ${error.message}</p>`;
+                results.innerHTML = `<pre>${error.stack}</pre>`;
+            }
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', () => testAPI(true));
+    </script>
+</body>
+</html>

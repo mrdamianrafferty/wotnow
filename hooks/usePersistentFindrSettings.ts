@@ -4,7 +4,6 @@ const STORAGE_KEY = 'findrSettings';
 
 interface StoredSettings {
   selectedCode?: string;
-  manualCode?: string;
   predictionDate?: string;
   language?: string;
 }
@@ -17,8 +16,6 @@ interface UsePersistentFindrSettingsArgs {
 interface UsePersistentFindrSettingsResult {
   selectedCode: string;
   setSelectedCode: (value: string) => void;
-  manualCode: string;
-  setManualCode: (value: string) => void;
   predictionDate: string;
   setPredictionDate: (value: string) => void;
   language: string;
@@ -34,7 +31,6 @@ function readStoredSettings(): StoredSettings | null {
     if (parsed && typeof parsed === 'object') {
       return {
         selectedCode: typeof parsed.selectedCode === 'string' ? parsed.selectedCode : undefined,
-        manualCode: typeof parsed.manualCode === 'string' ? parsed.manualCode : undefined,
         predictionDate: typeof parsed.predictionDate === 'string' ? parsed.predictionDate : undefined,
         language: typeof parsed.language === 'string' ? parsed.language : undefined,
       };
@@ -50,7 +46,6 @@ export function usePersistentFindrSettings({
   language: defaultLanguage = 'en',
 }: UsePersistentFindrSettingsArgs): UsePersistentFindrSettingsResult {
   const [selectedCode, setSelectedCode] = useState('');
-  const [manualCode, setManualCode] = useState('');
   const [predictionDate, setPredictionDate] = useState(defaultPredictionDate);
   const [language, setLanguage] = useState(defaultLanguage);
   const hasHydrated = useRef(typeof window === 'undefined');
@@ -60,9 +55,6 @@ export function usePersistentFindrSettings({
     const stored = readStoredSettings();
     if (stored?.selectedCode) {
       setSelectedCode(stored.selectedCode);
-    }
-    if (stored?.manualCode) {
-      setManualCode(stored.manualCode);
     }
     // Don't load old prediction dates - always use today's date
     // The stored date might be days/weeks old which would show stale predictions
@@ -86,7 +78,6 @@ export function usePersistentFindrSettings({
     if (!hasHydrated.current) return;
     const payload: StoredSettings = {
       selectedCode: selectedCode || undefined,
-      manualCode: manualCode || undefined,
       predictionDate: predictionDate || undefined,
       language: language || undefined,
     };
@@ -95,13 +86,11 @@ export function usePersistentFindrSettings({
     } catch (error) {
       console.warn('Unable to persist Findr settings', error);
     }
-  }, [language, manualCode, predictionDate, selectedCode]);
+  }, [language, predictionDate, selectedCode]);
 
   return {
     selectedCode,
     setSelectedCode,
-    manualCode,
-    setManualCode,
     predictionDate,
     setPredictionDate,
     language,

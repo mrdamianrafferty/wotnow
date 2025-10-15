@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Heart } from 'lucide-react';
+import { useRouter } from 'next/router';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 
 /**
  * DEMO PAGE - No Authentication Required
@@ -9,6 +12,11 @@ import { Heart } from 'lucide-react';
  * from get_fishing_predictions without requiring user sign-in.
  * 
  * Usage: http://localhost:3000/findr/favourites-demo?rectangleCode=31F2
+ * 
+ * Note: If no rectangleCode is provided in URL, will use:
+ * 1. User's location from UnifiedLocationContext
+ * 2. Fallback to selectedCode from persistent settings
+ * 3. Final fallback to 31F2 (Brighton area)
  */
 
 interface Species {
@@ -30,11 +38,30 @@ interface PredictionResponse {
 }
 
 export default function FavouritesDemoPage() {
-  const [rectangleCode, setRectangleCode] = useState('31F2'); // Default to Brighton area
+  const router = useRouter();
+  const { location } = useUnifiedLocation();
+  const { selectedCode } = usePersistentFindrSettings({
+    predictionDate: new Date().toISOString().split('T')[0],
+    language: 'en',
+  });
+  
+  // Priority: URL query param > UnifiedLocationContext > selectedCode > fallback
+  const rectangleFromQuery = typeof router.query.rectangleCode === 'string' ? router.query.rectangleCode : null;
+  const defaultRectangle = rectangleFromQuery ?? location?.rectangleCode ?? selectedCode ?? '31F2';
+  
+  const [rectangleCode, setRectangleCode] = useState(defaultRectangle);
   const [species, setSpecies] = useState<Species[]>([]);
   const [predictions, setPredictions] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Update rectangle when query param, location, or settings change
+  useEffect(() => {
+    const newRectangle = rectangleFromQuery ?? location?.rectangleCode ?? selectedCode ?? '31F2';
+    if (newRectangle !== rectangleCode) {
+      setRectangleCode(newRectangle);
+    }
+  }, [rectangleFromQuery, location?.rectangleCode, selectedCode, rectangleCode]);
 
   // Fetch top species from database
   useEffect(() => {

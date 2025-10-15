@@ -1,0 +1,9 @@
+[dotenv@17.2.1] injecting env (19) from .env.local -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+🔍 Starting Automated Environmental Data Extraction (DuckDB + OBIS)
+
+================================================================================
+
+📊 Fetching species from database...
+✅ Found 62 species
+
+🦆 Initializing DuckDB and loading FishBase Parquet data...

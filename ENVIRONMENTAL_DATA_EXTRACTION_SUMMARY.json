@@ -1,0 +1,477 @@
+{
+  "timestamp": "2025-10-11T20:40:30.267Z",
+  "method": "duckdb_parquet + obis_api",
+  "total_species": 62,
+  "complete": 0,
+  "partial": 56,
+  "poor": 6,
+  "fishbase_hits": 56,
+  "obis_hits": 59,
+  "manual_review_needed": 62,
+  "parameter_coverage": {
+    "temperature": 0,
+    "salinity": 56,
+    "depth": 59,
+    "substrate": 47
+  },
+  "species_needing_review": [
+    {
+      "species_code": "wrb",
+      "name_en": "Ballan Wrasse",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "brs",
+      "name_en": "Black Seabream",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "bll",
+      "name_en": "Brill",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "BUH",
+      "name_en": "Bull Huss",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "cod",
+      "name_en": "Cod (Coastal)",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "CMB",
+      "name_en": "Comber",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "cut",
+      "name_en": "Common Cuttlefish",
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "lin",
+      "name_en": "Common Ling",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "oct",
+      "name_en": "Common Octopus",
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "CSH",
+      "name_en": "Common Smoothhound",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "sqc",
+      "name_en": "Common Squid",
+      "gaps": [
+        "temperature",
+        "salinity",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "con",
+      "name_en": "Conger Eel",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "WRK",
+      "name_en": "Corkwing Wrasse",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "wrc",
+      "name_en": "Cuckoo Wrasse",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "dab",
+      "name_en": "Dab",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "dex",
+      "name_en": "Dentex",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "sol",
+      "name_en": "Dover Sole",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "fgm",
+      "name_en": "Flathead Grey Mullet",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "fle",
+      "name_en": "Flounder",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "gar",
+      "name_en": "Garfish (Needlefish)",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "sbg",
+      "name_en": "Gilthead Seabream",
+      "gaps": [
+        "temperature",
+        "depth",
+        "salinity",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "WRG",
+      "name_en": "Goldsinny Wrasse",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "gaj",
+      "name_en": "Greater Amberjack",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "wee",
+      "name_en": "Greater Weever",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "GGR",
+      "name_en": "Grey Gurnard",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "mug",
+      "name_en": "Grey Mullet",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "had",
+      "name_en": "Haddock",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "her",
+      "name_en": "Herring",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "hom",
+      "name_en": "Horse Mackerel",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "jod",
+      "name_en": "John Dory",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "lta",
+      "name_en": "Little Tunny",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "mac",
+      "name_en": "Mackerel",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "ldb",
+      "name_en": "Megrim",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "CMP",
+      "name_en": "Painted Comber",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "par",
+      "name_en": "Parrotfish",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "PIC",
+      "name_en": "Picarel",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "ple",
+      "name_en": "Plaice",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "pol",
+      "name_en": "Pollack",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "GUR",
+      "name_en": "Red Gurnard",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "mul",
+      "name_en": "Red Mullet",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "sbr",
+      "name_en": "Red Seabream",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "WRO",
+      "name_en": "Rock Cook",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "pok",
+      "name_en": "Saithe (Pollachius virens)",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "sai",
+      "name_en": "Saithe/Pollock",
+      "gaps": [
+        "temperature",
+        "depth",
+        "salinity",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "SAL",
+      "name_en": "Salema (Saupe)",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "san",
+      "name_en": "Sand Eel",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "pil",
+      "name_en": "Sardine",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "bss",
+      "name_en": "Sea Bass",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "sba",
+      "name_en": "Sea Bream (Dorada)",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "trs",
+      "name_en": "Sea Trout",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "RME",
+      "name_en": "Small-eyed Ray",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "scy",
+      "name_en": "Small-spotted Catshark",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "bsp",
+      "name_en": "Spotted Bass",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "RJM",
+      "name_en": "Spotted Ray",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "spr",
+      "name_en": "Sprat",
+      "gaps": [
+        "temperature",
+        "substrate"
+      ]
+    },
+    {
+      "species_code": "SSH",
+      "name_en": "Starry Smoothhound",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "rjc",
+      "name_en": "Thornback Ray",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "gug",
+      "name_en": "Tub Gurnard",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "tur",
+      "name_en": "Turbot (Small)",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "RUN",
+      "name_en": "Undulate Ray",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "whg",
+      "name_en": "Whiting",
+      "gaps": [
+        "temperature"
+      ]
+    },
+    {
+      "species_code": "wra",
+      "name_en": "Wrasse (various)",
+      "gaps": [
+        "temperature",
+        "depth",
+        "salinity",
+        "substrate"
+      ]
+    }
+  ]
+}

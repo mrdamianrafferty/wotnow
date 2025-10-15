@@ -1,0 +1,399 @@
+{
+  "timestamp": "2025-10-11T18:19:37.037Z",
+  "frequency_species_count": 2,
+  "current_species_count": 62,
+  "overlap_count": 0,
+  "frequency_species_ids": [
+    "04965f67-80fe-465b-b663-b62bf812669c",
+    "16299558-6b27-4412-a88b-465dfa18feff"
+  ],
+  "current_species": [
+    {
+      "id": "33dc4780-c4e1-4346-9b9b-bc475252b8a2",
+      "code": "wrb",
+      "name": "Ballan Wrasse",
+      "scientific_name": "Labrus bergylta"
+    },
+    {
+      "id": "4b81f63b-655c-44b1-ac06-c2b13dd41b13",
+      "code": "brs",
+      "name": "Black Seabream",
+      "scientific_name": "Spondyliosoma cantharus"
+    },
+    {
+      "id": "f863e87c-0883-4c07-a896-790bb3b37d16",
+      "code": "bll",
+      "name": "Brill",
+      "scientific_name": "Scophthalmus rhombus"
+    },
+    {
+      "id": "39d25a22-dea4-41b1-8af0-c55e501b715c",
+      "code": "cod",
+      "name": "Cod (Coastal)",
+      "scientific_name": "Gadus morhua"
+    },
+    {
+      "id": "873477c5-2b2b-448a-a17c-f2c8bcf95c69",
+      "code": "cut",
+      "name": "Common Cuttlefish",
+      "scientific_name": "Sepia officinalis"
+    },
+    {
+      "id": "8773301c-08ad-4177-a8a9-0f0e89f13b6d",
+      "code": "lin",
+      "name": "Common Ling",
+      "scientific_name": "Molva molva"
+    },
+    {
+      "id": "b2e31ceb-aa7b-4f90-aedb-5a0b5e6edce3",
+      "code": "oct",
+      "name": "Common Octopus",
+      "scientific_name": "Octopus vulgaris"
+    },
+    {
+      "id": "351d5194-8f72-4c7d-bdd9-cecd18691cca",
+      "code": "sqc",
+      "name": "Common Squid",
+      "scientific_name": "Loligo vulgaris"
+    },
+    {
+      "id": "aa12f55e-c4fb-4be1-9011-d27e29e3b149",
+      "code": "con",
+      "name": "Conger Eel",
+      "scientific_name": "Conger conger"
+    },
+    {
+      "id": "d19bf161-8459-4ff7-8677-6be6f40ee2b4",
+      "code": "wrc",
+      "name": "Cuckoo Wrasse",
+      "scientific_name": "Labrus mixtus"
+    },
+    {
+      "id": "c8d0c3f8-67a4-4722-9911-b96c64a288fb",
+      "code": "dab",
+      "name": "Dab",
+      "scientific_name": "Limanda limanda"
+    },
+    {
+      "id": "fecf4bb2-f522-4484-b349-6af516ecf70d",
+      "code": "dex",
+      "name": "Dentex",
+      "scientific_name": "Dentex dentex"
+    },
+    {
+      "id": "d93860a9-b51f-464e-b448-f31016783658",
+      "code": "sol",
+      "name": "Dover Sole",
+      "scientific_name": "Solea solea"
+    },
+    {
+      "id": "e2047506-3a07-4b7b-887a-78678c790855",
+      "code": "fgm",
+      "name": "Flathead Grey Mullet",
+      "scientific_name": "Mugil cephalus"
+    },
+    {
+      "id": "8f1bf333-53cd-46e8-823b-34bb120d81c9",
+      "code": "fle",
+      "name": "Flounder",
+      "scientific_name": "Platichthys flesus"
+    },
+    {
+      "id": "de0e3718-6ff7-42cc-a446-af6198ebf9b6",
+      "code": "gar",
+      "name": "Garfish (Needlefish)",
+      "scientific_name": "Belone belone"
+    },
+    {
+      "id": "8c6892ce-541b-4c87-a1a1-0a70ee95d6a7",
+      "code": "sbg",
+      "name": "Gilthead Seabream",
+      "scientific_name": "Gilthead Seabream"
+    },
+    {
+      "id": "956ae44a-17a7-4ba2-b122-9f7c4031d9c9",
+      "code": "gaj",
+      "name": "Greater Amberjack",
+      "scientific_name": "Seriola dumerili"
+    },
+    {
+      "id": "1a6e5c1d-0966-4a1d-88ab-d9fadd11d91d",
+      "code": "wee",
+      "name": "Greater Weever",
+      "scientific_name": "Trachinus draco"
+    },
+    {
+      "id": "cdff3a7d-13c1-43ab-8b4c-026fea407846",
+      "code": "mug",
+      "name": "Grey Mullet",
+      "scientific_name": "Chelon labrosus"
+    },
+    {
+      "id": "cdec14dc-1717-4c71-908c-8f4bdce40ba3",
+      "code": "had",
+      "name": "Haddock",
+      "scientific_name": "Melanogrammus aeglefinus"
+    },
+    {
+      "id": "fb41c21b-d0c6-4630-9a03-43bcbcddc5bc",
+      "code": "her",
+      "name": "Herring",
+      "scientific_name": "Clupea harengus"
+    },
+    {
+      "id": "8e08ef70-183e-42a3-a24d-55d248ca5fd2",
+      "code": "hom",
+      "name": "Horse Mackerel",
+      "scientific_name": "Trachurus trachurus"
+    },
+    {
+      "id": "cfdb7cb9-093f-466c-b52f-7eb3ce4b2236",
+      "code": "jod",
+      "name": "John Dory",
+      "scientific_name": "Zeus faber"
+    },
+    {
+      "id": "74a25287-ab66-41b2-bc6d-2807ce4d301f",
+      "code": "lta",
+      "name": "Little Tunny",
+      "scientific_name": "Euthynnus alletteratus"
+    },
+    {
+      "id": "70083afd-7e2c-4ebf-aa3e-9ce079647c83",
+      "code": "mac",
+      "name": "Mackerel",
+      "scientific_name": "Scomber scombrus"
+    },
+    {
+      "id": "de8827c0-ead9-485e-a96b-68d6fcb54b24",
+      "code": "ldb",
+      "name": "Megrim",
+      "scientific_name": "Lepidorhombus whiffiagonis"
+    },
+    {
+      "id": "2bca1f9d-6511-4350-8306-c1bfbd799566",
+      "code": "par",
+      "name": "Parrotfish",
+      "scientific_name": "Sparisoma cretense"
+    },
+    {
+      "id": "7d5e3175-325e-4173-bf73-20cfa8149027",
+      "code": "ple",
+      "name": "Plaice",
+      "scientific_name": "Pleuronectes platessa"
+    },
+    {
+      "id": "f9663a72-68d2-4978-ab35-1d1da19c154d",
+      "code": "pol",
+      "name": "Pollack",
+      "scientific_name": "Pollachius pollachius"
+    },
+    {
+      "id": "649d843b-afcb-4c0f-b2a8-de537b76f9d7",
+      "code": "mul",
+      "name": "Red Mullet",
+      "scientific_name": "Mullus surmuletus"
+    },
+    {
+      "id": "234cb9ab-030d-4191-9177-9e37846bcf9a",
+      "code": "sbr",
+      "name": "Red Seabream",
+      "scientific_name": "Pagellus bogaraveo"
+    },
+    {
+      "id": "27210ffa-ce53-4417-8324-fae1cb6887e7",
+      "code": "pok",
+      "name": "Saithe (Pollachius virens)",
+      "scientific_name": "Pollachius virens"
+    },
+    {
+      "id": "9a0fa366-c1be-4ef9-b0ca-fccece1e5ad4",
+      "code": "sai",
+      "name": "Saithe/Pollock",
+      "scientific_name": "Saithe/Pollock"
+    },
+    {
+      "id": "9862dffd-13e4-4e7e-a50d-93c4b4794c01",
+      "code": "san",
+      "name": "Sand Eel",
+      "scientific_name": "Ammodytes tobianus"
+    },
+    {
+      "id": "29717253-1b65-4035-8e22-347696263934",
+      "code": "pil",
+      "name": "Sardine",
+      "scientific_name": "Sardina pilchardus"
+    },
+    {
+      "id": "a4d859a8-31f5-4079-8d7b-435090a64ebc",
+      "code": "bss",
+      "name": "Sea Bass",
+      "scientific_name": "Dicentrarchus labrax"
+    },
+    {
+      "id": "38f43103-d9be-4e48-8186-0c61070eb6a1",
+      "code": "sba",
+      "name": "Sea Bream (Dorada)",
+      "scientific_name": "Sparus aurata"
+    },
+    {
+      "id": "acff734e-fc96-4fc3-b158-803bd4e9342e",
+      "code": "trs",
+      "name": "Sea Trout",
+      "scientific_name": "Salmo trutta"
+    },
+    {
+      "id": "ed21d6cd-cf25-4e41-bcf2-cec413186df4",
+      "code": "scy",
+      "name": "Small-spotted Catshark",
+      "scientific_name": "Scyliorhinus canicula"
+    },
+    {
+      "id": "8f333815-a1f5-4be4-a491-705e44c0a304",
+      "code": "bsp",
+      "name": "Spotted Bass",
+      "scientific_name": "Dicentrarchus punctatus"
+    },
+    {
+      "id": "64768e97-9b31-4a15-977b-ba31d79f104b",
+      "code": "spr",
+      "name": "Sprat",
+      "scientific_name": "Sprattus sprattus"
+    },
+    {
+      "id": "bcefa338-ee77-4d40-8939-14e16e12c236",
+      "code": "rjc",
+      "name": "Thornback Ray",
+      "scientific_name": "Raja clavata"
+    },
+    {
+      "id": "77553fff-3979-4f02-a16a-61f0a01c261f",
+      "code": "gug",
+      "name": "Tub Gurnard",
+      "scientific_name": "Chelidonichthys lucerna"
+    },
+    {
+      "id": "52fee867-bd14-4cd2-8904-f368c9097c01",
+      "code": "tur",
+      "name": "Turbot (Small)",
+      "scientific_name": "Scophthalmus maximus"
+    },
+    {
+      "id": "ed70b779-68c8-4f71-a6c9-3a0454cd881b",
+      "code": "whg",
+      "name": "Whiting",
+      "scientific_name": "Merlangius merlangus"
+    },
+    {
+      "id": "0c62a1c7-2c32-40e1-9250-12940c8cfca4",
+      "code": "wra",
+      "name": "Wrasse (various)",
+      "scientific_name": "Labridae spp."
+    },
+    {
+      "id": "09c25d59-0180-41fa-a1e0-216a3acb8be4",
+      "code": "WRK",
+      "name": "Corkwing Wrasse",
+      "scientific_name": "Symphodus melops"
+    },
+    {
+      "id": "80bed2d4-d4be-4c67-a39c-b53071cfa116",
+      "code": "WRG",
+      "name": "Goldsinny Wrasse",
+      "scientific_name": "Ctenolabrus rupestris"
+    },
+    {
+      "id": "fa7ffbc6-334d-4f73-869c-cbb0179813e6",
+      "code": "WRO",
+      "name": "Rock Cook",
+      "scientific_name": "Centrolabrus exoletus"
+    },
+    {
+      "id": "80f9836a-acb6-4f89-b35d-44c94bb2f37c",
+      "code": "CMB",
+      "name": "Comber",
+      "scientific_name": "Serranus cabrilla"
+    },
+    {
+      "id": "21387c4d-6310-4445-8c48-02718feaaabb",
+      "code": "CMP",
+      "name": "Painted Comber",
+      "scientific_name": "Serranus scriba"
+    },
+    {
+      "id": "47bdcecf-fe46-4d5e-a4b2-304820c56367",
+      "code": "SAL",
+      "name": "Salema (Saupe)",
+      "scientific_name": "Sarpa salpa"
+    },
+    {
+      "id": "042f8eee-b819-4cdc-a913-508c41b4c7bb",
+      "code": "PIC",
+      "name": "Picarel",
+      "scientific_name": "Spicara smaris"
+    },
+    {
+      "id": "680e1bcb-8d4c-45a6-bd8a-fd95e14a75c9",
+      "code": "SSH",
+      "name": "Starry Smoothhound",
+      "scientific_name": "Mustelus asterias"
+    },
+    {
+      "id": "7f00612a-ce1c-4380-b227-2d0ec5bc715c",
+      "code": "CSH",
+      "name": "Common Smoothhound",
+      "scientific_name": "Mustelus mustelus"
+    },
+    {
+      "id": "dbe7a1c9-29f9-4620-b5dc-60376973a158",
+      "code": "BUH",
+      "name": "Bull Huss",
+      "scientific_name": "Scyliorhinus stellaris"
+    },
+    {
+      "id": "ee20edc8-ab67-4494-b083-f8a5702e4241",
+      "code": "RJM",
+      "name": "Spotted Ray",
+      "scientific_name": "Raja montagui"
+    },
+    {
+      "id": "bb4f2007-01e3-40cc-8494-402ab42f1468",
+      "code": "RME",
+      "name": "Small-eyed Ray",
+      "scientific_name": "Raja microocellata"
+    },
+    {
+      "id": "f55d6f7a-92d6-405c-a7b9-538229ac9a4b",
+      "code": "RUN",
+      "name": "Undulate Ray",
+      "scientific_name": "Raja undulata"
+    },
+    {
+      "id": "e6c1fac9-8e11-4447-81a5-fea7306cb6df",
+      "code": "GUR",
+      "name": "Red Gurnard",
+      "scientific_name": "Chelidonichthys cuculus"
+    },
+    {
+      "id": "926a1d0c-8452-4691-bb5c-d23f13934181",
+      "code": "GGR",
+      "name": "Grey Gurnard",
+      "scientific_name": "Eutrigla gurnardus"
+    }
+  ],
+  "overlapping_species": [],
+  "environmental_profiles": [
+    {
+      "old_species_id": "04965f67-80fe-465b-b663-b62bf812669c",
+      "temp_min": 15,
+      "temp_max": 26,
+      "wind_max": 10
+    },
+    {
+      "old_species_id": "16299558-6b27-4412-a88b-465dfa18feff",
+      "temp_min": 8,
+      "temp_max": 18,
+      "wind_max": 15
+    }
+  ]
+}

@@ -47,6 +47,11 @@ export interface CardData {
   localizedNames?: LocalizedSpeciesNames;
   advice?: SpeciesAdvice[];
   
+  // User-friendly species characteristics extracted from preferences
+  depthRange?: string;    // e.g., "5-30m" or "Shallow coastal (0-20m)"
+  seasonality?: string;   // e.g., "Spring-Autumn" or "Year-round"
+  habitatType?: string;   // e.g., "Rocky reefs" or "Sandy bottom"
+  
   // Phase 10: Environmental data from real CMEMS marine data
   data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
   weight_profile?: 'pelagic' | 'surf_estuary' | 'reef_kelp' | 'benthic' | 'cephalopod' | 'default_coastal';
@@ -181,6 +186,109 @@ function collectFromKeys(source: FishingPrediction, keys: string[]): string[] {
   return collected;
 }
 
+/**
+ * Format depth range from species preferences into user-friendly string
+ */
+function formatDepthRange(prediction: FishingPrediction): string | undefined {
+  const depthMin = extractNumber(prediction.depth_min);
+  const depthMax = extractNumber(prediction.depth_max);
+  const depthOptMin = extractNumber(prediction.depth_optimal_min);
+  const depthOptMax = extractNumber(prediction.depth_optimal_max);
+  
+  // If we have optimal range, use that
+  if (depthOptMin != null && depthOptMax != null) {
+    if (depthOptMax <= 20) {
+      return `Shallow (${Math.round(depthOptMin)}-${Math.round(depthOptMax)}m)`;
+    } else if (depthOptMin >= 50) {
+      return `Deep (${Math.round(depthOptMin)}-${Math.round(depthOptMax)}m)`;
+    } else {
+      return `${Math.round(depthOptMin)}-${Math.round(depthOptMax)}m`;
+    }
+  }
+  
+  // Fall back to min/max range
+  if (depthMin != null && depthMax != null) {
+    if (depthMax <= 20) {
+      return `Shallow (${Math.round(depthMin)}-${Math.round(depthMax)}m)`;
+    } else if (depthMin >= 50) {
+      return `Deep (${Math.round(depthMin)}-${Math.round(depthMax)}m)`;
+    } else {
+      return `${Math.round(depthMin)}-${Math.round(depthMax)}m`;
+    }
+  }
+  
+  return undefined;
+}
+
+/**
+ * Format seasonality from species preferences into user-friendly string
+ */
+function formatSeasonality(prediction: FishingPrediction): string | undefined {
+  // Check for explicit season fields
+  const season = firstString(prediction.best_season) || 
+                 firstString(prediction.peak_season) ||
+                 firstString(prediction.preferred_season);
+  
+  if (season) return season;
+  
+  // Check temperature preferences to infer seasonality
+  const tempMin = extractNumber(prediction.temp_min);
+  const tempMax = extractNumber(prediction.temp_max);
+  const tempOptMin = extractNumber(prediction.temp_optimal_min);
+  const tempOptMax = extractNumber(prediction.temp_optimal_max);
+  
+  // Use optimal temp range if available
+  const optMin = tempOptMin ?? tempMin;
+  const optMax = tempOptMax ?? tempMax;
+  
+  if (optMin != null && optMax != null) {
+    // Warm water species (>18°C optimal)
+    if (optMin >= 16) return 'Summer-Autumn';
+    // Cold water species (<12°C optimal)
+    if (optMax <= 12) return 'Winter-Spring';
+    // Temperate species (wide range)
+    if (optMax - optMin > 10) return 'Year-round';
+    // Moderate species
+    return 'Spring-Autumn';
+  }
+  
+  return 'Year-round';  // Default
+}
+
+/**
+ * Format habitat type from species preferences into user-friendly string
+ */
+function formatHabitatType(prediction: FishingPrediction): string | undefined {
+  const weightProfile = firstString(prediction.weight_profile);
+  const substrate = firstString(prediction.actual_substrate) || 
+                   firstString(prediction.substrate_preferred);
+  
+  // Use weight profile to determine habitat type
+  if (weightProfile) {
+    switch (weightProfile) {
+      case 'pelagic': return 'Open water';
+      case 'surf_estuary': return 'Estuaries & surf';
+      case 'reef_kelp': return 'Rocky reefs & kelp';
+      case 'benthic': return 'Seabed';
+      case 'cephalopod': return 'Coastal waters';
+      case 'default_coastal': return 'Coastal waters';
+    }
+  }
+  
+  // Use substrate if available
+  if (substrate) {
+    switch (substrate.toLowerCase()) {
+      case 'rock': return 'Rocky areas';
+      case 'sand': return 'Sandy bottom';
+      case 'mud': return 'Muddy bottom';
+      case 'mixed': return 'Mixed substrate';
+      default: return substrate;
+    }
+  }
+  
+  return 'Coastal waters';  // Default
+}
+
 function parseLocalizedSpeciesNames(value: JsonValue | undefined): LocalizedSpeciesNames | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return undefined;
@@ -257,7 +365,7 @@ function parseConfidence(prediction: FishingPrediction): number | null {
 }
 
 /**
- * Generate plain English explanation for confidence score based on environmental factors
+ * Generate Findr-style explanation for confidence score based on environmental factors
  */
 function generateEnvironmentalRationale(prediction: FishingPrediction): string[] {
   const rationale: string[] = [];
@@ -275,38 +383,36 @@ function generateEnvironmentalRationale(prediction: FishingPrediction): string[]
     ? factors.salinity.actual : null;
   const substrate = typeof factors?.substrate === 'object' && factors?.substrate && 'actual' in factors.substrate 
     ? factors.substrate.actual : null;
-  
-  // Temperature explanation
+
+  // 🌡️ Temperature
   if (tempMatch === 'optimal' && temp != null) {
-    rationale.push(`Water temperature (${temp}°C) is in the sweet spot`);
+    rationale.push(`Water’s sitting nicely at ${temp}°C — bang on for this species.`);
   } else if (tempMatch === 'acceptable' && temp != null) {
-    rationale.push(`Water temperature (${temp}°C) is acceptable but not ideal`);
+    rationale.push(`At ${temp}°C, it’s workable, but not quite prime conditions.`);
   } else if (tempMatch === 'poor' && temp != null) {
-    rationale.push(`Water temperature (${temp}°C) is outside preferred range`);
+    rationale.push(`Water’s around ${temp}°C — not their favourite range.`);
   }
-  
-  // Salinity explanation
+
+  // 🌊 Salinity
   if (salMatch === 'optimal' && sal != null) {
-    rationale.push(`Salinity (${sal} ppt) is perfect`);
+    rationale.push(`Salinity’s spot on at ${sal} ppt — just how they like it.`);
   } else if (salMatch === 'acceptable' && sal != null) {
-    rationale.push(`Salinity (${sal} ppt) is tolerable`);
+    rationale.push(`Salinity’s fine at ${sal} ppt — nothing to complain about.`);
   } else if (salMatch === 'poor' && sal != null) {
-    rationale.push(`Salinity (${sal} ppt) is not ideal`);
+    rationale.push(`Salinity’s off at ${sal} ppt — could put them off feeding.`);
   }
-  
-  // Substrate explanation - more specific based on match quality
-  if (substrateMatch === 'preferred') {
-    rationale.push(`Seabed (${substrate || 'mixed'}) is ideal for this species`);
-  } else if (substrateMatch === 'optimal') {
-    rationale.push(`Seabed (${substrate || 'mixed'}) is highly favorable`);
+
+  // 🪸 Seabed / Substrate
+  if (substrateMatch === 'optimal' || substrateMatch === 'preferred') {
+    rationale.push(`The seabed (${substrate || 'mixed'}) suits them perfectly.`);
   } else if (substrateMatch === 'suitable') {
-    rationale.push(`Seabed (${substrate || 'mixed'}) is suitable`);
+    rationale.push(`The seabed (${substrate || 'mixed'}) works fine — not their top choice though.`);
   } else if (substrateMatch === 'acceptable') {
-    rationale.push(`Seabed (${substrate || 'mixed'}) is acceptable`);
+    rationale.push(`They’ll make do with the ${substrate || 'mixed'} bottom.`);
   } else if (substrateMatch === 'poor') {
-    rationale.push(`Seabed (${substrate || 'mixed'}) is not preferred`);
+    rationale.push(`The ${substrate || 'mixed'} bottom isn’t really their thing.`);
   }
-  
+
   return rationale;
 }
 
@@ -510,6 +616,11 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     playfulBio,
     localizedNames,
     advice,
+    
+    // Extract user-friendly species characteristics
+    depthRange: formatDepthRange(prediction),
+    seasonality: formatSeasonality(prediction),
+    habitatType: formatHabitatType(prediction),
     
     // Phase 10: Environmental data
     data_freshness,

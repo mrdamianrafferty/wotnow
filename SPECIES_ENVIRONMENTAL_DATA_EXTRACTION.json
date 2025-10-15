@@ -1,0 +1,1199 @@
+{
+  "extracted_date": "2025-10-11T16:56:41.078Z",
+  "total_species": 62,
+  "categorization": {
+    "complete_in_poc": 15,
+    "has_regional_data": 47,
+    "needs_full_research": 0
+  },
+  "species": [
+    {
+      "species_code": "wrb",
+      "name_en": "Ballan Wrasse",
+      "scientific_name": "Labrus bergylta",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea (west)",
+        "Mediterranean fringe"
+      ],
+      "depth_hints": {
+        "shore": "Rocky headlands and kelp gullies right under your feet, 2–15 m.",
+        "boat": null
+      },
+      "temperature_hints": [
+        "Best in mild–warm months; sluggish in winter."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "brs",
+      "name_en": "Black Seabream",
+      "scientific_name": "Spondyliosoma cantharus",
+      "status": "complete_in_poc",
+      "regions": [
+        "Mediterranean",
+        "Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Piers, rocky ground 5–15m",
+        "boat": "Reefs, wrecks 20–50m"
+      },
+      "temperature_hints": [
+        "Prefers mild–warm; spawns spring inshore",
+        "Prefers mild–warm; spawns spring inshore"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "bll",
+      "name_en": "Brill",
+      "scientific_name": "Scophthalmus rhombus",
+      "status": "has_regional_data",
+      "regions": [
+        "North Sea",
+        "North Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Clean sand and shell 5–40 m from beaches and boats.",
+        "boat": "Sandbanks and sloping edges 10–60 m—classic drift tactics."
+      },
+      "temperature_hints": [
+        "Best spring–autumn; slows in very cold water.",
+        "Best spring–autumn; slows in very cold water."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "BUH",
+      "name_en": "Bull Huss",
+      "scientific_name": "Scyliorhinus stellaris",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic rough ground/kelp gullies",
+        "Reefs/wrecks 20-100 m"
+      ],
+      "depth_hints": {
+        "shore": "Rocky ledges 5-20 m",
+        "boat": "20-100 m"
+      },
+      "temperature_hints": [
+        "Fair year-round; deeper in heat",
+        "Cool-mild best"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "cod",
+      "name_en": "Cod (Coastal)",
+      "scientific_name": "Gadus morhua",
+      "status": "complete_in_poc",
+      "regions": [
+        "North Sea",
+        "Baltic",
+        "Norwegian waters"
+      ],
+      "depth_hints": {
+        "shore": "Shallow rough ground 5–20 m from beaches, piers, rocks.",
+        "boat": "Deeper rough ground and wrecks 20–60 m."
+      },
+      "temperature_hints": [
+        "Cold‑water species; moves deeper when warm.",
+        "Cold‑water species; moves deeper when warm."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "CMB",
+      "name_en": "Comber",
+      "scientific_name": "Serranus cabrilla",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean & S Iberia",
+        "Med reefs/wrecks"
+      ],
+      "depth_hints": {
+        "shore": "Harbours, reefs 2-20 m",
+        "boat": "10-80 m"
+      },
+      "temperature_hints": [
+        "Warm months best",
+        "Warmth helps"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "cut",
+      "name_en": "Common Cuttlefish",
+      "scientific_name": "Sepia officinalis",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic (Iberia/France/UK)",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Harbour walls, marinas and sandy patches 2–15 m—classic pier species.",
+        "boat": "Sandy bays and reefs 10–40 m; gentle drifts over weed/sand edges."
+      },
+      "temperature_hints": [
+        "Most coastal in mild seasons; heat drives them out deeper.",
+        "Most coastal in mild seasons; heat drives them out deeper."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "lin",
+      "name_en": "Common Ling",
+      "scientific_name": "Molva molva",
+      "status": "has_regional_data",
+      "regions": [
+        "North Atlantic",
+        "North Sea",
+        "Norwegian waters"
+      ],
+      "depth_hints": {
+        "shore": "From deep rock ledges within casting reach to wrecks 50–200 m.",
+        "boat": "Wrecks, pinnacles and heavy reef 80–300 m; big baits on strong gear."
+      },
+      "temperature_hints": [
+        "Cold-tolerant; deep marks fish consistently regardless of season.",
+        "Cold-tolerant; deep marks fish consistently regardless of season."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "oct",
+      "name_en": "Common Octopus",
+      "scientific_name": "Octopus vulgaris",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic (Iberia)",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Breakwaters, harbour walls and rough patches 2–20 m—classic pier target at night.",
+        "boat": "Reefs and rough ground 10–40 m; slow-drift jigs over boulders and weed."
+      },
+      "temperature_hints": [
+        "Prefers mild–warm seasons inshore; cold pushes them deeper.",
+        "Prefers mild–warm seasons inshore; cold pushes them deeper."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "CSH",
+      "name_en": "Common Smoothhound",
+      "scientific_name": "Mustelus mustelus",
+      "status": "has_regional_data",
+      "regions": [
+        "SE/SW Europe",
+        "Med and Atlantic",
+        "Banks/edges 10-60 m"
+      ],
+      "depth_hints": {
+        "shore": "Clean/mixed ground 3-15 m",
+        "boat": "10-60 m"
+      },
+      "temperature_hints": [
+        "Warmth helps; retreats deeper in cold",
+        "Warm months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sqc",
+      "name_en": "Common Squid",
+      "scientific_name": "Loligo vulgaris",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "From harbour walls to 5–30 m; over sand/weed beds. (shore accessible range)",
+        "boat": "From harbour walls to 5–30 m; over sand/weed beds. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Most coastal in cool to mild seasons; heat drives them deeper.",
+        "Most coastal in cool to mild seasons; heat drives them deeper."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "con",
+      "name_en": "Conger Eel",
+      "scientific_name": "Conger conger",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean",
+        "English Channel"
+      ],
+      "depth_hints": {
+        "shore": "Harbour walls, rocky gullies; 5–30 m.",
+        "boat": "Deep wrecks/reefs 30–100 m."
+      },
+      "temperature_hints": [
+        "Feeds across wide range; slightly better in mild water.",
+        "Feeds across wide range; slightly better in mild water."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "WRK",
+      "name_en": "Corkwing Wrasse",
+      "scientific_name": "Symphodus melops",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic fringes",
+        "Channel",
+        "W Europe",
+        "Inshore reefs/kelp beds"
+      ],
+      "depth_hints": {
+        "shore": "Right under boulders/kelp, 1-10 m",
+        "boat": "Reefs 5-25 m"
+      },
+      "temperature_hints": [
+        "Mild-warm months best; slows in winter",
+        "Better in warmer months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "wrc",
+      "name_en": "Cuckoo Wrasse",
+      "scientific_name": "Labrus mixtus",
+      "status": "has_regional_data",
+      "regions": [
+        "North Atlantic",
+        "North Sea (west)"
+      ],
+      "depth_hints": {
+        "shore": "Rocky points and reefs in 5–25 m; piers with kelp beds can hold them.",
+        "boat": null
+      },
+      "temperature_hints": [
+        "Active in mild–warm months; slows in winter."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "dab",
+      "name_en": "Dab",
+      "scientific_name": "Limanda limanda",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Beaches, piers, sandy ground 2–20m",
+        "boat": "Soft muddy seabeds 20–40m"
+      },
+      "temperature_hints": [
+        "Tolerant to cold, feeds year-round",
+        "Tolerant to cold, feeds year-round"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "dex",
+      "name_en": "Dentex",
+      "scientific_name": "Dentex dentex",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": null,
+        "boat": "Deep rocky reefs 20–100m"
+      },
+      "temperature_hints": [
+        "Active in warm Med summers"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sol",
+      "name_en": "Dover Sole",
+      "scientific_name": "Solea solea",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Sandy beaches, shallow mud 2–15m",
+        "boat": "Drifting soft grounds 20–40m"
+      },
+      "temperature_hints": [
+        "Prefers warmer summer/autumn; winter slow",
+        "Prefers warmer summer/autumn; winter slow"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "fgm",
+      "name_en": "Flathead Grey Mullet",
+      "scientific_name": "Mugil cephalus",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Harbours, estuaries, surf zones 0–10m",
+        "boat": null
+      },
+      "temperature_hints": [
+        "Best in mild–warm months; cold snaps shut down"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "fle",
+      "name_en": "Flounder",
+      "scientific_name": "Platichthys flesus",
+      "status": "has_regional_data",
+      "regions": [
+        "North Sea",
+        "Baltic",
+        "Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Very close in on sand/mud; 0–20 m (estuaries to open beaches). (shore accessible range)",
+        "boat": "Very close in on sand/mud; 0–20 m (estuaries to open beaches). (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Tolerant; feeds in cold but slower in extremes.",
+        "Tolerant; feeds in cold but slower in extremes."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "gar",
+      "name_en": "Garfish (Needlefish)",
+      "scientific_name": "Belone belone",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea",
+        "Baltic"
+      ],
+      "depth_hints": {
+        "shore": "Surface layers 0–5 m; close to piers/headlands. (shore accessible range)",
+        "boat": "Surface layers 0–5 m; close to piers/headlands. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Arrives with warming water in spring–summer.",
+        "Arrives with warming water in spring–summer."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sbg",
+      "name_en": "Gilthead Seabream",
+      "scientific_name": "Gilthead Seabream",
+      "status": "complete_in_poc",
+      "regions": [
+        "Mediterranean",
+        "Southern Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Estuaries, harbours 2–10m",
+        "boat": "Reefs, sandy bays 10–30m"
+      },
+      "temperature_hints": [
+        "Likes ≥15°C; sluggish in cold",
+        "Likes ≥15°C; sluggish in cold"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "WRG",
+      "name_en": "Goldsinny Wrasse",
+      "scientific_name": "Ctenolabrus rupestris",
+      "status": "has_regional_data",
+      "regions": [
+        "NE Atlantic",
+        "Channel",
+        "Shallow reefs/weed beds"
+      ],
+      "depth_hints": {
+        "shore": "Harbour walls/kelp edges 1-8 m",
+        "boat": "1-15 m"
+      },
+      "temperature_hints": [
+        "Perks up with warmth",
+        "Warm months best"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "gaj",
+      "name_en": "Greater Amberjack",
+      "scientific_name": "Seriola dumerili",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Southern Atlantic (Iberia)"
+      ],
+      "depth_hints": {
+        "shore": "Rocky headlands and harbour mouths from shore when bait is in; offshore reefs/pins 20–80 m.",
+        "boat": "Offshore reefs, wrecks and pinnacles 20–150 m; slow-troll or jig."
+      },
+      "temperature_hints": [
+        "Loves warm water; quiet during cold spells.",
+        "Loves warm water; quiet during cold spells."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "wee",
+      "name_en": "Greater Weever",
+      "scientific_name": "Trachinus draco",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Edges of sandy beaches and estuary bars 1–15 m—watch those spines underfoot!",
+        "boat": null
+      },
+      "temperature_hints": [
+        "Warmer months bring them inshore; cooler water pushes deeper."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "GGR",
+      "name_en": "Grey Gurnard",
+      "scientific_name": "Eutrigla gurnardus",
+      "status": "has_regional_data",
+      "regions": [
+        "North Sea/Atlantic",
+        "Banks 20-120 m"
+      ],
+      "depth_hints": {
+        "shore": "5-20 m",
+        "boat": "20-120 m"
+      },
+      "temperature_hints": [
+        "Cool-mild water fine",
+        "Cool-mild"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "mug",
+      "name_en": "Grey Mullet",
+      "scientific_name": "Chelon labrosus",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Harbours, marinas, surf edges; 0–10 m. (shore accessible range)",
+        "boat": "Harbours, marinas, surf edges; 0–10 m. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Best in mild–warm months; cold snaps shut them down.",
+        "Best in mild–warm months; cold snaps shut them down."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "had",
+      "name_en": "Haddock",
+      "scientific_name": "Melanogrammus aeglefinus",
+      "status": "complete_in_poc",
+      "regions": [
+        "North Sea",
+        "North Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Open sandy/mixed ground from beaches and piers 5–30 m; offshore banks and marks 30–100 m.",
+        "boat": "Drifts over sandbanks and mixed ground 30–120 m; downtiding at anchor also works."
+      },
+      "temperature_hints": [
+        "Prefers cool water; pushes deeper in summer warm spells.",
+        "Prefers cool water; pushes deeper in summer warm spells."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "her",
+      "name_en": "Herring",
+      "scientific_name": "Clupea harengus",
+      "status": "complete_in_poc",
+      "regions": [
+        "North Sea",
+        "Baltic",
+        "Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Mid‑water shoals 5–80 m; piers to offshore banks. (shore accessible range)",
+        "boat": "Mid‑water shoals 5–80 m; piers to offshore banks. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Cool‑water; seasonal coastal runs.",
+        "Cool‑water; seasonal coastal runs."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "hom",
+      "name_en": "Horse Mackerel",
+      "scientific_name": "Trachurus trachurus",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "Mediterranean",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Harbours, piers, lights; middle depths 5–50 m. (shore accessible range)",
+        "boat": "Harbours, piers, lights; middle depths 5–50 m. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "More coastal in mild–warm water; drops deeper in cold.",
+        "More coastal in mild–warm water; drops deeper in cold."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "jod",
+      "name_en": "John Dory",
+      "scientific_name": "Zeus faber",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Reefs/wrecks 20–150 m; occasional inshore. (shore accessible range)",
+        "boat": "Reefs/wrecks 20–150 m; occasional inshore. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Best in mild–warm settled periods.",
+        "Best in mild–warm settled periods."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "lta",
+      "name_en": "Little Tunny",
+      "scientific_name": "Euthynnus alletteratus",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Atlantic Iberia"
+      ],
+      "depth_hints": {
+        "shore": "Headlands, harbour mouths and nearshore rips from shore; offshore feeding lanes by boat.",
+        "boat": "Nearshore to offshore rips and temperature breaks; troll or run-and-gun where birds work."
+      },
+      "temperature_hints": [
+        "Loves warm water; pushes south/deeper when it cools.",
+        "Loves warm water; pushes south/deeper when it cools."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "mac",
+      "name_en": "Mackerel",
+      "scientific_name": "Scomber scombrus",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "North Sea",
+        "Baltic"
+      ],
+      "depth_hints": {
+        "shore": "Shoals close to piers/headlands; middle depths 5–20 m.",
+        "boat": "Offshore shoals middle depths 20–60 m; trolling and drift feathers."
+      },
+      "temperature_hints": [
+        "Stays near the surface in warm seasons; moves offshore/deeper when cold.",
+        "Stays near the surface in warm seasons; moves offshore/deeper when cold."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "ldb",
+      "name_en": "Megrim",
+      "scientific_name": "Lepidorhombus whiffiagonis",
+      "status": "has_regional_data",
+      "regions": [
+        "North Atlantic",
+        "Celtic/North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Clean ground within casting reach in deeper beaches 10–30 m; offshore flats 30–120 m.",
+        "boat": "Wide flats 40–200 m; drift baits a metre off the bottom when dogfish are thick."
+      },
+      "temperature_hints": [
+        "Cool to mild water suits; very cold slows them.",
+        "Cool to mild water suits; very cold slows them."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "CMP",
+      "name_en": "Painted Comber",
+      "scientific_name": "Serranus scriba",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Med reefs"
+      ],
+      "depth_hints": {
+        "shore": "Harbours/rocky coves 2-15 m",
+        "boat": "10-60 m"
+      },
+      "temperature_hints": [
+        "Warm seasons best",
+        "Warm months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "par",
+      "name_en": "Parrotfish",
+      "scientific_name": "Sparisoma cretense",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean (eastern and subtropical pockets)"
+      ],
+      "depth_hints": {
+        "shore": "Shallow rocky coves and jetties 1–10 m—right where you can see them.",
+        "boat": null
+      },
+      "temperature_hints": [
+        "Heat-lover; most active in summer."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "PIC",
+      "name_en": "Picarel",
+      "scientific_name": "Spicara smaris",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Inshore shoals"
+      ],
+      "depth_hints": {
+        "shore": "Mid-water shoals 3-20 m",
+        "boat": "5-60 m mid-water"
+      },
+      "temperature_hints": [
+        "Warm months best",
+        "Warm months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "ple",
+      "name_en": "Plaice",
+      "scientific_name": "Pleuronectes platessa",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Beaches and estuaries, 2–10m",
+        "boat": "Drifting over offshore banks 10–40m"
+      },
+      "temperature_hints": [
+        "Mild/cool best; sluggish in cold winter",
+        "Mild/cool best; sluggish in cold winter"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "pol",
+      "name_en": "Pollack",
+      "scientific_name": "Pollachius pollachius",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Kelp beds, reefs 5–30m close to rocks",
+        "boat": "Wrecks and offshore reefs 20–100m"
+      },
+      "temperature_hints": [
+        "Active in mild water; slows in extreme cold/heat",
+        "Active in mild water; slows in extreme cold/heat"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "GUR",
+      "name_en": "Red Gurnard",
+      "scientific_name": "Chelidonichthys cuculus",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic/Channel/Biscay",
+        "Banks/flats"
+      ],
+      "depth_hints": {
+        "shore": "5-20 m from beaches/rocks",
+        "boat": "15-100 m"
+      },
+      "temperature_hints": [
+        "Mild-warm months more active",
+        "Mild-warm"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "mul",
+      "name_en": "Red Mullet",
+      "scientific_name": "Mullus surmuletus",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Bay of Biscay"
+      ],
+      "depth_hints": {
+        "shore": "Sandy/muddy bays 5–50 m; often close in. (shore accessible range)",
+        "boat": "Sandy/muddy bays 5–50 m; often close in. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Warm‑water preference; summer–autumn peak.",
+        "Warm‑water preference; summer–autumn peak."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sbr",
+      "name_en": "Red Seabream",
+      "scientific_name": "Pagellus bogaraveo",
+      "status": "complete_in_poc",
+      "regions": [
+        "Mediterranean",
+        "Southern Atlantic"
+      ],
+      "depth_hints": {
+        "shore": null,
+        "boat": "Deep rocky reefs 20–100m"
+      },
+      "temperature_hints": [
+        "Prefers warmer Med/Atlantic waters"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "WRO",
+      "name_en": "Rock Cook",
+      "scientific_name": "Centrolabrus exoletus",
+      "status": "has_regional_data",
+      "regions": [
+        "NE Atlantic coasts",
+        "Shallow reefs"
+      ],
+      "depth_hints": {
+        "shore": "Rock pools to 6-10 m",
+        "boat": "5-20 m"
+      },
+      "temperature_hints": [
+        "Warm months best",
+        "Warmer months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "pok",
+      "name_en": "Saithe (Pollachius virens)",
+      "scientific_name": "Pollachius virens",
+      "status": "has_regional_data",
+      "regions": [
+        "North Sea",
+        "Norwegian waters",
+        "North Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Kelp fringes and rock pins accessible from shore 5–20 m; harbour mouths and headlands.",
+        "boat": "Deep reefs and wrecks 20–120 m; vertical jigging or long casts down-tide."
+      },
+      "temperature_hints": [
+        "Active in cool–mild water; very warm or very cold spells slow them.",
+        "Active in cool–mild water; very warm or very cold spells slow them."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sai",
+      "name_en": "Saithe/Pollock",
+      "scientific_name": "Saithe/Pollock",
+      "status": "has_regional_data",
+      "regions": [
+        "North Sea",
+        "Norwegian waters"
+      ],
+      "depth_hints": {
+        "shore": "Kelp fringes, reefs, wrecks 5–80 m. (shore accessible range)",
+        "boat": "Kelp fringes, reefs, wrecks 5–80 m. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Active in cool–mild water; heat or deep winter slows.",
+        "Active in cool–mild water; heat or deep winter slows."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "SAL",
+      "name_en": "Salema (Saupe)",
+      "scientific_name": "Sarpa salpa",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Macaronesia fringe",
+        "Nearshore weed/reef"
+      ],
+      "depth_hints": {
+        "shore": "Shallow weed beds/reefs 1-10 m",
+        "boat": "5-30 m"
+      },
+      "temperature_hints": [
+        "Likes warm water; summer peak",
+        "Warm months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "san",
+      "name_en": "Sand Eel",
+      "scientific_name": "Ammodytes tobianus",
+      "status": "has_regional_data",
+      "regions": [
+        "North Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Surf edges and shallow sandbars 0–10 m; harbour lights on calm nights.",
+        "boat": "Nearshore shoals and shallow banks 5–30 m; small-boat drifts find bigger launce."
+      },
+      "temperature_hints": [
+        "Prefers cooler to mild water; summer brings inshore shoals.",
+        "Prefers cooler to mild water; summer brings inshore shoals."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "pil",
+      "name_en": "Sardine",
+      "scientific_name": "Sardina pilchardus",
+      "status": "complete_in_poc",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Surface–midwater 0–40 m near ports/bays. (shore accessible range)",
+        "boat": "Surface–midwater 0–40 m near ports/bays. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Warmer‑water coastal; moves offshore in cold.",
+        "Warmer‑water coastal; moves offshore in cold."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "bss",
+      "name_en": "Sea Bass",
+      "scientific_name": "Dicentrarchus labrax",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Surf lines, estuaries, rocky headlands; 1–10 m; often within casting range.",
+        "boat": "Deeper reefs and wrecks 10–30 m offshore; drift fishing productive."
+      },
+      "temperature_hints": [
+        "Active ≥12–13 °C; slows in cold spells; peak June–Oct in many regions.",
+        "Active ≥12–13 °C; slows in cold spells; peak June–Oct in many regions."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "sba",
+      "name_en": "Sea Bream (Dorada)",
+      "scientific_name": "Sparus aurata",
+      "status": "complete_in_poc",
+      "regions": [
+        "Mediterranean",
+        "Southern Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Beaches/estuaries/rocky reefs; 2–30 m. (shore accessible range)",
+        "boat": "Beaches/estuaries/rocky reefs; 2–30 m. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Prefers ≥15 °C; sluggish in cold snaps.",
+        "Prefers ≥15 °C; sluggish in cold snaps."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "trs",
+      "name_en": "Sea Trout",
+      "scientific_name": "Salmo trutta",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea",
+        "Baltic"
+      ],
+      "depth_hints": {
+        "shore": "Very close to surf edges, drop‑offs, river mouths; 0–3 m.",
+        "boat": "Less targeted by boat; trolling near shorelines 3–10 m depth."
+      },
+      "temperature_hints": [
+        "Cool–mild water best (5–14 °C); hot bright days are tough.",
+        "Cool–mild water best (5–14 °C); hot bright days are tough."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "RME",
+      "name_en": "Small-eyed Ray",
+      "scientific_name": "Raja microocellata",
+      "status": "has_regional_data",
+      "regions": [
+        "Wales/Channel/Atlantic surf beaches",
+        "Inshore banks"
+      ],
+      "depth_hints": {
+        "shore": "Bars/holes 3-12 m",
+        "boat": "10-50 m"
+      },
+      "temperature_hints": [
+        "Mild months best",
+        "Mild-warm"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "scy",
+      "name_en": "Small-spotted Catshark",
+      "scientific_name": "Scyliorhinus canicula",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Surf beaches, estuaries 5–20m",
+        "boat": "Sandy/mud seabeds 20–100m"
+      },
+      "temperature_hints": [
+        "Active in wide temp range",
+        "Active in wide temp range"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "bsp",
+      "name_en": "Spotted Bass",
+      "scientific_name": "Dicentrarchus punctatus",
+      "status": "has_regional_data",
+      "regions": [
+        "Mediterranean",
+        "Atlantic Iberia"
+      ],
+      "depth_hints": {
+        "shore": "Small surf beaches, estuary mouths and rocky points 1–10 m.",
+        "boat": "Reefs and inshore banks 5–25 m; light-boat lure fishing shines."
+      },
+      "temperature_hints": [
+        "More active from ~15 °C upwards; sluggish in cold snaps.",
+        "More active from ~15 °C upwards; sluggish in cold snaps."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "RJM",
+      "name_en": "Spotted Ray",
+      "scientific_name": "Raja montagui",
+      "status": "has_regional_data",
+      "regions": [
+        "W Europe sandy bays/sandbanks",
+        "Inshore banks/channels"
+      ],
+      "depth_hints": {
+        "shore": "Surf bays 5-15 m",
+        "boat": "10-60 m"
+      },
+      "temperature_hints": [
+        "Mild-warm best",
+        "Mild-warm"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "spr",
+      "name_en": "Sprat",
+      "scientific_name": "Sprattus sprattus",
+      "status": "has_regional_data",
+      "regions": [
+        "Baltic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Surface shoals 0–30 m in bays/ports. (shore accessible range)",
+        "boat": "Surface shoals 0–30 m in bays/ports. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Prefers cool waters; winter inshore.",
+        "Prefers cool waters; winter inshore."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "SSH",
+      "name_en": "Starry Smoothhound",
+      "scientific_name": "Mustelus asterias",
+      "status": "has_regional_data",
+      "regions": [
+        "UK/IE/FR/ES Atlantic coasts",
+        "Banks/edges 10-60 m"
+      ],
+      "depth_hints": {
+        "shore": "Clean/mixed ground 3-15 m",
+        "boat": "10-60 m clean/mixed"
+      },
+      "temperature_hints": [
+        "Perks up in warmer months",
+        "Warm months"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "rjc",
+      "name_en": "Thornback Ray",
+      "scientific_name": "Raja clavata",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea"
+      ],
+      "depth_hints": {
+        "shore": "Sandy bays 5–20m",
+        "boat": "Deeper sands/channels 20–60m"
+      },
+      "temperature_hints": [
+        "Prefers mild–warm water; sluggish in cold",
+        "Prefers mild–warm water; sluggish in cold"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "gug",
+      "name_en": "Tub Gurnard",
+      "scientific_name": "Chelidonichthys lucerna",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Shallows 5–15m",
+        "boat": "Boat drifts 20–60m over sand/mud"
+      },
+      "temperature_hints": [
+        "Feeds in warmer seas; less in cold winters",
+        "Feeds in warmer seas; less in cold winters"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "tur",
+      "name_en": "Turbot (Small)",
+      "scientific_name": "Scophthalmus maximus",
+      "status": "complete_in_poc",
+      "regions": [
+        "North Sea",
+        "Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Sandbanks 10–70 m; often just off beaches. (shore accessible range)",
+        "boat": "Sandbanks 10–70 m; often just off beaches. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Active spring–autumn; slows in very cold water.",
+        "Active spring–autumn; slows in very cold water."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "RUN",
+      "name_en": "Undulate Ray",
+      "scientific_name": "Raja undulata",
+      "status": "has_regional_data",
+      "regions": [
+        "Southern UK/Channel/Biscay",
+        "Sandy channels/banks"
+      ],
+      "depth_hints": {
+        "shore": "Sandy bays 3-15 m",
+        "boat": "10-60 m"
+      },
+      "temperature_hints": [
+        "Prefers mild-warm",
+        "Mild-warm"
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "whg",
+      "name_en": "Whiting",
+      "scientific_name": "Merlangius merlangus",
+      "status": "complete_in_poc",
+      "regions": [
+        "North Sea",
+        "Atlantic"
+      ],
+      "depth_hints": {
+        "shore": "Inshore 5–50 m over sand/mixed. (shore accessible range)",
+        "boat": "Inshore 5–50 m over sand/mixed. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Cool‑water oriented; less activity in heat.",
+        "Cool‑water oriented; less activity in heat."
+      ],
+      "has_playful_bio": true
+    },
+    {
+      "species_code": "wra",
+      "name_en": "Wrasse (various)",
+      "scientific_name": "Labridae spp.",
+      "status": "has_regional_data",
+      "regions": [
+        "Atlantic",
+        "North Sea",
+        "Mediterranean"
+      ],
+      "depth_hints": {
+        "shore": "Rocky kelp ground 2–20 m; very close to shore. (shore accessible range)",
+        "boat": "Rocky kelp ground 2–20 m; very close to shore. (boat marks deeper/offshore)"
+      },
+      "temperature_hints": [
+        "Best in mild–warm water; lethargic in winter.",
+        "Best in mild–warm water; lethargic in winter."
+      ],
+      "has_playful_bio": true
+    }
+  ]
+}

@@ -13,11 +13,6 @@ interface _LanguageOption {
 
 
 export interface SettingsFormProps {
-  rectangleOptions: RectangleOption[];
-  optionsLoading: boolean;
-  optionsError: string | null;
-  usingFallback: boolean;
-  selectedCode: string;
   manualCode: string;
   manualNormalized: string | null;
   manualInvalid: boolean;
@@ -29,7 +24,6 @@ export interface SettingsFormProps {
   activeRectangle: string | null;
   formattedLastUpdated: string | null;
   totalPredictions: number;
-  onSelectOption: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onManualCodeChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onDateChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSetToday: () => void;
@@ -40,11 +34,6 @@ export interface SettingsFormProps {
 }
 
 export const SettingsForm: React.FC<SettingsFormProps> = ({
-  rectangleOptions,
-  optionsLoading,
-  optionsError,
-  usingFallback,
-  selectedCode,
   manualCode,
   manualNormalized,
   manualInvalid,
@@ -56,7 +45,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
   activeRectangle,
   formattedLastUpdated,
   totalPredictions,
-  onSelectOption,
   onManualCodeChange,
   onDateChange,
   onSetToday,
@@ -68,45 +56,31 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
   <div className="grid gap-6 md:grid-cols-2">
     <div className="space-y-3">
       <label className="font-semibold text-sm flex items-center gap-2">
-        <MapPin size={16} /> <TranslatedText text="Zone" />
+        <MapPin size={16} /> <TranslatedText text="Current fishing location" />
       </label>
-      <select
-        className="select select-bordered w-full"
-        value={selectedCode}
-        onChange={onSelectOption}
-        aria-label="Select fishing area"
-        disabled={rectangleOptions.length === 0}
-      >
-        {rectangleOptions.length === 0 ? (
-          <option value="" disabled>
-            <TranslatedText text="No zones available" />
-          </option>
-        ) : (
-          rectangleOptions.map((option) => (
-            <option key={option.code} value={option.code}>
-              {option.code} — {option.label}
-            </option>
-          ))
-        )}
-      </select>
-      {activeOption && (
-        <p className="text-xs text-base-content/60">
-          {activeOption.region} • {activeOption.centerLat.toFixed(2)}°N,{' '}
-          {Math.abs(activeOption.centerLon).toFixed(2)}°
-          {activeOption.centerLon >= 0 ? 'E' : 'W'}
-        </p>
-      )}
-      {optionsLoading && (
-        <p className="text-xs text-base-content/60 flex items-center gap-2">
-          <span className="loading loading-ring loading-xs text-blue-500" aria-hidden />
-          <TranslatedText text="Scouting nearby fishing areas…" />
-        </p>
-      )}
-      {optionsError && <p className="text-xs text-error"><TranslatedText text={optionsError} /></p>}
-      {!optionsLoading && !optionsError && usingFallback && (
-        <p className="text-xs text-base-content/60">
-          <TranslatedText text="Showing our offline area list while we reconnect." />
-        </p>
+      {activeOption ? (
+        <div className="p-4 bg-base-200 rounded-lg border border-base-300">
+          <p className="font-medium text-base-content">
+            {activeOption.code} — {activeOption.label}
+          </p>
+          <p className="text-xs text-base-content/60 mt-2">
+            {activeOption.region} • {activeOption.centerLat.toFixed(2)}°N,{' '}
+            {Math.abs(activeOption.centerLon).toFixed(2)}°
+            {activeOption.centerLon >= 0 ? 'E' : 'W'}
+          </p>
+          <p className="text-xs text-info mt-2">
+            <TranslatedText text="Change location using the button at the top of the page" />
+          </p>
+        </div>
+      ) : (
+        <div className="p-4 bg-base-200 rounded-lg border border-base-300">
+          <p className="text-sm text-base-content/60">
+            <TranslatedText text="No location selected" />
+          </p>
+          <p className="text-xs text-info mt-2">
+            <TranslatedText text="Use the location button at the top of the page to set your fishing area" />
+          </p>
+        </div>
       )}
     </div>
 

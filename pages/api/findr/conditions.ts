@@ -5,6 +5,7 @@ import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
 import { FALLBACK_CONDITIONS, type FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
 import { FALLBACK_RECTANGLE_OPTIONS } from '../../../lib/findr/fallbackRectangles';
 import { normalizeRectangleCode } from '../../../lib/findr/rectangle';
+import { calculateWaterClarity } from '../../../lib/utils/waterClarity';
 
 
 type ConditionsSource = 'supabase' | 'fallback';
@@ -14,6 +15,7 @@ interface ConditionsRow {
   captured_at?: string | null;
   sea_temp_c?: number | string | null;
   chlorophyll_mg_m3?: number | string | null;
+  kd490?: number | string | null;
   dissolved_oxygen_mg_l?: number | string | null;
   salinity_psu?: number | string | null;
   nitrate_umol_l?: number | string | null;
@@ -21,6 +23,24 @@ interface ConditionsRow {
   wave_height_m?: number | string | null;
   wind_speed_kts?: number | string | null;
   wind_direction_deg?: number | string | null;
+  // Ocean currents (Phase 2)
+  current_east_ms?: number | string | null;
+  current_north_ms?: number | string | null;
+  current_speed_ms?: number | string | null;
+  current_direction_deg?: number | string | null;
+  // Ocean dynamics (Phase 2)
+  mixed_layer_depth_m?: number | string | null;
+  sea_surface_height_m?: number | string | null;
+  // Food chain indicators (Phase 2)
+  zooplankton_mmol_m3?: number | string | null;
+  phytoplankton_mmol_m3?: number | string | null;
+  primary_production_mg_c_m3_day?: number | string | null;
+  // Wave details (Phase 2)
+  wave_direction_deg?: number | string | null;
+  wave_period_s?: number | string | null;
+  wind_sea_height_m?: number | string | null;
+  swell_height_m?: number | string | null;
+  // Tides and metadata
   next_high_tide_iso?: string | null;
   next_low_tide_iso?: string | null;
   hourly_marine_json?: unknown;
@@ -173,6 +193,51 @@ function applyConditionsRow(base: FallbackConditionPayload, row: ConditionsRow):
   if (maybeSeaTemp !== undefined) marine.seaTemperatureC = maybeSeaTemp;
   const maybeChl = normaliseNumber(row.chlorophyll_mg_m3);
   if (maybeChl !== undefined) marine.chlorophyllMgM3 = maybeChl;
+  
+  // Calculate water clarity from kd490 (if available) and chlorophyll
+  const maybeKd490 = normaliseNumber(row.kd490);
+  if (maybeKd490 !== undefined || maybeChl !== undefined) {
+    const clarity = calculateWaterClarity(maybeKd490, maybeChl);
+    if (clarity) {
+      marine.waterClarityIndex = clarity.clarity_index;
+      marine.waterClarityMethod = clarity.method;
+    }
+  }
+  
+  // Ocean currents (Phase 2 - Comprehensive Copernicus)
+  const maybeCurrentEast = normaliseNumber(row.current_east_ms);
+  if (maybeCurrentEast !== undefined) marine.currentEastSurface = maybeCurrentEast;
+  const maybeCurrentNorth = normaliseNumber(row.current_north_ms);
+  if (maybeCurrentNorth !== undefined) marine.currentNorthSurface = maybeCurrentNorth;
+  const maybeCurrentSpeed = normaliseNumber(row.current_speed_ms);
+  if (maybeCurrentSpeed !== undefined) marine.currentSpeedSurface = maybeCurrentSpeed;
+  const maybeCurrentDirection = normaliseNumber(row.current_direction_deg);
+  if (maybeCurrentDirection !== undefined) marine.currentDirectionSurface = maybeCurrentDirection;
+  
+  // Ocean dynamics (Phase 2)
+  const maybeMLD = normaliseNumber(row.mixed_layer_depth_m);
+  if (maybeMLD !== undefined) marine.mixedLayerDepth = maybeMLD;
+  const maybeSSH = normaliseNumber(row.sea_surface_height_m);
+  if (maybeSSH !== undefined) marine.seaSurfaceHeight = maybeSSH;
+  
+  // Food chain indicators (Phase 2)
+  const maybeZooplankton = normaliseNumber(row.zooplankton_mmol_m3);
+  if (maybeZooplankton !== undefined) marine.zooplanktonSurface = maybeZooplankton;
+  const maybePhytoplankton = normaliseNumber(row.phytoplankton_mmol_m3);
+  if (maybePhytoplankton !== undefined) marine.phytoplanktonSurface = maybePhytoplankton;
+  const maybePrimaryProd = normaliseNumber(row.primary_production_mg_c_m3_day);
+  if (maybePrimaryProd !== undefined) marine.primaryProductionSurface = maybePrimaryProd;
+  
+  // Wave details (Phase 2)
+  const maybeWaveDir = normaliseNumber(row.wave_direction_deg);
+  if (maybeWaveDir !== undefined) marine.waveDirection = maybeWaveDir;
+  const maybeWavePeriod = normaliseNumber(row.wave_period_s);
+  if (maybeWavePeriod !== undefined) marine.wavePeriod = maybeWavePeriod;
+  const maybeWindSea = normaliseNumber(row.wind_sea_height_m);
+  if (maybeWindSea !== undefined) marine.windSeaHeight = maybeWindSea;
+  const maybeSwell = normaliseNumber(row.swell_height_m);
+  if (maybeSwell !== undefined) marine.swellHeight = maybeSwell;
+  
   const maybeOx = normaliseNumber(row.dissolved_oxygen_mg_l);
   if (maybeOx !== undefined) marine.dissolvedOxygenMgL = maybeOx;
   const maybeSalinity = normaliseNumber(row.salinity_psu);
@@ -328,7 +393,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data, error } = await supabase
       .from('findr_conditions_latest')
       .select(
-        'rectangle_code, captured_at, sea_temp_c, chlorophyll_mg_m3, dissolved_oxygen_mg_l, salinity_psu, nitrate_umol_l, phosphate_umol_l, wave_height_m, wind_speed_kts, wind_direction_deg, next_high_tide_iso, next_low_tide_iso, hourly_marine_json, daily_marine_json, source'
+        'rectangle_code, captured_at, sea_temp_c, chlorophyll_mg_m3, kd490, dissolved_oxygen_mg_l, salinity_psu, nitrate_umol_l, phosphate_umol_l, wave_height_m, wind_speed_kts, wind_direction_deg, current_east_ms, current_north_ms, current_speed_ms, current_direction_deg, mixed_layer_depth_m, sea_surface_height_m, zooplankton_mmol_m3, phytoplankton_mmol_m3, primary_production_mg_c_m3_day, wave_direction_deg, wave_period_s, wind_sea_height_m, swell_height_m, next_high_tide_iso, next_low_tide_iso, hourly_marine_json, daily_marine_json, source'
       )
       .eq('rectangle_code', normalizedCode)
       .maybeSingle();
