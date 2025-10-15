@@ -11,6 +11,8 @@ interface SimplifiedShareModalProps {
   activityMessage?: string;     // AI-generated message about conditions
   activityDescription?: string; // Weather summary
   activityEmoji?: string;       // Activity emoji
+  activityId?: string;          // For smart defaults (night activities)
+  assessmentStatus?: 'perfect' | 'good' | 'fair' | 'poor' | 'offseason'; // For smart defaults
 }
 
 export default function SimplifiedShareModal({
@@ -19,7 +21,9 @@ export default function SimplifiedShareModal({
   activityName,
   activityMessage = "",
   activityDescription = "",
-  activityEmoji = "🎉"
+  activityEmoji = "🎉",
+  activityId,
+  assessmentStatus
 }: SimplifiedShareModalProps) {
   const [when, setWhen] = useState<string>("today");
   const [time, setTime] = useState<string>("afternoon");
@@ -47,17 +51,28 @@ export default function SimplifiedShareModal({
     { label: "The usual spot", value: "the usual spot" }
   ];
 
-  // Reset form when modal opens
+  // Reset form when modal opens with smart defaults
   useEffect(() => {
     if (isOpen) {
-      setWhen("today");
-      setTime("afternoon");
+      // Smart default for "when": If conditions are perfect, suggest today
+      const defaultWhen = assessmentStatus === 'perfect' ? 'today' : 'today';
+      setWhen(defaultWhen);
+
+      // Smart default for "time": Evening for night activities, afternoon otherwise
+      const nightActivities = [
+        'cinema', 'theatre', 'concert', 'nightclub', 'bar_hopping',
+        'restaurant', 'dinner', 'stargazing', 'astronomy', 'night_photography'
+      ];
+      const isNightActivity = activityId && nightActivities.includes(activityId);
+      const defaultTime = isNightActivity ? 'evening' : 'afternoon';
+      setTime(defaultTime);
+
       setWhere("");
       setCustomWhere("");
       setShareSuccess(null);
       setIsSharing(false);
     }
-  }, [isOpen]);
+  }, [isOpen, assessmentStatus, activityId]);
 
   // Lock body scroll when modal is open
   useEffect(() => {

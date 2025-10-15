@@ -535,8 +535,10 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
         onClose={() => setIsShareModalOpen(false)}
         activityName={activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')}
         activityMessage={message}
-        activityDescription={assessment.status !== 'offseason' ? reasonsObjects.map(r => r.title).join(', ') : undefined}
+        activityDescription={assessment.status !== 'offseason' ? reasonsStrings.join(', ') : undefined}
         activityEmoji={activityId ? getActivityEmoji(activityId) : '🎉'}
+        activityId={activityId}
+        assessmentStatus={assessment.status}
       />
       </article>
     );
