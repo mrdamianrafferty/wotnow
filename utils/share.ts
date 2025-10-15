@@ -38,8 +38,8 @@ export async function shareToWhatsApp(payload: SharePayload): Promise<string> {
     try {
       await navigator.share({
         title: payload.title,
-        text: buildMessage(payload),
-        url: payload.url,
+        text: payload.text, // Just the text, not the full message
+        url: payload.url,    // Web Share API handles URL separately
       });
       return 'Shared successfully!';
     } catch (err) {
