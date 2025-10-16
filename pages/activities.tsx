@@ -567,26 +567,58 @@ function DayTabs({ days, activeDay, onDayChange, serverTime }: DayTabsProps) {
       className="day-tabs"
       aria-label="Forecast days"
     >
-      {days.map((day, idx) => (
-        <button
-          key={day.date}
-          role="tab"
-          aria-selected={activeDay === idx}
-          aria-controls={`day-panel-${idx}`}
-          id={`day-tab-${idx}`}
-          className={`day-tab ${activeDay === idx ? 'active' : ''}`}
-          onClick={() => onDayChange(idx)}
-        >
-          <div className="text-center">
-            <div className="day-tab__label">
-              {getDayLabel(day.date, idx, serverTime)}
+      {days.map((day, idx) => {
+        const isActive = activeDay === idx;
+        return (
+          <button
+            key={day.date}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls={`day-panel-${idx}`}
+            id={`day-tab-${idx}`}
+            style={{
+              backgroundColor: isActive ? '#3b82f6' : '#f8f9fa',
+              borderColor: isActive ? '#3b82f6' : '#e5e7eb',
+              color: isActive ? '#ffffff' : '#374151',
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              minWidth: '120px',
+              textAlign: 'center',
+              fontWeight: isActive ? '600' : '500',
+              whiteSpace: 'nowrap',
+              boxShadow: isActive ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.backgroundColor = '#e5f3ff';
+                e.currentTarget.style.borderColor = '#3b82f6';
+                e.currentTarget.style.color = '#1e40af';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.color = '#374151';
+              }
+            }}
+            onClick={() => onDayChange(idx)}
+          >
+            <div className="text-center">
+              <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
+                {getDayLabel(day.date, idx, serverTime)}
+              </div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '2px' }}>
+                {day.temperature}°
+              </div>
             </div>
-            <div className="day-tab__date">
-              {day.temperature}°
-            </div>
-          </div>
-        </button>
-      ))}
+          </button>
+        );
+      })}
     </nav>
   );
 }
