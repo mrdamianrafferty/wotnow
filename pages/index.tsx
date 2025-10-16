@@ -1259,21 +1259,40 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
   </div>
 ) : null}
 <main id="main-content" className="main-grid">
-  {enrichedHeroData.map(({ day, heroActivity, dayLabel, enriched, enrichedAlsoGoodPerfect, enrichedGoodActivities, enrichedIndoorActivities }) => {
+  {enrichedHeroData.map(({ day, heroActivity, dayLabel, enriched, enrichedAlsoGoodPerfect, enrichedGoodActivities, enrichedIndoorActivities }, dayIndex) => {
 
     // Removed AstronomyCard on homepage regardless of interests
+
+    // PERFORMANCE: First card uses Next.js Image with priority for faster LCP
+    // Cards 2-8 use CSS background-image (lazy load)
+    const isFirstCard = dayIndex === 0;
+    const backgroundImageSrc = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
+      ? getOptimizedImageSrc(heroActivity.activityId, 'webpMobile')
+      : getActivityBg(heroActivity?.activityId || 'default');
 
     const dayCard = (
       <div
         key={day.date}
         className="activity-card-enhanced text-on-dark"
         style={{
-          backgroundImage: `url(${heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
-            ? getOptimizedImageSrc(heroActivity.activityId, 'webpMobile')
-            : getActivityBg(heroActivity?.activityId || 'default')
-          })`,
+          // Only use background-image for cards 2-8
+          ...(!isFirstCard && {
+            backgroundImage: `url(${backgroundImageSrc})`,
+          }),
         }}
       >
+        {/* PERFORMANCE: First card uses Next.js Image with priority for LCP */}
+        {isFirstCard && heroActivity?.activityId && (
+          <Image
+            src={backgroundImageSrc}
+            alt={`${enriched?.activity?.name || heroActivity.activityId} background`}
+            fill
+            priority
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            quality={85}
+          />
+        )}
         <div className="activity-card-overlay" />
         <div className="activity-card-content">
             <div className="weather-icon-topright">
