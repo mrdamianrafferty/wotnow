@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import SEO from '../../components/SEO';
 import { useRouter } from 'next/router';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion';
 import {
@@ -783,9 +784,11 @@ const FindrPage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>findr | catch the fish of your life</title>
-      </Head>
+      <SEO
+        title="findr | catch the fish of your life"
+        description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
+        url="https://fishfindr.eu"
+      />
       <main className="min-h-screen bg-base-200 pb-16">
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />

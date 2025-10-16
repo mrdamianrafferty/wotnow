@@ -28,6 +28,8 @@ import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import AppHeader, { LocationLite } from '../components/AppHeader';
+import { SkeletonActivityGrid } from '../components/SkeletonLoader';
+import SEO from '../components/SEO';
 import { useHasMounted } from '../utils/useHasMounted';
 import { getActivityMessage } from '../data/activityMessages';
 import { buildReasons, isOutdoor, isOutOfSeason } from '../utils/activityHelpers';
@@ -949,6 +951,11 @@ export default function ActivitiesPage() {
 
   return (
     <>
+      <SEO
+        title="Activities"
+        description="Browse all your selected activities with detailed weather conditions, scores, and recommendations for the next 8 days."
+        url="https://godaisy.io/activities"
+      />
       {/* ✅ ADD HEADER BANNER */}
       <AppHeader
         homeLocation={homeLocation as LocationLite | undefined}
@@ -1026,9 +1033,8 @@ export default function ActivitiesPage() {
         {!needsLocation && !needsInterests && (
           <>
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
-                <span className="ml-3 text-base-content/80">Planning perfect days</span>
+              <div className="px-4 py-8">
+                <SkeletonActivityGrid count={12} />
               </div>
             ) : error ? (
               <div style={{ 

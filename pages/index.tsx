@@ -31,6 +31,7 @@ import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import type { SnowRecommendationLevel } from '../utils/snowRecommendations';
 import SEO from '../components/SEO';
+import { SkeletonHomePage } from '../components/SkeletonLoader';
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const { query } = ctx;
@@ -1039,10 +1040,21 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
    if (loading) {
      return (
-       <div className="flex items-center justify-center py-16">
-         <span className="loading loading-dots loading-lg text-primary" aria-hidden="true"></span>
-         <span className="ml-3 text-base-content/80">Go Daisy Go</span>
-       </div>
+       <>
+         <SEO
+           title="Perfect Weather-Based Activity Recommendations"
+           description="Find the best outdoor activities for today's weather. From surfing to hiking, Go Daisy helps you make the most of every day with personalized activity scores and 8-day forecasts."
+           url="https://godaisy.io"
+         />
+         <AppHeader
+           homeLocation={homeLocation}
+           coastalLocation={coastalLocation}
+           onOpenHomeDialog={() => setShowHomeDialog(true)}
+           onOpenCoastDialog={() => setShowCoastDialog(true)}
+         />
+         <SkeletonHomePage />
+         <Footer />
+       </>
      );
    }
 
