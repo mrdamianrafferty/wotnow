@@ -1,4 +1,6 @@
 // next.config.mjs
+import withPWA from 'next-pwa';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Disable Babel completely (SWC is used by default in Next.js 15+)
@@ -73,4 +75,60 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+// Wrap nextConfig with PWA configuration
+const pwaConfig = withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'openweather-api-cache',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 60 * 60, // 1 hour
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: /^https:\/\/api\.met\.no\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'met-norway-api-cache',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 60 * 60, // 1 hour
+        },
+        networkTimeoutSeconds: 10,
+      },
+    },
+    {
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'images-cache',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:js|css)$/i,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-resources-cache',
+        expiration: {
+          maxEntries: 32,
+          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+        },
+      },
+    },
+  ],
+});
+
+export default pwaConfig(nextConfig)

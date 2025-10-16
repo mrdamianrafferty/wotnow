@@ -1,0 +1,50 @@
+{
+  "name": "Go Daisy - Weather-Based Activity Recommendations",
+  "short_name": "Go Daisy",
+  "description": "Find the best outdoor activities for today's weather. From surfing to hiking, Go Daisy helps you make the most of every day with personalized activity scores and 8-day forecasts.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
+  "categories": ["weather", "lifestyle", "sports", "travel"],
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Activities",
+      "short_name": "Today",
+      "description": "View today's best activities",
+      "url": "/",
+      "icons": [{ "src": "/icons/shortcut-today.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Activities",
+      "short_name": "Activities",
+      "description": "Browse all available activities",
+      "url": "/activities",
+      "icons": [{ "src": "/icons/shortcut-activities.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

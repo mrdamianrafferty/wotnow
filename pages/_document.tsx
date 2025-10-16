@@ -22,10 +22,14 @@ export default class MyDocument extends Document {
 
   {/* Apple / iOS */}
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Go Daisy" />
 
-  {/* Optional: PWA */}
-  <link rel="manifest" href="/site.webmanifest?v=2" />
-  {/* Optional: Safari pinned tab (supply a monochrome SVG if you want this) */}
+  {/* PWA Manifest */}
+  <link rel="manifest" href="/manifest-godaisy.json" />
+
+  {/* Safari pinned tab */}
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0f766e" />
   
   {/* Google Maps API - loaded with callback-based event pattern for reliability */}
