@@ -158,8 +158,60 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             </label>
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-52"
+              className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-white rounded-box w-64"
             >
+              {/* Mobile: Location buttons at top */}
+              <li className="menu-title md:hidden">
+                <span>Locations</span>
+              </li>
+              <li className="md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenHomeDialog?.();
+                    // Close dropdown by removing focus
+                    (document.activeElement as HTMLElement)?.blur();
+                  }}
+                  className="justify-start"
+                >
+                  <span suppressHydrationWarning>
+                    {effectiveHome?.name ? `🏡 ${effectiveHome.name.split(',')[0]}` : '🏡 Set home location'}
+                  </span>
+                </button>
+              </li>
+              <li className="md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onOpenCoastDialog?.();
+                    (document.activeElement as HTMLElement)?.blur();
+                  }}
+                  className="justify-start"
+                >
+                  <span suppressHydrationWarning>
+                    {effectiveCoast?.name ? `🏖️ ${effectiveCoast.name.split(',')[0]}` : '🏖️ Set beach location'}
+                  </span>
+                </button>
+              </li>
+              {/* Toggle button for mobile */}
+              {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
+                <li className="md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleSwapClick();
+                      (document.activeElement as HTMLElement)?.blur();
+                    }}
+                    className="justify-start"
+                  >
+                    <span>
+                      🔄 {activeLocationType === 'coastal' ? 'Switch to Home' : 'Switch to Beach'}
+                    </span>
+                  </button>
+                </li>
+              )}
+              <li className="mt-1 border-t border-base-200 md:hidden" />
+              
               {/* Use root path for Home */}
               <li><Link href="/">Home</Link></li>
               <li><Link href="/weather">My Weather</Link></li>
@@ -189,62 +241,90 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
         {/* Right: Location buttons + Home/Beach switch */}
         <div className="navbar-end gap-2 items-center">
-          {/* DaisyUI swap-text toggle (render only when controlled) */}
-          {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
+          {/* Desktop: Show all controls (hidden on mobile) */}
+          <div className="hidden md:flex gap-2 items-center">
+            {/* DaisyUI swap-text toggle (render only when controlled) */}
+            {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
+              <button
+                type="button"
+                className={`swap swap-text btn btn-ghost btn-md ${activeLocationType === 'coastal' ? 'swap-active' : ''}`}
+                onClick={handleSwapClick}
+                aria-label={activeLocationType === 'coastal' ? 'Showing beach — switch to home' : 'Showing home — switch to beach'}
+                title={activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+              >
+                <div className="swap-on">Beach</div>
+                <div className="swap-off">Home</div>
+              </button>
+            )}
+
             <button
               type="button"
-              className={`swap swap-text btn btn-ghost btn-sm md:btn-md ${activeLocationType === 'coastal' ? 'swap-active' : ''}`}
-              onClick={handleSwapClick}
-              aria-label={activeLocationType === 'coastal' ? 'Showing beach — switch to home' : 'Showing home — switch to beach'}
-              title={activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+              className="btn btn-success btn-md"
+              onClick={() => onOpenHomeDialog?.()}
+              aria-label={resolvedHomeLabel}
+              title={resolvedHomeLabel}
             >
-              <div className="swap-on">Beach</div>
-              <div className="swap-off">Home</div>
+              <span suppressHydrationWarning>{resolvedHomeLabel}</span>
             </button>
-          )}
+            <button
+              type="button"
+              className="btn btn-info btn-md"
+              onClick={() => onOpenCoastDialog?.()}
+              aria-label={resolvedCoastLabel}
+              title={resolvedCoastLabel}
+            >
+              <span suppressHydrationWarning>{resolvedCoastLabel}</span>
+            </button>
+            {/* Auth badge: shows Log in/Register or user's name, and links appropriately */}
+            {authReady && (
+              userId ? (
+                <Link
+                  href="/settings"
+                  className="badge badge-outline badge-success gap-1 whitespace-nowrap"
+                  title="Go to settings"
+                  aria-label="Go to settings"
+                >
+                  <span aria-hidden="true">🤾</span>
+                  <span>{displayName ?? 'My Account'}</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="badge badge-outline badge-info gap-1 whitespace-nowrap"
+                  title="Log in or register"
+                  aria-label="Log in or register"
+                >
+                  <span aria-hidden="true">🪵</span>
+                  <span>Log in / Register</span>
+                </Link>
+              )
+            )}
+          </div>
 
-          <button
-            type="button"
-            className="btn btn-success btn-sm md:btn-md"
-            onClick={() => onOpenHomeDialog?.()}
-            aria-label={resolvedHomeLabel}
-            title={resolvedHomeLabel}
-          >
-            <span suppressHydrationWarning>{resolvedHomeLabel}</span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-info btn-sm md:btn-md"
-            onClick={() => onOpenCoastDialog?.()}
-            aria-label={resolvedCoastLabel}
-            title={resolvedCoastLabel}
-          >
-            <span suppressHydrationWarning>{resolvedCoastLabel}</span>
-          </button>
-          {/* Auth badge: shows Log in/Register or user's name, and links appropriately */}
-          {authReady && (
-            userId ? (
-              <Link
-                href="/settings"
-                className="badge badge-outline badge-success gap-1 whitespace-nowrap"
-                title="Go to settings"
-                aria-label="Go to settings"
-              >
-                <span aria-hidden="true">🤾</span>
-                <span>{displayName ?? 'My Account'}</span>
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="badge badge-outline badge-info gap-1 whitespace-nowrap"
-                title="Log in or register"
-                aria-label="Log in or register"
-              >
-                <span aria-hidden="true">🪵</span>
-                <span>Log in / Register</span>
-              </Link>
-            )
-          )}
+          {/* Mobile: Show only auth badge */}
+          <div className="flex md:hidden">
+            {authReady && (
+              userId ? (
+                <Link
+                  href="/settings"
+                  className="btn btn-ghost btn-sm btn-circle"
+                  title="My Account"
+                  aria-label="My Account"
+                >
+                  <span className="text-xl">🤾</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="btn btn-ghost btn-sm btn-circle"
+                  title="Log in"
+                  aria-label="Log in"
+                >
+                  <span className="text-xl">🪵</span>
+                </Link>
+              )
+            )}
+          </div>
         </div>
       </div>
 
