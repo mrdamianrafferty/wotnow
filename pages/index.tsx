@@ -777,7 +777,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   };
 
    // MAIN DATA FETCHING LOGIC
-   const { forecastByDay, loading, error, marineHours, weatherData, marineError } = useFetchForecastData(
+   const { forecastByDay, loading, error, marineHours: _marineHours, weatherData, marineError } = useFetchForecastData(
      homeLocation,
      coastalLocation,
      interests
