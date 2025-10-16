@@ -62,11 +62,10 @@ export default function BottomNav() {
           <button
             key={item.href}
             onClick={() => router.push(item.href)}
-            className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
-              isActive 
-                ? 'text-cyan-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            style={{
+              color: isActive ? '#0891b2' : '#6b7280',
+            }}
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors hover:opacity-80"
           >
             <Icon size={24} strokeWidth={2} />
             <span className="text-[10px] font-medium">{item.label}</span>
