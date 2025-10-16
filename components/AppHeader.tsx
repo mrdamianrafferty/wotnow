@@ -131,6 +131,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
   return (
     <header className="w-full" data-theme="light">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 btn btn-primary btn-sm"
+      >
+        Skip to main content
+      </a>
+
       <div className="navbar bg-base-100 shadow-sm">
         {/* Left: Hamburger + Logo */}
         <div className="navbar-start">

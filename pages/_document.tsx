@@ -5,6 +5,13 @@ export default class MyDocument extends Document {
     return (
       <Html>
         <Head>
+  {/* Preconnect to external APIs for faster loading */}
+  <link rel="preconnect" href="https://api.openweathermap.org" />
+  <link rel="preconnect" href="https://maps.googleapis.com" />
+  <link rel="preconnect" href="https://api.met.no" />
+  <link rel="dns-prefetch" href="https://api.openweathermap.org" />
+  <link rel="dns-prefetch" href="https://maps.googleapis.com" />
+
   {/* Core */}
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="shortcut icon" href="/favicon.ico?v=2" />

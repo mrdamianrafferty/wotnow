@@ -30,6 +30,7 @@ import { getActivityMessage } from '../data/activityMessages';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import EnvironmentalIndicators from '../components/EnvironmentalIndicators';
 import type { SnowRecommendationLevel } from '../utils/snowRecommendations';
+import SEO from '../components/SEO';
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const { query } = ctx;
@@ -362,8 +363,8 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
           // Use the closest time entry
           currentEntry = sortedByCloseness[0];
-          console.log('Today: Using current conditions instead of noon:',
-            { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
+          // console.log('Today: Using current conditions instead of noon:',
+          //   { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
         } else {
           // For future days, use noon as before
           currentEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
@@ -473,22 +474,22 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      // Format: YYYY-MM-DDThh
      const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
      
-     console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
-     console.log("Marine hours available:", (day.marine as MarineHour[]).map((h: MarineHour) => h.time));
+     // console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
+     // console.log("Marine hours available:", (day.marine as MarineHour[]).map((h: MarineHour) => h.time));
      
      const marineHour = (day.marine as MarineHour[]).find(
        (h) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
      );
      
      if (marineHour) {
-       console.log("Found matching marine hour:", marineHour);
-       console.log("Raw Stormglass wind speed (knots):", marineHour.windSpeed?.noaa);
+       // console.log("Found matching marine hour:", marineHour);
+       // console.log("Raw Stormglass wind speed (knots):", marineHour.windSpeed?.noaa);
        
        // Convert Stormglass wind speed from knots to m/s for internal consistency
        const windSpeedKnots = marineHour.windSpeed?.noaa;
        const windSpeedMps = windSpeedKnots ? knotsToMps(windSpeedKnots) : undefined;
        
-       console.log("Converted wind speed (m/s):", windSpeedMps);
+       // console.log("Converted wind speed (m/s):", windSpeedMps);
        
        // Use CONSISTENT property names and units (all wind speeds in m/s)
        return {
@@ -505,7 +506,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
          windDir: marineHour.windDirection?.noaa,
        };
      } else {
-       console.log("No matching marine hour found");
+       // console.log("No matching marine hour found");
      }
    }
    return day;
@@ -843,7 +844,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
    const validActivityIds = new Set(activityTypes.map((a) => a.id));
    const sanitizedInterests = normalizedInterests.filter((id) => validActivityIds.has(id));
    
-   console.log('🔍 Interest filtering:', {
+   // console.log('🔍 Interest filtering:', {
      rawInterests: interests,
      normalizedInterests,
      sanitizedInterests,
@@ -861,7 +862,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   const usedHeroActivities = new Set<string>();
   const heroDataByDay = forecastDays.map((day, idx) => {
      const filteredActivities = filteredActivitiesBase;
-     console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
+     // console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
        dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
        filteredActivitiesCount: filteredActivities.length,
        interests: sanitizedInterests
@@ -966,7 +967,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
        }
      }
 
-     console.log(`🗓️ Day ${idx} seasonal filtering:`, {
+     // console.log(`🗓️ Day ${idx} seasonal filtering:`, {
        currentMonth,
        totalSuggestions: suggestions.length,
        filteredCount: filteredSuggestions.length,
@@ -991,7 +992,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      }));
     const heroCandidates = heroCompatibleSuggestions.filter(candidate => !usedHeroActivities.has(candidate.activityId));
     const heroActivity = selectHeroActivity(heroCandidates.length ? heroCandidates : heroCompatibleSuggestions);
-     console.log(`🎯 Day ${idx} hero selection:`, {
+     // console.log(`🎯 Day ${idx} hero selection:`, {
        filteredSuggestionsCount: filteredSuggestions.length,
        topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
        selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
@@ -1012,7 +1013,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
        dayLabel: getDayLabel(day.date, idx)
      };
    });
-   console.log('marineHours before building forecast:', marineHours);
+   // console.log('marineHours before building forecast:', marineHours);
 
    if (!hasMounted) {
      return (
@@ -1052,6 +1053,12 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
    // MAIN RETURN - Enhanced version preserving all your functionality
    return (
      <>
+       <SEO
+         title="Perfect Weather-Based Activity Recommendations"
+         description="Find the best outdoor activities for today's weather. From surfing to hiking, Go Daisy helps you make the most of every day with personalized activity scores and 8-day forecasts."
+         url="https://godaisy.io"
+       />
+
        {/* Home Location Modal */}
        {showHomeDialog && (
          <CoastalLocationDialog

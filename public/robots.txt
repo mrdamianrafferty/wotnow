@@ -1,0 +1,15 @@
+# robots.txt for Go Daisy (godaisy.io)
+# Updated: 15 October 2025
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /_next/
+Disallow: /demo/
+Disallow: /test/
+
+# Sitemap location
+Sitemap: https://godaisy.io/sitemap.xml
