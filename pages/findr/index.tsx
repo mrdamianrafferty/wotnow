@@ -793,7 +793,7 @@ const FindrPage: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+        <div className="sm:mx-auto pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-6">
@@ -806,11 +806,11 @@ const FindrPage: React.FC = () => {
           )}
 
           <section className="space-y-1 sm:space-y-6">
-            <div className="space-y-1 sm:space-y-4 px-3 sm:px-0">
+            <div className="space-y-1 sm:space-y-4 px-2 sm:px-0">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-2">
                   <h1 className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles size={20} /> <TranslatedText text="Catch of the day" />
+                    <Sparkles size={20} /> <TranslatedText text="findr - catch of the day" />
                   </h1>
 
                 </div>
@@ -857,7 +857,7 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && !loading && !error && currentCard && (
-              <div className="space-y-4 max-w-xl mx-auto">
+              <div className="space-y-4 max-w-xl mx-auto px-2 sm:px-0">
                   <div className="relative h-[460px] sm:h-[520px] w-full">
                     <AnimatePresence initial={false}>
                       {visibleCards.map((card, index) => (
