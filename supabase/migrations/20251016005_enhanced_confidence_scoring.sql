@@ -112,9 +112,9 @@ BEGIN
        WHERE rectangle_code = target_rectangle AND DATE(captured_at) = target_date
        AND salinity_psu IS NOT NULL) as env_salinity,
       
-      (SELECT AVG(water_temperature_c) FROM findr_conditions_snapshots
+      (SELECT AVG(sea_temp_c) FROM findr_conditions_snapshots
        WHERE rectangle_code = target_rectangle AND DATE(captured_at) = target_date
-       AND water_temperature_c IS NOT NULL) as env_temperature,
+       AND sea_temp_c IS NOT NULL) as env_temperature,
       
       (SELECT MAX(DATE(captured_at)) FROM findr_conditions_snapshots
        WHERE rectangle_code = target_rectangle AND DATE(captured_at) <= target_date) as data_date,
