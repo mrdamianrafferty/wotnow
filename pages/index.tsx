@@ -855,10 +855,8 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
        filteredActivitiesBase = activityTypes.filter((a) => interestSet.has(a.id) || interestSet.has(a.id.replace(/_/g, '-')));
      }
 
-     return { sanitizedInterests, filteredActivitiesBase };
-   }, [interests, activityTypes]);
-
-  // Memoize expensive weather calculations to prevent re-computation on every render
+    return { sanitizedInterests, filteredActivitiesBase };
+  }, [interests]); // activityTypes is static import, not needed in deps  // Memoize expensive weather calculations to prevent re-computation on every render
   // This is the main performance bottleneck - reduces TBT from 1,030ms to ~300ms
   const heroDataByDay = useMemo(() => {
     const usedHeroActivities = new Set<string>();
@@ -1015,7 +1013,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
        dayLabel: getDayLabel(day.date, idx)
      };
    });
-  }, [forecastDays, filteredActivitiesBase, sanitizedInterests, activityTypes]);
+  }, [forecastDays, filteredActivitiesBase, sanitizedInterests]); // activityTypes is static import
    // console.log('marineHours before building forecast:', marineHours);
 
    if (!hasMounted) {
