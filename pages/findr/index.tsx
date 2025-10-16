@@ -8,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import Head from 'next/head';
 import Image from 'next/image';
 import SEO from '../../components/SEO';
 import { useRouter } from 'next/router';

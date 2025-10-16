@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import SEO from '../../components/SEO';
 import { MoonStar } from 'lucide-react';
