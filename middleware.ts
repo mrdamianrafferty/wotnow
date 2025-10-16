@@ -10,13 +10,20 @@ export function middleware(req: NextRequest) {
     // Skip redirect for:
     // - API routes (/api/*)
     // - Next.js internals (/_next/*)
-    // - Static assets (already handled by config.matcher)
+    // - Static assets (/webp/*, /images/*, /weather-icons/*, etc.)
     // - Already on findr paths
     const isApiRoute = url.pathname.startsWith('/api/');
     const isNextInternal = url.pathname.startsWith('/_next/');
     const isFindrPath = url.pathname.startsWith('/findr');
+    const isStaticAsset = url.pathname.startsWith('/webp/') || 
+                          url.pathname.startsWith('/images/') || 
+                          url.pathname.startsWith('/weather-icons/') ||
+                          url.pathname.startsWith('/waves/') ||
+                          url.pathname.startsWith('/skies/') ||
+                          url.pathname.startsWith('/findr-favicon/') ||
+                          url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
     
-    if (!isApiRoute && !isNextInternal && !isFindrPath) {
+    if (!isApiRoute && !isNextInternal && !isFindrPath && !isStaticAsset) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
       return NextResponse.redirect(findrUrl);
