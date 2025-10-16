@@ -164,13 +164,13 @@ async function getTargetRectangles(): Promise<string[]> {
   // or are marked as priority coastal areas
   const { data, error } = await supabase
     .from('ices_rectangles')
-    .select('code')
+    .select('rectangle_code')
     .or('has_copernicus_coverage.eq.true,is_coastal.eq.true')
-    .order('code');
+    .order('rectangle_code');
 
   if (error) throw error;
 
-  return data.map(r => r.code);
+  return data.map(r => r.rectangle_code);
 }
 
 /**

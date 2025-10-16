@@ -22,7 +22,7 @@ ON ices_rectangles(is_coastal)
 WHERE is_coastal = TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_ices_rectangles_priority 
-ON ices_rectangles(priority_level DESC, code) 
+ON ices_rectangles(priority_level DESC, rectangle_code) 
 WHERE priority_level > 0;
 
 -- Add comments
