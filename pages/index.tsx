@@ -541,6 +541,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      }
    }, []);
   const { preferences, setPreferences } = useUserPreferences();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const interests = preferences.interests ?? [];  const [authStatus, setAuthStatus] = useState<'unknown' | 'signed-in' | 'signed-out'>('unknown');
   const [storedSnapshot, setStoredSnapshot] = useState<PreferenceSnapshot>(() => readStoredPreferencesSnapshot());
 
@@ -856,8 +857,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      }
 
     return { sanitizedInterests, filteredActivitiesBase };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interests]); // interests is from context - stable reference  // Memoize expensive weather calculations to prevent re-computation on every render
+  }, [interests]);  // Memoize expensive weather calculations to prevent re-computation on every render
   // This is the main performance bottleneck - reduces TBT from 1,030ms to ~300ms
   const heroDataByDay = useMemo(() => {
     const usedHeroActivities = new Set<string>();
