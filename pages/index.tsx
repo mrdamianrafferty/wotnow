@@ -845,11 +845,11 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
    const sanitizedInterests = normalizedInterests.filter((id) => validActivityIds.has(id));
    
    // console.log('🔍 Interest filtering:', {
-     rawInterests: interests,
-     normalizedInterests,
-     sanitizedInterests,
-     validActivityCount: validActivityIds.size
-   });
+  //  rawInterests: interests,
+  //  normalizedInterests,
+  //  sanitizedInterests,
+  //  validActivityCount: validActivityIds.size
+   // });
 
    // Use a single filtered list for all days
    let filteredActivitiesBase = activityTypes.filter((a) => sanitizedInterests.includes(a.id));
@@ -863,10 +863,10 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   const heroDataByDay = forecastDays.map((day, idx) => {
      const filteredActivities = filteredActivitiesBase;
      // console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
-       dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
-       filteredActivitiesCount: filteredActivities.length,
-       interests: sanitizedInterests
-     });
+     //   dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
+     //   filteredActivitiesCount: filteredActivities.length,
+     //   interests: sanitizedInterests
+     // });
 
      // ✅ CORRECT: Use the original getSuggestionsByDay structure
      let suggestionsData = getSuggestionsByDay({
@@ -968,14 +968,14 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      }
 
      // console.log(`🗓️ Day ${idx} seasonal filtering:`, {
-       currentMonth,
-       totalSuggestions: suggestions.length,
-       filteredCount: filteredSuggestions.length,
-       sampleActivity: suggestions[0] ? {
-         id: suggestions[0].activityId,
-         seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
-       } : 'none'
-     });
+     //   currentMonth,
+     //   totalSuggestions: suggestions.length,
+     //   filteredCount: filteredSuggestions.length,
+     //   sampleActivity: suggestions[0] ? {
+     //     id: suggestions[0].activityId,
+     //     seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
+     //   } : 'none'
+     // });
      const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
      const _goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
      const indoorList = filteredSuggestions.filter((s) => {
@@ -993,10 +993,10 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     const heroCandidates = heroCompatibleSuggestions.filter(candidate => !usedHeroActivities.has(candidate.activityId));
     const heroActivity = selectHeroActivity(heroCandidates.length ? heroCandidates : heroCompatibleSuggestions);
      // console.log(`🎯 Day ${idx} hero selection:`, {
-       filteredSuggestionsCount: filteredSuggestions.length,
-       topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
-       selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
-     });
+     //   filteredSuggestionsCount: filteredSuggestions.length,
+     //   topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
+     //   selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
+     // });
 
      // ✅ Add the hero to used activities AFTER finding it
      if (heroActivity) {
