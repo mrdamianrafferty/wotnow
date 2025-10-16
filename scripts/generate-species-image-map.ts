@@ -53,6 +53,8 @@ const MANUAL_OVERRIDES: Record<string, string> = {
   PLE: 'plaice',
   DEN: 'dentex',
   COD: 'cod',
+  CMB: 'painted-comber',
+  sba: 'gilthead-seabream',
 };
 
 const DESCRIPTIVE_WORDS = ['atlantic', 'european', 'greater', 'common'];
