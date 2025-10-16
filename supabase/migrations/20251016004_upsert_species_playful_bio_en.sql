@@ -1,0 +1,96 @@
+-- Update species.playful_bio_en from a VALUES list keyed by name_en
+-- Safer than inserting full rows into species. Assumes name_en is unique per species.
+-- Optional: enforce uniqueness (one-off)
+--   CREATE UNIQUE INDEX IF NOT EXISTS species_name_en_uidx ON public.species (name_en);
+
+BEGIN;
+
+-- Inline data to merge
+WITH incoming(name_en, playful_bio_en) AS (
+VALUES
+    ('Atlantic Bonito', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('Atlantic Chub Mackerel', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('Ballan Wrasse', 'Curious, colourful, and a bit vain. I hang around rocky shallows showing off — always dressed for attention, never far from a crab snack.'),
+    ('Black Seabream', 'Proper dinner guest with glimmering sides and good manners. Likes calm seas, crustaceans, and the finer rigs in life.'),
+    ('Bluefish', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Bogue', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Brill', 'Flat but never dull. I blend in till I don’t — ambush expert with eyes for opportunity.'),
+    ('Bull Huss', 'I play it cool till the lights go out — smooth skin, sharper instincts, always chasing that next scent.'),
+    ('Cod (Coastal)', 'Deep thinker with a bottom-dweller’s charm. I go for substance — jigs, squid, and solid company.'),
+    ('Comber', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Common Cuttlefish', 'Smooth, smart, and unpredictable. I change colour when I’m in the mood — eight arms, no patience for small talk.'),
+    ('Common Ling', 'Deep thinker with a bottom-dweller’s charm. I go for substance — jigs, squid, and solid company.'),
+    ('Common Octopus', 'Smooth, smart, and unpredictable. I change colour when I’m in the mood — eight arms, no patience for small talk.'),
+    ('Common Pandora', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Common Smoothhound', 'Old soul with a bite. I cruise quietly till nightfall — polite predator with class, no drama, no rush.'),
+    ('Common Squid', 'Smooth, smart, and unpredictable. I change colour when I’m in the mood — eight arms, no patience for small talk.'),
+    ('Conger Eel', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Corkwing Wrasse', 'Daylight socialite with bold stripes and bigger ego. Love rocky lounges, hate cold fronts, always up for a nibble and a chat.'),
+    ('Cuckoo Wrasse', 'Curious, colourful, and a bit vain. I hang around rocky shallows showing off — always dressed for attention, never far from a crab snack.'),
+    ('Dab', 'Low-key, patient, and ambidextrous. Happy in sand, happier when something tasty swims too close.'),
+    ('Dentex', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Dover Sole', 'Flat but never dull. I blend in till I don’t — ambush expert with eyes for opportunity.'),
+    ('Dusky Grouper', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('European Barracuda', 'Sleek, restless, and hungry for motion. You’ll spot me where the sea’s alive and the light dances — all energy, no chill.'),
+    ('Flathead Grey Mullet', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Flounder', 'Flat but never dull. I blend in till I don’t — ambush expert with eyes for opportunity.'),
+    ('Garfish (Needlefish)', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Gilthead Seabream', 'Proper dinner guest with glimmering sides and good manners. Likes calm seas, crustaceans, and the finer rigs in life.'),
+    ('Goldsinny Wrasse', 'Curious, colourful, and a bit vain. I hang around rocky shallows showing off — always dressed for attention, never far from a crab snack.'),
+    ('Greater Amberjack', 'Sleek, restless, and hungry for motion. You’ll spot me where the sea’s alive and the light dances — all energy, no chill.'),
+    ('Greater Weever', 'Pretty on the surface, sting underneath. I like warm sand, drama, and people who watch their step.'),
+    ('Grey Gurnard', 'Talkative type — I croak, grunt, and strut on fins like legs. Charmingly odd, surprisingly musical.'),
+    ('Grey Mullet', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Haddock', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Herring', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Horse Mackerel', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('John Dory', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Leerfish', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Little Tunny', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('Mackerel', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('Meagre', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Mediterranean Scad', 'Fast, flashy, and never still. Always chasing shimmer and excitement — silver stripes, no filter, pure cardio.'),
+    ('Megrim', 'Low-key, patient, and ambidextrous. Happy in sand, happier when something tasty swims too close.'),
+    ('Painted Comber', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Parrotfish', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Picarel', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Plaice', 'Low-key, patient, and ambidextrous. Happy in sand, happier when something tasty swims too close.'),
+    ('Pollack', 'Classic taste, northern roots. I like rough ground and good meals — call it traditional values.'),
+    ('Red Gurnard', 'Talkative type — I croak, grunt, and strut on fins like legs. Charmingly odd, surprisingly musical.'),
+    ('Red Mullet', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Red Porgy', 'Golden flashes, sharp bite, refined tastes. I like structure and company — reefs, wrecks, and anyone who appreciates subtle elegance.'),
+    ('Red Scorpionfish', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Red Seabream', 'Golden flashes, sharp bite, refined tastes. I like structure and company — reefs, wrecks, and anyone who appreciates subtle elegance.'),
+    ('Rock Cook', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Saddled Seabream', 'Golden flashes, sharp bite, refined tastes. I like structure and company — reefs, wrecks, and anyone who appreciates subtle elegance.'),
+    ('Saithe (Pollachius virens)', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Saithe/Pollock', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Salema (Saupe)', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Sand Eel', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Sardine', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Sea Bass', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Sea Bream (Dorada)', 'Proper dinner guest with glimmering sides and good manners. Likes calm seas, crustaceans, and the finer rigs in life.'),
+    ('Sea Trout', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Small-eyed Ray', 'Gentle on the outside, charged underneath. Love a sandy dance floor and quiet nights by the tide.'),
+    ('Small-spotted Catshark', 'Old soul with a bite. I cruise quietly till nightfall — polite predator with class, no drama, no rush.'),
+    ('Spotted Bass', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('Spotted Ray', 'Gentle on the outside, charged underneath. Love a sandy dance floor and quiet nights by the tide.'),
+    ('Sprat', 'I move with the tide and live by instinct. Always hungry, mostly harmless, occasionally brilliant.'),
+    ('Starry Smoothhound', 'Old soul with a bite. I cruise quietly till nightfall — polite predator with class, no drama, no rush.'),
+    ('Thornback Ray', 'Smooth moves, electric charm. Glide by, stay close — I’m all about calm energy and hidden sparks.'),
+    ('Tub Gurnard', 'Talkative type — I croak, grunt, and strut on fins like legs. Charmingly odd, surprisingly musical.'),
+    ('Turbot (Small)', 'Low-key, patient, and ambidextrous. Happy in sand, happier when something tasty swims too close.'),
+    ('Two-banded Seabream', 'Proper dinner guest with glimmering sides and good manners. Likes calm seas, crustaceans, and the finer rigs in life.'),
+    ('Undulate Ray', 'Gentle on the outside, charged underneath. Love a sandy dance floor and quiet nights by the tide.'),
+    ('White Grouper', 'Just a local legend looking for steady flow and good bait. Predictable? Never — unless the moon says so.'),
+    ('White Seabream', 'Proper dinner guest with glimmering sides and good manners. Likes calm seas, crustaceans, and the finer rigs in life.'),
+    ('Whiting', 'Deep thinker with a bottom-dweller’s charm. I go for substance — jigs, squid, and solid company.'),
+    ('Wrasse (various)', 'Curious, colourful, and a bit vain. I hang around rocky shallows showing off — always dressed for attention, never far from a crab snack.'),
+    ('Yellowmouth Barracuda', 'Sleek, restless, and hungry for motion. You’ll spot me where the sea’s alive and the light dances — all energy, no chill.')
+)
+UPDATE public.species s
+SET playful_bio_en = i.playful_bio_en
+FROM incoming i
+WHERE s.name_en = i.name_en;
+
+COMMIT;
