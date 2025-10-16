@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Home, Mountain, CloudSun, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase/client';
 
 export default function BottomNav() {
+  const router = useRouter();
   const pathname = usePathname();
   const [userId, setUserId] = React.useState<string | null>(null);
 
@@ -53,20 +53,20 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="btm-nav btm-nav-md md:hidden z-50 fixed">
+    <div className="btm-nav md:hidden fixed bottom-0 left-0 right-0 z-50 bg-base-100 border-t border-base-200">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.match(pathname);
 
         return (
-          <Link
+          <button
             key={item.href}
-            href={item.href}
+            onClick={() => router.push(item.href)}
             className={isActive ? 'active' : ''}
           >
             <Icon size={20} />
             <span className="btm-nav-label text-xs">{item.label}</span>
-          </Link>
+          </button>
         );
       })}
     </div>
