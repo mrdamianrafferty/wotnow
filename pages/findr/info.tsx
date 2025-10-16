@@ -61,7 +61,7 @@ const FindrInfoPage = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-4xl">
+        <div className="sm:mx-auto pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-4xl">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center items-center mb-4">

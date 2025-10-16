@@ -1583,7 +1583,7 @@ export default function FindrCatchLogPage() {
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 pb-16">
         <FindrNavigation />
 
-        <div className="sm:mx-auto px-0 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+        <div className="sm:mx-auto pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           <header className="card bg-primary text-primary-content shadow-lg">
             <div className="card-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
