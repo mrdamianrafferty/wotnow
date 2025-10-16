@@ -837,8 +837,11 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
 
    // Use One Call 3.0 if available, else fallback to old format
-   const useOneCall = weatherData && weatherData.daily;
-   const forecastDays = useOneCall ? buildForecastFromOneCall(weatherData) : forecastByDay;
+   // Memoize to prevent heroDataByDay from recalculating on every render
+   const forecastDays = useMemo(() => {
+     const useOneCall = weatherData && weatherData.daily;
+     return useOneCall ? buildForecastFromOneCall(weatherData) : forecastByDay;
+   }, [weatherData, forecastByDay]);
 
    // Normalize and sanitize interests to avoid mismatches (e.g., stray whitespace)
    // Memoized to prevent recalculation on every render

@@ -1383,6 +1383,8 @@ abbr[title] {
   padding: 1.5rem;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
+  aspect-ratio: 16/9; /* Prevent layout shift when background images load */
+  min-height: 300px; /* Ensure cards have minimum height */
 }
 
 .activity-card-enhanced:hover {
