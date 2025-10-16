@@ -545,17 +545,35 @@ async function fetchCopernicusVariable(
  * Store biogeochemical data in database
  */
 async function storeBiogeochemicalData(data: BiogeochemicalData): Promise<void> {
-  const { error } = await supabase.from('findr_conditions_snapshots').insert({
-    rectangle_code: data.rectangle_code,
-    captured_at: data.captured_at.toISOString(),
-    chlorophyll_mg_m3: data.chlorophyll_mg_m3,
-    water_clarity_kd490: data.water_clarity_kd490,
-    dissolved_oxygen_mg_l: data.dissolved_oxygen_mg_l,
-    nitrate_umol_l: data.nitrate_umol_l,
-    phosphate_umol_l: data.phosphate_umol_l,
-    salinity_psu: data.salinity_psu,
-    source: data.source,
-  });
+  // The unique constraint 'uniq_snap_rect_day' uses DATE(captured_at)
+  // Standard upsert doesn't work with function-based constraints
+  // So we delete existing record for this rectangle+date, then insert
+  
+  const dateOnly = data.captured_at.toISOString().split('T')[0]; // "2025-10-15"
+  
+  // Delete existing record for this rectangle and date
+  await supabase
+    .from('findr_conditions_snapshots')
+    .delete()
+    .eq('rectangle_code', data.rectangle_code)
+    .gte('captured_at', dateOnly)
+    .lt('captured_at', `${dateOnly}T23:59:59`);
+  
+  // Insert new record
+  const { error } = await supabase
+    .from('findr_conditions_snapshots')
+    .insert({
+      rectangle_code: data.rectangle_code,
+      captured_at: data.captured_at.toISOString(),
+      chlorophyll_mg_m3: data.chlorophyll_mg_m3,
+      water_clarity_kd490: data.water_clarity_kd490,
+      dissolved_oxygen_mg_l: data.dissolved_oxygen_mg_l,
+      nitrate_umol_l: data.nitrate_umol_l,
+      phosphate_umol_l: data.phosphate_umol_l,
+      salinity_psu: data.salinity_psu,
+      water_temp_c: data.water_temp_c,
+      source: data.source,
+    });
   
   if (error) {
     throw new Error(`Database insert failed: ${error.message}`);
