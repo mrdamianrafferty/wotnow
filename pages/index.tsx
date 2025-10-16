@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
+import Head from 'next/head';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
@@ -1175,6 +1176,21 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
          description="Find the best outdoor activities for today's weather. From surfing to hiking, Go Daisy helps you make the most of every day with personalized activity scores and 8-day forecasts."
          url="https://godaisy.io"
        />
+
+       {/* PERFORMANCE: Preload first hero image for faster LCP */}
+       {enrichedHeroData && enrichedHeroData[0] && enrichedHeroData[0].heroActivity && (
+         <Head>
+           <link
+             rel="preload"
+             as="image"
+             href={isImageOptimized(enrichedHeroData[0].heroActivity.activityId)
+               ? getOptimizedImageSrc(enrichedHeroData[0].heroActivity.activityId, 'webpMobile')
+               : getActivityBg(enrichedHeroData[0].heroActivity.activityId)}
+             // @ts-expect-error - fetchpriority is not in TypeScript types yet
+             fetchpriority="high"
+           />
+         </Head>
+       )}
 
        {/* Home Location Modal */}
        {showHomeDialog && (
