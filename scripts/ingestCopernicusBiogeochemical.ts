@@ -69,6 +69,7 @@ interface BiogeochemicalData {
   nitrate_umol_l: number | null;
   phosphate_umol_l: number | null;
   salinity_psu: number | null;
+  water_temp_c: number | null;
   source: string;
 }
 
@@ -285,6 +286,42 @@ async function fetchSalinity(
   }
   
   console.log(`    ⚠ No salinity data available`);
+  return null;
+}
+
+/**
+ * Fetch sea water temperature from physics models
+ * Priority: Regional PHY products (most accurate for habitat calculations)
+ */
+async function fetchTemperature(
+  rectangle: Rectangle,
+  date: Date
+): Promise<number | null> {
+  const products = getRegionalProducts(rectangle.cmems_region, 'temperature');
+  
+  for (const product of products) {
+    try {
+      console.log(`  Fetching temperature from ${product.datasetId}...`);
+      
+      const value = await fetchCopernicusVariable(
+        product.datasetId,
+        'thetao',
+        rectangle,
+        date,
+        { depth: { min: 0, max: 10 } }
+      );
+      
+      if (value !== null) {
+        console.log(`    ✓ Temperature: ${value.toFixed(1)}°C`);
+        return value;
+      }
+    } catch (error) {
+      console.log(`    ✗ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      continue;
+    }
+  }
+  
+  console.log(`    ⚠ No temperature data available`);
   return null;
 }
 
@@ -596,6 +633,7 @@ async function ingestBiogeochemicalData(testRectangleCode?: string, testDate?: s
       const oxygen = await fetchDissolvedOxygen(rectangle, targetDate);
       const { nitrate, phosphate } = await fetchNutrients(rectangle, targetDate);
       const salinity = await fetchSalinity(rectangle, targetDate);
+      const temperature = await fetchTemperature(rectangle, targetDate);
       
       // Store in database
       await storeBiogeochemicalData({
@@ -607,6 +645,7 @@ async function ingestBiogeochemicalData(testRectangleCode?: string, testDate?: s
         nitrate_umol_l: nitrate,
         phosphate_umol_l: phosphate,
         salinity_psu: salinity,
+        water_temp_c: temperature,
         source: `copernicus-bgc-${rectangle.cmems_region.toLowerCase()}`,
       });
       
