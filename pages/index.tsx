@@ -1290,7 +1290,7 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
             priority
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={85}
+            quality={70}
           />
         )}
         <div className="activity-card-overlay" />
