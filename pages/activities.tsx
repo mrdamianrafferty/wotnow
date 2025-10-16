@@ -196,7 +196,7 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
   const activity = activityTypes.find(a => a.id === activityId);
   const assessment = getAssessmentCategory(score, activityId);
   const bgUrl = isImageOptimized(activityId)
-    ? getOptimizedImageSrc(activityId, 'webpMobile')
+    ? getOptimizedImageSrc(activityId, 'webpLarge')
     : getActivityBg(activityId);
   const isMarine = activityId ? MARINE_ACTIVITY_IDS.includes(activityId) : false;
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);

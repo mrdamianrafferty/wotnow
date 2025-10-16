@@ -1,12 +1,15 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/findr/enrichCatchData';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
   predictionDate?: string;
   language?: string;
   bypassCache?: boolean; // Debug flag to skip cache
+  latitude?: number; // Optional user latitude for substrate/depth scoring
+  longitude?: number; // Optional user longitude for substrate/depth scoring
 }
 
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -391,6 +394,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const predictionDate = validateDate(body.predictionDate) ?? new Date().toISOString().slice(0, 10);
   const language = body.language?.trim() || 'en';
   const bypassCache = Boolean(body.bypassCache);
+  const userLat = typeof body.latitude === 'number' ? body.latitude : null;
+  const userLon = typeof body.longitude === 'number' ? body.longitude : null;
 
   if (!rectangleCode) {
     return res.status(400).json({ error: 'rectangleCode is required' });
@@ -449,17 +454,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
     );
 
+    // Query EMODnet if lat/lon provided
+    let substrateData = null;
+    let bathymetryData = null;
+    
+    if (userLat !== null && userLon !== null) {
+      console.log('[Findr API] Querying EMODnet for lat/lon:', { userLat, userLon });
+      
+      try {
+        [bathymetryData, substrateData] = await Promise.all([
+          queryEMODnetBathymetry(userLat, userLon),
+          queryEMODnetSubstrate(userLat, userLon),
+        ]);
+        
+        console.log('[Findr API] EMODnet responses:', {
+          depth: bathymetryData.depth_meters,
+          substrate: substrateData.substrate,
+          bathyConfidence: bathymetryData.confidence,
+          substrateConfidence: substrateData.confidence,
+        });
+      } catch (emodnetError) {
+        console.warn('[Findr API] EMODnet query failed, continuing without:', (emodnetError as Error).message);
+      }
+    }
+
     console.log('[Findr API] About to call RPC with params:', {
       target_rectangle: rectangleCode,
       target_date: predictionDate,
+      user_lat: userLat,
+      user_lon: userLon,
+      user_substrate: substrateData?.substrate,
+      user_depth_m: bathymetryData?.depth_meters,
     });
 
-    // Phase 10: Use new function with environmental data
-    // NOTE: Function signature uses target_rectangle and target_date, not p_rectangle_code and p_date
-    const rpcPromise = supabase.rpc('get_environmental_predictions_basic', {
-      target_rectangle: rectangleCode,
-      target_date: predictionDate,
-    });
+    // Use enhanced function if lat/lon provided, otherwise use basic function
+    const useEnhancedFunction = userLat !== null && userLon !== null;
+    const rpcFunctionName = useEnhancedFunction 
+      ? 'get_environmental_predictions_enhanced' 
+      : 'get_environmental_predictions_basic';
+    
+    const rpcParams = useEnhancedFunction
+      ? {
+          target_rectangle: rectangleCode,
+          target_date: predictionDate,
+          user_lat: userLat,
+          user_lon: userLon,
+          user_substrate: substrateData?.substrate || null,
+          user_depth_m: bathymetryData?.depth_meters || null,
+        }
+      : {
+          target_rectangle: rectangleCode,
+          target_date: predictionDate,
+        };
+    
+    const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);
 
     const { data, error: rpcError } = await Promise.race([
       rpcPromise, 

@@ -11,6 +11,7 @@ export default class MyDocument extends Document {
   <link rel="preconnect" href="https://api.met.no" />
   <link rel="dns-prefetch" href="https://api.openweathermap.org" />
   <link rel="dns-prefetch" href="https://maps.googleapis.com" />
+  <link rel="dns-prefetch" href="https://api.met.no" />
 
   {/* Core */}
   <link rel="icon" href="/favicon.ico" sizes="any" />

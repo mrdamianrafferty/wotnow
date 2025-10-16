@@ -300,7 +300,7 @@ const Popup: React.FC<PopupProps> = ({
   useEffect(() => {
     const loadOptimalImage = async () => {
       if (isImageOptimized(activityId)) {
-        const webpSrc = getOptimizedImageSrc(activityId, isMobile ? 'webpMobile' : 'webp');
+        const webpSrc = getOptimizedImageSrc(activityId, isMobile ? 'webpSmall' : 'webpLarge');
         try {
           await new Promise<void>((resolve, reject) => {
             const img = new Image();

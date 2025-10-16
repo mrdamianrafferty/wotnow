@@ -300,7 +300,7 @@ function ActivityCard({ activityId, score, day, coastalLocation, homeLocation, s
   const activity = activityTypes.find(a => a.id === activityId);
   const assessment = getAssessmentCategory(score, activityId);
   const bgUrl = isImageOptimized(activityId)
-    ? getOptimizedImageSrc(activityId, 'webpMobile')
+    ? getOptimizedImageSrc(activityId, 'webpLarge')
     : getActivityBg(activityId);
   const isMarine = MARINE_ACTIVITY_IDS.includes(activityId);
 

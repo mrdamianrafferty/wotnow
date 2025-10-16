@@ -1,697 +1,698 @@
 // data/bgMapOptimized.ts
 // Auto-generated from image optimization process
+// Generated: 2025-10-16T18:26:53.541Z
 
 interface ImageVariants {
-  webp: string;       // WebP desktop version (1024x1536)
-  webpMobile: string; // WebP mobile version (512x768)
-  webpThumb: string;  // WebP thumbnail version (256x384)
+  webpLarge: string;  // WebP large version (1600x900) - Desktop
+  webpMedium: string; // WebP medium version (1200x675) - Tablet
+  webpSmall: string;  // WebP small version (750x422) - Mobile
   fallback: string;   // Original PNG fallback
 }
 
 // Mapping of activity IDs to optimized image variants
 const bgMapOptimized: Record<string, ImageVariants> = {
   football_soccer: {
-    webp: '/webp/soccer.webp',
-    webpMobile: '/webp/soccer-mobile.webp',
-    webpThumb: '/webp/soccer-thumb.webp',
-    fallback: '/soccer.png'
+    webpLarge: '/WEBP/soccer-1600x900.webp',
+    webpMedium: '/WEBP/soccer-1200x675.webp',
+    webpSmall: '/WEBP/soccer-750x422.webp',
+    fallback: '/PNGS/soccer.png'
   },
   cricket: {
-    webp: '/webp/crickety.webp',
-    webpMobile: '/webp/crickety-mobile.webp',
-    webpThumb: '/webp/crickety-thumb.webp',
-    fallback: '/crickety.png'
+    webpLarge: '/WEBP/crickety-1600x900.webp',
+    webpMedium: '/WEBP/crickety-1200x675.webp',
+    webpSmall: '/WEBP/crickety-750x422.webp',
+    fallback: '/PNGS/crickety.png'
   },
   rugby: {
-    webp: '/webp/rugby.webp',
-    webpMobile: '/webp/rugby-mobile.webp',
-    webpThumb: '/webp/rugby-thumb.webp',
-    fallback: '/rugby.png'
+    webpLarge: '/WEBP/rugby-1600x900.webp',
+    webpMedium: '/WEBP/rugby-1200x675.webp',
+    webpSmall: '/WEBP/rugby-750x422.webp',
+    fallback: '/PNGS/rugby.png'
   },
   basketball_outdoor: {
-    webp: '/webp/basketbally.webp',
-    webpMobile: '/webp/basketbally-mobile.webp',
-    webpThumb: '/webp/basketbally-thumb.webp',
-    fallback: '/basketbally.png'
+    webpLarge: '/WEBP/basketbally-1600x900.webp',
+    webpMedium: '/WEBP/basketbally-1200x675.webp',
+    webpSmall: '/WEBP/basketbally-750x422.webp',
+    fallback: '/PNGS/basketbally.png'
   },
   beach_volleyball: {
-    webp: '/webp/beachvolley.webp',
-    webpMobile: '/webp/beachvolley-mobile.webp',
-    webpThumb: '/webp/beachvolley-thumb.webp',
-    fallback: '/beachvolley.png'
+    webpLarge: '/WEBP/beachvolley-1600x900.webp',
+    webpMedium: '/WEBP/beachvolley-1200x675.webp',
+    webpSmall: '/WEBP/beachvolley-750x422.webp',
+    fallback: '/PNGS/beachvolley.png'
   },
   american_football: {
-    webp: '/webp/amfootbally.webp',
-    webpMobile: '/webp/amfootbally-mobile.webp',
-    webpThumb: '/webp/amfootbally-thumb.webp',
-    fallback: '/amfootbally.png'
+    webpLarge: '/WEBP/amfootbally-1600x900.webp',
+    webpMedium: '/WEBP/amfootbally-1200x675.webp',
+    webpSmall: '/WEBP/amfootbally-750x422.webp',
+    fallback: '/PNGS/amfootbally.png'
   },
   baseball: {
-    webp: '/webp/basebally.webp',
-    webpMobile: '/webp/basebally-mobile.webp',
-    webpThumb: '/webp/basebally-thumb.webp',
-    fallback: '/basebally.png'
+    webpLarge: '/WEBP/basebally-1600x900.webp',
+    webpMedium: '/WEBP/basebally-1200x675.webp',
+    webpSmall: '/WEBP/basebally-750x422.webp',
+    fallback: '/PNGS/basebally.png'
   },
   hurling_camogie: {
-    webp: '/webp/hurcam.webp',
-    webpMobile: '/webp/hurcam-mobile.webp',
-    webpThumb: '/webp/hurcam-thumb.webp',
-    fallback: '/hurcam.png'
+    webpLarge: '/WEBP/hurcam-1600x900.webp',
+    webpMedium: '/WEBP/hurcam-1200x675.webp',
+    webpSmall: '/WEBP/hurcam-750x422.webp',
+    fallback: '/PNGS/hurcam.png'
   },
   gaelic_football: {
-    webp: '/webp/gaelic.webp',
-    webpMobile: '/webp/gaelic-mobile.webp',
-    webpThumb: '/webp/gaelic-thumb.webp',
-    fallback: '/gaelic.png'
+    webpLarge: '/WEBP/gaelic-1600x900.webp',
+    webpMedium: '/WEBP/gaelic-1200x675.webp',
+    webpSmall: '/WEBP/gaelic-750x422.webp',
+    fallback: '/PNGS/gaelic.png'
   },
   outdoor_gardening: {
-    webp: '/webp/gardening.jpg',
-    webpMobile: '/webp/gardening-mobile.jpg',
-    webpThumb: '/webp/gardening-thumb.jpg',
-    fallback: '/gardening.jpg'
+    webpLarge: '/WEBP/gardening-1600x900.webp',
+    webpMedium: '/WEBP/gardening-1200x675.webp',
+    webpSmall: '/WEBP/gardening-750x422.webp',
+    fallback: '/PNGS/gardening.png'
   },
   hockey: {
-    webp: '/webp/fieldhockey.webp',
-    webpMobile: '/webp/fieldhockey-mobile.webp',
-    webpThumb: '/webp/fieldhockey-thumb.webp',
-    fallback: '/fieldhockey.png'
+    webpLarge: '/WEBP/fieldhockey-1600x900.webp',
+    webpMedium: '/WEBP/fieldhockey-1200x675.webp',
+    webpSmall: '/WEBP/fieldhockey-750x422.webp',
+    fallback: '/PNGS/fieldhockey.png'
   },
   netball: {
-    webp: '/webp/netball.webp',
-    webpMobile: '/webp/netball-mobile.webp',
-    webpThumb: '/webp/netball-thumb.webp',
-    fallback: '/netball.png'
+    webpLarge: '/WEBP/netball-1600x900.webp',
+    webpMedium: '/WEBP/netball-1200x675.webp',
+    webpSmall: '/WEBP/netball-750x422.webp',
+    fallback: '/PNGS/netball.png'
   },
   golf: {
-    webp: '/webp/golfy.webp',
-    webpMobile: '/webp/golfy-mobile.webp',
-    webpThumb: '/webp/golfy-thumb.webp',
-    fallback: '/golfy.png'
+    webpLarge: '/WEBP/golfy-1600x900.webp',
+    webpMedium: '/WEBP/golfy-1200x675.webp',
+    webpSmall: '/WEBP/golfy-750x422.webp',
+    fallback: '/PNGS/golfy.png'
   },
   tennis: {
-    webp: '/webp/tennisy.webp',
-    webpMobile: '/webp/tennisy-mobile.webp',
-    webpThumb: '/webp/tennisy-thumb.webp',
-    fallback: '/tennisy.png'
+    webpLarge: '/WEBP/tennisy-1600x900.webp',
+    webpMedium: '/WEBP/tennisy-1200x675.webp',
+    webpSmall: '/WEBP/tennisy-750x422.webp',
+    fallback: '/PNGS/tennisy.png'
   },
   tennis_indoor: {
-    webp: '/webp/indoortennis.webp',
-    webpMobile: '/webp/indoortennis-mobile.webp',
-    webpThumb: '/webp/indoortennis-thumb.webp',
-    fallback: '/indoortennis.png'
+    webpLarge: '/WEBP/indoortennis-1600x900.webp',
+    webpMedium: '/WEBP/indoortennis-1200x675.webp',
+    webpSmall: '/WEBP/indoortennis-750x422.webp',
+    fallback: '/PNGS/indoortennis.png'
   },
   squash: {
-    webp: '/webp/squashy.webp',
-    webpMobile: '/webp/squashy-mobile.webp',
-    webpThumb: '/webp/squashy-thumb.webp',
-    fallback: '/squashy.png'
+    webpLarge: '/WEBP/squashy-1600x900.webp',
+    webpMedium: '/WEBP/squashy-1200x675.webp',
+    webpSmall: '/WEBP/squashy-750x422.webp',
+    fallback: '/PNGS/squashy.png'
   },
   volleyball_indoor: {
-    webp: '/webp/volley-indoor.webp',
-    webpMobile: '/webp/volley-indoor-mobile.webp',
-    webpThumb: '/webp/volley-indoor-thumb.webp',
-    fallback: '/volley-indoor.png'
+    webpLarge: '/webp/volley.webp',
+    webpMedium: '/webp/volley-mobile.webp',
+    webpSmall: '/webp/volley-thumb.webp',
+    fallback: '/volley.png'
   },
   badminton: {
-    webp: '/webp/badminton.webp',
-    webpMobile: '/webp/badminton-mobile.webp',
-    webpThumb: '/webp/badminton-thumb.webp',
-    fallback: '/badminton.png'
+    webpLarge: '/WEBP/badminton-1600x900.webp',
+    webpMedium: '/WEBP/badminton-1200x675.webp',
+    webpSmall: '/WEBP/badminton-750x422.webp',
+    fallback: '/PNGS/badminton.png'
   },
   table_tennis: {
-    webp: '/webp/pingpongy.webp',
-    webpMobile: '/webp/pingpongy-mobile.webp',
-    webpThumb: '/webp/pingpongy-thumb.webp',
-    fallback: '/pingpongy.png'
+    webpLarge: '/WEBP/pingpongy-1600x900.webp',
+    webpMedium: '/WEBP/pingpongy-1200x675.webp',
+    webpSmall: '/WEBP/pingpongy-750x422.webp',
+    fallback: '/PNGS/pingpongy.png'
   },
   archery: {
-    webp: '/webp/archery.webp',
-    webpMobile: '/webp/archery-mobile.webp',
-    webpThumb: '/webp/archery-thumb.webp',
-    fallback: '/archery.png'
+    webpLarge: '/WEBP/archery-1600x900.webp',
+    webpMedium: '/WEBP/archery-1200x675.webp',
+    webpSmall: '/WEBP/archery-750x422.webp',
+    fallback: '/PNGS/archery.png'
   },
   pickleball: {
-    webp: '/webp/pickley.webp',
-    webpMobile: '/webp/pickley-mobile.webp',
-    webpThumb: '/webp/pickley-thumb.webp',
-    fallback: '/pickley.png'
+    webpLarge: '/WEBP/pickley-1600x900.webp',
+    webpMedium: '/WEBP/pickley-1200x675.webp',
+    webpSmall: '/WEBP/pickley-750x422.webp',
+    fallback: '/PNGS/pickley.png'
   },
   padel: {
-    webp: '/webp/tennisy.webp',
-    webpMobile: '/webp/tennisy-mobile.webp',
-    webpThumb: '/webp/tennisy-thumb.webp',
-    fallback: '/tennisy.png'
+    webpLarge: '/WEBP/tennisy-1600x900.webp',
+    webpMedium: '/WEBP/tennisy-1200x675.webp',
+    webpSmall: '/WEBP/tennisy-750x422.webp',
+    fallback: '/PNGS/tennisy.png'
   },
   kayaking: {
-    webp: '/webp/kayaky2.webp',
-    webpMobile: '/webp/kayaky2-mobile.webp',
-    webpThumb: '/webp/kayaky2-thumb.webp',
-    fallback: '/kayaky2.png'
+    webpLarge: '/WEBP/kayaky2-1600x900.webp',
+    webpMedium: '/WEBP/kayaky2-1200x675.webp',
+    webpSmall: '/WEBP/kayaky2-750x422.webp',
+    fallback: '/PNGS/kayaky2.png'
   },
   sea_kayaking: {
-    webp: '/webp/kayaky.webp',
-    webpMobile: '/webp/kayaky-mobile.webp',
-    webpThumb: '/webp/kayaky-thumb.webp',
-    fallback: '/kayaky.png'
+    webpLarge: '/WEBP/kayaky-1600x900.webp',
+    webpMedium: '/WEBP/kayaky-1200x675.webp',
+    webpSmall: '/WEBP/kayaky-750x422.webp',
+    fallback: '/PNGS/kayaky.png'
   },
   canoeing: {
-    webp: '/webp/canoe.webp',
-    webpMobile: '/webp/canoe-mobile.webp',
-    webpThumb: '/webp/canoe-thumb.webp',
-    fallback: '/canoe.png'
+    webpLarge: '/WEBP/canoe-1600x900.webp',
+    webpMedium: '/WEBP/canoe-1200x675.webp',
+    webpSmall: '/WEBP/canoe-750x422.webp',
+    fallback: '/PNGS/canoe.png'
   },
   surfing: {
-    webp: '/webp/surfy.webp',
-    webpMobile: '/webp/surfy-mobile.webp',
-    webpThumb: '/webp/surfy-thumb.webp',
-    fallback: '/surfy.png'
+    webpLarge: '/WEBP/surfy-1600x900.webp',
+    webpMedium: '/WEBP/surfy-1200x675.webp',
+    webpSmall: '/WEBP/surfy-750x422.webp',
+    fallback: '/PNGS/surfy.png'
   },
   stand_up_paddleboarding: {
-    webp: '/webp/suppy.webp',
-    webpMobile: '/webp/suppy-mobile.webp',
-    webpThumb: '/webp/suppy-thumb.webp',
-    fallback: '/suppy.png'
+    webpLarge: '/WEBP/suppy-1600x900.webp',
+    webpMedium: '/WEBP/suppy-1200x675.webp',
+    webpSmall: '/WEBP/suppy-750x422.webp',
+    fallback: '/PNGS/suppy.png'
   },
   sup_sea: {
-    webp: '/webp/suppy.webp',
-    webpMobile: '/webp/suppy-mobile.webp',
-    webpThumb: '/webp/suppy-thumb.webp',
-    fallback: '/suppy.png'
+    webpLarge: '/WEBP/suppy-1600x900.webp',
+    webpMedium: '/WEBP/suppy-1200x675.webp',
+    webpSmall: '/WEBP/suppy-750x422.webp',
+    fallback: '/PNGS/suppy.png'
   },
   snorkeling: {
-    webp: '/webp/snorkely.webp',
-    webpMobile: '/webp/snorkely-mobile.webp',
-    webpThumb: '/webp/snorkely-thumb.webp',
-    fallback: '/snorkely.png'
+    webpLarge: '/WEBP/snorkely-1600x900.webp',
+    webpMedium: '/WEBP/snorkely-1200x675.webp',
+    webpSmall: '/WEBP/snorkely-750x422.webp',
+    fallback: '/PNGS/snorkely.png'
   },
   sea_swimming: {
-    webp: '/webp/seaswim.webp',
-    webpMobile: '/webp/seaswim-mobile.webp',
-    webpThumb: '/webp/seaswim-thumb.webp',
-    fallback: '/seaswim.png'
+    webpLarge: '/WEBP/seaswim-1600x900.webp',
+    webpMedium: '/WEBP/seaswim-1200x675.webp',
+    webpSmall: '/WEBP/seaswim-750x422.webp',
+    fallback: '/PNGS/seaswim.png'
   },
   wild_swimming: {
-    webp: '/webp/wildswim.webp',
-    webpMobile: '/webp/wildswim-mobile.webp',
-    webpThumb: '/webp/wildswim-thumb.webp',
-    fallback: '/wildswim.png'
+    webpLarge: '/WEBP/wildswim-1600x900.webp',
+    webpMedium: '/WEBP/wildswim-1200x675.webp',
+    webpSmall: '/WEBP/wildswim-750x422.webp',
+    fallback: '/PNGS/wildswim.png'
   },
   beach: {
-    webp: '/webp/beachrio.webp',
-    webpMobile: '/webp/beachrio-mobile.webp',
-    webpThumb: '/webp/beachrio-thumb.webp',
-    fallback: '/beachrio.png'
+    webpLarge: '/WEBP/beachrio-1600x900.webp',
+    webpMedium: '/WEBP/beachrio-1200x675.webp',
+    webpSmall: '/WEBP/beachrio-750x422.webp',
+    fallback: '/PNGS/beachrio.png'
   },
   indoor_swimming: {
-    webp: '/webp/swimpool.webp',
-    webpMobile: '/webp/swimpool-mobile.webp',
-    webpThumb: '/webp/swimpool-thumb.webp',
-    fallback: '/swimpool.png'
+    webpLarge: '/WEBP/swimpool-1600x900.webp',
+    webpMedium: '/WEBP/swimpool-1200x675.webp',
+    webpSmall: '/WEBP/swimpool-750x422.webp',
+    fallback: '/PNGS/swimpool.png'
   },
   fly_fishing_freshwater: {
-    webp: '/webp/trout.webp',
-    webpMobile: '/webp/trout-mobile.webp',
-    webpThumb: '/webp/trout-thumb.webp',
-    fallback: '/trout.png'
+    webpLarge: '/WEBP/trout-1600x900.webp',
+    webpMedium: '/WEBP/trout-1200x675.webp',
+    webpSmall: '/WEBP/trout-750x422.webp',
+    fallback: '/PNGS/trout.png'
   },
   coarse_fishing: {
-    webp: '/webp/carp.webp',
-    webpMobile: '/webp/carp-mobile.webp',
-    webpThumb: '/webp/carp-thumb.webp',
-    fallback: '/carp.png'
+    webpLarge: '/WEBP/carp-1600x900.webp',
+    webpMedium: '/WEBP/carp-1200x675.webp',
+    webpSmall: '/WEBP/carp-750x422.webp',
+    fallback: '/PNGS/carp.png'
   },
   sea_fishing_shore: {
-    webp: '/webp/beachfishy.webp',
-    webpMobile: '/webp/beachfishy-mobile.webp',
-    webpThumb: '/webp/beachfishy-thumb.webp',
-    fallback: '/beachfishy.png'
+    webpLarge: '/WEBP/beachfishy-1600x900.webp',
+    webpMedium: '/WEBP/beachfishy-1200x675.webp',
+    webpSmall: '/WEBP/beachfishy-750x422.webp',
+    fallback: '/PNGS/beachfishy.png'
   },
   sea_fishing_boat: {
-    webp: '/webp/boaty.webp',
-    webpMobile: '/webp/boaty-mobile.webp',
-    webpThumb: '/webp/boaty-thumb.webp',
-    fallback: '/boaty.png'
+    webpLarge: '/WEBP/boaty-1600x900.webp',
+    webpMedium: '/WEBP/boaty-1200x675.webp',
+    webpSmall: '/WEBP/boaty-750x422.webp',
+    fallback: '/PNGS/boaty.png'
   },
   mountain_biking: {
-    webp: '/webp/mountainbikey.webp',
-    webpMobile: '/webp/mountainbikey-mobile.webp',
-    webpThumb: '/webp/mountainbikey-thumb.webp',
-    fallback: '/mountainbikey.png'
+    webpLarge: '/WEBP/mountainbikey-1600x900.webp',
+    webpMedium: '/WEBP/mountainbikey-1200x675.webp',
+    webpSmall: '/WEBP/mountainbikey-750x422.webp',
+    fallback: '/PNGS/mountainbikey.png'
   },
   rock_climbing: {
-    webp: '/webp/mountainy.webp',
-    webpMobile: '/webp/mountainy-mobile.webp',
-    webpThumb: '/webp/mountainy-thumb.webp',
+    webpLarge: '/webp/mountainy.webp',
+    webpMedium: '/webp/mountainy-mobile.webp',
+    webpSmall: '/webp/mountainy-thumb.webp',
     fallback: '/mountainy.png'
   },
   rock_hopping: {
-    webp: '/webp/rocky.jpg',
-    webpMobile: '/webp/rocky-mobile.jpg',
-    webpThumb: '/webp/rocky-thumb.jpg',
-    fallback: '/rocky.png'
+    webpLarge: '/WEBP/rocky-1600x900.webp',
+    webpMedium: '/WEBP/rocky-1200x675.webp',
+    webpSmall: '/WEBP/rocky-750x422.webp',
+    fallback: '/PNGS/rocky.png'
   },
   hiking: {
-    webp: '/webp/walky.webp',
-    webpMobile: '/webp/walky-mobile.webp',
-    webpThumb: '/webp/walky-thumb.webp',
+    webpLarge: '/webp/walky.webp',
+    webpMedium: '/webp/walky-mobile.webp',
+    webpSmall: '/webp/walky-thumb.webp',
     fallback: '/walky.png'
   },
   skateboarding: {
-    webp: '/webp/skatey.webp',
-    webpMobile: '/webp/skatey-mobile.webp',
-    webpThumb: '/webp/skatey-thumb.webp',
-    fallback: '/skatey.png'
+    webpLarge: '/WEBP/skatey-1600x900.webp',
+    webpMedium: '/WEBP/skatey-1200x675.webp',
+    webpSmall: '/WEBP/skatey-750x422.webp',
+    fallback: '/PNGS/skatey.png'
   },
   rollerblading: {
-    webp: '/webp/roller.webp',
-    webpMobile: '/webp/roller-mobile.webp',
-    webpThumb: '/webp/roller-thumb.webp',
-    fallback: '/roller.png'
+    webpLarge: '/WEBP/roller-1600x900.webp',
+    webpMedium: '/WEBP/roller-1200x675.webp',
+    webpSmall: '/WEBP/roller-750x422.webp',
+    fallback: '/PNGS/roller.png'
   },
   trail_running: {
-    webp: '/webp/trailrunning.webp',
-    webpMobile: '/webp/trailrunning-mobile.webp',
-    webpThumb: '/webp/trailrunning-thumb.webp',
-    fallback: '/trailrunning.png'
+    webpLarge: '/WEBP/trailrunning-1600x900.webp',
+    webpMedium: '/WEBP/trailrunning-1200x675.webp',
+    webpSmall: '/WEBP/trailrunning-750x422.webp',
+    fallback: '/PNGS/trailrunning.png'
   },
   photography: {
-    webp: '/webp/photo.webp',
-    webpMobile: '/webp/photo-mobile.webp',
-    webpThumb: '/webp/photo-thumb.webp',
-    fallback: '/photo.png'
+    webpLarge: '/WEBP/photo-1600x900.webp',
+    webpMedium: '/WEBP/photo-1200x675.webp',
+    webpSmall: '/WEBP/photo-750x422.webp',
+    fallback: '/PNGS/photo.png'
   },
   running: {
-    webp: '/webp/running.webp',
-    webpMobile: '/webp/running-mobile.webp',
-    webpThumb: '/webp/running-thumb.webp',
-    fallback: '/running.png'
+    webpLarge: '/WEBP/running-1600x900.webp',
+    webpMedium: '/WEBP/running-1200x675.webp',
+    webpSmall: '/WEBP/running-750x422.webp',
+    fallback: '/PNGS/running.png'
   },
   road_cycling: {
-    webp: '/webp/roadcycling.webp',
-    webpMobile: '/webp/roadcycling-mobile.webp',
-    webpThumb: '/webp/roadcycling-thumb.webp',
-    fallback: '/roadcycling.png'
+    webpLarge: '/WEBP/roadcycling-1600x900.webp',
+    webpMedium: '/WEBP/roadcycling-1200x675.webp',
+    webpSmall: '/WEBP/roadcycling-750x422.webp',
+    fallback: '/PNGS/roadcycling.png'
   },
   cycling: {
-    webp: '/webp/cycling.webp',
-    webpMobile: '/webp/cycling-mobile.webp',
-    webpThumb: '/webp/cycling-thumb.webp',
-    fallback: '/cycling.png'
+    webpLarge: '/WEBP/cycling-1600x900.webp',
+    webpMedium: '/WEBP/cycling-1200x675.webp',
+    webpSmall: '/WEBP/cycling-750x422.webp',
+    fallback: '/PNGS/cycling.png'
   },
   gravel_biking: {
-    webp: '/webp/gravelbikey.webp',
-    webpMobile: '/webp/gravelbikey-mobile.webp',
-    webpThumb: '/webp/gravelbikey-thumb.webp',
-    fallback: '/gravelbikey.png'
+    webpLarge: '/WEBP/gravelbikey-1600x900.webp',
+    webpMedium: '/WEBP/gravelbikey-1200x675.webp',
+    webpSmall: '/WEBP/gravelbikey-750x422.webp',
+    fallback: '/PNGS/gravelbikey.png'
   },
   urban_exploring: {
-    webp: '/webp/walk.webp',
-    webpMobile: '/webp/walk-mobile.webp',
-    webpThumb: '/webp/walk-thumb.webp',
-    fallback: '/walk.png'
+    webpLarge: '/WEBP/walk-1600x900.webp',
+    webpMedium: '/WEBP/walk-1200x675.webp',
+    webpSmall: '/WEBP/walk-750x422.webp',
+    fallback: '/PNGS/walk.png'
   },
   outdoor_gym: {
-    webp: '/webp/outdoorgym.webp',
-    webpMobile: '/webp/outdoorgym-mobile.webp',
-    webpThumb: '/webp/outdoorgym-thumb.webp',
-    fallback: '/outdoorgym.png'
+    webpLarge: '/WEBP/outdoorgym-1600x900.webp',
+    webpMedium: '/WEBP/outdoorgym-1200x675.webp',
+    webpSmall: '/WEBP/outdoorgym-750x422.webp',
+    fallback: '/PNGS/outdoorgym.png'
   },
   outdoor_yoga: {
-    webp: '/webp/yogaparky.webp',
-    webpMobile: '/webp/yogaparky-mobile.webp',
-    webpThumb: '/webp/yogaparky-thumb.webp',
-    fallback: '/yogaparky.png'
+    webpLarge: '/WEBP/yogaparky-1600x900.webp',
+    webpMedium: '/WEBP/yogaparky-1200x675.webp',
+    webpSmall: '/WEBP/yogaparky-750x422.webp',
+    fallback: '/PNGS/yogaparky.png'
   },
   outdoor_meditation: {
-    webp: '/webp/meditateoutdoors.webp',
-    webpMobile: '/webp/meditateoutdoors-mobile.webp',
-    webpThumb: '/webp/meditateoutdoors-thumb.webp',
-    fallback: '/meditateoutdoors.png'
+    webpLarge: '/WEBP/meditateoutdoors-1600x900.webp',
+    webpMedium: '/WEBP/meditateoutdoors-1200x675.webp',
+    webpSmall: '/WEBP/meditateoutdoors-750x422.webp',
+    fallback: '/PNGS/meditateoutdoors.png'
   },
   tai_chi: {
-    webp: '/webp/taichi.webp',
-    webpMobile: '/webp/taichi-mobile.webp',
-    webpThumb: '/webp/taichi-thumb.webp',
-    fallback: '/taichi.png'
+    webpLarge: '/WEBP/taichi-1600x900.webp',
+    webpMedium: '/WEBP/taichi-1200x675.webp',
+    webpSmall: '/WEBP/taichi-750x422.webp',
+    fallback: '/PNGS/taichi.png'
   },
   picnicking: {
-    webp: '/webp/picnicpark.webp',
-    webpMobile: '/webp/picnicpark-mobile.webp',
-    webpThumb: '/webp/picnicpark-thumb.webp',
-    fallback: '/picnicpark.png'
+    webpLarge: '/WEBP/picnicpark-1600x900.webp',
+    webpMedium: '/WEBP/picnicpark-1200x675.webp',
+    webpSmall: '/WEBP/picnicpark-750x422.webp',
+    fallback: '/PNGS/picnicpark.png'
   },
   bbq: {
-    webp: '/webp/bbq.webp',
-    webpMobile: '/webp/bbq-mobile.webp',
-    webpThumb: '/webp/bbq-thumb.webp',
-    fallback: '/bbq.png'
+    webpLarge: '/WEBP/bbq-1600x900.webp',
+    webpMedium: '/WEBP/bbq-1200x675.webp',
+    webpSmall: '/WEBP/bbq-750x422.webp',
+    fallback: '/PNGS/bbq.png'
   },
   geocaching: {
-    webp: '/webp/geo.webp',
-    webpMobile: '/webp/geo-mobile.webp',
-    webpThumb: '/webp/geo-thumb.webp',
-    fallback: '/geo.png'
+    webpLarge: '/WEBP/geo-1600x900.webp',
+    webpMedium: '/WEBP/geo-1200x675.webp',
+    webpSmall: '/WEBP/geo-750x422.webp',
+    fallback: '/PNGS/geo.png'
   },
   camping: {
-    webp: '/webp/campy.webp',
-    webpMobile: '/webp/campy-mobile.webp',
-    webpThumb: '/webp/campy-thumb.webp',
-    fallback: '/campy.png'
+    webpLarge: '/WEBP/campy-1600x900.webp',
+    webpMedium: '/WEBP/campy-1200x675.webp',
+    webpSmall: '/WEBP/campy-750x422.webp',
+    fallback: '/PNGS/campy.png'
   },
   outdoor_reading: {
-    webp: '/webp/readingparky.webp',
-    webpMobile: '/webp/readingparky-mobile.webp',
-    webpThumb: '/webp/readingparky-thumb.webp',
-    fallback: '/readingparky.png'
+    webpLarge: '/WEBP/readingparky-1600x900.webp',
+    webpMedium: '/WEBP/readingparky-1200x675.webp',
+    webpSmall: '/WEBP/readingparky-750x422.webp',
+    fallback: '/PNGS/readingparky.png'
   },
   dog_walking: {
-    webp: '/webp/doggy2.webp',
-    webpMobile: '/webp/doggy2-mobile.webp',
-    webpThumb: '/webp/doggy2-thumb.webp',
-    fallback: '/doggy2.png'
+    webpLarge: '/WEBP/doggy2-1600x900.webp',
+    webpMedium: '/WEBP/doggy2-1200x675.webp',
+    webpSmall: '/WEBP/doggy2-750x422.webp',
+    fallback: '/PNGS/doggy2.png'
   },
   outdoor_playground: {
-    webp: '/webp/playgroundy.webp',
-    webpMobile: '/webp/playgroundy-mobile.webp',
-    webpThumb: '/webp/playgroundy-thumb.webp',
-    fallback: '/playgroundy.png'
+    webpLarge: '/WEBP/playgroundy-1600x900.webp',
+    webpMedium: '/WEBP/playgroundy-1200x675.webp',
+    webpSmall: '/WEBP/playgroundy-750x422.webp',
+    fallback: '/PNGS/playgroundy.png'
   },
   outdoor_chess: {
-    webp: '/webp/chessy.webp',
-    webpMobile: '/webp/chessy-mobile.webp',
-    webpThumb: '/webp/chessy-thumb.webp',
-    fallback: '/chessy.png'
+    webpLarge: '/WEBP/chessy-1600x900.webp',
+    webpMedium: '/WEBP/chessy-1200x675.webp',
+    webpSmall: '/WEBP/chessy-750x422.webp',
+    fallback: '/PNGS/chessy.png'
   },
   outdoor_painting: {
-    webp: '/webp/paintingoutdoors.webp',
-    webpMobile: '/webp/paintingoutdoors-mobile.webp',
-    webpThumb: '/webp/paintingoutdoors-thumb.webp',
-    fallback: '/paintingoutdoors.png'
+    webpLarge: '/WEBP/paintingoutdoors-1600x900.webp',
+    webpMedium: '/WEBP/paintingoutdoors-1200x675.webp',
+    webpSmall: '/WEBP/paintingoutdoors-750x422.webp',
+    fallback: '/PNGS/paintingoutdoors.png'
   },
   outdoor_music: {
-    webp: '/webp/musicfolkies.webp',
-    webpMobile: '/webp/musicfolkies-mobile.webp',
-    webpThumb: '/webp/musicfolkies-thumb.webp',
-    fallback: '/musicfolkies.png'
+    webpLarge: '/WEBP/musicfolkies-1600x900.webp',
+    webpMedium: '/WEBP/musicfolkies-1200x675.webp',
+    webpSmall: '/WEBP/musicfolkies-750x422.webp',
+    fallback: '/PNGS/musicfolkies.png'
   },
   gym_workout: {
-    webp: '/webp/gymy.webp',
-    webpMobile: '/webp/gymy-mobile.webp',
-    webpThumb: '/webp/gymy-thumb.webp',
-    fallback: '/gymy.png'
+    webpLarge: '/WEBP/gymy-1600x900.webp',
+    webpMedium: '/WEBP/gymy-1200x675.webp',
+    webpSmall: '/WEBP/gymy-750x422.webp',
+    fallback: '/PNGS/gymy.png'
   },
   yoga: {
-    webp: '/webp/yoga.webp',
-    webpMobile: '/webp/yoga-mobile.webp',
-    webpThumb: '/webp/yoga-thumb.webp',
-    fallback: '/yoga.png'
+    webpLarge: '/WEBP/yoga-1600x900.webp',
+    webpMedium: '/WEBP/yoga-1200x675.webp',
+    webpSmall: '/WEBP/yoga-750x422.webp',
+    fallback: '/PNGS/yoga.png'
   },
   pilates: {
-    webp: '/webp/pilates.webp',
-    webpMobile: '/webp/pilates-mobile.webp',
-    webpThumb: '/webp/pilates-thumb.webp',
-    fallback: '/pilates.png'
+    webpLarge: '/WEBP/pilates-1600x900.webp',
+    webpMedium: '/WEBP/pilates-1200x675.webp',
+    webpSmall: '/WEBP/pilates-750x422.webp',
+    fallback: '/PNGS/pilates.png'
   },
   martial_arts: {
-    webp: '/webp/karate.webp',
-    webpMobile: '/webp/karate-mobile.webp',
-    webpThumb: '/webp/karate-thumb.webp',
-    fallback: '/karate.png'
+    webpLarge: '/WEBP/karate-1600x900.webp',
+    webpMedium: '/WEBP/karate-1200x675.webp',
+    webpSmall: '/WEBP/karate-750x422.webp',
+    fallback: '/PNGS/karate.png'
   },
   indoor_climbing: {
-    webp: '/webp/indoorclimbey.webp',
-    webpMobile: '/webp/indoorclimbey-mobile.webp',
-    webpThumb: '/webp/indoorclimbey-thumb.webp',
-    fallback: '/indoorclimbey.png'
+    webpLarge: '/WEBP/indoorclimbey-1600x900.webp',
+    webpMedium: '/WEBP/indoorclimbey-1200x675.webp',
+    webpSmall: '/WEBP/indoorclimbey-750x422.webp',
+    fallback: '/PNGS/indoorclimbey.png'
   },
   meditation: {
-    webp: '/webp/meditation.webp',
-    webpMobile: '/webp/meditation-mobile.webp',
-    webpThumb: '/webp/meditation-thumb.webp',
-    fallback: '/meditation.png'
+    webpLarge: '/WEBP/meditation-1600x900.webp',
+    webpMedium: '/WEBP/meditation-1200x675.webp',
+    webpSmall: '/WEBP/meditation-750x422.webp',
+    fallback: '/PNGS/meditation.png'
   },
   crafts: {
-    webp: '/webp/crafty.webp',
-    webpMobile: '/webp/crafty-mobile.webp',
-    webpThumb: '/webp/crafty-thumb.webp',
-    fallback: '/crafty.png'
+    webpLarge: '/WEBP/crafty-1600x900.webp',
+    webpMedium: '/WEBP/crafty-1200x675.webp',
+    webpSmall: '/WEBP/crafty-750x422.webp',
+    fallback: '/PNGS/crafty.png'
   },
   knitting: {
-    webp: '/webp/knitty.webp',
-    webpMobile: '/webp/knitty-mobile.webp',
-    webpThumb: '/webp/knitty-thumb.webp',
-    fallback: '/knitty.png'
+    webpLarge: '/WEBP/knitty-1600x900.webp',
+    webpMedium: '/WEBP/knitty-1200x675.webp',
+    webpSmall: '/WEBP/knitty-750x422.webp',
+    fallback: '/PNGS/knitty.png'
   },
   diy: {
-    webp: '/webp/diy.webp',
-    webpMobile: '/webp/diy-mobile.webp',
-    webpThumb: '/webp/diy-thumb.webp',
-    fallback: '/diy.png'
+    webpLarge: '/WEBP/diy-1600x900.webp',
+    webpMedium: '/WEBP/diy-1200x675.webp',
+    webpSmall: '/WEBP/diy-750x422.webp',
+    fallback: '/PNGS/diy.png'
   },
   playing_records: {
-    webp: '/webp/recordy.webp',
-    webpMobile: '/webp/recordy-mobile.webp',
-    webpThumb: '/webp/recordy-thumb.webp',
-    fallback: '/recordy.png'
+    webpLarge: '/WEBP/recordy-1600x900.webp',
+    webpMedium: '/WEBP/recordy-1200x675.webp',
+    webpSmall: '/WEBP/recordy-750x422.webp',
+    fallback: '/PNGS/recordy.png'
   },
   reading: {
-    webp: '/webp/ready.webp',
-    webpMobile: '/webp/ready-mobile.webp',
-    webpThumb: '/webp/ready-thumb.webp',
-    fallback: '/ready.png'
+    webpLarge: '/WEBP/ready-1600x900.webp',
+    webpMedium: '/WEBP/ready-1200x675.webp',
+    webpSmall: '/WEBP/ready-750x422.webp',
+    fallback: '/PNGS/ready.png'
   },
   playing_cards: {
-    webp: '/webp/cards.webp',
-    webpMobile: '/webp/cards-mobile.webp',
-    webpThumb: '/webp/cards-thumb.webp',
-    fallback: '/cards.png'
+    webpLarge: '/WEBP/cards-1600x900.webp',
+    webpMedium: '/WEBP/cards-1200x675.webp',
+    webpSmall: '/WEBP/cards-750x422.webp',
+    fallback: '/PNGS/cards.png'
   },
   watch_a_movie: {
-    webp: '/webp/watchy.webp',
-    webpMobile: '/webp/watchy-mobile.webp',
-    webpThumb: '/webp/watchy-thumb.webp',
-    fallback: '/watchy.png'
+    webpLarge: '/WEBP/watchy-1600x900.webp',
+    webpMedium: '/WEBP/watchy-1200x675.webp',
+    webpSmall: '/WEBP/watchy-750x422.webp',
+    fallback: '/PNGS/watchy.png'
   },
   cooking: {
-    webp: '/webp/cooking.webp',
-    webpMobile: '/webp/cooking-mobile.webp',
-    webpThumb: '/webp/cooking-thumb.webp',
-    fallback: '/cooking.png'
+    webpLarge: '/WEBP/cooking-1600x900.webp',
+    webpMedium: '/WEBP/cooking-1200x675.webp',
+    webpSmall: '/WEBP/cooking-750x422.webp',
+    fallback: '/PNGS/cooking.png'
   },
   dance: {
-    webp: '/webp/dancey.webp',
-    webpMobile: '/webp/dancey-mobile.webp',
-    webpThumb: '/webp/dancey-thumb.webp',
-    fallback: '/dancey.png'
+    webpLarge: '/WEBP/dancey-1600x900.webp',
+    webpMedium: '/WEBP/dancey-1200x675.webp',
+    webpSmall: '/WEBP/dancey-750x422.webp',
+    fallback: '/PNGS/dancey.png'
   },
   make_music: {
-    webp: '/webp/makingmusic.webp',
-    webpMobile: '/webp/makingmusic-mobile.webp',
-    webpThumb: '/webp/makingmusic-thumb.webp',
-    fallback: '/makingmusic.png'
+    webpLarge: '/WEBP/makingmusic-1600x900.webp',
+    webpMedium: '/WEBP/makingmusic-1200x675.webp',
+    webpSmall: '/WEBP/makingmusic-750x422.webp',
+    fallback: '/PNGS/makingmusic.png'
   },
   painting: {
-    webp: '/webp/crafty.webp',
-    webpMobile: '/webp/crafty-mobile.webp',
-    webpThumb: '/webp/crafty-thumb.webp',
-    fallback: '/crafty.png'
+    webpLarge: '/WEBP/crafty-1600x900.webp',
+    webpMedium: '/WEBP/crafty-1200x675.webp',
+    webpSmall: '/WEBP/crafty-750x422.webp',
+    fallback: '/PNGS/crafty.png'
   },
   skiing: {
-    webp: '/webp/skiingy.webp',
-    webpMobile: '/webp/skiingy-mobile.webp',
-    webpThumb: '/webp/skiingy-thumb.webp',
-    fallback: '/skiingy.png'
+    webpLarge: '/WEBP/skiingy-1600x900.webp',
+    webpMedium: '/WEBP/skiingy-1200x675.webp',
+    webpSmall: '/WEBP/skiingy-750x422.webp',
+    fallback: '/PNGS/skiingy.png'
   },
   snowboarding: {
-    webp: '/webp/snowboardy.webp',
-    webpMobile: '/webp/snowboardy-mobile.webp',
-    webpThumb: '/webp/snowboardy-thumb.webp',
-    fallback: '/snowboardy.png'
+    webpLarge: '/WEBP/snowboardy-1600x900.webp',
+    webpMedium: '/WEBP/snowboardy-1200x675.webp',
+    webpSmall: '/WEBP/snowboardy-750x422.webp',
+    fallback: '/PNGS/snowboardy.png'
   },
   cross_country_skiing: {
-    webp: '/webp/crosscountryski.webp',
-    webpMobile: '/webp/crosscountryski-mobile.webp',
-    webpThumb: '/webp/crosscountryski-thumb.webp',
-    fallback: '/crosscountryski.png'
+    webpLarge: '/WEBP/crosscountryski-1600x900.webp',
+    webpMedium: '/WEBP/crosscountryski-1200x675.webp',
+    webpSmall: '/WEBP/crosscountryski-750x422.webp',
+    fallback: '/PNGS/crosscountryski.png'
   },
   ice_skating: {
-    webp: '/webp/outdooriceskatingy.webp',
-    webpMobile: '/webp/outdooriceskatingy-mobile.webp',
-    webpThumb: '/webp/outdooriceskatingy-thumb.webp',
-    fallback: '/outdooriceskatingy.png'
+    webpLarge: '/WEBP/outdooriceskatingy-1600x900.webp',
+    webpMedium: '/WEBP/outdooriceskatingy-1200x675.webp',
+    webpSmall: '/WEBP/outdooriceskatingy-750x422.webp',
+    fallback: '/PNGS/outdooriceskatingy.png'
   },
   curling: {
-    webp: '/webp/curly.webp',
-    webpMobile: '/webp/curly-mobile.webp',
-    webpThumb: '/webp/curly-thumb.webp',
-    fallback: '/curly.png'
+    webpLarge: '/WEBP/curly-1600x900.webp',
+    webpMedium: '/WEBP/curly-1200x675.webp',
+    webpSmall: '/WEBP/curly-750x422.webp',
+    fallback: '/PNGS/curly.png'
   },
   ice_hockey: {
-    webp: '/webp/icehockey.webp',
-    webpMobile: '/webp/icehockey-mobile.webp',
-    webpThumb: '/webp/icehockey-thumb.webp',
-    fallback: '/icehockey.png'
+    webpLarge: '/WEBP/icehockey-1600x900.webp',
+    webpMedium: '/WEBP/icehockey-1200x675.webp',
+    webpSmall: '/WEBP/icehockey-750x422.webp',
+    fallback: '/PNGS/icehockey.png'
   },
   ice_hockey_indoor: {
-    webp: '/webp/indooricehockey.webp',
-    webpMobile: '/webp/indooricehockey-mobile.webp',
-    webpThumb: '/webp/indooricehockey-thumb.webp',
-    fallback: '/indooricehockey.png'
+    webpLarge: '/WEBP/indooricehockey-1600x900.webp',
+    webpMedium: '/WEBP/indooricehockey-1200x675.webp',
+    webpSmall: '/WEBP/indooricehockey-750x422.webp',
+    fallback: '/PNGS/indooricehockey.png'
   },
   ice_fishing: {
-    webp: '/webp/icefishing.webp',
-    webpMobile: '/webp/icefishing-mobile.webp',
-    webpThumb: '/webp/icefishing-thumb.webp',
-    fallback: '/icefishing.png'
+    webpLarge: '/WEBP/icefishing-1600x900.webp',
+    webpMedium: '/WEBP/icefishing-1200x675.webp',
+    webpSmall: '/WEBP/icefishing-750x422.webp',
+    fallback: '/PNGS/icefishing.png'
   },
   birdwatching: {
-    webp: '/webp/woodsy.webp',
-    webpMobile: '/webp/woodsy-mobile.webp',
-    webpThumb: '/webp/woodsy-thumb.webp',
-    fallback: '/woodsy.png'
+    webpLarge: '/WEBP/woodsy-1600x900.webp',
+    webpMedium: '/WEBP/woodsy-1200x675.webp',
+    webpSmall: '/WEBP/woodsy-750x422.webp',
+    fallback: '/PNGS/woodsy.png'
   },
   foraging: {
-    webp: '/webp/foreagey.webp',
-    webpMobile: '/webp/foreagey-mobile.webp',
-    webpThumb: '/webp/foreagey-thumb.webp',
-    fallback: '/foreagey.png'
+    webpLarge: '/WEBP/foreagey-1600x900.webp',
+    webpMedium: '/WEBP/foreagey-1200x675.webp',
+    webpSmall: '/WEBP/foreagey-750x422.webp',
+    fallback: '/PNGS/foreagey.png'
   },
   mushroom_hunting: {
-    webp: '/webp/mushroom.webp',
-    webpMobile: '/webp/mushroom-mobile.webp',
-    webpThumb: '/webp/mushroom-thumb.webp',
-    fallback: '/mushroom.png'
+    webpLarge: '/WEBP/mushroom-1600x900.webp',
+    webpMedium: '/WEBP/mushroom-1200x675.webp',
+    webpSmall: '/WEBP/mushroom-750x422.webp',
+    fallback: '/PNGS/mushroom.png'
   },
   stargazing: {
-    webp: '/webp/milkyway.webp',
-    webpMobile: '/webp/milkyway-mobile.webp',
-    webpThumb: '/webp/milkyway-thumb.webp',
-    fallback: '/milkyway.png'
+    webpLarge: '/WEBP/milkyway-1600x900.webp',
+    webpMedium: '/WEBP/milkyway-1200x675.webp',
+    webpSmall: '/WEBP/milkyway-750x422.webp',
+    fallback: '/PNGS/milkyway.png'
   },
   going_to_pub: {
-    webp: '/webp/pubby.webp',
-    webpMobile: '/webp/pubby-mobile.webp',
-    webpThumb: '/webp/pubby-thumb.webp',
-    fallback: '/pubby.png'
+    webpLarge: '/WEBP/pubby-1600x900.webp',
+    webpMedium: '/WEBP/pubby-1200x675.webp',
+    webpSmall: '/WEBP/pubby-750x422.webp',
+    fallback: '/PNGS/pubby.png'
   },
   cafe: {
-    webp: '/webp/cafe.webp',
-    webpMobile: '/webp/cafe-mobile.webp',
-    webpThumb: '/webp/cafe-thumb.webp',
-    fallback: '/cafe.png'
+    webpLarge: '/WEBP/cafe-1600x900.webp',
+    webpMedium: '/WEBP/cafe-1200x675.webp',
+    webpSmall: '/WEBP/cafe-750x422.webp',
+    fallback: '/PNGS/cafe.png'
   },
   cinema: {
-    webp: '/webp/cinema.webp',
-    webpMobile: '/webp/cinema-mobile.webp',
-    webpThumb: '/webp/cinema-thumb.webp',
-    fallback: '/cinema.png'
+    webpLarge: '/WEBP/cinema-1600x900.webp',
+    webpMedium: '/WEBP/cinema-1200x675.webp',
+    webpSmall: '/WEBP/cinema-750x422.webp',
+    fallback: '/PNGS/cinema.png'
   },
   museum: {
-    webp: '/webp/museumy.webp',
-    webpMobile: '/webp/museumy-mobile.webp',
-    webpThumb: '/webp/museumy-thumb.webp',
-    fallback: '/museumy.png'
+    webpLarge: '/WEBP/museumy-1600x900.webp',
+    webpMedium: '/WEBP/museumy-1200x675.webp',
+    webpSmall: '/WEBP/museumy-750x422.webp',
+    fallback: '/PNGS/museumy.png'
   },
   shopping: {
-    webp: '/webp/shoppy.webp',
-    webpMobile: '/webp/shoppy-mobile.webp',
-    webpThumb: '/webp/shoppy-thumb.webp',
-    fallback: '/shoppy.png'
+    webpLarge: '/WEBP/shoppy-1600x900.webp',
+    webpMedium: '/WEBP/shoppy-1200x675.webp',
+    webpSmall: '/WEBP/shoppy-750x422.webp',
+    fallback: '/PNGS/shoppy.png'
   },
   jetskiing: {
-    webp: '/webp/watery.webp',
-    webpMobile: '/webp/watery-mobile.webp',
-    webpThumb: '/webp/watery-thumb.webp',
+    webpLarge: '/webp/watery.webp',
+    webpMedium: '/webp/watery-mobile.webp',
+    webpSmall: '/webp/watery-thumb.webp',
     fallback: '/watery.png'
   },
   sailing_inland: {
-    webp: '/webp/sailing.webp',
-    webpMobile: '/webp/sailing-mobile.webp',
-    webpThumb: '/webp/sailing-thumb.webp',
-    fallback: '/sailing.png'
+    webpLarge: '/WEBP/sailing-1600x900.webp',
+    webpMedium: '/WEBP/sailing-1200x675.webp',
+    webpSmall: '/WEBP/sailing-750x422.webp',
+    fallback: '/PNGS/sailing.png'
   },
   scuba_diving: {
-    webp: '/webp/scuba.webp',
-    webpMobile: '/webp/scuba-mobile.webp',
-    webpThumb: '/webp/scuba-thumb.webp',
-    fallback: '/scuba.png'
+    webpLarge: '/WEBP/scuba-1600x900.webp',
+    webpMedium: '/WEBP/scuba-1200x675.webp',
+    webpSmall: '/WEBP/scuba-750x422.webp',
+    fallback: '/PNGS/scuba.png'
   },
   kitesurfing: {
-    webp: '/webp/kitey.webp',
-    webpMobile: '/webp/kitey-mobile.webp',
-    webpThumb: '/webp/kitey-thumb.webp',
-    fallback: '/kitey.png'
+    webpLarge: '/WEBP/kitey-1600x900.webp',
+    webpMedium: '/WEBP/kitey-1200x675.webp',
+    webpSmall: '/WEBP/kitey-750x422.webp',
+    fallback: '/PNGS/kitey.png'
   },
   windsurfing: {
-    webp: '/webp/windy.webp',
-    webpMobile: '/webp/windy-mobile.webp',
-    webpThumb: '/webp/windy-thumb.webp',
-    fallback: '/windy.png'
+    webpLarge: '/WEBP/windy-1600x900.webp',
+    webpMedium: '/WEBP/windy-1200x675.webp',
+    webpSmall: '/WEBP/windy-750x422.webp',
+    fallback: '/PNGS/windy.png'
   },
   gaming: {
-    webp: '/webp/gaming.webp',
-    webpMobile: '/webp/gaming-mobile.webp',
-    webpThumb: '/webp/gaming-thumb.webp',
-    fallback: '/gaming.png'
+    webpLarge: '/WEBP/gaming-1600x900.webp',
+    webpMedium: '/WEBP/gaming-1200x675.webp',
+    webpSmall: '/WEBP/gaming-750x422.webp',
+    fallback: '/PNGS/gaming.png'
   },
   boxing: {
-    webp: '/webp/boxing.webp',
-    webpMobile: '/webp/boxing-mobile.webp',
-    webpThumb: '/webp/boxing-thumb.webp',
-    fallback: '/boxing.png'
+    webpLarge: '/WEBP/boxing-1600x900.webp',
+    webpMedium: '/WEBP/boxing-1200x675.webp',
+    webpSmall: '/WEBP/boxing-750x422.webp',
+    fallback: '/PNGS/boxing.png'
   },
   zumba: {
-    webp: '/webp/zumba.webp',
-    webpMobile: '/webp/zumba-mobile.webp',
-    webpThumb: '/webp/zumba-thumb.webp',
-    fallback: '/zumba.png'
+    webpLarge: '/WEBP/zumba-1600x900.webp',
+    webpMedium: '/WEBP/zumba-1200x675.webp',
+    webpSmall: '/WEBP/zumba-750x422.webp',
+    fallback: '/PNGS/zumba.png'
   },
   spinning: {
-    webp: '/webp/spinning.webp',
-    webpMobile: '/webp/spinning-mobile.webp',
-    webpThumb: '/webp/spinning-thumb.webp',
-    fallback: '/spinning.png'
+    webpLarge: '/WEBP/spinning-1600x900.webp',
+    webpMedium: '/WEBP/spinning-1200x675.webp',
+    webpSmall: '/WEBP/spinning-750x422.webp',
+    fallback: '/PNGS/spinning.png'
   },
   riding_motorbike: {
-    webp: '/webp/motorbikey.webp',
-    webpMobile: '/webp/motorbikey-mobile.webp',
-    webpThumb: '/webp/motorbikey-thumb.webp',
-    fallback: '/motorbikey.png'
+    webpLarge: '/WEBP/motorbikey-1600x900.webp',
+    webpMedium: '/WEBP/motorbikey-1200x675.webp',
+    webpSmall: '/WEBP/motorbikey-750x422.webp',
+    fallback: '/PNGS/motorbikey.png'
   },
   bowling: {
-    webp: '/webp/bowling.webp',
-    webpMobile: '/webp/bowling-mobile.webp',
-    webpThumb: '/webp/bowling-thumb.webp',
-    fallback: '/bowling.png'
+    webpLarge: '/WEBP/bowling-1600x900.webp',
+    webpMedium: '/WEBP/bowling-1200x675.webp',
+    webpSmall: '/WEBP/bowling-750x422.webp',
+    fallback: '/PNGS/bowling.png'
   },
   gallery: {
-    webp: '/webp/gallery.webp',
-    webpMobile: '/webp/gallery-mobile.webp',
-    webpThumb: '/webp/gallery-thumb.webp',
-    fallback: '/gallery.png'
+    webpLarge: '/WEBP/gallery-1600x900.webp',
+    webpMedium: '/WEBP/gallery-1200x675.webp',
+    webpSmall: '/WEBP/gallery-750x422.webp',
+    fallback: '/PNGS/gallery.png'
   },
   online: {
-    webp: '/webp/online.webp',
-    webpMobile: '/webp/online-mobile.webp',
-    webpThumb: '/webp/online-thumb.webp',
-    fallback: '/online.png'
+    webpLarge: '/WEBP/online-1600x900.webp',
+    webpMedium: '/WEBP/online-1200x675.webp',
+    webpSmall: '/WEBP/online-750x422.webp',
+    fallback: '/PNGS/online.png'
   },
   sailing: {
-    webp: '/webp/sailing2.webp',
-    webpMobile: '/webp/sailing2-mobile.webp',
-    webpThumb: '/webp/sailing2-thumb.webp',
-    fallback: '/sailing2.png'
-  },
+    webpLarge: '/WEBP/sailing2-1600x900.webp',
+    webpMedium: '/WEBP/sailing2-1200x675.webp',
+    webpSmall: '/WEBP/sailing2-750x422.webp',
+    fallback: '/PNGS/sailing2.png'
+  }
 };
 
 export default bgMapOptimized;
 
 // Utility functions for getting optimized images
-export function getOptimizedImageSrc(activityId: string, variant: 'webp' | 'webpMobile' | 'webpThumb' | 'fallback' = 'webp'): string {
+export function getOptimizedImageSrc(activityId: string, variant: 'webpLarge' | 'webpMedium' | 'webpSmall' | 'fallback' = 'webpLarge'): string {
   const imageData = bgMapOptimized[activityId];
   if (!imageData) {
     // Fallback to zumba.png if not optimized yet
-    return '/zumba.png';
+    return '/PNGS/zumba.png';
   }
   return imageData[variant];
 }
@@ -710,8 +711,8 @@ export function getResponsiveImageSrc(activityId: string, isMobile: boolean = fa
     // Import and use original bgMap for fallback
     return `/${activityId.replace(/_/g, '')}.png`; // Basic fallback
   }
-  
-  return isMobile 
-    ? getOptimizedImageSrc(activityId, 'webpMobile')
-    : getOptimizedImageSrc(activityId, 'webp');
+
+  return isMobile
+    ? getOptimizedImageSrc(activityId, 'webpSmall')
+    : getOptimizedImageSrc(activityId, 'webpLarge');
 }

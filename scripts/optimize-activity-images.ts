@@ -50,10 +50,20 @@ interface ProcessStats {
 
 /**
  * Get all PNG files from source directory
+ * Only includes files older than 7 days (to avoid processing recent/in-progress images)
  */
 function getSourceImages(filter?: string[]): string[] {
+  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
   const files = fs.readdirSync(CONFIG.sourceDir)
-    .filter(file => file.endsWith('.png'));
+    .filter(file => {
+      if (!file.endsWith('.png')) return false;
+
+      // Check file age - only process files older than 1 week
+      const filePath = path.join(CONFIG.sourceDir, file);
+      const stats = fs.statSync(filePath);
+      return stats.mtimeMs < oneWeekAgo;
+    });
 
   if (filter && filter.length > 0) {
     return files.filter(file => {
@@ -101,6 +111,17 @@ async function getCropDimensions(imagePath: string): Promise<{ width: number; he
 async function processImage(filename: string, stats: ProcessStats): Promise<void> {
   const sourcePath = path.join(CONFIG.sourceDir, filename);
   const baseName = path.basename(filename, '.png');
+
+  // Skip if already processed (all 3 sizes exist)
+  const largeExists = fs.existsSync(path.join(CONFIG.outputDir, `${baseName}-1600x900.webp`));
+  const mediumExists = fs.existsSync(path.join(CONFIG.outputDir, `${baseName}-1200x675.webp`));
+  const smallExists = fs.existsSync(path.join(CONFIG.outputDir, `${baseName}-750x422.webp`));
+
+  if (largeExists && mediumExists && smallExists) {
+    console.log(`\n⏭️  Skipping: ${baseName} (already processed)`);
+    stats.skipped++;
+    return;
+  }
 
   console.log(`\n📸 Processing: ${baseName}`);
 

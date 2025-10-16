@@ -1184,7 +1184,7 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
              rel="preload"
              as="image"
              href={isImageOptimized(enrichedHeroData[0].heroActivity.activityId)
-               ? getOptimizedImageSrc(enrichedHeroData[0].heroActivity.activityId, 'webpMobile')
+               ? getOptimizedImageSrc(enrichedHeroData[0].heroActivity.activityId, 'webpLarge')
                : getActivityBg(enrichedHeroData[0].heroActivity.activityId)}
              // @ts-expect-error - fetchpriority is not in TypeScript types yet
              fetchpriority="high"
@@ -1267,7 +1267,7 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
     // Cards 2-8 use CSS background-image (lazy load)
     const isFirstCard = dayIndex === 0;
     const backgroundImageSrc = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
-      ? getOptimizedImageSrc(heroActivity.activityId, 'webpMobile')
+      ? getOptimizedImageSrc(heroActivity.activityId, 'webpLarge')
       : getActivityBg(heroActivity?.activityId || 'default');
 
     const dayCard = (
