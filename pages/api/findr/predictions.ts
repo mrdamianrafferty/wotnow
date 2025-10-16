@@ -188,7 +188,7 @@ function firstString(value: JsonValue | unknown): string | null {
 function normalizeSpeciesCode(value: string | null): string | null {
   if (!value) return null;
   const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed.toUpperCase() : null;
+  return trimmed.length > 0 ? trimmed.toLowerCase() : null;
 }
 
 function normalizeScientificName(value: string | null): string | null {
