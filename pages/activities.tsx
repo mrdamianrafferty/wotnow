@@ -28,6 +28,7 @@ import { getActivityEmoji } from '../data/emojiMap';
 import { getActivityBg } from '../data/bgMap';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import AppHeader, { LocationLite } from '../components/AppHeader';
+import BottomNav from '../components/BottomNav';
 import { SkeletonActivityGrid } from '../components/SkeletonLoader';
 import SEO from '../components/SEO';
 import { useHasMounted } from '../utils/useHasMounted';
@@ -944,6 +945,7 @@ export default function ActivitiesPage() {
             <span className="ml-3 text-base-content/80">Planning perfect days</span>
           </div>
         </section>
+        <BottomNav />
         <Footer /> {/* <-- add footer in loading state */}
       </>
     );
@@ -1098,6 +1100,7 @@ export default function ActivitiesPage() {
         )}
       </section>
 
+      <BottomNav />
       <Footer /> {/* <-- add footer in main state */}
     </>
   );

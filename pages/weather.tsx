@@ -9,6 +9,7 @@ import Image from "next/image";
 // WeatherAnimationLayer is a default export
 import WeatherAnimationLayer from "../components/WeatherAnimationLayer";
 import Footer from "../components/footer";
+import BottomNav from "../components/BottomNav";
 // Statically import critical Row 2 cards to avoid dynamic loading blanks
 import { SunriseSunsetCard as ExternalSunriseSunsetCard } from "../components/weather-cards/SunriseSunsetCard";
 import { HumidityCard as ExternalHumidityCard } from "../components/weather-cards/HumidityCard";
@@ -757,6 +758,7 @@ export default function WeatherPage() {
       </main>
       {/* Footer */}
       <div className="relative z-10">
+        <BottomNav />
         <Footer />
       </div>
     </div>

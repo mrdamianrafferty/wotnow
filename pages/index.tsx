@@ -15,6 +15,7 @@ import { knotsToMps } from '../utils/weatherUtils';
 import { selectHeroActivity } from '../utils/heroSelector';
 import AppHeader from '../components/AppHeader';
 import Footer from '../components/footer';
+import BottomNav from '../components/BottomNav';
 import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
@@ -1482,6 +1483,7 @@ const popupPayload = buildPopupActivityPayload({
     onClose={() => setPopupActivity(null)}
   />
 )}
+      <BottomNav />
       <Footer />
     </> /* End of fragment */
   ); // End of return
