@@ -1,0 +1,58 @@
+-- Upsert fun facts + conservation status into public.species_meta
+-- Assumes a UNIQUE constraint or index exists on (scientific_name)
+--   CREATE UNIQUE INDEX IF NOT EXISTS species_meta_scientific_name_uidx ON public.species_meta (scientific_name);
+
+INSERT INTO public.species_meta (scientific_name, conservation_status, fun_fact)
+VALUES
+    ('Spicara smaris', NULL, 'Named in dockside songs and pub tales — proof supper can swim.'),
+    ('Symphodus melops', 'LC', 'Curious kelp-lover that’ll eyeball your lure like it owes it money.'),
+    ('Sphyraena sphyraena', 'LC', 'Pelagic speedster — fishermen’s folklore says follow the birds and you’ll find me.'),
+    ('Labridae spp.', NULL, 'Curious kelp-lover that’ll eyeball your lure like it owes it money.'),
+    ('Trachinus draco', 'LC', 'Lurks in warm sand like a booby trap — sting first, apologies later.'),
+    ('Serranus scriba', NULL, 'Masters the tides like clockwork — ask a harbour cat, they’ll vouch for me.'),
+    ('Diplodus vulgaris', NULL, 'Dinner-plate royalty since Roman times — delicate flakes, fierce bite.'),
+    ('Pagellus bogaraveo', NULL, 'Gold-trimmed and surprisingly streetwise — loves reefs, hates sloppy rigs.'),
+    ('Scomber colias', 'LC', 'Pelagic speedster — fishermen’s folklore says follow the birds and you’ll find me.'),
+    ('Sparisoma cretense', NULL, 'Named in dockside songs and pub tales — proof supper can swim.'),
+    ('Trachurus mediterraneus', NULL, 'Named in dockside songs and pub tales — proof supper can swim.'),
+    ('Sarda sarda', 'LC', 'Silver torpedo with endless cardio — built for sprinting tides and breaking hearts.'),
+    ('Sarpa salpa', NULL, 'Half science, half superstition — I turn up when the sea feels ‘right’.'),
+    ('Pomatomus saltatrix', 'VU', 'Local legend with habits the old boys swear they can predict by the moon.'),
+    ('Mustelus asterias', NULL, 'Polite shark with table manners — prefers crabs to chaos.'),
+    ('Euthynnus alletteratus', NULL, 'Pelagic speedster — fishermen’s folklore says follow the birds and you’ll find me.'),
+    ('Mustelus mustelus', 'EN', 'Polite shark with table manners — prefers crabs to chaos.'),
+    ('Ctenolabrus rupestris', 'LC', 'Born female, turn male later — nature’s cheeky gender swap in the kelp.'),
+    ('Serranus cabrilla', 'LC', 'Masters the tides like clockwork — ask a harbour cat, they’ll vouch for me.'),
+    ('Sepia officinalis', 'LC', 'Colour-shifting flirt who signals in Morse code with skin.'),
+    ('Molva molva', 'NE', 'Named in dockside songs and pub tales — proof supper can swim.'),
+    ('Gilthead Seabream', 'LC', 'Gold-trimmed and surprisingly streetwise — loves reefs, hates sloppy rigs.'),
+    ('Argyrosomus regius', NULL, 'Half science, half superstition — I turn up when the sea feels ‘right’.'),
+    ('Scorpaena scrofa', NULL, 'Half science, half superstition — I turn up when the sea feels ‘right’.'),
+    ('Dicentrarchus punctatus', NULL, 'Masters the tides like clockwork — ask a harbour cat, they’ll vouch for me.'),
+    ('Epinephelus aeneus', NULL, 'Slow to grow, big on presence — treat with respect, tell legends later.'),
+    ('Eutrigla gurnardus', NULL, 'Walks on pectoral ‘legs’ and grunts — the sea’s musical taxi.'),
+    ('Seriola dumerili', 'LC', 'Pelagic speedster — fishermen’s folklore says follow the birds and you’ll find me.'),
+    ('Ammodytes tobianus', NULL, 'Local legend with habits the old boys swear they can predict by the moon.'),
+    ('Saithe/Pollock', NULL, 'Half science, half superstition — I turn up when the sea feels ‘right’.'),
+    ('Octopus vulgaris', 'LC', 'Camouflage wizard with a brain in every arm — party trick: vanish.'),
+    ('Raja microocellata', NULL, 'Winged glider of the shallows — looks serene, eats crabs for breakfast.'),
+    ('Epinephelus marginatus', 'VU', 'Mediterranean monarch — changes sex mid‑life and guards reefs like a bouncer.'),
+    ('Lichia amia', NULL, 'Silver torpedo with endless cardio — built for sprinting tides and breaking hearts.'),
+    ('Melanogrammus aeglefinus', NULL, 'From folklore to frying pan — coastal families grew up on this face.'),
+    ('Oblada melanura', NULL, 'Gold-trimmed and surprisingly streetwise — loves reefs, hates sloppy rigs.'),
+    ('Labrus mixtus', 'LC', 'Rockpool stylist with bold colours and bolder attitude — proper coastal peacock.'),
+    ('Pagellus erythrinus', 'LC', 'Dinner-plate royalty since Roman times — delicate flakes, fierce bite.'),
+    ('Scyliorhinus stellaris', 'VU', 'Polite shark with table manners — prefers crabs to chaos.'),
+    ('Lepidorhombus whiffiagonis', NULL, 'Named in dockside songs and pub tales — proof supper can swim.'),
+    ('Sphyraena viridensis', NULL, 'Pelagic speedster — fishermen’s folklore says follow the birds and you’ll find me.'),
+    ('Chelidonichthys cuculus', NULL, 'Walks on pectoral ‘legs’ and grunts — the sea’s musical taxi.'),
+    ('Raja montagui', NULL, 'Winged glider of the shallows — looks serene, eats crabs for breakfast.'),
+    ('Boops boops', 'LC', 'Masters the tides like clockwork — ask a harbour cat, they’ll vouch for me.'),
+    ('Diplodus sargus', NULL, 'Dinner-plate royalty since Roman times — delicate flakes, fierce bite.'),
+    ('Raja undulata', NULL, 'Sandsliding ninja — leaves only a smiley face in the seabed.'),
+    ('Scophthalmus rhombus', 'LC', 'From folklore to frying pan — coastal families grew up on this face.'),
+    ('Centrolabrus exoletus', NULL, 'Local legend with habits the old boys swear they can predict by the moon.')
+ON CONFLICT (scientific_name)
+DO UPDATE SET
+    conservation_status = EXCLUDED.conservation_status,
+    fun_fact = EXCLUDED.fun_fact;
