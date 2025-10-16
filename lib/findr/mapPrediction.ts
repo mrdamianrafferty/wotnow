@@ -29,6 +29,31 @@ export interface SpeciesAdvice {
   fun_fact?: string;
 }
 
+export interface TechniqueInfo {
+  technique_id: number;
+  technique_code: string;
+  technique_name: string;
+  effectiveness: number;
+  notes: string | null;
+  beginner_tips: string | null;
+}
+
+export interface BaitInfo {
+  bait_id: number;
+  bait_name: string;
+  effectiveness: number;
+  notes: string | null;
+}
+
+export interface SubstrateInfo {
+  name_en: string;
+  has_sand: boolean;
+  has_gravel: boolean;
+  has_rock: boolean;
+  has_mud: boolean;
+  has_mixed: boolean;
+}
+
 export interface CardData {
   id: string;
   speciesId?: string | null;
@@ -63,6 +88,12 @@ export interface CardData {
     data_age_hours?: number;
     data_source?: string;
   };
+  
+  // Enhanced species data from database
+  techniques?: TechniqueInfo[];
+  bait?: BaitInfo[];
+  substrates?: SubstrateInfo | null;
+  inaturalist_url?: string | null;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {

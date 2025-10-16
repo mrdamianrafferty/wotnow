@@ -17,10 +17,15 @@ import {
   UtensilsCrossed,
   Waves,
   X,
+  Target,
+  Wand2,
+  Mountain,
+  ExternalLink,
 } from 'lucide-react';
 import type { CardData } from '../../lib/findr/mapPrediction';
 import { getSpeciesAdvice } from '../../data/speciesAdvice';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import { useSpeciesDetails } from '../../hooks/useSpeciesDetails';
 
 type SpeciesModalContext = 'shore' | 'boat' | 'both';
 
@@ -127,6 +132,13 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     if (!card) return null;
     return getSpeciesAdvice(card.commonName, card.speciesCode ?? undefined);
   }, [card]);
+
+  // Fetch enhanced species details
+  const { details: speciesDetails, loading: detailsLoading } = useSpeciesDetails({
+    speciesId: card?.speciesId,
+    speciesCode: card?.speciesCode,
+    enabled: open && Boolean(card),
+  });
 
   const titleId = useId();
   const contentId = useId();
@@ -319,6 +331,97 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                 <InfoSection icon={<Shield size={20} />} title="Looking after them">
                   {sentenceCase(advice?.conservation ?? 'Check local guidance for conservation status.')}
                 </InfoSection>
+              </>
+            )}
+
+            {/* Enhanced species data from database */}
+            {speciesDetails && !detailsLoading && (
+              <>
+                {/* Fishing Techniques */}
+                {speciesDetails.techniques && speciesDetails.techniques.length > 0 && (
+                  <InfoSection icon={<Target size={20} />} title="Best fishing techniques">
+                    <div className="space-y-3">
+                      {speciesDetails.techniques.slice(0, 3).map((technique) => (
+                        <div key={technique.technique_id} className="rounded-lg border border-base-200 bg-base-50 p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-semibold text-sm">{technique.technique_name}</span>
+                            <span className="badge badge-sm badge-primary">
+                              {Math.round(technique.effectiveness * 100)}% effective
+                            </span>
+                          </div>
+                          {technique.beginner_tips && (
+                            <p className="text-xs text-base-content/70 mt-1">{technique.beginner_tips}</p>
+                          )}
+                          {technique.notes && (
+                            <p className="text-xs text-base-content/60 mt-1 italic">{technique.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </InfoSection>
+                )}
+
+                {/* Recommended Bait */}
+                {speciesDetails.bait && speciesDetails.bait.length > 0 && (
+                  <InfoSection icon={<Wand2 size={20} />} title="Top bait recommendations">
+                    <div className="space-y-2">
+                      {speciesDetails.bait.slice(0, 5).map((baitItem) => (
+                        <div key={baitItem.bait_id} className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <span className="font-medium text-sm">{baitItem.bait_name}</span>
+                            {baitItem.notes && (
+                              <p className="text-xs text-base-content/60 mt-0.5">{baitItem.notes}</p>
+                            )}
+                          </div>
+                          <span className="badge badge-sm badge-success shrink-0">
+                            {Math.round(baitItem.effectiveness * 100)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </InfoSection>
+                )}
+
+                {/* Substrate Preferences */}
+                {speciesDetails.substrates && (
+                  <InfoSection icon={<Mountain size={20} />} title="Preferred habitats">
+                    <div className="flex flex-wrap gap-2">
+                      {speciesDetails.substrates.has_sand && (
+                        <span className="badge badge-lg gap-1">🏖️ Sand</span>
+                      )}
+                      {speciesDetails.substrates.has_gravel && (
+                        <span className="badge badge-lg gap-1">⚪ Gravel</span>
+                      )}
+                      {speciesDetails.substrates.has_rock && (
+                        <span className="badge badge-lg gap-1">🪨 Rock</span>
+                      )}
+                      {speciesDetails.substrates.has_mud && (
+                        <span className="badge badge-lg gap-1">🟤 Mud</span>
+                      )}
+                      {speciesDetails.substrates.has_mixed && (
+                        <span className="badge badge-lg gap-1">🌊 Mixed</span>
+                      )}
+                    </div>
+                  </InfoSection>
+                )}
+
+                {/* iNaturalist Link */}
+                {speciesDetails.inaturalist_url && (
+                  <InfoSection icon={<ExternalLink size={20} />} title="Learn more">
+                    <a
+                      href={speciesDetails.inaturalist_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:text-primary-focus transition-colors"
+                    >
+                      <span>View on iNaturalist</span>
+                      <ExternalLink size={14} />
+                    </a>
+                    <p className="text-xs text-base-content/60 mt-1">
+                      Explore photos, observations, and identification guides from the community
+                    </p>
+                  </InfoSection>
+                )}
               </>
             )}
 
