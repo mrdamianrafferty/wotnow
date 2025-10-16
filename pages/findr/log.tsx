@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import SEO from '../../components/SEO';
 import {
   MapPin,
   Grid3X3,
@@ -1575,9 +1576,11 @@ export default function FindrCatchLogPage() {
 
   return (
     <>
-      <Head>
-        <title>Findr catch log | WotNow</title>
-      </Head>
+      <SEO
+        title="Catch Log"
+        description="Record and track your fishing catches with detailed environmental conditions, species information, and catch statistics."
+        url="https://fishfindr.eu/findr/log"
+      />
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 pb-16">
         <FindrNavigation />
 

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import SEO from '../../components/SEO';
 import { MoonStar } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
@@ -172,9 +173,11 @@ const FindrConditionsRoute: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>findr conditions</title>
-      </Head>
+      <SEO
+        title="Conditions"
+        description="View detailed environmental conditions including water temperature, salinity, oxygen levels, and water clarity for your fishing area."
+        url="https://fishfindr.eu/findr/conditions"
+      />
       <main className="min-h-screen bg-base-200 pb-16">
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />

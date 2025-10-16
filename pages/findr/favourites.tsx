@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import SEO from '../../components/SEO';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -1035,9 +1036,11 @@ const FindrFavouritesPage: React.FC = () => {
 
   return (
     <>
-      <Head>
-        <title>Findr favourites | WotNow</title>
-      </Head>
+      <SEO
+        title="Favourites"
+        description="Track your favourite fish species and get personalized bite predictions for your target catches."
+        url="https://fishfindr.eu/findr/favourites"
+      />
       <style jsx>{`
         @keyframes swim {
           0% { transform: translateX(0) rotate(0deg); }
