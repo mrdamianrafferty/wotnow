@@ -76,7 +76,7 @@ BEGIN
         WHEN s.common_name IN ('Cod', 'Whiting', 'Plaice') THEN 65
         ELSE 55
       END as base_prediction_score
-    FROM findr_species s
+    FROM species s
     WHERE s.common_name IS NOT NULL
     ORDER BY s.common_name
     LIMIT 30  -- Use the new species limit
