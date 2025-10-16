@@ -1395,6 +1395,7 @@ abbr[title] {
   border-radius: 12px;
   padding: 16px;
   min-height: 200px;
+  aspect-ratio: 16/9; /* Prevent layout shift by reserving space */
   color: #fff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
