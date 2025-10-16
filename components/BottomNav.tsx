@@ -53,7 +53,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="btm-nav md:hidden fixed bottom-0 left-0 right-0 z-50 bg-base-100 border-t border-base-200">
+    <div className="btm-nav md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.match(pathname);
@@ -62,10 +62,14 @@ export default function BottomNav() {
           <button
             key={item.href}
             onClick={() => router.push(item.href)}
-            className={isActive ? 'active' : ''}
+            className={`flex flex-col items-center justify-center gap-1 ${
+              isActive 
+                ? 'text-primary' 
+                : 'text-base-content/60 hover:text-base-content'
+            }`}
           >
-            <Icon size={20} />
-            <span className="btm-nav-label text-xs">{item.label}</span>
+            <Icon size={24} strokeWidth={2} />
+            <span className="text-[10px] font-medium">{item.label}</span>
           </button>
         );
       })}
