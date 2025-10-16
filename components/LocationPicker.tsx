@@ -126,13 +126,14 @@ export function LocationPicker() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
+        style={{ color: '#374151' }}
         title={`Current location: ${getLocationDisplay}`}
       >
         <span className="text-lg">{getLocationIcon()}</span>
         <span className="hidden sm:block truncate max-w-32">
           {currentRectangle || 'Location'}
         </span>
-        <span className="text-xs text-gray-500">▼</span>
+        <span className="text-xs" style={{ color: '#6b7280' }}>▼</span>
       </button>
 
       {/* Dropdown Menu */}

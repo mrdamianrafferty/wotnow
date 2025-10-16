@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import { LocationPicker } from '../LocationPicker';
 
 interface NavLink {
   href: string;
@@ -83,7 +84,8 @@ export function FindrNavigation() {
             })}
           </ul>
         </nav>
-        <div className="ml-4 flex-shrink-0">
+        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+          <LocationPicker />
           <LanguageSelector compact />
         </div>
       </div>
