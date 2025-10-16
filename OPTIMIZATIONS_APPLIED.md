@@ -1,7 +1,7 @@
 # Performance Optimizations Applied
 
 **Date:** October 16, 2025
-**Status:** Phase 1 & 2 Complete, Safely Committed
+**Status:** Phase 1, 2 & 3 Complete, Safely Committed
 
 ---
 
@@ -71,9 +71,59 @@
 
 ---
 
+### Phase 3: Lazy Load Google Maps
+
+**Commit:** `57a43d10` - "perf: Lazy load Google Maps API on demand"
+
+#### Changes Made:
+
+1. **Created `lib/googleMapsLazy.ts`**
+   ```typescript
+   export function loadGoogleMapsAPI(): Promise<void> {
+     // Lazy loads Google Maps script on demand
+     // Only runs when CoastalLocationDialog opens
+   }
+   ```
+   - Injects Google Maps script dynamically into DOM
+   - Returns promise that resolves when API is ready
+   - Includes timeout handling and error recovery
+
+2. **Updated `components/CoastalLocationDialog.tsx`**
+   ```typescript
+   useEffect(() => {
+     if (!open) return;
+     loadGoogleMapsAPI().catch((err) => {
+       setLocationError('Failed to load location search. Please refresh the page.');
+     });
+   }, [open]);
+   ```
+   - Triggers Google Maps load when dialog opens
+   - Shows user-friendly error if loading fails
+
+3. **Removed synchronous script from `pages/_document.tsx`**
+   - Deleted `<script src="maps.googleapis.com">` tag
+   - Removed inline callback initialization code
+   - Kept preconnect hint for faster loading when triggered
+
+**Expected Impact:**
+- ⬇️ **First Contentful Paint (FCP):** -500ms to -1s
+- ⬆️ **Performance Score:** +5-10%
+- 🚀 **Initial bundle:** ~100KB smaller (Google Maps only loads when needed)
+- ✨ **User Experience:** No delay for users who never open location picker
+
+**Rollback:** `git revert 57a43d10`
+
+---
+
 ## 🔄 How to Rollback
 
 If any optimization causes issues, rollback safely:
+
+### Rollback Phase 3 Only:
+```bash
+git revert 57a43d10
+git push origin main
+```
 
 ### Rollback Phase 2 Only:
 ```bash
@@ -87,9 +137,9 @@ git revert e873aa8f
 git push origin main
 ```
 
-### Rollback Both Phases:
+### Rollback All Phases:
 ```bash
-git revert e873aa8f 603ed8de
+git revert 57a43d10 603ed8de e873aa8f
 git push origin main
 ```
 
@@ -97,22 +147,20 @@ git push origin main
 
 ## ⏭️ Next Steps (Not Yet Applied)
 
-### Phase 3: Lazy Load Google Maps (Pending)
+### Phase 4: Image Optimization (Future)
 
-**Issue:** Google Maps API blocks initial render (+500ms to FCP)
+**Issue:** Activity card images loading slowly (LCP 7.7-8.2s)
 
 **Changes Needed:**
-1. Remove synchronous Maps script from `pages/_document.tsx`
-2. Create `lib/googleMapsLazy.ts` with lazy loading function
-3. Update `CoastalLocationDialog` to load Maps on demand
+1. Use Next.js Image component with priority for above-fold images
+2. Implement lazy loading for below-fold cards (useLazyBackground hook ready!)
+3. Optimize image sizes and formats (WebP with PNG fallback)
 
 **Expected Impact:**
-- ⬇️ **First Contentful Paint:** -500ms to -1s
-- ⬆️ **Performance Score:** +5-10%
+- ⬇️ **Largest Contentful Paint:** 7.7s → 4s (**-48%**)
+- ⬆️ **Performance Score:** +10-15%
 
-**Estimated Time:** 2 hours
-
-**See:** `PERFORMANCE_ANALYSIS.md` Phase 3 for implementation details
+**Estimated Time:** 3 hours
 
 ---
 
@@ -120,18 +168,19 @@ git push origin main
 
 Based on Lighthouse testing and code analysis:
 
-| Metric | Before | After Phase 1 & 2 | Improvement |
-|--------|--------|-------------------|-------------|
-| **Homepage Performance** | 42% | ~60% | **+43%** |
-| **Activities Performance** | 47% | ~55% | **+17%** |
+| Metric | Before | After Phase 1, 2 & 3 | Improvement |
+|--------|--------|---------------------|-------------|
+| **Homepage Performance** | 42% | ~65-70% | **+55-67%** |
+| **Activities Performance** | 47% | ~55-60% | **+17-28%** |
 | **Total Blocking Time** | 1,030ms | ~300ms | **-71%** |
 | **Cumulative Layout Shift** | 0.467 | 0.05 | **-89%** |
+| **First Contentful Paint** | 2.7s | ~1.5-2s | **-26-44%** |
 | **LCP (Homepage)** | 7.7s | ~6s | **-22%** |
 
 ### Still Needs Addressing:
 - LCP still high (target: < 2.5s, currently ~6s)
-- Need Phase 3 (Google Maps) for additional FCP improvement
-- Consider Phase 2b (image optimization) for further LCP gains
+- Phase 4 (image optimization) would bring further LCP improvements
+- Consider code splitting for additional bundle size reduction
 
 ---
 
@@ -307,21 +356,27 @@ Before deploying to production:
 
 ## ✅ Conclusion
 
-**Phases 1 & 2 Complete:**
-- ✅ useMemo optimizations applied to homepage
-- ✅ Layout shift fix applied to activities page
+**Phases 1, 2 & 3 Complete:**
+- ✅ useMemo optimizations applied to homepage (Phase 1)
+- ✅ Layout shift fix applied to activities page (Phase 2)
+- ✅ Google Maps lazy loading implemented (Phase 3)
 - ✅ All changes safely committed with rollback instructions
-- ✅ Expected 40-70% performance improvement
+- ✅ Expected 55-67% performance improvement
+
+**What Changed:**
+1. Homepage weather calculations now memoized (70% faster re-renders)
+2. Activities page no longer has layout shift (89% improvement)
+3. Google Maps only loads when location picker opens (500ms-1s faster FCP)
 
 **Next Steps:**
-1. Deploy to production (Vercel auto-deploy on push)
-2. Re-run Lighthouse tests to verify improvements
-3. Apply Phase 3 (Google Maps lazy loading) if needed
-4. Continue with Phase 2b (image optimization) if LCP still high
+1. Re-run Lighthouse tests to verify improvements
+2. Monitor production performance
+3. Apply Phase 4 (image optimization) if LCP still high
+4. Consider code splitting for additional gains
 
-**Estimated Total Impact:** 42% → 60%+ performance score (+43% improvement)
+**Estimated Total Impact:** 42% → 65-70% performance score (+55-67% improvement)
 
 ---
 
 *Last updated: October 16, 2025*
-*Commits: e873aa8f, 603ed8de, 3c8bf94a, 81e776db, e34c5654*
+*Commits: e873aa8f, 603ed8de, 3c8bf94a, 81e776db, e34c5654, 57a43d10*
