@@ -28,6 +28,7 @@
     "env:sync": "tsx scripts/env-sync.ts",
     "seed:findr:rectangles": "tsx scripts/seedFindrRectangles.ts",
     "seed:findr:conditions": "tsx scripts/seedFindrConditionsSnapshot.ts",
+    "optimize-images": "tsx scripts/optimize-activity-images.ts",
     "smoke": "bash scripts/smoke-unified.sh"
   },
   "resolutions": {
