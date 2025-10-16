@@ -442,10 +442,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .eq('rectangle_code', rectangleCode)
       .single();
     
+    console.log('[Findr API] Fetched rectangle data:', { rectangleCode, region: rectangleData?.region });
+    
     // Add timeout to the RPC call for Vercel
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
     );
+
+    console.log('[Findr API] About to call RPC with params:', {
+      p_rectangle_code: rectangleCode,
+      p_date: predictionDate,
+    });
 
     // Phase 10: Use new function with environmental data
     const rpcPromise = supabase.rpc('get_environmental_predictions_basic', {
@@ -460,7 +467,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('[Findr API] RPC response via client:', {
       hasError: Boolean(rpcError),
+      errorCode: rpcError?.code,
       errorMessage: rpcError?.message,
+      errorDetails: rpcError?.details,
+      errorHint: rpcError?.hint,
       dataType: Array.isArray(data) ? 'array' : typeof data,
       dataLength: Array.isArray(data) ? data.length : 'N/A',
       firstItem: Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]).substring(0, 200) : null,
@@ -468,10 +478,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (rpcError) {
-      console.error('[Findr API] RPC error:', rpcError);
+      console.error('[Findr API] RPC error details:', {
+        code: rpcError.code,
+        message: rpcError.message,
+        details: rpcError.details,
+        hint: rpcError.hint,
+      });
       return res.status(500).json({ 
         error: 'RPC call failed', 
-        details: rpcError 
+        details: {
+          code: rpcError.code,
+          message: rpcError.message,
+          hint: rpcError.hint,
+        }
       });
     }
 
