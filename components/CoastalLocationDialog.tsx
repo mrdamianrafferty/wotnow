@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from '../lib/hooks/usePlacesAutocompleteNew';
 import dynamic from 'next/dynamic';
+import { loadGoogleMapsAPI } from '../lib/googleMapsLazy';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
 
@@ -150,6 +151,16 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     });
   };
 
+  // Lazy load Google Maps when dialog opens
+  useEffect(() => {
+    if (!open) return;
+
+    loadGoogleMapsAPI().catch((err) => {
+      console.error('Failed to load Google Maps:', err);
+      setLocationError('Failed to load location search. Please refresh the page.');
+    });
+  }, [open]);
+
   // Google Places hook (we render our own suggestions list)
   const {
     ready,
@@ -157,7 +168,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     suggestions: { status, data },
     setValue,
     clearSuggestions,
-  } = usePlacesAutocomplete({ 
+  } = usePlacesAutocomplete({
     debounce: 300,
     requestOptions: {
       types: ['geocode'],
