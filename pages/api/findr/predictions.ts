@@ -450,14 +450,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
 
     console.log('[Findr API] About to call RPC with params:', {
-      p_rectangle_code: rectangleCode,
-      p_date: predictionDate,
+      target_rectangle: rectangleCode,
+      target_date: predictionDate,
     });
 
     // Phase 10: Use new function with environmental data
+    // NOTE: Function signature uses target_rectangle and target_date, not p_rectangle_code and p_date
     const rpcPromise = supabase.rpc('get_environmental_predictions_basic', {
-      p_rectangle_code: rectangleCode,
-      p_date: predictionDate,
+      target_rectangle: rectangleCode,
+      target_date: predictionDate,
     });
 
     const { data, error: rpcError } = await Promise.race([

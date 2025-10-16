@@ -23,8 +23,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Test 2: Check if function exists
     const { data: funcData, error: funcError } = await supabase
       .rpc('get_environmental_predictions_basic', {
-        p_rectangle_code: '31F1',
-        p_date: '2025-10-16',
+        target_rectangle: '31F1',
+        target_date: '2025-10-16',
       });
     
     if (funcError) {
