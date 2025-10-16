@@ -517,13 +517,34 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
  const _getTargetHour = (dayUnixTimestamp: number): string => {
    const dayDate = new Date(dayUnixTimestamp * 1000);
    const today = new Date();
-   const isToday = dayDate.getDate() === today.getDate() && 
-                   dayDate.getMonth() === today.getMonth() && 
+   const isToday = dayDate.getDate() === today.getDate() &&
+                   dayDate.getMonth() === today.getMonth() &&
                    dayDate.getFullYear() === today.getFullYear();
-   
+
    const hour = isToday ? today.getHours() : 12;
    return `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
  };
+
+// ============================================================================
+// PERFORMANCE: Move constants outside component to prevent recreation on render
+// ============================================================================
+
+const SNOW_DANGER_LEVELS = new Set([
+  'dangerous',
+  'unsafe',
+  'impossible',
+  'unplayable',
+  'too_deep',
+  'snowfall_unsafe'
+] as const);
+
+type SnowDangerLevel = 'dangerous' | 'unsafe' | 'impossible' | 'unplayable' | 'too_deep' | 'snowfall_unsafe';
+
+const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
+  if (MARINE_ACTIVITY_IDS.includes(activityId)) return false;
+  if (!level) return false;
+  return SNOW_DANGER_LEVELS.has(level as SnowDangerLevel);
+};
 
  export default function Home() {
    // If Supabase sent us to the homepage with an auth code (query) or OAuth tokens (hash),
@@ -1019,6 +1040,85 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
      };
    });
   }, [forecastDays, filteredActivitiesBase, sanitizedInterests]); // activityTypes is static import
+
+  // ============================================================================
+  // PERFORMANCE: Enrich hero data with render-time computations
+  // Move expensive operations from render to useMemo to prevent recalculation
+  // ============================================================================
+  const enrichedHeroData = useMemo(() => {
+    return heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, dayLabel }) => {
+      // Pre-compute hero activity data
+      let enrichedHero = null;
+      if (heroActivity) {
+        const { activityId, score } = heroActivity;
+        const activity = activityTypes.find((a) => a.id === activityId);
+        const emoji = getActivityEmoji(activityId) || '❓';
+        const scoreInfo = getScoreCategory(score || 0);
+        const isOutdoorActivity = isOutdoor(activityId);
+        const activityMessage = getActivityMessage(
+          activityId,
+          scoreInfo.label.toLowerCase() as "perfect" | "good" | "fair" | "poor",
+          []
+        );
+        const heroSuggestion = suggestions.find(s => s.activityId === heroActivity.activityId);
+
+        enrichedHero = {
+          activity,
+          emoji,
+          scoreInfo,
+          isOutdoorActivity,
+          activityMessage,
+          heroSuggestion
+        };
+      }
+
+      // Pre-compute alsoGoodPerfect list data (prevents activityTypes.find in render)
+      const enrichedAlsoGoodPerfect = alsoGoodPerfect.map(suggestion => ({
+        ...suggestion,
+        activity: activityTypes.find(a => a.id === suggestion.activityId),
+        emoji: getActivityEmoji(suggestion.activityId),
+        isOutdoorActivity: isOutdoor(suggestion.activityId)
+      }));
+
+      // Pre-compute good activities list (filters + enriches)
+      const enrichedGoodActivities = suggestions
+        .filter(s => s.score >= 60 && s.score < 80 && s.activityId !== heroActivity?.activityId)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4)
+        .map(suggestion => ({
+          ...suggestion,
+          activity: activityTypes.find(a => a.id === suggestion.activityId),
+          emoji: getActivityEmoji(suggestion.activityId),
+          isOutdoorActivity: isOutdoor(suggestion.activityId)
+        }));
+
+      // Pre-compute indoor activities list
+      const enrichedIndoorActivities = suggestions
+        .filter(s => {
+          const activity = activityTypes.find(a => a.id === s.activityId);
+          return activity && !activity.weatherSensitive;
+        })
+        .sort((a, b) => b.score - a.score)
+        .map(suggestion => ({
+          ...suggestion,
+          activity: activityTypes.find(a => a.id === suggestion.activityId),
+          emoji: getActivityEmoji(suggestion.activityId)
+        }));
+
+      return {
+        day,
+        dayLabel,
+        alsoGoodPerfect,
+        suggestions,
+        heroActivity,
+        enriched: enrichedHero,
+        enrichedAlsoGoodPerfect,
+        enrichedGoodActivities,
+        enrichedIndoorActivities
+      };
+    });
+  }, [heroDataByDay]);
+
    // console.log('marineHours before building forecast:', marineHours);
 
    if (!hasMounted) {
@@ -1143,7 +1243,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   </div>
 ) : null}
 <main id="main-content" className="main-grid">
-  {heroDataByDay.map(({ day, heroActivity, alsoGoodPerfect, suggestions, dayLabel }) => {
+  {enrichedHeroData.map(({ day, heroActivity, dayLabel, enriched, enrichedAlsoGoodPerfect, enrichedGoodActivities, enrichedIndoorActivities }) => {
 
     // Removed AstronomyCard on homepage regardless of interests
 
@@ -1199,57 +1299,28 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
           </div>
 
           {/* HERO ACTIVITY */}
-          {heroActivity && (() => {
-            const { activityId, score } = heroActivity;
-            const activity = activityTypes.find((a) => a.id === activityId);
-            const emoji = getActivityEmoji(activityId) || '❓';
-            const scoreInfo = getScoreCategory(score || 0);
-            const isOutdoorActivity = isOutdoor(activityId);
-            const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase() as "perfect" | "good" | "fair" | "poor", []);
+          {heroActivity && enriched && (() => {
+            // PERFORMANCE: Use pre-computed values from enrichedHeroData
+            const { activityId } = heroActivity;
+            const {
+              activity,
+              emoji,
+              scoreInfo,
+              isOutdoorActivity,
+              activityMessage,
+              heroSuggestion
+            } = enriched;
 
-            // Helper: only show snow warnings for severe levels and non‑marine activities
-            const SNOW_DANGER_LEVELS = new Set([
-              'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'
-            ] as const);
-            // Previously showed amber levels for some categories — now suppressed
-            // const SNOW_AMBER_LEVELS = new Set([
-            //   'caution', 'difficult', 'uncomfortable', 'impractical', 'requires_winter_gear', 'snowfall_caution'
-            // ] as const);
-            type SnowDangerLevel = typeof SNOW_DANGER_LEVELS extends Set<infer T> ? T : never;
-            // type SnowAmberLevel = typeof SNOW_AMBER_LEVELS extends Set<infer T> ? T : never;
-            const shouldShowSnowWarning = (aid: string, level?: string) => {
-              if (MARINE_ACTIVITY_IDS.includes(aid)) return false; // drop for watersports
-              if (!level) return false;
-              // Only show severe/dangerous levels
-              if (SNOW_DANGER_LEVELS.has(level as SnowDangerLevel)) return true;
-              return false;
-            };
-
-            // Suppose 'forecastDay' is the day object and you have marine hours attached
-            const dayDate = new Date(day.date * 1000);
-            const today = new Date();
-            const isToday = dayDate.getDate() === today.getDate() && 
-                            dayDate.getMonth() === today.getMonth() && 
-                            dayDate.getFullYear() === today.getFullYear();
-
-            // Use current time for today, midday for future
-            const hour = isToday ? today.getHours() : 12;
-            const _targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
-
-            const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
-            const marinePopupDay = getPopupDay(heroActivity.activityId, day); // Stormglass
-            const _weatherPopupDay = getWeatherDay(day); // <-- Use a function that extracts OpenWeather fields
-
-            const popupPayload = buildPopupActivityPayload({
-              activityId: heroActivity.activityId,
-              score: heroActivity.score,
-              day: marinePopupDay,
-              reasons: buildReasons(day, heroActivity.activityId),
-            });
-            // Find the selected hero suggestion to surface inline snow advisory if present
-            const heroSuggestion = suggestions.find(s => s.activityId === heroActivity.activityId);
+            // PERFORMANCE: Lazy popup payload - only compute when user clicks
             const handlePopupOpen = () => {
               if (isOutdoorActivity) {
+                const marinePopupDay = getPopupDay(heroActivity.activityId, day);
+                const popupPayload = buildPopupActivityPayload({
+                  activityId: heroActivity.activityId,
+                  score: heroActivity.score,
+                  day: marinePopupDay,
+                  reasons: buildReasons(day, heroActivity.activityId),
+                });
                 setPopupActivity(popupPayload);
               }
             };
@@ -1299,30 +1370,28 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
           {/* Activity Lists */}
           <div className="activity-suggestions">
-            {/* Perfect Activities */}
-            {alsoGoodPerfect.length > 0 && (
+            {/* Perfect Activities - PERFORMANCE: Use enriched data */}
+            {enrichedAlsoGoodPerfect && enrichedAlsoGoodPerfect.length > 0 && (
               <div className="activity-section">
                 <h4 className="also-good-title">💯 Also Perfect Today</h4>
                 <ul className="also-good-list">
-                  {alsoGoodPerfect.map(suggestion => {
-                    const activity = activityTypes.find(a => a.id === suggestion.activityId);
-                    const isOutdoorActivity = isOutdoor(suggestion.activityId);
+                  {enrichedAlsoGoodPerfect.map(enrichedSuggestion => {
+                    const { activityId, score, activity, emoji, isOutdoorActivity } = enrichedSuggestion;
 
                     return (
                       <li
-                        key={suggestion.activityId}
+                        key={activityId}
                         role="button"
                         tabIndex={0}
                         className="also-good-item"
                         onClick={() => {
                           if (isOutdoorActivity) {
-const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
-const popupPayload = buildPopupActivityPayload({
-  activityId: suggestion.activityId,
-  score: suggestion.score,
-  day: getPopupDay(suggestion.activityId, day),
-  reasons: buildReasons(day, suggestion.activityId),
-});
+                            const popupPayload = buildPopupActivityPayload({
+                              activityId,
+                              score,
+                              day: getPopupDay(activityId, day),
+                              reasons: buildReasons(day, activityId),
+                            });
                             setPopupActivity(popupPayload);
                           }
                         }}
@@ -1331,10 +1400,10 @@ const popupPayload = buildPopupActivityPayload({
                         }}
                       >
                         <span>
-                          {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
+                          {emoji} {activity?.name || activityId.replace(/_/g, ' ')}
                         </span>
                         <span className="also-good-score">
-                          {Math.round(suggestion.score)}%
+                          {Math.round(score)}%
                         </span>
                       </li>
                     );
@@ -1343,101 +1412,78 @@ const popupPayload = buildPopupActivityPayload({
               </div>
             )}
 
-            {/* Good Activities */}
-            {(() => {
-              const goodActivities = suggestions
-                .filter(s => s.score >= 60 && s.score < 80 && s.activityId !== heroActivity?.activityId)
-                .sort((a, b) => b.score - a.score)
-                .slice(0, 4);
+            {/* Good Activities - PERFORMANCE: Use enriched data */}
+            {enrichedGoodActivities && enrichedGoodActivities.length > 0 && (
+              <div className="activity-section">
+                <h4 className="also-good-title">👍 Good Options Today</h4>
+                <ul className="activity-list-good">
+                  {enrichedGoodActivities.map(enrichedSuggestion => {
+                    const { activityId, score, activity, emoji, isOutdoorActivity } = enrichedSuggestion;
 
-              if (goodActivities.length === 0) return null;
+                    return (
+                      <li
+                        key={activityId}
+                        role="button"
+                        tabIndex={0}
+                        className="activity-item-good"
+                        onClick={() => {
+                          if (isOutdoorActivity) {
+                            const popupPayload = buildPopupActivityPayload({
+                              activityId,
+                              score,
+                              day: getPopupDay(activityId, day),
+                              reasons: buildReasons(day, activityId),
+                            });
+                            setPopupActivity(popupPayload);
+                          }
+                        }}
+                        style={{
+                          cursor: isOutdoorActivity ? 'pointer' : 'default',
+                        }}
+                      >
+                        <span>
+                          {emoji} {activity?.name || activityId.replace(/_/g, ' ')}
+                        </span>
+                        <span className="also-good-score">
+                          {Math.round(score)}%
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
-              return (
-                <div className="activity-section">
-                  <h4 className="also-good-title">👍 Good Options Today</h4>
-                  <ul className="activity-list-good">
-                    {goodActivities.map(suggestion => {
-                      const activity = activityTypes.find(a => a.id === suggestion.activityId);
-                      const isOutdoorActivity = isOutdoor(suggestion.activityId);
+            {/* Indoor Section - PERFORMANCE: Use enriched data */}
+            {enrichedIndoorActivities && enrichedIndoorActivities.length > 0 && (
+              <div className="also-good-section">
+                <h4 className="also-good-title">👺 Staying Indoors?</h4>
+                <ul className="also-good-list">
+                  {enrichedIndoorActivities.map((enrichedIndoor) => {
+                    const { activityId, score, activity, emoji } = enrichedIndoor;
 
-                      return (
-                        <li
-                          key={suggestion.activityId}
-                          role="button"
-                          tabIndex={0}
-                          className="activity-item-good"
-                          onClick={() => {
-                            if (isOutdoorActivity) {
-const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(suggestion.activityId);
-const popupPayload = buildPopupActivityPayload({
-  activityId: suggestion.activityId,
-  score: suggestion.score,
-  day: getPopupDay(suggestion.activityId, day),
-  reasons: buildReasons(day, suggestion.activityId),
-});
-                              setPopupActivity(popupPayload);
-                            }
-                          }}
-                          style={{
-                            cursor: isOutdoorActivity ? 'pointer' : 'default',
-                          }}
-                        >
-                          <span>
-                            {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
-                          </span>
-                          <span className="also-good-score">
-                            {Math.round(suggestion.score)}%
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })()}
-
-            {/* Indoor Section */}
-            {(() => {
-  // Get indoor activities from the suggestions list
-  const indoorListFiltered = suggestions
-    .filter(s => {
-      const activity = activityTypes.find(a => a.id === s.activityId);
-      return activity && !activity.weatherSensitive;
-    })
-    .sort((a, b) => b.score - a.score);
-  
-  if (!indoorListFiltered.length) return null;
-
-  return (
-    <div className="also-good-section">
-      <h4 className="also-good-title">👺 Staying Indoors?</h4>
-      <ul className="also-good-list">
-        {indoorListFiltered.map((s) => {
-          const activity = activityTypes.find((a) => a.id === s.activityId);
-          
-          return (
-            <li
-              key={s.activityId}
-              className="also-good-item"
-              role="button"
-              tabIndex={0}
-              style={{
-                cursor: 'default',
-              }}
-            >
-              <span>
-                {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
-              </span>
-              <span className="also-good-score">
-                {Math.round(s.score ?? 0)}%
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-})()}
+                    return (
+                      <li
+                        key={activityId}
+                        className="also-good-item"
+                        role="button"
+                        tabIndex={0}
+                        style={{
+                          cursor: 'default',
+                        }}
+                      >
+                        <span>
+                          {emoji} {activity?.name || activityId.replace(/_/g, ' ')}
+                        </span>
+                        <span className="also-good-score">
+                          {Math.round(score ?? 0)}%
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div> {/* This is the closing tag for activity-suggestions */}
           
           {/* Add back the bottom-aligned action buttons */}
@@ -1492,7 +1538,7 @@ const popupPayload = buildPopupActivityPayload({
   ); // End of return
 } // End of Home component
 
-function getWeatherDay(day: WeatherForecastDay) {
+function _getWeatherDay(day: WeatherForecastDay) {
   return {
     temperature: day.temperature,
     tempMax: day.tempMax,
