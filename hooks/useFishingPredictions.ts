@@ -17,6 +17,8 @@ export interface UseFishingPredictionsOptions {
   predictionDate?: string | null;
   language?: string;
   enabled?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface UseFishingPredictionsState {
@@ -42,7 +44,7 @@ interface PredictionResponse {
 const DEFAULT_LANGUAGE = 'en';
 
 export function useFishingPredictions(options: UseFishingPredictionsOptions): UseFishingPredictionsState {
-  const { rectangleCode, predictionDate, language = DEFAULT_LANGUAGE, enabled = true } = options;
+  const { rectangleCode, predictionDate, language = DEFAULT_LANGUAGE, enabled = true, latitude, longitude } = options;
   const [predictions, setPredictions] = useState<FishingPrediction[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +58,10 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
       rectangleCode,
       predictionDate: predictionDate || undefined,
       language,
+      latitude: latitude ?? undefined,
+      longitude: longitude ?? undefined,
     };
-  }, [rectangleCode, predictionDate, language, enabled]);
+  }, [rectangleCode, predictionDate, language, latitude, longitude, enabled]);
 
   const fetchPredictions = useCallback(async () => {
     if (!params) {

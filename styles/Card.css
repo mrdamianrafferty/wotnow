@@ -812,5 +812,5 @@
 }
 
 .indie-text {
-  font-family: "Indie Flower", cursive;
+  font-family: var(--font-indie-flower), "Indie Flower", cursive;
 }

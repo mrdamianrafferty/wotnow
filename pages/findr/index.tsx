@@ -640,6 +640,8 @@ const FindrPage: React.FC = () => {
     predictionDate,
     language,
     enabled: Boolean(activeRectangle),
+    latitude: location?.lat ?? null,
+    longitude: location?.lon ?? null,
   });
 
   // Debug: Log when predictions change

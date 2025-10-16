@@ -1,8 +1,9 @@
+import { Roboto, Indie_Flower } from 'next/font/google'
+
 import '../styles/index.css'
 import '../styles/Card.css'
 import '../styles/Popup.css'
-// Keep only one of the weather-icons CSS imports to avoid duplicate rules
-// Removed: import '../styles/weather-icons-wind.css'
+// Using minified version only (124KB). Unminified version (144KB) removed as duplicate.
 import '../styles/weather-icons-wind.min.css'
 import '../styles/windwave.css'
 import 'leaflet/dist/leaflet.css'
@@ -13,6 +14,21 @@ import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
 import { useEffect } from 'react'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
+
+// Optimize font loading with next/font
+const roboto = Roboto({
+  weight: ['300', '400', '500', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto',
+})
+
+const indieFlower = Indie_Flower({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-indie-flower',
+})
 
 type ThemeName = 'light' | 'wotnow' | string;
 
@@ -79,7 +95,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
           <link rel="icon" type="image/x-icon" href="/findr-favicon/favicon.ico" />
           </Head>
           {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-          <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content">
+          <div data-theme={theme} className={`min-h-screen bg-base-100 text-base-content ${roboto.variable} ${indieFlower.variable}`} style={{ fontFamily: 'var(--font-roboto), Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
             <Component {...pageProps} />
           </div>
         </UnifiedLocationProvider>
