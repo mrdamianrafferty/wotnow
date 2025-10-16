@@ -53,7 +53,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="btm-nav md:hidden z-50 border-t border-base-200">
+    <div className="btm-nav btm-nav-md md:hidden z-50 fixed">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.match(pathname);
