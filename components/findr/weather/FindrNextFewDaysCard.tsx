@@ -184,7 +184,7 @@ export function FindrNextFewDaysCard({
                   {/* Day + Icon */}
                   <div className="flex items-center gap-3 min-w-[100px]">
                     <span className="font-medium text-sm w-10">{label}</span>
-                    <Image src={iconUrl} alt="Weather" width={28} height={28} className="opacity-90" />
+                    <Image src={iconUrl} alt="Weather" width={48} height={48} className="opacity-90 w-12 h-12" />
                   </div>
 
                   {/* Temperature */}
@@ -195,7 +195,7 @@ export function FindrNextFewDaysCard({
                   {/* Wind */}
                   <div className="flex items-center gap-2 min-w-[70px]">
                     {typeof d.windDeg === 'number' && (
-                      <WindDirectionIcon deg={d.windDeg} size={16} className="opacity-70" />
+                      <WindDirectionIcon deg={d.windDeg} size={48} className="opacity-70" />
                     )}
                     <span className="text-xs">{windKts != null ? `${windKts}kt` : '—'}</span>
                   </div>
