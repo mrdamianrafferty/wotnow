@@ -2,6 +2,7 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
 import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/findr/enrichCatchData';
+import { fetchMetNoLocationForecast } from '../../../lib/services/weatherService';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -510,10 +511,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Fetch rectangle region info for the response metadata
+    // Fetch rectangle region and center coordinates for weather
     const { data: rectangleData } = await supabase
       .from('ices_rectangles')
-      .select('region')
+      .select('region, center_lat, center_lon')
       .eq('rectangle_code', rectangleCode)
       .single();
     
@@ -557,6 +558,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       user_depth_m: bathymetryData?.depth_meters,
     });
 
+    // Fetch current weather conditions for the rectangle center
+    let currentWindSpeedMS: number | null = null;
+    let currentPressureHPA: number | null = null;
+    
+    if (rectangleData?.center_lat != null && rectangleData?.center_lon != null) {
+      try {
+        const weatherData = await fetchMetNoLocationForecast(
+          rectangleData.center_lat, 
+          rectangleData.center_lon,
+          { signal: AbortSignal.timeout(3000) } // 3s timeout
+        );
+        
+        if (weatherData?.properties?.timeseries?.[0]?.data?.instant?.details) {
+          const details = weatherData.properties.timeseries[0].data.instant.details;
+          currentWindSpeedMS = details.wind_speed ?? null;
+          currentPressureHPA = details.air_pressure_at_sea_level ?? null;
+          
+          console.log('[Findr API] Weather fetched:', {
+            wind_speed_ms: currentWindSpeedMS,
+            pressure_hpa: currentPressureHPA,
+            location: { lat: rectangleData.center_lat, lon: rectangleData.center_lon }
+          });
+        }
+      } catch (weatherError) {
+        console.warn('[Findr API] Weather fetch failed, using neutral score:', (weatherError as Error).message);
+      }
+    }
+
     // Use enhanced function if lat/lon provided, otherwise use basic function
     const useEnhancedFunction = userLat !== null && userLon !== null;
     const rpcFunctionName = useEnhancedFunction 
@@ -569,12 +598,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           target_date: predictionDate,
           user_lat: userLat,
           user_lon: userLon,
-          user_substrate: substrateData?.substrate || null,
-          user_depth_m: bathymetryData?.depth_meters || null,
+          substrate_type: substrateData?.substrate || null,
+          depth_meters: bathymetryData?.depth_meters || null,
+          current_wind_speed_ms: currentWindSpeedMS,
+          current_pressure_hpa: currentPressureHPA,
         }
       : {
           target_rectangle: rectangleCode,
           target_date: predictionDate,
+          current_wind_speed_ms: currentWindSpeedMS,
+          current_pressure_hpa: currentPressureHPA,
         };
     
     const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);

@@ -7,21 +7,22 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
-
-  // Configure webpack dev server for better HMR reliability
-  webpackDevMiddleware: (config) => {
-    // Improve file watching reliability
-    config.watchOptions = {
-      poll: 1000, // Check for changes every second
-      aggregateTimeout: 300,
-      ignored: /node_modules/,
-    };
-    return config;
-  },
   
   // Disable ESLint during production builds; lint enforced via `prebuild` script
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  
+  // Webpack configuration for better file watching (Next.js 15 compatible)
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+      };
+    }
+    return config;
   },
   
   images: {

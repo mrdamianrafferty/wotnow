@@ -31,6 +31,10 @@ type MetNoInstantDetails = {
   sea_water_to_direction?: number;
   wind_speed?: number;
   wind_from_direction?: number;
+  air_pressure_at_sea_level?: number;
+  air_temperature?: number;
+  cloud_area_fraction?: number;
+  relative_humidity?: number;
 };
 
 interface MetNoOceanTimeseriesEntry {
