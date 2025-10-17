@@ -10,7 +10,7 @@ import WaveSummaryCard from './weather/WaveSummaryCard';
 import TideSummaryCard from './weather/TideSummaryCard';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
-import DailyMarineCarousel from './weather/DailyMarineCarousel';
+import FindrNextFewDaysCard from './weather/FindrNextFewDaysCard';
 import { buildMarineBioIndicators, calculateStealthIndex } from '../../utils/bioMarineLevels';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -263,7 +263,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     return [];
   }, [marineWeather.hourly, data.snapshot?.hourly]);
 
-  const daily = useMemo(() => {
+  const _daily = useMemo(() => {
     // Prefer live weather data from marine-weather API
     if (marineWeather.daily && marineWeather.daily.length > 0) {
       return marineWeather.daily.slice(0, 7).map(d => ({
@@ -358,7 +358,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     };
   }, [tideEvents]);
 
-  const _nextFewDaysDaily = useMemo(() => {
+  const nextFewDaysDaily = useMemo(() => {
     // Prefer live weather data
     if (marineWeather.daily && marineWeather.daily.length > 0) {
       const today = new Date();
@@ -413,7 +413,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   // ⚠️ Falls back to cached Supabase data if live weather fails
   // 📊 NextFewDaysCard uses this to show wave heights for each day
   // ==================================================================================
-  const _marineHourlyForCard = useMemo<MarineHourlyPoint[]>(() => {
+  const marineHourlyForCard = useMemo<MarineHourlyPoint[]>(() => {
     // Prefer live marine weather data
     if (marineWeather.hourly && marineWeather.hourly.length > 0) {
       return marineWeather.hourly.map((hour) => ({
@@ -666,12 +666,16 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
           </div>
 
           <div className="mt-4">
-            {daily.length > 0 ? (
-              <DailyMarineCarousel entries={daily} />
+            {nextFewDaysDaily.length > 0 ? (
+              <FindrNextFewDaysCard
+                daily={nextFewDaysDaily}
+                marineHourly={marineHourlyForCard}
+                tide={tideEvents}
+              />
             ) : (
               <div className="card bg-base-200/40 border border-base-200 shadow-sm">
                 <div className="card-body text-sm text-base-content/70">
-                  <TranslatedText text="Daily marine summaries are still generating. Check back once the conditions pipeline completes its 7-day forecast window." />
+                  <TranslatedText text="Daily marine outlooks are still generating for this rectangle. Fresh ingestions will surface once available." />
                 </div>
               </div>
             )}
