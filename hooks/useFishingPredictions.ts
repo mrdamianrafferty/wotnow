@@ -78,9 +78,10 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     const controller = new AbortController();
 
     try {
-      // Use absolute URL for fishfindr.eu to avoid redirect issues
-      const apiUrl = typeof window !== 'undefined' && window.location.hostname === 'fishfindr.eu' 
-        ? 'https://www.fishfindr.eu/api/findr/predictions'
+      // Use absolute URL for fishfindr.eu and godaisy.io to avoid redirect issues
+      const apiUrl = typeof window !== 'undefined' && 
+        (window.location.hostname === 'fishfindr.eu' || window.location.hostname.includes('godaisy.io'))
+        ? `${window.location.protocol}//${window.location.host}/api/findr/predictions`
         : '/api/findr/predictions';
         
       const response = await fetch(apiUrl, {

@@ -6,7 +6,8 @@ export function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || '';
   
   // Redirect fishfindr.eu to /findr (but NOT for API routes, static assets, or _next)
-  if (hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') {
+  // Also handle godaisy.io subdomain paths
+  if (hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu' || hostname.includes('godaisy.io')) {
     // Skip redirect for:
     // - API routes (/api/*)
     // - Next.js internals (/_next/*)
