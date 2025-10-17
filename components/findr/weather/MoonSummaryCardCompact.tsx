@@ -138,14 +138,22 @@ export function MoonSummaryCardCompact({ lat, lon, className }: MoonSummaryCardC
     return () => controller.abort();
   }, [lat, lon]);
 
-  const subtitle = phase ? `Next full moon in ${phase.moon_phases.full_moon.next.days_ahead || '?'} days` : 'Moon phase';
+  // Calculate days to next full moon - use whichever is positive
+  const daysToFullMoon = phase?.moon_phases.full_moon.next.days_ahead;
+  const subtitle = phase && daysToFullMoon != null && daysToFullMoon > 0 
+    ? `Next full moon in ${daysToFullMoon} days` 
+    : 'Moon phase';
+  
   const moonrise = phase?.moon.moonrise ? formatDisplayTime(phase.moon.moonrise) : '—';
   const moonset = phase?.moon.moonset ? formatDisplayTime(phase.moon.moonset) : '—';
   const phaseName = phase ? formatPhaseName(phase.moon.phase_name) : 'Loading...';
   const moonIconUrl = phase ? getMoonIconUrl(phase.moon.phase_name) : '/weather-icons/design/fill/final/moon-full.svg';
   const description = phase ? getMoonlightDescription(phase.moon.illumination, phase.moon.stage, phase.moon.phase_name) : undefined;
   const tideCondition = phase ? getTideCondition(phase.moon.phase_name) : undefined;
-  const nextNewMoonDays = phase?.moon_phases.new_moon.next.days_ahead;
+  
+  // Calculate days to next new moon - use whichever is positive
+  const daysToNewMoon = phase?.moon_phases.new_moon.next.days_ahead;
+  const nextNewMoonDays = daysToNewMoon != null && daysToNewMoon > 0 ? daysToNewMoon : undefined;
 
   let body: React.ReactNode;
   if (loading) {
