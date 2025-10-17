@@ -1,6 +1,5 @@
 import { AlertTriangle, Eye, EyeOff, MapPin } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import type { ComponentProps } from 'react';
 import dynamic from 'next/dynamic';
 import type { ConditionsSource } from '../../hooks/useFindrConditions';
 import type { FallbackConditionPayload } from '../../lib/findr/fallbackConditions';
@@ -12,7 +11,6 @@ import TideSummaryCard from './weather/TideSummaryCard';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
 import DailyMarineCarousel from './weather/DailyMarineCarousel';
-import FindrNextFewDaysCard from './weather/FindrNextFewDaysCard';
 import { buildMarineBioIndicators, calculateStealthIndex } from '../../utils/bioMarineLevels';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -105,8 +103,6 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
   const fallback = new Date(baseUtc.getTime() + index * HOUR_MS);
   return fallback.toISOString();
 };
-
-type NextFewDaysCardProps = ComponentProps<typeof FindrNextFewDaysCard>;
 
 /**
  * ConditionsDashboard Component
@@ -362,7 +358,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     };
   }, [tideEvents]);
 
-  const nextFewDaysDaily = useMemo<NextFewDaysCardProps['daily']>(() => {
+  const _nextFewDaysDaily = useMemo(() => {
     // Prefer live weather data
     if (marineWeather.daily && marineWeather.daily.length > 0) {
       const today = new Date();
@@ -417,7 +413,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   // ⚠️ Falls back to cached Supabase data if live weather fails
   // 📊 NextFewDaysCard uses this to show wave heights for each day
   // ==================================================================================
-  const marineHourlyForCard = useMemo<MarineHourlyPoint[]>(() => {
+  const _marineHourlyForCard = useMemo<MarineHourlyPoint[]>(() => {
     // Prefer live marine weather data
     if (marineWeather.hourly && marineWeather.hourly.length > 0) {
       return marineWeather.hourly.map((hour) => ({
@@ -658,22 +654,6 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
           </div>
 
           <div className="mt-4">
-            {nextFewDaysDaily.length > 0 ? (
-              <FindrNextFewDaysCard
-                daily={nextFewDaysDaily}
-                marineHourly={marineHourlyForCard}
-                tide={tideEvents}
-              />
-            ) : (
-              <div className="card bg-base-200/40 border border-base-200 shadow-sm">
-                <div className="card-body text-sm text-base-content/70">
-                  <TranslatedText text="Daily marine outlooks are still generating for this rectangle. Fresh ingestions will surface once available." />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="grid gap-4 lg:grid-cols-2">
             {hourly.length > 0 ? (
               <HourlyMarineCarousel entries={hourly} />
             ) : (
@@ -683,6 +663,9 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="mt-4">
             {daily.length > 0 ? (
               <DailyMarineCarousel entries={daily} />
             ) : (
