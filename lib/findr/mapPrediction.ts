@@ -492,7 +492,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
   const commonName =
     firstString(prediction.species_common_name) ||
     firstString(prediction.common_name) ||
-    firstString(prediction.species_name) ||
+    firstString(prediction.name_en) ||
     firstString(prediction.target_species) ||
     firstString(prediction.catch_name) ||
     'Unidentified species';

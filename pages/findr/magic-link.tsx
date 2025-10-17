@@ -183,3 +183,8 @@ export default function MagicLink() {
     </>
   );
 }
+
+// Disable static generation for magic link page (requires authentication flow)
+export async function getServerSideProps() {
+  return { props: {} };
+}

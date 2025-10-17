@@ -1,6 +1,7 @@
 // /pages/api/marine.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 
 // Snap coordinates to 3 decimal places (~110 m) to align with server cache + quotas
 const round3dp = (n: number) => Math.round(n * 1e3) / 1e3;
@@ -85,6 +86,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // 🛰️ Fetch from Stormglass
+  let span: ReturnType<typeof weatherMetrics.start> | null = null;
   try {
     const params = [
       'windSpeed',
@@ -108,6 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const url = `${STORMGLASS_API}?lat=${rlat}&lng=${rlon}&params=${params}&start=${encodeURIComponent(startISO)}&end=${encodeURIComponent(endISO)}`;
     
     // Make the request to Stormglass
+    span = weatherMetrics.start('stormglass', 'marine', JSON.stringify({ lat: rlat, lon: rlon }));
     const sgRes = await fetch(url, {
       headers: {
         'Authorization': apiKey
@@ -117,6 +120,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!sgRes.ok) {
       const errorText = await sgRes.text();
       console.error('❌ Stormglass API Response:', errorText);
+      span?.failure(new Error(`HTTP ${sgRes.status}`), { status: sgRes.status });
       return res.status(sgRes.status).json({ error: errorText });
     }
 
@@ -124,6 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if ((data as { errors?: unknown; message?: unknown })?.errors || (data as { message?: unknown })?.message) {
       console.error('❌ Stormglass API returned an error:', (data as { errors?: unknown; message?: unknown }).errors || (data as { message?: unknown }).message);
+      span?.failure(new Error('Stormglass API error payload'), { status: sgRes.status });
       return res.status(500).json({ error: (data as { errors?: unknown; message?: unknown }).errors || (data as { message?: unknown }).message });
     }
 
@@ -131,10 +136,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     cache.set(locationKey, { timestamp: now, ttlMs, data });
     console.log(`🌊 Cached Stormglass data for ${coordKey3dp(rlat, rlon)} (${getTimeBucket()}), ttl=${Math.round(ttlMs/60000)}m`);
 
+    span?.success({ status: sgRes.status });
     return res.status(200).json(data);
   } catch (error) {
     const err = error as Error;
     console.error('❌ Stormglass API Error:', err.stack || String(error));
+    span?.failure(err);
     return res.status(500).json({
       error: 'Fetch error contacting Stormglass',
       details: err.message || String(error),

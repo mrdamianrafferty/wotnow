@@ -57,3 +57,8 @@ export default function HowWeDoIt() {
     </>
   );
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

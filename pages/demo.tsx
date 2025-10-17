@@ -963,4 +963,9 @@ useEffect(() => { saveCoastPref(coastalPlace); }, [coastalPlace]);
     </main>
   );
 }
+
+// Disable static generation since this page uses client-side state
+export async function getServerSideProps() {
+  return { props: {} };
+}
  

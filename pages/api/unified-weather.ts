@@ -5,6 +5,7 @@ import {
   getRectangleDayKey,
 } from '../../lib/weather/rectangleAnchors';
 import { getMoonSunData } from '../../lib/astro/moonService';
+import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 
 /*
  * ████████████████████████████████████████████████████████████████████████████████████
@@ -35,19 +36,19 @@ const gridCache = new Map<string, CacheEntry<NwsPointProperties>>();
 /**
  * Standardized precision strategy for maximum cache efficiency:
  * - FREE PROVIDERS: Use recommended precision (4dp for MET Norway)
- * - OPENWEATHER: 2dp (1.1km) for maximum caching when used as fallback
- * - STORMGLASS: 3dp (111m) for marine/coastal data
+ * - OPENWEATHER: 3dp (~110m) to align with free-provider cache
+ * - STORMGLASS: 3dp (≈110m) for marine/coastal data
  * - ENVIRONMENTAL: 2dp for air quality, pollen (regional data)
  * 
  * This gives us ~10,000x better caching than 5dp
  */
 const PRECISION = {
-  METNO: 4,        // MET Norway recommendation (11m)
-  NOAA: 3,         // NOAA grid precision (111m)
-  EC: 3,           // Environment Canada (111m)
-  OPENWEATHER: 2,  // Maximum caching (1.1km) - rarely used
-  STORMGLASS: 3,   // Marine data (111m)
-  ENVIRONMENTAL: 2 // Air quality, pollen (1.1km)
+  METNO: 4,        // MET Norway recommendation (~11m)
+  NOAA: 3,         // NOAA grid precision (~111m)
+  EC: 3,           // Environment Canada (~111m)
+  OPENWEATHER: 3,  // Align with free-provider cache (~111m)
+  STORMGLASS: 3,   // Marine data (~111m)
+  ENVIRONMENTAL: 2 // Air quality, pollen (~1.1km)
 } as const;
 
 // ============================================================================
@@ -347,21 +348,33 @@ function computeSunTimes(date: Date, _lat: number, _lon: number): { sunriseISO?:
 }
 
 async function fetchFromMetNo(lat: number, lon: number, units: string, mode: string): Promise<UnifiedWeather | null> {
+  // Use MET Norway's recommended precision and cache results
+  const { lat: metLat, lon: metLon } = roundForProvider(lat, lon, 'metno');
+  const cacheKey = `metno:${getCacheKey(lat, lon, 'metno')}:${units}:${mode}`;
+  const cached = weatherCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
+    return cached.data as UnifiedWeather;
+  }
+
+  const span = weatherMetrics.start('metno', 'locationforecast', `${units}|${mode}`);
+
   try {
-    // Use MET Norway's recommended precision and cache results
-    const { lat: metLat, lon: metLon } = roundForProvider(lat, lon, 'metno');
-    const cacheKey = `metno:${getCacheKey(lat, lon, 'metno')}:${units}:${mode}`;
-    const cached = weatherCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
-      return cached.data as UnifiedWeather;
-    }
     const url = `https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${metLat}&lon=${metLon}`;
     const ua = process.env.METNO_USER_AGENT || 'Go Daisy/1.0 (hello@godaisy.io)';
-    const r = await fetch(url, { headers: { 'User-Agent': ua, 'Accept': 'application/json' } });
-    if (!r.ok) throw new Error(`MET Norway ${r.status}`);
-    const metPayload = await r.json() as MetNoForecastResponse;
+    const response = await fetch(url, { headers: { 'User-Agent': ua, 'Accept': 'application/json' } });
+    const statusCode = response.status;
+
+    if (!response.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      return null;
+    }
+
+    const metPayload = await response.json() as MetNoForecastResponse;
     const ts = metPayload.properties?.timeseries ?? [];
-    if (!ts.length) return null;
+    if (!ts.length) {
+      span.failure(new Error('Empty timeseries payload'), { status: statusCode });
+      return null;
+    }
 
     const HOURLY_LIMIT = Math.min(ts.length, 24 * 5); // up to ~5 days of hourly clarity
     const DAILY_LIMIT_HOURS = Math.min(ts.length, 24 * 7); // aim for a full week of day buckets
@@ -511,22 +524,27 @@ async function fetchFromMetNo(lat: number, lon: number, units: string, mode: str
     current.daily = daily;
     // Cache MET Norway unified result
     weatherCache.set(cacheKey, { ts: Date.now(), data: current });
+    span.success({ status: statusCode });
     return current;
   } catch (e) {
+    span.failure(e);
     console.warn('MET Norway fetch failed', e);
     return null;
   }
 }
 
 async function fetchFromNoaa(lat: number, lon: number, units: string, mode: string): Promise<UnifiedWeather | null> {
+  // Use NOAA 3dp grid precision and cache both grid lookup and unified result
+  const { lat: noaaLat, lon: noaaLon } = roundForProvider(lat, lon, 'noaa');
+  const cacheKey = `noaa:${getCacheKey(lat, lon, 'noaa')}:${units}:${mode}`;
+  const cached = weatherCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
+    return cached.data as UnifiedWeather;
+  }
+
+  const resultSpan = weatherMetrics.start('noaa', 'unified', `${units}|${mode}`);
+
   try {
-    // Use NOAA 3dp grid precision and cache both grid lookup and unified result
-    const { lat: noaaLat, lon: noaaLon } = roundForProvider(lat, lon, 'noaa');
-    const cacheKey = `noaa:${getCacheKey(lat, lon, 'noaa')}:${units}:${mode}`;
-    const cached = weatherCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < WEATHER_TTL_MS) {
-      return cached.data as UnifiedWeather;
-    }
     const ua = process.env.NWS_USER_AGENT || 'Go Daisy/1.0 (hello@godaisy.io)';
     // Step 1: resolve gridpoint
     const gridCacheKey = `grid:${getCacheKey(lat, lon, 'noaa')}`;
@@ -535,33 +553,77 @@ async function fetchFromNoaa(lat: number, lon: number, units: string, mode: stri
     if (gridEntry && Date.now() - gridEntry.ts < 7 * 24 * 60 * 60 * 1000) {
       props = gridEntry.data;
     } else {
-      const p = await fetch(`https://api.weather.gov/points/${noaaLat},${noaaLon}`, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
-      if (!p.ok) throw new Error(`NWS points ${p.status}`);
-      const pj = await p.json() as NwsPointsResponse;
-      props = pj?.properties ?? {};
-      gridCache.set(gridCacheKey, { ts: Date.now(), data: props });
+      const spanPoints = weatherMetrics.start('noaa', 'points', `${units}|${mode}`);
+      try {
+        const response = await fetch(`https://api.weather.gov/points/${noaaLat},${noaaLon}`, {
+          headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' },
+        });
+        const statusCode = response.status;
+        if (!response.ok) {
+          const error = new Error(`HTTP ${statusCode}`);
+          spanPoints.failure(error, { status: statusCode });
+          resultSpan.failure(error, { status: statusCode });
+          return null;
+        }
+        const pj = await response.json() as NwsPointsResponse;
+        spanPoints.success({ status: statusCode });
+        props = pj?.properties ?? {};
+        gridCache.set(gridCacheKey, { ts: Date.now(), data: props });
+      } catch (error) {
+        spanPoints.failure(error);
+        resultSpan.failure(error);
+        return null;
+      }
     }
     const hourlyUrl = props.forecastHourly;
     const gridUrl = props.forecast;
-    if (!hourlyUrl && !gridUrl) return null;
+    if (!hourlyUrl && !gridUrl) {
+      resultSpan.failure(new Error('Missing NOAA forecast URLs'));
+      return null;
+    }
 
     // Step 2: hourly periods
     let hResp: NwsForecastResponse | null = null;
     if (hourlyUrl) {
-      const hr = await fetch(hourlyUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
-      if (hr.ok) hResp = await hr.json() as NwsForecastResponse;
+      const spanHourly = weatherMetrics.start('noaa', 'forecastHourly', `${units}|${mode}`);
+      try {
+        const hr = await fetch(hourlyUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
+        const statusCode = hr.status;
+        if (!hr.ok) {
+          spanHourly.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+        } else {
+          hResp = await hr.json() as NwsForecastResponse;
+          spanHourly.success({ status: statusCode });
+        }
+      } catch (error) {
+        spanHourly.failure(error);
+      }
     }
 
     // Step 3: daily periods (zone forecast)
     let dResp: NwsForecastResponse | null = null;
     if (gridUrl) {
-      const dr = await fetch(gridUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
-      if (dr.ok) dResp = await dr.json() as NwsForecastResponse;
+      const spanDaily = weatherMetrics.start('noaa', 'forecast', `${units}|${mode}`);
+      try {
+        const dr = await fetch(gridUrl, { headers: { 'User-Agent': ua, 'Accept': 'application/geo+json' } });
+        const statusCode = dr.status;
+        if (!dr.ok) {
+          spanDaily.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+        } else {
+          dResp = await dr.json() as NwsForecastResponse;
+          spanDaily.success({ status: statusCode });
+        }
+      } catch (error) {
+        spanDaily.failure(error);
+      }
     }
 
     const hPeriods: NwsForecastPeriod[] = hResp?.properties?.periods ?? [];
     const dPeriods: NwsForecastPeriod[] = dResp?.properties?.periods ?? [];
-    if (!hPeriods.length && !dPeriods.length) return null;
+    if (!hPeriods.length && !dPeriods.length) {
+      resultSpan.failure(new Error('Empty NOAA forecast data'));
+      return null;
+    }
 
     // helpers
     const mphToMs = (v?: number | string) => {
@@ -633,8 +695,10 @@ async function fetchFromNoaa(lat: number, lon: number, units: string, mode: stri
 
     // Cache NOAA unified result
     weatherCache.set(cacheKey, { ts: Date.now(), data: current });
+    resultSpan.success({ status: 200 });
     return current;
   } catch (e) {
+    resultSpan.failure(e);
     console.warn('NOAA NWS fetch failed:', e);
     return null;
   }

@@ -1111,3 +1111,8 @@ const FindrPage: React.FC = () => {
 };
 
 export default FindrPage;
+
+// Disable static generation for this page
+export async function getServerSideProps() {
+  return { props: {} };
+}

@@ -197,3 +197,8 @@ export default function BlankReportModalTestPage() {
     </div>
   );
 }
+
+// Disable static generation since this test page uses client-side state
+export async function getServerSideProps() {
+  return { props: {} };
+}

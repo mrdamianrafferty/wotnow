@@ -252,3 +252,8 @@ const FindrConditionsRoute: React.FC = () => {
 };
 
 export default FindrConditionsRoute;
+
+// Disable static generation for this page
+export async function getServerSideProps() {
+  return { props: {} };
+}

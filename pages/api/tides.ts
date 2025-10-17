@@ -1,5 +1,6 @@
 // /pages/api/tides.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 
 // Simple in-memory cooldown to avoid hammering Stormglass when quota is hit
 let lastLimitedAt: number | null = null;
@@ -29,6 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const url = `https://api.stormglass.io/v2/tide/extremes/point?lat=${latNum}&lng=${lonNum}`;
 
+  let span: ReturnType<typeof weatherMetrics.start> | null = null;
+
   try {
     const key = cacheKey(latNum, lonNum);
     const now = Date.now();
@@ -41,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true, data: [], limited: true, status: 402, cached: true });
     }
     console.log('🌊 Fetching tide data from Stormglass');
+    span = weatherMetrics.start('stormglass', 'tides', JSON.stringify({ lat: latNum, lon: lonNum }));
     const response = await fetch(url, {
       headers: { Authorization: apiKey }
     });
@@ -51,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (response.status === 402 || response.status === 429) {
         lastLimitedAt = Date.now();
       }
+      span?.failure(new Error(`HTTP ${response.status}`), { status: response.status });
       const payload = { success: true, data: [] as unknown[], limited: true as const, status: response.status };
       tideCache.set(key, { ts: now, data: payload });
       return res.status(200).json(payload);
@@ -63,12 +68,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (Array.isArray(items)) {
       const payload = { success: true, data: items };
       tideCache.set(key, { ts: now, data: payload });
+      span?.success({ status: response.status });
       return res.status(200).json(payload);
     } else {
+      span?.failure(new Error('Invalid tide data payload'), { status: response.status });
       return res.status(500).json({ success: false, error: 'Invalid tide data from Stormglass', details: data });
     }
   } catch (err: unknown) {
     console.error('🌊 Tide fetch failed', err);
+    span?.failure(err);
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ success: false, error: 'Tide fetch failed', details: message });
   }

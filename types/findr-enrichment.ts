@@ -23,6 +23,8 @@ export interface EMODnetBathymetryResponse {
   confidence?: string;
   query_time?: string;
   error?: string;
+  cached?: boolean; // Whether result came from cache
+  cache_age_hours?: number; // Age of cached data in hours
 }
 
 // EMODnet substrate API response
@@ -36,6 +38,8 @@ export interface EMODnetSubstrateResponse {
   query_time?: string;
   raw_classification?: string;
   error?: string;
+  cached?: boolean; // Whether result came from cache
+  cache_age_hours?: number; // Age of cached data in hours
 }
 
 // Final enriched catch data structure

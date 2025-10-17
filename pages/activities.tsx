@@ -1137,3 +1137,8 @@ export default function ActivitiesPage() {
     </>
   );
 }
+
+// Disable static generation for this page
+export async function getServerSideProps() {
+  return { props: {} };
+}

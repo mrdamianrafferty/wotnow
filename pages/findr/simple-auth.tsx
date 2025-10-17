@@ -291,3 +291,7 @@ export default function SimpleAuth() {
     </>
   );
 }
+// Disable static generation for auth page
+export async function getServerSideProps() {
+  return { props: {} };
+}

@@ -15,8 +15,8 @@ priority list before falling back to OpenWeather. The default behaviour is:
 If `FREE_PROVIDER_ORDER` is configured at runtime, that explicit order wins; otherwise the table above is used.
 
 Successful free-provider responses set diagnostic headers (`X-Weather-Source`) and cache keys so we can see
-which service produced the payload. Failures bubble up to the OpenWeather fallback which still honours the
-two-decimal coordinate cache.
+which service produced the payload. Failures bubble up to the OpenWeather fallback which now honours the
+three-decimal (≈110 m) coordinate cache.
 
 ## Provider priority test coverage
 Jest tests at `lib/services/weatherService.test.ts` exercise the new routing logic without hitting external APIs.
@@ -27,4 +27,3 @@ Jest tests at `lib/services/weatherService.test.ts` exercise the new routing log
 Both tests stub ancillary requests (Open-Meteo pollen/pressure) so we can focus on the primary provider calls
 while still allowing the handler to run its enrichment pipeline. Console warnings for missing optional keys are
 expected during the test run.
-

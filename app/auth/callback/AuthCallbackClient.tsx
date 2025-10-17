@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 
 // Ultra-lightweight callback handler. It supports:
@@ -194,7 +195,7 @@ export default function AuthCallbackClient() {
       {phase === Phase.Error && (
         <div className="alert alert-error flex items-center justify-between gap-3" role="alert">
           <span>{error}</span>
-          <a className="btn btn-sm" href="/login">Back to login</a>
+          <Link href="/login" className="btn btn-sm">Back to login</Link>
         </div>
       )}
     </main>

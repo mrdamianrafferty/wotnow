@@ -7,6 +7,7 @@ import {
   type WorldTidesResponse,
 } from '../../../lib/services/weatherService';
 import { mapMetNoSymbolToIcon } from '../../../lib/utils/weatherIconMapping';
+import { monitoredFetch } from '../../../lib/monitoring/weatherMetrics';
 
 /**
  * API endpoint to fetch live marine weather with priority fallback:
@@ -456,7 +457,7 @@ export default async function handler(
       if (!hasWindData) {
         try {
           const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latNum}&longitude=${lonNum}&hourly=temperature_2m,windspeed_10m,winddirection_10m&timezone=UTC&forecast_days=7`;
-          const weatherRes = await fetch(weatherUrl);
+          const weatherRes = await monitoredFetch('open-meteo', 'forecast_hourly_fallback', weatherUrl);
           if (weatherRes.ok) {
             const weatherData = await weatherRes.json() as { hourly?: { time?: number[]; temperature_2m?: number[]; windspeed_10m?: number[]; winddirection_10m?: number[] } };
             if (weatherData.hourly?.time) {

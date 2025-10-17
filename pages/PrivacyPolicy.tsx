@@ -65,3 +65,8 @@ export default function PrivacyPolicy() {
     </>
   );
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

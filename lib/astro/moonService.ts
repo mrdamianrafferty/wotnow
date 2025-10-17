@@ -64,7 +64,8 @@ interface FetchParams {
 }
 
 const DEFAULT_PROVIDER = 'ipgeolocation';
-const COORD_PRECISION = 1; // 0.1° grid as per caching brief
+const COORD_PRECISION = 3; // 0.001° grid (~110m) matches weather cache precision
+const COORD_FACTOR = 10 ** COORD_PRECISION;
 const SYNODIC_MONTH_DAYS = 29.530588853;
 
 let cacheDisabled = false;
@@ -86,7 +87,7 @@ function logCacheDisabled(reason: string): void {
 }
 
 function roundToGrid(value: number): number {
-  return Number((Math.round(value * 10) / 10).toFixed(COORD_PRECISION));
+  return Number((Math.round(value * COORD_FACTOR) / COORD_FACTOR).toFixed(COORD_PRECISION));
 }
 
 function normalizeIllumination(raw?: string | number | null): number | undefined {

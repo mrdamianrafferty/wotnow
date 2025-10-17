@@ -222,3 +222,8 @@ export default function FindrAuth() {
     </>
   );
 }
+
+// Disable static generation for auth page
+export async function getServerSideProps() {
+  return { props: {} };
+}

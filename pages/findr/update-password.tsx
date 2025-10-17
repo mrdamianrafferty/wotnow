@@ -185,3 +185,8 @@ export default function UpdatePassword() {
     </>
   );
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

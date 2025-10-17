@@ -5,7 +5,7 @@
     "prebuild": "npm run lint:ci",
     "prevercel-build": "npm run lint:ci",
     "postinstall": "git config core.hooksPath .githooks || true",
-    "dev": "next dev",
+    "dev": "node ./scripts/ensure-next-manifests.js && next dev",
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",

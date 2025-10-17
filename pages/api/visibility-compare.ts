@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { monitoredFetch } from '../../lib/monitoring/weatherMetrics';
 
 // Reuse existing OpenWeather helpers
 import {
@@ -46,7 +47,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const endISO = new Date(now.getTime() + 3 * 60 * 60 * 1000).toISOString();
     const params = ['visibility'].join(',');
     const sgUrl = `${STORMGLASS_WEATHER_API}?lat=${latNum}&lng=${lonNum}&params=${params}&start=${startISO}&end=${endISO}`;
-    const sgRes = await fetch(sgUrl, { headers: { Authorization: sgKey } });
+    const sgRes = await monitoredFetch('stormglass', 'visibility', sgUrl, {
+      headers: { Authorization: sgKey },
+    });
     const sgJson: unknown = await sgRes.json();
     if (!sgRes.ok) throw new Error(`Stormglass error ${sgRes.status}: ${JSON.stringify(sgJson)}`);
 
@@ -95,4 +98,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }
-

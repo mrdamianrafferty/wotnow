@@ -329,3 +329,8 @@ export default function TrophyPhotoCarouselTestPage() {
     </div>
   );
 }
+
+// Disable static generation for this test page
+export async function getServerSideProps() {
+  return { props: {} };
+}

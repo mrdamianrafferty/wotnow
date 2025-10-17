@@ -4,6 +4,7 @@
 // Flow: Try Open-Meteo astronomy → normalise → if unavailable, fall back to OpenWeather daily and derive illumination.
 
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { monitoredFetch } from '../../lib/monitoring/weatherMetrics';
 // Simple in-memory daily cache for OpenWeather data (per lat/lon)
 // In-memory cache for OpenWeather daily forecast (per lat/lon)
 const openWeatherDailyCache: {
@@ -104,7 +105,13 @@ class WotNowAstronomyAPI {
 
     try {
       const requestUrl = url.toString();
-      const response = await fetch(requestUrl);
+      const response = await monitoredFetch(
+        'open-meteo',
+        'astronomy',
+        requestUrl,
+        undefined,
+        JSON.stringify({ startDate, endDate })
+      );
       if (!response.ok) {
         const text = await response.text();
         console.error(`[Open-Meteo] Astronomy API error: status=${response.status}, url=${requestUrl}, body=${text}`);

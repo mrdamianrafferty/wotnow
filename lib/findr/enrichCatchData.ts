@@ -2,6 +2,7 @@
 // Environmental enrichment service for catch logging
 
 import ExifReader from 'exifreader';
+import { createClient } from '@supabase/supabase-js';
 import type {
   ExifGPSData,
   EMODnetBathymetryResponse,
@@ -9,6 +10,12 @@ import type {
   EnrichedCatchData,
   SubstrateType,
 } from '../../types/findr-enrichment';
+
+// Initialize Supabase client for cache access
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 type ExifPrimitive = string | number | boolean | Array<string | number | boolean> | undefined | null;
 
@@ -148,13 +155,34 @@ function convertDMSToDD(dms: string, ref: string): number | null {
 }
 
 /**
- * Query EMODnet for bathymetry data
+ * Query EMODnet for bathymetry data (with 90-day cache)
  */
 export async function queryEMODnetBathymetry(
   latitude: number,
   longitude: number
 ): Promise<EMODnetBathymetryResponse> {
   try {
+    // Check cache first (90-day TTL)
+    const { data: cached, error: cacheError } = await supabase.rpc('get_emodnet_cache', {
+      query_lat: latitude,
+      query_lon: longitude
+    });
+
+    if (!cacheError && cached && cached.length > 0 && cached[0].depth_meters !== null) {
+      const hit = cached[0];
+      console.log(`[EMODnet Cache HIT] Bathymetry for ${latitude.toFixed(4)}, ${longitude.toFixed(4)} (age: ${Math.round(hit.cache_age_hours)}h)`);
+      return {
+        depth_meters: hit.depth_meters,
+        data_source: 'emodnet_cached',
+        confidence: hit.depth_confidence || 'high',
+        query_time: new Date().toISOString(),
+        cached: true,
+        cache_age_hours: hit.cache_age_hours
+      };
+    }
+
+    console.log(`[EMODnet Cache MISS] Querying bathymetry API for ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+
     // EMODnet Web Coverage Service (WCS) endpoint
     const baseUrl = 'https://ows.emodnet-bathymetry.eu/wcs';
     
@@ -187,32 +215,84 @@ export async function queryEMODnetBathymetry(
     const depthValue = data.value?.[0] || data.values?.[0]?.[0];
     const depth = depthValue ? Math.abs(depthValue) : null;
 
-    return {
+    const result = {
       depth_meters: depth,
       data_source: 'emodnet',
       confidence: depth ? 'high' : 'low',
       query_time: new Date().toISOString(),
+      cached: false
     };
+
+    // Store in cache (90-day TTL, fire-and-forget)
+    void (async () => {
+      try {
+        await supabase.rpc('set_emodnet_cache', {
+          query_lat: latitude,
+          query_lon: longitude,
+          p_depth_meters: depth,
+          p_depth_confidence: result.confidence
+        });
+      } catch (err) {
+        console.warn('[EMODnet] Failed to cache bathymetry:', err instanceof Error ? err.message : 'Unknown error');
+      }
+    })();
+
+    return result;
   } catch (error) {
     console.error('Error querying EMODnet bathymetry:', error);
+    
+    // Store error in cache to avoid hammering failed endpoints
+    void (async () => {
+      try {
+        await supabase.rpc('set_emodnet_cache', {
+          query_lat: latitude,
+          query_lon: longitude,
+          p_error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      } catch {}
+    })();
+    
     return {
       depth_meters: null,
       data_source: 'emodnet',
       confidence: 'low',
       query_time: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Unknown error',
+      cached: false
     };
   }
 }
 
 /**
- * Query EMODnet for substrate/seabed data
+ * Query EMODnet for substrate/seabed data (with 90-day cache)
  */
 export async function queryEMODnetSubstrate(
   latitude: number,
   longitude: number
 ): Promise<EMODnetSubstrateResponse> {
   try {
+    // Check cache first (90-day TTL)
+    const { data: cached, error: cacheError } = await supabase.rpc('get_emodnet_cache', {
+      query_lat: latitude,
+      query_lon: longitude
+    });
+
+    if (!cacheError && cached && cached.length > 0 && cached[0].substrate) {
+      const hit = cached[0];
+      console.log(`[EMODnet Cache HIT] Substrate for ${latitude.toFixed(4)}, ${longitude.toFixed(4)} (age: ${Math.round(hit.cache_age_hours)}h)`);
+      return {
+        substrate: hit.substrate as SubstrateType,
+        data_source: 'emodnet_cached',
+        confidence: hit.substrate_confidence || 'high',
+        query_time: new Date().toISOString(),
+        raw_classification: hit.substrate_raw_classification,
+        cached: true,
+        cache_age_hours: hit.cache_age_hours
+      };
+    }
+
+    console.log(`[EMODnet Cache MISS] Querying substrate API for ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+
     // EMODnet Seabed Habitats WFS endpoint
     const baseUrl = 'https://ows.emodnet-seabedhabitats.eu/emodnet_view/wfs';
     
@@ -248,21 +328,52 @@ export async function queryEMODnetSubstrate(
     // Map to our substrate types
     const substrate = mapSubstrateType(substrateRaw);
 
-    return {
+    const result = {
       substrate,
       data_source: 'emodnet',
       confidence: feature ? 'high' : 'low',
       query_time: new Date().toISOString(),
       raw_classification: substrateRaw,
+      cached: false
     };
+
+    // Store in cache (90-day TTL, fire-and-forget)
+    void (async () => {
+      try {
+        await supabase.rpc('set_emodnet_cache', {
+          query_lat: latitude,
+          query_lon: longitude,
+          p_substrate: substrate,
+          p_substrate_confidence: result.confidence,
+          p_substrate_raw: substrateRaw
+        });
+      } catch (err) {
+        console.warn('[EMODnet] Failed to cache substrate:', err instanceof Error ? err.message : 'Unknown error');
+      }
+    })();
+
+    return result;
   } catch (error) {
     console.error('Error querying EMODnet substrate:', error);
+    
+    // Store error in cache to avoid hammering failed endpoints
+    void (async () => {
+      try {
+        await supabase.rpc('set_emodnet_cache', {
+          query_lat: latitude,
+          query_lon: longitude,
+          p_error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      } catch {}
+    })();
+    
     return {
       substrate: 'unknown',
       data_source: 'emodnet',
       confidence: 'low',
       query_time: new Date().toISOString(),
       error: error instanceof Error ? error.message : 'Unknown error',
+      cached: false
     };
   }
 }

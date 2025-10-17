@@ -4,6 +4,8 @@
  * NOTE: Do not put any top-level "smoke" script logic in this file.
  */
 
+import { weatherMetrics } from '../lib/monitoring/weatherMetrics';
+
 // --- Types ---
 export interface StormglassHour {
   time: string; // ISO
@@ -91,16 +93,39 @@ function getStormglassKey(): string {
 
 /** Helper: fetch JSON and include a short text preview for non-200s. */
 async function fetchJsonWithDetail<T = unknown>(url: string, headers: Record<string, string> = {}): Promise<T> {
-  const resp = await fetch(url, { headers });
-  const text = await resp.text();
-  if (!resp.ok) {
-    const preview = text.slice(0, 400);
-    throw new Error(`Stormglass ${resp.status} ${resp.statusText} @ ${url}\n${preview}`);
-  }
+  const parsed = new URL(url);
+  const endpoint = parsed.pathname.replace(/^\/+/, '') || 'stormglass';
+  const note = parsed.searchParams.toString() ? parsed.searchParams.toString().slice(0, 200) : undefined;
+  let recorded = false;
+  const span = weatherMetrics.start('stormglass', endpoint, note);
+
   try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error(`Stormglass invalid JSON @ ${url}: ${text.slice(0, 200)}`);
+    const resp = await fetch(url, { headers });
+    const text = await resp.text();
+    if (!resp.ok) {
+      recorded = true;
+      const preview = text.slice(0, 400);
+      const error = new Error(`Stormglass ${resp.status} ${resp.statusText} @ ${url}\n${preview}`);
+      span.failure(error, { status: resp.status });
+      throw error;
+    }
+
+    try {
+      const json = JSON.parse(text) as T;
+      span.success({ status: resp.status });
+      recorded = true;
+      return json;
+    } catch {
+      const error = new Error(`Stormglass invalid JSON @ ${url}: ${text.slice(0, 200)}`);
+      span.failure(error, { status: resp.status });
+      recorded = true;
+      throw error;
+    }
+  } catch (error) {
+    if (!recorded) {
+      span.failure(error);
+    }
+    throw error;
   }
 }
 

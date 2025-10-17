@@ -656,3 +656,8 @@ const FindrInfoPage = () => {
 };
 
 export default FindrInfoPage;
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

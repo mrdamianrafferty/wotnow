@@ -178,3 +178,7 @@ export default function SurfSiteFAQ() {
     </>
   );
 }
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

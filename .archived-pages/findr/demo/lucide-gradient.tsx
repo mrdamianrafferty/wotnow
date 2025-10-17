@@ -54,3 +54,8 @@ function LucideIconGradient({ name, gradientId, size = 96, strokeWidth = 2.5 }: 
   return <Icon size={size} stroke={`url(#${gradientId})`} strokeWidth={strokeWidth} />;
 }
 
+// Disable static generation for this demo page
+export async function getServerSideProps() {
+  return { props: {} };
+}
+

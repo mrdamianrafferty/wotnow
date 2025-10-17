@@ -30,6 +30,7 @@ type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string
 interface SpeciesLocalizationRow {
   species_code: string | null;
   scientific_name: string | null;
+  name_en: string | null;
   name_fr: string | null;
   name_es: string | null;
   name_de: string | null;
@@ -235,10 +236,13 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 
   const speciesCodes = new Set<string>();
   const scientificNames = new Set<string>();
+  const commonNames = new Set<string>();
 
   for (const prediction of predictions) {
     if (!prediction || typeof prediction !== 'object') continue;
     const record = prediction as Record<string, JsonValue>;
+    
+    // Collect species_code
     const codeCandidate =
       firstString(record.species_code) ||
       firstString(record.speciesCode) ||
@@ -249,6 +253,7 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
       speciesCodes.add(normalizedCode);
     }
 
+    // Collect scientific_name
     const scientificCandidate =
       firstString(record.scientific_name) ||
       firstString(record.species_scientific_name) ||
@@ -258,18 +263,28 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     if (normalizedScientific) {
       scientificNames.add(normalizedScientific);
     }
+
+    // Collect name_en (common name) - this is critical!
+    const commonNameCandidate =
+      firstString(record.name_en) ||
+      firstString(record.species_name) ||
+      firstString(record.common_name);
+    if (commonNameCandidate) {
+      commonNames.add(commonNameCandidate);
+    }
   }
 
-  if (speciesCodes.size === 0 && scientificNames.size === 0) {
+  if (speciesCodes.size === 0 && scientificNames.size === 0 && commonNames.size === 0) {
     return predictions;
   }
 
   const localizationRows: SpeciesLocalizationRow[] = [];
 
+  // First, try species_code (most reliable)
   if (speciesCodes.size > 0) {
     const { data, error } = await supabase
       .from('species')
-      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
       .in('species_code', Array.from(speciesCodes));
 
     if (error) {
@@ -279,6 +294,7 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     }
   }
 
+  // Then try scientific_name
   const mappedScientific = new Set(
     localizationRows
       .map((row) => normalizeScientificName(row.scientific_name))
@@ -292,11 +308,35 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
   if (remainingScientific.length > 0) {
     const { data, error } = await supabase
       .from('species')
-      .select('species_code, scientific_name, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
       .in('scientific_name', remainingScientific);
 
     if (error) {
       console.warn('[findr] Failed to load localized names by scientific name', error.message);
+    } else if (data) {
+      localizationRows.push(...data);
+    }
+  }
+
+  // Finally, try common name (name_en) as fallback
+  const mappedCommonNames = new Set(
+    localizationRows
+      .map((row) => row.name_en)
+      .filter((name): name is string => Boolean(name))
+  );
+
+  const remainingCommonNames = Array.from(commonNames).filter(
+    (name) => !mappedCommonNames.has(name)
+  );
+
+  if (remainingCommonNames.length > 0) {
+    const { data, error } = await supabase
+      .from('species')
+      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+      .in('name_en', remainingCommonNames);
+
+    if (error) {
+      console.warn('[findr] Failed to load localized names by common name', error.message);
     } else if (data) {
       localizationRows.push(...data);
     }
@@ -308,6 +348,7 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 
   const byCode = new Map<string, SpeciesLocalizationRow>();
   const byScientific = new Map<string, SpeciesLocalizationRow>();
+  const byCommonName = new Map<string, SpeciesLocalizationRow>();
 
   for (const row of localizationRows) {
     const code = normalizeSpeciesCode(row.species_code);
@@ -318,6 +359,9 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     if (scientific && !byScientific.has(scientific)) {
       byScientific.set(scientific, row);
     }
+    if (row.name_en && !byCommonName.has(row.name_en)) {
+      byCommonName.set(row.name_en, row);
+    }
   }
 
   return predictions.map((entry) => {
@@ -325,6 +369,11 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 
     const original = entry as Record<string, JsonValue>;
     const result: Record<string, JsonValue> = { ...original };
+
+    // Transform playful_bio_en from database function to playful_bio for frontend
+    if (!result.playful_bio && original.playful_bio_en && typeof original.playful_bio_en === 'string' && original.playful_bio_en.trim().length > 0) {
+      result.playful_bio = original.playful_bio_en.trim() as unknown as JsonValue;
+    }
 
     const normalizedCode = normalizeSpeciesCode(
       firstString(original.species_code) ||
@@ -340,11 +389,18 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
         firstString(original.latin_name)
     );
 
+    const commonName = 
+      firstString(original.name_en) ||
+      firstString(original.species_name) ||
+      firstString(original.common_name);
+
     let match: SpeciesLocalizationRow | undefined;
     if (normalizedCode && byCode.has(normalizedCode)) {
       match = byCode.get(normalizedCode);
     } else if (normalizedScientific && byScientific.has(normalizedScientific)) {
       match = byScientific.get(normalizedScientific);
+    } else if (commonName && byCommonName.has(commonName)) {
+      match = byCommonName.get(commonName);
     }
 
     if (!match) {
@@ -356,6 +412,15 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
       result.localized_names = localizedNames as unknown as JsonValue;
     }
 
+    // Populate name_en if missing (critical for avoiding "Unidentified species")
+    if (!result.name_en && match.name_en) {
+      result.name_en = match.name_en as unknown as JsonValue;
+    }
+
+    if (!result.species_name && match.name_en) {
+      result.species_name = match.name_en as unknown as JsonValue;
+    }
+
     if (!result.scientific_name && match.scientific_name) {
       result.scientific_name = match.scientific_name as unknown as JsonValue;
     }
@@ -364,8 +429,13 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
       result.species_scientific_name = match.scientific_name as unknown as JsonValue;
     }
 
-    // Add playful bio from Supabase if available
-    if (match.playful_bio_en && typeof match.playful_bio_en === 'string' && match.playful_bio_en.trim().length > 0) {
+    // Populate species_code if missing
+    if (!result.species_code && match.species_code) {
+      result.species_code = match.species_code as unknown as JsonValue;
+    }
+
+    // Add playful bio from Supabase if available (fallback if not in database function)
+    if (!result.playful_bio && match.playful_bio_en && typeof match.playful_bio_en === 'string' && match.playful_bio_en.trim().length > 0) {
       result.playful_bio = match.playful_bio_en.trim() as unknown as JsonValue;
     }
 

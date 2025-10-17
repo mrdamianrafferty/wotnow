@@ -110,3 +110,8 @@ export default function ResetPassword() {
     </>
   );
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

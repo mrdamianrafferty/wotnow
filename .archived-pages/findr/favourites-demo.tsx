@@ -290,3 +290,8 @@ export default function FavouritesDemoPage() {
     </div>
   );
 }
+
+// Disable static generation since this page uses useRouter()
+export async function getServerSideProps() {
+  return { props: {} };
+}

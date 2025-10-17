@@ -168,3 +168,8 @@ export default function SessionLogModalTestPage() {
     </div>
   );
 }
+
+// Disable static generation for this test page
+export async function getServerSideProps() {
+  return { props: {} };
+}

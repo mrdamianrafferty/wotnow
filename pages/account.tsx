@@ -255,3 +255,8 @@ export default function AccountPage() {
     </>
   );
 }
+
+// Disable static generation for account page (requires authentication)
+export async function getServerSideProps() {
+  return { props: {} };
+}

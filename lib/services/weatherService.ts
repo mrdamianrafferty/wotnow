@@ -1,4 +1,5 @@
 import { fetchWeatherApi } from 'openmeteo';
+import { monitoredFetch, weatherMetrics } from '../monitoring/weatherMetrics';
 
 /**
  * Normalize and merge core weather fields (clouds, rain, snow, etc.) with fallback logic
@@ -113,16 +114,27 @@ async function fetchMetNoOceanForecast(
   url.searchParams.set('lat', round4dp(lat).toFixed(4));
   url.searchParams.set('lon', round4dp(lon).toFixed(4));
 
+  const span = weatherMetrics.start('metno', 'oceanforecast');
+
   try {
     const response = await fetch(url.toString(), {
       headers: buildMetNoHeaders(options),
       signal: options?.signal,
     });
-    if (!response.ok) return null;
+    const statusCode = response.status;
+    if (!response.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      return null;
+    }
     const data = await response.json();
-    if (!data || typeof data !== 'object') return null;
+    if (!data || typeof data !== 'object') {
+      span.failure(new Error('Invalid ocean forecast payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
     return data as MetNoOceanForecastResponse;
   } catch (error) {
+    span.failure(error);
     console.warn('Met Norway ocean forecast fetch failed', error);
     return null;
   }
@@ -137,16 +149,27 @@ async function fetchMetNoLocationForecast(
   url.searchParams.set('lat', round4dp(lat).toFixed(4));
   url.searchParams.set('lon', round4dp(lon).toFixed(4));
 
+  const span = weatherMetrics.start('metno', 'locationforecast');
+
   try {
     const response = await fetch(url.toString(), {
       headers: buildMetNoHeaders(options),
       signal: options?.signal,
     });
-    if (!response.ok) return null;
+    const statusCode = response.status;
+    if (!response.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      return null;
+    }
     const data = await response.json();
-    if (!data || typeof data !== 'object') return null;
+    if (!data || typeof data !== 'object') {
+      span.failure(new Error('Invalid location forecast payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
     return data as MetNoLocationForecastResponse;
   } catch (error) {
+    span.failure(error);
     console.warn('Met Norway location forecast fetch failed', error);
     return null;
   }
@@ -293,6 +316,8 @@ async function fetchOpenMeteoMarineSeries(
   const startMs = Date.parse(startISO);
   const endMs = Date.parse(endISO);
 
+  const span = weatherMetrics.start('open-meteo', 'marine');
+
   try {
     const params: Record<string, unknown> = {
       latitude: lat,
@@ -308,13 +333,22 @@ async function fetchOpenMeteoMarineSeries(
 
     const responses = await fetchWeatherApi('https://marine-api.open-meteo.com/v1/marine', params);
     const response = responses?.[0];
-    if (!response) return null;
+    if (!response) {
+      span.failure(new Error('Empty Open-Meteo marine response'));
+      return null;
+    }
 
     const hourly = response.hourly();
-    if (!hourly) return null;
+    if (!hourly) {
+      span.failure(new Error('Open-Meteo marine response lacked hourly data'));
+      return null;
+    }
 
     const interval = hourly.interval();
-    if (!Number.isFinite(interval) || interval <= 0) return null;
+    if (!Number.isFinite(interval) || interval <= 0) {
+      span.failure(new Error('Invalid Open-Meteo marine interval'));
+      return null;
+    }
 
     const toArray = (index: number) => {
       const variable = hourly.variables(index);
@@ -330,7 +364,10 @@ async function fetchOpenMeteoMarineSeries(
 
     const timeStart = Number(hourly.time());
     const timeEnd = Number(hourly.timeEnd());
-    if (!Number.isFinite(timeStart) || !Number.isFinite(timeEnd)) return null;
+    if (!Number.isFinite(timeStart) || !Number.isFinite(timeEnd)) {
+      span.failure(new Error('Open-Meteo marine response missing time range'));
+      return null;
+    }
 
     const hours: OpenMeteoMarineSeriesHour[] = [];
     for (
@@ -359,8 +396,8 @@ async function fetchOpenMeteoMarineSeries(
       const seaTemperatureC = pushNumber('sea_surface_temperature', 2);
       const currentSpeedMS = pushNumber('ocean_current_velocity', 2);
       const currentDirectionDeg = pushNumber('ocean_current_direction', 0);
-  const windSpeedMS: number | null = null;
-  const windDirectionDeg: number | null = null;
+      const windSpeedMS: number | null = null;
+      const windDirectionDeg: number | null = null;
 
       hours.push({
         timeISO: new Date(timestampMs).toISOString(),
@@ -379,9 +416,14 @@ async function fetchOpenMeteoMarineSeries(
       });
     }
 
-    if (!hours.length) return null;
+    if (!hours.length) {
+      span.failure(new Error('Open-Meteo marine response produced no hours'));
+      return null;
+    }
 
-    const firstHour = hours[0];
+    hours.sort((a, b) => a.timeISO.localeCompare(b.timeISO));
+    const limited = hours.slice(0, Math.max(1, maxHours));
+    const firstHour = limited[0];
 
     const current = response.current();
     if (current) {
@@ -402,11 +444,13 @@ async function fetchOpenMeteoMarineSeries(
       firstHour.seaTemperatureC = override('sea_surface_temperature', 2) ?? firstHour.seaTemperatureC;
       firstHour.currentSpeedMS = override('ocean_current_velocity', 2) ?? firstHour.currentSpeedMS;
       firstHour.currentDirectionDeg = override('ocean_current_direction', 0) ?? firstHour.currentDirectionDeg;
-  firstHour.windSpeedKts = toKnots(firstHour.windSpeedMS);
+      firstHour.windSpeedKts = toKnots(firstHour.windSpeedMS);
     }
 
-    return { hours, firstHour } satisfies OpenMeteoMarineSeriesResult;
+    span.success({ status: 200 });
+    return { hours: limited, firstHour } satisfies OpenMeteoMarineSeriesResult;
   } catch (error) {
+    span.failure(error);
     console.warn('Open-Meteo marine fetch failed', error);
     return null;
   }
@@ -587,7 +631,8 @@ async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: numbe
     exclude: options?.exclude || '',
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ units: options?.units ?? 'metric', exclude: options?.exclude ?? '' });
+  const response = await monitoredFetch('openweather', 'onecall3_alerts', url, undefined, note);
   const data: unknown = await response.json();
   if (!response.ok) throw { status: response.status, data };
   // Alerts are in data.alerts (array)
@@ -612,7 +657,7 @@ async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: numbe
  */
 async function getAirPollution({ lat, lon, apiKey }: { lat: number|string, lon: number|string, apiKey: string }) {
   const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-  const response = await fetch(url);
+  const response = await monitoredFetch('openweather', 'air_pollution', url);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -760,7 +805,8 @@ async function getCurrentAndForecast({ lat, lon, apiKey, options = {} }: { lat: 
     exclude: options?.exclude || '',
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ units: options?.units ?? 'metric', exclude: options?.exclude ?? '' });
+  const response = await monitoredFetch('openweather', 'onecall3_current_forecast', url, undefined, note);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -793,7 +839,8 @@ async function getHistoricalWeather({ lat, lon, dt, apiKey }: { lat: number|stri
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_TIMEMACHINE}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ dt: Number(dt) });
+  const response = await monitoredFetch('openweather', 'timemachine', url, undefined, note);
   const data = await response.json();
   // Fields: current.temp, current.humidity, current.pressure, current.wind_speed, current.wind_deg, current.weather[0].main/description/icon, current.clouds, current.visibility, current.dt
   //         hourly[]: same fields as current
@@ -837,7 +884,8 @@ async function getDailySummary({ lat, lon, date, apiKey }: { lat: number|string,
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_DAYSUMMARY}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ date });
+  const response = await monitoredFetch('openweather', 'day_summary', url, undefined, note);
   const data = await response.json();
   // Field-level comments:
   // data.uvi: UV index (0–11+, daily max, unitless)
@@ -863,7 +911,7 @@ async function getWeatherOverview({ lat, lon, apiKey }: { lat: number|string, lo
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_OVERVIEW}?${params.toString()}`;
-  const response = await fetch(url);
+  const response = await monitoredFetch('openweather', 'overview', url);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -917,7 +965,8 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
   console.log('  URL:', url.replace(apiKey, 'API_KEY'));
   
   try {
-    const response = await fetch(url);
+    const note = JSON.stringify({ units: options?.units ?? 'metric', exclude: options?.exclude ?? '' });
+    const response = await monitoredFetch('openweather', 'onecall3', url, undefined, note);
     const data = await response.json();
     
     console.log('🌡️ OneCall Debug: One Call 3.0 Response');
@@ -951,17 +1000,14 @@ async function getOneCallData({ lat, lon, apiKey, options = {} }: { lat: number|
     // Fallback to 2.5 API
     const url2 = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
     console.log('  Fallback URL:', url2.replace(apiKey, 'API_KEY'));
-    
-    const response2 = await fetch(url2);
-    const data2 = await response2.json();
-    if (!response2.ok) {
-      console.log('❌ 2.5 fallback also failed:', { status: response2.status, data: data2 });
-      throw { status: response2.status, data: data2 };
+    try {
+      const data2 = await fetchOpenWeatherForecast25(Number(lat), Number(lon), apiKey, options);
+      console.log('✅ OneCall Debug: 2.5 fallback successful');
+      return { source: 'forecast2.5', data: data2 };
+    } catch (fallbackError) {
+      console.log('❌ 2.5 fallback also failed:', fallbackError);
+      throw fallbackError;
     }
-    
-    console.log('✅ OneCall Debug: 2.5 fallback successful');
-    
-    return { source: 'forecast2.5', data: data2 };
   }
 }
 
@@ -1142,7 +1188,10 @@ async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string,
     exclude: options?.exclude || '',
   });
   const url = `${OPENWEATHER_BASE_3}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = options
+    ? JSON.stringify({ units: options.units ?? 'metric', exclude: options.exclude ?? '' })
+    : undefined;
+  const response = await monitoredFetch('openweather', 'onecall3', url, undefined, note);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -1151,7 +1200,8 @@ async function fetchOpenWeatherOneCall(lat: number, lon: number, apiKey: string,
 // OpenWeather 2.5 Forecast (fallback)
 async function fetchOpenWeatherForecast25(lat: number, lon: number, apiKey: string, options?: WeatherOptions) {
   const url = `${OPENWEATHER_BASE_2_5}?lat=${lat}&lon=${lon}&units=${options?.units || 'metric'}&appid=${apiKey}`;
-  const response = await fetch(url);
+  const note = options ? JSON.stringify({ units: options.units ?? 'metric' }) : undefined;
+  const response = await monitoredFetch('openweather', 'forecast2.5', url, undefined, note);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -1166,7 +1216,8 @@ async function fetchOpenWeatherTimemachine(lat: number, lon: number, dt: number,
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_TIMEMACHINE}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ dt });
+  const response = await monitoredFetch('openweather', 'timemachine', url, undefined, note);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -1181,7 +1232,8 @@ async function fetchOpenWeatherDaySummary(lat: number, lon: number, date: string
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_DAYSUMMARY}?${params.toString()}`;
-  const response = await fetch(url);
+  const note = JSON.stringify({ date });
+  const response = await monitoredFetch('openweather', 'day_summary', url, undefined, note);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -1195,7 +1247,7 @@ async function fetchOpenWeatherOverview(lat: number, lon: number, apiKey: string
     appid: apiKey,
   });
   const url = `${OPENWEATHER_BASE_OVERVIEW}?${params.toString()}`;
-  const response = await fetch(url);
+  const response = await monitoredFetch('openweather', 'overview', url);
   const data = await response.json();
   if (!response.ok) throw { status: response.status, data };
   return data;
@@ -1254,7 +1306,8 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
     'pressure_msl'
   ].join(','));
   try {
-    const response = await fetch(url.toString());
+    const note = JSON.stringify({ start: startDate, end: endDate });
+    const response = await monitoredFetch('open-meteo', 'forecast', url.toString(), undefined, note);
     const data = await response.json();
     if (!response.ok) throw { status: response.status, data };
     return data;
@@ -1314,7 +1367,8 @@ async function fetchOpenMeteoAirPollen(lat: number, lon: number, startDate: stri
   ].join(','));
   try {
     const reqUrl = url.toString();
-    const response = await fetch(reqUrl);
+    const note = JSON.stringify({ start: startDate, end: endDate });
+    const response = await monitoredFetch('open-meteo', 'air-quality', reqUrl, undefined, note);
     const data = await response.json();
     if (!response.ok) throw { status: response.status, statusText: response.statusText, data, url: reqUrl };
     return data;
@@ -1373,11 +1427,29 @@ async function fetchStormglassMarine(
     'windSpeed','windDirection','gust','visibility'
   ].join(','));
 
+  const span = weatherMetrics.start(
+    'stormglass',
+    'marine',
+    JSON.stringify({ start: startISO, end: endISO, params: params ?? 'default' })
+  );
+
   try {
     const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
-    if (!res.ok) return null; // graceful failure
-    return await safeJson(res);
-  } catch {
+    const statusCode = res.status;
+    if (!res.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      await safeJson(res); // consume body for reuse
+      return null; // graceful failure
+    }
+    const payload = await safeJson(res);
+    if (!payload) {
+      span.failure(new Error('Empty Stormglass marine payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
+    return payload;
+  } catch (error) {
+    span.failure(error);
     return null; // swallow errors and degrade politely
   }
 }
@@ -1401,13 +1473,29 @@ async function fetchStormglassTides(lat: number, lon: number, apiKey: string): P
   url.searchParams.set('lat', String(lat));
   url.searchParams.set('lng', String(lon));
 
+  const span = weatherMetrics.start(
+    'stormglass',
+    'tides',
+    JSON.stringify({ lat, lon })
+  );
+
   try {
     const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
-    if (!res.ok) return null;
+    const statusCode = res.status;
+    if (!res.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      await safeJson(res);
+      return null;
+    }
     const data = await safeJson(res);
-    if (!data || !Array.isArray(data.data)) return null;
+    if (!data || !Array.isArray(data.data)) {
+      span.failure(new Error('Invalid Stormglass tide payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
     return data;
-  } catch {
+  } catch (error) {
+    span.failure(error);
     return null;
   }
 }
@@ -1535,11 +1623,29 @@ async function fetchStormglassAstronomy(
   url.searchParams.set('start', startISO);
   url.searchParams.set('end', endISO);
 
+  const span = weatherMetrics.start(
+    'stormglass',
+    'astronomy',
+    JSON.stringify({ start: startISO, end: endISO })
+  );
+
   try {
     const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
-    if (!res.ok) return null;
-    return await safeJson(res);
-  } catch {
+    const statusCode = res.status;
+    if (!res.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      await safeJson(res);
+      return null;
+    }
+    const payload = await safeJson(res);
+    if (!payload) {
+      span.failure(new Error('Empty Stormglass astronomy payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
+    return payload;
+  } catch (error) {
+    span.failure(error);
     return null;
   }
 }
@@ -1578,11 +1684,29 @@ async function fetchStormglassBio(
     'chlorophyll','dissolvedOxygen','nitrate','phosphate','salinity','sst'
   ].join(','));
 
+  const span = weatherMetrics.start(
+    'stormglass',
+    'bio',
+    JSON.stringify({ start: startISO, end: endISO, params: params ?? 'default' })
+  );
+
   try {
     const res = await withTimeout(fetch(url.toString(), { headers: { Authorization: apiKey } }), 10000);
-    if (!res.ok) return null;
-    return await safeJson(res);
-  } catch {
+    const statusCode = res.status;
+    if (!res.ok) {
+      span.failure(new Error(`HTTP ${statusCode}`), { status: statusCode });
+      await safeJson(res);
+      return null;
+    }
+    const payload = await safeJson(res);
+    if (!payload) {
+      span.failure(new Error('Empty Stormglass bio payload'), { status: statusCode });
+      return null;
+    }
+    span.success({ status: statusCode });
+    return payload;
+  } catch (error) {
+    span.failure(error);
     return null;
   }
 }
@@ -1676,11 +1800,18 @@ async function fetchWorldTides(
     url.searchParams.set('length', String(days * 24 * 60 * 60)); // Length in seconds
     url.searchParams.set('key', WORLDTIDES_API_KEY);
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        'User-Agent': 'WotNow/1.0',
+    const response = await monitoredFetch(
+      'worldtides',
+      'extremes',
+      url.toString(),
+      {
+        headers: {
+          'User-Agent': 'WotNow/1.0',
+        },
       },
-    });
+      JSON.stringify({ days })
+    );
+    
 
     if (!response.ok) {
       console.error(`[WorldTides] API error: ${response.status} ${response.statusText}`);

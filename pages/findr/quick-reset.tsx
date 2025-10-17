@@ -119,3 +119,7 @@ export default function QuickReset() {
     </>
   );
 }
+// Disable static generation for this page
+export async function getServerSideProps() {
+  return { props: {} };
+}
