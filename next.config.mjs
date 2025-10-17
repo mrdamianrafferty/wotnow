@@ -13,18 +13,17 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Webpack configuration for better file watching (Next.js 15 compatible)
+  // Webpack configuration
   webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.watchOptions = {
-        poll: 1000,
-        aggregateTimeout: 300,
-        ignored: /node_modules/,
-      };
-    }
+    // Exclude WIP files with syntax errors
+    config.module.rules.push({
+      test: /\/(generateInsights|get-insights)\.ts$/,
+      use: 'null-loader',
+    });
+
     return config;
   },
-  
+
   images: {
     remotePatterns: [
       {
@@ -64,15 +63,6 @@ const nextConfig = {
     FREE_PROVIDER_ORDER: process.env.FREE_PROVIDER_ORDER ?? 'auto',
     NEXT_PUBLIC_FREE_PROVIDERS_ENABLED: process.env.NEXT_PUBLIC_FREE_PROVIDERS_ENABLED ?? process.env.FREE_PROVIDERS_ENABLED ?? '1',
     NEXT_PUBLIC_FREE_PROVIDER_ORDER: process.env.NEXT_PUBLIC_FREE_PROVIDER_ORDER ?? process.env.FREE_PROVIDER_ORDER ?? 'auto',
-  },
-
-  webpack: (config, { isServer }) => {
-    // Exclude WIP files with syntax errors
-    config.module.rules.push({
-      test: /\/(generateInsights|get-insights)\.ts$/,
-      use: 'null-loader',
-    });
-    return config;
   },
 }
 
