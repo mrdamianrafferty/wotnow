@@ -165,7 +165,7 @@ export default function TrophyPhotoCarouselTestPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="badge badge-primary badge-sm">✓</span>
-                  <span>Loading states and error handling</span>
+                  <span>Say cheese, nearly there</span>
                 </div>
               </div>
             </div>

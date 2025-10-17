@@ -324,11 +324,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       moon: {
         phase: phaseFraction,
         phase_name: data.moonPhaseName ?? 'Unknown phase',
-        stage: getMoonStage(phaseFraction),
+        stage: data.moonPhaseStage ?? getMoonStage(phaseFraction),
         illumination: illuminationPct != null ? `${illuminationPct}%` : '--%',
         age_days: getMoonAge(phaseFraction),
         lunar_cycle: getLunarCycle(phaseFraction),
         emoji: getMoonEmoji(phaseFraction),
+        days_until_next_full_moon: data.daysUntilNextFullMoon ?? null,
+        days_until_next_new_moon: data.daysUntilNextNewMoon ?? null,
         zodiac: {
           sun_sign: '', // Not available
           moon_sign: '', // Not available

@@ -15,6 +15,9 @@ export interface MoonSunData {
   moonPhaseName?: string;
   moonPhaseFraction?: number;
   moonIlluminationPct?: number;
+  moonPhaseStage?: string; // 'waxing' or 'waning'
+  daysUntilNextFullMoon?: number;
+  daysUntilNextNewMoon?: number;
   source: string;
   cachedAt: string;
   expiresAt: string;
@@ -34,6 +37,9 @@ interface MoonCacheRow {
   moon_phase_name: string | null;
   moon_phase_fraction: number | null;
   moon_illumination_pct: number | null;
+  moon_phase_stage: string | null;
+  days_until_next_full_moon: number | null;
+  days_until_next_new_moon: number | null;
   source: string | null;
   cached_at: string;
   expires_at: string;
@@ -50,9 +56,11 @@ interface IpGeoAstronomyResponse {
   moonset?: string;
   moon_phase?: string;
   moon_illumination?: string | number;
+  moon_illumination_percentage?: string | number; // Actual field name from API
   moonrise_next?: string;
   moonset_previous?: string;
   moon_age?: string | number;
+  moon_angle?: number; // Can be used to calculate moon age if moon_age not available
   current_time?: string;
   [key: string]: unknown;
 }
@@ -134,6 +142,39 @@ function parseMoonFraction(ageRaw?: string | number | null, illuminationPct?: nu
     return Number(normalized.toFixed(4));
   }
   return undefined;
+}
+
+function getMoonPhaseStage(phaseFraction?: number): string | undefined {
+  if (phaseFraction == null) return undefined;
+  // 0 = new moon, 0.5 = full moon, 1 = new moon again
+  // Waxing: 0 -> 0.5, Waning: 0.5 -> 1
+  return phaseFraction < 0.5 ? 'waxing' : 'waning';
+}
+
+function calculateDaysUntilNextPhase(phaseFraction?: number): { daysUntilFullMoon?: number; daysUntilNewMoon?: number } {
+  if (phaseFraction == null) return {};
+  
+  const currentDay = phaseFraction * SYNODIC_MONTH_DAYS;
+  const fullMoonDay = SYNODIC_MONTH_DAYS / 2; // Day 14.76
+  const newMoonDay = SYNODIC_MONTH_DAYS; // Day 29.53
+  
+  let daysUntilFullMoon: number;
+  let daysUntilNewMoon: number;
+  
+  if (currentDay < fullMoonDay) {
+    // Before full moon
+    daysUntilFullMoon = fullMoonDay - currentDay;
+    daysUntilNewMoon = newMoonDay - currentDay;
+  } else {
+    // After full moon
+    daysUntilFullMoon = (SYNODIC_MONTH_DAYS - currentDay) + fullMoonDay;
+    daysUntilNewMoon = newMoonDay - currentDay;
+  }
+  
+  return {
+    daysUntilFullMoon: Math.round(daysUntilFullMoon),
+    daysUntilNewMoon: Math.round(daysUntilNewMoon)
+  };
 }
 
 function toZonedInstantISO(localDate: string, time: string | undefined, timeZone: string): string | undefined {
@@ -245,6 +286,9 @@ async function writeCache(
       moon_phase_name: payload.moonPhaseName ?? null,
       moon_phase_fraction: payload.moonPhaseFraction ?? null,
       moon_illumination_pct: payload.moonIlluminationPct ?? null,
+      moon_phase_stage: payload.moonPhaseStage ?? null,
+      days_until_next_full_moon: payload.daysUntilNextFullMoon ?? null,
+      days_until_next_new_moon: payload.daysUntilNextNewMoon ?? null,
       source: payload.source,
       cached_at: payload.cachedAt,
       expires_at: payload.expiresAt,
@@ -278,6 +322,9 @@ function mapRowToPayload(row: MoonCacheRow): MoonSunData {
     moonPhaseName: row.moon_phase_name ?? undefined,
     moonPhaseFraction: row.moon_phase_fraction ?? undefined,
     moonIlluminationPct: row.moon_illumination_pct ?? undefined,
+    moonPhaseStage: row.moon_phase_stage ?? undefined,
+    daysUntilNextFullMoon: row.days_until_next_full_moon ?? undefined,
+    daysUntilNextNewMoon: row.days_until_next_new_moon ?? undefined,
     source: row.source ?? DEFAULT_PROVIDER,
     cachedAt: row.cached_at,
     expiresAt: row.expires_at,
@@ -333,14 +380,20 @@ function buildPayload(
 ): MoonSunData {
   const localDate = data.date ?? Temporal.Now.instant().toZonedDateTimeISO('UTC').toPlainDate().toString();
   const timezone = data.timezone ?? 'UTC';
-  const illuminationPct = normalizeIllumination(data.moon_illumination);
-  const moonPhaseFraction = parseMoonFraction(data.moon_age, illuminationPct);
+  // Try both field names for illumination
+  const illuminationPct = normalizeIllumination(data.moon_illumination_percentage ?? data.moon_illumination);
+  // Calculate moon age from moon_angle if moon_age not available
+  const moonAge = data.moon_age ?? (data.moon_angle != null ? (data.moon_angle / 360) * SYNODIC_MONTH_DAYS : undefined);
+  const moonPhaseFraction = parseMoonFraction(moonAge, illuminationPct);
   const sunriseISO = toZonedInstantISO(localDate, data.sunrise as string | undefined, timezone);
   const sunsetISO = toZonedInstantISO(localDate, data.sunset as string | undefined, timezone);
   const moonriseISO = toZonedInstantISO(localDate, data.moonrise as string | undefined, timezone) ??
     toZonedInstantISO(localDate, (data as Record<string, unknown>)['moonrise_next'] as string | undefined, timezone);
   const moonsetISO = toZonedInstantISO(localDate, data.moonset as string | undefined, timezone) ??
     toZonedInstantISO(localDate, (data as Record<string, unknown>)['moonset_previous'] as string | undefined, timezone);
+  
+  const moonPhaseStage = getMoonPhaseStage(moonPhaseFraction);
+  const { daysUntilFullMoon, daysUntilNewMoon } = calculateDaysUntilNextPhase(moonPhaseFraction);
 
   return {
     latBucket,
@@ -355,6 +408,9 @@ function buildPayload(
     moonPhaseName: data.moon_phase as string | undefined,
     moonPhaseFraction,
     moonIlluminationPct: illuminationPct,
+    moonPhaseStage,
+    daysUntilNextFullMoon: daysUntilFullMoon,
+    daysUntilNextNewMoon: daysUntilNewMoon,
     source: DEFAULT_PROVIDER,
     cachedAt: Temporal.Now.instant().toString(),
     expiresAt: computeExpiryIso(localDate, timezone),

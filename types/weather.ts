@@ -105,6 +105,9 @@ export interface MoonInfo {
   phaseName?: string;
   phaseFraction?: number;
   illuminationPct?: number;
+  phaseStage?: string; // 'waxing' or 'waning'
+  daysUntilNextFullMoon?: number;
+  daysUntilNextNewMoon?: number;
   sunriseISO?: string;
   sunsetISO?: string;
   moonriseISO?: string;

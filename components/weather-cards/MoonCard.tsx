@@ -137,6 +137,9 @@ export const MoonCard: React.FC<MoonCardProps> = ({
 
   const inferredPhaseName = getMoonPhaseName(phaseFraction);
   const phaseName = moon?.phaseName ?? inferredPhaseName;
+  const phaseStage = moon?.phaseStage;
+  const daysUntilFullMoon = moon?.daysUntilNextFullMoon;
+  const daysUntilNewMoon = moon?.daysUntilNextNewMoon;
   const illumPct = typeof moon?.illuminationPct === 'number'
     ? Math.round(moon.illuminationPct)
     : calcIlluminationPct(phaseFraction);
@@ -153,6 +156,7 @@ export const MoonCard: React.FC<MoonCardProps> = ({
             className="w-12 h-12" 
           />
           {phaseName && phaseName !== '—' ? `${phaseName} Moon` : 'Moon'}
+          {phaseStage && <span className="text-sm opacity-70 capitalize">({phaseStage})</span>}
         </h3>
         
         {/* Big icons side by side */}
@@ -239,6 +243,26 @@ export const MoonCard: React.FC<MoonCardProps> = ({
                       : '—'}
                   </div>
                 </div>
+                {(daysUntilFullMoon != null || daysUntilNewMoon != null) && (
+                  <>
+                    {daysUntilFullMoon != null && (
+                      <div>
+                        <div className="opacity-60 text-[11px] uppercase tracking-wide">Next Full Moon</div>
+                        <div className="font-semibold">
+                          {daysUntilFullMoon === 0 ? 'Today' : daysUntilFullMoon === 1 ? 'Tomorrow' : `${daysUntilFullMoon} days`}
+                        </div>
+                      </div>
+                    )}
+                    {daysUntilNewMoon != null && (
+                      <div>
+                        <div className="opacity-60 text-[11px] uppercase tracking-wide">Next New Moon</div>
+                        <div className="font-semibold">
+                          {daysUntilNewMoon === 0 ? 'Today' : daysUntilNewMoon === 1 ? 'Tomorrow' : `${daysUntilNewMoon} days`}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <div className="text-sm leading-relaxed text-base-content/90 px-0 py-0 [&_*]:!bg-transparent [&_*]:!shadow-none [&_*]:!backdrop-blur-0 [&_*]:!border-0 [&_.badge]:hidden [&_.chip]:hidden [&_span.rounded-full]:hidden">
                 <div className="font-medium mb-2">Moon folklore — <span className="capitalize">{(phaseName || '').toLowerCase()}</span></div>

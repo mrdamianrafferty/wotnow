@@ -231,7 +231,7 @@ const NextFewDaysCard: React.FC<NextFewDaysCardProps> = ({
                             {/* Wind (col 2) */}
                             <span className="inline-flex items-center gap-1">
                               {typeof d.windDeg === 'number' ? (
-                                <WindDirectionIcon deg={d.windDeg} size={20} className="opacity-80" />
+                                <WindDirectionIcon deg={d.windDeg} size={10} className="opacity-80" />
                               ) : (
                                 <span className="opacity-60">—</span>
                               )}
@@ -240,7 +240,7 @@ const NextFewDaysCard: React.FC<NextFewDaysCardProps> = ({
 
                             {/* Waves (col 3) */}
                             <span className="inline-flex items-center gap-1 pl-0 sm:pl-0.5">
-                              <Image src="/weather-icons/design/fill/final/wave-moving.svg" alt="Waves" width={20} height={20} className="opacity-70" />
+                              <Image src="/weather-icons/design/fill/final/wave-moving.svg" alt="Waves" width={10} height={10} className="opacity-70" />
                               <span>
                                 {typeof medHeight === 'number' ? `${medHeight.toFixed(1)}m` : '—'}
                                 {typeof medPeriod === 'number' ? ` (${Math.round(medPeriod)}s)` : ''}

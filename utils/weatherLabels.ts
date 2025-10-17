@@ -145,6 +145,19 @@ export function getWaveDescription(meters: number): string {
   return '⚠️ Heavy swell – expert only, potentially dangerous';
 }
 
+// Short wave/swell height descriptor (1-2 words)
+export function getWaveDescriptionShort(meters: number): string {
+  if (meters < 0.1) return 'Flat';
+  if (meters < 0.3) return 'Ripples';
+  if (meters < 0.6) return 'Tiny';
+  if (meters < 1) return 'Knee-high';
+  if (meters < 1.5) return 'Waist-high';
+  if (meters < 2) return 'Shoulder-high';
+  if (meters < 3) return 'Head-high';
+  if (meters < 4) return '⚠️ Overhead';
+  return '⚠️ Heavy swell';
+}
+
 // Complete snow classification system combining depth, active snowfall, and weather conditions
 export function getSnowDescription(
   snowDepthCm: number = 0, 

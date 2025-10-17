@@ -1139,7 +1139,7 @@ const shouldShowSnowWarning = (activityId: string, level?: string): boolean => {
     return (
       <div className="flex items-center justify-center py-16">
         <span className="loading loading-dots loading-lg text-primary" aria-hidden="true"></span>
-        <span className="ml-3 text-base-content/80">Syncing your favourites…</span>
+        <span className="ml-3 text-base-content/80">Good times are buffering—please remain fabulous.</span>
       </div>
     );
   }

@@ -5,7 +5,7 @@ interface WeatherStatCardProps {
   subtitle?: React.ReactNode;
   icon?: React.ReactNode;
   value?: React.ReactNode;
-  badge?: string;
+  badge?: React.ReactNode;
   footer?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;

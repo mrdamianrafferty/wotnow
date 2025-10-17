@@ -1307,7 +1307,9 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
     'snow_depth',
     'freezing_level_height',
     // Add pressure for reliable per-hour pressure series (hPa)
-    'pressure_msl'
+    'pressure_msl',
+    // Add visibility for MET Norway supplement (meters)
+    'visibility'
   ].join(','));
   try {
     const note = JSON.stringify({ start: startDate, end: endDate });

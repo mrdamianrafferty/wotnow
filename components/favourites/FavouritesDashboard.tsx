@@ -63,7 +63,7 @@ export function FavouritesDashboard({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner size="lg" message="Loading your favourites..." />
+        <LoadingSpinner size="lg" message="Loading the good shit..." />
       </div>
     );
   }

@@ -483,33 +483,34 @@ const FindrInfoPage = () => {
             </div>
           </div>
 
-          {/* Artwork Credits */}
-          <div className="card bg-secondary/10 shadow-xl mt-6">
-            <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">
-                <Fish className="text-secondary" size={24} />
-                <TranslatedText text="Artwork & Design" />
-              </h2>
-              <div className="card bg-base-100">
-                <div className="card-body">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="avatar placeholder">
-                      <div className="bg-gradient-to-br from-secondary to-accent text-secondary-content rounded-full w-12">
-                        <span className="text-lg font-bold">RT</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold">Ruki Takada</h3>
-                      <p className="text-sm text-secondary"><TranslatedText text="Renowned Nature Artist" /></p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-base-content/80 mb-4">
-                    <TranslatedText text="A heartfelt thank you to Ruki Takada for creating the exquisite custom artwork that brings findr's underwater world to life. The beautiful fish illustrations, marine landscapes, and nature-inspired design elements capture the magic and mystery of the ocean that every angler feels when casting their line." />
-                  </p>
-                  <div className="text-xs">
-                    <span className="badge badge-secondary badge-sm mr-2">🎨 <TranslatedText text="Custom fish species illustrations" /></span>
-                    <span className="badge badge-secondary badge-sm">🌊 <TranslatedText text="Marine environment artwork" /></span>
-                  </div>
+          {/* Local Tackle Shops Tribute */}
+<div className="card bg-primary/5 shadow-xl mt-6">
+  <div className="card-body">
+    <h2 className="card-title text-2xl mb-4">
+      <Fish className="text-primary" size={24} />
+      <TranslatedText text="Independent Tackle Shops & Bait Stores" />
+    </h2>
+
+    <div className="card bg-base-100">
+      <div className="card-body">
+        <p className="text-sm text-base-content/80 mb-3">
+          <TranslatedText text="A huge thank you to the independent men and women who keep the angling world alive — the ones who open their shops early, keep the bait fresh, and always have time for a story, a bit of advice, or a packet of hooks." />
+        </p>
+
+        <p className="text-sm text-base-content/80 mb-3">
+          <TranslatedText text="In a world of online shopping and courier deliveries, these local tackle shops are the beating heart of our fishing communities. They teach, repair, lend, and laugh with us — and without them, the sport would lose its soul." />
+        </p>
+
+        <p className="text-sm text-base-content/80 mb-3">
+          <TranslatedText text="If you’re lucky enough to have a local shop nearby, please support them. Every visit, every reel of line, every chat over the counter helps keep our shared traditions alive for the next generation." />
+        </p>
+
+        <div className="mt-4 text-xs flex flex-wrap gap-2">
+          <span className="badge badge-primary badge-sm">🎣 <TranslatedText text="Local knowledge" /></span>
+          <span className="badge badge-primary badge-sm">🪱 <TranslatedText text="Fresh bait, friendly advice" /></span>
+          <span className="badge badge-primary badge-sm">🏪 <TranslatedText text="Community spirit" /></span>
+          <span className="badge badge-primary badge-sm">💬 <TranslatedText text="Real stories, real people" /></span>
+        </div>
                 </div>
               </div>
             </div>
