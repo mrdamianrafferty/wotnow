@@ -287,6 +287,8 @@ function mapRowToPayload(row: MoonCacheRow): MoonSunData {
 function computeExpiryIso(localDate: string, timeZone: string): string {
   try {
     const date = Temporal.PlainDate.from(localDate);
+    // Cache expires at midnight of the SAME day (transition to next day)
+    // This ensures moon data refreshes daily at midnight
     const nextDay = date.add({ days: 1 });
     const nextMidnight = Temporal.ZonedDateTime.from(`${nextDay.toString()}T00:00:00[${timeZone}]`);
     return nextMidnight.toInstant().toString();
@@ -365,10 +367,8 @@ export async function getMoonSunData(params: FetchParams): Promise<MoonSunData> 
   const lonBucket = roundToGrid(params.lon);
 
   const previewDate = params.date ?? Temporal.Now.instant().toZonedDateTimeISO('UTC').toPlainDate().toString();
-  let cachedRow = await readFromCache(supabase, latBucket, lonBucket, params.date);
-  if (!cachedRow) {
-    cachedRow = await readFromCache(supabase, latBucket, lonBucket);
-  }
+  // Always try to read cache with the specific date (either provided or today)
+  const cachedRow = await readFromCache(supabase, latBucket, lonBucket, previewDate);
   if (cachedRow) {
     return mapRowToPayload(cachedRow);
   }
