@@ -1,10 +1,19 @@
-/* Main Grid */
+/* Main Grid - Homepage Portrait Cards */
 .main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
-  gap: 16px;
+  gap: 24px;
   align-items: start; /* Changed from stretch to start to prevent overlap */
-  grid-auto-rows: auto; /* Changed from 1fr to auto to allow natural height */
+  grid-auto-rows: auto; /* Allow natural height for portrait cards */
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Homepage portrait cards - taller aspect ratio */
+.main-grid .activity-card-enhanced {
+  aspect-ratio: 3/4; /* Portrait orientation for homepage */
+  min-height: 500px;
 }
 
 /* General Card Styles */
@@ -661,23 +670,25 @@
 @media (max-width: 600px) {
   .main-grid {
     grid-template-columns: 1fr !important;
-    gap: 8px !important;
-    padding: 0 !important;
+    gap: 12px !important;
+    padding: 8px !important;
     margin: 0 !important;
   }
 
-  .activity-card-enhanced {
+  /* Homepage portrait cards on mobile */
+  .main-grid .activity-card-enhanced {
+    aspect-ratio: 3/4 !important; /* Maintain portrait on mobile */
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100vw !important;
     height: auto !important;
-    min-height: 0 !important;
+    min-height: 400px !important;
     max-height: none !important;
     border-radius: 12px !important;
     padding: 0.5rem !important;
     box-sizing: border-box !important;
     margin-bottom: 12px !important;
-    box-shadow: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     background-size: cover;
     background-position: center;
   }

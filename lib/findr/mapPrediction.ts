@@ -94,6 +94,11 @@ export interface CardData {
   bait?: BaitInfo[];
   substrates?: SubstrateInfo | null;
   inaturalist_url?: string | null;
+  
+  // Weather data (Phase 11)
+  weather_score?: number | null;
+  current_wind_speed_ms?: number | null;
+  current_pressure_hpa?: number | null;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
@@ -652,6 +657,11 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     depthRange: formatDepthRange(prediction),
     seasonality: formatSeasonality(prediction),
     habitatType: formatHabitatType(prediction),
+    
+    // Weather data
+    weather_score: extractNumber(prediction.weather_score),
+    current_wind_speed_ms: extractNumber(prediction.current_wind_speed_ms),
+    current_pressure_hpa: extractNumber(prediction.current_pressure_hpa),
     
     // Phase 10: Environmental data
     data_freshness,

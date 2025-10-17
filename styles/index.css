@@ -1383,10 +1383,11 @@ abbr[title] {
   padding: 1.5rem;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s, box-shadow 0.2s;
-  aspect-ratio: 16/9; /* Prevent layout shift when background images load */
-  min-height: 300px; /* Ensure cards have minimum height */
+  min-height: 300px; /* Base minimum height */
   position: relative; /* For Next.js Image fill */
   overflow: hidden; /* Contain Image within border-radius */
+  display: flex;
+  flex-direction: column;
 }
 
 .activity-card-enhanced:hover {
@@ -1398,14 +1399,16 @@ abbr[title] {
 .activity-card {
   border-radius: 12px;
   padding: 16px;
-  min-height: 200px;
-  aspect-ratio: 16/9; /* Prevent layout shift by reserving space */
+  min-height: 250px;
+  aspect-ratio: 16/9; /* Landscape orientation for activities page */
   color: #fff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  background-size: cover;
+  background-position: center;
 }
 
 .activity-card__header {
@@ -1576,12 +1579,18 @@ abbr[title] {
   margin-top: 2px;
 }
 
-/* ------ ACTIVITIES GRID ------ */
+/* ------ ACTIVITIES GRID (landscape cards) ------ */
 .activities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); /* Wider columns for landscape */
   gap: 1.5rem;
   margin-top: 1.5rem;
+  align-items: start;
+  grid-auto-rows: auto; /* Let landscape aspect ratio control height */
+  padding: 16px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ------ UTILITY CLASSES ------ */

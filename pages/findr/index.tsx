@@ -42,6 +42,25 @@ import { CatchEntry as _CatchEntry } from '../../types/aiRecommendations';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFishDeck';
 import { GuildBadge } from '../../components/findr/GuildBadge';
 import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
+import { getWeatherMessage } from '../../lib/utils/weatherMessages';
+
+const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
+  if (isLoading) {
+    return (
+      <span className="flex items-center gap-2 leading-relaxed text-base-content/60">
+        <span className="loading loading-spinner loading-xs" aria-hidden />
+        <TranslatedText text="Checking conditions..." />
+      </span>
+    );
+  }
+  
+  const weather = getWeatherMessage(speciesCode, scientificName, { 
+    windSpeedMS, 
+    pressureHPA, 
+    weatherScore 
+  });
+  return <span className="leading-relaxed">{weather.message}</span>;
+};
 
 const TODAY_ISO = getTodayIso();
 
@@ -218,6 +237,20 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
           </div>
           {card.summary && (
             <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>
+          )}
+          
+          {/* Guild weather message */}
+          {(card.weather_score != null && card.current_wind_speed_ms != null && card.current_pressure_hpa != null) && (
+            <div className="rounded-xl border-l-4 border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+              <WeatherGuildMessage 
+                speciesCode={card.speciesCode || ''}
+                scientificName={card.scientificName || ''}
+                weatherScore={card.weather_score}
+                windSpeedMS={card.current_wind_speed_ms}
+                pressureHPA={card.current_pressure_hpa}
+                isLoading={false}
+              />
+            </div>
           )}
         </div>
 

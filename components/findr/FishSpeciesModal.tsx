@@ -26,6 +26,25 @@ import type { CardData } from '../../lib/findr/mapPrediction';
 import { getSpeciesAdvice } from '../../data/speciesAdvice';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useSpeciesDetails } from '../../hooks/useSpeciesDetails';
+import { getWeatherMessage } from '../../lib/utils/weatherMessages';
+
+const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
+  if (isLoading) {
+    return (
+      <span className="flex items-center gap-2 text-base-content/60">
+        <span className="loading loading-spinner loading-xs" aria-hidden />
+        <TranslatedText text="Checking conditions..." />
+      </span>
+    );
+  }
+  
+  const weather = getWeatherMessage(speciesCode, scientificName, { 
+    windSpeedMS, 
+    pressureHPA, 
+    weatherScore 
+  });
+  return <span>{weather.message}</span>;
+};
 
 type SpeciesModalContext = 'shore' | 'boat' | 'both';
 
@@ -252,6 +271,25 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                 <TranslatedText text="findr bio" />
               </p>
               {card.playfulBio}
+            </div>
+          )}
+          
+          {/* Guild weather message */}
+          {card.weather_score != null && card.current_wind_speed_ms != null && card.current_pressure_hpa != null && (
+            <div className="rounded-xl border-l-4 border-info/40 bg-info/10 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-info mb-2 flex items-center gap-2">
+                <CloudRain size={14} />
+                <span><TranslatedText text="Weather check" /></span>
+              </p>
+              <p className="text-sm leading-relaxed text-base-content/80">
+                <WeatherGuildMessage 
+                  speciesCode={card.speciesCode || ''}
+                  scientificName={card.scientificName || ''}
+                  weatherScore={card.weather_score}
+                  windSpeedMS={card.current_wind_speed_ms}
+                  pressureHPA={card.current_pressure_hpa}
+                />
+              </p>
             </div>
           )}
 
