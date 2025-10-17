@@ -8,6 +8,7 @@ import { useFindrMarineWeather } from '../../hooks/useFindrMarineWeather';
 import WindSummaryCard from './weather/WindSummaryCard';
 import WaveSummaryCard from './weather/WaveSummaryCard';
 import TideSummaryCard from './weather/TideSummaryCard';
+import MoonSummaryCardCompact from './weather/MoonSummaryCardCompact';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
 import FindrNextFewDaysCard from './weather/FindrNextFewDaysCard';
@@ -628,7 +629,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
               
               Environmental card (pollen/AQI/UV) removed - not relevant for marine fishing.
               ======================================================================== */}
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <WindSummaryCard
               speedKts={windSpeedKts}
               directionDeg={windDirectionDeg}
@@ -645,11 +646,15 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
               lastTideHeight={tideExtrema.max}
               upcomingTideHeight={tideExtrema.min}
             />
+            <MoonSummaryCardCompact
+              lat={mapLocation.lat}
+              lon={mapLocation.lon}
+            />
             <MarineBioIndicatorsCard
               indicators={marineBioIndicators}
               loading={loading}
               updatedAt={data.snapshot.capturedAt}
-              className="md:col-span-2 xl:col-span-3"
+              className="md:col-span-2 xl:col-span-4"
             />
           </div>
 
