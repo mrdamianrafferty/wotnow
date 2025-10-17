@@ -10,10 +10,11 @@
   margin: 0 auto;
 }
 
-/* Homepage portrait cards - taller aspect ratio */
+/* Homepage portrait cards - allow natural height for content */
 .main-grid .activity-card-enhanced {
-  aspect-ratio: 3/4; /* Portrait orientation for homepage */
-  min-height: 500px;
+  /* Removed fixed aspect-ratio to allow content to dictate height */
+  min-height: 450px;
+  height: auto; /* Allow cards to expand based on content */
 }
 
 /* General Card Styles */
@@ -65,7 +66,7 @@
   position: relative;
   padding: 1.5rem;
   z-index: 1;
-  height: 100%; /* <-- add this line */
+  min-height: 100%; /* Changed from height to min-height to allow expansion */
 }
 
 .date-label {
@@ -472,7 +473,25 @@
   position: relative;
   padding: 1.5rem;
   z-index: 1;
-  height: 100%; /* <-- add this line */
+  min-height: 100%; /* Changed from height to min-height to allow expansion */
+}
+
+/* Forecast header - day and temperature info */
+.forecast-header {
+  flex-shrink: 0; /* Prevent compression */
+  margin-bottom: 1rem;
+}
+
+.temperature-info {
+  flex-shrink: 0; /* Prevent compression */
+}
+
+/* Activity suggestions container - allows scrolling if needed */
+.activity-suggestions {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
 }
 
 .activity-card-actions {
@@ -480,6 +499,7 @@
   display: flex;
   gap: 1rem;
   padding-top: 1.5rem;
+  flex-shrink: 0; /* Prevent buttons from being compressed */
 }
 
 .activity-card-btn {
@@ -677,12 +697,12 @@
 
   /* Homepage portrait cards on mobile */
   .main-grid .activity-card-enhanced {
-    aspect-ratio: 3/4 !important; /* Maintain portrait on mobile */
+    /* Removed fixed aspect-ratio to allow content expansion on mobile */
     min-width: 0 !important;
     width: 100% !important;
     max-width: 100vw !important;
     height: auto !important;
-    min-height: 400px !important;
+    min-height: 350px !important;
     max-height: none !important;
     border-radius: 12px !important;
     padding: 0.5rem !important;
