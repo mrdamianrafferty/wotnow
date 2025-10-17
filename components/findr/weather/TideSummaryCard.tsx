@@ -32,8 +32,8 @@ export function TideSummaryCard({ nextHighIso, nextLowIso, lastTideHeight, upcom
 
   return (
     <WeatherStatCard
-      title={<TranslatedText text="Marées" />}
-      subtitle={<TranslatedText text="Prochaines fenêtres solaires" />}
+      title={<TranslatedText text="Tides" />}
+      subtitle={<TranslatedText text="Next tidal windows" />}
       icon={<Anchor className="size-5" />}
       value={headline ? <TranslatedText text={headline} /> : undefined}
       footer={footerText ? <TranslatedText text={footerText} /> : undefined}

@@ -12,7 +12,7 @@ import TideSummaryCard from './weather/TideSummaryCard';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
 import DailyMarineCarousel from './weather/DailyMarineCarousel';
-import NextFewDaysCard from '../weather-cards/NextFewDaysCard';
+import FindrNextFewDaysCard from './weather/FindrNextFewDaysCard';
 import { buildMarineBioIndicators, calculateStealthIndex } from '../../utils/bioMarineLevels';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -106,7 +106,7 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
   return fallback.toISOString();
 };
 
-type NextFewDaysCardProps = ComponentProps<typeof NextFewDaysCard>;
+type NextFewDaysCardProps = ComponentProps<typeof FindrNextFewDaysCard>;
 
 /**
  * ConditionsDashboard Component
@@ -345,6 +345,23 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   // ✅ Provides accurate 7-day forecasts with real wave/wind data
   // ⚠️ Falls back to data.snapshot.daily if live weather API fails
   // ==================================================================================
+
+  // Extract next high and low tides from tideEvents for the TideSummaryCard
+  const nextTides = useMemo(() => {
+    const now = Date.now();
+    const upcoming = tideEvents
+      .filter(event => new Date(event.timeISO).getTime() > now)
+      .sort((a, b) => new Date(a.timeISO).getTime() - new Date(b.timeISO).getTime());
+    
+    const nextHigh = upcoming.find(event => event.type === 'HIGH');
+    const nextLow = upcoming.find(event => event.type === 'LOW');
+    
+    return {
+      nextHighIso: nextHigh?.timeISO ?? null,
+      nextLowIso: nextLow?.timeISO ?? null,
+    };
+  }, [tideEvents]);
+
   const nextFewDaysDaily = useMemo<NextFewDaysCardProps['daily']>(() => {
     // Prefer live weather data
     if (marineWeather.daily && marineWeather.daily.length > 0) {
@@ -604,10 +621,10 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
                  🔄 Updated: Every page load (hourly data)
                  📊 Shows: Wave height (m), Chlorophyll (mg/m³ from DB)
               
-              3️⃣ TIDES (Cached - OK for daily changes)
-                 🟢 Source: data.snapshot.tides (Supabase - daily ingestion)
-                 🔄 Updated: Daily (tides are predictable, change slowly)
-                 📊 Shows: Next high/low times, Tide heights
+              3️⃣ TIDES (Live)
+                 � Source: marineWeather.tides (WorldTides API via unified-weather)
+                 🔄 Updated: Every page load (7-day forecast)
+                 📊 Shows: Next high/low times from live tide data
               
               ⚠️ SAFETY: Wind & wave data MUST be live - stale data endangers lives!
               ⚠️ NEVER revert to marine.windSpeedKts or marine.waveHeightM directly!
@@ -627,8 +644,8 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
               updatedAt={marineWeather.updatedAt ?? data.snapshot.capturedAt}
             />
             <TideSummaryCard
-              nextHighIso={data.snapshot.tides.nextHighIso}
-              nextLowIso={data.snapshot.tides.nextLowIso}
+              nextHighIso={nextTides.nextHighIso}
+              nextLowIso={nextTides.nextLowIso}
               lastTideHeight={tideExtrema.max}
               upcomingTideHeight={tideExtrema.min}
             />
@@ -642,11 +659,10 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
 
           <div className="mt-4">
             {nextFewDaysDaily.length > 0 ? (
-              <NextFewDaysCard
+              <FindrNextFewDaysCard
                 daily={nextFewDaysDaily}
                 marineHourly={marineHourlyForCard}
                 tide={tideEvents}
-                isMarine
               />
             ) : (
               <div className="card bg-base-200/40 border border-base-200 shadow-sm">

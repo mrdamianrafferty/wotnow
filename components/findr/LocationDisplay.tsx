@@ -116,7 +116,7 @@ export function LocationDisplay() {
         ) : (
           <MapPin size={16} className="text-cyan-500" />
         )}
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium text-base-content">
           {loadingState ? 'Finding area...' : locationName}
         </span>
       </button>
