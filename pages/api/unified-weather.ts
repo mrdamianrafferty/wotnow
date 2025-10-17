@@ -6,6 +6,7 @@ import {
 } from '../../lib/weather/rectangleAnchors';
 import { getMoonSunData } from '../../lib/astro/moonService';
 import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
+import { fetchWorldTides, type WorldTidesResponse } from '../../lib/services/weatherService';
 
 /*
  * ████████████████████████████████████████████████████████████████████████████████████
@@ -22,6 +23,7 @@ import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 type CacheEntry<T> = { ts: number; data: T };
 // Strengthen cache maps with generics
 const sgTideCache = new Map<string, CacheEntry<StormglassTidesResponse>>();
+const worldTidesCache = new Map<string, CacheEntry<WorldTidesResponse>>();
 const sgMarineCache = new Map<string, CacheEntry<StormglassMarineResponse>>();
 const sgBioCache = new Map<string, CacheEntry<StormglassBioResponse>>();
 const owWeatherCache = new Map<string, CacheEntry<OpenWeatherOneCall3 | OpenWeatherForecast25>>();
@@ -148,13 +150,14 @@ interface OpenMeteoSoilHourly {
     soil_moisture_9_to_27cm?: number[];
   };
 }
-// New: minimal Open-Meteo general weather hourly typing (for pressure_msl, temperature_2m)
+// New: minimal Open-Meteo general weather hourly typing (for pressure_msl, temperature_2m, visibility)
 interface OpenMeteoGeneralHourly {
   utc_offset_seconds?: number;
   hourly?: {
     time?: string[];
     pressure_msl?: number[];
     temperature_2m?: number[];
+    visibility?: number[]; // meters
     // NEW: include snow arrays so we can map them into unified hourly
     snowfall?: number[]; // cm per hour
     snow_depth?: number[]; // cm
@@ -266,7 +269,7 @@ class CacheMetrics {
 }
 
 // Cache TTL settings
-const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+const _TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours (currently unused, tides use WorldTides live data)
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
 const RECT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours per rectangle/day
 const WEATHER_TTL_MS = 5 * 60 * 1000;   // 5 minutes for main weather data
@@ -446,7 +449,7 @@ async function fetchFromMetNo(lat: number, lon: number, units: string, mode: str
       windSpeedMS: inst0?.wind_speed,
       windGustMS: undefined,
       windDeg: inst0?.wind_from_direction,
-      visibilityKm: undefined,
+      visibilityKm: undefined, // Will be supplemented from OpenWeather below
       uvi: undefined,
       cloudsPct: inst0?.cloud_area_fraction,
       description: mappedNow.description,
@@ -1638,27 +1641,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         const tideCacheKey = rectangleCode
           ? buildRectangleCacheKey(rectangleCode, 'tides', sgDayKey)
-          : getCacheKey(latNum, lonNum, 'stormglass', 'tides');
+          : getCacheKey(latNum, lonNum, 'worldtides', 'tides');
         const marineCacheKey = rectangleCode
           ? buildRectangleCacheKey(rectangleCode, 'marine', sgDayKey)
           : getCacheKey(latNum, lonNum, 'stormglass', 'marine');
-        // Tides with cache
-        const tideCached = sgTideCache.get(tideCacheKey);
+
+        // Try WorldTides first (preferred for Go Daisy), fallback to Stormglass
+        const worldTidesKey = process.env.WORLDTIDES_API_KEY;
         let tidesRaw: StormglassTidesResponse | null = null;
-        const tideTtl = rectangleCode ? RECT_TTL_MS : TIDE_TTL_MS;
-        if (tideCached && Date.now() - tideCached.ts < tideTtl) {
-          tidesRaw = tideCached.data as StormglassTidesResponse;
-        } else {
-          tidesRaw = await fetchStormglassTides(sgLat, sgLon, sgKey);
-          if (tidesRaw) sgTideCache.set(tideCacheKey, { ts: Date.now(), data: tidesRaw });
+        const tideTtl = rectangleCode ? RECT_TTL_MS : 24 * 60 * 60 * 1000; // 24h for WorldTides (predictable)
+
+        if (worldTidesKey) {
+          // WorldTides path (preferred)
+          const wtCached = worldTidesCache.get(tideCacheKey);
+          if (wtCached && Date.now() - wtCached.ts < tideTtl) {
+            const wtData = wtCached.data;
+            if (wtData.extremes && Array.isArray(wtData.extremes)) {
+              const tides = wtData.extremes.map((t): { time: string; type: 'high' | 'low'; height: number | null } => ({
+                time: new Date(t.dt * 1000).toISOString(),
+                type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
+                height: typeof t.height === 'number' ? t.height : null
+              }));
+              normalizedData.tides = tides;
+              try { res.setHeader('X-Tide-Source', 'worldtides'); } catch { /* noop */ }
+            }
+          } else {
+            const wtData = await fetchWorldTides(sgLat, sgLon, 7);
+            if (wtData) {
+              worldTidesCache.set(tideCacheKey, { ts: Date.now(), data: wtData });
+              if (wtData.extremes && Array.isArray(wtData.extremes)) {
+                const tides = wtData.extremes.map((t): { time: string; type: 'high' | 'low'; height: number | null } => ({
+                  time: new Date(t.dt * 1000).toISOString(),
+                  type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
+                  height: typeof t.height === 'number' ? t.height : null
+                }));
+                normalizedData.tides = tides;
+                try { res.setHeader('X-Tide-Source', 'worldtides'); } catch { /* noop */ }
+              }
+            }
+          }
         }
-        if (tidesRaw && Array.isArray(tidesRaw.data)) {
-          const tides = tidesRaw.data.map((t): { time: string; type: 'high' | 'low'; height: number | null } => ({
-            time: new Date(t.time).toISOString(),
-            type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
-            height: typeof t.height === 'number' ? t.height : (t.height != null ? Number(t.height) : null)
-          }));
-          normalizedData.tides = tides;
+
+        // Fallback to Stormglass if WorldTides failed or not configured
+        if (!normalizedData.tides && sgKey) {
+          const tideCached = sgTideCache.get(tideCacheKey);
+          if (tideCached && Date.now() - tideCached.ts < tideTtl) {
+            tidesRaw = tideCached.data as StormglassTidesResponse;
+          } else {
+            tidesRaw = await fetchStormglassTides(sgLat, sgLon, sgKey);
+            if (tidesRaw) sgTideCache.set(tideCacheKey, { ts: Date.now(), data: tidesRaw });
+          }
+          if (tidesRaw && Array.isArray(tidesRaw.data)) {
+            const tides = tidesRaw.data.map((t): { time: string; type: 'high' | 'low'; height: number | null } => ({
+              time: new Date(t.time).toISOString(),
+              type: String(t.type).toLowerCase().includes('high') ? 'high' : 'low',
+              height: typeof t.height === 'number' ? t.height : (t.height != null ? Number(t.height) : null)
+            }));
+            normalizedData.tides = tides;
+            try { res.setHeader('X-Tide-Source', 'stormglass'); } catch { /* noop */ }
+          }
         }
 
   // Marine (multi-day) with MET Norway primary and Stormglass fallback
@@ -2113,22 +2154,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const t: string[] = H.time || [];
       const p: number[] = H.pressure_msl || [];
       const tc: number[] = H.temperature_2m || [];
+      const vis: number[] = H.visibility || []; // meters
       // NEW: snow arrays (Open-Meteo units: snowfall is cm over last hour; snow_depth is cm)
       const snowDepth: number[] = H.snow_depth || [];
       const snowfallCm: number[] = H.snowfall || [];
 
       // Build UTC ms for OM times by subtracting offset from the naive-UTC parse
-      const omSamples: Array<{ ms: number; pressure?: number; temp?: number; snowDepthCm?: number; snowfallRateMmH?: number }> = [];
+      const omSamples: Array<{ ms: number; pressure?: number; temp?: number; visibilityKm?: number; snowDepthCm?: number; snowfallRateMmH?: number }> = [];
       for (let i = 0; i < t.length; i++) {
         const parsed = Date.parse(String(t[i]) + 'Z'); // interpret string as UTC first
         const utcMs = Number.isFinite(parsed) ? (parsed - offset * 1000) : NaN;
         const pr = typeof p[i] === 'number' ? Number(p[i]) : undefined;
         const tm = typeof tc[i] === 'number' ? Number(tc[i]) : undefined;
+        const visM = typeof vis[i] === 'number' ? Number(vis[i]) : undefined;
+        const visKm = typeof visM === 'number' && Number.isFinite(visM) ? Math.round(visM / 100) / 10 : undefined; // Convert meters to km (1 decimal)
         const sd = typeof snowDepth[i] === 'number' ? Number(snowDepth[i]) : undefined;
         const sfCm = typeof snowfallCm[i] === 'number' ? Number(snowfallCm[i]) : undefined;
         // Convert snowfall cm to mm/h for unified naming consistency
         const sfMmH = typeof sfCm === 'number' && Number.isFinite(sfCm) ? sfCm * 10 : undefined;
-        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm, snowDepthCm: sd, snowfallRateMmH: sfMmH });
+        if (Number.isFinite(utcMs)) omSamples.push({ ms: utcMs, pressure: pr, temp: tm, visibilityKm: visKm, snowDepthCm: sd, snowfallRateMmH: sfMmH });
       }
 
       if (omSamples.length) {
@@ -2171,18 +2215,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (hours.length) (normalizedData as UnifiedWeather).hourly = hours;
         }
 
-        // Also set current pressure if missing, using nearest OM sample to now
-        if (normalizedData.pressureHpa == null) {
+        // Also set current pressure and visibility if missing, using nearest OM sample to now
+        if (normalizedData.pressureHpa == null || normalizedData.visibilityKm == null) {
           const nowMs = Date.now();
           const nearest = nearestOM(nowMs);
-          const prNow = nearest?.pressure;
-          if (typeof prNow === 'number' && Number.isFinite(prNow)) {
-            (normalizedData as UnifiedWeather).pressureHpa = prNow;
+          if (normalizedData.pressureHpa == null) {
+            const prNow = nearest?.pressure;
+            if (typeof prNow === 'number' && Number.isFinite(prNow)) {
+              (normalizedData as UnifiedWeather).pressureHpa = prNow;
+            }
+          }
+          if (normalizedData.visibilityKm == null) {
+            const visNow = nearest?.visibilityKm;
+            if (typeof visNow === 'number' && Number.isFinite(visNow)) {
+              (normalizedData as UnifiedWeather).visibilityKm = visNow;
+            }
           }
         }
       }
     } catch (e) {
-      console.warn('Open-Meteo hourly pressure/snow supplement failed:', e);
+      console.warn('Open-Meteo hourly pressure/visibility/snow supplement failed:', e);
     }
 
     // Optional: Soil snapshot (Open-Meteo) — take a midday snapshot to avoid night-bias
