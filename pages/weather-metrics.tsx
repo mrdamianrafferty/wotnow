@@ -339,3 +339,8 @@ function EndpointsTable({ endpoints }: { endpoints: EndpointSnapshot[] }) {
     </div>
   );
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

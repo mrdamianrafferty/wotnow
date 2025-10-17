@@ -852,3 +852,8 @@ const InterestsTest: React.FC = () => {
 };
 
 export default InterestsTest;
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

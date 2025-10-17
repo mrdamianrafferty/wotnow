@@ -5,6 +5,9 @@ import AppHeader from '../../components/AppHeader';
 import Footer from '../../components/footer';
 import BottomNav from '../../components/BottomNav';
 
+// Disable static generation for auth-protected page
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   const supabase = await createClient(); // await the Promise
 

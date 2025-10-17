@@ -5,8 +5,8 @@ import { useCallback } from "react";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
-// (Optional) keep this if you also wire theme via _app; not required for the wrapper approach
-export function getStaticProps() {
+// Disable static generation
+export async function getServerSideProps() {
   return { props: { theme: "light" } };
 }
 

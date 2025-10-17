@@ -1408,3 +1408,8 @@ function getHourlyAQIOverall({ bundle, timeISO }: { bundle: WeatherBundle; timeI
   if (!levels.length) return undefined;
   return Math.max(1, Math.min(6, Math.max(...levels)));
 }
+
+// Disable static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}
