@@ -438,7 +438,11 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
 
         {!ready && !locationError ? (
           <div className="alert alert-info mt-3">
-            <span>Loading location search service...</span>
+            <span>
+              {showLoadingTimeout
+                ? 'Location search is taking longer than expected. Try using "Current location" or "Pick from map" instead.'
+                : 'Loading location search service...'}
+            </span>
           </div>
         ) : null}
 

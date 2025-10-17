@@ -156,15 +156,19 @@ export function FindrNextFewDaysCard({
             }
 
             // Tide times - get both high and low tides
-            const dayStartLocal = new Date(`${dayKey}T00:00:00`);
-            const dayEndLocal = new Date(`${dayKey}T23:59:59.999`);
+            // Extract just the date part from tide ISO strings for comparison
             const now = new Date();
-            
-            // For "Today", only show upcoming tides. For future days, show all tides.
             const dayTides = (tide || []).filter(t => {
               const raw = (t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || '';
+              if (!raw) return false;
+              
               const dt = new Date(raw);
-              const isInDay = dt >= dayStartLocal && dt <= dayEndLocal;
+              if (isNaN(dt.getTime())) return false;
+              
+              // Compare just the date portion (YYYY-MM-DD)
+              const tideDateKey = dt.toISOString().slice(0, 10);
+              const isInDay = tideDateKey === dayKey;
+              
               // For today (idx 0), filter out past tides
               if (idx === 0) {
                 return isInDay && dt > now;
@@ -240,7 +244,10 @@ export function FindrNextFewDaysCard({
                         <span className="text-xs">{lowStr}</span>
                       </>
                     ) : (
-                      <span className="text-xs opacity-50">—</span>
+                      <>
+                        <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="No tide" width={48} height={48} className="opacity-30 w-12 h-12" />
+                        <span className="text-xs opacity-50">—</span>
+                      </>
                     )}
                   </div>
                 </div>
