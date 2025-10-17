@@ -202,7 +202,7 @@ export function FindrNextFewDaysCard({
 
                   {/* Rain */}
                   <div className="flex items-center gap-1 min-w-[60px]">
-                    <Image src="/weather-icons/design/fill/final/raindrop.svg" alt="Rain" width={14} height={14} className="opacity-60" />
+                    <Image src="/weather-icons/design/fill/final/raindrop.svg" alt="Rain" width={40} height={40} className="opacity-60" />
                     <span className="text-xs">{showMM ? `${mmRounded}mm` : hasPop ? `${popPct}%` : '—'}</span>
                   </div>
 
@@ -212,22 +212,22 @@ export function FindrNextFewDaysCard({
                       <label className="swap swap-rotate cursor-pointer" title="Toggle High/Low tides">
                         <input type="checkbox" aria-label="Toggle tide view (High/Low)" />
                         <span className="swap-off inline-flex items-center gap-1">
-                          <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={14} height={14} className="opacity-60" />
+                          <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={40} height={40} className="opacity-60" />
                           <span className="text-xs">{highStr}</span>
                         </span>
                         <span className="swap-on inline-flex items-center gap-1">
-                          <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={14} height={14} className="opacity-60" />
+                          <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={40} height={40} className="opacity-60" />
                           <span className="text-xs">{lowStr}</span>
                         </span>
                       </label>
                     ) : highStr ? (
                       <>
-                        <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={14} height={14} className="opacity-60" />
+                        <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={40} height={40} className="opacity-60" />
                         <span className="text-xs">{highStr}</span>
                       </>
                     ) : lowStr ? (
                       <>
-                        <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={14} height={14} className="opacity-60" />
+                        <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={40} height={40} className="opacity-60" />
                         <span className="text-xs">{lowStr}</span>
                       </>
                     ) : (
