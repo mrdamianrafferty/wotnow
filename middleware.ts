@@ -5,9 +5,9 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
   
-  // Redirect fishfindr.eu to /findr (but NOT for API routes, static assets, or _next)
-  // Also handle godaisy.io subdomain paths
-  if (hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu' || hostname.includes('godaisy.io')) {
+  // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
+  // Do NOT redirect godaisy.io - it's already serving /findr as a subdomain path
+  if ((hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') && !hostname.includes('godaisy.io')) {
     // Skip redirect for:
     // - API routes (/api/*)
     // - Next.js internals (/_next/*)
@@ -43,7 +43,8 @@ export function middleware(req: NextRequest) {
   const isFindrFlow = url.searchParams.get('app') === 'findr' || 
                       url.pathname.startsWith('/findr') ||
                       req.headers.get('referer')?.includes('/findr') ||
-                      req.headers.get('host')?.includes('fishfindr.eu');
+                      hostname.includes('fishfindr.eu') ||
+                      hostname.includes('godaisy.io');
 
   if ((hasCode || hasTokenHash)) {
     if (isFindrFlow && url.pathname !== '/findr/magic-link') {
