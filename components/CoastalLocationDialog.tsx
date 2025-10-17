@@ -82,6 +82,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
   const [confirmLocate, setConfirmLocate] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingSuggestion, setIsLoadingSuggestion] = useState(false);
+  const [showLoadingTimeout, setShowLoadingTimeout] = useState(false);
 
   const RECENT_KEY = 'coastal_recent_locations_v1';
   const LEGACY_KEY = 'recentCoastalLocations';
@@ -155,10 +156,32 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
   useEffect(() => {
     if (!open) return;
 
-    loadGoogleMapsAPI().catch((err) => {
-      console.error('Failed to load Google Maps:', err);
-      setLocationError('Failed to load location search. Please refresh the page.');
-    });
+    // Set a timeout to show alternative options if loading takes too long
+    const timeoutId = setTimeout(() => {
+      setShowLoadingTimeout(true);
+    }, 5000); // Show alternatives after 5 seconds
+
+    loadGoogleMapsAPI()
+      .then(() => {
+        clearTimeout(timeoutId);
+        setShowLoadingTimeout(false);
+      })
+      .catch((err) => {
+        clearTimeout(timeoutId);
+        console.error('Failed to load Google Maps:', err);
+        const message = err instanceof Error ? err.message : 'Failed to load location search';
+
+        // Show helpful error based on the issue
+        if (message.includes('API key')) {
+          setLocationError('Location search unavailable. You can still use "Current location" or "Pick from map".');
+        } else if (message.includes('timeout')) {
+          setLocationError('Location search is taking longer than expected. You can still use "Current location" or "Pick from map".');
+        } else {
+          setLocationError('Location search unavailable. You can still use "Current location" or "Pick from map".');
+        }
+      });
+
+    return () => clearTimeout(timeoutId);
   }, [open]);
 
   // Google Places hook (we render our own suggestions list)

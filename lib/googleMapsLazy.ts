@@ -21,6 +21,14 @@ export function loadGoogleMapsAPI(): Promise<void> {
 
   // Start loading
   loadPromise = new Promise((resolve, reject) => {
+    // Check if API key exists
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey || apiKey === 'your_google_maps_api_key') {
+      console.error('❌ Google Maps API key missing or not configured');
+      reject(new Error('Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local'));
+      return;
+    }
+
     // Check if script already exists (edge case)
     if (document.querySelector('script[src*="maps.googleapis.com"]')) {
       console.log('✅ Google Maps script already in DOM');
@@ -42,7 +50,7 @@ export function loadGoogleMapsAPI(): Promise<void> {
     // Create timeout handler
     const timeoutId = setTimeout(() => {
       console.error('❌ Google Maps failed to load within 15 seconds');
-      reject(new Error('Google Maps load timeout'));
+      reject(new Error('Google Maps load timeout - please check your internet connection'));
     }, 15000);
 
     // Create callback that Google Maps will call when ready

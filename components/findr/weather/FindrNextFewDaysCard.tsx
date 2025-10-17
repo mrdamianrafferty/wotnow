@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { Waves } from "lucide-react";
 import type { MarineHourlyPoint, TideEvent } from "../../../types/weather";
 import WindDirectionIcon from "../../WindDirectionIcon";
 
@@ -195,14 +196,14 @@ export function FindrNextFewDaysCard({
                   {/* Wind */}
                   <div className="flex items-center gap-2 min-w-[70px]">
                     {typeof d.windDeg === 'number' && (
-                      <WindDirectionIcon deg={d.windDeg} size={48} className="opacity-70" />
+                      <WindDirectionIcon deg={d.windDeg} size={24} className="opacity-70" />
                     )}
                     <span className="text-xs">{windKts != null ? `${windKts}kt` : '—'}</span>
                   </div>
 
                   {/* Waves */}
                   <div className="flex items-center gap-2 min-w-[60px]">
-                    <Image src="/weather-icons/design/fill/final/wave-moving.svg" alt="Waves" width={48} height={48} className="opacity-60 w-12 h-12" />
+                    <Waves className="w-5 h-5 opacity-60" />
                     <span className="text-xs">
                       {typeof medHeight === 'number' ? `${medHeight.toFixed(1)}m` : '—'}
                     </span>
