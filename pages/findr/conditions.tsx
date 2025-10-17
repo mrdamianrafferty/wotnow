@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import SEO from '../../components/SEO';
-import { MoonStar } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
-import { TranslatedText } from '../../components/translation/TranslatedFishCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
   useFindrRectangleOptions,
@@ -16,7 +14,6 @@ import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettin
 import { getTodayIso } from '../../lib/date/today';
 import ConditionsDashboard from '../../components/findr/ConditionsDashboard';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
-import MoonWidget from '../../components/findr/MoonWidget';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 
 const FindrConditionsRoute: React.FC = () => {
@@ -32,8 +29,6 @@ const FindrConditionsRoute: React.FC = () => {
   const {
     selectedCode,
     setSelectedCode,
-    predictionDate,
-    setPredictionDate,
     language: _language,
     setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
@@ -106,17 +101,6 @@ const FindrConditionsRoute: React.FC = () => {
     });
   }, [rectangleFromUrl, locationLoading, locationRectangle, rectangleOptions, router.isReady, updateLocation]);
 
-  const handleDateChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setPredictionDate(event.target.value);
-    },
-    [setPredictionDate]
-  );
-
-  const handleSetToday = useCallback(() => {
-    setPredictionDate(getTodayIso());
-  }, [setPredictionDate]);
-
   const conditions = useFindrConditions(activeRectangle);
 
   // Debug: Log when activeRectangle changes
@@ -128,32 +112,6 @@ const FindrConditionsRoute: React.FC = () => {
       source: location?.source,
     });
   }, [activeRectangle, locationRectangle, selectedCode, location?.source]);
-
-  const moonCoords = useMemo(() => {
-    const optionLat = typeof activeOption?.centerLat === 'number' ? activeOption.centerLat : undefined;
-    const optionLon = typeof activeOption?.centerLon === 'number' ? activeOption.centerLon : undefined;
-    const fallbackLat = typeof conditions.data?.rectangle?.centerLat === 'number' ? conditions.data.rectangle.centerLat : undefined;
-    const fallbackLon = typeof conditions.data?.rectangle?.centerLon === 'number' ? conditions.data.rectangle.centerLon : undefined;
-
-    const latCandidate = optionLat ?? fallbackLat;
-    const lonCandidate = optionLon ?? fallbackLon;
-
-    if (
-      typeof latCandidate === 'number' &&
-      Number.isFinite(latCandidate) &&
-      typeof lonCandidate === 'number' &&
-      Number.isFinite(lonCandidate)
-    ) {
-      return { lat: latCandidate, lon: lonCandidate };
-    }
-
-    return null;
-  }, [
-    activeOption?.centerLat,
-    activeOption?.centerLon,
-    conditions.data?.rectangle?.centerLat,
-    conditions.data?.rectangle?.centerLon,
-  ]);
 
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;
@@ -192,58 +150,12 @@ const FindrConditionsRoute: React.FC = () => {
             onRetry={conditions.reload}
             rectangleCode={activeRectangle ?? undefined}
           />
-          {moonCoords ? (
-            <section className="card bg-base-100 shadow-lg">
-              <div className="card-body space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                      <MoonStar size={20} /> <TranslatedText text="Moon" />
-                    </h2>
-                    <p className="text-sm text-base-content/60">
-                    
-                    </p>
-                  </div>
-                  <span className="badge badge-ghost text-xs">beta</span>
-                </div>
-                <div className="-mx-3 sm:-mx-4 md:mx-0">
-                  <MoonWidget lat={moonCoords.lat} lon={moonCoords.lon} />
-                </div>
-              </div>
-            </section>
-          ) : null}
           
           {/* Fishing Area Information */}
           <FishingAreaInfo
             activeOption={activeOption}
             activeRectangle={activeRectangle}
           />
-
-          {/* Date Settings */}
-          <section className="card bg-base-100 shadow-lg">
-            <div className="card-body">
-              <h2 className="text-lg font-semibold mb-4">
-                <TranslatedText text="Prediction date" />
-              </h2>
-              
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="date"
-                  value={predictionDate}
-                  onChange={handleDateChange}
-                  className="input input-bordered"
-                  aria-label="Prediction date"
-                />
-                <button type="button" className="btn btn-ghost btn-sm" onClick={handleSetToday}>
-                  <TranslatedText text="Today" />
-                </button>
-              </div>
-              
-              <p className="text-xs text-base-content/60 mt-3">
-                <TranslatedText text="View fishing predictions for any date" />
-              </p>
-            </div>
-          </section>
           </div>
         </div>
       </main>

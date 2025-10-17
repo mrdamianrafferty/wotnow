@@ -92,13 +92,14 @@ const ExternalMoonCard = dynamic<MoonCardProps>(
   { ssr: true }
 );
 
-const ExternalSoilCard = dynamic<SoilCardProps>(
+// Orphaned components - kept for potential future spin-off apps
+const _ExternalSoilCard = dynamic<SoilCardProps>(
   () => import("../components/weather-cards/SoilCard").then(m => m.SoilCard as React.ComponentType<SoilCardProps>),
   { ssr: true }
 );
 
 // NextFewDaysCard is statically imported above; keep explicit dynamic for SurfDayGrade
-const ExternalSurfDayGrade = dynamic<SurfDayGradeProps>(
+const _ExternalSurfDayGrade = dynamic<SurfDayGradeProps>(
   () => import('../components/weather-cards/SurfDayGrade').then(m => m.default as React.ComponentType<SurfDayGradeProps>),
   { ssr: true }
 );
@@ -347,8 +348,8 @@ export default function WeatherPage() {
     co: airQualityForCard?.co,
   });
 
-  // Sanitize soil into the exact shape expected by SoilCard
-  const soilForCard = React.useMemo(() => {
+  // Sanitize soil into the exact shape expected by SoilCard (orphaned for future use)
+  const _soilForCard = React.useMemo(() => {
     const s = (data.soil ?? {}) as Partial<SoilSnapshot>;
     const hasSnapshotKeys = [
       'temp0cm','temp6cm','temp18cm','temp54cm',
@@ -501,12 +502,16 @@ export default function WeatherPage() {
           )}
         </section>
 
-        {/* Rows */}
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-6">
-          {/* Row 1 */}
-          <Row>
-            {effectiveMarine ? (
-              <>
+        {/* Cards Layout with Sections */}
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4">
+          {effectiveMarine ? (
+            /* ============ MARINE MODE LAYOUT ============ */
+            <>
+              {/* SURF & MARINE CONDITIONS SECTION */}
+              <SectionHeader icon="🌊" title="Surf & Marine Conditions" />
+
+              {/* Hero: Hourly Marine Timeline (Full Width) */}
+              <Row className="grid grid-cols-1 gap-4">
                 {marineHourlyEvents.length === 0 ? (
                   <Card title="Hourly">
                     <div className="flex items-center py-2">
@@ -525,15 +530,10 @@ export default function WeatherPage() {
                     />
                   </div>
                 )}
-                <Safe fallback={<Card title="Wind"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-wind">
-                    <ExternalWindCard
-                      isMarine={true}
-                      weather={{ hourly: data.hourly, windSpeedMS: data.marineHourly?.[0]?.windKts ? (data.marineHourly[0].windKts as number) / 1.94384 : (data.hourly?.[0]?.windKts ? data.hourly[0].windKts / 1.94384 : undefined), windDirection: data.marineHourly?.[0]?.windDirection ?? data.hourly?.[0]?.windDirection }}
-                      points={mapHourlyToWindPoints(data.marineHourly ?? data.hourly)}
-                    />
-                  </div>
-                </Safe>
+              </Row>
+
+              {/* Marine Essentials: Waves + Wind + Tides */}
+              <Row>
                 <Safe fallback={<Card title="Waves"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-wave">
                     <ExternalWaveCard
@@ -552,9 +552,125 @@ export default function WeatherPage() {
                     />
                   </div>
                 </Safe>
-              </>
-            ) : (
-              <>
+                <Safe fallback={<Card title="Wind"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-wind">
+                    <ExternalWindCard
+                      isMarine={true}
+                      weather={{ hourly: data.hourly, windSpeedMS: data.marineHourly?.[0]?.windKts ? (data.marineHourly[0].windKts as number) / 1.94384 : (data.hourly?.[0]?.windKts ? data.hourly[0].windKts / 1.94384 : undefined), windDirection: data.marineHourly?.[0]?.windDirection ?? data.hourly?.[0]?.windDirection }}
+                      points={mapHourlyToWindPoints(data.marineHourly ?? data.hourly)}
+                    />
+                  </div>
+                </Safe>
+                <Safe fallback={<Card title="Tides"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-tides">
+                    <ExternalTidesCard weather={{ tides: data.tide }} tideState={{ text: "Tides", icon: "/weather-icons/design/fill/final/tide-high.svg", nextTimeISO: data.tide?.[0]?.timeISO || null }} tidePhase="rising" />
+                  </div>
+                </Safe>
+              </Row>
+
+              {/* FORECAST SECTION */}
+              <SectionHeader icon="📅" title="Forecast" />
+              <Row>
+                <Safe fallback={<Card title="Next Few Days"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div className="lg:col-span-2" data-testid="card-nextdays">
+                    <ExternalNextFewDaysCard daily={data.daily} isMarine={!!effectiveMarine} marineHourly={data.marineHourly} tide={data.tide} />
+                  </div>
+                </Safe>
+                <div data-testid="card-sea-temp">
+                  <SeaTempCard
+                    lat={activeLat}
+                    lon={activeLon}
+                    seaTempProp={typeof data.seaTemp === 'number' ? data.seaTemp : null}
+                    locationName={safeLocationName}
+                    activity={seaTempActivity}
+                    className="weather-card-bg text-base-content"
+                  />
+                </div>
+              </Row>
+
+              {/* ATMOSPHERIC CONDITIONS SECTION */}
+              <SectionHeader icon="🌡️" title="Atmospheric Conditions" />
+              <Row>
+                <Safe fallback={<Card title="Pressure"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-pressure"><SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" /></div>
+                </Safe>
+                <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-feelslike">
+                    <FeelsLike
+                      tempC={data.header.tempC}
+                      humidityPct={data.humidityPct ?? 0}
+                      wind={
+                        typeof data.marineHourly?.[0]?.windKts === 'number' ? (data.marineHourly![0]!.windKts as number) / 1.94384
+                        : (typeof data.hourly?.[0]?.windKts === 'number' ? (data.hourly![0]!.windKts as number) / 1.94384 : 0)
+                      }
+                    />
+                  </div>
+                </Safe>
+                {(Array.isArray(data.hourly) && data.hourly.length > 0) && (
+                  <div data-testid="card-precip24">
+                    <ExternalPrecipNext24hCard
+                      title="Precip next 24h"
+                      hours={(data.hourly || []).map((h) => ({
+                        timeISO: h.timeISO,
+                        pop: typeof h.pop === 'number' ? h.pop : undefined,
+                        precipMm: typeof h.precipMm === 'number' ? h.precipMm : undefined,
+                        icon: h.icon ?? convertWeatherCodeToIcon(h.weatherCode),
+                        weatherCode: h.weatherCode,
+                        weatherDescription: h.weatherDescription,
+                      }))}
+                    />
+                  </div>
+                )}
+              </Row>
+
+              {/* VISIBILITY & COMFORT SECTION */}
+              <SectionHeader icon="👁️" title="Visibility & Comfort" />
+              <Row>
+                <div data-testid="card-visibility">
+                  <ExternalVisibilityCard visibilityKm={typeof data.visibilityKm === 'number' ? data.visibilityKm : null} />
+                </div>
+                <div data-testid="card-humidity">
+                  <ExternalHumidityCard weather={{ dewPointC: data.dewPointC ?? undefined }} humidity={data.humidityPct ?? null} />
+                </div>
+                <div data-testid="card-sunrise">
+                  <ExternalSunriseSunsetCard weather={{ sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} />
+                </div>
+              </Row>
+
+              {/* ENVIRONMENT & ASTRONOMY SECTION */}
+              <SectionHeader icon="🌙" title="Environment & Astronomy" />
+              <Row>
+                <div data-testid="card-uv"><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} today={{ uvi: data.uvi }} /></div>
+                <div data-testid="card-aqi"><ExternalAirQualityCard weather={{ airQuality: airQualityForCard }} aqiAssess={aqiAssessment} /></div>
+                <div data-testid="card-pollen"><ExternalPollenCard
+                  pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
+                  pollenIdx={pollenIdx}
+                  pollenToday={{
+                    tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
+                    grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
+                    weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
+                    olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
+                    alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
+                    birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
+                    ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
+                    mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
+                  }}
+                /></div>
+              </Row>
+              <Row>
+                <div data-testid="card-moon">
+                  <ExternalMoonCard moon={data.moon} today={moonCardToday} />
+                </div>
+              </Row>
+            </>
+          ) : (
+            /* ============ NON-MARINE MODE LAYOUT ============ */
+            <>
+              {/* CURRENT & FORECAST SECTION */}
+              <SectionHeader icon="⛅" title="Current & Forecast" />
+
+              {/* Hero: Hourly Timeline (Full Width) */}
+              <Row className="grid grid-cols-1 gap-4">
                 {data.hourly.length === 0 ? (
                   <Card title="Hourly">
                     <div className="flex items-center py-2">
@@ -591,93 +707,62 @@ export default function WeatherPage() {
                     />
                   </div>
                 )}
-                <Safe fallback={<Card title="Wind"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-wind"><ExternalWindCard isMarine={false} weather={{ hourly: data.hourly, windSpeedMS: data.hourly?.[0]?.windKts ? data.hourly[0].windKts / 1.94384 : undefined, windDirection: data.hourly?.[0]?.windDirection }} points={mapHourlyToWindPoints(data.hourly)} /></div>
-                </Safe>
-                <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-feels"><FeelsLike tempC={data.header.tempC ?? 0} humidityPct={data.humidityPct ?? 0} wind={typeof data.hourly?.[0]?.windKts === 'number' ? data.hourly[0].windKts / 1.94384 : 0} /></div>
-                </Safe>
-              </>
-            )}
-          </Row>
+              </Row>
 
-          {/* Row: Precipitation next 24h and Visibility */}
-          {(Array.isArray(data.hourly) && data.hourly.length > 0) && (
-            <Row>
-              <div data-testid="card-precip24">
-                <ExternalPrecipNext24hCard
-                  title="Precip next 24 hours"
-                  hours={(data.hourly || []).map((h) => ({
-                    timeISO: h.timeISO,
-                    pop: typeof h.pop === 'number' ? h.pop : undefined,
-                    precipMm: typeof h.precipMm === 'number' ? h.precipMm : undefined,
-                    icon: h.icon ?? convertWeatherCodeToIcon(h.weatherCode),
-                    weatherCode: h.weatherCode,
-                    weatherDescription: h.weatherDescription,
-                  }))}
-                />
-              </div>
-              <div data-testid="card-visibility">
-                <ExternalVisibilityCard visibilityKm={typeof data.visibilityKm === 'number' ? data.visibilityKm : null} />
-              </div>
-            </Row>
-          )}
+              {/* Key Metrics: Precip + UV + Visibility */}
+              {(Array.isArray(data.hourly) && data.hourly.length > 0) && (
+                <Row>
+                  <div data-testid="card-precip24">
+                    <ExternalPrecipNext24hCard
+                      title="Precip next 24h"
+                      hours={(data.hourly || []).map((h) => ({
+                        timeISO: h.timeISO,
+                        pop: typeof h.pop === 'number' ? h.pop : undefined,
+                        precipMm: typeof h.precipMm === 'number' ? h.precipMm : undefined,
+                        icon: h.icon ?? convertWeatherCodeToIcon(h.weatherCode),
+                        weatherCode: h.weatherCode,
+                        weatherDescription: h.weatherDescription,
+                      }))}
+                    />
+                  </div>
+                  <div data-testid="card-uv"><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} today={{ uvi: data.uvi }} /></div>
+                  <div data-testid="card-visibility">
+                    <ExternalVisibilityCard visibilityKm={typeof data.visibilityKm === 'number' ? data.visibilityKm : null} />
+                  </div>
+                </Row>
+              )}
 
-          {/* Row 2 - Next few days + stacked cards */}
-          <Row>
-            <Safe fallback={<Card title="Next Few Days"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-              <div className="lg:col-span-2" data-testid="card-nextdays">
-                <ExternalNextFewDaysCard daily={data.daily} isMarine={!!effectiveMarine} marineHourly={data.marineHourly} tide={data.tide} />
-              </div>
-            </Safe>
-            {effectiveMarine ? (
-              <Safe fallback={<Card title="Tides"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                <div data-testid="card-tides">
-                  <ExternalTidesCard weather={{ tides: data.tide }} tideState={{ text: "Tides", icon: "/weather-icons/design/fill/final/tide-high.svg", nextTimeISO: data.tide?.[0]?.timeISO || null }} tidePhase="rising" />
-                </div>
-              </Safe>
-            ) : (
-              <>
+              {/* MULTI-DAY FORECAST SECTION */}
+              <SectionHeader icon="📅" title="Multi-Day Forecast" />
+              <Row>
+                <Safe fallback={<Card title="Next Few Days"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div className="lg:col-span-2" data-testid="card-nextdays">
+                    <ExternalNextFewDaysCard daily={data.daily} isMarine={!!effectiveMarine} marineHourly={data.marineHourly} tide={data.tide} />
+                  </div>
+                </Safe>
                 <Safe fallback={<Card title="Sunrise & Sunset"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-sunrise">
                     <ExternalSunriseSunsetCard weather={{ sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} />
                   </div>
                 </Safe>
+              </Row>
+
+              {/* ATMOSPHERIC & ENVIRONMENT SECTION */}
+              <SectionHeader icon="🌡️" title="Atmospheric & Environment" />
+              <Row>
+                <Safe fallback={<Card title="Pressure"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-pressure"><SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" /></div>
+                </Safe>
+                <Safe fallback={<Card title="Wind"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-wind"><ExternalWindCard isMarine={false} weather={{ hourly: data.hourly, windSpeedMS: data.hourly?.[0]?.windKts ? data.hourly[0].windKts / 1.94384 : undefined, windDirection: data.hourly?.[0]?.windDirection }} points={mapHourlyToWindPoints(data.hourly)} /></div>
+                </Safe>
                 <Safe fallback={<Card title="Humidity"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
                   <div data-testid="card-humidity"><ExternalHumidityCard weather={{ dewPointC: data.dewPointC ?? undefined }} humidity={data.humidityPct ?? null} /></div>
                 </Safe>
-              </>
-            )}
-          </Row>
-
-          {/* Row 3 */}
-          <Row>
-            {effectiveMarine ? (
-              <>
-                <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                  <div data-testid="card-feelslike">
-                    <FeelsLike
-                      tempC={data.header.tempC}
-                      humidityPct={data.humidityPct ?? 0}
-                      wind={
-                        typeof data.marineHourly?.[0]?.windKts === 'number' ? (data.marineHourly![0]!.windKts as number) / 1.94384
-                        : (typeof data.hourly?.[0]?.windKts === 'number' ? (data.hourly![0]!.windKts as number) / 1.94384 : 0)
-                      }
-                    />
-                  </div>
-                </Safe>
-                <div data-testid="card-humidity">
-                  <ExternalHumidityCard weather={{ dewPointC: data.dewPointC ?? undefined }} humidity={data.humidityPct ?? null} />
-                </div>
-                <div data-testid="card-sunrise">
-                  <ExternalSunriseSunsetCard weather={{ sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} />
-                </div>
-              </>
-            ) : (
-              <>
-                <div data-testid="card-uv"><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} today={{ uvi: data.uvi }} /></div>
+              </Row>
+              <Row>
                 <div data-testid="card-aqi"><ExternalAirQualityCard weather={{ airQuality: airQualityForCard }} aqiAssess={aqiAssessment} /></div>
-                <div data-testid="card-pollen"><ExternalPollenCard 
+                <div data-testid="card-pollen"><ExternalPollenCard
                   pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
                   pollenIdx={pollenIdx}
                   pollenToday={{
@@ -691,69 +776,20 @@ export default function WeatherPage() {
                     mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
                   }}
                 /></div>
-              </>
-            )}
-          </Row>
+                <Safe fallback={<Card title="Feels Like"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
+                  <div data-testid="card-feels"><FeelsLike tempC={data.header.tempC ?? 0} humidityPct={data.humidityPct ?? 0} wind={typeof data.hourly?.[0]?.windKts === 'number' ? data.hourly[0].windKts / 1.94384 : 0} /></div>
+                </Safe>
+              </Row>
 
-          {/* Row 4 - Marine also shows UV | AQI | Pollen */}
-          {effectiveMarine && (
-            <Row>
-              <div data-testid="card-uv"><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO: data.sunriseISO, sunsetISO: data.sunsetISO }} today={{ uvi: data.uvi }} /></div>
-              <div data-testid="card-aqi"><ExternalAirQualityCard weather={{ airQuality: airQualityForCard }} aqiAssess={aqiAssessment} /></div>
-              <div data-testid="card-pollen"><ExternalPollenCard 
-                pollenAssess={{ description: getPollenDescription(data.pollen), advice: getPollenAdvice(data.pollen) }}
-                pollenIdx={pollenIdx}
-                pollenToday={{
-                  tree_pollen: data.pollen?.tree !== undefined && data.pollen?.tree !== null ? String(data.pollen.tree) : undefined,
-                  grass_pollen: data.pollen?.grass !== undefined && data.pollen?.grass !== null ? String(data.pollen.grass) : undefined,
-                  weed_pollen: data.pollen?.weed !== undefined && data.pollen?.weed !== null ? String(data.pollen.weed) : undefined,
-                  olive_pollen: data.pollen?.olive !== undefined && data.pollen?.olive !== null ? String(data.pollen.olive) : undefined,
-                  alder_pollen: data.pollen?.alder_pollen !== undefined && data.pollen?.alder_pollen !== null ? String(data.pollen.alder_pollen) : undefined,
-                  birch_pollen: data.pollen?.birch_pollen !== undefined && data.pollen?.birch_pollen !== null ? String(data.pollen.birch_pollen) : undefined,
-                  ragweed_pollen: data.pollen?.ragweed_pollen !== undefined && data.pollen?.ragweed_pollen !== null ? String(data.pollen.ragweed_pollen) : undefined,
-                  mugwort_pollen: data.pollen?.mugwort_pollen !== undefined && data.pollen?.mugwort_pollen !== null ? String(data.pollen.mugwort_pollen) : undefined,
-                }}
-              /></div>
-            </Row>
+              {/* ASTRONOMY SECTION */}
+              <SectionHeader icon="🌙" title="Astronomy" />
+              <Row>
+                <div data-testid="card-moon">
+                  <ExternalMoonCard moon={data.moon} today={moonCardToday} />
+                </div>
+              </Row>
+            </>
           )}
-
-          {/* Row 5 */}
-          <Row>
-            <div data-testid="card-moon">
-              <ExternalMoonCard moon={data.moon} today={moonCardToday} />
-            </div>
-            {effectiveMarine ? (
-              <Safe fallback={<Card title="Surf Outlook"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-                {buildSurfDayData(data) ? (
-                  <div data-testid="card-surf"><ExternalSurfDayGrade data={buildSurfDayData(data)!} /></div>
-                ) : (
-                  <Card title="Surf Outlook" subtitle="Insufficient data"><div className="text-sm opacity-70">No marine/tide data</div></Card>
-                )}
-              </Safe>
-            ) : (
-              <div data-testid="card-soil"><ExternalSoilCard weather={{ soil: soilForCard, tempC: data.header.tempC, humidity: data.humidityPct ?? undefined }} /></div>
-            )}
-
-            {effectiveMarine && (
-              <div data-testid="card-sea-temp">
-                <SeaTempCard
-                  lat={activeLat}
-                  lon={activeLon}
-                  seaTempProp={typeof data.seaTemp === 'number' ? data.seaTemp : null}
-                  locationName={safeLocationName}
-                  activity={seaTempActivity}
-                  className="weather-card-bg text-base-content"
-                />
-              </div>
-            )}
-          </Row>
-
-          {/* Pressure */}
-          <Row>
-            <Safe fallback={<Card title="Pressure"><div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div></Card>}>
-              <div data-testid="card-pressure"><SimplePressureCardDial weather={data} lat={activeLat} title="Pressure" minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className="" /></div>
-            </Safe>
-          </Row>
         </div>
       </main>
       {/* Footer */}
@@ -766,7 +802,22 @@ export default function WeatherPage() {
 }
 
 // ---------------- Layout helpers ----------------
-function Row({ children }: { children: React.ReactNode }) { return (<section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</section>); }
+function Row({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (<section className={className || "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"}>{children}</section>);
+}
+
+function SectionHeader({ icon, title }: { icon: string; title: string }) {
+  return (
+    <div className="col-span-full mb-2 mt-6 first:mt-0">
+      <div className="flex items-center gap-2 text-sm font-semibold text-white/70 uppercase tracking-wide">
+        <span className="text-lg">{icon}</span>
+        <span>{title}</span>
+        <div className="flex-1 h-px bg-white/20"></div>
+      </div>
+    </div>
+  );
+}
+
 function Card({ title, children, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode; children?: React.ReactNode; }) {
   return (
     <div className="card bg-slate-800/35 backdrop-blur-sm text-white border border-white/10 shadow-sm">
@@ -1196,7 +1247,9 @@ function convertWeatherCodeToIcon(weatherCode?: number): string {
   if (weatherCode >= 803) return '04d';
   return '01d';
 }
-function buildSurfDayData(bundle: WeatherBundle) {
+
+// Orphaned function - kept for potential future surf-specific spin-off app
+function _buildSurfDayData(bundle: WeatherBundle) {
   if (!bundle.marineHourly || !bundle.marineHourly.length) return null;
 
   const tideEvents = bundle.tide || [];
