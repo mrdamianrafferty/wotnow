@@ -3,8 +3,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid */
   gap: 24px;
-  align-items: start; /* Changed from stretch to start to prevent overlap */
-  grid-auto-rows: auto; /* Allow natural height for portrait cards */
+  align-items: stretch; /* Stretch cards to equal height in same row */
+  grid-auto-rows: 1fr; /* Force equal height for cards in same row */
   padding: 16px;
   max-width: 1400px;
   margin: 0 auto;
