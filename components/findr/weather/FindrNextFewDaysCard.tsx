@@ -154,7 +154,7 @@ export function FindrNextFewDaysCard({
               if (heights.length > 0) medHeight = median(heights);
             }
 
-            // Tide times
+            // Tide times - get both high and low tides
             const dayStartLocal = new Date(`${dayKey}T00:00:00`);
             const dayEndLocal = new Date(`${dayKey}T23:59:59.999`);
             const dayTides = (tide || []).filter(t => {
@@ -163,9 +163,12 @@ export function FindrNextFewDaysCard({
               return dt >= dayStartLocal && dt <= dayEndLocal;
             });
             const highs = dayTides.filter(t => String(t.type).toLowerCase() === 'high').map(t => new Date((t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || ''));
+            const lows = dayTides.filter(t => String(t.type).toLowerCase() === 'low').map(t => new Date((t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || ''));
             highs.sort((a,b)=>a.getTime()-b.getTime());
+            lows.sort((a,b)=>a.getTime()-b.getTime());
             const fmt = (d: Date) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-            const highStr = highs.length ? highs.slice(0, 1).map(fmt).join('') : undefined;
+            const highStr = highs.length ? highs.slice(0, 2).map(fmt).join('/') : undefined;
+            const lowStr = lows.length ? lows.slice(0, 2).map(fmt).join('/') : undefined;
 
             return (
               <div key={d.dateISO} className="bg-base-100 rounded-lg p-3 border border-base-200/50 hover:border-base-300 transition-colors">
@@ -203,12 +206,29 @@ export function FindrNextFewDaysCard({
                     <span className="text-xs">{showMM ? `${mmRounded}mm` : hasPop ? `${popPct}%` : '—'}</span>
                   </div>
 
-                  {/* High Tide */}
-                  <div className="flex items-center gap-1 min-w-[60px]">
-                    {highStr ? (
+                  {/* Tide Toggle - High/Low */}
+                  <div className="flex items-center gap-1 min-w-[70px]">
+                    {highStr && lowStr ? (
+                      <label className="swap swap-rotate cursor-pointer" title="Toggle High/Low tides">
+                        <input type="checkbox" aria-label="Toggle tide view (High/Low)" />
+                        <span className="swap-off inline-flex items-center gap-1">
+                          <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={14} height={14} className="opacity-60" />
+                          <span className="text-xs">{highStr}</span>
+                        </span>
+                        <span className="swap-on inline-flex items-center gap-1">
+                          <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={14} height={14} className="opacity-60" />
+                          <span className="text-xs">{lowStr}</span>
+                        </span>
+                      </label>
+                    ) : highStr ? (
                       <>
                         <Image src="/weather-icons/design/fill/final/tide-high.svg" alt="High tide" width={14} height={14} className="opacity-60" />
                         <span className="text-xs">{highStr}</span>
+                      </>
+                    ) : lowStr ? (
+                      <>
+                        <Image src="/weather-icons/design/fill/final/tide-low.svg" alt="Low tide" width={14} height={14} className="opacity-60" />
+                        <span className="text-xs">{lowStr}</span>
                       </>
                     ) : (
                       <span className="text-xs opacity-50">—</span>
