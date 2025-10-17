@@ -61,10 +61,21 @@ function formatPhaseName(phaseName: string): string {
 }
 
 // Helper: Get moonlight description
-function getMoonlightDescription(illumination: string, stage: string): string {
-  const illumNum = parseInt(illumination);
+function getMoonlightDescription(illumination: string, stage: string, phaseName: string): string {
+  // Handle new moon specifically
+  const phase = phaseName.toLowerCase();
+  if (phase.includes('new')) {
+    return 'New moon - dark water';
+  }
   
-  if (isNaN(illumNum)) {
+  const illumNum = parseInt(illumination.replace('%', '').replace('-', ''));
+  
+  if (isNaN(illumNum) || illumination === '--%') {
+    // Fallback based on phase name
+    if (phase.includes('full')) return 'Full moon - very bright';
+    if (phase.includes('crescent')) return stage === 'waxing' ? 'Thin crescent' : 'Fading crescent';
+    if (phase.includes('quarter')) return 'Half moon';
+    if (phase.includes('gibbous')) return stage === 'waxing' ? 'Nearly full' : 'Waning gibbous';
     return stage === 'waxing' ? 'Building light' : 'Dimming light';
   }
   
@@ -132,7 +143,7 @@ export function MoonSummaryCardCompact({ lat, lon, className }: MoonSummaryCardC
   const moonset = phase?.moon.moonset ? formatDisplayTime(phase.moon.moonset) : '—';
   const phaseName = phase ? formatPhaseName(phase.moon.phase_name) : 'Loading...';
   const moonIconUrl = phase ? getMoonIconUrl(phase.moon.phase_name) : '/weather-icons/design/fill/final/moon-full.svg';
-  const description = phase ? getMoonlightDescription(phase.moon.illumination, phase.moon.stage) : undefined;
+  const description = phase ? getMoonlightDescription(phase.moon.illumination, phase.moon.stage, phase.moon.phase_name) : undefined;
   const tideCondition = phase ? getTideCondition(phase.moon.phase_name) : undefined;
   const nextNewMoonDays = phase?.moon_phases.new_moon.next.days_ahead;
 
