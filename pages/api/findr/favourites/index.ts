@@ -565,6 +565,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 // Helper: Get live confidence scores from get_fishing_predictions RPC
+// **OPTIMIZATION: Batch all 7-day forecasts in parallel (Quick Win #3)**
 async function getLiveConfidenceScores(
   rectangleCode: string,
   speciesCodes: string[]
@@ -578,33 +579,62 @@ async function getLiveConfidenceScores(
   }
 
   try {
-    const today = new Date().toISOString().slice(0, 10);
     const rpcUrl = `${SUPABASE_REST_URL.replace(/\/?$/, '')}/rest/v1/rpc/get_fishing_predictions`;
 
-    // Fetch today's predictions
-    const response = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        rectangle_code_input: rectangleCode,
-        prediction_date_input: today,
-        user_language: 'en',
-      }),
-    });
+    // **OPTIMIZATION: Fetch all 7 days in parallel instead of sequentially**
+    const dayOffsets = [0, 1, 2, 3, 4, 5, 6];
+    const predictionsByDay = await Promise.all(
+      dayOffsets.map(async (dayOffset) => {
+        try {
+          const date = new Date();
+          date.setDate(date.getDate() + dayOffset);
+          const dateStr = date.toISOString().slice(0, 10);
 
-    if (!response.ok) {
-      console.warn('[favourites] Failed to fetch predictions:', response.statusText);
-      return results;
+          const response = await fetch(rpcUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              rectangle_code_input: rectangleCode,
+              prediction_date_input: dateStr,
+              user_language: 'en',
+            }),
+          });
+
+          if (!response.ok) {
+            console.warn(`[favourites] Failed to fetch predictions for day ${dayOffset}:`, response.statusText);
+            return [];
+          }
+
+          return await response.json() as PredictionResponse[];
+        } catch (error) {
+          console.error(`[favourites] Error fetching predictions for day ${dayOffset}:`, error);
+          return [];
+        }
+      })
+    );
+
+    // Build forecast map for each species
+    const forecastMap = new Map<string, number[]>();
+
+    for (const code of speciesCodes) {
+      const forecast: number[] = [];
+
+      for (const dayPredictions of predictionsByDay) {
+        const match = dayPredictions.find(p => p.species_code?.toUpperCase() === code.toUpperCase());
+        forecast.push(match?.confidence ?? match?.confidence_percent ?? 50);
+      }
+
+      forecastMap.set(code, forecast);
     }
 
-    const predictions = await response.json() as PredictionResponse[];
+    // Use today's predictions (first day) for current confidence
+    const todayPredictions = predictionsByDay[0] || [];
 
-    // Map predictions by species code
-    for (const pred of predictions) {
+    for (const pred of todayPredictions) {
       const code = pred.species_code?.toUpperCase();
       if (!code || !speciesCodes.includes(code)) continue;
 
@@ -612,8 +642,18 @@ async function getLiveConfidenceScores(
 
       results.set(code, {
         confidence,
-        forecast: await get7DayForecast(rectangleCode, code),
+        forecast: forecastMap.get(code) || Array(7).fill(50),
       });
+    }
+
+    // Add entries for species that weren't in today's predictions
+    for (const code of speciesCodes) {
+      if (!results.has(code)) {
+        results.set(code, {
+          confidence: 50,
+          forecast: forecastMap.get(code) || Array(7).fill(50),
+        });
+      }
     }
 
     return results;
@@ -621,51 +661,4 @@ async function getLiveConfidenceScores(
     console.error('[favourites] Error fetching live predictions:', error);
     return results;
   }
-}
-
-// Helper: Get 7-day forecast for a species
-async function get7DayForecast(rectangleCode: string, speciesCode: string): Promise<number[]> {
-  const forecast: number[] = [];
-
-  try {
-    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-      const date = new Date();
-      date.setDate(date.getDate() + dayOffset);
-      const dateStr = date.toISOString().slice(0, 10);
-
-      const rpcUrl = `${SUPABASE_REST_URL!.replace(/\/?$/, '')}/rest/v1/rpc/get_fishing_predictions`;
-
-      const response = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_ANON_KEY!,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          rectangle_code_input: rectangleCode,
-          prediction_date_input: dateStr,
-          user_language: 'en',
-        }),
-      });
-
-      if (!response.ok) {
-        forecast.push(50); // Default if request fails
-        continue;
-      }
-
-      const predictions = await response.json() as PredictionResponse[];
-      const match = predictions.find(p => p.species_code?.toUpperCase() === speciesCode.toUpperCase());
-      
-      forecast.push(match?.confidence ?? match?.confidence_percent ?? 50);
-    }
-  } catch (error) {
-    console.error('[favourites] Error fetching 7-day forecast:', error);
-    // Fill remaining days with default
-    while (forecast.length < 7) {
-      forecast.push(50);
-    }
-  }
-
-  return forecast;
 }
