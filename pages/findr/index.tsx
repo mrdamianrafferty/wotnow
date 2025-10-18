@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
 import { useRouter } from 'next/router';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion';
@@ -24,9 +25,18 @@ import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { useFavourites } from '../../hooks/useFavourites';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
-import { FindrModal } from '../../components/findr/Modal';
-import { FishSpeciesModal } from '../../components/findr/FishSpeciesModal';
 import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
+
+// Code-split modals - only loaded when opened (saves ~30KB from initial bundle)
+const FindrModal = dynamic(
+  () => import('../../components/findr/Modal').then(mod => ({ default: mod.FindrModal })),
+  { ssr: false, loading: () => null }
+);
+
+const FishSpeciesModal = dynamic(
+  () => import('../../components/findr/FishSpeciesModal').then(mod => ({ default: mod.FishSpeciesModal })),
+  { ssr: false, loading: () => null }
+);
 import { SkeletonCard } from '../../components/findr/SkeletonCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
