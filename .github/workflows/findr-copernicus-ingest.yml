@@ -31,6 +31,7 @@ jobs:
         run: npm ci
 
       - name: Run Copernicus data ingestion
+        id: ingest
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -38,3 +39,142 @@ jobs:
           COPERNICUS_PASSWORD: ${{ secrets.COPERNICUS_PASSWORD }}
           FINDR_CONDITIONS_DELAY_MS: '500'
         run: npx tsx scripts/ingest-copernicus-data.ts
+
+      - name: Verify data was ingested
+        id: verify
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cat > verify-ingestion.ts << 'EOF'
+          import { createClient } from '@supabase/supabase-js';
+          
+          const supabase = createClient(
+            process.env.SUPABASE_URL || '',
+            process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+          );
+          
+          async function verify() {
+            const { count, error } = await supabase
+              .from('findr_conditions_snapshots')
+              .select('*', { count: 'exact', head: true });
+              
+            if (error) throw new Error(`Verification failed: ${error.message}`);
+            
+            console.log(`Total records in findr_conditions_snapshots: ${count}`);
+            
+            if (!count || count === 0) {
+              throw new Error('No data in findr_conditions_snapshots after ingestion!');
+            }
+            
+            // Check for recent data
+            const { data: recent } = await supabase
+              .from('findr_conditions_snapshots')
+              .select('captured_at')
+              .order('captured_at', { ascending: false })
+              .limit(1)
+              .single();
+              
+            const hoursSinceCapture = recent 
+              ? (Date.now() - new Date(recent.captured_at).getTime()) / (1000 * 60 * 60)
+              : 999;
+              
+            console.log(`Latest data: ${recent?.captured_at} (${hoursSinceCapture.toFixed(1)} hours old)`);
+            
+            if (hoursSinceCapture > 48) {
+              throw new Error(`Data is stale! Latest capture was ${hoursSinceCapture.toFixed(1)} hours ago`);
+            }
+            
+            console.log('✅ Verification passed');
+          }
+          
+          verify().catch(err => {
+            console.error(err.message);
+            process.exit(1);
+          });
+          EOF
+          npx tsx verify-ingestion.ts
+
+      - name: Create GitHub Issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Copernicus Data Ingestion Failed';
+            const body = `## Copernicus Data Ingestion Failure
+            
+            The scheduled Copernicus data ingestion workflow failed.
+            
+            **Workflow Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Time**: ${{ github.event.head_commit.timestamp || github.event.schedule }}
+            
+            ### Possible Causes:
+            - Copernicus API credentials expired
+            - Network issues
+            - API rate limiting
+            - Data validation failure
+            
+            ### Impact:
+            - \`findr_conditions_snapshots\` table may be empty or stale
+            - Predictions will show 0 results or outdated data
+            
+            ### Actions Required:
+            1. Check workflow logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            2. Verify Copernicus credentials in GitHub Secrets
+            3. Manually trigger workflow if needed
+            4. Check Supabase table for data freshness
+            `;
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'copernicus-ingestion-failure'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['bug', 'copernicus-ingestion-failure', 'automated']
+              });
+            } else {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `Another failure occurred on ${{ github.event.head_commit.timestamp || github.event.schedule }}\\n\\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+            }
+
+      - name: Close success issues
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'copernicus-ingestion-failure'
+            });
+            
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '✅ Copernicus ingestion is now working. Closing this issue.'
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }

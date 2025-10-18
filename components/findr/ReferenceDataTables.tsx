@@ -587,9 +587,11 @@ function SpeciesTable({
                       <div className="w-12 h-12 rounded-lg bg-base-200">
                         {SPECIES_IMAGE_MAP[species.code]?.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img 
-                            src={SPECIES_IMAGE_MAP[species.code].image} 
+                          <img
+                            src={SPECIES_IMAGE_MAP[species.code].image}
                             alt={species.commonName}
+                            width={48}
+                            height={48}
                             className="w-full h-full object-contain"
                           />
                         ) : (

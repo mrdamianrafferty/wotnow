@@ -522,6 +522,8 @@ export function QuickLogModal({
                   <img
                     src={photoPreviewUrl}
                     alt="Selected catch preview"
+                    width={640}
+                    height={360}
                     className="w-full h-full object-cover"
                   />
                 </div>

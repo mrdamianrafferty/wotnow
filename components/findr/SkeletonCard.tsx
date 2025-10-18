@@ -11,10 +11,13 @@ import React from 'react';
 
 export const SkeletonCard: React.FC = () => {
   return (
-    <div className="card h-full bg-base-100 shadow-xl">
+    <div className="card h-full bg-base-100 shadow-xl" style={{ minHeight: '460px' }}>
       <div className="card-body flex h-full flex-col gap-4 sm:gap-5">
         {/* Image Skeleton */}
-        <div className="skeleton relative mx-auto w-full h-48 sm:h-64 rounded-2xl aspect-[3/2] sm:aspect-[4/3]" />
+        <div
+          className="skeleton relative mx-auto w-full h-48 sm:h-64 rounded-2xl aspect-[3/2] sm:aspect-[4/3]"
+          style={{ minHeight: '192px' }}
+        />
 
         {/* Title and Badge Skeleton */}
         <div className="flex items-start justify-between gap-3">

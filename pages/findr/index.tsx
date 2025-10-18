@@ -106,6 +106,7 @@ interface PredictionCardContentProps {
   regionName?: string;
   isFavorite: boolean;
   interactive: boolean;
+  isFirstCard?: boolean;
   onShowSpeciesInfo?: (card: CardData) => void;
   onToggleFavorite?: (card: CardData) => void;
 }
@@ -116,6 +117,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
   regionName: _regionName,
   isFavorite: _isFavorite,
   interactive,
+  isFirstCard = false,
   onShowSpeciesInfo,
   onToggleFavorite,
 }) => {
@@ -161,7 +163,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 fill
                 sizes="(min-width: 1024px) 400px, 90vw"
                 className="object-contain"
-                priority={false}
+                priority={isFirstCard}
               />
               {/* Heart indicator for favorites */}
               <button
@@ -486,6 +488,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           regionName={regionName}
           isFavorite={isFavorite}
           interactive={isTop}
+          isFirstCard={index === 0}
           onShowSpeciesInfo={isTop ? onShowSpeciesInfo : undefined}
           onToggleFavorite={isTop ? onToggleFavorite : undefined}
         />
@@ -658,13 +661,32 @@ const FindrPage: React.FC = () => {
 
   // Auto-select first rectangle if none selected (fallback only)
   useEffect(() => {
+    console.log('[Findr] Auto-select check:', {
+      rectangleFromContext,
+      rectangleFromQuery,
+      selectedCode,
+      rectangleOptionsCount: rectangleOptions.length,
+      firstOption: rectangleOptions[0]?.code,
+      hasValidSelection: selectedCode && rectangleOptions.some(opt => opt.code === selectedCode),
+    });
+    
     // Don't auto-select if we have a rectangle from context or query
-    if (rectangleFromContext || rectangleFromQuery) return;
+    if (rectangleFromContext || rectangleFromQuery) {
+      console.log('[Findr] Skipping auto-select: rectangle from context/query');
+      return;
+    }
     // Don't auto-select if valid rectangle already selected
-    if (selectedCode && rectangleOptions.some(opt => opt.code === selectedCode)) return;
+    if (selectedCode && rectangleOptions.some(opt => opt.code === selectedCode)) {
+      console.log('[Findr] Skipping auto-select: valid rectangle already selected');
+      return;
+    }
     // Don't auto-select if rectangles not loaded yet
-    if (rectangleOptions.length === 0) return;
+    if (rectangleOptions.length === 0) {
+      console.log('[Findr] Skipping auto-select: no rectangles loaded yet');
+      return;
+    }
     // Auto-select first rectangle
+    console.log('[Findr] AUTO-SELECTING first rectangle:', rectangleOptions[0].code);
     setSelectedCode(rectangleOptions[0].code);
   }, [rectangleFromContext, rectangleFromQuery, rectangleOptions, selectedCode, setSelectedCode]);
 

@@ -104,6 +104,12 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
         const errMessage = typeof json?.error === 'string'
           ? json.error
           : json?.details?.message || 'Failed to load fishing predictions';
+        console.error('[useFishingPredictions] API error:', {
+          status: response.status,
+          error: json?.error,
+          details: json?.details,
+          fullResponse: json,
+        });
         throw new Error(errMessage);
       }
 

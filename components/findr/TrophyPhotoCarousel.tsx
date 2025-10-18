@@ -388,6 +388,8 @@ export function TrophyPhotoCarousel({
                 ref={imageRef}
                 src={currentPhoto.url}
                 alt={currentPhoto.caption || `Photo ${currentIndex + 1}`}
+                width={1200}
+                height={800}
                 className="max-w-full max-h-full object-contain"
                 onLoad={handleImageLoad}
                 onError={handleImageError}
@@ -502,6 +504,8 @@ export function TrophyPhotoCarousel({
                   <img
                     src={photo.thumbnail || photo.url}
                     alt={`Thumbnail ${index + 1}`}
+                    width={64}
+                    height={64}
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -552,6 +556,8 @@ export function PhotoGalleryGrid({
             <img
               src={photo.thumbnail || photo.url}
               alt={photo.caption || `Photo ${index + 1}`}
+              width={200}
+              height={200}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             />
 
