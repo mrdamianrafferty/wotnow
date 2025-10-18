@@ -6,6 +6,161 @@ This guide provides a quick overview of how GoDaisy and Findr are built and work
 
 ---
 
+## ⚡ Top 10 Things That Will Trip You Up
+
+**The gotchas that keep catching developers - save yourself hours of debugging:**
+
+### 1. **Environment Variables Require Server Restart** 🔄
+**Problem**: You change `.env.local` but nothing happens.  
+**Solution**: Always restart dev server after env changes (`Ctrl+C`, then `npm run dev`). Next.js only reads env files at startup.
+```bash
+# Wrong: Just editing .env.local and expecting changes
+# Right: Edit, then restart
+vim .env.local
+npm run dev  # Must restart!
+```
+
+### 2. **Only `NEXT_PUBLIC_*` Variables Work in Browser** 🌐
+**Problem**: `process.env.SUPABASE_SERVICE_ROLE_KEY` is undefined in components.  
+**Solution**: Server-only variables (without `NEXT_PUBLIC_`) are ONLY available in API routes (`pages/api/*`). Browser code can only access `NEXT_PUBLIC_*` prefixed vars.
+```typescript
+// ❌ Won't work in components
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// ✅ Works in components
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+// ✅ Works in API routes (both types)
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+```
+
+### 3. **Cache Issues Everywhere** 💾
+**Problem**: Changes not appearing, stale data, weird bugs.  
+**Solution**: Clear ALL the caches when things get weird:
+```bash
+# Nuclear option (fixes 80% of weird issues):
+rm -rf .next
+rm -rf node_modules/.cache
+npm run dev
+
+# React Query cache: Refresh browser or wait 30 min
+# Database cache: Expires after 3 hours (findr_prediction_sessions)
+# Vercel cache: Wait ~60 seconds after deploy
+```
+
+### 4. **Predictions Return Empty Array** 📊
+**Problem**: API returns `{ predictions: [] }` with no errors.  
+**Solution**: Check the data pipeline in order:
+```sql
+-- 1. Is there Copernicus data?
+SELECT * FROM copernicus_data 
+WHERE rectangle_code = 'YOUR_CODE' 
+ORDER BY data_date DESC LIMIT 1;
+
+-- 2. Are there active species?
+SELECT COUNT(*) FROM species WHERE is_active = true;
+
+-- 3. Does the rectangle exist?
+SELECT * FROM ices_rectangles WHERE rectangle_code = 'YOUR_CODE';
+```
+Most common cause: Copernicus data ingestion failed. Check GitHub Actions logs.
+
+### 5. **Port 3000 Already in Use** 🚪
+**Problem**: `Error: listen EADDRINUSE: address already in use :::3000`  
+**Solution**: Kill the zombie process:
+```bash
+# Quick fix
+lsof -ti:3000 | xargs kill -9
+
+# Or use different port
+PORT=3001 npm run dev
+```
+
+### 6. **TypeScript Errors in IDE But Build Succeeds** 🔴
+**Problem**: VS Code shows red squiggles but `npm run build` works fine.  
+**Solution**: Restart TypeScript server in VS Code:
+```
+Cmd+Shift+P → "TypeScript: Restart TS Server"
+```
+Common after installing packages or changing tsconfig.json.
+
+### 7. **Supabase RLS Policies Block Everything** 🔒
+**Problem**: Queries work in SQL editor but fail in app with "permission denied".  
+**Solution**: Row-Level Security (RLS) policies are enforced for regular users. Check:
+```sql
+-- See RLS policies
+SELECT * FROM pg_policies WHERE tablename = 'your_table';
+
+-- Bypass RLS in API routes using service role key
+const supabase = createClient(url, SERVICE_ROLE_KEY);  -- Bypasses RLS
+```
+Most common: Trying to access user-specific data without `user_id = auth.uid()` policy.
+
+### 8. **Images Not Loading** 🖼️
+**Problem**: Images show broken/404 in production but work locally.  
+**Solution**: Check these in order:
+```bash
+# 1. File exists in /public?
+ls public/PNGS/your-image.png
+
+# 2. Using next/image with correct path?
+<Image src="/PNGS/species.png" />  # ✅ Correct
+<Image src="public/PNGS/species.png" />  # ❌ Wrong
+
+# 3. Domain allowed in next.config.js?
+# External images need domains configured
+
+# 4. Clear Next.js cache
+rm -rf .next && npm run dev
+```
+
+### 9. **React Query Stale Time Confusion** ⏰
+**Problem**: Data doesn't refresh when you expect, or refreshes too often.  
+**Solution**: Understand stale vs cache time:
+```typescript
+useQuery({
+  staleTime: 1000 * 60 * 30,  // 30 min - data is "fresh", no refetch
+  gcTime: 1000 * 60 * 60 * 3, // 3 hours - keep in memory
+  refetchOnWindowFocus: false, // Don't refetch on tab switch
+});
+
+// Stale: Data is old, will refetch on next mount
+// Fresh: Data is new, use cached version
+// GC: After this time, delete from memory entirely
+```
+
+### 10. **Copernicus Data Ingestion Silently Fails** 🌊
+**Problem**: Predictions work but show old/incorrect data.  
+**Solution**: Check the daily cron job:
+```bash
+# 1. Go to GitHub Actions → FINDR Copernicus ingestion
+# 2. Check latest run status (should be green)
+# 3. Check logs for errors:
+#    - Invalid credentials
+#    - CMEMS API downtime
+#    - Rate limiting
+
+# Manual test:
+COPERNICUS_USERNAME=xxx COPERNICUS_PASSWORD=xxx \
+  npx tsx scripts/ingest-copernicus-data.ts
+
+# Check data recency:
+SELECT rectangle_code, data_date, created_at 
+FROM copernicus_data 
+ORDER BY created_at DESC LIMIT 10;
+# Should have today's date or yesterday's
+```
+
+**Bonus Tip**: When completely stuck, check these in order:
+1. Console logs (browser + terminal)
+2. Network tab (API responses)
+3. Supabase logs (Database → Logs)
+4. Vercel deployment logs
+5. GitHub Actions logs
+6. This troubleshooting section below! ⬇️
+
+---
+
 ## 🎯 What is This?
 
 **GoDaisy** is a platform designed to get people off their phones and doing something better - engaging in real-world activities like sports, hobbies, outdoor adventures, and more.
