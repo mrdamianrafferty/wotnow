@@ -518,14 +518,15 @@ interface DeckActionsProps {
 }
 
 const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) => (
-  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6">
+  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6" role="group" aria-label="Card actions">
     <button
       type="button"
       className="btn btn-outline btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
       onClick={onSkip}
       disabled={disabled}
+      aria-label="Skip this fish and see the next prediction"
     >
-      <X size={20} />
+      <X size={20} aria-hidden="true" />
       <TranslatedText text="Next!" />
     </button>
     <button
@@ -533,8 +534,9 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
       className="btn btn-primary btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
       onClick={onLike}
       disabled={disabled}
+      aria-label="Add this fish to my favorites"
     >
-      <Heart size={20} />
+      <Heart size={20} aria-hidden="true" />
       <TranslatedText text="Fave" />
     </button>
   </div>
@@ -874,12 +876,12 @@ const FindrPage: React.FC = () => {
             </div>
           )}
 
-          <section className="space-y-1 sm:space-y-6">
+          <section className="space-y-1 sm:space-y-6" aria-labelledby="main-heading">
             <div className="space-y-1 sm:space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-2">
-                  <h1 className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles size={20} /> <TranslatedText text="findr - catch of the day" />
+                  <h1 id="main-heading" className="text-xl font-semibold flex items-center gap-2">
+                    <Sparkles size={20} aria-hidden="true" /> <TranslatedText text="findr - catch of the day" />
                   </h1>
 
                 </div>
@@ -968,10 +970,10 @@ const FindrPage: React.FC = () => {
           </section>
 
           {activeRectangle && !loading && !error && totalPredictions > 0 && (
-            <section className="space-y-5">
+            <section className="space-y-5" aria-labelledby="species-lineup-heading">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <ListChecks size={18} /> <TranslatedText text="Full species lineup" />
+                <h3 id="species-lineup-heading" className="text-lg font-semibold flex items-center gap-2">
+                  <ListChecks size={18} aria-hidden="true" /> <TranslatedText text="Full species lineup" />
                 </h3>
                 <span className="text-sm text-base-content/60">
                   <TranslatedText text="Sorted by confidence for" /> {regionLabel ?? (
