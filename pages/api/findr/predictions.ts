@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
 import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/findr/enrichCatchData';
 import { fetchMetNoLocationForecast } from '../../../lib/services/weatherService';
+import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/queryWithTiming';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -73,15 +74,24 @@ async function readCachedPredictions(params: {
   const { rectangleCode, predictionDate, language } = params;
 
   try {
-    const { data, error } = await supabase
-      .from(CACHE_TABLE)
-      .select('*')
-      .eq('rectangle_code', rectangleCode)
-      .eq('prediction_date', predictionDate)
-      .eq('language', language)
-      .order('fetched_at', { ascending: false })
-      .limit(1)
-    .maybeSingle<CachedPredictionRow>();
+    // **OPTIMIZATION 2: Add performance timing to cache reads**
+    const result = await queryWithTiming(
+      async () => {
+        const { data, error } = await supabase
+          .from(CACHE_TABLE)
+          .select('*')
+          .eq('rectangle_code', rectangleCode)
+          .eq('prediction_date', predictionDate)
+          .eq('language', language)
+          .order('fetched_at', { ascending: false })
+          .limit(1)
+          .maybeSingle<CachedPredictionRow>();
+        return { data, error };
+      },
+      'cache_read_predictions'
+    );
+
+    const { data, error } = result;
 
     if (error) {
       if (isMissingRelationError(error)) {
@@ -511,52 +521,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Fetch rectangle region and center coordinates for weather
-    const { data: rectangleData } = await supabase
-      .from('ices_rectangles')
-      .select('region, center_lat, center_lon')
-      .eq('rectangle_code', rectangleCode)
-      .single();
-    
-    console.log('[Findr API] Fetched rectangle data:', { rectangleCode, region: rectangleData?.region });
-    
     // Add timeout to the RPC call for Vercel
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
     );
 
-    // Query EMODnet if lat/lon provided
-    let substrateData = null;
-    let bathymetryData = null;
-    
-    if (userLat !== null && userLon !== null) {
-      console.log('[Findr API] Querying EMODnet for lat/lon:', { userLat, userLon });
-      
-      try {
-        [bathymetryData, substrateData] = await Promise.all([
-          queryEMODnetBathymetry(userLat, userLon),
-          queryEMODnetSubstrate(userLat, userLon),
-        ]);
-        
-        console.log('[Findr API] EMODnet responses:', {
-          depth: bathymetryData.depth_meters,
-          substrate: substrateData.substrate,
-          bathyConfidence: bathymetryData.confidence,
-          substrateConfidence: substrateData.confidence,
-        });
-      } catch (emodnetError) {
-        console.warn('[Findr API] EMODnet query failed, continuing without:', (emodnetError as Error).message);
+    // **OPTIMIZATION 1: Parallelize rectangle and EMODnet queries**
+    // Fetch all required data in parallel instead of sequentially
+    const [rectangleResult, emodnetResult] = await timedParallelQueries([
+      {
+        name: 'fetch_rectangle_data',
+        fn: async () => {
+          const result = await supabase
+            .from('ices_rectangles')
+            .select('region, center_lat, center_lon')
+            .eq('rectangle_code', rectangleCode)
+            .single();
+          return result;
+        }
+      },
+      {
+        name: 'fetch_emodnet_data',
+        fn: async () => {
+          if (userLat === null || userLon === null) {
+            return { bathymetry: null, substrate: null };
+          }
+          try {
+            const [bathymetryData, substrateData] = await Promise.all([
+              queryEMODnetBathymetry(userLat, userLon),
+              queryEMODnetSubstrate(userLat, userLon),
+            ]);
+            return { bathymetry: bathymetryData, substrate: substrateData };
+          } catch (error) {
+            console.warn('[Findr API] EMODnet query failed:', (error as Error).message);
+            return { bathymetry: null, substrate: null };
+          }
+        }
       }
-    }
+    ]);
 
-    console.log('[Findr API] About to call RPC with params:', {
-      target_rectangle: rectangleCode,
-      target_date: predictionDate,
-      user_lat: userLat,
-      user_lon: userLon,
-      user_substrate: substrateData?.substrate,
-      user_depth_m: bathymetryData?.depth_meters,
-    });
+    const rectangleData = (rectangleResult as { data: { region: string; center_lat: number; center_lon: number } | null })?.data;
+    const { bathymetry: bathymetryData, substrate: substrateData } = emodnetResult as { 
+      bathymetry: { depth_meters: number; confidence: string } | null; 
+      substrate: { substrate: string; confidence: string } | null 
+    };
+    
+    console.log('[Findr API] Fetched rectangle data:', { rectangleCode, region: rectangleData?.region });
+    
+    if (emodnetResult.bathymetry || emodnetResult.substrate) {
+      console.log('[Findr API] EMODnet responses:', {
+        depth: bathymetryData?.depth_meters,
+        substrate: substrateData?.substrate,
+        bathyConfidence: bathymetryData?.confidence,
+        substrateConfidence: substrateData?.confidence,
+      });
+    }
 
     // Fetch current weather conditions for the rectangle center
     let currentWindSpeedMS: number | null = null;
@@ -564,10 +583,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (rectangleData?.center_lat != null && rectangleData?.center_lon != null) {
       try {
-        const weatherData = await fetchMetNoLocationForecast(
-          rectangleData.center_lat, 
-          rectangleData.center_lon,
-          { signal: AbortSignal.timeout(3000) } // 3s timeout
+        const weatherData = await queryWithTiming(
+          () => fetchMetNoLocationForecast(
+            rectangleData.center_lat, 
+            rectangleData.center_lon,
+            { signal: AbortSignal.timeout(3000) }
+          ),
+          'fetch_weather_forecast'
         );
         
         if (weatherData?.properties?.timeseries?.[0]?.data?.instant?.details) {
@@ -586,6 +608,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    console.log('[Findr API] About to call RPC with params:', {
+      target_rectangle: rectangleCode,
+      target_date: predictionDate,
+      user_lat: userLat,
+      user_lon: userLon,
+      user_substrate: substrateData?.substrate,
+      user_depth_m: bathymetryData?.depth_meters,
+    });
+
     // Always use enhanced function - it handles null lat/lon gracefully
     // and provides better predictions (weather, substrate, depth scoring)
     const rpcFunctionName = 'get_environmental_predictions_enhanced';
@@ -601,12 +632,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       current_pressure_hpa: currentPressureHPA,
     };
     
-    const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);
-
-    const { data, error: rpcError } = await Promise.race([
-      rpcPromise, 
-      timeoutPromise
-    ]) as { data: unknown; error: PostgrestError | null };
+    // **OPTIMIZATION 2: Add performance timing to RPC calls**
+    const { data, error: rpcError } = await queryWithTiming(
+      async () => {
+        const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);
+        const result = await Promise.race([
+          rpcPromise, 
+          timeoutPromise
+        ]) as { data: unknown; error: PostgrestError | null };
+        return result;
+      },
+      'rpc_get_predictions_enhanced'
+    );
 
     console.log('[Findr API] RPC response via client:', {
       hasError: Boolean(rpcError),
