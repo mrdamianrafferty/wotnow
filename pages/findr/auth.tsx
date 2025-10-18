@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase/client';
+import { normalizeEmail, mapAuthError } from '../../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Fish } from 'lucide-react';
@@ -24,34 +25,36 @@ export default function FindrAuth() {
     setMessage(null);
 
     try {
+      const emailNorm = normalizeEmail(email);
+
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: emailNorm,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/findr/magic-link`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?app=findr`,
             data: {
               app: 'findr',
             },
           },
         });
-        
+
         if (error) throw error;
-        
+
         setMessage('Check your email to confirm your account!');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: emailNorm,
           password,
         });
-        
+
         if (error) throw error;
-        
+
         // Redirect to returnTo or default to /findr
         router.push(returnTo && returnTo.startsWith('/findr') ? returnTo : '/findr');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -61,20 +64,21 @@ export default function FindrAuth() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/findr/magic-link`,
+          redirectTo: `${window.location.origin}/auth/callback?app=findr`,
           queryParams: {
-            app: 'findr',
+            // Force account picker for Google (consistent with Go Daisy UX)
+            ...(provider === 'google' ? { prompt: 'select_account' } : {}),
           },
         },
       });
-      
+
       if (error) throw error;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(mapAuthError(err));
       setLoading(false);
     }
   };

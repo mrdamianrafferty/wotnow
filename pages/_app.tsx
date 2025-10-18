@@ -12,6 +12,7 @@ import type { AppProps } from 'next/app'
 import Head from 'next/head'
 import { UserPreferencesProvider } from '../context/UserPreferencesContext'
 import { LanguageProvider } from '../context/LanguageContext'
+import { AuthProvider } from '../context/AuthContext'
 import { useEffect } from 'react'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 
@@ -71,35 +72,37 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   const theme = (pageProps?.theme as ThemeName | undefined) ?? defaultTheme;
 
   return (
-    <LanguageProvider>
-      <UserPreferencesProvider>
-        <UnifiedLocationProvider>
-          <Head>
-          {/* Ensure proper scaling and colour on iPad/phones */}
-          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-          <meta name="theme-color" content="#111827" />
-          
-          {/* PWA Manifest */}
-          <link rel="manifest" href="/manifest.json" />
-          
-          {/* Apple Touch Icons */}
-          <link rel="apple-touch-icon" href="/findr-favicon/apple-touch-icon.png" />
-          <meta name="mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-          <meta name="apple-mobile-web-app-title" content="Findr" />
-          
-          {/* Favicons */}
-          <link rel="icon" type="image/svg+xml" href="/findr-favicon/favicon.svg" />
-          <link rel="icon" type="image/png" sizes="96x96" href="/findr-favicon/favicon-96x96.png" />
-          <link rel="icon" type="image/x-icon" href="/findr-favicon/favicon.ico" />
-          </Head>
-          {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-          <div data-theme={theme} className={`min-h-screen bg-base-100 text-base-content ${roboto.variable} ${indieFlower.variable}`} style={{ fontFamily: 'var(--font-roboto), Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
-            <Component {...pageProps} />
-          </div>
-        </UnifiedLocationProvider>
-      </UserPreferencesProvider>
-    </LanguageProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <UserPreferencesProvider>
+          <UnifiedLocationProvider>
+            <Head>
+            {/* Ensure proper scaling and colour on iPad/phones */}
+            <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+            <meta name="theme-color" content="#111827" />
+
+            {/* PWA Manifest */}
+            <link rel="manifest" href="/manifest.json" />
+
+            {/* Apple Touch Icons */}
+            <link rel="apple-touch-icon" href="/findr-favicon/apple-touch-icon.png" />
+            <meta name="mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-capable" content="yes" />
+            <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+            <meta name="apple-mobile-web-app-title" content="Findr" />
+
+            {/* Favicons */}
+            <link rel="icon" type="image/svg+xml" href="/findr-favicon/favicon.svg" />
+            <link rel="icon" type="image/png" sizes="96x96" href="/findr-favicon/favicon-96x96.png" />
+            <link rel="icon" type="image/x-icon" href="/findr-favicon/favicon.ico" />
+            </Head>
+            {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
+            <div data-theme={theme} className={`min-h-screen bg-base-100 text-base-content ${roboto.variable} ${indieFlower.variable}`} style={{ fontFamily: 'var(--font-roboto), Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
+              <Component {...pageProps} />
+            </div>
+          </UnifiedLocationProvider>
+        </UserPreferencesProvider>
+      </LanguageProvider>
+    </AuthProvider>
   )
 }

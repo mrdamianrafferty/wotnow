@@ -660,7 +660,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
 
           <div className="mt-4">
             {hourly.length > 0 ? (
-              <HourlyMarineCarousel entries={hourly} />
+              <HourlyMarineCarousel entries={hourly} tideEvents={tideEvents} />
             ) : (
               <div className="card bg-base-200/40 border border-base-200 shadow-sm">
                 <div className="card-body text-sm text-base-content/70">

@@ -3,11 +3,66 @@ import { WiDayWindy, WiHot, WiBarometer } from 'react-icons/wi';
 import { Waves } from 'lucide-react';
 import Image from 'next/image';
 import WeatherCarousel from './WeatherCarousel';
-import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature, formatTideHeight } from '../../../lib/findr/weatherFormatting';
+import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature } from '../../../lib/findr/weatherFormatting';
 import type { FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
+import type { TideEvent } from '../../../types/weather';
 
 interface HourlyMarineCarouselProps {
   entries: FallbackConditionPayload['snapshot']['hourly'];
+  tideEvents?: TideEvent[];
+}
+
+/**
+ * Calculate tide state for a given time based on tide events
+ * Returns: 'High', 'Low', 'Rising', or 'Falling'
+ */
+function getTideState(timeISO: string, tideEvents: TideEvent[]): string {
+  if (!tideEvents || tideEvents.length === 0) return '—';
+  
+  const targetTime = new Date(timeISO).getTime();
+  const THIRTY_MINUTES = 30 * 60 * 1000;
+  
+  // Check if within 30 minutes of high or low tide
+  for (const event of tideEvents) {
+    const eventTime = new Date(event.timeISO).getTime();
+    const diff = Math.abs(targetTime - eventTime);
+    
+    if (diff <= THIRTY_MINUTES) {
+      return event.type === 'HIGH' ? 'High' : 'Low';
+    }
+  }
+  
+  // Find surrounding tide events to determine rising or falling
+  const sorted = [...tideEvents]
+    .map(e => ({ ...e, time: new Date(e.timeISO).getTime() }))
+    .sort((a, b) => a.time - b.time);
+  
+  // Find the tide events before and after target time
+  let before: typeof sorted[0] | null = null;
+  let after: typeof sorted[0] | null = null;
+  
+  for (const event of sorted) {
+    if (event.time < targetTime) {
+      before = event;
+    } else if (event.time > targetTime && !after) {
+      after = event;
+      break;
+    }
+  }
+  
+  // Determine if rising or falling
+  if (before && after) {
+    // If previous was LOW and next is HIGH, we're rising
+    if (before.type === 'LOW' && after.type === 'HIGH') {
+      return 'Rising';
+    }
+    // If previous was HIGH and next is LOW, we're falling
+    if (before.type === 'HIGH' && after.type === 'LOW') {
+      return 'Falling';
+    }
+  }
+  
+  return '—';
 }
 
 function getWeatherIconUrl(code?: string | null): string {
@@ -20,9 +75,10 @@ function getWeatherIconUrl(code?: string | null): string {
 
 interface HourlyCardProps {
   entry: FallbackConditionPayload['snapshot']['hourly'][0];
+  tideState: string;
 }
 
-function HourlyCard({ entry }: HourlyCardProps) {
+function HourlyCard({ entry, tideState }: HourlyCardProps) {
   const [showPrecipAmount, setShowPrecipAmount] = useState(false);
   
   const iconUrl = getWeatherIconUrl(entry.weatherIcon);
@@ -124,7 +180,7 @@ function HourlyCard({ entry }: HourlyCardProps) {
             <span className="flex items-center gap-2">
               <WiBarometer className="size-5 text-secondary" /> Tide
             </span>
-            <span className="font-semibold">{formatTideHeight(entry.tideMeters)}</span>
+            <span className="font-semibold">{tideState}</span>
           </div>
         </div>
       </div>
@@ -132,10 +188,13 @@ function HourlyCard({ entry }: HourlyCardProps) {
   );
 }
 
-export function HourlyMarineCarousel({ entries }: HourlyMarineCarouselProps) {
-  const cards = entries.map((entry) => (
-    <HourlyCard key={`${entry.time}-${entry.waveHeightM}`} entry={entry} />
-  ));
+export function HourlyMarineCarousel({ entries, tideEvents = [] }: HourlyMarineCarouselProps) {
+  const cards = entries.map((entry) => {
+    const tideState = getTideState(entry.time, tideEvents);
+    return (
+      <HourlyCard key={`${entry.time}-${entry.waveHeightM}`} entry={entry} tideState={tideState} />
+    );
+  });
 
   return (
     <WeatherCarousel

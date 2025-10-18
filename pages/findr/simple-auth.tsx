@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { Fish } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
+import { normalizeEmail, mapAuthError, validateAndCleanSession } from '../../lib/auth/utils';
 
 export default function SimpleAuth() {
   const router = useRouter();
@@ -14,21 +15,31 @@ export default function SimpleAuth() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Check if user is already signed in
+  // Check if user is already signed in and validate session
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    let isSubscribed = true;
+
+    // Validate and check session
+    validateAndCleanSession(supabase).then((hasValidSession) => {
+      if (isSubscribed && hasValidSession) {
         router.push('/findr');
       }
     });
 
+    // Listen for auth state changes (but don't double-redirect)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        router.push('/findr');
+      if (isSubscribed && event === 'SIGNED_IN' && session) {
+        // Small delay to prevent race condition with manual redirect
+        setTimeout(() => {
+          if (isSubscribed) router.push('/findr');
+        }, 100);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   const handleEmailPassword = async (e: React.FormEvent) => {
@@ -38,23 +49,30 @@ export default function SimpleAuth() {
     setMessage(null);
 
     try {
+      const emailNorm = normalizeEmail(email);
+
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: emailNorm,
           password,
+          options: {
+            data: {
+              app: 'findr',
+            },
+          },
         });
         if (error) throw error;
         setMessage('Check your email for confirmation link!');
       } else if (mode === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: emailNorm,
           password,
         });
         if (error) throw error;
         // Will be redirected by auth state change
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -71,16 +89,17 @@ export default function SimpleAuth() {
     setMessage(null);
 
     try {
+      const emailNorm = normalizeEmail(email);
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: emailNorm,
         options: {
-          emailRedirectTo: `${window.location.origin}/findr/magic-link`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?app=findr`,
         },
       });
       if (error) throw error;
       setMessage('Check your email for a magic sign-in link! 🪄');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -97,17 +116,18 @@ export default function SimpleAuth() {
     setMessage(null);
 
     try {
+      const emailNorm = normalizeEmail(email);
       // Use magic link for "password reset" - simpler and more reliable
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: emailNorm,
         options: {
-          emailRedirectTo: `${window.location.origin}/findr/magic-link`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?app=findr`,
         },
       });
       if (error) throw error;
       setMessage('Check your email for a sign-in link! No password needed. 🎣');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(mapAuthError(err));
     } finally {
       setLoading(false);
     }

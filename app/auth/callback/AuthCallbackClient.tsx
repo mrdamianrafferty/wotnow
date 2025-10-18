@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 
-// Ultra-lightweight callback handler. It supports:
-// 1) Email OTP links (magic link / signup confirm / recovery / invite / email change)
-// 2) OAuth implicit flow (Google / Apple) – session is already set by Supabase
+// Unified authentication callback handler for Go Daisy and Findr
+// Supports:
+// 1) PKCE flow (modern, code-based OAuth and magic links)
+// 2) Implicit flow (legacy, direct token access)
+// 3) Email OTP links (magic link / signup confirm / recovery / invite / email change)
 //
-// We purposefully avoid complex returnTo / PKCE code-exchange handling
-// to reduce edge cases ("wrong tab", code verifier missing, etc.).
-// On success we always send people to the homepage.
+// Intelligently routes users based on app context after successful authentication.
 
 enum Phase { Checking, Done, Error }
 
@@ -38,6 +38,40 @@ function getErrorMessage(err: unknown): string {
   return 'That link could not be used. Please start again from the login page.';
 }
 
+// Determine the correct destination based on context
+function getDestination(params: {
+  returnTo?: string | null;
+  app?: string | null;
+  isRecovery: boolean;
+  hostname: string;
+}): string {
+  const { returnTo, app, isRecovery, hostname } = params;
+
+  // If this is a recovery flow, send to appropriate password update page
+  if (isRecovery) {
+    const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu');
+    return isFindrFlow ? '/findr/update-password' : '/auth/reset';
+  }
+
+  // If returnTo is specified and safe, use it
+  if (returnTo) {
+    // Validate returnTo is same-origin and safe
+    try {
+      const url = new URL(returnTo, window.location.origin);
+      if (url.origin === window.location.origin) {
+        return url.pathname + url.search + url.hash;
+      }
+    } catch {
+      // Invalid URL, fall through to defaults
+    }
+  }
+
+  // Determine app context
+  const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu');
+
+  return isFindrFlow ? '/findr' : '/';
+}
+
 export default function AuthCallbackClient() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -45,11 +79,15 @@ export default function AuthCallbackClient() {
   const typeParam = sp?.get('type');
   const tokenHash = sp?.get('token_hash') || sp?.get('token');
   const oauthError = sp?.get('error') || sp?.get('error_description');
-  
+
   // Check for additional Supabase parameters
   const code = sp?.get('code');
   const access_token = sp?.get('access_token');
   const refresh_token = sp?.get('refresh_token');
+
+  // Get routing context
+  const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
+  const app = sp?.get('app');
 
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
@@ -73,47 +111,40 @@ export default function AuthCallbackClient() {
           throw new Error(oauthError);
         }
 
-        // Handle PKCE flow (newer Supabase magic links)
+        // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
-          
-          // Success - redirect based on type or domain
+
+          // Success - route to appropriate destination
           setPhase(Phase.Done);
-          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
-          
-          if ((typeParam || '').toLowerCase() === 'recovery') {
-            router.replace(isFindrDomain ? '/findr/update-password' : '/auth/reset');
-            return;
-          }
-          
-          let destination = returnTo;
-          if (!destination) {
-            destination = isFindrDomain ? '/findr' : '/';
-          }
-          
+          const destination = getDestination({
+            returnTo,
+            app,
+            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+            hostname: window.location.hostname,
+          });
+
           router.replace(destination);
           return;
         }
 
-        // Handle implicit flow tokens (older style)
+        // Handle implicit flow tokens (older style OAuth)
         if (access_token) {
           const { error } = await supabase.auth.setSession({
             access_token,
             refresh_token: refresh_token || ''
           });
           if (error) throw error;
-          
+
           setPhase(Phase.Done);
-          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
-          
-          let destination = returnTo;
-          if (!destination) {
-            destination = isFindrDomain ? '/findr' : '/';
-          }
-          
+          const destination = getDestination({
+            returnTo,
+            app,
+            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+            hostname: window.location.hostname,
+          });
+
           router.replace(destination);
           return;
         }
@@ -124,49 +155,29 @@ export default function AuthCallbackClient() {
           const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash });
           if (error) throw error;
 
-          // If this was a recovery flow, send user to reset page after session is established
-          if ((typeParam || '').toLowerCase() === 'recovery') {
-            setPhase(Phase.Done);
-            // Check if this is a findr user by looking at returnTo or app context
-            const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-            const isFindrUser = returnTo?.includes('/findr') || window.location.origin.includes('fishfindr.eu');
-            
-            if (isFindrUser) {
-              router.replace('/findr/update-password');
-            } else {
-              router.replace('/auth/reset');
-            }
-            return;
-          }
-
-          // Success – check for returnTo parameter, otherwise go to findr for findr domain
           setPhase(Phase.Done);
-          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
-          
-          let destination = returnTo;
-          if (!destination) {
-            destination = isFindrDomain ? '/findr' : '/';
-          }
-          
+          const destination = getDestination({
+            returnTo,
+            app,
+            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+            hostname: window.location.hostname,
+          });
+
           router.replace(destination);
           return;
         }
 
-        // OAuth implicit – session should already be present
+        // OAuth implicit – session should already be present (fallback)
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setPhase(Phase.Done);
-          
-          // Check for returnTo parameter, otherwise redirect to /findr for findr users
-          const returnTo = sp?.get('returnTo') || sp?.get('redirect_to');
-          const isFindrDomain = window.location.origin.includes('fishfindr.eu');
-          
-          let destination = returnTo;
-          if (!destination) {
-            destination = isFindrDomain ? '/findr' : '/';
-          }
-          
+          const destination = getDestination({
+            returnTo,
+            app,
+            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+            hostname: window.location.hostname,
+          });
+
           router.replace(destination);
           return;
         }

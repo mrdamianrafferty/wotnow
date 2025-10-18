@@ -36,26 +36,31 @@ export function middleware(req: NextRequest) {
     }
   }
   
+  // Unified auth callback routing
+  // All auth callbacks (PKCE, implicit, OTP) go to /auth/callback
+  // The callback handler determines the correct destination based on app parameter
   const hasCode = url.searchParams.has('code');
   const hasTokenHash = url.searchParams.has('token_hash') || url.searchParams.has('token');
-  
-  // Only redirect to findr magic link if this appears to be a findr-related auth flow
-  const isFindrFlow = url.searchParams.get('app') === 'findr' || 
-                      url.pathname.startsWith('/findr') ||
-                      req.headers.get('referer')?.includes('/findr') ||
-                      hostname.includes('fishfindr.eu') ||
-                      hostname.includes('godaisy.io');
+  const isAuthCallback = url.pathname === '/auth/callback';
+  const isLegacyFindrCallback = url.pathname === '/findr/magic-link';
 
-  if ((hasCode || hasTokenHash)) {
-    if (isFindrFlow && url.pathname !== '/findr/magic-link') {
-      const to = url.clone();
-      to.pathname = '/findr/magic-link';
-      return NextResponse.redirect(to);
-    } else if (!isFindrFlow && url.pathname !== '/auth/callback') {
-      const to = url.clone();
-      to.pathname = '/auth/callback';
-      return NextResponse.redirect(to);
+  if ((hasCode || hasTokenHash) && !isAuthCallback && !isLegacyFindrCallback) {
+    // Redirect to unified callback handler
+    const to = url.clone();
+    to.pathname = '/auth/callback';
+    return NextResponse.redirect(to);
+  }
+
+  // Support legacy /findr/magic-link callback for backwards compatibility
+  // (existing email links may still point there)
+  if (isLegacyFindrCallback && (hasCode || hasTokenHash)) {
+    const to = url.clone();
+    to.pathname = '/auth/callback';
+    // Preserve app=findr parameter for routing
+    if (!to.searchParams.has('app')) {
+      to.searchParams.set('app', 'findr');
     }
+    return NextResponse.redirect(to);
   }
   
   return NextResponse.next();

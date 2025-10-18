@@ -71,14 +71,29 @@ export default function AuthClient() {
   }
 
   // If already signed in, send to homepage
+  // Also listen for auth state changes (e.g., OAuth popup completion)
   useEffect(() => {
     let active = true;
+
+    // Check existing session
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (active && data.session) router.replace("/");
     })();
+
+    // Listen for auth state changes (handles OAuth popup, magic links, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (active && event === 'SIGNED_IN' && session) {
+        // Small delay to prevent race condition with initial session check
+        setTimeout(() => {
+          if (active) router.replace("/");
+        }, 100);
+      }
+    });
+
     return () => {
       active = false;
+      subscription.unsubscribe();
     };
   }, [router]);
 
