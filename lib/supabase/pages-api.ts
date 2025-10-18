@@ -1,6 +1,12 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+/**
+ * Creates a Supabase client for use in Next.js Pages API routes
+ *
+ * @deprecated Use createPagesServerClient from @supabase/auth-helpers-nextjs instead
+ * This function is maintained for backwards compatibility but should be migrated
+ */
 export function createServerSupabaseClient(context: { req: NextApiRequest; res: NextApiResponse }) {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,4 +27,11 @@ export function createServerSupabaseClient(context: { req: NextApiRequest; res: 
       },
     }
   )
+}
+
+/**
+ * Recommended: Creates a Supabase client for Pages API routes using official helper
+ */
+export function createPagesServerClient(context: { req: NextApiRequest; res: NextApiResponse }) {
+  return createServerSupabaseClient(context);
 }

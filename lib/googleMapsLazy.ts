@@ -12,6 +12,11 @@ let loadPromise: Promise<void> | null = null;
 let isLoaded = false;
 
 export function loadGoogleMapsAPI(): Promise<void> {
+  // Check if we're in browser environment
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('Google Maps can only be loaded in browser environment'));
+  }
+
   // Already loaded
   if (isLoaded && window.google?.maps) {
     return Promise.resolve();
@@ -99,5 +104,8 @@ export function loadGoogleMapsAPI(): Promise<void> {
 }
 
 export function isGoogleMapsReady(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   return isLoaded && window.google?.maps !== undefined;
 }

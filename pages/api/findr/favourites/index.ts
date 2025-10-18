@@ -374,13 +374,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ? await getLiveConfidenceScores(rectangleCode, speciesCodes)
           : new Map();
 
+        // Track orphaned favourites for cleanup
+        const orphanedFavouriteIds: string[] = [];
+
         // Build response with live confidence scores
         const favouritesWithConfidence = typedFavourites.map((fav) => {
           const species = speciesMap.get(fav.species_id);
-          
-          // Skip if species not found (shouldn't happen)
+
+          // Skip if species not found (orphaned favourite from deleted species)
           if (!species) {
-            console.warn(`Species not found for id: ${fav.species_id}`);
+            orphanedFavouriteIds.push(fav.id);
             return null;
           }
           
@@ -418,6 +421,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             conservationStatus: species.conservation_status
           };
         }).filter(Boolean); // Remove any nulls
+
+        // Clean up orphaned favourites (species no longer exist)
+        if (orphanedFavouriteIds.length > 0) {
+          console.log(`[Favourites] Cleaning up ${orphanedFavouriteIds.length} orphaned favourites for user ${userId}`);
+          await supabase
+            .from('user_favourites')
+            .delete()
+            .in('id', orphanedFavouriteIds);
+        }
 
         return res.status(200).json({ success: true, favourites: favouritesWithConfidence });
       } catch (error: unknown) {
