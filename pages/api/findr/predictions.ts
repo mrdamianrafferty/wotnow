@@ -586,29 +586,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Use enhanced function if lat/lon provided, otherwise use basic function
-    const useEnhancedFunction = userLat !== null && userLon !== null;
-    const rpcFunctionName = useEnhancedFunction 
-      ? 'get_environmental_predictions_enhanced' 
-      : 'get_environmental_predictions_basic';
+    // Always use enhanced function - it handles null lat/lon gracefully
+    // and provides better predictions (weather, substrate, depth scoring)
+    const rpcFunctionName = 'get_environmental_predictions_enhanced';
     
-    const rpcParams = useEnhancedFunction
-      ? {
-          target_rectangle: rectangleCode,
-          target_date: predictionDate,
-          user_lat: userLat,
-          user_lon: userLon,
-          substrate_type: substrateData?.substrate || null,
-          depth_meters: bathymetryData?.depth_meters || null,
-          current_wind_speed_ms: currentWindSpeedMS,
-          current_pressure_hpa: currentPressureHPA,
-        }
-      : {
-          target_rectangle: rectangleCode,
-          target_date: predictionDate,
-          current_wind_speed_ms: currentWindSpeedMS,
-          current_pressure_hpa: currentPressureHPA,
-        };
+    const rpcParams = {
+      target_rectangle: rectangleCode,
+      target_date: predictionDate,
+      user_lat: userLat || null,  // Pass null if not provided - function handles this
+      user_lon: userLon || null,  // Pass null if not provided - function handles this
+      substrate_type: substrateData?.substrate || null,
+      depth_meters: bathymetryData?.depth_meters || null,
+      current_wind_speed_ms: currentWindSpeedMS,
+      current_pressure_hpa: currentPressureHPA,
+    };
     
     const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);
 
