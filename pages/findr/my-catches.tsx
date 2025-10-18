@@ -39,7 +39,7 @@ export default function MyCatchesPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
         {/* Header */}
         <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="container mx-auto px-4 py-4">
+          <div className="container mx-auto px-2 sm:px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link href="/findr" className="btn btn-ghost btn-sm btn-circle">
@@ -83,7 +83,7 @@ export default function MyCatchesPage() {
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-2 sm:px-4 py-8">
           {!user ? (
             // Not signed in
             <div className="card bg-base-100 shadow-xl p-8 text-center max-w-2xl mx-auto">

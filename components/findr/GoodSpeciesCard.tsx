@@ -75,9 +75,9 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
   return (
     <div className="card bg-gradient-to-br from-warning/10 via-warning/5 to-base-100 border border-warning/30 shadow-lg hover:shadow-xl transition-all duration-300">
-      <div className="card-body p-4">
+      <div className="card-body p-3 sm:p-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Species Image/Emoji */}
             <div className="flex-shrink-0">
@@ -111,7 +111,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
               
               {/* Confidence Badge */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="badge badge-warning gap-1 py-2 px-3">
+                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3">
                   <span className="font-bold">{species.confidence}%</span>
                 </div>
                 <span className="text-xs font-semibold text-warning uppercase">
@@ -121,7 +121,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
               {/* Best Fishing Time */}
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <div className="badge badge-info gap-1 py-2 px-3">
+                <div className="badge badge-info gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3">
                   <Clock size={12} />
                   <span className="font-semibold text-xs">{fishingTime.time}</span>
                 </div>

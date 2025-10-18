@@ -93,9 +93,9 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
   return (
     <div className="card bg-gradient-to-br from-success/10 via-success/5 to-base-100 border-2 border-success shadow-xl hover:shadow-2xl transition-all duration-300">
-      <div className="card-body p-4 sm:p-6">
+      <div className="card-body p-3 sm:p-4 md:p-6">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
             {/* Species Image/Emoji */}
             <div className="flex-shrink-0">
@@ -132,7 +132,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               
               {/* Confidence Badge */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="badge badge-error badge-lg gap-2 py-3 px-4">
+                <div className="badge badge-error badge-lg gap-2 py-2 px-3 sm:py-3 sm:px-4">
                   <Zap size={16} fill="currentColor" />
                   <span className="font-bold">{species.confidence}%</span>
                 </div>
@@ -143,7 +143,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
               {/* Best Fishing Time */}
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <div className="badge badge-success badge-lg gap-2 py-3 px-4">
+                <div className="badge badge-success badge-lg gap-2 py-2 px-3 sm:py-3 sm:px-4">
                   <Clock size={16} />
                   <span className="font-bold">{fishingTime.time}</span>
                 </div>
