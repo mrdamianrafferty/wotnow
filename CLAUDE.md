@@ -347,6 +347,100 @@ tsx scripts/clear-all-cache-for-date.js
 
 See `DEPLOYMENT.md` for detailed deployment procedures.
 
+## Documentation Index
+
+### 🟢 Current & Active (October 2025)
+
+**Performance Optimizations:**
+- `SUPABASE_OPTIMIZATION_IMPLEMENTATION_COMPLETE.md` - ✅ **DEPLOYED** Query parallelization & timing (Oct 18, 2025)
+- `SUPABASE_OPTIMIZATION_EXECUTIVE_SUMMARY.md` - Quick reference for optimization strategy
+- `SUPABASE_OPTIMIZATION_ACTION_PLAN.md` - Detailed implementation plan with risks
+- `SUPABASE_OPTIMIZATION_CRITICAL_ANALYSIS.md` - Deep analysis of optimization opportunities
+- `PERFORMANCE_ANALYSIS.md` - Overall performance metrics and targets
+
+**Data Ingestion & Quality:**
+- `FILL_VALUE_FILTERING_COMPLETE.md` - ✅ **DEPLOYED** Copernicus fill value detection (Oct 18, 2025)
+- `PARTIAL_DATA_IMPLEMENTATION_COMPLETE.md` - ✅ **DEPLOYED** Accept 3/7 variable minimum (Oct 18, 2025)
+- `PARTIAL_DATA_ACCEPTANCE_STRATEGY.md` - Strategy for handling incomplete data
+- `DATASET_FRESHNESS_ANALYSIS.md` - Data age analysis and thresholds
+- `ENHANCED_REINGEST_QUICK_REF.md` - Quick reference for data re-ingestion
+- `TARGETED_REINGEST_COMPLETE.md` - Rectangle-specific re-ingestion guide
+- `REINGEST_QUICK_REF.md` - Short command reference for re-ingestion
+
+**Recent Fixes & Deployments:**
+- `28E5_ROOT_CAUSE_ANALYSIS.md` - Analysis of missing data issue (Oct 18, 2025)
+- `EMERGENCY_FIX_28E5_20251018.md` - Emergency patch for rectangle 28E5
+- `BITE_SCORE_FIX_APPLIED_SUCCESS.md` - ✅ **DEPLOYED** Bite score calculation fix (Oct 18, 2025)
+- `DUPLICATE_FISH_CLEANUP_SUMMARY.md` - Species alias system implementation
+- `GOOGLE_MAPS_LOADER_FIX.md` - Maps initialization fix (Oct 18, 2025)
+
+**Core System Documentation:**
+- `CLAUDE.md` - **THIS FILE** - Main guidance document
+- `CONFIDENCE_SCORING_ALGORITHM.md` - How prediction confidence is calculated
+- `FINDR_PREDICTIONS_DATA_SOURCES.md` - Data sources for predictions
+- `COPERNICUS_DATA_INGESTION_GUIDE.md` - CMEMS data ingestion process
+- `DIAGNOSIS_QUICK_REF.md` - Quick troubleshooting guide
+
+### 🟡 Reference (Still Relevant But Historical)
+
+**Phase 10 CMEMS Integration (2024):**
+- `PHASE_10_COMPLETE_SUMMARY.md` - Final summary of CMEMS integration
+- `BIOGEOCHEMICAL_INTEGRATION_COMPLETE.md` - Biogeochemical variables added
+- `CMEMS_INTEGRATION_STATUS.md` - Integration status overview
+- `CMEMS_FLOW_CLARITY_INTEGRATION.md` - Water flow and clarity integration
+- `COPERNICUS_SUCCESS.md` - Initial success metrics
+- `COPERNICUS_CORRECT_DATASET_IDS.md` - Dataset ID reference
+
+**Environmental Matching System:**
+- `ENVIRONMENTAL_MATCHING_SUMMARY.md` - How species matching works
+- `ENVIRONMENTAL_MATCHING_TWO_PHASE_SYSTEM.md` - Two-phase matching strategy
+- `BIO_BAND_CONFIDENCE_QUICK_REFERENCE.md` - Guild weighting profiles
+
+**Bite Score & Confidence:**
+- `BITE_SCORE_IMPLEMENTATION_COMPLETE.md` - Initial bite score implementation
+- `BITE_SCORE_CRITICAL_STATUS.md` - Bite score issues identified
+- `BITE_SCORE_TEST_RESULTS.md` - Test results for bite score
+- `BIO_BAND_CONFIDENCE_DEPLOYMENT_SUMMARY.md` - Bio band confidence deployment
+
+**User Features:**
+- `FAVOURITES_GUIDE.md` - User favorites system
+- `SHARING_FEATURE_IMPLEMENTED.md` - Sharing functionality
+- `INTERESTS_RECOMMENDATIONS_INTEGRATION.md` - User interests system
+
+### �️ Archived Documentation
+
+**Location:** `/archive/` folder
+
+All outdated documentation has been moved to the `archive/` folder to keep the workspace clean.
+See `archive/README.md` for a complete list of archived files and what replaced them.
+
+**Categories archived:**
+- Superseded implementations (old optimization plans, early Copernicus analysis)
+- Historical development phases (Phase 2, 9, 9.5)
+- Resolved issues (location system, router race conditions, UI fixes)
+- Completed work (image optimization, resource hints)
+
+### 📋 Documentation Best Practices
+
+**When Creating New Documentation:**
+1. Use clear, dated filenames (e.g., `FEATURE_NAME_COMPLETE_20251018.md`)
+2. Mark deployment status clearly: ✅ **DEPLOYED**, 🚧 **IN PROGRESS**, ⏳ **PLANNED**
+3. Include "Status" and "Next Steps" sections
+4. Cross-reference related docs
+5. Update this index when adding new docs
+
+**When Updating Existing Documentation:**
+1. Add "Updated: YYYY-MM-DD" to the top of the doc
+2. Note what changed in a "Changelog" section
+3. Move to "Outdated" section in this index if superseded
+4. Keep old docs for historical reference (don't delete)
+
+**Quick Reference Docs Should:**
+- Be < 100 lines
+- Have clear command examples
+- Focus on "how" not "why"
+- Be named with `_QUICK_REF.md` suffix
+
 ## Common Tasks
 
 **Adding a new species:**
@@ -373,3 +467,4 @@ See `DEPLOYMENT.md` for detailed deployment procedures.
 3. Check `findr_prediction_sessions` table for cached results
 4. Verify CMEMS data coverage in `copernicus_data` table
 5. Test scripts in `scripts/test-*.ts` for isolated component testing
+6. **NEW:** Check query timing with `LOG_QUERY_TIMING=true` environment variable
