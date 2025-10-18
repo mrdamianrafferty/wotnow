@@ -5,6 +5,9 @@
  * The API is only loaded when CoastalLocationDialog opens for the first time.
  */
 
+// Get API key at module level so Next.js can inline it at build time
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
 let loadPromise: Promise<void> | null = null;
 let isLoaded = false;
 
@@ -21,10 +24,11 @@ export function loadGoogleMapsAPI(): Promise<void> {
 
   // Start loading
   loadPromise = new Promise((resolve, reject) => {
-    // Check if API key exists
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!apiKey || apiKey === 'your_google_maps_api_key') {
+    console.log('🔍 Google Maps API key check:', GOOGLE_MAPS_API_KEY ? 'Found' : 'Missing');
+
+    if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key') {
       console.error('❌ Google Maps API key missing or not configured');
+      console.error('Key value:', GOOGLE_MAPS_API_KEY || '(empty)');
       reject(new Error('Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local'));
       return;
     }
@@ -76,9 +80,11 @@ export function loadGoogleMapsAPI(): Promise<void> {
 
     // Create and inject script
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async&v=weekly&callback=initGoogleMaps`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&loading=async&v=weekly&callback=initGoogleMaps`;
     script.async = true;
     script.defer = true;
+
+    console.log('📡 Loading Google Maps from:', script.src.substring(0, 80) + '...');
 
     script.onerror = () => {
       clearTimeout(timeoutId);

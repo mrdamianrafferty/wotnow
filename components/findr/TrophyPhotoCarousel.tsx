@@ -405,7 +405,14 @@ export function TrophyPhotoCarousel({
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               {currentPhoto.caption && (
-                <h3 className="text-lg font-medium mb-2">{currentPhoto.caption}</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-medium">{currentPhoto.caption}</h3>
+                  {currentPhoto.metadata.photographer === 'Stock photo' && (
+                    <span className="badge badge-sm bg-white/20 text-white border-none">
+                      Stock Photo
+                    </span>
+                  )}
+                </div>
               )}
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -532,27 +539,39 @@ export function PhotoGalleryGrid({
       columns === 4 ? 'grid-cols-4' :
       'grid-cols-3'
     }`}>
-      {photos.map((photo, index) => (
-        <button
-          key={photo.id}
-          onClick={() => onPhotoClickAction(index)}
-          className={`${aspectClasses[aspectRatio]} rounded-lg overflow-hidden bg-base-200 hover:shadow-lg transition-all duration-200 group`}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={photo.thumbnail || photo.url}
-            alt={photo.caption || `Photo ${index + 1}`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-          />
-          {photo.caption && (
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2">
-              <span className="text-white text-xs font-medium">
-                {photo.caption}
-              </span>
-            </div>
-          )}
-        </button>
-      ))}
+      {photos.map((photo, index) => {
+        const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
+
+        return (
+          <button
+            key={photo.id}
+            onClick={() => onPhotoClickAction(index)}
+            className={`relative ${aspectClasses[aspectRatio]} rounded-lg overflow-hidden bg-base-200 hover:shadow-lg transition-all duration-200 group`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.thumbnail || photo.url}
+              alt={photo.caption || `Photo ${index + 1}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+
+            {/* Stock photo indicator badge */}
+            {isStockPhoto && (
+              <div className="absolute top-2 right-2 badge badge-sm bg-black/50 text-white border-none">
+                Stock
+              </div>
+            )}
+
+            {photo.caption && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2">
+                <span className="text-white text-xs font-medium">
+                  {photo.caption}
+                </span>
+              </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

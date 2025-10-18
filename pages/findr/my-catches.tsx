@@ -1,0 +1,259 @@
+/**
+ * My Trophy Gallery Page
+ *
+ * Displays user's catch photos in a gallery format with carousel viewer.
+ * Uses stock species photos as fallback when user hasn't uploaded a photo.
+ */
+
+import { useState } from 'react';
+import Head from 'next/head';
+import { Camera, ArrowLeft, Upload, Info, ClipboardList, Fish } from 'lucide-react';
+import Link from 'next/link';
+import { TrophyPhotoCarousel, PhotoGalleryGrid } from '@/components/findr/TrophyPhotoCarousel';
+import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
+import { useAuth } from '@/context/AuthContext';
+import { TranslatedText } from '@/components/translation/TranslatedFishCard';
+
+export default function MyCatchesPage() {
+  const { user } = useAuth();
+  const { data: photos = [], isLoading, error } = useMyCatchPhotos();
+  const [carouselOpen, setCarouselOpen] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
+
+  const openPhoto = (index: number) => {
+    setStartIndex(index);
+    setCarouselOpen(true);
+  };
+
+  // Count user photos vs stock photos
+  const userPhotos = photos.filter(p => p.metadata?.photographer !== 'Stock photo');
+  const stockPhotos = photos.filter(p => p.metadata?.photographer === 'Stock photo');
+
+  return (
+    <>
+      <Head>
+        <title>My Trophy Gallery - findr</title>
+        <meta name="description" content="View your catch photos and fishing history" />
+      </Head>
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Link href="/findr" className="btn btn-ghost btn-sm btn-circle">
+                  <ArrowLeft className="w-5 h-5" />
+                </Link>
+                <div>
+                  <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+                    <Camera className="w-6 h-6" />
+                    <TranslatedText text="My Trophy Gallery" />
+                  </h1>
+                  <p className="text-sm text-base-content/70">
+                    {photos.length === 0 ? (
+                      <TranslatedText text="No catches logged yet" />
+                    ) : (
+                      <>
+                        {userPhotos.length > 0 && (
+                          <span className="font-medium text-primary">
+                            {userPhotos.length} <TranslatedText text={userPhotos.length === 1 ? 'your photo' : 'your photos'} />
+                          </span>
+                        )}
+                        {userPhotos.length > 0 && stockPhotos.length > 0 && <span> · </span>}
+                        {stockPhotos.length > 0 && (
+                          <span>
+                            {stockPhotos.length} <TranslatedText text={stockPhotos.length === 1 ? 'stock photo' : 'stock photos'} />
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {user && photos.length > 0 && (
+                <Link href="/findr/log" className="btn btn-primary btn-sm gap-2">
+                  <Upload className="w-4 h-4" />
+                  <span className="hidden sm:inline"><TranslatedText text="Log Catch" /></span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="container mx-auto px-4 py-8">
+          {!user ? (
+            // Not signed in
+            <div className="card bg-base-100 shadow-xl p-8 text-center max-w-2xl mx-auto">
+              <div className="text-6xl mb-4">🔒</div>
+              <h2 className="text-2xl font-bold mb-3">
+                <TranslatedText text="Sign in to view your catches" />
+              </h2>
+              <p className="text-base-content/70 mb-6 text-lg">
+                <TranslatedText text="Create an account to log your catches and build your trophy gallery" />
+              </p>
+
+              {/* Feature highlights */}
+              <div className="grid md:grid-cols-3 gap-4 mb-8 text-left">
+                <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
+                  <Camera className="w-8 h-8 text-primary mb-2" />
+                  <h3 className="font-semibold text-sm mb-1">
+                    <TranslatedText text="Upload Photos" />
+                  </h3>
+                  <p className="text-xs text-base-content/60 text-center">
+                    <TranslatedText text="Add photos when logging catches to build your personal gallery" />
+                  </p>
+                </div>
+                <div className="flex flex-col items-center p-4 bg-secondary/5 rounded-lg">
+                  <ClipboardList className="w-8 h-8 text-secondary mb-2" />
+                  <h3 className="font-semibold text-sm mb-1">
+                    <TranslatedText text="Track Catches" />
+                  </h3>
+                  <p className="text-xs text-base-content/60 text-center">
+                    <TranslatedText text="Log species, location, bait, and conditions for every catch" />
+                  </p>
+                </div>
+                <div className="flex flex-col items-center p-4 bg-accent/5 rounded-lg">
+                  <Fish className="w-8 h-8 text-accent mb-2" />
+                  <h3 className="font-semibold text-sm mb-1">
+                    <TranslatedText text="Stock Fallbacks" />
+                  </h3>
+                  <p className="text-xs text-base-content/60 text-center">
+                    <TranslatedText text="No photo? We'll use beautiful species images as placeholders" />
+                  </p>
+                </div>
+              </div>
+
+              <Link href="/findr/auth" className="btn btn-primary btn-lg gap-2">
+                <Camera className="w-5 h-5" />
+                <TranslatedText text="Sign In to Get Started" />
+              </Link>
+            </div>
+          ) : isLoading ? (
+            // Loading state
+            <div className="flex items-center justify-center py-20">
+              <span className="loading loading-spinner loading-lg text-primary"></span>
+            </div>
+          ) : error ? (
+            // Error state
+            <div className="alert alert-error">
+              <span>
+                <TranslatedText text="Failed to load photos" />: {(error as Error).message}
+              </span>
+            </div>
+          ) : photos.length === 0 ? (
+            // Empty state
+            <div className="card bg-base-100 shadow-xl p-8 text-center">
+              <div className="text-6xl mb-4">📸</div>
+              <h2 className="text-xl font-bold mb-2">
+                <TranslatedText text="No Catches Logged Yet!" />
+              </h2>
+              <p className="text-base-content/70 mb-6">
+                <TranslatedText text="Start logging your catches to build your trophy gallery." />
+                <br />
+                <TranslatedText text="Photos are optional - we'll use stock images as placeholders!" />
+              </p>
+              <Link href="/findr/log" className="btn btn-primary gap-2">
+                <Upload className="w-4 h-4" />
+                <TranslatedText text="Log Your First Catch" />
+              </Link>
+            </div>
+          ) : (
+            // Gallery view
+            <>
+              {/* Info banner if showing stock photos */}
+              {stockPhotos.length > 0 && (
+                <div className="alert bg-info/10 border-info/20 mb-6">
+                  <Info className="w-5 h-5 text-info" />
+                  <div className="flex-1">
+                    <p className="text-sm">
+                      {userPhotos.length === 0 ? (
+                        <TranslatedText text="Showing stock photos for your catches. Add your own photos when logging catches to personalize your gallery!" />
+                      ) : (
+                        <TranslatedText text="Catches without photos show stock images as placeholders. Add photos when logging to see your actual catches!" />
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Photo gallery */}
+              <div className="card bg-base-100 shadow-xl p-6">
+                <PhotoGalleryGrid
+                  photos={photos}
+                  onPhotoClickAction={openPhoto}
+                  columns={3}
+                  aspectRatio="wide"
+                />
+              </div>
+
+              {/* Quick stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div className="stat bg-base-100 shadow rounded-lg">
+                  <div className="stat-figure text-primary">
+                    <Camera className="w-8 h-8" />
+                  </div>
+                  <div className="stat-title">
+                    <TranslatedText text="Total Catches" />
+                  </div>
+                  <div className="stat-value text-primary">{photos.length}</div>
+                </div>
+
+                <div className="stat bg-base-100 shadow rounded-lg">
+                  <div className="stat-figure text-success">
+                    <Upload className="w-8 h-8" />
+                  </div>
+                  <div className="stat-title">
+                    <TranslatedText text="Your Photos" />
+                  </div>
+                  <div className="stat-value text-success">{userPhotos.length}</div>
+                </div>
+
+                <div className="stat bg-base-100 shadow rounded-lg">
+                  <div className="stat-title">
+                    <TranslatedText text="Stock Photos" />
+                  </div>
+                  <div className="stat-value">{stockPhotos.length}</div>
+                  <div className="stat-desc">
+                    <TranslatedText text="Add photos to replace" />
+                  </div>
+                </div>
+
+                <div className="stat bg-base-100 shadow rounded-lg">
+                  <div className="stat-title">
+                    <TranslatedText text="Photo Coverage" />
+                  </div>
+                  <div className="stat-value">
+                    {photos.length > 0 ? Math.round((userPhotos.length / photos.length) * 100) : 0}%
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Trophy Photo Carousel */}
+      {photos.length > 0 && (
+        <TrophyPhotoCarousel
+          photos={photos}
+          initialPhotoIndex={startIndex}
+          isOpen={carouselOpen}
+          onClose={() => setCarouselOpen(false)}
+          title="My Catches" // Note: Carousel titles are not currently translated by design
+          showThumbnails={true}
+          allowDownload={true}
+          allowShare={userPhotos.length > 0} // Only allow sharing user's actual photos
+          allowZoom={true}
+        />
+      )}
+    </>
+  );
+}
+
+// Server-side props to prevent static generation
+export async function getServerSideProps() {
+  return { props: {} };
+}

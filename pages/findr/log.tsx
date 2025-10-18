@@ -24,6 +24,7 @@ import {
   Loader2,
   TrendingUp,
   Target,
+  Camera,
 } from 'lucide-react';
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
@@ -47,6 +48,7 @@ import { QuickLogModal } from '../../components/findr/QuickLogModal';
 import { SessionLogModal } from '../../components/findr/SessionLogModal';
 import { BlankReportModal } from '../../components/findr/BlankReportModal';
 import { ReferenceDataTables } from '../../components/findr/ReferenceDataTables';
+import { RecentCatchesWidget } from '../../components/findr/RecentCatchesWidget';
 import type { BlankReportData } from '../../components/findr/BlankReportModal';
 
 // Translation components
@@ -904,6 +906,36 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
             <TranslatedText text="View Today's Predictions" />
           </button>
         </div>
+
+        {/* Gallery Preview Section */}
+        <div className="mt-12 pt-12 border-t border-base-300">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold flex items-center justify-center gap-2">
+              <Camera className="w-6 h-6 text-primary" />
+              <TranslatedText text="Your Trophy Gallery" />
+            </h3>
+            <p className="text-sm text-base-content/60 mt-2">
+              <TranslatedText text="Build your collection - with or without photos!" />
+            </p>
+          </div>
+
+          {/* Example photos grid - placeholder boxes */}
+          <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
+            <div className="aspect-video rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border-2 border-dashed border-primary/30">
+              <span className="text-4xl opacity-50">🐟</span>
+            </div>
+            <div className="aspect-video rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/5 flex items-center justify-center border-2 border-dashed border-secondary/30">
+              <span className="text-4xl opacity-50">🎣</span>
+            </div>
+            <div className="aspect-video rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border-2 border-dashed border-accent/30">
+              <span className="text-4xl opacity-50">📸</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-base-content/40 text-center mt-4 max-w-sm mx-auto">
+            <TranslatedText text="Your catches will appear here as cards with photos. No photo? We'll show the species image!" />
+          </p>
+        </div>
       </div>
     );
   }
@@ -1607,6 +1639,11 @@ export default function FindrCatchLogPage() {
               </div>
             </div>
           </header>
+
+          {/* Recent Catches Widget - only shows when catches exist */}
+          <div className="mt-6">
+            <RecentCatchesWidget />
+          </div>
 
           <section className="card bg-base-100 shadow-xl mt-6">
             <div className="card-body space-y-8">
