@@ -7,12 +7,13 @@
 
 import { useState } from 'react';
 import Head from 'next/head';
-import { Camera, ArrowLeft, Upload, Info, ClipboardList, Fish } from 'lucide-react';
+import { Camera, Upload, Info, ClipboardList, Fish } from 'lucide-react';
 import Link from 'next/link';
 import { TrophyPhotoCarousel, PhotoGalleryGrid } from '@/components/findr/TrophyPhotoCarousel';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 import { useAuth } from '@/context/AuthContext';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
+import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
@@ -36,40 +37,38 @@ export default function MyCatchesPage() {
         <meta name="description" content="View your catch photos and fishing history" />
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
+      <main className="min-h-screen bg-base-200 pb-16">
+        {/* Navigation */}
+        <FindrNavigation />
+
+        {/* Page Header */}
+        <div className="bg-base-100 shadow-sm border-b border-base-200">
           <div className="container mx-auto px-2 sm:px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Link href="/findr" className="btn btn-ghost btn-sm btn-circle">
-                  <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div>
-                  <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
-                    <Camera className="w-6 h-6" />
-                    <TranslatedText text="My Trophy Gallery" />
-                  </h1>
-                  <p className="text-sm text-base-content/70">
-                    {photos.length === 0 ? (
-                      <TranslatedText text="No catches logged yet" />
-                    ) : (
-                      <>
-                        {userPhotos.length > 0 && (
-                          <span className="font-medium text-primary">
-                            {userPhotos.length} <TranslatedText text={userPhotos.length === 1 ? 'your photo' : 'your photos'} />
-                          </span>
-                        )}
-                        {userPhotos.length > 0 && stockPhotos.length > 0 && <span> · </span>}
-                        {stockPhotos.length > 0 && (
-                          <span>
-                            {stockPhotos.length} <TranslatedText text={stockPhotos.length === 1 ? 'stock photo' : 'stock photos'} />
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
+                  <Camera className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <TranslatedText text="My Trophy Gallery" />
+                </h1>
+                <p className="text-xs sm:text-sm text-base-content/70 mt-1">
+                  {photos.length === 0 ? (
+                    <TranslatedText text="No catches logged yet" />
+                  ) : (
+                    <>
+                      {userPhotos.length > 0 && (
+                        <span className="font-medium text-primary">
+                          {userPhotos.length} <TranslatedText text={userPhotos.length === 1 ? 'your photo' : 'your photos'} />
+                        </span>
+                      )}
+                      {userPhotos.length > 0 && stockPhotos.length > 0 && <span> · </span>}
+                      {stockPhotos.length > 0 && (
+                        <span>
+                          {stockPhotos.length} <TranslatedText text={stockPhotos.length === 1 ? 'stock photo' : 'stock photos'} />
+                        </span>
+                      )}
+                    </>
+                  )}
+                </p>
               </div>
 
               {user && photos.length > 0 && (
@@ -233,7 +232,7 @@ export default function MyCatchesPage() {
             </>
           )}
         </div>
-      </div>
+      </main>
 
       {/* Trophy Photo Carousel */}
       {photos.length > 0 && (
