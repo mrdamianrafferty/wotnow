@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { UserPreferencesProvider } from '../context/UserPreferencesContext';
 import { LanguageProvider } from '../context/LanguageContext';
 // Load Tailwind + DaisyUI globals so utilities and tokens are available in App Router pages
 import '../styles/index.css';
+
+// Lazy load devtools only in development - completely excluded from production bundle
+const ReactQueryDevtools = dynamic(
+  () => import('@tanstack/react-query-devtools').then(mod => ({ default: mod.ReactQueryDevtools })),
+  { ssr: false, loading: () => null }
+);
 
 export default function RootLayout({
   children,
