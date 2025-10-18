@@ -347,9 +347,26 @@ tsx scripts/clear-all-cache-for-date.js
 
 See `DEPLOYMENT.md` for detailed deployment procedures.
 
+## Quick Start
+
+**NEW TO THE PROJECT?** Start here: **`GETTING_STARTED.md`**
+
+This comprehensive guide covers:
+- 🏗️ Architecture overview (tech stack, directory structure)
+- 🎣 How Findr predictions work (complete pipeline)
+- 🌊 Environmental matching system (guild weights)
+- 📊 Database schema (key tables explained)
+- 🔧 API endpoints (with examples)
+- 🚀 Performance optimizations
+- 🧪 Development workflow
+- 🐛 Debugging guide
+
 ## Documentation Index
 
 ### 🟢 Current & Active (October 2025)
+
+**Getting Started:**
+- `GETTING_STARTED.md` - **START HERE** - Complete architecture & system overview (Oct 18, 2025)
 
 **Performance Optimizations:**
 - `SUPABASE_OPTIMIZATION_IMPLEMENTATION_COMPLETE.md` - ✅ **DEPLOYED** Query parallelization & timing (Oct 18, 2025)

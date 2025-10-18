@@ -736,7 +736,338 @@ npx supabase db connect
 
 ---
 
-## 📚 Deep Dive Documentation
+## � Deployment & Operations
+
+### Deployment Checklist
+
+**Pre-Deployment Verification:**
+```bash
+# 1. Run all checks locally
+npm run typecheck          # TypeScript compilation
+npm run lint              # ESLint (max-warnings=0)
+npm run build             # Next.js production build
+
+# 2. Test critical paths
+npx tsx scripts/test-comprehensive-weather.ts
+npx tsx scripts/test-guild-weather-weights.ts
+
+# 3. Verify environment variables
+# Required in production:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - NEXT_PUBLIC_MAPBOX_TOKEN
+# - COPERNICUS_USERNAME (for data ingestion)
+# - COPERNICUS_PASSWORD (for data ingestion)
+
+# 4. Check database migrations
+npx supabase db diff        # Any pending migrations?
+npx supabase db push        # Apply if needed
+
+# 5. Verify data freshness
+# Check copernicus_data has recent entries
+# Check findr_prediction_sessions cache expiry
+
+# 6. Review git status
+git status                  # No uncommitted changes
+git log --oneline -5        # Verify commits
+```
+
+**Deployment Flow:**
+1. Push to `main` branch triggers Vercel deployment
+2. Pre-push hooks run ESLint + TypeScript checks
+3. Vercel builds and deploys automatically
+4. Monitor deployment logs in Vercel dashboard
+5. Verify production at https://godaisy.io
+
+**Post-Deployment Verification:**
+```bash
+# Test production endpoints
+curl https://godaisy.io/api/health
+curl -X POST https://godaisy.io/api/findr/predictions \
+  -H "Content-Type: application/json" \
+  -d '{"rectangleCode": "39F3"}'
+
+# Check weather integration
+curl "https://godaisy.io/api/weather/forecast?lat=55&lon=10"
+
+# Verify static assets load
+# Check browser console for errors
+# Test user flows (auth, favorites, predictions)
+```
+
+---
+
+### Monitoring & Alerts
+
+**What to Watch in Production:**
+
+**Performance Metrics:**
+- API response times (target: <1s for predictions)
+- Database query times (warn if >500ms)
+- Cache hit rate (target: >70%)
+- Error rates (4xx/5xx responses)
+- Build times (Vercel deployments)
+
+**Vercel Dashboard:**
+- Real-time function logs
+- Edge function performance
+- Bandwidth usage
+- Build logs and deployment status
+
+**Supabase Dashboard:**
+- Database load (CPU, memory, disk)
+- Active connections
+- Slow queries (>500ms)
+- Table sizes and growth
+- Auth events (sign-ups, logins)
+
+**Critical Alerts to Set Up:**
+1. **API Error Rate** - Alert if >5% errors for 5 minutes
+2. **Database CPU** - Alert if >80% for 10 minutes
+3. **Cache Miss Rate** - Alert if >50% (data ingestion issue)
+4. **Build Failures** - Immediate notification
+5. **Auth Issues** - Alert on repeated failed logins
+
+**Monitoring Tools:**
+```bash
+# Enable query timing in development
+LOG_QUERY_TIMING=true npm run dev
+
+# Check Supabase logs
+npx supabase db logs
+
+# Monitor Copernicus data ingestion
+# GitHub Actions: .github/workflows/findr-copernicus-ingest.yml
+# Check workflow runs for failures
+```
+
+**Key Performance Indicators (KPIs):**
+- Findr predictions: 90th percentile <1s
+- Weather API: 95th percentile <500ms
+- Homepage load: LCP <2.5s
+- Cache hit rate: >70%
+- Uptime: >99.5%
+
+---
+
+### Rollback Procedure
+
+**If Something Breaks in Production:**
+
+**Option 1: Vercel Instant Rollback (Fastest)**
+```bash
+# Via Vercel Dashboard:
+1. Go to https://vercel.com/mrdamianrafferty/wotnow/deployments
+2. Find the last working deployment
+3. Click "..." menu → "Promote to Production"
+4. Confirm rollback
+
+# Via Vercel CLI:
+npx vercel rollback
+```
+
+**Option 2: Git Revert + Redeploy**
+```bash
+# Revert the problematic commit
+git revert HEAD           # Or specific commit hash
+git push origin main      # Triggers new deployment
+
+# Or reset to last working commit (use with caution!)
+git reset --hard <commit-hash>
+git push --force origin main
+```
+
+**Option 3: Emergency Hotfix**
+```bash
+# For critical bugs, create hotfix directly on main
+git checkout main
+# Make minimal fix
+git add .
+git commit -m "hotfix: critical bug description"
+git push origin main
+```
+
+**Database Rollback:**
+```bash
+# If migration caused issues
+npx supabase db reset     # Development only!
+
+# Production: Manually revert in Supabase SQL Editor
+# Or create new migration to undo changes
+npx supabase migration new revert_feature_name
+# Write SQL to undo previous migration
+npx supabase db push
+```
+
+**Communication During Incidents:**
+1. Post status update (if using status page)
+2. Notify users via Twitter/social media
+3. Document incident in post-mortem
+4. Update monitoring to catch similar issues
+
+---
+
+### Performance Benchmarks
+
+**Expected Response Times by Endpoint:**
+
+**Findr Predictions API** (`/api/findr/predictions`)
+- Cold start: ~1,000ms (cache miss, all data fetched)
+- Warm cache: ~350ms (cache hit)
+- p50: <500ms
+- p90: <1,000ms
+- p99: <2,000ms
+
+**Weather API** (`/api/weather/forecast`)
+- Met.no API call: ~300ms
+- Marine data merge: ~100ms
+- Total: <500ms
+- p90: <800ms
+
+**Favorites API** (`/api/findr/favourites`)
+- GET: <100ms (simple query)
+- POST: <150ms (insert + return)
+- DELETE: <100ms
+
+**Health Check** (`/api/health`)
+- Target: <50ms (no DB queries)
+
+**Data Ingestion** (`scripts/ingest-copernicus-data.ts`)
+- Per rectangle: ~2-5 seconds
+- Full run (all rectangles): ~10-30 minutes
+- Runs daily via GitHub Actions cron
+
+**Database Query Benchmarks:**
+```sql
+-- Rectangle lookup: <10ms
+SELECT * FROM ices_rectangles WHERE rectangle_code = '39F3';
+
+-- Copernicus data fetch: <50ms (indexed by rectangle_code + data_date)
+SELECT * FROM copernicus_data 
+WHERE rectangle_code = '39F3' 
+AND data_date = CURRENT_DATE;
+
+-- Species list: <20ms
+SELECT * FROM species WHERE is_active = true;
+
+-- RPC predictions: <150ms
+SELECT * FROM get_predictions_enhanced(...);
+
+-- Cache lookup: <30ms
+SELECT * FROM findr_prediction_sessions 
+WHERE rectangle_code = '39F3' 
+AND prediction_date = CURRENT_DATE 
+AND expires_at > NOW();
+```
+
+**Frontend Performance:**
+- First Contentful Paint (FCP): <1.8s
+- Largest Contentful Paint (LCP): <2.5s
+- Time to Interactive (TTI): <3.5s
+- Cumulative Layout Shift (CLS): <0.1
+
+---
+
+### Security Considerations
+
+**Row-Level Security (RLS) Policies:**
+
+**User Favorites:**
+```sql
+-- Users can only see/modify their own favorites
+CREATE POLICY "Users can view own favourites"
+ON user_favourites FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own favourites"
+ON user_favourites FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own favourites"
+ON user_favourites FOR DELETE
+USING (auth.uid() = user_id);
+```
+
+**Catch Logs:**
+```sql
+-- Users can only see/modify their own catch logs
+CREATE POLICY "Users can view own catches"
+ON catch_logs FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own catches"
+ON catch_logs FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+```
+
+**Public Data (No RLS):**
+- `species` - Public read access
+- `ices_rectangles` - Public read access
+- `copernicus_data` - Public read access
+- `findr_prediction_sessions` - Public read access (cached predictions)
+
+**API Key Security:**
+
+**Supabase Keys:**
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Safe to expose (RLS enforced)
+- `SUPABASE_SERVICE_ROLE_KEY` - **NEVER expose** (bypasses RLS)
+- Rotate service role key if compromised
+- Store in Vercel environment variables (encrypted)
+
+**Third-Party API Keys:**
+- `NEXT_PUBLIC_MAPBOX_TOKEN` - Public (restricted to domain)
+- `COPERNICUS_USERNAME` / `COPERNICUS_PASSWORD` - Server-only
+- `WEATHERSTACK_API_KEY` - Server-only (if used)
+
+**API Key Rotation Procedure:**
+```bash
+# 1. Generate new key in service dashboard
+# 2. Update Vercel environment variables
+# 3. Redeploy application
+# 4. Verify new key works in production
+# 5. Revoke old key after 24-48 hours
+```
+
+**Authentication Security:**
+- Magic link email authentication (passwordless)
+- Session tokens via Supabase Auth
+- Automatic token refresh
+- Secure cookie storage (httpOnly, sameSite)
+
+**CORS & CSP:**
+- CORS restricted to godaisy.io, fishfindr.eu domains
+- Content Security Policy headers in production
+- API rate limiting (future consideration)
+
+**Data Privacy:**
+- User data encrypted at rest (Supabase default)
+- HTTPS enforced (TLS 1.3)
+- GDPR compliance via data deletion hooks
+- Privacy policy at `/PrivacyPolicy`
+
+**Monitoring Security Events:**
+- Failed login attempts (Supabase Auth logs)
+- Unusual API usage patterns
+- Database connection attempts
+- Service role key usage (should be minimal)
+
+**Backup & Recovery:**
+- Supabase automatic daily backups (7-day retention)
+- Point-in-time recovery available
+- Export data via Supabase dashboard
+- Keep separate backups of critical migrations
+
+**Incident Response:**
+1. Identify breach scope
+2. Rotate compromised credentials immediately
+3. Review audit logs
+4. Notify affected users (if PII exposed)
+5. Document incident and prevention measures
+
+---
+
+## �📚 Deep Dive Documentation
 
 ### Core Systems
 - **`FINDR_PREDICTIONS_DATA_SOURCES.md`** - Complete prediction engine explanation
