@@ -174,6 +174,8 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 sizes="(min-width: 1024px) 400px, 90vw"
                 className="object-contain"
                 priority={isFirstCard}
+                placeholder={card.image.blurDataURL ? "blur" : undefined}
+                blurDataURL={card.image.blurDataURL}
               />
               {/* Heart indicator for favorites */}
               <button

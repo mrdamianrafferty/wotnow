@@ -1936,3 +1936,5 @@ abbr[title] {
 .modal .modal-box[data-theme="light"] .bg-base-300 {
   background-color: oklch(var(--b1)) !important;
 }
+/* Compact DaisyUI overrides (mobile) — must load last to win the cascade */
+@import "./compact.css";

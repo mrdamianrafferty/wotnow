@@ -5,13 +5,18 @@ export default class MyDocument extends Document {
     return (
       <Html>
         <Head>
-  {/* Preconnect to external APIs for faster loading */}
-  <link rel="preconnect" href="https://api.openweathermap.org" />
+  {/* Critical resource hints - preconnect establishes early connections to reduce API latency */}
+  <link rel="preconnect" href="https://api.openweathermap.org" crossOrigin="anonymous" />
   <link rel="preconnect" href="https://maps.googleapis.com" />
-  <link rel="preconnect" href="https://api.met.no" />
+  <link rel="preconnect" href="https://api.met.no" crossOrigin="anonymous" />
+
+  {/* DNS prefetch as fallback for browsers that don't support preconnect */}
   <link rel="dns-prefetch" href="https://api.openweathermap.org" />
   <link rel="dns-prefetch" href="https://maps.googleapis.com" />
   <link rel="dns-prefetch" href="https://api.met.no" />
+
+  {/* Preconnect to Supabase for faster auth and data fetching */}
+  <link rel="preconnect" href="https://swmviqpxetwziqxhzldh.supabase.co" crossOrigin="anonymous" />
 
   {/* Core */}
   <link rel="icon" href="/favicon.ico" sizes="any" />

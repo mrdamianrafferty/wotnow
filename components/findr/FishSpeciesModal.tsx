@@ -253,6 +253,8 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               sizes="(min-width: 1024px) 640px, 100vw"
               className="object-contain"
               priority={false}
+              placeholder={card.image.blurDataURL ? "blur" : undefined}
+              blurDataURL={card.image.blurDataURL}
             />
           </div>
         ) : (

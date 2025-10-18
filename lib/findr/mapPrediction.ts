@@ -9,6 +9,7 @@ export interface CardImage {
   alt: string;
   mobile: string | null;
   thumb: string | null;
+  blurDataURL?: string;
 }
 
 export type LocalizedSpeciesNames = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
@@ -647,6 +648,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
           alt: imageInfo.name,
           mobile: imageInfo.mobile ?? null,
           thumb: imageInfo.thumb ?? null,
+          blurDataURL: imageInfo.blurDataURL,
         }
       : undefined,
     playfulBio,
