@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import SEO from '../../components/SEO';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
@@ -12,9 +13,21 @@ import {
 } from '../../hooks/useFindrRectangleOptions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { getTodayIso } from '../../lib/date/today';
-import ConditionsDashboard from '../../components/findr/ConditionsDashboard';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+
+// Code-split ConditionsDashboard - likely contains charts/visualizations
+const ConditionsDashboard = dynamic(
+  () => import('../../components/findr/ConditionsDashboard'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    )
+  }
+);
 
 const FindrConditionsRoute: React.FC = () => {
   const router = useRouter();

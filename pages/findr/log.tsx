@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
 import {
   MapPin,
@@ -42,14 +43,33 @@ import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettin
 import { normaliseCatchPhotoAssets, type CatchPhotoAsset } from '@/utils/catchPhotoAssets';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 import type { FishingPrediction } from '../../hooks/useFishingPredictions';
-
-// Enhanced modal components
-import { QuickLogModal } from '../../components/findr/QuickLogModal';
-import { SessionLogModal } from '../../components/findr/SessionLogModal';
-import { BlankReportModal } from '../../components/findr/BlankReportModal';
-import { ReferenceDataTables } from '../../components/findr/ReferenceDataTables';
-import { RecentCatchesWidget } from '../../components/findr/RecentCatchesWidget';
 import type { BlankReportData } from '../../components/findr/BlankReportModal';
+
+// Code-split heavy modal components - only load when user opens them
+const QuickLogModal = dynamic(
+  () => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })),
+  { ssr: false, loading: () => null }
+);
+
+const SessionLogModal = dynamic(
+  () => import('../../components/findr/SessionLogModal').then(mod => ({ default: mod.SessionLogModal })),
+  { ssr: false, loading: () => null }
+);
+
+const BlankReportModal = dynamic(
+  () => import('../../components/findr/BlankReportModal').then(mod => ({ default: mod.BlankReportModal })),
+  { ssr: false, loading: () => null }
+);
+
+const ReferenceDataTables = dynamic(
+  () => import('../../components/findr/ReferenceDataTables').then(mod => ({ default: mod.ReferenceDataTables })),
+  { ssr: false, loading: () => null }
+);
+
+const RecentCatchesWidget = dynamic(
+  () => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })),
+  { ssr: false, loading: () => null }
+);
 
 // Translation components
 const LogCatchHeading = () => {

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -26,9 +27,6 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase/client';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
-import { ActiveSpeciesCard } from '../../components/findr/ActiveSpeciesCard';
-import { GoodSpeciesCard } from '../../components/findr/GoodSpeciesCard';
-import { WaitingSpeciesCard } from '../../components/findr/WaitingSpeciesCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
@@ -37,6 +35,22 @@ import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
+
+// Code-split species card components - loaded as user scrolls to them
+const ActiveSpeciesCard = dynamic(
+  () => import('../../components/findr/ActiveSpeciesCard').then(mod => ({ default: mod.ActiveSpeciesCard })),
+  { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
+);
+
+const GoodSpeciesCard = dynamic(
+  () => import('../../components/findr/GoodSpeciesCard').then(mod => ({ default: mod.GoodSpeciesCard })),
+  { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
+);
+
+const WaitingSpeciesCard = dynamic(
+  () => import('../../components/findr/WaitingSpeciesCard').then(mod => ({ default: mod.WaitingSpeciesCard })),
+  { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
+);
 
 const TODAY_ISO = getTodayIso();
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
