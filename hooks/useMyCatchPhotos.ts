@@ -7,12 +7,16 @@ export function useMyCatchPhotos() {
   return useQuery({
     queryKey: ['my-catch-photos'],
     queryFn: async () => {
-      // Get authenticated user
+      // Get authenticated user and access token
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('Not authenticated');
 
-      // Fetch catches (both with and without photos)
-      const res = await fetch('/api/findr/catch-log?limit=100');
+      // Fetch catches (both with and without photos) with auth token
+      const res = await fetch('/api/findr/catch-log?limit=100', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
       if (!res.ok) throw new Error('Failed to fetch catches');
 
       const catches = await res.json() as Array<{
