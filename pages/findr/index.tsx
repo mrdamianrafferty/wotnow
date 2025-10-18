@@ -153,8 +153,8 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
 
   return (
     <div className="card h-full bg-base-100 shadow-xl">
-      <div className="card-body flex h-full flex-col gap-4 sm:gap-5">
-        <div className="space-y-4">
+      <div className="card-body !p-4 sm:!p-6 flex h-full flex-col gap-3 sm:gap-4">
+        <div className="space-y-3 sm:space-y-4">
           {card.image ? (
             <div className="relative mx-auto w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[3/2] sm:aspect-[4/3]">
               <Image
@@ -850,7 +850,7 @@ const FindrPage: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="sm:mx-auto pt-2 px-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+        <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-6">
@@ -914,7 +914,7 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && !loading && !error && currentCard && (
-              <div className="space-y-4 max-w-xl mx-auto px-2 sm:px-0">
+              <div className="space-y-4 max-w-xl mx-auto">
                   <div className="relative h-[460px] sm:h-[520px] w-full">
                     <AnimatePresence initial={false}>
                       {visibleCards.map((card, index) => (
