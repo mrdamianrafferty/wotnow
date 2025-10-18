@@ -157,7 +157,6 @@ export function FindrNextFewDaysCard({
 
             // Tide times - get both high and low tides
             // Extract just the date part from tide ISO strings for comparison
-            const now = new Date();
             const dayTides = (tide || []).filter(t => {
               const raw = (t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || '';
               if (!raw) return false;
@@ -169,12 +168,19 @@ export function FindrNextFewDaysCard({
               const tideDateKey = dt.toISOString().slice(0, 10);
               const isInDay = tideDateKey === dayKey;
               
-              // For today (idx 0), filter out past tides
-              if (idx === 0) {
-                return isInDay && dt > now;
-              }
+              // Show all tides for the day (including past tides for today)
+              // This gives users full context of the day's tide cycle
               return isInDay;
             });
+            
+            // Debug logging for tide data
+            if (idx === 0 || idx === 1) {
+              console.log(`[FindrNextFewDays] Day ${idx} (${dayKey}):`, {
+                totalTides: (tide || []).length,
+                dayTides: dayTides.length,
+                tideTypes: dayTides.map(t => ({ type: t.type, time: (t as unknown as { timeISO?: string }).timeISO }))
+              });
+            }
             const highs = dayTides.filter(t => String(t.type).toLowerCase() === 'high').map(t => new Date((t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || ''));
             const lows = dayTides.filter(t => String(t.type).toLowerCase() === 'low').map(t => new Date((t as unknown as { timeISO?: string; time?: string }).timeISO || (t as unknown as { time?: string }).time || ''));
             highs.sort((a,b)=>a.getTime()-b.getTime());
