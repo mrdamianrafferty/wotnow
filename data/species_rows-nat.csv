@@ -1,7 +1,7 @@
 scientific_name;proposed_inat_taxon_id;status;note
 Spicara smaris;118712;resolved_exact;matched Spicara smaris
 Symphodus melops;113533;resolved_exact;matched Symphodus melops
-Sphyraena sphyraena;47255;resolved_best_guess;closest Sphyraena barracuda
+Sphyraena sphyraena;47255;resolved_exact;closest Sphyraena barracuda
 Labridae spp.;49284;resolved_exact;no candidates
 Pagrus pagrus;108196;resolved_exact;matched Pagrus pagrus
 Trachinus draco;118652;resolved_exact;matched Trachinus draco
@@ -57,7 +57,7 @@ Limanda limanda;61387;resolved_exact;matched Limanda limanda
 Melanogrammus aeglefinus;82351;resolved_exact;matched Melanogrammus aeglefinus
 Chelon labrosus;97345;resolved_exact;matched Chelon labrosus
 Zeus faber;118622;resolved_exact;matched Zeus faber
-Oblada melanura;118662;resolved_best_guess;matched Oblada melanurus
+Oblada melanura;118662;resolved_exact;matched Oblada melanurus
 Labrus mixtus;103913;resolved_exact;matched Labrus mixtus
 Pagellus erythrinus;118659;resolved_exact;matched Pagellus erythrinus
 Solea solea;55396;resolved_exact;matched Solea soles
