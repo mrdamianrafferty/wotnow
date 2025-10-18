@@ -44,6 +44,7 @@ export interface RPCPrediction {
   moon_phase?: string;
   moon_illumination?: number;
   biogeographic_regions?: string[];
+  aliases?: string[];  // Array of alternative names (e.g., "Sea Bass", "Seabass", etc.)
   
   // Optional legacy fields (for backward compatibility)
   species_name?: string;
@@ -99,6 +100,14 @@ export function getBioScore(prediction: AnyRecord): number {
  */
 export function getBiogeographicRegions(prediction: AnyRecord): string[] {
   return prediction?.biogeographic_regions || [];
+}
+
+/**
+ * Safely get aliases from an RPC prediction
+ * Returns array of alternative names (e.g., ["Sea Bass", "Seabass", "European Seabass"])
+ */
+export function getAliases(prediction: AnyRecord): string[] {
+  return prediction?.aliases || [];
 }
 
 /**
@@ -192,16 +201,34 @@ export function formatPrediction(prediction: AnyRecord, options: {
 
 /**
  * Search predictions by species name (fuzzy match)
+ * Searches name_en, scientific_name, AND aliases for better results
  */
 export function findSpeciesByName(predictions: AnyRecord[], searchName: string): AnyRecord | null {
-  const searchLower = searchName.toLowerCase();
+  const searchLower = searchName.toLowerCase().trim();
   return predictions.find(pred => {
     const name = getSpeciesName(pred).toLowerCase();
     const scientific = (pred.scientific_name || '').toLowerCase();
-    return name.includes(searchLower) 
-      || searchLower.includes(name)
-      || scientific.includes(searchLower)
-      || searchLower.includes(scientific);
+    const aliases = getAliases(pred);
+    
+    // Check official name
+    if (name.includes(searchLower) || searchLower.includes(name)) {
+      return true;
+    }
+    
+    // Check scientific name
+    if (scientific.includes(searchLower) || searchLower.includes(scientific)) {
+      return true;
+    }
+    
+    // Check each alias
+    for (const alias of aliases) {
+      const aliasLower = (alias || '').toLowerCase();
+      if (aliasLower && (aliasLower.includes(searchLower) || searchLower.includes(aliasLower))) {
+        return true;
+      }
+    }
+    
+    return false;
   }) || null;
 }
 
