@@ -1,46 +1,17 @@
 // pages/new-weather.tsx
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+// Keep critical above-the-fold components static for fast LCP
 import { HourlyMarineCard } from "../components/weather-cards/HourlyMarineCard";
 import { HourlyCard } from "../components/weather-cards/HourlyCard";
 import { SimplePressureCardDial } from "../components/weather-cards/PressureCardDial";
 import FeelsLike from "../components/FeelsLike";
 import Image from "next/image";
-// WeatherAnimationLayer is a default export
 import WeatherAnimationLayer from "../components/WeatherAnimationLayer";
 import Footer from "../components/footer";
 import BottomNav from "../components/BottomNav";
-// Statically import critical Row 2 cards to avoid dynamic loading blanks
-import { SunriseSunsetCard as ExternalSunriseSunsetCard } from "../components/weather-cards/SunriseSunsetCard";
-import { HumidityCard as ExternalHumidityCard } from "../components/weather-cards/HumidityCard";
-import { TidesCard as ExternalTidesCard } from "../components/weather-cards/TidesCard";
 import { DayMarine } from '../utils/surfScoring';
-import { WindCard as ExternalWindCard } from "../components/weather-cards/WindCard";
-import { WaveCard as ExternalWaveCard } from "../components/weather-cards/WaveCard";
-import { NextFewDaysCard as ExternalNextFewDaysCard } from "../components/weather-cards/NextFewDaysCard";
-// Add static imports to ensure reliable rendering (no hydration blanks)
-import { UVCard as ExternalUVCard } from "../components/weather-cards/UVCard";
-import { AirQualityCard as ExternalAirQualityCard } from "../components/weather-cards/AirQualityCard";
-import { PollenCard as ExternalPollenCard } from "../components/weather-cards/PollenCard";
-import type { MoonCardProps } from "../components/weather-cards/MoonCard";
-// AQI assessment utilities
 import { assessAirQualityConditions } from "../utils/airQualityUtils";
-// Render header client-side to avoid SSR hydration mismatches with localStorage prefs
-const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: false });
-// Render dialogs client-side only (uses Google Places APIs & window)
-const CoastalLocationDialog = dynamic(() => import("../components/CoastalLocationDialog"), { ssr: false });
-// Precip 24h shows time labels using local time; render client-only to avoid SSR/client time zone mismatches
-const ExternalPrecipNext24hCard = dynamic(
-  () => import("../components/weather-cards/PrecipNext24hCard").then(m => m.PrecipNext24hCard),
-  { ssr: false, loading: () => (
-    <div className="card bg-slate-800/35 backdrop-blur-sm text-white border border-white/10 shadow-sm">
-      <div className="card-body p-4">
-        <h3 className="card__header-title text-sm font-semibold mb-2">Precip next 24 hours</h3>
-        <div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div>
-      </div>
-    </div>
-  ) }
-);
 import {
   WeatherBundle,
   HourlyPoint,
@@ -54,11 +25,91 @@ import {
   AirQualityFull,
   SoilSnapshot,
 } from "../types/weather";
-// NEW: preferences + dialogs
 import { useUserPreferences } from "../context/UserPreferencesContext";
-// NEW: Visibility card
-import { VisibilityCard as ExternalVisibilityCard } from "../components/weather-cards/VisibilityCard";
-import SeaTempCard from "../components/weather-cards/SeaTempCard";
+import type { MoonCardProps } from "../components/weather-cards/MoonCard";
+
+// === DYNAMIC IMPORTS: Header & Dialogs (client-only) ===
+const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: false });
+const CoastalLocationDialog = dynamic(() => import("../components/CoastalLocationDialog"), { ssr: false });
+
+// === DYNAMIC IMPORTS: Row 2 Cards (Sunrise/Humidity/Tides) ===
+// Code-split Row 2 cards - load together as a group
+const CardLoadingSkeleton = () => (
+  <div className="card bg-slate-800/35 backdrop-blur-sm border border-white/10 shadow-sm animate-pulse">
+    <div className="card-body p-4 h-32"></div>
+  </div>
+);
+
+const ExternalSunriseSunsetCard = dynamic(
+  () => import("../components/weather-cards/SunriseSunsetCard").then(m => ({ default: m.SunriseSunsetCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalHumidityCard = dynamic(
+  () => import("../components/weather-cards/HumidityCard").then(m => ({ default: m.HumidityCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalTidesCard = dynamic(
+  () => import("../components/weather-cards/TidesCard").then(m => ({ default: m.TidesCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+// === DYNAMIC IMPORTS: Marine Cards (Wind/Waves) ===
+const ExternalWindCard = dynamic(
+  () => import("../components/weather-cards/WindCard").then(m => ({ default: m.WindCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalWaveCard = dynamic(
+  () => import("../components/weather-cards/WaveCard").then(m => ({ default: m.WaveCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+// === DYNAMIC IMPORTS: Extended Forecast ===
+const ExternalNextFewDaysCard = dynamic(
+  () => import("../components/weather-cards/NextFewDaysCard").then(m => ({ default: m.NextFewDaysCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+// === DYNAMIC IMPORTS: Environmental Cards (UV/AQ/Pollen/Visibility/SeaTemp) ===
+const ExternalUVCard = dynamic(
+  () => import("../components/weather-cards/UVCard").then(m => ({ default: m.UVCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalAirQualityCard = dynamic(
+  () => import("../components/weather-cards/AirQualityCard").then(m => ({ default: m.AirQualityCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalPollenCard = dynamic(
+  () => import("../components/weather-cards/PollenCard").then(m => ({ default: m.PollenCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const ExternalVisibilityCard = dynamic(
+  () => import("../components/weather-cards/VisibilityCard").then(m => ({ default: m.VisibilityCard })),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+const SeaTempCard = dynamic(
+  () => import("../components/weather-cards/SeaTempCard"),
+  { ssr: false, loading: CardLoadingSkeleton }
+);
+
+// === DYNAMIC IMPORTS: Precipitation Card (already optimized) ===
+const ExternalPrecipNext24hCard = dynamic(
+  () => import("../components/weather-cards/PrecipNext24hCard").then(m => m.PrecipNext24hCard),
+  { ssr: false, loading: () => (
+    <div className="card bg-slate-800/35 backdrop-blur-sm text-white border border-white/10 shadow-sm">
+      <div className="card-body p-4">
+        <h3 className="card__header-title text-sm font-semibold mb-2">Precip next 24 hours</h3>
+        <div className="flex items-center py-2"><span className="loading loading-ring loading-sm text-secondary" aria-hidden="true"></span><span className="ml-2 opacity-70">Updating</span></div>
+      </div>
+    </div>
+  ) }
+);
 
 /* ---------------- Local prop interfaces for dynamically loaded cards ---------------- */
 // These components do not export their prop types, so we define minimal versions here
