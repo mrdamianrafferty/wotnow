@@ -42,6 +42,12 @@ const ActiveSpeciesCard = dynamic(
   { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
 );
 
+// Code-split FishSpeciesModal - only loaded when opened
+const FishSpeciesModal = dynamic(
+  () => import('../../components/findr/FishSpeciesModal').then(mod => ({ default: mod.FishSpeciesModal })),
+  { ssr: false, loading: () => null }
+);
+
 const GoodSpeciesCard = dynamic(
   () => import('../../components/findr/GoodSpeciesCard').then(mod => ({ default: mod.GoodSpeciesCard })),
   { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
@@ -485,6 +491,8 @@ const FindrFavouritesPage: React.FC = () => {
   // UI state
   const [sortBy, setSortBy] = useState<SortOption>('confidence');
   const [selectedFish, setSelectedFish] = useState<FavouriteEntry | null>(null);
+  const [speciesModalOpen, setSpeciesModalOpen] = useState(false);
+  const [speciesModalCard, setSpeciesModalCard] = useState<CardData | null>(null);
   const [swipeStates, setSwipeStates] = useState<Record<string, { x: number; y: number; swiping: boolean }>>({});
   const [favorites, setFavorites] = useState<string[] | null>(null);
   const [favouriteIdMap, setFavouriteIdMap] = useState<Map<string, string>>(new Map()); // Map species_id -> favourite_id
@@ -882,7 +890,14 @@ const FindrFavouritesPage: React.FC = () => {
   }, []);
 
   const handleFishClick = useCallback((entry: FavouriteEntry) => {
-    setSelectedFish(entry);
+    // If we have full card data, show the comprehensive species modal
+    if (entry.card) {
+      setSpeciesModalCard(entry.card);
+      setSpeciesModalOpen(true);
+    } else {
+      // Otherwise show the basic favourites modal
+      setSelectedFish(entry);
+    }
   }, []);
 
   const closeModal = useCallback(() => {
@@ -1338,10 +1353,15 @@ const FindrFavouritesPage: React.FC = () => {
                       >
                         <div className="card-body p-4">
                         <div className="swipe-hint">← Remove | Priority → | ↑ Details</div>
-                        <div className="flex items-center justify-between mb-3 gap-3">
+                        <button 
+                          className="flex items-center justify-between mb-3 gap-3 w-full text-left hover:opacity-80 transition-opacity"
+                          onClick={(e) => { e.stopPropagation(); handleFishClick(entry); }}
+                          type="button"
+                          aria-label={`View ${entry.name} details`}
+                        >
                           <FavouriteThumbnail entry={entry} size={68} />
                           {entry.confidence !== null && <ConfidenceRing confidence={entry.confidence} size={60} />}
-                        </div>
+                        </button>
                         <h3 className="text-white font-semibold"><TranslatedFishName name={entry.name} /></h3>
                         <p className="text-base-content/70 text-sm"><TranslatedText text={entry.season} /></p>
                         <div className="mt-2 text-xs text-base-content/60">
@@ -1672,6 +1692,16 @@ const FindrFavouritesPage: React.FC = () => {
             </div>
           );
         })()}
+
+        {/* Full Species Details Modal */}
+        <FishSpeciesModal
+          open={speciesModalOpen}
+          card={speciesModalCard}
+          onClose={() => {
+            setSpeciesModalOpen(false);
+            setSpeciesModalCard(null);
+          }}
+        />
       </main>
     </>
   );

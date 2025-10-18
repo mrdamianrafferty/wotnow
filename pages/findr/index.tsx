@@ -53,6 +53,7 @@ import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFish
 import { GuildBadge } from '../../components/findr/GuildBadge';
 import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
+import { GradientFish } from '../../components/GradientFish';
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -195,10 +196,8 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               </button>
             </div>
           ) : (
-            <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl bg-base-200 sm:aspect-[4/3] relative">
-              <span className="text-6xl" aria-hidden>
-                {card.emoji}
-              </span>
+            <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-info/10 to-primary/10 sm:aspect-[4/3] relative">
+              <GradientFish size={80} />
               {/* Heart indicator for favorites */}
               <button
                 type="button"

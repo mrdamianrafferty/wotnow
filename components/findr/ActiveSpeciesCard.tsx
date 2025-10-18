@@ -92,7 +92,13 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   };
 
   return (
-    <div className="card bg-gradient-to-br from-success/10 via-success/5 to-base-100 border-2 border-success shadow-xl hover:shadow-2xl transition-all duration-300">
+    <div 
+      className="card bg-gradient-to-br from-success/10 via-success/5 to-base-100 border-2 border-success shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-[1.02]"
+      onClick={() => onAction?.(species.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAction?.(species.id)}
+    >
       <div className="card-body p-3 sm:p-4 md:p-6">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
@@ -180,14 +186,14 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
           {/* Action Buttons */}
           <div className="flex flex-col gap-2">
             <button
-              onClick={() => onTogglePriority(species.id)}
+              onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-sm ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
               title={species.isPriority ? 'Remove priority' : 'Make priority'}
             >
               <Target size={16} />
             </button>
             <button
-              onClick={() => onRemove(species.id)}
+              onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-sm text-error"
               title="Remove from favourites"
             >

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { TrendingUp, Target, Trash2, Clock } from 'lucide-react';
+import { TrendingUp, Target, Trash2, Clock, Fish } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
@@ -62,12 +62,23 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
     `${fishingTimeResult.primaryWindow.startHour}:00` : 
     'Tomorrow 7am';
 
+  const handleCardClick = () => {
+    // For waiting species, we might not have an onAction prop
+    // This could be extended in the future
+    console.log('Waiting species card clicked:', species.id);
+  };
+
   return (
     <div className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200">
       <div className="card-body p-3">
         <div className="flex items-center gap-3">
-          {/* Species Emoji/Image */}
-          <div className="flex-shrink-0">
+          {/* Species Image - Clickable */}
+          <button
+            onClick={handleCardClick}
+            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+            type="button"
+            aria-label={`View ${species.name} details`}
+          >
             {species.image ? (
               <div className="w-10 h-10 relative rounded overflow-hidden bg-base-200">
                 <Image
@@ -79,11 +90,11 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
                 />
               </div>
             ) : (
-              <div className="w-10 h-10 flex items-center justify-center text-2xl">
-                {species.emoji}
+              <div className="w-10 h-10 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10">
+                <Fish size={24} className="text-primary" />
               </div>
             )}
-          </div>
+          </button>
 
           {/* Name & Confidence */}
           <div className="flex-1 min-w-0">
@@ -117,14 +128,14 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           {/* Actions */}
           <div className="flex gap-1 flex-shrink-0">
             <button
-              onClick={() => onTogglePriority(species.id)}
+              onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
               title={species.isPriority ? 'Remove priority' : 'Make priority'}
             >
               <Target size={12} />
             </button>
             <button
-              onClick={() => onRemove(species.id)}
+              onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-xs"
               title="Remove"
             >

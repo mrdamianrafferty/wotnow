@@ -74,7 +74,13 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   };
 
   return (
-    <div className="card bg-gradient-to-br from-warning/10 via-warning/5 to-base-100 border border-warning/30 shadow-lg hover:shadow-xl transition-all duration-300">
+    <div 
+      className="card bg-gradient-to-br from-warning/10 via-warning/5 to-base-100 border border-warning/30 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02]"
+      onClick={() => onAction?.(species.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onAction?.(species.id)}
+    >
       <div className="card-body p-3 sm:p-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 sm:gap-3">
@@ -158,14 +164,14 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
           {/* Action Buttons */}
           <div className="flex gap-1">
             <button
-              onClick={() => onTogglePriority(species.id)}
+              onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
               title={species.isPriority ? 'Remove priority' : 'Make priority'}
             >
               <Target size={14} />
             </button>
             <button
-              onClick={() => onRemove(species.id)}
+              onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-xs text-error"
               title="Remove"
             >
@@ -193,7 +199,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
         {/* Expandable Details */}
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
           className="btn btn-ghost btn-xs w-full mt-3"
         >
           {expanded ? (
