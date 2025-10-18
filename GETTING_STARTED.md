@@ -653,13 +653,1214 @@ npm run typecheck
 # Run ESLint
 npm run lint
 
-# Test specific features
+# Run Jest unit tests
+npm test
+
+# Run tests with coverage
+npm run test:ci
+
+# Run specific test file
+npm test -- activityHelpers.windOrientation.test.ts
+
+# Test specific features (integration tests)
 npx tsx scripts/test-comprehensive-weather.ts
 npx tsx scripts/test-guild-weather-weights.ts
 npx tsx scripts/verify-temp-weights.ts
 ```
 
-### Database Migrations
+**Test Structure:**
+- Tests located in `__tests__/` directory
+- Jest + React Testing Library
+- Test naming: `*.test.ts` or `*.test.tsx`
+- Coverage reports in `coverage/` directory
+
+**Available Test Suites:**
+```
+__tests__/
+├── activityHelpers.windOrientation.test.ts    # Wind direction matching
+├── activitySnowScoring.test.ts                # Snow sport scoring
+├── activitySuitability.comparatorScoring.test.ts  # Activity evaluation
+├── airQuality.activityReasons.test.ts         # Air quality logic
+├── getSuggestionsByDay.humidityReason.test.ts # Humidity scoring
+├── windRecommendations.test.ts                # Wind-based recommendations
+├── unifiedWeather.moon.test.ts                # Moon phase calculations
+├── useCatchLogger.test.ts                     # Findr catch logging
+├── copernicus/                                # Copernicus data tests
+└── [12+ more test files]
+```
+
+**Writing Tests:**
+```typescript
+// Example test structure
+import { describe, it, expect } from '@jest/globals';
+import { yourFunction } from '../utils/yourModule';
+
+describe('yourFunction', () => {
+  it('should return expected result', () => {
+    const result = yourFunction(input);
+    expect(result).toBe(expectedOutput);
+  });
+  
+  it('should handle edge cases', () => {
+    expect(yourFunction(null)).toBeNull();
+  });
+});
+```
+
+**Test Coverage Goals:**
+- Critical paths: >80% coverage
+- Utility functions: >90% coverage
+- API routes: Integration tested
+- Components: Key interactions tested
+
+---
+
+## 🔄 CI/CD Pipeline
+
+### GitHub Actions Workflows
+
+**1. Build Workflow** (`.github/workflows/build.yml`)
+- **Triggers**: On all pull requests
+- **Purpose**: Verify code quality before merge
+- **Steps**:
+  1. Checkout code
+  2. Setup Node.js 20
+  3. Install dependencies (`npm ci`)
+  4. Run ESLint with zero warnings (`npm run lint:ci`)
+  5. TypeScript type check and build (`npm run build`)
+
+**2. Lint Workflow** (`.github/workflows/lint.yml`)
+- **Triggers**: On push to main, pull requests
+- **Purpose**: Enforce code quality standards
+- **Steps**: Fast ESLint check
+
+**3. Copernicus Data Ingestion** (`.github/workflows/findr-copernicus-ingest.yml`)
+- **Triggers**: 
+  - Cron: Daily at 3 AM UTC (`0 3 * * *`)
+  - Manual: `workflow_dispatch`
+- **Purpose**: Update marine environmental data for Findr predictions
+- **Timeout**: 120 minutes
+- **Steps**:
+  1. Setup Node.js
+  2. Run `npx tsx scripts/ingest-copernicus-data.ts`
+  3. Verify data was ingested
+  4. Post to Slack on failure (optional)
+- **Required Secrets**:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `COPERNICUS_USERNAME`
+  - `COPERNICUS_PASSWORD`
+
+**4. Met.no Weather Ingestion** (`.github/workflows/findr-met-ingest.yml`)
+- **Triggers**: Cron schedule
+- **Purpose**: Cache weather forecasts
+
+**5. Astro Canaries** (`.github/workflows/astro_canaries.yml`)
+- **Triggers**: Scheduled
+- **Purpose**: Validate astronomy data service
+
+### Deployment Flow
+
+```
+Developer → Git Push → GitHub
+                          ↓
+                    Pre-push Hooks
+                    ├── ESLint
+                    └── TypeScript
+                          ↓
+                    GitHub Actions
+                    ├── Build Check
+                    └── Lint Check
+                          ↓
+                    Vercel (auto-deploy)
+                    ├── Install deps
+                    ├── Run build
+                    ├── Deploy to edge
+                    └── Generate preview URL
+                          ↓
+                    Production (if main branch)
+                    └── https://godaisy.io
+```
+
+**Manual Workflow Triggers:**
+```bash
+# Trigger Copernicus ingestion manually
+# Go to: GitHub > Actions > FINDR Copernicus ingestion > Run workflow
+
+# Or use GitHub CLI
+gh workflow run findr-copernicus-ingest.yml
+```
+
+---
+
+## 🔧 Environment Variables
+
+### Complete Reference
+
+**Required for All Environments:**
+```bash
+# Supabase (Database & Auth)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key  # Server-only, NEVER expose
+
+# Mapbox (Maps)
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token
+```
+
+**Required for Findr (Marine Data):**
+```bash
+# Copernicus Marine Service
+COPERNICUS_USERNAME=your_cmems_username
+COPERNICUS_PASSWORD=your_cmems_password
+COPERNICUS_ENABLED=true
+COPERNICUS_PROVIDER=live  # or 'mock' for testing
+```
+
+**Weather Services:**
+```bash
+# Primary weather source (Met.no is free, no key required)
+# Backup/additional sources:
+NEXT_PUBLIC_OPENWEATHER_KEY=your_openweather_api_key  # Optional
+STORMGLASS_SECRET_KEY=your_stormglass_key  # Optional (marine data backup)
+```
+
+**Third-Party Integrations:**
+```bash
+# Google Maps (for location search)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+
+# Astronomy data
+N2YO_API_KEY=your_n2yo_key  # Satellite tracking
+MOON_API_KEY=your_moon_api_key  # Moon phase data (if needed)
+
+# Optional integrations
+EVENTBRITE_API_KEY=your_eventbrite_key  # Event discovery
+```
+
+**App Configuration:**
+```bash
+# Base URL for absolute links
+NEXT_PUBLIC_BASE_URL=https://godaisy.io  # Production
+# NEXT_PUBLIC_BASE_URL=http://localhost:3000  # Development
+
+# Performance monitoring
+LOG_QUERY_TIMING=true  # Development only - logs database query times
+```
+
+**Development vs Production:**
+
+| Variable | Development | Production |
+|----------|-------------|------------|
+| `NEXT_PUBLIC_BASE_URL` | `http://localhost:3000` | `https://godaisy.io` |
+| `LOG_QUERY_TIMING` | `true` (optional) | `false` or omit |
+| `COPERNICUS_PROVIDER` | `mock` (faster) | `live` |
+| `NODE_ENV` | `development` | `production` |
+
+### Setup Instructions
+
+**Local Development:**
+```bash
+# 1. Copy example file
+cp .env.example .env.local
+
+# 2. Edit .env.local with your actual keys
+nano .env.local
+
+# 3. Sync to CLI-friendly format (for scripts)
+npm run env:sync
+
+# 4. Start development server
+npm run dev
+```
+
+**Vercel Production:**
+```bash
+# Add via Vercel Dashboard:
+# 1. Go to Project Settings > Environment Variables
+# 2. Add each variable
+# 3. Select environment: Production, Preview, Development
+# 4. Save and redeploy
+
+# Or use Vercel CLI:
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add SUPABASE_SERVICE_ROLE_KEY
+# ... etc
+```
+
+**Required Secrets for GitHub Actions:**
+```bash
+# In GitHub: Settings > Secrets and variables > Actions
+# Add these repository secrets:
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+- COPERNICUS_USERNAME
+- COPERNICUS_PASSWORD
+```
+
+### Troubleshooting Environment Variables
+
+**"Cannot find module" or undefined errors:**
+```bash
+# Check .env.local exists
+ls -la .env.local
+
+# Restart dev server (env changes require restart)
+# Press Ctrl+C, then:
+npm run dev
+
+# Verify variables are loaded
+# Add to a page temporarily:
+console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+```
+
+**Variables not working in browser:**
+- Only `NEXT_PUBLIC_*` variables are exposed to browser
+- Server-only variables (like service keys) are only available in API routes
+- Restart dev server after changes
+
+---
+
+## 📊 Data Models & Types
+
+### Key TypeScript Interfaces
+
+**Activity Type:**
+```typescript
+// data/activities/types.ts
+interface ActivityType {
+  id: string;                    // e.g., 'surfing'
+  name: string;                  // e.g., 'Surfing'
+  category: string;              // e.g., 'watersports'
+  tags: string[];                // e.g., ['marine', 'outdoor', 'fitness']
+  conditions: {
+    temperature?: { min?: number; max?: number; optimal?: number };
+    windSpeed?: { min?: number; max?: number; optimal?: number };
+    precipitation?: { max?: number };
+    humidity?: { min?: number; max?: number };
+    uvIndex?: { max?: number };
+    // ... more conditions
+  };
+  marine?: {
+    waveHeight?: { min?: number; max?: number; optimal?: number };
+    waterTemp?: { min?: number };
+    tidePreference?: 'high' | 'low' | 'rising' | 'falling';
+  };
+  seasonal?: {
+    months?: number[];           // 1-12 (January-December)
+    hemisphere?: 'north' | 'south' | 'both';
+  };
+}
+```
+
+**Weather Data:**
+```typescript
+// types/weatherTypes.ts
+interface WeatherForecastDay {
+  dt: number;                    // Unix timestamp
+  temp: {
+    day: number;
+    min: number;
+    max: number;
+    night: number;
+    eve: number;
+    morn: number;
+  };
+  feels_like: {
+    day: number;
+    night: number;
+    eve: number;
+    morn: number;
+  };
+  pressure: number;              // hPa
+  humidity: number;              // %
+  wind_speed: number;            // m/s
+  wind_deg: number;              // degrees
+  wind_gust?: number;            // m/s
+  weather: Array<{
+    id: number;
+    main: string;
+    description: string;
+    icon: string;
+  }>;
+  clouds: number;                // %
+  pop: number;                   // Probability of precipitation (0-1)
+  rain?: number;                 // mm
+  snow?: number;                 // mm
+  uvi: number;                   // UV index
+}
+
+interface MarineHour {
+  time: string;                  // ISO timestamp
+  waveHeight: number;            // meters
+  wavePeriod: number;            // seconds
+  waveDirection: number;         // degrees
+  swellHeight: number;           // meters
+  swellPeriod: number;           // seconds
+  swellDirection: number;        // degrees
+  waterTemp: number;             // °C
+  currentSpeed?: number;         // m/s
+  currentDirection?: number;     // degrees
+}
+```
+
+**Findr Predictions:**
+```typescript
+// Prediction response from /api/findr/predictions
+interface PredictionResponse {
+  predictions: Array<{
+    species_id: string;
+    common_name: string;
+    scientific_name: string;
+    slug: string;
+    confidence_score: number;    // 0-100
+    guild: string;               // 'pelagic' | 'demersal' | 'rock_dwelling' | etc.
+    image_url: string;
+    environmental_match: {
+      temperature_score: number;
+      depth_score: number;
+      substrate_score: number;
+      bio_bands_score: number;
+    };
+    weather_impact: {
+      wind_factor: number;
+      pressure_factor: number;
+      temperature_factor: number;
+      overall_multiplier: number;
+    };
+  }>;
+  metadata: {
+    rectangleCode: string;
+    predictionDate: string;
+    region: string;
+    requestedAt: string;
+    cacheHit: boolean;
+  };
+}
+
+// Species database model
+interface Species {
+  id: string;
+  scientific_name: string;
+  common_name: string;
+  slug: string;
+  guild: string;
+  min_temp: number | null;
+  max_temp: number | null;
+  min_depth: number | null;
+  max_depth: number | null;
+  substrate_preferences: string[] | null;
+  is_active: boolean;
+  created_at: string;
+}
+```
+
+**User Data:**
+```typescript
+// User favorites
+interface UserFavourite {
+  id: string;
+  user_id: string;
+  species_id: string;
+  created_at: string;
+  species?: Species;             // Joined data
+}
+
+// Catch log
+interface CatchLog {
+  id: string;
+  user_id: string;
+  species_id: string;
+  rectangle_code: string;
+  caught_at: string;
+  weight_kg: number | null;
+  length_cm: number | null;
+  notes: string | null;
+  weather_conditions: Record<string, any> | null;
+  validation_data: Record<string, any> | null;
+  created_at: string;
+}
+```
+
+---
+
+## 🎣 Findr Validation System
+
+### Catch Logging & Prediction Validation
+
+The Findr app includes a comprehensive system to validate fishing predictions against real-world catches.
+
+**Features:**
+- **Impression Tracking**: Records when users view predictions
+- **Catch Logging**: Easy interface to log successful catches
+- **Blank Trip Recording**: Log unsuccessful fishing trips for data quality
+- **Environmental Snapshots**: Captures weather/marine conditions at catch time
+- **Validation Questions**: Links catches back to predictions viewed
+
+**Database Tables:**
+```sql
+-- Track prediction views
+findr_prediction_impressions (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES auth.users,
+  rectangle_code text,
+  prediction_date date,
+  viewed_at timestamp,
+  species_ids text[]  -- Species shown in prediction
+)
+
+-- Log catches
+catch_logs (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES auth.users,
+  species_id uuid REFERENCES species,
+  rectangle_code text,
+  caught_at timestamp,
+  weight_kg numeric,
+  length_cm numeric,
+  notes text,
+  weather_conditions jsonb,
+  validation_data jsonb,  -- Links to prediction impression
+  created_at timestamp
+)
+
+-- Log unsuccessful trips
+blank_trips (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES auth.users,
+  rectangle_code text,
+  fished_at timestamp,
+  duration_minutes integer,
+  conditions_snapshot jsonb,
+  created_at timestamp
+)
+```
+
+**API Endpoints:**
+
+```typescript
+// Record prediction view
+POST /api/findr/record-impression
+{
+  rectangleCode: string;
+  predictionDate: string;
+  speciesIds: string[];
+}
+
+// Log a catch
+POST /api/findr/catch-log
+{
+  speciesId: string;
+  rectangleCode: string;
+  caughtAt: string;  // ISO timestamp
+  weightKg?: number;
+  lengthCm?: number;
+  notes?: string;
+  predictionImpressionId?: string;  // Links to prediction
+}
+
+// Retrieve user's catch logs
+GET /api/findr/catch-log
+Response: CatchLog[]
+
+// Record unsuccessful trip
+POST /api/findr/record-blank-trip
+{
+  rectangleCode: string;
+  fishedAt: string;
+  durationMinutes: number;
+  conditions: object;
+}
+```
+
+**Usage in App:**
+```typescript
+// In /findr/log page
+import { useCatchLogger } from '@/hooks/useCatchLogger';
+
+function CatchLogPage() {
+  const { logCatch, loading, error } = useCatchLogger();
+  
+  const handleSubmit = async (data) => {
+    await logCatch({
+      speciesId: data.species,
+      rectangleCode: data.location,
+      caughtAt: data.timestamp,
+      weightKg: data.weight,
+      lengthCm: data.length,
+    });
+  };
+  
+  // ... form UI
+}
+```
+
+**Future Analytics:**
+- Prediction accuracy by species
+- Catch rate by rectangle and season
+- User feedback loop to improve predictions
+- Confidence score calibration
+
+---
+
+## 🌐 Third-Party Service Dependencies
+
+### Service Overview & Limits
+
+**1. Copernicus CMEMS** (Marine Environmental Data)
+- **Provider**: Copernicus Marine Environment Monitoring Service (EU)
+- **Purpose**: Ocean temperature, salinity, nutrients, oxygen, pH
+- **Authentication**: Username + Password
+- **Rate Limits**: Reasonable use, daily ingestion cron
+- **Data Coverage**: European waters, 30km resolution
+- **Cost**: Free for registered users
+- **Docs**: https://marine.copernicus.eu/
+- **Fallback**: Cached data (3-hour TTL), mock provider for testing
+
+**2. EMODnet** (Bathymetry & Substrate)
+- **Provider**: European Marine Observation and Data Network
+- **Purpose**: Seabed depth and substrate type
+- **Authentication**: None (public API)
+- **Rate Limits**: Fair use
+- **Data Coverage**: European waters
+- **Cost**: Free
+- **Docs**: https://emodnet.ec.europa.eu/
+- **Fallback**: Default depth values if unavailable
+
+**3. Met.no** (Weather Forecasts)
+- **Provider**: Norwegian Meteorological Institute
+- **Purpose**: Weather forecasts (temp, wind, precipitation, pressure)
+- **Authentication**: None required
+- **Rate Limits**: ~20 req/sec recommended
+- **User-Agent**: Required (identify your app)
+- **Data Coverage**: Global
+- **Cost**: Free
+- **Docs**: https://api.met.no/
+- **Fallback**: Cached forecasts, degraded predictions
+
+**4. Mapbox** (Interactive Maps)
+- **Provider**: Mapbox
+- **Purpose**: Map tiles, geocoding, location search
+- **Authentication**: API token (NEXT_PUBLIC_MAPBOX_TOKEN)
+- **Rate Limits**: 
+  - Free tier: 50,000 map loads/month
+  - 100,000 geocoding requests/month
+- **Cost**: Free tier, then pay-as-you-go
+- **Docs**: https://docs.mapbox.com/
+- **Fallback**: Disable map features
+
+**5. Google Maps** (Location Autocomplete)
+- **Provider**: Google Maps Platform
+- **Purpose**: Place search and autocomplete
+- **Authentication**: API key (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY)
+- **Rate Limits**: Based on billing plan
+- **Cost**: $200 free credit/month, then paid
+- **Docs**: https://developers.google.com/maps
+- **Fallback**: Manual location entry
+
+**6. Supabase** (Database & Auth)
+- **Provider**: Supabase (PostgreSQL + PostGIS)
+- **Purpose**: Primary database, user authentication, storage
+- **Authentication**: Project URL + API keys
+- **Rate Limits**: Based on plan (Free: 500MB, 2GB bandwidth)
+- **Cost**: Free tier, Pro at $25/month
+- **Docs**: https://supabase.com/docs
+- **Fallback**: None (critical dependency)
+
+### API Key Setup & Best Practices
+
+**Mapbox Setup:**
+```bash
+# 1. Sign up at https://account.mapbox.com/
+# 2. Create token with these scopes:
+#    - styles:read
+#    - fonts:read
+#    - datasets:read
+# 3. Restrict to domains: godaisy.io, *.vercel.app
+# 4. Add to .env.local:
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1IjoieW91ci11c2VybmFtZSIsImEiOiJhYmMxMjMifQ...
+```
+
+**Google Maps Setup:**
+```bash
+# 1. Go to Google Cloud Console
+# 2. Enable APIs: Maps JavaScript API, Places API, Geocoding API
+# 3. Create credentials > API key
+# 4. Restrict key:
+#    - Application restrictions: HTTP referrers
+#    - Add: godaisy.io/*, *.vercel.app/*
+#    - API restrictions: Select only needed APIs
+# 5. Add to .env.local:
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyC...
+```
+
+**Rate Limiting Best Practices:**
+- Use caching aggressively (React Query, database cache)
+- Implement exponential backoff on failures
+- Monitor usage in provider dashboards
+- Set up billing alerts
+- Use mock providers in development/testing
+
+---
+
+## 💻 Development Best Practices
+
+### Code Organization Patterns
+
+**1. Client vs Server Components**
+```typescript
+// Default to Server Components (no 'use client')
+// pages/index.tsx - Server Component
+export default async function HomePage() {
+  // Can fetch data directly
+  const data = await fetch('...');
+  return <div>...</div>;
+}
+
+// Use 'use client' only when needed:
+// - useState, useEffect, event handlers
+// - Browser APIs (localStorage, window)
+// - Third-party libraries requiring browser context
+'use client';
+export function InteractiveComponent() {
+  const [state, setState] = useState();
+  return <button onClick={() => setState(...)}>Click</button>;
+}
+```
+
+**2. API Route Patterns**
+```typescript
+// pages/api/example.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // 1. Check HTTP method
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // 2. Validate input
+  const { param } = req.body;
+  if (!param) {
+    return res.status(400).json({ error: 'Missing required parameter' });
+  }
+
+  // 3. Get authenticated user (if needed)
+  const supabase = getSupabaseServerClient({ req, res });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // 4. Perform operation
+  try {
+    const result = await someOperation(param);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Operation failed:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+```
+
+**3. Database Query Patterns**
+```typescript
+// Use queryWithTiming for performance monitoring
+import { queryWithTiming } from '@/lib/supabase/queryWithTiming';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+
+const supabase = getSupabaseServerClient();
+
+// Single query with timing
+const species = await queryWithTiming(
+  async () => {
+    const { data, error } = await supabase
+      .from('species')
+      .select('*')
+      .eq('is_active', true);
+    if (error) throw error;
+    return data;
+  },
+  'fetch_active_species'
+);
+
+// Parallel queries
+import { timedParallelQueries } from '@/lib/supabase/queryWithTiming';
+
+const [rectangles, conditions] = await timedParallelQueries([
+  {
+    name: 'fetch_rectangles',
+    fn: async () => {
+      const { data } = await supabase.from('ices_rectangles').select('*');
+      return data;
+    }
+  },
+  {
+    name: 'fetch_conditions',
+    fn: async () => {
+      const { data } = await supabase.from('copernicus_data').select('*');
+      return data;
+    }
+  }
+]);
+```
+
+**4. Caching Strategies**
+```typescript
+// Client-side: React Query
+import { useQuery } from '@tanstack/react-query';
+
+function usePredictions(rectangleCode: string) {
+  return useQuery({
+    queryKey: ['predictions', rectangleCode],
+    queryFn: () => fetchPredictions(rectangleCode),
+    staleTime: 1000 * 60 * 30,     // 30 min fresh
+    cacheTime: 1000 * 60 * 60 * 3,  // 3 hours in memory
+    refetchOnWindowFocus: false,
+  });
+}
+
+// Server-side: Database cache
+// Check cache in findr_prediction_sessions table
+// TTL: 3 hours (expires_at column)
+// Invalidate manually or wait for expiration
+```
+
+**5. Error Handling**
+```typescript
+// API routes: Always return proper status codes
+try {
+  const data = await riskyOperation();
+  return res.status(200).json(data);
+} catch (error) {
+  console.error('[API] Operation failed:', error);
+  
+  // Differentiate error types
+  if (error.code === 'PGRST116') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  
+  if (error.message.includes('permission')) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  return res.status(500).json({ 
+    error: 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? error.message : undefined
+  });
+}
+
+// Frontend: User-friendly messages
+try {
+  const result = await apiCall();
+} catch (error) {
+  toast.error('Unable to load predictions. Please try again.');
+  console.error('Detailed error:', error);
+}
+```
+
+---
+
+## 🤝 Contributing Guidelines
+
+### Code Style & Conventions
+
+**TypeScript:**
+- Use strict type checking (`tsconfig.json` with `strict: true`)
+- Avoid `any` - use `unknown` or specific types
+- Export types and interfaces for reusability
+- Use `interface` for object shapes, `type` for unions/intersections
+
+**Naming Conventions:**
+```typescript
+// Files: camelCase for utilities, PascalCase for components
+// utils/weatherUtils.ts
+// components/ActivityCard.tsx
+
+// Variables: camelCase
+const userLocation = getUserLocation();
+
+// Constants: UPPER_SNAKE_CASE
+const MAX_RETRY_ATTEMPTS = 3;
+
+// Functions: camelCase, descriptive verbs
+function calculateConfidenceScore() { }
+
+// Components: PascalCase
+function WeatherCard() { }
+
+// Types/Interfaces: PascalCase
+interface UserPreference { }
+type ActivityId = string;
+```
+
+**React Patterns:**
+```typescript
+// Prefer functional components
+function MyComponent({ prop1, prop2 }: Props) {
+  return <div>{prop1}</div>;
+}
+
+// Use hooks at top level
+function MyComponent() {
+  const [state, setState] = useState();
+  const data = useQuery(...);
+  
+  // Not inside conditionals or loops
+  if (condition) {
+    // const data = useQuery(...); // ❌ Wrong
+  }
+}
+
+// Extract complex logic to custom hooks
+function useComplexLogic() {
+  const [state, setState] = useState();
+  useEffect(() => { /* ... */ }, []);
+  return { state, setState };
+}
+```
+
+**Comments:**
+```typescript
+// Good: Explain WHY, not WHAT
+// Use 3-hour cache to align with Copernicus update frequency
+const CACHE_TTL = 1000 * 60 * 60 * 3;
+
+// Bad: Obvious from code
+// Set cache time to 3 hours
+const CACHE_TTL = 1000 * 60 * 60 * 3;
+
+// Good: Document complex algorithms
+/**
+ * Calculates fishing confidence score using two-phase matching:
+ * 1. Environmental suitability (temperature, depth, substrate)
+ * 2. Weather impact (guild-weighted multipliers)
+ * 
+ * @returns Score from 0-100
+ */
+function calculateConfidence() { }
+```
+
+### Git Workflow
+
+**Branch Naming:**
+```bash
+feature/add-species-search      # New features
+fix/prediction-cache-bug        # Bug fixes
+docs/update-api-documentation   # Documentation
+refactor/optimize-db-queries    # Code improvements
+chore/update-dependencies       # Maintenance
+```
+
+**Commit Messages:**
+```bash
+# Format: <type>: <subject>
+
+# Examples:
+feat: Add species filtering to predictions API
+fix: Resolve cache invalidation issue in predictions
+docs: Update GETTING_STARTED with environment variables
+refactor: Extract weather fetching to separate service
+chore: Update dependencies to latest versions
+perf: Parallelize rectangle and EMODnet queries
+test: Add unit tests for confidence scoring algorithm
+
+# Multi-line for complex changes:
+feat: Implement catch logging validation system
+
+- Add catch_logs and blank_trips tables
+- Create API endpoints for logging catches
+- Link catches to prediction impressions
+- Add environmental snapshot at catch time
+```
+
+**Pull Request Process:**
+1. Create feature branch from `main`
+2. Make changes with clear commits
+3. Run `npm run lint:ci` and `npm run typecheck`
+4. Push and create PR with description
+5. Address review comments
+6. Squash merge to `main`
+
+### Code Review Checklist
+
+**Before Submitting PR:**
+- [ ] Code follows style guidelines
+- [ ] TypeScript types are specific (no `any`)
+- [ ] ESLint passes with zero warnings
+- [ ] TypeScript compiles without errors
+- [ ] Added tests for new functionality
+- [ ] Updated documentation if needed
+- [ ] Checked for console.log() debugging statements
+- [ ] Verified no sensitive data in commits
+
+**Reviewer Checklist:**
+- [ ] Code is readable and maintainable
+- [ ] Logic is sound and efficient
+- [ ] Error handling is appropriate
+- [ ] Types are correctly defined
+- [ ] Tests cover edge cases
+- [ ] No security vulnerabilities
+- [ ] Performance impact considered
+
+---
+
+## 🆘 Troubleshooting & FAQ
+
+### Common Setup Issues
+
+**Q: `npm install` fails with dependency errors**
+```bash
+# A: Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm cache clean --force
+npm install
+```
+
+**Q: Port 3000 already in use**
+```bash
+# A: Find and kill process using port 3000
+lsof -ti:3000 | xargs kill -9
+
+# Or use different port
+PORT=3001 npm run dev
+```
+
+**Q: Environment variables not loading**
+```bash
+# A: Check file exists and restart server
+ls -la .env.local
+
+# Restart dev server (Ctrl+C, then):
+npm run dev
+
+# Verify in API route:
+console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+```
+
+**Q: Database connection errors**
+```bash
+# A: Verify Supabase credentials
+# Check .env.local has correct:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+
+# Test connection:
+npx supabase db ping
+```
+
+**Q: TypeScript errors in IDE but build succeeds**
+```bash
+# A: Restart TypeScript server
+# VS Code: Cmd+Shift+P > "TypeScript: Restart TS Server"
+
+# Or rebuild types:
+npm run typecheck
+```
+
+**Q: Images not loading**
+```bash
+# A: Check Next.js image optimization
+# Verify images in /public directory
+# Check next.config.js domains configuration
+# Clear .next cache:
+rm -rf .next && npm run dev
+```
+
+### Common Runtime Issues
+
+**Q: Predictions returning empty array**
+```typescript
+// A: Check data pipeline
+// 1. Verify Copernicus data exists
+const { data } = await supabase
+  .from('copernicus_data')
+  .select('*')
+  .eq('rectangle_code', 'YOUR_RECTANGLE')
+  .order('data_date', { ascending: false })
+  .limit(1);
+
+// 2. Check active species
+const { data: species } = await supabase
+  .from('species')
+  .select('*')
+  .eq('is_active', true);
+
+// 3. Check RPC function exists
+const { data, error } = await supabase.rpc('get_predictions_enhanced', {...});
+```
+
+**Q: Slow predictions (>2 seconds)**
+```bash
+# A: Enable query timing
+LOG_QUERY_TIMING=true npm run dev
+
+# Check logs for slow queries
+# Look for warnings: "Slow query: ... (>500ms)"
+
+# Verify cache is working
+# Check findr_prediction_sessions table
+```
+
+**Q: Authentication not working**
+```typescript
+// A: Check Supabase Auth configuration
+// 1. Verify email templates in Supabase dashboard
+// 2. Check redirect URLs are whitelisted
+// 3. Test with console logs:
+const { data: { user } } = await supabase.auth.getUser();
+console.log('Current user:', user);
+```
+
+**Q: Maps not displaying**
+```bash
+# A: Check Mapbox token
+# 1. Verify NEXT_PUBLIC_MAPBOX_TOKEN in .env.local
+# 2. Check browser console for errors
+# 3. Verify token scopes in Mapbox dashboard
+# 4. Check domain restrictions
+```
+
+### Performance Issues
+
+**Q: Slow page loads**
+```bash
+# A: Run Lighthouse audit
+# Chrome DevTools > Lighthouse > Generate report
+
+# Check for:
+# - Large bundle sizes (use dynamic imports)
+# - Unoptimized images (use next/image)
+# - Blocking third-party scripts
+# - Excessive client-side JavaScript
+```
+
+**Q: High memory usage**
+```bash
+# A: Check for memory leaks
+# 1. Use React DevTools Profiler
+# 2. Check for:
+#    - Unmounted components with active listeners
+#    - Large arrays/objects in state
+#    - Infinite re-renders
+#    - Missing cleanup in useEffect
+```
+
+### Data Issues
+
+**Q: Copernicus data ingestion failing**
+```bash
+# A: Check GitHub Actions logs
+# 1. Go to: Actions > FINDR Copernicus ingestion
+# 2. Check latest run for errors
+# 3. Common issues:
+#    - Invalid credentials (check secrets)
+#    - CMEMS API downtime (retry later)
+#    - Rate limiting (adjust delay)
+
+# Manual test:
+COPERNICUS_USERNAME=xxx COPERNICUS_PASSWORD=xxx \
+  npx tsx scripts/ingest-copernicus-data.ts
+```
+
+**Q: Stale weather data**
+```bash
+# A: Check Met.no API
+curl "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=55&lon=10"
+
+# Verify cache expiry
+# Weather cached client-side for 30 min
+# Clear React Query cache or wait for stale time
+```
+
+### Development Workflow Issues
+
+**Q: Hot reload not working**
+```bash
+# A: Clear Next.js cache
+rm -rf .next
+npm run dev
+
+# Or restart with clean build:
+pkill -f "next dev"
+rm -rf .next
+npm run dev
+```
+
+**Q: Git pre-push hooks failing**
+```bash
+# A: Fix linting/type errors first
+npm run lint:fix
+npm run typecheck
+
+# To bypass hooks (emergency only):
+git push --no-verify
+```
+
+**Q: Vercel deployment failing**
+```bash
+# A: Check Vercel logs
+# 1. Go to Vercel dashboard > Deployments
+# 2. Click failed deployment > View logs
+# 3. Common issues:
+#    - Missing environment variables
+#    - Build timeout (optimize build)
+#    - TypeScript errors (run typecheck locally)
+#    - Dependency conflicts (check package.json)
+```
+
+### FAQ
+
+**Q: What Node version should I use?**
+A: Node.js 20.x (specified in `package.json` engines)
+
+**Q: Can I use yarn or pnpm instead of npm?**
+A: Yes, but npm is recommended for consistency. Lock file is `package-lock.json`.
+
+**Q: How do I add a new activity?**
+A: Add to appropriate file in `data/activities/`, export from `index.ts`, add emoji to `emojiMap.ts`, add background image to `bgMap.ts`.
+
+**Q: How do I add a new species to Findr?**
+A: Create migration to insert into `species` table, add image to `/public/PNGS/`, add translations if needed.
+
+**Q: Where are API routes defined?**
+A: In `pages/api/` directory. Each file exports a handler function.
+
+**Q: How do I clear all caches?**
+```bash
+# Client cache (React Query):
+# Refresh browser or wait for stale time
+
+# Server cache (database):
+DELETE FROM findr_prediction_sessions WHERE expires_at < NOW();
+
+# Build cache:
+rm -rf .next
+
+# Node modules:
+rm -rf node_modules package-lock.json && npm install
+```
+
+**Q: How do I run in production mode locally?**
+```bash
+npm run build
+npm start
+```
+
+**Q: Where can I find more help?**
+- Check `CLAUDE.md` for project overview
+- Read specific docs: `FINDR_PREDICTIONS_DATA_SOURCES.md`, `CONFIDENCE_SCORING_ALGORITHM.md`
+- Check `DIAGNOSIS_QUICK_REF.md` for troubleshooting
+- Review GitHub Issues for similar problems
+
+---
+
+## 📚 Deep Dive Documentation
 
 ```bash
 # Create new migration
