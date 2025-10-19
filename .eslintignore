@@ -1,0 +1,18 @@
+# Test coverage reports
+coverage/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.generated.ts
+*.generated.js
+
+# Configuration
+.vercel/
