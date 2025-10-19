@@ -648,7 +648,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
           alt: imageInfo.name,
           mobile: imageInfo.mobile ?? null,
           thumb: imageInfo.thumb ?? null,
-          blurDataURL: imageInfo.blurDataURL,
+          blurDataURL: (imageInfo as { blurDataURL?: string }).blurDataURL,
         }
       : undefined,
     playfulBio,
