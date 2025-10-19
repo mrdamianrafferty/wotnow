@@ -93,6 +93,9 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
   return (
     <div 
+      data-testid="species-card"
+      data-species-id={species.id}
+      data-confidence={species.confidence}
       className="card bg-gradient-to-br from-success/10 via-success/5 to-base-100 border-2 border-success shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-[1.02]"
       onClick={() => onAction?.(species.id)}
       role="button"
@@ -138,7 +141,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               
               {/* Confidence Badge */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="badge badge-error badge-lg gap-2 py-2 px-3 sm:py-3 sm:px-4">
+                <div className="badge badge-error badge-lg gap-2 py-2 px-3 sm:py-3 sm:px-4" data-testid="confidence-score">
                   <Zap size={16} fill="currentColor" />
                   <span className="font-bold">{species.confidence}%</span>
                 </div>

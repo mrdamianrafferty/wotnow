@@ -1,17 +1,16 @@
 // /pages/api/tides.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
+import { round1dp, createCacheKey, COORDINATE_PRECISION, CACHE_DURATION_MS } from '../../lib/utils/coordinates';
 
 // Simple in-memory cooldown to avoid hammering Stormglass when quota is hit
 let lastLimitedAt: number | null = null;
 // Basic in-memory cache to reduce duplicate requests during fast reloads
 const tideCache = new Map<string, { ts: number; data: unknown }>();
-const TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours
+const TIDE_TTL_MS = CACHE_DURATION_MS.STORMGLASS; // 12 hours for Stormglass
 function cacheKey(lat: number, lon: number) {
-  // Round to ~100m to coalesce nearby points
-  const la = lat.toFixed(3);
-  const lo = lon.toFixed(3);
-  return `${la},${lo}`;
+  // Round to 1dp (~11km) for Stormglass with 12h cache
+  return createCacheKey(lat, lon, COORDINATE_PRECISION.STORMGLASS);
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,7 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, error: 'Invalid coordinates' });
   }
 
-  const url = `https://api.stormglass.io/v2/tide/extremes/point?lat=${latNum}&lng=${lonNum}`;
+  // Round to 1dp to minimize Stormglass paid API calls
+  const rlat = round1dp(latNum);
+  const rlon = round1dp(lonNum);
+
+  const url = `https://api.stormglass.io/v2/tide/extremes/point?lat=${rlat}&lng=${rlon}`;
 
   let span: ReturnType<typeof weatherMetrics.start> | null = null;
 
@@ -44,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true, data: [], limited: true, status: 402, cached: true });
     }
     console.log('🌊 Fetching tide data from Stormglass');
-    span = weatherMetrics.start('stormglass', 'tides', JSON.stringify({ lat: latNum, lon: lonNum }));
+    span = weatherMetrics.start('stormglass', 'tides', JSON.stringify({ lat: rlat, lon: rlon }));
     const response = await fetch(url, {
       headers: { Authorization: apiKey }
     });

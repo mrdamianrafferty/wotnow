@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Head from "next/head";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
@@ -53,6 +54,9 @@ export function CookieConsentBanner() {
 export default function CookiePolicy() {
   return (
     <>
+      <Head>
+        <title>Cookie Policy - Go Daisy</title>
+      </Head>
       <AppHeader />
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">

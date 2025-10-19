@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Umbrella, Wind, Cloud, Zap } from "lucide-react";
-import AppHeader from "../components/AppHeader";
+import React from 'react';
+import Head from 'next/head';
+import AppHeader from '../components/AppHeader';
 import Footer from "../components/footer";
 
 /**
@@ -15,6 +17,9 @@ import Footer from "../components/footer";
 export default function WeatherExplainerPage() {
   return (
     <>
+      <Head>
+        <title>Whether Weather - Go Daisy</title>
+      </Head>
       <AppHeader />
 
       <main className="min-h-screen bg-base-200">

@@ -107,6 +107,7 @@ export function LocationDisplay() {
   return (
     <>
       <button
+        data-testid="location-button"
         onClick={() => setShowLocationPicker(true)}
         disabled={loadingState}
         className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

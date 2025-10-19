@@ -69,8 +69,12 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   };
 
   return (
-    <div className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200">
-      <div className="card-body p-3">
+    <div 
+      data-testid="species-card"
+      data-species-id={species.id}
+      data-confidence={species.confidence}
+      className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200"
+    >      <div className="card-body p-3">
         <div className="flex items-center gap-3">
           {/* Species Image - Clickable */}
           <button
@@ -107,7 +111,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               )}
             </div>
             <div className="flex items-center gap-2 mt-1">
-              <span className="badge badge-sm badge-outline">{species.confidence}%</span>
+              <span className="badge badge-sm badge-outline" data-testid="confidence-score">{species.confidence}%</span>
               {trend === 'improving' && (
                 <span className="text-xs text-success flex items-center gap-1">
                   <TrendingUp size={12} /> <TranslatedText text="Improving" />

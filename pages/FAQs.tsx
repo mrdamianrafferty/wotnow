@@ -2,6 +2,7 @@
 // Site-wide FAQ for Go Daisy. Single accordion with clear, friendly answers.
 // British English spellings. DaisyUI/ Tailwind classes.
 
+import Head from "next/head";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
@@ -16,6 +17,9 @@ export default function SurfSiteFAQ() {
 
   return (
     <>
+      <Head>
+        <title>FAQs - Go Daisy</title>
+      </Head>
       <AppHeader />
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">

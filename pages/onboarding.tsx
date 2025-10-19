@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import type { CSSProperties } from "react";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
@@ -275,8 +276,12 @@ export default function OnboardingFlowDaisyUI() {
   }, []);
 
   return (
-    <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content p-4" style={LIGHT_INLINE_VARS}>
-      <div className="w-full">
+    <>
+      <Head>
+        <title>Get Started - Go Daisy</title>
+      </Head>
+      <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content p-4" style={LIGHT_INLINE_VARS}>
+        <div className="w-full">
         <LiveDemo />
       </div>
       <style jsx global>{`
@@ -310,7 +315,8 @@ export default function OnboardingFlowDaisyUI() {
           --animation-input: 0.2s;
         }
       `}</style>
-    </div>
+      </div>
+    </>
   );
 }
 // Compact, visible bar for selected activities

@@ -285,6 +285,20 @@ Jest is configured with Next.js integration. Test files use `.test.ts` or `.test
 - Use `@testing-library/react` for component tests
 - Mock Supabase client with `jest.mock()`
 
+**API Test Documentation:**
+- **`TESTING_FIXES_SUMMARY.md`** - Comprehensive guide to Findr API test suite (86% pass rate, 55/64 tests passing)
+  - Test patterns for RPC mocking, createClient mocking, serverClient mocking
+  - All predictions, catch-log, conditions, and marine-weather tests passing (100%)
+  - Documented approach for fixing remaining species-details tests
+- **`TRANSLATION_429_FIX.md`** - Translation rate limiting fixes with request deduplication and graceful fallbacks
+
+**E2E Test Documentation:**
+- **`E2E_TESTING_GUIDE.md`** - Complete Playwright E2E testing guide (12/12 tests passing, 3 skipped)
+  - Multi-browser testing: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
+  - Test coverage: Go Daisy (homepage, weather, activities) and Findr (predictions, catch-log)
+  - Helper utilities for authentication and location selection
+  - Run with: `npm run test:e2e` or `npm run test:e2e:ui` for interactive mode
+
 ## Git Workflow
 
 **Pre-commit hooks** (`.githooks/`):

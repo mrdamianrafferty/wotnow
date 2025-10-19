@@ -223,7 +223,7 @@ export default function ModernFavouritesPage() {
   return (
     <>
       <Head>
-        <title>Favourites - Findr by WotNow</title>
+        <title>Favourites - findr</title>
         <meta name="description" content="Track your favourite species and get alerts when conditions are perfect" />
       </Head>
       

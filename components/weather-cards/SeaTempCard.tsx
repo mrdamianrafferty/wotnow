@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { round3dp, createCacheKey, COORDINATE_PRECISION } from "../../lib/utils/coordinates";
 
 /* -------------------------------------------------------------------------- */
 /*                                 Utilities                                  */
@@ -316,77 +317,90 @@ const VARIANTS: Record<ActivityKey, Variant> = {
 };
 
 /* -------------------------------------------------------------------------- */
-/*                           Stormglass fetch + hook                          */
+/*                     Backend Marine API fetch + hook                        */
 /* -------------------------------------------------------------------------- */
 
-type SGPointResponse = {
-  hours: Array<{ time: string; waterTemperature?: Record<string, number | null> }>;
-};
-const SG_SOURCE = "noaa";
-
-function getPublicStormglassKey(): string | undefined {
-  if (typeof window !== "undefined") {
-    const w = window as unknown as { env?: { NEXT_PUBLIC_STORMGLASS_KEY?: string } };
-    if (typeof w.env?.NEXT_PUBLIC_STORMGLASS_KEY === "string") return w.env.NEXT_PUBLIC_STORMGLASS_KEY;
-  }
-  return process.env.NEXT_PUBLIC_STORMGLASS_KEY;
-}
-
-async function fetchStormglassSeaTemp(
+/**
+ * Fetch sea temperature from our backend /api/marine endpoint
+ * This endpoint uses free data sources (Copernicus, Met.no, Open-Meteo)
+ * with Stormglass only as emergency fallback
+ */
+async function fetchSeaTempFromBackend(
   lat: number,
   lon: number,
   signal?: AbortSignal
 ): Promise<number | null> {
-  const key = getPublicStormglassKey();
-  if (!key) return null;
-
-  const url = `https://api.stormglass.io/v2/weather/point?lat=${lat}&lng=${lon}&params=waterTemperature`;
-  const res = await fetch(url, { headers: { Authorization: key }, signal });
+  // Round coordinates to 3dp to match backend caching
+  const rlat = round3dp(lat);
+  const rlon = round3dp(lon);
+  
+  // Request 24h of data centered around now
+  const now = new Date();
+  const start = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+  const end = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
+  
+  const url = `/api/marine?lat=${rlat}&lon=${rlon}&start=${start}&end=${end}`;
+  
+  const res = await fetch(url, { signal });
   if (!res.ok) return null;
-  const data: SGPointResponse = await res.json();
-  const now = Date.now();
+  
+  interface MarineResponse {
+    hours: Array<{
+      time: string;
+      waterTemperature?: { value: number | null };
+    }>;
+    source?: string;
+  }
+  
+  const data: MarineResponse = await res.json();
+  
+  // Find the temperature closest to now
+  const nowMs = Date.now();
   let bestVal: number | null = null;
   let bestDiff = Infinity;
+  
   for (const h of data.hours || []) {
-    const wt = h.waterTemperature as Record<string, number | null | undefined> | undefined;
-    let v: number | undefined;
-    if (wt) {
-      const sourceVal = wt[SG_SOURCE];
-      if (typeof sourceVal === "number") {
-        v = sourceVal;
-      } else {
-        for (const val of Object.values(wt)) {
-          if (typeof val === "number") { v = val; break; }
-        }
+    const temp = h.waterTemperature?.value;
+    if (typeof temp === 'number') {
+      const diff = Math.abs(new Date(h.time).getTime() - nowMs);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestVal = temp;
       }
     }
-    if (typeof v === "number") {
-      const diff = Math.abs(new Date(h.time).getTime() - now);
-      if (diff < bestDiff) { bestDiff = diff; bestVal = v; }
-    }
   }
-  return typeof bestVal === "number" ? bestVal : null;
+  
+  return bestVal;
 }
 
-function useStormglassSeaTemp(lat?: number, lon?: number) {
+/**
+ * Hook to fetch sea temperature from backend API
+ * Uses 30-minute localStorage cache to minimize API calls
+ */
+function useSeaTemp(lat?: number, lon?: number) {
   const [tempC, setTempC] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const cacheKey =
-    lat != null && lon != null ? `sg:seaTemp:${lat.toFixed(3)},${lon.toFixed(3)}` : null;
+    lat != null && lon != null ? createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD, 'marine:seaTemp') : null;
 
   useEffect(() => {
     if (lat == null || lon == null) return;
     let mounted = true;
 
+    // Check localStorage cache first
     if (cacheKey && typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(cacheKey);
         if (raw) {
           const { value, ts } = JSON.parse(raw) as { value: number; ts: number };
-          if (Date.now() - ts < 30 * 60 * 1000) setTempC(clamp(value));
+          // Use 30-minute cache
+          if (Date.now() - ts < 30 * 60 * 1000) {
+            setTempC(clamp(value));
+            return; // Use cached value, don't fetch
+          }
         }
       } catch {
         /* ignore localStorage read errors */
@@ -400,12 +414,13 @@ function useStormglassSeaTemp(lat?: number, lon?: number) {
     const ac = new AbortController();
     abortRef.current = ac;
 
-    fetchStormglassSeaTemp(lat, lon, ac.signal)
+    fetchSeaTempFromBackend(lat, lon, ac.signal)
       .then(v => {
         if (!mounted) return;
         if (typeof v === "number") {
           const c = clamp(v);
           setTempC(c);
+          // Cache the result
           if (cacheKey && typeof window !== "undefined") {
             localStorage.setItem(cacheKey, JSON.stringify({ value: c, ts: Date.now() }));
           }
@@ -455,7 +470,7 @@ export default function SeaTempCard({
   activityLabels,
   onActivityChangeAction,
 }: SeaTempCardProps) {
-  const { tempC: sgTempC, loading } = useStormglassSeaTemp(lat, lon);
+  const { tempC: sgTempC, loading } = useSeaTemp(lat, lon);
 
   const [activeActivity, setActiveActivity] = useState<ActivityKey>(activity);
 

@@ -144,7 +144,7 @@ const FindrConditionsRoute: React.FC = () => {
   return (
     <>
       <SEO
-        title="Conditions"
+        title="Conditions - findr"
         description="View detailed environmental conditions including water temperature, salinity, oxygen levels, and water clarity for your fishing area."
         url="https://fishfindr.eu/findr/conditions"
       />

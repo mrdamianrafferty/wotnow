@@ -75,7 +75,10 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
   return (
     <div 
-      className="card bg-gradient-to-br from-warning/10 via-warning/5 to-base-100 border border-warning/30 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.02]"
+      data-testid="species-card"
+      data-species-id={species.id}
+      data-confidence={species.confidence}
+      className="card bg-gradient-to-br from-info/10 via-info/5 to-base-100 border-2 border-info shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer hover:scale-[1.01]"
       onClick={() => onAction?.(species.id)}
       role="button"
       tabIndex={0}
@@ -117,7 +120,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
               
               {/* Confidence Badge */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3">
+                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3" data-testid="confidence-score">
                   <span className="font-bold">{species.confidence}%</span>
                 </div>
                 <span className="text-xs font-semibold text-warning uppercase">

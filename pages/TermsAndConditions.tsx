@@ -1,3 +1,4 @@
+import Head from "next/head";
 import AppHeader from "../components/AppHeader";
 import Footer from "../components/footer";
 
@@ -5,6 +6,9 @@ import Footer from "../components/footer";
 export default function TermsAndConditions() {
   return (
     <>
+      <Head>
+        <title>Terms & Conditions - Go Daisy</title>
+      </Head>
       <AppHeader />
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">

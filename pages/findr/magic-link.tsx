@@ -121,7 +121,7 @@ export default function MagicLink() {
   return (
     <>
       <Head>
-        <title>Sign In - fishfindr</title>
+        <title>Sign In - findr</title>
         <meta name="description" content="Completing your sign-in..." />
       </Head>
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Head from 'next/head';
 import CoastalLocationDialog from '@/components/CoastalLocationDialog';
 import Script from 'next/script';
 import Link from 'next/link';
@@ -115,6 +116,9 @@ export default function AccountPage() {
 
   return (
     <>
+      <Head>
+        <title>Account - Go Daisy</title>
+      </Head>
       {/* Load Google Maps Places JS once on this page */}
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''}&libraries=places`}

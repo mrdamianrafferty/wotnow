@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import Head from "next/head";
 import { getActivityName, ACTIVITY_NAME_MAP } from "../data/activityTypes";
 import { useUserPreferences } from "../context/UserPreferencesContext";
 import { useHasMounted } from "../utils/useHasMounted";
@@ -746,6 +747,9 @@ const InterestsTest: React.FC = () => {
   if (!hasMounted) {
     return (
       <>
+        <Head>
+          <title>My Interests - Go Daisy</title>
+        </Head>
         <AppHeader />
         <div data-theme="light" className="min-h-[60vh] bg-base-100 text-base-content">
           <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -761,6 +765,9 @@ const InterestsTest: React.FC = () => {
 
   return (
     <>
+      <Head>
+        <title>My Interests - Go Daisy</title>
+      </Head>
       <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
         <AppHeader
           homeLocation={preferences.locations?.find((loc) => loc.type === 'home') as LocationLite | undefined}

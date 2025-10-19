@@ -54,6 +54,7 @@ import { GuildBadge } from '../../components/findr/GuildBadge';
 import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { GradientFish } from '../../components/GradientFish';
+import FindrFooter from '../../components/FindrFooter';
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -854,7 +855,7 @@ const FindrPage: React.FC = () => {
   return (
     <>
       <SEO
-        title="findr | catch the fish of your life"
+        title="findr"
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
       />
@@ -984,7 +985,7 @@ const FindrPage: React.FC = () => {
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {cards.map((card) => (
-                  <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60">
+                  <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
@@ -994,7 +995,7 @@ const FindrPage: React.FC = () => {
                             </span>
                             <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
                             {card.confidence !== null ? (
-                              <span className={confidenceBadgeClasses(card.confidence, 'sm')}>
+                              <span className={confidenceBadgeClasses(card.confidence, 'sm')} data-testid="confidence-score">
                                 {card.confidence}%
                               </span>
                             ) : (
@@ -1174,6 +1175,8 @@ const FindrPage: React.FC = () => {
         card={speciesModalCard}
         onClose={handleCloseSpeciesModal}
       />
+
+      <FindrFooter />
     </>
   );
 };

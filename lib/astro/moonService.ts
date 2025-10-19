@@ -1,6 +1,8 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseServerClient } from '../supabase/serverClient';
+import { round0dp } from '../utils/coordinates';
+import { getMoonTimes, getTimes, getMoonIllumination } from 'suncalc';
 
 export interface MoonSunData {
   latBucket: number;
@@ -345,6 +347,107 @@ function computeExpiryIso(localDate: string, timeZone: string): string {
   }
 }
 
+/**
+ * Fetch astronomy data from Open-Meteo (FREE, no API key required)
+ * Primary data source for sun data; moon data comes from SunCalc
+ */
+async function fetchFromOpenMeteo(lat: number, lon: number, date: string): Promise<IpGeoAstronomyResponse | null> {
+  try {
+    // Round to 0dp for astronomy API calls (same precision as ipgeolocation)
+    const rlat = round0dp(lat);
+    const rlon = round0dp(lon);
+    
+    // Open-Meteo forecast API has sunrise/sunset
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.set('latitude', String(rlat));
+    url.searchParams.set('longitude', String(rlon));
+    url.searchParams.set('daily', 'sunrise,sunset');
+    url.searchParams.set('timezone', 'auto');
+    url.searchParams.set('forecast_days', '1');
+
+    console.log(`📡 Open-Meteo forecast: lat=${rlat}, lon=${rlon}, date=${date}`);
+    const response = await fetch(url.toString());
+    
+    if (!response.ok) {
+      console.log(`📊 Open-Meteo: Response ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json() as {
+      daily?: {
+        time?: string[];
+        sunrise?: string[];
+        sunset?: string[];
+      };
+      timezone?: string;
+    };
+    
+    if (!data.daily || !data.daily.time?.[0]) {
+      console.log('📊 Open-Meteo: No daily data available');
+      return null;
+    }
+
+    // Get moon data from SunCalc for this location and date
+    const targetDate = new Date(data.daily.time[0] + 'T12:00:00Z');
+    const moonTimes = getMoonTimes(targetDate, rlat, rlon);
+    const moonIllum = getMoonIllumination(targetDate);
+
+    // Convert Open-Meteo format + SunCalc moon data to IpGeoAstronomyResponse format
+    const result: IpGeoAstronomyResponse = {
+      date: data.daily.time[0],
+      timezone: data.timezone || 'UTC',
+      sunrise: data.daily.sunrise?.[0]?.substring(11, 16), // Extract HH:MM from ISO
+      sunset: data.daily.sunset?.[0]?.substring(11, 16),
+      moonrise: moonTimes.rise?.toISOString().substring(11, 16),
+      moonset: moonTimes.set?.toISOString().substring(11, 16),
+      moon_angle: moonIllum.phase * 360, // Convert 0-1 to degrees
+      moon_illumination_percentage: moonIllum.fraction * 100, // Convert 0-1 to percentage
+    };
+
+    console.log('✅ Open-Meteo + SunCalc: Astronomy data found');
+    return result;
+  } catch (error) {
+    console.error('❌ Open-Meteo error:', error);
+    return null;
+  }
+}
+
+/**
+ * Calculate astronomy data using SunCalc library (FREE, local calculation)
+ * Ultimate fallback when all APIs fail
+ */
+async function fetchFromSunCalc(lat: number, lon: number, date: string): Promise<IpGeoAstronomyResponse> {
+  try {
+    console.log(`🌙 SunCalc: Computing local astronomy for lat=${lat}, lon=${lon}`);
+    
+    const targetDate = new Date(date + 'T12:00:00Z'); // Use noon to avoid timezone issues
+    const moonTimes = getMoonTimes(targetDate, lat, lon);
+    const sunTimes = getTimes(targetDate, lat, lon);
+    const moonIllum = getMoonIllumination(targetDate);
+
+    const result: IpGeoAstronomyResponse = {
+      date,
+      timezone: 'UTC',
+      sunrise: sunTimes.sunrise?.toISOString().substring(11, 16), // HH:MM format
+      sunset: sunTimes.sunset?.toISOString().substring(11, 16),
+      moonrise: moonTimes.rise?.toISOString().substring(11, 16),
+      moonset: moonTimes.set?.toISOString().substring(11, 16),
+      moon_angle: moonIllum.phase * 360, // Convert 0-1 to degrees
+      moon_illumination_percentage: moonIllum.fraction * 100, // Convert 0-1 to percentage
+    };
+
+    console.log('✅ SunCalc: Local calculation complete');
+    return result;
+  } catch (error) {
+    console.error('❌ SunCalc error:', error);
+    // Return minimal data if calculation fails
+    return {
+      date,
+      timezone: 'UTC',
+    };
+  }
+}
+
 async function requestAstronomyData({ lat, lon, date }: FetchParams): Promise<IpGeoAstronomyResponse> {
   const apiKey = process.env.MOON_API_KEY || process.env.IPGEOLOCATION_API_KEY;
   const apiUrl = process.env.MOON_API_URL || 'https://api.ipgeolocation.io/astronomy';
@@ -353,10 +456,14 @@ async function requestAstronomyData({ lat, lon, date }: FetchParams): Promise<Ip
     throw new Error('Moon data API key missing: set MOON_API_KEY or IPGEOLOCATION_API_KEY.');
   }
 
+  // Round to 0dp (whole degrees ~111km) for astronomy data with 24h cache
+  const rlat = round0dp(lat);
+  const rlon = round0dp(lon);
+
   const params = new URLSearchParams({
     apiKey,
-    lat: String(lat),
-    long: String(lon),
+    lat: String(rlat),
+    long: String(rlon),
   });
   if (date) {
     params.set('date', date);
@@ -423,15 +530,55 @@ export async function getMoonSunData(params: FetchParams): Promise<MoonSunData> 
   const lonBucket = roundToGrid(params.lon);
 
   const previewDate = params.date ?? Temporal.Now.instant().toZonedDateTimeISO('UTC').toPlainDate().toString();
-  // Always try to read cache with the specific date (either provided or today)
+  
+  // 1. Try cache first (with 0dp bucketing from Task 3)
   const cachedRow = await readFromCache(supabase, latBucket, lonBucket, previewDate);
   if (cachedRow) {
+    console.log(`✅ Astronomy cache hit for ${latBucket},${lonBucket}`);
     return mapRowToPayload(cachedRow);
   }
 
-  const live = await requestAstronomyData(params);
+  console.log('🔄 Astronomy cache miss - trying data sources in order...');
+  let live: IpGeoAstronomyResponse | null = null;
+  let source = 'unknown';
+
+  // 2. Try Open-Meteo (FREE, no API key required)
+  live = await fetchFromOpenMeteo(params.lat, params.lon, previewDate);
+  if (live) {
+    source = 'openmeteo';
+  }
+
+  // 3. Try ipgeolocation.io (PAID, only if API key exists and Open-Meteo failed)
+  if (!live) {
+    const hasApiKey = !!(process.env.MOON_API_KEY || process.env.IPGEOLOCATION_API_KEY);
+    if (hasApiKey) {
+      console.log('⚠️  Open-Meteo unavailable, trying ipgeolocation.io (PAID)');
+      try {
+        live = await requestAstronomyData(params);
+        source = 'ipgeolocation-paid';
+      } catch (error) {
+        console.error('❌ ipgeolocation.io error:', error);
+      }
+    } else {
+      console.log('📊 No paid API key configured, skipping ipgeolocation.io');
+    }
+  }
+
+  // 4. Fallback to SunCalc (FREE, local calculation - always works)
+  if (!live) {
+    console.log('📊 All APIs unavailable, using SunCalc local calculation');
+    live = await fetchFromSunCalc(params.lat, params.lon, previewDate);
+    source = 'suncalc';
+  }
+
   const localDate = live.date ?? previewDate;
   const payload = buildPayload(live, latBucket, lonBucket);
+  
+  // Update payload source to track which provider was used
+  payload.source = source;
+  
   await writeCache(supabase, latBucket, lonBucket, localDate, payload, live as Record<string, unknown> | null);
+  
+  console.log(`✅ Astronomy data fetched from ${source}`);
   return payload;
 }

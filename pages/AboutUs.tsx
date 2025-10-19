@@ -1,10 +1,14 @@
 import Image from "next/image";
+import Head from "next/head";
 import AppHeader from "../components/AppHeader"; // adjust path if your header lives elsewhere
 import Footer from "../components/footer";       // matches usage in pages/index.tsx
 
 export default function AboutUs() {
   return (
     <>
+      <Head>
+        <title>About Us - Go Daisy</title>
+      </Head>
       <AppHeader />
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12">

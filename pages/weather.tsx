@@ -1,6 +1,7 @@
 // pages/new-weather.tsx
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import Head from "next/head";
 // Keep critical above-the-fold components static for fast LCP
 import { HourlyMarineCard } from "../components/weather-cards/HourlyMarineCard";
 import { HourlyCard } from "../components/weather-cards/HourlyCard";
@@ -468,12 +469,16 @@ export default function WeatherPage() {
   } satisfies NonNullable<MoonCardProps['today']>;
 
   return (
-    <div
-      className="relative min-h-screen"
-      data-testid="page-new-weather"
-    >
-      <div className="relative z-20">
-        <AppHeader
+    <>
+      <Head>
+        <title>Weather - Go Daisy</title>
+      </Head>
+      <div
+        className="relative min-h-screen"
+        data-testid="page-new-weather"
+      >
+        <div className="relative z-20">
+          <AppHeader
           homeLocation={homeLocation || undefined}
           coastalLocation={coastalLocation || undefined}
           onOpenHomeDialog={() => setOpenHomeDialog(true)}
@@ -848,7 +853,8 @@ export default function WeatherPage() {
         <BottomNav />
         <Footer />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

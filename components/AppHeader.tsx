@@ -142,8 +142,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="navbar bg-base-100 shadow-sm">
         {/* Left: Hamburger + Logo */}
         <div className="navbar-start">
-          {/* Hamburger with submenu (mobile) */}
-          <div className="dropdown">
+          {/* Hamburger with submenu (desktop only) */}
+          <div className="dropdown hidden md:flex">
             <label
               tabIndex={0}
               className="btn btn-ghost swap swap-rotate text-gray-800"
@@ -234,7 +234,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               width={180}
               height={60}
               priority
-              style={{ width: 'auto', height: 'auto' }}
+              className="h-8 w-auto md:h-[60px]"
             />
           </Link>
         </div>

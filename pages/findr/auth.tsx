@@ -86,7 +86,7 @@ export default function FindrAuth() {
   return (
     <>
       <Head>
-        <title>findr - Sign In</title>
+        <title>Sign In - findr</title>
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">

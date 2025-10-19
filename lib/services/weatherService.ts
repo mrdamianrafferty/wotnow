@@ -1,5 +1,11 @@
 import { fetchWeatherApi } from 'openmeteo';
 import { monitoredFetch, weatherMetrics } from '../monitoring/weatherMetrics';
+import { 
+  round3dp as round3dpUtil, 
+  round1dp, 
+  createCacheKey, 
+  COORDINATE_PRECISION
+} from '../utils/coordinates';
 
 /**
  * Normalize and merge core weather fields (clouds, rain, snow, etc.) with fallback logic
@@ -17,8 +23,8 @@ type Json = Record<string, unknown>;
 type Source = Json | null | undefined;
 
 /** Coordinate precision + grouping (free tier: 3 decimal places ≈ 110 m) */
-const round3dp = (n: number) => Math.round(n * 1e3) / 1e3;
-const coordKey3dp = (lat: number, lon: number) => `${round3dp(lat).toFixed(3)},${round3dp(lon).toFixed(3)}`;
+const round3dp = round3dpUtil; // Use shared utility
+const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD);
 const round4dp = (n: number) => Math.round(n * 1e4) / 1e4;
 
 type Spot = { id: string; name: string; lat: number; lon: number };
@@ -1462,6 +1468,7 @@ async function fetchStormglassMarine(
 
 /**
  * Fetch tide extremes from Stormglass
+ * Uses 1dp rounding (~11km) to minimize paid API calls with 12h cache
  * @param lat Latitude
  * @param lon Longitude
  * @param apiKey Stormglass API key
@@ -1475,9 +1482,13 @@ async function fetchStormglassTides(lat: number, lon: number, apiKey: string): P
     });
   const safeJson = async (res: Response) => { try { return await res.json(); } catch { return null; } };
 
+  // Round to 1dp (~11km) for Stormglass to reduce costs
+  const rlat = round1dp(lat);
+  const rlon = round1dp(lon);
+
   const url = new URL('https://api.stormglass.io/v2/tide/extremes/point');
-  url.searchParams.set('lat', String(lat));
-  url.searchParams.set('lng', String(lon));
+  url.searchParams.set('lat', String(rlat));
+  url.searchParams.set('lng', String(rlon));
 
   const span = weatherMetrics.start(
     'stormglass',
@@ -1778,6 +1789,7 @@ export interface WorldTidesResponse {
 
 /**
  * Fetch tide extremes (high/low) from WorldTides API
+ * Uses 3dp rounding (~110m) as WorldTides is free tier
  * @param lat Latitude
  * @param lon Longitude
  * @param days Number of days to fetch (default 7)
@@ -1798,10 +1810,14 @@ async function fetchWorldTides(
   try {
     const now = Math.floor(Date.now() / 1000);
 
+    // Round to 3dp (~110m) for free API
+    const rlat = round3dp(lat);
+    const rlon = round3dp(lon);
+
     const url = new URL('https://www.worldtides.info/api/v3');
     url.searchParams.set('extremes', '');
-    url.searchParams.set('lat', String(lat));
-    url.searchParams.set('lon', String(lon));
+    url.searchParams.set('lat', String(rlat));
+    url.searchParams.set('lon', String(rlon));
     url.searchParams.set('start', String(now));
     url.searchParams.set('length', String(days * 24 * 60 * 60)); // Length in seconds
     url.searchParams.set('key', WORLDTIDES_API_KEY);

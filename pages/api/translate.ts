@@ -14,6 +14,31 @@ interface TranslateResponse {
   translation?: string;
   translations?: string[];
   error?: string;
+  retryAfter?: number;
+}
+
+// Simple rate limiter - track requests per IP
+const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 20; // 20 requests per minute per IP
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = requestCounts.get(ip);
+
+  if (!record || now > record.resetTime) {
+    // New window or expired window
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return { allowed: true };
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((record.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  record.count++;
+  return { allowed: true };
 }
 
 export default async function handler(
@@ -24,6 +49,21 @@ export default async function handler(
     return res.status(405).json({
       success: false,
       error: 'Method not allowed. Use POST.',
+    });
+  }
+
+  // Check rate limit
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+             (req.headers['x-real-ip'] as string) || 
+             'unknown';
+  
+  const { allowed, retryAfter } = checkRateLimit(ip);
+  
+  if (!allowed) {
+    return res.status(429).json({
+      success: false,
+      error: `Rate limit exceeded. Please try again in ${retryAfter} seconds.`,
+      retryAfter,
     });
   }
 
@@ -61,6 +101,18 @@ export default async function handler(
     });
   } catch (error) {
     console.error('Translation API error:', error);
+    
+    // Check if it's a DeepL rate limit error
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    if (errorMessage.includes('Too many requests') || errorMessage.includes('high load')) {
+      return res.status(429).json({
+        success: false,
+        error: 'DeepL API rate limit reached. Please try again later.',
+        retryAfter: 60, // Suggest retrying after 1 minute
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: 'Translation failed',

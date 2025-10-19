@@ -124,6 +124,7 @@ export function LocationPicker() {
     <div className="relative">
       {/* Location Button */}
       <button
+        data-testid="location-button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 text-sm rounded-lg hover:bg-gray-100 transition-colors"
         style={{ color: '#374151' }}

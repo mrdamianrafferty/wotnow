@@ -54,7 +54,7 @@ const FindrInfoPage = () => {
   return (
     <>
       <Head>
-        <title>findr info | How it works</title>
+        <title>Info - findr</title>
       </Head>
       <main className="min-h-screen bg-base-200 pb-16">
         {/* Navigation component handles responsive display internally */}

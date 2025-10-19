@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
@@ -745,9 +746,13 @@ useEffect(() => { saveCoastPref(coastalPlace); }, [coastalPlace]);
 
   // --- UI ---
   return (
-    <main className="min-h-screen bg-base-100">
-      {/* COMPACT HERO + TWO-COLUMN DEMO LAYOUT */}
-      <section className="px-4 md:px-6 pt-4 pb-2 border-b border-base-200 bg-base-100">
+    <>
+      <Head>
+        <title>Demo - Go Daisy</title>
+      </Head>
+      <main className="min-h-screen bg-base-100">
+        {/* COMPACT HERO + TWO-COLUMN DEMO LAYOUT */}
+        <section className="px-4 md:px-6 pt-4 pb-2 border-b border-base-200 bg-base-100">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl md:text-4xl font-bold leading-tight">
@@ -961,6 +966,7 @@ useEffect(() => { saveCoastPref(coastalPlace); }, [coastalPlace]);
         </div>
       </div>
     </main>
+    </>
   );
 }
 

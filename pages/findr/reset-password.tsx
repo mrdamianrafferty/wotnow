@@ -33,7 +33,7 @@ export default function ResetPassword() {
   return (
     <>
       <Head>
-        <title>findr - Reset Password</title>
+        <title>Reset Password - findr</title>
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">

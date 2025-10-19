@@ -1,6 +1,7 @@
 'use client';
 import { ACTIVITY_OPTIONS, ACTIVITY_NAME_MAP } from '../../data/activityTypes';
 import { rankRecommendations, idToLabel } from './recommendations';
+import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
 
 declare global {
   // Optional runtime-provided activity map (e.g. injected on window in demos)
@@ -179,6 +180,10 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
   const [homeName, setHomeName] = useState(getSpotNames(p).home_name);
   const [coastName, setCoastName] = useState(getSpotNames(p).coast_name);
+
+  // Location dialog state
+  const [showHomeLocationDialog, setShowHomeLocationDialog] = useState(false);
+  const [showCoastalLocationDialog, setShowCoastalLocationDialog] = useState(false);
 
   // Auth display + password update state
   const [emailDisplay, setEmailDisplay] = useState<string | null>(p.email ?? null);
@@ -773,6 +778,84 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
         </div>
       </section>
 
+      {/* Locations */}
+      <section className="card bg-base-100 shadow-sm">
+        <div className="card-body space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📍</span>
+            <div>
+              <h2 className="card-title">Your Locations</h2>
+              <p className="text-sm opacity-70 -mt-1">Set your home and favourite coastal locations for better recommendations</p>
+            </div>
+          </div>
+
+          {/* Locations Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Home Location */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold opacity-70 flex items-center gap-2">
+                🏠 Home Location
+              </h3>
+              {p.home_lat && p.home_lon ? (
+                <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
+                  <div className="space-y-1">
+                    <div className="font-semibold text-base">{homeName || 'Home'}</div>
+                    <div className="text-sm opacity-60">
+                      {p.home_lat.toFixed(4)}°, {p.home_lon.toFixed(4)}°
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-outline w-full"
+                    onClick={() => setShowHomeLocationDialog(true)}
+                  >
+                    Change Location
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-outline btn-block h-auto py-6 flex-col gap-2"
+                  onClick={() => setShowHomeLocationDialog(true)}
+                >
+                  <span className="text-2xl">📍</span>
+                  <span>Set Home Location</span>
+                </button>
+              )}
+            </div>
+
+            {/* Coastal Location */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold opacity-70 flex items-center gap-2">
+                🌊 Coastal Location
+              </h3>
+              {p.coast_lat && p.coast_lon ? (
+                <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
+                  <div className="space-y-1">
+                    <div className="font-semibold text-base">{coastName || 'Coastal'}</div>
+                    <div className="text-sm opacity-60">
+                      {p.coast_lat.toFixed(4)}°, {p.coast_lon.toFixed(4)}°
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-sm btn-outline w-full"
+                    onClick={() => setShowCoastalLocationDialog(true)}
+                  >
+                    Change Location
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-outline btn-block h-auto py-6 flex-col gap-2"
+                  onClick={() => setShowCoastalLocationDialog(true)}
+                >
+                  <span className="text-2xl">📍</span>
+                  <span>Set Coastal Location</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Interests */}
       <section className="card bg-base-100 shadow-sm">
         <div className="card-body space-y-4">
@@ -979,6 +1062,34 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
           <DeleteAccount />
         </div>
       </section>
+
+      {/* Location Dialogs */}
+      <CoastalLocationDialog
+        open={showHomeLocationDialog}
+        onClose={() => setShowHomeLocationDialog(false)}
+        title="Set your home location"
+        onSave={(loc: BasicLocation) => {
+          setP({ ...p, home_lat: loc.lat, home_lon: loc.lon });
+          setHomeName(loc.name);
+          setIsDirty(true);
+          setShowHomeLocationDialog(false);
+        }}
+        homeLocation={p.home_lat && p.home_lon ? { name: homeName, lat: p.home_lat, lon: p.home_lon, type: 'home' } : undefined}
+      />
+
+      <CoastalLocationDialog
+        open={showCoastalLocationDialog}
+        onClose={() => setShowCoastalLocationDialog(false)}
+        title="Set your coastal location"
+        onSave={(loc: BasicLocation) => {
+          setP({ ...p, coast_lat: loc.lat, coast_lon: loc.lon });
+          setCoastName(loc.name);
+          setIsDirty(true);
+          setShowCoastalLocationDialog(false);
+        }}
+        homeLocation={p.home_lat && p.home_lon ? { name: homeName, lat: p.home_lat, lon: p.home_lon, type: 'home' } : undefined}
+        coastalLocation={p.coast_lat && p.coast_lon ? { name: coastName, lat: p.coast_lat, lon: p.coast_lon, type: 'coastal' } : undefined}
+      />
 
     </main>
   );
