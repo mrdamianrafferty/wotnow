@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
+import { mapPrediction } from '../../lib/findr/mapPrediction';
 import type { FishingPrediction } from '../../hooks/useFishingPredictions';
 
 describe('mapPrediction', () => {
@@ -597,7 +597,7 @@ describe('mapPrediction', () => {
       const prediction: FishingPrediction = {
         species_common_name: 'Cod',
         confidence_percent: 70,
-        factors: 'invalid json' as any, // Malformed
+        factors: 'invalid json' as unknown as FishingPrediction['factors'], // Malformed
       };
 
       const result = mapPrediction(prediction, 0);

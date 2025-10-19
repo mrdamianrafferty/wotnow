@@ -21,9 +21,11 @@ function createTestQueryClient() {
 
 // Helper to create a wrapper with QueryClientProvider
 function createWrapper(queryClient: QueryClient) {
-  return ({ children }: { children: React.ReactNode }) => (
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+  Wrapper.displayName = 'QueryClientWrapper';
+  return Wrapper;
 }
 
 describe('useFishingPredictions', () => {
