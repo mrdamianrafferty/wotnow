@@ -350,5 +350,104 @@ npm install --save-dev @axe-core/playwright
 
 ---
 
-**Status**: Phase 1 Complete ✅
-**Next**: Phase 2 - AI-Assisted Unit Test Creation 🚀
+**Status**: Phase 2 Complete ✅
+**Next**: Phase 3 - Component Testing 🚀
+
+---
+
+## Phase 2 Completion Report - AI-Assisted Unit Tests
+
+**Completed**: October 19, 2025
+**Duration**: ~2 hours
+**Tests Added**: 88 new tests (+147% increase)
+**Coverage Improvement**: 41.1% → 44.6% (+3.5 percentage points)
+
+### Phase 2.1: mapPrediction.ts ✅
+**File**: `__tests__/findr/mapPrediction.comprehensive.test.ts`
+- **Tests Created**: 54 comprehensive tests
+- **Coverage**: 0% → 70.8% statements, 67.78% branches, 100% functions
+- **Test Categories**:
+  - Species image resolution (9 tests) - code/slug/name/scientific name aliasing
+  - Confidence score parsing (8 tests) - 0-1, 0-10, 0-100 normalization
+  - Environmental rationale generation (4 tests) - temperature/salinity/substrate
+  - Environmental factors extraction (3 tests) - JSONB parsing
+  - Depth range formatting (5 tests) - shallow/deep/mid-range
+  - Seasonality formatting (5 tests) - summer-autumn/winter-spring/year-round
+  - Habitat type formatting (4 tests) - pelagic/reef/substrate
+  - Species emoji selection (6 tests) - 🐟🦑🪱🛸🦈
+  - Edge cases & error handling (8 tests)
+  - Advice & localized names (3 tests)
+  - Weather score integration (2 tests)
+
+**Key Achievements**:
+- Full coverage of image aliasing system (SPECIES_IMAGE_MAP)
+- Comprehensive confidence score normalization testing
+- Environmental factor extraction from Copernicus JSONB data
+- User-friendly formatting validation
+
+### Phase 2.2: useFishingPredictions.ts ✅
+**File**: `__tests__/hooks/useFishingPredictions.test.tsx`
+- **Tests Created**: 16 comprehensive React Query hook tests
+- **Coverage**: 0% → 100% statements, 94.28% branches, 100% functions
+- **Test Categories**:
+  - Basic hook behavior (6 tests) - enabled/disabled, params, language
+  - Error handling (4 tests) - API errors, network failures, retry logic
+  - Caching and refetching (3 tests) - React Query cache, manual reload
+  - Edge cases (3 tests) - empty data, state transitions
+
+**Key Achievements**:
+- Full QueryClientProvider test setup
+- Proper React Query retry testing (retry: 1 configuration)
+- Mock fetch implementation for API calls
+- Parameter validation (rectangleCode, language, lat/lon, predictionDate)
+
+### Phase 2.3: getSuggestionsByDay.ts ✅
+**File**: `__tests__/getSuggestionsByDay.edgeCases.test.ts`
+- **Tests Created**: 18 edge case tests
+- **Coverage**: 72.97% → 89.18% statements, 84.72% branches (+16.21 points)
+- **Test Categories**:
+  - Indoor activities (2 tests) - weatherSensitive: false with evening bonus
+  - Perfect conditions with rain (3 tests) - water vs non-water activities
+  - Good conditions with rain (2 tests) - rain penalty logic
+  - Fair conditions scoring (2 tests) - neutral conditions
+  - Evening bonus (1 test) - outdoor activity evening multiplier
+  - Missing weather data (3 tests) - empty objects, missing fields
+  - Multiple days forecast (1 test) - multi-day scoring consistency
+  - Activity filtering (2 tests) - includeAllActivities flag
+  - Empty inputs (2 tests) - graceful degradation
+
+**Key Achievements**:
+- Covered previously untested code paths (lines 96-100, 145-150, 169-174, 179-180, 185-187)
+- Water activity rain tolerance validation
+- Indoor vs outdoor scoring logic
+- Evening bonus application for stargazing/similar activities
+- Empty input handling and edge cases
+
+### Overall Phase 2 Impact
+
+**Test Suite Growth**:
+- Test files: 17 → 21 (+4 files, +23.5%)
+- Passing tests: ~60 → 148 (+88 tests, +147%)
+- Overall coverage: 41.1% → 44.6% (+3.5 percentage points)
+
+**Coverage by Module (After Phase 2)**:
+- `hooks/`: 77.11% → 80.71% (+3.6 points)
+  - `useFishingPredictions.ts`: 0% → 100% ✅
+  - `useCatchLogger.ts`: 77.11% (unchanged)
+- `lib/findr/`: 75% → 75% (mapPrediction added, dataQuality unchanged)
+  - `mapPrediction.ts`: 0% → 70.8% ✅
+  - `dataQuality.ts`: 94.44% (unchanged)
+- `utils/`: 36.56% → higher (exact number TBD)
+  - `getSuggestionsByDay.ts`: 72.97% → 89.18% ✅
+
+**Test Execution Performance**:
+- Full test suite: ~1.7 seconds
+- No flaky tests detected
+- All tests deterministic (Math.random mocked)
+
+**Next Steps (Phase 3)**:
+- Component testing with React Testing Library
+- Focus on Findr species cards (ActiveSpeciesCard, GoodSpeciesCard, WaitingSpeciesCard)
+- Weather cards and warning components
+
+---
