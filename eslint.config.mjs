@@ -16,6 +16,7 @@ const eslintConfig = [
     '**/build/**',
     '**/public/**',
     '**/coverage/**',
+    '**/__tests__/**',
     'next-env.d.ts',
     'debug-*.js',
     'debug/**',

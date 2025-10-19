@@ -22,15 +22,25 @@ describe('PollenWarning', () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it('should not render when all pollen levels are NONE or LOW', () => {
+    it('should not render when all pollen levels are NONE', () => {
       const pollen: PollenSummary = {
-        grass: 0.3, // LOW
-        tree: 0.2,  // LOW
-        weed: 0.1,  // LOW
+        grass: 0, // NONE
+        tree: 0,  // NONE
+        weed: 0,  // NONE
       };
 
       const { container } = render(<PollenWarning pollen={pollen} />);
       expect(container.firstChild).toBeNull();
+    });
+
+    it('should render for LOW pollen levels (helpful for sensitive individuals)', () => {
+      const pollen: PollenSummary = {
+        grass: 0.3, // LOW
+      };
+
+      render(<PollenWarning pollen={pollen} mode="full" />);
+      // Component shows LOW levels for sensitive individuals
+      expect(screen.getByRole('region', { name: /pollen/i })).toBeInTheDocument();
     });
 
     it('should render when grass pollen is MODERATE or higher', () => {
@@ -140,13 +150,28 @@ describe('PollenWarning', () => {
       expect(screen.getByRole('region', { name: /pollen/i })).toBeInTheDocument();
     });
 
-    it('should not render if assessment shows only LOW pollen levels', () => {
+    it('should render if assessment shows LOW pollen levels (for sensitive individuals)', () => {
       const assessment: PollenAssessment = {
         grass: PollenLevel.LOW,
         tree: PollenLevel.LOW,
         weed: PollenLevel.LOW,
         olive: PollenLevel.NONE,
         overall: PollenLevel.LOW,
+        warnings: [],
+      };
+
+      render(<PollenWarning assessment={assessment} mode="full" />);
+      // Component shows LOW levels for sensitive individuals
+      expect(screen.getByRole('region', { name: /pollen/i })).toBeInTheDocument();
+    });
+
+    it('should not render if assessment shows only NONE pollen levels', () => {
+      const assessment: PollenAssessment = {
+        grass: PollenLevel.NONE,
+        tree: PollenLevel.NONE,
+        weed: PollenLevel.NONE,
+        olive: PollenLevel.NONE,
+        overall: PollenLevel.NONE,
         warnings: [],
       };
 
