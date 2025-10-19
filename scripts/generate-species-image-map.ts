@@ -157,7 +157,7 @@ function buildMapping(
 
     if (matchedSlug && matchedAsset?.base) {
       results.push({
-        code: row.species_code,
+        code: row.species_code.toUpperCase(), // Ensure uppercase for consistency
         name: row.name_en,
         scientificName: row.scientific_name,
         slug: matchedSlug,
@@ -167,7 +167,7 @@ function buildMapping(
       });
     } else {
       results.push({
-        code: row.species_code,
+        code: row.species_code.toUpperCase(), // Ensure uppercase for consistency
         name: row.name_en,
         scientificName: row.scientific_name,
         slug: null,
