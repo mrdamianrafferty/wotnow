@@ -69,9 +69,11 @@ export default function GoDaisyLogin() {
       sessionStorage.setItem('oauth_origin', window.location.origin);
       sessionStorage.setItem('oauth_app', 'godaisy');
 
-      // Determine the correct redirect URL
-      const origin = window.location.origin;
-      const redirectTo = `${origin}/auth/callback?app=godaisy&origin=${encodeURIComponent(origin)}`;
+      // Use the exact production domain for GoDaisy (with www)
+      // This must match exactly what's configured in Supabase redirect URLs
+      const isProduction = window.location.hostname.includes('godaisy.io');
+      const redirectOrigin = isProduction ? 'https://www.godaisy.io' : window.location.origin;
+      const redirectTo = `${redirectOrigin}/auth/callback?app=godaisy&origin=${encodeURIComponent(window.location.origin)}`;
 
       console.log('OAuth redirect will be:', redirectTo);
 
