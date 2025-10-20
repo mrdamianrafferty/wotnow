@@ -69,10 +69,10 @@ export default function GoDaisyLogin() {
       sessionStorage.setItem('oauth_origin', window.location.origin);
       sessionStorage.setItem('oauth_app', 'godaisy');
 
-      // Use the exact production domain for GoDaisy (with www)
-      // This must match exactly what's configured in Supabase redirect URLs
+      // Use godaisy.io (without www) - www.godaisy.io returns 404
+      // Vercel redirects godaisy.io → www.godaisy.io but www isn't configured
       const isProduction = window.location.hostname.includes('godaisy.io');
-      const redirectOrigin = isProduction ? 'https://www.godaisy.io' : window.location.origin;
+      const redirectOrigin = isProduction ? 'https://godaisy.io' : window.location.origin;
       const redirectTo = `${redirectOrigin}/auth/callback?app=godaisy&origin=${encodeURIComponent(window.location.origin)}`;
 
       console.log('OAuth redirect will be:', redirectTo);
