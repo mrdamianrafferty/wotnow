@@ -1,8 +1,5 @@
 {
   "version": 2,
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "installCommand": "npm ci",
   "functions": {
     "pages/api/**/*.ts": { "maxDuration": 30 },
     "app/api/**/*.ts": { "maxDuration": 30 }
