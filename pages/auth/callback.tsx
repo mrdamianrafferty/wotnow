@@ -129,6 +129,22 @@ export default function AuthCallback() {
         if (code) {
           console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...', codeLength: code.length });
           
+          // Check if PKCE verifier exists in localStorage (it should if OAuth flow started correctly)
+          const pkceVerifierKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token-code-verifier`;
+          const pkceVerifier = localStorage.getItem(pkceVerifierKey);
+          console.log('PKCE verifier check:', { 
+            hasVerifier: !!pkceVerifier, 
+            verifierLength: pkceVerifier?.length,
+            hostname: window.location.hostname,
+            origin: window.location.origin 
+          });
+          
+          if (!pkceVerifier) {
+            console.error('CRITICAL: No PKCE verifier found in localStorage!');
+            console.error('This means OAuth redirect domain does not match login domain');
+            console.error('Check that OAuth redirectTo uses window.location.origin');
+          }
+          
           try {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
             
