@@ -158,6 +158,31 @@ export function getWaveDescriptionShort(meters: number): string {
   return '⚠️ Heavy swell';
 }
 
+// Findr-specific wave descriptions tailored for fishing conditions
+export function getWaveDescriptionFindr(meters: number): string {
+  if (meters < 0.1) return 'Perfect visibility and easy boat handling';
+  if (meters < 0.3) return 'Relaxed fishing, ideal for light tackle';
+  if (meters < 0.6) return 'Pretty sweet – comfortable drift, fish likely active';
+  if (meters < 1) return 'Good conditions inshore, fair from shore';
+  if (meters < 1.5) return 'Take your sea sickness pill – boat work bumpy, surf marks lively';
+  if (meters < 2) return 'Small boats are going to struggle, risky shore surf';
+  if (meters < 3) return 'Unsafe for small boats or exposed rocks';
+  if (meters < 4) return 'Dangerous conditions, stick to safe shore marks';
+  return 'Heavy swell – go to the bar instead';
+}
+
+export function getWaveDescriptionFindrShort(meters: number): string {
+  if (meters < 0.1) return 'Glass calm';
+  if (meters < 0.3) return 'Flat';
+  if (meters < 0.6) return 'Gentle';
+  if (meters < 1) return 'Small chop';
+  if (meters < 1.5) return 'Choppy';
+  if (meters < 2) return 'Rough';
+  if (meters < 3) return 'Big swell';
+  if (meters < 4) return '⚠️ Very rough';
+  return '⛔️ Dangerous';
+}
+
 // Complete snow classification system combining depth, active snowfall, and weather conditions
 export function getSnowDescription(
   snowDepthCm: number = 0, 

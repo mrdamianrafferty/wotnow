@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Waves } from "lucide-react";
 import type { MarineHourlyPoint, TideEvent } from "../../../types/weather";
 import WindDirectionIcon from "../../WindDirectionIcon";
+import { TranslatedText } from "../../translation/TranslatedFishCard";
 
 // Helper function to get weather icon URL
 function getWeatherIconUrl(iconCode?: string) {
@@ -114,15 +115,16 @@ export function FindrNextFewDaysCard({
             </svg>
           </div>
           <div>
-            <h3 className="text-sm font-semibold">Next Few Days</h3>
-            <p className="text-xs text-base-content/60">7-day marine forecast</p>
+            <h3 className="text-sm font-semibold"><TranslatedText text="Next Few Days" /></h3>
+            <p className="text-xs text-base-content/60"><TranslatedText text="7-day marine forecast" /></p>
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-x-auto">
           {(daily || []).slice(0, maxDays).map((d: DailyForecast, idx: number) => {
             const date = new Date(d.dateISO);
-            const label = idx === 0 ? 'Today' : date.toLocaleDateString([], { weekday: 'short' });
+            const rawLabel = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const label = idx === 0 ? 'Today' : rawLabel;
             const iconUrl = getWeatherIconUrl(d.icon);
             const windKts = typeof d.windMS === 'number' ? Math.round(d.windMS * 1.94384) : undefined;
             const popPct = typeof d.pop === 'number' ? Math.round(d.pop * 100) : undefined;
@@ -190,11 +192,13 @@ export function FindrNextFewDaysCard({
             const lowStr = lows.length ? lows.slice(0, 2).map(fmt).join('/') : undefined;
 
             return (
-              <div key={d.dateISO} className="bg-base-100 rounded-lg p-3 border border-base-200/50 hover:border-base-300 transition-colors">
-                <div className="flex items-center justify-between gap-4">
+              <div key={d.dateISO} className="bg-base-100 rounded-lg p-3 border border-base-200/50 hover:border-base-300 transition-colors min-w-fit">
+                <div className="flex items-center justify-between gap-4 min-w-[600px]">
                   {/* Day + Icon */}
                   <div className="flex items-center gap-3 min-w-[100px]">
-                    <span className="font-medium text-sm w-10">{label}</span>
+                    <span className="font-medium text-sm w-10">
+                      <TranslatedText text={label} />
+                    </span>
                     <Image src={iconUrl} alt="Weather" width={48} height={48} className="opacity-90 w-12 h-12" />
                   </div>
 

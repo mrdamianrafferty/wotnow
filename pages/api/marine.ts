@@ -4,9 +4,10 @@
  * 
  * Data Source Priority:
  * 1. Copernicus Database (free, comprehensive European waters)
- * 2. Met.no Ocean Forecast (free, limited coverage)
- * 3. Open-Meteo Marine (free, basic data)
- * 4. Stormglass (paid, last resort only)
+ * 2. Met.no Ocean Forecast (free, Nordic seas & North Atlantic)
+ * 3. NOAA CO-OPS (free, North American coastal waters)
+ * 4. Open-Meteo Marine (free, global basic data)
+ * 5. Stormglass (paid, last resort only)
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -18,6 +19,7 @@ const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORD
 
 const STORMGLASS_API = 'https://api.stormglass.io/v2/weather/point';
 const METNO_OCEAN_API = 'https://api.met.no/weatherapi/oceanforecast/2.0/complete';
+const NOAA_COOPS_API = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter';
 const OPENMETEO_MARINE_API = 'https://marine-api.open-meteo.com/v1/marine';
 
 // Marine data response structure
@@ -194,6 +196,191 @@ async function fetchFromMetNo(lat: number, lon: number, _startISO: string, _endI
 }
 
 /**
+ * Check if coordinates are in North American coastal region
+ */
+function isNorthAmericanCoastal(lat: number, lon: number): boolean {
+  // North America coastal regions (approximate bounding boxes)
+  // Atlantic coast: 24°N-47°N, 97°W-65°W
+  // Pacific coast: 32°N-60°N, 130°W-117°W
+  // Gulf of Mexico: 24°N-31°N, 98°W-80°W
+  // Alaska: 51°N-71°N, 180°W-130°W
+  
+  const isAtlanticCoast = lat >= 24 && lat <= 47 && lon >= -97 && lon <= -65;
+  const isPacificCoast = lat >= 32 && lat <= 60 && lon >= -130 && lon <= -117;
+  const isGulfCoast = lat >= 24 && lat <= 31 && lon >= -98 && lon <= -80;
+  const isAlaska = lat >= 51 && lat <= 71 && lon >= -180 && lon <= -130;
+  
+  return isAtlanticCoast || isPacificCoast || isGulfCoast || isAlaska;
+}
+
+/**
+ * Find nearest NOAA CO-OPS station
+ * Returns station ID if found within reasonable distance (~50km)
+ */
+async function findNearestNOAAStation(lat: number, lon: number): Promise<string | null> {
+  // Major NOAA CO-OPS stations (sample - in production, query from database or API)
+  // Format: [stationId, lat, lon, name]
+  const stations: Array<[string, number, number, string]> = [
+    // Atlantic Coast
+    ['8454000', 41.807, -71.400, 'Providence, RI'],
+    ['8461490', 41.361, -72.089, 'New London, CT'],
+    ['8510560', 40.467, -74.009, 'Montauk, NY'],
+    ['8518750', 40.463, -74.009, 'The Battery, NY'],
+    ['8534720', 38.787, -74.959, 'Atlantic City, NJ'],
+    ['8557380', 36.967, -76.330, 'Lewisetta, VA'],
+    ['8570283', 36.967, -76.013, 'Ocean City Inlet, MD'],
+    ['8594900', 36.967, -76.113, 'Wilmington, NC'],
+    ['8665530', 32.033, -80.903, 'Charleston, SC'],
+    ['8720218', 27.760, -82.627, 'Mayport, FL'],
+    ['8724580', 27.760, -82.627, 'Key West, FL'],
+    
+    // Pacific Coast
+    ['9410170', 32.715, -117.173, 'San Diego, CA'],
+    ['9410660', 32.867, -117.257, 'Los Angeles, CA'],
+    ['9411340', 33.721, -118.272, 'Santa Monica, CA'],
+    ['9414290', 37.807, -122.465, 'San Francisco, CA'],
+    ['9432780', 43.350, -124.322, 'Charleston, OR'],
+    ['9440910', 45.544, -122.598, 'Toke Point, WA'],
+    ['9447130', 47.601, -122.339, 'Seattle, WA'],
+    
+    // Alaska
+    ['9450460', 58.438, -134.647, 'Juneau, AK'],
+    ['9454050', 57.050, -135.341, 'Sitka, AK'],
+    
+    // Gulf of Mexico
+    ['8729108', 29.310, -94.793, 'Galveston, TX'],
+    ['8761724', 29.723, -93.343, 'Grand Isle, LA'],
+    ['8764227', 30.033, -90.198, 'New Orleans, LA'],
+  ];
+  
+  let nearestStation: string | null = null;
+  let minDistance = Infinity;
+  
+  for (const [stationId, stationLat, stationLon, name] of stations) {
+    const dlat = stationLat - lat;
+    const dlon = stationLon - lon;
+    // Simple Euclidean distance (good enough for finding nearest)
+    const distance = Math.sqrt(dlat * dlat + dlon * dlon);
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearestStation = stationId;
+      console.log(`📍 NOAA: Found nearby station ${stationId} (${name}) - distance: ${distance.toFixed(3)}°`);
+    }
+  }
+  
+  // Only use station if within ~0.5 degrees (~50km)
+  if (minDistance > 0.5) {
+    console.log('📊 NOAA: No stations within 50km');
+    return null;
+  }
+  
+  return nearestStation;
+}
+
+/**
+ * Try to fetch marine data from NOAA CO-OPS
+ * Coverage: North American coastal waters (US East, West, Gulf, Alaska)
+ */
+async function fetchFromNOAA(lat: number, lon: number, startISO: string, _endISO: string): Promise<MarineDataResponse | null> {
+  try {
+    // Check if in North American coastal region
+    if (!isNorthAmericanCoastal(lat, lon)) {
+      console.log('📊 NOAA: Outside North American coastal coverage');
+      return null;
+    }
+    
+    // Find nearest station
+    const stationId = await findNearestNOAAStation(lat, lon);
+    if (!stationId) {
+      return null;
+    }
+    
+    // Parse start date for NOAA API format (YYYYMMDD)
+    const startDate = new Date(startISO);
+    const dateStr = startDate.toISOString().split('T')[0]!.replace(/-/g, '');
+    
+    // Fetch multiple products in parallel
+    const [waterTempData, windData, airTempData] = await Promise.all([
+      fetchNOAAProduct(stationId, 'water_temperature', dateStr),
+      fetchNOAAProduct(stationId, 'wind', dateStr),
+      fetchNOAAProduct(stationId, 'air_temperature', dateStr),
+    ]);
+    
+    // If we got at least some data, format it
+    if (!waterTempData && !windData && !airTempData) {
+      console.log('📊 NOAA: No data available from station');
+      return null;
+    }
+    
+    // Combine data into hourly format
+    const hours: MarineDataHour[] = [];
+    const baseTime = startDate.getTime();
+    
+    for (let i = 0; i < 48; i++) {
+      const hourTime = new Date(baseTime + i * 60 * 60 * 1000).toISOString();
+      hours.push({
+        time: hourTime,
+        waterTemperature: waterTempData ? { value: waterTempData.temp ?? null } : undefined,
+        windSpeed: windData ? { value: windData.speed ?? null } : undefined,
+        windDirection: windData ? { value: windData.direction ?? null } : undefined,
+      });
+    }
+    
+    console.log(`✅ NOAA CO-OPS: Data found from station ${stationId}`);
+    return { hours, source: 'noaa' };
+  } catch (error) {
+    console.error('❌ NOAA error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch specific product from NOAA CO-OPS API
+ */
+async function fetchNOAAProduct(
+  stationId: string, 
+  product: string, 
+  dateStr: string
+): Promise<{ temp?: number; speed?: number; direction?: number } | null> {
+  try {
+    const url = new URL(NOAA_COOPS_API);
+    url.searchParams.set('station', stationId);
+    url.searchParams.set('product', product);
+    url.searchParams.set('begin_date', dateStr);
+    url.searchParams.set('range', '48'); // 48 hours
+    url.searchParams.set('time_zone', 'gmt');
+    url.searchParams.set('units', 'metric');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('application', 'WotNow');
+    
+    const response = await fetch(url.toString());
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Parse based on product type
+    if (product === 'water_temperature' && data.data?.[0]?.v) {
+      return { temp: parseFloat(data.data[0].v) };
+    } else if (product === 'wind' && data.data?.[0]) {
+      return { 
+        speed: data.data[0].s ? parseFloat(data.data[0].s) * 0.514444 : undefined, // Convert knots to m/s
+        direction: data.data[0].d ? parseFloat(data.data[0].d) : undefined 
+      };
+    } else if (product === 'air_temperature' && data.data?.[0]?.v) {
+      return { temp: parseFloat(data.data[0].v) };
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Try to fetch marine data from Open-Meteo
  * Coverage: Global, but basic data only
  */
@@ -336,12 +523,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     result = await fetchFromMetNo(rlat, rlon, startISO, endISO);
   }
   
-  // 3. Try Open-Meteo Marine (free, global basic data)
+  // 3. Try NOAA CO-OPS (free, North American coastal waters)
+  if (!result) {
+    result = await fetchFromNOAA(rlat, rlon, startISO, endISO);
+  }
+  
+  // 4. Try Open-Meteo Marine (free, global basic data)
   if (!result) {
     result = await fetchFromOpenMeteo(rlat, rlon, startISO, endISO);
   }
   
-  // 4. LAST RESORT: Try Stormglass (paid, only when all free sources fail)
+  // 5. LAST RESORT: Try Stormglass (paid, only when all free sources fail)
   if (!result) {
     const apiKey = process.env.STORMGLASS_SECRET_KEY;
     if (!apiKey) {

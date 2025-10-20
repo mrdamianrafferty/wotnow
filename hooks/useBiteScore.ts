@@ -105,8 +105,9 @@ export function useBiteScore(
         const rectangleCode = rectangleData.rectangleCode;
         
         // Step 2: Fetch marine conditions for that rectangle
+        // Pass user's precise location for accurate weather data (4dp precision)
         const conditionsRes = await fetch(
-          `/api/findr/conditions?rectangleCode=${rectangleCode}`
+          `/api/findr/conditions?rectangleCode=${rectangleCode}&lat=${location.lat}&lon=${location.lon}`
         );
         
         if (!conditionsRes.ok) {

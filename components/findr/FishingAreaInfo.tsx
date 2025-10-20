@@ -8,11 +8,13 @@ import type { RectangleOption } from '../../hooks/useFindrRectangleOptions';
 export interface FishingAreaInfoProps {
   activeOption: RectangleOption | null;
   activeRectangle: string | null;
+  rectangleRegion?: string;
 }
 
 export const FishingAreaInfo: React.FC<FishingAreaInfoProps> = ({
   activeOption,
   activeRectangle,
+  rectangleRegion,
 }) => {
   if (!activeOption && !activeRectangle) {
     return (
@@ -41,7 +43,8 @@ export const FishingAreaInfo: React.FC<FishingAreaInfoProps> = ({
 
   const displayCode = activeRectangle || '';
   const displayName = activeOption?.label || displayCode;
-  const region = activeOption?.region || 'Unknown region';
+  // Use rectangleRegion from conditions API if available, otherwise fall back to activeOption
+  const region = rectangleRegion || activeOption?.region || 'Unknown region';
 
   // Determine water type based on coordinates (simplified)
   const getWaterType = () => {
@@ -118,6 +121,9 @@ export const FishingAreaInfo: React.FC<FishingAreaInfoProps> = ({
                   <TranslatedText text="ICES rectangle" />
                 </p>
                 <p className="text-sm text-base-content/60 font-mono">{displayCode}</p>
+                {region && region !== 'Unknown region' && (
+                  <p className="text-sm text-base-content/70 mt-1">{region}</p>
+                )}
                 <p className="text-xs text-base-content/50 mt-1">
                   <TranslatedText text="International fishing area identifier" />
                 </p>

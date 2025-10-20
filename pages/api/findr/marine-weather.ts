@@ -44,7 +44,7 @@ interface MarineWeatherResponse {
   hourly: Array<{
     time: string;
     waveHeightM: number;
-    windSpeedKts: number;
+    windSpeedMS: number;
     seaTemperatureC: number;
     waveDirectionDeg?: number | null;
     wavePeriodS?: number | null;
@@ -59,7 +59,7 @@ interface MarineWeatherResponse {
     dateLabel: string;
     waveHeightM: number;
     seaTemperatureC: number;
-    windSpeedKts: number;
+    windSpeedMS: number;
     windDirectionDeg?: number | null;
     icon?: string | null;
     minTempC?: number | null;
@@ -310,7 +310,7 @@ export default async function handler(
         return {
           time: h.timeISO,
           waveHeightM: h.waveHeightM ?? 0,
-          windSpeedKts: h.windSpeedKts ?? 0,
+          windSpeedMS: h.windSpeedMS ?? 0,
           seaTemperatureC: h.seaTemperatureC ?? 0,
           waveDirectionDeg: h.waveDirectionDeg,
           wavePeriodS: null,
@@ -478,7 +478,7 @@ export default async function handler(
         }
       }
 
-      // Populate hourly array with weather data (air temp, icon, precipitation)
+      // Populate hourly array with weather data (air temp, icon, precipitation, WIND)
       for (const hour of hourly) {
         const weather = weatherByHour.get(hour.time);
         if (weather) {
@@ -486,6 +486,13 @@ export default async function handler(
           hour.weatherIcon = weather.symbol ? (mapMetNoSymbolToIcon(weather.symbol) ?? null) : null;
           hour.precipMM = weather.precipMM ?? null;
           hour.precipProbability = weather.precipProb ?? null;
+          // Add wind data from Met.no location forecast (more reliable than Open-Meteo marine)
+          if (typeof weather.windSpeedMS === 'number') {
+            hour.windSpeedMS = weather.windSpeedMS;
+          }
+          if (typeof weather.windDirDeg === 'number') {
+            hour.windDirectionDeg = weather.windDirDeg;
+          }
         }
       }
 
@@ -541,17 +548,16 @@ export default async function handler(
           // Wind from MET Norway location forecast (more reliable than Open-Meteo marine for wind)
           const windSpeedsMS = dayWeatherHours.map(w => w.windSpeedMS).filter((s): s is number => typeof s === 'number');
           const avgWindMS = windSpeedsMS.length > 0 ? windSpeedsMS.reduce((a, b) => a + b, 0) / windSpeedsMS.length : avgWind;
-          const avgWindKts = Math.round(avgWindMS * 1.94384 * 10) / 10; // m/s to knots
           const noonWindDirDeg = noonWeather.windDirDeg ?? closestHour.windDirectionDeg ?? null;
 
-          const fishingScore = calculateFishingScore(avgWave, avgWindKts, avgTemp);
+          const fishingScore = calculateFishingScore(avgWave, avgWindMS, avgTemp);
 
           return {
             label: getDayLabel(dayKey),
             dateLabel: getDateLabel(dayKey),
             waveHeightM: Math.round(avgWave * 10) / 10,
             seaTemperatureC: Math.round(avgTemp * 10) / 10,
-            windSpeedKts: avgWindKts,
+            windSpeedMS: Math.round(avgWindMS * 10) / 10,
             windDirectionDeg: noonWindDirDeg,
             icon,
             minTempC,

@@ -15,7 +15,15 @@ export interface UseFindrConditionsState {
   reload: () => void;
 }
 
-export function useFindrConditions(rectangleCode?: string | null): UseFindrConditionsState {
+interface UserCoordinates {
+  lat: number;
+  lon: number;
+}
+
+export function useFindrConditions(
+  rectangleCode?: string | null,
+  userCoordinates?: UserCoordinates | null
+): UseFindrConditionsState {
   const [data, setData] = useState<FallbackConditionPayload>(FALLBACK_CONDITIONS);
   const [source, setSource] = useState<ConditionsSource>('fallback');
   const [loading, setLoading] = useState(false);
@@ -45,7 +53,13 @@ export function useFindrConditions(rectangleCode?: string | null): UseFindrCondi
       setError(null);
 
       try {
-  const res = await fetch(`/api/findr/conditions?rectangleCode=${encodeURIComponent(rectangleCodeSafe)}`, {
+        // Build URL with optional user coordinates for precise weather data (4dp)
+        let url = `/api/findr/conditions?rectangleCode=${encodeURIComponent(rectangleCodeSafe)}`;
+        if (userCoordinates?.lat && userCoordinates?.lon) {
+          url += `&lat=${userCoordinates.lat}&lon=${userCoordinates.lon}`;
+        }
+        
+        const res = await fetch(url, {
           method: 'GET',
           signal: controller.signal,
         });
@@ -91,7 +105,7 @@ export function useFindrConditions(rectangleCode?: string | null): UseFindrCondi
       active = false;
       controller.abort();
     };
-  }, [rectangleCode, reloadCount]);
+  }, [rectangleCode, reloadCount, userCoordinates?.lat, userCoordinates?.lon]);
 
   return useMemo(
     () => ({

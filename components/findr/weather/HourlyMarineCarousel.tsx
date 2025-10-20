@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { WiDayWindy, WiHot, WiBarometer } from 'react-icons/wi';
-import { Waves } from 'lucide-react';
+import { Waves, ArrowUp } from 'lucide-react';
 import Image from 'next/image';
 import WeatherCarousel from './WeatherCarousel';
 import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature } from '../../../lib/findr/weatherFormatting';
 import type { FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
 import type { TideEvent } from '../../../types/weather';
+import { TranslatedText } from '../../translation/TranslatedFishCard';
 
 interface HourlyMarineCarouselProps {
   entries: FallbackConditionPayload['snapshot']['hourly'];
@@ -99,7 +100,7 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
       <div className="card-body gap-3">
         <div>
           <p className="text-sm font-semibold">{formatDisplayTime(entry.time)}</p>
-          <p className="text-xs text-base-content/60">Hourly outlook</p>
+          <p className="text-xs text-base-content/60"><TranslatedText text="Hourly outlook" /></p>
         </div>
         
         {/* Weather icon with air temperature */}
@@ -160,27 +161,35 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <Waves className="size-4 text-primary" /> Wave
+              <Waves className="size-4 text-primary" /> <TranslatedText text="Wave" />
             </span>
             <span className="font-semibold">{formatWaveHeight(entry.waveHeightM)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <WiDayWindy className="size-5 text-info" /> Wind
+              <WiDayWindy className="size-5 text-info" /> <TranslatedText text="Wind" />
             </span>
-            <span className="font-semibold">{formatWindSpeed(entry.windSpeedKts)}</span>
+            <span className="font-semibold flex items-center gap-1">
+              {entry.windDirectionDeg != null && (
+                <ArrowUp 
+                  className="size-4" 
+                  style={{ transform: `rotate(${(entry.windDirectionDeg + 180) % 360}deg)` }} 
+                />
+              )}
+              {formatWindSpeed(entry.windSpeedKts)}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <WiHot className="size-5 text-warning" /> Water
+              <WiHot className="size-5 text-warning" /> <TranslatedText text="Water" />
             </span>
             <span className="font-semibold">{formatTemperature(entry.seaTemperatureC)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <WiBarometer className="size-5 text-secondary" /> Tide
+              <WiBarometer className="size-5 text-secondary" /> <TranslatedText text="Tide" />
             </span>
-            <span className="font-semibold">{tideState}</span>
+            <span className="font-semibold"><TranslatedText text={tideState} /></span>
           </div>
         </div>
       </div>
@@ -201,6 +210,7 @@ export function HourlyMarineCarousel({ entries, tideEvents = [] }: HourlyMarineC
       title="Hourly marine carousel"
       items={cards}
       controlsAriaLabel="Hourly marine outlook"
+      translateTitle
     />
   );
 }

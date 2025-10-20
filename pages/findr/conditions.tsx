@@ -114,7 +114,9 @@ const FindrConditionsRoute: React.FC = () => {
     });
   }, [rectangleFromUrl, locationLoading, locationRectangle, rectangleOptions, router.isReady, updateLocation]);
 
-  const conditions = useFindrConditions(activeRectangle);
+  // Pass user's precise coordinates for accurate weather data (4dp precision)
+  const userCoords = location?.lat && location?.lon ? { lat: location.lat, lon: location.lon } : null;
+  const conditions = useFindrConditions(activeRectangle, userCoords);
 
   // Debug: Log when activeRectangle changes
   useEffect(() => {
@@ -168,6 +170,7 @@ const FindrConditionsRoute: React.FC = () => {
           <FishingAreaInfo
             activeOption={activeOption}
             activeRectangle={activeRectangle}
+            rectangleRegion={conditions.data?.rectangle?.name}
           />
           </div>
         </div>

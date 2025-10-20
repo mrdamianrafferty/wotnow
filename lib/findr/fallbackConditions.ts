@@ -60,7 +60,7 @@ export interface FallbackConditionPayload {
     hourly: Array<{
       time: string;
       waveHeightM: number;
-      windSpeedKts: number;
+      windSpeedKts: number | null; // Converted from m/s in UI, can be null if unavailable
       seaTemperatureC: number;
       tideMeters?: number | null; // Optional - not available in live weather APIs
       waveDirectionDeg?: number | null;

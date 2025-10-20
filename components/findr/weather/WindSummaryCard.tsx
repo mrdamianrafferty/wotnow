@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, Navigation, ArrowUp } from 'lucide-react';
+import { Wind, ArrowUp } from 'lucide-react';
 import WeatherStatCard from './WeatherStatCard';
 import { formatCardinalDirection } from '../../../lib/findr/weatherFormatting';
 import { formatRelativeTime } from '../../../lib/findr/weatherFormatting';
@@ -37,7 +37,7 @@ export function WindSummaryCard({ speedKts, directionDeg, updatedAt }: WindSumma
   // Create badge with arrow and direction
   const badgeContent = directionDeg != null ? (
     <span className="flex items-center gap-1">
-      <ArrowUp className="size-3" style={{ transform: `rotate(${directionDeg}deg)` }} />
+      <ArrowUp className="size-3" style={{ transform: `rotate(${(directionDeg + 180) % 360}deg)` }} />
       {cardinal}
     </span>
   ) : cardinal;
@@ -47,27 +47,15 @@ export function WindSummaryCard({ speedKts, directionDeg, updatedAt }: WindSumma
       title={<TranslatedText text="Wind" />}
       subtitle={windMessage ? <TranslatedText text={windMessage} /> : <TranslatedText text="Current conditions" />}
       icon={<Wind className="size-5" />}
-      value={beaufortDesc}
+      value={<TranslatedText text={beaufortDesc} />}
       badge={badgeContent}
       footer={updatedLabel ? <TranslatedText text={`Updated ${updatedLabel}`} /> : undefined}
     >
       {multiUnitSpeed && (
-        <div className="text-xs text-base-content/60 mb-2">
+        <div className="text-xs text-base-content/60">
           {multiUnitSpeed}
         </div>
       )}
-      <div className="flex items-center justify-between text-xs text-base-content/70">
-        <div className="flex items-center gap-2">
-          <Navigation className="size-4" />
-          <span>{cardinal}</span>
-        </div>
-        {directionDeg != null ? (
-          <span className="flex items-center gap-1">
-            <ArrowUp className="size-3" style={{ transform: `rotate(${directionDeg}deg)` }} />
-            {cardinal}
-          </span>
-        ) : null}
-      </div>
     </WeatherStatCard>
   );
 }

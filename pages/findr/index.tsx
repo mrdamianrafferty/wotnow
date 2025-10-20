@@ -596,7 +596,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
             </ul>
           )}
           {card.confidence !== null && (
-            <span className="badge badge-outline badge-sm">{card.confidence}% activity</span>
+            <span className="badge badge-outline badge-sm">{card.confidence}% <TranslatedText text="activity" /></span>
           )}
         </div>
       ))}

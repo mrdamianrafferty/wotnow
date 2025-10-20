@@ -36,6 +36,12 @@ interface TranslatedTextProps {
 
 export function TranslatedText({ text, className = '', as = 'span' }: TranslatedTextProps) {
   const { translated } = useContextualTranslation(text);
+  
+  // Debug logging for weather terms
+  if (text && (text.includes('breeze') || text.includes('Choppy') || text.includes('Calm') || text.includes('Gale'))) {
+    console.log('[TranslatedText] Weather term:', { original: text, translated, same: text === translated });
+  }
+  
   const Component = as;
   return <Component className={className}>{translated}</Component>;
 }

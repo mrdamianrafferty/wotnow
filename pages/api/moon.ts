@@ -323,7 +323,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       moon: {
         phase: phaseFraction,
-        phase_name: data.moonPhaseName ?? 'Unknown phase',
+        phase_name: data.moonPhaseName ?? getPhaseNameFromFraction(phaseFraction),
         stage: data.moonPhaseStage ?? getMoonStage(phaseFraction),
         illumination: illuminationPct != null ? `${illuminationPct}%` : '--%',
         age_days: getMoonAge(phaseFraction),

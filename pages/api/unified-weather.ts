@@ -269,7 +269,7 @@ class CacheMetrics {
 }
 
 // Cache TTL settings
-const _TIDE_TTL_MS = 3 * 60 * 60 * 1000; // 3 hours (currently unused, tides use WorldTides live data)
+const TIDE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours (tides are astronomically predictable, change slowly)
 const MARINE_TTL_MS = 10 * 60 * 1000;   // 10 minutes
 const RECT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours per rectangle/day
 const WEATHER_TTL_MS = 5 * 60 * 1000;   // 5 minutes for main weather data
@@ -920,6 +920,7 @@ type UnifiedWeather = {
   name?: string
   lat: number
   lon: number
+  source?: string  // Track which API provided the weather data
   isMarine?: boolean
   temperatureC?: number
   feelsLikeC?: number
@@ -1457,6 +1458,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const free = await tryFreeProvidersOrder(order, latNum, lonNum, units, weatherMode);
       if (free && free.unified) {
         normalizedData = free.unified;
+        normalizedData.source = free.provider; // Add source to response body
         try {
           res.setHeader('X-Weather-Source', `free:${free.provider}`);
         } catch { /* noop */ }
@@ -1526,6 +1528,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } catch { /* noop */ }
 
       normalizedData = transformWeatherData(weatherData, latNum, lonNum, weatherMode);
+      // Add source tracking to response body
+      if (normalizedData) {
+        let src = (weatherData as { source?: string })?.source;
+        if (!src) {
+          if ((weatherData as OpenWeatherOneCall3)?.hourly || (weatherData as OpenWeatherOneCall3)?.daily) {
+            src = 'onecall3';
+          } else if ((weatherData as OpenWeatherForecast25)?.list) {
+            src = 'forecast2.5';
+          } else {
+            src = 'openweather';
+          }
+        }
+        normalizedData.source = src;
+      }
     }
 
     // Enrich with moon & sun metadata (cached via Supabase)
@@ -1649,7 +1665,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Try WorldTides first (preferred for Go Daisy), fallback to Stormglass
         const worldTidesKey = process.env.WORLDTIDES_API_KEY;
         let tidesRaw: StormglassTidesResponse | null = null;
-        const tideTtl = rectangleCode ? RECT_TTL_MS : 24 * 60 * 60 * 1000; // 24h for WorldTides (predictable)
+        const tideTtl = rectangleCode ? RECT_TTL_MS : TIDE_TTL_MS; // 24h for WorldTides (astronomically predictable)
 
         if (worldTidesKey) {
           // WorldTides path (preferred)

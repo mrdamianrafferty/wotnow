@@ -10,6 +10,24 @@ import { calculateWaterClarity } from '../../../lib/utils/waterClarity';
 
 type ConditionsSource = 'supabase' | 'fallback';
 
+// Weather API response structure (from unified-weather)
+interface WeatherHourlyEntry {
+  timeISO?: string;
+  tempC?: number;
+  feelsLikeC?: number;
+  description?: string;
+  icon?: string;
+  precipMM?: number;
+  pop?: number; // Probability of precipitation
+  windMS?: number; // Wind speed in meters per second
+  windDeg?: number; // Wind direction in degrees
+}
+
+interface WeatherApiResponse {
+  hourly?: WeatherHourlyEntry[];
+  source?: string;
+}
+
 interface ConditionsRow {
   rectangle_code?: string | null;
   captured_at?: string | null;
@@ -182,6 +200,81 @@ function parseDailySeries(input: unknown): FallbackConditionPayload['snapshot'][
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 }
 
+/**
+ * Fetch weather data from the unified weather waterfall and merge into hourly marine data.
+ * Uses the FREE waterfall: NWS (US) → Met.no (EU) → Open-Meteo (global) → OpenWeather (fallback)
+ * 
+ * Note: We use precise coordinates (4dp ~11m) here because:
+ * - Rectangle system is only for marine data (Copernicus DB)
+ * - Weather waterfall has its own optimized caching (3-6h TTL)
+ * - No benefit to rounding since we're calling our own cached endpoint
+ */
+async function fetchAndMergeWeatherData(
+  payload: FallbackConditionPayload,
+  preciseLat: number,
+  preciseLon: number
+): Promise<void> {
+  try {
+    // Use precise coordinates - unified-weather endpoint has its own caching strategy
+    const weatherUrl = `http://localhost:3000/api/unified-weather?lat=${preciseLat}&lon=${preciseLon}`;
+    const response = await fetch(weatherUrl, {
+      headers: { 'User-Agent': 'WotNow-Findr-Conditions' }
+    });
+    
+    if (!response.ok) {
+      console.warn(`[findr] Weather fetch failed: ${response.status}`);
+      return;
+    }
+
+    const weatherData = await response.json() as WeatherApiResponse;
+    
+    if (!weatherData.hourly || weatherData.hourly.length === 0) {
+      console.warn('[findr] No hourly weather data available');
+      return;
+    }
+
+    // Create a map of weather data by timestamp for fast lookup
+    const weatherByTime = new Map<string, WeatherHourlyEntry>();
+    for (const entry of weatherData.hourly) {
+      if (entry.timeISO) {
+        // Normalize to hourly timestamp (remove minutes/seconds)
+        const normalizedTime = new Date(entry.timeISO);
+        normalizedTime.setMinutes(0, 0, 0);
+        weatherByTime.set(normalizedTime.toISOString(), entry);
+      }
+    }
+
+    // Merge weather data into existing hourly marine data
+    for (const marineEntry of payload.snapshot.hourly) {
+      const normalizedTime = new Date(marineEntry.time);
+      normalizedTime.setMinutes(0, 0, 0);
+      const weatherEntry = weatherByTime.get(normalizedTime.toISOString());
+      
+      if (weatherEntry) {
+        // Merge weather fields into marine data
+        marineEntry.airTempC = weatherEntry.tempC ?? null;
+        marineEntry.weatherIcon = weatherEntry.icon ?? null;
+        marineEntry.precipMM = weatherEntry.precipMM ?? null;
+        marineEntry.precipProbability = weatherEntry.pop ?? null;
+        
+        // Override wind data from weather if available (more accurate than marine forecast)
+        // Convert from m/s to knots (1 m/s = 1.94384 knots)
+        if (weatherEntry.windMS !== undefined && weatherEntry.windMS !== null) {
+          marineEntry.windSpeedKts = Math.round(weatherEntry.windMS * 1.94384);
+        }
+        if (weatherEntry.windDeg !== undefined && weatherEntry.windDeg !== null) {
+          marineEntry.windDirectionDeg = Math.round(weatherEntry.windDeg);
+        }
+      }
+    }
+
+    console.log(`[findr] Merged weather data from ${weatherData.source || 'unknown'} for ${preciseLat.toFixed(4)},${preciseLon.toFixed(4)}`);
+  } catch (error) {
+    console.error('[findr] Failed to fetch/merge weather data:', error);
+    // Don't throw - weather is supplementary, marine data is still valid
+  }
+}
+
 function applyConditionsRow(base: FallbackConditionPayload, row: ConditionsRow): void {
   const capturedAt = parseIsoString(row.captured_at);
   if (capturedAt) {
@@ -274,7 +367,7 @@ function getFallbackRectangleMeta(code: string): RectangleMeta {
   if (fallback) {
     return {
       code,
-      name: fallback.label,
+      name: code,
       region: fallback.region,
       centerLat: fallback.centerLat,
       centerLon: fallback.centerLon,
@@ -297,7 +390,7 @@ async function fetchRectangleMeta(supabase: ReturnType<typeof getSupabaseServerC
   for (const table of sources) {
     const { data, error } = await supabase
       .from(table)
-      .select('rectangle_code, region, center_lat, center_lon, lat_south, lat_north, lon_west, lon_east')
+      .select('rectangle_code, region, cmems_region, center_lat, center_lon, lat_south, lat_north, lon_west, lon_east')
       .eq('rectangle_code', code)
       .maybeSingle();
 
@@ -312,6 +405,7 @@ async function fetchRectangleMeta(supabase: ReturnType<typeof getSupabaseServerC
 
     if (data) {
       const region = typeof data.region === 'string' && data.region.trim() ? data.region.trim() : code;
+      const cmems_region = typeof data.cmems_region === 'string' && data.cmems_region.trim() ? data.cmems_region.trim() : null;
       const centerLat = normaliseNumber(data.center_lat);
       const centerLon = normaliseNumber(data.center_lon);
       const latSouth = normaliseNumber(data.lat_south);
@@ -323,7 +417,7 @@ async function fetchRectangleMeta(supabase: ReturnType<typeof getSupabaseServerC
         const result: RectangleMeta = {
           code,
           name: region,
-          region,
+          region: cmems_region || code,
           centerLat,
           centerLon,
         };
@@ -379,6 +473,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const normalizedCode = rectangleParam ? normalizeRectangleCode(rectangleParam) : null;
 
+  // Optional: User's precise location for weather data (more accurate than rectangle center)
+  const userLat = req.query.lat ? parseFloat(Array.isArray(req.query.lat) ? req.query.lat[0] : req.query.lat) : null;
+  const userLon = req.query.lon ? parseFloat(Array.isArray(req.query.lon) ? req.query.lon[0] : req.query.lon) : null;
+  const hasUserLocation = userLat !== null && userLon !== null && !isNaN(userLat) && !isNaN(userLon);
+
   if (!normalizedCode) {
     const fallback = cloneFallbackPayload();
     res.setHeader('x-findr-conditions-source', 'fallback');
@@ -412,6 +511,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     applyConditionsRow(payload, data);
+
+    // Fetch and merge weather data from the waterfall (FREE: NWS/Met.no/Open-Meteo)
+    // Use user's precise location if provided, otherwise fall back to rectangle center
+    // This adds airTempC, weatherIcon, precipMM, precipProbability to hourly data
+    const weatherLat = hasUserLocation ? userLat! : meta.centerLat;
+    const weatherLon = hasUserLocation ? userLon! : meta.centerLon;
+    await fetchAndMergeWeatherData(payload, weatherLat, weatherLon);
 
     res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=43200');
     res.setHeader('x-findr-conditions-source', 'supabase');

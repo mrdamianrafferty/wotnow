@@ -3,12 +3,12 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '../../lib/supabase/client';
-import { User } from '@supabase/supabase-js';
-import { IdCard, LogIn, LogOut } from 'lucide-react';
+import { User as UserType } from '@supabase/supabase-js';
+import { User, LogIn, LogOut } from 'lucide-react';
 
 export default function FindrUserMenu() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,16 +66,18 @@ export default function FindrUserMenu() {
               unoptimized // OAuth avatars are already optimized
             />
           ) : (
-            <IdCard className="w-6 h-6" />
+            <User className="w-6 h-6" />
           )}
         </div>
       </div>
       <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300">
         <li className="menu-title px-4 py-2">
-          <span className="text-xs opacity-70 truncate">{user.email}</span>
+          <span className="text-xs text-base-content/70 truncate">
+            {user.user_metadata?.full_name || user.user_metadata?.name || user.email}
+          </span>
         </li>
         <li>
-          <button onClick={handleSignOut} className="flex items-center gap-2">
+          <button onClick={handleSignOut} className="flex items-center gap-2 text-base-content hover:text-base-content">
             <LogOut className="w-4 h-4" />
             Sign Out
           </button>

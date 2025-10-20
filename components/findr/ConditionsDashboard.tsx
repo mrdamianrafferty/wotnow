@@ -5,6 +5,7 @@ import type { ConditionsSource } from '../../hooks/useFindrConditions';
 import type { FallbackConditionPayload } from '../../lib/findr/fallbackConditions';
 import { useFindrEnvironmentalSignals } from '../../hooks/useFindrEnvironmentalSignals';
 import { useFindrMarineWeather } from '../../hooks/useFindrMarineWeather';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import WindSummaryCard from './weather/WindSummaryCard';
 import WaveSummaryCard from './weather/WaveSummaryCard';
 import TideSummaryCard from './weather/TideSummaryCard';
@@ -12,7 +13,13 @@ import MoonSummaryCardCompact from './weather/MoonSummaryCardCompact';
 import MarineBioIndicatorsCard from './weather/MarineBioIndicatorsCard';
 import HourlyMarineCarousel from './weather/HourlyMarineCarousel';
 import FindrNextFewDaysCard from './weather/FindrNextFewDaysCard';
-import { buildMarineBioIndicators, calculateStealthIndex } from '../../utils/bioMarineLevels';
+import {
+  buildMarineBioIndicators,
+  calculateStealthIndex,
+  calculateTargetDepth,
+  calculateFeedingPotential,
+  calculateBaitfishActivity,
+} from '../../utils/bioMarineLevels';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
@@ -149,15 +156,18 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
  * - pages/api/findr/marine-weather.ts - Weather API endpoint
  * ==============================================================================
  */
-export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
-  data,
-  loading,
-  error,
-  source: _source,
-  onRetry,
-  rectangleCode,
-}) => {
+export function ConditionsDashboard({ data, loading, error, source: _source, onRetry, rectangleCode }: ConditionsDashboardProps) {
   const [showMap, setShowMap] = useState(true);
+  const { location } = useUnifiedLocation();
+  
+  // Extract user's location name from rectangleLabel
+  // Format can be either "LocationName" or "CODE - LocationName"
+  const userLocationName = useMemo(() => {
+    if (!location?.rectangleLabel) return null;
+    const parts = location.rectangleLabel.split(' - ');
+    // If there's a " - " separator, take everything after it; otherwise use the whole string
+    return parts.length > 1 ? parts.slice(1).join(' - ') : location.rectangleLabel;
+  }, [location?.rectangleLabel]);
   const [_capturedDisplay, setCapturedDisplay] = useState('—');
   const [isClient, setIsClient] = useState(false);
   
@@ -239,9 +249,9 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
     if (marineWeather.hourly && marineWeather.hourly.length > 0) {
       const mapped = marineWeather.hourly.slice(0, 12).map(h => ({
         time: h.time,
-        waveHeightM: h.waveHeightM ?? 0,
-        windSpeedKts: h.windSpeedKts ?? 0,
-        seaTemperatureC: h.seaTemperatureC ?? 0,
+        waveHeightM: h.waveHeightM ?? null,
+        windSpeedKts: typeof h.windSpeedMS === 'number' ? h.windSpeedMS * 1.94384 : null,
+        seaTemperatureC: h.seaTemperatureC ?? null,
         waveDirectionDeg: h.waveDirectionDeg,
         wavePeriodS: h.wavePeriodS,
         windDirectionDeg: h.windDirectionDeg,
@@ -272,7 +282,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         dateLabel: d.dateLabel || d.label,
         waveHeightM: d.waveHeightM ?? 0,
         seaTemperatureC: d.seaTemperatureC ?? 0,
-        windSpeedKts: d.windSpeedKts ?? 0,
+        windSpeedKts: typeof d.windSpeedMS === 'number' ? d.windSpeedMS * 1.94384 : 0,
         windDirectionDeg: d.windDirectionDeg,
         fishingScore: d.fishingScore ?? 0,
         summary: d.summary || '',
@@ -373,7 +383,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         pop: day.precipProbability ?? undefined,
         precipMM: day.precipMM ?? undefined,
         summary: day.summary,
-        windMS: typeof day.windSpeedKts === 'number' ? day.windSpeedKts * KTS_TO_MS : undefined,
+        windMS: day.windSpeedMS ?? undefined,
         windDeg: day.windDirectionDeg ?? undefined,
         uvi: undefined,
       }));
@@ -421,7 +431,7 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         timeISO: hour.time,
         waveM: hour.waveHeightM ?? null,
         waterTempC: hour.seaTemperatureC ?? null,
-        windKts: hour.windSpeedKts ?? null,
+        windKts: typeof hour.windSpeedMS === 'number' ? hour.windSpeedMS * 1.94384 : null,
         waveHeightM: hour.waveHeightM ?? null, // NextFewDaysCard expects this field
         swellHeightM: hour.waveHeightM ?? null,
         wavePeriodS: hour.wavePeriodS ?? null,
@@ -475,7 +485,9 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   // The fallback is INTENTIONAL but should rarely happen. If it does, users see
   // slightly stale data rather than no data. This is acceptable for safety.
   const waveHeightM = marineWeather.current?.waveHeightM ?? marine.waveHeightM ?? null;
-  const windSpeedKts = marineWeather.current?.windSpeedKts ?? marine.windSpeedKts ?? null;
+  const windSpeedKts = typeof marineWeather.current?.windSpeedMS === 'number' 
+    ? marineWeather.current.windSpeedMS * 1.94384 
+    : (marine.windSpeedKts ?? null);
   const windDirectionDeg = marineWeather.current?.windDirectionDeg ?? marine.windDirectionDeg ?? null;
   
   // Log when falling back to database values
@@ -502,16 +514,38 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
   const marineBioIndicators = useMemo(
     () =>
       buildMarineBioIndicators({
+        // Existing indicators
         chlorophyll: marineBio?.chlorophyllAvg ?? chlorophyllMgM3,
         oxygen: marineBio?.dissolvedOxygenAvg ?? dissolvedOxygenMgL,
         nitrate: marineBio?.nitrateAvg ?? nitrateUmolL,
         phosphate: marineBio?.phosphateAvg ?? phosphateUmolL,
         salinity: marineBio?.salinityAvg ?? salinityPsu,
         surfaceTemperature: marineBio?.seaSurfaceTemperatureAvg ?? seaTemperatureC,
-        phytoplankton: marineBio?.phytoplanktonAvg ?? null,
+        phytoplankton: marineBio?.phytoplanktonAvg ?? marine.phytoplanktonSurface ?? null,
         stealth: calculateStealthIndex(
-          environmentalSignals.uvIndex,
-          environmentalSignals.cloudCover ?? 50 // Fallback to 50% if cloud data unavailable
+          data.rectangle.centerLat,
+          data.rectangle.centerLon,
+          environmentalSignals.cloudCover ?? null,
+          marine.waterClarityIndex ?? null
+        ),
+        // New indicators - use raw data for calculations
+        mixedLayerDepth: marine.mixedLayerDepth ?? null,
+        zooplankton: marine.zooplanktonSurface ?? null,
+        primaryProduction: marine.primaryProductionSurface ?? null,
+        // Calculate new composite indicators
+        targetDepth: calculateTargetDepth(
+          marine.mixedLayerDepth ?? null,
+          marineBio?.dissolvedOxygenAvg ?? dissolvedOxygenMgL ?? null,
+          marineBio?.seaSurfaceTemperatureAvg ?? seaTemperatureC ?? null
+        ),
+        feedingPotential: calculateFeedingPotential(
+          marineBio?.chlorophyllAvg ?? chlorophyllMgM3 ?? null,
+          marineBio?.phytoplanktonAvg ?? marine.phytoplanktonSurface ?? null,
+          marine.zooplanktonSurface ?? null,
+          marine.primaryProductionSurface ?? null
+        ),
+        baitfishActivity: calculateBaitfishActivity(
+          marine.zooplanktonSurface ?? null
         ),
       }),
     [
@@ -522,8 +556,14 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
       phosphateUmolL,
       salinityPsu,
       seaTemperatureC,
-      environmentalSignals.uvIndex,
+      data.rectangle.centerLat,
+      data.rectangle.centerLon,
       environmentalSignals.cloudCover,
+      marine.waterClarityIndex,
+      marine.mixedLayerDepth,
+      marine.zooplanktonSurface,
+      marine.phytoplanktonSurface,
+      marine.primaryProductionSurface,
     ]
   );
 
@@ -537,7 +577,9 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
         <div className="card-body">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-semibold"><TranslatedText text="Conditions for" /> {data.rectangle.name}</h1>
+              <h1 className="text-2xl font-semibold">
+                <TranslatedText text="Conditions for" /> {userLocationName || data.rectangle.name}
+              </h1>
               
             </div>
             
@@ -583,15 +625,8 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
               />
 
               <div className="p-4 bg-base-200/20 border-t border-base-200">
-                <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                  <div>
-                    <span className="font-medium"><TranslatedText text="Area:" /></span> {data.rectangle.name}
-                  </div>
-                  <div>
-                    <span className="font-medium"><TranslatedText text="Coordinates:" /></span>{' '}
-                    {mapLocation.lat.toFixed(2)}°N, {Math.abs(mapLocation.lon).toFixed(2)}°
-                    {mapLocation.lon >= 0 ? 'E' : 'W'}
-                  </div>
+                <div className="text-sm text-base-content/70">
+                  <span className="font-medium"><TranslatedText text="Area:" /></span> {data.rectangle.name} ({data.rectangle.region}{rectangleCode && rectangleCode !== data.rectangle.region ? ` ${rectangleCode}` : ''})
                 </div>
               </div>
             </div>
@@ -637,7 +672,11 @@ export const ConditionsDashboard: React.FC<ConditionsDashboardProps> = ({
             />
             <WaveSummaryCard
               waveHeightM={waveHeightM}
+              wavePeriodS={marineWeather.current?.wavePeriodS ?? marine.wavePeriod ?? null}
+              waveDirectionDeg={marineWeather.current?.waveDirectionDeg ?? marine.waveDirection ?? null}
               chlorophyllMgM3={marine.chlorophyllMgM3}
+              currentSpeedMS={marine.currentSpeedSurface ?? null}
+              currentDirectionDeg={marine.currentDirectionSurface ?? null}
               updatedAt={marineWeather.updatedAt ?? data.snapshot.capturedAt}
             />
             <TideSummaryCard

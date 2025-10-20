@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { TranslatedText } from '../../translation/TranslatedFishCard';
 
 interface WeatherCarouselProps {
   title: string;
@@ -8,6 +9,7 @@ interface WeatherCarouselProps {
   className?: string;
   itemWidth?: number;
   controlsAriaLabel?: string;
+  translateTitle?: boolean;
 }
 
 export function WeatherCarousel({
@@ -17,6 +19,7 @@ export function WeatherCarousel({
   className = '',
   itemWidth = 200,
   controlsAriaLabel,
+  translateTitle = false,
 }: WeatherCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollBack, setCanScrollBack] = useState(false);
@@ -59,7 +62,7 @@ export function WeatherCarousel({
       <div className="card-body gap-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">{title}</h2>
+            <h2 className="text-base font-semibold">{translateTitle ? <TranslatedText text={title} /> : title}</h2>
             {description ? <p className="text-xs text-base-content/60">{description}</p> : null}
           </div>
           <div className="flex items-center gap-2">

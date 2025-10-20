@@ -1,6 +1,9 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { getWaveDescription } from '../../utils/weatherLabels';
 import { classifyCurrentStrength } from '../../utils/currentStrength';
+import { TranslatedText } from '../translation/TranslatedFishCard';
 
 interface WaveCardProps {
   waveHeightM?: number | null;
@@ -296,9 +299,9 @@ export const WaveCard: React.FC<WaveCardProps> = ({
     <div className="card weather-card-bg text-base-content h-full">
       <div className="card-body p-4">
         <div className="card__header-title mb-2 flex flex-col items-start">
-          <span>Waves</span>
+          <span><TranslatedText text="Waves" /></span>
           {explanationSentence && (
-            <span className="text-sm font-normal opacity-80">{explanationSentence}</span>
+            <span className="text-sm font-normal opacity-80"><TranslatedText text={explanationSentence} /></span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-6">
@@ -329,7 +332,7 @@ export const WaveCard: React.FC<WaveCardProps> = ({
 
         {/* Wave Details moved to unexpanded card */}
         <div className="mt-3 bg-slate-800/25 p-3 rounded-lg">
-          <h4 className="text-sm font-medium mb-2">Wave Details</h4>
+          <h4 className="text-sm font-medium mb-2"><TranslatedText text="Wave Details" /></h4>
           <div className="flex flex-col gap-2">
             {waveData.map((s) => (
               <div key={s.id} className="flex items-center gap-2">

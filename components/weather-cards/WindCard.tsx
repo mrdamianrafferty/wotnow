@@ -1,9 +1,12 @@
 // Create: components/weather-cards/WindCard.tsx
+'use client';
+
 import React from 'react';
 import BeaufortIcon from '../BeaufortIcon';
 import WindDirectionIcon from '../WindDirectionIcon';
 import { getWindMessage } from '../../utils/weatherLabels';
 import Image from 'next/image';
+import { TranslatedText } from '../translation/TranslatedFishCard';
 
 interface WindDataPoint {
   timeISO: string;
@@ -255,7 +258,7 @@ export const WindCard: React.FC<WindCardProps> = ({
     <div className={`card weather-card-bg shadow ${className}`}>
       <div className="card-body">
         <div className="flex items-start justify-between">
-          <h3 className="card__header-title">Wind</h3>
+          <h3 className="card__header-title"><TranslatedText text="Wind" /></h3>
           <div className="flex flex-col items-end gap-1">
             <span className="badge badge-outline">
               {headerChipText}
@@ -269,7 +272,7 @@ export const WindCard: React.FC<WindCardProps> = ({
         </div>
         
         <p className="opacity-70">
-          {windMessage || '—'}
+          {windMessage ? <TranslatedText text={windMessage} /> : '—'}
         </p>
 
         {/* Current Wind Display */}
@@ -304,7 +307,7 @@ export const WindCard: React.FC<WindCardProps> = ({
             <div className="flex items-center">
               {/* Replace F# chip with large Beaufort icon */}
               <BeaufortIcon windMS={windSpeedMS} size={48} className="mr-2" />
-              <span className="text-sm">{beaufort.description}</span>
+              <span className="text-sm"><TranslatedText text={beaufort.description} /></span>
             </div>
             {showGust && (
               <div className="text-sm opacity-70">

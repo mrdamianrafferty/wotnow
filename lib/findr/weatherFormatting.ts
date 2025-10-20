@@ -95,6 +95,46 @@ export function formatTemperature(value?: number | null): string {
   return `${Math.round(value)}\u00a0°C`;
 }
 
+/**
+ * Format ocean current description in plain English
+ * @param speedMS Current speed in meters per second
+ * @param directionDeg Current direction in degrees (where current is flowing TO)
+ * @returns Plain English description like "Very strong currents (1.4 m/s) pushing south"
+ */
+export function formatCurrentDescription(speedMS?: number | null, directionDeg?: number | null): string | null {
+  if (speedMS == null || Number.isNaN(speedMS)) {
+    return null;
+  }
+
+  // Current strength categories (based on oceanographic standards)
+  let strength: string;
+  if (speedMS < 0.1) {
+    strength = 'Negligible';
+  } else if (speedMS < 0.25) {
+    strength = 'Weak';
+  } else if (speedMS < 0.5) {
+    strength = 'Moderate';
+  } else if (speedMS < 1.0) {
+    strength = 'Strong';
+  } else {
+    strength = 'Very strong';
+  }
+
+  // Get cardinal direction (simplified to 8 directions for readability)
+  let direction = '';
+  if (directionDeg != null && !Number.isNaN(directionDeg)) {
+    const normalised = ((directionDeg % 360) + 360) % 360;
+    const index = Math.round(normalised / 45); // 8 directions
+    const cardinals = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
+    direction = cardinals[index % 8];
+  }
+
+  const speedDisplay = speedMS.toFixed(2);
+  const directionPart = direction ? ` pushing ${direction}` : '';
+  
+  return `${strength} currents (${speedDisplay} m/s)${directionPart}`;
+}
+
 export function formatTideHeight(value?: number | null): string {
   if (value == null || Number.isNaN(value)) {
     return '—';

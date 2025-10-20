@@ -27,7 +27,7 @@ export interface MarineCurrentConditions {
   waveHeightM: number | null;
   waveDirectionDeg: number | null;
   wavePeriodS: number | null;
-  windSpeedKts: number | null;
+  windSpeedMS: number | null;
   windDirectionDeg: number | null;
   seaTemperatureC: number | null;
   timestamp: string;
@@ -36,7 +36,7 @@ export interface MarineCurrentConditions {
 export interface MarineHourlyForecast {
   time: string;
   waveHeightM: number;
-  windSpeedKts: number;
+  windSpeedMS: number;
   seaTemperatureC: number;
   waveDirectionDeg?: number | null;
   wavePeriodS?: number | null;
@@ -52,7 +52,7 @@ export interface MarineDailyForecast {
   dateLabel: string;
   waveHeightM: number;
   seaTemperatureC: number;
-  windSpeedKts: number;
+  windSpeedMS: number;
   windDirectionDeg?: number | null;
   icon?: string | null;
   minTempC?: number | null;

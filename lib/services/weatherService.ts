@@ -555,8 +555,279 @@ function normalizeCoreWeatherFields(
 }
 
 /**
- * Get comprehensive weather data for a location
- * Aggregates data from multiple OpenWeather endpoints and handles fallbacks
+ * Geographic region checks for waterfall optimization
+ */
+function isUSLocation(lat: number, lon: number): boolean {
+  // Continental US, Alaska, Hawaii, and territories
+  // Continental US: roughly 24.5°N-49°N, 125°W-66°W
+  // Alaska: 51°N-71°N, 130°W-172°E
+  // Hawaii: 18°N-23°N, 160°W-154°W
+  return (
+    // Continental US
+    (lat >= 24.5 && lat <= 49 && lon >= -125 && lon <= -66) ||
+    // Alaska
+    (lat >= 51 && lat <= 71 && ((lon >= -180 && lon <= -130) || (lon >= 172 && lon <= 180))) ||
+    // Hawaii
+    (lat >= 18 && lat <= 23 && lon >= -160 && lon <= -154)
+  );
+}
+
+function isEuropeanLocation(lat: number, lon: number): boolean {
+  // Europe: roughly 35°N-71°N, 10°W-40°E
+  // Covers most of Europe including UK, Scandinavia, Mediterranean
+  return lat >= 35 && lat <= 71 && lon >= -10 && lon <= 40;
+}
+
+/**
+ * Fetch weather data from NWS (National Weather Service) - US only, FREE
+ * https://www.weather.gov/documentation/services-web-api
+ */
+async function fetchFromNWS(lat: number, lon: number): Promise<FullWeather | null> {
+  try {
+    // Step 1: Get grid point data
+    const pointUrl = `https://api.weather.gov/points/${lat.toFixed(4)},${lon.toFixed(4)}`;
+    const pointResponse = await monitoredFetch('nws', 'points', pointUrl);
+    
+    if (!pointResponse.ok) {
+      console.log(`[NWS] Points API failed: ${pointResponse.status}`);
+      return null;
+    }
+    
+    const pointData = await pointResponse.json() as { properties?: { forecast?: string; forecastHourly?: string; forecastGridData?: string } };
+    const forecastUrl = pointData?.properties?.forecast;
+    const hourlyUrl = pointData?.properties?.forecastHourly;
+    
+    if (!forecastUrl) {
+      console.log('[NWS] No forecast URL in response');
+      return null;
+    }
+    
+    // Step 2: Get forecast data
+    const forecastResponse = await monitoredFetch('nws', 'forecast', forecastUrl);
+    if (!forecastResponse.ok) {
+      console.log(`[NWS] Forecast API failed: ${forecastResponse.status}`);
+      return null;
+    }
+    
+    const forecastData = await forecastResponse.json() as { properties?: { periods?: Array<{ 
+      temperature?: number; 
+      windSpeed?: string; 
+      windDirection?: string;
+      shortForecast?: string;
+      icon?: string;
+      startTime?: string;
+      isDaytime?: boolean;
+    }> } };
+    
+    // Step 3: Get hourly forecast
+    let hourlyData = null;
+    if (hourlyUrl) {
+      try {
+        const hourlyResponse = await monitoredFetch('nws', 'hourly', hourlyUrl);
+        if (hourlyResponse.ok) {
+          hourlyData = await hourlyResponse.json();
+        }
+      } catch (err) {
+        console.warn('[NWS] Hourly forecast failed:', err);
+      }
+    }
+    
+    const periods = forecastData?.properties?.periods || [];
+    if (periods.length === 0) {
+      return null;
+    }
+    
+    console.log(`✅ NWS: Weather data found (${periods.length} periods)`);
+    
+    // Transform NWS hourly data (also needs Fahrenheit to Celsius conversion)
+    const hourlyPeriods = hourlyData?.properties?.periods || [];
+    const transformedHourly = hourlyPeriods.map((hour: { temperature?: number; windSpeed?: string; [key: string]: unknown }) => ({
+      ...hour,
+      temperature: fahrenheitToCelsius(hour.temperature),
+      windSpeed: hour.windSpeed, // Keep as string for now, will be parsed by parseWindSpeed if needed
+    }));
+    
+    // Transform NWS data to our format (converting Fahrenheit to Celsius)
+    return {
+      source: 'nws',
+      current: {
+        temp: fahrenheitToCelsius(periods[0]?.temperature),
+        weather: [{ description: periods[0]?.shortForecast, icon: periods[0]?.icon }],
+        wind_speed: parseWindSpeed(periods[0]?.windSpeed),
+        wind_deg: parseWindDirection(periods[0]?.windDirection),
+      },
+      daily: periods.slice(0, 7).map(period => ({
+        dt: period.startTime ? new Date(period.startTime).getTime() / 1000 : undefined,
+        temp: { day: fahrenheitToCelsius(period.temperature) },
+        weather: [{ description: period.shortForecast, icon: period.icon }],
+        wind_speed: parseWindSpeed(period.windSpeed),
+        wind_deg: parseWindDirection(period.windDirection),
+      })),
+      hourly: transformedHourly,
+      alerts: [], // NWS alerts would come from /alerts endpoint
+    };
+  } catch (error) {
+    console.warn('[NWS] Error fetching weather:', error);
+    return null;
+  }
+}
+
+// Helper to parse NWS wind speed (e.g., "10 to 15 mph" -> m/s)
+function parseWindSpeed(windSpeed?: string): number | undefined {
+  if (!windSpeed) return undefined;
+  const match = windSpeed.match(/(\d+)/);
+  if (!match) return undefined;
+  const mph = parseInt(match[1]);
+  return mph * 0.44704; // Convert mph to m/s
+}
+
+// Helper to convert Fahrenheit to Celsius
+function fahrenheitToCelsius(fahrenheit?: number): number | undefined {
+  if (fahrenheit == null || !Number.isFinite(fahrenheit)) return undefined;
+  return (fahrenheit - 32) * 5 / 9;
+}
+
+// Helper to parse NWS wind direction (e.g., "NW" -> degrees)
+function parseWindDirection(direction?: string): number | undefined {
+  if (!direction) return undefined;
+  const directions: Record<string, number> = {
+    'N': 0, 'NNE': 22.5, 'NE': 45, 'ENE': 67.5,
+    'E': 90, 'ESE': 112.5, 'SE': 135, 'SSE': 157.5,
+    'S': 180, 'SSW': 202.5, 'SW': 225, 'WSW': 247.5,
+    'W': 270, 'WNW': 292.5, 'NW': 315, 'NNW': 337.5,
+  };
+  return directions[direction.toUpperCase()];
+}
+
+/**
+ * Fetch weather data from Met.no (MET Norway) - Europe, FREE
+ * https://api.met.no/weatherapi/locationforecast/2.0/documentation
+ */
+async function fetchFromMetNoWeather(lat: number, lon: number): Promise<FullWeather | null> {
+  try {
+    const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}`;
+    const response = await monitoredFetch('metno', 'locationforecast', url, {
+      headers: { 'User-Agent': 'WotNow/1.0 (github.com/yourrepo)' }
+    });
+    
+    if (!response.ok) {
+      console.log(`[Met.no] Weather API failed: ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json() as { properties?: { timeseries?: Array<{
+      time?: string;
+      data?: {
+        instant?: { details?: {
+          air_temperature?: number;
+          wind_speed?: number;
+          wind_from_direction?: number;
+          cloud_area_fraction?: number;
+          relative_humidity?: number;
+        }};
+        next_1_hours?: { summary?: { symbol_code?: string } };
+        next_6_hours?: { summary?: { symbol_code?: string } };
+      };
+    }> } };
+    
+    const timeseries = data?.properties?.timeseries || [];
+    if (timeseries.length === 0) {
+      return null;
+    }
+    
+    console.log(`✅ Met.no: Weather data found (${timeseries.length} hours)`);
+    
+    const current = timeseries[0];
+    return {
+      source: 'metno',
+      current: {
+        temp: current?.data?.instant?.details?.air_temperature,
+        wind_speed: current?.data?.instant?.details?.wind_speed,
+        wind_deg: current?.data?.instant?.details?.wind_from_direction,
+        humidity: current?.data?.instant?.details?.relative_humidity,
+        clouds: current?.data?.instant?.details?.cloud_area_fraction,
+        weather: [{
+          description: current?.data?.next_1_hours?.summary?.symbol_code || 
+                      current?.data?.next_6_hours?.summary?.symbol_code,
+        }],
+      },
+      hourly: timeseries.slice(0, 48),
+      daily: [], // Met.no doesn't provide daily aggregates
+      alerts: [],
+    };
+  } catch (error) {
+    console.warn('[Met.no] Error fetching weather:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch weather data from Open-Meteo - Global, FREE
+ * https://open-meteo.com/en/docs
+ */
+async function fetchFromOpenMeteoWeather(lat: number, lon: number): Promise<FullWeather | null> {
+  try {
+    const params = new URLSearchParams({
+      latitude: lat.toString(),
+      longitude: lon.toString(),
+      current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code',
+      hourly: 'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code',
+      daily: 'temperature_2m_max,temperature_2m_min,weather_code,wind_speed_10m_max',
+      timezone: 'auto',
+    });
+    
+    const url = `https://api.open-meteo.com/v1/forecast?${params}`;
+    const response = await monitoredFetch('openmeteo', 'forecast', url);
+    
+    if (!response.ok) {
+      console.log(`[Open-Meteo] Weather API failed: ${response.status}`);
+      return null;
+    }
+    
+    const data = await response.json() as {
+      current?: {
+        temperature_2m?: number;
+        relative_humidity_2m?: number;
+        wind_speed_10m?: number;
+        wind_direction_10m?: number;
+        weather_code?: number;
+      };
+      hourly?: { time?: string[]; temperature_2m?: number[] };
+      daily?: { time?: string[]; temperature_2m_max?: number[] };
+    };
+    
+    if (!data.current) {
+      return null;
+    }
+    
+    console.log(`✅ Open-Meteo: Weather data found`);
+    
+    return {
+      source: 'openmeteo',
+      current: {
+        temp: data.current.temperature_2m,
+        humidity: data.current.relative_humidity_2m,
+        wind_speed: data.current.wind_speed_10m,
+        wind_deg: data.current.wind_direction_10m,
+        weather: [{ description: `WMO ${data.current.weather_code}` }],
+      },
+      hourly: data.hourly ? [data.hourly as unknown] : [],
+      daily: data.daily ? [data.daily as unknown] : [],
+      alerts: [],
+    };
+  } catch (error) {
+    console.warn('[Open-Meteo] Error fetching weather:', error);
+    return null;
+  }
+}
+
+/**
+ * Get comprehensive weather data for a location with intelligent waterfall
+ * 
+ * Waterfall Strategy:
+ * - US locations: NWS (free) → Open-Meteo (free) → OpenWeather (paid) → Stormglass (paid)
+ * - Europe: Met.no (free) → Open-Meteo (free) → OpenWeather (paid) → Stormglass (paid)
+ * - Other: Open-Meteo (free) → OpenWeather (paid) → Stormglass (paid)
  * 
  * @param lat Latitude
  * @param lon Longitude
@@ -565,50 +836,112 @@ function normalizeCoreWeatherFields(
 interface FullWeather {
   alerts?: unknown[];
   daily?: unknown[];
+  source?: string;
   [key: string]: unknown;
 }
 
 async function getWeatherData(lat: number, lon: number): Promise<FullWeather> {
-  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  // Try free sources first based on location
+  let weatherData: FullWeather | null = null;
   
-  if (!apiKey) {
-    throw new Error('OpenWeather API key not configured');
+  // US locations: Try NWS first
+  if (isUSLocation(lat, lon)) {
+    console.log(`[Weather] US location detected (${lat.toFixed(2)}, ${lon.toFixed(2)}), trying NWS...`);
+    weatherData = await fetchFromNWS(lat, lon);
+    if (weatherData) {
+      console.log('✅ [Weather] Using NWS (FREE)');
+      // Get air quality from OpenWeather if available (cached 24h at 0dp)
+      weatherData.airQuality = await getAirQualityWithCache(lat, lon);
+      return weatherData;
+    }
   }
   
+  // European locations: Try Met.no first
+  if (isEuropeanLocation(lat, lon)) {
+    console.log(`[Weather] European location detected (${lat.toFixed(2)}, ${lon.toFixed(2)}), trying Met.no...`);
+    weatherData = await fetchFromMetNoWeather(lat, lon);
+    if (weatherData) {
+      console.log('✅ [Weather] Using Met.no (FREE)');
+      weatherData.airQuality = await getAirQualityWithCache(lat, lon);
+      return weatherData;
+    }
+  }
+  
+  // Try Open-Meteo (global, free)
+  console.log(`[Weather] Trying Open-Meteo (global)...`);
+  weatherData = await fetchFromOpenMeteoWeather(lat, lon);
+  if (weatherData) {
+    console.log('✅ [Weather] Using Open-Meteo (FREE)');
+    weatherData.airQuality = await getAirQualityWithCache(lat, lon);
+    return weatherData;
+  }
+  
+  // Fall back to OpenWeather (paid)
+  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  if (apiKey) {
+    console.log('⚠️  [Weather] Falling back to OpenWeather (PAID)');
+    try {
+      weatherData = await getFullWeather({ 
+        lat, 
+        lon, 
+        apiKey, 
+        options: { units: 'metric' } 
+      }) as FullWeather;
+      
+      weatherData.source = 'openweather';
+      weatherData.airQuality = await getAirQualityWithCache(lat, lon);
+      
+      // Get weather alerts
+      try {
+        const alerts = await getWeatherAlerts({ lat, lon, apiKey });
+        weatherData.alerts = alerts.length > 0 ? alerts : (weatherData.alerts || []);
+      } catch (error) {
+        console.warn('[Weather] Failed to fetch alerts:', error);
+      }
+      
+      return weatherData;
+    } catch (error) {
+      console.error('[Weather] OpenWeather failed:', error);
+    }
+  }
+  
+  // Last resort: throw error
+  throw new Error('No weather data available from any source');
+}
+
+/**
+ * Air quality cache (24h, 0dp precision for cost savings)
+ */
+const airQualityCache = new Map<string, { data: unknown; expires: number }>();
+
+async function getAirQualityWithCache(lat: number, lon: number): Promise<unknown> {
+  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+  if (!apiKey) return null;
+  
+  // Use 0dp precision for air quality (changes slowly)
+  const roundLat = Math.round(lat);
+  const roundLon = Math.round(lon);
+  const cacheKey = `aq_${roundLat}_${roundLon}`;
+  
+  // Check cache (24h TTL)
+  const cached = airQualityCache.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
+    console.log(`✅ Air quality cache hit (0dp: ${roundLat},${roundLon})`);
+    return cached.data;
+  }
+  
+  // Fetch from OpenWeather
   try {
-    // Get comprehensive weather data
-    const weatherData = await getFullWeather({ 
-      lat, 
-      lon, 
-      apiKey, 
-      options: { units: 'metric' } 
+    const data = await getAirPollution({ lat: roundLat, lon: roundLon, apiKey });
+    airQualityCache.set(cacheKey, {
+      data,
+      expires: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });
-    
-    // Get air pollution data if available
-    let airQuality: unknown = null;
-    try {
-      airQuality = await getAirPollution({ lat, lon, apiKey });
-    } catch (error) {
-      console.warn('Failed to fetch air quality data:', error);
-    }
-    
-    // Get any weather alerts
-    let alerts: unknown[] = [];
-    try {
-      alerts = await getWeatherAlerts({ lat, lon, apiKey });
-    } catch (error) {
-      console.warn('Failed to fetch weather alerts:', error);
-    }
-    
-    // Combine all data
-    return {
-      ...weatherData,
-      airQuality,
-      alerts: alerts.length > 0 ? alerts : ((weatherData as { alerts?: unknown[] }).alerts || []),
-    };
+    console.log(`📡 Air quality fetched from OpenWeather (0dp: ${roundLat},${roundLon})`);
+    return data;
   } catch (error) {
-    console.error('Error fetching weather data:', error);
-    throw error;
+    console.warn('[Weather] Failed to fetch air quality:', error);
+    return null;
   }
 }
 

@@ -1,10 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchOpenMeteoAirPollen, getFullWeather } from '../../lib/services/weatherService';
+import { fetchOpenMeteoAirPollen, getWeatherData } from '../../lib/services/weatherService';
 import { roundCoordinates } from '../../utils/coordinatePrecision';
 
-type Units = 'metric' | 'imperial' | 'standard';
-
-type WeatherPayload = Awaited<ReturnType<typeof getFullWeather>>;
+type WeatherPayload = Awaited<ReturnType<typeof getWeatherData>>;
 
 type PollenDaily = {
   grass?: number;
@@ -52,9 +50,6 @@ interface OpenMeteoAirPollenResponse {
     european_aqi?: Array<number | null | undefined>;
   };
 }
-
-const DEFAULT_UNITS: Units = 'metric';
-const ALLOWED_UNITS: ReadonlySet<Units> = new Set<Units>(['metric', 'imperial', 'standard']);
 
 function toISODate(date: Date): string {
   return date.toISOString().split('T')[0] ?? '';
@@ -167,14 +162,6 @@ async function fetchPollenSnapshot(
   }
 }
 
-function normalizeUnits(unitsParam: string | undefined): Units {
-  const normalized = unitsParam?.toLowerCase();
-  if (normalized && ALLOWED_UNITS.has(normalized as Units)) {
-    return normalized as Units;
-  }
-  return DEFAULT_UNITS;
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method && req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -194,13 +181,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid lat/lon parameters' });
   }
 
-  const apiKey = process.env.OPENWEATHER_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'OpenWeather API key not configured' });
-  }
-
-  const units = normalizeUnits(typeof req.query.units === 'string' ? req.query.units : undefined);
-
   try {
     const { lat: weatherLat, lon: weatherLon } = roundCoordinates(latitude, longitude, 'weather');
     const { lat: envLat, lon: envLon } = roundCoordinates(latitude, longitude, 'pollen');
@@ -209,8 +189,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const endDate = new Date(today);
     endDate.setDate(today.getDate() + 4);
 
+    // Use weather waterfall (NWS/Met.no/Open-Meteo/OpenWeather) instead of direct OpenWeather call
     const [weatherData, pollenData] = await Promise.all([
-      getFullWeather({ lat: weatherLat, lon: weatherLon, apiKey, options: { units } }),
+      getWeatherData(weatherLat, weatherLon),
       fetchPollenSnapshot(envLat, envLon, today, endDate),
     ]);
 

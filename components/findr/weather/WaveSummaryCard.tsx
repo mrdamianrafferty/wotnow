@@ -1,10 +1,10 @@
 import React from 'react';
-import { Waves, ArrowDown, Clock } from 'lucide-react';
+import { Waves, ArrowUp, Clock } from 'lucide-react';
 import WeatherStatCard from './WeatherStatCard';
-import { formatWaveHeight, formatCardinalDirection } from '../../../lib/findr/weatherFormatting';
+import { formatWaveHeight, formatCardinalDirection, formatCurrentDescription } from '../../../lib/findr/weatherFormatting';
 import { formatRelativeTime } from '../../../lib/findr/weatherFormatting';
 import { TranslatedText } from '../../translation/TranslatedFishCard';
-import { getWaveDescription, getWaveDescriptionShort } from '../../../utils/weatherLabels';
+import { getWaveDescriptionFindr, getWaveDescriptionFindrShort } from '../../../utils/weatherLabels';
 
 interface WaveSummaryCardProps {
   waveHeightM?: number | null;
@@ -12,17 +12,22 @@ interface WaveSummaryCardProps {
   waveDirectionDeg?: number | null;
   chlorophyllMgM3?: number | null;
   updatedAt?: string | null;
+  currentSpeedMS?: number | null;
+  currentDirectionDeg?: number | null;
 }
 
-export function WaveSummaryCard({ waveHeightM, wavePeriodS, waveDirectionDeg, updatedAt }: WaveSummaryCardProps) {
+export function WaveSummaryCard({ waveHeightM, wavePeriodS, waveDirectionDeg, updatedAt, currentSpeedMS, currentDirectionDeg }: WaveSummaryCardProps) {
   const height = formatWaveHeight(waveHeightM);
   const updatedLabel = formatRelativeTime(updatedAt ?? undefined);
   
-  // Get short descriptor for main display (bold text)
-  const waveShortDesc = waveHeightM != null ? getWaveDescriptionShort(waveHeightM) : '—';
+  // Get current description for footer
+  const currentDescription = formatCurrentDescription(currentSpeedMS, currentDirectionDeg);
   
-  // Get full descriptive wave condition message for subtitle
-  const waveDescription = waveHeightM != null ? getWaveDescription(waveHeightM) : 'Wave conditions';
+  // Get short descriptor for main display (bold text) - using Findr-specific descriptions
+  const waveShortDesc = waveHeightM != null ? getWaveDescriptionFindrShort(waveHeightM) : '—';
+  
+  // Get full descriptive wave condition message for subtitle - using Findr-specific descriptions
+  const waveDescription = waveHeightM != null ? getWaveDescriptionFindr(waveHeightM) : 'Wave conditions';
   
   // Format wave direction
   const waveDirectionCardinal = formatCardinalDirection(waveDirectionDeg);
@@ -32,18 +37,18 @@ export function WaveSummaryCard({ waveHeightM, wavePeriodS, waveDirectionDeg, up
       title={<TranslatedText text="Waves" />}
       subtitle={<TranslatedText text={waveDescription} />}
       icon={<Waves className="size-5" />}
-      value={waveShortDesc}
+      value={<TranslatedText text={waveShortDesc} />}
       badge={height}
-      footer={updatedLabel ? <TranslatedText text={`Updated ${updatedLabel}`} /> : undefined}
+      footer={currentDescription ? <TranslatedText text={currentDescription} /> : (updatedLabel ? <TranslatedText text={`Updated ${updatedLabel}`} /> : undefined)}
     >
       <div className="flex items-center justify-between text-xs text-base-content/70">
         <div className="flex items-center gap-2">
           <Clock className="size-4" />
-          <span><TranslatedText text="Period" /> {wavePeriodS != null ? `${Math.round(wavePeriodS)}s` : '—'}</span>
+          <span><TranslatedText text="Period" />: {wavePeriodS != null ? <><TranslatedText text={`${Math.round(wavePeriodS)} seconds`} /></> : '—'}</span>
         </div>
         {waveDirectionDeg != null ? (
           <div className="flex items-center gap-1">
-            <ArrowDown className="size-3" style={{ transform: `rotate(${waveDirectionDeg}deg)` }} />
+            <ArrowUp className="size-4" style={{ transform: `rotate(${waveDirectionDeg}deg)` }} />
             <span><TranslatedText text="towards" /> {waveDirectionCardinal}</span>
           </div>
         ) : null}

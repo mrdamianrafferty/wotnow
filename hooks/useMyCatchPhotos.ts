@@ -19,7 +19,8 @@ export function useMyCatchPhotos() {
       });
       if (!res.ok) throw new Error('Failed to fetch catches');
 
-      const catches = await res.json() as Array<{
+      const data = await res.json();
+      const catches = (data.catches || []) as Array<{
         id: string;
         species_id: string;
         species_common_name: string;

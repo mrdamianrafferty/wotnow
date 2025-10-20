@@ -29,10 +29,84 @@ const MAX_CONCURRENT_REQUESTS = 1; // Only 1 concurrent request to avoid rate li
 const DELAY_BETWEEN_REQUESTS = 1000; // 1 second delay between requests
 let activeRequests = 0;
 
+// Batch processing - collect requests for a short time then send together
+const batchQueue: QueuedRequest[] = [];
+let batchTimer: NodeJS.Timeout | null = null;
+const BATCH_DELAY = 100; // Wait 100ms to collect more requests
+const MAX_BATCH_SIZE = 50; // Send up to 50 translations at once
+
 function getCacheKey(text: string, targetLang: string): string {
   const normalizedText = text.trim().replace(/\s+/g, ' ');
   const normalizedLang = targetLang.toLowerCase();
   return `${normalizedLang}:${normalizedText}`;
+}
+
+/**
+ * Process batch translations - send multiple translations at once
+ */
+async function processBatch() {
+  if (batchQueue.length === 0) return;
+
+  const batch = batchQueue.splice(0, MAX_BATCH_SIZE);
+  const uniqueTexts = new Map<string, QueuedRequest[]>();
+
+  // Group by unique text+lang combinations
+  for (const request of batch) {
+    const key = getCacheKey(request.text, request.targetLang);
+    if (!uniqueTexts.has(key)) {
+      uniqueTexts.set(key, []);
+    }
+    uniqueTexts.get(key)!.push(request);
+  }
+
+  // Send batch request for this language
+  const targetLang = batch[0].targetLang;
+  const textsToTranslate = Array.from(uniqueTexts.keys()).map(key => {
+    const firstRequest = uniqueTexts.get(key)![0];
+    return firstRequest.text;
+  });
+
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        texts: textsToTranslate,
+        targetLang,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const translations = data.translations || [];
+
+      // Resolve all requests with their translations
+      textsToTranslate.forEach((text, index) => {
+        const translation = translations[index] || text;
+        const key = getCacheKey(text, targetLang);
+        clientCache.set(key, translation);
+
+        const requests = uniqueTexts.get(key) || [];
+        requests.forEach(req => req.resolve(translation));
+      });
+    } else if (response.status === 429) {
+      // Rate limited - fall back to queue processing
+      batch.forEach(req => requestQueue.push(req));
+      processQueue();
+    } else {
+      // Error - resolve with original text
+      batch.forEach(req => req.resolve(req.text));
+    }
+  } catch (error) {
+    console.error('Batch translation failed:', error);
+    // Fallback: resolve with original text
+    batch.forEach(req => req.resolve(req.text));
+  }
+
+  // Process next batch if any
+  if (batchQueue.length > 0) {
+    setTimeout(processBatch, DELAY_BETWEEN_REQUESTS);
+  }
 }
 
 /**
@@ -189,7 +263,7 @@ export async function clientTranslate(text: string, targetLang: string): Promise
   const requestGroup: QueuedRequest[] = [];
   pendingRequests.set(cacheKey, requestGroup);
 
-  // Add to queue and return a promise
+  // Add to batch queue and return a promise
   return new Promise((resolve, reject) => {
     const request = {
       text,
@@ -200,13 +274,22 @@ export async function clientTranslate(text: string, targetLang: string): Promise
     };
     
     requestGroup.push(request);
-    requestQueue.push(request);
-
-    // Start processing the queue
-    processQueue().catch(err => {
-      console.error('Queue processing error:', err);
-      // Don't reject here, let individual requests handle their own errors
-    });
+    batchQueue.push(request);
+    
+    // Set timer to process batch (allows collecting more requests)
+    if (batchTimer) {
+      clearTimeout(batchTimer);
+    }
+    
+    // Process immediately if batch is full, otherwise wait to collect more
+    if (batchQueue.length >= MAX_BATCH_SIZE) {
+      processBatch();
+    } else {
+      batchTimer = setTimeout(() => {
+        batchTimer = null;
+        processBatch();
+      }, BATCH_DELAY);
+    }
   }).catch(error => {
     console.error('Client translation failed:', error);
     return text; // Fallback to original text
