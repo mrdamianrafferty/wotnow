@@ -69,10 +69,10 @@ export default function FindrAuth() {
       sessionStorage.setItem('oauth_origin', window.location.origin);
       sessionStorage.setItem('oauth_app', 'findr');
 
-      // Use the exact production domain for FishFindr (no www)
-      // This must match exactly what's configured in Supabase redirect URLs
+      // Use www.fishfindr.eu to match Vercel's redirect preference
+      // Vercel automatically redirects fishfindr.eu → www.fishfindr.eu
       const isProduction = window.location.hostname.includes('fishfindr.eu');
-      const redirectOrigin = isProduction ? 'https://fishfindr.eu' : window.location.origin;
+      const redirectOrigin = isProduction ? 'https://www.fishfindr.eu' : window.location.origin;
       const redirectTo = `${redirectOrigin}/auth/callback?app=findr&origin=${encodeURIComponent(window.location.origin)}`;
 
       console.log('OAuth redirect will be:', redirectTo);
