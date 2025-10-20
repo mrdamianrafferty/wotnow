@@ -136,28 +136,34 @@ export default function AuthCallback() {
 
         // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
-          console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...', codeLength: code.length });
+          console.log('[OAuth Debug] Starting code exchange flow...', { code: code.substring(0, 10) + '...', codeLength: code.length });
           
           // First check if we already have a valid session (OAuth may have already completed)
-          const { data: existingSession } = await supabase.auth.getSession();
-          console.log('[OAuth Debug] Checking for existing session...', { hasSession: !!existingSession?.session });
-          if (existingSession?.session) {
-            console.log('Session already exists! OAuth completed successfully, skipping code exchange.');
-            setPhase(Phase.Done);
-            const destination = getDestination({
-              returnTo,
-              app,
-              isRecovery: (typeParam || '').toLowerCase() === 'recovery',
-              hostname: window.location.hostname,
-              origin,
-            });
-            console.log('Redirecting to:', destination);
-            sessionStorage.removeItem('oauth_origin');
-            sessionStorage.removeItem('oauth_app');
-            // Use window.location.replace to prevent back button issues
-            // This also removes the OAuth code from URL to prevent redirect loops
-            window.location.replace(destination);
-            return;
+          try {
+            const { data: existingSession } = await supabase.auth.getSession();
+            console.log('[OAuth Debug] Checked for existing session:', { hasSession: !!existingSession?.session, user: existingSession?.session?.user?.email });
+            if (existingSession?.session) {
+              console.log('[OAuth Debug] Session already exists! Skipping code exchange.');
+              setPhase(Phase.Done);
+              const destination = getDestination({
+                returnTo,
+                app,
+                isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+                hostname: window.location.hostname,
+                origin,
+              });
+              console.log('[OAuth Debug] Redirecting to:', destination);
+              sessionStorage.removeItem('oauth_origin');
+              sessionStorage.removeItem('oauth_app');
+              // Use window.location.replace to prevent back button issues
+              // This also removes the OAuth code from URL to prevent redirect loops
+              window.location.replace(destination);
+              return;
+            }
+            console.log('[OAuth Debug] No existing session, proceeding with code exchange...');
+          } catch (sessionError) {
+            console.log('[OAuth Debug] Error checking session:', sessionError);
+            // Continue with code exchange if session check fails
           }
           
           // Check if PKCE verifier exists in localStorage (it should if OAuth flow started correctly)
