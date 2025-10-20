@@ -69,11 +69,10 @@ export default function GoDaisyLogin() {
       sessionStorage.setItem('oauth_origin', window.location.origin);
       sessionStorage.setItem('oauth_app', 'godaisy');
 
-      // Use godaisy.io (without www) - www.godaisy.io returns 404
-      // Vercel redirects godaisy.io → www.godaisy.io but www isn't configured
-      const isProduction = window.location.hostname.includes('godaisy.io');
-      const redirectOrigin = isProduction ? 'https://godaisy.io' : window.location.origin;
-      const redirectTo = `${redirectOrigin}/auth/callback?app=godaisy&origin=${encodeURIComponent(window.location.origin)}`;
+      // CRITICAL: OAuth redirect MUST match current domain to preserve PKCE verifier in localStorage
+      // Supabase stores PKCE verifier per-domain, so we can't redirect from www to non-www
+      // Use the actual current origin (which will be www.godaisy.io due to Vercel redirect)
+      const redirectTo = `${window.location.origin}/auth/callback?app=godaisy&origin=${encodeURIComponent(window.location.origin)}`;
 
       console.log('OAuth redirect will be:', redirectTo);
 

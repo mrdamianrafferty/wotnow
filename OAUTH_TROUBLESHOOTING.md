@@ -48,13 +48,15 @@ https://godaisy.io/auth/callback
 https://fishfindr.eu/auth/callback
 https://www.fishfindr.eu/auth/callback
 https://fishfindr.eu/findr/magic-link
-https://www.godaisy.io/*
-https://godaisy.io/*
+https://www.godaisy.io/**
+https://godaisy.io/**
 https://fishfindr.eu/**
 https://www.fishfindr.eu/**
 http://localhost:3000/auth/callback
 http://localhost:3000/findr/auth
 ```
+
+**IMPORTANT**: `https://www.godaisy.io/auth/callback` MUST be in this list. Vercel automatically redirects `godaisy.io` → `www.godaisy.io`, so users will always be on the www subdomain. The OAuth redirect URL must match the exact domain where the user initiated the login to preserve the PKCE verifier in localStorage.
 
 ### 2. Verify OAuth Provider Settings
 
