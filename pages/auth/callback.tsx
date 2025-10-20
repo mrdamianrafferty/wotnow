@@ -84,6 +84,7 @@ export default function AuthCallback() {
 
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
+  const [detectedApp, setDetectedApp] = useState<'godaisy' | 'findr'>('godaisy');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -107,6 +108,14 @@ export default function AuthCallback() {
 
     (async () => {
       try {
+        // Detect which app this is for
+        const isFindr = 
+          app === 'findr' || 
+          window.location.hostname.includes('fishfindr.eu') ||
+          origin?.includes('fishfindr.eu') ||
+          sessionStorage.getItem('oauth_app') === 'findr';
+        setDetectedApp(isFindr ? 'findr' : 'godaisy');
+        
         // Debug: Log all query parameters
         console.log('Auth callback params:', {
           type: typeParam,
@@ -129,6 +138,27 @@ export default function AuthCallback() {
         if (code) {
           console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...', codeLength: code.length });
           
+          // First check if we already have a valid session (OAuth may have already completed)
+          const { data: existingSession } = await supabase.auth.getSession();
+          if (existingSession?.session) {
+            console.log('Session already exists! OAuth completed successfully, skipping code exchange.');
+            setPhase(Phase.Done);
+            const destination = getDestination({
+              returnTo,
+              app,
+              isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+              hostname: window.location.hostname,
+              origin,
+            });
+            console.log('Redirecting to:', destination);
+            sessionStorage.removeItem('oauth_origin');
+            sessionStorage.removeItem('oauth_app');
+            // Use window.location.replace to prevent back button issues
+            // This also removes the OAuth code from URL to prevent redirect loops
+            window.location.replace(destination);
+            return;
+          }
+          
           // Check if PKCE verifier exists in localStorage (it should if OAuth flow started correctly)
           const pkceVerifierKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token-code-verifier`;
           const pkceVerifier = localStorage.getItem(pkceVerifierKey);
@@ -140,9 +170,26 @@ export default function AuthCallback() {
           });
           
           if (!pkceVerifier) {
-            console.error('CRITICAL: No PKCE verifier found in localStorage!');
-            console.error('This means OAuth redirect domain does not match login domain');
-            console.error('Check that OAuth redirectTo uses window.location.origin');
+            console.warn('No PKCE verifier found - OAuth may have completed via implicit flow');
+            console.log('Checking for existing session instead...');
+            // Try one more time to get session
+            const { data: retrySession } = await supabase.auth.getSession();
+            if (retrySession?.session) {
+              console.log('Found session on retry!');
+              setPhase(Phase.Done);
+              const destination = getDestination({
+                returnTo,
+                app,
+                isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+                hostname: window.location.hostname,
+                origin,
+              });
+              console.log('Redirecting to:', destination);
+              sessionStorage.removeItem('oauth_origin');
+              sessionStorage.removeItem('oauth_app');
+              window.location.replace(destination);
+              return;
+            }
           }
           
           try {
@@ -182,9 +229,9 @@ export default function AuthCallback() {
             sessionStorage.removeItem('oauth_origin');
             sessionStorage.removeItem('oauth_app');
             
-            // Use window.location instead of router.replace to force a full page load
-            // This prevents the callback page from staying in history
-            window.location.href = destination;
+            // Use window.location.replace to prevent callback from staying in browser history
+            // This also removes OAuth code from URL to prevent redirect loops
+            window.location.replace(destination);
             return;
           } catch (exchangeError) {
             console.error('Code exchange error:', exchangeError);
@@ -296,11 +343,17 @@ export default function AuthCallback() {
             </div>
           </div>
           <div className="flex gap-2 justify-center">
-            <Link href="/findr/auth" className="btn btn-primary btn-sm">
+            <Link 
+              href={detectedApp === 'findr' ? '/findr/auth' : '/login'} 
+              className="btn btn-primary btn-sm"
+            >
               Try Again
             </Link>
-            <Link href="/findr" className="btn btn-ghost btn-sm">
-              Go to Findr
+            <Link 
+              href={detectedApp === 'findr' ? '/findr' : '/'} 
+              className="btn btn-ghost btn-sm"
+            >
+              {detectedApp === 'findr' ? 'Go to Findr' : 'Go to Home'}
             </Link>
           </div>
         </div>
