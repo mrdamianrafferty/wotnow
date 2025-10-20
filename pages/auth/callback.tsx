@@ -98,6 +98,13 @@ export default function AuthCallback() {
     const app = query.app as string | undefined;
     const origin = query.origin as string | undefined;
 
+    // Set a timeout to catch hanging auth flows
+    const timeoutId = setTimeout(() => {
+      console.error('Auth callback timeout - stuck for 15 seconds');
+      setError('Authentication is taking too long. Please try again.');
+      setPhase(Phase.Error);
+    }, 15000); // 15 second timeout
+
     (async () => {
       try {
         // Debug: Log all query parameters
@@ -120,9 +127,15 @@ export default function AuthCallback() {
 
         // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
-          console.log('Exchanging code for session...');
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
+          console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...' });
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          
+          console.log('Exchange result:', { hasData: !!data, hasSession: !!data?.session, error: error?.message });
+          
+          if (error) {
+            console.error('Code exchange failed:', error);
+            throw error;
+          }
 
           console.log('Code exchange successful');
           // Success - route to appropriate destination
@@ -219,6 +232,9 @@ export default function AuthCallback() {
         console.error('Auth callback error:', e);
         setError(getErrorMessage(e));
         setPhase(Phase.Error);
+      } finally {
+        // Clear the timeout
+        clearTimeout(timeoutId);
       }
     })();
   }, [router.isReady, router, query]);
