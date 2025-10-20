@@ -307,10 +307,12 @@ export default async function handler(
 
       const hourly = metResult.hours.slice(0, 48).map((h: MarineHour) => {
         const weather = weatherByHour.get(h.timeISO);
+        const windKts = h.windSpeedKts ?? 0;
+        const windMS = windKts / 1.94384; // Convert knots to m/s
         return {
           time: h.timeISO,
           waveHeightM: h.waveHeightM ?? 0,
-          windSpeedMS: h.windSpeedMS ?? 0,
+          windSpeedMS: windMS,
           seaTemperatureC: h.seaTemperatureC ?? 0,
           waveDirectionDeg: h.waveDirectionDeg,
           wavePeriodS: null,
@@ -333,7 +335,8 @@ export default async function handler(
         .slice(0, 7)
         .map(([dayKey, hours]) => {
           const avgWave = hours.reduce((s: number, h: MarineHour) => s + (h.waveHeightM ?? 0), 0) / hours.length;
-          const avgWind = hours.reduce((s: number, h: MarineHour) => s + (h.windSpeedKts ?? 0), 0) / hours.length;
+          const avgWindKts = hours.reduce((s: number, h: MarineHour) => s + (h.windSpeedKts ?? 0), 0) / hours.length;
+          const avgWindMS = avgWindKts / 1.94384; // Convert knots to m/s
           const avgTemp = hours.reduce((s: number, h: MarineHour) => s + (h.seaTemperatureC ?? 0), 0) / hours.length;
 
           const noonTime = new Date(`${dayKey}T12:00:00Z`).getTime();
@@ -353,14 +356,14 @@ export default async function handler(
           const noonWeather = weatherByHour.get(closestHour.timeISO);
           const icon = noonWeather?.symbol ? mapMetNoSymbolToIcon(noonWeather.symbol) : null;
 
-          const fishingScore = calculateFishingScore(avgWave, avgWind, avgTemp);
+          const fishingScore = calculateFishingScore(avgWave, avgWindMS, avgTemp);
 
           return {
             label: getDayLabel(dayKey),
             dateLabel: getDateLabel(dayKey),
             waveHeightM: Math.round(avgWave * 10) / 10,
             seaTemperatureC: Math.round(avgTemp * 10) / 10,
-            windSpeedKts: Math.round(avgWind * 10) / 10,
+            windSpeedMS: Math.round(avgWindMS * 10) / 10,
             windDirectionDeg: closestHour.windDirectionDeg ?? null,
             icon: icon || undefined,
             minTempC: airTemps.length > 0 ? Math.round(Math.min(...airTemps)) : null,
@@ -407,19 +410,23 @@ export default async function handler(
       };
 
       // First build hourly without weather data
-      const hourly = openMeteoResult.hours.slice(0, 48).map((h: MarineHour) => ({
-        time: h.timeISO,
-        waveHeightM: h.waveHeightM ?? 0,
-        windSpeedKts: h.windSpeedKts ?? 0,
-        seaTemperatureC: h.seaTemperatureC ?? 0,
-        waveDirectionDeg: h.waveDirectionDeg,
-        wavePeriodS: null,
-        windDirectionDeg: h.windDirectionDeg,
-        airTempC: null as number | null,
-        weatherIcon: null as string | null,
-        precipMM: null as number | null,
-        precipProbability: null as number | null,
-      }));
+      const hourly = openMeteoResult.hours.slice(0, 48).map((h: MarineHour) => {
+        const windKts = h.windSpeedKts ?? 0;
+        const windMS = windKts / 1.94384; // Convert knots to m/s
+        return {
+          time: h.timeISO,
+          waveHeightM: h.waveHeightM ?? 0,
+          windSpeedMS: windMS,
+          seaTemperatureC: h.seaTemperatureC ?? 0,
+          waveDirectionDeg: h.waveDirectionDeg,
+          wavePeriodS: null,
+          windDirectionDeg: h.windDirectionDeg,
+          airTempC: null as number | null,
+          weatherIcon: null as string | null,
+          precipMM: null as number | null,
+          precipProbability: null as number | null,
+        };
+      });
 
       // Fetch MET Norway location forecast for weather icons, temps, and precipitation
       // If that fails or doesn't have wind, we'll use Open-Meteo's regular weather API below
@@ -486,7 +493,7 @@ export default async function handler(
           hour.weatherIcon = weather.symbol ? (mapMetNoSymbolToIcon(weather.symbol) ?? null) : null;
           hour.precipMM = weather.precipMM ?? null;
           hour.precipProbability = weather.precipProb ?? null;
-          // Add wind data from Met.no location forecast (more reliable than Open-Meteo marine)
+          // Wind data from Met.no location forecast is already in windSpeedMS
           if (typeof weather.windSpeedMS === 'number') {
             hour.windSpeedMS = weather.windSpeedMS;
           }
