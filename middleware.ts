@@ -13,10 +13,12 @@ export function middleware(req: NextRequest) {
     // - Next.js internals (/_next/*)
     // - Static assets (/webp/*, /images/*, /weather-icons/*, etc.)
     // - PWA files (sw.js, manifest.json, workbox files)
+    // - Auth callbacks (/auth/callback)
     // - Already on findr paths
     const isApiRoute = url.pathname.startsWith('/api/');
     const isNextInternal = url.pathname.startsWith('/_next/');
     const isFindrPath = url.pathname.startsWith('/findr');
+    const isAuthPath = url.pathname.startsWith('/auth/');
     const isPWAFile = url.pathname === '/sw.js' || 
                       url.pathname === '/manifest.json' ||
                       url.pathname.startsWith('/workbox-') ||
@@ -29,7 +31,7 @@ export function middleware(req: NextRequest) {
                           url.pathname.startsWith('/findr-favicon/') ||
                           url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
     
-    if (!isApiRoute && !isNextInternal && !isFindrPath && !isPWAFile && !isStaticAsset) {
+    if (!isApiRoute && !isNextInternal && !isFindrPath && !isAuthPath && !isPWAFile && !isStaticAsset) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
       return NextResponse.redirect(findrUrl);
