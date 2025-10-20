@@ -127,35 +127,53 @@ export default function AuthCallback() {
 
         // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
-          console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...' });
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...', codeLength: code.length });
           
-          console.log('Exchange result:', { hasData: !!data, hasSession: !!data?.session, error: error?.message });
-          
-          if (error) {
-            console.error('Code exchange failed:', error);
-            throw error;
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            
+            console.log('Exchange result:', { 
+              hasData: !!data, 
+              hasSession: !!data?.session, 
+              hasUser: !!data?.user,
+              error: error?.message,
+              errorStatus: error?.status 
+            });
+            
+            if (error) {
+              console.error('Code exchange failed:', error);
+              throw new Error(`OAuth code exchange failed: ${error.message}`);
+            }
+
+            if (!data?.session) {
+              throw new Error('No session returned from code exchange');
+            }
+
+            console.log('Code exchange successful, session created');
+            // Success - route to appropriate destination
+            setPhase(Phase.Done);
+            const destination = getDestination({
+              returnTo,
+              app,
+              isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+              hostname: window.location.hostname,
+              origin,
+            });
+
+            console.log('Redirecting to:', destination);
+            
+            // Clear stored OAuth context
+            sessionStorage.removeItem('oauth_origin');
+            sessionStorage.removeItem('oauth_app');
+            
+            // Use window.location instead of router.replace to force a full page load
+            // This prevents the callback page from staying in history
+            window.location.href = destination;
+            return;
+          } catch (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            throw exchangeError;
           }
-
-          console.log('Code exchange successful');
-          // Success - route to appropriate destination
-          setPhase(Phase.Done);
-          const destination = getDestination({
-            returnTo,
-            app,
-            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
-            hostname: window.location.hostname,
-            origin,
-          });
-
-          console.log('Redirecting to:', destination);
-          
-          // Clear stored OAuth context
-          sessionStorage.removeItem('oauth_origin');
-          sessionStorage.removeItem('oauth_app');
-          
-          router.replace(destination);
-          return;
         }
 
         // Handle implicit flow tokens (older style OAuth)
