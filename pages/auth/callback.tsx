@@ -138,9 +138,10 @@ export default function AuthCallback() {
         if (code) {
           console.log('Exchanging code for session...', { code: code.substring(0, 10) + '...', codeLength: code.length });
           
-          // First check if we already have a valid session (OAuth may have already completed)
-          const { data: existingSession } = await supabase.auth.getSession();
-          if (existingSession?.session) {
+            // First check if we already have a valid session (OAuth may have already completed)
+            const { data: existingSession } = await supabase.auth.getSession();
+            console.log('[OAuth Debug] Checking for existing session...', { hasSession: !!existingSession?.session });
+            if (existingSession?.session) {
             console.log('Session already exists! OAuth completed successfully, skipping code exchange.');
             setPhase(Phase.Done);
             const destination = getDestination({
