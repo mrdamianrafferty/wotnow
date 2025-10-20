@@ -40,12 +40,13 @@ function getDestination(params: {
   app?: string | null;
   isRecovery: boolean;
   hostname: string;
+  origin?: string | null;
 }): string {
-  const { returnTo, app, isRecovery, hostname } = params;
+  const { returnTo, app, isRecovery, hostname, origin } = params;
 
   // If this is a recovery flow, send to appropriate password update page
   if (isRecovery) {
-    const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu');
+    const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu') || origin?.includes('fishfindr.eu');
     return isFindrFlow ? '/findr/update-password' : '/auth/reset';
   }
 
@@ -62,8 +63,17 @@ function getDestination(params: {
     }
   }
 
-  // Determine app context
-  const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu');
+  // Check sessionStorage for stored origin
+  const storedApp = typeof window !== 'undefined' ? sessionStorage.getItem('oauth_app') : null;
+  const storedOrigin = typeof window !== 'undefined' ? sessionStorage.getItem('oauth_origin') : null;
+
+  // Determine app context from multiple sources
+  const isFindrFlow = 
+    app === 'findr' || 
+    storedApp === 'findr' ||
+    hostname.includes('fishfindr.eu') || 
+    origin?.includes('fishfindr.eu') ||
+    storedOrigin?.includes('fishfindr.eu');
 
   return isFindrFlow ? '/findr' : '/';
 }
@@ -86,6 +96,7 @@ export default function AuthCallback() {
     const refresh_token = query.refresh_token as string | undefined;
     const returnTo = (query.returnTo as string) || (query.redirect_to as string);
     const app = query.app as string | undefined;
+    const origin = query.origin as string | undefined;
 
     (async () => {
       try {
@@ -98,6 +109,7 @@ export default function AuthCallback() {
           refresh_token: refresh_token ? '[PRESENT]' : null,
           error: oauthError,
           app,
+          origin,
           returnTo,
         });
 
@@ -120,9 +132,15 @@ export default function AuthCallback() {
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
+            origin,
           });
 
           console.log('Redirecting to:', destination);
+          
+          // Clear stored OAuth context
+          sessionStorage.removeItem('oauth_origin');
+          sessionStorage.removeItem('oauth_app');
+          
           router.replace(destination);
           return;
         }
@@ -142,9 +160,15 @@ export default function AuthCallback() {
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
+            origin,
           });
 
           console.log('Redirecting to:', destination);
+          
+          // Clear stored OAuth context
+          sessionStorage.removeItem('oauth_origin');
+          sessionStorage.removeItem('oauth_app');
+          
           router.replace(destination);
           return;
         }
@@ -162,6 +186,7 @@ export default function AuthCallback() {
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
+            origin,
           });
 
           console.log('Redirecting to:', destination);
@@ -180,6 +205,7 @@ export default function AuthCallback() {
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
+            origin,
           });
 
           console.log('Redirecting to:', destination);

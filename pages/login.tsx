@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase/client';
-import { normalizeEmail, mapAuthError } from '../../lib/auth/utils';
+import { supabase } from '../lib/supabase/client';
+import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Fish } from 'lucide-react';
+import { Cloud, Sun, Waves } from 'lucide-react';
 
-export default function FindrAuth() {
+export default function GoDaisyLogin() {
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -32,9 +32,9 @@ export default function FindrAuth() {
           email: emailNorm,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?app=findr`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?app=godaisy`,
             data: {
-              app: 'findr',
+              app: 'godaisy',
             },
           },
         });
@@ -50,8 +50,8 @@ export default function FindrAuth() {
 
         if (error) throw error;
 
-        // Redirect to returnTo or default to /findr
-        router.push(returnTo && returnTo.startsWith('/findr') ? returnTo : '/findr');
+        // Redirect to returnTo or default to home
+        router.push(returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/');
       }
     } catch (err) {
       setError(mapAuthError(err));
@@ -67,12 +67,11 @@ export default function FindrAuth() {
 
       // Store the current origin in sessionStorage so callback knows where to return
       sessionStorage.setItem('oauth_origin', window.location.origin);
-      sessionStorage.setItem('oauth_app', 'findr');
+      sessionStorage.setItem('oauth_app', 'godaisy');
 
       // Determine the correct redirect URL
-      // In production, always use the fishfindr.eu domain
       const origin = window.location.origin;
-      const redirectTo = `${origin}/auth/callback?app=findr&origin=${encodeURIComponent(origin)}`;
+      const redirectTo = `${origin}/auth/callback?app=godaisy&origin=${encodeURIComponent(origin)}`;
 
       console.log('OAuth redirect will be:', redirectTo);
 
@@ -81,7 +80,7 @@ export default function FindrAuth() {
         options: {
           redirectTo,
           queryParams: {
-            // Force account picker for Google (consistent with Go Daisy UX)
+            // Force account picker for Google
             ...(provider === 'google' ? { prompt: 'select_account' } : {}),
           },
         },
@@ -97,19 +96,21 @@ export default function FindrAuth() {
   return (
     <>
       <Head>
-        <title>Sign In - findr</title>
+        <title>Sign In - Go Daisy</title>
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
           <div className="card-body">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="flex justify-center mb-4">
-                <Fish className="w-16 h-16 text-primary" />
+              <div className="flex justify-center gap-2 mb-4">
+                <Sun className="w-12 h-12 text-yellow-500" />
+                <Cloud className="w-12 h-12 text-blue-400" />
+                <Waves className="w-12 h-12 text-cyan-500" />
               </div>
-              <h1 className="text-3xl font-bold text-primary">findr</h1>
+              <h1 className="text-3xl font-bold text-primary">Go Daisy</h1>
               <p className="text-base-content/70 mt-2">
-                {mode === 'signin' ? 'Welcome back!' : 'Join the fishing community'}
+                {mode === 'signin' ? 'Welcome back!' : 'Join the outdoor adventure'}
               </p>
             </div>
 
@@ -163,28 +164,18 @@ export default function FindrAuth() {
                 </label>
                 <input
                   type="email"
-                  placeholder="fisher@example.com"
+                  placeholder="your@email.com"
                   className="input input-bordered"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
 
               <div className="form-control">
                 <label className="label">
                   <span className="label-text">Password</span>
-                  {mode === 'signin' && (
-                    <div className="label-text-alt space-x-2">
-                      <Link href="/findr/reset-password" className="link link-hover">
-                        Reset password
-                      </Link>
-                      <span>|</span>
-                      <Link href="/findr/quick-reset" className="link link-hover">
-                        Magic link 🪄
-                      </Link>
-                    </div>
-                  )}
                 </label>
                 <input
                   type="password"
@@ -193,8 +184,15 @@ export default function FindrAuth() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  disabled={loading}
                 />
+                {mode === 'signin' && (
+                  <label className="label">
+                    <Link href="/auth/reset" className="label-text-alt link link-hover">
+                      Forgot password?
+                    </Link>
+                  </label>
+                )}
               </div>
 
               <button
@@ -203,11 +201,14 @@ export default function FindrAuth() {
                 disabled={loading}
               >
                 {loading ? (
-                  <span className="loading loading-spinner"></span>
+                  <>
+                    <span className="loading loading-spinner"></span>
+                    Loading...
+                  </>
                 ) : mode === 'signin' ? (
                   'Sign In'
                 ) : (
-                  'Create Account'
+                  'Sign Up'
                 )}
               </button>
             </form>
@@ -216,7 +217,7 @@ export default function FindrAuth() {
             <div className="text-center mt-4">
               <button
                 onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-                className="btn btn-link btn-sm"
+                className="link link-hover text-sm"
                 disabled={loading}
               >
                 {mode === 'signin'
@@ -224,21 +225,9 @@ export default function FindrAuth() {
                   : 'Already have an account? Sign in'}
               </button>
             </div>
-
-            {/* Back to findr */}
-            <div className="text-center mt-2">
-              <Link href="/findr" className="btn btn-ghost btn-sm">
-                ← Back to findr
-              </Link>
-            </div>
           </div>
         </div>
       </div>
     </>
   );
-}
-
-// Disable static generation for auth page
-export async function getServerSideProps() {
-  return { props: {} };
 }

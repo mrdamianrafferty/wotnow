@@ -2,15 +2,27 @@
 
 ## Current Issue
 
-Google and Apple OAuth login are failing because the redirect is going to the Supabase domain instead of your actual domain (fishfindr.eu).
+Google and Apple OAuth login are failing because **GoDaisy and FishFindr share the same Supabase project** but have different domains (godaisy.io and fishfindr.eu). The Supabase Site URL can only be set to one domain.
 
-## Root Cause
+## Solution
 
-The **Supabase Site URL** is not configured correctly in the Supabase Dashboard. When not configured, Supabase defaults to redirecting to `[project-ref].supabase.co` instead of your custom domain.
+The OAuth callback handler now uses **domain detection and sessionStorage** to route users back to the correct app after authentication.
+
+## How It Works
+
+1. **User clicks OAuth button** on either GoDaisy or FishFindr
+2. **App stores context** in sessionStorage (origin domain + app name)
+3. **OAuth flow completes** via Supabase
+4. **Callback handler detects** which app initiated the flow
+5. **User redirected** to correct domain and app
+
+This allows both apps to share authentication while maintaining separate user experiences.
 
 ## Fix Steps
 
 ### 1. Configure Supabase Site URL
+
+**Important**: Since GoDaisy and FishFindr share the same Supabase project, set the Site URL to your **primary domain** (the one you use most or want as default).
 
 1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
 2. Select your project: `swmviqpxetwziqxhzldh`
@@ -18,14 +30,28 @@ The **Supabase Site URL** is not configured correctly in the Supabase Dashboard.
 4. Set the following:
 
 #### Site URL
+Choose ONE (recommendation: use your primary domain):
+```
+https://www.godaisy.io
+```
+OR
 ```
 https://fishfindr.eu
 ```
 
-#### Redirect URLs (Add all of these)
+**Note**: The Site URL is used as a fallback when no `redirectTo` is specified. Our code explicitly sets `redirectTo` for each app, so this mainly affects email confirmations and password resets.
+
+#### Redirect URLs (Add ALL of these)
 ```
+https://www.godaisy.io/auth/callback
+https://godaisy.io/auth/callback
 https://fishfindr.eu/auth/callback
+https://www.fishfindr.eu/auth/callback
 https://fishfindr.eu/findr/magic-link
+https://www.godaisy.io/*
+https://godaisy.io/*
+https://fishfindr.eu/**
+https://www.fishfindr.eu/**
 http://localhost:3000/auth/callback
 http://localhost:3000/findr/auth
 ```
@@ -90,13 +116,23 @@ If Apple OAuth doesn't work after step 1:
 
 ## Testing After Configuration
 
+### For FishFindr:
 1. **Clear browser cookies** for fishfindr.eu
 2. Go to https://fishfindr.eu/findr/auth
-3. Click "Continue with Google"
+3. Click "Continue with Google" or "Continue with Apple"
 4. You should see:
-   - Google account picker
-   - After selection, redirect to `https://fishfindr.eu/auth/callback?code=...`
+   - Google/Apple account picker
+   - After selection, redirect to `https://fishfindr.eu/auth/callback?code=...&app=findr&origin=...`
    - Then redirect to `https://fishfindr.eu/findr`
+
+### For GoDaisy:
+1. **Clear browser cookies** for godaisy.io
+2. Go to https://www.godaisy.io/login
+3. Click "Continue with Google" or "Continue with Apple"
+4. You should see:
+   - Google/Apple account picker
+   - After selection, redirect to `https://www.godaisy.io/auth/callback?code=...&app=godaisy&origin=...`
+   - Then redirect to `https://www.godaisy.io/`
 
 ## Common Issues
 
@@ -129,20 +165,34 @@ These should already be set correctly.
 
 ## Debug Checklist
 
-- [ ] Site URL set to `https://fishfindr.eu` in Supabase Dashboard
-- [ ] Redirect URLs include `https://fishfindr.eu/auth/callback` in Supabase Dashboard
+- [ ] Site URL set to either `https://www.godaisy.io` OR `https://fishfindr.eu` in Supabase Dashboard
+- [ ] Redirect URLs include BOTH GoDaisy and FishFindr callback URLs in Supabase Dashboard
 - [ ] Google OAuth provider is enabled in Supabase
 - [ ] Apple OAuth provider is enabled in Supabase
 - [ ] Google Cloud Console has Supabase callback URL authorized
 - [ ] Apple Developer has Supabase callback URL authorized
 - [ ] Browser cookies cleared
 - [ ] Tested on production (not localhost)
+- [ ] SessionStorage is working (check browser dev tools → Application → Session Storage)
 
 ## Files in This Project
 
-- `/pages/auth/callback.tsx` - OAuth callback handler ✅ Created
-- `/pages/findr/auth.tsx` - Login page with OAuth buttons ✅ Correct
+- `/pages/auth/callback.tsx` - **Unified OAuth callback handler** for both GoDaisy and FishFindr ✅ Created
+- `/pages/findr/auth.tsx` - FishFindr login page with OAuth buttons ✅ Updated
+- `/pages/login.tsx` - **GoDaisy login page** with OAuth buttons ✅ Created
 - `/middleware.ts` - Routes OAuth callbacks correctly ✅ Correct
+
+## Key Implementation Details
+
+### Multi-Domain OAuth Support
+
+The callback handler (`/pages/auth/callback.tsx`) detects which app initiated the OAuth flow using:
+1. `?app=findr` or `?app=godaisy` query parameter
+2. `?origin=https://fishfindr.eu` or `?origin=https://www.godaisy.io` query parameter  
+3. SessionStorage values: `oauth_app` and `oauth_origin`
+4. Hostname detection (fishfindr.eu vs godaisy.io)
+
+This ensures users are always redirected back to the correct domain after authentication.
 
 ## Contact Support
 
