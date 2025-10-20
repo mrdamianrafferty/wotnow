@@ -65,10 +65,17 @@ export default function FindrAuth() {
       setLoading(true);
       setError(null);
 
+      // Determine the correct redirect URL
+      // In production, always use the fishfindr.eu domain
+      const origin = window.location.origin;
+      const redirectTo = `${origin}/auth/callback?app=findr`;
+
+      console.log('OAuth redirect will be:', redirectTo);
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?app=findr`,
+          redirectTo,
           queryParams: {
             // Force account picker for Google (consistent with Go Daisy UX)
             ...(provider === 'google' ? { prompt: 'select_account' } : {}),
