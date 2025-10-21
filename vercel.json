@@ -3,7 +3,10 @@
   "build": {
     "env": {
       "NEXT_TELEMETRY_DISABLED": "1",
-      "NODE_OPTIONS": "--max-old-space-size=4096"
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "VERCEL_FORCE_NO_BUILD_CACHE": "1",
+      "NPM_CONFIG_PLATFORM": "linux",
+      "NPM_CONFIG_ARCH": "x64"
     }
   },
   "functions": {
