@@ -27,7 +27,7 @@
       ]
     },
     {
-      "source": "/_next/static/chunks/pages/auth/callback-*.js",
+      "source": "/_next/static/chunks/pages/auth/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" }
       ]
