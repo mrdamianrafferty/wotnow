@@ -1,4 +1,5 @@
-import { Roboto, Indie_Flower } from 'next/font/google'
+// Temporarily disabled next/font to fix Vercel build
+// import { Roboto, Indie_Flower } from 'next/font/google'
 
 import '../styles/index.css'
 import '../styles/Card.css'
@@ -18,19 +19,20 @@ import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 // Optimize font loading with next/font
-const roboto = Roboto({
-  weight: ['300', '400', '500', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-roboto',
-})
+// Temporarily disabled to fix Vercel build
+// const roboto = Roboto({
+//   weight: ['300', '400', '500', '700'],
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-roboto',
+// })
 
-const indieFlower = Indie_Flower({
-  weight: '400',
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-indie-flower',
-})
+// const indieFlower = Indie_Flower({
+//   weight: '400',
+//   subsets: ['latin'],
+//   display: 'swap',
+//   variable: '--font-indie-flower',
+// })
 
 type ThemeName = 'light' | 'wotnow' | string;
 
@@ -109,7 +111,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
               <link rel="icon" type="image/x-icon" href="/findr-favicon/favicon.ico" />
               </Head>
               {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-              <div data-theme={theme} className={`min-h-screen bg-base-100 text-base-content ${roboto.variable} ${indieFlower.variable}`} style={{ fontFamily: 'var(--font-roboto), Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
+              <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
                 <Component {...pageProps} />
               </div>
             </UnifiedLocationProvider>
