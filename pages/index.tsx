@@ -334,7 +334,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   }, [coastalLocation, homeLocation]);
 
   useEffect(() => {
-    if (!weatherData || marineHours.length === 0) return;
+    if (!weatherData || !weatherData.list || marineHours.length === 0) return;
 
     // Now build forecastByDay using weatherData and marineHours
     const grouped: Record<string, WeatherWithPollen['list']> = {};
