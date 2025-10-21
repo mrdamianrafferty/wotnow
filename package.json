@@ -4,7 +4,7 @@
   "scripts": {
     "prebuild": "echo 'Skipping lint for deployment'",
     "prevercel-build": "echo 'Skipping lint for deployment'",
-    "postinstall": "git config core.hooksPath .githooks || true",
+    "postinstall": "npm rebuild sharp || true && git config core.hooksPath .githooks || true",
     "dev": "node ./scripts/ensure-next-manifests.js && next dev",
     "build": "next build",
     "postbuild": "echo 'Skipping sitemap generation'",
@@ -22,7 +22,6 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:report": "playwright show-report",
-    "vercel-build": "./vercel-build.sh",
     "deploy": "./deploy.sh",
     "deploy:quick": "./quick-deploy.sh",
     "astro:canaries": "cd services/astro_highlights/astro_highlights && .venv/bin/python run_canaries.py",
