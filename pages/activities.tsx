@@ -1069,7 +1069,7 @@ export default function ActivitiesPage() {
         {/* Main Content */}
         {!needsLocation && !needsInterests && (
           <>
-            {loading ? (
+            {(loading || isHydrating) ? (
               <div className="px-4 py-8">
                 <SkeletonActivityGrid count={12} />
               </div>
