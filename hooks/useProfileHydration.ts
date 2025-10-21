@@ -113,19 +113,7 @@ export function useProfileHydration() {
         const hasRemoteCoast = isFiniteNumber(profile.coast_lat) && isFiniteNumber(profile.coast_lon);
         const spotNames = getSpotNamesFromProfileJson(profile.preferences_json);
 
-        console.log('[Profile Hydration] Remote profile data:', {
-          remoteActivities,
-          hasRemoteInterests,
-          hasRemoteHome,
-          hasRemoteCoast,
-          spotNames
-        });
-
         setPreferences(prev => {
-          console.log('[Profile Hydration] Current preferences:', {
-            interests: prev.interests,
-            locations: prev.locations
-          });
           const prevInterests = Array.isArray(prev.interests) ? prev.interests : [];
           const interestsChanged = hasRemoteInterests && (
             prevInterests.length !== remoteActivities.length ||
@@ -172,7 +160,6 @@ export function useProfileHydration() {
           });
 
           if (!interestsChanged && !locationsChanged) {
-            console.log('[Profile Hydration] No changes detected, keeping current preferences');
             return prev;
           }
 
@@ -181,13 +168,6 @@ export function useProfileHydration() {
             interests: hasRemoteInterests ? remoteActivities : prevInterests,
             locations: locationsChanged ? nextLocations : prevLocations,
           };
-
-          console.log('[Profile Hydration] Updating preferences:', {
-            interestsChanged,
-            locationsChanged,
-            nextInterests: nextPreferences.interests,
-            nextLocations: nextPreferences.locations
-          });
 
           try {
             localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(nextPreferences));
