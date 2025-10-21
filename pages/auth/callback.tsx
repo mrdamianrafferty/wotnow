@@ -75,7 +75,9 @@ function getDestination(params: {
     origin?.includes('fishfindr.eu') ||
     storedOrigin?.includes('fishfindr.eu');
 
-  return isFindrFlow ? '/findr' : '/';
+  const destination = isFindrFlow ? '/findr' : '/';
+  console.log('[OAuth Debug] getDestination result:', { destination, isFindrFlow, app, hostname, origin });
+  return destination;
 }
 
 export default function AuthCallback() {
@@ -144,6 +146,7 @@ export default function AuthCallback() {
             console.log('[OAuth Debug] Checked for existing session:', { hasSession: !!existingSession?.session, user: existingSession?.session?.user?.email });
             if (existingSession?.session) {
               console.log('[OAuth Debug] Session already exists! Skipping code exchange.');
+              console.log('[OAuth Debug] Session user:', existingSession.session.user?.email);
               setPhase(Phase.Done);
               const destination = getDestination({
                 returnTo,
@@ -152,11 +155,14 @@ export default function AuthCallback() {
                 hostname: window.location.hostname,
                 origin,
               });
-              console.log('[OAuth Debug] Redirecting to:', destination);
+              console.log('[OAuth Debug] Determined destination:', destination);
+              console.log('[OAuth Debug] Current URL:', window.location.href);
+              console.log('[OAuth Debug] Query params:', { returnTo, app, origin });
               sessionStorage.removeItem('oauth_origin');
               sessionStorage.removeItem('oauth_app');
               // Use window.location.replace to prevent back button issues
               // This also removes the OAuth code from URL to prevent redirect loops
+              console.log('[OAuth Debug] About to redirect to:', destination);
               window.location.replace(destination);
               return;
             }
