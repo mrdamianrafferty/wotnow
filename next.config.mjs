@@ -19,12 +19,30 @@ const nextConfig = {
   },
   
   // Webpack configuration
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
     // Exclude WIP files with syntax errors
     config.module.rules.push({
       test: /\/(generateInsights|get-insights)\.ts$/,
       use: 'null-loader',
     });
+
+    // Help Vercel handle native modules in @tailwindcss/postcss
+    // This doesn't change CSS/Tailwind processing, just module resolution
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+      };
+    }
+
+    // Ignore optional native bindings that may not be available in Vercel's environment
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^lightningcss-linux-x64-gnu$/,
+        contextRegExp: /@tailwindcss\/postcss/,
+      })
+    );
 
     return config;
   },
