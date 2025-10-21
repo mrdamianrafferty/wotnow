@@ -33,6 +33,7 @@ import BottomNav from '../components/BottomNav';
 import { SkeletonActivityGrid } from '../components/SkeletonLoader';
 import SEO from '../components/SEO';
 import { useHasMounted } from '../utils/useHasMounted';
+import { useProfileHydration } from '../hooks/useProfileHydration';
 import { getActivityMessage } from '../data/activityMessages';
 import { buildReasons, isOutdoor, isOutOfSeason } from '../utils/activityHelpers';
 import {
@@ -644,6 +645,7 @@ export default function ActivitiesPage() {
   // =============================================================================
   
   const hasMounted = useHasMounted();
+  const { isHydrating } = useProfileHydration();
   const { preferences } = useUserPreferences();
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
@@ -962,8 +964,8 @@ export default function ActivitiesPage() {
     return b.score - a.score;
   });
 
-  // Pre-hydration loading state
-  if (!hasMounted) {
+  // Pre-hydration or profile loading state
+  if (!hasMounted || isHydrating) {
     return (
       <>
         <AppHeader
@@ -975,7 +977,7 @@ export default function ActivitiesPage() {
         <section className="flex items-center justify-center py-16">
           <div className="flex items-center">
             <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
-            <span className="ml-3 text-base-content/80">Planning perfect days</span>
+            <span className="ml-3 text-base-content/80">Loading your activities</span>
           </div>
         </section>
         <BottomNav />

@@ -110,9 +110,12 @@ function normalisePreferences(value: unknown): Preferences {
 
   const parsed = value as Partial<Preferences>;
   const validIds = new Set(activityTypes.map(a => a.id));
-  const interests = Array.isArray(parsed.interests)
+  const parsedInterests = Array.isArray(parsed.interests)
     ? parsed.interests.filter((id): id is string => typeof id === 'string' && validIds.has(id))
     : [];
+  
+  // Use default interests if none are saved
+  const interests = parsedInterests.length > 0 ? parsedInterests : [...DEFAULT_INTEREST_IDS];
 
   const rawLocations = Array.isArray(parsed.locations) ? parsed.locations : [];
   const locations: Location[] = rawLocations
