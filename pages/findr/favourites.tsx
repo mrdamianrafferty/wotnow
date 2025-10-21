@@ -22,7 +22,8 @@ import {
   LogIn,
   UserPlus,
 } from 'lucide-react';
-import { Montserrat } from 'next/font/google';
+// Temporarily disabled next/font to fix Vercel build
+// import { Montserrat } from 'next/font/google';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase/client';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
@@ -60,11 +61,12 @@ const WaitingSpeciesCard = dynamic(
 
 const TODAY_ISO = getTodayIso();
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-  display: 'swap',
-});
+// Temporarily disabled next/font to fix Vercel build
+// const montserrat = Montserrat({
+//   subsets: ['latin'],
+//   weight: ['300', '400', '500', '600', '700', '800', '900'],
+//   display: 'swap',
+// });
 
 // Species code aliases - maps incorrect database codes to correct SPECIES_IMAGE_MAP codes
 // This fixes legacy data where species were stored with wrong codes
@@ -1155,7 +1157,7 @@ const FindrFavouritesPage: React.FC = () => {
           opacity: 1;
         }
       `}</style>
-      <main className={`${montserrat.className} min-h-screen bg-base-200 pb-16`}>
+      <main className="min-h-screen bg-base-200 pb-16" style={{ fontFamily: 'Montserrat, system-ui, -apple-system, sans-serif' }}>
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />
         
