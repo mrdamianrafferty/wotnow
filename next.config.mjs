@@ -146,10 +146,11 @@ const pwaConfig = withPWA({
   ],
 });
 
-const sentryEnabled = Boolean(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT);
+const hasSentryCredentials = Boolean(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT);
+const sentryUploadsEnabled = process.env.SENTRY_UPLOAD_SOURCEMAPS === 'true' && hasSentryCredentials;
 
 const withOptionalSentry = (config) => {
-  if (!sentryEnabled) {
+  if (!sentryUploadsEnabled) {
     return config;
   }
 
