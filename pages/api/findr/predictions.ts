@@ -12,6 +12,7 @@ interface PredictionRequestBody {
   bypassCache?: boolean; // Debug flag to skip cache
   latitude?: number; // Optional user latitude for substrate/depth scoring
   longitude?: number; // Optional user longitude for substrate/depth scoring
+  regionCode?: string; // Optional explicit NA region code for region-aware overrides
 }
 
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -230,6 +231,54 @@ function buildLocalizedNamePayload(row: SpeciesLocalizationRow): LocalizedNameMa
   }
 
   return Object.fromEntries(defined) as LocalizedNameMap;
+}
+
+// --- Offline country + NA region inference (no external API) ---
+function inferCountryISOFromLatLon(lat: number, lon: number): 'US' | 'CA' | 'MX' | null {
+  const normalizedLon = ((lon + 180) % 360 + 360) % 360 - 180;
+
+  const inCONUS = lat >= 24 && lat <= 49 && normalizedLon >= -125 && normalizedLon <= -66;
+  const inAlaska = lat >= 51 && lat <= 72 && normalizedLon >= -170 && normalizedLon <= -129;
+  const inHawaii = lat >= 18 && lat <= 23 && normalizedLon >= -161 && normalizedLon <= -154;
+  const inPuertoRico = lat >= 17.5 && lat <= 18.6 && normalizedLon >= -67.5 && normalizedLon <= -65.2;
+  if (inCONUS || inAlaska || inHawaii || inPuertoRico) return 'US';
+
+  const inCanada = lat >= 42 && lat <= 84 && normalizedLon >= -141 && normalizedLon <= -52;
+  if (inCanada) return 'CA';
+
+  const inMexico = lat >= 14 && lat <= 33 && normalizedLon >= -118 && normalizedLon <= -86;
+  if (inMexico) return 'MX';
+
+  return null;
+}
+
+function mapNARegionCode(
+  lat: number,
+  lon: number,
+  country: 'US' | 'CA' | 'MX'
+): 'us_pac' | 'us_atl' | 'gom' | 'ca_pac' | 'ca_atl' | 'mx_pac' {
+  const normalizedLon = ((lon + 180) % 360 + 360) % 360 - 180;
+
+  if (country === 'US') {
+    const inHawaii = lat >= 18 && lat <= 23 && normalizedLon >= -161 && normalizedLon <= -154;
+    const inAlaska = lat >= 51 && lat <= 72 && normalizedLon >= -170 && normalizedLon <= -129;
+    if (inHawaii || inAlaska) return 'us_pac';
+
+    const inGulfBand = lat >= 18 && lat <= 31.5 && normalizedLon >= -98 && normalizedLon <= -80;
+    const westOfDivide = normalizedLon <= -100;
+
+    if (inGulfBand) return 'gom';
+    if (westOfDivide) return 'us_pac';
+    return 'us_atl';
+  }
+
+  if (country === 'CA') {
+    const pacific = normalizedLon <= -124 && lat >= 48;
+    return pacific ? 'ca_pac' : 'ca_atl';
+  }
+
+  const pacificMX = normalizedLon <= -105;
+  return pacificMX ? 'mx_pac' : 'gom';
 }
 
 async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promise<unknown> {
@@ -477,6 +526,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const bypassCache = Boolean(body.bypassCache);
   const userLat = typeof body.latitude === 'number' ? body.latitude : null;
   const userLon = typeof body.longitude === 'number' ? body.longitude : null;
+  // Optional explicit NA region code for region-aware overrides (e.g., 'us_atl','gom','us_pac','ca_atl','ca_pac','mx_pac')
+  const regionCode = typeof body.regionCode === 'string' && body.regionCode.trim().length > 0
+    ? body.regionCode.trim().toLowerCase()
+    : null;
+
+  // Infer NA region code if not provided and lat/lon are available
+  let inferredRegionCode: string | null = null;
+  if (!regionCode && userLat != null && userLon != null) {
+    const iso = inferCountryISOFromLatLon(userLat, userLon);
+    if (iso === 'US' || iso === 'CA' || iso === 'MX') {
+      inferredRegionCode = mapNARegionCode(userLat, userLon, iso);
+      console.log('[Findr API] Inferred NA regionCode from lat/lon:', { iso, inferredRegionCode });
+    } else {
+      // Outside US/CA/MX -> treat as EU (no NA overrides)
+      inferredRegionCode = null;
+    }
+  }
 
   if (!rectangleCode) {
     return res.status(400).json({ error: 'rectangleCode is required' });
@@ -521,11 +587,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Add timeout to the RPC call for Vercel
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('RPC timeout after 25 seconds')), 25000)
-    );
-
     // **OPTIMIZATION 1: Parallelize rectangle and EMODnet queries**
     // Fetch all required data in parallel instead of sequentially
     const [rectangleResult, emodnetResult] = await timedParallelQueries([
@@ -615,36 +676,73 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       user_lon: userLon,
       user_substrate: substrateData?.substrate,
       user_depth_m: bathymetryData?.depth_meters,
+      region_code: regionCode ?? inferredRegionCode,
     });
 
-    // Always use enhanced function - it handles null lat/lon gracefully
-    // and provides better predictions (weather, substrate, depth scoring)
-    const rpcFunctionName = 'get_environmental_predictions_enhanced';
-    
-    const rpcParams = {
-      target_rectangle: rectangleCode,
-      target_date: predictionDate,
-      user_lat: userLat || null,  // Pass null if not provided - function handles this
-      user_lon: userLon || null,  // Pass null if not provided - function handles this
-      substrate_type: substrateData?.substrate || null,
-      depth_meters: bathymetryData?.depth_meters || null,
-      current_wind_speed_ms: currentWindSpeedMS,
-      current_pressure_hpa: currentPressureHPA,
-    };
-    
-    // **OPTIMIZATION 2: Add performance timing to RPC calls**
-    const { data, error: rpcError } = await queryWithTiming(
-      async () => {
-        const rpcPromise = supabase.rpc(rpcFunctionName, rpcParams);
-        const result = await Promise.race([
-          rpcPromise, 
-          timeoutPromise
-        ]) as { data: unknown; error: PostgrestError | null };
-        return result;
+    // Prefer the region-aware + i18n RPC; fall back to the existing enhanced one if unavailable
+    const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
+      {
+        name: 'get_fishing_predictions_v2',
+        params: {
+          target_rectangle: rectangleCode,
+          target_date: predictionDate,
+          p_lang: language,
+          p_region_code: regionCode ?? inferredRegionCode, // null => base rows (no overrides)
+        },
       },
-      'rpc_get_predictions_enhanced'
-    );
+      {
+        name: 'get_environmental_predictions_enhanced',
+        params: {
+          target_rectangle: rectangleCode,
+          target_date: predictionDate,
+          user_lat: userLat || null,
+          user_lon: userLon || null,
+          substrate_type: substrateData?.substrate || null,
+          depth_meters: bathymetryData?.depth_meters || null,
+          current_wind_speed_ms: currentWindSpeedMS,
+          current_pressure_hpa: currentPressureHPA,
+        },
+      },
+    ];
+    
+    let data: unknown = null;
+    let rpcError: PostgrestError | null = null;
 
+    for (const candidate of rpcCandidates) {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`RPC ${candidate.name} timeout after 25 seconds`)), 25000)
+      );
+    
+      const attempt = await queryWithTiming(
+        async () => {
+          const rpcPromise = supabase.rpc(candidate.name, candidate.params);
+          const result = await Promise.race([rpcPromise, timeoutPromise]) as { data: unknown; error: PostgrestError | null };
+          return result;
+        },
+        `rpc_${candidate.name}`
+      );
+    
+      data = attempt.data;
+      rpcError = attempt.error;
+    
+      if (!rpcError) {
+        console.log('[Findr API] RPC succeeded:', candidate.name, {
+          dataType: Array.isArray(data) ? 'array' : typeof data,
+          dataLength: Array.isArray(data) ? data.length : 'N/A',
+        });
+        break;
+      } else {
+        console.warn('[Findr API] RPC failed, will try next candidate if any:', {
+          candidate: candidate.name,
+          code: rpcError.code,
+          message: rpcError.message,
+        });
+        // If function is missing (42P01 or 42883), continue to next; otherwise break
+        if (!(rpcError.code === '42P01' || rpcError.code === '42883')) {
+          break;
+        }
+      }
+    }
     console.log('[Findr API] RPC response via client:', {
       hasError: Boolean(rpcError),
       errorCode: rpcError?.code,
@@ -714,4 +812,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Unexpected server error', details: (error as Error).message });
   }
 }
-

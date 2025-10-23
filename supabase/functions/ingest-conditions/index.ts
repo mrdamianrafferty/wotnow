@@ -17,14 +17,19 @@ if (!SUPABASE_URL || !SERVICE_KEY) {
   throw new Error("Supabase credentials are not configured for the ingest-conditions function");
 }
 
+type IngestRequestPayload = {
+  bbox?: [number, number, number, number];
+  providers?: string[];
+  vars?: string[];
+  limit?: number;
+};
+
 serve(async (req) => {
-  // Parse request body (Edge Functions pass Request)
-  let payload: any = {};
-  try {
-    payload = await req.json();
-  } catch (_e) {
-    payload = {};
-  }
+  const rawPayload = await req.json().catch(() => null);
+  const payload: IngestRequestPayload =
+    rawPayload && typeof rawPayload === "object"
+      ? (rawPayload as IngestRequestPayload)
+      : {};
 
   const bbox = Array.isArray(payload?.bbox) && payload.bbox.length === 4
     ? (payload.bbox as [number, number, number, number])
@@ -130,16 +135,14 @@ async function fetchAndSampleProviders(
   const [noaaSamples = [], cmemsSamples = []] = providerResults.length === 2 ? providerResults : [providerResults[0] ?? [], providerResults[1] ?? []];
 
   for (const sample of [...noaaSamples, ...cmemsSamples]) {
-    const existing = aggregator.get(sample.cell_id) ?? { cell_id: sample.cell_id };
-
+    const existing: ConditionRow = aggregator.get(sample.cell_id) ?? { cell_id: sample.cell_id };
     if (sample.collected_at && (!existing.collected_at || existing.collected_at < sample.collected_at)) {
       existing.collected_at = sample.collected_at;
     }
 
-    for (const [key, value] of Object.entries(sample.values)) {
+    for (const [key, value] of Object.entries(sample.values) as Array<[keyof ConditionRow, ConditionRow[keyof ConditionRow]]>) {
       if (value !== undefined) {
-        // deno-lint-ignore no-explicit-any
-        (existing as Record<string, any>)[key] = value;
+        existing[key] = value;
       }
     }
 
@@ -184,7 +187,6 @@ const NOAA_VARIABLE = (() => {
 })();
 const NOAA_DEPTH_DIMENSION = env.NOAA_ERDDAP_DEPTH_DIMENSION ?? "zlev";
 const NOAA_DEPTH_VALUE = env.NOAA_ERDDAP_DEPTH_VALUE ?? "0";
-const NOAA_LOOKBACK_HOURS = Number(env.NOAA_ERDDAP_LOOKBACK_HOURS ?? "2160"); // 90 days
 const NOAA_SEARCH_RADIUS = Number(env.NOAA_ERDDAP_SEARCH_RADIUS ?? "0.25");
 const NOAA_CONCURRENCY = Number(env.NOAA_ERDDAP_CONCURRENCY ?? "4");
 const NOAA_INTERFACE = (env.NOAA_ERDDAP_INTERFACE ?? "griddap").toLowerCase();
@@ -343,12 +345,12 @@ async function fetchCmemsMetrics(cells: GridCell[], vars: string[], diagnostics?
 
   // Filter requested variables to those we support
   const requestedSet = new Set(vars);
-  const filteredVarEntries = Object.entries(CMEMS_VARIABLE_MAP).filter(([k, v]) => requestedSet.has(v));
+  const filteredVarEntries = Object.entries(CMEMS_VARIABLE_MAP).filter(([, mappedField]) => requestedSet.has(mappedField));
   if (filteredVarEntries.length === 0) {
     console.log("CMEMS: no requested variables matched supported map; skipping");
     return [];
   }
-  const varList = filteredVarEntries.map(([k]) => k);
+  const varList = filteredVarEntries.map(([variableKey]) => variableKey);
   const fieldMap: Record<string, keyof ConditionRow> = Object.fromEntries(filteredVarEntries) as Record<string, keyof ConditionRow>;
 
   const authHeader = "Basic " + btoa(`${CMEMS_USERNAME}:${CMEMS_PASSWORD}`);
