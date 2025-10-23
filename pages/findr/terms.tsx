@@ -128,8 +128,8 @@ export default function FindrTermsAndConditions() {
             </p>
             <p className="text-sm mt-2">
               <TranslatedText text="Questions? Contact us at" />{" "}
-              <a href="mailto:hello@godaisy.com" className="link">
-                hello@godaisy.com
+              <a href="mailto:hello@fishfindr.eu" className="link">
+                hello@fishfindr.eu
               </a>
             </p>
           </div>

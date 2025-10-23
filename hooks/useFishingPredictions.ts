@@ -9,6 +9,20 @@ export interface FishingPrediction {
   species_id?: string;
   species_common_name?: string;
   confidence?: number;
+  bite_score?: number;
+  bio_band_score?: number;
+  temp_score?: number;
+  substrate_score?: number;
+  depth_score?: number;
+  light_score?: number;
+  habitat_bonus?: number;
+  lunar_score?: number;
+  weather_score?: number;
+  freshness_score?: number;
+  completeness_score?: number;
+  moon_phase?: string;
+  moon_illumination?: number;
+  biogeographic_regions?: JsonValue;
   rationale?: JsonValue;
 }
 

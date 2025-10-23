@@ -11,19 +11,19 @@
   "categories": ["sports", "weather", "lifestyle"],
   "icons": [
     {
-      "src": "/findr-favicon/web-app-manifest-192x192.png",
+      "src": "/findr-favicon-v2/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/findr-favicon/web-app-manifest-512x512.png",
+      "src": "/findr-favicon-v2/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/findr-favicon/apple-touch-icon.png",
+      "src": "/findr-favicon-v2/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"

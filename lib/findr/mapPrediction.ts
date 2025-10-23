@@ -72,6 +72,22 @@ export interface CardData {
   playfulBio?: string;
   localizedNames?: LocalizedSpeciesNames;
   advice?: SpeciesAdvice[];
+  biteScore?: number | null;
+  scoreBreakdown?: {
+    bio?: number | null;
+    temperature?: number | null;
+    substrate?: number | null;
+    depth?: number | null;
+    light?: number | null;
+    habitat?: number | null;
+    lunar?: number | null;
+    weather?: number | null;
+    freshness?: number | null;
+    completeness?: number | null;
+  };
+  moonPhase?: string | null;
+  moonIllumination?: number | null;
+  biogeographicRegions?: string[] | null;
   
   // User-friendly species characteristics extracted from preferences
   depthRange?: string;    // e.g., "5-30m" or "Shallow coastal (0-20m)"
@@ -346,6 +362,24 @@ function parseLocalizedSpeciesNames(value: JsonValue | undefined): LocalizedSpec
   return Object.keys(names).length > 0 ? names : undefined;
 }
 
+function parseStringArray(value: JsonValue | undefined): string[] | undefined {
+  if (!value) return undefined;
+  if (Array.isArray(value)) {
+    const entries = value
+      .map((entry) => firstString(entry as JsonValue))
+      .filter((entry): entry is string => Boolean(entry && entry.trim().length > 0));
+    return entries.length > 0 ? entries : undefined;
+  }
+  if (typeof value === 'string') {
+    const parts = value
+      .split(/[,;]/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts : undefined;
+  }
+  return undefined;
+}
+
 function extractNumber(value: JsonValue | undefined): number | null {
   if (value == null) return null;
   if (typeof value === 'number') return value;
@@ -381,6 +415,7 @@ function parseConfidence(prediction: FishingPrediction): number | null {
     'confidenceScore',
     'probability',
     'score',
+    'bite_score',
   ];
 
   for (const key of candidateKeys) {
@@ -583,6 +618,27 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     : undefined;
 
   // Phase 10: Extract environmental data
+  const biteScoreValue = extractNumber(prediction.bite_score);
+  const scoreBreakdownRaw: CardData['scoreBreakdown'] = {
+    bio: extractNumber(prediction.bio_band_score),
+    temperature: extractNumber(prediction.temp_score),
+    substrate: extractNumber(prediction.substrate_score),
+    depth: extractNumber(prediction.depth_score),
+    light: extractNumber(prediction.light_score),
+    habitat: extractNumber(prediction.habitat_bonus),
+    lunar: extractNumber(prediction.lunar_score),
+    weather: extractNumber(prediction.weather_score),
+    freshness: extractNumber(prediction.freshness_score),
+    completeness: extractNumber(prediction.completeness_score),
+  };
+  const hasScoreBreakdown = Object.values(scoreBreakdownRaw ?? {}).some((value) => value != null);
+
+  const moonPhase = firstString(prediction.moon_phase) || firstString(prediction.moonPhase) || null;
+  const moonIlluminationValue = extractNumber(prediction.moon_illumination);
+  const biogeographicRegions =
+    parseStringArray(prediction.biogeographic_regions as JsonValue | undefined) ??
+    parseStringArray(prediction.biogeographicRegions as JsonValue | undefined);
+
   const data_freshness = firstString(prediction.data_freshness) as CardData['data_freshness'];
   const weight_profile = firstString(prediction.weight_profile) as CardData['weight_profile'];
   
@@ -657,8 +713,13 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     
     // Extract user-friendly species characteristics
     depthRange: formatDepthRange(prediction),
-    seasonality: formatSeasonality(prediction),
-    habitatType: formatHabitatType(prediction),
+   seasonality: formatSeasonality(prediction),
+   habitatType: formatHabitatType(prediction),
+    biteScore: biteScoreValue ?? undefined,
+    scoreBreakdown: hasScoreBreakdown ? scoreBreakdownRaw : undefined,
+    moonPhase: moonPhase ?? undefined,
+    moonIllumination: moonIlluminationValue ?? undefined,
+    biogeographicRegions: biogeographicRegions ?? undefined,
     
     // Weather data
     weather_score: extractNumber(prediction.weather_score),

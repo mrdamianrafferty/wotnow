@@ -749,7 +749,11 @@ const FindrPage: React.FC = () => {
     const mapped = predictions
       .map((prediction, index) => mapPrediction(prediction, index))
       .filter((card): card is CardData => card !== null)
-      .sort((a, b) => (b.confidence ?? -Infinity) - (a.confidence ?? -Infinity));
+      .sort((a, b) => {
+        const scoreB = b.biteScore ?? b.confidence ?? -Infinity;
+        const scoreA = a.biteScore ?? a.confidence ?? -Infinity;
+        return scoreB - scoreA;
+      });
     
     console.log('[Findr] Cards computed:', {
       rectangleCode: activeRectangle,
@@ -757,6 +761,7 @@ const FindrPage: React.FC = () => {
       cardCount: mapped.length,
       firstCardSpecies: mapped[0]?.commonName,
       firstCardConfidence: mapped[0]?.confidence,
+      firstCardBiteScore: mapped[0]?.biteScore,
     });
     
     return mapped;

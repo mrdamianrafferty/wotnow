@@ -737,8 +737,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           code: rpcError.code,
           message: rpcError.message,
         });
-        // If function is missing (42P01 or 42883), continue to next; otherwise break
-        if (!(rpcError.code === '42P01' || rpcError.code === '42883')) {
+        // If function is missing (42P01 or 42883) or has type mismatch (42804), continue to next; otherwise break
+        if (!(rpcError.code === '42P01' || rpcError.code === '42883' || rpcError.code === '42804')) {
           break;
         }
       }

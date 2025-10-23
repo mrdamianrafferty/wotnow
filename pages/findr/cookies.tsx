@@ -148,8 +148,8 @@ export default function FindrCookiePolicy() {
               <p className="font-semibold"><TranslatedText text="Questions about cookies?" /></p>
               <p className="text-sm">
                 <TranslatedText text="Contact us at" />{" "}
-                <a href="mailto:hello@godaisy.com" className="link">
-                  hello@godaisy.com
+                <a href="mailto:hello@fishfindr.eu" className="link">
+                  hello@fishfindr.eu
                 </a>
               </p>
             </div>

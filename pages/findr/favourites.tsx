@@ -174,6 +174,7 @@ interface FavouriteEntry {
   scientificName?: string;
   emoji: string;
   confidence: number | null;
+  biteScore?: number | null;
   bestBait: string;
   bestBaitSource: 'prediction' | 'mock' | 'supabase';
   season: string;
@@ -698,10 +699,20 @@ const FindrFavouritesPage: React.FC = () => {
     const mapped = predictions
       .map((prediction, index) => mapPrediction(prediction, index))
       .filter((card): card is CardData => card !== null)
-      .sort((a, b) => (b.confidence ?? -Infinity) - (a.confidence ?? -Infinity));
+      .sort((a, b) => {
+        const scoreB = b.biteScore ?? b.confidence ?? -Infinity;
+        const scoreA = a.biteScore ?? a.confidence ?? -Infinity;
+        return scoreB - scoreA;
+      });
     
     // Debug: Log what IDs the prediction cards actually have
-    console.log('[Findr Favourites] Prediction card IDs:', mapped.map(c => ({ id: c.id, code: c.speciesCode, name: c.commonName })));
+    console.log('[Findr Favourites] Prediction card IDs:', mapped.map(c => ({
+      id: c.id,
+      code: c.speciesCode,
+      name: c.commonName,
+      biteScore: c.biteScore,
+      confidence: c.confidence,
+    })));
     
     return mapped;
   }, [predictions]);
@@ -749,7 +760,7 @@ const FindrFavouritesPage: React.FC = () => {
       
       // ONLY use confidence from live prediction card, never from stale database metadata
       // This ensures we show real-time conditions, not outdated stored values
-      const derivedConfidence = card?.confidence ?? null;
+      const derivedConfidence = card?.biteScore ?? card?.confidence ?? null;
       
       const bestBait =
         bestBaitFromPrediction ??
@@ -784,6 +795,7 @@ const FindrFavouritesPage: React.FC = () => {
         scientificName,
         emoji: card?.emoji ?? '🐟',
         confidence: derivedConfidence,
+        biteScore: card?.biteScore ?? null,
         bestBait,
         bestBaitSource,
         season: deriveSeasonLabel(derivedConfidence, insight?.seasonLabel ?? mock.seasonFallback),

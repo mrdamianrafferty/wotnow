@@ -96,8 +96,8 @@ export default function FindrPrivacyPolicy() {
             </ul>
             <p className="text-base-content mt-2">
               <TranslatedText text="Contact us at" />{" "}
-              <a href="mailto:hello@godaisy.com" className="link">
-                hello@godaisy.com
+              <a href="mailto:hello@fishfindr.eu" className="link">
+                hello@fishfindr.eu
               </a>{" "}
               <TranslatedText text="to exercise any of these rights." />
             </p>
@@ -134,8 +134,8 @@ export default function FindrPrivacyPolicy() {
             </p>
             <p className="text-sm mt-2">
               <TranslatedText text="Questions about privacy? Contact us at" />{" "}
-              <a href="mailto:hello@godaisy.com" className="link">
-                hello@godaisy.com
+              <a href="mailto:hello@fishfindr.eu" className="link">
+                hello@fishfindr.eu
               </a>
             </p>
           </div>
