@@ -6,6 +6,32 @@ import { detectUserLocation, findNearestRectangles } from '../lib/findr/location
 import { useFindrRectangleOptions } from '../hooks/useFindrRectangleOptions';
 import { useUnifiedLocation } from '../context/UnifiedLocationContext';
 
+// Helper to get place name from coordinates using Google Maps reverse geocoding
+async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return null;
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`
+    );
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      // Get most specific place name (usually first result)
+      const result = data.results[0];
+      const locality = result.address_components?.find((c: { types: string[] }) =>
+        c.types.includes('locality') || c.types.includes('administrative_area_level_1')
+      );
+      return locality?.long_name || result.formatted_address?.split(',')[0] || null;
+    }
+    return null;
+  } catch (error) {
+    console.warn('[LocationPicker] Reverse geocode failed', error);
+    return null;
+  }
+}
+
 export function LocationPicker() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -30,7 +56,7 @@ export function LocationPicker() {
   // Auto-detect IP location if no location has been stored yet
   useEffect(() => {
     if (autodetectAttempted.current) return;
-    if (currentRectangle) return;
+    if (location?.lat && location?.lon) return; // Skip if we already have coordinates
     if (rectangleOptions.length === 0) return;
 
     autodetectAttempted.current = true;
@@ -41,9 +67,12 @@ export function LocationPicker() {
         const ipLocation = await detectUserLocation('ip');
         if (!ipLocation) return;
 
-        const nearest = findNearestRectangles(ipLocation, rectangleOptions);
-        if (!nearest) return;
+        const nearest = rectangleOptions.length > 0
+          ? findNearestRectangles(ipLocation, rectangleOptions)
+          : null;
 
+        if (nearest) {
+          // European waters: use ICES rectangle
           await updateLocation({
             coordinates: { lat: ipLocation.latitude, lon: ipLocation.longitude },
             rectangleCode: nearest.primary.code,
@@ -52,6 +81,18 @@ export function LocationPicker() {
             source: 'ip',
             accuracy: ipLocation.accuracy ?? 10000,
           });
+        } else {
+          // Non-European waters: use raw coordinates
+          const locationLabel = await reverseGeocode(ipLocation.latitude, ipLocation.longitude);
+          await updateLocation({
+            coordinates: { lat: ipLocation.latitude, lon: ipLocation.longitude },
+            rectangleCode: null,
+            rectangleRegion: null,
+            rectangleLabel: locationLabel || `${ipLocation.latitude.toFixed(2)}, ${ipLocation.longitude.toFixed(2)}`,
+            source: 'ip',
+            accuracy: ipLocation.accuracy ?? 10000,
+          });
+        }
       } catch (error) {
         console.warn('[LocationPicker] Auto-detect failed', error);
       } finally {
@@ -67,9 +108,14 @@ export function LocationPicker() {
       setIsDetecting(true);
       const gpsLocation = await detectUserLocation('gps');
 
-      if (gpsLocation && rectangleOptions.length > 0) {
-        const nearest = findNearestRectangles(gpsLocation, rectangleOptions);
+      if (gpsLocation) {
+        // Try to find nearest ICES rectangle (for European waters)
+        const nearest = rectangleOptions.length > 0
+          ? findNearestRectangles(gpsLocation, rectangleOptions)
+          : null;
+
         if (nearest) {
+          // European waters: use ICES rectangle
           await updateLocation({
             coordinates: { lat: gpsLocation.latitude, lon: gpsLocation.longitude },
             rectangleCode: nearest.primary.code,
@@ -78,8 +124,19 @@ export function LocationPicker() {
             source: 'gps',
             accuracy: gpsLocation.accuracy ?? 10,
           });
-          setIsOpen(false);
+        } else {
+          // Non-European waters: use raw coordinates without rectangle
+          const locationLabel = await reverseGeocode(gpsLocation.latitude, gpsLocation.longitude);
+          await updateLocation({
+            coordinates: { lat: gpsLocation.latitude, lon: gpsLocation.longitude },
+            rectangleCode: null,
+            rectangleRegion: null,
+            rectangleLabel: locationLabel || `${gpsLocation.latitude.toFixed(2)}, ${gpsLocation.longitude.toFixed(2)}`,
+            source: 'gps',
+            accuracy: gpsLocation.accuracy ?? 10,
+          });
         }
+        setIsOpen(false);
       }
     } catch (error) {
       console.error('[LocationPicker] GPS location failed', error);
@@ -144,7 +201,7 @@ export function LocationPicker() {
             <h3 className="font-medium text-gray-900 mb-3">Choose Your Fishing Area</h3>
             
             {/* Current Location Display */}
-            {currentRectangle && (
+            {(location?.lat && location?.lon) && (
               <div className="mb-3 p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -153,6 +210,7 @@ export function LocationPicker() {
                       {currentSource === 'gps' && 'GPS detected'}
                       {currentSource === 'ip' && 'IP detected'}
                       {currentSource === 'manual' && 'Manually selected'}
+                      {!currentRectangle && ' • Worldwide location'}
                     </p>
                   </div>
                   <span className="text-xl">{getLocationIcon()}</span>

@@ -203,8 +203,8 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
 
   const updateLocation = useCallback(
     async (input: UpdateLocationInput): Promise<UnifiedLocationRecord | null> => {
-      if (!input.coordinates && !input.rectangleCode && !location?.rectangleCode) {
-        setLastError('Cannot update location without coordinates or rectangle code');
+      if (!input.coordinates && !location?.lat && !location?.lon) {
+        setLastError('Cannot update location without coordinates');
         return null;
       }
 
@@ -218,21 +218,23 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
         let nextRectangleRegion = input.rectangleRegion ?? location?.rectangleRegion ?? null;
         let nextRectangleLabel = input.rectangleLabel ?? location?.rectangleLabel ?? null;
 
-        if ((input.resolveRectangle || !nextRectangleCode) && nextLat != null && nextLon != null) {
+        // Only resolve ICES rectangle if explicitly requested (for European waters)
+        // For non-European waters, allow locations without rectangleCode
+        if (input.resolveRectangle && nextLat != null && nextLon != null) {
           try {
             const metadata = await fetchRectangleMetadata(nextLat, nextLon);
             nextRectangleCode = metadata.rectangleCode;
             nextRectangleRegion = metadata.region;
             if (!nextRectangleLabel) {
-            nextRectangleLabel = `${metadata.rectangleCode} - ${metadata.region}`;
+              nextRectangleLabel = `${metadata.rectangleCode} - ${metadata.region}`;
             }
-            // Align coordinates with rectangle anchor for consistency
+            // Align coordinates with rectangle anchor for consistency (European waters only)
             nextLat = metadata.centerLat;
             nextLon = metadata.centerLon;
           } catch (resolveError) {
-            if (!nextRectangleCode) {
-              throw resolveError;
-            }
+            // Rectangle resolution failed (likely non-European location)
+            // Keep original coordinates and continue without rectangleCode
+            console.info('[UnifiedLocation] Rectangle resolution unavailable, using raw coordinates');
           }
         }
 
