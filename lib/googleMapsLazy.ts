@@ -52,10 +52,16 @@ export function loadGoogleMapsAPI(): Promise<void> {
     .then(() => {
       isLoaded = true;
       console.log('✅ Google Maps API loaded successfully');
+
+      // Dispatch event to notify hooks that Google Maps is ready
+      window.dispatchEvent(new Event('googleMapsLoaded'));
     })
     .catch((err) => {
       console.error('❌ Error loading Google Maps:', err);
       loadPromise = null; // Reset so user can retry
+
+      // Dispatch error event
+      window.dispatchEvent(new Event('googleMapsLoadError'));
       throw err;
     });
 

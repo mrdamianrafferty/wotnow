@@ -34,24 +34,35 @@ export function LocationDisplay() {
     setIsLookingUp(true);
 
     try {
-      // Look up which ICES rectangle contains this location
+      // Try to find ICES rectangle (European waters)
+      // If not found, use worldwide location with raw coordinates
       const res = await fetch(
         `/api/findr/rectangle-lookup?lat=${location.lat}&lon=${location.lon}`
       );
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to find fishing area');
+
+      let rectangleCode: string | null = null;
+      let region: string | null = null;
+      let distance: number | null = null;
+      let useRectangleCenter = false;
+
+      if (res.ok) {
+        // European waters - has ICES rectangle
+        const data = await res.json();
+        rectangleCode = data.rectangleCode;
+        region = data.region;
+        distance = data.distance;
+        useRectangleCenter = true;
+
+        console.log('[LocationDisplay] Found ICES rectangle:', {
+          rectangleCode,
+          region,
+          distance,
+          location,
+        });
+      } else {
+        // Non-European waters - use worldwide location
+        console.log('[LocationDisplay] No ICES rectangle, using worldwide location:', location);
       }
-      
-      const { rectangleCode, region, distance, centerLat, centerLon } = await res.json();
-      
-      console.log('[LocationDisplay] Found rectangle:', {
-        rectangleCode,
-        region,
-        distance,
-        location,
-      });
 
       const displayName =
         typeof distance === 'number' && distance > 10
@@ -59,7 +70,10 @@ export function LocationDisplay() {
           : location.name;
 
       const unified = await updateLocation({
-        coordinates: { lat: centerLat, lon: centerLon },
+        coordinates: {
+          lat: location.lat, // Keep user's chosen coordinates
+          lon: location.lon
+        },
         rectangleCode,
         rectangleRegion: region,
         rectangleLabel: displayName,
@@ -71,34 +85,50 @@ export function LocationDisplay() {
 
       // Close the picker
       setShowLocationPicker(false);
-      
-      const targetRectangle = unified?.rectangleCode ?? rectangleCode;
-      
-      // Only navigate if not already on conditions page
-      // Otherwise the context update will trigger a re-render automatically
+
+      // Navigate appropriately based on whether we have a rectangle
       if (router.pathname !== '/findr/conditions') {
-        await router.push(`/findr/conditions?rectangle=${targetRectangle}`, undefined, { shallow: false });
+        if (rectangleCode) {
+          // European - navigate with rectangle param
+          await router.push(`/findr/conditions?rectangle=${rectangleCode}`, undefined, { shallow: false });
+        } else {
+          // Worldwide - navigate without rectangle param
+          await router.push('/findr/conditions', undefined, { shallow: false });
+        }
       } else {
-        // Already on conditions page - just update URL query parameter
-        await router.replace(
-          {
-            pathname: router.pathname,
-            query: { ...router.query, rectangle: targetRectangle },
-          },
-          undefined,
-          { shallow: true }
-        );
+        // Already on conditions page - update URL if we have rectangle
+        if (rectangleCode) {
+          await router.replace(
+            {
+              pathname: router.pathname,
+              query: { ...router.query, rectangle: rectangleCode },
+            },
+            undefined,
+            { shallow: true }
+          );
+        } else {
+          // Remove rectangle param for worldwide locations
+          const { rectangle, ...restQuery } = router.query;
+          await router.replace(
+            {
+              pathname: router.pathname,
+              query: restQuery,
+            },
+            undefined,
+            { shallow: true }
+          );
+        }
       }
-      
+
       console.log('[LocationDisplay] Location updated successfully:', {
-        rectangleCode: targetRectangle,
+        rectangleCode,
         region,
+        worldwide: !rectangleCode,
         pathname: router.pathname,
-        navigated: router.pathname !== '/findr/conditions',
       });
     } catch (error) {
-      console.error('[LocationDisplay] Failed to look up rectangle:', error);
-      alert(`Could not find fishing area for this location: ${(error as Error).message}`);
+      console.error('[LocationDisplay] Failed to save location:', error);
+      alert(`Could not save location: ${(error as Error).message}`);
     } finally {
       setIsLookingUp(false);
     }
