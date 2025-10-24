@@ -1,0 +1,128 @@
+name: Ingest Copernicus BGC
+
+on:
+  schedule:
+    # every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      sample_date:
+        description: 'Optional sample date in YYYYMMDD (defaults to yesterday UTC)'
+        required: false
+
+jobs:
+  ingest:
+    name: Download & ingest Copernicus BGC
+    runs-on: ubuntu-latest
+    env:
+      COPERNICUS_USER: ${{ secrets.COPERNICUS_USER }}
+      COPERNICUS_PWD: ${{ secrets.COPERNICUS_PWD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install motuclient and Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install motuclient xarray fsspec s3fs zarr numpy netcdf4 dask pandas
+
+      - name: Try Copernicus Marine Toolbox (best-effort)
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          # try common package names for the Python API
+          pip install copernicusmarine || pip install copernicus-marine || true
+          python scripts/ci_copernicus_toolbox_fetch.py || true
+
+      - name: Download Copernicus BGC NetCDFs (with retries)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p data/copernicus
+
+          # compute sample date: use workflow_dispatch input if provided, otherwise yesterday UTC
+          SAMPLE_DATE="${{ github.event.inputs.sample_date }}"
+          if [ -z "$SAMPLE_DATE" ]; then
+            SAMPLE_DATE=$(date -u -d '1 day ago' +%Y%m%d)
+          fi
+          echo "Using SAMPLE_DATE=$SAMPLE_DATE"
+
+          try_cmd() {
+            n=0
+            until [ "$n" -ge 3 ]; do
+              if "$@"; then
+                return 0
+              fi
+              n=$((n+1))
+              sleep $((n*10))
+            done
+            return 1
+          }
+
+          # product download commands
+          try_cmd motuclient --user "$COPERNICUS_USER" --pwd "$COPERNICUS_PWD" --auth-mode basic \
+            --motu https://motu.cmems-motu.copernicus.eu/motu-web/Motu \
+            --service-id GLOBAL_ANALYSISFORECAST_BGC_001_028 \
+            --product-id cmems_mod_glo_bgc-pft_anfc_0.25deg_P1D-m_202311 \
+            --longitude-min -180 --longitude-max 180 --latitude-min -80 --latitude-max 90 \
+            --date-min "${SAMPLE_DATE} 00:00:00" --date-max "${SAMPLE_DATE} 00:00:00" \
+            --variable chl --variable phyc --variable nppv \
+            --out-dir data/copernicus --out-name cmems_pft_${SAMPLE_DATE}.nc
+
+          try_cmd motuclient --user "$COPERNICUS_USER" --pwd "$COPERNICUS_PWD" --auth-mode basic \
+            --motu https://motu.cmems-motu.copernicus.eu/motu-web/Motu \
+            --service-id GLOBAL_ANALYSISFORECAST_BGC_001_028 \
+            --product-id cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m_202311 \
+            --longitude-min -180 --longitude-max 180 --latitude-min -80 --latitude-max 90 \
+            --date-min "${SAMPLE_DATE} 00:00:00" --date-max "${SAMPLE_DATE} 00:00:00" \
+            --variable o2 \
+            --out-dir data/copernicus --out-name cmems_bio_${SAMPLE_DATE}.nc
+
+          try_cmd motuclient --user "$COPERNICUS_USER" --pwd "$COPERNICUS_PWD" --auth-mode basic \
+            --motu https://motu.cmems-motu.copernicus.eu/motu-web/Motu \
+            --service-id GLOBAL_ANALYSISFORECAST_BGC_001_028 \
+            --product-id cmems_mod_glo_bgc-nut_anfc_0.25deg_P1D-m_202311 \
+            --longitude-min -180 --longitude-max 180 --latitude-min -80 --latitude-max 90 \
+            --date-min "${SAMPLE_DATE} 00:00:00" --date-max "${SAMPLE_DATE} 00:00:00" \
+            --variable no3 --variable po4 --variable si --variable fe \
+            --out-dir data/copernicus --out-name cmems_nut_${SAMPLE_DATE}.nc
+
+          try_cmd motuclient --user "$COPERNICUS_USER" --pwd "$COPERNICUS_PWD" --auth-mode basic \
+            --motu https://motu.cmems-motu.copernicus.eu/motu-web/Motu \
+            --service-id GLOBAL_ANALYSISFORECAST_BGC_001_028 \
+            --product-id cmems_mod_glo_bgc-optics_anfc_0.25deg_P1D-m_202311 \
+            --longitude-min -180 --longitude-max 180 --latitude-min -80 --latitude-max 90 \
+            --date-min "${SAMPLE_DATE} 00:00:00" --date-max "${SAMPLE_DATE} 00:00:00" \
+            --variable kd \
+            --out-dir data/copernicus --out-name cmems_optics_${SAMPLE_DATE}.nc
+
+          # set environment for ingest script
+          echo "COPERNICUS_LOCAL_DIR=./data/copernicus" >> $GITHUB_ENV
+          echo "COPERNICUS_SAMPLE_DATE=${SAMPLE_DATE}" >> $GITHUB_ENV
+
+      - name: Run ingest prototype
+        env:
+          COPERNICUS_LOCAL_DIR: ${{ env.COPERNICUS_LOCAL_DIR }}
+          COPERNICUS_SAMPLE_DATE: ${{ env.COPERNICUS_SAMPLE_DATE }}
+        run: |
+          set -euo pipefail
+          python scripts/ingest_copernicus_bgc_sample.py
+
+      - name: Upload Copernicus NetCDF artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: copernicus-netcdfs
+          path: data/copernicus/*.nc
+
+      - name: Upload regridded sample
+        uses: actions/upload-artifact@v4
+        with:
+          name: regridded-sample
+          path: tmp_copernicus_sample/**
