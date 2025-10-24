@@ -48,13 +48,16 @@ const FindrConditionsRoute: React.FC = () => {
 
   const { location, updateLocation, loading: locationLoading } = useUnifiedLocation();
   const locationRectangle = location?.rectangleCode ?? null;
+  const hasLocation = Boolean(location?.lat && location?.lon);
 
   const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
 
   // Single source of truth priority:
   // 1. Location from UnifiedLocationContext (from header picker)
-  // 2. selectedCode (persisted fallback)
-  const activeRectangle = locationRectangle ?? (selectedCode || null);
+  //    - For European: use rectangleCode
+  //    - For Worldwide: rectangleCode will be null (use lat/lon)
+  // 2. selectedCode (persisted fallback, ICES rectangle only)
+  const activeRectangle = hasLocation ? locationRectangle : (selectedCode || null);
   
   const activeOption = useMemo<RectangleOption | null>(
     () => {
@@ -66,21 +69,24 @@ const FindrConditionsRoute: React.FC = () => {
   );
 
   // Sync selectedCode when location context changes (for persistence)
+  // Only sync if rectangleCode exists (European waters with ICES rectangles)
+  // For worldwide locations (null rectangleCode), don't overwrite selectedCode
   useEffect(() => {
     if (locationLoading) return;
-    if (!locationRectangle) return;
+    if (!locationRectangle) return; // Don't sync null rectangleCode (worldwide locations)
     if (selectedCode === locationRectangle) return;
     console.log('[Conditions] Syncing selectedCode to context:', locationRectangle);
     setSelectedCode(locationRectangle);
   }, [locationRectangle, locationLoading, selectedCode, setSelectedCode]);
 
   // Sync URL to match active rectangle (for sharing/bookmarking)
+  // Only sync if we have an ICES rectangle - worldwide locations don't use URL params
   useEffect(() => {
     if (!router.isReady) return;
-    if (!activeRectangle) return;
+    if (!activeRectangle) return; // No rectangle for worldwide locations
     const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
     if (current === activeRectangle) return;
-    
+
     console.log('[Conditions] Syncing URL to activeRectangle:', { from: current, to: activeRectangle });
     router.replace(
       {
@@ -97,7 +103,7 @@ const FindrConditionsRoute: React.FC = () => {
   // - URL has a rectangle parameter
   useEffect(() => {
     if (locationLoading) return;
-    if (locationRectangle) return; // Already have location, don't override
+    if (hasLocation) return; // Already have location (coordinates), don't override
     if (!router.isReady) return;
     if (!rectangleFromUrl) return;
     
@@ -112,7 +118,7 @@ const FindrConditionsRoute: React.FC = () => {
       rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
       source: 'manual',
     });
-  }, [rectangleFromUrl, locationLoading, locationRectangle, rectangleOptions, router.isReady, updateLocation]);
+  }, [rectangleFromUrl, locationLoading, hasLocation, rectangleOptions, router.isReady, updateLocation]);
 
   // Pass user's precise coordinates for accurate weather data (4dp precision)
   const userCoords = location?.lat && location?.lon ? { lat: location.lat, lon: location.lon } : null;
