@@ -53,79 +53,49 @@ jobs:
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'california' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting California coastal grids..."
-          npx tsx scripts/call-ingest-function.ts --california --limit=${{ github.event.inputs.limit || '10' }}
+          npx tsx scripts/call-ingest-function.ts --california --limit=20
         continue-on-error: true
 
       - name: Ingest Florida (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'florida' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting Florida coastal grids..."
-          npx tsx scripts/call-ingest-function.ts --florida --limit=${{ github.event.inputs.limit || '10' }}
+          npx tsx scripts/call-ingest-function.ts --florida --limit=20
         continue-on-error: true
 
       - name: Ingest New York (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'newyork' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting New York coastal grids..."
-          npx tsx scripts/call-ingest-function.ts --newyork --limit=${{ github.event.inputs.limit || '10' }}
+          npx tsx scripts/call-ingest-function.ts --newyork --limit=20
         continue-on-error: true
 
       - name: Ingest Gulf of Mexico (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'gulf'
         run: |
           echo "🌊 Ingesting Gulf of Mexico grids..."
-          # Gulf of Mexico: 18-31°N, 98-80°W
-          # Note: Would need to add --gulf option to script, or we can skip for now
-          echo "Gulf region support coming soon"
+          npx tsx scripts/call-ingest-function.ts --gulf --limit=20
         continue-on-error: true
 
       - name: Ingest Pacific Northwest (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'pacific-nw'
         run: |
           echo "🌊 Ingesting Pacific Northwest grids..."
-          # PNW: 42-50°N, 125-120°W
-          echo "Pacific NW region support coming soon"
+          npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=20
         continue-on-error: true
 
       - name: Ingest Hawaii (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii'
         run: |
           echo "🌊 Ingesting Hawaii grids..."
-          # Hawaii: 18-23°N, 161-154°W
-          echo "Hawaii region support coming soon"
+          npx tsx scripts/call-ingest-function.ts --hawaii --limit=20
         continue-on-error: true
 
       - name: Check coverage
         if: always()
         run: |
           echo "📊 Checking current data coverage..."
-          npx tsx -e "
-          import { createClient } from '@supabase/supabase-js';
-          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-          // Total grids with data
-          const { count: totalCount } = await supabase
-            .from('grid_conditions_latest')
-            .select('*', { count: 'exact', head: true });
-
-          // Grids with real NOAA data
-          const { count: noaaCount } = await supabase
-            .from('grid_conditions_latest')
-            .select('*', { count: 'exact', head: true })
-            .contains('sources', ['ncdcOisst21Agg_LonPM180.sst']);
-
-          // Grids with mock data
-          const { count: mockCount } = await supabase
-            .from('grid_conditions_latest')
-            .select('*', { count: 'exact', head: true })
-            .contains('sources', ['MOCK_DATA_FOR_TESTING']);
-
-          console.log('📊 Data Coverage Summary:');
-          console.log('  Total grids with data: ' + totalCount + ' / 65,884 (' + (totalCount/65884*100).toFixed(2) + '%)');
-          console.log('  Real NOAA grids: ' + noaaCount);
-          console.log('  Mock data grids: ' + mockCount);
-          console.log('  Real data coverage: ' + ((noaaCount/(noaaCount+mockCount))*100).toFixed(1) + '%');
-          "
+          npx tsx -e "(async () => {\nimport { createClient } from '@supabase/supabase-js';\nconst supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);\n\nconst { count: totalCount } = await supabase\n  .from('grid_conditions_latest')\n  .select('*', { count: 'exact', head: true });\n\nconst { count: noaaCount } = await supabase\n  .from('grid_conditions_latest')\n  .select('*', { count: 'exact', head: true })\n  .contains('sources', ['ncdcOisst21Agg_LonPM180.sst']);\n\nconst { count: mockCount } = await supabase\n  .from('grid_conditions_latest')\n  .select('*', { count: 'exact', head: true })\n  .contains('sources', ['MOCK_DATA_FOR_TESTING']);\n\nconsole.log('📊 Data Coverage Summary:');\nconsole.log('  Total grids with data: ' + totalCount + ' / 65,884 (' + (totalCount/65884*100).toFixed(2) + '%)');\nconsole.log('  Real NOAA grids: ' + noaaCount);\nconsole.log('  Mock data grids: ' + mockCount);\nconsole.log('  Real data coverage: ' + ((noaaCount/(noaaCount+mockCount))*100).toFixed(1) + '%');\n})()"
 
       - name: Report status
         if: always()

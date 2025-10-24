@@ -1,4 +1,5 @@
 // lib/findr/locationDetection.ts
+import { findNearestGridCellId } from './gridCellLookup';
 
 import { type RectangleOption } from '../../hooks/useFindrRectangleOptions';
 
@@ -105,26 +106,41 @@ export function findNearestRectangles(
   rectangles: RectangleOption[],
   maxResults: number = 5
 ): NearestRectangles | null {
+  // Use grid cell lookup for US/CA/MX, fallback to ICES rectangles for Europe
+  const lat = location.latitude;
+  const lon = location.longitude;
+  // Simple region check (should match API logic)
+  const isAmericas = lat >= 14 && lat <= 72 && lon <= -66 && lon >= -170;
+  if (isAmericas) {
+    // Use grid cell lookup
+    const cellId = findNearestGridCellId(lat, lon);
+    // Return a dummy RectangleOption for grid cell
+    return {
+      primary: {
+        code: cellId,
+        label: 'NOAA Grid Cell',
+        region: 'Americas',
+        centerLat: lat,
+        centerLon: lon,
+      },
+      alternatives: [],
+      distance: 0,
+    };
+  }
+  // Otherwise, fallback to ICES rectangles
   if (!rectangles.length) return null;
-
-  // Calculate distances to all rectangles
   const distances = rectangles.map(rectangle => ({
     rectangle,
     distance: calculateDistance(
-      location.latitude,
-      location.longitude,
+      lat,
+      lon,
       rectangle.centerLat,
       rectangle.centerLon
     )
   }));
-
-  // Sort by distance
   distances.sort((a, b) => a.distance - b.distance);
-
-  // Return the closest rectangle and alternatives
   const primary = distances[0];
   const alternatives = distances.slice(1, maxResults).map(d => d.rectangle);
-
   return {
     primary: primary.rectangle,
     alternatives,

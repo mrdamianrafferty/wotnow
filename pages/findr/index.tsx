@@ -20,6 +20,7 @@ import {
   ListChecks,
   Sparkles,
   X,
+  Info,
 } from 'lucide-react';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { useFavourites } from '../../hooks/useFavourites';
@@ -168,16 +169,17 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
       <div className="card-body !p-4 sm:!p-6 flex h-full flex-col gap-3 sm:gap-4">
         <div className="space-y-3 sm:space-y-4">
           {card.image ? (
-            <div className="relative mx-auto w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[3/2] sm:aspect-[4/3]">
+            <div className="relative mx-auto w-full max-h-64 sm:max-h-80 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0">
               <Image
                 src={card.image.src}
                 alt={card.image.alt}
                 fill
-                sizes="(min-width: 1024px) 400px, 90vw"
+                sizes="(min-width: 1024px) 500px, 95vw"
                 className="object-contain"
                 priority={isFirstCard}
                 placeholder={card.image.blurDataURL ? "blur" : undefined}
                 blurDataURL={card.image.blurDataURL}
+                style={{ padding: 0 }}
               />
               {/* Heart indicator for favorites */}
               <button
@@ -188,6 +190,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                   onToggleFavorite?.(card);
                 }}
                 aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                style={{ zIndex: 2 }}
               >
                 {_isFavorite ? (
                   <Heart size={20} className="fill-red-500 text-red-500" />
@@ -195,27 +198,54 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                   <Heart size={20} className="text-gray-700 stroke-2" />
                 )}
               </button>
+              {/* Info button absolutely positioned bottom right over image */}
+              {onShowSpeciesInfo && (
+                <button
+                  type="button"
+                  className="absolute bottom-2 right-2 btn btn-circle btn-ghost btn-lg"
+                  onClick={() => onShowSpeciesInfo(card)}
+                  aria-label="Show info"
+                  style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)', zIndex: 3 }}
+                >
+                  <Info size={32} />
+                </button>
+              )}
             </div>
           ) : (
-            <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-info/10 to-primary/10 sm:aspect-[4/3] relative">
-              <GradientFish size={80} />
-              {/* Heart indicator for favorites */}
-              <button
-                type="button"
-                className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite?.(card);
-                }}
-                aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              >
-                {_isFavorite ? (
-                  <Heart size={20} className="fill-red-500 text-red-500" />
-                ) : (
-                  <Heart size={20} className="text-gray-700 stroke-2" />
-                )}
-              </button>
-            </div>
+            <>
+              <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl bg-gradient-to-br from-info/10 to-primary/10 sm:aspect-[4/3] relative">
+                <GradientFish size={80} />
+                {/* Heart indicator for favorites */}
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 p-3 rounded-full bg-transparent hover:bg-white/20 transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleFavorite?.(card);
+                  }}
+                  aria-label={_isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {_isFavorite ? (
+                    <Heart size={20} className="fill-red-500 text-red-500" />
+                  ) : (
+                    <Heart size={20} className="text-gray-700 stroke-2" />
+                  )}
+                </button>
+              </div>
+              {onShowSpeciesInfo && (
+                <div className="flex justify-end mt-2" style={{ position: 'relative', zIndex: 2 }}>
+                  <button
+                    type="button"
+                    className="btn btn-circle btn-ghost btn-sm"
+                    onClick={() => onShowSpeciesInfo(card)}
+                    aria-label="Show info"
+                    style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)', zIndex: 2, position: 'relative' }}
+                  >
+                    <Info size={24} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex items-start justify-between gap-3">
@@ -234,15 +264,8 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {onShowSpeciesInfo && (
-                  <button
-                    type="button"
-                    className="btn btn-xs btn-outline gap-1"
-                    onClick={() => onShowSpeciesInfo(card)}
-                  >
-                    <Sparkles size={14} /> <TranslatedText text="Get to know me" />
-                  </button>
-                )}
+              </div>
+              <div style={{ position: 'relative', width: '100%' }}>
                 {card.weight_profile && (
                   <GuildBadge guild={card.weight_profile} size="sm" />
                 )}
@@ -838,8 +861,12 @@ const FindrPage: React.FC = () => {
   }, [cards]);
 
   const handleProgrammaticSkip = useCallback(() => {
-    if (!currentCard) return;
-    swipeCardRef.current?.swipeLeft();
+  if (!currentCard) return;
+  // Reset swipingRef before triggering swipe to avoid stuck state
+  swipingRef.current = false;
+  swipeCardRef.current?.swipeLeft();
+  // Also reset after a short delay in case animation or state update lags
+  setTimeout(() => { swipingRef.current = false; }, 300);
   }, [currentCard]);
 
   const handleProgrammaticLike = useCallback(() => {

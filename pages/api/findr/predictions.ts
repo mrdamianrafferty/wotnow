@@ -544,19 +544,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  if (!rectangleCode) {
-    return res.status(400).json({ error: 'rectangleCode is required' });
+  // Use grid_025deg cell_id for Americas/global, ICES rectangles for Europe
+  let useGlobalGrid = false;
+  let gridCellId: string | null = null;
+  if (userLat !== null && userLon !== null) {
+    const iso = inferCountryISOFromLatLon(userLat, userLon);
+    if (iso === 'US' || iso === 'CA' || iso === 'MX') {
+      useGlobalGrid = true;
+      // Here you would implement logic to resolve lat/lon to grid_025deg.cell_id
+      // For now, just use a placeholder or pass lat/lon to the RPC
+      gridCellId = `LAT${userLat.toFixed(2)}LON${userLon.toFixed(2)}`;
+    }
   }
 
-  // Skip cache if bypass flag is set
-  const cached = bypassCache ? { data: null, source: null } : await readCachedPredictions({ rectangleCode, predictionDate, language });
+  // Generate cache key: use rectangleCode for Europe, gridCellId for Americas/global
+  const cacheKey = useGlobalGrid ? gridCellId : rectangleCode || (userLat !== null && userLon !== null ? `LAT${userLat.toFixed(2)}LON${userLon.toFixed(2)}` : null);
+
+  // Skip cache if bypass flag is set or no cache key
+  const cached = (bypassCache || !cacheKey) ? { data: null, source: null } : await readCachedPredictions({ rectangleCode: cacheKey, predictionDate, language });
 
   if (cached.data) {
     const cacheControl = 's-maxage=600, stale-while-revalidate=1800';
     res.setHeader('Cache-Control', cacheControl);
     const enriched = await augmentPredictionsWithLocalizedNames(cached.data);
     return res.status(200).json({
-      rectangleCode,
+      rectangleCode: useGlobalGrid ? gridCellId : rectangleCode,
       predictionDate,
       language,
       predictions: Array.isArray(enriched) ? enriched : [],
@@ -569,7 +581,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   console.log('[Findr API] Calling RPC with params:', {
-    rectangle_code_input: rectangleCode,
+    rectangle_code_input: useGlobalGrid ? gridCellId : rectangleCode,
     prediction_date_input: predictionDate,
     user_language: language,
   });
@@ -679,17 +691,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       region_code: regionCode ?? inferredRegionCode,
     });
 
-    // Prefer the region-aware + i18n RPC; fall back to the existing enhanced one if unavailable
+    // Prefer the global predictions function that works worldwide
+    // Falls back to rectangle-based functions for backward compatibility
     const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
+      // NEW: Global grid-based predictions (works worldwide, never returns empty)
+      {
+        name: 'get_global_fishing_predictions',
+        params: {
+          user_lat: userLat || rectangleData?.center_lat || null,
+          user_lon: userLon || rectangleData?.center_lon || null,
+          target_date: predictionDate,
+          p_lang: language,
+        },
+      },
+      // FALLBACK: Region-aware v2 (for Americas, doesn't exist yet)
       {
         name: 'get_fishing_predictions_v2',
         params: {
           target_rectangle: rectangleCode,
           target_date: predictionDate,
           p_lang: language,
-          p_region_code: regionCode ?? inferredRegionCode, // null => base rows (no overrides)
+          p_region_code: regionCode ?? inferredRegionCode,
         },
       },
+      // FALLBACK: Original ICES rectangle-based (European only)
       {
         name: 'get_environmental_predictions_enhanced',
         params: {
@@ -793,7 +818,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enriched = await augmentPredictionsWithLocalizedNames(data);
 
-    void writeCachedPredictions({ rectangleCode, predictionDate, language, payload: enriched });
+    // Cache predictions using the cache key (rectangleCode or lat/lon hash)
+    if (cacheKey) {
+      void writeCachedPredictions({ rectangleCode: cacheKey, predictionDate, language, payload: enriched });
+    }
 
     return res.status(200).json({
       rectangleCode,

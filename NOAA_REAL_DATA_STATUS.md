@@ -133,12 +133,15 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install
       - name: Ingest California
-        run: npx tsx scripts/call-ingest-function.ts --california --limit=10
+        run: npx tsx scripts/call-ingest-function.ts --california --limit=20
       - name: Ingest Florida
-        run: npx tsx scripts/call-ingest-function.ts --florida --limit=10
+        run: npx tsx scripts/call-ingest-function.ts --florida --limit=20
       - name: Ingest New York
-        run: npx tsx scripts/call-ingest-function.ts --newyork --limit=10
+        run: npx tsx scripts/call-ingest-function.ts --newyork --limit=20
 ```
+npx tsx scripts/call-ingest-function.ts --florida --limit=20
+npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=20
+npx tsx scripts/call-ingest-function.ts --newyork --limit=20
 
 ### Option B: Direct NOAA Bulk Downloads
 
