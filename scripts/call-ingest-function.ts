@@ -48,21 +48,22 @@ async function callIngestFunction(options: {
 const args = process.argv.slice(2);
 
 // Default: American waters (California coast for testing)
+// IMPORTANT: Bounding boxes are coastal-only to exclude land cells (which return 0°C from NOAA)
 const bbox: [number, number, number, number] = args.includes('--americas')
   ? [-130, 20, -60, 50] // All American coastal waters
   : args.includes('--california')
-  ? [-125, 32, -117, 42] // California coast
+  ? [-125, 32, -120, 42] // California coast ONLY (excludes W117-W119 inland)
   : args.includes('--florida')
-  ? [-85, 24, -80, 31] // Florida
+  ? [-85, 24, -79, 31] // Florida coast (excludes inland panhandle)
   : args.includes('--newyork')
-  ? [-75, 39, -72, 42] // New York area
+  ? [-75, 39, -71, 42] // New York coast (excludes inland NY)
   : args.includes('--pacific-nw')
-  ? [-125, 42, -120, 50] // Pacific Northwest
+  ? [-125, 42, -123, 50] // Pacific Northwest coast
   : args.includes('--gulf')
-  ? [-98, 18, -80, 31] // Gulf of Mexico
+  ? [-98, 18, -88, 31] // Gulf of Mexico coast (excludes deep inland)
   : args.includes('--hawaii')
-  ? [-161, 18, -154, 23] // Hawaii
-  : [-125, 32, -117, 42]; // Default: California
+  ? [-161, 18, -154, 23] // Hawaii (already island-only)
+  : [-125, 32, -120, 42]; // Default: California coast ONLY
 
 const providers = args.includes('--cmems') ? ['CMEMS'] : ['NOAA']; // NOAA only for American waters
 const vars = ['surface_temperature_c']; // Temperature only for now
