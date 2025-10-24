@@ -113,9 +113,21 @@ export default async function handler(
 
     const nearest = distances[0];
 
-    // If distance > 500km, warn that it's very far
-    if (nearest.distance > 500) {
-      console.warn('[rectangle-lookup] Very far from any rectangle:', {
+    // If distance > 1000km, this is not a European location - reject it
+    // This prevents San Francisco from mapping to Scotland (37G6, 7763km away)
+    if (nearest.distance > 1000) {
+      console.log('[rectangle-lookup] Location too far from any ICES rectangle:', {
+        lat,
+        lon,
+        nearest: nearest.rectangleCode,
+        distance: nearest.distance,
+      });
+      return res.status(404).json({ error: 'No ICES fishing areas near this location. This appears to be outside European waters.' });
+    }
+
+    // If distance > 100km, warn that it's far from rectangle center
+    if (nearest.distance > 100) {
+      console.warn('[rectangle-lookup] Somewhat far from rectangle center:', {
         lat,
         lon,
         nearest: nearest.rectangleCode,
