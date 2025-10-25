@@ -9,7 +9,6 @@ import type { FallbackConditionPayload } from '../../../lib/findr/fallbackCondit
 import type { TideEvent } from '../../../types/weather';
 import { TranslatedText } from '../../translation/TranslatedFishCard';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface HourlyMarineCarouselProps {
   entries: FallbackConditionPayload['snapshot']['hourly'];
   tideEvents?: TideEvent[];
@@ -194,6 +193,19 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * HourlyMarineCarousel component (WIP)
+ * TODO: Implement carousel layout using WeatherCarousel or custom carousel
+ */
+export default function HourlyMarineCarousel({ entries, tideEvents }: HourlyMarineCarouselProps) {
+  return (
+    <div className="text-base-content/60 p-4 text-center">
+      <p><TranslatedText text="Hourly marine forecast coming soon" /></p>
+      <p className="text-xs mt-2">{entries.length} hourly entries available</p>
     </div>
   );
 }

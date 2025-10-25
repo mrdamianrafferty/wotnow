@@ -420,7 +420,7 @@ const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
 export default function Home() {
   // Fish species modal state (for hero/favourites)
   const [fishModalOpen, setFishModalOpen] = useState(false);
-  const [fishModalCard, setFishModalCard] = useState(null);
+  const [fishModalCard, setFishModalCard] = useState<CardData | null>(null);
   // If Supabase sent us to the homepage with an auth code (query) or OAuth tokens (hash),
   // forward everything to /auth/callback so the session can be established or recovery can run.
   useEffect(() => {
