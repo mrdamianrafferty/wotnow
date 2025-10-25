@@ -36,7 +36,10 @@ export function useFindrConditions(
 
   useEffect(() => {
     const safeCode = rectangleCode?.trim();
-    if (!safeCode) {
+    const hasCoords = userCoordinates?.lat && userCoordinates?.lon;
+
+    // Only use static fallback if we have neither rectangle code NOR coordinates
+    if (!safeCode && !hasCoords) {
       setData(FALLBACK_CONDITIONS);
       setSource('fallback');
       setError(null);
@@ -45,7 +48,7 @@ export function useFindrConditions(
     }
 
   const controller = new AbortController();
-  const rectangleCodeSafe = safeCode;
+  const rectangleCodeSafe = safeCode || '';
     let active = true;
 
     async function run() {
@@ -53,10 +56,21 @@ export function useFindrConditions(
       setError(null);
 
       try {
-        // Build URL with optional user coordinates for precise weather data (4dp)
-        let url = `/api/findr/conditions?rectangleCode=${encodeURIComponent(rectangleCodeSafe)}`;
+        // Build URL - either with rectangleCode (European) or just coordinates (worldwide)
+        let url = '/api/findr/conditions';
+        const params = new URLSearchParams();
+
+        if (rectangleCodeSafe) {
+          params.append('rectangleCode', rectangleCodeSafe);
+        }
+
         if (userCoordinates?.lat && userCoordinates?.lon) {
-          url += `&lat=${userCoordinates.lat}&lon=${userCoordinates.lon}`;
+          params.append('lat', userCoordinates.lat.toString());
+          params.append('lon', userCoordinates.lon.toString());
+        }
+
+        if (params.toString()) {
+          url += `?${params.toString()}`;
         }
         
         const res = await fetch(url, {

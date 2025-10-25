@@ -1,7 +1,7 @@
 # Findr Launch Checklist
 
-**Date:** October 24, 2025
-**Status:** 🟡 Ready to generate images (last blocker)
+**Date:** October 25, 2025
+**Status:** 🟢 Image generation in progress (52/100 complete)
 
 ---
 
@@ -23,6 +23,22 @@
 - **Backup:** Dual location (project + `~/fish_images_backup/americas/`)
 - **Optimized:** 2 min interval = ~3.3 hours total
 - **Documentation:** `GENERATE_AMERICAN_SPECIES_IMAGES.md`
+
+### 4. ES Module Build Error Fixed (Commit `b03b4b60`)
+- **Problem:** "module is not defined in ES module scope" in styles/index.css
+- **Root Cause:** package.json has "type": "module" but config files used CommonJS
+- **Solution:** Renamed all config files from .js to .cjs extension
+  - `postcss.config.js` → `postcss.config.cjs`
+  - `tailwind.config.js` → `tailwind.config.cjs`
+  - `jest.config.js` → `jest.config.cjs`
+  - `next-sitemap.config.js` → `next-sitemap.config.cjs`
+- **Result:** Dev server builds successfully in 3.9s, no more build errors
+
+### 5. American Species Image Generation (In Progress)
+- **Status:** 52 out of 100 images generated (52% complete)
+- **Latest:** Red Grouper (Epinephelus morio)
+- **Remaining:** 48 species
+- **Location:** `fish_out_americas/` + `~/fish_images_backup/americas/`
 
 ---
 
