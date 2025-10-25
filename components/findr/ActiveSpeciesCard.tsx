@@ -106,8 +106,15 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         {/* Header */}
         <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            {/* Species Image/Emoji */}
-            <div className="flex-shrink-0">
+            {/* Species Image/Emoji (now clickable) */}
+            <button
+              type="button"
+              className="flex-shrink-0 focus:outline-none hover:opacity-90"
+              style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
+              tabIndex={-1}
+              aria-label={`View ${species.name} details`}
+              onClick={e => { e.stopPropagation(); onAction?.(species.id); }}
+            >
               {species.image ? (
                 <div className="w-16 h-16 sm:w-20 sm:h-20 relative rounded-xl overflow-hidden bg-base-200">
                   <Image
@@ -123,7 +130,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   <GradientFish size={48} />
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Title & Info */}
             <div className="flex-1 min-w-0">

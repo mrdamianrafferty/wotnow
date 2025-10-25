@@ -488,7 +488,7 @@ function generateEnvironmentalRationale(prediction: FishingPrediction): string[]
   return rationale;
 }
 
-function resolveSpeciesImage(
+export function resolveSpeciesImage(
   speciesCode?: string | null,
   commonName?: string | null
 ): SpeciesImageInfo | undefined {

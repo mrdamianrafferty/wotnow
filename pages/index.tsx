@@ -5,6 +5,8 @@ import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
+import { resolveSpeciesImage } from '../lib/findr/mapPrediction';
+import FishSpeciesModal from '../components/findr/FishSpeciesModal';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import CoastalLocationDialog from '../components/CoastalLocationDialog';
@@ -416,6 +418,9 @@ const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
 };
 
 export default function Home() {
+  // Fish species modal state (for hero/favourites)
+  const [fishModalOpen, setFishModalOpen] = useState(false);
+  const [fishModalCard, setFishModalCard] = useState(null);
   // If Supabase sent us to the homepage with an auth code (query) or OAuth tokens (hash),
   // forward everything to /auth/callback so the session can be established or recovery can run.
   useEffect(() => {
@@ -826,36 +831,29 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           {heroActivity && (() => {
             const { activityId, score } = heroActivity;
             const activity = activityTypes.find((a) => a.id === activityId);
-            const emoji = getActivityEmoji(activityId) || '❓';
             const scoreInfo = getScoreCategory(score || 0);
             const isOutdoorActivity = isOutdoor(activityId);
             const activityMessage = getActivityMessage(activityId, scoreInfo.label.toLowerCase() as "perfect" | "good" | "fair" | "poor", []);
 
-            // Suppose 'forecastDay' is the day object and you have marine hours attached
-const dayDate = new Date(day.date * 1000);
-const today = new Date();
-const isToday = dayDate.getDate() === today.getDate() && 
-                dayDate.getMonth() === today.getMonth() && 
-                dayDate.getFullYear() === today.getFullYear();
+            // Use activity name as species name for fish image lookup
+            const fishCommonName: string | undefined = activity?.name;
+            const fishImageInfo = fishCommonName ? resolveSpeciesImage(undefined, fishCommonName) : undefined;
 
-// Use current time for today, midday for future
-const hour = isToday ? today.getHours() : 12;
-const _targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
-
-            const _isMarineActivity = MARINE_ACTIVITY_IDS.includes(heroActivity.activityId);
-const marinePopupDay = getPopupDay(heroActivity.activityId, day); // Stormglass
-const _weatherPopupDay = getWeatherDay(day); // <-- Use a function that extracts OpenWeather fields
-
-const popupPayload = buildPopupActivityPayload({
-  activityId: heroActivity.activityId,
-  score: heroActivity.score,
-  day: marinePopupDay,
-  reasons: buildReasons(day, heroActivity.activityId),
-});
-
-            const handlePopupOpen = () => {
-              if (isOutdoorActivity) {
-                setPopupActivity(popupPayload);
+            const handleFishClick = () => {
+              if (fishCommonName) {
+                setFishModalCard({
+                  emoji: getActivityEmoji(activityId) || '🐟',
+                  commonName: fishCommonName,
+                  ...(fishImageInfo && {
+                    image: {
+                      src: fishImageInfo.image,
+                      alt: fishImageInfo.name,
+                      mobile: fishImageInfo.mobile ?? null,
+                      thumb: fishImageInfo.thumb ?? null,
+                    }
+                  })
+                } as any); // Cast to any to avoid type error for now
+                setFishModalOpen(true);
               }
             };
 
@@ -864,22 +862,30 @@ const popupPayload = buildPopupActivityPayload({
                 className="card__hero-activity"
                 role="button"
                 tabIndex={0}
-                onClick={handlePopupOpen}
+                onClick={isOutdoorActivity && fishImageInfo ? handleFishClick : undefined}
                 onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && isOutdoorActivity) {
+                  if ((e.key === 'Enter' || e.key === ' ') && isOutdoorActivity && fishImageInfo) {
                     e.preventDefault();
-                    handlePopupOpen();
+                    handleFishClick();
                   }
                 }}
               >
-                <div className="card__hero-icon">{emoji}</div>
+                <div className="card__hero-icon">
+                  {fishImageInfo && fishImageInfo.thumb ? (
+                    <Image
+                      src={fishImageInfo.thumb}
+                      alt={fishCommonName || ''}
+                      width={48}
+                      height={48}
+                      style={{ borderRadius: '50%', cursor: 'pointer' }}
+                    />
+                  ) : (
+                    getActivityEmoji(activityId) || '🐟'
+                  )}
+                </div>
                 <div className="card__hero-title">
-                  <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>
-                    {activity?.name || activityId.replace(/_/g, ' ')}
-                  </div>
-                  <div className="card__hero-message">
-                    {activityMessage}
-                  </div>
+                  <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>{activity?.name || activityId.replace(/_/g, ' ')}</div>
+                  <div className="card__hero-message">{activityMessage}</div>
                 </div>
                 <div
                   className="card__score-badge"
@@ -891,6 +897,13 @@ const popupPayload = buildPopupActivityPayload({
               </div>
             );
           })()}
+
+      {/* Fish Species Modal (global, not per-card) */}
+      <FishSpeciesModal
+        open={fishModalOpen}
+        card={fishModalCard}
+        onClose={() => setFishModalOpen(false)}
+      />
 
           {/* Activity Lists */}
           <div className="activity-suggestions">
