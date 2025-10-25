@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { WiDayWindy, WiHot, WiBarometer } from 'react-icons/wi';
 import { Waves, ArrowUp } from 'lucide-react';
 import Image from 'next/image';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import WeatherCarousel from './WeatherCarousel';
 import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature } from '../../../lib/findr/weatherFormatting';
 import type { FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
 import type { TideEvent } from '../../../types/weather';
 import { TranslatedText } from '../../translation/TranslatedFishCard';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface HourlyMarineCarouselProps {
   entries: FallbackConditionPayload['snapshot']['hourly'];
   tideEvents?: TideEvent[];
@@ -17,6 +19,7 @@ interface HourlyMarineCarouselProps {
  * Calculate tide state for a given time based on tide events
  * Returns: 'High', 'Low', 'Rising', or 'Falling'
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getTideState(timeISO: string, tideEvents: TideEvent[]): string {
   if (!tideEvents || tideEvents.length === 0) return '—';
   
@@ -79,6 +82,7 @@ interface HourlyCardProps {
   tideState: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function HourlyCard({ entry, tideState }: HourlyCardProps) {
   const [showPrecipAmount, setShowPrecipAmount] = useState(false);
   

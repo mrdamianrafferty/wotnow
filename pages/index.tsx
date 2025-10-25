@@ -5,7 +5,7 @@ import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
-import { resolveSpeciesImage } from '../lib/findr/mapPrediction';
+import { resolveSpeciesImage, type CardData } from '../lib/findr/mapPrediction';
 import FishSpeciesModal from '../components/findr/FishSpeciesModal';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
@@ -852,7 +852,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
                       thumb: fishImageInfo.thumb ?? null,
                     }
                   })
-                } as any); // Cast to any to avoid type error for now
+                } as CardData);
                 setFishModalOpen(true);
               }
             };
@@ -862,9 +862,9 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
                 className="card__hero-activity"
                 role="button"
                 tabIndex={0}
-                onClick={isOutdoorActivity && fishImageInfo ? handleFishClick : undefined}
+                onClick={fishCommonName ? handleFishClick : undefined}
                 onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && isOutdoorActivity && fishImageInfo) {
+                  if ((e.key === 'Enter' || e.key === ' ') && fishCommonName) {
                     e.preventDefault();
                     handleFishClick();
                   }
@@ -880,7 +880,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
                       style={{ borderRadius: '50%', cursor: 'pointer' }}
                     />
                   ) : (
-                    getActivityEmoji(activityId) || '🐟'
+                    <span style={{ fontSize: 40, cursor: 'pointer' }}>{getActivityEmoji(activityId) || '🐟'}</span>
                   )}
                 </div>
                 <div className="card__hero-title">
@@ -1105,6 +1105,7 @@ const popupPayload = buildPopupActivityPayload({
   ); // End of return
 } // End of Home component
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getWeatherDay(day: WeatherForecastDay) {
   return {
     temperature: day.temperature,
