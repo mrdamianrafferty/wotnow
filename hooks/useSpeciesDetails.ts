@@ -3,6 +3,31 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { TechniqueInfo, BaitInfo, SubstrateInfo } from '../lib/findr/mapPrediction';
 
+interface AdviceInfo {
+  shore?: {
+    regions?: string;
+    best_time?: string;
+    tide_sensitivity?: string;
+    baits_diet?: string;
+    temperature_effect?: string;
+    weather_effect?: string;
+    distance_depth?: string;
+    restrictions?: string;
+    authority?: string;
+  };
+  boat?: {
+    regions?: string;
+    best_time?: string;
+    tide_sensitivity?: string;
+    baits_diet?: string;
+    temperature_effect?: string;
+    weather_effect?: string;
+    distance_depth?: string;
+    restrictions?: string;
+    authority?: string;
+  };
+}
+
 export interface SpeciesDetails {
   species_id: string;
   species_code: string;
@@ -12,6 +37,12 @@ export interface SpeciesDetails {
   techniques: TechniqueInfo[];
   bait: BaitInfo[];
   substrates: SubstrateInfo | null;
+  advice: AdviceInfo | null;
+  eating_quality: number | null;
+  conservation_status: string | null;
+  fun_fact: string | null;
+  min_depth: number | null;
+  max_depth: number | null;
 }
 
 interface UseSpeciesDetailsOptions {

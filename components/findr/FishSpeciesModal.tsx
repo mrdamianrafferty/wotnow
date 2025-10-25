@@ -21,6 +21,7 @@ import {
   Wand2,
   Mountain,
   ExternalLink,
+  ArrowDownUp,
 } from 'lucide-react';
 import type { CardData } from '../../lib/findr/mapPrediction';
 import { getSpeciesAdvice } from '../../data/speciesAdvice';
@@ -188,10 +189,33 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     };
   }, [open, onClose]);
 
-  const detail = advice?.detail;
+  // Use database advice when available, fallback to hardcoded advice
+  const dbAdvice = speciesDetails?.advice;
+  const hasShore = !!(dbAdvice?.shore && Object.keys(dbAdvice.shore).length > 0);
+  const hasBoat = !!(dbAdvice?.boat && Object.keys(dbAdvice.boat).length > 0);
+
+  // Determine context from database advice or hardcoded advice
+  const context: SpeciesModalContext = hasShore && hasBoat ? 'both' : hasBoat ? 'boat' : 'shore';
+  const currentAdvice = context === 'boat' ? dbAdvice?.boat : dbAdvice?.shore;
+
+  // Prefer database advice, fallback to hardcoded
+  const detail = currentAdvice ? {
+    regions: currentAdvice.regions ?? advice?.detail?.regions ?? 'Various regions',
+    distance: currentAdvice.distance_depth ?? advice?.detail?.distance ?? 'Varies by location',
+    bestTime: currentAdvice.best_time ?? advice?.detail?.bestTime ?? 'Varies',
+    tideSensitivity: currentAdvice.tide_sensitivity ?? advice?.detail?.tideSensitivity ?? 'Moderate',
+    favouriteBaits: currentAdvice.baits_diet ?? advice?.detail?.favouriteBaits ?? 'Various baits',
+    naturalDiet: advice?.detail?.naturalDiet,
+    temperature: currentAdvice.temperature_effect ?? advice?.detail?.temperature ?? 'Varies',
+    weather: currentAdvice.weather_effect ?? advice?.detail?.weather ?? 'Most conditions',
+    edibility: speciesDetails?.eating_quality ?? advice?.detail?.edibility ?? null,
+    restrictions: currentAdvice.restrictions ?? advice?.detail?.restrictions ?? 'Check local regulations',
+    authority: currentAdvice.authority ?? advice?.detail?.authority ?? null,
+  } : advice?.detail;
+
   const dinnerMaterial = getDinnerMaterialText(detail?.edibility ?? null);
   const localizedLine = buildLocalizedNameLine(card?.localizedNames);
-  const contextsAvailable = advice?.contextsAvailable ?? [];
+  const contextsAvailable = hasShore && hasBoat ? ['shore', 'boat'] : hasBoat ? ['boat'] : ['shore'];
 
   if (!open || !card) {
     return null;
@@ -342,7 +366,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                   )}
                 </InfoSection>
                 <InfoSection icon={<Sparkles size={20} />} title="Fun fact about me">
-                  {advice?.funFact ?? 'We’re still cataloguing this curiosity.'}
+                  {speciesDetails?.fun_fact ?? advice?.funFact ?? "We're still cataloguing this curiosity."}
                 </InfoSection>
                 <InfoSection icon={<Thermometer size={20} />} title="Temperature vibe">
                   {sentenceCase(detail.temperature)}
@@ -369,7 +393,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                   </div>
                 </InfoSection>
                 <InfoSection icon={<Shield size={20} />} title="Looking after them">
-                  {sentenceCase(advice?.conservation ?? 'Check local guidance for conservation status.')}
+                  {sentenceCase(speciesDetails?.conservation_status ?? advice?.conservation ?? 'Check local guidance for conservation status.')}
                 </InfoSection>
               </>
             )}
@@ -441,6 +465,27 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                       {speciesDetails.substrates.has_mixed && (
                         <span className="badge badge-lg gap-1">🌊 Mixed</span>
                       )}
+                    </div>
+                  </InfoSection>
+                )}
+
+                {/* Depth Range */}
+                {(speciesDetails.min_depth !== null || speciesDetails.max_depth !== null) && (
+                  <InfoSection icon={<ArrowDownUp size={20} />} title="Depth range">
+                    <div className="flex items-center gap-2">
+                      {speciesDetails.min_depth !== null && speciesDetails.max_depth !== null ? (
+                        <span className="font-semibold">
+                          {speciesDetails.min_depth}m - {speciesDetails.max_depth}m
+                        </span>
+                      ) : speciesDetails.min_depth !== null ? (
+                        <span className="font-semibold">From {speciesDetails.min_depth}m</span>
+                      ) : (
+                        <span className="font-semibold">Up to {speciesDetails.max_depth}m</span>
+                      )}
+                      <span className="badge badge-sm badge-info">
+                        {speciesDetails.max_depth && speciesDetails.max_depth < 20 ? 'Shallow' :
+                         speciesDetails.max_depth && speciesDetails.max_depth < 50 ? 'Medium' : 'Deep'}
+                      </span>
                     </div>
                   </InfoSection>
                 )}

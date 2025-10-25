@@ -26,6 +26,31 @@ interface SubstrateData {
   has_mixed: boolean;
 }
 
+interface AdviceData {
+  shore?: {
+    regions?: string;
+    best_time?: string;
+    tide_sensitivity?: string;
+    baits_diet?: string;
+    temperature_effect?: string;
+    weather_effect?: string;
+    distance_depth?: string;
+    restrictions?: string;
+    authority?: string;
+  };
+  boat?: {
+    regions?: string;
+    best_time?: string;
+    tide_sensitivity?: string;
+    baits_diet?: string;
+    temperature_effect?: string;
+    weather_effect?: string;
+    distance_depth?: string;
+    restrictions?: string;
+    authority?: string;
+  };
+}
+
 interface SpeciesDetailResponse {
   species_id: string;
   species_code: string;
@@ -35,6 +60,12 @@ interface SpeciesDetailResponse {
   techniques: TechniqueData[];
   bait: BaitData[];
   substrates: SubstrateData | null;
+  advice: AdviceData | null;
+  eating_quality: number | null;
+  conservation_status: string | null;
+  fun_fact: string | null;
+  min_depth: number | null;
+  max_depth: number | null;
 }
 
 export default async function handler(
@@ -64,7 +95,13 @@ export default async function handler(
         species_code,
         name_en,
         scientific_name,
-        inaturalist_url
+        inaturalist_url,
+        advice,
+        eating_quality,
+        conservation_status,
+        fun_fact,
+        min_depth,
+        max_depth
       `)
       .limit(1);
 
@@ -172,6 +209,12 @@ export default async function handler(
       techniques,
       bait,
       substrates: substratesData || null,
+      advice: speciesData.advice || null,
+      eating_quality: speciesData.eating_quality || null,
+      conservation_status: speciesData.conservation_status || null,
+      fun_fact: speciesData.fun_fact || null,
+      min_depth: speciesData.min_depth || null,
+      max_depth: speciesData.max_depth || null,
     };
 
     return res.status(200).json(response);
