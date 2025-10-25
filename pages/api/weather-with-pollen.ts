@@ -1,35 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fetchOpenMeteoAirPollen, getWeatherData } from '../../lib/services/weatherService';
-import { roundCoordinates } from '../../utils/coordinatePrecision';
-
-type WeatherPayload = Awaited<ReturnType<typeof getWeatherData>>;
-
-type PollenDaily = {
-  grass?: number;
-  tree?: number;
-  weed?: number;
-  olive?: number;
-};
-
-type PollenByDate = Record<string, PollenDaily>;
-
-type AirQualityDaily = {
-  overall?: number;
-  pm2_5?: number;
-  pm10?: number;
-  no2?: number;
-  o3?: number;
-  so2?: number;
-  co?: number;
-  euAqi?: number;
-};
-
-type AirQualityByDate = Record<string, AirQualityDaily>;
-
-type WeatherWithPollenResponse = WeatherPayload & {
-  pollenByDate?: PollenByDate;
-  airQualityByDate?: AirQualityByDate;
-};
+import { getFullWeather } from '../../lib/services/weatherService';
 
 interface OpenMeteoAirPollenResponse {
   hourly?: {
@@ -37,177 +7,203 @@ interface OpenMeteoAirPollenResponse {
     alder_pollen?: Array<number | null | undefined>;
     birch_pollen?: Array<number | null | undefined>;
     grass_pollen?: Array<number | null | undefined>;
-    mugwort_pollen?: Array<number | null | undefined>;
-    olive_pollen?: Array<number | null | undefined>;
     ragweed_pollen?: Array<number | null | undefined>;
-    pm2_5?: Array<number | null | undefined>;
-    pm10?: Array<number | null | undefined>;
-    nitrogen_dioxide?: Array<number | null | undefined>;
-    ozone?: Array<number | null | undefined>;
-    sulphur_dioxide?: Array<number | null | undefined>;
-    carbon_monoxide?: Array<number | null | undefined>;
+    olive_pollen?: Array<number | null | undefined>;
     us_aqi?: Array<number | null | undefined>;
-    european_aqi?: Array<number | null | undefined>;
   };
 }
 
-function toISODate(date: Date): string {
-  return date.toISOString().split('T')[0] ?? '';
-}
-
-function toFinite(value: number | null | undefined): number | undefined {
-  if (typeof value !== 'number') return undefined;
-  return Number.isFinite(value) ? value : undefined;
-}
-
-function updateMax(
-  target: Record<string, number | undefined>,
-  key: string,
-  value: number | undefined
-): void {
-  if (value === undefined) return;
-  const current = target[key];
-  target[key] = typeof current === 'number' ? Math.max(current, value) : value;
-}
-
-function maxDefined(...values: Array<number | undefined>): number | undefined {
-  let result: number | undefined;
-  for (const value of values) {
-    if (value === undefined) continue;
-    result = result === undefined ? value : Math.max(result, value);
-  }
-  return result;
-}
-
-function hasNumericValue(record: Record<string, number | undefined>): boolean {
-  return Object.values(record).some((value) => typeof value === 'number' && Number.isFinite(value));
-}
-
-function hasAnyKey<T>(record: Record<string, T>): boolean {
-  return Object.keys(record).length > 0;
-}
-
-function aggregatePollenAndAirQuality(hourly?: OpenMeteoAirPollenResponse['hourly']) {
-  const pollenByDate: PollenByDate = {};
-  const airQualityByDate: AirQualityByDate = {};
-
-  if (!hourly?.time) {
-    return { pollenByDate, airQualityByDate };
+async function fetchOpenMeteoAirPollen(lat: number, lon: number): Promise<OpenMeteoAirPollenResponse> {
+  const now = new Date();
+  const start = now.toISOString().split('T')[0]; // Today YYYY-MM-DD
+  
+  // Calculate end date (5 days from now)
+  const endDate = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const end = endDate.toISOString().split('T')[0]; // 5 days later
+  
+  console.log(`Fetching air quality data from ${start} to ${end}`);
+  
+  // Ensure end date is after start date
+  if (new Date(end) <= new Date(start)) {
+    console.error(`Invalid date range: start=${start}, end=${end}`);
+    throw new Error(`Invalid date range: end date must be after start date`);
   }
 
-  const length = hourly.time.length;
+  const hourlyVars = [
+    'alder_pollen',
+    'birch_pollen', 
+    'grass_pollen',
+    'ragweed_pollen',
+    'olive_pollen',
+    'us_aqi' // Add air quality index
+  ];
 
-  for (let index = 0; index < length; index += 1) {
-    const timestamp = hourly.time[index];
-    if (!timestamp) continue;
-    const [dateKey] = timestamp.split('T');
-    if (!dateKey) continue;
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?` +
+    `latitude=${lat}&longitude=${lon}&` +
+    `hourly=${hourlyVars.join(',')}&` +
+    `start_date=${start}&end_date=${end}&` +
+    `timezone=auto`;
 
-    const pollenEntry = pollenByDate[dateKey] ?? (pollenByDate[dateKey] = {});
-    const airEntry = airQualityByDate[dateKey] ?? (airQualityByDate[dateKey] = {});
+  console.log('Open-Meteo air quality URL:', url);
 
-    updateMax(pollenEntry, 'grass', toFinite(hourly.grass_pollen?.[index] ?? undefined));
-    const tree = maxDefined(
-      toFinite(hourly.alder_pollen?.[index] ?? undefined),
-      toFinite(hourly.birch_pollen?.[index] ?? undefined)
-    );
-    updateMax(pollenEntry, 'tree', tree);
-
-    const weed = maxDefined(
-      toFinite(hourly.ragweed_pollen?.[index] ?? undefined),
-      toFinite(hourly.mugwort_pollen?.[index] ?? undefined)
-    );
-    updateMax(pollenEntry, 'weed', weed);
-    updateMax(pollenEntry, 'olive', toFinite(hourly.olive_pollen?.[index] ?? undefined));
-
-    updateMax(airEntry, 'overall', toFinite(hourly.us_aqi?.[index] ?? undefined));
-    updateMax(airEntry, 'euAqi', toFinite(hourly.european_aqi?.[index] ?? undefined));
-    updateMax(airEntry, 'pm2_5', toFinite(hourly.pm2_5?.[index] ?? undefined));
-    updateMax(airEntry, 'pm10', toFinite(hourly.pm10?.[index] ?? undefined));
-    updateMax(airEntry, 'no2', toFinite(hourly.nitrogen_dioxide?.[index] ?? undefined));
-    updateMax(airEntry, 'o3', toFinite(hourly.ozone?.[index] ?? undefined));
-    updateMax(airEntry, 'so2', toFinite(hourly.sulphur_dioxide?.[index] ?? undefined));
-    updateMax(airEntry, 'co', toFinite(hourly.carbon_monoxide?.[index] ?? undefined));
-  }
-
-  for (const key of Object.keys(pollenByDate)) {
-    if (!hasNumericValue(pollenByDate[key]!)) {
-      delete pollenByDate[key];
-    }
-  }
-
-  for (const key of Object.keys(airQualityByDate)) {
-    if (!hasNumericValue(airQualityByDate[key]!)) {
-      delete airQualityByDate[key];
-    }
-  }
-
-  return { pollenByDate, airQualityByDate };
-}
-
-async function fetchPollenSnapshot(
-  lat: number,
-  lon: number,
-  start: Date,
-  end: Date
-): Promise<OpenMeteoAirPollenResponse | null> {
   try {
-    const startDate = toISODate(start);
-    const endDate = toISODate(end);
-    const data = await fetchOpenMeteoAirPollen(lat, lon, startDate, endDate);
-    return (data ?? null) as OpenMeteoAirPollenResponse | null;
+    const res = await fetch(url);
+    console.log('Open-Meteo response status:', res.status);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Open-Meteo error response:', errorText);
+      console.error('Request details:', {
+        url,
+        status: res.status,
+        statusText: res.statusText,
+        headers: Object.fromEntries([...res.headers.entries()])
+      });
+      throw new Error(`Open-Meteo air/pollen ${res.status}: ${errorText}`);
+    }
+    
+    const data = (await res.json()) as OpenMeteoAirPollenResponse;
+    console.log('Open-Meteo data received successfully');
+    return data;
   } catch (error) {
-    console.warn('Open-Meteo air/pollen fetch failed', error);
-    return null;
+    console.error('Error fetching Open-Meteo data:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    throw error;
   }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method && req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   const { lat, lon } = req.query;
-
-  if (typeof lat !== 'string' || typeof lon !== 'string') {
-    return res.status(400).json({ error: 'Missing lat/lon parameters' });
+  
+  if (!lat || !lon) {
+    return res.status(400).json({ error: "Missing lat/lon parameters" });
   }
-
-  const latitude = Number.parseFloat(lat);
-  const longitude = Number.parseFloat(lon);
-
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return res.status(400).json({ error: 'Invalid lat/lon parameters' });
-  }
-
+  
   try {
-    const { lat: weatherLat, lon: weatherLon } = roundCoordinates(latitude, longitude, 'weather');
-    const { lat: envLat, lon: envLon } = roundCoordinates(latitude, longitude, 'pollen');
+    const latitude = parseFloat(lat as string);
+    const longitude = parseFloat(lon as string);
+    
+    console.log(`Weather API called for lat: ${latitude}, lon: ${longitude}`);
+    
+    // Get OpenWeather data using new service module
+    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+    if (!apiKey) {
+      console.error('Missing OpenWeather API key');
+      throw new Error('Missing OpenWeather API key');
+    }
 
-    const today = new Date();
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + 4);
-
-    // Use weather waterfall (NWS/Met.no/Open-Meteo/OpenWeather) instead of direct OpenWeather call
-    const [weatherData, pollenData] = await Promise.all([
-      getWeatherData(weatherLat, weatherLon),
-      fetchPollenSnapshot(envLat, envLon, today, endDate),
+    // Fetch weather and pollen data in parallel
+    console.log('Fetching weather and pollen data in parallel...');
+    const [weatherData, pollenResponse] = await Promise.all([
+      getFullWeather({ lat: latitude, lon: longitude, apiKey })
+        .catch(err => {
+          console.error('Error fetching weather data:', err);
+          throw new Error(`Weather data fetch error: ${err.message}`);
+        }),
+      fetchOpenMeteoAirPollen(latitude, longitude)
+        .catch(err => {
+          console.error('Error fetching pollen data:', err);
+          // Continue with weather data even if pollen data fails
+          return { hourly: { time: [] } } as OpenMeteoAirPollenResponse;
+        })
     ]);
-
-    const { pollenByDate, airQualityByDate } = aggregatePollenAndAirQuality(pollenData?.hourly);
-
-    const responsePayload: WeatherWithPollenResponse = { ...weatherData };
-    if (hasAnyKey(pollenByDate)) responsePayload.pollenByDate = pollenByDate;
-    if (hasAnyKey(airQualityByDate)) responsePayload.airQualityByDate = airQualityByDate;
-
-    return res.status(200).json(responsePayload);
+    
+    console.log('Successfully fetched weather data');
+    console.log('Pollen data status:', pollenResponse?.hourly?.time ? 'Available' : 'Not available');
+    
+    const transformedData = weatherData;
+    // Process pollen and air quality data by day
+    const pollenByDate: Record<string, { grass?: number; tree?: number; weed?: number; olive?: number }> = {};
+    const airQualityByDate: Record<string, { overall?: number }> = {};
+    
+    // Check if we have pollen data before processing
+    if (pollenResponse?.hourly?.time && pollenResponse.hourly.time.length > 0) {
+      console.log(`Processing ${pollenResponse.hourly.time.length} hourly pollen data points`);
+      
+      const pollenHours = (pollenResponse.hourly.time || []).map((t: string, i: number) => ({
+        time: t,
+        alder: pollenResponse.hourly?.alder_pollen?.[i],
+        birch: pollenResponse.hourly?.birch_pollen?.[i],
+        grass: pollenResponse.hourly?.grass_pollen?.[i],
+        ragweed: pollenResponse.hourly?.ragweed_pollen?.[i],
+        olive: pollenResponse.hourly?.olive_pollen?.[i],
+        aqi: pollenResponse.hourly?.us_aqi?.[i],
+      }));
+      
+      for (const h of pollenHours) {
+        const dateKey = h.time.split('T')[0]; // YYYY-MM-DD
+        
+        // Process pollen data
+        if (!pollenByDate[dateKey]) {
+          pollenByDate[dateKey] = { grass: -Infinity, tree: -Infinity, weed: -Infinity, olive: -Infinity };
+        }
+        
+        // Calculate daily maxima for pollen
+        if (h.grass != null) pollenByDate[dateKey].grass = Math.max(pollenByDate[dateKey].grass ?? -Infinity, Number(h.grass));
+        
+        const treeMax = Math.max(Number(h.alder ?? -Infinity), Number(h.birch ?? -Infinity));
+        if (treeMax > -Infinity) pollenByDate[dateKey].tree = Math.max(pollenByDate[dateKey].tree ?? -Infinity, treeMax);
+        
+        if (h.ragweed != null) pollenByDate[dateKey].weed = Math.max(pollenByDate[dateKey].weed ?? -Infinity, Number(h.ragweed));
+        if (h.olive != null) pollenByDate[dateKey].olive = Math.max(pollenByDate[dateKey].olive ?? -Infinity, Number(h.olive));
+        
+        // Process air quality data
+        if (!airQualityByDate[dateKey]) {
+          airQualityByDate[dateKey] = { overall: -Infinity };
+        }
+        
+        if (h.aqi != null) airQualityByDate[dateKey].overall = Math.max(airQualityByDate[dateKey].overall ?? -Infinity, Number(h.aqi));
+      }
+      
+      // Clean up -Infinity values
+      Object.keys(pollenByDate).forEach(dateKey => {
+        const p = pollenByDate[dateKey];
+        if (p.grass === -Infinity) p.grass = undefined;
+        if (p.tree === -Infinity) p.tree = undefined; 
+        if (p.weed === -Infinity) p.weed = undefined;
+        if (p.olive === -Infinity) p.olive = undefined;
+      });
+      
+      Object.keys(airQualityByDate).forEach(dateKey => {
+        const aq = airQualityByDate[dateKey];
+        if (aq.overall === -Infinity) aq.overall = undefined;
+      });
+      
+      console.log(`Processed pollen data for ${Object.keys(pollenByDate).length} days`);
+    } else {
+      console.log('No pollen data available, returning weather data only');
+    }
+    
+    // Add pollen and air quality data to transformed response
+    const enrichedData = {
+      ...transformedData,
+      pollenByDate, // Add pollen data indexed by date
+      airQualityByDate, // Add air quality data indexed by date
+    };
+    res.status(200).json(enrichedData);
   } catch (error) {
     console.error('Weather with pollen API error:', error);
-    const details = error instanceof Error ? error.message : String(error);
-    return res.status(500).json({
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Check if it's a network error
+    if (error && typeof error === 'object' && 'cause' in error) {
+      console.error('Error cause:', (error as { cause?: unknown }).cause);
+    }
+    
+    res.status(500).json({ 
       error: 'Failed to fetch weather and pollen data',
-      details,
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 }
