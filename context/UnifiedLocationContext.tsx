@@ -231,7 +231,7 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
             // Align coordinates with rectangle anchor for consistency (European waters only)
             nextLat = metadata.centerLat;
             nextLon = metadata.centerLon;
-          } catch (resolveError) {
+          } catch (_resolveError) {
             // Rectangle resolution failed (likely non-European location)
             // Keep original coordinates and continue without rectangleCode
             console.info('[UnifiedLocation] Rectangle resolution unavailable, using raw coordinates');

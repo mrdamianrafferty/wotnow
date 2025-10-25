@@ -43,7 +43,7 @@ export function LocationDisplay() {
       let rectangleCode: string | null = null;
       let region: string | null = null;
       let distance: number | null = null;
-      let useRectangleCenter = false;
+      let _useRectangleCenter = false;
 
       if (res.ok) {
         // European waters - has ICES rectangle
@@ -51,7 +51,7 @@ export function LocationDisplay() {
         rectangleCode = data.rectangleCode;
         region = data.region;
         distance = data.distance;
-        useRectangleCenter = true;
+        _useRectangleCenter = true;
 
         console.log('[LocationDisplay] Found ICES rectangle:', {
           rectangleCode,
@@ -69,7 +69,7 @@ export function LocationDisplay() {
           ? `${location.name} (~${Math.round(distance)}km away)`
           : location.name;
 
-      const unified = await updateLocation({
+      const _unified = await updateLocation({
         coordinates: {
           lat: location.lat, // Keep user's chosen coordinates
           lon: location.lon
@@ -108,7 +108,7 @@ export function LocationDisplay() {
           );
         } else {
           // Remove rectangle param for worldwide locations
-          const { rectangle, ...restQuery } = router.query;
+          const { rectangle: _rectangle, ...restQuery } = router.query;
           await router.replace(
             {
               pathname: router.pathname,

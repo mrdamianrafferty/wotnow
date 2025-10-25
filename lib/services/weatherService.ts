@@ -734,9 +734,14 @@ async function fetchFromMetNoWeather(lat: number, lon: number): Promise<FullWeat
     if (timeseries.length === 0) {
       return null;
     }
-    
-    console.log(`✅ Met.no: Weather data found (${timeseries.length} hours)`);
-    
+
+    // Log number of unique days in timeseries
+    const uniqueDays = new Set(timeseries.map(entry => {
+      if (!entry.time) return null;
+      return entry.time.slice(0, 10);
+    }).filter(Boolean));
+    console.log(`✅ Met.no: Weather data found (${timeseries.length} hours, ${uniqueDays.size} unique days)`);
+
     const current = timeseries[0];
     return {
       source: 'metno',

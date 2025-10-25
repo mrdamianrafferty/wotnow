@@ -10,49 +10,69 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../pages/api/weather-with-pollen';
 
-// Mock the weatherService module
-jest.mock('../../lib/services/weatherService', () => ({
-  getFullWeather: jest.fn(() => Promise.resolve({
-    current: {
-      dt: Date.now() / 1000,
-      temp: 15,
-      feels_like: 14,
-      pressure: 1013,
-      humidity: 75,
-      dew_point: 10,
-      uvi: 3,
-      clouds: 50,
-      visibility: 10000,
-      wind_speed: 5,
-      wind_deg: 180,
+const baseWeatherPayload = {
+  current: {
+    dt: Date.now() / 1000,
+    temp: 15,
+    feels_like: 14,
+    pressure: 1013,
+    humidity: 75,
+    dew_point: 10,
+    uvi: 3,
+    clouds: 50,
+    visibility: 10000,
+    wind_speed: 5,
+    wind_deg: 180,
+    weather: [{ id: 801, main: 'Clouds', description: 'few clouds', icon: '02d' }],
+  },
+  list: [
+    {
+      dt: Math.floor(Date.now() / 1000),
+      dt_txt: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      main: {
+        temp: 15,
+        temp_min: 13,
+        temp_max: 17,
+        humidity: 75,
+      },
       weather: [{ id: 801, main: 'Clouds', description: 'few clouds', icon: '02d' }],
+      wind: { speed: 5, deg: 180 },
+      clouds: { all: 50 },
+      visibility: 10000,
     },
-    hourly: [],
-    daily: [],
-  })),
-  fetchOpenMeteoAirPollen: jest.fn(() => Promise.resolve({
-    hourly: {
-      time: [
-        '2025-10-19T00:00',
-        '2025-10-19T01:00',
-        '2025-10-19T02:00',
-      ],
-      grass_pollen: [1.5, 2.0, 2.5],
-      birch_pollen: [0.8, 1.0, 1.2],
-      alder_pollen: [0.5, 0.6, 0.7],
-      ragweed_pollen: [0.3, 0.4, 0.5],
-      mugwort_pollen: [0.2, 0.3, 0.4],
-      olive_pollen: [0.1, 0.2, 0.3],
-      us_aqi: [45, 50, 55],
-      european_aqi: [20, 25, 30],
-      pm2_5: [10, 12, 15],
-      pm10: [20, 25, 30],
-      nitrogen_dioxide: [15, 18, 20],
-      ozone: [40, 45, 50],
-      sulphur_dioxide: [5, 6, 7],
-      carbon_monoxide: [200, 220, 240],
-    },
-  })),
+  ],
+  hourly: [],
+  daily: [],
+  source: 'test',
+};
+
+const basePollenPayload = {
+  hourly: {
+    time: [
+      '2025-10-19T00:00',
+      '2025-10-19T01:00',
+      '2025-10-19T02:00',
+    ],
+    grass_pollen: [1.5, 2.0, 2.5],
+    birch_pollen: [0.8, 1.0, 1.2],
+    alder_pollen: [0.5, 0.6, 0.7],
+    ragweed_pollen: [0.3, 0.4, 0.5],
+    mugwort_pollen: [0.2, 0.3, 0.4],
+    olive_pollen: [0.1, 0.2, 0.3],
+    us_aqi: [45, 50, 55],
+    european_aqi: [20, 25, 30],
+    pm2_5: [10, 12, 15],
+    pm10: [20, 25, 30],
+    nitrogen_dioxide: [15, 18, 20],
+    ozone: [40, 45, 50],
+    sulphur_dioxide: [5, 6, 7],
+    carbon_monoxide: [200, 220, 240],
+  },
+};
+
+jest.mock('../../lib/services/weatherService', () => ({
+  getWeatherData: jest.fn(() => Promise.resolve(baseWeatherPayload)),
+  fetchOpenMeteoAirPollen: jest.fn(() => Promise.resolve(basePollenPayload)),
 }));
 
 // Mock coordinatePrecision utility
@@ -60,11 +80,15 @@ jest.mock('../../utils/coordinatePrecision', () => ({
   roundCoordinates: jest.fn((lat, lon) => ({ lat, lon })),
 }));
 
+const weatherService = require('../../lib/services/weatherService');
+
 describe('GET /api/weather-with-pollen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Mock environment variable
     process.env.OPENWEATHER_KEY = 'test-api-key';
+    weatherService.getWeatherData.mockResolvedValue(baseWeatherPayload);
+    weatherService.fetchOpenMeteoAirPollen.mockResolvedValue(basePollenPayload);
   });
 
   describe('Basic Request Validation', () => {
@@ -149,6 +173,7 @@ describe('GET /api/weather-with-pollen', () => {
     it('should return 500 if OPENWEATHER_KEY is not configured', async () => {
       delete process.env.OPENWEATHER_KEY;
       delete process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+      weatherService.getWeatherData.mockRejectedValueOnce(new Error('API key missing'));
 
       const { req, res } = createMocks({
         method: 'GET',
@@ -163,7 +188,8 @@ describe('GET /api/weather-with-pollen', () => {
       expect(res._getStatusCode()).toBe(500);
       const data = JSON.parse(res._getData());
       expect(data).toHaveProperty('error');
-      expect(data.error).toContain('API key');
+      expect(data.error).toContain('Failed to fetch weather and pollen data');
+      expect(data.details).toContain('API key');
     });
   });
 
@@ -535,9 +561,6 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Error Handling', () => {
     it('should handle weather service errors gracefully', async () => {
-      const weatherService = require('../../lib/services/weatherService');
-      weatherService.getFullWeather.mockRejectedValueOnce(new Error('Weather API failed'));
-
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -545,6 +568,8 @@ describe('GET /api/weather-with-pollen', () => {
           lon: '-5.0',
         },
       });
+
+      weatherService.getWeatherData.mockRejectedValueOnce(new Error('Weather API failed'));
 
       await handler(req, res);
 
@@ -555,7 +580,6 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should handle pollen API failures gracefully', async () => {
-      const weatherService = require('../../lib/services/weatherService');
       weatherService.fetchOpenMeteoAirPollen.mockRejectedValueOnce(new Error('Pollen API failed'));
 
       const { req, res } = createMocks({
@@ -609,7 +633,6 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should not include pollenByDate if no data', async () => {
-      const weatherService = require('../../lib/services/weatherService');
       weatherService.fetchOpenMeteoAirPollen.mockResolvedValueOnce(null);
 
       const { req, res } = createMocks({
@@ -628,7 +651,6 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should not include airQualityByDate if no data', async () => {
-      const weatherService = require('../../lib/services/weatherService');
       weatherService.fetchOpenMeteoAirPollen.mockResolvedValueOnce(null);
 
       const { req, res } = createMocks({

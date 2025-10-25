@@ -101,7 +101,7 @@ export function LocationPicker() {
     };
 
     void autoDetect();
-  }, [currentRectangle, rectangleOptions, updateLocation]);
+  }, [currentRectangle, rectangleOptions, updateLocation, location?.lat, location?.lon]);
 
   const requestGPSLocation = useCallback(async () => {
     try {

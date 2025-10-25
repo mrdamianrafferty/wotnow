@@ -31,6 +31,7 @@ import { getActivityMessage } from '../data/activityMessages';
 import { WeatherData } from '../types/weatherData';
 import AstronomyCard from '../components/AstronomyCard';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
+import BottomNav from '../components/BottomNav';
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const { query } = ctx;
@@ -244,7 +245,7 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
     });
 
     const forecast: WeatherForecastDay[] = Object.entries(grouped)
-      .slice(0, 5)
+  .slice(0, 8)
       .map(([dateStr, dayEntries], dayIndex) => {
         // Different handling for today vs future days
         const isToday = dayIndex === 0;
@@ -485,7 +486,7 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
   if (!weatherData?.daily) return [];
-  return weatherData.daily.slice(0, 5).map((day) => {
+  return weatherData.daily.slice(0, 8).map((day) => {
     return {
       date: day.dt,
       temperature: Math.round(day.temp.day),
@@ -784,7 +785,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         className="activity-card-enhanced"
         style={{
           backgroundImage: `url(${heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
-            ? getOptimizedImageSrc(heroActivity.activityId, 'webpMobile')
+            ? getOptimizedImageSrc(heroActivity.activityId, 'webpSmall')
             : getActivityBg(heroActivity?.activityId || 'default')
           })`,
         }}
@@ -1086,6 +1087,7 @@ const popupPayload = buildPopupActivityPayload({
   />
 )}
       <Footer />
+      <BottomNav />
     </> /* End of fragment */
   ); // End of return
 } // End of Home component

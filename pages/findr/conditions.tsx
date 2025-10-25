@@ -101,7 +101,7 @@ const FindrConditionsRoute: React.FC = () => {
     } else if (current !== null) {
       // No rectangle (worldwide location) but URL has one - remove it
       console.log('[Conditions] Removing rectangle param for worldwide location');
-      const { rectangle, ...restQuery } = router.query;
+      const { rectangle: _rectangle, ...restQuery } = router.query;
       router.replace(
         {
           pathname: router.pathname,
