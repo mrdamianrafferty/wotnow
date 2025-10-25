@@ -268,8 +268,8 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
           </button>
         </div>
 
-        {card.image ? (
-          <div className="relative aspect-[3/2] w-full bg-base-200 md:aspect-[16/7]">
+        {card && card.image ? (
+          <div className="relative aspect-[3/2] w-full bg-white md:aspect-[16/7]">
             <Image
               src={card.image.src}
               alt={card.image.alt}
@@ -282,7 +282,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             />
           </div>
         ) : (
-          <div className="flex aspect-[3/2] w-full items-center justify-center bg-base-200 text-6xl">
+          <div className="flex aspect-[3/2] w-full items-center justify-center bg-white text-6xl">
             <span aria-hidden>{card.emoji}</span>
           </div>
         )}

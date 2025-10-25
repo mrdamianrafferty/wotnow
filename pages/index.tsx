@@ -677,7 +677,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   }
 
   if (loading) {
-    return <div>Loading your smart recommendations...</div>;
+    return <div>Hold on petal — today is about to get gorgeous 💋</div>;
   }
 
   if (error) {

@@ -47,7 +47,8 @@ import {
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { getTodayIso } from '../../lib/date/today';
-import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
+import { mapPrediction, type CardData, resolveSpeciesImage } from '../../lib/findr/mapPrediction';
+
 import '../../lib/buildInfo'; // Log build metadata on mount
 import { CatchEntry as _CatchEntry } from '../../types/aiRecommendations';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFishDeck';
@@ -122,6 +123,8 @@ interface PredictionCardContentProps {
   isFirstCard?: boolean;
   onShowSpeciesInfo?: (card: CardData) => void;
   onToggleFavorite?: (card: CardData) => void;
+  infoButtonClassName?: string;
+  infoIconClassName?: string;
 }
 
 const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
@@ -133,6 +136,8 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
   isFirstCard = false,
   onShowSpeciesInfo,
   onToggleFavorite,
+  infoButtonClassName,
+  infoIconClassName,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -169,7 +174,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
       <div className="card-body !p-4 sm:!p-6 flex h-full flex-col gap-3 sm:gap-4">
         <div className="space-y-3 sm:space-y-4">
           {card.image ? (
-            <div className="relative mx-auto w-full max-h-64 sm:max-h-80 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0">
+            <div className="relative mx-auto w-full max-h-64 sm:max-h-80 overflow-hidden rounded-2xl bg-white aspect-[3/1.2] sm:aspect-[4/1.5] p-0">
               <Image
                 src={card.image.src}
                 alt={card.image.alt}
@@ -202,12 +207,12 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               {onShowSpeciesInfo && (
                 <button
                   type="button"
-                  className="absolute bottom-2 right-2 btn btn-circle btn-ghost btn-lg"
+                  className={infoButtonClassName ? `absolute bottom-2 right-2 ${infoButtonClassName}` : "absolute bottom-2 right-2 btn btn-circle btn-ghost btn-lg"}
                   onClick={() => onShowSpeciesInfo(card)}
                   aria-label="Show info"
                   style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)', zIndex: 3 }}
                 >
-                  <Info size={32} />
+                  <Info size={32} className={infoIconClassName || undefined} />
                 </button>
               )}
             </div>
@@ -494,6 +499,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
         dragElastic={0.25}
         onDragEnd={isTop ? handleDragEnd : undefined}
       >
+        <div className="absolute inset-0 rounded-3xl bg-white" style={{zIndex: 0}} />
         {isTop && (
           <>
             <motion.div
@@ -526,6 +532,8 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           isFirstCard={index === 0}
           onShowSpeciesInfo={isTop ? onShowSpeciesInfo : undefined}
           onToggleFavorite={isTop ? onToggleFavorite : undefined}
+          infoButtonClassName="btn btn-circle btn-outline btn-lg border-gray-300 bg-white text-gray-800 shadow-sm hover:bg-gray-100"
+          infoIconClassName="text-gray-800"
         />
       </motion.div>
     );
@@ -1014,88 +1022,115 @@ const FindrPage: React.FC = () => {
                 </span>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {cards.map((card) => (
-                  <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
-                    <div className="card-body space-y-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-base-content">
-                            <span className="text-2xl" aria-hidden>
-                              {card.emoji}
-                            </span>
-                            <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
-                            {card.confidence !== null ? (
-                              <span className={confidenceBadgeClasses(card.confidence, 'sm')} data-testid="confidence-score">
-                                {card.confidence}%
-                              </span>
-                            ) : (
-                              <span className="badge badge-outline badge-sm">n/a</span>
-                            )}
-                            {card.weight_profile && (
-                              <GuildBadge guild={card.weight_profile} size="xs" />
+                {cards.map((card) => {
+                  const fishImageInfo = card.commonName ? resolveSpeciesImage(undefined, card.commonName) : undefined;
+                  const handleCardClick = () => {
+                    setSpeciesModalCard({
+                      ...card,
+                      image: fishImageInfo && fishImageInfo.thumb ? {
+                        src: fishImageInfo.thumb,
+                        alt: fishImageInfo.name,
+                        mobile: fishImageInfo.mobile ?? null,
+                        thumb: fishImageInfo.thumb ?? null,
+                      } : undefined,
+                    });
+                  };
+                  return (
+                    <article
+                      key={card.id}
+                      className="card bg-base-100 shadow-md border border-base-200/60 cursor-pointer hover:shadow-xl transition-all duration-200"
+                      data-testid="species-card"
+                      onClick={handleCardClick}
+                    >
+                      <div className="card-body space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-base-content">
+                              {fishImageInfo && fishImageInfo.thumb ? (
+                                <Image
+                                  src={fishImageInfo.thumb}
+                                  alt={card.commonName}
+                                  width={40}
+                                  height={40}
+                                  style={{ borderRadius: '50%' }}
+                                />
+                              ) : (
+                                <span className="text-2xl" aria-hidden>{card.emoji}</span>
+                              )}
+                              <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
+                              {card.confidence !== null ? (
+                                <span className={confidenceBadgeClasses(card.confidence, 'sm')} data-testid="confidence-score">
+                                  {card.confidence}%
+                                </span>
+                              ) : (
+                                <span className="badge badge-outline badge-sm">n/a</span>
+                              )}
+                              {card.weight_profile && (
+                                <GuildBadge guild={card.weight_profile} size="xs" />
+                              )}
+                            </div>
+                            {card.scientificName && (
+                              <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
                             )}
                           </div>
-                          {card.scientificName && (
-                            <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
+                          <button
+                            type="button"
+                            className={`btn btn-ghost btn-sm ${
+                              favoritesSet.has(getFavouriteKeyFromCard(card))
+                                ? 'text-error hover:text-error'
+                                : 'text-base-content/60 hover:text-error'
+                            }`}
+                            onClick={(e) => { e.stopPropagation(); handleToggleFavorite(card); }}
+                            aria-label={
+                              favoritesSet.has(getFavouriteKeyFromCard(card))
+                                ? 'Remove from favourites'
+                                : 'Add to favourites'
+                            }
+                          >
+                            <Heart
+                              size={16}
+                              fill={favoritesSet.has(getFavouriteKeyFromCard(card)) ? 'currentColor' : 'none'}
+                            />
+                          </button>
+                        </div>
+                        {card.summary && (
+                          <p className="text-sm leading-relaxed text-base-content/80">
+                            {card.summary}
+                          </p>
+                        )}
+                        {card.playfulBio && (
+                          <div className="text-xs text-base-content/60 bg-base-200/60 rounded-lg p-3">
+                            <TranslatedFishBio bio={card.playfulBio} />
+                          </div>
+                        )}
+                        <div className="grid gap-2 text-xs text-base-content/70">
+                          {card.rationale.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-base-content/80"><TranslatedText text="How are you today, hun?" /></p>
+                              <ul className="list-disc pl-4 space-y-1">
+                                {card.rationale.slice(0, 3).map((item, idx) => (
+                                  <li key={`${card.id}-rationale-${idx}`}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {card.baitSuggestions.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-base-content/80"><TranslatedText text="Bait & presentation" /></p>
+                              <p>{card.baitSuggestions.slice(0, 2).join(', ')}</p>
+                            </div>
+                          )}
+                          {card.tideTips.length > 0 && (
+                            <div>
+                              <p className="font-semibold text-base-content/80"><TranslatedText text="Tide & timing" /></p>
+                              <p>{card.tideTips[0]}</p>
+                            </div>
                           )}
                         </div>
-                        <button
-                          type="button"
-                          className={`btn btn-ghost btn-sm ${
-                            favoritesSet.has(getFavouriteKeyFromCard(card))
-                              ? 'text-error hover:text-error'
-                              : 'text-base-content/60 hover:text-error'
-                          }`}
-                          onClick={() => handleToggleFavorite(card)}
-                          aria-label={
-                            favoritesSet.has(getFavouriteKeyFromCard(card))
-                              ? 'Remove from favourites'
-                              : 'Add to favourites'
-                          }
-                        >
-                          <Heart
-                            size={16}
-                            fill={favoritesSet.has(getFavouriteKeyFromCard(card)) ? 'currentColor' : 'none'}
-                          />
-                        </button>
                       </div>
-                      {card.summary && (
-                        <p className="text-sm leading-relaxed text-base-content/80">
-                          {card.summary}
-                        </p>
-                      )}
-                      {card.playfulBio && (
-                        <div className="text-xs text-base-content/60 bg-base-200/60 rounded-lg p-3">
-                          <TranslatedFishBio bio={card.playfulBio} />
-                        </div>
-                      )}
-                      <div className="grid gap-2 text-xs text-base-content/70">
-                        {card.rationale.length > 0 && (
-                          <div>
-                                                        <p className="font-semibold text-base-content/80"><TranslatedText text="How are you today, hun?" /></p>
-                            <ul className="list-disc pl-4 space-y-1">
-                              {card.rationale.slice(0, 3).map((item, idx) => (
-                                <li key={`${card.id}-rationale-${idx}`}>{item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {card.baitSuggestions.length > 0 && (
-                          <div>
-                            <p className="font-semibold text-base-content/80"><TranslatedText text="Bait & presentation" /></p>
-                            <p>{card.baitSuggestions.slice(0, 2).join(', ')}</p>
-                          </div>
-                        )}
-                        {card.tideTips.length > 0 && (
-                          <div>
-                            <p className="font-semibold text-base-content/80"><TranslatedText text="Tide & timing" /></p>
-                            <p>{card.tideTips[0]}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             </section>
           )}

@@ -700,7 +700,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     speciesCode,
     image: imageInfo
       ? {
-          src: imageInfo.image,
+          src: imageInfo.image, // Always use main image for modal
           alt: imageInfo.name,
           mobile: imageInfo.mobile ?? null,
           thumb: imageInfo.thumb ?? null,

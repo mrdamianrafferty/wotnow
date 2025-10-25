@@ -118,6 +118,7 @@ FISH_IMAGES=(
     "public/PNGS/horse-mackerel.png"
     "public/PNGS/atlantic-mackerel.png"
     "public/PNGS/bass.png"
+    "public/PNGS/blackbelly-rosefish.png"
 )
 
 echo "Converting fishing illustration set..."
