@@ -201,7 +201,7 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
  * HourlyMarineCarousel component (WIP)
  * TODO: Implement carousel layout using WeatherCarousel or custom carousel
  */
-export default function HourlyMarineCarousel({ entries, tideEvents }: HourlyMarineCarouselProps) {
+export default function HourlyMarineCarousel({ entries, tideEvents: _tideEvents }: HourlyMarineCarouselProps) {
   return (
     <div className="text-base-content/60 p-4 text-center">
       <p><TranslatedText text="Hourly marine forecast coming soon" /></p>
