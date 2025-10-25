@@ -34,7 +34,23 @@
   - `next-sitemap.config.js` → `next-sitemap.config.cjs`
 - **Result:** Dev server builds successfully in 3.9s, no more build errors
 
-### 5. American Species Image Generation (In Progress)
+### 5. Conditions Map Fix (Commit `b287a19a`)
+- **Problem:** Map showing Spanish location (Gijón) for American waters (Malibu Beach)
+- **Root Cause:** Fallback conditions had hardcoded Spanish coordinates
+- **Solution:** Create dynamic fallback using user's actual coordinates when rectangleCode is null
+- **Files:**
+  - `pages/api/findr/conditions.ts` (lines 481-499)
+  - `hooks/useFindrConditions.ts` (lines 37-74)
+- **Result:** American locations now show correct coordinates on map
+
+### 6. Swipable Cards Fix
+- **Problem:** "Next!" button gets stuck after 1-2 clicks on Findr swipable cards
+- **Root Cause:** Race condition in `handleProgrammaticSkip` trying to trigger swipe animation programmatically
+- **Solution:** Simplified to directly call `handleSkip()` instead of triggering animation
+- **File:** `pages/findr/index.tsx` (lines 863-868)
+- **Result:** Next button now reliably advances to next card without getting stuck
+
+### 7. American Species Image Generation (In Progress)
 - **Status:** 52 out of 100 images generated (52% complete)
 - **Latest:** Red Grouper (Epinephelus morio)
 - **Remaining:** 48 species
