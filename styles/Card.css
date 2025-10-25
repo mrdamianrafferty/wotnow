@@ -27,13 +27,13 @@
   overflow: hidden;       /* Key for overlay/card radius */
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  color: hsl(var(--bc));
+  color: #fff !important;
 }
 
 /* Opt-in white text for dark/image-backed cards */
 .card.text-on-dark,
 .activity-card-enhanced.text-on-dark {
-  color: #fff;
+  color: #fff !important;
 }
 .card:hover,
 .activity-card-enhanced:hover {
@@ -67,11 +67,12 @@
   padding: 1.5rem;
   z-index: 1;
   min-height: 100%; /* Changed from height to min-height to allow expansion */
+  color: #fff !important;
 }
 
 .date-label {
   font-weight: bold;
-  color: #fff;
+  color: #fff !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   margin-bottom: 8px;
 }
@@ -86,7 +87,7 @@
 .card__header-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #fff;
+  color: #fff !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
   margin-bottom: 8px;
 }
@@ -191,13 +192,14 @@
 }
 .card__title {
   font-size: 1.1rem;
-  color: white;
+  color: #fff !important;
   font-weight: 600;
 }
 .card__description {
   font-size: 0.9rem;
   line-height: 1.4;
   margin-top: 8px;
+  color: #fff !important;
 }
 .card__marine-data {
   font-size: 0.85rem;
@@ -223,7 +225,7 @@
 /* Perfect Activity */
 .perfect-activity {
   background: rgba(60,60,60,0.1);
-  color: white;
+  color: #fff !important;
   padding: 1.5rem;
   margin: 1rem 0;
   text-align: center;
@@ -239,7 +241,7 @@
 }
 .perfect-name {
   font-size: 1.4rem;
-  color: white;
+  color: #fff !important;
   font-weight: 700;
 }
 
@@ -250,7 +252,7 @@
 .also-good-title {
   font-size: 0.95rem;
   margin-bottom: 8px;
-  color: #fff;
+  color: #fff !important;
 }
 .activity-list-good {
   list-style: none;
@@ -262,7 +264,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 0;
-  color: #fcfffe;
+  color: #fff !important;
 }
 .also-good-score {
   font-size: 0.7rem;
@@ -289,15 +291,16 @@
 
 /* Indoor Day Section */
 .indoor-day-section {
-  background: #f8fafc;
+  background: #222;
   padding: 1.5rem;
   margin: 1rem 0;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #444;
+  color: #fff !important;
 }
 .indoor-day-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: hsl(var(--bc));
+  color: #fff !important;
   margin-bottom: 1rem;
   text-align: center;
 }
@@ -323,7 +326,7 @@
 }
 .indoor-day-item .activity-name {
   font-weight: 500;
-  color: hsl(var(--bc));
+  color: #fff !important;
   font-size: 1rem;
 }
 
@@ -333,7 +336,7 @@
 }
 .indoor-title {
   font-size: 0.95rem;
-  color: hsl(var(--bc));
+  color: #fff !important;
   margin-bottom: 6px;
   display: block;
 }
@@ -341,7 +344,7 @@
   list-style: none;
   padding-left: 0;
   margin: 0;
-  color: hsl(var(--bc));
+  color: #fff !important;
 }
 .indoor-item {
   display: flex;
@@ -380,7 +383,7 @@
 .weather-bar {
   font-size: 0.85rem;
   margin-bottom: 12px;
-  color: #fff;
+  color: #fff !important;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -390,7 +393,7 @@
 .weather-bar button {
   background: none;
   border: none;
-  color: #fff;
+  color: #fff !important;
   text-decoration: underline;
   cursor: pointer;
   font-weight: 600;
@@ -480,6 +483,7 @@
 .forecast-header {
   flex-shrink: 0; /* Prevent compression */
   margin-bottom: 1rem;
+  color: #fff !important;
 }
 
 .temperature-info {

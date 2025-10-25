@@ -215,6 +215,12 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
   const [baselineActivities, setBaselineActivities] = useState<string[]>(
     Array.isArray(initial?.activities) ? [...(initial!.activities as string[])] : []
   );
+  const [baselineHome, setBaselineHome] = useState<{lat: number|null, lon: number|null, name: string}>(
+    { lat: initial?.home_lat ?? null, lon: initial?.home_lon ?? null, name: getSpotNames(initial).home_name }
+  );
+  const [baselineCoast, setBaselineCoast] = useState<{lat: number|null, lon: number|null, name: string}>(
+    { lat: initial?.coast_lat ?? null, lon: initial?.coast_lon ?? null, name: getSpotNames(initial).coast_name }
+  );
   const [hydrated, setHydrated] = useState(false);
 
   // Derived dirtiness
@@ -226,6 +232,14 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     for (const x of a) if (!b.has(x)) return true;
     return false;
   })();
+  const dirtyLocations = (
+    p.home_lat !== baselineHome.lat ||
+    p.home_lon !== baselineHome.lon ||
+    homeName !== baselineHome.name ||
+    p.coast_lat !== baselineCoast.lat ||
+    p.coast_lon !== baselineCoast.lon ||
+    coastName !== baselineCoast.name
+  );
 
 
   const [newActivity, setNewActivity] = useState('');
@@ -336,7 +350,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
   function refreshGlobalDirty() {
     if (!hydrated) { setIsDirty(false); return; }
-    const anyDirty = dirtyBasics || dirtyInterests || (pwTouched && (!!newPw || !!newPw2));
+    const anyDirty = dirtyBasics || dirtyInterests || dirtyLocations || (pwTouched && (!!newPw || !!newPw2));
     setIsDirty(anyDirty);
   }
 
@@ -853,6 +867,46 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
               )}
             </div>
           </div>
+          {/* Inline actions for locations */}
+          {dirtyLocations && (
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                className="btn btn-ghost"
+                onClick={() => {
+                  setP(prev => ({
+                    ...prev,
+                    home_lat: baselineHome.lat,
+                    home_lon: baselineHome.lon,
+                    coast_lat: baselineCoast.lat,
+                    coast_lon: baselineCoast.lon,
+                  }));
+                  setHomeName(baselineHome.name);
+                  setCoastName(baselineCoast.name);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={async () => {
+                  const ok = await patchProfile({
+                    home_lat: p.home_lat,
+                    home_lon: p.home_lon,
+                    coast_lat: p.coast_lat,
+                    coast_lon: p.coast_lon,
+                    preferences_json: setSpotNames(p.preferences_json as Record<string, Json>, homeName, coastName),
+                  });
+                  if (ok) {
+                    setBaselineHome({ lat: p.home_lat, lon: p.home_lon, name: homeName });
+                    setBaselineCoast({ lat: p.coast_lat, lon: p.coast_lon, name: coastName });
+                    setMsg('Locations saved ✓');
+                  }
+                }}
+              >
+                Save
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

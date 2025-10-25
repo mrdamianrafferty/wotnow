@@ -58,12 +58,12 @@ export function WeatherCarousel({
   };
 
   return (
-    <div className={`card bg-base-200/40 border border-base-200/80 shadow-sm space-y-3 ${className}`}>
-      <div className="card-body gap-3">
+  <div className={`card bg-white border border-base-200/80 shadow-sm space-y-3 ${className}`}>
+  <div className="card-body gap-3 text-base-content">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">{translateTitle ? <TranslatedText text={title} /> : title}</h2>
-            {description ? <p className="text-xs text-base-content/60">{description}</p> : null}
+            {description ? <p className="text-xs text-base-content">{description}</p> : null}
           </div>
           <div className="flex items-center gap-2">
             <button

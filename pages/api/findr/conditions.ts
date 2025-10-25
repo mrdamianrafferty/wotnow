@@ -480,6 +480,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!normalizedCode) {
     const fallback = cloneFallbackPayload();
+
+    // If user provided coordinates (worldwide location), use them instead of hardcoded Spanish location
+    if (hasUserLocation && userLat !== null && userLon !== null) {
+      // Update fallback to use user's actual coordinates
+      fallback.rectangle.code = 'WORLDWIDE';
+      fallback.rectangle.name = `${Math.abs(userLat).toFixed(2)}°${userLat >= 0 ? 'N' : 'S'}, ${Math.abs(userLon).toFixed(2)}°${userLon >= 0 ? 'E' : 'W'}`;
+      fallback.rectangle.region = 'Worldwide location';
+      fallback.rectangle.centerLat = userLat;
+      fallback.rectangle.centerLon = userLon;
+      // Remove bounds for worldwide locations
+      delete fallback.rectangle.bounds;
+      console.log('[Conditions API] Using worldwide fallback with user coordinates:', { lat: userLat, lon: userLon });
+    }
+
     res.setHeader('x-findr-conditions-source', 'fallback');
     return res.status(200).json({ ...fallback, source: 'fallback' satisfies ConditionsSource });
   }

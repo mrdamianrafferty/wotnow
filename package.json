@@ -6,7 +6,7 @@
     "prebuild": "",
     "prevercel-build": "",
     "postinstall": "git config core.hooksPath .githooks || true",
-    "dev": "node ./scripts/ensure-next-manifests.js && next dev",
+    "dev": "node ./scripts/ensure-next-manifests.cjs && next dev",
     "build": "next build",
     "postbuild": "",
     "start": "next start",

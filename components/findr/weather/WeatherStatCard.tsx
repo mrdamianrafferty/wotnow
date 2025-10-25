@@ -22,14 +22,14 @@ export function WeatherStatCard({
   className = '',
 }: WeatherStatCardProps) {
   return (
-    <div className={`card bg-base-200/40 border border-base-200/80 shadow-sm ${className}`}>
-      <div className="card-body gap-3">
+  <div className={`card bg-white border border-base-200/80 shadow-sm ${className}`}>
+  <div className="card-body gap-3 text-base-content">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             {icon ? <div className="bg-base-100 p-2 rounded-lg text-primary">{icon}</div> : null}
             <div>
               <h3 className="text-sm font-semibold">{title}</h3>
-              {subtitle ? <p className="text-xs text-base-content/60">{subtitle}</p> : null}
+              {subtitle ? <p className="text-xs text-base-content">{subtitle}</p> : null}
             </div>
           </div>
           {badge ? <span className="badge badge-outline badge-sm whitespace-nowrap">{badge}</span> : null}
@@ -39,7 +39,7 @@ export function WeatherStatCard({
 
         {children}
 
-        {footer ? <div className="mt-2 text-xs text-base-content/60">{footer}</div> : null}
+  {footer ? <div className="mt-2 text-xs text-base-content">{footer}</div> : null}
       </div>
     </div>
   );

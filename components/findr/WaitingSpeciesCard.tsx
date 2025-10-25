@@ -32,6 +32,7 @@ interface WaitingSpeciesCardProps {
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
+  onAction?: (id: string) => void;
 }
 
 /**
@@ -43,6 +44,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   location,
   onRemove,
   onTogglePriority,
+  onAction,
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
   const trend = getForecastTrend(species.forecast);
@@ -62,10 +64,14 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
     `${fishingTimeResult.primaryWindow.startHour}:00` : 
     'Tomorrow 7am';
 
-  const handleCardClick = () => {
-    // For waiting species, we might not have an onAction prop
-    // This could be extended in the future
-    console.log('Waiting species card clicked:', species.id);
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof onAction === 'function') {
+      onAction(species.id);
+    } else {
+      // fallback: log for now
+      console.log('Waiting species card clicked:', species.id);
+    }
   };
 
   return (
@@ -76,12 +82,14 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
       className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200"
     >      <div className="card-body p-3">
         <div className="flex items-center gap-3">
-          {/* Species Image - Clickable */}
+          {/* Species Image/Emoji - Clickable */}
           <button
             onClick={handleCardClick}
-            className="flex-shrink-0 hover:opacity-80 transition-opacity"
+            className="flex-shrink-0 hover:opacity-80 transition-opacity focus:outline-none"
             type="button"
             aria-label={`View ${species.name} details`}
+            tabIndex={-1}
+            style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
           >
             {species.image ? (
               <div className="w-10 h-10 relative rounded overflow-hidden bg-base-200">

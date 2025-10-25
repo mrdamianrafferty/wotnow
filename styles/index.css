@@ -1591,6 +1591,27 @@ abbr[title] {
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+
+@media (max-width: 500px) {
+  .activities-grid {
+    grid-template-columns: 1fr;
+    padding: 8px;
+  }
+  .activity-card, .activity-card__bg-image {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    aspect-ratio: unset;
+  }
+}
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+  grid-auto-rows: auto; /* Let landscape aspect ratio control height */
+  padding: 16px;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ------ UTILITY CLASSES ------ */

@@ -80,22 +80,37 @@ const FindrConditionsRoute: React.FC = () => {
   }, [locationRectangle, locationLoading, selectedCode, setSelectedCode]);
 
   // Sync URL to match active rectangle (for sharing/bookmarking)
-  // Only sync if we have an ICES rectangle - worldwide locations don't use URL params
+  // Add rectangle param for ICES locations, remove it for worldwide locations
   useEffect(() => {
     if (!router.isReady) return;
-    if (!activeRectangle) return; // No rectangle for worldwide locations
-    const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
-    if (current === activeRectangle) return;
 
-    console.log('[Conditions] Syncing URL to activeRectangle:', { from: current, to: activeRectangle });
-    router.replace(
-      {
-        pathname: router.pathname,
-        query: { ...router.query, rectangle: activeRectangle },
-      },
-      undefined,
-      { shallow: true }
-    );
+    const current = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
+
+    if (activeRectangle) {
+      // Have ICES rectangle - ensure URL has it
+      if (current === activeRectangle) return;
+      console.log('[Conditions] Syncing URL to activeRectangle:', { from: current, to: activeRectangle });
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: { ...router.query, rectangle: activeRectangle },
+        },
+        undefined,
+        { shallow: true }
+      );
+    } else if (current !== null) {
+      // No rectangle (worldwide location) but URL has one - remove it
+      console.log('[Conditions] Removing rectangle param for worldwide location');
+      const { rectangle: _rectangle, ...restQuery } = router.query;
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: restQuery,
+        },
+        undefined,
+        { shallow: true }
+      );
+    }
   }, [activeRectangle, router]);
 
   // Only update context from URL if:

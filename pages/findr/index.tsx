@@ -861,13 +861,11 @@ const FindrPage: React.FC = () => {
   }, [cards]);
 
   const handleProgrammaticSkip = useCallback(() => {
-  if (!currentCard) return;
-  // Reset swipingRef before triggering swipe to avoid stuck state
-  swipingRef.current = false;
-  swipeCardRef.current?.swipeLeft();
-  // Also reset after a short delay in case animation or state update lags
-  setTimeout(() => { swipingRef.current = false; }, 300);
-  }, [currentCard]);
+    if (!currentCard) return;
+    // Directly update queue instead of triggering animation to avoid race conditions
+    // This is simpler and more reliable than programmatic swipe animation
+    handleSkip();
+  }, [currentCard, handleSkip]);
 
   const handleProgrammaticLike = useCallback(() => {
     if (!currentCard) return;
