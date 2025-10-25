@@ -96,15 +96,14 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
   });
   
   return (
-    <div className="card bg-base-100 border border-base-200/80 shadow-sm h-full">
+    <div className="card bg-white border border-base-200/80 shadow-sm h-full text-base-content">
       <div className="card-body gap-3">
         <div>
           <p className="text-sm font-semibold">{formatDisplayTime(entry.time)}</p>
-          <p className="text-xs text-base-content/60"><TranslatedText text="Hourly outlook" /></p>
+          <p className="text-xs text-base-content"><TranslatedText text="Hourly outlook" /></p>
         </div>
-        
         {/* Weather icon with air temperature */}
-        <div className="flex items-center gap-2 pb-2 border-b border-base-200/60">
+        <div className="flex items-center gap-2 pb-2 border-b border-base-200/60 text-base-content">
           <Image 
             src={iconUrl} 
             alt="Weather" 
@@ -112,17 +111,16 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
             height={40} 
             className="opacity-90" 
           />
-          <span className="text-2xl font-semibold">
+          <span className="text-2xl font-semibold text-base-content">
             {entry.airTempC != null ? `${Math.round(entry.airTempC)}°` : '—'}
           </span>
           {/* Debug: show raw value */}
           {entry.airTempC != null && (
-            <span className="text-xs text-base-content/50">
+            <span className="text-xs text-base-content">
               ({entry.airTempC.toFixed(1)}°)
             </span>
           )}
         </div>
-        
         {/* Precipitation toggle */}
         {hasPrecipData && (
           <label 
@@ -143,7 +141,7 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
                 height={20} 
                 className="opacity-80" 
               />
-              <span>{precipPct != null ? `${precipPct}%` : '—'}</span>
+              <span className="text-base-content">{precipPct != null ? `${precipPct}%` : '—'}</span>
             </span>
             <span className="swap-on flex items-center gap-1.5">
               <Image 
@@ -153,23 +151,22 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
                 height={20} 
                 className="opacity-80" 
               />
-              <span>{precipMM != null ? `${precipMM}mm` : '—'}</span>
+              <span className="text-base-content">{precipMM != null ? `${precipMM}mm` : '—'}</span>
             </span>
           </label>
         )}
-        
-        <div className="flex flex-col gap-2 text-sm">
+        <div className="flex flex-col gap-2 text-sm text-base-content">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-base-content">
               <Waves className="size-4 text-primary" /> <TranslatedText text="Wave" />
             </span>
-            <span className="font-semibold">{formatWaveHeight(entry.waveHeightM)}</span>
+            <span className="font-semibold text-base-content">{formatWaveHeight(entry.waveHeightM)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-base-content">
               <WiDayWindy className="size-5 text-info" /> <TranslatedText text="Wind" />
             </span>
-            <span className="font-semibold flex items-center gap-1">
+            <span className="font-semibold flex items-center gap-1 text-base-content">
               {entry.windDirectionDeg != null && (
                 <ArrowUp 
                   className="size-4" 
@@ -180,39 +177,19 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-base-content">
               <WiHot className="size-5 text-warning" /> <TranslatedText text="Water" />
             </span>
-            <span className="font-semibold">{formatTemperature(entry.seaTemperatureC)}</span>
+            <span className="font-semibold text-base-content">{formatTemperature(entry.seaTemperatureC)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 text-base-content">
               <WiBarometer className="size-5 text-secondary" /> <TranslatedText text="Tide" />
             </span>
-            <span className="font-semibold"><TranslatedText text={tideState} /></span>
+            <span className="font-semibold text-base-content"><TranslatedText text={tideState} /></span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-export function HourlyMarineCarousel({ entries, tideEvents = [] }: HourlyMarineCarouselProps) {
-  const cards = entries.map((entry) => {
-    const tideState = getTideState(entry.time, tideEvents);
-    return (
-      <HourlyCard key={`${entry.time}-${entry.waveHeightM}`} entry={entry} tideState={tideState} />
-    );
-  });
-
-  return (
-    <WeatherCarousel
-      title="Hourly marine carousel"
-      items={cards}
-      controlsAriaLabel="Hourly marine outlook"
-      translateTitle
-    />
-  );
-}
-
-export default HourlyMarineCarousel;

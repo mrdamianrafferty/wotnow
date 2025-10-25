@@ -106,8 +106,8 @@ export function FindrNextFewDaysCard({
   tide = [],
 }: FindrNextFewDaysCardProps) {
   return (
-    <div className={`card bg-base-200/40 border border-base-200/80 shadow-sm ${className}`}>
-      <div className="card-body gap-3">
+  <div className={`card bg-white border border-base-200/80 shadow-sm ${className}`}>
+  <div className="card-body gap-3 text-base-content">
         <div className="flex items-center gap-3">
           <div className="bg-base-100 p-2 rounded-lg text-primary">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ export function FindrNextFewDaysCard({
           </div>
           <div>
             <h3 className="text-sm font-semibold"><TranslatedText text="Next Few Days" /></h3>
-            <p className="text-xs text-base-content/60"><TranslatedText text="7-day marine forecast" /></p>
+            <p className="text-xs text-base-content"><TranslatedText text="7-day marine forecast" /></p>
           </div>
         </div>
 
@@ -192,7 +192,7 @@ export function FindrNextFewDaysCard({
             const lowStr = lows.length ? lows.slice(0, 2).map(fmt).join('/') : undefined;
 
             return (
-              <div key={d.dateISO} className="bg-base-100 rounded-lg p-3 border border-base-200/50 hover:border-base-300 transition-colors min-w-fit">
+              <div key={d.dateISO} className="bg-base-100 rounded-lg p-3 border border-base-200/50 hover:border-base-300 transition-colors min-w-fit text-base-content">
                 <div className="flex items-center justify-between gap-4 min-w-[600px]">
                   {/* Day + Icon */}
                   <div className="flex items-center gap-3 min-w-[100px]">
