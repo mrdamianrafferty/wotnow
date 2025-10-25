@@ -50,7 +50,14 @@
 - **File:** `pages/findr/index.tsx` (lines 863-868)
 - **Result:** Next button now reliably advances to next card without getting stuck
 
-### 7. American Species Image Generation (In Progress)
+### 7. American Species Bios Added
+- **Problem:** Most American species had no bios showing on swipable cards or modals
+- **Root Cause:** Only 56 European species had hardcoded bios in `data/findrFishBios.ts`
+- **Solution:** Added playful Tinder-style bios for all 100 American species
+- **File:** `data/findrFishBios.ts` (lines 57-157)
+- **Result:** All 156 species now have complete bios on cards and modals
+
+### 8. American Species Image Generation (In Progress)
 - **Status:** 52 out of 100 images generated (52% complete)
 - **Latest:** Red Grouper (Epinephelus morio)
 - **Remaining:** 48 species
