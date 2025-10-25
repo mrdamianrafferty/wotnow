@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { loadGoogleMapsAPI } from '../googleMapsLazy';
 
 /**
  * Custom hook for Google Maps Places Autocomplete using the new API
- * Migrated from use-places-autocomplete to use google.maps.places.AutocompleteService (old) 
+ * Migrated from use-places-autocomplete to use google.maps.places.AutocompleteService (old)
  * but properly loaded via dynamic import
- * 
+ *
  * Note: We're still using the old AutocompleteService for now since the new AutocompleteSuggestion
  * has complex type requirements. This hook properly loads the library dynamically.
- * 
+ *
  * @see https://developers.google.com/maps/documentation/javascript/places-migration-overview
  */
 
@@ -90,8 +91,13 @@ export function usePlacesAutocompleteNew(
       console.log('✅ Google Maps already loaded, initializing immediately');
       initService();
     } else {
-      // Not loaded yet - wait for the event from _document.tsx
-      console.log('⏳ Waiting for Google Maps to load via callback...');
+      // Not loaded yet - proactively start loading AND listen for completion
+      console.log('🚀 Proactively loading Google Maps API...');
+      loadGoogleMapsAPI().catch(err => {
+        console.error('Failed to load Google Maps for autocomplete:', err);
+      });
+
+      // Set up event listeners for when loading completes
       window.addEventListener('googleMapsLoaded', handleGoogleMapsLoaded);
       window.addEventListener('googleMapsLoadError', handleGoogleMapsError);
 
