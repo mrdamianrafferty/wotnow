@@ -89,15 +89,7 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
   const precipMM = entry.precipMM != null ? Math.round(entry.precipMM) : null;
   const precipPct = entry.precipProbability != null ? Math.round(entry.precipProbability * 100) : null;
   const hasPrecipData = precipMM != null || precipPct != null;
-  
-  // Debug: log the temperature for this entry
-  console.log('[HourlyCard]', {
-    time: entry.time,
-    airTempC: entry.airTempC,
-    seaTemperatureC: entry.seaTemperatureC,
-    weatherIcon: entry.weatherIcon,
-  });
-  
+
   return (
     <div className="card bg-white border border-base-200/80 shadow-sm h-full text-base-content">
       <div className="card-body gap-3">
@@ -117,12 +109,6 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
           <span className="text-2xl font-semibold text-base-content">
             {entry.airTempC != null ? `${Math.round(entry.airTempC)}°` : '—'}
           </span>
-          {/* Debug: show raw value */}
-          {entry.airTempC != null && (
-            <span className="text-xs text-base-content">
-              ({entry.airTempC.toFixed(1)}°)
-            </span>
-          )}
         </div>
         {/* Precipitation toggle */}
         {hasPrecipData && (
