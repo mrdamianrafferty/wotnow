@@ -435,3 +435,63 @@ Into a single component with app-specific styling.
 ---
 
 **Status:** Phase 1 complete and deployed. Ready for production testing.
+
+---
+
+## Service Worker Caching Issue (October 27, 2025)
+
+### Problem Discovered
+
+After deploying the OAuth-only fix for Findr, users were still seeing the old auth page (with password fields) even after hard refresh. This was NOT related to the authentication fixes, but rather a PWA service worker caching issue.
+
+**Symptoms:**
+- Old Findr auth page displayed despite new deployment
+- Hard refresh (Ctrl+Shift+R) had no effect
+- Console error: `bad-precaching-response: bad-precaching-response :: [{"url":"https://www.fishfindr.eu/_next/app-build-manifest.json","status":404}]`
+
+**Root Cause:**
+- Service workers intercept network requests BEFORE they reach browser cache
+- Old service worker had precached files from previous build (including old `/findr/auth`)
+- After new deployment, old service worker tried to fetch old build manifest → 404 error
+- `skipWaiting: true` should have forced update, but browser hadn't properly updated service worker yet
+- Hard refresh doesn't bypass service worker (unlike regular browser cache)
+
+### Fix Applied - Commit 8f6a93ae
+
+**File Modified:** `next.config.mjs` (lines 99-106)
+
+**Changes:**
+
+1. **Added `publicExcludes`** to exclude auth pages from service worker precaching:
+   ```javascript
+   publicExcludes: [
+     '!**/findr/auth**',
+     '!**/login**',
+     '!**/auth/callback**',
+   ],
+   ```
+
+2. **Enabled `cleanupOutdatedCaches`** to automatically remove old Workbox caches:
+   ```javascript
+   cleanupOutdatedCaches: true,
+   ```
+
+**Result:**
+- Auth pages will ALWAYS be fetched fresh from network (not cached by service worker)
+- Old Workbox caches automatically cleaned up during service worker updates
+- Prevents stale cached versions from being served after deployments
+
+### Immediate User Action Required
+
+To see the updated Findr auth page, users must manually clear their service worker:
+
+1. Open DevTools (F12) on www.fishfindr.eu
+2. **Application** tab → **Service Workers** section → Click **Unregister**
+3. **Storage** section → Click **Clear site data**
+4. Close and reopen browser tab
+
+After next deployment (with commit 8f6a93ae), this issue won't occur again because auth pages won't be cached by the service worker.
+
+---
+
+**Updated Status:** Phase 1 complete, OAuth-only Findr deployed, service worker caching issue identified and fixed. Awaiting user to clear service worker to see updated auth page.
