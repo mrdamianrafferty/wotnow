@@ -96,6 +96,14 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  // Exclude auth pages from precaching to prevent stale cached versions
+  publicExcludes: [
+    '!**/findr/auth**',
+    '!**/login**',
+    '!**/auth/callback**',
+  ],
+  // Clean up outdated Workbox caches automatically
+  cleanupOutdatedCaches: true,
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
