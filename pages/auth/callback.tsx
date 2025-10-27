@@ -219,14 +219,26 @@ export default function AuthCallback() {
             origin,
           });
 
-          logAuthStep('Redirecting to destination', { destination });
+          logAuthStep('Redirecting to destination', {
+            destination,
+            isFullUrl: destination.startsWith('http'),
+            currentOrigin: window.location.origin
+          });
 
           // Clear stored OAuth context
           sessionStorage.removeItem('oauth_origin');
           sessionStorage.removeItem('oauth_app');
 
-          // Use window.location.replace to prevent callback from staying in browser history
-          window.location.replace(destination);
+          // Handle both relative paths and full URLs
+          if (destination.startsWith('http')) {
+            // Full URL - use window.location for cross-origin redirect
+            console.log('[Auth Flow] Cross-origin redirect to:', destination);
+            window.location.href = destination;
+          } else {
+            // Relative path - use router for same-origin navigation
+            console.log('[Auth Flow] Same-origin redirect to:', destination);
+            window.location.replace(destination);
+          }
           return;
         }
 
