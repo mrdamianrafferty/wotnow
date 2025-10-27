@@ -74,7 +74,14 @@ export default function SharedLogin() {
       // Manually redirect to OAuth provider URL
       if (data?.url) {
         console.log('[Shared Auth] Redirecting to OAuth provider...');
-        window.location.href = data.url;
+        console.log('[Shared Auth] Full redirect URL:', data.url);
+        // Use multiple redirect methods to ensure it works
+        try {
+          window.location.assign(data.url);
+        } catch (e) {
+          console.error('[Shared Auth] location.assign failed:', e);
+          window.location.href = data.url;
+        }
         return;
       }
 
