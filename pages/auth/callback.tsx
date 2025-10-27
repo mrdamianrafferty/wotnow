@@ -175,7 +175,7 @@ export default function AuthCallback() {
 
           let exchangeResult;
           try {
-            exchangeResult = await Promise.race([exchangePromise, timeoutPromise]) as { data: any; error: any };
+            exchangeResult = await Promise.race([exchangePromise, timeoutPromise]) as Awaited<typeof exchangePromise>;
           } catch (timeoutError) {
             logAuthStep('Code exchange timeout', {
               error: getErrorMessage(timeoutError),
