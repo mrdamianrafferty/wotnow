@@ -1,33 +1,70 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabase/client';
 import { mapAuthError } from '../../lib/auth/utils';
-import Link from 'next/link';
 import Head from 'next/head';
-import { Fish } from 'lucide-react';
+import { Fish, Sun, Cloud, Waves } from 'lucide-react';
 
-export default function FindrAuth() {
+/**
+ * Shared login page hosted on auth.godaisy.io
+ * Handles OAuth authentication for both Go Daisy and Findr
+ *
+ * Flow:
+ * 1. User redirected here from app with returnTo and app query params
+ * 2. User clicks OAuth button (Google/Apple)
+ * 3. OAuth redirects to Supabase with callback to auth.godaisy.io/auth/shared-callback
+ * 4. After successful auth, user redirected back to originating app with session tokens
+ */
+export default function SharedLogin() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSocialLogin = (provider: 'google' | 'apple') => {
+  // Get return destination from query params
+  const returnTo = router.query.returnTo as string | undefined;
+  const app = router.query.app as string | undefined;
+
+  const isFindr = app === 'findr';
+
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
 
-      // Redirect to shared auth subdomain (auth.godaisy.io)
-      // This domain matches Supabase Site URL, so no CORS issues
-      const returnTo = `${window.location.origin}/auth/receive-session`;
-      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=findr`;
+      // Store return destination in sessionStorage for callback page
+      if (returnTo) {
+        sessionStorage.setItem('auth_return_to', returnTo);
+        console.log('[Shared Auth] Stored returnTo:', returnTo);
+      }
+      if (app) {
+        sessionStorage.setItem('auth_app', app);
+        console.log('[Shared Auth] Stored app:', app);
+      }
 
-      console.log('[Findr Auth] Redirecting to shared auth:', {
-        authUrl,
-        returnTo,
+      // OAuth callback will be handled by auth.godaisy.io (matches Supabase Site URL - no CORS)
+      const redirectTo = 'https://auth.godaisy.io/auth/shared-callback';
+
+      console.log('[Shared Auth] Starting OAuth flow:', {
         provider,
+        redirectTo,
+        returnTo,
+        app,
       });
 
-      // Redirect to shared auth page
-      window.location.href = authUrl;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+          queryParams: {
+            // Force account picker for Google (consistent UX)
+            ...(provider === 'google' ? { prompt: 'select_account' } : {}),
+          },
+        },
+      });
+
+      if (error) throw error;
     } catch (err) {
-      console.error('[Findr Auth] Error:', err);
+      console.error('[Shared Auth] OAuth error:', err);
       setError(mapAuthError(err));
       setLoading(false);
     }
@@ -36,19 +73,29 @@ export default function FindrAuth() {
   return (
     <>
       <Head>
-        <title>Sign In - findr</title>
+        <title>Sign In - {isFindr ? 'Findr' : 'Go Daisy'}</title>
       </Head>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
           <div className="card-body">
-            {/* Header */}
+            {/* Header with app-specific branding */}
             <div className="text-center mb-6">
-              <div className="flex justify-center mb-4">
-                <Fish className="w-16 h-16 text-primary" />
+              <div className="flex justify-center gap-2 mb-4">
+                {isFindr ? (
+                  <Fish className="w-16 h-16 text-primary" />
+                ) : (
+                  <>
+                    <Sun className="w-12 h-12 text-yellow-500" />
+                    <Cloud className="w-12 h-12 text-blue-400" />
+                    <Waves className="w-12 h-12 text-cyan-500" />
+                  </>
+                )}
               </div>
-              <h1 className="text-3xl font-bold text-primary">findr</h1>
+              <h1 className="text-3xl font-bold text-primary">
+                {isFindr ? 'findr' : 'Go Daisy'}
+              </h1>
               <p className="text-base-content/70 mt-2">
-                Sign in to access your fishing predictions
+                Sign in to access your {isFindr ? 'fishing predictions' : 'outdoor activities'}
               </p>
             </div>
 
@@ -96,11 +143,11 @@ export default function FindrAuth() {
               </p>
             </div>
 
-            {/* Back to findr */}
-            <div className="text-center mt-2">
-              <Link href="/findr" className="btn btn-ghost btn-sm">
-                ← Back to findr
-              </Link>
+            {/* Note about shared auth */}
+            <div className="text-center mt-4">
+              <p className="text-xs text-base-content/50">
+                Powered by secure shared authentication
+              </p>
             </div>
           </div>
         </div>
@@ -109,7 +156,7 @@ export default function FindrAuth() {
   );
 }
 
-// Disable static generation for auth page
+// Disable static generation - needs query params
 export async function getServerSideProps() {
   return { props: {} };
 }

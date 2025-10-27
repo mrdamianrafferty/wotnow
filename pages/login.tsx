@@ -60,35 +60,26 @@ export default function GoDaisyLogin() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  const handleSocialLogin = (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
 
-      // Store the current origin in sessionStorage so callback knows where to return
-      sessionStorage.setItem('oauth_origin', window.location.origin);
-      sessionStorage.setItem('oauth_app', 'godaisy');
+      // Redirect to shared auth subdomain (auth.godaisy.io)
+      // This domain matches Supabase Site URL, so no CORS issues
+      const returnTo = `${window.location.origin}/auth/receive-session`;
+      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=godaisy`;
 
-      // CRITICAL: OAuth redirect MUST match current domain to preserve PKCE verifier in localStorage
-      // Supabase stores PKCE verifier per-domain, so we can't redirect from www to non-www
-      // Use the actual current origin (which will be www.godaisy.io due to Vercel redirect)
-      const redirectTo = `${window.location.origin}/auth/callback?app=godaisy&origin=${encodeURIComponent(window.location.origin)}`;
-
-      console.log('OAuth redirect will be:', redirectTo);
-
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log('[Go Daisy Auth] Redirecting to shared auth:', {
+        authUrl,
+        returnTo,
         provider,
-        options: {
-          redirectTo,
-          queryParams: {
-            // Force account picker for Google
-            ...(provider === 'google' ? { prompt: 'select_account' } : {}),
-          },
-        },
       });
 
-      if (error) throw error;
+      // Redirect to shared auth page
+      window.location.href = authUrl;
     } catch (err) {
+      console.error('[Go Daisy Auth] Error:', err);
       setError(mapAuthError(err));
       setLoading(false);
     }
