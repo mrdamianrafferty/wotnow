@@ -25,7 +25,7 @@ export default function SharedLogin() {
 
   const isFindr = app === 'findr';
 
-  const handleSocialLogin = (provider: 'google' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
@@ -33,20 +33,43 @@ export default function SharedLogin() {
       // Store return destination in sessionStorage for callback page
       if (returnTo) {
         sessionStorage.setItem('auth_return_to', returnTo);
-        console.log('[Shared Auth] Stored returnTo:', returnTo);
       }
       if (app) {
         sessionStorage.setItem('auth_app', app);
-        console.log('[Shared Auth] Stored app:', app);
       }
 
-      console.log('[Shared Auth] Redirecting directly to Supabase OAuth...');
+      // Generate PKCE challenge (required by Supabase)
+      const generateCodeVerifier = () => {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return btoa(String.fromCharCode(...array))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+      };
 
-      // Build OAuth URL manually and navigate directly (no async call)
-      // This ensures the navigation happens in direct response to user click
+      const sha256 = async (plain: string) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(plain);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return btoa(String.fromCharCode(...new Uint8Array(hash)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, '');
+      };
+
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await sha256(codeVerifier);
+
+      // Store code verifier for callback page
+      sessionStorage.setItem('pkce_code_verifier', codeVerifier);
+
+      // Build OAuth URL with PKCE
       const params = new URLSearchParams({
         provider,
         redirect_to: 'https://auth.godaisy.io/auth/shared-callback',
+        code_challenge: codeChallenge,
+        code_challenge_method: 's256',
       });
 
       // Add provider-specific params
@@ -56,9 +79,9 @@ export default function SharedLogin() {
 
       const oauthUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
 
-      console.log('[Shared Auth] Direct OAuth URL:', oauthUrl);
+      console.log('[Shared Auth] Navigating to OAuth with PKCE...');
 
-      // Direct navigation in response to user click (no async delay)
+      // Direct navigation (synchronous after async PKCE generation)
       window.location.href = oauthUrl;
     } catch (err) {
       console.error('[Shared Auth] OAuth error:', err);
