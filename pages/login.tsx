@@ -79,7 +79,7 @@ export default function GoDaisyLogin() {
       });
 
       // Start OAuth directly from current domain (no cross-domain redirect)
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: redirectUrl,
@@ -92,6 +92,11 @@ export default function GoDaisyLogin() {
       if (authError) {
         throw authError;
       }
+
+      console.log('[Go Daisy Auth] OAuth response:', { url: data.url, provider: data.provider });
+
+      // Give SDK time to store PKCE verifier before redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // SDK will redirect to OAuth provider automatically
     } catch (err) {

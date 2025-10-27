@@ -20,12 +20,17 @@ export default function FindrAuth() {
       // Start OAuth directly from current domain (no cross-domain redirect)
       const { supabase } = await import('../../lib/supabase/client');
 
-      console.log('[Findr Auth] Starting OAuth:', { provider, origin: window.location.origin });
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('[Findr Auth] Starting OAuth:', {
+        provider,
+        origin: window.location.origin,
+        redirectTo: redirectUrl
+      });
 
-      const { error: authError } = await supabase.auth.signInWithOAuth({
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
           queryParams: provider === 'google' ? {
             prompt: 'select_account',
           } : undefined,
@@ -35,6 +40,11 @@ export default function FindrAuth() {
       if (authError) {
         throw authError;
       }
+
+      console.log('[Findr Auth] OAuth response:', { url: data.url, provider: data.provider });
+
+      // Give SDK time to store PKCE verifier before redirect
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // SDK will redirect to OAuth provider automatically
     } catch (err) {
