@@ -53,8 +53,14 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   }));
 
   // Domain-based favicon and manifest selection
-  const [isFindr, setIsFindr] = useState(false);
+  // Detect domain immediately (client-side only, but before first render completes)
+  const [isFindr, setIsFindr] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hostname = window.location.hostname;
+    return hostname.includes('fishfindr.eu') || window.location.pathname.startsWith('/findr');
+  });
 
+  // Update if route changes (e.g., navigating from / to /findr)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
