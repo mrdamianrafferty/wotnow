@@ -24,11 +24,10 @@ export default function SharedCallback() {
 
     (async () => {
       try {
-        const code = router.query.code as string | undefined;
         const error_description = router.query.error_description as string | undefined;
 
         console.log('[Shared Callback] Started:', {
-          hasCode: !!code,
+          hasCode: !!router.query.code,
           hasError: !!error_description,
           url: window.location.href,
         });
@@ -38,28 +37,27 @@ export default function SharedCallback() {
           throw new Error(error_description);
         }
 
-        if (!code) {
-          throw new Error('No authorization code received from provider');
+        setStatus('Completing authentication...');
+
+        // Wait a moment for Supabase SDK to process the URL automatically
+        // The SDK has detectSessionInUrl: true, so it will handle the code exchange
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Check if session was established by SDK
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('[Shared Callback] Session error:', sessionError);
+          throw sessionError;
         }
 
-        setStatus('Exchanging authorization code...');
-
-        // Exchange code for session (this works because we're on auth.godaisy.io - matches Supabase Site URL)
-        console.log('[Shared Callback] Exchanging code for session...');
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (exchangeError) {
-          console.error('[Shared Callback] Exchange error:', exchangeError);
-          throw exchangeError;
+        if (!session) {
+          throw new Error('No session created after authentication');
         }
 
-        if (!data?.session) {
-          throw new Error('No session created after code exchange');
-        }
-
-        console.log('[Shared Callback] Session created successfully:', {
-          userEmail: data.session.user?.email,
-          expiresAt: data.session.expires_at,
+        console.log('[Shared Callback] Session established:', {
+          userEmail: session.user?.email,
+          expiresAt: session.expires_at,
         });
 
         // Get return destination from sessionStorage (set by shared-login page)
@@ -87,10 +85,10 @@ export default function SharedCallback() {
         // Construct return URL with session tokens as query params
         // The destination app will receive these and call setSession()
         const returnUrl = new URL(returnTo);
-        returnUrl.searchParams.set('access_token', data.session.access_token);
-        returnUrl.searchParams.set('refresh_token', data.session.refresh_token);
-        returnUrl.searchParams.set('expires_at', data.session.expires_at?.toString() || '');
-        returnUrl.searchParams.set('token_type', data.session.token_type || 'bearer');
+        returnUrl.searchParams.set('access_token', session.access_token);
+        returnUrl.searchParams.set('refresh_token', session.refresh_token);
+        returnUrl.searchParams.set('expires_at', session.expires_at?.toString() || '');
+        returnUrl.searchParams.set('token_type', session.token_type || 'bearer');
 
         console.log('[Shared Callback] Redirecting to:', returnUrl.toString().replace(/token=[^&]+/g, 'token=***'));
 

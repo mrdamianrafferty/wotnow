@@ -58,10 +58,12 @@ export default function SharedLogin() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
 
+      console.log('[Shared Auth] Return destination will be:', returnTo);
+
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'https://auth.godaisy.io/auth/shared-callback',
+          redirectTo: 'https://auth.godaisy.io/auth/shared-callback', // Must callback to same domain for PKCE
           queryParams: provider === 'google' ? {
             prompt: 'select_account',
           } : undefined,
