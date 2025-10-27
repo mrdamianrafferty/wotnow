@@ -146,121 +146,48 @@ export default function AuthCallback() {
         if (code) {
           logAuthStep('Starting PKCE code exchange', { codeLength: code.length });
 
-          // First check if we already have a valid session (OAuth may have already completed)
-          try {
-            const { data: existingSession } = await supabase.auth.getSession();
-            if (existingSession?.session) {
-              logAuthStep('Session already exists, skipping code exchange', {
-                userEmail: existingSession.session.user?.email
-              });
-              setPhase(Phase.Done);
-              const destination = getDestination({
-                returnTo,
-                app,
-                isRecovery: (typeParam || '').toLowerCase() === 'recovery',
-                hostname: window.location.hostname,
-                origin,
-              });
-              logAuthStep('Redirecting with existing session', { destination });
-              sessionStorage.removeItem('oauth_origin');
-              sessionStorage.removeItem('oauth_app');
-              window.location.replace(destination);
-              return;
-            }
-            logAuthStep('No existing session, proceeding with code exchange');
-          } catch (sessionError) {
-            logAuthStep('Error checking session, continuing with code exchange', {
+          // Wait for Supabase SDK to automatically handle the code exchange
+          // The SDK has detectSessionInUrl: true, so it processes the URL automatically
+          logAuthStep('Waiting for SDK to process OAuth callback...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Check if session was established by SDK
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+          if (sessionError) {
+            logAuthStep('Session error after SDK processing', {
               error: getErrorMessage(sessionError)
             });
+            throw sessionError;
           }
 
-          // Check if PKCE verifier exists in localStorage (it should if OAuth flow started correctly)
-          // Use robust key detection instead of string splitting
-          const getSupabasePkceKey = (): string | null => {
-            try {
-              const keys = Object.keys(localStorage);
-              return keys.find(k => k.includes('auth-token-code-verifier')) || null;
-            } catch {
-              return null;
-            }
-          };
+          if (!session) {
+            logAuthStep('No session created after SDK processing');
+            throw new Error('No session created after authentication');
+          }
 
-          const pkceVerifierKey = getSupabasePkceKey();
-          const pkceVerifier = pkceVerifierKey ? localStorage.getItem(pkceVerifierKey) : null;
-          logAuthStep('PKCE verifier check', {
-            hasVerifier: !!pkceVerifier,
-            verifierLength: pkceVerifier?.length,
-            verifierKey: pkceVerifierKey
+          logAuthStep('Session established by SDK', {
+            userEmail: session.user?.email
           });
 
-          if (!pkceVerifier) {
-            logAuthStep('No PKCE verifier found, checking for session fallback');
-            const { data: retrySession } = await supabase.auth.getSession();
-            if (retrySession?.session) {
-              logAuthStep('Found session on retry without verifier', {
-                userEmail: retrySession.session.user?.email
-              });
-              setPhase(Phase.Done);
-              const destination = getDestination({
-                returnTo,
-                app,
-                isRecovery: (typeParam || '').toLowerCase() === 'recovery',
-                hostname: window.location.hostname,
-                origin,
-              });
-              logAuthStep('Redirecting with fallback session', { destination });
-              sessionStorage.removeItem('oauth_origin');
-              sessionStorage.removeItem('oauth_app');
-              window.location.replace(destination);
-              return;
-            }
-          }
+          setPhase(Phase.Done);
+          const destination = getDestination({
+            returnTo,
+            app,
+            isRecovery: (typeParam || '').toLowerCase() === 'recovery',
+            hostname: window.location.hostname,
+            origin,
+          });
 
-          try {
-            logAuthStep('Exchanging code for session');
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          logAuthStep('Redirecting to destination', { destination });
 
-            if (error) {
-              logAuthStep('Code exchange failed', {
-                error: error.message,
-                status: error.status
-              });
-              throw new Error(`OAuth code exchange failed: ${error.message}`);
-            }
+          // Clear stored OAuth context
+          sessionStorage.removeItem('oauth_origin');
+          sessionStorage.removeItem('oauth_app');
 
-            if (!data?.session) {
-              logAuthStep('Code exchange returned no session');
-              throw new Error('No session returned from code exchange');
-            }
-
-            logAuthStep('Code exchange successful', {
-              userEmail: data.session.user?.email
-            });
-
-            setPhase(Phase.Done);
-            const destination = getDestination({
-              returnTo,
-              app,
-              isRecovery: (typeParam || '').toLowerCase() === 'recovery',
-              hostname: window.location.hostname,
-              origin,
-            });
-
-            logAuthStep('Redirecting to destination', { destination });
-
-            // Clear stored OAuth context
-            sessionStorage.removeItem('oauth_origin');
-            sessionStorage.removeItem('oauth_app');
-
-            // Use window.location.replace to prevent callback from staying in browser history
-            window.location.replace(destination);
-            return;
-          } catch (exchangeError) {
-            logAuthStep('Code exchange error', {
-              error: getErrorMessage(exchangeError)
-            });
-            throw exchangeError;
-          }
+          // Use window.location.replace to prevent callback from staying in browser history
+          window.location.replace(destination);
+          return;
         }
 
         // Handle implicit flow tokens (older style OAuth)
