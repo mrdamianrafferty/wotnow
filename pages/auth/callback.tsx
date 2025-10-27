@@ -26,6 +26,15 @@ function asEmailOtpType(t: string | null | undefined): EmailOtpType {
   }
 }
 
+// Structured logging helper for auth flow debugging
+function logAuthStep(step: string, data?: Record<string, unknown>) {
+  console.log(`[Auth Flow] ${step}`, {
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'SSR',
+    ...data
+  });
+}
+
 function getErrorMessage(err: unknown): string {
   if (typeof err === 'object' && err !== null && 'message' in err) {
     const m = (err as { message?: unknown }).message;
@@ -111,24 +120,21 @@ export default function AuthCallback() {
     (async () => {
       try {
         // Detect which app this is for
-        const isFindr = 
-          app === 'findr' || 
+        const isFindr =
+          app === 'findr' ||
           window.location.hostname.includes('fishfindr.eu') ||
           origin?.includes('fishfindr.eu') ||
           sessionStorage.getItem('oauth_app') === 'findr';
         setDetectedApp(isFindr ? 'findr' : 'godaisy');
-        
-        // Debug: Log all query parameters
-        console.log('Auth callback params:', {
+
+        // Log callback initialization
+        logAuthStep('Callback initiated', {
+          app: isFindr ? 'findr' : 'godaisy',
           type: typeParam,
-          token_hash: tokenHash,
-          code: code,
-          access_token: access_token ? '[PRESENT]' : null,
-          refresh_token: refresh_token ? '[PRESENT]' : null,
-          error: oauthError,
-          app,
-          origin,
-          returnTo,
+          hasCode: !!code,
+          hasTokenHash: !!tokenHash,
+          hasAccessToken: !!access_token,
+          hasError: !!oauthError,
         });
 
         // If the provider redirected with an explicit error, surface it.
@@ -138,15 +144,15 @@ export default function AuthCallback() {
 
         // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
-          console.log('[OAuth Debug] Starting code exchange flow...', { code: code.substring(0, 10) + '...', codeLength: code.length });
-          
+          logAuthStep('Starting PKCE code exchange', { codeLength: code.length });
+
           // First check if we already have a valid session (OAuth may have already completed)
           try {
             const { data: existingSession } = await supabase.auth.getSession();
-            console.log('[OAuth Debug] Checked for existing session:', { hasSession: !!existingSession?.session, user: existingSession?.session?.user?.email });
             if (existingSession?.session) {
-              console.log('[OAuth Debug] Session already exists! Skipping code exchange.');
-              console.log('[OAuth Debug] Session user:', existingSession.session.user?.email);
+              logAuthStep('Session already exists, skipping code exchange', {
+                userEmail: existingSession.session.user?.email
+              });
               setPhase(Phase.Done);
               const destination = getDestination({
                 returnTo,
@@ -155,40 +161,45 @@ export default function AuthCallback() {
                 hostname: window.location.hostname,
                 origin,
               });
-              console.log('[OAuth Debug] Determined destination:', destination);
-              console.log('[OAuth Debug] Current URL:', window.location.href);
-              console.log('[OAuth Debug] Query params:', { returnTo, app, origin });
+              logAuthStep('Redirecting with existing session', { destination });
               sessionStorage.removeItem('oauth_origin');
               sessionStorage.removeItem('oauth_app');
-              // Use window.location.replace to prevent back button issues
-              // This also removes the OAuth code from URL to prevent redirect loops
-              console.log('[OAuth Debug] About to redirect to:', destination);
               window.location.replace(destination);
               return;
             }
-            console.log('[OAuth Debug] No existing session, proceeding with code exchange...');
+            logAuthStep('No existing session, proceeding with code exchange');
           } catch (sessionError) {
-            console.log('[OAuth Debug] Error checking session:', sessionError);
-            // Continue with code exchange if session check fails
+            logAuthStep('Error checking session, continuing with code exchange', {
+              error: getErrorMessage(sessionError)
+            });
           }
-          
+
           // Check if PKCE verifier exists in localStorage (it should if OAuth flow started correctly)
-          const pkceVerifierKey = `sb-${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0]}-auth-token-code-verifier`;
-          const pkceVerifier = localStorage.getItem(pkceVerifierKey);
-          console.log('PKCE verifier check:', { 
-            hasVerifier: !!pkceVerifier, 
+          // Use robust key detection instead of string splitting
+          const getSupabasePkceKey = (): string | null => {
+            try {
+              const keys = Object.keys(localStorage);
+              return keys.find(k => k.includes('auth-token-code-verifier')) || null;
+            } catch {
+              return null;
+            }
+          };
+
+          const pkceVerifierKey = getSupabasePkceKey();
+          const pkceVerifier = pkceVerifierKey ? localStorage.getItem(pkceVerifierKey) : null;
+          logAuthStep('PKCE verifier check', {
+            hasVerifier: !!pkceVerifier,
             verifierLength: pkceVerifier?.length,
-            hostname: window.location.hostname,
-            origin: window.location.origin 
+            verifierKey: pkceVerifierKey
           });
-          
+
           if (!pkceVerifier) {
-            console.warn('No PKCE verifier found - OAuth may have completed via implicit flow');
-            console.log('Checking for existing session instead...');
-            // Try one more time to get session
+            logAuthStep('No PKCE verifier found, checking for session fallback');
             const { data: retrySession } = await supabase.auth.getSession();
             if (retrySession?.session) {
-              console.log('Found session on retry!');
+              logAuthStep('Found session on retry without verifier', {
+                userEmail: retrySession.session.user?.email
+              });
               setPhase(Phase.Done);
               const destination = getDestination({
                 returnTo,
@@ -197,36 +208,35 @@ export default function AuthCallback() {
                 hostname: window.location.hostname,
                 origin,
               });
-              console.log('Redirecting to:', destination);
+              logAuthStep('Redirecting with fallback session', { destination });
               sessionStorage.removeItem('oauth_origin');
               sessionStorage.removeItem('oauth_app');
               window.location.replace(destination);
               return;
             }
           }
-          
+
           try {
+            logAuthStep('Exchanging code for session');
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            
-            console.log('Exchange result:', { 
-              hasData: !!data, 
-              hasSession: !!data?.session, 
-              hasUser: !!data?.user,
-              error: error?.message,
-              errorStatus: error?.status 
-            });
-            
+
             if (error) {
-              console.error('Code exchange failed:', error);
+              logAuthStep('Code exchange failed', {
+                error: error.message,
+                status: error.status
+              });
               throw new Error(`OAuth code exchange failed: ${error.message}`);
             }
 
             if (!data?.session) {
+              logAuthStep('Code exchange returned no session');
               throw new Error('No session returned from code exchange');
             }
 
-            console.log('Code exchange successful, session created');
-            // Success - route to appropriate destination
+            logAuthStep('Code exchange successful', {
+              userEmail: data.session.user?.email
+            });
+
             setPhase(Phase.Done);
             const destination = getDestination({
               returnTo,
@@ -236,18 +246,19 @@ export default function AuthCallback() {
               origin,
             });
 
-            console.log('Redirecting to:', destination);
-            
+            logAuthStep('Redirecting to destination', { destination });
+
             // Clear stored OAuth context
             sessionStorage.removeItem('oauth_origin');
             sessionStorage.removeItem('oauth_app');
-            
+
             // Use window.location.replace to prevent callback from staying in browser history
-            // This also removes OAuth code from URL to prevent redirect loops
             window.location.replace(destination);
             return;
           } catch (exchangeError) {
-            console.error('Code exchange error:', exchangeError);
+            logAuthStep('Code exchange error', {
+              error: getErrorMessage(exchangeError)
+            });
             throw exchangeError;
           }
         }
@@ -323,7 +334,11 @@ export default function AuthCallback() {
         // If we get here, parameters are missing or the session isn't ready
         throw new Error('Missing or invalid parameters.');
       } catch (e: unknown) {
-        console.error('Auth callback error:', e);
+        logAuthStep('Auth callback error', {
+          error: getErrorMessage(e),
+          errorType: typeof e,
+          errorName: (e as Error)?.name
+        });
         setError(getErrorMessage(e));
         setPhase(Phase.Error);
       } finally {

@@ -63,33 +63,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const { pathname, search, hash } = window.location;
+  // Removed manual auth redirect logic - Supabase handles this via detectSessionInUrl
+  // See lib/supabase/client.ts for configuration
 
-    // Avoid loops on auth pages
-    if (pathname.startsWith('/findr/magic-link') || pathname.startsWith('/auth/callback')) return;
-
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('code');
-    const type = url.searchParams.get('type');
-    const hasOauthFragment = /(?:^#|&)(access_token|refresh_token|provider_token|expires_in|token_type)=/i.test(hash || '');
-
-    if (code || type === 'recovery' || hasOauthFragment) {
-      // Check if this is a findr-related auth flow
-      const isFindrFlow = url.searchParams.get('app') === 'findr' || 
-                          pathname.startsWith('/findr') ||
-                          window.location.host.includes('fishfindr.eu');
-      
-      if (isFindrFlow) {
-        // Preserve query and any OAuth hash for findr flows
-        window.location.replace(`/findr/magic-link${search}${hash || ''}`);
-      } else {
-        // Preserve query and any OAuth hash for GoDaisy flows
-        window.location.replace(`/auth/callback${search}${hash || ''}`);
-      }
-    }
-  }, []);
   // Use Light theme as universal default unless explicitly overridden at page level
   const defaultTheme = 'light';
   // If a page explicitly passes a theme via pageProps, honour it, otherwise use light
