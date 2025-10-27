@@ -71,8 +71,15 @@ export default function SharedLogin() {
 
       console.log('[Shared Auth] OAuth redirect URL:', data?.url);
 
-      // If we get here, OAuth provider should redirect automatically
-      // If not, something is wrong with the OAuth configuration
+      // Manually redirect to OAuth provider URL
+      if (data?.url) {
+        console.log('[Shared Auth] Redirecting to OAuth provider...');
+        window.location.href = data.url;
+        return;
+      }
+
+      // If no URL returned, something went wrong
+      throw new Error('No OAuth URL returned from Supabase')
     } catch (err) {
       console.error('[Shared Auth] OAuth catch block:', err);
       setError(mapAuthError(err));
