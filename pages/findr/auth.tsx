@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase/client';
 import { mapAuthError } from '../../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -9,31 +8,19 @@ export default function FindrAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  const handleSocialLogin = (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('[Findr Auth] Starting OAuth with Supabase SDK...');
+      // Redirect to shared auth subdomain
+      const returnTo = `${window.location.origin}/auth/receive-session`;
+      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=findr&provider=${provider}`;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/findr`,
-          queryParams: {
-            ...(provider === 'google' ? { prompt: 'select_account' } : {}),
-          },
-        },
-      });
+      console.log('[Findr Auth] Redirecting to shared auth:', { authUrl, returnTo, provider });
 
-      console.log('[Findr Auth] OAuth response:', { data, error });
-
-      if (error) {
-        console.error('[Findr Auth] OAuth error:', error);
-        throw error;
-      }
-
-      // SDK should auto-redirect
+      // Direct navigation - no async delay
+      window.location.href = authUrl;
     } catch (err) {
       console.error('[Findr Auth] Error:', err);
       setError(mapAuthError(err));
