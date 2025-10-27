@@ -68,7 +68,7 @@ export default function GoDaisyLogin() {
       // Redirect to shared auth subdomain (auth.godaisy.io)
       // This domain matches Supabase Site URL, so no CORS issues
       const returnTo = `${window.location.origin}/auth/receive-session`;
-      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=godaisy`;
+      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=godaisy&provider=${provider}`;
 
       console.log('[Go Daisy Auth] Redirecting to shared auth:', {
         authUrl,
