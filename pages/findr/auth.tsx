@@ -8,19 +8,35 @@ export default function FindrAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSocialLogin = (provider: 'google' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
 
-      // Redirect to shared auth subdomain
-      const returnTo = `${window.location.origin}/auth/receive-session`;
-      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=findr&provider=${provider}`;
+      // Store destination for callback page
+      sessionStorage.setItem('oauth_origin', '/findr');
+      sessionStorage.setItem('oauth_app', 'findr');
 
-      console.log('[Findr Auth] Redirecting to shared auth:', { authUrl, returnTo, provider });
+      // Start OAuth directly from current domain (no cross-domain redirect)
+      const { supabase } = await import('../../lib/supabase/client');
 
-      // Direct navigation - no async delay
-      window.location.href = authUrl;
+      console.log('[Findr Auth] Starting OAuth:', { provider, origin: window.location.origin });
+
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: provider === 'google' ? {
+            prompt: 'select_account',
+          } : undefined,
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      // SDK will redirect to OAuth provider automatically
     } catch (err) {
       console.error('[Findr Auth] Error:', err);
       setError(mapAuthError(err));

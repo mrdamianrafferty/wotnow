@@ -61,11 +61,23 @@ function getDestination(params: {
 
   // If returnTo is specified and safe, use it
   if (returnTo) {
-    // Validate returnTo is same-origin and safe
+    // Validate returnTo is same-origin or same-base-domain and safe
     try {
       const url = new URL(returnTo, window.location.origin);
+      const currentHostname = window.location.hostname;
+      const targetHostname = url.hostname;
+
+      // Allow same origin (exact match)
       if (url.origin === window.location.origin) {
         return url.pathname + url.search + url.hash;
+      }
+
+      // Allow same-base-domain (e.g., auth.godaisy.io → godaisy.io or fishfindr.eu)
+      const baseDomain = currentHostname.includes('godaisy') ? 'godaisy.io' :
+                         currentHostname.includes('fishfindr') ? 'fishfindr.eu' : null;
+      if (baseDomain && targetHostname.endsWith(baseDomain)) {
+        // Return full URL for cross-subdomain redirect
+        return url.toString();
       }
     } catch {
       // Invalid URL, fall through to defaults
@@ -144,35 +156,63 @@ export default function AuthCallback() {
 
         // Handle PKCE flow (newer Supabase magic links and OAuth)
         if (code) {
-          logAuthStep('Starting PKCE code exchange', { codeLength: code.length });
+          // Debug: Check localStorage for PKCE verifier
+          const storageKeys = Object.keys(localStorage).filter(k => k.includes('supabase') || k.includes('pkce'));
+          logAuthStep('Starting PKCE code exchange', {
+            codeLength: code.length,
+            hostname: window.location.hostname,
+            origin: window.location.origin,
+            storageKeys: storageKeys.length,
+            storageKeysFound: storageKeys
+          });
 
-          // Wait for Supabase SDK to automatically handle the code exchange
-          // The SDK has detectSessionInUrl: true, so it processes the URL automatically
-          logAuthStep('Waiting for SDK to process OAuth callback...');
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Manually exchange the code for a session
+          // Add a race with timeout to catch hanging exchanges
+          const exchangePromise = supabase.auth.exchangeCodeForSession(code);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Code exchange timed out after 10s')), 10000)
+          );
 
-          // Check if session was established by SDK
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-          if (sessionError) {
-            logAuthStep('Session error after SDK processing', {
-              error: getErrorMessage(sessionError)
+          let exchangeResult;
+          try {
+            exchangeResult = await Promise.race([exchangePromise, timeoutPromise]) as { data: any; error: any };
+          } catch (timeoutError) {
+            logAuthStep('Code exchange timeout', {
+              error: getErrorMessage(timeoutError),
+              note: 'PKCE verifier may be missing from storage'
             });
-            throw sessionError;
+            throw timeoutError;
           }
 
-          if (!session) {
-            logAuthStep('No session created after SDK processing');
+          const { data, error: exchangeError } = exchangeResult;
+
+          if (exchangeError) {
+            logAuthStep('Code exchange failed', {
+              error: getErrorMessage(exchangeError),
+              errorCode: exchangeError?.code,
+              errorStatus: exchangeError?.status
+            });
+            throw exchangeError;
+          }
+
+          if (!data?.session) {
+            logAuthStep('No session created after code exchange');
             throw new Error('No session created after authentication');
           }
+
+          const session = data.session;
 
           logAuthStep('Session established by SDK', {
             userEmail: session.user?.email
           });
 
           setPhase(Phase.Done);
+
+          // Check sessionStorage for stored returnTo (from shared-login flow)
+          const storedReturnTo = sessionStorage.getItem('oauth_origin');
+
           const destination = getDestination({
-            returnTo,
+            returnTo: returnTo || storedReturnTo,
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
@@ -200,8 +240,12 @@ export default function AuthCallback() {
           if (error) throw error;
 
           setPhase(Phase.Done);
+
+          // Check sessionStorage for stored returnTo (from shared-login flow)
+          const storedReturnTo = sessionStorage.getItem('oauth_origin');
+
           const destination = getDestination({
-            returnTo,
+            returnTo: returnTo || storedReturnTo,
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
@@ -226,8 +270,12 @@ export default function AuthCallback() {
           if (error) throw error;
 
           setPhase(Phase.Done);
+
+          // Check sessionStorage for stored returnTo (from shared-login flow)
+          const storedReturnTo = sessionStorage.getItem('oauth_origin');
+
           const destination = getDestination({
-            returnTo,
+            returnTo: returnTo || storedReturnTo,
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,
@@ -245,8 +293,12 @@ export default function AuthCallback() {
         if (session) {
           console.log('Session found');
           setPhase(Phase.Done);
+
+          // Check sessionStorage for stored returnTo (from shared-login flow)
+          const storedReturnTo = sessionStorage.getItem('oauth_origin');
+
           const destination = getDestination({
-            returnTo,
+            returnTo: returnTo || storedReturnTo,
             app,
             isRecovery: (typeParam || '').toLowerCase() === 'recovery',
             hostname: window.location.hostname,

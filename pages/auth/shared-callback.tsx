@@ -61,14 +61,14 @@ export default function SharedCallback() {
         });
 
         // Get return destination from sessionStorage (set by shared-login page)
-        const returnTo = sessionStorage.getItem('auth_return_to');
-        const app = sessionStorage.getItem('auth_app');
+        const returnTo = sessionStorage.getItem('oauth_origin');
+        const app = sessionStorage.getItem('oauth_app');
 
         console.log('[Shared Callback] Return destination:', { returnTo, app });
 
         // Clean up sessionStorage
-        sessionStorage.removeItem('auth_return_to');
-        sessionStorage.removeItem('auth_app');
+        sessionStorage.removeItem('oauth_origin');
+        sessionStorage.removeItem('oauth_app');
 
         if (!returnTo) {
           // Fallback if returnTo not stored (shouldn't happen)
@@ -127,13 +127,13 @@ export default function SharedCallback() {
           </div>
           <div className="flex gap-2 justify-center">
             <Link
-              href="/auth/shared-login?app=findr&returnTo=https://fishfindr.eu/auth/receive-session"
+              href="/auth/shared-login?app=findr&returnTo=https://fishfindr.eu/auth/receive-session?app=findr"
               className="btn btn-primary btn-sm"
             >
               Try Findr Again
             </Link>
             <Link
-              href="/auth/shared-login?app=godaisy&returnTo=https://godaisy.io/auth/receive-session"
+              href="/auth/shared-login?app=godaisy&returnTo=https://godaisy.io/auth/receive-session?app=godaisy"
               className="btn btn-ghost btn-sm"
             >
               Try Go Daisy

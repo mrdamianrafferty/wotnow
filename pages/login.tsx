@@ -60,24 +60,40 @@ export default function GoDaisyLogin() {
     }
   };
 
-  const handleSocialLogin = (provider: 'google' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
 
-      // Redirect to shared auth subdomain (auth.godaisy.io)
-      // This domain matches Supabase Site URL, so no CORS issues
-      const returnTo = `${window.location.origin}/auth/receive-session`;
-      const authUrl = `https://auth.godaisy.io/auth/shared-login?returnTo=${encodeURIComponent(returnTo)}&app=godaisy&provider=${provider}`;
+      // Store destination for callback page
+      const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
+      sessionStorage.setItem('oauth_origin', destination);
+      sessionStorage.setItem('oauth_app', 'godaisy');
 
-      console.log('[Go Daisy Auth] Redirecting to shared auth:', {
-        authUrl,
-        returnTo,
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('[Go Daisy Auth] Starting OAuth:', {
         provider,
+        origin: window.location.origin,
+        redirectTo: redirectUrl,
+        hostname: window.location.hostname
       });
 
-      // Redirect to shared auth page
-      window.location.href = authUrl;
+      // Start OAuth directly from current domain (no cross-domain redirect)
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: provider === 'google' ? {
+            prompt: 'select_account',
+          } : undefined,
+        },
+      });
+
+      if (authError) {
+        throw authError;
+      }
+
+      // SDK will redirect to OAuth provider automatically
     } catch (err) {
       console.error('[Go Daisy Auth] Error:', err);
       setError(mapAuthError(err));

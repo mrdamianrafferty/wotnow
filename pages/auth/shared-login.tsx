@@ -42,28 +42,25 @@ export default function SharedLogin() {
       setError(null);
 
       // Store return destination in sessionStorage for callback page
+      // Use keys that callback.tsx expects: oauth_origin and oauth_app
       if (returnTo) {
-        sessionStorage.setItem('auth_return_to', returnTo);
+        sessionStorage.setItem('oauth_origin', returnTo);
       }
       if (app) {
-        sessionStorage.setItem('auth_app', app);
+        sessionStorage.setItem('oauth_app', app);
       }
 
       console.log('[Shared Auth] Starting OAuth with Supabase SDK...');
 
-      // Use Supabase SDK for OAuth - it handles PKCE automatically
-      const { createBrowserClient } = await import('@supabase/ssr');
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
+      // Import the shared Supabase client to ensure PKCE storage is consistent
+      const { supabase } = await import('../../lib/supabase/client');
 
       console.log('[Shared Auth] Return destination will be:', returnTo);
 
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'https://auth.godaisy.io/auth/shared-callback', // Must callback to same domain for PKCE
+          redirectTo: 'https://auth.godaisy.io/auth/callback', // Must callback to same domain for PKCE
           queryParams: provider === 'google' ? {
             prompt: 'select_account',
           } : undefined,

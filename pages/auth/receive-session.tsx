@@ -60,12 +60,14 @@ export default function ReceiveSession() {
           expiresAt: data.session.expires_at,
         });
 
-        // Determine destination based on current domain
+        // Determine destination based on app query parameter or hostname
+        const app = router.query.app as string | undefined;
         const hostname = window.location.hostname;
-        const isFindr = hostname.includes('fishfindr.eu') || hostname.includes('findr');
+        const isFindr = app === 'findr' || hostname.includes('fishfindr.eu') || hostname.includes('findr');
         const destination = isFindr ? '/findr' : '/';
 
         console.log('[Receive Session] Destination logic:', {
+          app,
           hostname,
           includesFishfindr: hostname.includes('fishfindr.eu'),
           includesFindr: hostname.includes('findr'),
