@@ -49,51 +49,32 @@ export default function SharedLogin() {
         sessionStorage.setItem('auth_app', app);
       }
 
-      // Generate PKCE challenge (required by Supabase)
-      const generateCodeVerifier = () => {
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        return btoa(String.fromCharCode(...array))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, '');
-      };
+      console.log('[Shared Auth] Starting OAuth with Supabase SDK...');
 
-      const sha256 = async (plain: string) => {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(plain);
-        const hash = await crypto.subtle.digest('SHA-256', data);
-        return btoa(String.fromCharCode(...new Uint8Array(hash)))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, '');
-      };
+      // Use Supabase SDK for OAuth - it handles PKCE automatically
+      const { createBrowserClient } = await import('@supabase/ssr');
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await sha256(codeVerifier);
-
-      // Store code verifier for callback page
-      sessionStorage.setItem('pkce_code_verifier', codeVerifier);
-
-      // Build OAuth URL with PKCE
-      const params = new URLSearchParams({
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
-        redirect_to: 'https://auth.godaisy.io/auth/shared-callback',
-        code_challenge: codeChallenge,
-        code_challenge_method: 's256',
+        options: {
+          redirectTo: 'https://auth.godaisy.io/auth/shared-callback',
+          queryParams: provider === 'google' ? {
+            prompt: 'select_account',
+          } : undefined,
+        },
       });
 
-      // Add provider-specific params
-      if (provider === 'google') {
-        params.append('prompt', 'select_account');
+      if (authError) {
+        throw authError;
       }
 
-      const oauthUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
+      console.log('[Shared Auth] OAuth initiated successfully:', data);
 
-      console.log('[Shared Auth] Navigating to OAuth with PKCE...');
-
-      // Direct navigation (synchronous after async PKCE generation)
-      window.location.href = oauthUrl;
+      // SDK will automatically redirect to OAuth provider
     } catch (err) {
       console.error('[Shared Auth] OAuth error:', err);
       setError(mapAuthError(err));
