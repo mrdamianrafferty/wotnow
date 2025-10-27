@@ -65,7 +65,14 @@ export default function ReceiveSession() {
         const isFindr = hostname.includes('fishfindr.eu') || hostname.includes('findr');
         const destination = isFindr ? '/findr' : '/';
 
-        console.log('[Receive Session] Redirecting to:', destination);
+        console.log('[Receive Session] Destination logic:', {
+          hostname,
+          includesFishfindr: hostname.includes('fishfindr.eu'),
+          includesFindr: hostname.includes('findr'),
+          isFindr,
+          destination,
+          fullUrl: window.location.href
+        });
         setStatus('Redirecting...');
 
         // Clean URL and redirect to app
