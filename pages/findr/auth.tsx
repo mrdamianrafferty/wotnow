@@ -1,64 +1,13 @@
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase/client';
-import { normalizeEmail, mapAuthError } from '../../lib/auth/utils';
+import { mapAuthError } from '../../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Fish } from 'lucide-react';
 
 export default function FindrAuth() {
-  const router = useRouter();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  // Get returnTo parameter for redirect after login
-  const returnTo = router.query.returnTo as string | undefined;
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const emailNorm = normalizeEmail(email);
-
-      if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
-          email: emailNorm,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?app=findr`,
-            data: {
-              app: 'findr',
-            },
-          },
-        });
-
-        if (error) throw error;
-
-        setMessage('Check your email to confirm your account!');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: emailNorm,
-          password,
-        });
-
-        if (error) throw error;
-
-        // Redirect to returnTo or default to /findr
-        router.push(returnTo && returnTo.startsWith('/findr') ? returnTo : '/findr');
-      }
-    } catch (err) {
-      setError(mapAuthError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
@@ -109,24 +58,19 @@ export default function FindrAuth() {
               </div>
               <h1 className="text-3xl font-bold text-primary">findr</h1>
               <p className="text-base-content/70 mt-2">
-                {mode === 'signin' ? 'Welcome back!' : 'Join the fishing community'}
+                Sign in to access your fishing predictions
               </p>
             </div>
 
-            {/* Error/Success Messages */}
+            {/* Error Messages */}
             {error && (
               <div className="alert alert-error mb-4">
                 <span>{error}</span>
               </div>
             )}
-            {message && (
-              <div className="alert alert-success mb-4">
-                <span>{message}</span>
-              </div>
-            )}
 
             {/* Social Login Buttons */}
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3">
               <button
                 onClick={() => handleSocialLogin('google')}
                 disabled={loading}
@@ -153,76 +97,13 @@ export default function FindrAuth() {
               </button>
             </div>
 
-            <div className="divider">OR</div>
+            <div className="divider text-sm text-base-content/60">Passwordless & Secure</div>
 
-            {/* Email/Password Form */}
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  placeholder="fisher@example.com"
-                  className="input input-bordered"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Password</span>
-                  {mode === 'signin' && (
-                    <div className="label-text-alt space-x-2">
-                      <Link href="/findr/reset-password" className="link link-hover">
-                        Reset password
-                      </Link>
-                      <span>|</span>
-                      <Link href="/findr/quick-reset" className="link link-hover">
-                        Magic link 🪄
-                      </Link>
-                    </div>
-                  )}
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  className="input input-bordered"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="loading loading-spinner"></span>
-                ) : mode === 'signin' ? (
-                  'Sign In'
-                ) : (
-                  'Create Account'
-                )}
-              </button>
-            </form>
-
-            {/* Toggle between signin/signup */}
-            <div className="text-center mt-4">
-              <button
-                onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-                className="btn btn-link btn-sm"
-                disabled={loading}
-              >
-                {mode === 'signin'
-                  ? "Don't have an account? Sign up"
-                  : 'Already have an account? Sign in'}
-              </button>
+            {/* Info text */}
+            <div className="text-center">
+              <p className="text-sm text-base-content/70">
+                Sign in securely with your Google or Apple account. No passwords to remember!
+              </p>
             </div>
 
             {/* Back to findr */}
