@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase/client';
 import { mapAuthError } from '../../lib/auth/utils';
 import Head from 'next/head';
 import { Fish, Sun, Cloud, Waves } from 'lucide-react';
@@ -26,7 +25,7 @@ export default function SharedLogin() {
 
   const isFindr = app === 'findr';
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  const handleSocialLogin = (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
@@ -41,54 +40,28 @@ export default function SharedLogin() {
         console.log('[Shared Auth] Stored app:', app);
       }
 
-      // OAuth callback will be handled by auth.godaisy.io (matches Supabase Site URL - no CORS)
-      const redirectTo = 'https://auth.godaisy.io/auth/shared-callback';
+      console.log('[Shared Auth] Redirecting directly to Supabase OAuth...');
 
-      console.log('[Shared Auth] Starting OAuth flow:', {
+      // Build OAuth URL manually and navigate directly (no async call)
+      // This ensures the navigation happens in direct response to user click
+      const params = new URLSearchParams({
         provider,
-        redirectTo,
-        returnTo,
-        app,
+        redirect_to: 'https://auth.godaisy.io/auth/shared-callback',
       });
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo,
-          queryParams: {
-            // Force account picker for Google (consistent UX)
-            ...(provider === 'google' ? { prompt: 'select_account' } : {}),
-          },
-        },
-      });
-
-      console.log('[Shared Auth] OAuth response:', { data, error });
-
-      if (error) {
-        console.error('[Shared Auth] OAuth error:', error);
-        throw error;
+      // Add provider-specific params
+      if (provider === 'google') {
+        params.append('prompt', 'select_account');
       }
 
-      console.log('[Shared Auth] OAuth redirect URL:', data?.url);
+      const oauthUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/authorize?${params.toString()}`;
 
-      // Manually redirect to OAuth provider URL
-      if (data?.url) {
-        console.log('[Shared Auth] Redirecting to OAuth provider...');
-        console.log('[Shared Auth] Full redirect URL:', data.url);
-        // Use multiple redirect methods to ensure it works
-        try {
-          window.location.assign(data.url);
-        } catch (e) {
-          console.error('[Shared Auth] location.assign failed:', e);
-          window.location.href = data.url;
-        }
-        return;
-      }
+      console.log('[Shared Auth] Direct OAuth URL:', oauthUrl);
 
-      // If no URL returned, something went wrong
-      throw new Error('No OAuth URL returned from Supabase')
+      // Direct navigation in response to user click (no async delay)
+      window.location.href = oauthUrl;
     } catch (err) {
-      console.error('[Shared Auth] OAuth catch block:', err);
+      console.error('[Shared Auth] OAuth error:', err);
       setError(mapAuthError(err));
       setLoading(false);
     }
