@@ -51,7 +51,7 @@ export default function SharedLogin() {
         app,
       });
 
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
@@ -62,9 +62,19 @@ export default function SharedLogin() {
         },
       });
 
-      if (error) throw error;
+      console.log('[Shared Auth] OAuth response:', { data, error });
+
+      if (error) {
+        console.error('[Shared Auth] OAuth error:', error);
+        throw error;
+      }
+
+      console.log('[Shared Auth] OAuth redirect URL:', data?.url);
+
+      // If we get here, OAuth provider should redirect automatically
+      // If not, something is wrong with the OAuth configuration
     } catch (err) {
-      console.error('[Shared Auth] OAuth error:', err);
+      console.error('[Shared Auth] OAuth catch block:', err);
       setError(mapAuthError(err));
       setLoading(false);
     }
