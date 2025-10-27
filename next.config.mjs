@@ -93,7 +93,8 @@ const nextConfig = {
 // Wrap nextConfig with PWA configuration
 const pwaConfig = withPWA({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
+  // TEMPORARILY DISABLED: Service worker causing storage bloat and caching failed requests
+  disable: true, // Was: process.env.NODE_ENV === 'development'
   register: true,
   skipWaiting: true,
   // Exclude auth pages from precaching to prevent stale cached versions
