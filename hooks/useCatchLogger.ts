@@ -282,9 +282,7 @@ function buildFormData(input: CatchLogInput, userId?: string | null): FormData {
     formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
   }
 
-  if (userId) {
-    formData.append('user_id', userId);
-  }
+  // Note: user_id is extracted from Authorization header by API, not sent in form data
 
   // Send user location as separate lat/lon fields for API compatibility
   if (input.userLocation) {

@@ -92,6 +92,30 @@ export default async function handler(
   }
 
   try {
+    // Extract and verify user from authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const token = authHeader.substring(7);
+
+    // Initialize Supabase client for auth verification
+    const supabaseAuth = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // Verify user session with Supabase
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+
+    if (authError || !user) {
+      console.warn('[log-catch-enriched] Auth verification failed:', authError?.message);
+      return res.status(401).json({ error: 'Invalid authentication token' });
+    }
+
+    const userId = user.id; // Extract user ID from verified token
+
     // Parse form data
     const { fields, files } = await parseForm(req);
 
@@ -99,7 +123,6 @@ export default async function handler(
     const speciesName = getFieldValue(fields.species_name);
     const quantity = getNumberValue(fields.quantity);
     const catchDate = getFieldValue(fields.catch_date);
-    const userId = getFieldValue(fields.user_id);
 
     // Validate required fields
     if (!speciesName || !quantity || !catchDate) {
@@ -122,18 +145,10 @@ export default async function handler(
     const method = getFieldValue(fields.method);
     const depthRange = getFieldValue(fields.depth_range);
 
-    // Initialize Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Use the authenticated Supabase client for database operations
+    const supabase = supabaseAuth;
 
     const warnings: string[] = [];
-
-    if (!userId) {
-      console.warn('[log-catch-enriched] Catch submitted without user_id. Treating as anonymous.');
-      warnings.push('Catch logged without authenticated user context.');
-    }
 
     // Handle photo upload and EXIF extraction
     let photoUrl: string | null = null;

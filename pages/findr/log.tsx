@@ -1097,6 +1097,7 @@ export default function FindrCatchLogPage() {
   const [catches, setCatches] = useState<CatchEntry[]>([]);
   const [liveMatches, setLiveMatches] = useState<FishMatch[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(true);
+  const [userName, setUserName] = useState<string>('User');
 
   // Modal states
   const [showQuickLogModal, setShowQuickLogModal] = useState(false);
@@ -1113,6 +1114,19 @@ export default function FindrCatchLogPage() {
   
   // Priority: UnifiedLocationContext → selectedCode → fallback to '31F2'
   const activeRectangleCode = location?.rectangleCode ?? selectedCode ?? '31F2';
+
+  // Fetch user name from session
+  useEffect(() => {
+    const fetchUserName = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        const email = data.session.user.email || 'User';
+        const displayName = data.session.user.user_metadata?.full_name || email.split('@')[0];
+        setUserName(displayName);
+      }
+    };
+    void fetchUserName();
+  }, []);
 
   // Debug logging for location
   useEffect(() => {
@@ -1651,10 +1665,10 @@ export default function FindrCatchLogPage() {
                 <ClipboardList className="h-8 w-8" />
                 <div>
                   <h1 className="text-2xl font-semibold">
-                    <TranslatedText text="Findr catch log" />
+                    <TranslatedText text={`findr catch log for ${userName}`} />
                   </h1>
                   <p className="text-sm text-primary-content/80">
-                    <TranslatedText text="Smart fishing predictions for your location" />
+                    <TranslatedText text="Log your catches so you know what worked where and when. We'll add extra information to your catches so you get back to fishing as quuckly as possible." />
                   </p>
                 </div>
               </div>
