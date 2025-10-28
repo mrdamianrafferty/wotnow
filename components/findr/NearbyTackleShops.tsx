@@ -121,18 +121,7 @@ export function NearbyTackleShops() {
           >
             <div className="card-body p-4">
               <div className="flex items-start justify-between gap-3">
-                {/* Shop thumbnail if available */}
-                {shop.photos && shop.photos.length > 0 && (
-                  <div className="relative w-16 h-16 flex-shrink-0">
-                    <Image
-                      src={shop.photos[0]}
-                      alt={shop.name}
-                      fill
-                      className="rounded-lg object-cover"
-                      sizes="64px"
-                    />
-                  </div>
-                )}
+                {/* Shop thumbnails disabled - Google Photos API requires complex auth */}
 
                 <div className="flex-1 min-w-0">
                   <h5 className="font-semibold text-sm text-base-content truncate">{shop.name}</h5>

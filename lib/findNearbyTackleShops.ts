@@ -239,15 +239,15 @@ export async function findNearbyTackleShops(
         const shopLng = place.geometry?.location?.lng() || 0;
         const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
 
-        // Get photo URL if available
-        const photoUrl = place.photos && place.photos.length > 0
-          ? place.photos[0].getUrl({ maxWidth: 400, maxHeight: 400 })
-          : undefined;
+        // Get photo reference if available
+        // Note: photo.getUrl() returns API endpoints that need auth, not direct URLs
+        // So we skip photos to avoid 400 errors
+        const photoUrl = undefined; // Disabled - causes 400 errors with Next.js Image
 
         // Debug logging
         console.log(`[Tackle Shop] ${place.name}:`, {
           hasPhotos: !!(place.photos && place.photos.length > 0),
-          photoUrl,
+          photoCount: place.photos?.length || 0,
           placeId: place.place_id,
         });
 
@@ -261,6 +261,7 @@ export async function findNearbyTackleShops(
           userRatingsTotal: place.user_ratings_total,
           // Note: open_now is deprecated. Would need getDetails() call per shop to get current status.
           // Removed to avoid deprecation warnings and extra API calls.
+          // Photos disabled - Google's photo URLs require complex auth handling
           photos: photoUrl ? [photoUrl] : undefined,
         };
       })
