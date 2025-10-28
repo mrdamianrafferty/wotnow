@@ -31,8 +31,11 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Refresh session if expired - required for auth to work properly
-  await supabase.auth.getUser();
+  // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
+  const isAuthCallback = url.pathname === '/auth/callback';
+  if (!isAuthCallback) {
+    await supabase.auth.getUser();
+  }
 
   // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
   // Do NOT redirect godaisy.io - it's already serving /findr as a subdomain path
