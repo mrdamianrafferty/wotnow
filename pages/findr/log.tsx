@@ -1343,7 +1343,8 @@ export default function FindrCatchLogPage() {
 
   // Track impression when fish matches are viewed
   useEffect(() => {
-    if (currentPage === 'fish' && displayMatches.length > 0) {
+    // Only record impression if we have valid data: fish page, matches, and valid rectangle code
+    if (currentPage === 'fish' && displayMatches.length > 0 && activeRectangleCode && activeRectangleCode.trim() !== '') {
       const environmentalData = buildEnvironmentalConditions(currentMarineBio);
       recordPredictionView(
         activeRectangleCode,
