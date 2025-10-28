@@ -1,10 +1,39 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
-  
+
+  // Create response object that we can modify
+  let response = NextResponse.next({
+    request: {
+      headers: req.headers,
+    },
+  });
+
+  // Initialize Supabase client for session management
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  // Refresh session if expired - required for auth to work properly
+  await supabase.auth.getUser();
+
   // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
   // Do NOT redirect godaisy.io - it's already serving /findr as a subdomain path
   if ((hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') && !hostname.includes('godaisy.io')) {
@@ -34,7 +63,7 @@ export function middleware(req: NextRequest) {
     if (!isApiRoute && !isNextInternal && !isFindrPath && !isAuthPath && !isPWAFile && !isStaticAsset) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
-      return NextResponse.redirect(findrUrl);
+      response = NextResponse.redirect(findrUrl);
     }
   }
   
@@ -50,7 +79,7 @@ export function middleware(req: NextRequest) {
     // Redirect to unified callback handler
     const to = url.clone();
     to.pathname = '/auth/callback';
-    return NextResponse.redirect(to);
+    response = NextResponse.redirect(to);
   }
 
   // Support legacy /findr/magic-link callback for backwards compatibility
@@ -62,10 +91,10 @@ export function middleware(req: NextRequest) {
     if (!to.searchParams.has('app')) {
       to.searchParams.set('app', 'findr');
     }
-    return NextResponse.redirect(to);
+    response = NextResponse.redirect(to);
   }
-  
-  return NextResponse.next();
+
+  return response;
 }
 
 export const config = { matcher: ['/((?!_next|favicon.ico).*)'] };
