@@ -185,7 +185,7 @@ export interface CatchLogInput {
 }
 
 export interface CatchLogRequest {
-  species_common_name: string;
+  species_name: string; // API expects 'species_name', not 'species_common_name'
   quantity: number;
   catch_date: string;
   catch_time?: string | null;

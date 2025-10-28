@@ -254,7 +254,7 @@ function buildFormData(input: CatchLogInput, userId?: string | null): FormData {
   const formData = new FormData();
 
   const payload: CatchLogRequest = {
-    species_common_name: input.speciesCommonName,
+    species_name: input.speciesCommonName, // API expects 'species_name'
     quantity: input.quantity,
     catch_date: input.catchDate,
     catch_time: input.catchTime ?? null,
