@@ -255,7 +255,7 @@ export default async function handler(
 
     const catchEntry: Record<string, unknown> = {
       user_id: userId,
-      species_name: speciesName,
+      species_common_name: speciesName,
       quantity,
       catch_date: catchDate,
       entry_type: entryType,
