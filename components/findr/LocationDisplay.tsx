@@ -86,38 +86,28 @@ export function LocationDisplay() {
       // Close the picker
       setShowLocationPicker(false);
 
-      // Navigate appropriately based on whether we have a rectangle
-      if (router.pathname !== '/findr/conditions') {
-        if (rectangleCode) {
-          // European - navigate with rectangle param
-          await router.push(`/findr/conditions?rectangle=${rectangleCode}`, undefined, { shallow: false });
-        } else {
-          // Worldwide - navigate without rectangle param
-          await router.push('/findr/conditions', undefined, { shallow: false });
-        }
+      // Update URL parameters on current page (no navigation)
+      if (rectangleCode) {
+        // European waters - add rectangle param
+        await router.replace(
+          {
+            pathname: router.pathname,
+            query: { ...router.query, rectangle: rectangleCode },
+          },
+          undefined,
+          { shallow: true }
+        );
       } else {
-        // Already on conditions page - update URL if we have rectangle
-        if (rectangleCode) {
-          await router.replace(
-            {
-              pathname: router.pathname,
-              query: { ...router.query, rectangle: rectangleCode },
-            },
-            undefined,
-            { shallow: true }
-          );
-        } else {
-          // Remove rectangle param for worldwide locations
-          const { rectangle: _rectangle, ...restQuery } = router.query;
-          await router.replace(
-            {
-              pathname: router.pathname,
-              query: restQuery,
-            },
-            undefined,
-            { shallow: true }
-          );
-        }
+        // Worldwide location - remove rectangle param if present
+        const { rectangle: _rectangle, ...restQuery } = router.query;
+        await router.replace(
+          {
+            pathname: router.pathname,
+            query: restQuery,
+          },
+          undefined,
+          { shallow: true }
+        );
       }
 
       console.log('[LocationDisplay] Location updated successfully:', {
