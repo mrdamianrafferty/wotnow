@@ -65,15 +65,16 @@ export function useImpressionTracking(): UseImpressionTrackingResult {
   // Get authentication token from Supabase session
   const getAuthToken = useCallback(async (): Promise<string | null> => {
     try {
-      const { data: { session: _session }, error } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
         console.warn('[useImpressionTracking] Failed to get session:', error.message);
         return null;
       }
-      // TODO: For now, always return null until findr auth is implemented
-      // This prevents API errors when user is not authenticated
-      console.info('[useImpressionTracking] Skipping impression tracking - findr authentication not yet implemented');
-      return null; // session?.access_token || null;
+      if (!session) {
+        console.info('[useImpressionTracking] No active session, skipping impression tracking');
+        return null;
+      }
+      return session.access_token || null;
     } catch (error) {
       console.warn('[useImpressionTracking] Error getting auth token:', error);
       return null;
