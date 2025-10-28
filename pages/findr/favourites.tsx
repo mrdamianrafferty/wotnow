@@ -38,7 +38,6 @@ import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
-import { type TideInfo } from '../../components/findr/TideConditions';
 
 // Code-split species card components - loaded as user scrolls to them
 const ActiveSpeciesCard = dynamic(
