@@ -34,7 +34,7 @@ https://*.godaisy.io
 
 #### Vercel Preview Deployments (optional but recommended)
 ```
-https://*.vercel.app/*
+https://*.vercel.app
 ```
 
 #### Local Development (optional, for testing)
