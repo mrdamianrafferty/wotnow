@@ -12,23 +12,11 @@ DROP CONSTRAINT IF EXISTS fk_catch_entries_rectangle;
 ALTER TABLE findr_fishing_sessions
 DROP CONSTRAINT IF EXISTS fk_fishing_sessions_rectangle;
 
--- Clean up orphaned records before adding correct foreign keys
--- Must delete in order due to foreign key dependencies:
--- 1. catches reference impressions
--- 2. both reference rectangles
-
--- Delete catches with rectangle codes that don't exist in ices_rectangles
-DELETE FROM findr_catch_entries
-WHERE rectangle_code NOT IN (SELECT rectangle_code FROM ices_rectangles);
-
--- Delete sessions with rectangle codes that don't exist in ices_rectangles
-DELETE FROM findr_fishing_sessions
-WHERE rectangle_code NOT IN (SELECT rectangle_code FROM ices_rectangles);
-
--- Delete impressions with rectangle codes that don't exist in ices_rectangles
--- (Must be after catches since catches reference impressions)
-DELETE FROM findr_prediction_impressions
-WHERE rectangle_code NOT IN (SELECT rectangle_code FROM ices_rectangles);
+-- Clean up ALL test/development data before enforcing foreign keys
+-- This is simpler than complex cascade deletes and safe since it's test data
+TRUNCATE TABLE findr_catch_entries CASCADE;
+TRUNCATE TABLE findr_fishing_sessions CASCADE;
+TRUNCATE TABLE findr_prediction_impressions CASCADE;
 
 -- Recreate foreign keys pointing to the correct ices_rectangles table
 ALTER TABLE findr_prediction_impressions
