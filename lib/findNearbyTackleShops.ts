@@ -9,7 +9,7 @@ export interface TackleShop {
   distance?: number;
   rating?: number;
   userRatingsTotal?: number;
-  openNow?: boolean;
+  // openNow removed - deprecated API, would need expensive getDetails() calls
   photos?: string[];
   website?: string;
   phoneNumber?: string;
@@ -246,7 +246,8 @@ export async function findNearbyTackleShops(
           distance: Math.round(distance * 10) / 10, // Round to 1 decimal
           rating: place.rating,
           userRatingsTotal: place.user_ratings_total,
-          openNow: place.opening_hours?.open_now,
+          // Note: open_now is deprecated. Would need getDetails() call per shop to get current status.
+          // Removed to avoid deprecation warnings and extra API calls.
           photos: place.photos?.slice(0, 1).map((photo) =>
             photo.getUrl({ maxWidth: 400 })
           ),

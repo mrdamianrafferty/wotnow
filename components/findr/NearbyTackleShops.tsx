@@ -157,16 +157,6 @@ export function NearbyTackleShops() {
                         )}
                       </span>
                     )}
-
-                    {shop.openNow !== undefined && (
-                      <span
-                        className={`badge badge-sm ${
-                          shop.openNow ? 'badge-success' : 'badge-error'
-                        }`}
-                      >
-                        {shop.openNow ? '● Open' : '● Closed'}
-                      </span>
-                    )}
                   </div>
                 </div>
 
