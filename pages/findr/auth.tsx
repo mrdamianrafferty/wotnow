@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../../lib/supabase/client';
 import { mapAuthError } from '../../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -18,8 +19,6 @@ export default function FindrAuth() {
       sessionStorage.setItem('oauth_app', 'findr');
 
       // Start OAuth directly from current domain (no cross-domain redirect)
-      const { supabase } = await import('../../lib/supabase/client');
-
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[Findr Auth] Starting OAuth:', {
         provider,
