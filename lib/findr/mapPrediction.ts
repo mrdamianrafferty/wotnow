@@ -85,6 +85,14 @@ export interface CardData {
     freshness?: number | null;
     completeness?: number | null;
   };
+  // Individual score components for UI display
+  temp_score?: number | null;
+  tide_score?: number | null;
+  light_score?: number | null;
+  lunar_score?: number | null;
+  weather_score?: number | null;
+  bio_band_score?: number | null;
+  habitat_bonus?: number | null;
   moonPhase?: string | null;
   moonIllumination?: number | null;
   biogeographicRegions?: string[] | null;
@@ -111,9 +119,8 @@ export interface CardData {
   bait?: BaitInfo[];
   substrates?: SubstrateInfo | null;
   inaturalist_url?: string | null;
-  
-  // Weather data (Phase 11)
-  weather_score?: number | null;
+
+  // Weather data (Phase 11) - weather_score is in score components above
   current_wind_speed_ms?: number | null;
   current_pressure_hpa?: number | null;
 }
@@ -725,7 +732,15 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     weather_score: extractNumber(prediction.weather_score),
     current_wind_speed_ms: extractNumber(prediction.current_wind_speed_ms),
     current_pressure_hpa: extractNumber(prediction.current_pressure_hpa),
-    
+
+    // Individual score components for UI display (bite score breakdown)
+    temp_score: extractNumber(prediction.temp_score),
+    tide_score: extractNumber(prediction.tide_score),
+    light_score: extractNumber(prediction.light_score),
+    lunar_score: extractNumber(prediction.lunar_score),
+    bio_band_score: extractNumber(prediction.bio_band_score),
+    habitat_bonus: extractNumber(prediction.habitat_bonus),
+
     // Phase 10: Environmental data
     data_freshness,
     weight_profile,

@@ -37,6 +37,8 @@ import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
 import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
+import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
+import { type TideInfo } from '../../components/findr/TideConditions';
 
 // Code-split species card components - loaded as user scrolls to them
 const ActiveSpeciesCard = dynamic(
@@ -274,6 +276,28 @@ function deriveSeasonLabel(confidence: number | null, fallback: string): string 
 function getPreferredImageUrl(image?: CardImage | null): string | null {
   if (!image) return null;
   return image.thumb ?? image.mobile ?? image.src ?? null;
+}
+
+/**
+ * Build ScoreBreakdownData from a card's prediction data
+ */
+function buildScoreBreakdown(card: CardData): ScoreBreakdownData | undefined {
+  // Only build if we have bite score data
+  if (card.biteScore == null || card.confidence == null) {
+    return undefined;
+  }
+
+  return {
+    biteScore: card.biteScore,
+    confidence: card.confidence,
+    tempScore: card.temp_score ?? undefined,
+    tideScore: card.tide_score ?? undefined,
+    lightScore: card.light_score ?? undefined,
+    lunarScore: card.lunar_score ?? undefined,
+    weatherScore: card.weather_score ?? undefined,
+    bioBandScore: card.bio_band_score ?? undefined,
+    habitatBonus: card.habitat_bonus ?? undefined,
+  };
 }
 
 /**
@@ -691,7 +715,7 @@ const FindrFavouritesPage: React.FC = () => {
     }
   }, [favoritesList.length, insightsSource, insights.length, insightsError]);
 
-  const { predictions, loading, error, lastUpdated, reload } = useFishingPredictions({
+  const { predictions, loading, error, lastUpdated, tideInfo, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
     predictionDate,
     language,
@@ -1488,6 +1512,7 @@ const FindrFavouritesPage: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {groupedFavourites.active.map((entry) => {
                         const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
+                        const scoreBreakdown = entry.card ? buildScoreBreakdown(entry.card) : undefined;
                         return (
                                                     <ActiveSpeciesCard
                             key={entry.id}
@@ -1508,8 +1533,10 @@ const FindrFavouritesPage: React.FC = () => {
                               data_freshness: entry.card?.data_freshness,
                               weight_profile: entry.card?.weight_profile,
                               environmental_factors: entry.card?.environmental_factors,
+                              scoreBreakdown,
                             }}
                             location={cleanLocation}
+                            tideInfo={tideInfo}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}

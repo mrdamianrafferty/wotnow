@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import type { TideInfo } from '../components/findr/TideConditions';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -12,6 +13,7 @@ export interface FishingPrediction {
   bite_score?: number;
   bio_band_score?: number;
   temp_score?: number;
+  tide_score?: number;
   substrate_score?: number;
   depth_score?: number;
   light_score?: number;
@@ -41,6 +43,7 @@ export interface UseFishingPredictionsState {
   error: string | null;
   lastUpdated?: string;
   region?: string | null;
+  tideInfo?: TideInfo | null;
   reload: () => void;
 }
 
@@ -52,6 +55,13 @@ interface PredictionResponse {
   metadata?: {
     requestedAt?: string;
     region?: string | null;
+    conditions?: {
+      tide?: TideInfo | null;
+      weather?: {
+        windSpeedMS: number | null;
+        pressureHPA: number | null;
+      };
+    };
   };
 }
 
@@ -145,6 +155,7 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     error: query.error ? (query.error as Error).message : null,
     lastUpdated: query.data?.metadata?.requestedAt,
     region: query.data?.metadata?.region,
+    tideInfo: query.data?.metadata?.conditions?.tide ?? null,
     reload: () => query.refetch(),
   };
 }
