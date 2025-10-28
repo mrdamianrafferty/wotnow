@@ -4,6 +4,7 @@ import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
 import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/findr/enrichCatchData';
 import { fetchMetNoLocationForecast } from '../../../lib/services/weatherService';
 import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/queryWithTiming';
+import { calculateTidePhase, type TideExtreme } from '../../../lib/tides/calculateTidePhase';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -653,23 +654,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Fetch current weather conditions for the rectangle center
     let currentWindSpeedMS: number | null = null;
     let currentPressureHPA: number | null = null;
-    
+
     if (rectangleData?.center_lat != null && rectangleData?.center_lon != null) {
       try {
         const weatherData = await queryWithTiming(
           () => fetchMetNoLocationForecast(
-            rectangleData.center_lat, 
+            rectangleData.center_lat,
             rectangleData.center_lon,
             { signal: AbortSignal.timeout(3000) }
           ),
           'fetch_weather_forecast'
         );
-        
+
         if (weatherData?.properties?.timeseries?.[0]?.data?.instant?.details) {
           const details = weatherData.properties.timeseries[0].data.instant.details;
           currentWindSpeedMS = details.wind_speed ?? null;
           currentPressureHPA = details.air_pressure_at_sea_level ?? null;
-          
+
           console.log('[Findr API] Weather fetched:', {
             wind_speed_ms: currentWindSpeedMS,
             pressure_hpa: currentPressureHPA,
@@ -678,6 +679,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       } catch (weatherError) {
         console.warn('[Findr API] Weather fetch failed, using neutral score:', (weatherError as Error).message);
+      }
+    }
+
+    // Fetch current tide data for the rectangle center
+    let currentTideStage: string | null = null;
+    let currentFlowSpeedMS: number | null = null;
+
+    if (rectangleData?.center_lat != null && rectangleData?.center_lon != null) {
+      try {
+        const tideResponse = await queryWithTiming(
+          async () => {
+            const response = await fetch(
+              `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/tides?lat=${rectangleData.center_lat}&lon=${rectangleData.center_lon}`,
+              { signal: AbortSignal.timeout(3000) }
+            );
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          },
+          'fetch_tide_data'
+        );
+
+        if (tideResponse?.success && Array.isArray(tideResponse.data) && tideResponse.data.length > 0) {
+          const tideExtremes: TideExtreme[] = tideResponse.data;
+          const tidePhase = calculateTidePhase(tideExtremes);
+
+          if (tidePhase) {
+            currentTideStage = tidePhase.stage;
+            currentFlowSpeedMS = tidePhase.flowSpeedMS;
+
+            console.log('[Findr API] Tide phase calculated:', {
+              stage: currentTideStage,
+              flow_speed_ms: currentFlowSpeedMS,
+              current_height: tidePhase.currentHeight,
+              next_extreme: tidePhase.nextExtreme,
+              location: { lat: rectangleData.center_lat, lon: rectangleData.center_lon }
+            });
+          }
+        }
+      } catch (tideError) {
+        console.warn('[Findr API] Tide fetch failed, using neutral tide score:', (tideError as Error).message);
       }
     }
 
@@ -726,6 +767,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           depth_meters: bathymetryData?.depth_meters || null,
           current_wind_speed_ms: currentWindSpeedMS,
           current_pressure_hpa: currentPressureHPA,
+          current_tide_stage: currentTideStage,
+          current_flow_speed_ms: currentFlowSpeedMS,
         },
       },
     ];
