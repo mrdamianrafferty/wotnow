@@ -1401,6 +1401,10 @@ export default function FindrCatchLogPage() {
           notes: entry.notes ?? null,
           entryType: 'detailed',
           environmentalConditions: buildEnvironmentalConditions(entry.marineBio),
+          userLocation: location?.lat && location?.lon ? {
+            lat: location.lat,
+            lon: location.lon,
+          } : null,
         });
 
         if (!result) {
@@ -1422,7 +1426,7 @@ export default function FindrCatchLogPage() {
         setShowToast(true);
       }
     },
-    [logCatch]
+    [logCatch, location]
   );
 
   const submitBlankReport = useCallback(
@@ -1466,13 +1470,17 @@ export default function FindrCatchLogPage() {
         baitUsed: report.bait_attempted.join(', ') || undefined,
         notes: noteSegments.join(' | ') || undefined,
         environmentalConditions: environmental,
+        userLocation: location?.lat && location?.lon ? {
+          lat: location.lat,
+          lon: location.lon,
+        } : null,
       });
 
       if (!result) {
         throw new Error('Blank trip could not be logged.');
       }
     },
-    [logCatch]
+    [logCatch, location]
   );
 
   const handleQuickLogSuccess = useCallback(() => {

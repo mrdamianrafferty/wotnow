@@ -286,6 +286,12 @@ function buildFormData(input: CatchLogInput, userId?: string | null): FormData {
     formData.append('user_id', userId);
   }
 
+  // Send user location as separate lat/lon fields for API compatibility
+  if (input.userLocation) {
+    formData.append('user_latitude', String(input.userLocation.lat));
+    formData.append('user_longitude', String(input.userLocation.lon));
+  }
+
   if (input.photo) {
     const filename = input.photo instanceof File ? input.photo.name : 'catch-photo.jpg';
     formData.append('photo', input.photo, filename);
