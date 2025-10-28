@@ -163,8 +163,8 @@ export default async function handler(
       // Step 2: Process photo - strip EXIF, optimize for mobile, auto-rotate
       const processedBuffer = await sharp(originalBuffer)
         .rotate() // Auto-rotate based on EXIF orientation
-        .resize(1920, 1920, {
-          fit: 'inside', // Maintain aspect ratio, max 1920px on longest side
+        .resize(800, 800, {
+          fit: 'inside', // Maintain aspect ratio, max 800px on longest side
           withoutEnlargement: true, // Don't upscale smaller images
         })
         .jpeg({
