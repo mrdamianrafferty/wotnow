@@ -31,6 +31,13 @@ export default function TestAuth() {
         setError(authError.message)
       } else {
         console.log('[Test Auth] Success:', data)
+        console.log('[Test Auth] OAuth URL:', data.url)
+
+        // Explicitly redirect if SDK doesn't do it automatically
+        if (data.url) {
+          console.log('[Test Auth] Manually redirecting to:', data.url)
+          window.location.href = data.url
+        }
       }
     } catch (err) {
       console.error('[Test Auth] Caught error:', err)

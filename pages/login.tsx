@@ -95,10 +95,10 @@ export default function GoDaisyLogin() {
 
       console.log('[Go Daisy Auth] OAuth response:', { url: data.url, provider: data.provider });
 
-      // Give SDK time to store PKCE verifier before redirect
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // SDK will redirect to OAuth provider automatically
+      // Redirect to OAuth provider (SSR client doesn't auto-redirect)
+      if (data.url) {
+        window.location.href = data.url;
+      }
     } catch (err) {
       console.error('[Go Daisy Auth] Error:', err);
       setError(mapAuthError(err));
