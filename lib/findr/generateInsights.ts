@@ -37,7 +37,7 @@ export async function generateFishingInsights(userId: string, speciesName?: stri
 
   // Build query
   let query = supabase
-    .from('findr_catches')
+    .from('findr_catch_entries')
     .select('*')
     .eq('user_id', userId)
     .gt('quantity', 0) // Only successful catches

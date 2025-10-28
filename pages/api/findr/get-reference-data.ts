@@ -115,7 +115,7 @@ export default async function handler(
 
     // Build base query - optionally filter by user
     let catchesQuery = supabase
-      .from('findr_catches')
+      .from('findr_catch_entries')
       .select('*')
       .gte('quantity', 0); // Include blanks for session stats
 

@@ -275,7 +275,7 @@ export default async function handler(
 
     // Insert into database
     const { data: insertedCatch, error: insertError } = await supabase
-      .from('findr_catches')
+      .from('findr_catch_entries')
       .insert([catchEntry])
       .select()
       .single();
