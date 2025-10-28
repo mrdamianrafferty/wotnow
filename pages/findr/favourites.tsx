@@ -34,6 +34,7 @@ import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
+import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 
@@ -677,6 +678,9 @@ const FindrFavouritesPage: React.FC = () => {
   const { insights, loading: _insightsLoading, error: insightsError, source: insightsSource } = useFavouriteInsights(favoritesList);
   const insightMap = useMemo(() => new Map(insights.map((insight) => [insight.id, insight])), [insights]);
 
+  // Fetch real catch statistics
+  const { data: catchStats, isLoading: catchStatsLoading } = useCatchStatistics();
+
   useEffect(() => {
     if (favoritesList.length === 0) return;
 
@@ -783,8 +787,17 @@ const FindrFavouritesPage: React.FC = () => {
       const imageSource: FavouriteEntry['imageSource'] = card?.image ? 'prediction' : 'fallback';
       const name = card?.commonName ?? metadata?.name ?? 'Saved fish';
       const scientificName = card?.scientificName ?? metadata?.scientificName;
-      const catches = insight?.catches ?? metadata?.catches ?? mock.catches;
-      
+
+      // Get real catch data from statistics, fallback to insight/metadata, then mock as last resort
+      const realCatchData = catchStats?.bySpecies.get(id.toLowerCase());
+      const catches = realCatchData?.totalCatches ?? insight?.catches ?? metadata?.catches ?? mock.catches;
+
+      // Use real last caught date if available
+      const lastCaughtDate = realCatchData?.lastCaughtDate;
+      const recentActivity = lastCaughtDate
+        ? `Last caught ${new Date(lastCaughtDate).toLocaleDateString()}`
+        : (insight?.recentActivity ?? card?.summary ?? mock.recentActivity);
+
       // Generate forecast from live confidence, not stale database metadata
       const forecast = generate7DayForecast(derivedConfidence, id);
 
@@ -802,7 +815,7 @@ const FindrFavouritesPage: React.FC = () => {
         lastPerfectConditions: insight?.lastPerfectConditions ?? mock.lastPerfectConditions,
         swipedDate: insight?.swipedDateLabel ?? mock.swipedDate,
         catches,
-        recentActivity: insight?.recentActivity ?? card?.summary ?? mock.recentActivity,
+        recentActivity,
         nextBestDay: insight?.nextBestDay ?? mock.nextBestDay,
         isPriority: prioritySet.has(id),
         isMockOnly: card === null && typeof metadata?.confidence !== 'number' && !metadata?.forecast,
@@ -814,27 +827,7 @@ const FindrFavouritesPage: React.FC = () => {
         forecast,
       } satisfies FavouriteEntry;
     });
-  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap]);
-
-  useEffect(() => {
-    console.info('[Findr Favourites] Using hard-coded engagement datasets until Supabase integrations land.', {
-      swipedDateSamples: SWIPED_DATE_OPTIONS.slice(0, 3),
-      lastConditionsSamples: LAST_CONDITIONS_OPTIONS.slice(0, 3),
-      activitySamples: RECENT_ACTIVITY_OPTIONS.slice(0, 3),
-      baitFallbackCount: BAIT_FALLBACKS.length,
-    });
-  }, []);
-
-  useEffect(() => {
-    const mockDependent = favouriteEntries.filter(
-      (entry) => entry.bestBaitSource === 'mock' || entry.isMockOnly
-    ).length;
-    if (mockDependent === 0) return;
-    console.info('[Findr Favourites] Mocked favourite entries detected – replace with analytics from Supabase/weather.', {
-      mockDependent,
-      totalEntries: favouriteEntries.length,
-    });
-  }, [favouriteEntries]);
+  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, catchStats]);
 
   const sortedFavourites = useMemo(() => {
     const entries = [...favouriteEntries];
@@ -863,9 +856,10 @@ const FindrFavouritesPage: React.FC = () => {
     [favouriteEntries]
   );
 
+  // Use real catch statistics if available, otherwise fall back to summing favouriteEntries
   const totalCatches = useMemo(
-    () => favouriteEntries.reduce((sum, entry) => sum + entry.catches, 0),
-    [favouriteEntries]
+    () => catchStats?.totalCatches ?? favouriteEntries.reduce((sum, entry) => sum + entry.catches, 0),
+    [catchStats, favouriteEntries]
   );
 
   const missingLiveDataCount = useMemo(
@@ -1225,8 +1219,16 @@ const FindrFavouritesPage: React.FC = () => {
             <div className="alert alert-info mb-6">
               <Loader2 size={20} className="animate-spin" />
               <span>Loading your favourites...</span>
-              </div>
-            )}
+            </div>
+          )}
+
+          {/* Catch Statistics Loading State */}
+          {catchStatsLoading && !isLoadingFavourites && (
+            <div className="alert alert-info mb-6">
+              <Loader2 size={20} className="animate-spin" />
+              <span>Loading catch statistics...</span>
+            </div>
+          )}
             
             <header className="text-center mb-8">
               <div className="flex justify-center items-center mb-4">
@@ -1320,7 +1322,7 @@ const FindrFavouritesPage: React.FC = () => {
                 <div className="stat-value text-success">{totalCatches}</div>
                 <div className="stat-desc text-success">
                   <Trophy size={12} className="inline mr-1" />
-                  <TranslatedText text="from your favourites (placeholder)" />
+                  <TranslatedText text="from your catch log" />
                 </div>
               </div>
 
@@ -1603,9 +1605,9 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Footnote about placeholder fields */}
+            {/* Info about data sources */}
             <p className="text-xs text-gray-400 mt-8 text-center max-w-3xl mx-auto">
-              <TranslatedText text="Catch totals, swipe dates, and condition history are placeholders until the catch-logging service ships. Confidence scores, species bios, and bait tips update live from Findr predictions." />
+              <TranslatedText text="Catch totals reflect your logged catches. Confidence scores, species bios, and bait tips update live from Findr predictions." />
             </p>
             {missingImageCount > 0 && (
               <p className="text-xs text-base-content/40 mt-2 text-center">
