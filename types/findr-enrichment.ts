@@ -167,7 +167,7 @@ export interface CatchLogInput {
   catchDate: string;
   catchTime?: string | null;
   quantity: number;
-  sizeCategory?: 'small' | 'average' | 'large' | 'mixed' | 'trophy';
+  sizeCategory?: 'small' | 'average' | 'large' | 'mixed';
   weightKg?: number | null;
   lengthCm?: number | null;
   baitUsed?: string | null;
