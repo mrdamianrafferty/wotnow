@@ -143,7 +143,7 @@ export default async function handler(
       longitude: null as number | null,
       hasGPS: false,
     };
-    let locationSource: CatchLocationSource = 'rectangle_center';
+    let locationSource: CatchLocationSource = 'rectangle';
 
     const photoFile = files.photo as FormidableFile | FormidableFile[] | undefined;
     
@@ -157,7 +157,7 @@ export default async function handler(
       exifGPS = extractExifGPS(originalBuffer);
 
       if (exifGPS.hasGPS) {
-        locationSource = 'exif_gps';
+        locationSource = 'gps'; // EXIF GPS from photo
       }
 
       // Step 2: Process photo - strip EXIF, optimize for mobile, auto-rotate
@@ -218,26 +218,39 @@ export default async function handler(
       warnings.push('No photo provided; some enrichment signals may be unavailable.');
     }
 
-    // Fallback to user location if provided and no EXIF GPS
+    // Location Priority: EXIF GPS > User Location > Rectangle Center
+    // 1. EXIF GPS is MOST ACCURATE - taken at exact moment/location of catch
+    // 2. User Location is LESS ACCURATE - device GPS at form submission (might be later/elsewhere)
+    // 3. Rectangle Center is APPROXIMATE - general area only
+
     let finalLatitude = exifGPS.latitude;
     let finalLongitude = exifGPS.longitude;
 
-    if (!exifGPS.hasGPS) {
+    // Priority 1: EXIF GPS from photo (already set above if hasGPS === true)
+    if (exifGPS.hasGPS) {
+      console.info('[log-catch-enriched] Using EXIF GPS from photo for accurate location');
+    }
+    // Priority 2: User location from device GPS (fallback if no photo GPS)
+    else {
       const userLat = getNumberValue(fields.user_latitude);
       const userLon = getNumberValue(fields.user_longitude);
-      
+
       if (userLat && userLon) {
         finalLatitude = userLat;
         finalLongitude = userLon;
-        locationSource = 'user_location';
+        locationSource = 'manual'; // User-supplied GPS from device
+        console.info('[log-catch-enriched] Using user-supplied GPS (no photo GPS available)');
+        warnings.push('Using device GPS location (no photo GPS available).');
       }
-    }
-
-    if (!exifGPS.hasGPS) {
-      if (locationSource === 'rectangle_center') {
-        warnings.push('Precise location unavailable; using ICES rectangle centre.');
-      } else if (locationSource === 'user_location') {
-        warnings.push('Using user-supplied coordinates (no photo GPS available).');
+      // Priority 3: Rectangle center (approximate location fallback)
+      else {
+        // TODO: Look up rectangle center coordinates from rectangleCode
+        // For now, we'll use null coordinates and rely on rectangleCode for general area
+        finalLatitude = null;
+        finalLongitude = null;
+        locationSource = 'rectangle';
+        console.warn('[log-catch-enriched] No precise GPS available, using rectangle code only');
+        warnings.push('No GPS data available; location approximated from fishing area.');
       }
     }
 
@@ -255,7 +268,7 @@ export default async function handler(
     });
 
     // Prepare catch entry data
-    const hasUserLocation = locationSource === 'user_location';
+    const hasUserLocation = locationSource === 'manual';
     const hasNotes = Boolean(notes && notes.trim().length > 0);
     const hasEnvironmentalConditions =
       Boolean(weatherConditions && typeof weatherConditions === 'string' && weatherConditions.trim() !== '' && weatherConditions.trim() !== '{}');

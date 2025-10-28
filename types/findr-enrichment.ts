@@ -44,7 +44,7 @@ export interface EMODnetSubstrateResponse {
 
 // Final enriched catch data structure
 export interface EnrichedCatchData {
-  locationSource?: 'exif_gps' | 'user_location' | 'rectangle_center' | 'fallback';
+  locationSource?: CatchLocationSource;
   finalLat?: number | null;
   finalLon?: number | null;
   depthAtLocationM?: number | null;
@@ -73,11 +73,14 @@ export interface Coordinates {
   accuracyMeters?: number | null;
 }
 
+// Location source values match database constraint: CHECK (location_source IN ('gps', 'manual', 'rectangle'))
+// 'gps' = EXIF GPS from photo (most accurate)
+// 'manual' = User-supplied device GPS at submission time
+// 'rectangle' = Approximate location from ICES rectangle center
 export type CatchLocationSource =
-  | 'exif_gps'
-  | 'user_location'
-  | 'rectangle_center'
-  | 'fallback';
+  | 'gps'
+  | 'manual'
+  | 'rectangle';
 
 export interface ExifMetadata {
   hasLocation: boolean;
