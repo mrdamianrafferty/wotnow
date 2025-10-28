@@ -1,6 +1,5 @@
 // components/findr/NearbyTackleShops.tsx
 import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import { MapPin, Star, ExternalLink, Loader } from 'lucide-react';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
 import { findNearbyTackleShops, type TackleShop } from '@/lib/findNearbyTackleShops';
