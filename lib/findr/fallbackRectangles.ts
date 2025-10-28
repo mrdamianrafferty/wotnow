@@ -9,26 +9,26 @@ export interface FallbackRectangleOption {
 
 const RAW_CSV = `
 rectangle_code,region,center_lat,center_lon,distance_to_shore_km
-20C5,Portuguese Coast,37.500000,-7.500000,1.60
-21C6,Portuguese Coast,37.500000,-8.500000,1.40
-21D7,Galician Coast,42.500000,-8.000000,0.90
-21D8,Galician Coast,42.500000,-9.000000,0.60
 22D6,Portuguese Coast,38.500000,-9.000000,1.00
-22D7,Galician Coast,43.500000,-8.000000,0.70
-22D8,Galician Coast,43.500000,-9.000000,0.50
-23D6,Portuguese Coast,39.000000,-9.000000,0.80
-23E0,Bay of Biscay,43.250000,-7.500000,1.20
-23E1,Bay of Biscay,43.750000,-7.500000,1.00
-24D7,Portuguese Coast,41.000000,-8.000000,1.30
-24E0,Bay of Biscay,43.250000,-6.500000,1.50
 24E1,Bay of Biscay,43.750000,-6.500000,1.80
-24E2,Bay of Biscay,43.750000,-7.500000,3.00
-25C8,Irish Southwest,52.500000,-9.000000,1.40
-25D7,Portuguese Coast,41.500000,-8.000000,1.10
-25D8,Irish West,53.000000,-9.000000,1.00
-25D9,Irish West,53.000000,-10.000000,0.70
-25E0,Bay of Biscay,43.250000,-5.500000,2.50
 25E1,Bay of Biscay,43.750000,-5.500000,3.00
+26E1,Bay of Biscay,43.750000,-4.500000,2.20
+26D6,Portuguese Coast,40.250000,-9.000000,1.00
+27D7,Portuguese Coast,40.750000,-8.500000,2.00
+22D8,Galician Coast,43.500000,-9.000000,0.50
+21D8,Galician Coast,42.500000,-9.000000,0.60
+27F1,Bay of Biscay,46.500000,-1.000000,2.10
+28F2,Bay of Biscay,47.000000,-2.000000,1.70
+23E1,Bay of Biscay,43.750000,-7.500000,1.00
+24E2,Bay of Biscay,43.750000,-7.500000,3.00
+28F4,Bay of Biscay,48.000000,-4.000000,1.90
+22D7,Galician Coast,43.500000,-8.000000,0.70
+28D8,Irish Northwest,54.500000,-9.000000,1.40
+25D9,Irish West,53.000000,-10.000000,0.70
+27C7,Irish Southwest,51.500000,-10.000000,1.20
+28D9,Irish Northwest,54.500000,-10.000000,0.80
+26D9,Irish West,53.500000,-10.000000,0.90
+20C5,Portuguese Coast,37.500000,-7.500000,1.60
 26C7,Irish Southwest,52.000000,-10.000000,0.80
 26C8,Irish Southwest,52.000000,-9.000000,1.10
 26D6,Portuguese Coast,40.250000,-9.000000,1.00
@@ -138,7 +138,8 @@ export const FALLBACK_RECTANGLE_OPTIONS: FallbackRectangleOption[] = RAW_CSV.tri
   .slice(1)
   .map((line) => line.trim())
   .filter(Boolean)
-  .map(parseCsvRow)
-  .sort((a, b) => a.code.localeCompare(b.code));
+  .map(parseCsvRow);
+  // NOTE: CSV is already ordered with temperature-enabled rectangles first
+  // DO NOT sort alphabetically or 20C5 (no temp data) will be first!
 
 export const FALLBACK_RECTANGLE_SOURCE_ROWS = RAW_CSV;
