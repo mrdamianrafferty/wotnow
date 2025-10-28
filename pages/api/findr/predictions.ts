@@ -876,6 +876,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         requestedAt: new Date().toISOString(),
         source: 'live' as const,
         region: rectangleData?.region || null,
+        conditions: {
+          tide: currentTideStage ? {
+            stage: currentTideStage,
+            flowSpeedMS: currentFlowSpeedMS,
+          } : null,
+          weather: {
+            windSpeedMS: currentWindSpeedMS,
+            pressureHPA: currentPressureHPA,
+          },
+        },
       },
     });
   } catch (error) {

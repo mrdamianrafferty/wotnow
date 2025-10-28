@@ -6,10 +6,10 @@ import { Zap, ChevronDown, ChevronUp, Target, Trash2, Fish, Waves, Clock } from 
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
-import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
-import { useTideData } from '../../hooks/useTideData';
+import { ScoreBreakdown, type ScoreBreakdownData } from './ScoreBreakdown';
+import { TideConditions, type TideInfo } from './TideConditions';
 
 interface SpeciesAdvice {
   type?: string;
@@ -51,8 +51,11 @@ interface ActiveSpeciesCardProps {
       data_age_hours?: number;
       data_source?: string;
     };
+    // Score breakdown data
+    scoreBreakdown?: ScoreBreakdownData;
   };
   location?: { lat: number; lon: number } | null;
+  tideInfo?: TideInfo | null;
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
@@ -65,30 +68,19 @@ interface ActiveSpeciesCardProps {
 export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   species,
   location,
+  tideInfo,
   onRemove,
   onTogglePriority,
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
-  // Fetch real tide data for location
-  const tideInfo = useTideData(location ?? null);
-
   const nextPeakHours = getNextPeakTime(species.forecast);
-  // Get real fishing time data based on species preferences, location, and tides
-  const fishingTimeResult = getImmediateFishingTimes(
-    [species], 
-    'active',
-    location?.lat,
-    location?.lon,
-    tideInfo ?? undefined
-  );
+  // Note: We now use database bite scores instead of client-side calculation
   const fishingTime = {
-    time: fishingTimeResult.primaryWindow ? 
-      `${fishingTimeResult.primaryWindow.startHour}:00-${fishingTimeResult.primaryWindow.endHour}:00` :
-      'Dawn/Dusk',
-    emoji: fishingTimeResult.emoji,
-    reason: fishingTimeResult.recommendation
+    time: 'Now',
+    emoji: '🎣',
+    reason: 'Optimal conditions right now!'
   };
 
   return (
@@ -152,6 +144,9 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   <Zap size={16} fill="currentColor" />
                   <span className="font-bold">{species.confidence}%</span>
                 </div>
+                {species.scoreBreakdown && (
+                  <ScoreBreakdown data={species.scoreBreakdown} speciesName={species.name} />
+                )}
                 <span className="text-sm font-semibold text-error uppercase tracking-wide">
                   🔥 <TranslatedText text="PEAK CONDITIONS" />
                 </span>
@@ -167,6 +162,13 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   {fishingTime.emoji} {fishingTime.reason}
                 </span>
               </div>
+
+              {/* Tide Conditions */}
+              {tideInfo && (
+                <div className="mt-2">
+                  <TideConditions tide={tideInfo} />
+                </div>
+              )}
 
               {/* Environmental Conditions - Compact View */}
               {species.environmental_factors && (
