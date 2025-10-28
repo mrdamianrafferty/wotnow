@@ -123,8 +123,8 @@ export async function findNearbyTackleShops(
     const request = {
       location: new google.maps.LatLng(latitude, longitude),
       radius: COARSE_RADIUS_METERS,
-      type: 'sporting_goods_store',
-      keyword: 'fishing tackle bait shop angling',
+      // Don't restrict to a specific type - let keyword matching do the work
+      keyword: 'fishing tackle bait shop angling pesca',
     };
 
     return new Promise((resolve, reject) => {
@@ -136,15 +136,28 @@ export async function findNearbyTackleShops(
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
           const shops: TackleShop[] = results
             .filter((place) => {
-              // Filter for fishing-related shops
+              // Light filtering - trust Google's keyword matching, but exclude obviously wrong results
               const name = place.name?.toLowerCase() || '';
               const types = place.types || [];
+
+              // Exclude restaurants, cafes, etc.
+              const excludedTypes = ['restaurant', 'cafe', 'bar', 'food'];
+              const hasExcludedType = types.some(type => excludedTypes.includes(type));
+
+              if (hasExcludedType) {
+                return false;
+              }
+
+              // If it has fishing-related keywords or is a sporting goods store, include it
               return (
                 name.includes('fish') ||
                 name.includes('tackle') ||
                 name.includes('bait') ||
                 name.includes('angl') ||
-                types.includes('sporting_goods_store')
+                name.includes('pesca') || // Spanish for fishing
+                name.includes('nautic') ||
+                types.includes('sporting_goods_store') ||
+                types.includes('store')
               );
             })
             .map((place) => {
@@ -167,7 +180,7 @@ export async function findNearbyTackleShops(
               };
             })
             .sort((a, b) => (a.distance || 0) - (b.distance || 0)) // Sort by distance
-            .slice(0, 5); // Limit to top 5
+            .slice(0, 10); // Limit to top 10
 
           // Cache the results
           setCachedShops(latitude, longitude, shops);

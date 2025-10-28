@@ -172,7 +172,7 @@ export function NearbyTackleShops() {
       </div>
 
       <p className="text-xs text-center text-base-content/50 pt-2">
-        <TranslatedText text="Data from Google Places • Cached for 30 days" />
+        <TranslatedText text="Data from Google Places • Showing up to 10 shops • Cached for 30 days" />
       </p>
     </div>
   );
