@@ -41,5 +41,3 @@ USING (
   bucket_id = 'catch-photos' AND
   (storage.foldername(name))[1] = auth.uid()::text
 );
-
-COMMENT ON TABLE storage.buckets IS 'catch-photos bucket stores user-uploaded fishing catch photos with automatic optimization support';
