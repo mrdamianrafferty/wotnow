@@ -192,9 +192,6 @@ export default async function handler(
           });
 
         photoThumbnailUrl = thumbnailData.publicUrl ?? null;
-
-        // Note: photoThumbnailUrl is for future use in UI optimization
-        void photoThumbnailUrl;
       }
     } else {
       warnings.push('No photo provided; some enrichment signals may be unavailable.');
@@ -265,7 +262,7 @@ export default async function handler(
       longitude: finalLongitude,
       depth_meters: enrichedData.bathymetry?.depth_meters || null,
       substrate: enrichedData.substrate?.substrate || null,
-      photo_url: photoUrl,
+      photo_urls: photoUrl ? [photoUrl] : null,
       notes: notes,
       size_category: sizeCategory,
       weather_conditions: weatherConditions,
