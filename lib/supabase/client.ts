@@ -1,16 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
-// Use standard Supabase client for browser operations
-// This uses localStorage by default which works reliably with PKCE OAuth
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      flowType: 'pkce',
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    }
-  }
-);
+// Official Supabase pattern for Next.js browser client
+// Source: https://supabase.com/docs/guides/auth/server-side/nextjs
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+// Export singleton instance for convenience
+export const supabase = createClient()
