@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps API Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Google Maps API Test</h1>
+    <div id="status">Loading...</div>
+    <input id="autocomplete" type="text" placeholder="Search for a place..." style="width: 100%; padding: 10px; font-size: 16px;">
+    <div id="map"></div>
+
+    <script>
+        const API_KEY = 'AIzaSyBvUzTUyaNiTufKVIMa5Wh087VMkxpf61Q';
+        const statusDiv = document.getElementById('status');
+
+        function showSuccess(msg) {
+            statusDiv.className = 'success';
+            statusDiv.innerHTML = '✅ ' + msg;
+        }
+
+        function showError(msg) {
+            statusDiv.className = 'error';
+            statusDiv.innerHTML = '❌ ' + msg;
+        }
+
+        // Listen for Google Maps errors
+        window.gm_authFailure = function() {
+            showError('API Key Authentication Failed! Check your API key restrictions.');
+        };
+
+        function initMap() {
+            try {
+                // Test 1: Initialize map
+                const map = new google.maps.Map(document.getElementById('map'), {
+                    center: { lat: 51.5074, lng: -0.1278 }, // London
+                    zoom: 10
+                });
+
+                // Test 2: Initialize autocomplete
+                const input = document.getElementById('autocomplete');
+                const autocomplete = new google.maps.places.Autocomplete(input);
+
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (place.geometry) {
+                        map.setCenter(place.geometry.location);
+                        map.setZoom(15);
+                        showSuccess('Maps + Places API working! Search successful: ' + place.name);
+                    }
+                });
+
+                showSuccess('Maps JavaScript API + Places API loaded successfully! Try searching for a place.');
+            } catch (error) {
+                showError('Error initializing: ' + error.message);
+            }
+        }
+
+        // Load Google Maps
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = function() {
+            showError('Failed to load Google Maps script. Check your API key.');
+        };
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
