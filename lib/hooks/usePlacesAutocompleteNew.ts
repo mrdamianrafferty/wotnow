@@ -155,6 +155,7 @@ export function usePlacesAutocompleteNew(
 
         if (rawSuggestions && rawSuggestions.length > 0) {
           // Transform new API response to match old API format for compatibility
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data: PlacePrediction[] = rawSuggestions.map((suggestion: any) => {
             const prediction = suggestion.placePrediction;
             if (!prediction) {
