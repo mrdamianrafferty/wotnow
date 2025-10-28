@@ -24,11 +24,13 @@ Scroll to **"Application restrictions"** section and ensure these referrers are 
 
 #### Production Domains
 ```
-https://fishfindr.eu/*
-https://*.fishfindr.eu/*
-https://godaisy.io/*
-https://*.godaisy.io/*
+https://fishfindr.eu
+https://*.fishfindr.eu
+https://godaisy.io
+https://*.godaisy.io
 ```
+
+**Note:** Do NOT add paths like `/*` - Google only supports domain-level restrictions, not path-level.
 
 #### Vercel Preview Deployments (optional but recommended)
 ```
