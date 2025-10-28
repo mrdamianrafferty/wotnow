@@ -5,6 +5,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable, { type File as FormidableFile } from 'formidable';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
+import sharp from 'sharp';
 import { extractExifGPS, enrichCatchData } from '@/lib/findr/enrichCatchData';
 import { calculateDataQualityScore, calculateCatchPoints } from '@/lib/findr/dataQuality';
 import type {
@@ -150,26 +151,40 @@ export default async function handler(
 
     if (photoFile) {
       const file = Array.isArray(photoFile) ? photoFile[0] : photoFile;
-      
-      // Extract EXIF GPS data
-      const photoBuffer = fs.readFileSync(file.filepath);
-      exifGPS = extractExifGPS(photoBuffer);
+
+      // Step 1: Extract EXIF GPS data from original photo (for enrichment)
+      const originalBuffer = fs.readFileSync(file.filepath);
+      exifGPS = extractExifGPS(originalBuffer);
 
       if (exifGPS.hasGPS) {
         locationSource = 'exif_gps';
       }
 
+      // Step 2: Process photo - strip EXIF, optimize for mobile, auto-rotate
+      const processedBuffer = await sharp(originalBuffer)
+        .rotate() // Auto-rotate based on EXIF orientation
+        .resize(1920, 1920, {
+          fit: 'inside', // Maintain aspect ratio, max 1920px on longest side
+          withoutEnlargement: true, // Don't upscale smaller images
+        })
+        .jpeg({
+          quality: 85, // High quality, good compression
+          progressive: true, // Progressive JPEG for faster loading
+          mozjpeg: true, // Use mozjpeg for better compression
+        })
+        .toBuffer();
+      // Note: Re-encoding to JPEG automatically strips ALL EXIF data
+
       const safeUserId = userId || 'anonymous';
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const originalName = file.originalFilename ?? 'catch-photo.jpg';
-      const extension = originalName.includes('.') ? originalName.substring(originalName.lastIndexOf('.')) : '.jpg';
-      const storagePath = `${safeUserId}/${timestamp}${extension}`;
+      const storagePath = `${safeUserId}/${timestamp}.jpg`; // Always .jpg after processing
 
+      // Step 3: Upload privacy-safe, optimized photo
       const { data: uploadData, error: uploadError } = await supabase
         .storage
         .from('catch-photos')
-        .upload(storagePath, photoBuffer, {
-          contentType: file.mimetype || 'image/jpeg',
+        .upload(storagePath, processedBuffer, {
+          contentType: 'image/jpeg',
           upsert: false,
         });
 
