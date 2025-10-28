@@ -130,7 +130,7 @@ export default async function handler(
 
     // Handle photo upload and EXIF extraction
     let photoUrl: string | null = null;
-    let photoThumbnailUrl: string | null = null;
+    let _photoThumbnailUrl: string | null = null; // Generated on-demand via Supabase transform API
     let exifGPS = {
       latitude: null as number | null,
       longitude: null as number | null,
@@ -191,7 +191,7 @@ export default async function handler(
             },
           });
 
-        photoThumbnailUrl = thumbnailData.publicUrl ?? null;
+        _photoThumbnailUrl = thumbnailData.publicUrl ?? null;
       }
     } else {
       warnings.push('No photo provided; some enrichment signals may be unavailable.');
