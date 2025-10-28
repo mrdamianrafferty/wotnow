@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { 
-  Fish, 
-  Waves, 
-  Thermometer, 
-  Droplets, 
-  Activity, 
-  Clock, 
-  TrendingUp, 
-  Database, 
-  Globe, 
-  ChevronDown, 
+import {
+  Fish,
+  Waves,
+  Thermometer,
+  Droplets,
+  Activity,
+  Clock,
+  TrendingUp,
+  Database,
+  Globe,
+  ChevronDown,
   ChevronRight,
   Wind,
-  Anchor
+  Anchor,
+  MapPin
 } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedText } from '../../components/translation/TranslatedFishCard';
+import { NearbyTackleShops } from '../../components/findr/NearbyTackleShops';
 
 const FindrInfoPage = () => {
   type SectionKey = 'ices' | 'marine' | 'weather' | 'expert';
@@ -511,6 +513,17 @@ const FindrInfoPage = () => {
           <span className="badge badge-primary badge-sm">🏪 <TranslatedText text="Community spirit" /></span>
           <span className="badge badge-primary badge-sm">💬 <TranslatedText text="Real stories, real people" /></span>
         </div>
+                </div>
+              </div>
+
+              {/* Nearby Tackle Shops Finder */}
+              <div className="card bg-base-100 mt-4">
+                <div className="card-body">
+                  <h3 className="card-title text-base mb-2">
+                    <MapPin size={20} className="text-primary" />
+                    <TranslatedText text="Find Your Nearest Tackle Shop" />
+                  </h3>
+                  <NearbyTackleShops />
                 </div>
               </div>
             </div>
