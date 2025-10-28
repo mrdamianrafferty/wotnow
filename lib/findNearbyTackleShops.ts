@@ -41,7 +41,7 @@ function getCacheKey(lat: number, lng: number): string {
   return `${CACHE_KEY_PREFIX}${rounded.lat}_${rounded.lng}`;
 }
 
-function getCachedShops(lat: number, lng: number): TackleShop[] | null {
+function _getCachedShops(lat: number, lng: number): TackleShop[] | null {
   try {
     const cacheKey = getCacheKey(lat, lng);
     const cached = localStorage.getItem(cacheKey);
@@ -65,7 +65,7 @@ function getCachedShops(lat: number, lng: number): TackleShop[] | null {
   }
 }
 
-function setCachedShops(lat: number, lng: number, shops: TackleShop[]): void {
+function _setCachedShops(lat: number, lng: number, shops: TackleShop[]): void {
   try {
     const cacheKey = getCacheKey(lat, lng);
     const data: CachedTackleShops = {
