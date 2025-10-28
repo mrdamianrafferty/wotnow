@@ -67,7 +67,7 @@ interface ActiveSpeciesCardProps {
  */
 export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   species,
-  location,
+  location: _location,
   tideInfo,
   onRemove,
   onTogglePriority,
