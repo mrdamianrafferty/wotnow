@@ -192,15 +192,37 @@ export default function AuthCallback() {
               errorCode: exchangeError?.code,
               errorStatus: exchangeError?.status
             });
-            throw exchangeError;
+
+            // WORKAROUND: Sometimes the session is created even though code exchange "fails"
+            // Check if a session actually exists before throwing the error
+            logAuthStep('Checking if session exists despite error...');
+            const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+
+            if (fallbackSession) {
+              logAuthStep('Session exists despite code exchange error! Using fallback session.', {
+                userEmail: fallbackSession.user?.email
+              });
+              // Continue with the session we found
+            } else {
+              // No session found, throw the error
+              throw exchangeError;
+            }
           }
 
           if (!data?.session) {
-            logAuthStep('No session created after code exchange');
-            throw new Error('No session created after authentication');
+            // Check for fallback session one more time
+            const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+            if (!fallbackSession) {
+              logAuthStep('No session created after code exchange');
+              throw new Error('No session created after authentication');
+            }
           }
 
-          const session = data.session;
+          const session = data?.session || (await supabase.auth.getSession()).data.session;
+
+          if (!session) {
+            throw new Error('No session available after all checks');
+          }
 
           logAuthStep('Session established by SDK', {
             userEmail: session.user?.email
