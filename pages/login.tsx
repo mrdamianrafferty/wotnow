@@ -95,6 +95,10 @@ export default function GoDaisyLogin() {
 
       console.log('[Go Daisy Auth] OAuth response:', { url: data.url, provider: data.provider });
 
+      // DEBUG: Check what cookies exist BEFORE redirect
+      console.log('[Go Daisy Auth] Cookies before redirect:', document.cookie);
+      console.log('[Go Daisy Auth] LocalStorage before redirect:', Object.keys(localStorage));
+
       // Redirect to OAuth provider (SSR client doesn't auto-redirect)
       if (data.url) {
         window.location.href = data.url;
