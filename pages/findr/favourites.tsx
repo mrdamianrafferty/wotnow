@@ -846,10 +846,17 @@ const FindrFavouritesPage: React.FC = () => {
     return entries;
   }, [favouriteEntries, sortBy]);
 
-  const hotRightNow = useMemo(
-    () => sortedFavourites.filter((entry) => entry.confidence !== null).slice(0, 3),
-    [sortedFavourites]
-  );
+  const hotRightNow = useMemo(() => {
+    // Sort by bite score (includes real-time tides) or confidence
+    const scored = sortedFavourites
+      .filter((entry) => (entry.biteScore ?? entry.confidence) !== null)
+      .sort((a, b) => {
+        const scoreA = a.biteScore ?? a.confidence ?? 0;
+        const scoreB = b.biteScore ?? b.confidence ?? 0;
+        return scoreB - scoreA;
+      });
+    return scored.slice(0, 3);
+  }, [sortedFavourites]);
 
   const priorityFish = useMemo(
     () => favouriteEntries.filter((entry) => entry.isPriority),
@@ -872,17 +879,19 @@ const FindrFavouritesPage: React.FC = () => {
     [favouriteEntries]
   );
 
-  // Group favourites by confidence tier for the 3-tier dashboard
+  // Group favourites by bite score (or confidence) for the 3-tier dashboard
+  // Bite score includes real-time factors like tides, making it more actionable
   const groupedFavourites = useMemo(() => {
     const active: FavouriteEntry[] = [];
     const good: FavouriteEntry[] = [];
     const waiting: FavouriteEntry[] = [];
 
     sortedFavourites.forEach((entry) => {
-      const confidence = entry.confidence ?? 0;
-      if (confidence >= 85) {
+      // Use bite score if available (includes tides + conditions), otherwise fall back to confidence
+      const score = entry.biteScore ?? entry.confidence ?? 0;
+      if (score >= 85) {
         active.push(entry);
-      } else if (confidence >= 70) {
+      } else if (score >= 70) {
         good.push(entry);
       } else {
         waiting.push(entry);
@@ -1351,7 +1360,7 @@ const FindrFavouritesPage: React.FC = () => {
                   <TrendingUp className="mr-3 text-red-300" />
                   <Flame className="mr-2 text-red-300" size={20} />
                   <TranslatedText text="Hot Right Now" />
-                  <span className="ml-2 text-sm font-normal text-gray-400">(<TranslatedText text="top picks by confidence" />)</span>
+                  <span className="ml-2 text-sm font-normal text-gray-400">(<TranslatedText text="top picks by bite score" />)</span>
                 </h2>
 
                 {hotRightNow.length === 0 ? (
@@ -1369,14 +1378,23 @@ const FindrFavouritesPage: React.FC = () => {
                       >
                         <div className="card-body p-4">
                         <div className="swipe-hint">← Remove | Priority → | ↑ Details</div>
-                        <button 
+                        <button
                           className="flex items-center justify-between mb-3 gap-3 w-full text-left hover:opacity-80 transition-opacity"
                           onClick={(e) => { e.stopPropagation(); handleFishClick(entry); }}
                           type="button"
                           aria-label={`View ${entry.name} details`}
                         >
                           <FavouriteThumbnail entry={entry} size={68} />
-                          {entry.confidence !== null && <ConfidenceRing confidence={entry.confidence} size={60} />}
+                          {(entry.biteScore ?? entry.confidence) !== null && (
+                            <div className="flex flex-col items-center gap-1">
+                              <ConfidenceRing confidence={entry.biteScore ?? entry.confidence ?? 0} size={60} />
+                              {entry.biteScore && (
+                                <span className="text-xs font-semibold text-success">
+                                  <TranslatedText text="BITE NOW" />
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </button>
                         <h3 className="text-white font-semibold"><TranslatedFishName name={entry.name} /></h3>
                         <p className="text-base-content/70 text-sm"><TranslatedText text={entry.season} /></p>
@@ -1478,15 +1496,18 @@ const FindrFavouritesPage: React.FC = () => {
                               name: entry.name,
                               scientificName: entry.scientificName,
                               emoji: entry.emoji,
-                              confidence: entry.confidence ?? 0,
+                              confidence: entry.biteScore ?? entry.confidence ?? 0,
                               forecast,
                               bestBait: entry.bestBait,
                               season: entry.season,
-                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null) 
+                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
                                 : null,
                               isPriority: entry.isPriority,
                               advice: entry.advice,
+                              data_freshness: entry.card?.data_freshness,
+                              weight_profile: entry.card?.weight_profile,
+                              environmental_factors: entry.card?.environmental_factors,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
@@ -1525,14 +1546,16 @@ const FindrFavouritesPage: React.FC = () => {
                               name: entry.name,
                               scientificName: entry.scientificName,
                               emoji: entry.emoji,
-                              confidence: entry.confidence ?? 0,
+                              confidence: entry.biteScore ?? entry.confidence ?? 0,
                               forecast,
                               bestBait: entry.bestBait,
                               season: entry.season,
-                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null) 
+                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
                                 : null,
                               isPriority: entry.isPriority,
+                              data_freshness: entry.card?.data_freshness,
+                              environmental_factors: entry.card?.environmental_factors,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
@@ -1607,7 +1630,7 @@ const FindrFavouritesPage: React.FC = () => {
 
             {/* Info about data sources */}
             <p className="text-xs text-gray-400 mt-8 text-center max-w-3xl mx-auto">
-              <TranslatedText text="Catch totals reflect your logged catches. Confidence scores, species bios, and bait tips update live from Findr predictions." />
+              <TranslatedText text="Catch totals reflect your logged catches. Bite scores include real-time tides, environmental conditions, and species preferences. Confidence scores, species bios, and bait tips update live from Findr predictions." />
             </p>
             {missingImageCount > 0 && (
               <p className="text-xs text-base-content/40 mt-2 text-center">
