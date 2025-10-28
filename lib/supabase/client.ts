@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr' // or '@supabase/auth-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 export const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,6 +9,14 @@ export const supabase = createBrowserClient(
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      storageKey: 'supabase.auth',
     },
+    cookieOptions: {
+      name: 'sb-auth-token',
+      domain: typeof window !== 'undefined' ? window.location.hostname : undefined,
+      path: '/',
+      sameSite: 'lax',
+    }
   }
 );
