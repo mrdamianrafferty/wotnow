@@ -110,10 +110,16 @@ export default async function handler(
     // Extract optional fields
     const entryType = (getFieldValue(fields.entry_type) || 'detailed') as CatchLogRequest['entry_type'];
     const rectangleCode = getFieldValue(fields.rectangle_code);
+    const scientificName = getFieldValue(fields.scientific_name);
+    const speciesId = getFieldValue(fields.species_id);
     const notes = getFieldValue(fields.notes);
     const sizeCategory = getFieldValue(fields.size_category) as CatchLogRequest['size_category'] | null;
     const weatherConditions = getFieldValue(fields.weather_conditions);
     const iceNumber = getFieldValue(fields.ice_number);
+    const baitUsed = getFieldValue(fields.bait_used);
+    const habitatType = getFieldValue(fields.habitat_type);
+    const method = getFieldValue(fields.method);
+    const depthRange = getFieldValue(fields.depth_range);
 
     // Initialize Supabase client
     const supabase = createClient(
@@ -252,22 +258,31 @@ export default async function handler(
 
     const catchEntry: Record<string, unknown> = {
       user_id: userId,
+      species_id: speciesId || 'UNKNOWN', // Required field - use UNKNOWN if not provided
       species_common_name: speciesName,
+      scientific_name: scientificName,
       quantity,
-      catch_date: catchDate,
-      entry_type: entryType,
+      caught_at: catchDate, // Database column is 'caught_at'
       rectangle_code: rectangleCode,
       location_source: locationSource,
-      latitude: finalLatitude,
-      longitude: finalLongitude,
-      depth_meters: enrichedData.bathymetry?.depth_meters || null,
-      substrate: enrichedData.substrate?.substrate || null,
+      gps_latitude: finalLatitude, // Database column is 'gps_latitude'
+      gps_longitude: finalLongitude, // Database column is 'gps_longitude'
       photo_urls: photoUrl ? [photoUrl] : null,
       notes: notes,
       size_category: sizeCategory,
-      weather_conditions: weatherConditions,
-      ice_number: iceNumber,
-      data_quality_score: dataQualityScore,
+      bait_used: baitUsed,
+      habitat_type: habitatType,
+      method: method,
+      depth_range: depthRange,
+      // Store enrichment data in environmental_conditions JSONB
+      environmental_conditions: {
+        ...(typeof weatherConditions === 'string' && weatherConditions !== '' ? JSON.parse(weatherConditions) : {}),
+        depth_meters: enrichedData.bathymetry?.depth_meters || null,
+        substrate: enrichedData.substrate?.substrate || null,
+        entry_type: entryType,
+        ice_number: iceNumber,
+        data_quality_score: dataQualityScore,
+      },
     };
 
     // Insert into database
