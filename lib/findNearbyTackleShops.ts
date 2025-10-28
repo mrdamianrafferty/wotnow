@@ -147,11 +147,12 @@ export async function findNearbyTackleShops(
   latitude: number,
   longitude: number
 ): Promise<TackleShop[]> {
+  // TEMPORARILY DISABLED FOR TESTING
   // Check cache first
-  const cached = getCachedShops(latitude, longitude);
-  if (cached) {
-    return cached;
-  }
+  // const cached = getCachedShops(latitude, longitude);
+  // if (cached) {
+  //   return cached;
+  // }
 
   try {
     const google = await loadGoogleMaps();
@@ -238,6 +239,18 @@ export async function findNearbyTackleShops(
         const shopLng = place.geometry?.location?.lng() || 0;
         const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
 
+        // Get photo URL if available
+        const photoUrl = place.photos && place.photos.length > 0
+          ? place.photos[0].getUrl({ maxWidth: 400, maxHeight: 400 })
+          : undefined;
+
+        // Debug logging
+        console.log(`[Tackle Shop] ${place.name}:`, {
+          hasPhotos: !!(place.photos && place.photos.length > 0),
+          photoUrl,
+          placeId: place.place_id,
+        });
+
         return {
           name: place.name || 'Unknown Shop',
           placeId: place.place_id || '',
@@ -248,18 +261,18 @@ export async function findNearbyTackleShops(
           userRatingsTotal: place.user_ratings_total,
           // Note: open_now is deprecated. Would need getDetails() call per shop to get current status.
           // Removed to avoid deprecation warnings and extra API calls.
-          photos: place.photos?.slice(0, 1).map((photo) =>
-            photo.getUrl({ maxWidth: 400 })
-          ),
+          photos: photoUrl ? [photoUrl] : undefined,
         };
       })
       .sort((a, b) => (a.distance || 0) - (b.distance || 0)) // Sort by distance
       .slice(0, 10); // Limit to top 10
 
+    // TEMPORARILY DISABLED FOR TESTING
     // Cache the results
-    setCachedShops(latitude, longitude, shops);
+    // setCachedShops(latitude, longitude, shops);
 
     console.log(`[Tackle Shops] Found ${shops.length} unique shops from ${allResults.size} total results`);
+    console.log(`[Tackle Shops] Shops with photos: ${shops.filter(s => s.photos && s.photos.length > 0).length}`);
     return shops;
   } catch (error) {
     console.error('[Tackle Shops] Error finding shops:', error);
