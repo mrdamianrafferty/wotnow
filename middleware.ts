@@ -6,6 +6,12 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const hostname = req.headers.get('host') || '';
 
+  // Check for auth callback early to avoid duplicate declarations
+  const hasCode = url.searchParams.has('code');
+  const hasTokenHash = url.searchParams.has('token_hash') || url.searchParams.has('token');
+  const isAuthCallback = url.pathname === '/auth/callback';
+  const isLegacyFindrCallback = url.pathname === '/findr/magic-link';
+
   // Create response object that we can modify
   let response = NextResponse.next({
     request: {
@@ -32,7 +38,6 @@ export async function middleware(req: NextRequest) {
   );
 
   // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
-  const isAuthCallback = url.pathname === '/auth/callback';
   if (!isAuthCallback) {
     await supabase.auth.getUser();
   }
@@ -73,11 +78,6 @@ export async function middleware(req: NextRequest) {
   // Unified auth callback routing
   // All auth callbacks (PKCE, implicit, OTP) go to /auth/callback
   // The callback handler determines the correct destination based on app parameter
-  const hasCode = url.searchParams.has('code');
-  const hasTokenHash = url.searchParams.has('token_hash') || url.searchParams.has('token');
-  const isAuthCallback = url.pathname === '/auth/callback';
-  const isLegacyFindrCallback = url.pathname === '/findr/magic-link';
-
   if ((hasCode || hasTokenHash) && !isAuthCallback && !isLegacyFindrCallback) {
     // Redirect to unified callback handler
     const to = url.clone();
