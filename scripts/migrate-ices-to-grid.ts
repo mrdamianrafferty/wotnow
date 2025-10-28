@@ -56,7 +56,8 @@ async function migrateICESDataToGrid() {
   // 3. Map ICES data to grid cells (deduplicate by cell_id)
   console.log('🗺️  Step 3: Mapping ICES data to grid cells...');
 
-  // Use Map to deduplicate - if multiple rectangles map to same grid, use first one
+  // Use Map to deduplicate - prefer rectangles WITH data over NULL
+  // Track which rectangles contributed data to each cell
   const gridDataMap = new Map<
     string,
     {
@@ -72,15 +73,14 @@ async function migrateICESDataToGrid() {
       phytoplankton_index: number | null;
       sources: string[];
       quality: string;
+      source_rectangles?: string[];
     }
   >();
 
-  for (const mapping of mappings || []) {
-    // Skip if we already have data for this grid cell
-    if (gridDataMap.has(mapping.cell_id)) {
-      continue;
-    }
+  let overlappingCells = 0;
+  let dataUpgrades = 0;
 
+  for (const mapping of mappings || []) {
     // Find conditions for this rectangle
     const conditions = icesConditions?.find((c) => c.rectangle_code === mapping.rectangle_code);
 
@@ -88,7 +88,10 @@ async function migrateICESDataToGrid() {
       continue; // No conditions data for this rectangle
     }
 
-    gridDataMap.set(mapping.cell_id, {
+    const existing = gridDataMap.get(mapping.cell_id);
+
+    // Build candidate data for this rectangle
+    const candidateData = {
       cell_id: mapping.cell_id,
       collected_at: conditions.captured_at || new Date().toISOString(),
       surface_temperature_c: conditions.sea_temp_c || null,
@@ -100,8 +103,75 @@ async function migrateICESDataToGrid() {
       phosphate_umol_l: null,
       phytoplankton_index: null,
       sources: ['CMEMS', 'findr_conditions_latest_migration'],
-      quality: 'high',
-    });
+      quality: 'high' as const,
+      source_rectangles: [mapping.rectangle_code],
+    };
+
+    if (!existing) {
+      // First rectangle for this cell - add it
+      gridDataMap.set(mapping.cell_id, candidateData);
+      continue;
+    }
+
+    // Cell already has data - decide which to keep
+    overlappingCells++;
+
+    // CRITICAL: Temperature is THE most important field for species matching
+    // Always prefer rectangles with temperature data
+    const existingHasTemp = existing.surface_temperature_c !== null;
+    const candidateHasTemp = candidateData.surface_temperature_c !== null;
+
+    if (candidateHasTemp && !existingHasTemp) {
+      // Candidate has temp but existing doesn't - ALWAYS upgrade
+      dataUpgrades++;
+      candidateData.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+      gridDataMap.set(mapping.cell_id, candidateData);
+    } else if (!candidateHasTemp && existingHasTemp) {
+      // Existing has temp but candidate doesn't - ALWAYS keep existing
+      existing.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+    } else {
+      // Both have temp OR both lack temp - use secondary criteria
+
+      // Count other critical fields (weighted)
+      const existingDataScore =
+        (existing.surface_temperature_c !== null ? 10 : 0) + // Temperature: weight 10
+        (existing.salinity_psu !== null ? 2 : 0) +           // Salinity: weight 2
+        (existing.chlorophyll_mg_m3 !== null ? 1 : 0) +      // Chlorophyll: weight 1
+        (existing.oxygen_mg_l !== null ? 1 : 0);             // Oxygen: weight 1
+
+      const candidateDataScore =
+        (candidateData.surface_temperature_c !== null ? 10 : 0) +
+        (candidateData.salinity_psu !== null ? 2 : 0) +
+        (candidateData.chlorophyll_mg_m3 !== null ? 1 : 0) +
+        (candidateData.oxygen_mg_l !== null ? 1 : 0);
+
+      if (candidateDataScore > existingDataScore) {
+        dataUpgrades++;
+        candidateData.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+        gridDataMap.set(mapping.cell_id, candidateData);
+      } else if (candidateDataScore === existingDataScore) {
+        // Equal data quality - prefer more recent
+        const existingDate = new Date(existing.collected_at);
+        const candidateDate = new Date(candidateData.collected_at);
+
+        if (candidateDate > existingDate) {
+          dataUpgrades++;
+          candidateData.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+          gridDataMap.set(mapping.cell_id, candidateData);
+        } else {
+          // Keep existing, but track that this rectangle also mapped to this cell
+          existing.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+        }
+      } else {
+        // Existing has better data - keep it, but track this rectangle
+        existing.source_rectangles = [...(existing.source_rectangles || []), mapping.rectangle_code];
+      }
+    }
+  }
+
+  if (overlappingCells > 0) {
+    console.log(`⚠️  Found ${overlappingCells} grid cells with multiple rectangle mappings`);
+    console.log(`✅ Upgraded ${dataUpgrades} cells to use rectangle with better data`);
   }
 
   const gridData = Array.from(gridDataMap.values());
@@ -119,7 +189,8 @@ async function migrateICESDataToGrid() {
   let inserted = 0;
 
   for (let i = 0; i < gridData.length; i += BATCH_SIZE) {
-    const batch = gridData.slice(i, i + BATCH_SIZE);
+    // Remove source_rectangles field (not in database schema)
+    const batch = gridData.slice(i, i + BATCH_SIZE).map(({ source_rectangles, ...data }) => data);
 
     const { error: upsertError } = await supabase
       .from('grid_conditions_latest')
