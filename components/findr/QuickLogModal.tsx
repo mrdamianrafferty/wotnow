@@ -14,6 +14,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { X, Camera, AlertCircle, Zap, Plus } from 'lucide-react';
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -173,7 +174,14 @@ export function QuickLogModal({
 
     } catch (err) {
       console.error('[QuickLogModal] Failed to log catch:', err);
-      setError(err instanceof Error ? err.message : 'Failed to log catch');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to log catch';
+
+      // Provide helpful context for authentication errors
+      if (errorMessage.includes('Authentication') || errorMessage.includes('auth')) {
+        setError('You need to sign in to log catches. Please sign in and try again.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -281,7 +289,14 @@ export function QuickLogModal({
         {error && (
           <div className="alert alert-error mb-4">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">{error}</span>
+            <div className="flex-1">
+              <span className="text-sm">{error}</span>
+              {error.includes('sign in') && (
+                <Link href="/findr/auth" className="btn btn-sm btn-ghost mt-2">
+                  <TranslatedText text="Go to Sign In" />
+                </Link>
+              )}
+            </div>
           </div>
         )}
         

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
 import {
@@ -1098,6 +1099,7 @@ export default function FindrCatchLogPage() {
   const [liveMatches, setLiveMatches] = useState<FishMatch[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(true);
   const [userName, setUserName] = useState<string>('User');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking, true/false = known
 
   // Modal states
   const [showQuickLogModal, setShowQuickLogModal] = useState(false);
@@ -1115,7 +1117,7 @@ export default function FindrCatchLogPage() {
   // Priority: UnifiedLocationContext → selectedCode → fallback to '31F2'
   const activeRectangleCode = location?.rectangleCode ?? selectedCode ?? '31F2';
 
-  // Fetch user name from session
+  // Fetch user name and auth status from session
   useEffect(() => {
     const fetchUserName = async () => {
       const { data } = await supabase.auth.getSession();
@@ -1123,6 +1125,9 @@ export default function FindrCatchLogPage() {
         const email = data.session.user.email || 'User';
         const displayName = data.session.user.user_metadata?.full_name || email.split('@')[0];
         setUserName(displayName);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
       }
     };
     void fetchUserName();
@@ -1657,6 +1662,28 @@ export default function FindrCatchLogPage() {
       />
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 pb-16">
         <FindrNavigation />
+
+        {/* Auth Banner - shown when not authenticated */}
+        {isAuthenticated === false && (
+          <div className="sm:mx-auto px-2 sm:px-4 md:px-6 lg:max-w-6xl pt-4">
+            <div className="alert alert-warning shadow-lg">
+              <AlertTriangle className="w-6 h-6 shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-bold">
+                  <TranslatedText text="Sign in required to log catches" />
+                </h3>
+                <div className="text-sm">
+                  <TranslatedText text="Create an account or sign in to save your catches, track your fishing history, and upload photos to your trophy gallery." />
+                </div>
+              </div>
+              <div className="flex-none">
+                <Link href="/findr/auth" className="btn btn-sm btn-primary gap-2">
+                  <TranslatedText text="Sign In" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="sm:mx-auto pt-2 px-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
           <header className="card bg-primary text-primary-content shadow-lg">
