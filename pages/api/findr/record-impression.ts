@@ -73,8 +73,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      console.warn('[Record Impression] Auth verification failed:', authError?.message);
-      return res.status(401).json({ error: 'Invalid authentication token' });
+      console.warn('[Record Impression] Auth verification failed:', authError?.message || 'User is null');
+      return res.status(401).json({
+        error: 'Invalid authentication token',
+        details: authError?.message || 'User verification returned null'
+      });
     }
 
     // Validate request body
@@ -87,10 +90,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       source = 'findr-api-v1'
     }: RecordImpressionRequest = req.body;
 
+    console.log('[Record Impression] Request data:', {
+      rectangle_code,
+      prediction_date,
+      ranked_species_count: Array.isArray(ranked_species) ? ranked_species.length : 'not array',
+      urgency_level,
+      user_id: user.id
+    });
+
     if (!rectangle_code || !prediction_date || !ranked_species || !urgency_level) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing required fields',
-        required: ['rectangle_code', 'prediction_date', 'ranked_species', 'urgency_level']
+        required: ['rectangle_code', 'prediction_date', 'ranked_species', 'urgency_level'],
+        received: { rectangle_code, prediction_date, has_ranked_species: !!ranked_species, urgency_level }
       });
     }
 
@@ -156,7 +168,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (insertError) {
       console.error('[Record Impression] Insert failed:', insertError);
-      return res.status(500).json({ error: 'Failed to record impression' });
+      return res.status(500).json({
+        error: 'Failed to record impression',
+        details: insertError.message,
+        code: insertError.code
+      });
     }
 
     console.info('[Record Impression] Successfully recorded', {
