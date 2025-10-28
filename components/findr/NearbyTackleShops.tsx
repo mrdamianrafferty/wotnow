@@ -108,7 +108,7 @@ export function NearbyTackleShops() {
           <TranslatedText text={`${shops.length} Tackle Shop${shops.length !== 1 ? 's' : ''} Near You`} />
         </h4>
         <span className="text-xs text-base-content/50">
-          <TranslatedText text="Updated monthly" />
+          <TranslatedText text="Updated regularly" />
         </span>
       </div>
 
@@ -116,17 +116,17 @@ export function NearbyTackleShops() {
         {shops.map((shop) => (
           <div
             key={shop.placeId}
-            className="card bg-base-100 hover:bg-base-200 transition-colors"
+            className="card bg-base-100 hover:bg-base-200 transition-colors border border-base-300"
           >
             <div className="card-body p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h5 className="font-semibold text-sm truncate">{shop.name}</h5>
+                  <h5 className="font-semibold text-sm text-base-content truncate">{shop.name}</h5>
                   <p className="text-xs text-base-content/70 truncate">{shop.address}</p>
 
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {shop.distance !== undefined && (
-                      <span className="badge badge-sm badge-outline gap-1">
+                      <span className="badge badge-sm badge-outline gap-1 text-base-content">
                         <MapPin size={12} />
                         {shop.distance}km
                       </span>
