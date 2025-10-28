@@ -606,7 +606,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
   async function signOut() {
     await supabase.auth.signOut();
-    location.href = '/login';
+    location.href = '/';
   }
 
   function addActivity(id: string) {
