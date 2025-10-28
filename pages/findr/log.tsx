@@ -1667,8 +1667,8 @@ export default function FindrCatchLogPage() {
                   <h1 className="text-2xl font-semibold">
                     <TranslatedText text={`findr catch log for ${userName}`} />
                   </h1>
-                  <p className="text-sm text-primary-content/80">
-                    <TranslatedText text="Log your catches so you know what worked where and when. We'll add extra information to your catches so you get back to fishing as quuckly as possible." />
+                  <p className="text-sm color-black text-primary-content/80">
+                    <TranslatedText text="Log your catches and we’ll fill in the details." />
                   </p>
                 </div>
               </div>
