@@ -104,6 +104,42 @@ function calculateDistance(
 }
 
 /**
+ * Get place name from coordinates for more specific searches
+ */
+async function getPlaceName(latitude: number, longitude: number): Promise<string | null> {
+  try {
+    const geocoder = new google.maps.Geocoder();
+    const result = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+      geocoder.geocode(
+        { location: { lat: latitude, lng: longitude } },
+        (results, status) => {
+          if (status === 'OK' && results) {
+            resolve(results);
+          } else {
+            reject(new Error(`Geocoding failed: ${status}`));
+          }
+        }
+      );
+    });
+
+    // Try to get locality (city/town) from address components
+    for (const res of result) {
+      const locality = res.address_components.find(
+        (comp) => comp.types.includes('locality') || comp.types.includes('postal_town')
+      );
+      if (locality) {
+        return locality.long_name;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('[Tackle Shops] Reverse geocoding failed:', error);
+    return null;
+  }
+}
+
+/**
  * Find nearby tackle shops using Google Places API
  * Results are cached for 30 days using coarse location rounding
  */
@@ -120,84 +156,110 @@ export async function findNearbyTackleShops(
   try {
     const google = await loadGoogleMaps();
 
-    const request = {
-      location: new google.maps.LatLng(latitude, longitude),
-      radius: COARSE_RADIUS_METERS,
-      // Don't restrict to a specific type - let keyword matching do the work
-      keyword: 'fishing tackle bait shop angling pesca',
-    };
+    // Get place name for more specific query
+    const placeName = await getPlaceName(latitude, longitude);
 
-    return new Promise((resolve, reject) => {
-      const service = new google.maps.places.PlacesService(
-        document.createElement('div')
-      );
+    // Try multiple search strategies
+    const searchQueries = placeName
+      ? [
+          `fishing tackle shop ${placeName}`,
+          `bait and tackle near ${placeName}`,
+          `fishing tackle bait shop angling`,
+        ]
+      : [
+          `fishing tackle bait shop angling`,
+        ];
 
-      service.nearbySearch(request, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          const shops: TackleShop[] = results
-            .filter((place) => {
-              // Light filtering - trust Google's keyword matching, but exclude obviously wrong results
-              const name = place.name?.toLowerCase() || '';
-              const types = place.types || [];
+    console.log(`[Tackle Shops] Searching with queries:`, searchQueries);
 
-              // Exclude restaurants, cafes, etc.
-              const excludedTypes = ['restaurant', 'cafe', 'bar', 'food'];
-              const hasExcludedType = types.some(type => excludedTypes.includes(type));
+    const service = new google.maps.places.PlacesService(
+      document.createElement('div')
+    );
 
-              if (hasExcludedType) {
-                return false;
+    // Collect results from multiple searches
+    const allResults = new Map<string, google.maps.places.PlaceResult>();
+
+    for (const query of searchQueries) {
+      const request = {
+        location: new google.maps.LatLng(latitude, longitude),
+        radius: COARSE_RADIUS_METERS,
+        keyword: query,
+      };
+
+      await new Promise<void>((resolveSearch) => {
+        service.nearbySearch(request, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            // Add unique results to map (deduplicate by place_id)
+            results.forEach((place) => {
+              if (place.place_id && !allResults.has(place.place_id)) {
+                allResults.set(place.place_id, place);
               }
-
-              // If it has fishing-related keywords or is a sporting goods store, include it
-              return (
-                name.includes('fish') ||
-                name.includes('tackle') ||
-                name.includes('bait') ||
-                name.includes('angl') ||
-                name.includes('pesca') || // Spanish for fishing
-                name.includes('nautic') ||
-                types.includes('sporting_goods_store') ||
-                types.includes('store')
-              );
-            })
-            .map((place) => {
-              const shopLat = place.geometry?.location?.lat() || 0;
-              const shopLng = place.geometry?.location?.lng() || 0;
-              const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
-
-              return {
-                name: place.name || 'Unknown Shop',
-                placeId: place.place_id || '',
-                address: place.vicinity || '',
-                location: { lat: shopLat, lng: shopLng },
-                distance: Math.round(distance * 10) / 10, // Round to 1 decimal
-                rating: place.rating,
-                userRatingsTotal: place.user_ratings_total,
-                openNow: place.opening_hours?.open_now,
-                photos: place.photos?.slice(0, 1).map((photo) =>
-                  photo.getUrl({ maxWidth: 400 })
-                ),
-              };
-            })
-            .sort((a, b) => (a.distance || 0) - (b.distance || 0)) // Sort by distance
-            .slice(0, 10); // Limit to top 10
-
-          // Cache the results
-          setCachedShops(latitude, longitude, shops);
-
-          console.log(`[Tackle Shops] Found ${shops.length} shops within ${COARSE_RADIUS_METERS / 1000}km`);
-          resolve(shops);
-        } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-          // Cache empty result to avoid repeated API calls
-          setCachedShops(latitude, longitude, []);
-          console.log('[Tackle Shops] No shops found in area');
-          resolve([]);
-        } else {
-          console.error('[Tackle Shops] Search failed:', status);
-          reject(new Error(`Places search failed: ${status}`));
-        }
+            });
+          }
+          resolveSearch();
+        });
       });
-    });
+
+      // Small delay between searches to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Process all collected results
+    const results = Array.from(allResults.values());
+
+    const shops: TackleShop[] = results
+      .filter((place) => {
+        // Light filtering - trust Google's keyword matching, but exclude obviously wrong results
+        const name = place.name?.toLowerCase() || '';
+        const types = place.types || [];
+
+        // Exclude restaurants, cafes, etc.
+        const excludedTypes = ['restaurant', 'cafe', 'bar', 'food'];
+        const hasExcludedType = types.some(type => excludedTypes.includes(type));
+
+        if (hasExcludedType) {
+          return false;
+        }
+
+        // If it has fishing-related keywords or is a sporting goods store, include it
+        return (
+          name.includes('fish') ||
+          name.includes('tackle') ||
+          name.includes('bait') ||
+          name.includes('angl') ||
+          name.includes('pesca') || // Spanish for fishing
+          name.includes('nautic') ||
+          types.includes('sporting_goods_store') ||
+          types.includes('store')
+        );
+      })
+      .map((place) => {
+        const shopLat = place.geometry?.location?.lat() || 0;
+        const shopLng = place.geometry?.location?.lng() || 0;
+        const distance = calculateDistance(latitude, longitude, shopLat, shopLng);
+
+        return {
+          name: place.name || 'Unknown Shop',
+          placeId: place.place_id || '',
+          address: place.vicinity || '',
+          location: { lat: shopLat, lng: shopLng },
+          distance: Math.round(distance * 10) / 10, // Round to 1 decimal
+          rating: place.rating,
+          userRatingsTotal: place.user_ratings_total,
+          openNow: place.opening_hours?.open_now,
+          photos: place.photos?.slice(0, 1).map((photo) =>
+            photo.getUrl({ maxWidth: 400 })
+          ),
+        };
+      })
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0)) // Sort by distance
+      .slice(0, 10); // Limit to top 10
+
+    // Cache the results
+    setCachedShops(latitude, longitude, shops);
+
+    console.log(`[Tackle Shops] Found ${shops.length} unique shops from ${allResults.size} total results`);
+    return shops;
   } catch (error) {
     console.error('[Tackle Shops] Error finding shops:', error);
     throw error;
