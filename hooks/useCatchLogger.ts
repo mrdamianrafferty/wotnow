@@ -136,7 +136,7 @@ export function useCatchLogger(options: UseCatchLoggerOptions = {}): UseCatchLog
           throw authError;
         }
 
-        const formData = buildFormData(input, authStateRef.current.userId);
+        const formData = buildFormData(input);
 
         const response = await fetch('/api/findr/log-catch-enriched', {
           method: 'POST',
@@ -250,7 +250,7 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
   };
 }
 
-function buildFormData(input: CatchLogInput, userId?: string | null): FormData {
+function buildFormData(input: CatchLogInput): FormData {
   const formData = new FormData();
 
   const payload: CatchLogRequest = {
