@@ -1,5 +1,6 @@
 // components/findr/NearbyTackleShops.tsx
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { MapPin, Star, ExternalLink, Loader } from 'lucide-react';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
 import { findNearbyTackleShops, type TackleShop } from '@/lib/findNearbyTackleShops';
@@ -122,11 +123,15 @@ export function NearbyTackleShops() {
               <div className="flex items-start justify-between gap-3">
                 {/* Shop thumbnail if available */}
                 {shop.photos && shop.photos.length > 0 && (
-                  <img
-                    src={shop.photos[0]}
-                    alt={shop.name}
-                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-                  />
+                  <div className="relative w-16 h-16 flex-shrink-0">
+                    <Image
+                      src={shop.photos[0]}
+                      alt={shop.name}
+                      fill
+                      className="rounded-lg object-cover"
+                      sizes="64px"
+                    />
+                  </div>
                 )}
 
                 <div className="flex-1 min-w-0">
