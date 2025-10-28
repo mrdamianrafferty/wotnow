@@ -62,10 +62,10 @@ const FindrInfoPage = () => {
           <div className="text-center mt-6 mb-8">
             <div className="flex justify-center items-center mb-4">
               <Fish size={48} className="text-primary mr-3" />
-              <h1 className="text-4xl font-bold">findr</h1>
+              <h1 className="text-4xl font-bold"></h1>
             </div>
             <p className="text-xl text-base-content/80 mb-2">
-              <TranslatedText text="Smart Fishing Intelligence" />
+              <TranslatedText text="findr - Smart Fishing Intelligence" />
             </p>
             <p className="text-base-content/70 max-w-2xl mx-auto">
               <TranslatedText text="We combine marine science, weather data, and local fishing wisdom to predict when and where fish want to bite" />

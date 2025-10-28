@@ -13,15 +13,16 @@ Your current key seems stuck in Google's caching system. Create a fresh one:
 
 ### Application restrictions → Websites
 
-Add these (NO /* at the end):
+Add these (domains only, NO paths):
 ```
 http://localhost:3000
 https://fishfindr.eu
-https://fishfindr.eu/findr/*
 https://*.fishfindr.eu
 https://godaisy.io
 https://*.godaisy.io
 ```
+
+**Important:** Google does NOT support path-based referrers like `/findr/*`. Only use domains and subdomains.
 
 ### API restrictions → Don't restrict key
 
