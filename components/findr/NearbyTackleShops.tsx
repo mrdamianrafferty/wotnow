@@ -1,6 +1,6 @@
 // components/findr/NearbyTackleShops.tsx
-import { useState, useEffect } from 'react';
-import { MapPin, Star, ExternalLink, Phone, Globe, Loader } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { MapPin, Star, ExternalLink, Loader } from 'lucide-react';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
 import { findNearbyTackleShops, type TackleShop } from '@/lib/findNearbyTackleShops';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -12,14 +12,7 @@ export function NearbyTackleShops() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  useEffect(() => {
-    // Auto-search when location is available
-    if (location?.lat && location?.lon && !hasSearched) {
-      handleSearch();
-    }
-  }, [location, hasSearched]);
-
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!location?.lat || !location?.lon) {
       setError('Location not available. Please set your fishing location first.');
       return;
@@ -46,7 +39,14 @@ export function NearbyTackleShops() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [location]);
+
+  useEffect(() => {
+    // Auto-search when location is available
+    if (location?.lat && location?.lon && !hasSearched) {
+      handleSearch();
+    }
+  }, [location, hasSearched, handleSearch]);
 
   if (!hasSearched && !loading) {
     return (
