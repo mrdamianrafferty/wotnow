@@ -787,7 +787,8 @@ const FindrFavouritesPage: React.FC = () => {
       
       // ONLY use confidence from live prediction card, never from stale database metadata
       // This ensures we show real-time conditions, not outdated stored values
-      const derivedConfidence = card?.biteScore ?? card?.confidence ?? null;
+      // Use confidence (habitat suitability) NOT bite_score (feeding activity)
+      const derivedConfidence = card?.confidence ?? null;
       
       const bestBait =
         bestBaitFromPrediction ??
