@@ -276,7 +276,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm truncate">
+                                <p className="font-semibold text-sm truncate text-base-content">
                                   <TranslatedFishName name={opp.name} />
                                 </p>
                                 <p className="text-xs text-base-content/60">
