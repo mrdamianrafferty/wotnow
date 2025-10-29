@@ -149,6 +149,9 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
           {/* Mini Forecast */}
           <div className="w-24 flex-shrink-0">
+            <div className="text-[9px] text-base-content/50 text-center mb-0.5">
+              <TranslatedText text="7-day" />
+            </div>
             <MiniCalendar forecast={species.forecast} compact={true} showLabels={false} />
           </div>
 

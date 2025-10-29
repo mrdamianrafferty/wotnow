@@ -241,6 +241,9 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
         {/* 7-Day Forecast */}
         <div className="mt-4">
+          <h4 className="text-xs font-semibold text-base-content/70 mb-2">
+            <TranslatedText text="7-Day Confidence Forecast" />
+          </h4>
           <MiniCalendar forecast={species.forecast} compact={false} />
         </div>
 

@@ -279,10 +279,15 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
             <div className="text-xs text-base-content/60 space-y-1 p-2 bg-base-100 rounded">
               <p className="font-medium text-base-content"><TranslatedText text="How this score was calculated:" /></p>
 
+              {/* Base calculation - always show */}
+              <p>
+                • <TranslatedText text="Base score from species habitat preferences, historical catch patterns, and typical behavior" />
+              </p>
+
               {/* Environmental factors explanation */}
               {hasEnvironmentalData && (
                 <p>
-                  • <TranslatedText text="Environmental conditions" />:{' '}
+                  • <TranslatedText text="Environmental boost" />:{' '}
                   {environmentalFactors.temperature && (
                     <span>
                       <TranslatedText text="water temperature" /> ({environmentalFactors.temperature.actual.toFixed(1)}°C)
@@ -303,11 +308,11 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                   )}
                   {environmentalFactors.substrate && (
                     <span>
-                      <TranslatedText text="substrate type" /> ({environmentalFactors.substrate.actual})
+                      <TranslatedText text="substrate" /> ({environmentalFactors.substrate.actual})
                     </span>
                   )}
                   {' '}
-                  <TranslatedText text="matched against this species' preferences" />
+                  <TranslatedText text="matched to this species' optimal conditions" />
                 </p>
               )}
 
@@ -315,14 +320,13 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
               {seasonalMultiplier !== undefined && seasonalMultiplier !== 1.0 && originalConfidence && (
                 <p>
                   • <TranslatedText text="Seasonal adjustment" />:{' '}
-                  <TranslatedText text="base score" /> ({Math.round(originalConfidence)}%)
-                  {' × '}
+                  {Math.round(originalConfidence)}%{' × '}
                   {seasonalMultiplier >= 0.9 ? (
-                    <TranslatedText text="peak season multiplier" />
+                    <TranslatedText text="peak season" />
                   ) : seasonalMultiplier >= 0.6 ? (
-                    <TranslatedText text="shoulder season multiplier" />
+                    <TranslatedText text="shoulder season" />
                   ) : (
-                    <TranslatedText text="off-season multiplier" />
+                    <TranslatedText text="off-season" />
                   )}
                   {' '}
                   ({seasonalMultiplier.toFixed(1)})
@@ -333,7 +337,7 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
 
               {/* Data source */}
               <p>
-                • <TranslatedText text="Marine data from" />{' '}
+                • <TranslatedText text="Real-time marine data" />:{' '}
                 {environmentalFactors?.data_source || 'Copernicus Marine Service'}
                 {environmentalFactors?.data_age_hours !== undefined && (
                   <span>
