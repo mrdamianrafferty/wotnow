@@ -277,10 +277,75 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
 
             {/* Calculation Summary */}
             <div className="text-xs text-base-content/60 space-y-1 p-2 bg-base-100 rounded">
-              <p className="font-medium text-base-content"><TranslatedText text="How it's calculated:" /></p>
-              <p>• <TranslatedText text="Environmental match scores are based on species preferences" /></p>
-              <p>• <TranslatedText text="Seasonal adjustments reflect migration and spawning patterns" /></p>
-              <p>• <TranslatedText text="Real marine data from Copernicus Marine Service" /></p>
+              <p className="font-medium text-base-content"><TranslatedText text="How this score was calculated:" /></p>
+
+              {/* Environmental factors explanation */}
+              {hasEnvironmentalData && (
+                <p>
+                  • <TranslatedText text="Environmental conditions" />:{' '}
+                  {environmentalFactors.temperature && (
+                    <span>
+                      <TranslatedText text="water temperature" /> ({environmentalFactors.temperature.actual.toFixed(1)}°C)
+                      {(environmentalFactors.salinity || environmentalFactors.depth || environmentalFactors.substrate) && ', '}
+                    </span>
+                  )}
+                  {environmentalFactors.salinity && (
+                    <span>
+                      <TranslatedText text="salinity" /> ({environmentalFactors.salinity.actual.toFixed(1)} PSU)
+                      {(environmentalFactors.depth || environmentalFactors.substrate) && ', '}
+                    </span>
+                  )}
+                  {environmentalFactors.depth && (
+                    <span>
+                      <TranslatedText text="depth" /> ({environmentalFactors.depth.actual.toFixed(0)}m)
+                      {environmentalFactors.substrate && ', '}
+                    </span>
+                  )}
+                  {environmentalFactors.substrate && (
+                    <span>
+                      <TranslatedText text="substrate type" /> ({environmentalFactors.substrate.actual})
+                    </span>
+                  )}
+                  {' '}
+                  <TranslatedText text="matched against this species' preferences" />
+                </p>
+              )}
+
+              {/* Seasonal adjustment explanation */}
+              {seasonalMultiplier !== undefined && seasonalMultiplier !== 1.0 && originalConfidence && (
+                <p>
+                  • <TranslatedText text="Seasonal adjustment" />:{' '}
+                  <TranslatedText text="base score" /> ({Math.round(originalConfidence)}%)
+                  {' × '}
+                  {seasonalMultiplier >= 0.9 ? (
+                    <TranslatedText text="peak season multiplier" />
+                  ) : seasonalMultiplier >= 0.6 ? (
+                    <TranslatedText text="shoulder season multiplier" />
+                  ) : (
+                    <TranslatedText text="off-season multiplier" />
+                  )}
+                  {' '}
+                  ({seasonalMultiplier.toFixed(1)})
+                  {' = '}
+                  {confidence}%
+                </p>
+              )}
+
+              {/* Data source */}
+              <p>
+                • <TranslatedText text="Marine data from" />{' '}
+                {environmentalFactors?.data_source || 'Copernicus Marine Service'}
+                {environmentalFactors?.data_age_hours !== undefined && (
+                  <span>
+                    {' ('}
+                    {environmentalFactors.data_age_hours < 24
+                      ? `${Math.round(environmentalFactors.data_age_hours)}h ago`
+                      : `${Math.round(environmentalFactors.data_age_hours / 24)}d ago`
+                    }
+                    {')'}
+                  </span>
+                )}
+              </p>
             </div>
           </div>
         )}
