@@ -321,21 +321,21 @@ export function ReferenceDataTables({
           {/* View Tabs */}
           <div className="tabs tabs-boxed bg-base-200/60 p-1 mb-4">
             <button
-              className={`tab gap-2 ${currentView === 'species' ? 'tab-active' : 'text-base-content'}`}
+              className={`tab gap-2 ${currentView === 'species' ? 'tab-active' : ''} text-black`}
               onClick={() => setCurrentView('species')}
             >
               <Fish className="w-4 h-4" />
               <TranslatedText text="Species" />
             </button>
             <button
-              className={`tab gap-2 ${currentView === 'baits' ? 'tab-active' : 'text-base-content'}`}
+              className={`tab gap-2 ${currentView === 'baits' ? 'tab-active' : ''} text-black`}
               onClick={() => setCurrentView('baits')}
             >
               <Target className="w-4 h-4" />
               <TranslatedText text="Baits" />
             </button>
             <button
-              className={`tab gap-2 ${currentView === 'habitats' ? 'tab-active' : 'text-base-content'}`}
+              className={`tab gap-2 ${currentView === 'habitats' ? 'tab-active' : ''} text-black`}
               onClick={() => setCurrentView('habitats')}
             >
               <MapPin className="w-4 h-4" />
@@ -584,7 +584,7 @@ function SpeciesTable({
                 <td className="text-base-content">
                   <div className="flex items-center gap-3">
                     <div className="avatar">
-                      <div className="w-12 h-12 rounded-lg bg-base-200">
+                      <div className="w-12 h-12 rounded-lg bg-base-200 flex items-center justify-center p-1">
                         {SPECIES_IMAGE_MAP[species.code]?.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -593,6 +593,7 @@ function SpeciesTable({
                             width={48}
                             height={48}
                             className="w-full h-full object-contain"
+                            style={{ objectFit: 'contain', padding: '2px', maxHeight: '44px', maxWidth: '44px' }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -627,7 +628,7 @@ function SpeciesTable({
                   <span className="font-mono text-base-content">{species.totalCatches}</span>
                 </td>
                 <td className="text-base-content">
-                  {species.bestMonth === 'Unknown' ? (
+                  {(!species.bestMonth || species.bestMonth === 'Unknown' || species.bestMonth === 'Invalid Date') ? (
                     <span className="text-sm opacity-50 text-base-content">No data</span>
                   ) : (
                     <span className="badge badge-outline text-base-content">{species.bestMonth}</span>

@@ -70,6 +70,8 @@ interface CatchEntry {
   catch_date: string;
   notes?: string;
   weather_conditions?: string;
+  bait_used?: string;
+  habitat_type?: string;
 }
 
 interface SpeciesAggregation {
@@ -246,16 +248,25 @@ function generateBaitStats(catches: CatchEntry[]): BaitStats[] {
   const baitMap = new Map<string, BaitAggregation>();
 
   catches.forEach(catchEntry => {
-    if (!catchEntry.notes) {
-      return;
+    // Try to get bait from structured field first, fallback to notes parsing
+    let baitName: string | null = null;
+
+    // Check if catch entry has a bait_used field (from newer catch logs)
+    if (catchEntry.bait_used && typeof catchEntry.bait_used === 'string') {
+      baitName = catchEntry.bait_used.trim();
+    }
+    // Fallback: Try to parse from notes (for older catch logs)
+    else if (catchEntry.notes) {
+      const baitMatch = catchEntry.notes.match(/bait:\s*([^.|]+)/i);
+      if (baitMatch) {
+        baitName = baitMatch[1].trim();
+      }
     }
 
-    const baitMatch = catchEntry.notes.match(/bait:\s*([^.]+)/i);
-    if (!baitMatch) {
+    // Skip if no bait information found
+    if (!baitName) {
       return;
     }
-
-    const baitName = baitMatch[1].trim();
 
     let stats = baitMap.get(baitName);
     if (!stats) {
@@ -305,17 +316,28 @@ function generateHabitatStats(catches: CatchEntry[]): HabitatStats[] {
   catches.forEach(catchEntry => {
     let habitatType = 'Unknown';
 
-    if (catchEntry.substrate === 'rock') {
+    // Prefer structured habitat_type field from catch log
+    if (catchEntry.habitat_type && typeof catchEntry.habitat_type === 'string') {
+      // Normalize habitat type (capitalize first letter of each word)
+      habitatType = catchEntry.habitat_type
+        .split(/[\s_-]+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+    // Fallback to substrate-based detection
+    else if (catchEntry.substrate === 'rock') {
       habitatType = 'Rocky Shore';
     } else if (catchEntry.substrate === 'sand') {
       habitatType = 'Sandy Beach';
-    } else if (catchEntry.notes?.toLowerCase().includes('pier') ||
+    } else if (catchEntry.substrate === 'mixed') {
+      habitatType = 'Mixed Ground';
+    }
+    // Fallback to notes parsing (for older logs)
+    else if (catchEntry.notes?.toLowerCase().includes('pier') ||
                catchEntry.notes?.toLowerCase().includes('harbor')) {
       habitatType = 'Pier/Harbor';
     } else if (catchEntry.notes?.toLowerCase().includes('estuary')) {
       habitatType = 'Estuary';
-    } else if (catchEntry.substrate === 'mixed') {
-      habitatType = 'Mixed Ground';
     }
 
     let stats = habitatMap.get(habitatType);
