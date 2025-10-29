@@ -9,6 +9,7 @@ import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
+import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -178,19 +179,18 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           </div>
         )}
 
-        {/* Environmental Conditions Explanation */}
-        {species.environmental_factors && (
-          <div className="text-xs text-base-content/60 mt-2">
-            <p className="font-semibold mb-1"><TranslatedText text="Current conditions:" /></p>
-            <EnvironmentalInfo 
-              factors={species.environmental_factors} 
-              compact={true}
-            />
-            {species.data_freshness === 'stale' && (
-              <p className="text-warning mt-1">⚠️ <TranslatedText text="Data may be outdated" /></p>
-            )}
-          </div>
-        )}
+        {/* Confidence Breakdown */}
+        <div className="mt-2">
+          <ConfidenceBreakdownCard
+            speciesName={species.name}
+            confidence={species.confidence}
+            originalConfidence={species.original_confidence}
+            seasonalMultiplier={species.seasonal_multiplier}
+            environmentalFactors={species.environmental_factors}
+            dataFreshness={species.data_freshness}
+            compact={true}
+          />
+        </div>
       </div>
     </div>
   );

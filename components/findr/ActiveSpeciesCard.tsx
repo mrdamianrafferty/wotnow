@@ -11,6 +11,7 @@ import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { ScoreBreakdown, type ScoreBreakdownData } from './ScoreBreakdown';
 import { TideConditions, type TideInfo } from './TideConditions';
 import { SeasonalityBadge } from './SeasonalityBadge';
+import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 
 interface SpeciesAdvice {
   type?: string;
@@ -323,6 +324,17 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Confidence Breakdown */}
+            <ConfidenceBreakdownCard
+              speciesName={species.name}
+              confidence={species.confidence}
+              originalConfidence={species.original_confidence}
+              seasonalMultiplier={species.seasonal_multiplier}
+              environmentalFactors={species.environmental_factors}
+              dataFreshness={species.data_freshness}
+              compact={false}
+            />
           </div>
         )}
 

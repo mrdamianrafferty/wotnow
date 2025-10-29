@@ -11,6 +11,7 @@ import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
+import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 
 interface GoodSpeciesCardProps {
   species: {
@@ -251,6 +252,17 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
                 <p className="text-xs italic text-base-content/60">{species.scientificName}</p>
               )}
             </div>
+
+            {/* Confidence Breakdown */}
+            <ConfidenceBreakdownCard
+              speciesName={species.name}
+              confidence={species.confidence}
+              originalConfidence={species.original_confidence}
+              seasonalMultiplier={species.seasonal_multiplier}
+              environmentalFactors={species.environmental_factors}
+              dataFreshness={species.data_freshness}
+              compact={true}
+            />
 
             {/* Action Button */}
             <button
