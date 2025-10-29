@@ -2,6 +2,8 @@
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 const envLocalPath = path.resolve(process.cwd(), '.env.local');
 dotenv.config({ path: envLocalPath });
@@ -14,6 +16,8 @@ import {
   fetchStormglassBio,
   fetchMetNoMarineSeries,
   fetchOpenMeteoMarineSeries,
+  fetchWorldTides,
+  type WorldTidesResponse,
 } from '../lib/services/weatherService';
 
 interface UpsertRow {
@@ -28,8 +32,12 @@ interface UpsertRow {
   wave_height_m: number | null;
   wind_speed_kts: number | null;
   wind_direction_deg: number | null;
+  air_pressure_hpa: number | null;
+  cloud_cover_pct: number | null;
   next_high_tide_iso: string | null;
   next_low_tide_iso: string | null;
+  tide_phase: string | null;
+  tide_flow_speed_ms: number | null;
   hourly_marine_json: unknown;
   daily_marine_json: unknown;
   source: string;
@@ -87,6 +95,64 @@ const FALLBACK_RECTANGLE_BY_CODE = new Map(
 );
 type MetProbeCandidate = { lat: number; lon: number; label: string };
 type IngestSource = 'met' | 'openmeteo' | 'stormglass' | 'none';
+
+// Helper to check if location is in US/North America for NOAA tides
+function isNorthAmericanCoast(lat: number, lon: number): boolean {
+  // US coasts, Canada, Mexico, Caribbean
+  // Atlantic: 25°N-50°N, 100°W-60°W
+  // Pacific: 25°N-60°N, 135°W-115°W
+  // Gulf: 18°N-31°N, 98°W-80°W
+  // Caribbean: 10°N-27°N, 90°W-60°W
+  return (
+    (lat >= 25 && lat <= 50 && lon >= -100 && lon <= -60) || // Atlantic
+    (lat >= 25 && lat <= 60 && lon >= -135 && lon <= -115) || // Pacific
+    (lat >= 18 && lat <= 31 && lon >= -98 && lon <= -80) || // Gulf
+    (lat >= 10 && lat <= 27 && lon >= -90 && lon <= -60)    // Caribbean
+  );
+}
+
+// Fetch NOAA tides for US/North American coasts (FREE)
+async function fetchNOAATides(lat: number, lon: number): Promise<Array<{ time: string; type: string; height: number }> | null> {
+  try {
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() + 7);
+
+    const url = new URL('https://api.tidesandcurrents.noaa.gov/api/prod/datagetter');
+    url.searchParams.set('product', 'predictions');
+    url.searchParams.set('application', 'WotNow');
+    url.searchParams.set('begin_date', now.toISOString().split('T')[0].replace(/-/g, ''));
+    url.searchParams.set('end_date', endDate.toISOString().split('T')[0].replace(/-/g, ''));
+    url.searchParams.set('datum', 'MLLW');
+    url.searchParams.set('time_zone', 'gmt');
+    url.searchParams.set('units', 'metric');
+    url.searchParams.set('interval', 'hilo');
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('lat', String(lat.toFixed(3)));
+    url.searchParams.set('lon', String(lon.toFixed(3)));
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json() as { predictions?: Array<{ t: string; v: string; type: string }> };
+
+    if (!data.predictions || data.predictions.length === 0) {
+      return null;
+    }
+
+    return data.predictions.map((p: { t: string; v: string; type: string }) => ({
+      time: p.t,
+      type: p.type === 'H' ? 'high' : 'low',
+      height: parseFloat(p.v)
+    }));
+  } catch (error) {
+    console.warn('[NOAA] Tide fetch failed:', error);
+    return null;
+  }
+}
 
 interface IngestRectangleResult {
   success: boolean;
@@ -488,6 +554,8 @@ interface MetNoFallbackBundle {
   waveHeightM: number | null;
   windSpeedKts: number | null;
   windDirectionDeg: number | null;
+  airPressureHpa: number | null;
+  cloudCoverPct: number | null;
 }
 
 interface OpenMeteoFallbackBundle {
@@ -534,6 +602,8 @@ async function buildMetNoMarineFallback(
     waveHeightM: firstHour?.waveHeightM ?? null,
     windSpeedKts: firstHour?.windSpeedKts ?? null,
     windDirectionDeg: firstHour?.windDirectionDeg ?? null,
+    airPressureHpa: firstHour?.airPressureHpa ?? null,
+    cloudCoverPct: firstHour?.cloudCoverPct ?? null,
   };
 }
 
@@ -679,15 +749,48 @@ export async function ingestRectangle(
     dataSource = 'stormglass';
   }
 
-  let tidesRaw: StormglassTideResponse | null = null;
-  let bioRaw: StormglassBioResponse | null = null;
+  // Tide data: 3-tier waterfall (WorldTides → NOAA → Stormglass)
+  let tideData: Array<{ time: string; type: string; height: number }> | null = null;
+  let tideSource: 'worldtides' | 'noaa' | 'stormglass' | 'none' = 'none';
 
-  if (dataSource === 'stormglass' && stormglassKey) {
+  // 1. Try WorldTides first (FREE, global coverage)
+  const worldTidesData = await fetchWorldTides(lat, lon, 7);
+  if (worldTidesData && worldTidesData.extremes && worldTidesData.extremes.length > 0) {
+    tideData = worldTidesData.extremes.map(e => ({
+      time: e.date,
+      type: e.type.toLowerCase(),
+      height: e.height
+    }));
+    tideSource = 'worldtides';
+    console.info(`[${rectangleCode}] Using WorldTides for tides (FREE)`);
+  }
+
+  // 2. Try NOAA for US/North American coasts (FREE)
+  if (!tideData && isNorthAmericanCoast(lat, lon)) {
+    const noaaData = await fetchNOAATides(lat, lon);
+    if (noaaData) {
+      tideData = noaaData;
+      tideSource = 'noaa';
+      console.info(`[${rectangleCode}] Using NOAA for tides (FREE)`);
+    }
+  }
+
+  // 3. Fall back to Stormglass only as last resort (PAID)
+  let tidesRaw: StormglassTideResponse | null = null;
+  if (!tideData && dataSource === 'stormglass' && stormglassKey) {
     const sgKey = stormglassKey;
-    [tidesRaw, bioRaw] = await Promise.all([
-      fetchStormglassTides(lat, lon, sgKey) as Promise<StormglassTideResponse | null>,
-      fetchStormglassBio(lat, lon, start.toISOString(), end.toISOString(), undefined, sgKey) as Promise<StormglassBioResponse | null>,
-    ]);
+    tidesRaw = await fetchStormglassTides(lat, lon, sgKey) as Promise<StormglassTideResponse | null>;
+    if (tidesRaw && tidesRaw.data) {
+      tideData = tidesRaw.data;
+      tideSource = 'stormglass';
+      console.info(`[${rectangleCode}] Using Stormglass for tides (PAID)`);
+    }
+  }
+
+  // Fetch bio data from Stormglass if available
+  let bioRaw: StormglassBioResponse | null = null;
+  if (dataSource === 'stormglass' && stormglassKey) {
+    bioRaw = await fetchStormglassBio(lat, lon, start.toISOString(), end.toISOString(), undefined, stormglassKey) as Promise<StormglassBioResponse | null>;
   }
 
   const hourlySeries = metMarine
@@ -717,8 +820,43 @@ export async function ingestRectangle(
     ?? openMeteoMarine?.windDirectionDeg
     ?? toFixedOrNull(sgNumber(marineRaw?.hours?.[0]?.windDirection), 0);
 
-  const nextHigh = tidesRaw?.data?.find((point) => String(point.type).toLowerCase().includes('high'))?.time ?? null;
-  const nextLow = tidesRaw?.data?.find((point) => String(point.type).toLowerCase().includes('low'))?.time ?? null;
+  const nextHigh = tideData?.find((point) => String(point.type).toLowerCase().includes('high'))?.time ?? null;
+  const nextLow = tideData?.find((point) => String(point.type).toLowerCase().includes('low'))?.time ?? null;
+
+  // Calculate tide phase and flow speed using helper functions
+  let tidePhase: string | null = null;
+  let tideFlowSpeed: number | null = null;
+
+  if (nextHigh && nextLow) {
+    try {
+      // Call calculate_tide_phase RPC function
+      const { data: phaseData, error: phaseError } = await client.rpc('calculate_tide_phase', {
+        p_current_time: capturedAtISO,
+        p_next_high: nextHigh,
+        p_next_low: nextLow
+      });
+
+      if (!phaseError && phaseData) {
+        tidePhase = phaseData;
+      }
+
+      // Call calculate_tide_flow_speed RPC function
+      const { data: flowData, error: flowError } = await client.rpc('calculate_tide_flow_speed', {
+        p_current_time: capturedAtISO,
+        p_next_high: nextHigh,
+        p_next_low: nextLow
+      });
+
+      if (!flowError && flowData !== null && flowData !== undefined) {
+        tideFlowSpeed = flowData;
+      }
+    } catch (error) {
+      console.warn(`[${rectangleCode}] Tide calculation failed:`, error);
+    }
+  }
+
+  const airPressureHpa = metMarine?.airPressureHpa ?? null;
+  const cloudCoverPct = metMarine?.cloudCoverPct ?? null;
 
   const row: UpsertRow = {
     rectangle_code: rectangleCode,
@@ -732,8 +870,12 @@ export async function ingestRectangle(
     wave_height_m: waveHeight,
     wind_speed_kts: windSpeedKts,
     wind_direction_deg: windDirectionDeg,
+    air_pressure_hpa: airPressureHpa,
+    cloud_cover_pct: cloudCoverPct,
     next_high_tide_iso: nextHigh,
     next_low_tide_iso: nextLow,
+    tide_phase: tidePhase,
+    tide_flow_speed_ms: tideFlowSpeed,
     hourly_marine_json: hourlySeries,
     daily_marine_json: summariseDaily(hourlySeries),
     source: dataSource === 'met'
@@ -908,7 +1050,11 @@ async function main() {
   }
 }
 
-if (require.main === module) {
+// Run main if this is the entry point (ES module compatible)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
     console.error('Unexpected error during conditions ingestion', error);
     process.exit(1);

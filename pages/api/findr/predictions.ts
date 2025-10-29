@@ -504,6 +504,141 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
   });
 }
 
+/**
+ * Apply seasonality multipliers to prediction confidence scores
+ */
+async function applySeasonalityMultipliers(
+  predictions: unknown,
+  userLat: number | null,
+  userLon: number | null,
+  rectangleData: { center_lat: number; center_lon: number } | null
+): Promise<unknown> {
+  if (!Array.isArray(predictions) || predictions.length === 0) {
+    return predictions;
+  }
+
+  let supabase;
+  try {
+    supabase = getSupabaseServerClient();
+  } catch (error) {
+    console.warn('[seasonality] Unable to load Supabase client', (error as Error).message);
+    return predictions;
+  }
+
+  // Determine lat/lon for grid lookup
+  const lat = userLat ?? rectangleData?.center_lat ?? null;
+  const lon = userLon ?? rectangleData?.center_lon ?? null;
+
+  if (lat === null || lon === null) {
+    console.warn('[seasonality] No lat/lon available, skipping seasonality');
+    return predictions;
+  }
+
+  // Calculate grid cell_id from lat/lon
+  // Grid is 0.25° cells: G025_N{lat}{E|W}{lon}
+  const latRounded = Math.floor(lat / 0.25) * 0.25;
+  const lonRounded = Math.floor(lon / 0.25) * 0.25;
+  const latStr = `N${Math.abs(latRounded).toString().padStart(2, '0')}`;
+  const lonStr = `${lon >= 0 ? 'E' : 'W'}${Math.abs(lonRounded).toString().padStart(3, '0')}`;
+  const cellId = `G025_${latStr}${lonStr}`;
+
+  // Fetch region_code for this cell
+  const { data: gridData, error: gridError } = await supabase
+    .from('grid_025deg')
+    .select('region_code')
+    .eq('cell_id', cellId)
+    .maybeSingle();
+
+  if (gridError || !gridData?.region_code) {
+    console.warn('[seasonality] No region found for cell', { cellId, lat, lon });
+    return predictions;
+  }
+
+  const regionCode = gridData.region_code;
+
+  console.log('[seasonality] Found grid cell:', { cellId, regionCode, lat, lon });
+
+  // Extract species codes from predictions
+  const speciesCodes = new Set<string>();
+  for (const pred of predictions) {
+    if (pred && typeof pred === 'object') {
+      const record = pred as Record<string, JsonValue>;
+      const code =
+        firstString(record.species_code) ||
+        firstString(record.speciesCode) ||
+        firstString(record.species_id) ||
+        firstString(record.speciesId);
+      if (code) {
+        speciesCodes.add(code.toUpperCase());
+      }
+    }
+  }
+
+  if (speciesCodes.size === 0) {
+    console.warn('[seasonality] No species codes found in predictions');
+    return predictions;
+  }
+
+  // Fetch seasonality multipliers for species in this cell
+  const { data: availabilityData, error: availError } = await supabase
+    .from('species_availability_by_grid')
+    .select('species_code, availability_multiplier')
+    .eq('cell_id', cellId)
+    .in('species_code', Array.from(speciesCodes));
+
+  if (availError) {
+    console.warn('[seasonality] Error fetching availability', availError.message);
+    return predictions;
+  }
+
+  if (!availabilityData || availabilityData.length === 0) {
+    console.log('[seasonality] No availability data for these species');
+    return predictions;
+  }
+
+  // Build multiplier map
+  const multiplierMap = new Map<string, number>();
+  for (const row of availabilityData) {
+    if (row.species_code && typeof row.availability_multiplier === 'number') {
+      multiplierMap.set(row.species_code.toUpperCase(), row.availability_multiplier);
+    }
+  }
+
+  console.log('[seasonality] Applying multipliers:', Object.fromEntries(multiplierMap));
+
+  // Apply multipliers to predictions
+  const enhanced = predictions.map((pred) => {
+    if (!pred || typeof pred !== 'object') return pred;
+    const record = pred as Record<string, JsonValue>;
+
+    const code =
+      firstString(record.species_code) ||
+      firstString(record.speciesCode) ||
+      firstString(record.species_id) ||
+      firstString(record.speciesId);
+
+    if (!code) return pred;
+
+    const multiplier = multiplierMap.get(code.toUpperCase());
+    if (multiplier === undefined) return pred;
+
+    // Apply multiplier to confidence score
+    const confidence = typeof record.confidence === 'number' ? record.confidence : null;
+    if (confidence === null) return pred;
+
+    const adjustedConfidence = Math.max(0, Math.min(100, confidence * multiplier));
+
+    return {
+      ...record,
+      confidence: adjustedConfidence,
+      seasonal_multiplier: multiplier,
+      original_confidence: confidence,
+    };
+  });
+
+  return enhanced;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -861,16 +996,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enriched = await augmentPredictionsWithLocalizedNames(data);
 
+    // Apply seasonality multipliers to predictions
+    const withSeasonality = await applySeasonalityMultipliers(enriched, userLat, userLon, rectangleData);
+
     // Cache predictions using the cache key (rectangleCode or lat/lon hash)
     if (cacheKey) {
-      void writeCachedPredictions({ rectangleCode: cacheKey, predictionDate, language, payload: enriched });
+      void writeCachedPredictions({ rectangleCode: cacheKey, predictionDate, language, payload: withSeasonality });
     }
 
     return res.status(200).json({
       rectangleCode,
       predictionDate,
       language,
-      predictions: Array.isArray(enriched) ? enriched : [],
+      predictions: Array.isArray(withSeasonality) ? withSeasonality : [],
       metadata: {
         cacheControl,
         requestedAt: new Date().toISOString(),

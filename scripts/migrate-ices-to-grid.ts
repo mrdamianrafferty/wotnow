@@ -71,6 +71,18 @@ async function migrateICESDataToGrid() {
       nitrate_umol_l: number | null;
       phosphate_umol_l: number | null;
       phytoplankton_index: number | null;
+      wind_speed_ms: number | null;
+      wind_direction_deg: number | null;
+      wave_height_m: number | null;
+      wave_direction_deg: number | null;
+      wave_period_s: number | null;
+      air_pressure_hpa: number | null;
+      cloud_cover_pct: number | null;
+      next_high_tide_at: string | null;
+      next_low_tide_at: string | null;
+      tide_phase: string | null;
+      tide_flow_speed_ms: number | null;
+      kd490: number | null;
       sources: string[];
       quality: string;
       source_rectangles?: string[];
@@ -102,7 +114,23 @@ async function migrateICESDataToGrid() {
       nitrate_umol_l: null, // ICES snapshots don't have nutrients
       phosphate_umol_l: null,
       phytoplankton_index: null,
-      sources: ['CMEMS', 'findr_conditions_latest_migration'],
+      // Wind/wave data from MET Norway
+      wind_speed_ms: conditions.wind_speed_kts ? conditions.wind_speed_kts * 0.51444 : null, // Convert knots to m/s
+      wind_direction_deg: conditions.wind_direction_deg || null,
+      wave_height_m: conditions.wave_height_m || null,
+      wave_direction_deg: conditions.wave_direction_deg || null,
+      wave_period_s: conditions.wave_period_s || null,
+      // Pressure and cloud from MET Norway
+      air_pressure_hpa: conditions.air_pressure_hpa || null,
+      cloud_cover_pct: conditions.cloud_cover_pct || null,
+      // Tide data from WorldTides/NOAA + calculated phase/flow
+      next_high_tide_at: conditions.next_high_tide_iso || null,
+      next_low_tide_at: conditions.next_low_tide_iso || null,
+      tide_phase: conditions.tide_phase || null,
+      tide_flow_speed_ms: conditions.tide_flow_speed_ms || null,
+      // Water clarity from CMEMS
+      kd490: conditions.kd490 || null,
+      sources: ['CMEMS', 'MET Norway', 'WorldTides', 'findr_conditions_latest_migration'],
       quality: 'high' as const,
       source_rectangles: [mapping.rectangle_code],
     };
@@ -137,13 +165,19 @@ async function migrateICESDataToGrid() {
         (existing.surface_temperature_c !== null ? 10 : 0) + // Temperature: weight 10
         (existing.salinity_psu !== null ? 2 : 0) +           // Salinity: weight 2
         (existing.chlorophyll_mg_m3 !== null ? 1 : 0) +      // Chlorophyll: weight 1
-        (existing.oxygen_mg_l !== null ? 1 : 0);             // Oxygen: weight 1
+        (existing.oxygen_mg_l !== null ? 1 : 0) +            // Oxygen: weight 1
+        (existing.wind_speed_ms !== null ? 3 : 0) +          // Wind: weight 3 (important for real-time)
+        (existing.wave_height_m !== null ? 2 : 0) +          // Wave: weight 2
+        (existing.kd490 !== null ? 1 : 0);                   // Water clarity: weight 1
 
       const candidateDataScore =
         (candidateData.surface_temperature_c !== null ? 10 : 0) +
         (candidateData.salinity_psu !== null ? 2 : 0) +
         (candidateData.chlorophyll_mg_m3 !== null ? 1 : 0) +
-        (candidateData.oxygen_mg_l !== null ? 1 : 0);
+        (candidateData.oxygen_mg_l !== null ? 1 : 0) +
+        (candidateData.wind_speed_ms !== null ? 3 : 0) +
+        (candidateData.wave_height_m !== null ? 2 : 0) +
+        (candidateData.kd490 !== null ? 1 : 0);
 
       if (candidateDataScore > existingDataScore) {
         dataUpgrades++;

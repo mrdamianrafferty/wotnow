@@ -10,6 +10,7 @@ import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { ScoreBreakdown, type ScoreBreakdownData } from './ScoreBreakdown';
 import { TideConditions, type TideInfo } from './TideConditions';
+import { SeasonalityBadge } from './SeasonalityBadge';
 
 interface SpeciesAdvice {
   type?: string;
@@ -53,6 +54,9 @@ interface ActiveSpeciesCardProps {
     };
     // Score breakdown data
     scoreBreakdown?: ScoreBreakdownData;
+    // Week 3: Seasonality data
+    seasonal_multiplier?: number;
+    original_confidence?: number;
   };
   location?: { lat: number; lon: number } | null;
   tideInfo?: TideInfo | null;
@@ -143,7 +147,15 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 <div className="badge badge-error badge-lg gap-2 py-2 px-3 sm:py-3 sm:px-4" data-testid="confidence-score">
                   <Zap size={16} fill="currentColor" />
                   <span className="font-bold">{species.confidence}%</span>
+                  {species.seasonal_multiplier && species.original_confidence && (
+                    <span className="text-xs opacity-75">
+                      (from {Math.round(species.original_confidence)}%)
+                    </span>
+                  )}
                 </div>
+                {species.seasonal_multiplier && (
+                  <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
+                )}
                 {species.scoreBreakdown && (
                   <ScoreBreakdown data={species.scoreBreakdown} speciesName={species.name} />
                 )}

@@ -74,6 +74,8 @@ interface MetNoMarineSeriesHour {
   windDirectionDeg: number | null;
   currentSpeedMS: number | null;
   currentDirectionDeg: number | null;
+  airPressureHpa: number | null;
+  cloudCoverPct: number | null;
 }
 
 interface MetNoMarineSeriesResult {
@@ -251,6 +253,8 @@ async function fetchMetNoMarineSeries(
     const loc = locationByTime.get(timeISO);
     const windSpeedMs = loc && typeof loc.wind_speed === 'number' ? loc.wind_speed : null;
     const windDirectionDeg = loc && typeof loc.wind_from_direction === 'number' ? loc.wind_from_direction : null;
+    const airPressure = loc && typeof loc.air_pressure_at_sea_level === 'number' ? loc.air_pressure_at_sea_level : null;
+    const cloudCover = loc && typeof loc.cloud_area_fraction === 'number' ? loc.cloud_area_fraction : null;
 
     hours.push({
       timeISO,
@@ -262,6 +266,8 @@ async function fetchMetNoMarineSeries(
       windSpeedMS: windSpeedMs,
       windSpeedKts: toKnots(windSpeedMs),
       windDirectionDeg: toFixedOrNull(windDirectionDeg, 0),
+      airPressureHpa: toFixedOrNull(airPressure, 1),
+      cloudCoverPct: toFixedOrNull(cloudCover, 0),
     });
   }
 

@@ -43,6 +43,9 @@ export interface FallbackConditionPayload {
       wavePeriod?: number;
       windSeaHeight?: number;
       swellHeight?: number;
+      // Week 1: Real-time bite score factors
+      airPressureHpa?: number;
+      cloudCoverPct?: number;
     };
     marineBio?: {
       chlorophyllAvg?: number;
@@ -56,6 +59,9 @@ export interface FallbackConditionPayload {
     tides: {
       nextHighIso: string;
       nextLowIso: string;
+      // Week 1: Real-time bite score factors
+      phase?: string;
+      flowSpeedMs?: number;
     };
     hourly: Array<{
       time: string;

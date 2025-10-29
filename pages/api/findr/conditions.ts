@@ -61,6 +61,11 @@ interface ConditionsRow {
   // Tides and metadata
   next_high_tide_iso?: string | null;
   next_low_tide_iso?: string | null;
+  // Week 1: Real-time bite score factors
+  tide_phase?: string | null;
+  tide_flow_speed_ms?: number | string | null;
+  air_pressure_hpa?: number | string | null;
+  cloud_cover_pct?: number | string | null;
   hourly_marine_json?: unknown;
   daily_marine_json?: unknown;
   source?: string | null;
@@ -351,6 +356,23 @@ function applyConditionsRow(base: FallbackConditionPayload, row: ConditionsRow):
   if (nextHigh) base.snapshot.tides.nextHighIso = nextHigh;
   if (nextLow) base.snapshot.tides.nextLowIso = nextLow;
 
+  // Week 1: Real-time bite score factors
+  if (row.tide_phase && typeof row.tide_phase === 'string') {
+    base.snapshot.tides.phase = row.tide_phase;
+  }
+  const maybeFlowSpeed = normaliseNumber(row.tide_flow_speed_ms);
+  if (maybeFlowSpeed !== undefined) {
+    base.snapshot.tides.flowSpeedMs = maybeFlowSpeed;
+  }
+  const maybePressure = normaliseNumber(row.air_pressure_hpa);
+  if (maybePressure !== undefined) {
+    marine.airPressureHpa = maybePressure;
+  }
+  const maybeCloudCover = normaliseNumber(row.cloud_cover_pct);
+  if (maybeCloudCover !== undefined) {
+    marine.cloudCoverPct = maybeCloudCover;
+  }
+
   const hourly = parseHourlySeries(row.hourly_marine_json);
   if (hourly && hourly.length > 0) {
     base.snapshot.hourly = hourly;
@@ -506,7 +528,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data, error } = await supabase
       .from('findr_conditions_latest')
       .select(
-        'rectangle_code, captured_at, sea_temp_c, chlorophyll_mg_m3, kd490, dissolved_oxygen_mg_l, salinity_psu, nitrate_umol_l, phosphate_umol_l, wave_height_m, wind_speed_kts, wind_direction_deg, current_east_ms, current_north_ms, current_speed_ms, current_direction_deg, mixed_layer_depth_m, sea_surface_height_m, zooplankton_mmol_m3, phytoplankton_mmol_m3, primary_production_mg_c_m3_day, wave_direction_deg, wave_period_s, wind_sea_height_m, swell_height_m, next_high_tide_iso, next_low_tide_iso, hourly_marine_json, daily_marine_json, source'
+        'rectangle_code, captured_at, sea_temp_c, chlorophyll_mg_m3, kd490, dissolved_oxygen_mg_l, salinity_psu, nitrate_umol_l, phosphate_umol_l, wave_height_m, wind_speed_kts, wind_direction_deg, current_east_ms, current_north_ms, current_speed_ms, current_direction_deg, mixed_layer_depth_m, sea_surface_height_m, zooplankton_mmol_m3, phytoplankton_mmol_m3, primary_production_mg_c_m3_day, wave_direction_deg, wave_period_s, wind_sea_height_m, swell_height_m, next_high_tide_iso, next_low_tide_iso, tide_phase, tide_flow_speed_ms, air_pressure_hpa, cloud_cover_pct, hourly_marine_json, daily_marine_json, source'
       )
       .eq('rectangle_code', normalizedCode)
       .maybeSingle();
