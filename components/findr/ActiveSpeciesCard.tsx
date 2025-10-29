@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Target, Trash2, Fish, Waves, Clock } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -75,7 +75,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   location: _location,
   tideInfo,
   onRemove,
-  onTogglePriority,
+  onTogglePriority: _onTogglePriority,
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -135,9 +135,6 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 <h3 className="text-xl sm:text-2xl font-bold text-base-content">
                   <TranslatedFishName name={species.name} />
                 </h3>
-                {species.isPriority && (
-                  <Target size={18} className="text-warning flex-shrink-0" />
-                )}
               </div>
               {species.scientificName && (
                 <p className="text-sm italic text-base-content/60 mb-2">{species.scientificName}</p>
@@ -211,18 +208,18 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
           {/* Action Buttons */}
           <div className="flex flex-col gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
-              className={`btn btn-sm ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
-              title={species.isPriority ? 'Remove priority' : 'Make priority'}
+              onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
+              className="btn btn-sm btn-ghost"
+              title="View species details"
             >
-              <Target size={16} />
+              <Info size={16} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-sm text-error"
               title="Remove from favourites"
             >
-              <Trash2 size={16} />
+              <Heart size={16} fill="currentColor" />
             </button>
           </div>
         </div>

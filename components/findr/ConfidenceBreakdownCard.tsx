@@ -122,7 +122,7 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
           <div className="mt-3 space-y-3">
             {/* Overall Confidence */}
             <div className="flex items-center justify-between p-2 bg-base-100 rounded">
-              <span className="text-sm font-bold"><TranslatedText text="Final Confidence" /></span>
+              <span className="text-sm font-bold text-base-content"><TranslatedText text="Final Confidence" /></span>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">{confidence}%</span>
               </div>

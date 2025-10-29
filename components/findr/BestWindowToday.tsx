@@ -233,7 +233,7 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
                 </p>
               </div>
             </div>
-            <div className="badge badge-lg badge-outline gap-2">
+            <div className="badge badge-lg badge-outline gap-2 text-base-content border-base-content">
               <span className="font-bold">{confidence}%</span>
               <span className="text-xs opacity-75"><TranslatedText text="confidence" /></span>
             </div>
@@ -243,8 +243,8 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
           <div className="flex items-start gap-3 p-3 bg-base-100/50 rounded-lg mb-4">
             <Fish size={20} className="text-secondary flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Tracking" /></p>
-              <p className="font-bold text-base">
+              <p className="font-semibold text-sm text-base-content"><TranslatedText text="Tracking" /></p>
+              <p className="font-bold text-base text-base-content">
                 {species.slice(0, 2).map((name, idx) => (
                   <span key={idx}>
                     <TranslatedFishName name={name} />
