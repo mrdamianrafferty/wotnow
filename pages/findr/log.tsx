@@ -963,7 +963,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
 
   return (
     <div className="space-y-4">
-      <h2 className="flex items-center gap-2 text-2xl font-semibold">
+      <h2 className="flex items-center gap-2 text-2xl font-semibold text-base-content">
         <ClipboardList className="h-6 w-6 text-primary" />
         <TranslatedText text={`Your catch log (${catches.length})`} />
       </h2>
@@ -971,12 +971,29 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
         const displaySize = catchEntry.size || 'average';
         const sizeDisplay = displaySize.charAt(0).toUpperCase() + displaySize.slice(1);
         const timestamp = new Date(catchEntry.date);
+
+        // Robust image fallback: use user photo if available, else fallback to species image
+        let images: { src: string; alt: string; isFallback: boolean }[] = [];
+        if (catchEntry.photos && catchEntry.photos.length > 0) {
+          images = catchEntry.photos.map((photo, idx) => {
+            const asset = catchEntry.photoAssets?.[idx];
+            const source = asset?.thumbnailUrl ?? asset?.url ?? photo;
+            return { src: source, alt: `${catchEntry.fishName} catch photo ${idx + 1}`, isFallback: false };
+          });
+        } else {
+          // fallback to species image
+          const speciesInfo = SPECIES_IMAGE_MAP[catchEntry.fishId] || Object.values(SPECIES_IMAGE_MAP).find(img => img.name === catchEntry.fishName);
+          if (speciesInfo && speciesInfo.image) {
+            images = [{ src: speciesInfo.thumb || speciesInfo.mobile || speciesInfo.image, alt: `${catchEntry.fishName} species image`, isFallback: true }];
+          }
+        }
+
         return (
           <div key={catchEntry.id} className="card bg-base-100 shadow-md">
             <div className="card-body space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
-                  <h3 className="card-title text-lg">
+                  <h3 className="card-title text-lg text-base-content">
                     <TranslatedText text={catchEntry.fishName} />
                   </h3>
                   <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
@@ -987,7 +1004,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
-                  <span className="badge badge-outline gap-1">
+                  <span className="badge badge-outline gap-1 text-base-content">
                     <Calendar className="w-3 h-3" />
                     {timestamp.toLocaleDateString(undefined, {
                       month: 'short',
@@ -995,7 +1012,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                       year: 'numeric',
                     })}
                   </span>
-                  <span className="badge badge-primary gap-1">
+                  <span className="badge badge-primary gap-1 text-base-100">
                     <Grid3X3 className="w-3 h-3" />
                     {catchEntry.icesGrid}
                   </span>
@@ -1006,14 +1023,14 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                 <div className="space-y-2">
                   <p className="flex items-center gap-2">
                     <Navigation className="h-4 w-4" />
-                    <span className="font-medium">
+                    <span className="font-medium text-base-content">
                       <TranslatedText text="Location:" />
                     </span>
                     {catchEntry.location.name}
                   </p>
                   <p className="flex items-center gap-2">
                     <Fish className="h-4 w-4" />
-                    <span className="font-medium">
+                    <span className="font-medium text-base-content">
                       <TranslatedText text="Bait:" />
                     </span>
                     <TranslatedText text={catchEntry.bait} />
@@ -1021,7 +1038,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   {catchEntry.habitat && (
                     <p className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      <span className="font-medium">
+                      <span className="font-medium text-base-content">
                         <TranslatedText text="Habitat:" />
                       </span>
                       <TranslatedText text={catchEntry.habitat} />
@@ -1029,7 +1046,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   )}
                   {catchEntry.notes && (
                     <p className="flex items-start gap-2">
-                      <span className="font-medium">
+                      <span className="font-medium text-base-content">
                         <TranslatedText text="Notes:" />
                       </span>
                       {catchEntry.notes}
@@ -1037,7 +1054,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   )}
                 </div>
                 <div className="rounded-lg bg-info/10 p-3">
-                  <p className="mb-2 flex items-center gap-2 font-medium">
+                  <p className="mb-2 flex items-center gap-2 font-medium text-info">
                     <Waves className="h-4 w-4" />
                     <TranslatedText text="Marine conditions" />
                   </p>
@@ -1045,38 +1062,27 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                 </div>
               </div>
 
-              {(catchEntry.photos?.length || catchEntry.photo) && (
+              {images.length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm flex items-center gap-2">
+                  <h4 className="font-medium text-sm flex items-center gap-2 text-base-content">
                     📸 <TranslatedText text="Photos" />
                   </h4>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                    {catchEntry.photos
-                      ? catchEntry.photos.map((photo, index) => {
-                          const asset = catchEntry.photoAssets?.[index];
-                          const source = asset?.thumbnailUrl ?? asset?.url ?? photo;
-                          return (
-                            <Image
-                              key={index}
-                              src={source}
-                              alt={`${catchEntry.fishName} catch photo ${index + 1}`}
-                              width={120}
-                              height={80}
-                              className="w-full h-20 object-cover rounded-lg border border-base-300"
-                              unoptimized={source.startsWith('blob:')}
-                            />
-                          );
-                        })
-                      : catchEntry.photo && (
-                          <Image
-                            src={catchEntry.photoAssets?.[0]?.thumbnailUrl ?? catchEntry.photoAssets?.[0]?.url ?? catchEntry.photo}
-                            alt={`${catchEntry.fishName} catch photo`}
-                            width={120}
-                            height={80}
-                            className="w-full h-20 object-cover rounded-lg border border-base-300"
-                            unoptimized={catchEntry.photo.startsWith('blob:')}
-                          />
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative">
+                        <Image
+                          src={img.src}
+                          alt={img.alt}
+                          width={120}
+                          height={80}
+                          className="w-full h-20 object-cover rounded-lg border border-base-300"
+                          unoptimized={img.src.startsWith('blob:')}
+                        />
+                        {img.isFallback && (
+                          <div className="absolute top-1 right-1 badge badge-xs bg-black/60 text-white border-none">Stock</div>
                         )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1090,12 +1096,25 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
 
 // Main Page Component
 export default function FindrCatchLogPage() {
-  const [currentPage, setCurrentPage] = useState<'fish' | 'log' | 'history'>('fish');
+  const [catches, setCatches] = useState<CatchEntry[]>([]);
+  // Default to 'history' if catches exist, otherwise 'fish'
+  const [currentPage, setCurrentPage] = useState<'fish' | 'log' | 'history'>(() => {
+    if (typeof window !== 'undefined') {
+      const storedCatches = window.localStorage.getItem('findr-catches');
+      if (storedCatches) {
+        try {
+          const parsed = JSON.parse(storedCatches);
+          if (Array.isArray(parsed) && parsed.length > 0) return 'history';
+        } catch {}
+      }
+    }
+    return 'fish';
+  });
   const [showCatchLogger, setShowCatchLogger] = useState(false);
   const [selectedFish, setSelectedFish] = useState<FishMatch | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
-  const [catches, setCatches] = useState<CatchEntry[]>([]);
+  // ...existing code...
   const [liveMatches, setLiveMatches] = useState<FishMatch[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(true);
   const [userName, setUserName] = useState<string>('User');
@@ -1273,10 +1292,14 @@ export default function FindrCatchLogPage() {
         mapApiCatchToEntry(catchRow, activeRectangleCode, currentLocation, currentMarineBio)
       );
       setCatches(mapped);
+      // If there are catches and not already on 'history', switch to 'history'
+      if (mapped.length > 0 && currentPage !== 'history') {
+        setCurrentPage('history');
+      }
     } catch (error) {
       console.error('[Findr Catch Log] Unable to fetch catch history:', error);
     }
-  }, [activeRectangleCode, currentLocation, currentMarineBio, resolveAccessToken]);
+  }, [activeRectangleCode, currentLocation, currentMarineBio, resolveAccessToken, currentPage]);
 
   const handleCatchLoggerTelemetry = useCallback((event: CatchLoggerTelemetryEvent) => {
     console.info('[Catch Log Telemetry]', event);

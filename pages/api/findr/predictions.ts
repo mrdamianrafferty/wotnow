@@ -536,10 +536,13 @@ async function applySeasonalityMultipliers(
 
   // Calculate grid cell_id from lat/lon
   // Grid is 0.25° cells: G025_N{lat}{E|W}{lon}
+  // The grid naming uses the index: Nxx = floor(lat_rounded + 0.5), Wxx = floor(abs(lon_rounded) + 0.5)
   const latRounded = Math.floor(lat / 0.25) * 0.25;
   const lonRounded = Math.floor(lon / 0.25) * 0.25;
-  const latStr = `N${Math.abs(latRounded).toString().padStart(2, '0')}`;
-  const lonStr = `${lon >= 0 ? 'E' : 'W'}${Math.abs(lonRounded).toString().padStart(3, '0')}`;
+  const latIndex = Math.floor(latRounded + 0.5);
+  const lonIndex = Math.floor(Math.abs(lonRounded) + 0.5);
+  const latStr = `N${latIndex.toString().padStart(2, '0')}`;
+  const lonStr = `${lon >= 0 ? 'E' : 'W'}${lonIndex.toString().padStart(3, '0')}`;
   const cellId = `G025_${latStr}${lonStr}`;
 
   // Fetch region_code for this cell
