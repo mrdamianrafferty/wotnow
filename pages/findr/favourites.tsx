@@ -39,6 +39,7 @@ import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
 import { BestWindowToday } from '../../components/findr/BestWindowToday';
+import { WeeklyPlannerCard } from '../../components/findr/WeeklyPlannerCard';
 
 // Code-split species card components - loaded as user scrolls to them
 const ActiveSpeciesCard = dynamic(
@@ -1339,6 +1340,16 @@ const FindrFavouritesPage: React.FC = () => {
                 favourites={favouriteEntries}
                 loading={loading}
               />
+            )}
+
+            {/* Weekly Planner */}
+            {hasFavourites && (
+              <div className="mb-8">
+                <WeeklyPlannerCard
+                  favourites={favouriteEntries}
+                  loading={loading}
+                />
+              </div>
             )}
 
             {/* Stats Dashboard */}
