@@ -38,6 +38,7 @@ import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
+import { BestWindowToday } from '../../components/findr/BestWindowToday';
 
 // Code-split species card components - loaded as user scrolls to them
 const ActiveSpeciesCard = dynamic(
@@ -1330,6 +1331,14 @@ const FindrFavouritesPage: React.FC = () => {
                   Pick a fishing area from Findr Home to sync confidence scores for your favourites.
                 </span>
               </div>
+            )}
+
+            {/* Best Window Today Hero Section */}
+            {hasFavourites && (
+              <BestWindowToday
+                favourites={favouriteEntries}
+                loading={loading}
+              />
             )}
 
             {/* Stats Dashboard */}
