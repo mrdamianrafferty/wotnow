@@ -9,6 +9,7 @@ import { GradientFish } from '../GradientFish';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { DataFreshnessBadge } from './DataFreshnessBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
 
 interface GoodSpeciesCardProps {
@@ -33,6 +34,9 @@ interface GoodSpeciesCardProps {
       data_age_hours?: number;
       data_source?: string;
     };
+    // Week 3: Seasonality data
+    seasonal_multiplier?: number;
+    original_confidence?: number;
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -129,7 +133,15 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
               <div className="flex flex-wrap items-center gap-2">
                 <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3" data-testid="confidence-score">
                   <span className="font-bold">{species.confidence}%</span>
+                  {species.seasonal_multiplier && species.original_confidence && (
+                    <span className="text-xs opacity-75">
+                      (from {Math.round(species.original_confidence)}%)
+                    </span>
+                  )}
                 </div>
+                {species.seasonal_multiplier && (
+                  <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
+                )}
                 <span className="text-xs font-semibold text-warning uppercase">
                   ⚡ <TranslatedText text="Good conditions" />
                 </span>

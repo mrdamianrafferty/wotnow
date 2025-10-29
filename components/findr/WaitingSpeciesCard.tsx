@@ -7,6 +7,7 @@ import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
 
 interface WaitingSpeciesCardProps {
@@ -28,6 +29,9 @@ interface WaitingSpeciesCardProps {
       data_age_hours?: number;
       data_source?: string;
     };
+    // Week 3: Seasonality data
+    seasonal_multiplier?: number;
+    original_confidence?: number;
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -118,8 +122,18 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
                 <Target size={12} className="text-warning flex-shrink-0" />
               )}
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="badge badge-sm badge-outline" data-testid="confidence-score">{species.confidence}%</span>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="badge badge-sm badge-outline" data-testid="confidence-score">
+                {species.confidence}%
+                {species.seasonal_multiplier && species.original_confidence && (
+                  <span className="ml-1 opacity-75 text-xs">
+                    (from {Math.round(species.original_confidence)}%)
+                  </span>
+                )}
+              </span>
+              {species.seasonal_multiplier && (
+                <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
+              )}
               {trend === 'improving' && (
                 <span className="text-xs text-success flex items-center gap-1">
                   <TrendingUp size={12} /> <TranslatedText text="Improving" />
