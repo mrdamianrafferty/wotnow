@@ -215,6 +215,67 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
     }
   };
 
+  // For low confidence (<60%), show different layout
+  if (confidence < 60) {
+    return (
+      <div className={`card ${getCardStyle()} mb-8`}>
+        <div className="card-body p-4 sm:p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle size={24} className="text-warning" />
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-base-content">
+                  <TranslatedText text="Wait for better conditions" />
+                </h2>
+                <p className="text-sm text-base-content/60">
+                  <TranslatedText text="Based on your favourites" />
+                </p>
+              </div>
+            </div>
+            <div className="badge badge-lg badge-outline gap-2">
+              <span className="font-bold">{confidence}%</span>
+              <span className="text-xs opacity-75"><TranslatedText text="confidence" /></span>
+            </div>
+          </div>
+
+          {/* Target species (still show what we're tracking) */}
+          <div className="flex items-start gap-3 p-3 bg-base-100/50 rounded-lg mb-4">
+            <Fish size={20} className="text-secondary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Tracking" /></p>
+              <p className="font-bold text-base">
+                {species.slice(0, 2).map((name, idx) => (
+                  <span key={idx}>
+                    <TranslatedFishName name={name} />
+                    {idx < species.slice(0, 2).length - 1 && ', '}
+                  </span>
+                ))}
+                {species.length > 2 && (
+                  <span className="text-xs opacity-75"> +{species.length - 2} more</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="alert alert-warning">
+            <AlertCircle size={20} />
+            <div>
+              <p className="font-semibold">
+                <TranslatedText text="Conditions are suboptimal right now" />
+              </p>
+              <p className="text-sm">
+                <TranslatedText text="Check the weekly planner below to see when conditions improve, or add different species that are more active now." />
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Good confidence (≥60%) - show full recommendations
   return (
     <div className={`card ${getCardStyle()} mb-8 transition-all duration-300 hover:scale-[1.01]`}>
       <div className="card-body p-4 sm:p-6">
@@ -318,15 +379,6 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
             <Calendar size={20} />
             <span>
               <TranslatedText text="Set an alarm for tomorrow morning's fishing window" />
-            </span>
-          </div>
-        )}
-
-        {confidence < 60 && (
-          <div className="alert alert-warning mt-4">
-            <AlertCircle size={20} />
-            <span>
-              <TranslatedText text="Conditions are suboptimal. Consider waiting for better weather or trying different species." />
             </span>
           </div>
         )}

@@ -257,19 +257,28 @@ function generateMockDetail(id: string): MockDetail {
     swipedDate: pickFrom(SWIPED_DATE_OPTIONS, id, 'swiped'),
     catches: catchesOptions[hashString(`${id}:catches`) % catchesOptions.length],
     lastPerfectConditions: pickFrom(LAST_CONDITIONS_OPTIONS, id, 'conditions'),
-    seasonFallback: pickFrom(['Hot right now', 'In the mood', 'Playing hard to get', 'Left the country'], id, 'season'),
+    seasonFallback: pickFrom(['Hot right now', 'In the mood', 'Active', 'Low activity'], id, 'season'),
     recentActivity: pickFrom(RECENT_ACTIVITY_OPTIONS, id, 'activity'),
     nextBestDay: pickFrom(DAY_NAMES, id, 'day'),
     recencyScore: hashString(`${id}:recent`) % 100,
   };
 }
 
-function deriveSeasonLabel(confidence: number | null, fallback: string): string {
+function deriveSeasonLabel(confidence: number | null, fallback: string, seasonalMultiplier?: number): string {
   if (confidence === null) return fallback;
+
+  // Check if truly off-season (seasonal multiplier < 0.3)
+  if (seasonalMultiplier && seasonalMultiplier < 0.3) {
+    return 'Off season';
+  }
+
+  // Clear labels based on confidence
   if (confidence >= 90) return 'Hot right now';
   if (confidence >= 80) return 'In the mood';
-  if (confidence >= 70) return 'Playing hard to get';
-  return fallback;
+  if (confidence >= 70) return 'Active';
+  if (confidence >= 60) return 'Moderate activity';
+  if (confidence >= 40) return 'Low activity';
+  return 'Conditions not favorable';
 }
 
 function getPreferredImageUrl(image?: CardImage | null): string | null {
@@ -834,7 +843,7 @@ const FindrFavouritesPage: React.FC = () => {
         biteScore: card?.biteScore ?? null,
         bestBait,
         bestBaitSource,
-        season: deriveSeasonLabel(derivedConfidence, insight?.seasonLabel ?? mock.seasonFallback),
+        season: deriveSeasonLabel(derivedConfidence, insight?.seasonLabel ?? mock.seasonFallback, card?.seasonal_multiplier),
         lastPerfectConditions: insight?.lastPerfectConditions ?? mock.lastPerfectConditions,
         swipedDate: insight?.swipedDateLabel ?? mock.swipedDate,
         catches,

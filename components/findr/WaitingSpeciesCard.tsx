@@ -5,9 +5,7 @@ import Image from 'next/image';
 import { TrendingUp, Target, Trash2, Clock, Fish } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
-import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
 import { SeasonalityBadge } from './SeasonalityBadge';
-import { useTideData } from '../../hooks/useTideData';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 
 interface WaitingSpeciesCardProps {
@@ -45,28 +43,34 @@ interface WaitingSpeciesCardProps {
  */
 export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   species,
-  location,
+  location: _location,
   onRemove,
   onTogglePriority,
   onAction,
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
   const trend = getForecastTrend(species.forecast);
-  
-  // Fetch real tide data for location
-  const tideInfo = useTideData(location ?? null);
-  
-  // Get conservative fishing time data for waiting species with location and tides
-  const fishingTimeResult = getImmediateFishingTimes(
-    [species], 
-    'waiting',
-    location?.lat,
-    location?.lon,
-    tideInfo ?? undefined
-  );
-  const nextBestTime = fishingTimeResult.primaryWindow ? 
-    `${fishingTimeResult.primaryWindow.startHour}:00` : 
-    'Tomorrow 7am';
+
+  // For low confidence species, show general timing rather than specific hours
+  const getGeneralTiming = (): string => {
+    const now = new Date().getHours();
+
+    // If conditions improve soon, mention that day
+    if (improvingDay) {
+      return improvingDay;
+    }
+
+    // Otherwise suggest dawn/dusk (general good fishing times)
+    if (now >= 5 && now < 9) {
+      return 'This evening';
+    } else if (now >= 9 && now < 17) {
+      return 'Dawn/dusk';
+    } else {
+      return 'Tomorrow dawn';
+    }
+  };
+
+  const nextBestTime = getGeneralTiming();
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
