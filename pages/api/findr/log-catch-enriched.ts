@@ -317,6 +317,26 @@ export default async function handler(
       habitat_type: habitatType,
       method: method,
       depth_range: depthRange,
+      // GPS-derived bathymetry data (separate from user-reported data)
+      gps_depth_meters: enrichedData.bathymetry?.depth_meters ?? null,
+      gps_substrate: enrichedData.substrate?.substrate ?? null,
+      gps_data_source:
+        (enrichedData.bathymetry && typeof enrichedData.bathymetry === 'object' && 'data_source' in enrichedData.bathymetry && typeof (enrichedData.bathymetry as { data_source?: string }).data_source === 'string'
+          ? (enrichedData.bathymetry as { data_source?: string }).data_source
+          : undefined)
+        || (enrichedData.substrate && typeof enrichedData.substrate === 'object' && 'data_source' in enrichedData.substrate && typeof (enrichedData.substrate as { data_source?: string }).data_source === 'string'
+          ? (enrichedData.substrate as { data_source?: string }).data_source
+          : undefined)
+        || 'emodnet',
+      gps_data_cached_at: enrichedData.enrichment_timestamp ? new Date(enrichedData.enrichment_timestamp) : null,
+      gps_data_confidence:
+        (enrichedData.bathymetry && typeof enrichedData.bathymetry === 'object' && 'confidence' in enrichedData.bathymetry && typeof (enrichedData.bathymetry as { confidence?: string }).confidence === 'string'
+          ? (enrichedData.bathymetry as { confidence?: string }).confidence
+          : undefined)
+        || (enrichedData.substrate && typeof enrichedData.substrate === 'object' && 'confidence' in enrichedData.substrate && typeof (enrichedData.substrate as { confidence?: string }).confidence === 'string'
+          ? (enrichedData.substrate as { confidence?: string }).confidence
+          : undefined)
+        || null,
       // Store enrichment data in environmental_conditions JSONB
       environmental_conditions: {
         ...(typeof weatherConditions === 'string' && weatherConditions !== '' ? JSON.parse(weatherConditions) : {}),

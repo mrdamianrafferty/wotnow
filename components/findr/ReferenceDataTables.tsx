@@ -526,12 +526,12 @@ function SpeciesTable({
     <div className="overflow-x-auto">
       <table className="table table-zebra w-full">
         <thead>
-          <tr>
-            <th></th>
-            <th>
+          <tr className="text-base-content">
+            <th className="text-base-content"></th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('name')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Species
                 {sortField === 'name' && (
@@ -539,10 +539,10 @@ function SpeciesTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('successRate')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Success Rate
                 {sortField === 'successRate' && (
@@ -550,10 +550,10 @@ function SpeciesTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('totalCatches')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Total Catches
                 {sortField === 'totalCatches' && (
@@ -561,18 +561,18 @@ function SpeciesTable({
                 )}
               </button>
             </th>
-            <th>Best Month</th>
-            <th>Actions</th>
+            <th className="text-base-content">Best Month</th>
+            <th className="text-base-content">Actions</th>
           </tr>
         </thead>
         <tbody>
           {data.map((species) => (
             <React.Fragment key={species.id}>
-              <tr className="hover">
-                <td>
+              <tr className="hover text-base-content">
+                <td className="text-base-content">
                   <button
                     onClick={() => onToggleExpansion(species.id)}
-                    className="btn btn-ghost btn-xs"
+                    className="btn btn-ghost btn-xs text-base-content"
                   >
                     {expandedRows.has(species.id) ? (
                       <ChevronUp className="w-4 h-4" />
@@ -581,7 +581,7 @@ function SpeciesTable({
                     )}
                   </button>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className="flex items-center gap-3">
                     <div className="avatar">
                       <div className="w-12 h-12 rounded-lg bg-base-200">
@@ -602,35 +602,39 @@ function SpeciesTable({
                       </div>
                     </div>
                     <div>
-                      <div className="font-bold">{species.commonName}</div>
-                      <div className="text-sm opacity-50">{species.scientificName}</div>
+                      <div className="font-bold text-base-content">{species.commonName}</div>
+                      <div className="text-sm opacity-50 text-base-content">{species.scientificName}</div>
                     </div>
                   </div>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className="flex items-center gap-2">
                     <div className={`badge ${
                       species.successRate >= 70 ? 'badge-success' :
-                      species.successRate >= 50 ? 'badge-warning' : 
+                      species.successRate >= 50 ? 'badge-warning' :
                       'badge-error'
                     }`}>
                       {species.successRate}%
                     </div>
                     {species.totalCatches < 5 && (
-                      <div className="badge badge-ghost badge-sm">
+                      <div className="badge badge-ghost badge-sm text-base-content">
                         Limited data
                       </div>
                     )}
                   </div>
                 </td>
-                <td>
-                  <span className="font-mono">{species.totalCatches}</span>
+                <td className="text-base-content">
+                  <span className="font-mono text-base-content">{species.totalCatches}</span>
                 </td>
-                <td>
-                  <span className="badge badge-outline">{species.bestMonth}</span>
+                <td className="text-base-content">
+                  {species.bestMonth === 'Unknown' ? (
+                    <span className="text-sm opacity-50 text-base-content">No data</span>
+                  ) : (
+                    <span className="badge badge-outline text-base-content">{species.bestMonth}</span>
+                  )}
                 </td>
-                <td>
-                  <button className="btn btn-ghost btn-xs">
+                <td className="text-base-content">
+                  <button className="btn btn-ghost btn-xs text-base-content">
                     <ExternalLink className="w-4 h-4" />
                   </button>
                 </td>
@@ -771,12 +775,12 @@ function BaitTable({
     <div className="overflow-x-auto">
       <table className="table table-zebra w-full">
         <thead>
-          <tr>
-            <th></th>
-            <th>
+          <tr className="text-base-content">
+            <th className="text-base-content"></th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('name')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Bait
                 {sortField === 'name' && (
@@ -784,10 +788,10 @@ function BaitTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('successRate')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Success Rate
                 {sortField === 'successRate' && (
@@ -795,10 +799,10 @@ function BaitTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('totalUses')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Total Uses
                 {sortField === 'totalUses' && (
@@ -806,18 +810,18 @@ function BaitTable({
                 )}
               </button>
             </th>
-            <th>Cost</th>
-            <th>Availability</th>
+            <th className="text-base-content">Cost</th>
+            <th className="text-base-content">Availability</th>
           </tr>
         </thead>
         <tbody>
           {data.map((bait) => (
             <React.Fragment key={bait.baitName}>
-              <tr className="hover">
-                <td>
+              <tr className="hover text-base-content">
+                <td className="text-base-content">
                   <button
                     onClick={() => onToggleExpansion(bait.baitName)}
-                    className="btn btn-ghost btn-xs"
+                    className="btn btn-ghost btn-xs text-base-content"
                   >
                     {expandedRows.has(bait.baitName) ? (
                       <ChevronUp className="w-4 h-4" />
@@ -826,22 +830,22 @@ function BaitTable({
                     )}
                   </button>
                 </td>
-                <td>
-                  <div className="font-bold">{bait.baitName}</div>
+                <td className="text-base-content">
+                  <div className="font-bold text-base-content">{bait.baitName}</div>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className={`badge ${
                     bait.successRate >= 70 ? 'badge-success' :
-                    bait.successRate >= 50 ? 'badge-warning' : 
+                    bait.successRate >= 50 ? 'badge-warning' :
                     'badge-error'
                   }`}>
                     {bait.successRate}%
                   </div>
                 </td>
-                <td>
-                  <span className="font-mono">{bait.totalUses}</span>
+                <td className="text-base-content">
+                  <span className="font-mono text-base-content">{bait.totalUses}</span>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <span className={`badge badge-outline ${
                     bait.cost === 'low' ? 'badge-success' :
                     bait.cost === 'medium' ? 'badge-warning' :
@@ -850,7 +854,7 @@ function BaitTable({
                     {bait.cost}
                   </span>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <span className={`badge badge-outline ${
                     bait.availability === 'common' ? 'badge-success' :
                     bait.availability === 'seasonal' ? 'badge-warning' :
@@ -942,12 +946,12 @@ function HabitatTable({
     <div className="overflow-x-auto">
       <table className="table table-zebra w-full">
         <thead>
-          <tr>
-            <th></th>
-            <th>
+          <tr className="text-base-content">
+            <th className="text-base-content"></th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('name')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Habitat Type
                 {sortField === 'name' && (
@@ -955,10 +959,10 @@ function HabitatTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('successRate')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Success Rate
                 {sortField === 'successRate' && (
@@ -966,10 +970,10 @@ function HabitatTable({
                 )}
               </button>
             </th>
-            <th>
+            <th className="text-base-content">
               <button
                 onClick={() => onSort('totalSessions')}
-                className="flex items-center gap-1 font-semibold"
+                className="flex items-center gap-1 font-semibold text-base-content"
               >
                 Total Sessions
                 {sortField === 'totalSessions' && (
@@ -977,18 +981,18 @@ function HabitatTable({
                 )}
               </button>
             </th>
-            <th>Avg. Catch/Session</th>
-            <th>Description</th>
+            <th className="text-base-content">Avg. Catch/Session</th>
+            <th className="text-base-content">Description</th>
           </tr>
         </thead>
         <tbody>
           {data.map((habitat) => (
             <React.Fragment key={habitat.type}>
-              <tr className="hover">
-                <td>
+              <tr className="hover text-base-content">
+                <td className="text-base-content">
                   <button
                     onClick={() => onToggleExpansion(habitat.type)}
-                    className="btn btn-ghost btn-xs"
+                    className="btn btn-ghost btn-xs text-base-content"
                   >
                     {expandedRows.has(habitat.type) ? (
                       <ChevronUp className="w-4 h-4" />
@@ -997,28 +1001,28 @@ function HabitatTable({
                     )}
                   </button>
                 </td>
-                <td>
-                  <div className="font-bold">{habitat.type}</div>
+                <td className="text-base-content">
+                  <div className="font-bold text-base-content">{habitat.type}</div>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className={`badge ${
                     habitat.successRate >= 70 ? 'badge-success' :
-                    habitat.successRate >= 50 ? 'badge-warning' : 
+                    habitat.successRate >= 50 ? 'badge-warning' :
                     'badge-error'
                   }`}>
                     {habitat.successRate}%
                   </div>
                 </td>
-                <td>
-                  <span className="font-mono">{habitat.totalSessions}</span>
+                <td className="text-base-content">
+                  <span className="font-mono text-base-content">{habitat.totalSessions}</span>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className="flex items-center gap-1">
                     <TrendingUp className="w-4 h-4 text-success" />
-                    <span className="font-mono">{habitat.avgCatchPerSession}</span>
+                    <span className="font-mono text-base-content">{habitat.avgCatchPerSession}</span>
                   </div>
                 </td>
-                <td>
+                <td className="text-base-content">
                   <div className="text-sm text-base-content/70 max-w-xs truncate">
                     {habitat.description}
                   </div>

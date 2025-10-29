@@ -170,6 +170,11 @@ interface CatchEntry {
   usingFindrPredictions?: boolean | null;
   followedBaitAdvice?: boolean | null;
   followedHabitatAdvice?: boolean | null;
+  // GPS-derived environmental data from EMODnet
+  gpsDepthMeters?: number | null;
+  gpsSubstrate?: string | null;
+  gpsDataSource?: string | null;
+  gpsDataConfidence?: string | null;
 }
 
 interface FishMatch {
@@ -328,6 +333,11 @@ function mapApiCatchToEntry(
     usingFindrPredictions: apiCatch.followed_findr_advice === true,
     followedBaitAdvice: apiCatch.used_recommended_bait === true,
     followedHabitatAdvice: apiCatch.used_recommended_habitat === true,
+    // GPS-derived environmental data
+    gpsDepthMeters: typeof apiCatch.gps_depth_meters === 'number' ? apiCatch.gps_depth_meters : null,
+    gpsSubstrate: typeof apiCatch.gps_substrate === 'string' ? apiCatch.gps_substrate : null,
+    gpsDataSource: typeof apiCatch.gps_data_source === 'string' ? apiCatch.gps_data_source : null,
+    gpsDataConfidence: typeof apiCatch.gps_data_confidence === 'string' ? apiCatch.gps_data_confidence : null,
   };
 }
 
@@ -969,7 +979,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
       </h2>
       {catches.map((catchEntry) => {
         const displaySize = catchEntry.size || 'average';
-        const sizeDisplay = displaySize.charAt(0).toUpperCase() + displaySize.slice(1);
+  const sizeDisplay = displaySize.toLowerCase() === 'mixed' ? 'Mixed Sizes' : displaySize.charAt(0).toUpperCase() + displaySize.slice(1);
         const timestamp = new Date(catchEntry.date);
 
         // Robust image fallback: use user photo if available, else fallback to species image
@@ -978,35 +988,74 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
           images = catchEntry.photos.map((photo, idx) => {
             const asset = catchEntry.photoAssets?.[idx];
             const source = asset?.thumbnailUrl ?? asset?.url ?? photo;
-            // EXIF GPS extraction (if present on asset)
             const exifLat = asset && typeof asset.exifLat === 'number' ? asset.exifLat : undefined;
             const exifLon = asset && typeof asset.exifLon === 'number' ? asset.exifLon : undefined;
             return { src: source, alt: `${catchEntry.fishName} catch photo ${idx + 1}`, isFallback: false, exifLat, exifLon };
           }).filter(img => img.src && typeof img.src === 'string' && img.src.trim() !== '');
         } else {
-          // fallback to species image
           const speciesInfo = SPECIES_IMAGE_MAP[catchEntry.fishId] || Object.values(SPECIES_IMAGE_MAP).find(img => img.name === catchEntry.fishName);
           if (speciesInfo && speciesInfo.image) {
             images = [{ src: speciesInfo.thumb || speciesInfo.mobile || speciesInfo.image, alt: `${catchEntry.fishName} species image`, isFallback: true }];
           }
         }
 
+        // Information hierarchy: group fields, only show if present
+        type InfoField = { icon: React.ReactNode|null; label: React.ReactNode; value: React.ReactNode|string };
+        const infoFields: InfoField[] = [];
+        if (catchEntry.location?.name) {
+          // Show location name, and if available, coordinates
+          let locationValue: React.ReactNode = catchEntry.location.name;
+          if (typeof catchEntry.location.lat === 'number' && typeof catchEntry.location.lon === 'number') {
+            locationValue = (
+              <span>
+                {catchEntry.location.name}
+                <a
+                  href={`https://www.google.com/maps?q=${catchEntry.location.lat},${catchEntry.location.lon}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ml-2 underline text-blue-700 hover:text-blue-900 text-xs"
+                  title={`View on map: ${catchEntry.location.lat},${catchEntry.location.lon}`}
+                >
+                  ({catchEntry.location.lat.toFixed(4)}, {catchEntry.location.lon.toFixed(4)})
+                </a>
+              </span>
+            );
+          }
+          infoFields.push({
+            icon: <Navigation className="h-4 w-4" />, 
+            label: <TranslatedText text="Location:" />, 
+            value: locationValue
+          });
+        }
+        if (catchEntry.bait) {
+          infoFields.push({ icon: <Fish className="h-4 w-4" />, label: <TranslatedText text="Bait:" />, value: <TranslatedText text={catchEntry.bait} /> });
+        }
+        if (catchEntry.habitat) {
+          infoFields.push({ icon: <MapPin className="h-4 w-4" />, label: <TranslatedText text="Habitat:" />, value: <TranslatedText text={catchEntry.habitat} /> });
+        }
+        if (catchEntry.notes) {
+          infoFields.push({ icon: null, label: <TranslatedText text="Notes:" />, value: catchEntry.notes });
+        }
+
+        // Marine conditions: badge if short, collapsible if long
+        const marineSummary = catchEntry.weatherSummary || (catchEntry.marineBio && Object.keys(catchEntry.marineBio).length > 0);
+        const marineDetails = catchEntry.marineBio && Object.entries(catchEntry.marineBio).length > 1;
+
         return (
           <div key={catchEntry.id} className="card bg-base-100 shadow-md text-base-content">
             <div className="card-body space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-2">
+              {/* Header row: name, date, ICES grid, quantity, size */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="card-title text-lg text-base-content">
                     <TranslatedText text={catchEntry.fishName} />
                   </h3>
-                  <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
-                    {catchEntry.quantity > 1 && (
-                      <span className="badge badge-success text-base-content">x{catchEntry.quantity === 5 ? 'Loads' : catchEntry.quantity}</span>
-                    )}
-                    <span className="badge badge-info text-base-content">{sizeDisplay}</span>
-                  </div>
+                  {catchEntry.quantity > 1 && (
+                    <span className="badge badge-success text-base-content">{catchEntry.quantity === 15 ? 'Loads' : `x${catchEntry.quantity}`}</span>
+                  )}
+                  <span className="badge badge-info text-base-content">{sizeDisplay}</span>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="badge badge-outline gap-1 text-base-content">
                     <Calendar className="w-3 h-3" />
                     {timestamp.toLocaleDateString(undefined, {
@@ -1022,59 +1071,72 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                 </div>
               </div>
 
-              <div className="grid gap-4 text-sm sm:grid-cols-2">
-                <div className="space-y-2">
-                  <p className="flex items-center gap-2">
-                    <Navigation className="h-4 w-4" />
-                    <span className="font-medium text-base-content">
-                      <TranslatedText text="Location:" />
-                    </span>
-                    <span className="badge bg-blue-100 text-blue-900 font-semibold">{catchEntry.location.name}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Fish className="h-4 w-4" />
-                    <span className="font-medium text-base-content">
-                      <TranslatedText text="Bait:" />
-                    </span>
-                    <span className="badge bg-blue-100 text-blue-900 font-semibold"><TranslatedText text={catchEntry.bait} /></span>
-                  </p>
-                  {catchEntry.habitat && (
-                    <p className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span className="font-medium text-base-content">
-                        <TranslatedText text="Habitat:" />
-                      </span>
-                      <span className="badge bg-blue-100 text-blue-900 font-semibold"><TranslatedText text={catchEntry.habitat} /></span>
-                    </p>
-                  )}
-                  {catchEntry.notes && (
-                    <p className="flex items-start gap-2">
-                      <span className="font-medium text-base-content">
-                        <TranslatedText text="Notes:" />
-                      </span>
-                      <span className="badge bg-blue-100 text-blue-900 font-semibold">{catchEntry.notes}</span>
-                    </p>
-                  )}
+              {/* Info fields section */}
+              {infoFields.length > 0 && (
+                <div className="flex flex-col gap-2 p-3 rounded-lg bg-base-200/60">
+                  {infoFields.map((field, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      {field.icon}
+                      <span className="font-medium text-base-content">{field.label}</span>
+                      <span className="badge bg-blue-100 text-blue-900 font-semibold">{field.value}</span>
+                    </div>
+                  ))}
                 </div>
-                {/* Marine/Bio/Weather Data */}
-                {(catchEntry.marineBio && Object.keys(catchEntry.marineBio).length > 0) || catchEntry.weatherSummary ? (
-                  <div className="rounded-lg bg-info/10 p-3">
-                    <p className="mb-2 flex items-center gap-2 font-medium text-info">
+              )}
+
+              {/* AI-derived location data from GPS coordinates */}
+              {(catchEntry.gpsDepthMeters || catchEntry.gpsSubstrate) && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-gradient-to-r from-primary/10 to-info/10 border border-primary/20">
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-base-content">
+                      <span className="font-semibold text-primary">Findr AI says</span> the catch was
+                      {catchEntry.gpsSubstrate && (
+                        <> on <span className="font-medium text-primary">{catchEntry.gpsSubstrate}</span></>
+                      )}
+                      {catchEntry.gpsDepthMeters && (
+                        <> at about <span className="font-medium text-primary">{Math.round(catchEntry.gpsDepthMeters)}m</span> depth</>
+                      )}
+                    </p>
+                    {catchEntry.gpsDataSource && (
+                      <p className="text-xs text-base-content/60 mt-1">
+                        Data from {catchEntry.gpsDataSource}
+                        {catchEntry.gpsDataConfidence && ` • ${catchEntry.gpsDataConfidence} confidence`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Marine/Bio/Weather Data */}
+              {marineSummary && (
+                <div className="mt-2">
+                  {marineDetails ? (
+                    <details className="rounded-lg bg-info/10 p-3">
+                      <summary className="flex items-center gap-2 font-medium text-info cursor-pointer select-none">
+                        <Waves className="h-4 w-4" />
+                        <TranslatedText text="Marine conditions" />
+                      </summary>
+                      {catchEntry.weatherSummary && (
+                        <p className="text-xs text-base-content/70 mb-1 mt-2">{catchEntry.weatherSummary}</p>
+                      )}
+                      {catchEntry.marineBio && Object.entries(catchEntry.marineBio).map(([key, value]) => (
+                        <p key={key} className="text-xs text-base-content/70">
+                          <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
+                        </p>
+                      ))}
+                    </details>
+                  ) : (
+                    <span className="badge badge-info gap-2 text-info-content text-xs px-3 py-2">
                       <Waves className="h-4 w-4" />
                       <TranslatedText text="Marine conditions" />
-                    </p>
-                    {catchEntry.weatherSummary && (
-                      <p className="text-xs text-base-content/70 mb-1">{catchEntry.weatherSummary}</p>
-                    )}
-                    {catchEntry.marineBio && Object.entries(catchEntry.marineBio).map(([key, value]) => (
-                      <p key={key} className="text-xs text-base-content/70">
-                        <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+                      {catchEntry.weatherSummary && <span className="ml-2">{catchEntry.weatherSummary}</span>}
+                    </span>
+                  )}
+                </div>
+              )}
 
+              {/* Photos section */}
               {images.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm flex items-center gap-2 text-base-content">
@@ -1084,22 +1146,39 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                     {images.map((img, idx) => (
                       <div key={idx} className="relative">
                         {img.src && img.src.trim() !== '' ? (
-                          <Image
-                            src={img.src}
-                            alt={img.alt}
-                            width={120}
-                            height={80}
-                            className="w-full h-20 object-cover rounded-lg border border-base-300"
-                            unoptimized={img.src.startsWith('blob:')}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
+                          <a
+                            href={img.src}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full"
+                            title="View full size in gallery"
+                          >
+                            <div className="w-full max-h-32 rounded-lg border border-base-300 bg-white flex items-center justify-center overflow-x-auto overflow-y-hidden">
+                              <Image
+                                src={img.src}
+                                alt={img.alt}
+                                height={128}
+                                width={512}
+                                style={{ objectFit: 'contain', height: '8rem', width: 'auto', maxWidth: '100%' }}
+                                className="!static"
+                                unoptimized={
+                                  img.src.startsWith('blob:') ||
+                                  img.src.startsWith('http://') ||
+                                  img.src.startsWith('https://')
+                                }
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </div>
+                          </a>
                         ) : (
-                          <div className="w-full h-20 flex items-center justify-center bg-base-200 text-base-content/40 rounded-lg border border-base-300">
+                          <div className="w-full max-h-32 flex items-center justify-center bg-base-200 text-base-content/40 rounded-lg border border-base-300">
                             <span>Image unavailable</span>
                           </div>
                         )}
                         {img.isFallback && (
-                          <div className="absolute top-1 right-1 badge badge-xs bg-black/60 text-white border-none">Stock</div>
+                          <div className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 flex items-center justify-center" title="Findr stock image">
+                            <Fish className="w-4 h-4" />
+                          </div>
                         )}
                         {/* EXIF Location badge if present */}
                         {typeof img.exifLat === 'number' && typeof img.exifLon === 'number' && (
@@ -1107,10 +1186,11 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                             href={`https://www.google.com/maps?q=${img.exifLat},${img.exifLon}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="absolute bottom-1 right-1 badge badge-xs bg-blue-600 text-white border-none"
+                            className="absolute bottom-1 right-1 badge badge-xs bg-blue-600 text-white border-none flex items-center gap-1 px-1.5"
                             title={`Photo location: ${img.exifLat},${img.exifLon}`}
                           >
                             <MapPin className="w-3 h-3" />
+                            <span className="hidden sm:inline text-xs">View</span>
                           </a>
                         )}
                       </div>

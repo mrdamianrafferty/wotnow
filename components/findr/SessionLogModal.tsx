@@ -257,13 +257,6 @@ export function SessionLogModal({
           throw new Error(`Species information not found for ${catch_.species_id}`);
         }
 
-        const notesSegments = [
-          `Bait: ${catch_.bait_used}`,
-          `Habitat: ${HABITAT_LABELS[habitat] ?? habitat}`,
-          timePeriods.length ? `Time: ${timePeriods.map(period => period.replace('_', ' ')).join(' & ')}` : null,
-          catch_.notes ? `Notes: ${catch_.notes}` : null,
-        ].filter(Boolean);
-
         const env: Record<string, string | number> = {
           session_time_periods: timePeriods.join(', '),
           session_duration_hours: durationHours,
@@ -273,7 +266,7 @@ export function SessionLogModal({
 
         if (photos.length > 0) {
           env.session_photo_count = photos.length;
-        };
+        }
 
         const result = await onSubmitCatch({
           speciesId: catch_.species_id,
@@ -287,7 +280,7 @@ export function SessionLogModal({
           baitUsed: catch_.bait_used,
           habitatType: habitat,
           method: 'shore',
-          notes: notesSegments.join(' | ') || undefined,
+          notes: catch_.notes || undefined,
           entryType: 'detailed',
           photo: index === 0 ? primaryPhoto : null,
           userLocation: userLocation ?? undefined,

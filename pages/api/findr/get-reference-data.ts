@@ -420,16 +420,60 @@ function getSeasonalityFromMonths(months: Record<string, number>): string[] {
 }
 
 function getScientificName(commonName: string): string {
+  // Map both common names and species codes to scientific names
   const scientificNames: Record<string, string> = {
+    // Common names
     'Mackerel': 'Scomber scombrus',
     'Bass': 'Dicentrarchus labrax',
     'Sea Bass': 'Dicentrarchus labrax',
+    'European Bass': 'Dicentrarchus labrax',
     'Cod': 'Gadus morhua',
     'Pollock': 'Pollachius pollachius',
     'Plaice': 'Pleuronectes platessa',
     'Flounder': 'Platichthys flesus',
+    'Black Bream': 'Spondyliosoma cantharus',
+    'Gilthead Bream': 'Sparus aurata',
+    'Bonito': 'Sarda sarda',
+    'Whiting': 'Merlangius merlangus',
+    'Pollack': 'Pollachius pollachius',
+    'Haddock': 'Melanogrammus aeglefinus',
+    'Brill': 'Scophthalmus rhombus',
+    'Turbot': 'Scophthalmus maximus',
+    'Dab': 'Limanda limanda',
+    'Sole': 'Solea solea',
+    'Ling': 'Molva molva',
+    'Conger Eel': 'Conger conger',
+    'Tope': 'Galeorhinus galeus',
+    'Smoothhound': 'Mustelus mustelus',
+    'Thornback Ray': 'Raja clavata',
+    'Blonde Ray': 'Raja brachyura',
+
+    // Species codes (3-letter codes)
+    'MAC': 'Scomber scombrus',
+    'BSS': 'Dicentrarchus labrax',
+    'COD': 'Gadus morhua',
+    'POL': 'Pollachius pollachius',
+    'PLE': 'Pleuronectes platessa',
+    'FLO': 'Platichthys flesus',
+    'BBR': 'Spondyliosoma cantharus',
+    'GBR': 'Sparus aurata',
+    'BON': 'Sarda sarda',
+    'WHG': 'Merlangius merlangus',
+    'HAD': 'Melanogrammus aeglefinus',
+    'BLL': 'Scophthalmus rhombus',
+    'TUR': 'Scophthalmus maximus',
+    'DAB': 'Limanda limanda',
+    'SOL': 'Solea solea',
+    'LIN': 'Molva molva',
+    'COE': 'Conger conger',
+    'GAG': 'Galeorhinus galeus',
+    'SDV': 'Mustelus mustelus',
+    'RJC': 'Raja clavata',
+    'RJH': 'Raja brachyura',
+    'SBA': 'Dicentrarchus labrax', // Sea bass alternative code
   };
-  return scientificNames[commonName] || 'Species unknown';
+
+  return scientificNames[commonName] || scientificNames[commonName.toUpperCase()] || 'Species unknown';
 }
 
 function generateSpeciesTips(name: string, avgDepth?: number, substrate?: string, successRate?: number): string[] {
