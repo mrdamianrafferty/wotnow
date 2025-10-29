@@ -1,14 +1,23 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Calendar, TrendingUp, Star, AlertTriangle, X } from 'lucide-react';
+import Image from 'next/image';
+import { Calendar, TrendingUp, Star, AlertTriangle, X, Fish } from 'lucide-react';
 import { TranslatedText, TranslatedFishName } from '../translation/TranslatedFishCard';
+import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
+
+// Helper to find species image by name
+function getSpeciesImageByName(name: string): string | null {
+  const entry = Object.values(SPECIES_IMAGE_MAP).find(s => s.name === name);
+  return entry?.thumb ?? entry?.image ?? null;
+}
 
 interface FavouriteWithForecast {
   name: string;
   confidence: number | null;
   forecast?: number[] | null;
   bestBait?: string;
+  image?: { src: string; alt: string } | null;
   card?: {
     environmental_factors?: {
       temperature?: { actual: number };
@@ -31,6 +40,7 @@ interface DayPlan {
     confidence: number;
     timeWindow: string;
     bestBait?: string;
+    image?: { src: string; alt: string } | null;
   }[];
   quality: 'excellent' | 'good' | 'fair' | 'poor';
   conditions?: string;
@@ -84,6 +94,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
           confidence: fav.forecast![dayIndex],
           timeWindow: getTimeWindow(fav.forecast![dayIndex], dayIndex),
           bestBait: fav.bestBait,
+          image: fav.image,
         }))
         .sort((a, b) => b.confidence - a.confidence)
         .slice(0, 3); // Top 3 species per day
@@ -243,30 +254,48 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                   {/* Opportunities */}
                   {day.opportunities.length > 0 ? (
                     <div className="space-y-2">
-                      {day.opportunities.map((opp, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2 bg-base-200/50 rounded">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-2xl">🎣</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm truncate">
-                                <TranslatedFishName name={opp.name} />
-                              </p>
-                              <p className="text-xs text-base-content/60">
-                                {opp.timeWindow}
-                                {opp.bestBait && (
-                                  <>
-                                    {' • '}
-                                    <TranslatedText text={opp.bestBait} />
-                                  </>
-                                )}
-                              </p>
+                      {day.opportunities.map((opp, idx) => {
+                        const imagePath = getSpeciesImageByName(opp.name);
+                        return (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-base-200/50 rounded">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              {/* Species Thumbnail */}
+                              {imagePath ? (
+                                <div className="w-8 h-8 relative rounded overflow-hidden bg-base-200 flex-shrink-0">
+                                  <Image
+                                    src={imagePath}
+                                    alt={opp.name}
+                                    fill
+                                    className="object-contain"
+                                    sizes="32px"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10 flex-shrink-0">
+                                  <Fish size={20} className="text-primary" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm truncate">
+                                  <TranslatedFishName name={opp.name} />
+                                </p>
+                                <p className="text-xs text-base-content/60">
+                                  {opp.timeWindow}
+                                  {opp.bestBait && (
+                                    <>
+                                      {' • '}
+                                      <TranslatedText text={opp.bestBait} />
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="badge badge-sm badge-outline font-bold">
+                              {opp.confidence}%
                             </div>
                           </div>
-                          <div className="badge badge-sm badge-outline font-bold">
-                            {opp.confidence}%
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="text-sm text-base-content/50 italic">

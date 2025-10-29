@@ -11,11 +11,9 @@ import {
   Star,
   TrendingUp,
   Calendar,
-  Target,
   Heart,
   Clock,
   Flame,
-  Trophy,
   HeartOff,
   RefreshCw,
   Loader2,
@@ -425,7 +423,7 @@ function validateAndFixImage(
 }
 
 
-const FavouriteThumbnail: React.FC<{ entry: FavouriteEntry; size?: number; className?: string }> = ({
+const _FavouriteThumbnail: React.FC<{ entry: FavouriteEntry; size?: number; className?: string }> = ({
   entry,
   size = 72,
   className,
@@ -470,7 +468,7 @@ const FavouriteThumbnail: React.FC<{ entry: FavouriteEntry; size?: number; class
   );
 };
 
-const ConfidenceRing: React.FC<{ confidence: number; size?: number }> = ({ confidence, size = 80 }) => {
+const _ConfidenceRing: React.FC<{ confidence: number; size?: number }> = ({ confidence, size = 80 }) => {
   const getColorClass = (value: number): string => {
     if (value >= 90) return 'text-success';
     if (value >= 80) return 'text-warning';
@@ -497,7 +495,7 @@ const ConfidenceRing: React.FC<{ confidence: number; size?: number }> = ({ confi
   );
 };
 
-function getConfidenceCardClass(confidence: number | null): string {
+function _getConfidenceCardClass(confidence: number | null): string {
   if (confidence === null) return 'bg-base-200/20 border-base-300';
   if (confidence >= 90) return 'bg-success/10 border-success/30';
   if (confidence >= 80) return 'bg-warning/10 border-warning/30';
@@ -871,7 +869,7 @@ const FindrFavouritesPage: React.FC = () => {
     return entries;
   }, [favouriteEntries, sortBy]);
 
-  const hotRightNow = useMemo(() => {
+  const _hotRightNow = useMemo(() => {
     // Sort by bite score (includes real-time tides) or confidence
     const scored = sortedFavourites
       .filter((entry) => (entry.biteScore ?? entry.confidence) !== null)
@@ -883,13 +881,13 @@ const FindrFavouritesPage: React.FC = () => {
     return scored.slice(0, 3);
   }, [sortedFavourites]);
 
-  const priorityFish = useMemo(
+  const _priorityFish = useMemo(
     () => favouriteEntries.filter((entry) => entry.isPriority),
     [favouriteEntries]
   );
 
   // Use real catch statistics if available, otherwise fall back to summing favouriteEntries
-  const totalCatches = useMemo(
+  const _totalCatches = useMemo(
     () => catchStats?.totalCatches ?? favouriteEntries.reduce((sum, entry) => sum + entry.catches, 0),
     [catchStats, favouriteEntries]
   );
@@ -1015,7 +1013,7 @@ const FindrFavouritesPage: React.FC = () => {
 
   // stopPropagation removed - now handled inline with preventDefault
 
-  const handleTouchStart = useCallback((fishId: string, event: React.TouchEvent) => {
+  const _handleTouchStart = useCallback((fishId: string, event: React.TouchEvent) => {
     const touch = event.touches[0];
     setSwipeStates((prev) => ({
       ...prev,
@@ -1023,7 +1021,7 @@ const FindrFavouritesPage: React.FC = () => {
     }));
   }, []);
 
-  const handleTouchMove = useCallback(
+  const _handleTouchMove = useCallback(
     (fishId: string, event: React.TouchEvent) => {
       const state = swipeStates[fishId];
       if (!state?.swiping) return;
@@ -1045,7 +1043,7 @@ const FindrFavouritesPage: React.FC = () => {
     [swipeStates]
   );
 
-  const handleTouchEnd = useCallback(
+  const _handleTouchEnd = useCallback(
     (fishId: string, event: React.TouchEvent) => {
       const state = swipeStates[fishId];
       if (!state?.swiping) return;
@@ -1352,118 +1350,10 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Stats Dashboard */}
-            <div className="stats stats-vertical lg:stats-horizontal shadow mb-8">
-                            <div className="stat">
-                <div className="stat-figure text-error">
-                  <TrendingUp size={32} />
-                </div>
-                <div className="stat-title"><TranslatedText text="Hot Right Now" /></div>
-                <div className="stat-value text-error">{hotRightNow.length}</div>
-                <div className="stat-desc text-error">
-                  <Flame size={12} className="inline mr-1" />
-                  <TranslatedText text="fish ready to catch" />
-                </div>
-              </div>
-
-              <div className="stat">
-                <div className="stat-figure text-success">
-                  <Fish size={32} className="fish-shimmer" />
-                </div>
-                <div className="stat-title"><TranslatedText text="Total Catches" /></div>
-                <div className="stat-value text-success">{totalCatches}</div>
-                <div className="stat-desc text-success">
-                  <Trophy size={12} className="inline mr-1" />
-                  <TranslatedText text="from your catch log" />
-                </div>
-              </div>
-
-              <div className="stat">
-                <div className="stat-figure text-primary">
-                  <Heart size={32} />
-                </div>
-                <div className="stat-title"><TranslatedText text="Total favourites" /></div>
-                <div className="stat-value text-primary">{favoritesList.length}</div>
-              </div>
-
-              <div className="stat">
-                <div className="stat-figure text-warning">
-                  <Target size={32} />
-                  {priorityFish.length > 0 && <Star size={16} className="absolute -top-1 -right-1" />}
-                </div>
-                <div className="stat-title"><TranslatedText text="Priority fish" /></div>
-                <div className="stat-value text-warning">{priorityFish.length}</div>
-              </div>
-            </div>
-
-            {/* Hot Right Now */}
-            {hasFavourites && (
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
-                  <TrendingUp className="mr-3 text-red-300" />
-                  <Flame className="mr-2 text-red-300" size={20} />
-                  <TranslatedText text="Hot Right Now" />
-                  <span className="ml-2 text-sm font-normal text-gray-400">(<TranslatedText text="top picks by bite score" />)</span>
-                </h2>
-
-                {hotRightNow.length === 0 ? (
-                  <p className="text-sm text-gray-300"><TranslatedText text="No favourites have live confidence scores yet. Refresh predictions to update." /></p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {hotRightNow.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className={`card ${getConfidenceCardClass(entry.confidence)} cursor-pointer hover:scale-105 transition-transform swipeable-card shadow-md`}
-                        onClick={() => handleFishClick(entry)}
-                        onTouchStart={(e) => handleTouchStart(entry.id, e)}
-                        onTouchMove={(e) => handleTouchMove(entry.id, e)}
-                        onTouchEnd={(e) => handleTouchEnd(entry.id, e)}
-                      >
-                        <div className="card-body p-4">
-                        <div className="swipe-hint">← Remove | Priority → | ↑ Details</div>
-                        <button
-                          className="flex items-center justify-between mb-3 gap-3 w-full text-left hover:opacity-80 transition-opacity"
-                          onClick={(e) => { e.stopPropagation(); handleFishClick(entry); }}
-                          type="button"
-                          aria-label={`View ${entry.name} details`}
-                        >
-                          <FavouriteThumbnail entry={entry} size={68} />
-                          {(entry.biteScore ?? entry.confidence) !== null && (
-                            <div className="flex flex-col items-center gap-1">
-                              <ConfidenceRing confidence={entry.biteScore ?? entry.confidence ?? 0} size={60} />
-                              {entry.biteScore && (
-                                <span className="text-xs font-semibold text-success">
-                                  <TranslatedText text="BITE NOW" />
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </button>
-                        <h3 className="text-white font-semibold"><TranslatedFishName name={entry.name} /></h3>
-                        <p className="text-base-content/70 text-sm"><TranslatedText text={entry.season} /></p>
-                        <div className="mt-2 text-xs text-base-content/60">
-                          🎣
-                          {entry.catches > 0
-                            ? <> <TranslatedText text={`Hooked up ${entry.catches} time${entry.catches === 1 ? '' : 's'}`} /></>
-                            : <> <TranslatedText text="Still waiting for first catch log" /></>}
-                        </div>
-                        <div
-                          className={`mt-1 text-xs ${entry.confidence !== null && entry.confidence < 70 ? 'text-error' : 'text-info'}`}
-                        >
-                          <TranslatedText text={getPullMessage(entry)} />
-                        </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            )}
-
             {/* Sorting Controls */}
             {hasFavourites && (
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                <h2 className="text-2xl font-bold text-white mb-4 sm:mb-0 flex items-center">
+                <h2 className="text-2xl font-bold text-base-content mb-4 sm:mb-0 flex items-center">
                   <Star className="mr-3 text-yellow-300 fish-combo" />
                   <TranslatedText text="All Your Favourites" /> ({favoritesList.length})
                 </h2>
