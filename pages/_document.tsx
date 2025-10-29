@@ -32,8 +32,7 @@ export default class MyDocument extends Document {
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Go Daisy" />
 
-  {/* PWA Manifest */}
-  <link rel="manifest" href="/manifest-godaisy.json" />
+  {/* PWA Manifest - Handled dynamically in _app.tsx based on domain/route */}
 
   {/* Safari pinned tab */}
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0f766e" />

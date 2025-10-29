@@ -1034,7 +1034,11 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
           infoFields.push({ icon: <MapPin className="h-4 w-4" />, label: <TranslatedText text="Habitat:" />, value: <TranslatedText text={catchEntry.habitat} /> });
         }
         if (catchEntry.notes) {
-          infoFields.push({ icon: null, label: <TranslatedText text="Notes:" />, value: catchEntry.notes });
+          // Only show notes if user added free text (not just auto-generated or default)
+          const notes = catchEntry.notes?.trim();
+          if (notes && notes.length > 0 && !/^Bait:|Habitat:|Time:|\|/.test(notes) && !notes.match(/^Bait:|Habitat:|Time:|\|/i)) {
+            infoFields.push({ icon: null, label: <TranslatedText text="Notes:" />, value: notes });
+          }
         }
 
         // Marine conditions: badge if short, collapsible if long

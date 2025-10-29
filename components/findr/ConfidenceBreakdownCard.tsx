@@ -5,10 +5,10 @@ import { ChevronDown, ChevronUp, TrendingUp, TrendingDown, AlertCircle, CheckCir
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
 interface EnvironmentalFactors {
-  temperature?: { actual: number; match: string; score: number };
-  salinity?: { actual: number; match: string; score: number };
-  depth?: { actual: number; match: string; score: number };
-  substrate?: { actual: string; match: string; score: number };
+  temperature?: { actual: number; match: string; score: number; species_pref?: string };
+  salinity?: { actual: number; match: string; score: number; species_pref?: string };
+  depth?: { actual: number; match: string; score: number; species_pref?: string };
+  substrate?: { actual: string; match: string; score: number; species_pref?: string };
   data_age_hours?: number;
   data_source?: string;
 }
@@ -146,6 +146,9 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                           </p>
                           <p className="text-base-content/60">
                             {environmentalFactors.temperature.actual.toFixed(1)}°C
+                            {environmentalFactors.temperature.species_pref && (
+                              <> {' (prefers '}{environmentalFactors.temperature.species_pref}{'°C)'}</>
+                            )}
                             {' - '}
                             <TranslatedText text={getMatchLabel(environmentalFactors.temperature.match, environmentalFactors.temperature.score)} />
                           </p>
@@ -167,6 +170,9 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                           </p>
                           <p className="text-base-content/60">
                             {environmentalFactors.salinity.actual.toFixed(1)} PSU
+                            {environmentalFactors.salinity.species_pref && (
+                              <> {' (prefers '}{environmentalFactors.salinity.species_pref}{' PSU)'}</>
+                            )}
                             {' - '}
                             <TranslatedText text={getMatchLabel(environmentalFactors.salinity.match, environmentalFactors.salinity.score)} />
                           </p>
@@ -188,6 +194,9 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                           </p>
                           <p className="text-base-content/60">
                             {environmentalFactors.depth.actual.toFixed(0)}m
+                            {environmentalFactors.depth.species_pref && (
+                              <> {' (prefers '}{environmentalFactors.depth.species_pref}{'m)'}</>
+                            )}
                             {' - '}
                             <TranslatedText text={getMatchLabel(environmentalFactors.depth.match, environmentalFactors.depth.score)} />
                           </p>
@@ -209,6 +218,9 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                           </p>
                           <p className="text-base-content/60">
                             <TranslatedText text={environmentalFactors.substrate.actual} />
+                            {environmentalFactors.substrate.species_pref && (
+                              <> {' (prefers '}<TranslatedText text={environmentalFactors.substrate.species_pref} />{')'}</>
+                            )}
                             {' - '}
                             <TranslatedText text={getMatchLabel(environmentalFactors.substrate.match, environmentalFactors.substrate.score)} />
                           </p>
@@ -284,36 +296,58 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                 • <TranslatedText text="Base score from species habitat preferences, historical catch patterns, and typical behavior" />
               </p>
 
-              {/* Environmental factors explanation */}
+              {/* Environmental factors explanation with species preferences */}
               {hasEnvironmentalData && (
-                <p>
-                  • <TranslatedText text="Environmental boost" />:{' '}
+                <>
                   {environmentalFactors.temperature && (
-                    <span>
-                      <TranslatedText text="water temperature" /> ({environmentalFactors.temperature.actual.toFixed(1)}°C)
-                      {(environmentalFactors.salinity || environmentalFactors.depth || environmentalFactors.substrate) && ', '}
-                    </span>
+                    <p>
+                      • <TranslatedText text="Water temp" />: {environmentalFactors.temperature.actual.toFixed(1)}°C
+                      {environmentalFactors.temperature.species_pref && (
+                        <> (species prefers {environmentalFactors.temperature.species_pref}°C)</>
+                      )}
+                      {' → '}
+                      <span className={getScoreColor(environmentalFactors.temperature.score)}>
+                        {environmentalFactors.temperature.score > 0 ? '+' : ''}{environmentalFactors.temperature.score} points
+                      </span>
+                    </p>
                   )}
                   {environmentalFactors.salinity && (
-                    <span>
-                      <TranslatedText text="salinity" /> ({environmentalFactors.salinity.actual.toFixed(1)} PSU)
-                      {(environmentalFactors.depth || environmentalFactors.substrate) && ', '}
-                    </span>
+                    <p>
+                      • <TranslatedText text="Salinity" />: {environmentalFactors.salinity.actual.toFixed(1)} PSU
+                      {environmentalFactors.salinity.species_pref && (
+                        <> (species prefers {environmentalFactors.salinity.species_pref} PSU)</>
+                      )}
+                      {' → '}
+                      <span className={getScoreColor(environmentalFactors.salinity.score)}>
+                        {environmentalFactors.salinity.score > 0 ? '+' : ''}{environmentalFactors.salinity.score} points
+                      </span>
+                    </p>
                   )}
                   {environmentalFactors.depth && (
-                    <span>
-                      <TranslatedText text="depth" /> ({environmentalFactors.depth.actual.toFixed(0)}m)
-                      {environmentalFactors.substrate && ', '}
-                    </span>
+                    <p>
+                      • <TranslatedText text="Depth" />: {environmentalFactors.depth.actual.toFixed(0)}m
+                      {environmentalFactors.depth.species_pref && (
+                        <> (species prefers {environmentalFactors.depth.species_pref}m)</>
+                      )}
+                      {' → '}
+                      <span className={getScoreColor(environmentalFactors.depth.score)}>
+                        {environmentalFactors.depth.score > 0 ? '+' : ''}{environmentalFactors.depth.score} points
+                      </span>
+                    </p>
                   )}
                   {environmentalFactors.substrate && (
-                    <span>
-                      <TranslatedText text="substrate" /> ({environmentalFactors.substrate.actual})
-                    </span>
+                    <p>
+                      • <TranslatedText text="Substrate" />: <TranslatedText text={environmentalFactors.substrate.actual} />
+                      {environmentalFactors.substrate.species_pref && (
+                        <> (species prefers <TranslatedText text={environmentalFactors.substrate.species_pref} />)</>
+                      )}
+                      {' → '}
+                      <span className={getScoreColor(environmentalFactors.substrate.score)}>
+                        {environmentalFactors.substrate.score > 0 ? '+' : ''}{environmentalFactors.substrate.score} points
+                      </span>
+                    </p>
                   )}
-                  {' '}
-                  <TranslatedText text="matched to this species' optimal conditions" />
-                </p>
+                </>
               )}
 
               {/* Seasonal adjustment explanation */}

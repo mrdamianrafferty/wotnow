@@ -625,7 +625,7 @@ function SpeciesTable({
                   </div>
                 </td>
                 <td className="text-base-content">
-                  <span className="font-mono text-base-content">{species.totalCatches}</span>
+                  <span className="text-base-content">{species.commonName}</span>
                 </td>
                 <td className="text-base-content">
                   {(!species.bestMonth || species.bestMonth === 'Unknown' || species.bestMonth === 'Invalid Date') ? (
