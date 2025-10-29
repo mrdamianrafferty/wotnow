@@ -2,6 +2,8 @@ export interface CatchPhotoAsset {
   url: string;
   thumbnailUrl?: string | null;
   path?: string | null;
+  exifLat?: number;
+  exifLon?: number;
 }
 
 const isString = (value: unknown): value is string => typeof value === 'string';
@@ -25,10 +27,14 @@ export function normaliseCatchPhotoAssets(apiCatch: Record<string, unknown>): Ca
     }
 
     seen.add(url);
+    // Use Record<string, unknown> for safe property access
+  const assetObj = asset as unknown as Record<string, unknown>;
     assets.push({
       url,
       thumbnailUrl: isString(asset.thumbnailUrl) ? asset.thumbnailUrl : null,
       path: isString(asset.path) ? asset.path : undefined,
+      exifLat: typeof assetObj.exifLat === 'number' ? assetObj.exifLat : undefined,
+      exifLon: typeof assetObj.exifLon === 'number' ? assetObj.exifLon : undefined,
     });
   };
 
@@ -64,6 +70,8 @@ export function normaliseCatchPhotoAssets(apiCatch: Record<string, unknown>): Ca
           url,
           thumbnailUrl: thumbnail,
           path,
+          exifLat: typeof photoObject.exifLat === 'number' ? photoObject.exifLat : undefined,
+          exifLon: typeof photoObject.exifLon === 'number' ? photoObject.exifLon : undefined,
         });
       }
     });

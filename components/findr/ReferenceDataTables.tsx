@@ -298,8 +298,8 @@ export function ReferenceDataTables({
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 text-base-content">
+      <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col text-base-content">
         
         {/* Header */}
         <div className="p-6 border-b border-base-300">
@@ -498,7 +498,7 @@ function EmptyState({
   message: string;
 }) {
   return (
-    <div className="text-center py-12">
+    <div className="text-center py-12 text-base-content">
       <Icon className="w-16 h-16 mx-auto mb-4 opacity-30" />
       <h3 className="text-xl font-semibold mb-2">{title}</h3>
       <p className="opacity-70">{message}</p>

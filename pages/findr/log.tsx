@@ -973,13 +973,16 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
         const timestamp = new Date(catchEntry.date);
 
         // Robust image fallback: use user photo if available, else fallback to species image
-        let images: { src: string; alt: string; isFallback: boolean }[] = [];
+        let images: { src: string; alt: string; isFallback: boolean; exifLat?: number; exifLon?: number }[] = [];
         if (catchEntry.photos && catchEntry.photos.length > 0) {
           images = catchEntry.photos.map((photo, idx) => {
             const asset = catchEntry.photoAssets?.[idx];
             const source = asset?.thumbnailUrl ?? asset?.url ?? photo;
-            return { src: source, alt: `${catchEntry.fishName} catch photo ${idx + 1}`, isFallback: false };
-          });
+            // EXIF GPS extraction (if present on asset)
+            const exifLat = asset && typeof asset.exifLat === 'number' ? asset.exifLat : undefined;
+            const exifLon = asset && typeof asset.exifLon === 'number' ? asset.exifLon : undefined;
+            return { src: source, alt: `${catchEntry.fishName} catch photo ${idx + 1}`, isFallback: false, exifLat, exifLon };
+          }).filter(img => img.src && typeof img.src === 'string' && img.src.trim() !== '');
         } else {
           // fallback to species image
           const speciesInfo = SPECIES_IMAGE_MAP[catchEntry.fishId] || Object.values(SPECIES_IMAGE_MAP).find(img => img.name === catchEntry.fishName);
@@ -989,7 +992,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
         }
 
         return (
-          <div key={catchEntry.id} className="card bg-base-100 shadow-md">
+          <div key={catchEntry.id} className="card bg-base-100 shadow-md text-base-content">
             <div className="card-body space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2">
@@ -998,9 +1001,9 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   </h3>
                   <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
                     {catchEntry.quantity > 1 && (
-                      <span className="badge badge-success">x{catchEntry.quantity === 5 ? 'Loads' : catchEntry.quantity}</span>
+                      <span className="badge badge-success text-base-content">x{catchEntry.quantity === 5 ? 'Loads' : catchEntry.quantity}</span>
                     )}
-                    <span className="badge badge-info">{sizeDisplay}</span>
+                    <span className="badge badge-info text-base-content">{sizeDisplay}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs sm:text-sm">
@@ -1026,14 +1029,14 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                     <span className="font-medium text-base-content">
                       <TranslatedText text="Location:" />
                     </span>
-                    {catchEntry.location.name}
+                    <span className="badge bg-blue-100 text-blue-900 font-semibold">{catchEntry.location.name}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Fish className="h-4 w-4" />
                     <span className="font-medium text-base-content">
                       <TranslatedText text="Bait:" />
                     </span>
-                    <TranslatedText text={catchEntry.bait} />
+                    <span className="badge bg-blue-100 text-blue-900 font-semibold"><TranslatedText text={catchEntry.bait} /></span>
                   </p>
                   {catchEntry.habitat && (
                     <p className="flex items-center gap-2">
@@ -1041,7 +1044,7 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                       <span className="font-medium text-base-content">
                         <TranslatedText text="Habitat:" />
                       </span>
-                      <TranslatedText text={catchEntry.habitat} />
+                      <span className="badge bg-blue-100 text-blue-900 font-semibold"><TranslatedText text={catchEntry.habitat} /></span>
                     </p>
                   )}
                   {catchEntry.notes && (
@@ -1049,17 +1052,27 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                       <span className="font-medium text-base-content">
                         <TranslatedText text="Notes:" />
                       </span>
-                      {catchEntry.notes}
+                      <span className="badge bg-blue-100 text-blue-900 font-semibold">{catchEntry.notes}</span>
                     </p>
                   )}
                 </div>
-                <div className="rounded-lg bg-info/10 p-3">
-                  <p className="mb-2 flex items-center gap-2 font-medium text-info">
-                    <Waves className="h-4 w-4" />
-                    <TranslatedText text="Marine conditions" />
-                  </p>
-                  <p className="text-xs text-base-content/70">{catchEntry.weatherSummary}</p>
-                </div>
+                {/* Marine/Bio/Weather Data */}
+                {(catchEntry.marineBio && Object.keys(catchEntry.marineBio).length > 0) || catchEntry.weatherSummary ? (
+                  <div className="rounded-lg bg-info/10 p-3">
+                    <p className="mb-2 flex items-center gap-2 font-medium text-info">
+                      <Waves className="h-4 w-4" />
+                      <TranslatedText text="Marine conditions" />
+                    </p>
+                    {catchEntry.weatherSummary && (
+                      <p className="text-xs text-base-content/70 mb-1">{catchEntry.weatherSummary}</p>
+                    )}
+                    {catchEntry.marineBio && Object.entries(catchEntry.marineBio).map(([key, value]) => (
+                      <p key={key} className="text-xs text-base-content/70">
+                        <span className="font-semibold capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span> {value}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               {images.length > 0 && (
@@ -1070,16 +1083,35 @@ const CatchHistory: React.FC<CatchHistoryProps> = ({ catches, onViewPredictions 
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {images.map((img, idx) => (
                       <div key={idx} className="relative">
-                        <Image
-                          src={img.src}
-                          alt={img.alt}
-                          width={120}
-                          height={80}
-                          className="w-full h-20 object-cover rounded-lg border border-base-300"
-                          unoptimized={img.src.startsWith('blob:')}
-                        />
+                        {img.src && img.src.trim() !== '' ? (
+                          <Image
+                            src={img.src}
+                            alt={img.alt}
+                            width={120}
+                            height={80}
+                            className="w-full h-20 object-cover rounded-lg border border-base-300"
+                            unoptimized={img.src.startsWith('blob:')}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-20 flex items-center justify-center bg-base-200 text-base-content/40 rounded-lg border border-base-300">
+                            <span>Image unavailable</span>
+                          </div>
+                        )}
                         {img.isFallback && (
                           <div className="absolute top-1 right-1 badge badge-xs bg-black/60 text-white border-none">Stock</div>
+                        )}
+                        {/* EXIF Location badge if present */}
+                        {typeof img.exifLat === 'number' && typeof img.exifLon === 'number' && (
+                          <a
+                            href={`https://www.google.com/maps?q=${img.exifLat},${img.exifLon}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-1 right-1 badge badge-xs bg-blue-600 text-white border-none"
+                            title={`Photo location: ${img.exifLat},${img.exifLon}`}
+                          >
+                            <MapPin className="w-3 h-3" />
+                          </a>
                         )}
                       </div>
                     ))}

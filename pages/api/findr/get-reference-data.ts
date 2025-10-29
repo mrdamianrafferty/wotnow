@@ -61,6 +61,8 @@ interface CatchEntry {
   id?: string;
   user_id?: string;
   species_name?: string;
+  species_id?: string;
+  name_en?: string;
   quantity: number;
   depth_meters?: number;
   substrate?: string;
@@ -148,7 +150,14 @@ function generateSpeciesStats(catches: CatchEntry[]): SpeciesStats[] {
   const speciesMap = new Map<string, SpeciesAggregation>();
 
   catches.forEach(catchEntry => {
-    const speciesName = catchEntry.species_name;
+    // Use species_name, fallback to name_en, then species_id if missing
+    let speciesName = catchEntry.species_name;
+    if (!speciesName && catchEntry.name_en) {
+      speciesName = String(catchEntry.name_en);
+    }
+    if (!speciesName && catchEntry.species_id) {
+      speciesName = String(catchEntry.species_id);
+    }
     if (!speciesName) {
       return;
     }

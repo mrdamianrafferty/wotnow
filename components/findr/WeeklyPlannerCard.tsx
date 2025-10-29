@@ -87,7 +87,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
         .filter(fav => {
           if (!fav.forecast || !Array.isArray(fav.forecast)) return false;
           const forecastConfidence = fav.forecast[dayIndex];
-          return forecastConfidence !== undefined && forecastConfidence >= 60;
+          return forecastConfidence !== undefined && forecastConfidence >= 50;
         })
         .map(fav => ({
           name: fav.name,

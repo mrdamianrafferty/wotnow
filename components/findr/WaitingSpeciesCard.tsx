@@ -124,7 +124,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               </h3>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="badge badge-sm badge-outline" data-testid="confidence-score">
+              <span className="badge badge-sm badge-outline text-base-content border-base-content" data-testid="confidence-score">
                 {species.confidence}%
                 {species.seasonal_multiplier && species.original_confidence && (
                   <span className="ml-1 opacity-75 text-xs">

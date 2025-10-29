@@ -27,6 +27,7 @@ import { supabase } from '../../lib/supabase/client';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
+import { use7DayFishingPredictions } from '../../hooks/use7DayFishingPredictions';
 import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
@@ -730,6 +731,16 @@ const FindrFavouritesPage: React.FC = () => {
     enabled: Boolean(activeRectangle),
   });
 
+  // Fetch 7-day predictions for weekly forecast
+  const { forecastsBySpecies, loading: forecasts7DayLoading } = use7DayFishingPredictions({
+    rectangleCode: activeRectangle,
+    startDate: predictionDate,
+    language,
+    enabled: Boolean(activeRectangle),
+    latitude: cleanLocation?.lat ?? null,
+    longitude: cleanLocation?.lon ?? null,
+  });
+
   const cards = useMemo(() => {
     if (!predictions) return [];
     const mapped = predictions
@@ -830,8 +841,8 @@ const FindrFavouritesPage: React.FC = () => {
         ? `Last caught ${new Date(lastCaughtDate).toLocaleDateString()}`
         : (insight?.recentActivity ?? card?.summary ?? mock.recentActivity);
 
-      // Generate forecast from live confidence, not stale database metadata
-      const forecast = generate7DayForecast(derivedConfidence, id);
+      // Use real 7-day forecast if available, fallback to synthetic forecast
+      const forecast = forecastsBySpecies.get(id) ?? generate7DayForecast(derivedConfidence, id);
 
       return {
         id,
@@ -859,7 +870,7 @@ const FindrFavouritesPage: React.FC = () => {
         forecast,
       } satisfies FavouriteEntry;
     });
-  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, catchStats]);
+  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, catchStats, forecastsBySpecies]);
 
   const sortedFavourites = useMemo(() => {
     const entries = [...favouriteEntries];
@@ -1354,7 +1365,7 @@ const FindrFavouritesPage: React.FC = () => {
               <div className="mb-8">
                 <WeeklyPlannerCard
                   favourites={favouriteEntries}
-                  loading={loading}
+                  loading={loading || forecasts7DayLoading}
                 />
               </div>
             )}
