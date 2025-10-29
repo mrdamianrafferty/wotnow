@@ -1533,6 +1533,8 @@ const FindrFavouritesPage: React.FC = () => {
                               weight_profile: entry.card?.weight_profile,
                               environmental_factors: entry.card?.environmental_factors,
                               scoreBreakdown,
+                              seasonal_multiplier: entry.card?.seasonal_multiplier,
+                              original_confidence: entry.card?.original_confidence,
                             }}
                             location={cleanLocation}
                             tideInfo={tideInfo}
@@ -1582,6 +1584,8 @@ const FindrFavouritesPage: React.FC = () => {
                               isPriority: entry.isPriority,
                               data_freshness: entry.card?.data_freshness,
                               environmental_factors: entry.card?.environmental_factors,
+                              seasonal_multiplier: entry.card?.seasonal_multiplier,
+                              original_confidence: entry.card?.original_confidence,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
@@ -1623,10 +1627,14 @@ const FindrFavouritesPage: React.FC = () => {
                               // This prevents showing stale database values like "50%"
                               confidence: entry.card ? (entry.confidence ?? 0) : 0,
                               forecast,
-                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null) 
+                              image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)
                                 ? { src: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)!, alt: entry.name }
                                 : null,
                               isPriority: entry.isPriority,
+                              data_freshness: entry.card?.data_freshness,
+                              environmental_factors: entry.card?.environmental_factors,
+                              seasonal_multiplier: entry.card?.seasonal_multiplier,
+                              original_confidence: entry.card?.original_confidence,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}

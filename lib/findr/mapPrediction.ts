@@ -123,6 +123,10 @@ export interface CardData {
   // Weather data (Phase 11) - weather_score is in score components above
   current_wind_speed_ms?: number | null;
   current_pressure_hpa?: number | null;
+
+  // Week 3: Seasonality data
+  seasonal_multiplier?: number;
+  original_confidence?: number;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
@@ -744,7 +748,11 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     // Phase 10: Environmental data
     data_freshness,
     weight_profile,
-    environmental_factors
+    environmental_factors,
+
+    // Week 3: Seasonality data
+    seasonal_multiplier: extractNumber(prediction.seasonal_multiplier) ?? undefined,
+    original_confidence: extractNumber(prediction.original_confidence) ?? undefined,
   };
 }
 
