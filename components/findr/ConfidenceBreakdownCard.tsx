@@ -14,7 +14,7 @@ interface EnvironmentalFactors {
 }
 
 interface ConfidenceBreakdownCardProps {
-  speciesName: string;
+  speciesName?: string; // Optional since not currently used, but may be needed for future features
   confidence: number;
   originalConfidence?: number;
   seasonalMultiplier?: number;
@@ -57,7 +57,6 @@ function StarRating({ stars, size = 16 }: { stars: number; size?: number }) {
 }
 
 export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = ({
-  speciesName,
   confidence,
   originalConfidence,
   seasonalMultiplier,
@@ -69,7 +68,6 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const stars = confidenceToStars(confidence);
-  const baseConfidence = originalConfidence ?? confidence;
 
   // Calculate environmental contribution
   const hasEnvironmentalData = environmentalFactors && (

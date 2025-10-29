@@ -6,7 +6,6 @@ import { TrendingUp, Target, Trash2, Clock, Fish } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { getImmediateFishingTimes } from '../../utils/fishingTimeDataService';
-import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
