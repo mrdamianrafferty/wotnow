@@ -1,4 +1,7 @@
 import React from 'react';
+import { Sparkles, Upload } from 'lucide-react';
+import { useCatchLogger } from '../../hooks/useCatchLogger';
+import { usePendingCatchSync } from '../../utils/usePendingCatchSync';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Camera, Image as ImageIcon, Fish } from 'lucide-react';
@@ -16,6 +19,9 @@ import SEO from '../../components/SEO';
  */
 export default function CatchLogEntryPage() {
   const router = useRouter();
+  // Use the same logCatch as the log flows
+  const { logCatch } = useCatchLogger();
+  const { pending, syncing, error, lastSync } = usePendingCatchSync(logCatch);
 
   return (
     <>
@@ -25,6 +31,21 @@ export default function CatchLogEntryPage() {
       />
 
       <div className="min-h-screen bg-base-200">
+        {/* Pending upload UI */}
+        {pending.length > 0 && (
+          <div className="alert alert-info flex items-center gap-2 justify-center mb-4">
+            <Upload className="h-5 w-5" />
+            <span>
+              {syncing
+                ? `Uploading ${pending.length} pending catch${pending.length > 1 ? 'es' : ''}...`
+                : `${pending.length} catch${pending.length > 1 ? 'es are' : ' is'} pending upload. Will sync when online.`}
+            </span>
+            {error && <span className="text-error ml-2">{error}</span>}
+            {lastSync && !syncing && (
+              <span className="ml-2 text-xs text-base-content/60">Last sync: {new Date(lastSync).toLocaleTimeString()}</span>
+            )}
+          </div>
+        )}
         {/* Header */}
         <div className="bg-base-100 border-b border-base-300">
           <div className="container mx-auto px-4 py-4">
