@@ -62,27 +62,29 @@ export function useQuickLogSpecies(
     if (!predictions) return [];
 
     return predictions
-      .slice(0, maxSpecies)
-      .map((pred: any) => {
+  .slice(0, maxSpecies)
+  .map((pred) => {
         // Get thumbnail from existing image map
-        const imageInfo = SPECIES_IMAGE_MAP[pred.species_code];
+        const speciesCode = pred.species_code as string;
+        const imageInfo = SPECIES_IMAGE_MAP[speciesCode];
 
         // Determine badge based on bite score thresholds
+        const biteScore = (pred.bite_score as number) ?? 0;
         let badge: 'hot' | 'good' | null = null;
-        if (pred.bite_score >= 60) {
+        if (biteScore >= 60) {
           badge = 'hot';
-        } else if (pred.bite_score >= 45) {
+        } else if (biteScore >= 45) {
           badge = 'good';
         }
 
         return {
-          id: pred.slug || pred.species_code,
-          code: pred.species_code,
-          name: pred.name_en,
-          scientificName: pred.scientific_name,
+          id: (pred.slug as string) || speciesCode,
+          code: speciesCode,
+          name: pred.name_en as string,
+          scientificName: (pred.scientific_name as string | null | undefined) || null,
           thumbnail: imageInfo?.thumb || imageInfo?.image || null,
-          confidence: pred.confidence,
-          biteScore: pred.bite_score,
+          confidence: (pred.confidence as number) ?? 0,
+          biteScore: biteScore,
           badge,
         };
       });

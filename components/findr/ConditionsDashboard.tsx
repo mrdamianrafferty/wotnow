@@ -1,5 +1,22 @@
+// Added offline detection and UI warning for conditions page
 import { AlertTriangle, Eye, EyeOff, MapPin } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+// Offline detection hook
+function useOfflineStatus() {
+  const [isOffline, setIsOffline] = useState(typeof window !== 'undefined' ? !navigator.onLine : false);
+  useEffect(() => {
+    function handleOnline() { setIsOffline(false); }
+    function handleOffline() { setIsOffline(true); }
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  return isOffline;
+}
 import dynamic from 'next/dynamic';
 import type { ConditionsSource } from '../../hooks/useFindrConditions';
 import type { FallbackConditionPayload } from '../../lib/findr/fallbackConditions';
@@ -157,6 +174,7 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
  * ==============================================================================
  */
 export function ConditionsDashboard({ data, loading, error, source: _source, onRetry, rectangleCode }: ConditionsDashboardProps) {
+  const isOffline = useOfflineStatus();
   const [showMap, setShowMap] = useState(true);
   const { location } = useUnifiedLocation();
   
@@ -573,6 +591,15 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
 
   return (
     <section className="space-y-6">
+      {isOffline && (
+        <div className="alert alert-error flex items-center gap-3 mb-4">
+          <AlertTriangle className="h-5 w-5" />
+          <div>
+            <h3 className="font-semibold text-sm">You are offline</h3>
+            <p className="text-sm">Latest available conditions are shown, but live weather data may be outdated or unavailable. Some features may not work until you reconnect.</p>
+          </div>
+        </div>
+      )}
       <div className="card bg-base-100 shadow-lg">
         <div className="card-body">
           <div className="flex flex-wrap items-center justify-between gap-3">

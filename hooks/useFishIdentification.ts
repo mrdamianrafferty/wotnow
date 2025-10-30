@@ -40,7 +40,14 @@ export function useFishIdentification(
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [result, setResult] = useState<IdentificationResult | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    aiAvailable: boolean;
+    monthlyUsage: number;
+    remainingBudget: number;
+    pricePerCall: number;
+    monthlyBudget?: number;
+    cacheSize?: number;
+  } | null>(null);
 
   // Load service stats on mount
   useEffect(() => {
@@ -160,7 +167,7 @@ export function useFishIdServiceHealth() {
           monthlyUsage: stats.monthlyUsage,
           cacheSize: stats.cacheSize
         });
-      } catch (error) {
+      } catch (_error) {
         setHealth(prev => ({ ...prev, status: 'unknown' }));
       }
     };

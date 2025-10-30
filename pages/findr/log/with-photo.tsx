@@ -58,6 +58,7 @@ export default function WithPhotoCatchLogPage() {
   useEffect(() => {
     if (photoFile && species.length > 0 && !aiResult && !isIdentifying) {
       console.log('[WithPhoto] Auto-triggering AI identification');
+  // ...existing code...
       identify(photoFile, species, {
         location: {
           coords: location?.lat && location?.lon ? [location.lat, location.lon] : undefined,
@@ -66,7 +67,7 @@ export default function WithPhotoCatchLogPage() {
         }
       });
     }
-  }, [photoFile, species, aiResult, isIdentifying]);
+  }, [photoFile, species, aiResult, isIdentifying, identify, location]);
 
   const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

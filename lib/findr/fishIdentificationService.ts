@@ -158,8 +158,8 @@ class FishIdentificationService {
       // 6. Manual selection fallback
       return this.handleManualSelection(context.candidates);
 
-    } catch (error) {
-      console.error('[FishID] Complete identification failure:', error);
+    } catch (_error) {
+      console.error('[FishID] Complete identification failure:', _error);
       return this.handleCompleteFailure(context);
     }
   }
@@ -180,7 +180,7 @@ class FishIdentificationService {
           timestamp: exif.DateTimeOriginal ? new Date(exif.DateTimeOriginal) : undefined
         };
       }
-    } catch (error) {
+    } catch (_error) {
       console.log('[FishID] No EXIF data found (this is normal for uploaded photos)');
     }
     return null;
@@ -314,7 +314,7 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
       const date = (context.date || new Date()).toISOString().split('T')[0];
 
       return `${hash}-${location}-${date}`;
-    } catch (error) {
+    } catch (_error) {
       // Fallback to simple hash if sharp fails
       return `${Date.now()}-${Math.random()}`;
     }
@@ -323,7 +323,7 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
   /**
    * Handle scenario where no candidates are provided
    */
-  private handleNoCandidates(context: CatchContext): IdentificationResult {
+  private handleNoCandidates(_context: CatchContext): IdentificationResult {
     console.warn('[FishID] No regional candidates available');
     return {
       species: [],
@@ -380,7 +380,7 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
   /**
    * Complete failure fallback
    */
-  private handleCompleteFailure(context: CatchContext): IdentificationResult {
+  private handleCompleteFailure(_context: CatchContext): IdentificationResult {
     return {
       species: [],
       method: 'manual_selection',

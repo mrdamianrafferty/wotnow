@@ -337,6 +337,14 @@ import { fishIdService } from '@/lib/findr/fishIdentificationService';
 - [ ] Check console logs for EXIF extraction status
 - [ ] Verify graceful handling of missing EXIF
 
+**Multi-Fish Detection Testing:**
+- [ ] Upload photo with multiple fish visible
+- [ ] Verify AI detects multiple fish
+- [ ] Check for "Multiple fish detected - please identify manually" message
+- [ ] Confirm manual species grid is shown
+- [ ] Verify AI cost (€0.01) still charged
+- [ ] Console log should show: `[FishID] Multiple fish detected in image`
+
 ### Testing Commands
 
 **TypeScript Compilation:**
@@ -494,7 +502,30 @@ location.reload();
 - Check regional candidates include expected species
 - Use manual selection as fallback
 
-**4. EXIF Extraction Fails**
+**4. Multiple Fish Detected**
+
+**Symptoms:**
+- Message: "Multiple fish detected - please identify manually"
+- Manual species grid shown immediately
+- AI cost (€0.01) still charged
+- Console: `[FishID] Multiple fish detected in image`
+
+**Expected Behavior:**
+This is intentional and working correctly. When the AI detects multiple different fish species in a single photo, it cannot reliably identify which one to log, so it falls back to manual selection.
+
+**Why This Happens:**
+- Photo contains multiple fish of different species
+- AI explicitly trained to detect this scenario
+- Prevents incorrect automated species selection
+
+**Solutions:**
+- This is not an error - simply select the correct species from the grid
+- For best AI performance, capture photos with a single fish clearly visible
+- If you consistently catch multiple species together, consider taking individual photos
+
+**Note:** AI still charges €0.01 for the multi-fish detection since it performed analysis. This is expected behavior.
+
+**5. EXIF Extraction Fails**
 
 **Symptoms:**
 - Console: "No EXIF data found"
