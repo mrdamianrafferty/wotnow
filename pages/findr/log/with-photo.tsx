@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { savePendingCatch } from '../../../utils/pendingCatchLogs';
 import { useRouter } from 'next/router';
 import { ArrowLeft, Flame, Circle, Upload, X, Sparkles, AlertCircle } from 'lucide-react';
 import { useUnifiedLocation } from '../../../context/UnifiedLocationContext';
@@ -106,9 +107,33 @@ export default function WithPhotoCatchLogPage() {
     setQuantity(Math.max(1, quantity + delta));
   };
 
+  const [pendingMsg, setPendingMsg] = useState<string | null>(null);
   const handleSubmit = async () => {
     if (!selectedSpecies || !location) return;
 
+    if (typeof window !== 'undefined' && !navigator.onLine) {
+      // Offline: save to IndexedDB
+      const pending = {
+        id: crypto.randomUUID(),
+        data: {
+          speciesId: selectedSpecies.id,
+          speciesCommonName: selectedSpecies.name,
+          scientificName: selectedSpecies.scientificName || null,
+          rectangleCode: location.rectangleCode || null,
+          catchDate: new Date().toISOString(),
+          quantity,
+          baitUsed: null,
+          habitatType: null,
+          notes: null,
+        },
+        image: photoFile || undefined,
+        createdAt: Date.now(),
+      };
+      await savePendingCatch(pending);
+      setPendingMsg('You are offline. Catch saved for upload when online.');
+      setTimeout(() => router.push('/findr'), 1200);
+      return;
+    }
     try {
       await logCatch({
         speciesId: selectedSpecies.id,
@@ -122,12 +147,9 @@ export default function WithPhotoCatchLogPage() {
         habitatType: null,
         notes: null,
       });
-
-      // Success - return to Findr home
       router.push('/findr');
     } catch (err) {
       console.error('Failed to log catch:', err);
-      // TODO: Show error toast
     }
   };
 
@@ -139,6 +161,12 @@ export default function WithPhotoCatchLogPage() {
       />
 
       <div className="min-h-screen bg-base-200">
+        {pendingMsg && (
+          <div className="alert alert-info shadow-sm flex items-center gap-2 justify-center mb-4">
+            <Sparkles className="h-5 w-5" />
+            <span>{pendingMsg}</span>
+          </div>
+        )}
         {/* Header - No Global Navigation */}
         <div className="bg-base-100 border-b border-base-300">
           <div className="container mx-auto px-4 py-4">
