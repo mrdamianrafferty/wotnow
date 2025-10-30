@@ -68,6 +68,8 @@ export interface CardData {
   statusNotes: string[];
   emoji: string;
   speciesCode?: string;
+  slug?: string | null;              // Phase 5: URL-friendly species identifier
+  aliases?: string[] | null;         // Phase 5: Alternative common names
   image?: CardImage;
   playfulBio?: string;
   localizedNames?: LocalizedSpeciesNames;
@@ -564,6 +566,16 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     firstString(prediction.latin_name) ||
     undefined;
 
+  // Phase 5: Extract slug (URL-friendly species identifier)
+  const slug =
+    firstString(prediction.slug) ||
+    undefined;
+
+  // Phase 5: Extract aliases (alternative common names)
+  const aliases = Array.isArray(prediction.aliases)
+    ? prediction.aliases.filter((a): a is string => typeof a === 'string' && a.trim().length > 0)
+    : undefined;
+
   const summary =
     firstString(prediction.headline) ||
     firstString(prediction.summary) ||
@@ -704,6 +716,8 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     id,
     commonName,
     scientificName,
+    slug,              // Phase 5: URL-friendly species identifier
+    aliases,           // Phase 5: Alternative common names
     confidence: parseConfidence(prediction),
     summary,
     rationale,

@@ -7,6 +7,7 @@ interface SpeciesData {
   id: string;
   code: string;
   commonName: string;
+  name_en?: string;
   scientificName: string;
   averageSize: string;
   seasonality: string[];

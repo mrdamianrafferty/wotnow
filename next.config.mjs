@@ -93,8 +93,8 @@ const nextConfig = {
 // Wrap nextConfig with PWA configuration
 const pwaConfig = withPWA({
   dest: 'public',
-  // TEMPORARILY DISABLED: Service worker causing storage bloat and caching failed requests
-  disable: true, // Was: process.env.NODE_ENV === 'development'
+  // Enable PWA except in development
+  disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
   // Exclude auth pages from precaching to prevent stale cached versions
@@ -106,49 +106,51 @@ const pwaConfig = withPWA({
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   runtimeCaching: [
+    // Cache all HTML pages (SSR/SSG)
     {
-      urlPattern: /^https:\/\/api\.openweathermap\.org\/.*/i,
-      handler: 'NetworkFirst',
+      urlPattern: /^https?:\/\/[^\/]+\/.*/,
+      handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'openweather-api-cache',
+        cacheName: 'pages-cache',
         expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 60 * 60, // 1 hour
+          maxEntries: 50,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         },
-        networkTimeoutSeconds: 10,
       },
     },
+    // Cache API responses (local and remote)
     {
-      urlPattern: /^https:\/\/api\.met\.no\/.*/i,
-      handler: 'NetworkFirst',
+      urlPattern: /\/api\//,
+      handler: 'StaleWhileRevalidate',
       options: {
-        cacheName: 'met-norway-api-cache',
+        cacheName: 'api-cache',
         expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 60 * 60, // 1 hour
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 1 day
         },
-        networkTimeoutSeconds: 10,
       },
     },
+    // Cache images
     {
       urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
       handler: 'CacheFirst',
       options: {
         cacheName: 'images-cache',
         expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxEntries: 128,
+          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
         },
       },
     },
+    // Cache static resources (JS, CSS)
     {
       urlPattern: /\.(?:js|css)$/i,
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'static-resources-cache',
         expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
+          maxEntries: 64,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
     },

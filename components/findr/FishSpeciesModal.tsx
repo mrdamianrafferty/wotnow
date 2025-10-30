@@ -252,6 +252,18 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             {localizedLine && (
               <p className="text-xs text-base-content/60">{localizedLine}</p>
             )}
+            {card.aliases && card.aliases.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">
+                  Also known as:
+                </span>
+                {card.aliases.map((alias) => (
+                  <span key={alias} className="badge badge-sm badge-outline">
+                    {alias}
+                  </span>
+                ))}
+              </div>
+            )}
             {contextsAvailable.length > 1 && advice?.alternate && (
               <p className="text-xs text-base-content/60">
                 Bonus tips available for {advice.alternate.context === 'shore' ? 'shore anglers' : 'boat crews'} below.

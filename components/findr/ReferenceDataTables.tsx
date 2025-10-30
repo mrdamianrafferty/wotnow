@@ -15,13 +15,14 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { 
-  Search, Download, BarChart3, TrendingUp,
+  BarChart3, TrendingUp,
   Fish, Target, MapPin, Calendar, Clock, Thermometer,
   ChevronDown, ChevronUp, ExternalLink, Star, Award,
   RefreshCw, Waves
 } from 'lucide-react';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
-import { TranslatedText } from '../translation/TranslatedFishCard';
+import { TranslatedText, TranslatedFishName } from '../translation/TranslatedFishCard';
+// Do not import SpeciesData from the hook, use local interface for correct fields
 import { useReferenceData } from '../../hooks/useReferenceData';
 
 // Types
@@ -29,6 +30,7 @@ interface SpeciesData {
   id: string;
   code: string;
   commonName: string;
+  name_en?: string;
   scientificName: string;
   imageUrl?: string;
   averageSize: string;
@@ -104,8 +106,8 @@ export function ReferenceDataTables({
   }, [isOpen, data, loading, refetch]);
 
   // State
-  const [currentView, setCurrentView] = useState<TableView>(initialView);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [currentView] = useState<TableView>(initialView);
+  const [searchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -117,10 +119,11 @@ export function ReferenceDataTables({
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       speciesData = speciesData.filter(species => 
-        species.commonName.toLowerCase().includes(term) ||
+        (species.name_en?.toLowerCase().includes(term) ||
+        species.commonName?.toLowerCase().includes(term) ||
         species.scientificName.toLowerCase().includes(term) ||
         species.preferredBaits.some(bait => bait.toLowerCase().includes(term)) ||
-        species.habitatTypes.some(habitat => habitat.toLowerCase().includes(term))
+        species.habitatTypes.some(habitat => habitat.toLowerCase().includes(term)))
       );
     }
     
@@ -130,8 +133,8 @@ export function ReferenceDataTables({
       
       switch (sortField) {
         case 'name':
-          aVal = a.commonName;
-          bVal = b.commonName;
+          aVal = a.name_en || a.commonName;
+          bVal = b.name_en || b.commonName;
           break;
         case 'successRate':
           aVal = a.successRate;
@@ -142,8 +145,8 @@ export function ReferenceDataTables({
           bVal = b.totalCatches;
           break;
         default:
-          aVal = a.commonName;
-          bVal = b.commonName;
+          aVal = a.name_en || a.commonName;
+          bVal = b.name_en || b.commonName;
       }
       
       if (typeof aVal === 'string') {
@@ -260,53 +263,18 @@ export function ReferenceDataTables({
     });
   }, []);
   
-  const exportData = useCallback(() => {
-    if (!data) {
-      alert('No data to export');
-      return;
-    }
-
-    let dataToExport: SpeciesData[] | BaitEffectivenessData[] | HabitatData[] = [];
-    let filename = '';
-    
-    switch (currentView) {
-      case 'species':
-        dataToExport = filteredSpeciesData;
-        filename = 'species-data.json';
-        break;
-      case 'baits':
-        dataToExport = filteredBaitData;
-        filename = 'bait-data.json';
-        break;
-      case 'habitats':
-        dataToExport = filteredHabitatData;
-        filename = 'habitat-data.json';
-        break;
-    }
-    
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [data, currentView, filteredSpeciesData, filteredBaitData, filteredHabitatData]);
   
   if (!isOpen) return null;
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 text-base-content">
       <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] flex flex-col text-base-content">
-        
         {/* Header */}
         <div className="p-6 border-b border-base-300">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-primary flex items-center gap-3">
               <BarChart3 className="w-6 h-6" />
-              <TranslatedText text="Reference Data" />
+              <TranslatedText text="Reference Data for your Favourite Species" />
             </h2>
             <button
               onClick={onClose}
@@ -315,61 +283,6 @@ export function ReferenceDataTables({
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
-          </div>
-          
-          {/* View Tabs */}
-          <div className="tabs tabs-boxed bg-base-200/60 p-1 mb-4">
-            <button
-              className={`tab gap-2 ${currentView === 'species' ? 'tab-active' : ''} text-black`}
-              onClick={() => setCurrentView('species')}
-            >
-              <Fish className="w-4 h-4" />
-              <TranslatedText text="Species" />
-            </button>
-            <button
-              className={`tab gap-2 ${currentView === 'baits' ? 'tab-active' : ''} text-black`}
-              onClick={() => setCurrentView('baits')}
-            >
-              <Target className="w-4 h-4" />
-              <TranslatedText text="Baits" />
-            </button>
-            <button
-              className={`tab gap-2 ${currentView === 'habitats' ? 'tab-active' : ''} text-black`}
-              onClick={() => setCurrentView('habitats')}
-            >
-              <MapPin className="w-4 h-4" />
-              <TranslatedText text="Habitats" />
-            </button>
-          </div>
-          
-          {/* Search and Actions */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/50" />
-              <input
-                type="text"
-                placeholder="Search data..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input input-bordered w-full pl-10"
-              />
-            </div>
-            <button
-              onClick={refetch}
-              className="btn btn-outline gap-2"
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <TranslatedText text="Refresh" />
-            </button>
-            <button
-              onClick={exportData}
-              className="btn btn-outline gap-2"
-              disabled={!data}
-            >
-              <Download className="w-4 h-4" />
-              <TranslatedText text="Export" />
             </button>
           </div>
         </div>
@@ -539,17 +452,7 @@ function SpeciesTable({
                 )}
               </button>
             </th>
-            <th className="text-base-content">
-              <button
-                onClick={() => onSort('successRate')}
-                className="flex items-center gap-1 font-semibold text-base-content"
-              >
-                Success Rate
-                {sortField === 'successRate' && (
-                  sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-            </th>
+            {/* Success Rate column removed */}
             <th className="text-base-content">
               <button
                 onClick={() => onSort('totalCatches')}
@@ -603,30 +506,15 @@ function SpeciesTable({
                       </div>
                     </div>
                     <div>
-                      <div className="font-bold text-base-content">{species.commonName}</div>
-                      <div className="text-sm opacity-50 text-base-content">{species.scientificName}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="text-base-content">
-                  <div className="flex items-center gap-2">
-                    <div className={`badge ${
-                      species.successRate >= 70 ? 'badge-success' :
-                      species.successRate >= 50 ? 'badge-warning' :
-                      'badge-error'
-                    }`}>
-                      {species.successRate}%
-                    </div>
-                    {species.totalCatches < 5 && (
-                      <div className="badge badge-ghost badge-sm text-base-content">
-                        Limited data
+                      <div className="font-bold text-base-content">
+                        <TranslatedFishName name={species.name_en || species.commonName} />
                       </div>
-                    )}
+                      <div className="italic opacity-50 text-base-content" style={{ fontSize: '0.75rem' }}>{species.scientificName}</div>
+                    </div>
                   </div>
                 </td>
-                <td className="text-base-content">
-                  <span className="text-base-content">{species.commonName}</span>
-                </td>
+                {/* Success Rate cell removed */}
+                {/* Removed duplicate common name cell (was previously code) */}
                 <td className="text-base-content">
                   {(!species.bestMonth || species.bestMonth === 'Unknown' || species.bestMonth === 'Invalid Date') ? (
                     <span className="text-sm opacity-50 text-base-content">No data</span>

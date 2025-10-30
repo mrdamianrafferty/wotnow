@@ -41,6 +41,8 @@ interface SpeciesLocalizationRow {
   name_it: string | null;
   name_pt: string | null;
   playful_bio_en: string | null;
+  slug: string | null;
+  aliases: string[] | null;
 }
 
 type LocalizedNameMap = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
@@ -350,19 +352,19 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
       speciesCodes.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
             .in('species_code', Array.from(speciesCodes))
         : Promise.resolve({ data: null, error: null }),
       scientificNames.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
             .in('scientific_name', Array.from(scientificNames))
         : Promise.resolve({ data: null, error: null }),
       commonNames.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
             .in('name_en', Array.from(commonNames))
         : Promise.resolve({ data: null, error: null }),
     ]);
@@ -487,6 +489,16 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     // Add playful bio from Supabase if available (fallback if not in database function)
     if (!result.playful_bio && match.playful_bio_en && typeof match.playful_bio_en === 'string' && match.playful_bio_en.trim().length > 0) {
       result.playful_bio = match.playful_bio_en.trim() as unknown as JsonValue;
+    }
+
+    // Add slug from species schema migration (Phase 4 API-layer enrichment)
+    if (!result.slug && match.slug) {
+      result.slug = match.slug as unknown as JsonValue;
+    }
+
+    // Add aliases from species schema migration (Phase 4 API-layer enrichment)
+    if (!result.aliases && match.aliases && Array.isArray(match.aliases) && match.aliases.length > 0) {
+      result.aliases = match.aliases as unknown as JsonValue;
     }
 
     return result;
