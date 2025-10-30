@@ -82,16 +82,6 @@ const TIME_PERIODS: { value: TimePeriod; label: string; hours: string }[] = [
   { value: 'night', label: 'Night', hours: '10PM - 5AM' },
 ];
 
-const HABITAT_LABELS: Record<HabitatType, string> = {
-  rocky_shore: 'Rocky Shore',
-  sandy_beach: 'Sandy Beach',
-  pier_harbor: 'Pier/Harbor',
-  estuary: 'Estuary',
-  shallow_water: 'Shallow Water',
-  deep_water: 'Deep Water',
-  wreck_reef: 'Wreck/Reef',
-  open_sea: 'Open Sea',
-};
 
 const TIME_PERIOD_TO_TIME: Record<TimePeriod, string> = {
   morning: '08:00:00',
