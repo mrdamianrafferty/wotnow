@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getAllPendingCatches, deletePendingCatch, PendingCatch } from './pendingCatchLogs';
 import type { CatchLogInput } from '../hooks/useCatchLogger';
 

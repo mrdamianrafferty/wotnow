@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { useCatchLogger } from '../../hooks/useCatchLogger';
 import { usePendingCatchSync } from '../../utils/usePendingCatchSync';
 import Link from 'next/link';

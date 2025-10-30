@@ -216,9 +216,6 @@ describe('FishIdentificationService', () => {
   describe('Multi-Fish Detection', () => {
     it('should handle multiple fish detection from AI', async () => {
       // Mock AI response for multiple fish
-      const OpenAI = require('openai');
-      const mockCreate = OpenAI.default.mock.results[0].value.chat.completions.create;
-
       mockCreate.mockResolvedValueOnce({
         choices: [{
           message: {
@@ -237,7 +234,7 @@ describe('FishIdentificationService', () => {
       // Should fall back to manual selection
       if (result.method === 'manual_selection' && Array.isArray(result.species)) {
         expect(result.species.length).toBeGreaterThan(0);
-        expect(result.message).toContain('Multiple fish detected' || 'select manually');
+        expect(result.message).toMatch(/Multiple fish detected|select manually/i);
       }
     });
   });
@@ -274,9 +271,6 @@ describe('FishIdentificationService', () => {
 
   describe('Confidence Thresholds', () => {
     it('should auto-select high confidence AI results', async () => {
-      const OpenAI = require('openai');
-      const mockCreate = OpenAI.default.mock.results[0].value.chat.completions.create;
-
       mockCreate.mockResolvedValueOnce({
         choices: [{
           message: {
@@ -298,9 +292,6 @@ describe('FishIdentificationService', () => {
     });
 
     it('should provide manual selection for low confidence', async () => {
-      const OpenAI = require('openai');
-      const mockCreate = OpenAI.default.mock.results[0].value.chat.completions.create;
-
       mockCreate.mockResolvedValueOnce({
         choices: [{
           message: {
@@ -317,7 +308,7 @@ describe('FishIdentificationService', () => {
       const result = await fishIdService.identify(mockImage, mockContext);
 
       // Low confidence or unknown should trigger manual selection
-      expect(result.method).toMatch(/manual_selection|ai/);
+      expect(['manual_selection', 'ai']).toContain(result.method);
       if (result.method === 'manual_selection') {
         expect(Array.isArray(result.species)).toBe(true);
       }
