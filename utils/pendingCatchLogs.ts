@@ -1,9 +1,10 @@
 // Utility for storing and syncing pending catch logs (with images) in IndexedDB
 // Used for deferred catch logging when offline
 
+import type { CatchLogInput } from '../hooks/useCatchLogger';
 export interface PendingCatch {
   id: string; // uuid
-  data: Record<string, any>; // catch log fields
+  data: CatchLogInput; // catch log fields
   image?: Blob; // optional image file
   createdAt: number;
 }

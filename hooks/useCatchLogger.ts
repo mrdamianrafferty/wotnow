@@ -9,6 +9,8 @@ import type {
   CatchLoggerTelemetryEvent,
 } from '@/types/findr-enrichment';
 
+export type { CatchLogInput };
+
 interface CatchLoggerState {
   loading: boolean;
   error: Error | null;
