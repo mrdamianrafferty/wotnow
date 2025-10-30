@@ -106,10 +106,10 @@ export interface CardData {
   data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
   weight_profile?: 'pelagic' | 'surf_estuary' | 'reef_kelp' | 'benthic' | 'cephalopod' | 'default_coastal';
   environmental_factors?: {
-    temperature?: { actual: number; match: string; score: number };
-    salinity?: { actual: number; match: string; score: number };
-    depth?: { actual: number; match: string; score: number };
-    substrate?: { actual: string; match: string; score: number };
+    temperature?: { actual: number; match: string; score: number; species_pref?: string };
+    salinity?: { actual: number; match: string; score: number; species_pref?: string };
+    depth?: { actual: number; match: string; score: number; species_pref?: string };
+    substrate?: { actual: string; match: string; score: number; species_pref?: string };
     data_age_hours?: number;
     data_source?: string;
   };
@@ -670,22 +670,26 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
       temperature: factors.temperature ? {
         actual: Number(getFactorValue(factors.temperature, 'actual')) || 0,
         match: String(getFactorValue(factors.temperature, 'match') || ''),
-        score: Number(getFactorValue(factors.temperature, 'score')) || 0
+        score: Number(getFactorValue(factors.temperature, 'score')) || 0,
+        species_pref: getFactorValue(factors.temperature, 'species_pref') ? String(getFactorValue(factors.temperature, 'species_pref')) : undefined
       } : undefined,
       salinity: factors.salinity ? {
         actual: Number(getFactorValue(factors.salinity, 'actual')) || 0,
         match: String(getFactorValue(factors.salinity, 'match') || ''),
-        score: Number(getFactorValue(factors.salinity, 'score')) || 0
+        score: Number(getFactorValue(factors.salinity, 'score')) || 0,
+        species_pref: getFactorValue(factors.salinity, 'species_pref') ? String(getFactorValue(factors.salinity, 'species_pref')) : undefined
       } : undefined,
       depth: factors.depth ? {
         actual: Number(getFactorValue(factors.depth, 'actual')) || 0,
         match: String(getFactorValue(factors.depth, 'match') || ''),
-        score: Number(getFactorValue(factors.depth, 'score')) || 0
+        score: Number(getFactorValue(factors.depth, 'score')) || 0,
+        species_pref: getFactorValue(factors.depth, 'species_pref') ? String(getFactorValue(factors.depth, 'species_pref')) : undefined
       } : undefined,
       substrate: factors.substrate ? {
         actual: String(getFactorValue(factors.substrate, 'actual') || ''),
         match: String(getFactorValue(factors.substrate, 'match') || ''),
-        score: Number(getFactorValue(factors.substrate, 'score')) || 0
+        score: Number(getFactorValue(factors.substrate, 'score')) || 0,
+        species_pref: getFactorValue(factors.substrate, 'species_pref') ? String(getFactorValue(factors.substrate, 'species_pref')) : undefined
       } : undefined,
       data_age_hours: factors.data_age_hours !== undefined && factors.data_age_hours !== null
         ? Number(factors.data_age_hours) 

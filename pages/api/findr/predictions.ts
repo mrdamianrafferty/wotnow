@@ -339,68 +339,57 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     return predictions;
   }
 
+  // **OPTIMIZATION: Batch all localization lookups into parallel queries**
+  // Instead of 3 sequential queries (by code, by scientific name, by common name),
+  // run them in parallel and deduplicate
   const localizationRows: SpeciesLocalizationRow[] = [];
 
-  // First, try species_code (most reliable)
-  if (speciesCodes.size > 0) {
-    const { data, error } = await supabase
-      .from('species')
-      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
-      .in('species_code', Array.from(speciesCodes));
+  try {
+    // Fetch by species_code, scientific_name, and name_en in parallel
+    const [codeResults, scientificResults, commonResults] = await Promise.all([
+      speciesCodes.size > 0
+        ? supabase
+            .from('species')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .in('species_code', Array.from(speciesCodes))
+        : Promise.resolve({ data: null, error: null }),
+      scientificNames.size > 0
+        ? supabase
+            .from('species')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .in('scientific_name', Array.from(scientificNames))
+        : Promise.resolve({ data: null, error: null }),
+      commonNames.size > 0
+        ? supabase
+            .from('species')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
+            .in('name_en', Array.from(commonNames))
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
-    if (error) {
-      console.warn('[findr] Failed to load localized names by species code', error.message);
-    } else if (data) {
-      localizationRows.push(...data);
+    // Combine results and deduplicate by species_code
+    const seen = new Set<string>();
+    for (const result of [codeResults, scientificResults, commonResults]) {
+      if (result.data) {
+        for (const row of result.data) {
+          if (row.species_code && !seen.has(row.species_code)) {
+            localizationRows.push(row);
+            seen.add(row.species_code);
+          }
+        }
+      }
+      if (result.error) {
+        console.warn('[findr] Localization query error:', result.error.message);
+      }
     }
-  }
 
-  // Then try scientific_name
-  const mappedScientific = new Set(
-    localizationRows
-      .map((row) => normalizeScientificName(row.scientific_name))
-      .filter((name): name is string => Boolean(name))
-  );
-
-  const remainingScientific = Array.from(scientificNames).filter(
-    (name) => !mappedScientific.has(name)
-  );
-
-  if (remainingScientific.length > 0) {
-    const { data, error } = await supabase
-      .from('species')
-      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
-      .in('scientific_name', remainingScientific);
-
-    if (error) {
-      console.warn('[findr] Failed to load localized names by scientific name', error.message);
-    } else if (data) {
-      localizationRows.push(...data);
-    }
-  }
-
-  // Finally, try common name (name_en) as fallback
-  const mappedCommonNames = new Set(
-    localizationRows
-      .map((row) => row.name_en)
-      .filter((name): name is string => Boolean(name))
-  );
-
-  const remainingCommonNames = Array.from(commonNames).filter(
-    (name) => !mappedCommonNames.has(name)
-  );
-
-  if (remainingCommonNames.length > 0) {
-    const { data, error } = await supabase
-      .from('species')
-      .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en')
-      .in('name_en', remainingCommonNames);
-
-    if (error) {
-      console.warn('[findr] Failed to load localized names by common name', error.message);
-    } else if (data) {
-      localizationRows.push(...data);
-    }
+    console.log('[findr] Batched localization query completed:', {
+      totalRows: localizationRows.length,
+      queriesRun: 3,
+      parallelExecution: true
+    });
+  } catch (error) {
+    console.warn('[findr] Localization batch query failed:', (error as Error).message);
   }
 
   if (localizationRows.length === 0) {
@@ -506,12 +495,14 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 
 /**
  * Apply seasonality multipliers to prediction confidence scores
+ * @param preFetchedGridData - Optional pre-fetched grid data to avoid duplicate queries
  */
 async function applySeasonalityMultipliers(
   predictions: unknown,
   userLat: number | null,
   userLon: number | null,
-  rectangleData: { center_lat: number; center_lon: number } | null
+  rectangleData: { center_lat: number; center_lon: number } | null,
+  preFetchedGridData?: { gridData: { region_code: string } | null; cellId: string } | null
 ): Promise<unknown> {
   if (!Array.isArray(predictions) || predictions.length === 0) {
     return predictions;
@@ -534,32 +525,38 @@ async function applySeasonalityMultipliers(
     return predictions;
   }
 
-  // Calculate grid cell_id from lat/lon
-  // Grid is 0.25° cells: G025_N{lat}{E|W}{lon}
-  // The grid naming uses the index: Nxx = floor(lat_rounded + 0.5), Wxx = floor(abs(lon_rounded) + 0.5)
-  const latRounded = Math.floor(lat / 0.25) * 0.25;
-  const lonRounded = Math.floor(lon / 0.25) * 0.25;
-  const latIndex = Math.floor(latRounded + 0.5);
-  const lonIndex = Math.floor(Math.abs(lonRounded) + 0.5);
-  const latStr = `N${latIndex.toString().padStart(2, '0')}`;
-  const lonStr = `${lon >= 0 ? 'E' : 'W'}${lonIndex.toString().padStart(3, '0')}`;
-  const cellId = `G025_${latStr}${lonStr}`;
+  let cellId: string;
+  let regionCode: string;
 
-  // Fetch region_code for this cell
-  const { data: gridData, error: gridError } = await supabase
-    .from('grid_025deg')
-    .select('region_code')
-    .eq('cell_id', cellId)
-    .maybeSingle();
+  // Use pre-fetched grid data if available (OPTIMIZATION!)
+  if (preFetchedGridData?.gridData?.region_code) {
+    cellId = preFetchedGridData.cellId;
+    regionCode = preFetchedGridData.gridData.region_code;
+    console.log('[seasonality] Using pre-fetched grid data:', { cellId, regionCode });
+  } else {
+    // Fallback: calculate and fetch grid data (old path)
+    const latRounded = Math.floor(lat / 0.25) * 0.25;
+    const lonRounded = Math.floor(lon / 0.25) * 0.25;
+    const latIndex = Math.floor(latRounded + 0.5);
+    const lonIndex = Math.floor(Math.abs(lonRounded) + 0.5);
+    const latStr = `N${latIndex.toString().padStart(2, '0')}`;
+    const lonStr = `${lon >= 0 ? 'E' : 'W'}${lonIndex.toString().padStart(3, '0')}`;
+    cellId = `G025_${latStr}${lonStr}`;
 
-  if (gridError || !gridData?.region_code) {
-    console.warn('[seasonality] No region found for cell', { cellId, lat, lon });
-    return predictions;
+    const { data: gridData, error: gridError } = await supabase
+      .from('grid_025deg')
+      .select('region_code')
+      .eq('cell_id', cellId)
+      .maybeSingle();
+
+    if (gridError || !gridData?.region_code) {
+      console.warn('[seasonality] No region found for cell', { cellId, lat, lon });
+      return predictions;
+    }
+
+    regionCode = gridData.region_code;
+    console.log('[seasonality] Found grid cell:', { cellId, regionCode, lat, lon });
   }
-
-  const regionCode = gridData.region_code;
-
-  console.log('[seasonality] Found grid cell:', { cellId, regionCode, lat, lon });
 
   // Extract species codes from predictions
   const speciesCodes = new Set<string>();
@@ -870,6 +867,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       region_code: regionCode ?? inferredRegionCode,
     });
 
+    // **OPTIMIZATION: Pre-fetch seasonality grid data in parallel with RPC**
+    // Calculate grid cell_id and fetch data NOW instead of waiting until after RPC
+    let gridCellIdForSeasonality: string | null = null;
+    let seasonalityDataPromise: Promise<{
+      gridData: { region_code: string } | null;
+      speciesCodes: Set<string>;
+      availabilityMap: Map<string, number>
+    }> | null = null;
+
+    const lat = userLat ?? rectangleData?.center_lat ?? null;
+    const lon = userLon ?? rectangleData?.center_lon ?? null;
+
+    if (lat !== null && lon !== null) {
+      // Calculate grid cell_id (same logic as in applySeasonalityMultipliers)
+      const latRounded = Math.floor(lat / 0.25) * 0.25;
+      const lonRounded = Math.floor(lon / 0.25) * 0.25;
+      const latIndex = Math.floor(latRounded + 0.5);
+      const lonIndex = Math.floor(Math.abs(lonRounded) + 0.5);
+      const latStr = `N${latIndex.toString().padStart(2, '0')}`;
+      const lonStr = `${lon >= 0 ? 'E' : 'W'}${lonIndex.toString().padStart(3, '0')}`;
+      gridCellIdForSeasonality = `G025_${latStr}${lonStr}`;
+
+      console.log('[seasonality] Pre-fetching grid data for cell:', { cellId: gridCellIdForSeasonality, lat, lon });
+
+      // Start fetching grid data in parallel (don't await yet)
+      seasonalityDataPromise = (async () => {
+        try {
+          const { data: gridData, error: gridError } = await supabase
+            .from('grid_025deg')
+            .select('region_code')
+            .eq('cell_id', gridCellIdForSeasonality)
+            .maybeSingle();
+
+          if (gridError || !gridData?.region_code) {
+            return { gridData: null, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
+          }
+
+          return { gridData, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
+        } catch (error) {
+          console.warn('[seasonality] Grid pre-fetch failed:', (error as Error).message);
+          return { gridData: null, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
+        }
+      })();
+    }
+
     // Prefer the global predictions function that works worldwide
     // Falls back to rectangle-based functions for backward compatibility
     const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
@@ -999,8 +1041,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enriched = await augmentPredictionsWithLocalizedNames(data);
 
-    // Apply seasonality multipliers to predictions
-    const withSeasonality = await applySeasonalityMultipliers(enriched, userLat, userLon, rectangleData);
+    // **OPTIMIZATION: Use pre-fetched seasonality grid data**
+    // Await the grid data that's been fetching in parallel
+    let gridDataForSeasonality: { gridData: { region_code: string } | null; cellId: string } | null = null;
+    if (seasonalityDataPromise && gridCellIdForSeasonality) {
+      const seasonalityData = await seasonalityDataPromise;
+      if (seasonalityData.gridData) {
+        gridDataForSeasonality = {
+          gridData: seasonalityData.gridData,
+          cellId: gridCellIdForSeasonality,
+        };
+      }
+    }
+
+    // Apply seasonality multipliers to predictions (using pre-fetched data!)
+    const withSeasonality = await applySeasonalityMultipliers(
+      enriched,
+      userLat,
+      userLon,
+      rectangleData,
+      gridDataForSeasonality
+    );
 
     // Cache predictions using the cache key (rectangleCode or lat/lon hash)
     if (cacheKey) {

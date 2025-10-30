@@ -772,43 +772,50 @@ const FindrFavouritesPage: React.FC = () => {
       const insight = insightMap.get(id);
       const metadata = favouriteMetadata.get(id);
       const mock = generateMockDetail(id);
-      
-      // Match by species code instead of ID since both predictions and favorites may have invalid codes
-      // Try multiple matching strategies:
-      // 1. Match by species code (direct match)
-      // 2. Match by ID (if IDs happen to match)
+
+      // Robust matching: try all possible keys
       let card: CardData | null = null;
-      
+      let matchReason = '';
+      const tryCodes: string[] = [];
       if (metadata?.speciesCode) {
-        // Try matching by species code directly (case-insensitive)
         const upperCode = metadata.speciesCode.toUpperCase();
-        card = cards.find((item) => item.speciesCode?.toUpperCase() === upperCode) ?? null;
-        
-        if (card) {
-          console.log(`[Findr Favourites] ✅ Matched ${id} by species code: ${upperCode} -> ${card.commonName} (confidence: ${card.confidence}%)`);
+        tryCodes.push(upperCode);
+        // Try mapped/aliased code if present
+        if (SPECIES_CODE_ALIASES[upperCode]) {
+          tryCodes.push(SPECIES_CODE_ALIASES[upperCode]);
         }
       }
-      
-      // Fallback: try matching by ID
-      if (!card) {
-        card = cards.find((item) => item.id === id) ?? null;
+      // Always try the id (could be a code or UUID)
+      tryCodes.push(id);
+      tryCodes.push(id.toLowerCase());
+
+      // Try to match by any of the above
+      for (const code of tryCodes) {
+        card = cards.find((item) =>
+          (item.speciesCode && item.speciesCode.toUpperCase() === code.toUpperCase()) ||
+          (item.id && item.id === code)
+        ) ?? null;
         if (card) {
-          console.log(`[Findr Favourites] ✅ Matched ${id} by ID -> ${card.commonName} (confidence: ${card.confidence}%)`);
+          matchReason = code;
+          break;
         }
       }
-      
-      if (!card && metadata?.speciesCode) {
-        console.warn(`[Findr Favourites] ❌ No match for ${id} (code: ${metadata.speciesCode}). Available:`, cards.map(c => `${c.speciesCode} (${c.commonName})`).join(', '));
+
+      if (card) {
+        console.log(`[Findr Favourites] ✅ Matched ${id} using key: ${matchReason} -> ${card.commonName} (confidence: ${card.confidence}%)`);
+      } else {
+        const codeInfo = metadata?.speciesCode ? ` (code: ${metadata.speciesCode})` : '';
+        console.warn(`[Findr Favourites] ❌ No match for ${id}${codeInfo}. Tried: [${tryCodes.join(', ')}]. Available:`, cards.map(c => `${c.speciesCode} (${c.commonName})`).join(', '));
       }
-      
+
       const bestBaitFromPrediction = card?.baitSuggestions.find((item) => item.trim().length > 0);
       const bestBaitFromInsights = insight?.bestBait?.trim();
       const bestBaitFromMetadata = metadata?.baitTips?.find((item) => item.trim().length > 0);
-      
+
       // ONLY use confidence from live prediction card, never from stale database metadata
       // This ensures we show real-time conditions, not outdated stored values
       const derivedConfidence = card?.biteScore ?? card?.confidence ?? null;
-      
+
       const bestBait =
         bestBaitFromPrediction ??
         (bestBaitFromInsights && bestBaitFromInsights.length > 0
@@ -823,7 +830,7 @@ const FindrFavouritesPage: React.FC = () => {
           : bestBaitFromMetadata
             ? 'supabase'
             : 'mock';
-      
+
       // Validate and fix image - if metadata has invalid path, try to rebuild from species code
       const rawImage = card?.image ?? metadata?.image ?? undefined;
       const image = validateAndFixImage(rawImage, card?.speciesCode ?? id);
