@@ -208,30 +208,57 @@ export function QuickLogModal({
         : (location?.lat && location?.lon ? { lat: location.lat, lon: location.lon } : undefined);
 
       // Submit all selected species as separate catches
+      const results: { species: QuickLogSpecies; success: boolean; error?: string }[] = [];
+
       for (const species of selectedSpecies) {
         const speciesInfo = SPECIES_IMAGE_MAP[species.code];
 
-        const result = await onQuickLog({
-          speciesId: species.id,
-          speciesCommonName: speciesInfo?.name || species.name,
-          scientificName: species.scientificName,
-          rectangleCode: rectangleCode ?? location?.rectangleCode,
-          quantity,
-          photo: photoFile ?? undefined,
-          userLocation,
-          catchDate: exifData?.timestamp
-            ? exifData.timestamp.toISOString().split('T')[0]
-            : undefined,
-          catchTime: exifData?.timestamp
-            ? exifData.timestamp.toISOString().split('T')[1]?.slice(0, 8)
-            : undefined,
-        });
+        try {
+          const result = await onQuickLog({
+            speciesId: species.id,
+            speciesCommonName: speciesInfo?.name || species.name,
+            scientificName: species.scientificName,
+            rectangleCode: rectangleCode ?? location?.rectangleCode,
+            quantity,
+            photo: photoFile ?? undefined,
+            userLocation,
+            catchDate: exifData?.timestamp
+              ? exifData.timestamp.toISOString().split('T')[0]
+              : undefined,
+            catchTime: exifData?.timestamp
+              ? exifData.timestamp.toISOString().split('T')[1]?.slice(0, 8)
+              : undefined,
+          });
 
-        if (result == null) {
-          throw new Error(`Failed to log ${species.name}. Please try again.`);
+          if (result == null) {
+            results.push({ species, success: false, error: 'Unknown error occurred' });
+          } else {
+            results.push({ species, success: true });
+          }
+        } catch (speciesErr) {
+          const errMsg = speciesErr instanceof Error ? speciesErr.message : 'Unknown error';
+          results.push({ species, success: false, error: errMsg });
         }
       }
 
+      // Check if all failed
+      const successCount = results.filter(r => r.success).length;
+      const failedCount = results.filter(r => !r.success).length;
+
+      if (successCount === 0) {
+        // All failed
+        const firstError = results.find(r => r.error)?.error || 'Failed to log catches';
+        if (firstError.includes('Authentication') || firstError.toLowerCase().includes('auth')) {
+          throw new Error('You need to sign in to log catches. Please sign in and try again.');
+        } else {
+          throw new Error(`Failed to log catches: ${firstError}`);
+        }
+      } else if (failedCount > 0) {
+        // Partial success
+        console.warn('[QuickLog] Partial success:', { successCount, failedCount, results });
+      }
+
+      // Show success even if partial
       setCurrentStep('success');
       onSuccess?.();
 
@@ -242,12 +269,7 @@ export function QuickLogModal({
     } catch (err) {
       console.error('[QuickLog] Failed to log catch:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to log catch';
-
-      if (errorMessage.includes('Authentication') || errorMessage.includes('auth')) {
-        setError('You need to sign in to log catches. Please sign in and try again.');
-      } else {
-        setError(errorMessage);
-      }
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
