@@ -35,10 +35,12 @@ export type QuickLogParams = {
   speciesId: string;
   speciesCommonName: string;
   scientificName?: string | null;
-  rectangleCode: string;
+  rectangleCode?: string | null;
   quantity: number;
   photo?: File | Blob | null;
   userLocation?: { lat: number; lon: number };
+  catchDate?: string;
+  catchTime?: string;
 };
 
 /**
