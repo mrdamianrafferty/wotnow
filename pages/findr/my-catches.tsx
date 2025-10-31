@@ -9,7 +9,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { Camera, Upload, Info, ClipboardList, Fish } from 'lucide-react';
 import Link from 'next/link';
-import { TrophyPhotoCarousel, PhotoGalleryGrid } from '@/components/findr/TrophyPhotoCarousel';
+import { TrophyPhotoCarousel, PhotoGalleryGrid, type PhotoData } from '@/components/findr/TrophyPhotoCarousel';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 import { useAuth } from '@/context/AuthContext';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
@@ -31,7 +31,7 @@ export default function MyCatchesPage() {
   });
 
   // Pin/unpin handler
-  async function handlePinToggle(photo, index) {
+  async function handlePinToggle(photo: PhotoData, index: number) {
     if (!user) return;
     setPinning(photo.id);
     try {

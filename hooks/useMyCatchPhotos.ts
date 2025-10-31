@@ -30,6 +30,7 @@ export function useMyCatchPhotos() {
         size_category: string;
         bait_used: string;
         notes?: string;
+        pinned?: boolean;
         photo_assets?: Array<{
           url: string;
           thumbnail_url: string;
