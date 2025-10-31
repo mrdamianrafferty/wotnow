@@ -99,7 +99,7 @@ export function QuickLogModal({
   rectangleCode: propRectangleCode,
 }: QuickLogModalProps) {
   // Context
-  const { location } = useUnifiedLocation();
+  const { location, updateLocation } = useUnifiedLocation();
 
   // Get rectangle code from coordinates if not in location context
   const [lookupRectangleCode, setLookupRectangleCode] = useState<string | undefined>(
@@ -163,6 +163,37 @@ export function QuickLogModal({
       rectangleCode: lookupRectangleCode
     }
   );
+
+  // Request location when modal opens
+  useEffect(() => {
+    if (isOpen && !location?.lat && !location?.lon && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      console.log('[QuickLogModal] Requesting location...');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('[QuickLogModal] Location received:', position.coords);
+          updateLocation({
+            coordinates: {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            },
+            source: 'gps',
+            accuracy: position.coords.accuracy,
+            resolveRectangle: true
+          }).catch((err: Error) => {
+            console.warn('[QuickLogModal] Failed to update location:', err);
+          });
+        },
+        (err: GeolocationPositionError) => {
+          console.warn('[QuickLogModal] Location request failed:', err.message);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    }
+  }, [isOpen, location?.lat, location?.lon, updateLocation]);
 
   // Debug log
   useEffect(() => {
@@ -593,8 +624,21 @@ export function QuickLogModal({
               </div>
             )}
 
+            {/* Loading Regional Species */}
+            {loadingSpecies && (
+              <div className="text-center py-8">
+                <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+                <h4 className="font-semibold text-lg mb-2">
+                  <TranslatedText text="Loading regional species..." />
+                </h4>
+                <p className="text-sm opacity-70">
+                  <TranslatedText text="Finding fish in your area" />
+                </p>
+              </div>
+            )}
+
             {/* AI Identifying State */}
-            {isIdentifying && (
+            {!loadingSpecies && isIdentifying && (
               <div className="text-center py-8">
                 <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
                 <h4 className="font-semibold text-lg mb-2 flex items-center justify-center gap-2">
@@ -667,8 +711,21 @@ export function QuickLogModal({
         {/* Step 3: Species Selection */}
         {currentStep === 'species-selection' && (
           <div className="space-y-4">
+            {/* Loading Regional Species */}
+            {loadingSpecies && (
+              <div className="text-center py-8">
+                <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+                <h4 className="font-semibold text-lg mb-2">
+                  <TranslatedText text="Loading regional species..." />
+                </h4>
+                <p className="text-sm opacity-70">
+                  <TranslatedText text="Finding fish in your area" />
+                </p>
+              </div>
+            )}
+
             {/* AI Result - High Confidence */}
-            {aiResult && !Array.isArray(aiResult.species) && aiResult.confidence >= 0.7 && (
+            {!loadingSpecies && aiResult && !Array.isArray(aiResult.species) && aiResult.confidence >= 0.7 && (
               <div className="card bg-success/10 border border-success/30">
                 <div className="card-body p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -730,7 +787,7 @@ export function QuickLogModal({
             )}
 
             {/* AI Result - Low Confidence or Manual */}
-            {(!aiResult || aiResult.confidence < 0.7 || aiError) && (
+            {!loadingSpecies && (!aiResult || aiResult.confidence < 0.7 || aiError) && (
               <>
                 <div className="text-center mb-4">
                   <p className="text-sm opacity-70">
