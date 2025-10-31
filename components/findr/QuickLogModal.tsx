@@ -82,6 +82,15 @@ export function QuickLogModal({
     { maxSpecies: 8 }
   );
 
+  // Debug log
+  useEffect(() => {
+    console.log('[QuickLogModal] Species loaded:', {
+      count: regionalSpecies.length,
+      loading: loadingSpecies,
+      location: { lat: location?.lat, lon: location?.lon }
+    });
+  }, [regionalSpecies, loadingSpecies, location]);
+
   // AI identification
   const { identify, isIdentifying, result: aiResult, error: aiError } = useFishIdentification({
     onSuccess: (result) => {
@@ -631,7 +640,7 @@ export function QuickLogModal({
                       <div key={i} className="aspect-square bg-base-200 animate-pulse rounded-lg" />
                     ))}
                   </div>
-                ) : (
+                ) : regionalSpecies.length > 0 ? (
                   <>
                     <div className="grid grid-cols-4 gap-2">
                       {regionalSpecies.map((species) => {
@@ -701,6 +710,11 @@ export function QuickLogModal({
                       </button>
                     )}
                   </>
+                ) : (
+                  <div className="text-center py-4 text-sm opacity-60">
+                    <p><TranslatedText text="No predictions available for this location" /></p>
+                    <p className="text-xs mt-1"><TranslatedText text="Use the search below to find your species" /></p>
+                  </div>
                 )}
 
                 {/* Show All Species Toggle */}
