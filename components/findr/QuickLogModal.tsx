@@ -247,6 +247,7 @@ export function QuickLogModal({
   const [baitUsed, setBaitUsed] = useState<string>('');
   const [habitatType, setHabitatType] = useState<HabitatType | ''>('');
   const [notes, setNotes] = useState<string>('');
+  const [requestingLocation, setRequestingLocation] = useState<boolean>(false);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -296,6 +297,43 @@ export function QuickLogModal({
   const handleSkipPhoto = useCallback(() => {
     setCurrentStep('species-selection');
   }, []);
+
+  // Request GPS location
+  const handleRequestLocation = useCallback(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      console.error('[QuickLogModal] Geolocation not supported');
+      return;
+    }
+
+    setRequestingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log('[QuickLogModal] GPS location received:', position.coords);
+        updateLocation({
+          coordinates: {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude
+          },
+          source: 'gps',
+          accuracy: position.coords.accuracy,
+          resolveRectangle: true
+        }).catch((err: Error) => {
+          console.warn('[QuickLogModal] Failed to update location:', err);
+        }).finally(() => {
+          setRequestingLocation(false);
+        });
+      },
+      (err: GeolocationPositionError) => {
+        console.warn('[QuickLogModal] Location request failed:', err.message);
+        setRequestingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0 // Force fresh location
+      }
+    );
+  }, [updateLocation]);
 
   // Species selection handlers (multi-select)
   const handleSpeciesToggle = useCallback((species: QuickLogSpecies) => {
@@ -712,7 +750,7 @@ export function QuickLogModal({
             {exifData && (
               <div className="alert alert-info">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <div className="text-xs">
+                <div className="text-xs flex-1">
                   {exifData.location && (
                     <div>
                       <TranslatedText text="Location" />: {Math.abs(exifData.location[0]).toFixed(4)}°{exifData.location[0] >= 0 ? 'N' : 'S'}, {Math.abs(exifData.location[1]).toFixed(4)}°{exifData.location[1] >= 0 ? 'E' : 'W'}
@@ -724,7 +762,23 @@ export function QuickLogModal({
                     </div>
                   )}
                   {!exifData.location && !exifData.timestamp && (
-                    <div><TranslatedText text="No EXIF data found - using current location" /></div>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span><TranslatedText text="No location data in photo" /></span>
+                      <button
+                        onClick={handleRequestLocation}
+                        disabled={requestingLocation}
+                        className="btn btn-xs btn-primary"
+                      >
+                        {requestingLocation ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <TranslatedText text="Getting location..." />
+                          </>
+                        ) : (
+                          <TranslatedText text="Use my GPS location" />
+                        )}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -935,9 +989,43 @@ export function QuickLogModal({
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-4 text-sm opacity-60">
-                    <p><TranslatedText text="No predictions available for this location" /></p>
-                    <p className="text-xs mt-1"><TranslatedText text="Use the search below to find your species" /></p>
+                  <div className="text-center py-6 space-y-3">
+                    {!location?.lat || !location?.lon || !lookupRectangleCode ? (
+                      <>
+                        <AlertCircle className="w-12 h-12 mx-auto text-warning/50" />
+                        <div>
+                          <p className="text-sm font-medium mb-1">
+                            <TranslatedText text="Location needed for predictions" />
+                          </p>
+                          <p className="text-xs opacity-60">
+                            <TranslatedText text="Let us use your GPS to show likely species in your area" />
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleRequestLocation}
+                          disabled={requestingLocation}
+                          className="btn btn-primary btn-sm"
+                        >
+                          {requestingLocation ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <TranslatedText text="Getting location..." />
+                            </>
+                          ) : (
+                            <TranslatedText text="Use my GPS location" />
+                          )}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm opacity-60">
+                          <TranslatedText text="No predictions available for this location" />
+                        </p>
+                        <p className="text-xs opacity-50">
+                          <TranslatedText text="Use the search below to find your species" />
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
 
