@@ -193,9 +193,9 @@ export function QuickLogModal({
         speciesId: selectedSpecies.id,
         speciesCommonName: speciesInfo?.name || selectedSpecies.name,
         scientificName: selectedSpecies.scientificName,
-        rectangleCode: rectangleCode || location?.rectangleCode || undefined,
+        rectangleCode: rectangleCode || location?.rectangleCode,
         quantity,
-        photo: photoFile,
+        photo: photoFile || undefined,
         userLocation,
         catchDate: exifData?.timestamp
           ? exifData.timestamp.toISOString().split('T')[0]
