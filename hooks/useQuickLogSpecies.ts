@@ -15,6 +15,7 @@ export interface QuickLogSpecies {
 
 export interface UseQuickLogSpeciesOptions {
   maxSpecies?: number;
+  rectangleCode?: string;
 }
 
 export interface UseQuickLogSpeciesResult {
@@ -51,6 +52,7 @@ export function useQuickLogSpecies(
 
   // Fetch predictions for location
   const { predictions, loading, error } = useFishingPredictions({
+    rectangleCode: options?.rectangleCode,
     latitude,
     longitude,
     predictionDate: new Date().toISOString().split('T')[0],

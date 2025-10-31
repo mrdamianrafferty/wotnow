@@ -79,7 +79,10 @@ export function QuickLogModal({
   const { species: regionalSpecies, isLoading: loadingSpecies } = useQuickLogSpecies(
     location?.lat || 43.5, // Fallback coordinates
     location?.lon || -5.25,
-    { maxSpecies: 8 }
+    {
+      maxSpecies: 8,
+      rectangleCode: location?.rectangleCode || undefined
+    }
   );
 
   // Debug log
@@ -87,7 +90,11 @@ export function QuickLogModal({
     console.log('[QuickLogModal] Species loaded:', {
       count: regionalSpecies.length,
       loading: loadingSpecies,
-      location: { lat: location?.lat, lon: location?.lon }
+      location: {
+        lat: location?.lat,
+        lon: location?.lon,
+        rectangleCode: location?.rectangleCode
+      }
     });
   }, [regionalSpecies, loadingSpecies, location]);
 
