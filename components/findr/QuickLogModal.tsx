@@ -103,7 +103,7 @@ export function QuickLogModal({
 
     // Otherwise, look up rectangleCode from coordinates
     if (location?.lat && location?.lon) {
-      const url = `/api/findr/rectangle-lookup?latitude=${location.lat}&longitude=${location.lon}`;
+      const url = `/api/findr/rectangle-lookup?lat=${location.lat}&lon=${location.lon}`;
       console.log('[QuickLogModal] Fetching rectangleCode from API:', url);
 
       fetch(url)
