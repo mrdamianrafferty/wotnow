@@ -464,6 +464,29 @@ export function QuickLogModal({
                 </span>
               </div>
             )}
+
+            {/* Continue Button - always show after photo is captured */}
+            <button
+              onClick={() => setCurrentStep('species-selection')}
+              className="btn btn-primary btn-lg w-full"
+              disabled={isSubmitting}
+            >
+              {isIdentifying ? (
+                <>
+                  <TranslatedText text="Skip AI & Continue" />
+                </>
+              ) : (
+                <>
+                  <TranslatedText text="Continue" />
+                </>
+              )}
+            </button>
+
+            {isIdentifying && (
+              <p className="text-xs text-center opacity-60">
+                <TranslatedText text="AI identification will continue in background" />
+              </p>
+            )}
           </div>
         )}
 
