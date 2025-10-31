@@ -1,0 +1,62 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - navigation [ref=e6]:
+      - link "findr" [ref=e7] [cursor=pointer]:
+        - /url: /findr
+        - img [ref=e8]
+        - generic [ref=e14]: findr
+      - link "faves" [ref=e15] [cursor=pointer]:
+        - /url: /findr/favourites
+        - img [ref=e16]
+        - generic [ref=e18]: faves
+      - link "catches" [ref=e19] [cursor=pointer]:
+        - /url: /findr/log
+        - img [ref=e20]
+        - generic [ref=e23]: catches
+      - link "gallery" [ref=e24] [cursor=pointer]:
+        - /url: /findr/my-catches
+        - img [ref=e25]
+        - generic [ref=e28]: gallery
+      - link "conditions" [ref=e29] [cursor=pointer]:
+        - /url: /findr/conditions
+        - img [ref=e30]
+        - generic [ref=e35]: conditions
+      - link "info" [ref=e36] [cursor=pointer]:
+        - /url: /findr/info
+        - img [ref=e37]
+        - generic [ref=e39]: info
+    - generic [ref=e40]:
+      - button "Set location" [ref=e41] [cursor=pointer]:
+        - img [ref=e42]
+        - generic [ref=e45]: Set location
+      - generic [ref=e46]:
+        - link "Sign In" [ref=e47] [cursor=pointer]:
+          - /url: /findr/auth
+          - img [ref=e48]
+          - text: Sign In
+        - button "🇮🇪 en" [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]: 🇮🇪
+          - generic [ref=e54]: en
+          - img [ref=e55]
+    - generic [ref=e59]:
+      - img [ref=e61]
+      - heading "Sign in to view your favourites" [level=2] [ref=e63]
+      - paragraph [ref=e64]: Save your favourite species and get personalized fishing predictions
+      - generic [ref=e65]:
+        - link "Sign In" [ref=e66] [cursor=pointer]:
+          - /url: /findr/auth
+          - img [ref=e67]
+          - generic [ref=e70]: Sign In
+        - link "Register" [ref=e71] [cursor=pointer]:
+          - /url: /findr/auth
+          - img [ref=e72]
+          - generic [ref=e75]: Register
+      - link "← Back to Findr" [ref=e77] [cursor=pointer]:
+        - /url: /findr
+  - button "Open Next.js Dev Tools" [ref=e83] [cursor=pointer]:
+    - img [ref=e84]
+  - alert [ref=e87]
+```

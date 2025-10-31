@@ -1,0 +1,78 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - navigation [ref=e6]:
+        - link "findr" [ref=e7]:
+          - /url: /findr
+          - img [ref=e8]
+          - generic [ref=e14]: findr
+        - link "faves" [ref=e15]:
+          - /url: /findr/favourites
+          - img [ref=e16]
+          - generic [ref=e18]: faves
+        - link "catches" [ref=e19]:
+          - /url: /findr/log
+          - img [ref=e20]
+          - generic [ref=e23]: catches
+        - link "gallery" [ref=e24]:
+          - /url: /findr/my-catches
+          - img [ref=e25]
+          - generic [ref=e28]: gallery
+        - link "conditions" [ref=e29]:
+          - /url: /findr/conditions
+          - img [ref=e30]
+          - generic [ref=e35]: conditions
+        - link "info" [ref=e36]:
+          - /url: /findr/info
+          - img [ref=e37]
+          - generic [ref=e39]: info
+      - generic [ref=e40]:
+        - button "Set location" [ref=e41] [cursor=pointer]:
+          - img [ref=e42]
+          - generic [ref=e45]: Set location
+        - button "🇮🇪 en" [ref=e49] [cursor=pointer]:
+          - generic [ref=e50]: 🇮🇪
+          - generic [ref=e51]: en
+          - img [ref=e52]
+      - region "findr - catch of the day" [ref=e55]:
+        - heading "findr - catch of the day" [level=1] [ref=e59]:
+          - img [ref=e60]
+          - generic [ref=e63]: findr - catch of the day
+        - generic [ref=e66]: Looking for fish activity near Portuguese Coast…
+    - option [selected]
+    - option
+    - option
+    - contentinfo [ref=e85]:
+      - generic [ref=e86]:
+        - complementary [ref=e87]:
+          - img "findr by Go Daisy" [ref=e88]
+          - generic [ref=e89]: findr
+          - paragraph [ref=e90]:
+            - text: by
+            - link "Go Daisy" [ref=e91] [cursor=pointer]:
+              - /url: https://godaisy.io
+        - generic [ref=e92]:
+          - navigation [ref=e93]:
+            - link "Support findr" [ref=e94] [cursor=pointer]:
+              - /url: /findr/support
+            - link "How it works" [ref=e95] [cursor=pointer]:
+              - /url: /findr/how-it-works
+            - link "About findr" [ref=e96] [cursor=pointer]:
+              - /url: /findr/about
+          - navigation [ref=e97]:
+            - link "Terms of use" [ref=e98] [cursor=pointer]:
+              - /url: /findr/terms
+            - link "Privacy policy" [ref=e99] [cursor=pointer]:
+              - /url: /findr/privacy
+            - link "Cookie policy" [ref=e100] [cursor=pointer]:
+              - /url: /findr/cookies
+        - navigation [ref=e101]:
+          - paragraph [ref=e102]: Find your sole, mate
+          - paragraph [ref=e103]: © 2025 Go Daisy. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e109] [cursor=pointer]:
+    - img [ref=e110]
+  - alert [ref=e115]
+```

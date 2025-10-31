@@ -7,6 +7,7 @@ import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
+import { EnvironmentalInfo } from './EnvironmentalInfo';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -179,6 +180,13 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           <div className="mt-2 text-xs text-base-content/60 flex items-center gap-1">
             <TrendingUp size={12} className="text-info" />
             <TranslatedText text={`Conditions improving ${improvingDay}`} />
+          </div>
+        )}
+
+        {/* Environmental Info (Phase 10) */}
+        {species.environmental_factors && (
+          <div className="mt-2">
+            <EnvironmentalInfo factors={species.environmental_factors} data-testid="environmental-info" />
           </div>
         )}
 

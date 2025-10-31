@@ -31,7 +31,7 @@ https://*.godaisy.io
 ```
 
 **Note:** Do NOT add paths like `/*` - Google only supports domain-level restrictions, not path-level.
-
+...<YOUR_GOOGLE_MAPS_API_KEY>...
 #### Vercel Preview Deployments (optional but recommended)
 ```
 https://*.vercel.app

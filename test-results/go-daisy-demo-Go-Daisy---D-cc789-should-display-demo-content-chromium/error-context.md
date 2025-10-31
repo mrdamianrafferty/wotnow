@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "Go Daisy helps you plan your next activity in seconds — matched to this week's weather." [level=1] [ref=e8]
+        - paragraph [ref=e9]: See what’s best right now in your area — it's totally free and you don't even have to sign up.
+      - generic [ref=e10]:
+        - link "Sign in" [ref=e11] [cursor=pointer]:
+          - /url: /login
+        - link "Create account" [ref=e12] [cursor=pointer]:
+          - /url: /signup
+    - generic [ref=e13]:
+      - complementary [ref=e14]:
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e19]: Your area
+            - textbox "Type a place (e.g., Colunga, Asturias)" [ref=e22]
+            - generic [ref=e23]:
+              - text: "Showing demo for:"
+              - strong [ref=e24]: Madrid, Spain
+          - generic [ref=e25]:
+            - button "Use my location" [ref=e26] [cursor=pointer]
+            - button "Lastres" [ref=e27] [cursor=pointer]
+            - button "Madrid" [ref=e28] [cursor=pointer]
+          - generic [ref=e29]:
+            - generic [ref=e31]: Filters
+            - generic [ref=e32]:
+              - button "Outdoors" [ref=e33] [cursor=pointer]
+              - button "Water" [ref=e34] [cursor=pointer]
+              - button "Family" [ref=e35] [cursor=pointer]
+              - button "Sports" [ref=e36] [cursor=pointer]
+          - generic [ref=e38]: No account needed. Changing location updates the live cards on the right.
+          - generic [ref=e40]:
+            - generic [ref=e41]: 👋
+            - generic [ref=e42]:
+              - generic [ref=e43]: Already using Go Daisy?
+              - generic [ref=e44]: Sign in to see your personalised activities and saved places.
+            - generic [ref=e45]:
+              - link "Sign in" [ref=e46] [cursor=pointer]:
+                - /url: /login
+              - link "Create account" [ref=e47] [cursor=pointer]:
+                - /url: /signup
+                - text: Register
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: Make it yours
+              - generic [ref=e52]:
+                - text: Start onboarding and we’ll carry over
+                - strong [ref=e53]: Madrid, Spain
+                - text: .
+            - link "Start onboarding" [ref=e54] [cursor=pointer]:
+              - /url: /onboarding?lat=40.4168&lon=-3.7038&name=Madrid%2C%20Spain&coastLat=35.272&coastLon=23.539&coastName=Elafonissi%20Beach%2C%20Crete
+              - text: Start
+      - generic [ref=e58]:
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic [ref=e59]: Updating
+  - button "Open Next.js Dev Tools" [ref=e65] [cursor=pointer]:
+    - img [ref=e66]
+  - alert [ref=e69]
+```

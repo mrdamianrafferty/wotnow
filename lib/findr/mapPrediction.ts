@@ -1,4 +1,6 @@
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
+import blurPlaceholders from '../../data/blur-placeholders.json';
+import { generateBlurDataURL } from '../image/placeholder';
 import { getFindrFishBio } from '../../data/findrFishBios';
 import type { FishingPrediction } from '../../hooks/useFishingPredictions';
 
@@ -10,6 +12,12 @@ export interface CardImage {
   mobile: string | null;
   thumb: string | null;
   blurDataURL?: string;
+}
+
+// Build a lookup for blurDataURL by code (case-insensitive)
+const BLUR_PLACEHOLDER_MAP: Record<string, string> = {};
+for (const entry of blurPlaceholders as Array<{ code: string; blurDataURL: string }>) {
+  BLUR_PLACEHOLDER_MAP[entry.code.toLowerCase()] = entry.blurDataURL;
 }
 
 export type LocalizedSpeciesNames = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
@@ -733,7 +741,11 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
           alt: imageInfo.name,
           mobile: imageInfo.mobile ?? null,
           thumb: imageInfo.thumb ?? null,
-          blurDataURL: (imageInfo as { blurDataURL?: string }).blurDataURL,
+          blurDataURL:
+            BLUR_PLACEHOLDER_MAP[imageInfo.code?.toLowerCase?.()] ||
+            BLUR_PLACEHOLDER_MAP[imageInfo.slug?.toLowerCase?.()] ||
+            BLUR_PLACEHOLDER_MAP[imageInfo.name?.toLowerCase?.().replace(/\s+/g, '-') || ''] ||
+            generateBlurDataURL(32, 20),
         }
       : undefined,
     playfulBio,

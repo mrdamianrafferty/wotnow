@@ -5,6 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  globalSetup: './e2e/global-setup.ts',
   
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -27,13 +28,10 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
-    
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
-    
     /* Screenshot on failure */
     screenshot: 'only-on-failure',
-    
     /* Video on failure */
     video: 'retain-on-failure',
   },

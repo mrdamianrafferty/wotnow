@@ -1,0 +1,126 @@
+# Page snapshot
+
+```yaml
+- generic:
+  - generic [active]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - navigation [ref=e6]:
+            - button "previous" [disabled] [ref=e7]:
+              - img "previous" [ref=e8]
+            - generic [ref=e10]:
+              - generic [ref=e11]: 1/
+              - text: "2"
+            - button "next" [ref=e12] [cursor=pointer]:
+              - img "next" [ref=e13]
+          - img
+        - generic [ref=e15]:
+          - link "Next.js 15.5.0 (outdated) Webpack" [ref=e16] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+            - img [ref=e17]
+            - generic "An outdated version detected (latest is 16.0.1), upgrade is highly recommended!" [ref=e19]: Next.js 15.5.0 (outdated)
+            - generic [ref=e20]: Webpack
+          - img
+      - dialog "Runtime TypeError" [ref=e22]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - generic [ref=e29]: Runtime TypeError
+              - generic [ref=e30]:
+                - button "Copy Error Info" [ref=e31] [cursor=pointer]:
+                  - img [ref=e32]
+                - button "No related documentation found" [disabled] [ref=e34]:
+                  - img [ref=e35]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=e37] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+                  - img [ref=e38]
+            - paragraph [ref=e47]: can't access property "day", day.temp is undefined
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - paragraph [ref=e51]:
+                - img [ref=e53]
+                - generic [ref=e56]: pages/index.tsx (497:31) @ buildForecastFromOneCall/<
+                - button "Open in editor" [ref=e57] [cursor=pointer]:
+                  - img [ref=e59]
+              - generic [ref=e62]:
+                - generic [ref=e63]: "495 | return {"
+                - generic [ref=e64]: "496 | date: day.dt,"
+                - generic [ref=e65]: "> 497 | temperature: Math.round(day.temp.day),"
+                - generic [ref=e66]: "| ^"
+                - generic [ref=e67]: "498 | tempMax: Math.round(day.temp.max),"
+                - generic [ref=e68]: "499 | tempMin: Math.round(day.temp.min),"
+                - generic [ref=e69]: "500 | condition: day.weather?.[0]?.main ?? '',"
+            - generic [ref=e70]:
+              - generic [ref=e71]:
+                - paragraph [ref=e72]:
+                  - text: Call Stack
+                  - generic [ref=e73]: "58"
+                - button "Show 45 ignore-listed frame(s)" [ref=e74] [cursor=pointer]:
+                  - text: Show 45 ignore-listed frame(s)
+                  - img [ref=e75]
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - text: buildForecastFromOneCall/<
+                  - button "Open buildForecastFromOneCall/< in editor" [ref=e79] [cursor=pointer]:
+                    - img [ref=e80]
+                - text: pages/index.tsx (497:31)
+              - generic [ref=e82]:
+                - generic [ref=e83]:
+                  - text: buildForecastFromOneCall
+                  - button "Open buildForecastFromOneCall in editor" [ref=e84] [cursor=pointer]:
+                    - img [ref=e85]
+                - text: pages/index.tsx (494:40)
+              - generic [ref=e87]:
+                - generic [ref=e88]:
+                  - text: Home
+                  - button "Open Home in editor" [ref=e89] [cursor=pointer]:
+                    - img [ref=e90]
+                - text: pages/index.tsx (521:37)
+              - generic [ref=e92]:
+                - generic [ref=e93]: (pages-dir-browser)/./node_modules/scheduler/cjs/scheduler.development.js
+                - text: .next/static/chunks/main.js (4135:1)
+              - generic [ref=e94]:
+                - generic [ref=e95]: (pages-dir-browser)/./node_modules/scheduler/index.js
+                - text: .next/static/chunks/main.js (4146:1)
+              - generic [ref=e96]:
+                - generic [ref=e97]: (pages-dir-browser)/./node_modules/react-dom/cjs/react-dom.development.js
+                - text: .next/static/chunks/main.js (4058:1)
+              - generic [ref=e98]:
+                - generic [ref=e99]: (pages-dir-browser)/./node_modules/react-dom/index.js
+                - text: .next/static/chunks/main.js (4080:1)
+              - generic [ref=e100]:
+                - generic [ref=e101]: (pages-dir-browser)/./node_modules/react-dom/client.js
+                - text: .next/static/chunks/main.js (4069:1)
+              - generic [ref=e102]:
+                - generic [ref=e103]: (pages-dir-browser)/./node_modules/next/dist/client/index.js
+                - text: .next/static/chunks/main.js (2854:1)
+              - generic [ref=e104]:
+                - generic [ref=e105]: (pages-dir-browser)/./node_modules/next/dist/client/next-dev.js
+                - text: .next/static/chunks/main.js (2865:1)
+              - generic [ref=e106]:
+                - generic [ref=e107]: __webpack_exec__
+                - text: .next/static/chunks/main.js (4163:67)
+              - generic [ref=e108]:
+                - generic [ref=e109]: <unknown>
+                - text: .next/static/chunks/main.js (4164:53)
+              - generic [ref=e110]:
+                - generic [ref=e111]: <unknown>
+                - text: .next/static/chunks/main.js (9:61)
+        - generic [ref=e112]:
+          - generic [ref=e113]: "1"
+          - generic [ref=e114]: "2"
+    - generic [ref=e119] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=e120]:
+        - img [ref=e121]
+      - generic [ref=e125]:
+        - button "Open issues overlay" [ref=e126]:
+          - generic [ref=e127]:
+            - generic [ref=e128]: "1"
+            - generic [ref=e129]: "2"
+          - generic [ref=e130]:
+            - text: Issue
+            - generic [ref=e131]: s
+        - button "Collapse issues badge" [ref=e132]:
+          - img [ref=e133]
+```

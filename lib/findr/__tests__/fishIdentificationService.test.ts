@@ -304,8 +304,17 @@ describe('FishIdentificationService', () => {
         }]
       });
 
+      // Use only low-confidence candidates to avoid database match
+      const lowConfidenceContext = {
+        ...mockContext,
+        candidates: [
+          { ...mockContext.candidates[0], confidence: 50 },
+          { ...mockContext.candidates[1], confidence: 60 }
+        ]
+      };
+
       const mockImage = createMockImage();
-      const result = await fishIdService.identify(mockImage, mockContext);
+      const result = await fishIdService.identify(mockImage, lowConfidenceContext);
 
       // Low confidence or unknown should trigger manual selection
       expect(['manual_selection', 'ai']).toContain(result.method);

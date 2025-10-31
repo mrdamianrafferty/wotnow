@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Skip to main content" [ref=e5] [cursor=pointer]:
+        - /url: "#main-content"
+      - generic [ref=e6]:
+        - link "Go Daisy home" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img "Go Daisy" [ref=e9]
+        - link "Log in" [ref=e12] [cursor=pointer]:
+          - /url: /login
+          - generic [ref=e13]: 🪵
+    - contentinfo [ref=e15]:
+      - generic [ref=e16]:
+        - complementary [ref=e17]:
+          - img "Go Daisy" [ref=e18]
+          - img "Go Daisy logo" [ref=e19]
+        - generic [ref=e20]:
+          - navigation [ref=e21]:
+            - link "Support Go Daisy" [ref=e22] [cursor=pointer]:
+              - /url: /support
+            - link "How we do it" [ref=e23] [cursor=pointer]:
+              - /url: /HowWeDoIt
+            - link "Sorry about the weather" [ref=e24] [cursor=pointer]:
+              - /url: /whether-weather
+            - link "About us" [ref=e25] [cursor=pointer]:
+              - /url: /AboutUs
+          - navigation [ref=e26]:
+            - link "Terms of use" [ref=e27] [cursor=pointer]:
+              - /url: /TermsAndConditions
+            - link "Privacy policy" [ref=e28] [cursor=pointer]:
+              - /url: /PrivacyPolicy
+            - link "Cookie policy" [ref=e29] [cursor=pointer]:
+              - /url: /CookiePolicy
+        - navigation [ref=e30]:
+          - paragraph [ref=e31]: Get out there!
+          - paragraph [ref=e32]: © 2025 Go Daisy. All rights reserved.
+    - generic [ref=e33]:
+      - button "Home" [ref=e34] [cursor=pointer]:
+        - img [ref=e35]
+        - generic [ref=e38]: Home
+      - button "Activities" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+        - generic [ref=e42]: Activities
+      - button "Weather" [ref=e43] [cursor=pointer]:
+        - img [ref=e44]
+        - generic [ref=e49]: Weather
+      - button "Settings" [ref=e50] [cursor=pointer]:
+        - img [ref=e51]
+        - generic [ref=e54]: Settings
+  - button "Open Next.js Dev Tools" [ref=e60] [cursor=pointer]:
+    - img [ref=e61]
+  - alert [ref=e64]
+```

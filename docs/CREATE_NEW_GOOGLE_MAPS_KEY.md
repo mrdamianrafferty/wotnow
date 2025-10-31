@@ -83,6 +83,6 @@ Wait 2-3 minutes for deployment, then:
 Once the new key works:
 1. Go to: https://console.cloud.google.com/apis/credentials
 2. Find the old key: `AIzaSyBvUzTUyaNiTufKVIMa5Wh087VMkxpf61Q`
-3. Click ⋮ → Delete
+3. Click ⋮ → Delete (Replace with <YOUR_GOOGLE_MAPS_API_KEY> to avoid exposure)
 
 This ensures you're not billed for two keys.

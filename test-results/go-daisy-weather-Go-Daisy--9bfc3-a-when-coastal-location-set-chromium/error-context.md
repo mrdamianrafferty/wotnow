@@ -1,0 +1,2607 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e4]:
+    - banner [ref=e6]:
+      - link "Skip to main content" [ref=e7] [cursor=pointer]:
+        - /url: "#main-content"
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - button "Open menu" [ref=e11] [cursor=pointer]:
+            - img [ref=e12]
+            - img [ref=e14]
+          - link "Go Daisy home" [ref=e16] [cursor=pointer]:
+            - /url: /
+            - img "Go Daisy" [ref=e17]
+        - generic [ref=e19]:
+          - button "Showing home — switch to beach" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: Beach
+            - generic [ref=e22]: Home
+          - button "🏡 London ✓" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: 🏡 London ✓
+          - button "Set beach location" [ref=e25] [cursor=pointer]:
+            - generic [ref=e26]: Set beach location
+          - link "Log in or register" [ref=e27] [cursor=pointer]:
+            - /url: /login
+            - generic [ref=e28]: 🪵
+            - generic [ref=e29]: Log in / Register
+    - main [ref=e30]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - img "Clear" [ref=e37]
+          - generic [ref=e38]:
+            - generic [ref=e40]: 15°
+            - generic [ref=e41]: Clear
+            - generic [ref=e42]: Feels like 0° · High 16° · Low 14°
+        - generic [ref=e43]:
+          - generic [ref=e44]: London, UK
+          - generic [ref=e45]:
+            - generic [ref=e47]:
+              - img [ref=e49]
+              - generic [ref=e50]: 25 km/h
+              - generic [ref=e51]: SW
+            - generic [ref=e53]:
+              - img [ref=e55]
+              - generic [ref=e56]: 3 mm
+            - generic [ref=e58]:
+              - img [ref=e60]: 🥾
+              - generic [ref=e61]: Muddy ground
+              - generic [ref=e62]: 36%
+      - generic [ref=e63]:
+        - generic [ref=e65]:
+          - generic [ref=e66]: ⛅
+          - generic [ref=e67]: Current & Forecast
+        - generic [ref=e74]:
+          - generic [ref=e78]:
+            - generic [ref=e79]: 14:00
+            - img "Weather icon" [ref=e80]
+            - generic [ref=e81]: 15°
+            - generic [ref=e83]:
+              - img "Precipitation" [ref=e84]
+              - generic [ref=e85]: 1mm
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - img "Beaufort 4" [ref=e88]
+                - generic "Wind from 185°" [ref=e89]: 
+                - generic [ref=e90]: S
+              - generic [ref=e91]: 25 km/h
+              - generic "Toggle Air/Pollen" [ref=e93] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e94]
+                - generic [ref=e96]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e97]
+                - generic [ref=e99]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e100]
+          - generic [ref=e104]:
+            - generic [ref=e105]: 15:00
+            - img "Weather icon" [ref=e106]
+            - generic [ref=e107]: 16°
+            - generic [ref=e109]:
+              - img "Precipitation" [ref=e110]
+              - generic [ref=e111]: 1mm
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - img "Beaufort 4" [ref=e114]
+                - generic "Wind from 190°" [ref=e115]: 
+                - generic [ref=e116]: S
+              - generic [ref=e117]: 24 km/h
+              - generic "Toggle Air/Pollen" [ref=e119] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e120]
+                - generic [ref=e122]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e123]
+                - generic [ref=e125]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e126]
+          - generic [ref=e130]:
+            - generic [ref=e131]: 16:00
+            - img "Weather icon" [ref=e132]
+            - generic [ref=e133]: 16°
+            - generic [ref=e135]:
+              - img "Precipitation" [ref=e136]
+              - generic [ref=e137]: 1mm
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - img "Beaufort 4" [ref=e140]
+                - generic "Wind from 194°" [ref=e141]: 
+                - generic [ref=e142]: SSW
+              - generic [ref=e143]: 25 km/h
+              - generic "Toggle Air/Pollen" [ref=e145] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e146]
+                - generic [ref=e148]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e149]
+                - generic [ref=e151]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e152]
+          - generic [ref=e156]:
+            - generic [ref=e157]: 17:00
+            - img "Weather icon" [ref=e158]
+            - generic [ref=e159]: 15°
+            - generic [ref=e161]:
+              - img "Precipitation" [ref=e162]
+              - generic [ref=e163]: 1mm
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - img "Beaufort 4" [ref=e166]
+                - generic "Wind from 199°" [ref=e167]: 
+                - generic [ref=e168]: SSW
+              - generic [ref=e169]: 26 km/h
+              - generic "Toggle Air/Pollen" [ref=e171] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e172]
+                - generic [ref=e174]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e175]
+                - generic [ref=e177]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e178]
+          - generic [ref=e182]:
+            - generic [ref=e183]: 18:00
+            - img "Weather icon" [ref=e184]
+            - generic [ref=e185]: 15°
+            - generic [ref=e187]:
+              - img "Precipitation" [ref=e188]
+              - generic [ref=e189]: 0mm
+            - generic [ref=e190]:
+              - generic [ref=e191]:
+                - img "Beaufort 4" [ref=e192]
+                - generic "Wind from 201°" [ref=e193]: 
+                - generic [ref=e194]: SSW
+              - generic [ref=e195]: 25 km/h
+              - generic "Toggle Air/Pollen" [ref=e197] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e198]
+                - generic [ref=e200]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e201]
+                - generic [ref=e203]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e204]
+          - generic [ref=e208]:
+            - generic [ref=e209]: 19:00
+            - img "Weather icon" [ref=e210]
+            - generic [ref=e211]: 14°
+            - generic [ref=e213]:
+              - img "Precipitation" [ref=e214]
+              - generic [ref=e215]: 1mm
+            - generic [ref=e216]:
+              - generic [ref=e217]:
+                - img "Beaufort 4" [ref=e218]
+                - generic "Wind from 204°" [ref=e219]: 
+                - generic [ref=e220]: SSW
+              - generic [ref=e221]: 24 km/h
+              - generic "Toggle Air/Pollen" [ref=e223] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e224]
+                - generic [ref=e226]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e227]
+                - generic [ref=e229]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e230]
+          - generic [ref=e234]:
+            - generic [ref=e235]: 20:00
+            - img "Weather icon" [ref=e236]
+            - generic [ref=e237]: 14°
+            - generic [ref=e239]:
+              - img "Precipitation" [ref=e240]
+              - generic [ref=e241]: 0mm
+            - generic [ref=e242]:
+              - generic [ref=e243]:
+                - img "Beaufort 4" [ref=e244]
+                - generic "Wind from 197°" [ref=e245]: 
+                - generic [ref=e246]: SSW
+              - generic [ref=e247]: 24 km/h
+              - generic "Toggle Air/Pollen" [ref=e249] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e250]
+                - generic [ref=e252]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e253]
+                - generic [ref=e255]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e256]
+          - generic [ref=e260]:
+            - generic [ref=e261]: 21:00
+            - img "Weather icon" [ref=e262]
+            - generic [ref=e263]: 15°
+            - generic [ref=e265]:
+              - img "Precipitation" [ref=e266]
+              - generic [ref=e267]: 0mm
+            - generic [ref=e268]:
+              - generic [ref=e269]:
+                - img "Beaufort 4" [ref=e270]
+                - generic "Wind from 188°" [ref=e271]: 
+                - generic [ref=e272]: S
+              - generic [ref=e273]: 22 km/h
+              - generic "Toggle Air/Pollen" [ref=e275] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e276]
+                - generic [ref=e278]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e279]
+                - generic [ref=e281]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e282]
+          - generic [ref=e286]:
+            - generic [ref=e287]: 22:00
+            - img "Weather icon" [ref=e288]
+            - generic [ref=e289]: 15°
+            - generic [ref=e291]:
+              - img "Precipitation" [ref=e292]
+              - generic [ref=e293]: 1mm
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - img "Beaufort 4" [ref=e296]
+                - generic "Wind from 187°" [ref=e297]: 
+                - generic [ref=e298]: S
+              - generic [ref=e299]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e301] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e302]
+                - generic [ref=e304]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e305]
+                - generic [ref=e307]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e308]
+          - generic [ref=e312]:
+            - generic [ref=e313]: 23:00
+            - img "Weather icon" [ref=e314]
+            - generic [ref=e315]: 14°
+            - generic [ref=e317]:
+              - img "Precipitation" [ref=e318]
+              - generic [ref=e319]: 0mm
+            - generic [ref=e320]:
+              - generic [ref=e321]:
+                - img "Beaufort 5" [ref=e322]
+                - generic "Wind from 192°" [ref=e323]: 
+                - generic [ref=e324]: SSW
+              - generic [ref=e325]: 29 km/h
+              - generic "Toggle Air/Pollen" [ref=e327] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e328]
+                - generic [ref=e330]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e331]
+                - generic [ref=e333]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e334]
+          - generic [ref=e338]:
+            - generic [ref=e339]: 00:00
+            - img "Weather icon" [ref=e340]
+            - generic [ref=e341]: 15°
+            - generic [ref=e343]:
+              - img "Precipitation" [ref=e344]
+              - generic [ref=e345]: 1mm
+            - generic [ref=e346]:
+              - generic [ref=e347]:
+                - img "Beaufort 4" [ref=e348]
+                - generic "Wind from 194°" [ref=e349]: 
+                - generic [ref=e350]: SSW
+              - generic [ref=e351]: 26 km/h
+              - generic "Toggle Air/Pollen" [ref=e353] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e354]
+                - generic [ref=e356]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e357]
+                - generic [ref=e359]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e360]
+          - generic [ref=e364]:
+            - generic [ref=e365]: 01:00
+            - img "Weather icon" [ref=e366]
+            - generic [ref=e367]: 14°
+            - generic [ref=e369]:
+              - img "Precipitation" [ref=e370]
+              - generic [ref=e371]: 4mm
+            - generic [ref=e372]:
+              - generic [ref=e373]:
+                - img "Beaufort 4" [ref=e374]
+                - generic "Wind from 203°" [ref=e375]: 
+                - generic [ref=e376]: SSW
+              - generic [ref=e377]: 28 km/h
+              - generic "Toggle Air/Pollen" [ref=e379] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e380]
+                - generic [ref=e382]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e383]
+                - generic [ref=e385]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e386]
+          - generic [ref=e390]:
+            - generic [ref=e391]: 02:00
+            - img "Weather icon" [ref=e392]
+            - generic [ref=e393]: 14°
+            - generic [ref=e395]:
+              - img "Precipitation" [ref=e396]
+              - generic [ref=e397]: 2mm
+            - generic [ref=e398]:
+              - generic [ref=e399]:
+                - img "Beaufort 5" [ref=e400]
+                - generic "Wind from 200°" [ref=e401]: 
+                - generic [ref=e402]: SSW
+              - generic [ref=e403]: 30 km/h
+              - generic "Toggle Air/Pollen" [ref=e405] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e406]
+                - generic [ref=e408]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e409]
+                - generic [ref=e411]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e412]
+          - generic [ref=e416]:
+            - generic [ref=e417]: 03:00
+            - img "Weather icon" [ref=e418]
+            - generic [ref=e419]: 14°
+            - generic [ref=e421]:
+              - img "Precipitation" [ref=e422]
+              - generic [ref=e423]: 2mm
+            - generic [ref=e424]:
+              - generic [ref=e425]:
+                - img "Beaufort 4" [ref=e426]
+                - generic "Wind from 209°" [ref=e427]: 
+                - generic [ref=e428]: SSW
+              - generic [ref=e429]: 28 km/h
+              - generic "Toggle Air/Pollen" [ref=e431] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e432]
+                - generic [ref=e434]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e435]
+                - generic [ref=e437]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e438]
+          - generic [ref=e442]:
+            - generic [ref=e443]: 04:00
+            - img "Weather icon" [ref=e444]
+            - generic [ref=e445]: 14°
+            - generic [ref=e447]:
+              - img "Precipitation" [ref=e448]
+              - generic [ref=e449]: 1mm
+            - generic [ref=e450]:
+              - generic [ref=e451]:
+                - img "Beaufort 4" [ref=e452]
+                - generic "Wind from 207°" [ref=e453]: 
+                - generic [ref=e454]: SSW
+              - generic [ref=e455]: 27 km/h
+              - generic "Toggle Air/Pollen" [ref=e457] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e458]
+                - generic [ref=e460]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e461]
+                - generic [ref=e463]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e464]
+          - generic [ref=e468]:
+            - generic [ref=e469]: 05:00
+            - img "Weather icon" [ref=e470]
+            - generic [ref=e471]: 13°
+            - generic [ref=e473]:
+              - img "Precipitation" [ref=e474]
+              - generic [ref=e475]: 0mm
+            - generic [ref=e476]:
+              - generic [ref=e477]:
+                - img "Beaufort 4" [ref=e478]
+                - generic "Wind from 210°" [ref=e479]: 
+                - generic [ref=e480]: SSW
+              - generic [ref=e481]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e483] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e484]
+                - generic [ref=e486]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e487]
+                - generic [ref=e489]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e490]
+          - generic [ref=e494]:
+            - generic [ref=e495]: 06:00
+            - img "Weather icon" [ref=e496]
+            - generic [ref=e497]: 13°
+            - generic [ref=e499]:
+              - img "Precipitation" [ref=e500]
+              - generic [ref=e501]: 0mm
+            - generic [ref=e502]:
+              - generic [ref=e503]:
+                - img "Beaufort 4" [ref=e504]
+                - generic "Wind from 214°" [ref=e505]: 
+                - generic [ref=e506]: SSW
+              - generic [ref=e507]: 22 km/h
+              - generic "Toggle Air/Pollen" [ref=e509] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e510]
+                - generic [ref=e512]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e513]
+                - generic [ref=e515]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e516]
+          - generic [ref=e520]:
+            - generic [ref=e521]: 07:00
+            - img "Weather icon" [ref=e522]
+            - generic [ref=e523]: 13°
+            - generic [ref=e525]:
+              - img "Precipitation" [ref=e526]
+              - generic [ref=e527]: 0mm
+            - generic [ref=e528]:
+              - generic [ref=e529]:
+                - img "Beaufort 4" [ref=e530]
+                - generic "Wind from 212°" [ref=e531]: 
+                - generic [ref=e532]: SSW
+              - generic [ref=e533]: 21 km/h
+              - generic "Toggle Air/Pollen" [ref=e535] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e536]
+                - generic [ref=e538]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e539]
+                - generic [ref=e541]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e542]
+          - generic [ref=e546]:
+            - generic [ref=e547]: 08:00
+            - img "Weather icon" [ref=e548]
+            - generic [ref=e549]: 13°
+            - generic [ref=e551]:
+              - img "Precipitation" [ref=e552]
+              - generic [ref=e553]: 0mm
+            - generic [ref=e554]:
+              - generic [ref=e555]:
+                - img "Beaufort 3" [ref=e556]
+                - generic "Wind from 215°" [ref=e557]: 
+                - generic [ref=e558]: SW
+              - generic [ref=e559]: 20 km/h
+              - generic "Toggle Air/Pollen" [ref=e561] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e562]
+                - generic [ref=e564]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e565]
+                - generic [ref=e567]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e568]
+          - generic [ref=e572]:
+            - generic [ref=e573]: 09:00
+            - img "Weather icon" [ref=e574]
+            - generic [ref=e575]: 13°
+            - generic [ref=e577]:
+              - img "Precipitation" [ref=e578]
+              - generic [ref=e579]: 0mm
+            - generic [ref=e580]:
+              - generic [ref=e581]:
+                - img "Beaufort 3" [ref=e582]
+                - generic "Wind from 216°" [ref=e583]: 
+                - generic [ref=e584]: SW
+              - generic [ref=e585]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e587] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e588]
+                - generic [ref=e590]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e591]
+                - generic [ref=e593]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e594]
+          - generic [ref=e598]:
+            - generic [ref=e599]: 10:00
+            - img "Weather icon" [ref=e600]
+            - generic [ref=e601]: 13°
+            - generic [ref=e603]:
+              - img "Precipitation" [ref=e604]
+              - generic [ref=e605]: 0mm
+            - generic [ref=e606]:
+              - generic [ref=e607]:
+                - img "Beaufort 3" [ref=e608]
+                - generic "Wind from 221°" [ref=e609]: 
+                - generic [ref=e610]: SW
+              - generic [ref=e611]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e613] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e614]
+                - generic [ref=e616]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e617]
+                - generic [ref=e619]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e620]
+          - generic [ref=e624]:
+            - generic [ref=e625]: 11:00
+            - img "Weather icon" [ref=e626]
+            - generic [ref=e627]: 13°
+            - generic [ref=e629]:
+              - img "Precipitation" [ref=e630]
+              - generic [ref=e631]: 0mm
+            - generic [ref=e632]:
+              - generic [ref=e633]:
+                - img "Beaufort 3" [ref=e634]
+                - generic "Wind from 217°" [ref=e635]: 
+                - generic [ref=e636]: SW
+              - generic [ref=e637]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e639] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e640]
+                - generic [ref=e642]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e643]
+                - generic [ref=e645]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e646]
+          - generic [ref=e650]:
+            - generic [ref=e651]: 12:00
+            - img "Weather icon" [ref=e652]
+            - generic [ref=e653]: 14°
+            - generic [ref=e655]:
+              - img "Precipitation" [ref=e656]
+              - generic [ref=e657]: 0mm
+            - generic [ref=e658]:
+              - generic [ref=e659]:
+                - img "Beaufort 4" [ref=e660]
+                - generic "Wind from 228°" [ref=e661]: 
+                - generic [ref=e662]: SW
+              - generic [ref=e663]: 21 km/h
+              - generic "Toggle Air/Pollen" [ref=e665] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e666]
+                - generic [ref=e668]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e669]
+                - generic [ref=e671]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e672]
+          - generic [ref=e676]:
+            - generic [ref=e677]: 13:00
+            - img "Weather icon" [ref=e678]
+            - generic [ref=e679]: 14°
+            - generic [ref=e681]:
+              - img "Precipitation" [ref=e682]
+              - generic [ref=e683]: 0mm
+            - generic [ref=e684]:
+              - generic [ref=e685]:
+                - img "Beaufort 4" [ref=e686]
+                - generic "Wind from 236°" [ref=e687]: 
+                - generic [ref=e688]: SW
+              - generic [ref=e689]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e691] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e692]
+                - generic [ref=e694]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e695]
+                - generic [ref=e697]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e698]
+          - generic [ref=e702]:
+            - generic [ref=e703]: 14:00
+            - img "Weather icon" [ref=e704]
+            - generic [ref=e705]: 15°
+            - generic [ref=e707]:
+              - img "Precipitation" [ref=e708]
+              - generic [ref=e709]: 0mm
+            - generic [ref=e710]:
+              - generic [ref=e711]:
+                - img "Beaufort 4" [ref=e712]
+                - generic "Wind from 238°" [ref=e713]: 
+                - generic [ref=e714]: WSW
+              - generic [ref=e715]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e717] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e718]
+                - generic [ref=e720]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e721]
+                - generic [ref=e723]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e724]
+          - generic [ref=e728]:
+            - generic [ref=e729]: 15:00
+            - img "Weather icon" [ref=e730]
+            - generic [ref=e731]: 15°
+            - generic [ref=e733]:
+              - img "Precipitation" [ref=e734]
+              - generic [ref=e735]: 0mm
+            - generic [ref=e736]:
+              - generic [ref=e737]:
+                - img "Beaufort 4" [ref=e738]
+                - generic "Wind from 235°" [ref=e739]: 
+                - generic [ref=e740]: SW
+              - generic [ref=e741]: 21 km/h
+              - generic "Toggle Air/Pollen" [ref=e743] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e744]
+                - generic [ref=e746]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e747]
+                - generic [ref=e749]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e750]
+          - generic [ref=e754]:
+            - generic [ref=e755]: 16:00
+            - img "Weather icon" [ref=e756]
+            - generic [ref=e757]: 14°
+            - generic [ref=e759]:
+              - img "Precipitation" [ref=e760]
+              - generic [ref=e761]: 1mm
+            - generic [ref=e762]:
+              - generic [ref=e763]:
+                - img "Beaufort 3" [ref=e764]
+                - generic "Wind from 229°" [ref=e765]: 
+                - generic [ref=e766]: SW
+              - generic [ref=e767]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e769] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e770]
+                - generic [ref=e772]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e773]
+                - generic [ref=e775]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e776]
+          - generic [ref=e780]:
+            - generic [ref=e781]: 17:00
+            - img "Weather icon" [ref=e782]
+            - generic [ref=e783]: 13°
+            - generic [ref=e785]:
+              - img "Precipitation" [ref=e786]
+              - generic [ref=e787]: 1mm
+            - generic [ref=e788]:
+              - generic [ref=e789]:
+                - img "Beaufort 3" [ref=e790]
+                - generic "Wind from 233°" [ref=e791]: 
+                - generic [ref=e792]: SW
+              - generic [ref=e793]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e795] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e796]
+                - generic [ref=e798]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e799]
+                - generic [ref=e801]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e802]
+          - generic [ref=e806]:
+            - generic [ref=e807]: 18:00
+            - img "Weather icon" [ref=e808]
+            - generic [ref=e809]: 11°
+            - generic [ref=e811]:
+              - img "Precipitation" [ref=e812]
+              - generic [ref=e813]: 0mm
+            - generic [ref=e814]:
+              - generic [ref=e815]:
+                - img "Beaufort 3" [ref=e816]
+                - generic "Wind from 223°" [ref=e817]: 
+                - generic [ref=e818]: SW
+              - generic [ref=e819]: 17 km/h
+              - generic "Toggle Air/Pollen" [ref=e821] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e822]
+                - generic [ref=e824]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e825]
+                - generic [ref=e827]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e828]
+          - generic [ref=e832]:
+            - generic [ref=e833]: 19:00
+            - img "Weather icon" [ref=e834]
+            - generic [ref=e835]: 11°
+            - generic [ref=e837]:
+              - img "Precipitation" [ref=e838]
+              - generic [ref=e839]: 0mm
+            - generic [ref=e840]:
+              - generic [ref=e841]:
+                - img "Beaufort 3" [ref=e842]
+                - generic "Wind from 220°" [ref=e843]: 
+                - generic [ref=e844]: SW
+              - generic [ref=e845]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e847] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e848]
+                - generic [ref=e850]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e851]
+                - generic [ref=e853]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e854]
+          - generic [ref=e858]:
+            - generic [ref=e859]: 20:00
+            - img "Weather icon" [ref=e860]
+            - generic [ref=e861]: 10°
+            - generic [ref=e863]:
+              - img "Precipitation" [ref=e864]
+              - generic [ref=e865]: 0mm
+            - generic [ref=e866]:
+              - generic [ref=e867]:
+                - img "Beaufort 3" [ref=e868]
+                - generic "Wind from 234°" [ref=e869]: 
+                - generic [ref=e870]: SW
+              - generic [ref=e871]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e873] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e874]
+                - generic [ref=e876]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e877]
+                - generic [ref=e879]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e880]
+          - generic [ref=e884]:
+            - generic [ref=e885]: 21:00
+            - img "Weather icon" [ref=e886]
+            - generic [ref=e887]: 10°
+            - generic [ref=e889]:
+              - img "Precipitation" [ref=e890]
+              - generic [ref=e891]: 0mm
+            - generic [ref=e892]:
+              - generic [ref=e893]:
+                - img "Beaufort 3" [ref=e894]
+                - generic "Wind from 227°" [ref=e895]: 
+                - generic [ref=e896]: SW
+              - generic [ref=e897]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e899] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e900]
+                - generic [ref=e902]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e903]
+                - generic [ref=e905]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e906]
+          - generic [ref=e910]:
+            - generic [ref=e911]: 22:00
+            - img "Weather icon" [ref=e912]
+            - generic [ref=e913]: 10°
+            - generic [ref=e915]:
+              - img "Precipitation" [ref=e916]
+              - generic [ref=e917]: 0mm
+            - generic [ref=e918]:
+              - generic [ref=e919]:
+                - img "Beaufort 3" [ref=e920]
+                - generic "Wind from 230°" [ref=e921]: 
+                - generic [ref=e922]: SW
+              - generic [ref=e923]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e925] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e926]
+                - generic [ref=e928]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e929]
+                - generic [ref=e931]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e932]
+          - generic [ref=e936]:
+            - generic [ref=e937]: 23:00
+            - img "Weather icon" [ref=e938]
+            - generic [ref=e939]: 9°
+            - generic [ref=e941]:
+              - img "Precipitation" [ref=e942]
+              - generic [ref=e943]: 0mm
+            - generic [ref=e944]:
+              - generic [ref=e945]:
+                - img "Beaufort 3" [ref=e946]
+                - generic "Wind from 225°" [ref=e947]: 
+                - generic [ref=e948]: SW
+              - generic [ref=e949]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e951] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e952]
+                - generic [ref=e954]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e955]
+                - generic [ref=e957]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e958]
+          - generic [ref=e962]:
+            - generic [ref=e963]: 00:00
+            - img "Weather icon" [ref=e964]
+            - generic [ref=e965]: 9°
+            - generic [ref=e967]:
+              - img "Precipitation" [ref=e968]
+              - generic [ref=e969]: 0mm
+            - generic [ref=e970]:
+              - generic [ref=e971]:
+                - img "Beaufort 3" [ref=e972]
+                - generic "Wind from 225°" [ref=e973]: 
+                - generic [ref=e974]: SW
+              - generic [ref=e975]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e977] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e978]
+                - generic [ref=e980]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e981]
+                - generic [ref=e983]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e984]
+          - generic [ref=e988]:
+            - generic [ref=e989]: 01:00
+            - img "Weather icon" [ref=e990]
+            - generic [ref=e991]: 8°
+            - generic [ref=e993]:
+              - img "Precipitation" [ref=e994]
+              - generic [ref=e995]: 0mm
+            - generic [ref=e996]:
+              - generic [ref=e997]:
+                - img "Beaufort 3" [ref=e998]
+                - generic "Wind from 217°" [ref=e999]: 
+                - generic [ref=e1000]: SW
+              - generic [ref=e1001]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e1003] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1004]
+                - generic [ref=e1006]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1007]
+                - generic [ref=e1009]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1010]
+          - generic [ref=e1014]:
+            - generic [ref=e1015]: 02:00
+            - img "Weather icon" [ref=e1016]
+            - generic [ref=e1017]: 8°
+            - generic [ref=e1019]:
+              - img "Precipitation" [ref=e1020]
+              - generic [ref=e1021]: 0mm
+            - generic [ref=e1022]:
+              - generic [ref=e1023]:
+                - img "Beaufort 3" [ref=e1024]
+                - generic "Wind from 209°" [ref=e1025]: 
+                - generic [ref=e1026]: SSW
+              - generic [ref=e1027]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e1029] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1030]
+                - generic [ref=e1032]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1033]
+                - generic [ref=e1035]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1036]
+          - generic [ref=e1040]:
+            - generic [ref=e1041]: 03:00
+            - img "Weather icon" [ref=e1042]
+            - generic [ref=e1043]: 8°
+            - generic [ref=e1045]:
+              - img "Precipitation" [ref=e1046]
+              - generic [ref=e1047]: 0mm
+            - generic [ref=e1048]:
+              - generic [ref=e1049]:
+                - img "Beaufort 3" [ref=e1050]
+                - generic "Wind from 201°" [ref=e1051]: 
+                - generic [ref=e1052]: SSW
+              - generic [ref=e1053]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e1055] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1056]
+                - generic [ref=e1058]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1059]
+                - generic [ref=e1061]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1062]
+          - generic [ref=e1066]:
+            - generic [ref=e1067]: 04:00
+            - img "Weather icon" [ref=e1068]
+            - generic [ref=e1069]: 8°
+            - generic [ref=e1071]:
+              - img "Precipitation" [ref=e1072]
+              - generic [ref=e1073]: 0mm
+            - generic [ref=e1074]:
+              - generic [ref=e1075]:
+                - img "Beaufort 3" [ref=e1076]
+                - generic "Wind from 193°" [ref=e1077]: 
+                - generic [ref=e1078]: SSW
+              - generic [ref=e1079]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1081] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1082]
+                - generic [ref=e1084]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1085]
+                - generic [ref=e1087]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1088]
+          - generic [ref=e1092]:
+            - generic [ref=e1093]: 05:00
+            - img "Weather icon" [ref=e1094]
+            - generic [ref=e1095]: 9°
+            - generic [ref=e1097]:
+              - img "Precipitation" [ref=e1098]
+              - generic [ref=e1099]: 0mm
+            - generic [ref=e1100]:
+              - generic [ref=e1101]:
+                - img "Beaufort 3" [ref=e1102]
+                - generic "Wind from 194°" [ref=e1103]: 
+                - generic [ref=e1104]: SSW
+              - generic [ref=e1105]: 15 km/h
+              - generic "Toggle Air/Pollen" [ref=e1107] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1108]
+                - generic [ref=e1110]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1111]
+                - generic [ref=e1113]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1114]
+          - generic [ref=e1118]:
+            - generic [ref=e1119]: 06:00
+            - img "Weather icon" [ref=e1120]
+            - generic [ref=e1121]: 10°
+            - generic [ref=e1123]:
+              - img "Precipitation" [ref=e1124]
+              - generic [ref=e1125]: 2mm
+            - generic [ref=e1126]:
+              - generic [ref=e1127]:
+                - img "Beaufort 3" [ref=e1128]
+                - generic "Wind from 206°" [ref=e1129]: 
+                - generic [ref=e1130]: SSW
+              - generic [ref=e1131]: 17 km/h
+              - generic "Toggle Air/Pollen" [ref=e1133] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1134]
+                - generic [ref=e1136]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1137]
+                - generic [ref=e1139]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1140]
+          - generic [ref=e1144]:
+            - generic [ref=e1145]: 07:00
+            - img "Weather icon" [ref=e1146]
+            - generic [ref=e1147]: 9°
+            - generic [ref=e1149]:
+              - img "Precipitation" [ref=e1150]
+              - generic [ref=e1151]: 2mm
+            - generic [ref=e1152]:
+              - generic [ref=e1153]:
+                - img "Beaufort 3" [ref=e1154]
+                - generic "Wind from 202°" [ref=e1155]: 
+                - generic [ref=e1156]: SSW
+              - generic [ref=e1157]: 18 km/h
+              - generic "Toggle Air/Pollen" [ref=e1159] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1160]
+                - generic [ref=e1162]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1163]
+                - generic [ref=e1165]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1166]
+          - generic [ref=e1170]:
+            - generic [ref=e1171]: 08:00
+            - img "Weather icon" [ref=e1172]
+            - generic [ref=e1173]: 9°
+            - generic [ref=e1175]:
+              - img "Precipitation" [ref=e1176]
+              - generic [ref=e1177]: 2mm
+            - generic [ref=e1178]:
+              - generic [ref=e1179]:
+                - img "Beaufort 3" [ref=e1180]
+                - generic "Wind from 197°" [ref=e1181]: 
+                - generic [ref=e1182]: SSW
+              - generic [ref=e1183]: 18 km/h
+              - generic "Toggle Air/Pollen" [ref=e1185] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1186]
+                - generic [ref=e1188]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1189]
+                - generic [ref=e1191]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1192]
+          - generic [ref=e1196]:
+            - generic [ref=e1197]: 09:00
+            - img "Weather icon" [ref=e1198]
+            - generic [ref=e1199]: 9°
+            - generic [ref=e1201]:
+              - img "Precipitation" [ref=e1202]
+              - generic [ref=e1203]: 0mm
+            - generic [ref=e1204]:
+              - generic [ref=e1205]:
+                - img "Beaufort 4" [ref=e1206]
+                - generic "Wind from 209°" [ref=e1207]: 
+                - generic [ref=e1208]: SSW
+              - generic [ref=e1209]: 21 km/h
+              - generic "Toggle Air/Pollen" [ref=e1211] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1212]
+                - generic [ref=e1214]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1215]
+                - generic [ref=e1217]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1218]
+          - generic [ref=e1222]:
+            - generic [ref=e1223]: 10:00
+            - img "Weather icon" [ref=e1224]
+            - generic [ref=e1225]: 10°
+            - generic [ref=e1227]:
+              - img "Precipitation" [ref=e1228]
+              - generic [ref=e1229]: 1mm
+            - generic [ref=e1230]:
+              - generic [ref=e1231]:
+                - img "Beaufort 3" [ref=e1232]
+                - generic "Wind from 227°" [ref=e1233]: 
+                - generic [ref=e1234]: SW
+              - generic [ref=e1235]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e1237] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1238]
+                - generic [ref=e1240]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1241]
+                - generic [ref=e1243]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1244]
+          - generic [ref=e1248]:
+            - generic [ref=e1249]: 11:00
+            - img "Weather icon" [ref=e1250]
+            - generic [ref=e1251]: 10°
+            - generic [ref=e1253]:
+              - img "Precipitation" [ref=e1254]
+              - generic [ref=e1255]: 1mm
+            - generic [ref=e1256]:
+              - generic [ref=e1257]:
+                - img "Beaufort 3" [ref=e1258]
+                - generic "Wind from 253°" [ref=e1259]: 
+                - generic [ref=e1260]: WSW
+              - generic [ref=e1261]: 17 km/h
+              - generic "Toggle Air/Pollen" [ref=e1263] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1264]
+                - generic [ref=e1266]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1267]
+                - generic [ref=e1269]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1270]
+          - generic [ref=e1274]:
+            - generic [ref=e1275]: 12:00
+            - img "Weather icon" [ref=e1276]
+            - generic [ref=e1277]: 11°
+            - generic [ref=e1279]:
+              - img "Precipitation" [ref=e1280]
+              - generic [ref=e1281]: 0mm
+            - generic [ref=e1282]:
+              - generic [ref=e1283]:
+                - img "Beaufort 3" [ref=e1284]
+                - generic "Wind from 269°" [ref=e1285]: 
+                - generic [ref=e1286]: W
+              - generic [ref=e1287]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e1289] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1290]
+                - generic [ref=e1292]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1293]
+                - generic [ref=e1295]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1296]
+          - generic [ref=e1300]:
+            - generic [ref=e1301]: 13:00
+            - img "Weather icon" [ref=e1302]
+            - generic [ref=e1303]: 11°
+            - generic [ref=e1305]:
+              - img "Precipitation" [ref=e1306]
+              - generic [ref=e1307]: 0mm
+            - generic [ref=e1308]:
+              - generic [ref=e1309]:
+                - img "Beaufort 3" [ref=e1310]
+                - generic "Wind from 277°" [ref=e1311]: 
+                - generic [ref=e1312]: W
+              - generic [ref=e1313]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e1315] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1316]
+                - generic [ref=e1318]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1319]
+                - generic [ref=e1321]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1322]
+          - generic [ref=e1326]:
+            - generic [ref=e1327]: 14:00
+            - img "Weather icon" [ref=e1328]
+            - generic [ref=e1329]: 12°
+            - generic [ref=e1331]:
+              - img "Precipitation" [ref=e1332]
+              - generic [ref=e1333]: 0mm
+            - generic [ref=e1334]:
+              - generic [ref=e1335]:
+                - img "Beaufort 3" [ref=e1336]
+                - generic "Wind from 279°" [ref=e1337]: 
+                - generic [ref=e1338]: W
+              - generic [ref=e1339]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e1341] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1342]
+                - generic [ref=e1344]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1345]
+                - generic [ref=e1347]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1348]
+          - generic [ref=e1352]:
+            - generic [ref=e1353]: 15:00
+            - img "Weather icon" [ref=e1354]
+            - generic [ref=e1355]: 12°
+            - generic [ref=e1357]:
+              - img "Precipitation" [ref=e1358]
+              - generic [ref=e1359]: 0mm
+            - generic [ref=e1360]:
+              - generic [ref=e1361]:
+                - img "Beaufort 3" [ref=e1362]
+                - generic "Wind from 278°" [ref=e1363]: 
+                - generic [ref=e1364]: W
+              - generic [ref=e1365]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e1367] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1368]
+                - generic [ref=e1370]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1371]
+                - generic [ref=e1373]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1374]
+          - generic [ref=e1378]:
+            - generic [ref=e1379]: 16:00
+            - img "Weather icon" [ref=e1380]
+            - generic [ref=e1381]: 11°
+            - generic [ref=e1383]:
+              - img "Precipitation" [ref=e1384]
+              - generic [ref=e1385]: 0mm
+            - generic [ref=e1386]:
+              - generic [ref=e1387]:
+                - img "Beaufort 3" [ref=e1388]
+                - generic "Wind from 269°" [ref=e1389]: 
+                - generic [ref=e1390]: W
+              - generic [ref=e1391]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e1393] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1394]
+                - generic [ref=e1396]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1397]
+                - generic [ref=e1399]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1400]
+          - generic [ref=e1404]:
+            - generic [ref=e1405]: 17:00
+            - img "Weather icon" [ref=e1406]
+            - generic [ref=e1407]: 11°
+            - generic [ref=e1409]:
+              - img "Precipitation" [ref=e1410]
+              - generic [ref=e1411]: 0mm
+            - generic [ref=e1412]:
+              - generic [ref=e1413]:
+                - img "Beaufort 3" [ref=e1414]
+                - generic "Wind from 261°" [ref=e1415]: 
+                - generic [ref=e1416]: W
+              - generic [ref=e1417]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1419] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1420]
+                - generic [ref=e1422]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1423]
+                - generic [ref=e1425]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1426]
+          - generic [ref=e1430]:
+            - generic [ref=e1431]: 18:00
+            - img "Weather icon" [ref=e1432]
+            - generic [ref=e1433]: 10°
+            - generic [ref=e1435]:
+              - img "Precipitation" [ref=e1436]
+              - generic [ref=e1437]: 0mm
+            - generic [ref=e1438]:
+              - generic [ref=e1439]:
+                - img "Beaufort 3" [ref=e1440]
+                - generic "Wind from 248°" [ref=e1441]: 
+                - generic [ref=e1442]: WSW
+              - generic [ref=e1443]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e1445] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1446]
+                - generic [ref=e1448]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1449]
+                - generic [ref=e1451]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1452]
+          - generic [ref=e1456]:
+            - generic [ref=e1457]: 19:00
+            - img "Weather icon" [ref=e1458]
+            - generic [ref=e1459]: 9°
+            - generic [ref=e1461]:
+              - img "Precipitation" [ref=e1462]
+              - generic [ref=e1463]: 0mm
+            - generic [ref=e1464]:
+              - generic [ref=e1465]:
+                - img "Beaufort 3" [ref=e1466]
+                - generic "Wind from 240°" [ref=e1467]: 
+                - generic [ref=e1468]: WSW
+              - generic [ref=e1469]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1471] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1472]
+                - generic [ref=e1474]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1475]
+                - generic [ref=e1477]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1478]
+          - generic [ref=e1482]:
+            - generic [ref=e1483]: 20:00
+            - img "Weather icon" [ref=e1484]
+            - generic [ref=e1485]: 9°
+            - generic [ref=e1487]:
+              - img "Precipitation" [ref=e1488]
+              - generic [ref=e1489]: 0mm
+            - generic [ref=e1490]:
+              - generic [ref=e1491]:
+                - img "Beaufort 3" [ref=e1492]
+                - generic "Wind from 243°" [ref=e1493]: 
+                - generic [ref=e1494]: WSW
+              - generic [ref=e1495]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1497] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1498]
+                - generic [ref=e1500]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1501]
+                - generic [ref=e1503]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1504]
+          - generic [ref=e1508]:
+            - generic [ref=e1509]: 21:00
+            - img "Weather icon" [ref=e1510]
+            - generic [ref=e1511]: 9°
+            - generic [ref=e1513]:
+              - img "Precipitation" [ref=e1514]
+              - generic [ref=e1515]: 0mm
+            - generic [ref=e1516]:
+              - generic [ref=e1517]:
+                - img "Beaufort 3" [ref=e1518]
+                - generic "Wind from 241°" [ref=e1519]: 
+                - generic [ref=e1520]: WSW
+              - generic [ref=e1521]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1523] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1524]
+                - generic [ref=e1526]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1527]
+                - generic [ref=e1529]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1530]
+          - generic [ref=e1534]:
+            - generic [ref=e1535]: 22:00
+            - img "Weather icon" [ref=e1536]
+            - generic [ref=e1537]: 8°
+            - generic [ref=e1539]:
+              - img "Precipitation" [ref=e1540]
+              - generic [ref=e1541]: 0mm
+            - generic [ref=e1542]:
+              - generic [ref=e1543]:
+                - img "Beaufort 3" [ref=e1544]
+                - generic "Wind from 230°" [ref=e1545]: 
+                - generic [ref=e1546]: SW
+              - generic [ref=e1547]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1549] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1550]
+                - generic [ref=e1552]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1553]
+                - generic [ref=e1555]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1556]
+          - generic [ref=e1560]:
+            - generic [ref=e1561]: 23:00
+            - img "Weather icon" [ref=e1562]
+            - generic [ref=e1563]: 8°
+            - generic [ref=e1565]:
+              - img "Precipitation" [ref=e1566]
+              - generic [ref=e1567]: 0mm
+            - generic [ref=e1568]:
+              - generic [ref=e1569]:
+                - img "Beaufort 3" [ref=e1570]
+                - generic "Wind from 226°" [ref=e1571]: 
+                - generic [ref=e1572]: SW
+              - generic [ref=e1573]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e1575] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1576]
+                - generic [ref=e1578]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1579]
+                - generic [ref=e1581]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1582]
+          - generic [ref=e1586]:
+            - generic [ref=e1587]: 00:00
+            - img "Weather icon" [ref=e1588]
+            - generic [ref=e1589]: 8°
+            - generic [ref=e1591]:
+              - img "Precipitation" [ref=e1592]
+              - generic [ref=e1593]: 0mm
+            - generic [ref=e1594]:
+              - generic [ref=e1595]:
+                - img "Beaufort 3" [ref=e1596]
+                - generic "Wind from 225°" [ref=e1597]: 
+                - generic [ref=e1598]: SW
+              - generic [ref=e1599]: 15 km/h
+              - generic "Toggle Air/Pollen" [ref=e1601] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1602]
+                - generic [ref=e1604]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1605]
+                - generic [ref=e1607]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1608]
+          - generic [ref=e1612]:
+            - generic [ref=e1613]: 01:00
+            - img "Weather icon" [ref=e1614]
+            - generic [ref=e1615]: 8°
+            - generic [ref=e1617]:
+              - img "Precipitation" [ref=e1618]
+              - generic [ref=e1619]: 0mm
+            - generic [ref=e1620]:
+              - generic [ref=e1621]:
+                - img "Beaufort 3" [ref=e1622]
+                - generic "Wind from 225°" [ref=e1623]: 
+                - generic [ref=e1624]: SW
+              - generic [ref=e1625]: 15 km/h
+              - generic "Toggle Air/Pollen" [ref=e1627] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1628]
+                - generic [ref=e1630]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1631]
+                - generic [ref=e1633]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1634]
+          - generic [ref=e1638]:
+            - generic [ref=e1639]: 02:00
+            - img "Weather icon" [ref=e1640]
+            - generic [ref=e1641]: 9°
+            - generic [ref=e1643]:
+              - img "Precipitation" [ref=e1644]
+              - generic [ref=e1645]: 0mm
+            - generic [ref=e1646]:
+              - generic [ref=e1647]:
+                - img "Beaufort 3" [ref=e1648]
+                - generic "Wind from 223°" [ref=e1649]: 
+                - generic [ref=e1650]: SW
+              - generic [ref=e1651]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e1653] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1654]
+                - generic [ref=e1656]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1657]
+                - generic [ref=e1659]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1660]
+          - generic [ref=e1664]:
+            - generic [ref=e1665]: 03:00
+            - img "Weather icon" [ref=e1666]
+            - generic [ref=e1667]: 10°
+            - generic [ref=e1669]:
+              - img "Precipitation" [ref=e1670]
+              - generic [ref=e1671]: 1mm
+            - generic [ref=e1672]:
+              - generic [ref=e1673]:
+                - img "Beaufort 3" [ref=e1674]
+                - generic "Wind from 223°" [ref=e1675]: 
+                - generic [ref=e1676]: SW
+              - generic [ref=e1677]: 18 km/h
+              - generic "Toggle Air/Pollen" [ref=e1679] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1680]
+                - generic [ref=e1682]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1683]
+                - generic [ref=e1685]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1686]
+          - generic [ref=e1690]:
+            - generic [ref=e1691]: 04:00
+            - img "Weather icon" [ref=e1692]
+            - generic [ref=e1693]: 11°
+            - generic [ref=e1695]:
+              - img "Precipitation" [ref=e1696]
+              - generic [ref=e1697]: 1mm
+            - generic [ref=e1698]:
+              - generic [ref=e1699]:
+                - img "Beaufort 4" [ref=e1700]
+                - generic "Wind from 220°" [ref=e1701]: 
+                - generic [ref=e1702]: SW
+              - generic [ref=e1703]: 20 km/h
+              - generic "Toggle Air/Pollen" [ref=e1705] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1706]
+                - generic [ref=e1708]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1709]
+                - generic [ref=e1711]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1712]
+          - generic [ref=e1716]:
+            - generic [ref=e1717]: 05:00
+            - img "Weather icon" [ref=e1718]
+            - generic [ref=e1719]: 11°
+            - generic [ref=e1721]:
+              - img "Precipitation" [ref=e1722]
+              - generic [ref=e1723]: 0mm
+            - generic [ref=e1724]:
+              - generic [ref=e1725]:
+                - img "Beaufort 4" [ref=e1726]
+                - generic "Wind from 219°" [ref=e1727]: 
+                - generic [ref=e1728]: SW
+              - generic [ref=e1729]: 22 km/h
+              - generic "Toggle Air/Pollen" [ref=e1731] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1732]
+                - generic [ref=e1734]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1735]
+                - generic [ref=e1737]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1738]
+          - generic [ref=e1742]:
+            - generic [ref=e1743]: 06:00
+            - img "Weather icon" [ref=e1744]
+            - generic [ref=e1745]: 12°
+            - generic [ref=e1747]:
+              - img "Precipitation" [ref=e1748]
+              - generic [ref=e1749]: 0mm
+            - generic [ref=e1750]:
+              - generic [ref=e1751]:
+                - img "Beaufort 4" [ref=e1752]
+                - generic "Wind from 220°" [ref=e1753]: 
+                - generic [ref=e1754]: SW
+              - generic [ref=e1755]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e1757] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1758]
+                - generic [ref=e1760]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1761]
+                - generic [ref=e1763]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1764]
+          - generic [ref=e1768]:
+            - generic [ref=e1769]: 07:00
+            - img "Weather icon" [ref=e1770]
+            - generic [ref=e1771]: 12°
+            - generic [ref=e1773]:
+              - img "Precipitation" [ref=e1774]
+              - generic [ref=e1775]: 1mm
+            - generic [ref=e1776]:
+              - generic [ref=e1777]:
+                - img "Beaufort 4" [ref=e1778]
+                - generic "Wind from 223°" [ref=e1779]: 
+                - generic [ref=e1780]: SW
+              - generic [ref=e1781]: 23 km/h
+              - generic "Toggle Air/Pollen" [ref=e1783] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1784]
+                - generic [ref=e1786]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1787]
+                - generic [ref=e1789]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1790]
+          - generic [ref=e1794]:
+            - generic [ref=e1795]: 13:00
+            - img "Weather icon" [ref=e1796]
+            - generic [ref=e1797]: 16°
+            - generic [ref=e1799]:
+              - img "Precipitation" [ref=e1800]
+              - generic [ref=e1801]: 0mm
+            - generic [ref=e1802]:
+              - generic [ref=e1803]:
+                - img "Beaufort 4" [ref=e1804]
+                - generic "Wind from 230°" [ref=e1805]: 
+                - generic [ref=e1806]: SW
+              - generic [ref=e1807]: 20 km/h
+              - generic "Toggle Air/Pollen" [ref=e1809] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1810]
+                - generic [ref=e1812]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1813]
+                - generic [ref=e1815]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1816]
+          - generic [ref=e1820]:
+            - generic [ref=e1821]: 19:00
+            - img "Weather icon" [ref=e1822]
+            - generic [ref=e1823]: 14°
+            - generic [ref=e1825]:
+              - img "Precipitation" [ref=e1826]
+              - generic [ref=e1827]: 0mm
+            - generic [ref=e1828]:
+              - generic [ref=e1829]:
+                - img "Beaufort 3" [ref=e1830]
+                - generic "Wind from 220°" [ref=e1831]: 
+                - generic [ref=e1832]: SW
+              - generic [ref=e1833]: 19 km/h
+              - generic "Toggle Air/Pollen" [ref=e1835] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1836]
+                - generic [ref=e1838]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1839]
+                - generic [ref=e1841]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1842]
+          - generic [ref=e1846]:
+            - generic [ref=e1847]: 01:00
+            - img "Weather icon" [ref=e1848]
+            - generic [ref=e1849]: 13°
+            - generic [ref=e1851]:
+              - img "Precipitation" [ref=e1852]
+              - generic [ref=e1853]: 1mm
+            - generic [ref=e1854]:
+              - generic [ref=e1855]:
+                - img "Beaufort 3" [ref=e1856]
+                - generic "Wind from 207°" [ref=e1857]: 
+                - generic [ref=e1858]: SSW
+              - generic [ref=e1859]: 17 km/h
+              - generic "Toggle Air/Pollen" [ref=e1861] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1862]
+                - generic [ref=e1864]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1865]
+                - generic [ref=e1867]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1868]
+          - generic [ref=e1872]:
+            - generic [ref=e1873]: 07:00
+            - img "Weather icon" [ref=e1874]
+            - generic [ref=e1875]: 14°
+            - generic [ref=e1877]:
+              - img "Precipitation" [ref=e1878]
+              - generic [ref=e1879]: 1mm
+            - generic [ref=e1880]:
+              - generic [ref=e1881]:
+                - img "Beaufort 3" [ref=e1882]
+                - generic "Wind from 199°" [ref=e1883]: 
+                - generic [ref=e1884]: SSW
+              - generic [ref=e1885]: 18 km/h
+              - generic "Toggle Air/Pollen" [ref=e1887] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1888]
+                - generic [ref=e1890]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1891]
+                - generic [ref=e1893]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1894]
+          - generic [ref=e1898]:
+            - generic [ref=e1899]: 13:00
+            - img "Weather icon" [ref=e1900]
+            - generic [ref=e1901]: 14°
+            - generic [ref=e1903]:
+              - img "Precipitation" [ref=e1904]
+              - generic [ref=e1905]: 1mm
+            - generic [ref=e1906]:
+              - generic [ref=e1907]:
+                - img "Beaufort 3" [ref=e1908]
+                - generic "Wind from 194°" [ref=e1909]: 
+                - generic [ref=e1910]: SSW
+              - generic [ref=e1911]: 18 km/h
+              - generic "Toggle Air/Pollen" [ref=e1913] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1914]
+                - generic [ref=e1916]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1917]
+                - generic [ref=e1919]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1920]
+          - generic [ref=e1924]:
+            - generic [ref=e1925]: 19:00
+            - img "Weather icon" [ref=e1926]
+            - generic [ref=e1927]: 15°
+            - generic [ref=e1929]:
+              - img "Precipitation" [ref=e1930]
+              - generic [ref=e1931]: 0mm
+            - generic [ref=e1932]:
+              - generic [ref=e1933]:
+                - img "Beaufort 2" [ref=e1934]
+                - generic "Wind from 202°" [ref=e1935]: 
+                - generic [ref=e1936]: SSW
+              - generic [ref=e1937]: 11 km/h
+              - generic "Toggle Air/Pollen" [ref=e1939] [cursor=pointer]:
+                - checkbox "Air quality is great Air quality is great Pollen level is low Pollen level is low" [ref=e1940]
+                - generic [ref=e1942]:
+                  - text: Air quality is great
+                  - img "Air quality is great" [ref=e1943]
+                - generic [ref=e1945]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1946]
+          - generic [ref=e1950]:
+            - generic [ref=e1951]: 01:00
+            - img "Weather icon" [ref=e1952]
+            - generic [ref=e1953]: 15°
+            - generic [ref=e1955]:
+              - img "Precipitation" [ref=e1956]
+              - generic [ref=e1957]: 0mm
+            - generic [ref=e1958]:
+              - generic [ref=e1959]:
+                - img "Beaufort 2" [ref=e1960]
+                - generic "Wind from 205°" [ref=e1961]: 
+                - generic [ref=e1962]: SSW
+              - generic [ref=e1963]: 11 km/h
+              - generic "Toggle Air/Pollen" [ref=e1965] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e1966]
+                - generic [ref=e1968]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e1969]
+                - generic [ref=e1971]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1972]
+          - generic [ref=e1976]:
+            - generic [ref=e1977]: 07:00
+            - img "Weather icon" [ref=e1978]
+            - generic [ref=e1979]: 14°
+            - generic [ref=e1981]:
+              - img "Precipitation" [ref=e1982]
+              - generic [ref=e1983]: 1mm
+            - generic [ref=e1984]:
+              - generic [ref=e1985]:
+                - img "Beaufort 2" [ref=e1986]
+                - generic "Wind from 172°" [ref=e1987]: 
+                - generic [ref=e1988]: S
+              - generic [ref=e1989]: 9 km/h
+              - generic "Toggle Air/Pollen" [ref=e1991] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e1992]
+                - generic [ref=e1994]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e1995]
+                - generic [ref=e1997]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e1998]
+          - generic [ref=e2002]:
+            - generic [ref=e2003]: 13:00
+            - img "Weather icon" [ref=e2004]
+            - generic [ref=e2005]: 15°
+            - generic [ref=e2007]:
+              - img "Precipitation" [ref=e2008]
+              - generic [ref=e2009]: 1mm
+            - generic [ref=e2010]:
+              - generic [ref=e2011]:
+                - img "Beaufort 2" [ref=e2012]
+                - generic "Wind from 148°" [ref=e2013]: 
+                - generic [ref=e2014]: SSE
+              - generic [ref=e2015]: 12 km/h
+              - generic "Toggle Air/Pollen" [ref=e2017] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2018]
+                - generic [ref=e2020]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2021]
+                - generic [ref=e2023]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2024]
+          - generic [ref=e2028]:
+            - generic [ref=e2029]: 19:00
+            - img "Weather icon" [ref=e2030]
+            - generic [ref=e2031]: 15°
+            - generic [ref=e2033]:
+              - img "Precipitation" [ref=e2034]
+              - generic [ref=e2035]: 0mm
+            - generic [ref=e2036]:
+              - generic [ref=e2037]:
+                - img "Beaufort 3" [ref=e2038]
+                - generic "Wind from 173°" [ref=e2039]: 
+                - generic [ref=e2040]: S
+              - generic [ref=e2041]: 13 km/h
+              - generic "Toggle Air/Pollen" [ref=e2043] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2044]
+                - generic [ref=e2046]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2047]
+                - generic [ref=e2049]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2050]
+          - generic [ref=e2054]:
+            - generic [ref=e2055]: 01:00
+            - img "Weather icon" [ref=e2056]
+            - generic [ref=e2057]: 16°
+            - generic [ref=e2059]:
+              - img "Precipitation" [ref=e2060]
+              - generic [ref=e2061]: 0mm
+            - generic [ref=e2062]:
+              - generic [ref=e2063]:
+                - img "Beaufort 3" [ref=e2064]
+                - generic "Wind from 187°" [ref=e2065]: 
+                - generic [ref=e2066]: S
+              - generic [ref=e2067]: 15 km/h
+              - generic "Toggle Air/Pollen" [ref=e2069] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2070]
+                - generic [ref=e2072]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2073]
+                - generic [ref=e2075]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2076]
+          - generic [ref=e2080]:
+            - generic [ref=e2081]: 07:00
+            - img "Weather icon" [ref=e2082]
+            - generic [ref=e2083]: 15°
+            - generic [ref=e2085]:
+              - img "Precipitation" [ref=e2086]
+              - generic [ref=e2087]: 1mm
+            - generic [ref=e2088]:
+              - generic [ref=e2089]:
+                - img "Beaufort 2" [ref=e2090]
+                - generic "Wind from 177°" [ref=e2091]: 
+                - generic [ref=e2092]: S
+              - generic [ref=e2093]: 12 km/h
+              - generic "Toggle Air/Pollen" [ref=e2095] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2096]
+                - generic [ref=e2098]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2099]
+                - generic [ref=e2101]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2102]
+          - generic [ref=e2106]:
+            - generic [ref=e2107]: 13:00
+            - img "Weather icon" [ref=e2108]
+            - generic [ref=e2109]: 17°
+            - generic [ref=e2111]:
+              - img "Precipitation" [ref=e2112]
+              - generic [ref=e2113]: 1mm
+            - generic [ref=e2114]:
+              - generic [ref=e2115]:
+                - img "Beaufort 3" [ref=e2116]
+                - generic "Wind from 196°" [ref=e2117]: 
+                - generic [ref=e2118]: SSW
+              - generic [ref=e2119]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e2121] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2122]
+                - generic [ref=e2124]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2125]
+                - generic [ref=e2127]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2128]
+          - generic [ref=e2132]:
+            - generic [ref=e2133]: 19:00
+            - img "Weather icon" [ref=e2134]
+            - generic [ref=e2135]: 15°
+            - generic [ref=e2137]:
+              - img "Precipitation" [ref=e2138]
+              - generic [ref=e2139]: 1mm
+            - generic [ref=e2140]:
+              - generic [ref=e2141]:
+                - img "Beaufort 3" [ref=e2142]
+                - generic "Wind from 195°" [ref=e2143]: 
+                - generic [ref=e2144]: SSW
+              - generic [ref=e2145]: 17 km/h
+              - generic "Toggle Air/Pollen" [ref=e2147] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2148]
+                - generic [ref=e2150]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2151]
+                - generic [ref=e2153]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2154]
+          - generic [ref=e2158]:
+            - generic [ref=e2159]: 01:00
+            - img "Weather icon" [ref=e2160]
+            - generic [ref=e2161]: 13°
+            - generic [ref=e2163]:
+              - img "Precipitation" [ref=e2164]
+              - generic [ref=e2165]: 0mm
+            - generic [ref=e2166]:
+              - generic [ref=e2167]:
+                - img "Beaufort 3" [ref=e2168]
+                - generic "Wind from 241°" [ref=e2169]: 
+                - generic [ref=e2170]: WSW
+              - generic [ref=e2171]: 14 km/h
+              - generic "Toggle Air/Pollen" [ref=e2173] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2174]
+                - generic [ref=e2176]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2177]
+                - generic [ref=e2179]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2180]
+          - generic [ref=e2184]:
+            - generic [ref=e2185]: 07:00
+            - img "Weather icon" [ref=e2186]
+            - generic [ref=e2187]: 10°
+            - generic [ref=e2189]:
+              - img "Precipitation" [ref=e2190]
+              - generic [ref=e2191]: 1mm
+            - generic [ref=e2192]:
+              - generic [ref=e2193]:
+                - img "Beaufort 2" [ref=e2194]
+                - generic "Wind from 235°" [ref=e2195]: 
+                - generic [ref=e2196]: SW
+              - generic [ref=e2197]: 11 km/h
+              - generic "Toggle Air/Pollen" [ref=e2199] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2200]
+                - generic [ref=e2202]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2203]
+                - generic [ref=e2205]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2206]
+          - generic [ref=e2210]:
+            - generic [ref=e2211]: 13:00
+            - img "Weather icon" [ref=e2212]
+            - generic [ref=e2213]: 14°
+            - generic [ref=e2215]:
+              - img "Precipitation" [ref=e2216]
+              - generic [ref=e2217]: 1mm
+            - generic [ref=e2218]:
+              - generic [ref=e2219]:
+                - img "Beaufort 3" [ref=e2220]
+                - generic "Wind from 230°" [ref=e2221]: 
+                - generic [ref=e2222]: SW
+              - generic [ref=e2223]: 16 km/h
+              - generic "Toggle Air/Pollen" [ref=e2225] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2226]
+                - generic [ref=e2228]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2229]
+                - generic [ref=e2231]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2232]
+          - generic [ref=e2236]:
+            - generic [ref=e2237]: 19:00
+            - img "Weather icon" [ref=e2238]
+            - generic [ref=e2239]: 12°
+            - generic [ref=e2241]:
+              - img "Precipitation" [ref=e2242]
+              - generic [ref=e2243]: 0mm
+            - generic [ref=e2244]:
+              - generic [ref=e2245]:
+                - img "Beaufort 3" [ref=e2246]
+                - generic "Wind from 197°" [ref=e2247]: 
+                - generic [ref=e2248]: SSW
+              - generic [ref=e2249]: 12 km/h
+              - generic "Toggle Air/Pollen" [ref=e2251] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2252]
+                - generic [ref=e2254]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2255]
+                - generic [ref=e2257]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2258]
+          - generic [ref=e2262]:
+            - generic [ref=e2263]: 01:00
+            - img "Weather icon" [ref=e2264]
+            - generic [ref=e2265]: 13°
+            - generic [ref=e2267]:
+              - img "Precipitation" [ref=e2268]
+              - generic [ref=e2269]: 1mm
+            - generic [ref=e2270]:
+              - generic [ref=e2271]:
+                - img "Beaufort 3" [ref=e2272]
+                - generic "Wind from 201°" [ref=e2273]: 
+                - generic [ref=e2274]: SSW
+              - generic [ref=e2275]: 15 km/h
+              - generic "Toggle Air/Pollen" [ref=e2277] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2278]
+                - generic [ref=e2280]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2281]
+                - generic [ref=e2283]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2284]
+          - generic [ref=e2288]:
+            - generic [ref=e2289]: 07:00
+            - img "Weather icon" [ref=e2290]
+            - generic [ref=e2291]: 13°
+            - generic [ref=e2293]:
+              - img "Precipitation" [ref=e2294]
+              - generic [ref=e2295]: 1mm
+            - generic [ref=e2296]:
+              - generic [ref=e2297]:
+                - img "Beaufort 2" [ref=e2298]
+                - generic "Wind from 199°" [ref=e2299]: 
+                - generic [ref=e2300]: SSW
+              - generic [ref=e2301]: 9 km/h
+              - generic "Toggle Air/Pollen" [ref=e2303] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2304]
+                - generic [ref=e2306]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2307]
+                - generic [ref=e2309]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2310]
+          - generic [ref=e2314]:
+            - generic [ref=e2315]: 13:00
+            - img "Weather icon" [ref=e2316]
+            - generic [ref=e2317]: 13°
+            - generic [ref=e2319]:
+              - img "Precipitation" [ref=e2320]
+              - generic [ref=e2321]: 2mm
+            - generic [ref=e2322]:
+              - generic [ref=e2323]:
+                - img "Beaufort 1" [ref=e2324]
+                - generic "Wind from 287°" [ref=e2325]: 
+                - generic [ref=e2326]: WNW
+              - generic [ref=e2327]: 2 km/h
+              - generic "Toggle Air/Pollen" [ref=e2329] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2330]
+                - generic [ref=e2332]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2333]
+                - generic [ref=e2335]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2336]
+          - generic [ref=e2340]:
+            - generic [ref=e2341]: 19:00
+            - img "Weather icon" [ref=e2342]
+            - generic [ref=e2343]: 12°
+            - generic [ref=e2345]:
+              - img "Precipitation" [ref=e2346]
+              - generic [ref=e2347]: 1mm
+            - generic [ref=e2348]:
+              - generic [ref=e2349]:
+                - img "Beaufort 1" [ref=e2350]
+                - generic "Wind from 283°" [ref=e2351]: 
+                - generic [ref=e2352]: WNW
+              - generic [ref=e2353]: 4 km/h
+              - generic "Toggle Air/Pollen" [ref=e2355] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2356]
+                - generic [ref=e2358]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2359]
+                - generic [ref=e2361]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2362]
+          - generic [ref=e2366]:
+            - generic [ref=e2367]: 01:00
+            - img "Weather icon" [ref=e2368]
+            - generic [ref=e2369]: 11°
+            - generic [ref=e2371]:
+              - img "Precipitation" [ref=e2372]
+              - generic [ref=e2373]: 0mm
+            - generic [ref=e2374]:
+              - generic [ref=e2375]:
+                - img "Beaufort 1" [ref=e2376]
+                - generic "Wind from 310°" [ref=e2377]: 
+                - generic [ref=e2378]: NW
+              - generic [ref=e2379]: 5 km/h
+              - generic "Toggle Air/Pollen" [ref=e2381] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2382]
+                - generic [ref=e2384]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2385]
+                - generic [ref=e2387]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2388]
+          - generic [ref=e2392]:
+            - generic [ref=e2393]: 07:00
+            - img "Weather icon" [ref=e2394]
+            - generic [ref=e2395]: 7°
+            - generic [ref=e2397]:
+              - img "Precipitation" [ref=e2398]
+              - generic [ref=e2399]: 0mm
+            - generic [ref=e2400]:
+              - generic [ref=e2401]:
+                - img "Beaufort 1" [ref=e2402]
+                - generic "Wind from 289°" [ref=e2403]: 
+                - generic [ref=e2404]: WNW
+              - generic [ref=e2405]: 4 km/h
+              - generic "Toggle Air/Pollen" [ref=e2407] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2408]
+                - generic [ref=e2410]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2411]
+                - generic [ref=e2413]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2414]
+          - generic [ref=e2418]:
+            - generic [ref=e2419]: 13:00
+            - img "Weather icon" [ref=e2420]
+            - generic [ref=e2421]: 11°
+            - generic [ref=e2423]:
+              - img "Precipitation" [ref=e2424]
+              - generic [ref=e2425]: 0mm
+            - generic [ref=e2426]:
+              - generic [ref=e2427]:
+                - img "Beaufort 1" [ref=e2428]
+                - generic "Wind from 290°" [ref=e2429]: 
+                - generic [ref=e2430]: WNW
+              - generic [ref=e2431]: 6 km/h
+              - generic "Toggle Air/Pollen" [ref=e2433] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2434]
+                - generic [ref=e2436]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2437]
+                - generic [ref=e2439]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2440]
+          - generic [ref=e2444]:
+            - generic [ref=e2445]: 19:00
+            - img "Weather icon" [ref=e2446]
+            - generic [ref=e2447]: 9°
+            - generic [ref=e2449]:
+              - img "Precipitation" [ref=e2450]
+              - generic [ref=e2451]: 0mm
+            - generic [ref=e2452]:
+              - generic [ref=e2453]:
+                - img "Beaufort 1" [ref=e2454]
+                - generic "Wind from 295°" [ref=e2455]: 
+                - generic [ref=e2456]: WNW
+              - generic [ref=e2457]: 5 km/h
+              - generic "Toggle Air/Pollen" [ref=e2459] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2460]
+                - generic [ref=e2462]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2463]
+                - generic [ref=e2465]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2466]
+          - generic [ref=e2470]:
+            - generic [ref=e2471]: 01:00
+            - img "Weather icon" [ref=e2472]
+            - generic [ref=e2473]: 6°
+            - generic [ref=e2475]:
+              - img "Precipitation" [ref=e2476]
+              - generic [ref=e2477]: 0mm
+            - generic [ref=e2478]:
+              - generic [ref=e2479]:
+                - img "Beaufort 1" [ref=e2480]
+                - generic "Wind from 255°" [ref=e2481]: 
+                - generic [ref=e2482]: WSW
+              - generic [ref=e2483]: 5 km/h
+              - generic "Toggle Air/Pollen" [ref=e2485] [cursor=pointer]:
+                - checkbox "Air quality is OK Air quality is OK Pollen level is low Pollen level is low" [ref=e2486]
+                - generic [ref=e2488]:
+                  - text: Air quality is OK
+                  - img "Air quality is OK" [ref=e2489]
+                - generic [ref=e2491]:
+                  - text: Pollen level is low
+                  - img "Pollen level is low" [ref=e2492]
+        - generic [ref=e2493]:
+          - generic [ref=e2496]:
+            - heading "Hourly Rain Forecast" [level=3] [ref=e2497]
+            - generic [ref=e2499]:
+              - generic [ref=e2500]:
+                - generic [ref=e2501]: Now
+                - img "wx" [ref=e2503]
+                - generic [ref=e2504]: —
+                - generic [ref=e2505]: 0.1mm
+              - generic [ref=e2506]:
+                - generic [ref=e2507]: "15"
+                - img "wx" [ref=e2509]
+                - generic [ref=e2510]: —
+                - generic [ref=e2511]: 0.2mm
+              - generic [ref=e2512]:
+                - generic [ref=e2513]: "16"
+                - img "wx" [ref=e2515]
+                - generic [ref=e2516]: —
+                - generic [ref=e2517]: 0.6mm
+              - generic [ref=e2518]:
+                - generic [ref=e2519]: "17"
+                - img "wx" [ref=e2521]
+                - generic [ref=e2522]: —
+                - generic [ref=e2523]: 0.2mm
+              - generic [ref=e2524]:
+                - generic [ref=e2525]: "18"
+                - img "wx" [ref=e2527]
+                - generic [ref=e2528]: —
+                - generic [ref=e2529]: 0mm
+              - generic [ref=e2530]:
+                - generic [ref=e2531]: "19"
+                - img "wx" [ref=e2533]
+                - generic [ref=e2534]: —
+                - generic [ref=e2535]: 0.2mm
+              - generic [ref=e2536]:
+                - generic [ref=e2537]: "20"
+                - img "wx" [ref=e2539]
+                - generic [ref=e2540]: —
+                - generic [ref=e2541]: 0mm
+              - generic [ref=e2542]:
+                - generic [ref=e2543]: "21"
+                - img "wx" [ref=e2545]
+                - generic [ref=e2546]: —
+                - generic [ref=e2547]: 0mm
+              - generic [ref=e2548]:
+                - generic [ref=e2549]: "22"
+                - img "wx" [ref=e2551]
+                - generic [ref=e2552]: —
+                - generic [ref=e2553]: 0.3mm
+              - generic [ref=e2554]:
+                - generic [ref=e2555]: "23"
+                - img "wx" [ref=e2557]
+                - generic [ref=e2558]: —
+                - generic [ref=e2559]: 0mm
+              - generic [ref=e2560]:
+                - generic [ref=e2561]: "00"
+                - img "wx" [ref=e2563]
+                - generic [ref=e2564]: —
+                - generic [ref=e2565]: 1mm
+              - generic [ref=e2566]:
+                - generic [ref=e2567]: "01"
+                - img "wx" [ref=e2569]
+                - generic [ref=e2570]: —
+                - generic [ref=e2571]: 3.3mm
+              - generic [ref=e2572]:
+                - generic [ref=e2573]: "02"
+                - img "wx" [ref=e2575]
+                - generic [ref=e2576]: —
+                - generic [ref=e2577]: 2mm
+              - generic [ref=e2578]:
+                - generic [ref=e2579]: "03"
+                - img "wx" [ref=e2581]
+                - generic [ref=e2582]: —
+                - generic [ref=e2583]: 1.1mm
+              - generic [ref=e2584]:
+                - generic [ref=e2585]: "04"
+                - img "wx" [ref=e2587]
+                - generic [ref=e2588]: —
+                - generic [ref=e2589]: 0.4mm
+              - generic [ref=e2590]:
+                - generic [ref=e2591]: "05"
+                - img "wx" [ref=e2593]
+                - generic [ref=e2594]: —
+                - generic [ref=e2595]: 0mm
+              - generic [ref=e2596]:
+                - generic [ref=e2597]: "06"
+                - img "wx" [ref=e2599]
+                - generic [ref=e2600]: —
+                - generic [ref=e2601]: 0mm
+              - generic [ref=e2602]:
+                - generic [ref=e2603]: "07"
+                - img "wx" [ref=e2605]
+                - generic [ref=e2606]: —
+                - generic [ref=e2607]: 0mm
+              - generic [ref=e2608]:
+                - generic [ref=e2609]: "08"
+                - img "wx" [ref=e2611]
+                - generic [ref=e2612]: —
+                - generic [ref=e2613]: 0mm
+              - generic [ref=e2614]:
+                - generic [ref=e2615]: "09"
+                - img "wx" [ref=e2617]
+                - generic [ref=e2618]: —
+                - generic [ref=e2619]: 0mm
+              - generic [ref=e2620]:
+                - generic [ref=e2621]: "10"
+                - img "wx" [ref=e2623]
+                - generic [ref=e2624]: —
+                - generic [ref=e2625]: 0mm
+              - generic [ref=e2626]:
+                - generic [ref=e2627]: "11"
+                - img "wx" [ref=e2629]
+                - generic [ref=e2630]: —
+                - generic [ref=e2631]: 0mm
+              - generic [ref=e2632]:
+                - generic [ref=e2633]: "12"
+                - img "wx" [ref=e2635]
+                - generic [ref=e2636]: —
+                - generic [ref=e2637]: 0mm
+              - generic [ref=e2638]:
+                - generic [ref=e2639]: "13"
+                - img "wx" [ref=e2641]
+                - generic [ref=e2642]: —
+                - generic [ref=e2643]: 0mm
+          - generic [ref=e2646]:
+            - heading "UV UV Index" [level=3] [ref=e2648]:
+              - img "UV" [ref=e2649]
+              - text: UV Index
+            - paragraph [ref=e2651]: Unable to determine UV index
+            - generic [ref=e2656]:
+              - generic [ref=e2657]: "0"
+              - generic [ref=e2658]: "3"
+              - generic [ref=e2659]: "6"
+              - generic [ref=e2660]: "8"
+              - generic [ref=e2661]: 11+
+            - generic [ref=e2662]:
+              - generic [ref=e2663]: "Current: — (Unknown)"
+              - generic [ref=e2664]: "Peak today: —"
+          - generic [ref=e2667]:
+            - generic [ref=e2668]:
+              - heading "Visibility Visibility" [level=3] [ref=e2669]:
+                - img "Visibility" [ref=e2670]
+                - text: Visibility
+              - generic [ref=e2671]: 38 km
+            - paragraph [ref=e2673]: Crystal clear — you can see for miles
+            - generic [ref=e2677]:
+              - generic [ref=e2678]: "0"
+              - generic [ref=e2679]: 0-10 km (log scale)
+              - generic [ref=e2680]: "10"
+        - generic [ref=e2682]:
+          - generic [ref=e2683]: 📅
+          - generic [ref=e2684]: Multi-Day Forecast
+        - generic [ref=e2686]:
+          - generic [ref=e2689]:
+            - heading "Next Few Days" [level=3] [ref=e2690]
+            - table [ref=e2692]:
+              - rowgroup [ref=e2693]:
+                - row "Today Weather icon 14°–16° Toggle precipitation view (Amount/POP) Rain amount 3mm Precipitation probability — Toggle wind direction / speed  SSW 25km/h" [ref=e2694]:
+                  - cell "Today Weather icon" [ref=e2695]:
+                    - generic [ref=e2696]:
+                      - generic [ref=e2697]: Today
+                      - img "Weather icon" [ref=e2698]
+                  - cell "14°–16° Toggle precipitation view (Amount/POP) Rain amount 3mm Precipitation probability — Toggle wind direction / speed  SSW 25km/h" [ref=e2699]:
+                    - generic [ref=e2700]:
+                      - generic [ref=e2701]: 14°–16°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2702] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2703]
+                        - generic [ref=e2704]:
+                          - img "Rain amount" [ref=e2705]
+                          - generic [ref=e2706]: 3mm
+                        - generic [ref=e2707]:
+                          - img "Precipitation probability" [ref=e2708]
+                          - generic [ref=e2709]: —
+                      - generic "Toggle wind direction / speed" [ref=e2710] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2711]
+                        - generic [ref=e2712]:
+                          - generic "Wind from 194°" [ref=e2713]: 
+                          - generic [ref=e2714]: SSW
+                        - generic [ref=e2716]: 25km/h
+                - row "Sat Weather icon 9°–15° Toggle precipitation view (Amount/POP) Rain amount 8mm Precipitation probability — Toggle wind direction / speed  SW 20km/h" [ref=e2717]:
+                  - cell "Sat Weather icon" [ref=e2718]:
+                    - generic [ref=e2719]:
+                      - generic [ref=e2720]: Sat
+                      - img "Weather icon" [ref=e2721]
+                  - cell "9°–15° Toggle precipitation view (Amount/POP) Rain amount 8mm Precipitation probability — Toggle wind direction / speed  SW 20km/h" [ref=e2722]:
+                    - generic [ref=e2723]:
+                      - generic [ref=e2724]: 9°–15°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2725] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2726]
+                        - generic [ref=e2727]:
+                          - img "Rain amount" [ref=e2728]
+                          - generic [ref=e2729]: 8mm
+                        - generic [ref=e2730]:
+                          - img "Precipitation probability" [ref=e2731]
+                          - generic [ref=e2732]: —
+                      - generic "Toggle wind direction / speed" [ref=e2733] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2734]
+                        - generic [ref=e2735]:
+                          - generic "Wind from 221°" [ref=e2736]: 
+                          - generic [ref=e2737]: SW
+                        - generic [ref=e2739]: 20km/h
+                - row "Sun Weather icon 8°–12° Toggle precipitation view (Amount/POP) Rain amount 4mm Precipitation probability — Toggle wind direction / speed  SW 16km/h" [ref=e2740]:
+                  - cell "Sun Weather icon" [ref=e2741]:
+                    - generic [ref=e2742]:
+                      - generic [ref=e2743]: Sun
+                      - img "Weather icon" [ref=e2744]
+                  - cell "8°–12° Toggle precipitation view (Amount/POP) Rain amount 4mm Precipitation probability — Toggle wind direction / speed  SW 16km/h" [ref=e2745]:
+                    - generic [ref=e2746]:
+                      - generic [ref=e2747]: 8°–12°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2748] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2749]
+                        - generic [ref=e2750]:
+                          - img "Rain amount" [ref=e2751]
+                          - generic [ref=e2752]: 4mm
+                        - generic [ref=e2753]:
+                          - img "Precipitation probability" [ref=e2754]
+                          - generic [ref=e2755]: —
+                      - generic "Toggle wind direction / speed" [ref=e2756] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2757]
+                        - generic [ref=e2758]:
+                          - generic "Wind from 233°" [ref=e2759]: 
+                          - generic [ref=e2760]: SW
+                        - generic [ref=e2762]: 16km/h
+                - row "Mon Weather icon 8°–16° Toggle precipitation view (Amount/POP) Rain amount 2mm Precipitation probability — Toggle wind direction / speed  SW 20km/h" [ref=e2763]:
+                  - cell "Mon Weather icon" [ref=e2764]:
+                    - generic [ref=e2765]:
+                      - generic [ref=e2766]: Mon
+                      - img "Weather icon" [ref=e2767]
+                  - cell "8°–16° Toggle precipitation view (Amount/POP) Rain amount 2mm Precipitation probability — Toggle wind direction / speed  SW 20km/h" [ref=e2768]:
+                    - generic [ref=e2769]:
+                      - generic [ref=e2770]: 8°–16°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2771] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2772]
+                        - generic [ref=e2773]:
+                          - img "Rain amount" [ref=e2774]
+                          - generic [ref=e2775]: 2mm
+                        - generic [ref=e2776]:
+                          - img "Precipitation probability" [ref=e2777]
+                          - generic [ref=e2778]: —
+                      - generic "Toggle wind direction / speed" [ref=e2779] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2780]
+                        - generic [ref=e2781]:
+                          - generic "Wind from 223°" [ref=e2782]: 
+                          - generic [ref=e2783]: SW
+                        - generic [ref=e2785]: 20km/h
+                - row "Tue Weather icon 13°–15° Toggle precipitation view (Amount/POP) Rain amount 0mm Precipitation probability — Toggle wind direction / speed  SSW 16km/h" [ref=e2786]:
+                  - cell "Tue Weather icon" [ref=e2787]:
+                    - generic [ref=e2788]:
+                      - generic [ref=e2789]: Tue
+                      - img "Weather icon" [ref=e2790]
+                  - cell "13°–15° Toggle precipitation view (Amount/POP) Rain amount 0mm Precipitation probability — Toggle wind direction / speed  SSW 16km/h" [ref=e2791]:
+                    - generic [ref=e2792]:
+                      - generic [ref=e2793]: 13°–15°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2794] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2795]
+                        - generic [ref=e2796]:
+                          - img "Rain amount" [ref=e2797]
+                          - generic [ref=e2798]: 0mm
+                        - generic [ref=e2799]:
+                          - img "Precipitation probability" [ref=e2800]
+                          - generic [ref=e2801]: —
+                      - generic "Toggle wind direction / speed" [ref=e2802] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2803]
+                        - generic [ref=e2804]:
+                          - generic "Wind from 200°" [ref=e2805]: 
+                          - generic [ref=e2806]: SSW
+                        - generic [ref=e2808]: 16km/h
+                - row "Wed Weather icon 14°–15° Toggle precipitation view (Amount/POP) Rain amount 0mm Precipitation probability — Toggle wind direction / speed  S 11km/h" [ref=e2809]:
+                  - cell "Wed Weather icon" [ref=e2810]:
+                    - generic [ref=e2811]:
+                      - generic [ref=e2812]: Wed
+                      - img "Weather icon" [ref=e2813]
+                  - cell "14°–15° Toggle precipitation view (Amount/POP) Rain amount 0mm Precipitation probability — Toggle wind direction / speed  S 11km/h" [ref=e2814]:
+                    - generic [ref=e2815]:
+                      - generic [ref=e2816]: 14°–15°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2817] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2818]
+                        - generic [ref=e2819]:
+                          - img "Rain amount" [ref=e2820]
+                          - generic [ref=e2821]: 0mm
+                        - generic [ref=e2822]:
+                          - img "Precipitation probability" [ref=e2823]
+                          - generic [ref=e2824]: —
+                      - generic "Toggle wind direction / speed" [ref=e2825] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2826]
+                        - generic [ref=e2827]:
+                          - generic "Wind from 174°" [ref=e2828]: 
+                          - generic [ref=e2829]: S
+                        - generic [ref=e2831]: 11km/h
+                - row "Thu Weather icon 15°–17° Toggle precipitation view (Amount/POP) Rain amount 1mm Precipitation probability — Toggle wind direction / speed  S 15km/h" [ref=e2832]:
+                  - cell "Thu Weather icon" [ref=e2833]:
+                    - generic [ref=e2834]:
+                      - generic [ref=e2835]: Thu
+                      - img "Weather icon" [ref=e2836]
+                  - cell "15°–17° Toggle precipitation view (Amount/POP) Rain amount 1mm Precipitation probability — Toggle wind direction / speed  S 15km/h" [ref=e2837]:
+                    - generic [ref=e2838]:
+                      - generic [ref=e2839]: 15°–17°
+                      - generic "Toggle precipitation view (Amount/POP)" [ref=e2840] [cursor=pointer]:
+                        - checkbox "Toggle precipitation view (Amount/POP)" [ref=e2841]
+                        - generic [ref=e2842]:
+                          - img "Rain amount" [ref=e2843]
+                          - generic [ref=e2844]: 1mm
+                        - generic [ref=e2845]:
+                          - img "Precipitation probability" [ref=e2846]
+                          - generic [ref=e2847]: —
+                      - generic "Toggle wind direction / speed" [ref=e2848] [cursor=pointer]:
+                        - checkbox "Toggle wind direction / speed" [ref=e2849]
+                        - generic [ref=e2850]:
+                          - generic "Wind from 189°" [ref=e2851]: 
+                          - generic [ref=e2852]: S
+                        - generic [ref=e2854]: 15km/h
+          - generic [ref=e2857]:
+            - heading "Sun Sun Times" [level=3] [ref=e2858]:
+              - img "Sun" [ref=e2859]
+              - text: Sun Times
+            - generic [ref=e2860]:
+              - generic [ref=e2861]:
+                - img "Sunrise" [ref=e2862]
+                - generic [ref=e2863]: 07:53
+                - generic [ref=e2864]: Sunrise
+              - generic [ref=e2865]:
+                - img "Sunset" [ref=e2866]
+                - generic [ref=e2867]: 17:33
+                - generic [ref=e2868]: Sunset
+              - generic [ref=e2869]:
+                - img "Day length" [ref=e2870]
+                - generic [ref=e2871]: 9h 40m
+                - generic [ref=e2872]: Day length
+        - generic [ref=e2874]:
+          - generic [ref=e2875]: 🌡️
+          - generic [ref=e2876]: Atmospheric & Environment
+        - generic [ref=e2878]:
+          - generic [ref=e2881]:
+            - heading "Barometer Pressure" [level=3] [ref=e2882]:
+              - img "Barometer" [ref=e2883]
+              - text: Pressure
+            - generic [ref=e2884]:
+              - img "Barometric pressure Current pressure 1001 hPa; trend unknown." [ref=e2885]:
+                - generic [ref=e2888]:
+                  - generic [ref=e2904]: "960"
+                  - generic [ref=e2905]: "980"
+                  - generic [ref=e2906]: "1000"
+                  - generic [ref=e2907]: "1020"
+                  - generic [ref=e2908]: "1040"
+              - generic [ref=e2914]: 1001 hPa
+          - generic [ref=e2917]:
+            - generic [ref=e2918]:
+              - heading "Wind" [level=3] [ref=e2919]
+              - generic [ref=e2921]: 25km/h
+            - paragraph [ref=e2922]: 🔄 Moderate breeze from the S – changing direction
+            - generic [ref=e2923]:
+              - generic [ref=e2924]:
+                - generic [ref=e2925]:
+                  - generic "Wind from 185°" [ref=e2926]: 
+                  - generic [ref=e2927]:
+                    - generic [ref=e2928]: S
+                    - generic [ref=e2929]: 184.5°
+                - generic [ref=e2930]:
+                  - generic [ref=e2931]: 25 km/h
+                  - generic [ref=e2932]: 7 m/s
+              - generic [ref=e2934]:
+                - img "Beaufort 4" [ref=e2935]
+                - generic [ref=e2936]: Moderate breeze
+              - generic [ref=e2937]:
+                - generic [ref=e2938]: Next 24 hours
+                - generic [ref=e2939]:
+                  - generic [ref=e2940]:
+                    - img "Weather" [ref=e2941]
+                    - generic [ref=e2942]: 14:00
+                    - generic [ref=e2943]: 25 km/h
+                    - generic [ref=e2944]: S
+                  - generic [ref=e2945]:
+                    - img "Weather" [ref=e2946]
+                    - generic [ref=e2947]: 15:00
+                    - generic [ref=e2948]: 24 km/h
+                    - generic [ref=e2949]: S
+                  - generic [ref=e2950]:
+                    - img "Weather" [ref=e2951]
+                    - generic [ref=e2952]: 16:00
+                    - generic [ref=e2953]: 25 km/h
+                    - generic [ref=e2954]: SSW
+                  - generic [ref=e2955]:
+                    - img "Weather" [ref=e2956]
+                    - generic [ref=e2957]: 17:00
+                    - generic [ref=e2958]: 26 km/h
+                    - generic [ref=e2959]: SSW
+                  - generic [ref=e2960]:
+                    - img "Weather" [ref=e2961]
+                    - generic [ref=e2962]: 18:00
+                    - generic [ref=e2963]: 25 km/h
+                    - generic [ref=e2964]: SSW
+                  - generic [ref=e2965]:
+                    - img "Weather" [ref=e2966]
+                    - generic [ref=e2967]: 19:00
+                    - generic [ref=e2968]: 24 km/h
+                    - generic [ref=e2969]: SSW
+                  - generic [ref=e2970]:
+                    - img "Weather" [ref=e2971]
+                    - generic [ref=e2972]: 20:00
+                    - generic [ref=e2973]: 24 km/h
+                    - generic [ref=e2974]: SSW
+                  - generic [ref=e2975]:
+                    - img "Weather" [ref=e2976]
+                    - generic [ref=e2977]: 21:00
+                    - generic [ref=e2978]: 22 km/h
+                    - generic [ref=e2979]: S
+                  - generic [ref=e2980]:
+                    - img "Weather" [ref=e2981]
+                    - generic [ref=e2982]: 22:00
+                    - generic [ref=e2983]: 23 km/h
+                    - generic [ref=e2984]: S
+                  - generic [ref=e2985]:
+                    - img "Weather" [ref=e2986]
+                    - generic [ref=e2987]: 23:00
+                    - generic [ref=e2988]: 29 km/h
+                    - generic [ref=e2989]: SSW
+                  - generic [ref=e2990]:
+                    - img "Weather" [ref=e2991]
+                    - generic [ref=e2992]: 00:00
+                    - generic [ref=e2993]: 26 km/h
+                    - generic [ref=e2994]: SSW
+                  - generic [ref=e2995]:
+                    - img "Weather" [ref=e2996]
+                    - generic [ref=e2997]: 01:00
+                    - generic [ref=e2998]: 28 km/h
+                    - generic [ref=e2999]: SSW
+                  - generic [ref=e3000]:
+                    - img "Weather" [ref=e3001]
+                    - generic [ref=e3002]: 02:00
+                    - generic [ref=e3003]: 30 km/h
+                    - generic [ref=e3004]: SSW
+                  - generic [ref=e3005]:
+                    - img "Weather" [ref=e3006]
+                    - generic [ref=e3007]: 03:00
+                    - generic [ref=e3008]: 28 km/h
+                    - generic [ref=e3009]: SSW
+                  - generic [ref=e3010]:
+                    - img "Weather" [ref=e3011]
+                    - generic [ref=e3012]: 04:00
+                    - generic [ref=e3013]: 27 km/h
+                    - generic [ref=e3014]: SSW
+                  - generic [ref=e3015]:
+                    - img "Weather" [ref=e3016]
+                    - generic [ref=e3017]: 05:00
+                    - generic [ref=e3018]: 23 km/h
+                    - generic [ref=e3019]: SSW
+                  - generic [ref=e3020]:
+                    - img "Weather" [ref=e3021]
+                    - generic [ref=e3022]: 06:00
+                    - generic [ref=e3023]: 22 km/h
+                    - generic [ref=e3024]: SSW
+                  - generic [ref=e3025]:
+                    - img "Weather" [ref=e3026]
+                    - generic [ref=e3027]: 07:00
+                    - generic [ref=e3028]: 21 km/h
+                    - generic [ref=e3029]: SSW
+                  - generic [ref=e3030]:
+                    - img "Weather" [ref=e3031]
+                    - generic [ref=e3032]: 08:00
+                    - generic [ref=e3033]: 20 km/h
+                    - generic [ref=e3034]: SW
+                  - generic [ref=e3035]:
+                    - img "Weather" [ref=e3036]
+                    - generic [ref=e3037]: 09:00
+                    - generic [ref=e3038]: 19 km/h
+                    - generic [ref=e3039]: SW
+                  - generic [ref=e3040]:
+                    - img "Weather" [ref=e3041]
+                    - generic [ref=e3042]: 10:00
+                    - generic [ref=e3043]: 19 km/h
+                    - generic [ref=e3044]: SW
+                  - generic [ref=e3045]:
+                    - img "Weather" [ref=e3046]
+                    - generic [ref=e3047]: 11:00
+                    - generic [ref=e3048]: 19 km/h
+                    - generic [ref=e3049]: SW
+                  - generic [ref=e3050]:
+                    - img "Weather" [ref=e3051]
+                    - generic [ref=e3052]: 12:00
+                    - generic [ref=e3053]: 21 km/h
+                    - generic [ref=e3054]: SW
+                  - generic [ref=e3055]:
+                    - img "Weather" [ref=e3056]
+                    - generic [ref=e3057]: 13:00
+                    - generic [ref=e3058]: 23 km/h
+                    - generic [ref=e3059]: SW
+          - generic "Humidity card" [ref=e3061]:
+            - generic [ref=e3062]:
+              - generic [ref=e3063]:
+                - heading "Humidity" [level=3] [ref=e3064]
+                - 'generic "Comfort: Sticky" [ref=e3065]':
+                  - generic [ref=e3066]: 💦
+                  - generic [ref=e3067]: Sticky
+              - generic [ref=e3068]:
+                - img [ref=e3069]:
+                  - generic [ref=e3107]: 84%
+                  - generic [ref=e3108]: RH
+                - generic "Relative humidity 84%" [ref=e3109]:
+                  - generic [ref=e3110]: Dew point 12°
+                  - generic [ref=e3111]: Sticky — Muggy; sweat evaporation is poor.
+              - generic [ref=e3112]:
+                - generic [ref=e3113]:
+                  - generic [ref=e3114]: 🌵
+                  - generic [ref=e3115]: Dry
+                - generic [ref=e3116]:
+                  - generic [ref=e3117]: 🙂
+                  - generic [ref=e3118]: Comfy
+                - generic [ref=e3119]:
+                  - generic [ref=e3120]: 💦
+                  - generic [ref=e3121]: Sticky
+        - generic [ref=e3122]:
+          - generic [ref=e3125]:
+            - generic [ref=e3126]:
+              - heading "Air Quality Air Quality" [level=3] [ref=e3127]:
+                - img "Air Quality" [ref=e3128]
+                - text: Air Quality
+              - img "AQI 2 - Good" [ref=e3129]
+            - paragraph [ref=e3131]: Air is sparkling clean – perfect for being outdoors.
+            - generic [ref=e3136]:
+              - generic [ref=e3137]: "0"
+              - generic [ref=e3138]: "100"
+              - generic [ref=e3139]: "200"
+              - generic [ref=e3140]: "300"
+              - generic [ref=e3141]: "500"
+            - group [ref=e3142]:
+              - generic "Air Pollutants" [ref=e3143] [cursor=pointer]
+          - generic [ref=e3146]:
+            - generic [ref=e3147]:
+              - heading "Pollen Pollen" [level=3] [ref=e3148]:
+                - img "Pollen" [ref=e3149]
+                - text: Pollen
+              - img "Pollen 1 - Low" [ref=e3150]
+            - paragraph [ref=e3152]: "Low: 🌿 Hardly any pollen about – most people won’t notice."
+            - generic [ref=e3157]:
+              - generic [ref=e3158]: "0"
+              - generic [ref=e3159]: "1"
+              - generic [ref=e3160]: "3"
+              - generic [ref=e3161]: "4"
+              - generic [ref=e3162]: "5"
+            - generic [ref=e3164]: Perfect conditions for outdoor activities. Minimal allergy symptoms expected.
+            - group [ref=e3165]:
+              - generic "Pollen Types" [ref=e3166] [cursor=pointer]
+          - generic [ref=e3169]:
+            - heading "Yes, but what does it feel like?" [level=3] [ref=e3170]
+            - generic [ref=e3171]:
+              - generic [ref=e3172]:
+                - img "loquacious" [ref=e3176]
+                - generic [ref=e3177]: Positively perky, duckie!
+              - generic [ref=e3178]:
+                - img "logical" [ref=e3182]
+                - generic [ref=e3183]: Cool and fresh, good for walking or light activity.
+        - generic [ref=e3185]:
+          - generic [ref=e3186]: 🌙
+          - generic [ref=e3187]: Astronomy
+        - generic [ref=e3192]:
+          - heading "Moon Phase Waxing gibbous Moon" [level=3] [ref=e3193]:
+            - img "Moon Phase" [ref=e3194]
+            - text: Waxing gibbous Moon
+          - generic [ref=e3195]:
+            - generic [ref=e3196]:
+              - img "Moonrise" [ref=e3197]
+              - generic [ref=e3198]: 15:37
+              - generic [ref=e3199]: Moonrise
+            - generic [ref=e3200]:
+              - img "Moonset" [ref=e3201]
+              - generic [ref=e3202]: 00:59
+              - generic [ref=e3203]: Moonset
+          - button "More details" [ref=e3205] [cursor=pointer]:
+            - generic [ref=e3206]: More details
+            - img [ref=e3207]
+    - contentinfo [ref=e3210]:
+      - generic [ref=e3211]:
+        - complementary [ref=e3212]:
+          - img "Go Daisy" [ref=e3213]
+          - img "Go Daisy logo" [ref=e3214]
+        - generic [ref=e3215]:
+          - navigation [ref=e3216]:
+            - link "Support Go Daisy" [ref=e3217] [cursor=pointer]:
+              - /url: /support
+            - link "How we do it" [ref=e3218] [cursor=pointer]:
+              - /url: /HowWeDoIt
+            - link "Sorry about the weather" [ref=e3219] [cursor=pointer]:
+              - /url: /whether-weather
+            - link "About us" [ref=e3220] [cursor=pointer]:
+              - /url: /AboutUs
+          - navigation [ref=e3221]:
+            - link "Terms of use" [ref=e3222] [cursor=pointer]:
+              - /url: /TermsAndConditions
+            - link "Privacy policy" [ref=e3223] [cursor=pointer]:
+              - /url: /PrivacyPolicy
+            - link "Cookie policy" [ref=e3224] [cursor=pointer]:
+              - /url: /CookiePolicy
+        - navigation [ref=e3225]:
+          - paragraph [ref=e3226]: Get out there!
+          - paragraph [ref=e3227]: © 2025 Go Daisy. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e3233] [cursor=pointer]:
+    - img [ref=e3234]
+  - alert [ref=e3237]
+```

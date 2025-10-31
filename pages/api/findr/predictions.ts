@@ -669,6 +669,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const rectangleCode = body.rectangleCode?.trim();
+  if (!rectangleCode) {
+    return res.status(400).json({ error: 'rectangleCode is required' });
+  }
   const predictionDate = validateDate(body.predictionDate) ?? new Date().toISOString().slice(0, 10);
   const language = body.language?.trim() || 'en';
   const bypassCache = Boolean(body.bypassCache);

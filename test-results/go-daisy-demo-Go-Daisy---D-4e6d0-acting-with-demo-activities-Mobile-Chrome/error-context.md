@@ -1,0 +1,66 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e4]:
+    - generic [ref=e6]:
+      - heading "Go Daisy helps you plan your next activity in seconds — matched to this week's weather." [level=1] [ref=e8]
+      - generic [ref=e9]:
+        - link "Sign in" [ref=e10] [cursor=pointer]:
+          - /url: /login
+        - link "Create account" [ref=e11] [cursor=pointer]:
+          - /url: /signup
+    - generic [ref=e12]:
+      - complementary [ref=e13]:
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e18]: Your area
+            - textbox "Type a place (e.g., Colunga, Asturias)" [ref=e21]
+            - generic [ref=e22]:
+              - text: "Showing demo for:"
+              - strong [ref=e23]: Madrid, Spain
+          - generic [ref=e24]:
+            - button "Use my location" [ref=e25] [cursor=pointer]
+            - button "Lastres" [ref=e26] [cursor=pointer]
+            - button "Madrid" [ref=e27] [cursor=pointer]
+          - generic [ref=e28]:
+            - generic [ref=e30]: Filters
+            - generic [ref=e31]:
+              - button "Outdoors" [ref=e32] [cursor=pointer]
+              - button "Water" [ref=e33] [cursor=pointer]
+              - button "Family" [ref=e34] [cursor=pointer]
+              - button "Sports" [ref=e35] [cursor=pointer]
+          - generic [ref=e37]: No account needed. Changing location updates the live cards on the right.
+          - generic [ref=e39]:
+            - generic [ref=e40]: 👋
+            - generic [ref=e41]:
+              - generic [ref=e42]: Already using Go Daisy?
+              - generic [ref=e43]: Sign in to see your personalised activities and saved places.
+            - generic [ref=e44]:
+              - link "Sign in" [ref=e45] [cursor=pointer]:
+                - /url: /login
+              - link "Create account" [ref=e46] [cursor=pointer]:
+                - /url: /signup
+                - text: Register
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - generic [ref=e50]: Make it yours
+              - generic [ref=e51]:
+                - text: Start onboarding and we’ll carry over
+                - strong [ref=e52]: Madrid, Spain
+                - text: .
+            - link "Start onboarding" [ref=e53] [cursor=pointer]:
+              - /url: /onboarding?lat=40.4168&lon=-3.7038&name=Madrid%2C%20Spain&coastLat=35.272&coastLon=23.539&coastName=Elafonissi%20Beach%2C%20Crete
+              - text: Start
+      - generic [ref=e57]:
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic "Updating"
+        - generic [ref=e58]: Updating
+  - button "Open Next.js Dev Tools" [ref=e64] [cursor=pointer]:
+    - img [ref=e65]
+  - alert [ref=e68]
+```

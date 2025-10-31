@@ -31,7 +31,7 @@ describe('GET /api/tides', () => {
     jest.clearAllMocks();
     // Reset fetch mock
     global.fetch = jest.fn();
-    
+
     // Mock environment variable
     process.env.STORMGLASS_SECRET_KEY = 'test-stormglass-key';
 
@@ -59,6 +59,13 @@ describe('GET /api/tides', () => {
         ],
       }),
     });
+
+    // Clear global cache and cooldown state
+    if (globalThis.__tideCache__) globalThis.__tideCache__.clear();
+    if (globalThis.__worldTidesCache__) globalThis.__worldTidesCache__.clear();
+    if (globalThis.__noaaTidesCache__) globalThis.__noaaTidesCache__.clear();
+    if (typeof globalThis.__lastLimitedResponse__ !== 'undefined') globalThis.__lastLimitedResponse__ = undefined;
+    if (typeof global.lastLimitedAt !== 'undefined') global.lastLimitedAt = null;
   });
 
   afterEach(() => {

@@ -1,0 +1,54 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Skip to main content" [ref=e5] [cursor=pointer]:
+        - /url: "#main-content"
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - button "Open menu" [ref=e9] [cursor=pointer]:
+            - img [ref=e10]
+            - img [ref=e12]
+          - link "Go Daisy home" [ref=e14] [cursor=pointer]:
+            - /url: /
+            - img "Go Daisy" [ref=e15]
+        - generic [ref=e17]:
+          - button "🏡 London ✓" [ref=e18] [cursor=pointer]:
+            - generic [ref=e19]: 🏡 London ✓
+          - button "Set beach location" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: Set beach location
+          - link "Log in or register" [ref=e22] [cursor=pointer]:
+            - /url: /login
+            - generic [ref=e23]: 🪵
+            - generic [ref=e24]: Log in / Register
+    - contentinfo [ref=e26]:
+      - generic [ref=e27]:
+        - complementary [ref=e28]:
+          - img "Go Daisy" [ref=e29]
+          - img "Go Daisy logo" [ref=e30]
+        - generic [ref=e31]:
+          - navigation [ref=e32]:
+            - link "Support Go Daisy" [ref=e33] [cursor=pointer]:
+              - /url: /support
+            - link "How we do it" [ref=e34] [cursor=pointer]:
+              - /url: /HowWeDoIt
+            - link "Sorry about the weather" [ref=e35] [cursor=pointer]:
+              - /url: /whether-weather
+            - link "About us" [ref=e36] [cursor=pointer]:
+              - /url: /AboutUs
+          - navigation [ref=e37]:
+            - link "Terms of use" [ref=e38] [cursor=pointer]:
+              - /url: /TermsAndConditions
+            - link "Privacy policy" [ref=e39] [cursor=pointer]:
+              - /url: /PrivacyPolicy
+            - link "Cookie policy" [ref=e40] [cursor=pointer]:
+              - /url: /CookiePolicy
+        - navigation [ref=e41]:
+          - paragraph [ref=e42]: Get out there!
+          - paragraph [ref=e43]: © 2025 Go Daisy. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e49] [cursor=pointer]:
+    - img [ref=e50]
+  - alert [ref=e53]
+```

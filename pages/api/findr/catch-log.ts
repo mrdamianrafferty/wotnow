@@ -364,6 +364,17 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
   if (!catchData.species_id || !catchData.species_common_name || !catchData.rectangle_code || 
       !catchData.caught_at || !catchData.bait_used || typeof catchData.quantity !== 'number' ||
       typeof catchData.followed_findr_advice !== 'boolean') {
+    console.warn('[Catch Log POST] Missing required fields', {
+      missing: [
+        !catchData.species_id && 'species_id',
+        !catchData.species_common_name && 'species_common_name',
+        !catchData.rectangle_code && 'rectangle_code',
+        !catchData.caught_at && 'caught_at',
+        !catchData.bait_used && 'bait_used',
+        typeof catchData.quantity !== 'number' && 'quantity',
+        typeof catchData.followed_findr_advice !== 'boolean' && 'followed_findr_advice',
+      ].filter(Boolean)
+    });
     return res.status(400).json({ 
       error: 'Missing required fields',
       required: ['species_id', 'species_common_name', 'rectangle_code', 'caught_at', 'bait_used', 'quantity', 'followed_findr_advice']
@@ -385,6 +396,8 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
 
     if (impressionError) {
       console.warn('[Catch Log POST] Failed to query impressions:', impressionError);
+      // User-facing error for DB issues
+      return res.status(500).json({ error: 'Failed to link to recent prediction. Please try again.' });
     }
 
     let linkedImpressionId: string | null = null;
@@ -488,7 +501,7 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
 
     if (insertError) {
       console.error('[Catch Log POST] Insert failed:', insertError);
-      return res.status(500).json({ error: 'Failed to create catch entry' });
+      return res.status(500).json({ error: 'Failed to create catch entry. Please try again.' });
     }
 
     console.info('[Catch Log POST] Successfully created catch', {
@@ -529,6 +542,6 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
 
   } catch (error) {
     console.error('[Catch Log POST] Error:', error);
-    res.status(500).json({ error: 'Failed to create catch entry' });
+    res.status(500).json({ error: 'Failed to create catch entry. Please try again.' });
   }
 }

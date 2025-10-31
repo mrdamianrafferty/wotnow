@@ -1,0 +1,877 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - main [ref=e4]:
+      - generic [ref=e5]:
+        - navigation [ref=e6]:
+          - list [ref=e7]:
+            - listitem [ref=e8]:
+              - link "findr" [ref=e9] [cursor=pointer]:
+                - /url: /findr
+                - img [ref=e10]
+                - generic [ref=e16]: findr
+            - listitem [ref=e17]:
+              - link "faves" [ref=e18] [cursor=pointer]:
+                - /url: /findr/favourites
+                - img [ref=e19]
+                - generic [ref=e21]: faves
+            - listitem [ref=e22]:
+              - link "catches" [ref=e23] [cursor=pointer]:
+                - /url: /findr/log
+                - img [ref=e24]
+                - generic [ref=e27]: catches
+            - listitem [ref=e28]:
+              - link "gallery" [ref=e29] [cursor=pointer]:
+                - /url: /findr/my-catches
+                - img [ref=e30]
+                - generic [ref=e33]: gallery
+            - listitem [ref=e34]:
+              - link "conditions" [ref=e35] [cursor=pointer]:
+                - /url: /findr/conditions
+                - img [ref=e36]
+                - generic [ref=e41]: conditions
+            - listitem [ref=e42]:
+              - link "info" [ref=e43] [cursor=pointer]:
+                - /url: /findr/info
+                - img [ref=e44]
+                - generic [ref=e46]: info
+        - generic [ref=e47]:
+          - button "Set location" [ref=e48] [cursor=pointer]:
+            - img [ref=e49]
+            - generic [ref=e52]: Set location
+          - link "Sign In" [ref=e53] [cursor=pointer]:
+            - /url: /findr/auth
+            - img [ref=e54]
+            - text: Sign In
+          - button "🇮🇪 en" [ref=e58] [cursor=pointer]:
+            - generic [ref=e59]: 🇮🇪
+            - generic [ref=e60]: en
+            - img [ref=e61]
+      - generic [ref=e63]:
+        - region "findr - catch of the day" [ref=e64]:
+          - heading "findr - catch of the day" [level=1] [ref=e68]:
+            - img [ref=e69]
+            - generic [ref=e72]: findr - catch of the day
+          - generic [ref=e73]:
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - generic: ADD TO TRIP
+                - generic: SKIP
+                - generic [ref=e77]:
+                  - generic [ref=e78]:
+                    - generic [ref=e79]:
+                      - img "Sea Bass" [ref=e80]
+                      - button "Add to favorites" [ref=e81] [cursor=pointer]:
+                        - img [ref=e82]
+                      - button "Show info" [ref=e84] [cursor=pointer]:
+                        - img [ref=e85]
+                    - generic [ref=e89]:
+                      - heading "Sea Bass (Dicentrarchus labrax)" [level=2] [ref=e90]:
+                        - generic [ref=e91]: Sea Bass
+                        - generic [ref=e92]: (Dicentrarchus labrax)
+                      - generic [ref=e93]:
+                        - text: 81%
+                        - generic [ref=e94]: biting
+                  - generic [ref=e96]:
+                    - paragraph [ref=e97]:
+                      - img [ref=e98]
+                      - generic [ref=e100]: Findr bio
+                    - paragraph [ref=e101]: Estuary specialist — beyond color breaks and rides pressure waves for ambush; Slow-Rolled Swimbaits Near Bottom.
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img "Sea Bream (Dorada)"
+                        - button "Add to favorites":
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - heading "Sea Bream (Dorada) (Sparus aurata)" [level=2]:
+                              - generic: Sea Bream (Dorada)
+                              - generic: (Sparus aurata)
+                            - generic:
+                              - text: 79%
+                              - generic: biting
+                    - generic:
+                      - generic:
+                        - paragraph:
+                          - img "Conditions": 🌊
+                          - generic: Current Conditions
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img "Temperature": 🌡️
+                                - generic: "Temp:"
+                              - generic:
+                                - generic: 18.75°C
+                                - generic: ✅
+                            - generic:
+                              - generic:
+                                - img "Depth": 📏
+                                - generic: "Depth:"
+                              - generic:
+                                - generic: 0m
+                                - generic: ❌
+                            - generic:
+                              - generic:
+                                - img "Substrate": 🪨
+                                - generic: "Seabed:"
+                              - generic:
+                                - generic: mixed
+                                - generic: ❌
+                    - generic:
+                      - paragraph:
+                        - img
+                        - generic: Findr bio
+                      - paragraph: Shelf wanderer — around kelp forests and glides the contour then darts; Bucktails Tipped With Bait.
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - img "Grey Mullet"
+                        - button "Add to favorites":
+                          - img
+                      - generic:
+                        - generic:
+                          - generic:
+                            - heading "Thicklip Grey Mullet (Chelon labrosus)" [level=2]:
+                              - generic: Thicklip Grey Mullet
+                              - generic: (Chelon labrosus)
+                            - generic:
+                              - text: 78%
+                              - generic: biting
+                    - generic:
+                      - generic:
+                        - paragraph:
+                          - img "Conditions": 🌊
+                          - generic: Current Conditions
+                        - generic:
+                          - generic:
+                            - generic:
+                              - generic:
+                                - img "Temperature": 🌡️
+                                - generic: "Temp:"
+                              - generic:
+                                - generic: 18.75°C
+                                - generic: ✅
+                            - generic:
+                              - generic:
+                                - img "Depth": 📏
+                                - generic: "Depth:"
+                              - generic:
+                                - generic: 0m
+                                - generic: ❌
+                            - generic:
+                              - generic:
+                                - img "Substrate": 🪨
+                                - generic: "Seabed:"
+                              - generic:
+                                - generic: mixed
+                                - generic: ❌
+                    - generic:
+                      - paragraph:
+                        - img
+                        - generic: Findr bio
+                      - paragraph: Shelf wanderer — under weed mats and lights up on bait sprays; Soft Plastics On Subtle Hops.
+            - group "Card actions" [ref=e103]:
+              - button "Skip this fish and see the next prediction" [ref=e104] [cursor=pointer]:
+                - img [ref=e105]
+                - generic [ref=e108]: Next!
+              - button "Add this fish to my favorites" [ref=e109] [cursor=pointer]:
+                - img [ref=e110]
+                - generic [ref=e112]: Fave
+        - region "Full species lineup" [ref=e113]:
+          - generic [ref=e114]:
+            - heading "Full species lineup" [level=3] [ref=e115]:
+              - img [ref=e116]
+              - generic [ref=e119]: Full species lineup
+            - generic [ref=e120]: Sorted by confidence for Portuguese Coast
+          - generic [ref=e121]:
+            - article [ref=e122]:
+              - generic [ref=e123]:
+                - generic [ref=e124]:
+                  - generic [ref=e125]:
+                    - generic [ref=e126]:
+                      - generic [ref=e127]: 🐟
+                      - generic [ref=e128]: Sea Bass
+                      - generic [ref=e129]: 81%
+                    - paragraph [ref=e130]: Dicentrarchus labrax
+                  - button "Add to favourites" [ref=e131] [cursor=pointer]:
+                    - img [ref=e132]
+                - paragraph [ref=e135]: Estuary specialist — beyond color breaks and rides pressure waves for ambush; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e136]:
+              - generic [ref=e137]:
+                - generic [ref=e138]:
+                  - generic [ref=e139]:
+                    - generic [ref=e140]:
+                      - generic [ref=e141]: 🐟
+                      - generic [ref=e142]: Sea Bream (Dorada)
+                      - generic [ref=e143]: 79%
+                    - paragraph [ref=e144]: Sparus aurata
+                  - button "Add to favourites" [ref=e145] [cursor=pointer]:
+                    - img [ref=e146]
+                - paragraph [ref=e149]: Shelf wanderer — around kelp forests and glides the contour then darts; Bucktails Tipped With Bait.
+            - article [ref=e150]:
+              - generic [ref=e151]:
+                - generic [ref=e152]:
+                  - generic [ref=e153]:
+                    - generic [ref=e154]:
+                      - generic [ref=e155]: 🐟
+                      - generic [ref=e156]: Thicklip Grey Mullet
+                      - generic [ref=e157]: 78%
+                    - paragraph [ref=e158]: Chelon labrosus
+                  - button "Add to favourites" [ref=e159] [cursor=pointer]:
+                    - img [ref=e160]
+                - paragraph [ref=e163]: Shelf wanderer — under weed mats and lights up on bait sprays; Soft Plastics On Subtle Hops.
+            - article [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - generic [ref=e167]:
+                    - generic [ref=e168]:
+                      - generic [ref=e169]: 🐟
+                      - generic [ref=e170]: Grey Mullet
+                      - generic [ref=e171]: 78%
+                    - paragraph [ref=e172]: Mugil cephalus
+                  - button "Add to favourites" [ref=e173] [cursor=pointer]:
+                    - img [ref=e174]
+                - paragraph [ref=e177]: Kelp-lane hunter — along rip lines and feeds hard on dusk pulses; Liveys Drifted Across The Line.
+            - article [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]:
+                  - generic [ref=e181]:
+                    - generic [ref=e182]:
+                      - generic [ref=e183]: 🐟
+                      - generic [ref=e184]: Black Seabream
+                      - generic [ref=e185]: 23%
+                    - paragraph [ref=e186]: Spondyliosoma cantharus
+                  - button "Add to favourites" [ref=e187] [cursor=pointer]:
+                    - img [ref=e188]
+                - paragraph [ref=e191]: Surf prowler — over cold mud plains and pounces when tide turns; Natural Baits On Light Fluoro.
+            - article [ref=e192]:
+              - generic [ref=e193]:
+                - generic [ref=e194]:
+                  - generic [ref=e195]:
+                    - generic [ref=e196]:
+                      - generic [ref=e197]: 🐟
+                      - generic [ref=e198]: Picarel
+                      - generic [ref=e199]: 75%
+                    - paragraph [ref=e200]: Spicara smaris
+                  - button "Add to favourites" [ref=e201] [cursor=pointer]:
+                    - img [ref=e202]
+                - paragraph [ref=e205]: Estuary specialist — at ledge edges and pounces when tide turns; Stickbaits Ripped And Paused.
+            - article [ref=e206]:
+              - generic [ref=e207]:
+                - generic [ref=e208]:
+                  - generic [ref=e209]:
+                    - generic [ref=e210]:
+                      - generic [ref=e211]: 🐟
+                      - generic [ref=e212]: Starry Smoothhound
+                      - generic [ref=e213]: 73%
+                    - paragraph [ref=e214]: Mustelus asterias
+                  - button "Add to favourites" [ref=e215] [cursor=pointer]:
+                    - img [ref=e216]
+                - paragraph [ref=e219]: Open-water hunter — beyond color breaks and tracks temp breaks like rails; Metal Jigs And Fast Retrieves.
+            - article [ref=e220]:
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic [ref=e223]:
+                    - generic [ref=e224]:
+                      - generic [ref=e225]: 🐟
+                      - generic [ref=e226]: Atlantic Chub Mackerel
+                      - generic [ref=e227]: 73%
+                    - paragraph [ref=e228]: Scomber colias
+                  - button "Add to favourites" [ref=e229] [cursor=pointer]:
+                    - img [ref=e230]
+                - paragraph [ref=e233]: Open-water hunter — inside mangrove channels and pounces when tide turns; Natural Baits On Light Fluoro.
+            - article [ref=e234]:
+              - generic [ref=e235]:
+                - generic [ref=e236]:
+                  - generic [ref=e237]:
+                    - generic [ref=e238]:
+                      - generic [ref=e239]: 🐟
+                      - generic [ref=e240]: Common Smoothhound
+                      - generic [ref=e241]: 73%
+                    - paragraph [ref=e242]: Mustelus mustelus
+                  - button "Add to favourites" [ref=e243] [cursor=pointer]:
+                    - img [ref=e244]
+                - paragraph [ref=e247]: Slope cruiser — inside mangrove channels and rides pressure waves for ambush; Stickbaits Ripped And Paused.
+            - article [ref=e248]:
+              - generic [ref=e249]:
+                - generic [ref=e250]:
+                  - generic [ref=e251]:
+                    - generic [ref=e252]:
+                      - generic [ref=e253]: 🐟
+                      - generic [ref=e254]: Bogue
+                      - generic [ref=e255]: 73%
+                    - paragraph [ref=e256]: Boops boops
+                  - button "Add to favourites" [ref=e257] [cursor=pointer]:
+                    - img [ref=e258]
+                - paragraph [ref=e261]: Bank edge stalker — at ledge edges and threads current seams patiently; Bucktails Tipped With Bait.
+            - article [ref=e262]:
+              - generic [ref=e263]:
+                - generic [ref=e264]:
+                  - generic [ref=e265]:
+                    - generic [ref=e266]:
+                      - generic [ref=e267]: 🐟
+                      - generic [ref=e268]: White Seabream
+                      - generic [ref=e269]: 73%
+                    - paragraph [ref=e270]: Diplodus sargus
+                  - button "Add to favourites" [ref=e271] [cursor=pointer]:
+                    - img [ref=e272]
+                - paragraph [ref=e275]: Wreck bruiser — beyond color breaks and cruises high, dives fast; Small Plugs Washed In The Seam.
+            - article [ref=e276]:
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]:
+                    - generic [ref=e280]:
+                      - generic [ref=e281]: 🐟
+                      - generic [ref=e282]: Sardine
+                      - generic [ref=e283]: 72%
+                    - paragraph [ref=e284]: Sardina pilchardus
+                  - button "Add to favourites" [ref=e285] [cursor=pointer]:
+                    - img [ref=e286]
+                - paragraph [ref=e289]: Kelp-lane hunter — around kelp forests and tracks temp breaks like rails; Bucktails Tipped With Bait.
+            - article [ref=e290]:
+              - generic [ref=e291]:
+                - generic [ref=e292]:
+                  - generic [ref=e293]:
+                    - generic [ref=e294]:
+                      - generic [ref=e295]: 🐟
+                      - generic [ref=e296]: Dentex
+                      - generic [ref=e297]: 72%
+                    - paragraph [ref=e298]: Dentex dentex
+                  - button "Add to favourites" [ref=e299] [cursor=pointer]:
+                    - img [ref=e300]
+                - paragraph [ref=e303]: Bank edge stalker — beyond color breaks and hunts tight schools with intent; Small Plugs Washed In The Seam.
+            - article [ref=e304]:
+              - generic [ref=e305]:
+                - generic [ref=e306]:
+                  - generic [ref=e307]:
+                    - generic [ref=e308]:
+                      - generic [ref=e309]: 🐟
+                      - generic [ref=e310]: Red Scorpionfish
+                      - generic [ref=e311]: 72%
+                    - paragraph [ref=e312]: Scorpaena scrofa
+                  - button "Add to favourites" [ref=e313] [cursor=pointer]:
+                    - img [ref=e314]
+                - paragraph [ref=e317]: Bank edge stalker — over sandy troughs and tracks temp breaks like rails; Metal Jigs And Fast Retrieves.
+            - article [ref=e318]:
+              - generic [ref=e319]:
+                - generic [ref=e320]:
+                  - generic [ref=e321]:
+                    - generic [ref=e322]:
+                      - generic [ref=e323]: 🐟
+                      - generic [ref=e324]: Red Mullet
+                      - generic [ref=e325]: 71%
+                    - paragraph [ref=e326]: Mullus surmuletus
+                  - button "Add to favourites" [ref=e327] [cursor=pointer]:
+                    - img [ref=e328]
+                - paragraph [ref=e331]: Wreck bruiser — at ledge edges and rides pressure waves for ambush; Liveys Drifted Across The Line.
+            - article [ref=e332]:
+              - generic [ref=e333]:
+                - generic [ref=e334]:
+                  - generic [ref=e335]:
+                    - generic [ref=e336]:
+                      - generic [ref=e337]: 🐟
+                      - generic [ref=e338]: Horse Mackerel
+                      - generic [ref=e339]: 49%
+                    - paragraph [ref=e340]: Trachurus trachurus
+                  - button "Add to favourites" [ref=e341] [cursor=pointer]:
+                    - img [ref=e342]
+                - paragraph [ref=e345]: Pelagic sprinter — along rip lines and tracks temp breaks like rails; Natural Baits On Light Fluoro.
+            - article [ref=e346]:
+              - generic [ref=e347]:
+                - generic [ref=e348]:
+                  - generic [ref=e349]:
+                    - generic [ref=e350]:
+                      - generic [ref=e351]: 🐟
+                      - generic [ref=e352]: Pollack
+                      - generic [ref=e353]: 21%
+                    - paragraph [ref=e354]: Pollachius pollachius
+                  - button "Add to favourites" [ref=e355] [cursor=pointer]:
+                    - img [ref=e356]
+                - paragraph [ref=e359]: Pelagic sprinter — beside reef drop-offs and lights up on bait sprays; Soft Plastics On Subtle Hops.
+            - article [ref=e360]:
+              - generic [ref=e361]:
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - generic [ref=e364]:
+                      - generic [ref=e365]: 🐟
+                      - generic [ref=e366]: Mediterranean Scad
+                      - generic [ref=e367]: 69%
+                    - paragraph [ref=e368]: Trachurus mediterraneus
+                  - button "Add to favourites" [ref=e369] [cursor=pointer]:
+                    - img [ref=e370]
+                - paragraph [ref=e373]: Shelf wanderer — at ledge edges and tracks temp breaks like rails; Soft Plastics On Subtle Hops.
+            - article [ref=e374]:
+              - generic [ref=e375]:
+                - generic [ref=e376]:
+                  - generic [ref=e377]:
+                    - generic [ref=e378]:
+                      - generic [ref=e379]: 🛸
+                      - generic [ref=e380]: Undulate Ray
+                      - generic [ref=e381]: 69%
+                    - paragraph [ref=e382]: Raja undulata
+                  - button "Add to favourites" [ref=e383] [cursor=pointer]:
+                    - img [ref=e384]
+                - paragraph [ref=e387]: Shelf wanderer — beyond color breaks and rides pressure waves for ambush; Metal Jigs And Fast Retrieves.
+            - article [ref=e388]:
+              - generic [ref=e389]:
+                - generic [ref=e390]:
+                  - generic [ref=e391]:
+                    - generic [ref=e392]:
+                      - generic [ref=e393]: 🐟
+                      - generic [ref=e394]: Flounder
+                      - generic [ref=e395]: 69%
+                    - paragraph [ref=e396]: Platichthys flesus
+                  - button "Add to favourites" [ref=e397] [cursor=pointer]:
+                    - img [ref=e398]
+                - paragraph [ref=e401]: Kelp-lane hunter — beside reef drop-offs and waits in shade then surges; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e402]:
+              - generic [ref=e403]:
+                - generic [ref=e404]:
+                  - generic [ref=e405]:
+                    - generic [ref=e406]:
+                      - generic [ref=e407]: 🐟
+                      - generic [ref=e408]: Red Seabream
+                      - generic [ref=e409]: 69%
+                    - paragraph [ref=e410]: Pagellus bogaraveo
+                  - button "Add to favourites" [ref=e411] [cursor=pointer]:
+                    - img [ref=e412]
+                - paragraph [ref=e415]: Surf prowler — at ledge edges and glides the contour then darts; Trolled Feathers Near The Edge.
+            - article [ref=e416]:
+              - generic [ref=e417]:
+                - generic [ref=e418]:
+                  - generic [ref=e419]:
+                    - generic [ref=e420]:
+                      - generic [ref=e421]: 🐟
+                      - generic [ref=e422]: Ballan Wrasse
+                      - generic [ref=e423]: 69%
+                    - paragraph [ref=e424]: Labrus bergylta
+                  - button "Add to favourites" [ref=e425] [cursor=pointer]:
+                    - img [ref=e426]
+                - paragraph [ref=e429]: Wreck bruiser — beyond color breaks and waits in shade then surges; Stickbaits Ripped And Paused.
+            - article [ref=e430]:
+              - generic [ref=e431]:
+                - generic [ref=e432]:
+                  - generic [ref=e433]:
+                    - generic [ref=e434]:
+                      - generic [ref=e435]: 🐟
+                      - generic [ref=e436]: Spotted Bass
+                      - generic [ref=e437]: 69%
+                    - paragraph [ref=e438]: Dicentrarchus punctatus
+                  - button "Add to favourites" [ref=e439] [cursor=pointer]:
+                    - img [ref=e440]
+                - paragraph [ref=e443]: Bank edge stalker — beyond color breaks and glides the contour then darts; Stickbaits Ripped And Paused.
+            - article [ref=e444]:
+              - generic [ref=e445]:
+                - generic [ref=e446]:
+                  - generic [ref=e447]:
+                    - generic [ref=e448]:
+                      - generic [ref=e449]: 🐟
+                      - generic [ref=e450]: Garfish (Needlefish)
+                      - generic [ref=e451]: 21%
+                    - paragraph [ref=e452]: Belone belone
+                  - button "Add to favourites" [ref=e453] [cursor=pointer]:
+                    - img [ref=e454]
+                - paragraph [ref=e457]: Bank edge stalker — on rocky pinnacles and waits in shade then surges; Trolled Feathers Near The Edge.
+            - article [ref=e458]:
+              - generic [ref=e459]:
+                - generic [ref=e460]:
+                  - generic [ref=e461]:
+                    - generic [ref=e462]:
+                      - generic [ref=e463]: 🦑
+                      - generic [ref=e464]: Common Cuttlefish
+                      - generic [ref=e465]: 68%
+                    - paragraph [ref=e466]: Sepia officinalis
+                  - button "Add to favourites" [ref=e467] [cursor=pointer]:
+                    - img [ref=e468]
+                - paragraph [ref=e471]: Kelp-lane hunter — at ledge edges and tracks temp breaks like rails; Small Plugs Washed In The Seam.
+            - article [ref=e472]:
+              - generic [ref=e473]:
+                - generic [ref=e474]:
+                  - generic [ref=e475]:
+                    - generic [ref=e476]:
+                      - generic [ref=e477]: 🛸
+                      - generic [ref=e478]: Small-eyed Ray
+                      - generic [ref=e479]: 68%
+                    - paragraph [ref=e480]: Raja microocellata
+                  - button "Add to favourites" [ref=e481] [cursor=pointer]:
+                    - img [ref=e482]
+                - paragraph [ref=e485]: Bank edge stalker — on rocky pinnacles and threads current seams patiently; Liveys Drifted Across The Line.
+            - article [ref=e486]:
+              - generic [ref=e487]:
+                - generic [ref=e488]:
+                  - generic [ref=e489]:
+                    - generic [ref=e490]:
+                      - generic [ref=e491]: 🐟
+                      - generic [ref=e492]: Tub Gurnard
+                      - generic [ref=e493]: 68%
+                    - paragraph [ref=e494]: Chelidonichthys lucerna
+                  - button "Add to favourites" [ref=e495] [cursor=pointer]:
+                    - img [ref=e496]
+                - paragraph [ref=e499]: Open-water hunter — beside reef drop-offs and pounces when tide turns; Metal Jigs And Fast Retrieves.
+            - article [ref=e500]:
+              - generic [ref=e501]:
+                - generic [ref=e502]:
+                  - generic [ref=e503]:
+                    - generic [ref=e504]:
+                      - generic [ref=e505]: 🦑
+                      - generic [ref=e506]: Common Squid
+                      - generic [ref=e507]: 68%
+                    - paragraph [ref=e508]: Loligo vulgaris
+                  - button "Add to favourites" [ref=e509] [cursor=pointer]:
+                    - img [ref=e510]
+                - paragraph [ref=e513]: Estuary specialist — at ledge edges and lights up on bait sprays; Soft Plastics On Subtle Hops.
+            - article [ref=e514]:
+              - generic [ref=e515]:
+                - generic [ref=e516]:
+                  - generic [ref=e517]:
+                    - generic [ref=e518]:
+                      - generic [ref=e519]: 🐟
+                      - generic [ref=e520]: Greater Weever
+                      - generic [ref=e521]: 68%
+                    - paragraph [ref=e522]: Trachinus draco
+                  - button "Add to favourites" [ref=e523] [cursor=pointer]:
+                    - img [ref=e524]
+                - paragraph [ref=e527]: Wreck bruiser — on rocky pinnacles and pounces when tide turns; Flutter Spoons In The Column.
+            - article [ref=e528]:
+              - generic [ref=e529]:
+                - generic [ref=e530]:
+                  - generic [ref=e531]:
+                    - generic [ref=e532]:
+                      - generic [ref=e533]: 🐟
+                      - generic [ref=e534]: Corkwing Wrasse
+                      - generic [ref=e535]: 68%
+                    - paragraph [ref=e536]: Symphodus melops
+                  - button "Add to favourites" [ref=e537] [cursor=pointer]:
+                    - img [ref=e538]
+                - paragraph [ref=e541]: Reef ambusher — over cold mud plains and glides the contour then darts; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e542]:
+              - generic [ref=e543]:
+                - generic [ref=e544]:
+                  - generic [ref=e545]:
+                    - generic [ref=e546]:
+                      - generic [ref=e547]: 🐠
+                      - generic [ref=e548]: John Dory
+                      - generic [ref=e549]: 67%
+                    - paragraph [ref=e550]: Zeus faber
+                  - button "Add to favourites" [ref=e551] [cursor=pointer]:
+                    - img [ref=e552]
+                - paragraph [ref=e555]: Slope cruiser — inside mangrove channels and waits in shade then surges; Soft Plastics On Subtle Hops.
+            - article [ref=e556]:
+              - generic [ref=e557]:
+                - generic [ref=e558]:
+                  - generic [ref=e559]:
+                    - generic [ref=e560]:
+                      - generic [ref=e561]: 🐟
+                      - generic [ref=e562]: Wrasse (various)
+                      - generic [ref=e563]: 67%
+                    - paragraph [ref=e564]: Labridae spp.
+                  - button "Add to favourites" [ref=e565] [cursor=pointer]:
+                    - img [ref=e566]
+                - paragraph [ref=e569]: Surf prowler — on rocky pinnacles and feeds hard on dusk pulses; Soft Plastics On Subtle Hops.
+            - article [ref=e570]:
+              - generic [ref=e571]:
+                - generic [ref=e572]:
+                  - generic [ref=e573]:
+                    - generic [ref=e574]:
+                      - generic [ref=e575]: 🐟
+                      - generic [ref=e576]: Sea Trout
+                      - generic [ref=e577]: 67%
+                    - paragraph [ref=e578]: Salmo trutta
+                  - button "Add to favourites" [ref=e579] [cursor=pointer]:
+                    - img [ref=e580]
+                - paragraph [ref=e583]: Pelagic sprinter — beyond color breaks and tracks temp breaks like rails; Small Plugs Washed In The Seam.
+            - article [ref=e584]:
+              - generic [ref=e585]:
+                - generic [ref=e586]:
+                  - generic [ref=e587]:
+                    - generic [ref=e588]:
+                      - generic [ref=e589]: 🛸
+                      - generic [ref=e590]: Spotted Ray
+                      - generic [ref=e591]: 67%
+                    - paragraph [ref=e592]: Raja montagui
+                  - button "Add to favourites" [ref=e593] [cursor=pointer]:
+                    - img [ref=e594]
+                - paragraph [ref=e597]: Pelagic sprinter — inside mangrove channels and threads current seams patiently; Bucktails Tipped With Bait.
+            - article [ref=e598]:
+              - generic [ref=e599]:
+                - generic [ref=e600]:
+                  - generic [ref=e601]:
+                    - generic [ref=e602]:
+                      - generic [ref=e603]: 🐟
+                      - generic [ref=e604]: Cuckoo Wrasse
+                      - generic [ref=e605]: 67%
+                    - paragraph [ref=e606]: Labrus mixtus
+                  - button "Add to favourites" [ref=e607] [cursor=pointer]:
+                    - img [ref=e608]
+                - paragraph [ref=e611]: Slope cruiser — beside reef drop-offs and pounces when tide turns; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e612]:
+              - generic [ref=e613]:
+                - generic [ref=e614]:
+                  - generic [ref=e615]:
+                    - generic [ref=e616]:
+                      - generic [ref=e617]: 🐟
+                      - generic [ref=e618]: Sand Eel
+                      - generic [ref=e619]: 66%
+                    - paragraph [ref=e620]: Ammodytes tobianus
+                  - button "Add to favourites" [ref=e621] [cursor=pointer]:
+                    - img [ref=e622]
+                - paragraph [ref=e625]: Open-water hunter — along rip lines and pounces when tide turns; Liveys Drifted Across The Line.
+            - article [ref=e626]:
+              - generic [ref=e627]:
+                - generic [ref=e628]:
+                  - generic [ref=e629]:
+                    - generic [ref=e630]:
+                      - generic [ref=e631]: 🐟
+                      - generic [ref=e632]: Goldsinny Wrasse
+                      - generic [ref=e633]: 66%
+                    - paragraph [ref=e634]: Ctenolabrus rupestris
+                  - button "Add to favourites" [ref=e635] [cursor=pointer]:
+                    - img [ref=e636]
+                - paragraph [ref=e639]: Reef ambusher — beside reef drop-offs and threads current seams patiently; Flutter Spoons In The Column.
+            - article [ref=e640]:
+              - generic [ref=e641]:
+                - generic [ref=e642]:
+                  - generic [ref=e643]:
+                    - generic [ref=e644]:
+                      - generic [ref=e645]: 🐟
+                      - generic [ref=e646]: Rock Cook
+                      - generic [ref=e647]: 66%
+                    - paragraph [ref=e648]: Centrolabrus exoletus
+                  - button "Add to favourites" [ref=e649] [cursor=pointer]:
+                    - img [ref=e650]
+                - paragraph [ref=e653]: Wreck bruiser — under weed mats and waits in shade then surges; Soft Plastics On Subtle Hops.
+            - article [ref=e654]:
+              - generic [ref=e655]:
+                - generic [ref=e656]:
+                  - generic [ref=e657]:
+                    - generic [ref=e658]:
+                      - generic [ref=e659]: 🐟
+                      - generic [ref=e660]: Brill
+                      - generic [ref=e661]: 66%
+                    - paragraph [ref=e662]: Scophthalmus rhombus
+                  - button "Add to favourites" [ref=e663] [cursor=pointer]:
+                    - img [ref=e664]
+                - paragraph [ref=e667]: Kelp-lane hunter — beyond color breaks and glides the contour then darts; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e668]:
+              - generic [ref=e669]:
+                - generic [ref=e670]:
+                  - generic [ref=e671]:
+                    - generic [ref=e672]:
+                      - generic [ref=e673]: 🐟
+                      - generic [ref=e674]: Turbot (Small)
+                      - generic [ref=e675]: 66%
+                    - paragraph [ref=e676]: Scophthalmus maximus
+                  - button "Add to favourites" [ref=e677] [cursor=pointer]:
+                    - img [ref=e678]
+                - paragraph [ref=e681]: Estuary specialist — inside mangrove channels and feeds hard on dusk pulses; Bucktails Tipped With Bait.
+            - article [ref=e682]:
+              - generic [ref=e683]:
+                - generic [ref=e684]:
+                  - generic [ref=e685]:
+                    - generic [ref=e686]:
+                      - generic [ref=e687]: 🛸
+                      - generic [ref=e688]: Thornback Ray
+                      - generic [ref=e689]: 66%
+                    - paragraph [ref=e690]: Raja clavata
+                  - button "Add to favourites" [ref=e691] [cursor=pointer]:
+                    - img [ref=e692]
+                - paragraph [ref=e695]: Pelagic sprinter — under weed mats and tracks temp breaks like rails; Trolled Feathers Near The Edge.
+            - article [ref=e696]:
+              - generic [ref=e697]:
+                - generic [ref=e698]:
+                  - generic [ref=e699]:
+                    - generic [ref=e700]:
+                      - generic [ref=e701]: 🐟
+                      - generic [ref=e702]: Red Gurnard
+                      - generic [ref=e703]: 65%
+                    - paragraph [ref=e704]: Chelidonichthys cuculus
+                  - button "Add to favourites" [ref=e705] [cursor=pointer]:
+                    - img [ref=e706]
+                - paragraph [ref=e709]: Slope cruiser — along rip lines and threads current seams patiently; Liveys Drifted Across The Line.
+            - article [ref=e710]:
+              - generic [ref=e711]:
+                - generic [ref=e712]:
+                  - generic [ref=e713]:
+                    - generic [ref=e714]:
+                      - generic [ref=e715]: 🐟
+                      - generic [ref=e716]: Dover Sole
+                      - generic [ref=e717]: 65%
+                    - paragraph [ref=e718]: Solea solea
+                  - button "Add to favourites" [ref=e719] [cursor=pointer]:
+                    - img [ref=e720]
+                - paragraph [ref=e723]: Reef ambusher — over cold mud plains and cruises high, dives fast; Flutter Spoons In The Column.
+            - article [ref=e724]:
+              - generic [ref=e725]:
+                - generic [ref=e726]:
+                  - generic [ref=e727]:
+                    - generic [ref=e728]:
+                      - generic [ref=e729]: 🐟
+                      - generic [ref=e730]: Common Ling
+                      - generic [ref=e731]: 65%
+                    - paragraph [ref=e732]: Molva molva
+                  - button "Add to favourites" [ref=e733] [cursor=pointer]:
+                    - img [ref=e734]
+                - paragraph [ref=e737]: Wreck bruiser — beyond color breaks and tracks temp breaks like rails; Slow-Rolled Swimbaits Near Bottom.
+            - article [ref=e738]:
+              - generic [ref=e739]:
+                - generic [ref=e740]:
+                  - generic [ref=e741]:
+                    - generic [ref=e742]:
+                      - generic [ref=e743]: 🐟
+                      - generic [ref=e744]: Megrim
+                      - generic [ref=e745]: 65%
+                    - paragraph [ref=e746]: Lepidorhombus whiffiagonis
+                  - button "Add to favourites" [ref=e747] [cursor=pointer]:
+                    - img [ref=e748]
+                - paragraph [ref=e751]: Reef ambusher — beside reef drop-offs and pounces when tide turns; Flutter Spoons In The Column.
+            - article [ref=e752]:
+              - generic [ref=e753]:
+                - generic [ref=e754]:
+                  - generic [ref=e755]:
+                    - generic [ref=e756]:
+                      - generic [ref=e757]: 🐟
+                      - generic [ref=e758]: Sprat
+                      - generic [ref=e759]: 65%
+                    - paragraph [ref=e760]: Sprattus sprattus
+                  - button "Add to favourites" [ref=e761] [cursor=pointer]:
+                    - img [ref=e762]
+                - paragraph [ref=e765]: Surf prowler — at ledge edges and rides pressure waves for ambush; Small Plugs Washed In The Seam.
+            - article [ref=e766]:
+              - generic [ref=e767]:
+                - generic [ref=e768]:
+                  - generic [ref=e769]:
+                    - generic [ref=e770]:
+                      - generic [ref=e771]: 🦑
+                      - generic [ref=e772]: Common Octopus
+                      - generic [ref=e773]: 64%
+                    - paragraph [ref=e774]: Octopus vulgaris
+                  - button "Add to favourites" [ref=e775] [cursor=pointer]:
+                    - img [ref=e776]
+                - paragraph [ref=e779]: Slope cruiser — beside reef drop-offs and cruises high, dives fast; Flutter Spoons In The Column.
+            - article [ref=e780]:
+              - generic [ref=e781]:
+                - generic [ref=e782]:
+                  - generic [ref=e783]:
+                    - generic [ref=e784]:
+                      - generic [ref=e785]: 🐟
+                      - generic [ref=e786]: Plaice
+                      - generic [ref=e787]: 64%
+                    - paragraph [ref=e788]: Pleuronectes platessa
+                  - button "Add to favourites" [ref=e789] [cursor=pointer]:
+                    - img [ref=e790]
+                - paragraph [ref=e793]: Shelf wanderer — inside mangrove channels and lights up on bait sprays; Metal Jigs And Fast Retrieves.
+            - article [ref=e794]:
+              - generic [ref=e795]:
+                - generic [ref=e796]:
+                  - generic [ref=e797]:
+                    - generic [ref=e798]:
+                      - generic [ref=e799]: 🐟
+                      - generic [ref=e800]: Grey Gurnard
+                      - generic [ref=e801]: 64%
+                    - paragraph [ref=e802]: Eutrigla gurnardus
+                  - button "Add to favourites" [ref=e803] [cursor=pointer]:
+                    - img [ref=e804]
+                - paragraph [ref=e807]: Slope cruiser — under weed mats and waits in shade then surges; Small Plugs Washed In The Seam.
+            - article [ref=e808]:
+              - generic [ref=e809]:
+                - generic [ref=e810]:
+                  - generic [ref=e811]:
+                    - generic [ref=e812]:
+                      - generic [ref=e813]: 🐟
+                      - generic [ref=e814]: Whiting
+                      - generic [ref=e815]: 64%
+                    - paragraph [ref=e816]: Merlangius merlangus
+                  - button "Add to favourites" [ref=e817] [cursor=pointer]:
+                    - img [ref=e818]
+                - paragraph [ref=e821]: Estuary specialist — over sandy troughs and cruises high, dives fast; Liveys Drifted Across The Line.
+            - article [ref=e822]:
+              - generic [ref=e823]:
+                - generic [ref=e824]:
+                  - generic [ref=e825]:
+                    - generic [ref=e826]:
+                      - generic [ref=e827]: 🐟
+                      - generic [ref=e828]: Dab
+                      - generic [ref=e829]: 62%
+                    - paragraph [ref=e830]: Limanda limanda
+                  - button "Add to favourites" [ref=e831] [cursor=pointer]:
+                    - img [ref=e832]
+                - paragraph [ref=e835]: Bank edge stalker — under weed mats and tracks temp breaks like rails; Metal Jigs And Fast Retrieves.
+            - article [ref=e836]:
+              - generic [ref=e837]:
+                - generic [ref=e838]:
+                  - generic [ref=e839]:
+                    - generic [ref=e840]:
+                      - generic [ref=e841]: 🪱
+                      - generic [ref=e842]: Conger Eel
+                      - generic [ref=e843]: 62%
+                    - paragraph [ref=e844]: Conger conger
+                  - button "Add to favourites" [ref=e845] [cursor=pointer]:
+                    - img [ref=e846]
+                - paragraph [ref=e849]: Shelf wanderer — inside mangrove channels and lights up on bait sprays; Metal Jigs And Fast Retrieves.
+            - article [ref=e850]:
+              - generic [ref=e851]:
+                - generic [ref=e852]:
+                  - generic [ref=e853]:
+                    - generic [ref=e854]:
+                      - generic [ref=e855]: 🐟
+                      - generic [ref=e856]: Bull Huss
+                      - generic [ref=e857]: 59%
+                    - paragraph [ref=e858]: Scyliorhinus stellaris
+                  - button "Add to favourites" [ref=e859] [cursor=pointer]:
+                    - img [ref=e860]
+                - paragraph [ref=e863]: Bank edge stalker — beyond color breaks and feeds hard on dusk pulses; Liveys Drifted Across The Line.
+            - article [ref=e864]:
+              - generic [ref=e865]:
+                - generic [ref=e866]:
+                  - generic [ref=e867]:
+                    - generic [ref=e868]:
+                      - generic [ref=e869]: 🦈
+                      - generic [ref=e870]: Small-spotted Catshark
+                      - generic [ref=e871]: 59%
+                    - paragraph [ref=e872]: Scyliorhinus canicula
+                  - button "Add to favourites" [ref=e873] [cursor=pointer]:
+                    - img [ref=e874]
+                - paragraph [ref=e877]: Kelp-lane hunter — beyond color breaks and tracks temp breaks like rails; Liveys Drifted Across The Line.
+    - option [selected]
+    - option
+    - option
+    - contentinfo [ref=e878]:
+      - generic [ref=e879]:
+        - complementary [ref=e880]:
+          - img "findr by Go Daisy" [ref=e881]
+          - generic [ref=e882]: findr
+          - paragraph [ref=e883]:
+            - text: by
+            - link "Go Daisy" [ref=e884] [cursor=pointer]:
+              - /url: https://godaisy.io
+        - generic [ref=e885]:
+          - navigation [ref=e886]:
+            - link "Support findr" [ref=e887] [cursor=pointer]:
+              - /url: /findr/support
+            - link "How it works" [ref=e888] [cursor=pointer]:
+              - /url: /findr/how-it-works
+            - link "About findr" [ref=e889] [cursor=pointer]:
+              - /url: /findr/about
+          - navigation [ref=e890]:
+            - link "Terms of use" [ref=e891] [cursor=pointer]:
+              - /url: /findr/terms
+            - link "Privacy policy" [ref=e892] [cursor=pointer]:
+              - /url: /findr/privacy
+            - link "Cookie policy" [ref=e893] [cursor=pointer]:
+              - /url: /findr/cookies
+        - navigation [ref=e894]:
+          - paragraph [ref=e895]: Find your sole, mate
+          - paragraph [ref=e896]: © 2025 Go Daisy. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e902] [cursor=pointer]:
+    - img [ref=e903]
+  - alert [ref=e906]
+```

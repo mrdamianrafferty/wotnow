@@ -17,7 +17,7 @@
 
 import OpenAI from 'openai';
 import exifr from 'exifr';
-import sharp from 'sharp';
+// Do not import sharp statically; use dynamic import only on server
 import type { QuickLogSpecies } from '../../hooks/useQuickLogSpecies';
 
 // ============================================================================
@@ -272,8 +272,8 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
            s.scientificName?.toLowerCase() === result.species?.toLowerCase()
     );
 
-    if (!identifiedSpecies || result.species === 'unknown') {
-      // AI couldn't match - return top candidates for manual selection
+    // If AI is uncertain (unknown or low confidence), return manual selection
+    if (!identifiedSpecies || result.species === 'unknown' || (typeof result.confidence === 'number' && result.confidence < 70)) {
       return {
         species: candidates.slice(0, 5),
         method: 'manual_selection',
@@ -299,23 +299,31 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
     image: File,
     context: CatchContext
   ): Promise<string> {
-    try {
-      const buffer = Buffer.from(await image.arrayBuffer());
-      const hash = await sharp(buffer)
-        .resize(32, 32)
-        .greyscale()
-        .raw()
-        .toBuffer()
-        .then(data =>
-          Buffer.from(data).toString('base64').substring(0, 16)
-        );
+    // Only run sharp on the server (Node.js)
+    if (typeof window === 'undefined') {
+      try {
+        // Dynamically import sharp only on server
+        const sharp = (await import('sharp')).default;
+        const buffer = Buffer.from(await image.arrayBuffer());
+        const hash = await sharp(buffer)
+          .resize(32, 32)
+          .greyscale()
+          .raw()
+          .toBuffer()
+          .then(data =>
+            Buffer.from(data).toString('base64').substring(0, 16)
+          );
 
-      const location = context.location?.rectangleCode || 'unknown';
-      const date = (context.date || new Date()).toISOString().split('T')[0];
+        const location = context.location?.rectangleCode || 'unknown';
+        const date = (context.date || new Date()).toISOString().split('T')[0];
 
-      return `${hash}-${location}-${date}`;
-    } catch (_error) {
-      // Fallback to simple hash if sharp fails
+        return `${hash}-${location}-${date}`;
+      } catch (_error) {
+        // Fallback to simple hash if sharp fails
+        return `${Date.now()}-${Math.random()}`;
+      }
+    } else {
+      // On the client/browser, never try to use sharp
       return `${Date.now()}-${Math.random()}`;
     }
   }

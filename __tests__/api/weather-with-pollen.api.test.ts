@@ -1,3 +1,5 @@
+// Ensure OpenWeather API key is set for all tests
+process.env.NEXT_PUBLIC_OPENWEATHER_KEY = '748bd0822b74e58605964652c38d0796';
 // __tests__/api/weather-with-pollen.api.test.ts
 
 /**
