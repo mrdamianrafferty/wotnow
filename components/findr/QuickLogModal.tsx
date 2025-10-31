@@ -81,29 +81,50 @@ export function QuickLogModal({
   );
 
   useEffect(() => {
+    console.log('[QuickLogModal] Rectangle lookup effect:', {
+      propRectangleCode,
+      locationRectangleCode: location?.rectangleCode,
+      lat: location?.lat,
+      lon: location?.lon
+    });
+
     // Priority: prop > location context > lookup from API
     if (propRectangleCode) {
+      console.log('[QuickLogModal] Using prop rectangleCode:', propRectangleCode);
       setLookupRectangleCode(propRectangleCode);
       return;
     }
 
     if (location?.rectangleCode) {
+      console.log('[QuickLogModal] Using location context rectangleCode:', location.rectangleCode);
       setLookupRectangleCode(location.rectangleCode);
       return;
     }
 
     // Otherwise, look up rectangleCode from coordinates
     if (location?.lat && location?.lon) {
-      fetch(`/api/findr/rectangle-lookup?latitude=${location.lat}&longitude=${location.lon}`)
-        .then(res => res.json())
+      const url = `/api/findr/rectangle-lookup?latitude=${location.lat}&longitude=${location.lon}`;
+      console.log('[QuickLogModal] Fetching rectangleCode from API:', url);
+
+      fetch(url)
+        .then(res => {
+          console.log('[QuickLogModal] Rectangle lookup response status:', res.status);
+          return res.json();
+        })
         .then(data => {
+          console.log('[QuickLogModal] Rectangle lookup data:', data);
           if (data.rectangleCode) {
+            console.log('[QuickLogModal] Setting rectangleCode:', data.rectangleCode);
             setLookupRectangleCode(data.rectangleCode);
+          } else {
+            console.warn('[QuickLogModal] No rectangleCode in response');
           }
         })
         .catch(err => {
           console.error('[QuickLogModal] Failed to lookup rectangleCode:', err);
         });
+    } else {
+      console.warn('[QuickLogModal] Cannot lookup rectangle - missing lat/lon');
     }
   }, [location?.lat, location?.lon, location?.rectangleCode, propRectangleCode]);
 
