@@ -68,6 +68,42 @@ const HABITAT_OPTIONS: { value: HabitatType; label: string }[] = [
   { value: 'open_sea', label: 'Open Sea' },
 ];
 
+// European species codes (~30 popular species)
+const EUROPEAN_SPECIES_CODES = new Set([
+  'BSS',      // Sea Bass
+  'COD',      // Atlantic Cod
+  'MAC',      // Mackerel
+  'POL',      // Pollack
+  'POK',      // Atlantic Pollock (Saithe)
+  'PLE',      // Plaice
+  'FLE',      // Flounder
+  'SOL',      // Dover Sole
+  'BLL',      // Brill
+  'TUR',      // Turbot
+  'DAB',      // Dab
+  'WHG',      // Whiting
+  'LIN',      // Common Ling
+  'CON',      // Conger Eel
+  'MUG',      // Grey Mullet
+  'MUL',      // Red Mullet
+  'SBA',      // Sea Bream (Dorada)
+  'BRS',      // Black Seabream
+  '2BD-BREAM', // Two-banded Seabream
+  'RJC',      // Thornback Ray
+  'RJM',      // Spotted Ray
+  'CSH',      // Common Smoothhound
+  'SSH',      // Starry Smoothhound
+  'BUH',      // Bull Huss
+  'SQC',      // Common Squid
+  'CUT',      // Common Cuttlefish
+  'OCT',      // Common Octopus
+  'HOM',      // Horse Mackerel
+  'BONITO',   // Atlantic Bonito
+  'GAR',      // Garfish
+  'WRB',      // Ballan Wrasse
+  'WRC',      // Cuckoo Wrasse
+]);
+
 // EXIF extraction utility
 async function extractExif(file: File): Promise<ExifData | null> {
   try {
@@ -536,8 +572,9 @@ export function QuickLogModal({
     }
   }, [currentStep, isIdentifying, aiResult, selectedSpecies.length]);
 
-  // All species list (fallback)
+  // All species list (filtered to European species only)
   const allSpecies = Object.keys(SPECIES_IMAGE_MAP)
+    .filter(code => EUROPEAN_SPECIES_CODES.has(code))
     .map(code => {
       const existing = regionalSpecies.find(s => s.code === code);
       if (existing) return existing;
@@ -1031,7 +1068,7 @@ export function QuickLogModal({
 
                 {/* Show All Species Toggle */}
                 <div className="divider text-xs opacity-50">
-                  <TranslatedText text="or search all species" />
+                  <TranslatedText text="or browse more species" />
                 </div>
                 {!showAllSpecies ? (
                   <button
@@ -1039,7 +1076,7 @@ export function QuickLogModal({
                     className="btn btn-ghost btn-sm btn-block"
                   >
                     <Plus className="w-4 h-4" />
-                    <TranslatedText text="Show all species" />
+                    <TranslatedText text="Browse species list" />
                   </button>
                 ) : (
                   <div className="space-y-2">

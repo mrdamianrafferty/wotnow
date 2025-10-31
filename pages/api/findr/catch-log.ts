@@ -88,6 +88,7 @@ interface CatchResponse {
   photo_public_urls?: string[] | null;
   photo_thumbnail_urls?: string[] | null;
   photo_assets?: CatchPhotoAsset[] | null;
+  pinned: boolean;
 }
 
 /**
@@ -169,7 +170,8 @@ async function handleGetCatches(req: NextApiRequest, res: NextApiResponse, userI
         used_recommended_habitat,
         is_blank_trip,
         environmental_conditions,
-        prediction_impression_id
+        prediction_impression_id,
+        pinned
       `)
       .eq('user_id', userId)
       .order('caught_at', { ascending: false });
@@ -230,6 +232,7 @@ async function handleGetCatches(req: NextApiRequest, res: NextApiResponse, userI
                 .filter((value): value is string => Boolean(value))
             : null,
         photo_assets: assets.length > 0 ? assets : null,
+        pinned: !!catchEntry.pinned,
       };
     });
 
@@ -495,7 +498,8 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
         gps_latitude,
         gps_longitude,
         location_accuracy,
-        location_source
+        location_source,
+        pinned
       `)
       .single();
 
@@ -532,7 +536,8 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
       used_recommended_bait: insertedCatch.used_recommended_bait,
       used_recommended_habitat: insertedCatch.used_recommended_habitat,
       prediction_matched: !!linkedImpressionId,
-      environmental_conditions: insertedCatch.environmental_conditions
+      environmental_conditions: insertedCatch.environmental_conditions,
+      pinned: !!insertedCatch.pinned,
     };
 
     res.status(201).json({

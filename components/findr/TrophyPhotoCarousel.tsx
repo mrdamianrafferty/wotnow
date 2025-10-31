@@ -19,7 +19,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { 
   X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, 
   Download, Share2, Calendar, MapPin, Fish, Camera,
-  Maximize2, ChevronUp, ChevronDown
+  Maximize2, ChevronUp, ChevronDown, Trophy
 } from 'lucide-react';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
@@ -29,6 +29,7 @@ export interface PhotoData {
   url: string;
   thumbnail?: string;
   caption?: string;
+  pinned?: boolean;
   metadata?: {
     speciesName?: string;
     location?: string;
@@ -522,11 +523,13 @@ export function TrophyPhotoCarousel({
 export function PhotoGalleryGrid({ 
   photos, 
   onPhotoClickAction,
+  onPinToggle,
   columns = 3,
   aspectRatio = 'square' 
 }: {
   photos: PhotoData[];
   onPhotoClickAction: (index: number) => void;
+  onPinToggle?: (photo: PhotoData, index: number) => void;
   columns?: number;
   aspectRatio?: 'square' | 'wide' | 'tall';
 }) {
@@ -547,19 +550,34 @@ export function PhotoGalleryGrid({
         const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
 
         return (
-          <button
-            key={photo.id}
-            onClick={() => onPhotoClickAction(index)}
-            className={`relative ${aspectClasses[aspectRatio]} rounded-lg overflow-hidden bg-base-200 hover:shadow-lg transition-all duration-200 group`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={photo.thumbnail || photo.url}
-              alt={photo.caption || `Photo ${index + 1}`}
-              width={200}
-              height={200}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            />
+          <div key={photo.id} className={`relative ${aspectClasses[aspectRatio]} rounded-lg overflow-hidden bg-base-200 hover:shadow-lg transition-all duration-200 group`}>
+            <button
+              onClick={() => onPhotoClickAction(index)}
+              className="absolute inset-0 w-full h-full z-0"
+              tabIndex={-1}
+              aria-label={photo.caption || `Photo ${index + 1}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photo.thumbnail || photo.url}
+                alt={photo.caption || `Photo ${index + 1}`}
+                width={200}
+                height={200}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+            </button>
+
+            {/* Pin (Trophy) icon button */}
+            {onPinToggle && (
+              <button
+                type="button"
+                className={`absolute top-2 left-2 z-10 p-1 rounded-full bg-white/80 hover:bg-yellow-200 border border-yellow-400 shadow ${photo.pinned ? 'text-yellow-500' : 'text-gray-400'}`}
+                title={photo.pinned ? 'Unpin this catch' : 'Pin this catch'}
+                onClick={e => { e.stopPropagation(); onPinToggle(photo, index); }}
+              >
+                <Trophy className="w-5 h-5" fill={photo.pinned ? '#facc15' : 'none'} />
+              </button>
+            )}
 
             {/* Stock photo indicator badge */}
             {isStockPhoto && (
@@ -569,13 +587,13 @@ export function PhotoGalleryGrid({
             )}
 
             {photo.caption && (
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2 pointer-events-none">
                 <span className="text-white text-xs font-medium">
                   {photo.caption}
                 </span>
               </div>
             )}
-          </button>
+          </div>
         );
       })}
     </div>

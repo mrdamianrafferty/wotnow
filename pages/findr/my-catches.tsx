@@ -17,7 +17,39 @@ import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
-  const { data: photos = [], isLoading, error } = useMyCatchPhotos();
+  const { data: photosRaw = [], isLoading, error, refetch } = useMyCatchPhotos();
+  const [pinning, setPinning] = useState<string | null>(null);
+
+  // Sort: pinned photos first, then by caught_at descending (if available)
+  const photos = [...photosRaw].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    // fallback: sort by caught_at if available in metadata
+    const aDate = a.metadata?.date ? new Date(a.metadata.date).getTime() : 0;
+    const bDate = b.metadata?.date ? new Date(b.metadata.date).getTime() : 0;
+    return bDate - aDate;
+  });
+
+  // Pin/unpin handler
+  async function handlePinToggle(photo, index) {
+    if (!user) return;
+    setPinning(photo.id);
+    try {
+      // Find catch id (strip -default or -assetIndex)
+      const catchId = photo.id.split('-')[0];
+      const newPinned = !photo.pinned;
+      await fetch('/api/findr/pin-catch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catchId, pinned: newPinned }),
+      });
+      await refetch();
+    } catch (err) {
+      alert('Failed to update pin.');
+    } finally {
+      setPinning(null);
+    }
+  }
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
 
@@ -183,6 +215,7 @@ export default function MyCatchesPage() {
                 <PhotoGalleryGrid
                   photos={photos}
                   onPhotoClickAction={openPhoto}
+                  onPinToggle={handlePinToggle}
                   columns={3}
                   aspectRatio="wide"
                 />

@@ -45,6 +45,7 @@ export function useMyCatchPhotos() {
             url: asset.url,
             thumbnail: asset.thumbnail_url,
             caption: `${c.species_common_name} (${c.quantity}x)`,
+            pinned: !!c.pinned,
             metadata: {
               speciesName: c.species_common_name,
               location: c.rectangle_code,
@@ -69,6 +70,7 @@ export function useMyCatchPhotos() {
           url: speciesImage.image, // Full-size species image
           thumbnail: speciesImage.thumb || speciesImage.mobile || speciesImage.image,
           caption: `${c.species_common_name} (${c.quantity}x) - ${new Date(c.caught_at).toLocaleDateString()}`,
+          pinned: !!c.pinned,
           metadata: {
             speciesName: c.species_common_name,
             location: c.rectangle_code,
