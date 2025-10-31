@@ -70,10 +70,42 @@ export function QuickLogModal({
   onClose,
   onQuickLog,
   onSuccess,
-  rectangleCode,
+  rectangleCode: propRectangleCode,
 }: QuickLogModalProps) {
   // Context
   const { location } = useUnifiedLocation();
+
+  // Get rectangle code from coordinates if not in location context
+  const [lookupRectangleCode, setLookupRectangleCode] = useState<string | undefined>(
+    propRectangleCode || location?.rectangleCode || undefined
+  );
+
+  useEffect(() => {
+    // Priority: prop > location context > lookup from API
+    if (propRectangleCode) {
+      setLookupRectangleCode(propRectangleCode);
+      return;
+    }
+
+    if (location?.rectangleCode) {
+      setLookupRectangleCode(location.rectangleCode);
+      return;
+    }
+
+    // Otherwise, look up rectangleCode from coordinates
+    if (location?.lat && location?.lon) {
+      fetch(`/api/findr/rectangle-lookup?latitude=${location.lat}&longitude=${location.lon}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.rectangleCode) {
+            setLookupRectangleCode(data.rectangleCode);
+          }
+        })
+        .catch(err => {
+          console.error('[QuickLogModal] Failed to lookup rectangleCode:', err);
+        });
+    }
+  }, [location?.lat, location?.lon, location?.rectangleCode, propRectangleCode]);
 
   // Location-aware species (max 8 for quick selection)
   const { species: regionalSpecies, isLoading: loadingSpecies } = useQuickLogSpecies(
@@ -81,7 +113,7 @@ export function QuickLogModal({
     location?.lon || -5.25,
     {
       maxSpecies: 8,
-      rectangleCode: location?.rectangleCode || undefined
+      rectangleCode: lookupRectangleCode
     }
   );
 
@@ -90,13 +122,14 @@ export function QuickLogModal({
     console.log('[QuickLogModal] Species loaded:', {
       count: regionalSpecies.length,
       loading: loadingSpecies,
+      rectangleCode: lookupRectangleCode,
       location: {
         lat: location?.lat,
         lon: location?.lon,
-        rectangleCode: location?.rectangleCode
+        rectangleCodeFromContext: location?.rectangleCode
       }
     });
-  }, [regionalSpecies, loadingSpecies, location]);
+  }, [regionalSpecies, loadingSpecies, location, lookupRectangleCode]);
 
   // AI identification
   const { identify, isIdentifying, result: aiResult, error: aiError } = useFishIdentification({
@@ -153,7 +186,7 @@ export function QuickLogModal({
         const context = {
           location: {
             coords: exif?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
-            rectangleCode: location?.rectangleCode || rectangleCode,
+            rectangleCode: lookupRectangleCode,
             rectangleLabel: location?.rectangleLabel,
           }
         };
@@ -161,7 +194,7 @@ export function QuickLogModal({
         void identify(file, regionalSpecies, context);
       }
     },
-    [regionalSpecies, location, rectangleCode, identify]
+    [regionalSpecies, location, lookupRectangleCode, identify]
   );
 
   // Skip photo and go directly to species selection
@@ -232,7 +265,7 @@ export function QuickLogModal({
             speciesId: species.id,
             speciesCommonName: speciesInfo?.name || species.name,
             scientificName: species.scientificName,
-            rectangleCode: rectangleCode ?? location?.rectangleCode,
+            rectangleCode: lookupRectangleCode,
             quantity,
             photo: photoFile ?? undefined,
             userLocation,
@@ -299,7 +332,7 @@ export function QuickLogModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedSpecies, quantity, photoFile, exifData, location, rectangleCode, onQuickLog, onSuccess, onClose]);
+  }, [selectedSpecies, quantity, photoFile, exifData, location, lookupRectangleCode, onQuickLog, onSuccess, onClose]);
 
   // Close handler with cleanup
   const handleClose = useCallback(() => {
@@ -913,7 +946,7 @@ export function QuickLogModal({
               </div>
             )}
             <div className="space-y-1 text-sm opacity-70">
-              {rectangleCode && <div>📍 {rectangleCode}</div>}
+              {lookupRectangleCode && <div>📍 {lookupRectangleCode}</div>}
               {photoFile && <div>📸 <TranslatedText text="Photo uploaded" /></div>}
               {exifData?.location && <div>📊 <TranslatedText text="Location saved" /></div>}
             </div>
