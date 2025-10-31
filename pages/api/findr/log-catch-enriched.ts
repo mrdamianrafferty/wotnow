@@ -370,10 +370,15 @@ export default async function handler(
 
     // Update user points (if user_id provided)
     if (userId) {
-      await supabase.rpc('increment_user_points', {
-        p_user_id: userId,
-        p_points: pointsEarned,
-      });
+      try {
+        await supabase.rpc('increment_user_points', {
+          p_user_id: userId,
+          p_points: pointsEarned,
+        });
+      } catch (pointsError) {
+        // Points system not yet implemented - log warning but don't fail the request
+        console.warn('[log-catch-enriched] Points update failed (function may not exist):', pointsError);
+      }
     }
 
     // Prepare enrichment status
