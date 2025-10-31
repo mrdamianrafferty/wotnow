@@ -33,13 +33,39 @@ interface QuickLogModalProps {
   rectangleCode?: string;
 }
 
-type Step = 'photo-decision' | 'photo-captured' | 'species-selection' | 'quantity' | 'submitting' | 'success';
+type Step = 'photo-decision' | 'photo-captured' | 'species-selection' | 'quantity' | 'extra-details' | 'submitting' | 'success';
 type PhotoSource = 'camera' | 'gallery' | 'skip';
+type HabitatType = 'rocky_shore' | 'sandy_beach' | 'pier_harbor' | 'estuary' | 'shallow_water' | 'deep_water' | 'wreck_reef' | 'open_sea';
 
 interface ExifData {
   location?: [number, number];
   timestamp?: Date;
 }
+
+// Common baits for quick selection
+const COMMON_BAITS = [
+  'Lugworm',
+  'Ragworm',
+  'Prawns',
+  'Crab',
+  'Feather rigs',
+  'Spinners',
+  'Soft plastics',
+  'Bread',
+  'Mackerel strip',
+] as const;
+
+// Habitat options
+const HABITAT_OPTIONS: { value: HabitatType; label: string }[] = [
+  { value: 'rocky_shore', label: 'Rocky Shore' },
+  { value: 'sandy_beach', label: 'Sandy Beach' },
+  { value: 'pier_harbor', label: 'Pier/Harbor' },
+  { value: 'estuary', label: 'Estuary' },
+  { value: 'shallow_water', label: 'Shallow Water' },
+  { value: 'deep_water', label: 'Deep Water' },
+  { value: 'wreck_reef', label: 'Wreck/Reef' },
+  { value: 'open_sea', label: 'Open Sea' },
+];
 
 // EXIF extraction utility
 async function extractExif(file: File): Promise<ExifData | null> {
@@ -173,6 +199,9 @@ export function QuickLogModal({
   const [exifData, setExifData] = useState<ExifData | null>(null);
   const [selectedSpecies, setSelectedSpecies] = useState<QuickLogSpecies[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
+  const [baitUsed, setBaitUsed] = useState<string>('');
+  const [habitatType, setHabitatType] = useState<HabitatType | ''>('');
+  const [notes, setNotes] = useState<string>('');
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -249,6 +278,10 @@ export function QuickLogModal({
     }
   }, [selectedSpecies]);
 
+  const handleContinueToExtraDetails = useCallback(() => {
+    setCurrentStep('extra-details');
+  }, []);
+
   const handleChangeSpecies = useCallback(() => {
     setSelectedSpecies([]);
     setCurrentStep('species-selection');
@@ -296,6 +329,9 @@ export function QuickLogModal({
             catchTime: exifData?.timestamp
               ? exifData.timestamp.toISOString().split('T')[1]?.slice(0, 8)
               : undefined,
+            baitUsed: baitUsed || null,
+            habitatType: habitatType || null,
+            notes: notes || null,
           });
 
           if (result == null) {
@@ -353,7 +389,17 @@ export function QuickLogModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedSpecies, quantity, photoFile, exifData, location, lookupRectangleCode, onQuickLog, onSuccess, onClose]);
+  }, [selectedSpecies, quantity, baitUsed, habitatType, notes, photoFile, exifData, location, lookupRectangleCode, onQuickLog, onSuccess, onClose]);
+
+  // Skip extra details and submit directly
+  const handleSkipExtraDetails = useCallback(() => {
+    // Clear extra details fields
+    setBaitUsed('');
+    setHabitatType('');
+    setNotes('');
+    // Submit immediately
+    void handleSubmit();
+  }, [handleSubmit]);
 
   // Close handler with cleanup
   const handleClose = useCallback(() => {
@@ -366,6 +412,9 @@ export function QuickLogModal({
     setExifData(null);
     setSelectedSpecies([]);
     setQuantity(1);
+    setBaitUsed('');
+    setHabitatType('');
+    setNotes('');
     setShowAllSpecies(false);
     setIsSubmitting(false);
     setError(null);
@@ -925,6 +974,102 @@ export function QuickLogModal({
               </button>
             </div>
 
+            {/* Continue or Skip to Extra Details */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleSkipExtraDetails}
+                className="btn btn-ghost flex-1"
+                disabled={isSubmitting}
+              >
+                <TranslatedText text="Skip & Log" />
+              </button>
+              <button
+                onClick={handleContinueToExtraDetails}
+                className="btn btn-primary flex-1"
+                disabled={isSubmitting}
+              >
+                <Plus className="w-5 h-5" />
+                <TranslatedText text="Add Details" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 5: Extra Details (Optional) */}
+        {currentStep === 'extra-details' && (
+          <div className="space-y-4">
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-semibold mb-2">
+                <TranslatedText text="Extra Details (Optional)" />
+              </h3>
+              <p className="text-sm opacity-70">
+                <TranslatedText text="Help improve predictions by sharing more details" />
+              </p>
+            </div>
+
+            {/* Bait Used */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-semibold">
+                  <TranslatedText text="Bait Used" />
+                </span>
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {COMMON_BAITS.map((bait) => (
+                  <button
+                    key={bait}
+                    onClick={() => setBaitUsed(bait)}
+                    className={`btn btn-sm ${baitUsed === bait ? 'btn-primary' : 'btn-outline'}`}
+                  >
+                    {bait}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Or type your own..."
+                className="input input-bordered w-full"
+                value={baitUsed}
+                onChange={(e) => setBaitUsed(e.target.value)}
+              />
+            </div>
+
+            {/* Habitat Type */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-semibold">
+                  <TranslatedText text="Habitat" />
+                </span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={habitatType}
+                onChange={(e) => setHabitatType(e.target.value as HabitatType | '')}
+              >
+                <option value="">Select habitat...</option>
+                {HABITAT_OPTIONS.map((habitat) => (
+                  <option key={habitat.value} value={habitat.value}>
+                    {habitat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Notes */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-semibold">
+                  <TranslatedText text="Notes" />
+                </span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered h-24"
+                placeholder="Any additional notes..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
@@ -946,7 +1091,7 @@ export function QuickLogModal({
           </div>
         )}
 
-        {/* Step 5: Success */}
+        {/* Step 6: Success */}
         {currentStep === 'success' && (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 bg-success rounded-full flex items-center justify-center">

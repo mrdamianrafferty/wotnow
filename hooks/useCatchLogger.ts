@@ -41,6 +41,9 @@ export type QuickLogParams = {
   userLocation?: { lat: number; lon: number };
   catchDate?: string;
   catchTime?: string;
+  baitUsed?: string | null;
+  habitatType?: string | null;
+  notes?: string | null;
 };
 
 /**
@@ -224,10 +227,15 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
       quantity,
       photo,
       userLocation,
+      catchDate: providedDate,
+      catchTime: providedTime,
+      baitUsed,
+      habitatType,
+      notes,
     }: QuickLogParams) => {
       const now = new Date();
-      const catchDate = now.toISOString().split('T')[0];
-      const catchTime = now.toISOString().split('T')[1]?.slice(0, 8) ?? null;
+      const catchDate = providedDate ?? now.toISOString().split('T')[0];
+      const catchTime = providedTime ?? now.toISOString().split('T')[1]?.slice(0, 8) ?? null;
 
       return base.logCatch({
         speciesId,
@@ -239,7 +247,9 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
         catchTime,
         entryType: 'quick',
         sizeCategory: 'mixed',
-        baitUsed: 'Quick log - bait not specified',
+        baitUsed: baitUsed ?? 'Quick log - bait not specified',
+        habitatType: habitatType ?? null,
+        notes: notes ?? null,
         method: 'shore',
         photo: photo ?? null,
         userLocation: userLocation ?? null,
