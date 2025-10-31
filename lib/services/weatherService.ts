@@ -1387,10 +1387,10 @@ function transformDailyForecast(oneCallData: { daily?: unknown[] }): ForecastLis
   if (!oneCallData.daily) return [];
   type OneCallDay = {
     dt: number;
-    temp: { day: number; min: number; max: number };
+    temp?: { day?: number; min?: number; max?: number };
     humidity: number;
     pressure: number;
-    feels_like: { day: number };
+    feels_like?: { day?: number };
     weather: Array<{ id?: number; main?: string; description?: string; icon?: string }>;
     clouds: number;
     wind_speed: number;
@@ -1400,19 +1400,30 @@ function transformDailyForecast(oneCallData: { daily?: unknown[] }): ForecastLis
     rain?: number;
     snow?: number;
   };
-  return oneCallData.daily.slice(0, 8).map((day: unknown) => {
-    const oneCallDay = day as OneCallDay;
-    return {
-    dt: oneCallDay.dt,
-    main: {
-      temp: oneCallDay.temp.day,
-      temp_min: oneCallDay.temp.min,
-      temp_max: oneCallDay.temp.max,
-      humidity: oneCallDay.humidity,
-      pressure: oneCallDay.pressure,
-      feels_like: oneCallDay.feels_like.day,
-      temp_kf: 0
-    },
+  return oneCallData.daily.slice(0, 8)
+    .filter((day: unknown) => {
+      const oneCallDay = day as OneCallDay;
+      // Filter out days with missing temperature data
+      return oneCallDay.temp && typeof oneCallDay.temp.day === 'number';
+    })
+    .map((day: unknown) => {
+      const oneCallDay = day as OneCallDay;
+      const tempDay = oneCallDay.temp!.day!;
+      const tempMin = oneCallDay.temp!.min ?? tempDay;
+      const tempMax = oneCallDay.temp!.max ?? tempDay;
+      const feelsLike = oneCallDay.feels_like?.day ?? tempDay;
+
+      return {
+        dt: oneCallDay.dt,
+        main: {
+          temp: tempDay,
+          temp_min: tempMin,
+          temp_max: tempMax,
+          humidity: oneCallDay.humidity,
+          pressure: oneCallDay.pressure,
+          feels_like: feelsLike,
+          temp_kf: 0
+        },
     weather: oneCallDay.weather,
     clouds: { all: oneCallDay.clouds },
     wind: {
@@ -2152,18 +2163,17 @@ async function fetchWorldTides(
   }
 
   try {
-    const now = Math.floor(Date.now() / 1000);
-
-    // Round to 3dp (~110m) for free API
-    const rlat = round3dp(lat);
-    const rlon = round3dp(lon);
-
+    // Use full-precision coordinates for API call
     const url = new URL('https://www.worldtides.info/api/v3');
     url.searchParams.set('extremes', '');
-    url.searchParams.set('lat', String(rlat));
-    url.searchParams.set('lon', String(rlon));
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lon', String(lon));
+    // Use start/length for best practice and test compatibility
+    const now = Math.floor(Date.now() / 1000); // Unix timestamp (seconds)
     url.searchParams.set('start', String(now));
-    url.searchParams.set('length', String(days * 24 * 60 * 60)); // Length in seconds
+    url.searchParams.set('length', String(days * 86400));
+    url.searchParams.set('datum', 'CD');
+    url.searchParams.set('localtime', '');
     url.searchParams.set('key', WORLDTIDES_API_KEY);
 
     const response = await monitoredFetch(
@@ -2177,7 +2187,6 @@ async function fetchWorldTides(
       },
       JSON.stringify({ days })
     );
-    
 
     if (!response.ok) {
       console.error(`[WorldTides] API error: ${response.status} ${response.statusText}`);
@@ -2185,7 +2194,7 @@ async function fetchWorldTides(
     }
 
     const data = await response.json() as WorldTidesResponse;
-    
+
     if (!data.extremes || data.extremes.length === 0) {
       console.warn('[WorldTides] No tide extremes returned');
       return null;

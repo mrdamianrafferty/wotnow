@@ -236,7 +236,8 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
   }, [coastalLocation, homeLocation]);
 
   useEffect(() => {
-    if (!weatherData || marineHours.length === 0) return;
+
+    if (!weatherData?.list || marineHours.length === 0) return;
 
     // Now build forecastByDay using weatherData and marineHours
     const grouped: Record<string, WeatherWithPollen['list']> = {};
@@ -491,27 +492,31 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
   if (!weatherData?.daily) return [];
-  return weatherData.daily.slice(0, 8).map((day) => {
-    return {
-      date: day.dt,
-      temperature: Math.round(day.temp.day),
-      tempMax: Math.round(day.temp.max),
-      tempMin: Math.round(day.temp.min),
-      condition: day.weather?.[0]?.main ?? '',
-      description: day.weather?.[0]?.description ?? '',
-      icon: day.weather?.[0]?.icon ?? '01d',
-      rain: Math.round(day.rain ?? 0),
-      wind_speed: day.wind_speed,
-      wind_direction: day.wind_deg,
-      clouds: day.clouds,
-      humidity: day.humidity,
-      visibility: weatherData.current?.visibility ?? 10000,
-      waterTemperature: undefined,
-      marine: [],
-      pollen: weatherData.pollenByDate?.[String(day.dt)],
-      airQuality: weatherData.airQualityByDate?.[String(day.dt)],
-    };
-  });
+  return weatherData.daily
+    .slice(0, 8)
+    // Filter out days with missing temperature data
+    .filter(day => day.temp && typeof day.temp.day === 'number')
+    .map((day) => {
+      return {
+        date: day.dt,
+        temperature: Math.round(day.temp.day),
+        tempMax: Math.round(day.temp.max ?? day.temp.day),
+        tempMin: Math.round(day.temp.min ?? day.temp.day),
+        condition: day.weather?.[0]?.main ?? '',
+        description: day.weather?.[0]?.description ?? '',
+        icon: day.weather?.[0]?.icon ?? '01d',
+        rain: Math.round(day.rain ?? 0),
+        wind_speed: day.wind_speed,
+        wind_direction: day.wind_deg,
+        clouds: day.clouds,
+        humidity: day.humidity,
+        visibility: weatherData.current?.visibility ?? 10000,
+        waterTemperature: undefined,
+        marine: [],
+        pollen: weatherData.pollenByDate?.[String(day.dt)],
+        airQuality: weatherData.airQualityByDate?.[String(day.dt)],
+      };
+    });
 }
 
 
