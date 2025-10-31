@@ -20,6 +20,7 @@ import { X, Camera, ImageIcon, Zap, AlertCircle, Plus, Minus, Check, Sparkles, L
 import { useFishIdentification } from '@/hooks/useFishIdentification';
 import { useQuickLogSpecies, type QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
+import { useAuth } from '@/context/AuthContext';
 import { SPECIES_IMAGE_MAP } from '@/data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { QuickLogParams } from '@/hooks/useCatchLogger';
@@ -99,6 +100,7 @@ export function QuickLogModal({
   rectangleCode: propRectangleCode,
 }: QuickLogModalProps) {
   // Context
+  const { user, loading: authLoading } = useAuth();
   const { location, updateLocation } = useUnifiedLocation();
 
   // Get rectangle code from coordinates if not in location context
@@ -555,8 +557,38 @@ export function QuickLogModal({
           </div>
         )}
 
-        {/* Step 1: Photo Decision */}
-        {currentStep === 'photo-decision' && (
+        {/* Authentication Check - Show before allowing any actions */}
+        {!authLoading && !user ? (
+          <div className="text-center py-8 space-y-4">
+            <div className="w-16 h-16 mx-auto mb-4 bg-warning/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-10 h-10 text-warning" />
+            </div>
+            <h4 className="text-xl font-bold text-base-content">
+              <TranslatedText text="Sign In Required" />
+            </h4>
+            <p className="text-base-content/70">
+              <TranslatedText text="You need to sign in to log catches and track your fishing activity." />
+            </p>
+            <div className="flex flex-col gap-2">
+              <Link href="/findr/auth" className="btn btn-primary btn-lg">
+                <TranslatedText text="Sign In / Sign Up" />
+              </Link>
+              <button onClick={handleClose} className="btn btn-ghost">
+                <TranslatedText text="Maybe Later" />
+              </button>
+            </div>
+          </div>
+        ) : authLoading ? (
+          <div className="text-center py-8">
+            <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+            <p className="text-sm opacity-70">
+              <TranslatedText text="Checking authentication..." />
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Step 1: Photo Decision */}
+            {currentStep === 'photo-decision' && (
           <div className="space-y-4">
             <div className="text-center mb-2">
               <p className="text-sm opacity-70">
@@ -855,13 +887,13 @@ export function QuickLogModal({
                             )}
 
                             {/* Thumbnail */}
-                            <div className="relative w-full aspect-square mb-1">
+                            <div className="relative w-full aspect-square mb-1 bg-base-200 rounded">
                               {species.thumbnail ? (
                                 <Image
                                   src={species.thumbnail}
                                   alt={species.name}
                                   fill
-                                  className="object-cover rounded"
+                                  className="object-contain rounded"
                                   sizes="80px"
                                 />
                               ) : (
@@ -884,7 +916,7 @@ export function QuickLogModal({
                             </div>
 
                             {/* Name */}
-                            <span className="text-xs font-medium text-center line-clamp-2 leading-tight">
+                            <span className="text-xs font-medium text-center line-clamp-2 leading-tight text-base-content">
                               {species.name}
                             </span>
                           </button>
@@ -1199,6 +1231,8 @@ export function QuickLogModal({
               {exifData?.location && <div>📊 <TranslatedText text="Location saved" /></div>}
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>
