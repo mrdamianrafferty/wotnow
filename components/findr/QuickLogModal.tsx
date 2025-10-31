@@ -112,14 +112,14 @@ export function QuickLogModal({
 
   // Handle photo selection (camera or gallery)
   const handlePhotoChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>, source: PhotoSource) => {
-      const file = event.target.files?.[0] ?? null;
-      event.target.value = ''; // Reset input
+    async (event: React.ChangeEvent<HTMLInputElement> | Event, source: PhotoSource) => {
+      const target = event.target as HTMLInputElement;
+      const file = target.files?.[0] ?? null;
+      target.value = ''; // Reset input
 
       if (!file) return;
 
       setPhotoFile(file);
-      setPhotoSource(source);
 
       // Create preview
       const url = URL.createObjectURL(file);
@@ -150,7 +150,6 @@ export function QuickLogModal({
 
   // Skip photo and go directly to species selection
   const handleSkipPhoto = useCallback(() => {
-    setPhotoSource('skip');
     setCurrentStep('species-selection');
   }, []);
 
