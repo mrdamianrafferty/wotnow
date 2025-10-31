@@ -185,6 +185,18 @@ export function QuickLogModal({
         },
         (err: GeolocationPositionError) => {
           console.warn('[QuickLogModal] Location request failed:', err.message);
+          // Fallback to default location (Asturias coast, Spain) for development/testing
+          console.log('[QuickLogModal] Using fallback location for testing');
+          updateLocation({
+            coordinates: {
+              lat: 43.5139,
+              lon: -5.2706
+            },
+            source: 'manual',
+            resolveRectangle: true
+          }).catch((fallbackErr: Error) => {
+            console.error('[QuickLogModal] Fallback location also failed:', fallbackErr);
+          });
         },
         {
           enableHighAccuracy: false,
