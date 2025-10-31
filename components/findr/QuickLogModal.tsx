@@ -410,7 +410,7 @@ export function QuickLogModal({
             speciesId: species.id,
             speciesCommonName: speciesInfo?.name || species.name,
             scientificName: species.scientificName,
-            rectangleCode: lookupRectangleCode,
+            rectangleCode: lookupRectangleCode ?? null,
             quantity,
             photo: photoFile ?? undefined,
             userLocation,
