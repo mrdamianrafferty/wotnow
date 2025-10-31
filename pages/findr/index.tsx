@@ -906,8 +906,8 @@ const FindrPage: React.FC = () => {
             </div>
           )}
 
-          <section className="space-y-1 sm:space-y-6" aria-labelledby="main-heading">
-            <div className="space-y-1 sm:space-y-4">
+          <section className="space-y-1 sm:space-y-6 px-0 sm:px-4" aria-labelledby="main-heading">
+            <div className="space-y-1 sm:space-y-4 px-4 sm:px-0">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="space-y-2">
                   <h1 id="main-heading" className="text-xl font-semibold flex items-center gap-2">
@@ -926,13 +926,15 @@ const FindrPage: React.FC = () => {
             </div>
 
             {!activeRectangle && (
-                            <div className="alert alert-info">
-                <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
+              <div className="px-4 sm:px-0">
+                <div className="alert alert-info">
+                  <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
+                </div>
               </div>
             )}
 
             {activeRectangle && loading && (
-              <div className="space-y-4">
+              <div className="space-y-4 px-4 sm:px-0">
                 <div className="alert alert-info">
                   <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
                   <span>
@@ -946,13 +948,15 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && !loading && error && (
-              <div className="alert alert-error">
+              <div className="px-4 sm:px-0">
+                <div className="alert alert-error">
                 <div>
                   <p><TranslatedText text="We couldn't reel in today's predictions. Try refreshing in a moment." /></p>
                   <details className="mt-1 text-xs opacity-80">
                     <summary className="cursor-pointer"><TranslatedText text="View technical guff if you must" /></summary>
                     <pre className="whitespace-pre-wrap break-words">{error}</pre>
                   </details>
+                </div>
                 </div>
               </div>
             )}
@@ -991,16 +995,18 @@ const FindrPage: React.FC = () => {
 
 
             {activeRectangle && !loading && !error && totalPredictions === 0 && (
-              <div className="alert alert-warning">
-                <span>
-                  The fish are quiet here for {predictionDate}. Try different waters or shift the day.
-                </span>
+              <div className="px-4 sm:px-0">
+                <div className="alert alert-warning">
+                  <span>
+                    The fish are quiet here for {predictionDate}. Try different waters or shift the day.
+                  </span>
+                </div>
               </div>
             )}
           </section>
 
           {activeRectangle && !loading && !error && totalPredictions > 0 && (
-            <section className="space-y-5" aria-labelledby="species-lineup-heading">
+            <section className="space-y-5 px-4 sm:px-4" aria-labelledby="species-lineup-heading">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="species-lineup-heading" className="text-lg font-semibold flex items-center gap-2">
                   <ListChecks size={18} aria-hidden="true" /> <TranslatedText text="Full species lineup" />
