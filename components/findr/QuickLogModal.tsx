@@ -75,23 +75,23 @@ export function QuickLogModal({
   // Context
   const { location } = useUnifiedLocation();
 
-  // Location-aware species
+  // Location-aware species (max 8 for quick selection)
   const { species: regionalSpecies, isLoading: loadingSpecies } = useQuickLogSpecies(
     location?.lat || 43.5, // Fallback coordinates
     location?.lon || -5.25,
-    { maxSpecies: 12 }
+    { maxSpecies: 8 }
   );
 
   // AI identification
   const { identify, isIdentifying, result: aiResult, error: aiError } = useFishIdentification({
     onSuccess: (result) => {
-      // Auto-select if high confidence and single species
+      // Auto-add AI result to selection if high confidence and single species
       if (
         !Array.isArray(result.species) &&
         result.method === 'ai' &&
         result.confidence >= 0.7
       ) {
-        setSelectedSpecies(result.species);
+        setSelectedSpecies([result.species]);
       }
     }
   });
@@ -102,7 +102,7 @@ export function QuickLogModal({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [exifData, setExifData] = useState<ExifData | null>(null);
-  const [selectedSpecies, setSelectedSpecies] = useState<QuickLogSpecies | null>(null);
+  const [selectedSpecies, setSelectedSpecies] = useState<QuickLogSpecies[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -155,14 +155,34 @@ export function QuickLogModal({
     setCurrentStep('species-selection');
   }, []);
 
-  // Species selection handlers
-  const handleSpeciesSelect = useCallback((species: QuickLogSpecies) => {
-    setSelectedSpecies(species);
+  // Species selection handlers (multi-select)
+  const handleSpeciesToggle = useCallback((species: QuickLogSpecies) => {
+    setSelectedSpecies(prev => {
+      const exists = prev.find(s => s.id === species.id);
+      if (exists) {
+        // Remove if already selected
+        return prev.filter(s => s.id !== species.id);
+      } else {
+        // Add if not selected
+        return [...prev, species];
+      }
+    });
+  }, []);
+
+  // Quick select for AI results or "Show all" list - single species selection
+  const handleQuickSpeciesSelect = useCallback((species: QuickLogSpecies) => {
+    setSelectedSpecies([species]);
     setCurrentStep('quantity');
   }, []);
 
+  const handleContinueToQuantity = useCallback(() => {
+    if (selectedSpecies.length > 0) {
+      setCurrentStep('quantity');
+    }
+  }, [selectedSpecies]);
+
   const handleChangeSpecies = useCallback(() => {
-    setSelectedSpecies(null);
+    setSelectedSpecies([]);
     setCurrentStep('species-selection');
   }, []);
 
@@ -171,10 +191,10 @@ export function QuickLogModal({
   const decrementQuantity = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
   const setQuickQuantity = useCallback((q: number) => setQuantity(q), []);
 
-  // Submit handler
+  // Submit handler - handles multiple species
   const handleSubmit = useCallback(async () => {
-    if (!selectedSpecies) {
-      setError('Please select a species');
+    if (selectedSpecies.length === 0) {
+      setError('Please select at least one species');
       return;
     }
 
@@ -182,31 +202,34 @@ export function QuickLogModal({
     setError(null);
 
     try {
-      const speciesInfo = SPECIES_IMAGE_MAP[selectedSpecies.code];
-
       // Use EXIF location if available, otherwise current location
       const userLocation = exifData?.location
         ? { lat: exifData.location[0], lon: exifData.location[1] }
         : (location?.lat && location?.lon ? { lat: location.lat, lon: location.lon } : undefined);
 
-      const result = await onQuickLog({
-        speciesId: selectedSpecies.id,
-        speciesCommonName: speciesInfo?.name || selectedSpecies.name,
-        scientificName: selectedSpecies.scientificName,
-        rectangleCode: rectangleCode ?? location?.rectangleCode,
-        quantity,
-        photo: photoFile ?? undefined,
-        userLocation,
-        catchDate: exifData?.timestamp
-          ? exifData.timestamp.toISOString().split('T')[0]
-          : undefined,
-        catchTime: exifData?.timestamp
-          ? exifData.timestamp.toISOString().split('T')[1]?.slice(0, 8)
-          : undefined,
-      });
+      // Submit all selected species as separate catches
+      for (const species of selectedSpecies) {
+        const speciesInfo = SPECIES_IMAGE_MAP[species.code];
 
-      if (result == null) {
-        throw new Error('Failed to log catch. Please try again.');
+        const result = await onQuickLog({
+          speciesId: species.id,
+          speciesCommonName: speciesInfo?.name || species.name,
+          scientificName: species.scientificName,
+          rectangleCode: rectangleCode ?? location?.rectangleCode,
+          quantity,
+          photo: photoFile ?? undefined,
+          userLocation,
+          catchDate: exifData?.timestamp
+            ? exifData.timestamp.toISOString().split('T')[0]
+            : undefined,
+          catchTime: exifData?.timestamp
+            ? exifData.timestamp.toISOString().split('T')[1]?.slice(0, 8)
+            : undefined,
+        });
+
+        if (result == null) {
+          throw new Error(`Failed to log ${species.name}. Please try again.`);
+        }
       }
 
       setCurrentStep('success');
@@ -240,7 +263,7 @@ export function QuickLogModal({
       return null;
     });
     setExifData(null);
-    setSelectedSpecies(null);
+    setSelectedSpecies([]);
     setQuantity(1);
     setShowAllSpecies(false);
     setIsSubmitting(false);
@@ -255,7 +278,7 @@ export function QuickLogModal({
       currentStep === 'photo-captured' &&
       !isIdentifying &&
       aiResult &&
-      !selectedSpecies
+      selectedSpecies.length === 0
     ) {
       // If AI auto-selected (high confidence), go to quantity
       if (!Array.isArray(aiResult.species) && aiResult.confidence >= 0.7) {
@@ -265,7 +288,7 @@ export function QuickLogModal({
         setCurrentStep('species-selection');
       }
     }
-  }, [currentStep, isIdentifying, aiResult, selectedSpecies]);
+  }, [currentStep, isIdentifying, aiResult, selectedSpecies.length]);
 
   // All species list (fallback)
   const allSpecies = Object.keys(SPECIES_IMAGE_MAP)
@@ -422,7 +445,7 @@ export function QuickLogModal({
             {/* AI Identifying State */}
             {isIdentifying && (
               <div className="text-center py-8">
-                <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin mb-4" />
+                <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
                 <h4 className="font-semibold text-lg mb-2 flex items-center justify-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
                   <TranslatedText text="Identifying your catch..." />
@@ -532,7 +555,7 @@ export function QuickLogModal({
 
                   <div className="flex gap-2 mt-3">
                     <button
-                      onClick={() => handleSpeciesSelect(aiResult.species as QuickLogSpecies)}
+                      onClick={() => handleQuickSpeciesSelect(aiResult.species as QuickLogSpecies)}
                       className="btn btn-success btn-sm flex-1"
                     >
                       <Check className="w-4 h-4" />
@@ -569,57 +592,83 @@ export function QuickLogModal({
                   )}
                 </div>
 
-                {/* Regional Species Grid */}
+                {/* Regional Species Grid - Max 8 species in 4x2 layout */}
                 {loadingSpecies ? (
-                  <div className="grid grid-cols-3 gap-3">
-                    {[...Array(12)].map((_, i) => (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[...Array(8)].map((_, i) => (
                       <div key={i} className="aspect-square bg-base-200 animate-pulse rounded-lg" />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-3 gap-3">
-                    {regionalSpecies.map((species) => (
+                  <>
+                    <div className="grid grid-cols-4 gap-2">
+                      {regionalSpecies.map((species) => {
+                        const isSelected = selectedSpecies.some(s => s.id === species.id);
+                        return (
+                          <button
+                            key={species.code}
+                            onClick={() => handleSpeciesToggle(species)}
+                            className={`relative flex flex-col items-center p-2 rounded-lg border-2 transition-all ${
+                              isSelected
+                                ? 'border-primary bg-primary/10 scale-105'
+                                : 'border-base-300 hover:border-primary/50 hover:scale-105'
+                            }`}
+                          >
+                            {/* Checkbox indicator */}
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center z-10">
+                                <Check className="w-3 h-3 text-primary-content" />
+                              </div>
+                            )}
+
+                            {/* Thumbnail */}
+                            <div className="relative w-full aspect-square mb-1">
+                              {species.thumbnail ? (
+                                <Image
+                                  src={species.thumbnail}
+                                  alt={species.name}
+                                  fill
+                                  className="object-cover rounded"
+                                  sizes="80px"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-base-200 rounded flex items-center justify-center text-xl">
+                                  🐟
+                                </div>
+                              )}
+
+                              {/* Confidence Badge */}
+                              {species.badge && !isSelected && (
+                                <div className="absolute top-0 left-0">
+                                  {species.badge === 'hot' && (
+                                    <span className="badge badge-xs badge-error">🔥</span>
+                                  )}
+                                  {species.badge === 'good' && (
+                                    <div className="w-2 h-2 bg-success rounded-full" />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Name */}
+                            <span className="text-xs font-medium text-center line-clamp-2 leading-tight">
+                              {species.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Continue Button */}
+                    {selectedSpecies.length > 0 && (
                       <button
-                        key={species.code}
-                        onClick={() => handleSpeciesSelect(species)}
-                        className="relative flex flex-col items-center p-2 rounded-lg border-2 transition-all hover:scale-105 hover:border-primary/50 border-base-300"
+                        onClick={handleContinueToQuantity}
+                        className="btn btn-primary btn-block mt-4"
                       >
-                        {/* Thumbnail */}
-                        <div className="relative w-full aspect-square mb-1">
-                          {species.thumbnail ? (
-                            <Image
-                              src={species.thumbnail}
-                              alt={species.name}
-                              fill
-                              className="object-cover rounded"
-                              sizes="100px"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-base-200 rounded flex items-center justify-center text-2xl">
-                              🐟
-                            </div>
-                          )}
-
-                          {/* Confidence Badge */}
-                          {species.badge && (
-                            <div className="absolute -top-1 -right-1">
-                              {species.badge === 'hot' && (
-                                <span className="badge badge-xs badge-error">🔥</span>
-                              )}
-                              {species.badge === 'good' && (
-                                <div className="w-2 h-2 bg-success rounded-full" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Name */}
-                        <span className="text-xs font-medium text-center line-clamp-2 leading-tight">
-                          {species.name}
-                        </span>
+                        <TranslatedText text="Continue with" /> {selectedSpecies.length} <TranslatedText text={selectedSpecies.length === 1 ? "species" : "species"} />
                       </button>
-                    ))}
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {/* Show All Species Toggle */}
@@ -640,7 +689,7 @@ export function QuickLogModal({
                       {allSpecies.map((species) => (
                         <button
                           key={species.code}
-                          onClick={() => handleSpeciesSelect(species)}
+                          onClick={() => handleQuickSpeciesSelect(species)}
                           className="btn btn-sm btn-ghost justify-start w-full h-auto p-2 normal-case hover:btn-primary"
                         >
                           {species.thumbnail && (
@@ -672,34 +721,51 @@ export function QuickLogModal({
         )}
 
         {/* Step 4: Quantity Selection */}
-        {currentStep === 'quantity' && selectedSpecies && (
+        {currentStep === 'quantity' && selectedSpecies.length > 0 && (
           <div className="space-y-4">
             {/* Selected Species Display */}
             <div className="card bg-base-200">
-              <div className="card-body p-4 flex-row items-center gap-3">
-                {selectedSpecies.thumbnail && (
-                  <div className="w-16 h-16 relative rounded overflow-hidden bg-base-300 flex-shrink-0">
-                    <Image
-                      src={selectedSpecies.thumbnail}
-                      alt={selectedSpecies.name}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="font-semibold">
+                    {selectedSpecies.length === 1 ? (
+                      <TranslatedText text="Selected species" />
+                    ) : (
+                      <>
+                        <TranslatedText text="Selected" /> {selectedSpecies.length} <TranslatedText text="species" />
+                      </>
+                    )}
                   </div>
-                )}
-                <div className="flex-1">
-                  <div className="font-semibold">{selectedSpecies.name}</div>
-                  {selectedSpecies.scientificName && (
-                    <div className="text-sm italic opacity-70">{selectedSpecies.scientificName}</div>
-                  )}
+                  <button
+                    onClick={handleChangeSpecies}
+                    className="btn btn-ghost btn-sm btn-circle"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={handleChangeSpecies}
-                  className="btn btn-ghost btn-sm btn-circle"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="space-y-2">
+                  {selectedSpecies.map((species) => (
+                    <div key={species.id} className="flex items-center gap-3">
+                      {species.thumbnail && (
+                        <div className="w-12 h-12 relative rounded overflow-hidden bg-base-300 flex-shrink-0">
+                          <Image
+                            src={species.thumbnail}
+                            alt={species.name}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{species.name}</div>
+                        {species.scientificName && (
+                          <div className="text-xs italic opacity-70 truncate">{species.scientificName}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -782,9 +848,15 @@ export function QuickLogModal({
             <h4 className="text-2xl font-bold mb-2 text-success">
               <TranslatedText text="Catch Logged!" />
             </h4>
-            {selectedSpecies && (
+            {selectedSpecies.length > 0 && (
               <div className="text-lg mb-4">
-                {quantity} × {selectedSpecies.name}
+                {selectedSpecies.length === 1 ? (
+                  <div>{quantity} × {selectedSpecies[0].name}</div>
+                ) : (
+                  <div>
+                    {quantity} × <TranslatedText text="each of" /> {selectedSpecies.length} <TranslatedText text="species" />
+                  </div>
+                )}
               </div>
             )}
             <div className="space-y-1 text-sm opacity-70">
