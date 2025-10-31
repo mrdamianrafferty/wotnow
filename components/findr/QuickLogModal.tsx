@@ -112,7 +112,7 @@ export function QuickLogModal({
 
   // Handle photo selection (camera or gallery)
   const handlePhotoChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement> | Event, source: PhotoSource) => {
+    async (event: React.ChangeEvent<HTMLInputElement> | Event, _source: PhotoSource) => {
       const target = event.target as HTMLInputElement;
       const file = target.files?.[0] ?? null;
       target.value = ''; // Reset input
