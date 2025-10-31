@@ -358,6 +358,14 @@ export function QuickLogModal({
         const speciesInfo = SPECIES_IMAGE_MAP[species.code];
 
         try {
+          console.log('[QuickLog] Submitting species:', species.name, {
+            speciesId: species.id,
+            rectangleCode: lookupRectangleCode,
+            quantity,
+            hasPhoto: !!photoFile,
+            userLocation
+          });
+
           const result = await onQuickLog({
             speciesId: species.id,
             speciesCommonName: speciesInfo?.name || species.name,
@@ -377,13 +385,18 @@ export function QuickLogModal({
             notes: notes || null,
           });
 
+          console.log('[QuickLog] Result for', species.name, ':', result);
+
           if (result == null) {
-            results.push({ species, success: false, error: 'Unknown error occurred' });
+            console.error('[QuickLog] Got null result for species:', species.name);
+            results.push({ species, success: false, error: 'API returned null - check server logs' });
           } else {
+            console.log('[QuickLog] Success for', species.name);
             results.push({ species, success: true });
           }
         } catch (speciesErr) {
-          const errMsg = speciesErr instanceof Error ? speciesErr.message : 'Unknown error';
+          console.error('[QuickLog] Error logging species', species.name, ':', speciesErr);
+          const errMsg = speciesErr instanceof Error ? speciesErr.message : String(speciesErr);
           results.push({ species, success: false, error: errMsg });
         }
       }
@@ -952,7 +965,7 @@ export function QuickLogModal({
             <div className="card bg-base-200">
               <div className="card-body p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="font-semibold">
+                  <div className="font-semibold text-base-content">
                     {selectedSpecies.length === 1 ? (
                       <TranslatedText text="Selected species" />
                     ) : (
@@ -983,9 +996,9 @@ export function QuickLogModal({
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{species.name}</div>
+                        <div className="font-medium truncate text-base-content">{species.name}</div>
                         {species.scientificName && (
-                          <div className="text-xs italic opacity-70 truncate">{species.scientificName}</div>
+                          <div className="text-xs italic opacity-70 truncate text-base-content">{species.scientificName}</div>
                         )}
                       </div>
                     </div>
