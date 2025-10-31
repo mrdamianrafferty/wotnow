@@ -565,7 +565,7 @@ export function QuickLogModal({
                 <div className="text-xs">
                   {exifData.location && (
                     <div>
-                      <TranslatedText text="Location" />: {exifData.location[0].toFixed(4)}°N, {exifData.location[1].toFixed(4)}°W
+                      <TranslatedText text="Location" />: {Math.abs(exifData.location[0]).toFixed(4)}°{exifData.location[0] >= 0 ? 'N' : 'S'}, {Math.abs(exifData.location[1]).toFixed(4)}°{exifData.location[1] >= 0 ? 'E' : 'W'}
                     </div>
                   )}
                   {exifData.timestamp && (

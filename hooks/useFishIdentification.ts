@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { fishIdService, type IdentificationResult, type CatchContext } from '../lib/findr/fishIdentificationService';
+import type { IdentificationResult, CatchContext } from '../lib/findr/fishIdentificationService';
 import type { QuickLogSpecies } from './useQuickLogSpecies';
 
 interface UseFishIdentificationOptions {
@@ -56,8 +56,11 @@ export function useFishIdentification(
 
   const loadStats = async () => {
     try {
-      const serviceStats = await fishIdService.getStats();
-      setStats(serviceStats);
+      const response = await fetch('/api/findr/identify-stats');
+      if (response.ok) {
+        const serviceStats = await response.json();
+        setStats(serviceStats);
+      }
     } catch (err) {
       console.error('[useFishID] Failed to load stats:', err);
     }
@@ -78,15 +81,31 @@ export function useFishIdentification(
       console.log('[useFishID] Starting identification with', candidates.length, 'candidates');
 
       // Build context with candidates
-      const fullContext: CatchContext = {
+      const contextData = {
         location: context.location,
         date: context.date || new Date(),
         depth: context.depth,
-        candidates
       };
 
-      // Call identification service
-      const identificationResult = await fishIdService.identify(image, fullContext);
+      // Call API endpoint instead of service directly (server-side only)
+      const formData = new FormData();
+      formData.append('image', image);
+      formData.append('data', JSON.stringify({
+        candidates,
+        context: contextData
+      }));
+
+      const response = await fetch('/api/findr/identify-fish', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const identificationResult = await response.json();
 
       setResult(identificationResult);
 
@@ -152,7 +171,12 @@ export function useFishIdServiceHealth() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const stats = await fishIdService.getStats();
+        const response = await fetch('/api/findr/identify-stats');
+        if (!response.ok) {
+          throw new Error('Stats unavailable');
+        }
+
+        const stats = await response.json();
 
         let status: 'healthy' | 'degraded' | 'offline' = 'healthy';
 
@@ -165,7 +189,7 @@ export function useFishIdServiceHealth() {
           aiEnabled: stats.aiAvailable,
           budgetRemaining: stats.remainingBudget,
           monthlyUsage: stats.monthlyUsage,
-          cacheSize: stats.cacheSize
+          cacheSize: stats.cacheSize || 0
         });
       } catch (_error) {
         setHealth(prev => ({ ...prev, status: 'unknown' }));
