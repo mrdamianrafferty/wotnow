@@ -164,20 +164,34 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (hasLoaded.current) return;
+    hasLoaded.current = true;
+
+    // Read localStorage first (synchronous, fast)
     const stored = readStoredLocation();
     if (stored) {
       setLocation(stored);
     }
 
-    hasLoaded.current = true;
-    setLoading(false);
-
-    // Resolve remote copy asynchronously (do not block hydration)
+    // Fetch remote location (async) - keep loading true until complete
     void (async () => {
-      const remote = await loadRemoteLocation();
-      if (remote) {
-        setLocation(remote);
-        persistLocation(remote);
+      try {
+        const remote = await loadRemoteLocation();
+        if (remote) {
+          setLocation(remote);
+          persistLocation(remote);
+        } else if (!stored) {
+          // No localStorage AND no remote data - truly no location
+          setLocation(null);
+        }
+      } catch (error) {
+        console.warn('[UnifiedLocation] Failed to load remote location on mount', error);
+        // If remote fetch fails but we have localStorage, keep it
+        if (!stored) {
+          setLocation(null);
+        }
+      } finally {
+        // Only set loading false after remote check completes
+        setLoading(false);
       }
     })();
   }, []);
