@@ -314,7 +314,29 @@ export function QuickLogModal({
       setCurrentStep('photo-captured');
 
       // Auto-trigger AI identification
-      if (regionalSpecies.length > 0) {
+      // Use regional species if available, otherwise fall back to top European species
+      let candidateSpecies = regionalSpecies;
+      if (candidateSpecies.length === 0) {
+        // Fall back to top 8 European species
+        candidateSpecies = Object.keys(SPECIES_IMAGE_MAP)
+          .filter(code => EUROPEAN_SPECIES_CODES.has(code))
+          .slice(0, 8)
+          .map(code => {
+            const info = SPECIES_IMAGE_MAP[code];
+            return {
+              id: code,
+              code,
+              name: info.name,
+              scientificName: info.scientificName,
+              thumbnail: info.thumb || info.image,
+              confidence: 0,
+              biteScore: 0,
+              badge: null as null,
+            };
+          });
+      }
+
+      if (candidateSpecies.length > 0) {
         const context = {
           location: {
             coords: exif?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
@@ -323,7 +345,7 @@ export function QuickLogModal({
           }
         };
 
-        void identify(file, regionalSpecies, context);
+        void identify(file, candidateSpecies, context);
       }
     },
     [regionalSpecies, location, lookupRectangleCode, identify]
