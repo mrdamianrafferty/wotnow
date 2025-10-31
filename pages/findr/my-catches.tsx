@@ -18,7 +18,7 @@ import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
 export default function MyCatchesPage() {
   const { user } = useAuth();
   const { data: photosRaw = [], isLoading, error, refetch } = useMyCatchPhotos();
-  const [pinning, setPinning] = useState<string | null>(null);
+  const [_pinning, setPinning] = useState<string | null>(null);
 
   // Sort: pinned photos first, then by caught_at descending (if available)
   const photos = [...photosRaw].sort((a, b) => {
@@ -31,7 +31,7 @@ export default function MyCatchesPage() {
   });
 
   // Pin/unpin handler
-  async function handlePinToggle(photo: PhotoData, index: number) {
+  async function handlePinToggle(photo: PhotoData, _index: number) {
     if (!user) return;
     setPinning(photo.id);
     try {
@@ -44,7 +44,7 @@ export default function MyCatchesPage() {
         body: JSON.stringify({ catchId, pinned: newPinned }),
       });
       await refetch();
-    } catch (err) {
+  } catch (_err) {
       alert('Failed to update pin.');
     } finally {
       setPinning(null);
