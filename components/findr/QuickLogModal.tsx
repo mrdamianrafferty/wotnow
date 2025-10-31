@@ -98,7 +98,6 @@ export function QuickLogModal({
 
   // State
   const [currentStep, setCurrentStep] = useState<Step>('photo-decision');
-  const [photoSource, setPhotoSource] = useState<PhotoSource | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [exifData, setExifData] = useState<ExifData | null>(null);
@@ -264,7 +263,19 @@ export function QuickLogModal({
 
       // Auto-close after 2 seconds
       setTimeout(() => {
-        handleClose();
+        // Reset state
+        setCurrentStep('photo-decision');
+        setPhotoFile(null);
+        setPhotoPreview(prev => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+        setExifData(null);
+        setSelectedSpecies([]);
+        setQuantity(1);
+        setShowAllSpecies(false);
+        setError(null);
+        onClose();
       }, 2000);
     } catch (err) {
       console.error('[QuickLog] Failed to log catch:', err);
@@ -273,12 +284,11 @@ export function QuickLogModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedSpecies, quantity, photoFile, exifData, location, rectangleCode, onQuickLog, onSuccess]);
+  }, [selectedSpecies, quantity, photoFile, exifData, location, rectangleCode, onQuickLog, onSuccess, onClose]);
 
   // Close handler with cleanup
   const handleClose = useCallback(() => {
     setCurrentStep('photo-decision');
-    setPhotoSource(null);
     setPhotoFile(null);
     setPhotoPreview(prev => {
       if (prev) URL.revokeObjectURL(prev);
@@ -409,7 +419,7 @@ export function QuickLogModal({
                 const input = document.createElement('input');
                 input.type = 'file';
                 input.accept = 'image/*';
-                input.onchange = (e) => handlePhotoChange(e as any, 'gallery');
+                input.onchange = (e) => handlePhotoChange(e as Event, 'gallery');
                 input.click();
               }}
               className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
@@ -454,7 +464,8 @@ export function QuickLogModal({
             {/* Photo Preview */}
             {photoPreview && (
               <div className="bg-base-200 rounded-lg overflow-hidden">
-                <div className="aspect-video w-full bg-base-300">
+                <div className="aspect-video w-full bg-base-300 relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photoPreview}
                     alt="Catch preview"

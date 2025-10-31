@@ -1,32 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
-import {
-	MapPin, Grid3X3, Thermometer, Droplets, Activity, CloudSun, Waves, Fish, Calendar, Navigation, ClipboardList, Clock, AlertTriangle, Zap, Users, FileText, BarChart3, Loader2, TrendingUp, Target, Camera,
-} from 'lucide-react';
-import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
+import { ClipboardList, Zap, Users, FileText } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
-import { useCatchLogger, useQuickCatchLog } from '@/hooks/useCatchLogger';
-import { useImpressionTracking } from '../../hooks/useImpressionTracking';
-import { useContextualTranslation } from '../../context/LanguageContext';
-import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
-import { compressImage } from '../../lib/storage/photoStorage';
-import { TranslatedText } from '../../components/translation/TranslatedFishCard';
-import { GradientFish } from '../../components/GradientFish';
-import { supabase } from '@/lib/supabase/client';
-import { toast } from 'react-hot-toast';
-import type { CatchLogInput, CatchLoggerTelemetryEvent } from '@/types/findr-enrichment';
-import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { normaliseCatchPhotoAssets, type CatchPhotoAsset } from '@/utils/catchPhotoAssets';
-import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
-import type { FishingPrediction } from '../../hooks/useFishingPredictions';
-import type { BlankReportData } from '../../components/findr/BlankReportModal';
+import { useQuickCatchLog } from '@/hooks/useCatchLogger';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
-const SessionLogModal = dynamic(() => import('../../components/findr/SessionLogModal').then(mod => ({ default: mod.SessionLogModal })), { ssr: false, loading: () => null });
-const BlankReportModal = dynamic(() => import('../../components/findr/BlankReportModal').then(mod => ({ default: mod.BlankReportModal })), { ssr: false, loading: () => null });
-const ReferenceDataTables = dynamic(() => import('../../components/findr/ReferenceDataTables').then(mod => ({ default: mod.ReferenceDataTables })), { ssr: false, loading: () => null });
 const RecentCatchesWidget = dynamic(() => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })), { ssr: false, loading: () => null });
 
 // ...existing translation and utility components...
