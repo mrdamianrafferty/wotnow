@@ -8,16 +8,29 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Camera, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 import type { PhotoData } from '@/components/findr/TrophyPhotoCarousel';
+import { getFishingEncouragement } from '@/lib/findr/encouragementMessages';
 
 export function RecentCatchesWidget() {
   const { data, isLoading } = useMyCatchPhotos();
   const photos = data?.photos || [];
+  const sessions = data?.sessions || [];
+
+  // Calculate total fish caught
+  const totalFishCaught = useMemo(() => {
+    return sessions.reduce((sum, s) => sum + (s.quantity || 0), 0);
+  }, [sessions]);
+
+  // Calculate unique species count
+  const uniqueSpeciesCount = useMemo(() => {
+    const uniqueSpecies = new Set(sessions.map(s => s.species_common_name));
+    return uniqueSpecies.size;
+  }, [sessions]);
 
   // Only show widget if there are photos
   if (isLoading || photos.length === 0) {
@@ -43,6 +56,25 @@ export function RecentCatchesWidget() {
           <TranslatedText text="View All" />
           <ChevronRight className="w-3 h-3" />
         </Link>
+      </div>
+
+      {/* Stats Display */}
+      <div className="flex gap-4 mb-3">
+        <div className="flex-1">
+          <div className="text-2xl font-bold text-secondary">
+            {totalFishCaught}
+          </div>
+          <div className="text-xs opacity-70"><TranslatedText text="Fish Caught" /></div>
+          <div className="text-xs opacity-60 mt-1 leading-tight">
+            {getFishingEncouragement(totalFishCaught)}
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="text-2xl font-bold text-primary">
+            {uniqueSpeciesCount}
+          </div>
+          <div className="text-xs opacity-70"><TranslatedText text="Species" /></div>
+        </div>
       </div>
 
       {/* Horizontal scrollable photo strip */}

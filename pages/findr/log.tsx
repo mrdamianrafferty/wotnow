@@ -4,6 +4,7 @@ import SEO from '../../components/SEO';
 import { ClipboardList, Zap, Users, FileText } from 'lucide-react';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { useQuickCatchLog } from '@/hooks/useCatchLogger';
+import { getFishingEncouragement } from '@/lib/findr/encouragementMessages';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
 const RecentCatchesWidget = dynamic(() => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })), { ssr: false, loading: () => null });
