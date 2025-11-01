@@ -95,6 +95,7 @@ export default async function handler(
     // Extract and verify user from authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[log-catch-enriched] Missing authorization header');
       return res.status(401).json({ error: 'Missing or invalid authorization header' });
     }
 
@@ -115,9 +116,19 @@ export default async function handler(
     }
 
     const userId = user.id; // Extract user ID from verified token
+    console.log('[log-catch-enriched] Starting form parsing for user:', userId);
 
-    // Parse form data
-    const { fields, files } = await parseForm(req);
+    // Parse form data - wrap in try-catch to catch formidable errors
+    let fields, files;
+    try {
+      const parsed = await parseForm(req);
+      fields = parsed.fields;
+      files = parsed.files;
+      console.log('[log-catch-enriched] Form parsed successfully');
+    } catch (parseError) {
+      console.error('[log-catch-enriched] Form parsing failed:', parseError);
+      throw new Error(`Failed to parse form data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
     // Extract required fields
     const speciesName = getFieldValue(fields.species_name);
@@ -270,17 +281,29 @@ export default async function handler(
     }
 
     // Enrich catch data with environmental data
-    const enrichedData = await enrichCatchData({
-      latitude: finalLatitude,
-      longitude: finalLongitude,
-      exifData: {
-        latitude: exifGPS.latitude,
-        longitude: exifGPS.longitude,
-        altitude: null,
-        timestamp: null,
-        hasGPS: exifGPS.hasGPS,
-      },
-    });
+    let enrichedData;
+    try {
+      enrichedData = await enrichCatchData({
+        latitude: finalLatitude,
+        longitude: finalLongitude,
+        exifData: {
+          latitude: exifGPS.latitude,
+          longitude: exifGPS.longitude,
+          altitude: null,
+          timestamp: null,
+          hasGPS: exifGPS.hasGPS,
+        },
+      });
+    } catch (enrichError) {
+      console.error('[log-catch-enriched] Enrichment failed, continuing without environmental data:', enrichError);
+      warnings.push('Environmental data enrichment failed; catch logged without depth/substrate data.');
+      // Create empty enrichment result to allow catch logging to continue
+      enrichedData = {
+        bathymetry: null,
+        substrate: null,
+        enrichment_timestamp: new Date().toISOString(),
+      };
+    }
 
     // Prepare catch entry data
     const hasUserLocation = locationSource === 'manual';
@@ -449,7 +472,12 @@ export default async function handler(
 
     return res.status(201).json(response);
   } catch (error) {
-    console.error('Error logging catch:', error);
+    console.error('[log-catch-enriched] CRITICAL ERROR:', error);
+    console.error('[log-catch-enriched] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    console.error('[log-catch-enriched] Error details:', {
+      name: error instanceof Error ? error.name : typeof error,
+      message: error instanceof Error ? error.message : String(error),
+    });
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Internal server error',
     });

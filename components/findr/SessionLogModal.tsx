@@ -47,19 +47,22 @@ interface CatchFormEntry {
 }
 
 // Regional species for dropdowns
-const COMMON_SPECIES = ['MAC', 'SBA', 'POL', 'GMU', 'BBR', 'WHI', 'COD', 'PLE'] as const;
 
 // Common baits for quick selection
 const COMMON_BAITS = [
-  'Lugworm',
-  'Ragworm', 
-  'Prawns',
-  'Crab',
-  'Feather rigs',
-  'Spinners',
-  'Soft plastics',
-  'Bread',
-  'Mackerel strip',
+  '🪱 Worms',
+  '🦀 Crab',
+  '🦑 Squid',
+  '🐟 Fish baits',
+  '🦪 Shellfish',
+  '🦐 Prawns',
+  '🍞 Bread',
+  '🪶 Feather rigs',
+  '💫 Spinners',
+  '🪸 Soft plastics',
+  '🦑 Egis',
+  '🎯 Surface lures',
+  '🧪 Artificial baits'
 ] as const;
 
 // Habitat options

@@ -19,7 +19,7 @@ import { getFishingEncouragement } from '@/lib/findr/encouragementMessages';
 export function RecentCatchesWidget() {
   const { data, isLoading } = useMyCatchPhotos();
   const photos = data?.photos || [];
-  const sessions = data?.sessions || [];
+  const sessions = useMemo(() => data?.sessions || [], [data?.sessions]);
 
   // Calculate total fish caught
   const totalFishCaught = useMemo(() => {
@@ -31,6 +31,13 @@ export function RecentCatchesWidget() {
     const uniqueSpecies = new Set(sessions.map(s => s.species_common_name));
     return uniqueSpecies.size;
   }, [sessions]);
+
+  // Get encouragement message
+  const encouragementMessage = useMemo(() => {
+    const msg = getFishingEncouragement(totalFishCaught);
+    console.log('[RecentCatchesWidget] Fish count:', totalFishCaught, 'Message:', msg);
+    return msg;
+  }, [totalFishCaught]);
 
   // Don't show widget during loading
   if (isLoading) {
@@ -70,9 +77,11 @@ export function RecentCatchesWidget() {
             {totalFishCaught}
           </div>
           <div className="text-xs opacity-70"><TranslatedText text="Fish Caught" /></div>
-          <div className="text-xs opacity-60 mt-1 leading-tight">
-            {getFishingEncouragement(totalFishCaught)}
-          </div>
+          {encouragementMessage && (
+            <div className="text-xs opacity-80 mt-1 leading-tight font-medium text-secondary">
+              {encouragementMessage}
+            </div>
+          )}
         </div>
         <div className="flex-1">
           <div className="text-2xl font-bold text-primary">

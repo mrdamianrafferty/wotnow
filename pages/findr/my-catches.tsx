@@ -16,6 +16,7 @@ import { TranslatedText } from '@/components/translation/TranslatedFishCard';
 import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
 import { BadgeShowcase } from '@/components/findr/BadgeShowcase';
 import { MemberStatus } from '@/components/findr/MemberStatus';
+import { getFishingEncouragement } from '@/lib/findr/encouragementMessages';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
@@ -92,17 +93,6 @@ export default function MyCatchesPage() {
     const uniqueNames = Array.from(new Set(sessions.map(s => s.species_common_name)));
     return uniqueNames.sort();
   }, [sessions]);
-
-  // Format species names as "mackerel, cod, pollack and ling"
-  const formatSpeciesList = (names: string[]): string => {
-    if (names.length === 0) return '';
-    if (names.length === 1) return names[0].toLowerCase();
-    if (names.length === 2) return `${names[0].toLowerCase()} and ${names[1].toLowerCase()}`;
-
-    const allButLast = names.slice(0, -1).map(n => n.toLowerCase()).join(', ');
-    const last = names[names.length - 1].toLowerCase();
-    return `${allButLast} and ${last}`;
-  };
 
   return (
     <>
@@ -264,7 +254,7 @@ export default function MyCatchesPage() {
                  {/* Overlay spinner absolutely over the gallery if pinning is in progress */}
                  {_pinning && (
                    <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                     <span className="loading loading-ring loading-lg text-white bg-black/40 rounded-full p-4"></span>
+                     <span className="loading loading-bars loading-xl text-white bg-black/40 rounded-full p-4"></span>
                    </div>
                  )}
                </div>
@@ -272,13 +262,14 @@ export default function MyCatchesPage() {
               {/* Quick stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-figure text-primary">
-                    <Fish className="w-8 h-8" />
-                  </div>
                   <div className="stat-title">
                     <TranslatedText text="Species Caught" />
                   </div>
-                  <div className="stat-value text-primary">{speciesCount}</div>
+                  <div className="stat-value flex items-center gap-2">
+                    <span className="text-primary">{speciesCount}</span>
+                    <Fish className="w-7 h-7 text-primary" />
+                    <Fish className="w-7 h-7 text-secondary" />
+                  </div>
                   {speciesNamesList.length > 0 && (
                     <div className="stat-desc mt-2">
                       <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
@@ -298,13 +289,18 @@ export default function MyCatchesPage() {
                 </div>
 
                 <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-figure text-success">
-                    <TrendingUp className="w-8 h-8" />
-                  </div>
                   <div className="stat-title">
                     <TranslatedText text="Total Fish" />
                   </div>
-                  <div className="stat-value text-success">{totalFishCount}</div>
+                  <div className="stat-value flex items-center gap-2">
+                    <span className="text-success">{totalFishCount}</span>
+                    <TrendingUp className="w-7 h-7 text-success" />
+                  </div>
+                  <div className="stat-desc mt-2">
+                    <span className="badge badge-success gap-1">
+                      {getFishingEncouragement(totalFishCount)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Member Status - Shows medals earned */}
