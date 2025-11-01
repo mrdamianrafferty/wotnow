@@ -87,6 +87,23 @@ export default function MyCatchesPage() {
     return sessions.reduce((total, session) => total + session.quantity, 0);
   }, [sessions]);
 
+  // Get unique species names for display
+  const speciesNamesList = useMemo(() => {
+    const uniqueNames = Array.from(new Set(sessions.map(s => s.species_common_name)));
+    return uniqueNames.sort();
+  }, [sessions]);
+
+  // Format species names as "mackerel, cod, pollack and ling"
+  const formatSpeciesList = (names: string[]): string => {
+    if (names.length === 0) return '';
+    if (names.length === 1) return names[0].toLowerCase();
+    if (names.length === 2) return `${names[0].toLowerCase()} and ${names[1].toLowerCase()}`;
+
+    const allButLast = names.slice(0, -1).map(n => n.toLowerCase()).join(', ');
+    const last = names[names.length - 1].toLowerCase();
+    return `${allButLast} and ${last}`;
+  };
+
   return (
     <>
       <Head>
@@ -256,6 +273,11 @@ export default function MyCatchesPage() {
                     <TranslatedText text="Species Caught" />
                   </div>
                   <div className="stat-value text-primary">{speciesCount}</div>
+                  {speciesNamesList.length > 0 && (
+                    <div className="stat-desc mt-1 text-xs">
+                      <TranslatedText text={`You've caught ${formatSpeciesList(speciesNamesList)}`} />
+                    </div>
+                  )}
                 </div>
 
                 <div className="stat bg-base-100 shadow rounded-lg">
