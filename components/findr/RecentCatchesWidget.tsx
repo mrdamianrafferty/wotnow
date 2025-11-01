@@ -13,9 +13,11 @@ import { Camera, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
+import type { PhotoData } from '@/components/findr/TrophyPhotoCarousel';
 
 export function RecentCatchesWidget() {
-  const { data: photos = [], isLoading } = useMyCatchPhotos();
+  const { data, isLoading } = useMyCatchPhotos();
+  const photos = data?.photos || [];
 
   // Only show widget if there are photos
   if (isLoading || photos.length === 0) {
@@ -45,7 +47,7 @@ export function RecentCatchesWidget() {
 
       {/* Horizontal scrollable photo strip */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-        {recentPhotos.map((photo) => {
+        {recentPhotos.map((photo: PhotoData) => {
           const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
 
           return (

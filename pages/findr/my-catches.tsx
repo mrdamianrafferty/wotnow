@@ -14,10 +14,13 @@ import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 import { useAuth } from '@/context/AuthContext';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
 import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
+import { BadgeShowcase } from '@/components/findr/BadgeShowcase';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
-  const { data: photosRaw = [], isLoading, error, refetch } = useMyCatchPhotos();
+  const { data, isLoading, error, refetch } = useMyCatchPhotos();
+  const photosRaw = data?.photos || [];
+  const sessions = data?.sessions || [];
   const [_pinning, setPinning] = useState<string | null>(null);
 
   // Sort: pinned photos first, then by caught_at descending (if available)
@@ -264,14 +267,8 @@ export default function MyCatchesPage() {
                   </div>
                 </div>
 
-                <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-title">
-                    <TranslatedText text="Photo Coverage" />
-                  </div>
-                  <div className="stat-value">
-                    {photos.length > 0 ? Math.round((userPhotos.length / photos.length) * 100) : 0}%
-                  </div>
-                </div>
+                {/* Badge Showcase - Replaces Photo Coverage */}
+                <BadgeShowcase sessions={sessions} />
               </div>
             </>
           )}

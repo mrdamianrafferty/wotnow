@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { SPECIES_IMAGE_MAP } from '@/data/speciesImageMap';
 import type { PhotoData } from '@/components/findr/TrophyPhotoCarousel';
+import type { CatchSession } from '@/lib/findr/badgeDefinitions';
 
 export function useMyCatchPhotos() {
   return useQuery({
@@ -29,6 +30,7 @@ export function useMyCatchPhotos() {
         quantity: number;
         size_category: string;
         bait_used: string;
+        habitat_type?: string;
         notes?: string;
         pinned?: boolean;
         photo_assets?: Array<{
@@ -36,6 +38,22 @@ export function useMyCatchPhotos() {
           thumbnail_url: string;
         }> | null;
       }>;
+
+      // Convert to CatchSession format for badge calculations
+      const sessions: CatchSession[] = catches.map((c) => ({
+        id: c.id,
+        species_id: c.species_id,
+        species_common_name: c.species_common_name,
+        caught_at: c.caught_at,
+        rectangle_code: c.rectangle_code,
+        quantity: c.quantity,
+        size_category: c.size_category,
+        bait_used: c.bait_used,
+        habitat_type: c.habitat_type,
+        notes: c.notes,
+        pinned: c.pinned,
+        photo_assets: c.photo_assets,
+      }));
 
       // Transform to PhotoData[] format
       const photos: PhotoData[] = catches.flatMap((c) => {
@@ -85,7 +103,7 @@ export function useMyCatchPhotos() {
         }];
       });
 
-      return photos;
+      return { photos, sessions };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: true, // Always enabled if component is mounted
