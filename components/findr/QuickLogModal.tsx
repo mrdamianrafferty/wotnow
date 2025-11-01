@@ -930,12 +930,12 @@ export function QuickLogModal({
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="font-semibold">{aiResult.species.name}</div>
+                      <div className="font-semibold text-base-content">{aiResult.species.name}</div>
                       {aiResult.species.scientificName && (
-                        <div className="text-sm italic opacity-70">{aiResult.species.scientificName}</div>
+                        <div className="text-sm italic text-base-content/70">{aiResult.species.scientificName}</div>
                       )}
                       {aiResult.reasoning && (
-                        <div className="text-xs mt-1 opacity-80">{aiResult.reasoning}</div>
+                        <div className="text-xs mt-1 text-base-content/80">{aiResult.reasoning}</div>
                       )}
                     </div>
                   </div>
