@@ -38,13 +38,20 @@ export default function MyCatchesPage() {
       // Find catch id (strip -default or -assetIndex)
       const catchId = photo.id.split('-')[0];
       const newPinned = !photo.pinned;
+      // Get Supabase access token
+      const { data: { session } } = await import('@/lib/supabase/client').then(m => m.supabase.auth.getSession());
+      const accessToken = session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
       await fetch('/api/findr/pin-catch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ catchId, pinned: newPinned }),
       });
       await refetch();
-  } catch (_err) {
+    } catch (_err) {
       alert('Failed to update pin.');
     } finally {
       setPinning(null);
