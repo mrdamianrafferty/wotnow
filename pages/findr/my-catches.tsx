@@ -35,8 +35,12 @@ export default function MyCatchesPage() {
     if (!user) return;
     setPinning(photo.id);
     try {
-      // Find catch id (strip -default or -assetIndex)
-      const catchId = photo.id.split('-')[0];
+      // Find catch id (strip -default or -assetIndex from the end)
+      // Photo IDs are in format: {uuid}-{assetIndex} or {uuid}-default
+      // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (contains 4 dashes)
+      // So we need to remove only the LAST segment after the LAST dash
+      const lastDashIndex = photo.id.lastIndexOf('-');
+      const catchId = lastDashIndex > 0 ? photo.id.substring(0, lastDashIndex) : photo.id;
       const newPinned = !photo.pinned;
       // Get Supabase access token
       const { data: { session } } = await import('@/lib/supabase/client').then(m => m.supabase.auth.getSession());
