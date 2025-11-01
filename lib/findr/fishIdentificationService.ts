@@ -187,11 +187,34 @@ class FishIdentificationService {
   }
 
   /**
+   * Fetch recent catches in the same rectangle for AI context
+   */
+  private async getRecentCatchesByRectangle(rectangleCode: string): Promise<string[]> {
+    try {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const response = await fetch(
+        `/api/findr/recent-catches?rectangleCode=${rectangleCode}&since=${oneMonthAgo.toISOString()}`
+      );
+
+      if (!response.ok) return [];
+
+      const data = await response.json();
+      return data.species || [];
+    } catch (error) {
+      console.warn('[FishID] Failed to fetch recent catches:', error);
+      return [];
+    }
+  }
+
+  /**
    * AI identification using OpenAI Vision API
    */
   private async identifyWithAI(
     image: File,
-    candidates: QuickLogSpecies[]
+    candidates: QuickLogSpecies[],
+    context?: CatchContext
   ): Promise<IdentificationResult> {
     if (!this.openai) {
       throw new Error('OpenAI not initialized');
@@ -216,7 +239,16 @@ class FishIdentificationService {
                        hours >= 17 && hours < 21 ? 'evening' : 'night';
 
     const locationHint = context?.location?.rectangleLabel ?
-      `\n\nLocation: ${context.location.rectangleLabel}` : '';
+      `\nLocation: ${context.location.rectangleLabel}` : '';
+
+    // Fetch recent catches in this region
+    let recentCatchesHint = '';
+    if (context?.location?.rectangleCode) {
+      const recentCatches = await this.getRecentCatchesByRectangle(context.location.rectangleCode);
+      if (recentCatches.length > 0) {
+        recentCatchesHint = `\nRecently reported in this area (last 30 days): ${recentCatches.slice(0, 5).join(', ')}`;
+      }
+    }
 
     const prompt = `You are a fish identification expert. Analyze this photo of a caught fish.
 
@@ -227,7 +259,7 @@ IMPORTANT: If you see multiple different fish species in the image, respond with
   "reasoning": "Multiple fish detected in image"
 }
 
-Context: Photo taken during ${timeOfDay}${locationHint}
+Context: Photo taken during ${timeOfDay}${locationHint}${recentCatchesHint}
 
 The most likely species based on location and current conditions:
 ${candidateList}
