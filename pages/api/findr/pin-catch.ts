@@ -42,7 +42,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .eq('id', catchId)
     .eq('user_id', user.id);
   if (error) {
+    console.error('[pin-catch] Database error:', error);
     return res.status(500).json({ error: error.message });
   }
+  console.log('[pin-catch] Successfully updated:', { catchId, pinned, userId: user.id });
   return res.status(200).json({ success: true });
 }
