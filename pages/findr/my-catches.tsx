@@ -280,8 +280,19 @@ export default function MyCatchesPage() {
                   </div>
                   <div className="stat-value text-primary">{speciesCount}</div>
                   {speciesNamesList.length > 0 && (
-                    <div className="stat-desc mt-1 text-xs break-words">
-                      <TranslatedText text={`You've caught ${formatSpeciesList(speciesNamesList)}`} />
+                    <div className="stat-desc mt-2">
+                      <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
+                        {speciesNamesList.slice(0, 8).map((name, idx) => (
+                          <span key={idx} className="badge badge-sm badge-primary badge-outline">
+                            {name}
+                          </span>
+                        ))}
+                        {speciesNamesList.length > 8 && (
+                          <span className="text-xs opacity-60 mt-1">
+                            +{speciesNamesList.length - 8} more
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
