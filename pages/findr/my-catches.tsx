@@ -286,7 +286,7 @@ export default function MyCatchesPage() {
                   </div>
                   <div className="stat-value text-primary">{speciesCount}</div>
                   {speciesNamesList.length > 0 && (
-                    <div className="stat-desc mt-1 text-xs">
+                    <div className="stat-desc mt-1 text-xs break-words overflow-hidden">
                       <TranslatedText text={`You've caught ${formatSpeciesList(speciesNamesList)}`} />
                     </div>
                   )}
