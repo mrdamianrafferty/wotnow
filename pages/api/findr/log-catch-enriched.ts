@@ -167,18 +167,20 @@ export default async function handler(
     let exifGPS = {
       latitude: null as number | null,
       longitude: null as number | null,
+      altitude: null as number | null,
+      timestamp: null as string | null,
       hasGPS: false,
     };
     let locationSource: CatchLocationSource = 'rectangle';
 
     const photoFile = files.photo as FormidableFile | FormidableFile[] | undefined;
-    
+
     let photoStoragePath: string | null = null;
 
     if (photoFile) {
       const file = Array.isArray(photoFile) ? photoFile[0] : photoFile;
 
-      // Step 1: Extract EXIF GPS data from original photo (for enrichment)
+      // Step 1: Extract EXIF GPS data and timestamp from original photo (for enrichment)
       const originalBuffer = fs.readFileSync(file.filepath);
       exifGPS = extractExifGPS(originalBuffer);
 
@@ -322,13 +324,58 @@ export default async function handler(
       entryType,
     });
 
+    // Determine the best timestamp to use for caught_at:
+    // Priority 1: EXIF timestamp from photo (for accurate historical catches)
+    // Priority 2: Current time with form date (for catches logged right now)
+    // Priority 3: Form date at midnight (fallback)
+    let finalCaughtAt: string;
+
+    if (exifGPS.timestamp) {
+      // Use EXIF timestamp if available
+      try {
+        // Parse EXIF timestamp (format: "2020:09:01 14:23:45")
+        const exifDate = exifGPS.timestamp.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+        const parsedDate = new Date(exifDate);
+        if (!isNaN(parsedDate.getTime())) {
+          finalCaughtAt = parsedDate.toISOString();
+          console.info('[log-catch-enriched] Using EXIF timestamp for caught_at:', finalCaughtAt);
+        } else {
+          throw new Error('Invalid EXIF timestamp');
+        }
+      } catch (error) {
+        console.warn('[log-catch-enriched] Failed to parse EXIF timestamp:', error);
+        // Fall back to current time with form date
+        const now = new Date();
+        const formDateObj = new Date(catchDate);
+        formDateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+        finalCaughtAt = formDateObj.toISOString();
+        console.info('[log-catch-enriched] Using current time with form date:', finalCaughtAt);
+      }
+    } else {
+      // No EXIF timestamp - use current time combined with form date
+      const now = new Date();
+      const formDateObj = new Date(catchDate);
+
+      // If the form date is today, use current time exactly
+      const today = new Date();
+      if (formDateObj.toDateString() === today.toDateString()) {
+        finalCaughtAt = now.toISOString();
+        console.info('[log-catch-enriched] Using current time (catch logged today):', finalCaughtAt);
+      } else {
+        // Historical catch without EXIF - use noon on the selected date
+        formDateObj.setHours(12, 0, 0, 0);
+        finalCaughtAt = formDateObj.toISOString();
+        console.info('[log-catch-enriched] Using noon for historical date:', finalCaughtAt);
+      }
+    }
+
     const catchEntry: Record<string, unknown> = {
       user_id: userId,
       species_id: speciesId || 'UNKNOWN', // Required field - use UNKNOWN if not provided
       species_common_name: speciesName,
       scientific_name: scientificName,
       quantity,
-      caught_at: catchDate, // Database column is 'caught_at'
+      caught_at: finalCaughtAt, // Database column is 'caught_at' - EXIF timestamp or form date
       rectangle_code: rectangleCode,
       location_source: locationSource,
       gps_latitude: finalLatitude, // Database column is 'gps_latitude'

@@ -230,7 +230,7 @@ Otherwise, respond with JSON only in this exact format:
 Focus on: body shape, color patterns, fin structure, size relative to environment.`;
 
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4-vision-preview',
+      model: 'gpt-4o-mini', // Updated from deprecated gpt-4-vision-preview - faster, cheaper, better vision
       messages: [{
         role: 'user',
         content: [
@@ -239,7 +239,7 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
             type: 'image_url',
             image_url: {
               url: `data:image/jpeg;base64,${base64}`,
-              detail: 'low' // Cost optimization: "low" = €0.01 instead of "high" = €0.03
+              detail: 'low' // Cost optimization
             }
           }
         ]
