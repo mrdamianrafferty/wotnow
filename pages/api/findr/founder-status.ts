@@ -45,43 +45,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Get all users ordered by creation date
-    const { data: users, error: usersError } = await supabase
-      .from('auth.users')
-      .select('id, created_at')
-      .order('created_at', { ascending: true });
+    // Use RPC function to check founder status
+    const { data, error: rpcError } = await supabase
+      .rpc('check_founder_status', { p_user_id: user.id });
 
-    if (usersError) {
-      // auth.users table may not be accessible, try alternative approach
-      // Query user_location_preferences as a proxy (users who have used the app)
-      const { data: activeUsers, error: activeUsersError } = await supabase
-        .from('user_location_preferences')
-        .select('user_id, created_at')
-        .order('created_at', { ascending: true });
-
-      if (activeUsersError) {
-        console.error('[founder-status] Failed to query users:', activeUsersError);
-        return res.status(500).json({
-          error: 'Failed to determine founder status',
-          isFounder: false
-        });
-      }
-
-      // Find user's rank among active users
-      const userRank = activeUsers.findIndex(u => u.user_id === user.id) + 1;
-
-      return res.status(200).json({
-        isFounder: userRank > 0 && userRank <= 500,
-        userRank: userRank > 0 ? userRank : null,
+    if (rpcError || !data || data.length === 0) {
+      console.error('[founder-status] RPC error:', rpcError);
+      return res.status(500).json({
+        error: 'Failed to determine founder status',
+        isFounder: false
       });
     }
 
-    // Find user's rank
-    const userRank = users.findIndex(u => u.id === user.id) + 1;
+    const result = data[0];
 
     return res.status(200).json({
-      isFounder: userRank > 0 && userRank <= 500,
-      userRank: userRank > 0 ? userRank : null,
+      isFounder: result.is_founder,
+      userRank: result.user_rank,
     });
   } catch (error) {
     console.error('[founder-status] Error:', error);
