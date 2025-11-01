@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
 import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
 import { BadgeShowcase } from '@/components/findr/BadgeShowcase';
+import { MemberStatus } from '@/components/findr/MemberStatus';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
@@ -267,17 +268,10 @@ export default function MyCatchesPage() {
                   <div className="stat-value text-success">{totalFishCount}</div>
                 </div>
 
-                <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-title">
-                    <TranslatedText text="Stock Photos" />
-                  </div>
-                  <div className="stat-value">{stockPhotos.length}</div>
-                  <div className="stat-desc">
-                    <TranslatedText text="Add photos to replace" />
-                  </div>
-                </div>
+                {/* Member Status - Shows medals earned */}
+                <MemberStatus sessions={sessions} />
 
-                {/* Badge Showcase - Replaces Photo Coverage */}
+                {/* Badge Showcase */}
                 <BadgeShowcase sessions={sessions} />
               </div>
             </>
