@@ -253,15 +253,20 @@ export default function MyCatchesPage() {
               )}
 
               {/* Photo gallery */}
-               <div className="card bg-base-100 shadow-xl p-6">
+               <div className="card bg-base-100 shadow-xl p-6 relative">
                  <PhotoGalleryGrid
                    photos={photos}
                    onPhotoClickAction={openPhoto}
                    onPinToggle={handlePinToggle}
                    columns={3}
                    aspectRatio="wide"
-                   pinningId={_pinning}
                  />
+                 {/* Overlay spinner absolutely over the gallery if pinning is in progress */}
+                 {_pinning && (
+                   <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                     <span className="loading loading-ring loading-lg text-white bg-black/40 rounded-full p-4"></span>
+                   </div>
+                 )}
                </div>
 
               {/* Quick stats */}
@@ -275,7 +280,7 @@ export default function MyCatchesPage() {
                   </div>
                   <div className="stat-value text-primary">{speciesCount}</div>
                   {speciesNamesList.length > 0 && (
-                    <div className="stat-desc mt-1 text-xs break-words overflow-hidden">
+                    <div className="stat-desc mt-1 text-xs break-words">
                       <TranslatedText text={`You've caught ${formatSpeciesList(speciesNamesList)}`} />
                     </div>
                   )}
