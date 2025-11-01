@@ -24,6 +24,7 @@ import { useAuth } from '@/context/AuthContext';
 import { SPECIES_IMAGE_MAP } from '@/data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { QuickLogParams } from '@/hooks/useCatchLogger';
+import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 
 // Types
 interface QuickLogModalProps {
@@ -42,31 +43,6 @@ interface ExifData {
   location?: [number, number];
   timestamp?: Date;
 }
-
-// Common baits for quick selection
-const COMMON_BAITS = [
-  'Lugworm',
-  'Ragworm',
-  'Prawns',
-  'Crab',
-  'Feather rigs',
-  'Spinners',
-  'Soft plastics',
-  'Bread',
-  'Mackerel strip',
-] as const;
-
-// Habitat options
-const HABITAT_OPTIONS: { value: HabitatType; label: string }[] = [
-  { value: 'rocky_shore', label: 'Rocky Shore' },
-  { value: 'sandy_beach', label: 'Sandy Beach' },
-  { value: 'pier_harbor', label: 'Pier/Harbor' },
-  { value: 'estuary', label: 'Estuary' },
-  { value: 'shallow_water', label: 'Shallow Water' },
-  { value: 'deep_water', label: 'Deep Water' },
-  { value: 'wreck_reef', label: 'Wreck/Reef' },
-  { value: 'open_sea', label: 'Open Sea' },
-];
 
 // European species codes (~40 popular species)
 const EUROPEAN_SPECIES_CODES = new Set([
