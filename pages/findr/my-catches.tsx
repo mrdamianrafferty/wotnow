@@ -21,7 +21,7 @@ export default function MyCatchesPage() {
   const { user } = useAuth();
   const { data, isLoading, error, refetch } = useMyCatchPhotos();
   const photosRaw = data?.photos || [];
-  const sessions = data?.sessions || [];
+  const sessions = useMemo(() => data?.sessions || [], [data?.sessions]);
   const [_pinning, setPinning] = useState<string | null>(null);
 
   // Sort: pinned photos first, then by caught_at descending (if available)
