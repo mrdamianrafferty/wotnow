@@ -32,8 +32,13 @@ export function RecentCatchesWidget() {
     return uniqueSpecies.size;
   }, [sessions]);
 
-  // Only show widget if there are photos
-  if (isLoading || photos.length === 0) {
+  // Don't show widget during loading
+  if (isLoading) {
+    return null;
+  }
+
+  // Show widget if there are photos OR if there are sessions (to show stats)
+  if (photos.length === 0 && sessions.length === 0) {
     return null;
   }
 
@@ -77,8 +82,9 @@ export function RecentCatchesWidget() {
         </div>
       </div>
 
-      {/* Horizontal scrollable photo strip */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
+      {/* Horizontal scrollable photo strip - only show if there are photos */}
+      {photos.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
         {recentPhotos.map((photo: PhotoData) => {
           const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
 
@@ -127,7 +133,8 @@ export function RecentCatchesWidget() {
             </span>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
