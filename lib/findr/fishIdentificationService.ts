@@ -208,6 +208,16 @@ class FishIdentificationService {
       `${i + 1}. ${s.name}${s.scientificName ? ` (${s.scientificName})` : ''} - ${Math.round(s.confidence)}% likely in this location`
     ).join('\n');
 
+    // Add time of day and location context
+    const now = new Date();
+    const hours = now.getHours();
+    const timeOfDay = hours >= 5 && hours < 12 ? 'morning' :
+                       hours >= 12 && hours < 17 ? 'afternoon' :
+                       hours >= 17 && hours < 21 ? 'evening' : 'night';
+
+    const locationHint = context?.location?.rectangleLabel ?
+      `\n\nLocation: ${context.location.rectangleLabel}` : '';
+
     const prompt = `You are a fish identification expert. Analyze this photo of a caught fish.
 
 IMPORTANT: If you see multiple different fish species in the image, respond with:
@@ -216,6 +226,8 @@ IMPORTANT: If you see multiple different fish species in the image, respond with
   "confidence": 0,
   "reasoning": "Multiple fish detected in image"
 }
+
+Context: Photo taken during ${timeOfDay}${locationHint}
 
 The most likely species based on location and current conditions:
 ${candidateList}
