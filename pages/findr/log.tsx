@@ -288,7 +288,7 @@ export default function FindrCatchLogPage() {
                 disabled={isAuthenticated === false}
               >
                 <Zap className="w-4 h-4" />
-                <span className="hidden sm:inline">Quick Log</span>
+                Quick Log
               </button>
             </div>
           </div>
