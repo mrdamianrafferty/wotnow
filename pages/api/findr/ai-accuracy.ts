@@ -72,9 +72,19 @@ export default async function handler(
 
     // Calculate statistics
     const totalAISuggestions = data.length;
-    const correctSuggestions = data.filter((c: any) => !c.ai_was_corrected && !c.ai_gave_up).length;
-    const correctedSuggestions = data.filter((c: any) => c.ai_was_corrected).length;
-    const gaveUpCount = data.filter((c: any) => c.ai_gave_up).length;
+    type CatchEntry = {
+      ai_suggested_species_id: string;
+      ai_suggested_species_name?: string;
+      species_id: string;
+      species_common_name?: string;
+      ai_was_corrected?: boolean;
+      ai_gave_up?: boolean;
+      ai_confidence?: number;
+    };
+
+    const correctSuggestions = data.filter((c: CatchEntry) => !c.ai_was_corrected && !c.ai_gave_up).length;
+    const correctedSuggestions = data.filter((c: CatchEntry) => c.ai_was_corrected).length;
+    const gaveUpCount = data.filter((c: CatchEntry) => c.ai_gave_up).length;
 
     // Calculate accuracy rate (exclude gave-up cases from accuracy calculation)
     const aiAttempts = totalAISuggestions - gaveUpCount;
@@ -84,7 +94,7 @@ export default async function handler(
     // Identify top mistakes (where AI was corrected)
     const mistakes = new Map<string, { suggested: string; actual: string; count: number }>();
 
-    for (const catch_ of data.filter((c: any) => c.ai_was_corrected)) {
+  for (const catch_ of data.filter((c: CatchEntry) => c.ai_was_corrected)) {
       const key = `${catch_.ai_suggested_species_id}->${catch_.species_id}`;
       const existing = mistakes.get(key);
 
