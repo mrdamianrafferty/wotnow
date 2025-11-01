@@ -8,14 +8,16 @@
 import { Award, ChevronRight } from 'lucide-react';
 import { CatchSession, BADGE_CONFIGS, getEarnedBadges, getNextBadge } from '@/lib/findr/badgeDefinitions';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
+import { useFounderStatus } from '@/hooks/useFounderStatus';
 
 interface BadgeShowcaseProps {
   sessions: CatchSession[];
 }
 
 export function BadgeShowcase({ sessions }: BadgeShowcaseProps) {
-  const earnedBadges = getEarnedBadges(sessions);
-  const nextBadge = getNextBadge(sessions);
+  const { data: founderStatus } = useFounderStatus();
+  const earnedBadges = getEarnedBadges(sessions, founderStatus?.isFounder);
+  const nextBadge = getNextBadge(sessions, founderStatus?.isFounder);
 
   // Total badges available
   const totalBadges = BADGE_CONFIGS.length;
@@ -46,7 +48,7 @@ export function BadgeShowcase({ sessions }: BadgeShowcaseProps) {
         {BADGE_CONFIGS.map((badge) => {
           const isEarned = earnedBadges.includes(badge);
           const Icon = badge.icon;
-          const progress = badge.progress ? badge.progress(sessions) : null;
+          const progress = badge.progress ? badge.progress(sessions, founderStatus?.isFounder) : null;
 
           // Map badge color to Tailwind classes
           const colorMap: Record<string, { bg: string; border: string; text: string }> = {

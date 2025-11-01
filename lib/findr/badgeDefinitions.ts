@@ -47,8 +47,8 @@ export interface Badge {
   icon: LucideIcon;
   color: string; // Tailwind color class (e.g., 'amber-500')
   bgColor: string; // Background color class (e.g., 'amber-500/10')
-  requirement: (sessions: CatchSession[]) => boolean;
-  progress?: (sessions: CatchSession[]) => { current: number; target: number };
+  requirement: (sessions: CatchSession[], isFounder?: boolean) => boolean;
+  progress?: (sessions: CatchSession[], isFounder?: boolean) => { current: number; target: number };
 }
 
 /**
@@ -117,12 +117,13 @@ export const BADGE_CONFIGS: Badge[] = [
     icon: Award,
     color: 'amber-500',
     bgColor: 'amber-500/10',
-    requirement: (sessions) => {
-      // TODO: This needs user context to check if user ID is in first 500
-      // For now, return false until we have access to user data
-      return false;
+    requirement: (sessions, isFounder) => {
+      return isFounder === true;
     },
-    progress: () => ({ current: 0, target: 1 }),
+    progress: (sessions, isFounder) => ({
+      current: isFounder ? 1 : 0,
+      target: 1
+    }),
   },
   {
     id: 'species-champion',
@@ -313,25 +314,25 @@ export const BADGE_CONFIGS: Badge[] = [
 /**
  * Get all earned badges for the given sessions
  */
-export function getEarnedBadges(sessions: CatchSession[]): Badge[] {
-  return BADGE_CONFIGS.filter(badge => badge.requirement(sessions));
+export function getEarnedBadges(sessions: CatchSession[], isFounder?: boolean): Badge[] {
+  return BADGE_CONFIGS.filter(badge => badge.requirement(sessions, isFounder));
 }
 
 /**
  * Get the next badge to unlock (closest to completion)
  */
-export function getNextBadge(sessions: CatchSession[]): {
+export function getNextBadge(sessions: CatchSession[], isFounder?: boolean): {
   badge: Badge;
   progress: { current: number; target: number };
 } | null {
-  const unearnedBadges = BADGE_CONFIGS.filter(badge => !badge.requirement(sessions));
+  const unearnedBadges = BADGE_CONFIGS.filter(badge => !badge.requirement(sessions, isFounder));
 
   if (unearnedBadges.length === 0) return null;
 
   // Find badge with highest completion percentage
   const badgesWithProgress = unearnedBadges
     .map(badge => {
-      const progress = badge.progress ? badge.progress(sessions) : { current: 0, target: 1 };
+      const progress = badge.progress ? badge.progress(sessions, isFounder) : { current: 0, target: 1 };
       const percentage = progress.target > 0 ? progress.current / progress.target : 0;
       return { badge, progress, percentage };
     })
