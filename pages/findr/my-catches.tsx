@@ -253,15 +253,27 @@ export default function MyCatchesPage() {
               )}
 
               {/* Photo gallery */}
-              <div className="card bg-base-100 shadow-xl p-6">
-                <PhotoGalleryGrid
-                  photos={photos}
-                  onPhotoClickAction={openPhoto}
-                  onPinToggle={handlePinToggle}
-                  columns={3}
-                  aspectRatio="wide"
-                />
-              </div>
+               <div className="card bg-base-100 shadow-xl p-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                   {photos.map((photo, _idx) => (
+                     <div key={photo.id} className="relative">
+                       {/* PhotoGalleryGrid photo rendering logic here, or call the component if it handles children */}
+                       <PhotoGalleryGrid
+                         photos={[photo]}
+                         onPhotoClickAction={openPhoto}
+                         onPinToggle={handlePinToggle}
+                         columns={1}
+                         aspectRatio="wide"
+                       />
+                       {_pinning === photo.id && (
+                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-20">
+                           <span className="loading loading-ring loading-lg text-white"></span>
+                         </div>
+                       )}
+                     </div>
+                   ))}
+                 </div>
+               </div>
 
               {/* Quick stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
