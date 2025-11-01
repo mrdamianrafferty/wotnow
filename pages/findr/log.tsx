@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import SEO from '../../components/SEO';
 import { ClipboardList, Zap, Camera, Trophy, MapPin, TrendingUp, AlertTriangle, Fish, Calendar, Clock } from 'lucide-react';
+import QuickLogButton from '../../components/findr/QuickLogButton';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { useQuickCatchLog } from '@/hooks/useCatchLogger';
 import { supabase } from '@/lib/supabase/client';
@@ -282,14 +283,9 @@ export default function FindrCatchLogPage() {
               </div>
 
               {/* Right: Quick Log Button */}
-              <button
-                onClick={() => setShowQuickLogModal(true)}
-                className="btn btn-secondary btn-sm gap-2 flex-shrink-0"
-                disabled={isAuthenticated === false}
-              >
-                <Zap className="w-4 h-4" />
-                Quick Log
-              </button>
+              <span onClick={() => setShowQuickLogModal(true)} className="flex-shrink-0">
+                <QuickLogButton />
+              </span>
             </div>
           </div>
         </div>
