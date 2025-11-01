@@ -185,6 +185,15 @@ export interface CatchLogInput {
   userLocation?: Coordinates | null;
   rectangleCenter?: Coordinates | null;
   environmentalConditions?: Record<string, string | number | null>;
+  // AI identification tracking
+  aiSuggestedSpeciesId?: string | null;
+  aiSuggestedSpeciesName?: string | null;
+  aiConfidence?: number | null;
+  aiMethod?: 'cache' | 'database' | 'visual' | 'ai' | 'manual_selection' | null;
+  aiReasoning?: string | null;
+  aiWasCorrected?: boolean;
+  aiGaveUp?: boolean;
+  identificationSource?: 'ai' | 'manual' | 'ai_corrected' | 'ai_gave_up' | null;
 }
 
 export interface CatchLogRequest {
@@ -211,6 +220,15 @@ export interface CatchLogRequest {
   rectangle_center?: Coordinates | null;
   weight_units?: 'kg' | 'lb';
   length_units?: 'cm' | 'in';
+  // AI identification tracking
+  ai_suggested_species_id?: string | null;
+  ai_suggested_species_name?: string | null;
+  ai_confidence?: number | null;
+  ai_method?: string | null;
+  ai_reasoning?: string | null;
+  ai_was_corrected?: boolean;
+  ai_gave_up?: boolean;
+  identification_source?: string | null;
 }
 
 export interface LogCatchEnrichedResponse {

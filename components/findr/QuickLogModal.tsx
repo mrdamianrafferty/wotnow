@@ -247,6 +247,16 @@ export function QuickLogModal({
   // AI identification
   const { identify, isIdentifying, result: aiResult, error: aiError } = useFishIdentification({
     onSuccess: (result) => {
+      // Store original AI suggestion for tracking
+      if (!Array.isArray(result.species) && result.method === 'ai') {
+        setOriginalAiSuggestion({
+          species: result.species,
+          confidence: result.confidence,
+          method: result.method,
+          reasoning: result.reasoning
+        });
+      }
+
       // Auto-add AI result to selection if high confidence and single species
       if (
         !Array.isArray(result.species) &&
@@ -272,6 +282,14 @@ export function QuickLogModal({
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // AI tracking state - store original AI suggestion for feedback tracking
+  const [originalAiSuggestion, setOriginalAiSuggestion] = useState<{
+    species: QuickLogSpecies;
+    confidence: number;
+    method: string;
+    reasoning?: string;
+  } | null>(null);
 
   // Refs
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -440,13 +458,43 @@ export function QuickLogModal({
       for (const species of selectedSpecies) {
         const speciesInfo = SPECIES_IMAGE_MAP[species.code];
 
+        // Calculate AI tracking fields
+        let aiWasCorrected = false;
+        let aiGaveUp = false;
+        let identificationSource: 'ai' | 'manual' | 'ai_corrected' | 'ai_gave_up' | null = null;
+
+        if (originalAiSuggestion) {
+          // AI made a suggestion
+          if (originalAiSuggestion.method === 'manual_selection' || originalAiSuggestion.confidence < 0.7) {
+            // AI had low confidence and showed manual selection
+            aiGaveUp = true;
+            identificationSource = 'ai_gave_up';
+          } else if (species.id !== originalAiSuggestion.species.id) {
+            // User selected different species than AI suggested
+            aiWasCorrected = true;
+            identificationSource = 'ai_corrected';
+          } else {
+            // User accepted AI suggestion
+            identificationSource = 'ai';
+          }
+        } else {
+          // No AI suggestion (manual entry)
+          identificationSource = 'manual';
+        }
+
         try {
           console.log('[QuickLog] Submitting species:', species.name, {
             speciesId: species.id,
             rectangleCode: lookupRectangleCode,
             quantity,
             hasPhoto: !!photoFile,
-            userLocation
+            userLocation,
+            aiTracking: {
+              originalSuggestion: originalAiSuggestion?.species.name,
+              wasCorrected: aiWasCorrected,
+              gaveUp: aiGaveUp,
+              source: identificationSource
+            }
           });
 
           const result = await onQuickLog({
@@ -466,6 +514,15 @@ export function QuickLogModal({
             baitUsed: baitUsed || null,
             habitatType: habitatType || null,
             notes: notes || null,
+            // AI tracking fields
+            aiSuggestedSpeciesId: originalAiSuggestion?.species.id || null,
+            aiSuggestedSpeciesName: originalAiSuggestion?.species.name || null,
+            aiConfidence: originalAiSuggestion?.confidence || null,
+            aiMethod: (originalAiSuggestion?.method as 'cache' | 'database' | 'visual' | 'ai' | 'manual_selection') || null,
+            aiReasoning: originalAiSuggestion?.reasoning || null,
+            aiWasCorrected,
+            aiGaveUp,
+            identificationSource,
           });
 
           console.log('[QuickLog] Result for', species.name, ':', result);

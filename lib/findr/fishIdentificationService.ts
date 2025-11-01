@@ -10,9 +10,10 @@
  * 6. Manual selection fallback
  *
  * Cost Management:
- * - €0.01 per AI call (gpt-4-vision with "low" detail)
- * - €10/month budget = 1000 identifications
+ * - €0.05 per AI call (gpt-4o with "high" detail for best accuracy)
+ * - €50/month budget = 1000 identifications
  * - Targets <20% AI usage through smart filtering
+ * - Can downgrade to gpt-4o-mini later if needed to reduce costs
  */
 
 import OpenAI from 'openai';
@@ -59,8 +60,8 @@ class FishIdentificationService {
 
   // Budget tracking
   private monthlyUsage: number = 0;
-  private monthlyBudget: number = 10; // €10/month
-  private pricePerCall: number = 0.01; // €0.01 per AI identification
+  private monthlyBudget: number = 50; // €50/month (increased for premium model)
+  private pricePerCall: number = 0.05; // €0.05 per AI identification (gpt-4o with high detail)
 
   // Feature flags
   private aiAvailable: boolean = true;
@@ -209,6 +210,47 @@ class FishIdentificationService {
   }
 
   /**
+   * Fetch AI accuracy statistics for this rectangle to help AI learn from past mistakes
+   */
+  private async getAIAccuracyStatsByRectangle(rectangleCode: string): Promise<string> {
+    try {
+      const response = await fetch(
+        `/api/findr/ai-accuracy?rectangleCode=${rectangleCode}`
+      );
+
+      if (!response.ok) return '';
+
+      const data = await response.json();
+
+      // No AI suggestions yet in this area
+      if (data.totalAISuggestions === 0) return '';
+
+      const accuracyPct = Math.round(data.accuracyRate * 100);
+      const giveUpPct = Math.round(data.giveUpRate * 100);
+
+      let hint = `\n\nYour AI Performance in this area:`;
+      hint += `\n- Accuracy: ${accuracyPct}% (${data.correctSuggestions}/${data.totalAISuggestions - data.gaveUpCount} correct)`;
+
+      if (giveUpPct > 0) {
+        hint += `\n- Give-up rate: ${giveUpPct}% (low confidence cases)`;
+      }
+
+      // Add top mistakes to help AI learn
+      if (data.topMistakes && data.topMistakes.length > 0) {
+        hint += `\n- Common mistakes in this area:`;
+        for (const mistake of data.topMistakes.slice(0, 3)) {
+          hint += `\n  • Often confused ${mistake.suggestedSpecies} with ${mistake.actualSpecies} (${mistake.count}x)`;
+        }
+      }
+
+      return hint;
+    } catch (error) {
+      console.warn('[FishID] Failed to fetch AI accuracy stats:', error);
+      return '';
+    }
+  }
+
+  /**
    * AI identification using OpenAI Vision API
    */
   private async identifyWithAI(
@@ -250,6 +292,12 @@ class FishIdentificationService {
       }
     }
 
+    // Fetch AI accuracy stats to help learn from past mistakes
+    let aiAccuracyHint = '';
+    if (context?.location?.rectangleCode) {
+      aiAccuracyHint = await this.getAIAccuracyStatsByRectangle(context.location.rectangleCode);
+    }
+
     const prompt = `You are a fish identification expert. Analyze this photo of a caught fish.
 
 IMPORTANT: If you see multiple different fish species in the image, respond with:
@@ -259,22 +307,34 @@ IMPORTANT: If you see multiple different fish species in the image, respond with
   "reasoning": "Multiple fish detected in image"
 }
 
-Context: Photo taken during ${timeOfDay}${locationHint}${recentCatchesHint}
+Context: Photo taken during ${timeOfDay}${locationHint}${recentCatchesHint}${aiAccuracyHint}
 
 The most likely species based on location and current conditions:
 ${candidateList}
 
-Otherwise, respond with JSON only in this exact format:
+If you're confident (70%+), respond with:
 {
   "species": "exact name from the list above or 'unknown'",
   "confidence": 0-100,
   "reasoning": "brief explanation of identifying features (max 100 chars)"
 }
 
+If you're uncertain (below 70% confidence), provide your top 3 best guesses:
+{
+  "species": "uncertain",
+  "confidence": 0-100,
+  "alternatives": [
+    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"},
+    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"},
+    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"}
+  ],
+  "reasoning": "why identification is difficult"
+}
+
 Focus on: body shape, color patterns, fin structure, size relative to environment.`;
 
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Updated from deprecated gpt-4-vision-preview - faster, cheaper, better vision
+      model: 'gpt-4o', // Premium model for best accuracy - can downgrade to gpt-4o-mini later if needed
       messages: [{
         role: 'user',
         content: [
@@ -283,7 +343,7 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
             type: 'image_url',
             image_url: {
               url: `data:image/jpeg;base64,${base64}`,
-              detail: 'low' // Cost optimization
+              detail: 'high' // High detail for best accuracy
             }
           }
         ]
@@ -307,6 +367,42 @@ Focus on: body shape, color patterns, fin structure, size relative to environmen
         confidence: 0,
         cost: this.pricePerCall,
         message: 'Multiple fish detected - please identify manually'
+      };
+    }
+
+    // Check if AI returned uncertain response with alternatives
+    if (result.species === 'uncertain' && result.alternatives && Array.isArray(result.alternatives)) {
+      console.log('[FishID] AI uncertain - provided', result.alternatives.length, 'alternatives');
+
+      // Map AI alternatives to our candidate species
+      const topGuesses: QuickLogSpecies[] = [];
+      const seenIds = new Set<string>();
+
+      for (const alt of result.alternatives) {
+        const matchedSpecies = candidates.find(
+          s => s.name.toLowerCase() === alt.species?.toLowerCase() ||
+               s.scientificName?.toLowerCase() === alt.species?.toLowerCase()
+        );
+
+        if (matchedSpecies && !seenIds.has(matchedSpecies.id)) {
+          topGuesses.push({
+            ...matchedSpecies,
+            confidence: alt.confidence || matchedSpecies.confidence
+          });
+          seenIds.add(matchedSpecies.id);
+        }
+      }
+
+      // Add remaining candidates (deduped) to fill up to 8 total
+      const remainingCandidates = candidates.filter(c => !seenIds.has(c.id));
+      const allOptions = [...topGuesses, ...remainingCandidates].slice(0, 8);
+
+      return {
+        species: allOptions,
+        method: 'manual_selection',
+        confidence: result.confidence ? result.confidence / 100 : 0.5,
+        cost: this.pricePerCall,
+        message: `AI suggests: ${topGuesses.map(s => s.name).join(', ')}`
       };
     }
 

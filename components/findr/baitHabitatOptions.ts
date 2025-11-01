@@ -10,7 +10,7 @@ export const COMMON_BAITS = [
   '🪶 Feather rigs',
   '💫 Spinners',
   '🪸 Soft plastics',
-  '🦑 Egis',
+  '⥿ Egis',
   '🎯 Surface lures',
   '🧪 Artificial baits'
 ] as const;
@@ -19,7 +19,7 @@ export const HABITAT_OPTIONS = [
   { value: 'rocky_shore', label: '🪨 Rocky Shore' },
   { value: 'sandy_beach', label: '🏝️ Sandy Beach' },
   { value: 'pier_harbor', label: '🏗️ Pier / Harbor' },
-  { value: 'estuary', label: '⛵ Estuary' },
+  { value: 'estuary', label: '🏞️ Estuary' },
   { value: 'shallow_water', label: '💧 Shallow Water' },
   { value: 'deep_water', label: '⚓ Deep Water' },
   { value: 'wreck_reef', label: '🪸 Wreck & Reef' },

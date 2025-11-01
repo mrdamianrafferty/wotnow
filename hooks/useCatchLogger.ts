@@ -44,6 +44,15 @@ export type QuickLogParams = {
   baitUsed?: string | null;
   habitatType?: string | null;
   notes?: string | null;
+  // AI identification tracking fields
+  aiSuggestedSpeciesId?: string | null;
+  aiSuggestedSpeciesName?: string | null;
+  aiConfidence?: number | null;
+  aiMethod?: 'cache' | 'database' | 'visual' | 'ai' | 'manual_selection' | null;
+  aiReasoning?: string | null;
+  aiWasCorrected?: boolean;
+  aiGaveUp?: boolean;
+  identificationSource?: 'ai' | 'manual' | 'ai_corrected' | 'ai_gave_up' | null;
 };
 
 /**
@@ -289,6 +298,15 @@ function buildFormData(input: CatchLogInput): FormData {
     environmental_conditions: input.environmentalConditions ?? undefined,
     user_location: input.userLocation ?? null,
     rectangle_center: input.rectangleCenter ?? null,
+    // AI identification tracking
+    ai_suggested_species_id: input.aiSuggestedSpeciesId ?? null,
+    ai_suggested_species_name: input.aiSuggestedSpeciesName ?? null,
+    ai_confidence: input.aiConfidence ?? null,
+    ai_method: input.aiMethod ?? null,
+    ai_reasoning: input.aiReasoning ?? null,
+    ai_was_corrected: input.aiWasCorrected ?? false,
+    ai_gave_up: input.aiGaveUp ?? false,
+    identification_source: input.identificationSource ?? null,
   };
 
   for (const [key, value] of Object.entries(payload)) {

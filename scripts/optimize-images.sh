@@ -94,6 +94,8 @@ fi
 
 # Targeted conversion for fishing illustrations
 FISH_IMAGES=(
+    "/Users/damianrafferty/Projects/wotnow-image-backups/PNGS-backup-20251016/golden-grey-mullet.png"
+    "/Users/damianrafferty/Projects/wotnow-image-backups/PNGS-backup-20251016/thin-lipped-grey-mullet.png"
     "public/PNGS/greyling.png"
     "public/PNGS/brown-trout.png"
     "public/PNGS/salmon.png"

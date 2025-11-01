@@ -54,6 +54,15 @@ interface CreateCatchRequest {
   gps_longitude?: number;
   location_accuracy?: number; // meters
   location_source?: 'gps' | 'manual' | 'rectangle';
+  // AI identification tracking fields
+  ai_suggested_species_id?: string;
+  ai_suggested_species_name?: string;
+  ai_confidence?: number;
+  ai_method?: 'cache' | 'database' | 'visual' | 'ai' | 'manual_selection';
+  ai_reasoning?: string;
+  ai_was_corrected?: boolean;
+  ai_gave_up?: boolean;
+  identification_source?: 'ai' | 'manual' | 'ai_corrected' | 'ai_gave_up';
 }
 
 interface CatchPhotoAsset {
@@ -474,7 +483,16 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
       gps_latitude: catchData.gps_latitude || null,
       gps_longitude: catchData.gps_longitude || null,
       location_accuracy: catchData.location_accuracy || null,
-      location_source: catchData.location_source || 'rectangle'
+      location_source: catchData.location_source || 'rectangle',
+      // AI identification tracking
+      ai_suggested_species_id: catchData.ai_suggested_species_id || null,
+      ai_suggested_species_name: catchData.ai_suggested_species_name || null,
+      ai_confidence: catchData.ai_confidence || null,
+      ai_method: catchData.ai_method || null,
+      ai_reasoning: catchData.ai_reasoning || null,
+      ai_was_corrected: catchData.ai_was_corrected || false,
+      ai_gave_up: catchData.ai_gave_up || false,
+      identification_source: catchData.identification_source || null
     };
 
     const { data: insertedCatch, error: insertError } = await supabase
