@@ -80,7 +80,7 @@ export function useQuickLogSpecies(
         }
 
         return {
-          id: (pred.slug as string) || speciesCode,
+          id: speciesCode, // Use species_code as ID for database compatibility
           code: speciesCode,
           name: pred.name_en as string,
           scientificName: (pred.scientific_name as string | null | undefined) || null,

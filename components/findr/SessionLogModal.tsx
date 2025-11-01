@@ -66,15 +66,15 @@ const COMMON_BAITS = [
 ] as const;
 
 // Habitat options
-const HABITAT_OPTIONS: { value: HabitatType; label: string }[] = [
-  { value: 'rocky_shore', label: 'Rocky Shore' },
-  { value: 'sandy_beach', label: 'Sandy Beach' },
-  { value: 'pier_harbor', label: 'Pier/Harbor' },
-  { value: 'estuary', label: 'Estuary' },
-  { value: 'shallow_water', label: 'Shallow Water' },
-  { value: 'deep_water', label: 'Deep Water' },
-  { value: 'wreck_reef', label: 'Wreck/Reef' },
-  { value: 'open_sea', label: 'Open Sea' },
+const HABITAT_OPTIONS = [
+  { value: 'rocky_shore', label: '🪨 Rocky Shore' },
+  { value: 'sandy_beach', label: '🏝️ Sandy Beach' },
+  { value: 'pier_harbor', label: '🏗️ Pier / Harbor' },
+  { value: 'estuary', label: '⛵ Estuary' },
+  { value: 'shallow_water', label: '💧 Shallow Water' },
+  { value: 'deep_water', label: '⚓ Deep Water' },
+  { value: 'wreck_reef', label: '🪸 Wreck & Reef' },
+  { value: 'open_sea', label: '🛥️ Open Sea' },
 ];
 
 // Time period options

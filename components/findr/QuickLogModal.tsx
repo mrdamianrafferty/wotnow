@@ -68,7 +68,7 @@ const HABITAT_OPTIONS: { value: HabitatType; label: string }[] = [
   { value: 'open_sea', label: 'Open Sea' },
 ];
 
-// European species codes (~30 popular species)
+// European species codes (~40 popular species)
 const EUROPEAN_SPECIES_CODES = new Set([
   'BSS',      // Sea Bass
   'COD',      // Atlantic Cod
@@ -102,6 +102,15 @@ const EUROPEAN_SPECIES_CODES = new Set([
   'GAR',      // Garfish
   'WRB',      // Ballan Wrasse
   'WRC',      // Cuckoo Wrasse
+  'DEX',      // Dentex
+  'HAD',      // Haddock
+  'HAL',      // Atlantic Halibut
+  'JOD',      // John Dory
+  'MEAGRE',   // Meagre
+  'RED-PORGY', // Red Porgy
+  'SBR',      // Red Seabream
+  'TRS',      // Sea Trout
+  'ATS',      // Atlantic Salmon
 ]);
 
 // EXIF extraction utility

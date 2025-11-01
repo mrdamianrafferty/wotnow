@@ -6,6 +6,7 @@ import { ClipboardList, Zap, Camera, Trophy, MapPin, TrendingUp, AlertTriangle, 
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { useQuickCatchLog } from '@/hooks/useCatchLogger';
 import { supabase } from '@/lib/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
 const RecentCatchesWidget = dynamic(() => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })), { ssr: false, loading: () => null });
@@ -148,6 +149,7 @@ export default function FindrCatchLogPage() {
   const [isLoadingCatches, setIsLoadingCatches] = useState(true);
 
   const quickCatchLog = useQuickCatchLog();
+  const queryClient = useQueryClient();
 
   // Fetch user authentication status
   useEffect(() => {
@@ -216,7 +218,9 @@ export default function FindrCatchLogPage() {
     setToastMessage('🎉 Quick catch logged!');
     setShowToast(true);
     void fetchCatches();
-  }, [fetchCatches]);
+    // Invalidate React Query cache to update the gallery page
+    void queryClient.invalidateQueries({ queryKey: ['my-catch-photos'] });
+  }, [fetchCatches, queryClient]);
 
   // Toast auto-hide
   useEffect(() => {
@@ -255,31 +259,42 @@ export default function FindrCatchLogPage() {
           </div>
         )}
 
-        <div className="container mx-auto px-4 pt-6 max-w-6xl">
-          {/* Header with Stats */}
-          <div className="card bg-primary text-primary-content shadow-xl">
-            <div className="card-body">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="w-8 h-8" />
-                  <div>
-                    <h1 className="text-2xl font-bold">{userName}&apos;s Catch Log</h1>
-                    <p className="text-sm opacity-90">Track your fishing journey</p>
-                  </div>
-                </div>
-                <div className="stats stats-horizontal shadow">
-                  <div className="stat px-4 py-2 bg-base-100 text-base-content">
-                    <div className="stat-value text-xl text-primary">{catches.length}</div>
-                    <div className="stat-desc">Catches</div>
-                  </div>
-                  <div className="stat px-4 py-2 bg-base-100 text-base-content">
-                    <div className="stat-value text-xl text-secondary">{totalSpeciesCaught}</div>
-                    <div className="stat-desc">Species</div>
+        {/* Sticky Compact Header */}
+        <div className="sticky top-0 z-30 bg-base-100/95 backdrop-blur-sm border-b border-base-300 shadow-sm">
+          <div className="container mx-auto px-4 py-3 max-w-6xl">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Title and Stats */}
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <ClipboardList className="w-6 h-6 text-primary flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-bold truncate">{userName}&apos;s Catch Log</h1>
+                  <div className="flex items-center gap-3 text-xs text-base-content/70">
+                    <span className="flex items-center gap-1">
+                      <Fish className="w-3 h-3" />
+                      {catches.length} catches
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Trophy className="w-3 h-3" />
+                      {totalSpeciesCaught} species
+                    </span>
                   </div>
                 </div>
               </div>
+
+              {/* Right: Quick Log Button */}
+              <button
+                onClick={() => setShowQuickLogModal(true)}
+                className="btn btn-secondary btn-sm gap-2 flex-shrink-0"
+                disabled={isAuthenticated === false}
+              >
+                <Zap className="w-4 h-4" />
+                <span className="hidden sm:inline">Quick Log</span>
+              </button>
             </div>
           </div>
+        </div>
+
+        <div className="container mx-auto px-4 pt-6 max-w-6xl">
 
           {/* Recent Catches Widget */}
           <div className="mt-6">
@@ -289,24 +304,9 @@ export default function FindrCatchLogPage() {
           {/* Main Content Card */}
           <div className="card bg-base-100 shadow-xl mt-6">
             <div className="card-body space-y-6">
-              {/* Quick Log Section */}
-              <div className="bg-gradient-to-r from-secondary/10 to-secondary/5 rounded-lg p-6 text-center">
-                <Zap className="w-12 h-12 text-secondary mx-auto mb-3" />
-                <h2 className="text-xl font-bold mb-2">10 second quick log</h2>
-                <p className="text-sm text-base-content/70 mb-4">
-                  {/* Log it instantly - takes just 10 seconds */}
-                </p>
-                <button
-                  onClick={() => setShowQuickLogModal(true)}
-                  className="btn btn-secondary btn-lg gap-2"
-                  disabled={isAuthenticated === false}
-                >
-                  <Zap className="w-5 h-5" />
-                  Log Catch
-                </button>
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Your Catch History</h2>
               </div>
-
-              <div className="divider">Your Catch History</div>
 
               {/* Catch History Display */}
               {isLoadingCatches ? (
