@@ -5,9 +5,9 @@
  * Uses stock species photos as fallback when user hasn't uploaded a photo.
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Head from 'next/head';
-import { Camera, Upload, Info, ClipboardList, Fish } from 'lucide-react';
+import { Camera, Upload, Info, ClipboardList, Fish, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { TrophyPhotoCarousel, PhotoGalleryGrid, type PhotoData } from '@/components/findr/TrophyPhotoCarousel';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
@@ -75,6 +75,16 @@ export default function MyCatchesPage() {
   // Count user photos vs stock photos
   const userPhotos = photos.filter(p => p.metadata?.photographer !== 'Stock photo');
   const stockPhotos = photos.filter(p => p.metadata?.photographer === 'Stock photo');
+
+  // Calculate species diversity and total fish count from sessions
+  const speciesCount = useMemo(() => {
+    const uniqueSpecies = new Set(sessions.map(s => s.species_common_name));
+    return uniqueSpecies.size;
+  }, [sessions]);
+
+  const totalFishCount = useMemo(() => {
+    return sessions.reduce((total, session) => total + session.quantity, 0);
+  }, [sessions]);
 
   return (
     <>
@@ -239,22 +249,22 @@ export default function MyCatchesPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                 <div className="stat bg-base-100 shadow rounded-lg">
                   <div className="stat-figure text-primary">
-                    <Camera className="w-8 h-8" />
+                    <Fish className="w-8 h-8" />
                   </div>
                   <div className="stat-title">
-                    <TranslatedText text="Total Catches" />
+                    <TranslatedText text="Species Caught" />
                   </div>
-                  <div className="stat-value text-primary">{photos.length}</div>
+                  <div className="stat-value text-primary">{speciesCount}</div>
                 </div>
 
                 <div className="stat bg-base-100 shadow rounded-lg">
                   <div className="stat-figure text-success">
-                    <Upload className="w-8 h-8" />
+                    <TrendingUp className="w-8 h-8" />
                   </div>
                   <div className="stat-title">
-                    <TranslatedText text="Your Photos" />
+                    <TranslatedText text="Total Fish" />
                   </div>
-                  <div className="stat-value text-success">{userPhotos.length}</div>
+                  <div className="stat-value text-success">{totalFishCount}</div>
                 </div>
 
                 <div className="stat bg-base-100 shadow rounded-lg">
