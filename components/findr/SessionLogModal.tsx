@@ -49,33 +49,7 @@ interface CatchFormEntry {
 // Regional species for dropdowns
 
 // Common baits for quick selection
-const COMMON_BAITS = [
-  '🪱 Worms',
-  '🦀 Crab',
-  '🦑 Squid',
-  '🐟 Fish baits',
-  '🦪 Shellfish',
-  '🦐 Prawns',
-  '🍞 Bread',
-  '🪶 Feather rigs',
-  '💫 Spinners',
-  '🪸 Soft plastics',
-  '🦑 Egis',
-  '🎯 Surface lures',
-  '🧪 Artificial baits'
-] as const;
-
-// Habitat options
-const HABITAT_OPTIONS = [
-  { value: 'rocky_shore', label: '🪨 Rocky Shore' },
-  { value: 'sandy_beach', label: '🏝️ Sandy Beach' },
-  { value: 'pier_harbor', label: '🏗️ Pier / Harbor' },
-  { value: 'estuary', label: '⛵ Estuary' },
-  { value: 'shallow_water', label: '💧 Shallow Water' },
-  { value: 'deep_water', label: '⚓ Deep Water' },
-  { value: 'wreck_reef', label: '🪸 Wreck & Reef' },
-  { value: 'open_sea', label: '🛥️ Open Sea' },
-];
+import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 
 // Time period options
 const TIME_PERIODS: { value: TimePeriod; label: string; hours: string }[] = [
