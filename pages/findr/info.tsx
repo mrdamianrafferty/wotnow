@@ -523,6 +523,12 @@ const FindrInfoPage = () => {
                     <MapPin size={20} className="text-primary" />
                     <TranslatedText text="Find Your Nearest Tackle Shop" />
                   </h3>
+                  <div className="text-base-content font-semibold mb-1">
+                    <TranslatedText text="10 Tackle Shops Near You" />
+                  </div>
+                  <div className="text-xs text-base-content/70 mb-2">
+                    <TranslatedText text="Updated regularly" />
+                  </div>
                   <NearbyTackleShops />
                 </div>
               </div>
