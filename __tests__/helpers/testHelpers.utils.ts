@@ -4,7 +4,7 @@
  */
 
 import { mockSupabaseClient, mockSupabaseQuery } from '../../__mocks__/@supabase/supabase-js';
-import { mockSession, mockUser } from '../fixtures/mockData';
+import { mockSession, mockUser } from '../fixtures/mockData.fixtures';
 
 /**
  * Mock authenticated session for tests that require authentication

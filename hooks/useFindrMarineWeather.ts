@@ -127,9 +127,15 @@ export function useFindrMarineWeather(
         setLoading(true);
         setError(null);
 
-        // Add 15 second timeout to prevent hanging
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        console.log('[useFindrMarineWeather] Fetching weather for:', { lat: latValue, lon: lonValue });
 
+        // Add 30 second timeout to prevent hanging (increased from 15s)
+        const timeoutId = setTimeout(() => {
+          console.warn('[useFindrMarineWeather] Request timed out after 30s');
+          controller.abort();
+        }, 30000);
+
+        const fetchStart = Date.now();
         const response = await fetch(
           `/api/findr/marine-weather?lat=${latValue}&lon=${lonValue}`,
           {
@@ -137,16 +143,38 @@ export function useFindrMarineWeather(
             signal: controller.signal,
           }
         );
+        const fetchDuration = Date.now() - fetchStart;
 
         clearTimeout(timeoutId);
 
+        console.log('[useFindrMarineWeather] Response received:', {
+          status: response.status,
+          ok: response.ok,
+          duration: `${fetchDuration}ms`,
+        });
+
         if (!response.ok) {
-          const message = `Marine weather request failed (${response.status})`;
-          throw new Error(message);
+          let errorDetail = `Marine weather request failed (${response.status})`;
+          try {
+            const errorBody = await response.json();
+            errorDetail += `: ${errorBody.error || JSON.stringify(errorBody)}`;
+          } catch {
+            errorDetail += ` - Failed to parse error response`;
+          }
+          console.error('[useFindrMarineWeather] API error:', errorDetail);
+          throw new Error(errorDetail);
         }
 
         const payload = await response.json();
         if (cancelled) return;
+
+        console.log('[useFindrMarineWeather] Success:', {
+          source: payload.source,
+          hasCurrent: !!payload.current,
+          hourlyCount: payload.hourly?.length ?? 0,
+          dailyCount: payload.daily?.length ?? 0,
+          tidesCount: payload.tides?.length ?? 0,
+        });
 
         setCurrent(payload.current ?? null);
         setHourly(payload.hourly ?? []);
@@ -156,10 +184,18 @@ export function useFindrMarineWeather(
         setUpdatedAt(new Date().toISOString());
         setError(null);
       } catch (err) {
-        if ((err as Error).name === 'AbortError' || cancelled) {
+        if ((err as Error).name === 'AbortError') {
+          console.warn('[useFindrMarineWeather] Request aborted (timeout or component unmount)');
           return;
         }
-        console.error('[Findr] Failed to load marine weather', err);
+        if (cancelled) {
+          return;
+        }
+        console.error('[useFindrMarineWeather] Error:', {
+          message: (err as Error).message,
+          name: (err as Error).name,
+          stack: (err as Error).stack,
+        });
         setError((err as Error).message ?? 'Failed to load marine weather');
         setCurrent(null);
         setHourly([]);

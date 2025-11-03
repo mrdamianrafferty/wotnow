@@ -585,7 +585,7 @@ export function QuickLogModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedSpecies, quantity, baitUsed, habitatType, notes, photoFile, exifData, location, lookupRectangleCode, onQuickLog, onSuccess, onClose]);
+  }, [selectedSpecies, quantity, baitUsed, habitatType, notes, photoFile, exifData, location, lookupRectangleCode, onQuickLog, onSuccess, onClose, originalAiSuggestion]);
 
   // Skip extra details and submit directly
   const handleSkipExtraDetails = useCallback(() => {

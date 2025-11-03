@@ -207,31 +207,18 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
   // ==================================================================================
   // LIVE MARINE WEATHER DATA
   // ==================================================================================
-  // 🚨 CRITICAL: This hook fetches LIVE wave, wind, and forecast data from weather APIs.
-  // 
-  // DATA ARCHITECTURE:
-  // - This hook provides: Wave height, wind speed/direction, hourly/daily forecasts
-  // - Data source: MET Norway → Open-Meteo (priority fallback)
-  // - Update frequency: Fetched fresh on every page load (changes hourly)
-  // - ⚠️ DO NOT use data.snapshot.hourly or data.snapshot.daily for wave/wind!
-  //
-  // WHY THIS MATTERS:
-  // - Weather conditions change rapidly (hourly)
-  // - Cached/stale data is dangerous for maritime safety
-  // - Anglers need current conditions to make safe decisions
-  //
-  // WHAT TO USE FROM WHERE:
-  // ✅ USE marineWeather FOR: waves, wind, hourly forecasts, daily forecasts
-  // ✅ USE data.snapshot FOR: marine bio indicators (chlorophyll, oxygen), tides
-  // ❌ NEVER USE data.snapshot FOR: wave height, wind speed, hourly/daily weather
-  //
-  // The maxHours bug (defaulting to 24h) has been fixed in the API endpoint.
-  // We now request maxHours=192 to get full 7-day forecasts.
-  // ==================================================================================
-  const marineWeatherLat = Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null;
-  const marineWeatherLon = Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null;
-  
-  const marineWeather = useFindrMarineWeather(marineWeatherLat, marineWeatherLon);
+  // Prefer exact user coordinates when available; fall back to rectangle center
+  const chosenLat =
+    Number.isFinite(location?.lat)
+      ? (location!.lat as number)
+      : (Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null);
+
+  const chosenLon =
+    Number.isFinite(location?.lon)
+      ? (location!.lon as number)
+      : (Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null);
+
+  const marineWeather = useFindrMarineWeather(chosenLat, chosenLon);
 
   // Debug logging
   console.log('[ConditionsDashboard] marineWeather state:', {
@@ -245,10 +232,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
     hourlySample: marineWeather.hourly?.[0],
   });
 
-  const environmentalSignals = useFindrEnvironmentalSignals(
-    Number.isFinite(data.rectangle.centerLat) ? data.rectangle.centerLat : null,
-    Number.isFinite(data.rectangle.centerLon) ? data.rectangle.centerLon : null
-  );
+  const environmentalSignals = useFindrEnvironmentalSignals(chosenLat, chosenLon);
 
   const marine = data.snapshot.marine;
   const marineBio = data.snapshot.marineBio;
@@ -742,6 +726,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
                 daily={nextFewDaysDaily}
                 marineHourly={marineHourlyForCard}
                 tide={tideEvents}
+                isMarine={true}
               />
             ) : (
               <div className="card bg-base-200/40 border border-base-200 shadow-sm">
