@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-
-type LocationSource = 'manual' | 'gps' | 'ip' | 'unknown';
+import type { SavedLocation, LocationSlot, LocationSource } from '@/types/multiLocation';
+import { toLegacyFormat as convertToLegacy } from '@/types/multiLocation';
 
 /**
- * Represents the active fishing location used across both Findr and Go Daisy surfaces.
- * In the future we may extend this into a collection to support multiple saved locations.
+ * Legacy format for backward compatibility
+ * @deprecated Use SavedLocation with multi-location API instead
  */
 export interface UnifiedLocationRecord {
   lat: number | null;
@@ -20,6 +20,9 @@ export interface UnifiedLocationRecord {
   pendingSync?: boolean;
 }
 
+/**
+ * Legacy update input format (still supported)
+ */
 export interface UpdateLocationInput {
   coordinates?: { lat: number; lon: number };
   rectangleCode?: string | null;
@@ -28,56 +31,112 @@ export interface UpdateLocationInput {
   source?: LocationSource;
   accuracy?: number | null;
   resolveRectangle?: boolean;
+  slot?: LocationSlot; // NEW: Optional slot specification
+}
+
+/**
+ * Multi-location update input
+ */
+export interface UpdateLocationBySlotInput {
+  slot: LocationSlot;
+  coordinates: { lat: number; lon: number };
+  name?: string;
+  rectangleCode?: string | null;
+  rectangleRegion?: string | null;
+  source?: LocationSource;
+  accuracy?: number | null;
+  resolveRectangle?: boolean;
+  makeActive?: boolean;
 }
 
 interface UnifiedLocationContextValue {
+  // Legacy interface (backward compatible)
   location: UnifiedLocationRecord | null;
+  updateLocation: (input: UpdateLocationInput) => Promise<UnifiedLocationRecord | null>;
+  clearLocation: () => Promise<void>;
+
+  // NEW: Multi-location interface
+  locations: SavedLocation[];
+  activeLocation: SavedLocation | null;
+  homeLocation: SavedLocation | null;
+  coastalLocation: SavedLocation | null;
+  findrLocation: SavedLocation | null;
+
+  getLocationBySlot: (slot: LocationSlot) => SavedLocation | null;
+  updateLocationBySlot: (input: UpdateLocationBySlotInput) => Promise<SavedLocation>;
+  setActiveLocation: (locationId: string) => Promise<void>;
+  deleteLocation: (locationId: string) => Promise<void>;
+
+  // Shared state
   loading: boolean;
   syncing: boolean;
   lastError: string | null;
-  updateLocation: (input: UpdateLocationInput) => Promise<UnifiedLocationRecord | null>;
-  clearLocation: () => Promise<void>;
   refreshRemote: () => Promise<void>;
 }
 
 const UnifiedLocationContext = createContext<UnifiedLocationContextValue | null>(null);
 
-const STORAGE_KEY = 'findr.location';
+const STORAGE_KEY = 'findr.location.multi';
+const LEGACY_STORAGE_KEY = 'findr.location'; // For migration
 
-function readStoredLocation(): UnifiedLocationRecord | null {
+interface StoredState {
+  locations: SavedLocation[];
+  activeLocationId: string | null;
+}
+
+function readStoredState(): StoredState | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as UnifiedLocationRecord;
-    if (!parsed || typeof parsed !== 'object') return null;
-    return {
-      lat: typeof parsed.lat === 'number' ? parsed.lat : null,
-      lon: typeof parsed.lon === 'number' ? parsed.lon : null,
-      rectangleCode: typeof parsed.rectangleCode === 'string' ? parsed.rectangleCode : null,
-      rectangleRegion: typeof parsed.rectangleRegion === 'string' ? parsed.rectangleRegion : null,
-      rectangleLabel: typeof parsed.rectangleLabel === 'string' ? parsed.rectangleLabel : null,
-      source: parsed.source ?? 'unknown',
-      accuracy: typeof parsed.accuracy === 'number' ? parsed.accuracy : null,
-      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString(),
-      pendingSync: Boolean(parsed.pendingSync),
-    };
+    if (!raw) {
+      // Try migrating from legacy storage
+      const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacyRaw) {
+        const legacy = JSON.parse(legacyRaw) as UnifiedLocationRecord;
+        // Convert to new format
+        const location: SavedLocation = {
+          id: crypto.randomUUID(),
+          slot: 'home',
+          name: legacy.rectangleLabel ?? 'Saved Location',
+          lat: legacy.lat ?? 0,
+          lon: legacy.lon ?? 0,
+          rectangleCode: legacy.rectangleCode,
+          rectangleRegion: legacy.rectangleRegion,
+          accuracy: legacy.accuracy,
+          source: legacy.source,
+          updatedAt: legacy.updatedAt,
+          usageCount: 1,
+        };
+        return { locations: [location], activeLocationId: location.id };
+      }
+      return null;
+    }
+    const parsed = JSON.parse(raw) as StoredState;
+    return parsed;
   } catch (error) {
-    console.warn('[UnifiedLocation] Failed to read stored location', error);
+    console.warn('[UnifiedLocation] Failed to read stored state', error);
     return null;
   }
 }
 
-function persistLocation(record: UnifiedLocationRecord | null) {
+function persistState(state: StoredState | null) {
   if (typeof window === 'undefined') return;
-  if (!record) {
+  if (!state || state.locations.length === 0) {
     window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY); // Clean up legacy too
     return;
   }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+    // Also persist in legacy format for backward compatibility
+    const active = state.locations.find(loc => loc.id === state.activeLocationId) ?? state.locations[0];
+    if (active) {
+      const legacy = convertToLegacy(active);
+      window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(legacy));
+    }
   } catch (error) {
-    console.warn('[UnifiedLocation] Failed to persist location', error);
+    console.warn('[UnifiedLocation] Failed to persist state', error);
   }
 }
 
@@ -103,14 +162,23 @@ async function fetchRectangleMetadata(lat: number, lon: number) {
 }
 
 type RemoteUpsertResult =
-  | { ok: true; location: UnifiedLocationRecord | null }
+  | { ok: true; location: SavedLocation }
   | { ok: false; reason: 'unauthorized' };
 
-async function upsertRemoteLocation(record: UnifiedLocationRecord): Promise<RemoteUpsertResult> {
+async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Promise<RemoteUpsertResult> {
   const res = await fetch('/api/user/location', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(record),
+    body: JSON.stringify({
+      slot: input.slot,
+      name: input.name,
+      lat: input.coordinates.lat,
+      lon: input.coordinates.lon,
+      rectangleCode: input.rectangleCode,
+      rectangleRegion: input.rectangleRegion,
+      source: input.source ?? 'manual',
+      accuracy: input.accuracy,
+    }),
   });
 
   if (res.status === 401) {
@@ -122,16 +190,13 @@ async function upsertRemoteLocation(record: UnifiedLocationRecord): Promise<Remo
     throw new Error(message?.error || `Remote location write failed (${res.status})`);
   }
 
-  const payload = (await res.json().catch(() => ({}))) as { location?: UnifiedLocationRecord | null };
-  return {
-    ok: true,
-    location: payload?.location ?? null,
-  };
+  const location = (await res.json()) as SavedLocation;
+  return { ok: true, location };
 }
 
-async function loadRemoteLocation(): Promise<UnifiedLocationRecord | null> {
+async function loadRemoteLocations(): Promise<StoredState | null> {
   try {
-    const res = await fetch('/api/user/location', { method: 'GET' });
+    const res = await fetch('/api/user/location?multiLocation=true', { method: 'GET' });
     if (res.status === 401) {
       return null;
     }
@@ -139,74 +204,115 @@ async function loadRemoteLocation(): Promise<UnifiedLocationRecord | null> {
     if (!res.ok) {
       return null;
     }
-    const payload = (await res.json()) as { location?: UnifiedLocationRecord | null } | UnifiedLocationRecord | null;
-    if (payload === null) return null;
-    if ('location' in (payload as Record<string, unknown>)) {
-      const candidate = (payload as { location?: UnifiedLocationRecord | null }).location ?? null;
-      if (!candidate) return null;
-      return candidate;
-    }
-    return payload as UnifiedLocationRecord;
+
+    const payload = (await res.json()) as {
+      locations: SavedLocation[];
+      activeLocationId: string | null;
+    };
+
+    return {
+      locations: payload.locations ?? [],
+      activeLocationId: payload.activeLocationId,
+    };
   } catch (error) {
     console.warn('[UnifiedLocation] Remote lookup failed', error);
     return null;
   }
 }
 
+async function setRemoteActiveLocation(locationId: string): Promise<void> {
+  // For now, we'll implement this by re-saving the location
+  // In the future, we could add a dedicated endpoint for this
+  const res = await fetch('/api/user/location?multiLocation=true', { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to fetch locations');
+
+  const { locations } = (await res.json()) as { locations: SavedLocation[] };
+  const location = locations.find(loc => loc.id === locationId);
+  if (!location) throw new Error('Location not found');
+
+  // Re-save to make it active
+  await fetch('/api/user/location', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      slot: location.slot,
+      name: location.name,
+      lat: location.lat,
+      lon: location.lon,
+      rectangleCode: location.rectangleCode,
+      rectangleRegion: location.rectangleRegion,
+      source: location.source,
+      accuracy: location.accuracy,
+    }),
+  });
+}
+
+async function deleteRemoteLocation(locationId: string): Promise<void> {
+  const res = await fetch(`/api/user/location?locationId=${locationId}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok && res.status !== 204) {
+    throw new Error('Failed to delete location');
+  }
+}
+
 export function UnifiedLocationProvider({ children }: { children: React.ReactNode }) {
-  const [location, setLocation] = useState<UnifiedLocationRecord | null>(null);
+  const [locations, setLocations] = useState<SavedLocation[]>([]);
+  const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const hasLoaded = useRef(false);
-  // NOTE: Go Daisy currently keeps separate home/coastal waypoints inside UserPreferencesContext.
-  // When we converge the two flows this provider can expose named slots or a collection.
 
   useEffect(() => {
     if (hasLoaded.current) return;
     hasLoaded.current = true;
 
     // Read localStorage first (synchronous, fast)
-    const stored = readStoredLocation();
+    const stored = readStoredState();
     if (stored) {
-      setLocation(stored);
+      setLocations(stored.locations);
+      setActiveLocationId(stored.activeLocationId);
     }
 
-    // Fetch remote location (async) - keep loading true until complete
+    // Fetch remote locations (async)
     void (async () => {
       try {
-        const remote = await loadRemoteLocation();
+        const remote = await loadRemoteLocations();
         if (remote) {
-          setLocation(remote);
-          persistLocation(remote);
+          setLocations(remote.locations);
+          setActiveLocationId(remote.activeLocationId);
+          persistState(remote);
         } else if (!stored) {
-          // No localStorage AND no remote data - truly no location
-          setLocation(null);
+          setLocations([]);
+          setActiveLocationId(null);
         }
       } catch (error) {
-        console.warn('[UnifiedLocation] Failed to load remote location on mount', error);
-        // If remote fetch fails but we have localStorage, keep it
+        console.warn('[UnifiedLocation] Failed to load remote locations on mount', error);
         if (!stored) {
-          setLocation(null);
+          setLocations([]);
+          setActiveLocationId(null);
         }
       } finally {
-        // Only set loading false after remote check completes
         setLoading(false);
       }
     })();
   }, []);
 
   const refreshRemote = useCallback(async () => {
-    const remote = await loadRemoteLocation();
+    const remote = await loadRemoteLocations();
     if (remote) {
-      setLocation(remote);
-      persistLocation(remote);
+      setLocations(remote.locations);
+      setActiveLocationId(remote.activeLocationId);
+      persistState(remote);
     }
   }, []);
 
   const clearLocation = useCallback(async () => {
-    setLocation(null);
-    persistLocation(null);
+    setLocations([]);
+    setActiveLocationId(null);
+    persistState(null);
     setLastError(null);
     try {
       await fetch('/api/user/location', { method: 'DELETE' });
@@ -215,98 +321,254 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
     }
   }, []);
 
-  const updateLocation = useCallback(
-    async (input: UpdateLocationInput): Promise<UnifiedLocationRecord | null> => {
-      if (!input.coordinates && !location?.lat && !location?.lon) {
-        setLastError('Cannot update location without coordinates');
-        return null;
-      }
-
+  const updateLocationBySlot = useCallback(
+    async (input: UpdateLocationBySlotInput): Promise<SavedLocation> => {
       setSyncing(true);
       setLastError(null);
 
       try {
-        let nextLat = input.coordinates?.lat ?? location?.lat ?? null;
-        let nextLon = input.coordinates?.lon ?? location?.lon ?? null;
-        let nextRectangleCode = input.rectangleCode ?? location?.rectangleCode ?? null;
-        let nextRectangleRegion = input.rectangleRegion ?? location?.rectangleRegion ?? null;
-        let nextRectangleLabel = input.rectangleLabel ?? location?.rectangleLabel ?? null;
+        let nextLat = input.coordinates.lat;
+        let nextLon = input.coordinates.lon;
+        let nextRectangleCode = input.rectangleCode ?? null;
+        let nextRectangleRegion = input.rectangleRegion ?? null;
+        let nextName = input.name;
 
-        // Only resolve ICES rectangle if explicitly requested (for European waters)
-        // For non-European waters, allow locations without rectangleCode
-        if (input.resolveRectangle && nextLat != null && nextLon != null) {
+        // Resolve ICES rectangle if requested
+        if (input.resolveRectangle) {
           try {
             const metadata = await fetchRectangleMetadata(nextLat, nextLon);
             nextRectangleCode = metadata.rectangleCode;
             nextRectangleRegion = metadata.region;
-            if (!nextRectangleLabel) {
-              nextRectangleLabel = `${metadata.rectangleCode} - ${metadata.region}`;
+            if (!nextName) {
+              nextName = `${metadata.rectangleCode} - ${metadata.region}`;
             }
-            // Align coordinates with rectangle anchor for consistency (European waters only)
             nextLat = metadata.centerLat;
             nextLon = metadata.centerLon;
           } catch (_resolveError) {
-            // Rectangle resolution failed (likely non-European location)
-            // Keep original coordinates and continue without rectangleCode
             console.info('[UnifiedLocation] Rectangle resolution unavailable, using raw coordinates');
           }
         }
 
-        const record: UnifiedLocationRecord = {
-          lat: nextLat,
-          lon: nextLon,
-          rectangleCode: nextRectangleCode ?? null,
-          rectangleRegion: nextRectangleRegion ?? null,
-          rectangleLabel: nextRectangleLabel ?? null,
-          source: input.source ?? location?.source ?? 'unknown',
-          accuracy: input.accuracy ?? location?.accuracy ?? null,
-          updatedAt: new Date().toISOString(),
+        const updateInput: UpdateLocationBySlotInput = {
+          ...input,
+          coordinates: { lat: nextLat, lon: nextLon },
+          name: nextName ?? nextRectangleRegion ?? 'Saved Location',
+          rectangleCode: nextRectangleCode,
+          rectangleRegion: nextRectangleRegion,
         };
 
         // Optimistic local update
-        const optimistic: UnifiedLocationRecord = { ...record, pendingSync: true };
-        setLocation(optimistic);
-        persistLocation(optimistic);
+        const existingIndex = locations.findIndex(loc => loc.slot === input.slot);
+        const tempId = existingIndex >= 0 ? locations[existingIndex].id : crypto.randomUUID();
+        const optimisticLocation: SavedLocation = {
+          id: tempId,
+          slot: input.slot,
+          name: updateInput.name!,
+          lat: nextLat,
+          lon: nextLon,
+          rectangleCode: nextRectangleCode,
+          rectangleRegion: nextRectangleRegion,
+          accuracy: input.accuracy ?? null,
+          source: input.source ?? 'manual',
+          updatedAt: new Date().toISOString(),
+          usageCount: existingIndex >= 0 ? locations[existingIndex].usageCount + 1 : 1,
+        };
+
+        const optimisticLocations = existingIndex >= 0
+          ? locations.map((loc, i) => i === existingIndex ? optimisticLocation : loc)
+          : [...locations, optimisticLocation];
+
+        setLocations(optimisticLocations);
+        if (input.makeActive !== false) {
+          setActiveLocationId(optimisticLocation.id);
+        }
+        persistState({
+          locations: optimisticLocations,
+          activeLocationId: input.makeActive !== false ? optimisticLocation.id : activeLocationId,
+        });
 
         try {
-          const remoteResult = await upsertRemoteLocation(record);
+          const remoteResult = await upsertRemoteLocationBySlot(updateInput);
           if (remoteResult.ok) {
-            const remoteRecord = remoteResult.location ?? record;
-            const synced: UnifiedLocationRecord = { ...remoteRecord, pendingSync: false };
-            setLocation(synced);
-            persistLocation(synced);
-            return synced;
+            const remoteLocation = remoteResult.location;
+            const syncedLocations = existingIndex >= 0
+              ? locations.map((loc, i) => i === existingIndex ? remoteLocation : loc)
+              : [...locations.filter(loc => loc.slot !== input.slot), remoteLocation];
+
+            setLocations(syncedLocations);
+            if (input.makeActive !== false) {
+              setActiveLocationId(remoteLocation.id);
+            }
+            persistState({
+              locations: syncedLocations,
+              activeLocationId: input.makeActive !== false ? remoteLocation.id : activeLocationId,
+            });
+            return remoteLocation;
           }
 
-          // Unauthorized: keep optimistic record but report info
           setLastError('Sign in to sync your location across devices.');
-          return optimistic;
+          return optimisticLocation;
         } catch (error) {
           console.warn('[UnifiedLocation] Remote sync failed', error);
           setLastError((error as Error).message);
-          const failed: UnifiedLocationRecord = { ...record, pendingSync: true };
-          setLocation(failed);
-          persistLocation(failed);
-          return failed;
+          return optimisticLocation;
         }
       } finally {
         setSyncing(false);
       }
     },
-    [location]
+    [locations, activeLocationId]
+  );
+
+  // Legacy updateLocation method for backward compatibility
+  const updateLocation = useCallback(
+    async (input: UpdateLocationInput): Promise<UnifiedLocationRecord | null> => {
+      if (!input.coordinates && locations.length === 0) {
+        setLastError('Cannot update location without coordinates');
+        return null;
+      }
+
+      const slot = input.slot ?? 'home';
+      const existingLocation = locations.find(loc => loc.slot === slot);
+
+      const coordinates = input.coordinates ?? (existingLocation ? {
+        lat: existingLocation.lat,
+        lon: existingLocation.lon,
+      } : null);
+
+      if (!coordinates) {
+        setLastError('Cannot update location without coordinates');
+        return null;
+      }
+
+      const savedLocation = await updateLocationBySlot({
+        slot,
+        coordinates,
+        name: input.rectangleLabel ?? undefined,
+        rectangleCode: input.rectangleCode,
+        rectangleRegion: input.rectangleRegion,
+        source: input.source,
+        accuracy: input.accuracy,
+        resolveRectangle: input.resolveRectangle,
+        makeActive: true,
+      });
+
+      return convertToLegacy(savedLocation);
+    },
+    [locations, updateLocationBySlot]
+  );
+
+  const setActiveLocationHandler = useCallback(
+    async (locationId: string) => {
+      setSyncing(true);
+      setLastError(null);
+
+      try {
+        setActiveLocationId(locationId);
+        persistState({ locations, activeLocationId: locationId });
+
+        await setRemoteActiveLocation(locationId);
+      } catch (error) {
+        console.warn('[UnifiedLocation] Failed to set active location', error);
+        setLastError((error as Error).message);
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [locations]
+  );
+
+  const deleteLocationHandler = useCallback(
+    async (locationId: string) => {
+      setSyncing(true);
+      setLastError(null);
+
+      try {
+        const newLocations = locations.filter(loc => loc.id !== locationId);
+        const newActiveId = activeLocationId === locationId
+          ? (newLocations[0]?.id ?? null)
+          : activeLocationId;
+
+        setLocations(newLocations);
+        setActiveLocationId(newActiveId);
+        persistState(newLocations.length > 0 ? { locations: newLocations, activeLocationId: newActiveId } : null);
+
+        await deleteRemoteLocation(locationId);
+      } catch (error) {
+        console.warn('[UnifiedLocation] Failed to delete location', error);
+        setLastError((error as Error).message);
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [locations, activeLocationId]
+  );
+
+  const getLocationBySlot = useCallback(
+    (slot: LocationSlot) => {
+      return locations.find(loc => loc.slot === slot) ?? null;
+    },
+    [locations]
+  );
+
+  // Computed values
+  const activeLocation = useMemo(
+    () => locations.find(loc => loc.id === activeLocationId) ?? locations[0] ?? null,
+    [locations, activeLocationId]
+  );
+
+  const homeLocation = useMemo(() => getLocationBySlot('home'), [getLocationBySlot]);
+  const coastalLocation = useMemo(() => getLocationBySlot('coastal'), [getLocationBySlot]);
+  const findrLocation = useMemo(() => getLocationBySlot('findr_primary'), [getLocationBySlot]);
+
+  // Legacy location property for backward compatibility
+  const location = useMemo(
+    () => activeLocation ? convertToLegacy(activeLocation) : null,
+    [activeLocation]
   );
 
   const value = useMemo<UnifiedLocationContextValue>(
     () => ({
+      // Legacy interface
       location,
+      updateLocation,
+      clearLocation,
+
+      // New multi-location interface
+      locations,
+      activeLocation,
+      homeLocation,
+      coastalLocation,
+      findrLocation,
+      getLocationBySlot,
+      updateLocationBySlot,
+      setActiveLocation: setActiveLocationHandler,
+      deleteLocation: deleteLocationHandler,
+
+      // Shared
       loading,
       syncing,
       lastError,
-      updateLocation,
-      clearLocation,
       refreshRemote,
     }),
-    [clearLocation, lastError, location, loading, refreshRemote, syncing, updateLocation]
+    [
+      location,
+      updateLocation,
+      clearLocation,
+      locations,
+      activeLocation,
+      homeLocation,
+      coastalLocation,
+      findrLocation,
+      getLocationBySlot,
+      updateLocationBySlot,
+      setActiveLocationHandler,
+      deleteLocationHandler,
+      loading,
+      syncing,
+      lastError,
+      refreshRemote,
+    ]
   );
 
   return (
