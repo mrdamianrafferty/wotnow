@@ -272,21 +272,36 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
     // Read localStorage first (synchronous, fast)
     const stored = readStoredState();
     if (stored) {
+      console.log('[UnifiedLocation] Loaded from localStorage:', stored.locations.length, 'locations');
       setLocations(stored.locations);
       setActiveLocationId(stored.activeLocationId);
+    } else {
+      console.log('[UnifiedLocation] No stored locations found in localStorage');
     }
 
     // Fetch remote locations (async)
     void (async () => {
       try {
         const remote = await loadRemoteLocations();
-        if (remote) {
+        if (remote && remote.locations.length > 0) {
+          // Remote has data - use it and sync to localStorage
+          console.log('[UnifiedLocation] Loaded from remote:', remote.locations.length, 'locations');
           setLocations(remote.locations);
           setActiveLocationId(remote.activeLocationId);
           persistState(remote);
-        } else if (!stored) {
+        } else if (remote && !stored) {
+          // Remote explicitly returned empty AND we have no local data
+          console.log('[UnifiedLocation] Remote empty, no localStorage - clearing state');
           setLocations([]);
           setActiveLocationId(null);
+        } else if (!remote && !stored) {
+          // Remote failed/unauthorized AND we have no local data
+          console.log('[UnifiedLocation] Remote failed, no localStorage - clearing state');
+          setLocations([]);
+          setActiveLocationId(null);
+        } else if (!remote || (remote && remote.locations.length === 0)) {
+          // Remote returned empty/null but we have localStorage - keep localStorage!
+          console.log('[UnifiedLocation] Remote empty but keeping localStorage data:', stored?.locations.length ?? 0, 'locations');
         }
       } catch (error) {
         console.warn('[UnifiedLocation] Failed to load remote locations on mount', error);
@@ -294,6 +309,7 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
           setLocations([]);
           setActiveLocationId(null);
         }
+        // If we have stored data, keep it even if remote fails
       } finally {
         setLoading(false);
       }
