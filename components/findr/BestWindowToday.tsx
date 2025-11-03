@@ -305,7 +305,7 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
             <Clock size={20} className="text-primary flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Best window" /></p>
-              <p className="font-bold text-base">{timeRange}</p>
+              <p className="font-bold text-base text-base-content">{timeRange}</p>
             </div>
           </div>
 
@@ -314,7 +314,7 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
             <Fish size={20} className="text-secondary flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Target species" /></p>
-              <p className="font-bold text-base">
+              <p className="font-bold text-base text-base-content">
                 {species.slice(0, 2).map((name, idx) => (
                   <span key={idx}>
                     <TranslatedFishName name={name} />
@@ -333,7 +333,7 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
             <MapPin size={20} className="text-accent flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Where to fish" /></p>
-              <p className="font-bold text-base"><TranslatedText text={location} /></p>
+              <p className="font-bold text-base text-base-content"><TranslatedText text={location} /></p>
             </div>
           </div>
 
@@ -342,7 +342,7 @@ export const BestWindowToday: React.FC<BestWindowTodayProps> = ({ favourites, lo
             <Fish size={20} className="text-success flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm text-base-content/70"><TranslatedText text="Recommended bait" /></p>
-              <p className="font-bold text-base"><TranslatedText text={bestBait} /></p>
+              <p className="font-bold text-base text-base-content"><TranslatedText text={bestBait} /></p>
             </div>
           </div>
         </div>
