@@ -20,6 +20,7 @@ import OpenAI from 'openai';
 import exifr from 'exifr';
 // Do not import sharp statically; use dynamic import only on server
 import type { QuickLogSpecies } from '../../hooks/useQuickLogSpecies';
+import { getVisualFeatures } from '../../data/speciesVisualFeatures';
 
 // ============================================================================
 // Types
@@ -268,70 +269,68 @@ class FishIdentificationService {
     const buffer = Buffer.from(await image.arrayBuffer());
     const base64 = buffer.toString('base64');
 
-    // Build prompt with regional candidates
-    const candidateList = candidates.slice(0, 8).map((s, i) =>
-      `${i + 1}. ${s.name}${s.scientificName ? ` (${s.scientificName})` : ''} - ${Math.round(s.confidence)}% likely in this location`
-    ).join('\n');
+    // Build prompt with regional candidates and visual features
+    const candidateList = candidates.slice(0, 8).map((s, i) => {
+      const visualFeatures = getVisualFeatures(s.name);
+      return `${i + 1}. ${s.name} - ${visualFeatures}`;
+    }).join('\n');
 
-    // Add time of day and location context
-    const now = new Date();
+    // Build compact environmental context
+    const now = context?.date || new Date();
     const hours = now.getHours();
     const timeOfDay = hours >= 5 && hours < 12 ? 'morning' :
                        hours >= 12 && hours < 17 ? 'afternoon' :
                        hours >= 17 && hours < 21 ? 'evening' : 'night';
 
-    const locationHint = context?.location?.rectangleLabel ?
-      `\nLocation: ${context.location.rectangleLabel}` : '';
+    const month = now.getMonth();
+    const season = month >= 2 && month <= 4 ? 'Spring' :
+                   month >= 5 && month <= 7 ? 'Summer' :
+                   month >= 8 && month <= 10 ? 'Autumn' : 'Winter';
 
-    // Fetch recent catches in this region
+    let contextLine = `${timeOfDay}, ${season}`;
+    if (context?.location?.rectangleLabel) {
+      contextLine += ` | Location: ${context.location.rectangleLabel}`;
+    }
+    if (context?.depth) {
+      contextLine += ` | Depth: ${context.depth}m`;
+    }
+
+    // Fetch recent catches hint (keep concise)
     let recentCatchesHint = '';
     if (context?.location?.rectangleCode) {
       const recentCatches = await this.getRecentCatchesByRectangle(context.location.rectangleCode);
       if (recentCatches.length > 0) {
-        recentCatchesHint = `\nRecently reported in this area (last 30 days): ${recentCatches.slice(0, 5).join(', ')}`;
+        recentCatchesHint = `\nRecent catches here: ${recentCatches.slice(0, 4).join(', ')}`;
       }
     }
 
-    // Fetch AI accuracy stats to help learn from past mistakes
+    // Fetch AI accuracy stats
     let aiAccuracyHint = '';
     if (context?.location?.rectangleCode) {
       aiAccuracyHint = await this.getAIAccuracyStatsByRectangle(context.location.rectangleCode);
     }
 
-    const prompt = `You are a fish identification expert. Analyze this photo of a caught fish.
+    const prompt = `You are a fish identification expert analyzing a post-catch photo.
 
-IMPORTANT: If you see multiple different fish species in the image, respond with:
-{
-  "species": "multiple_fish",
-  "confidence": 0,
-  "reasoning": "Multiple fish detected in image"
-}
+Context: ${contextLine}${recentCatchesHint}${aiAccuracyHint}
 
-Context: Photo taken during ${timeOfDay}${locationHint}${recentCatchesHint}${aiAccuracyHint}
-
-The most likely species based on location and current conditions:
+Most likely species (with key identifying features):
 ${candidateList}
 
-If you're confident (70%+), respond with:
+Respond with JSON only:
 {
-  "species": "exact name from the list above or 'unknown'",
+  "species": "exact name from list above or 'unknown'",
   "confidence": 0-100,
-  "reasoning": "brief explanation of identifying features (max 100 chars)"
+  "reasoning": "key features observed (max 100 chars)",
+  "alternatives": ["backup option 1", "backup option 2"]
 }
 
-If you're uncertain (below 70% confidence), provide your top 3 best guesses:
-{
-  "species": "uncertain",
-  "confidence": 0-100,
-  "alternatives": [
-    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"},
-    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"},
-    {"species": "name from list", "confidence": 0-100, "reasoning": "why this could be it"}
-  ],
-  "reasoning": "why identification is difficult"
-}
+Special cases:
+- Multiple fish visible → species: "multiple_fish", confidence: 0
+- Poor image quality → note in reasoning, lower confidence
+- No clear match → species: "unknown", list alternatives
 
-Focus on: body shape, color patterns, fin structure, size relative to environment.`;
+Match visible features (fins, patterns, colors, body shape) to the species descriptions above.`;
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o', // Premium model for best accuracy - can downgrade to gpt-4o-mini later if needed
