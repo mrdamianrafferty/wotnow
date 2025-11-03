@@ -44,59 +44,57 @@ const LayerControls: React.FC<LayerControlProps> = ({
   onSeabedOpacityChange
 }) => {
   return (
-    <div className="absolute top-4 left-4 bg-base-100/95 rounded-lg shadow-xl p-4 z-[1000] max-w-xs">
-      <h3 className="font-semibold mb-3 text-sm">Map Layers</h3>
-
+    <div className="absolute top-2 left-2 bg-base-100/95 rounded-lg shadow-xl p-2 sm:p-3 z-[1000] max-w-[140px] sm:max-w-xs">
       {/* Layer toggle buttons */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-1 sm:gap-2 mb-2">
         <button
-          className={`btn btn-xs ${activeLayer === 'clear' ? 'btn-neutral' : 'btn-ghost'}`}
+          className={`btn btn-xs ${activeLayer === 'clear' ? 'btn-neutral' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
           onClick={() => onLayerChange('clear')}
           type="button"
         >
-          Clear
+          <span className="text-[10px] sm:text-xs">Clear</span>
         </button>
         <button
-          className={`btn btn-xs ${activeLayer === 'depth' ? 'btn-primary' : 'btn-ghost'}`}
+          className={`btn btn-xs ${activeLayer === 'depth' ? 'btn-primary' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
           onClick={() => onLayerChange('depth')}
           type="button"
         >
-          Depth
+          <span className="text-[10px] sm:text-xs">Depth</span>
         </button>
         <button
-          className={`btn btn-xs ${activeLayer === 'seabed' ? 'btn-success' : 'btn-ghost'}`}
+          className={`btn btn-xs ${activeLayer === 'seabed' ? 'btn-success' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
           onClick={() => onLayerChange('seabed')}
           type="button"
         >
-          Seabed
+          <span className="text-[10px] sm:text-xs">Sea</span>
         </button>
       </div>
 
-      {/* Opacity controls */}
+      {/* Opacity controls - compact on mobile */}
       {activeLayer === 'depth' && (
-        <div className="space-y-2">
-          <label className="text-xs font-medium">Depth Opacity: {Math.round(depthOpacity * 100)}%</label>
+        <div className="space-y-1">
+          <label className="text-[9px] sm:text-xs font-medium">{Math.round(depthOpacity * 100)}%</label>
           <input
             type="range"
             min="0"
             max="100"
             value={depthOpacity * 100}
             onChange={(e) => onDepthOpacityChange(Number(e.target.value) / 100)}
-            className="range range-xs range-primary"
+            className="range range-xs range-primary w-full"
           />
         </div>
       )}
 
       {activeLayer === 'seabed' && (
-        <div className="space-y-2">
-          <label className="text-xs font-medium">Seabed Opacity: {Math.round(seabedOpacity * 100)}%</label>
+        <div className="space-y-1">
+          <label className="text-[9px] sm:text-xs font-medium">{Math.round(seabedOpacity * 100)}%</label>
           <input
             type="range"
             min="0"
             max="100"
             value={seabedOpacity * 100}
             onChange={(e) => onSeabedOpacityChange(Number(e.target.value) / 100)}
-            className="range range-xs range-success"
+            className="range range-xs range-success w-full"
           />
         </div>
       )}
@@ -109,79 +107,82 @@ interface MapLegendProps {
 }
 
 const MapLegend: React.FC<MapLegendProps> = ({ activeLayer }) => {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+
   if (activeLayer === 'clear') return null;
 
   return (
-    <div className="absolute bottom-4 left-4 bg-base-100/95 rounded-lg shadow-xl p-4 z-[1000] max-w-xs">
-      {activeLayer === 'depth' && (
-        <>
-          <h4 className="font-semibold mb-3 text-sm">Depth (Bathymetry)</h4>
-          <div className="text-xs text-base-content/70 mb-3">
-            High-resolution seafloor depth from EMODnet EBWBL
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#8B0000' }}></div>
-              <span className="text-xs">0-50m</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#FF4500' }}></div>
-              <span className="text-xs">50-100m</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#FFD700' }}></div>
-              <span className="text-xs">100-200m</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#90EE90' }}></div>
-              <span className="text-xs">200-500m</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#4169E1' }}></div>
-              <span className="text-xs">500-1000m</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#000080' }}></div>
-              <span className="text-xs">1000m+</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-base-300 text-xs text-base-content/60">
-            Resolution: &lt;100m | Zoom: 2-14
-          </div>
-        </>
-      )}
+    <div className="absolute bottom-2 left-2 bg-base-100/95 rounded-lg shadow-xl p-2 sm:p-3 z-[1000] max-w-[160px] sm:max-w-xs">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between mb-2"
+        type="button"
+      >
+        <h4 className="font-semibold text-[10px] sm:text-sm">
+          {activeLayer === 'depth' ? 'Depth' : 'Seabed'}
+        </h4>
+        <span className="text-[10px] sm:text-xs">{isExpanded ? '▼' : '▶'}</span>
+      </button>
 
-      {activeLayer === 'seabed' && (
+      {isExpanded && (
         <>
-          <h4 className="font-semibold mb-3 text-sm">Seabed Substrate</h4>
-          <div className="text-xs text-base-content/70 mb-3">
-            Seafloor composition from EMODnet Geology
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
-              <span className="text-xs font-medium">Muddy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
-              <span className="text-xs font-medium">Sandy</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
-              <span className="text-xs font-medium">Stony</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
-              <span className="text-xs font-medium">Mixed</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-3 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
-              <span className="text-xs font-medium">Rocky</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-3 border-t border-base-300 text-xs text-base-content/60">
-            Scale: 1:1,000,000
-          </div>
+          {activeLayer === 'depth' && (
+            <>
+              <div className="space-y-1 sm:space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#8B0000' }}></div>
+                  <span className="text-[9px] sm:text-xs">0-50m</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#FF4500' }}></div>
+                  <span className="text-[9px] sm:text-xs">50-100m</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#FFD700' }}></div>
+                  <span className="text-[9px] sm:text-xs">100-200m</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#90EE90' }}></div>
+                  <span className="text-[9px] sm:text-xs">200-500m</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#4169E1' }}></div>
+                  <span className="text-[9px] sm:text-xs">500-1000m</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#000080' }}></div>
+                  <span className="text-[9px] sm:text-xs">1000m+</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeLayer === 'seabed' && (
+            <>
+              <div className="space-y-1 sm:space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
+                  <span className="text-[9px] sm:text-xs font-medium">Muddy</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
+                  <span className="text-[9px] sm:text-xs font-medium">Sandy</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
+                  <span className="text-[9px] sm:text-xs font-medium">Stony</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
+                  <span className="text-[9px] sm:text-xs font-medium">Mixed</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
+                  <span className="text-[9px] sm:text-xs font-medium">Rocky</span>
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
