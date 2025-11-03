@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { MapContainer, TileLayer, Marker, Popup, useMap, WMSTileLayer } from 'react-leaflet';
 import { LatLngExpression, Map as LeafletMap, DivIcon } from 'leaflet';
 import L from 'leaflet';
+import { X } from 'lucide-react';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
 
 // Fix for default markers in react-leaflet
@@ -29,75 +30,39 @@ interface FullScreenMapProps {
 interface LayerControlProps {
   activeLayer: 'clear' | 'depth' | 'seabed';
   onLayerChange: (layer: 'clear' | 'depth' | 'seabed') => void;
-  depthOpacity: number;
-  seabedOpacity: number;
-  onDepthOpacityChange: (opacity: number) => void;
-  onSeabedOpacityChange: (opacity: number) => void;
 }
 
 const LayerControls: React.FC<LayerControlProps> = ({
   activeLayer,
-  onLayerChange,
-  depthOpacity,
-  seabedOpacity,
-  onDepthOpacityChange,
-  onSeabedOpacityChange
+  onLayerChange
 }) => {
   return (
-    <div className="absolute top-2 left-2 bg-base-100/95 rounded-lg shadow-xl p-2 sm:p-3 z-[1000] max-w-[140px] sm:max-w-xs">
+    <div className="absolute top-2 left-2 bg-base-100/95 rounded-lg shadow-xl p-2 sm:p-3 z-[1000]">
       {/* Layer toggle buttons */}
-      <div className="flex gap-1 sm:gap-2 mb-2">
+      <div className="flex gap-1 sm:gap-2">
         <button
-          className={`btn btn-xs ${activeLayer === 'clear' ? 'btn-neutral' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
+          className={`btn btn-xs ${activeLayer === 'clear' ? 'btn-neutral' : 'btn-ghost'} px-2 sm:px-3 min-h-[24px] h-6`}
           onClick={() => onLayerChange('clear')}
           type="button"
+          title="Clear overlay"
         >
-          <span className="text-[10px] sm:text-xs">Clear</span>
+          <X className="h-3 w-3" />
         </button>
         <button
-          className={`btn btn-xs ${activeLayer === 'depth' ? 'btn-primary' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
+          className={`btn btn-xs ${activeLayer === 'depth' ? 'btn-primary' : 'btn-ghost'} px-2 sm:px-3 min-h-[24px] h-6`}
           onClick={() => onLayerChange('depth')}
           type="button"
         >
           <span className="text-[10px] sm:text-xs">Depth</span>
         </button>
         <button
-          className={`btn btn-xs ${activeLayer === 'seabed' ? 'btn-success' : 'btn-ghost'} px-1.5 sm:px-2 min-h-[24px] h-6`}
+          className={`btn btn-xs ${activeLayer === 'seabed' ? 'btn-success' : 'btn-ghost'} px-2 sm:px-3 min-h-[24px] h-6`}
           onClick={() => onLayerChange('seabed')}
           type="button"
         >
-          <span className="text-[10px] sm:text-xs">Sea</span>
+          <span className="text-[10px] sm:text-xs">Seabed</span>
         </button>
       </div>
-
-      {/* Opacity controls - compact on mobile */}
-      {activeLayer === 'depth' && (
-        <div className="space-y-1">
-          <label className="text-[9px] sm:text-xs font-medium">{Math.round(depthOpacity * 100)}%</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={depthOpacity * 100}
-            onChange={(e) => onDepthOpacityChange(Number(e.target.value) / 100)}
-            className="range range-xs range-primary w-full"
-          />
-        </div>
-      )}
-
-      {activeLayer === 'seabed' && (
-        <div className="space-y-1">
-          <label className="text-[9px] sm:text-xs font-medium">{Math.round(seabedOpacity * 100)}%</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={seabedOpacity * 100}
-            onChange={(e) => onSeabedOpacityChange(Number(e.target.value) / 100)}
-            className="range range-xs range-success w-full"
-          />
-        </div>
-      )}
     </div>
   );
 };
@@ -118,10 +83,10 @@ const MapLegend: React.FC<MapLegendProps> = ({ activeLayer }) => {
         className="w-full flex items-center justify-between mb-2"
         type="button"
       >
-        <h4 className="font-semibold text-[10px] sm:text-sm">
+        <h4 className="font-semibold text-[10px] sm:text-sm text-base-content">
           {activeLayer === 'depth' ? 'Depth' : 'Seabed'}
         </h4>
-        <span className="text-[10px] sm:text-xs">{isExpanded ? '▼' : '▶'}</span>
+        <span className="text-[10px] sm:text-xs text-base-content">{isExpanded ? '▼' : '▶'}</span>
       </button>
 
       {isExpanded && (
@@ -162,23 +127,23 @@ const MapLegend: React.FC<MapLegendProps> = ({ activeLayer }) => {
               <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#ADD8E6' }}></div>
-                  <span className="text-[9px] sm:text-xs font-medium">Muddy</span>
+                  <span className="text-[9px] sm:text-xs font-medium text-base-content">Muddy</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#FFFFE0' }}></div>
-                  <span className="text-[9px] sm:text-xs font-medium">Sandy</span>
+                  <span className="text-[9px] sm:text-xs font-medium text-base-content">Sandy</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#A8B896' }}></div>
-                  <span className="text-[9px] sm:text-xs font-medium">Stony</span>
+                  <span className="text-[9px] sm:text-xs font-medium text-base-content">Stony</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#D8BFD8' }}></div>
-                  <span className="text-[9px] sm:text-xs font-medium">Mixed</span>
+                  <span className="text-[9px] sm:text-xs font-medium text-base-content">Mixed</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-4 h-2 rounded-sm" style={{ backgroundColor: '#800020' }}></div>
-                  <span className="text-[9px] sm:text-xs font-medium">Rocky</span>
+                  <span className="text-[9px] sm:text-xs font-medium text-base-content">Rocky</span>
                 </div>
               </div>
             </>
@@ -283,8 +248,6 @@ export default function FullScreenMap({ initialLat, initialLon, initialZoom, ini
   const { activeLocation, findrLocation } = useUnifiedLocation();
   const [mapReady, setMapReady] = useState(false);
   const [activeLayer, setActiveLayer] = useState<'clear' | 'depth' | 'seabed'>(initialLayer);
-  const [depthOpacity, setDepthOpacity] = useState(0.6);
-  const [seabedOpacity, setSeabedOpacity] = useState(0.7);
   const mapRef = useRef<LeafletMap | null>(null);
 
   // Use findrLocation first, then activeLocation as fallback
@@ -374,10 +337,10 @@ export default function FullScreenMap({ initialLat, initialLon, initialZoom, ini
             <>
               <TileLayer
                 url="https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/{z}/{x}/{y}.png"
-                attribution='© <a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry Consortium (EBWBL)</a>'
+                attribution='© <a href="https://www.emodnet-bathymetry.eu/">EMODnet (EBWBL)</a>'
                 maxZoom={14}
                 minZoom={2}
-                opacity={depthOpacity}
+                opacity={1.0}
                 errorTileUrl="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
               />
 
@@ -389,24 +352,24 @@ export default function FullScreenMap({ initialLat, initialLon, initialZoom, ini
                   transparent: true,
                   version: '1.3.0'
                 }}
-                opacity={depthOpacity * 0.5}
+                opacity={0.5}
                 attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
               />
             </>
           )}
 
-          {/* Seabed Substrate Layer - Using user-confirmed working params */}
+          {/* Seabed Substrate Layer - Using proper namespace */}
           {activeLayer === 'seabed' && (
             <WMSTileLayer
               url="https://drive.emodnet-geology.eu/geoserver/wms"
               params={{
-                layers: 'seabed_substrate_1m',
+                layers: 'gtk:seabed_substrate_1m',
                 styles: 'folk_7_substrate_class',
                 format: 'image/png',
                 transparent: true,
                 version: '1.3.0'
               }}
-              opacity={seabedOpacity}
+              opacity={1.0}
               attribution='<a href="https://emodnet.ec.europa.eu/en/geology">EMODnet Geology</a>'
             />
           )}
@@ -428,10 +391,6 @@ export default function FullScreenMap({ initialLat, initialLon, initialZoom, ini
         <LayerControls
           activeLayer={activeLayer}
           onLayerChange={setActiveLayer}
-          depthOpacity={depthOpacity}
-          seabedOpacity={seabedOpacity}
-          onDepthOpacityChange={setDepthOpacity}
-          onSeabedOpacityChange={setSeabedOpacity}
         />
 
         {/* Legend */}
