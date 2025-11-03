@@ -176,7 +176,7 @@ const FindrConditionsRoute: React.FC = () => {
         <FindrNavigation />
 
         {/* Content container */}
-        <div className="sm:mx-auto px-4 pt-2 sm:px-4 sm:pt-6 md:px-6 lg:max-w-6xl">
+        <div className="sm:mx-auto px-2 pt-2 sm:px-2 sm:pt-6 md:px-4 lg:max-w-6xl">
           <div className="space-y-10">
             <ConditionsDashboard
             data={conditions.data}
