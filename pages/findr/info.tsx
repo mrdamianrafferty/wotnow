@@ -115,19 +115,19 @@ const FindrInfoPage = () => {
                       <ul className="space-y-2">
                         <li className="flex items-start gap-2">
                           <span className="badge badge-primary badge-sm mt-1 shrink-0">•</span>
-                          <span className="flex-1 text-sm">
+                          <span className="flex-1 text-sm text-base-content">
                             <TranslatedText text="Your fishing spot gets matched to its square on the map (like 42F8 for the Asturian coast)" />
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="badge badge-primary badge-sm mt-1 shrink-0">•</span>
-                          <span className="flex-1 text-sm">
+                          <span className="flex-1 text-sm text-base-content">
                             <TranslatedText text="We instantly know which fish species naturally live in that area" />
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="badge badge-primary badge-sm mt-1 shrink-0">•</span>
-                          <span className="flex-1 text-sm">
+                          <span className="flex-1 text-sm text-base-content">
                             <TranslatedText text="Fish move with the seasons - we track when they arrive and leave each area" />
                           </span>
                         </li>
@@ -135,19 +135,19 @@ const FindrInfoPage = () => {
                     </div>
                     <div className="card bg-primary/10">
                       <div className="card-body">
-                        <h5 className="card-title text-base"><TranslatedText text="Example ICES Areas" /></h5>
+                        <h5 className="card-title text-base text-base-content"><TranslatedText text="Example ICES Areas" /></h5>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between items-center gap-2">
-                            <span className="text-base-content/70 text-xs">VIIIc (Cantabrian Sea)</span>
-                            <span className="badge badge-primary badge-xs">Sea Bass, Bream</span>
+                            <span className="text-base-content text-xs">VIIIc (Cantabrian Sea)</span>
+                            <span className="badge badge-primary badge-xs text-primary-content">Sea Bass, Bream</span>
                           </div>
                           <div className="flex justify-between items-center gap-2">
-                            <span className="text-base-content/70 text-xs">VIIIb (Bay of Biscay)</span>
-                            <span className="badge badge-primary badge-xs">Mackerel, Tuna</span>
+                            <span className="text-base-content text-xs">VIIIb (Bay of Biscay)</span>
+                            <span className="badge badge-primary badge-xs text-primary-content">Mackerel, Tuna</span>
                           </div>
                           <div className="flex justify-between items-center gap-2">
-                            <span className="text-base-content/70 text-xs">VIIIa (Northern Biscay)</span>
-                            <span className="badge badge-primary badge-xs">Pollack, Cod</span>
+                            <span className="text-base-content text-xs">VIIIa (Northern Biscay)</span>
+                            <span className="badge badge-primary badge-xs text-primary-content">Pollack, Cod</span>
                           </div>
                         </div>
                       </div>
@@ -175,8 +175,8 @@ const FindrInfoPage = () => {
                     <div className="alert alert-success">
                       <div className="w-3 h-3 bg-success rounded-full shrink-0"></div>
                       <div>
-                        <h5 className="font-medium"><TranslatedText text="Water 'Greenness' (Chlorophyll)" /></h5>
-                        <p className="text-xs opacity-80">
+                        <h5 className="font-medium text-success-content"><TranslatedText text="Water 'Greenness' (Chlorophyll)" /></h5>
+                        <p className="text-xs opacity-80 text-success-content">
                           <TranslatedText text="Green water = lots of tiny plants = lots of small fish = big fish come to hunt. It's like checking if the dinner table is set!" />
                         </p>
                       </div>
@@ -184,8 +184,8 @@ const FindrInfoPage = () => {
                     <div className="alert alert-info">
                       <div className="w-3 h-3 bg-info rounded-full shrink-0"></div>
                       <div>
-                        <h5 className="font-medium"><TranslatedText text="Oxygen in the Water" /></h5>
-                        <p className="text-xs opacity-80">
+                        <h5 className="font-medium text-info-content"><TranslatedText text="Oxygen in the Water" /></h5>
+                        <p className="text-xs opacity-80 text-info-content">
                           <TranslatedText text="Fish need to 'breathe' underwater. Low oxygen = lazy fish that won't chase your bait. High oxygen = active, hungry fish" />
                         </p>
                       </div>
@@ -193,8 +193,8 @@ const FindrInfoPage = () => {
                     <div className="alert">
                       <Thermometer className="shrink-0" size={20} />
                       <div>
-                        <h5 className="font-medium"><TranslatedText text="Water Temperature" /></h5>
-                        <p className="text-xs opacity-80">
+                        <h5 className="font-medium text-base-content"><TranslatedText text="Water Temperature" /></h5>
+                        <p className="text-xs opacity-80 text-base-content">
                           <TranslatedText text="Every fish has a 'comfort zone' temperature. Too hot or cold and they either hide deeper or swim away to better areas" />
                         </p>
                       </div>
@@ -202,8 +202,8 @@ const FindrInfoPage = () => {
                     <div className="alert alert-warning">
                       <Droplets className="shrink-0" size={20} />
                       <div>
-                        <h5 className="font-medium"><TranslatedText text="Saltiness (Salinity)" /></h5>
-                        <p className="text-xs opacity-80">
+                        <h5 className="font-medium text-warning-content"><TranslatedText text="Saltiness (Salinity)" /></h5>
+                        <p className="text-xs opacity-80 text-warning-content">
                           <TranslatedText text="Some fish love super salty water, others prefer it mixed with fresh water from rivers. Wrong saltiness = no fish" />
                         </p>
                       </div>
@@ -260,9 +260,9 @@ const FindrInfoPage = () => {
                             <TranslatedText text="Different fish like different tide times - it's like their dinner schedule! We tell you:" />
                           </p>
                           <ul className="space-y-1 text-xs">
-                            <li>• <TranslatedText text="When each fish species prefers to feed (high tide, low tide, or moving water)" /></li>
-                            <li>• <TranslatedText text="The best times to fish before or after tide changes" /></li>
-                            <li>• <TranslatedText text="How strong currents affect where fish hang out" /></li>
+                            <li className="text-base-content">• <TranslatedText text="When each fish species prefers to feed (high tide, low tide, or moving water)" /></li>
+                            <li className="text-base-content">• <TranslatedText text="The best times to fish before or after tide changes" /></li>
+                            <li className="text-base-content">• <TranslatedText text="How strong currents affect where fish hang out" /></li>
                           </ul>
                         </div>
                       </div>
@@ -290,7 +290,7 @@ const FindrInfoPage = () => {
                           <Fish size={16} />
                           <TranslatedText text="Species Behavior" />
                         </h5>
-                        <ul className="text-xs space-y-1">
+                        <ul className="text-xs space-y-1 text-base-content">
                           <li>• <TranslatedText text="Feeding patterns and times" /></li>
                           <li>• <TranslatedText text="Habitat preferences" /></li>
                           <li>• <TranslatedText text="Seasonal movements" /></li>
@@ -304,7 +304,7 @@ const FindrInfoPage = () => {
                           <Activity size={16} />
                           <TranslatedText text="Bait & Technique" />
                         </h5>
-                        <ul className="text-xs space-y-1">
+                        <ul className="text-xs space-y-1 text-base-content">
                           <li>• <TranslatedText text="Best baits for each species" /></li>
                           <li>• <TranslatedText text="Optimal fishing methods" /></li>
                           <li>• <TranslatedText text="Gear recommendations" /></li>
@@ -318,7 +318,7 @@ const FindrInfoPage = () => {
                           <Clock size={16} />
                           <TranslatedText text="Timing Secrets" />
                         </h5>
-                        <ul className="text-xs space-y-1">
+                        <ul className="text-xs space-y-1 text-base-content">
                           <li>• <TranslatedText text="Dawn and dusk patterns" /></li>
                           <li>• <TranslatedText text="Moon phase influences" /></li>
                           <li>• <TranslatedText text="Weather front timing" /></li>
@@ -387,7 +387,7 @@ const FindrInfoPage = () => {
                   <p className="text-xs mb-3">
                     <TranslatedText text="Some water conditions are so bad that fish will simply swim away to better areas, even if it's their favorite season:" />
                   </p>
-                  <div className="grid md:grid-cols-2 gap-3 text-xs">
+                  <div className="grid md:grid-cols-2 gap-3 text-xs text-base-content">
                     <div>
                       <div className="font-semibold">🌡️ <TranslatedText text="Extreme Temperatures" /></div>
                       <div>• <TranslatedText text="Freezing cold water (<4°C): Fish go dormant" /></div>
@@ -508,10 +508,10 @@ const FindrInfoPage = () => {
         </p>
 
         <div className="mt-4 text-xs flex flex-wrap gap-2">
-          <span className="badge badge-primary badge-sm">🎣 <TranslatedText text="Local knowledge" /></span>
-          <span className="badge badge-primary badge-sm">🪱 <TranslatedText text="Fresh bait, friendly advice" /></span>
-          <span className="badge badge-primary badge-sm">🏪 <TranslatedText text="Community spirit" /></span>
-          <span className="badge badge-primary badge-sm">💬 <TranslatedText text="Real stories, real people" /></span>
+          <span className="badge badge-primary badge-sm text-primary-content">🎣 <TranslatedText text="Local knowledge" /></span>
+          <span className="badge badge-primary badge-sm text-primary-content">🪱 <TranslatedText text="Fresh bait, friendly advice" /></span>
+          <span className="badge badge-primary badge-sm text-primary-content">🏪 <TranslatedText text="Community spirit" /></span>
+          <span className="badge badge-primary badge-sm text-primary-content">💬 <TranslatedText text="Real stories, real people" /></span>
         </div>
                 </div>
               </div>
