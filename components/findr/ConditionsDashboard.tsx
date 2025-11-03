@@ -641,7 +641,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
           </div>
 
           {showMap ? (
-            <div className="bg-base-200/40 rounded-xl border border-base-200 overflow-hidden">
+            <div className="rounded-xl border border-base-200 overflow-hidden">
               <ConditionsMap
                 centerLocation={{ lat: mapLocation.lat, lon: mapLocation.lon }}
                 fishingSpots={fishingSpots}
@@ -652,7 +652,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
                 rectangleBounds={data.rectangle.bounds ?? null}
               />
 
-              <div className="p-4 bg-base-200/20 border-t border-base-200">
+              <div className="px-2 py-2 bg-base-200/20 border-t border-base-200">
                 <div className="text-sm text-base-content/70">
                   <span className="font-medium"><TranslatedText text="Area:" /></span> {data.rectangle.name} ({data.rectangle.region}{rectangleCode && rectangleCode !== data.rectangle.region ? ` ${rectangleCode}` : ''})
                 </div>
