@@ -83,6 +83,7 @@ export interface CardData {
   localizedNames?: LocalizedSpeciesNames;
   advice?: SpeciesAdvice[];
   biteScore?: number | null;
+  dailyPredictionScore?: number | null;  // NEW: For day-to-day comparisons (excludes tides/light/lunar)
   scoreBreakdown?: {
     bio?: number | null;
     temperature?: number | null;
@@ -650,6 +651,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
 
   // Phase 10: Extract environmental data
   const biteScoreValue = extractNumber(prediction.bite_score);
+  const dailyPredictionScoreValue = extractNumber(prediction.daily_prediction_score);
   const scoreBreakdownRaw: CardData['scoreBreakdown'] = {
     bio: extractNumber(prediction.bio_band_score),
     temperature: extractNumber(prediction.temp_score),
@@ -757,6 +759,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
    seasonality: formatSeasonality(prediction),
    habitatType: formatHabitatType(prediction),
     biteScore: biteScoreValue ?? undefined,
+    dailyPredictionScore: dailyPredictionScoreValue ?? undefined,
     scoreBreakdown: hasScoreBreakdown ? scoreBreakdownRaw : undefined,
     moonPhase: moonPhase ?? undefined,
     moonIllumination: moonIlluminationValue ?? undefined,

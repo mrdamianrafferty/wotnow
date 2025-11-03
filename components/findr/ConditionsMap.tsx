@@ -2,19 +2,21 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { 
-  MapContainer, 
-  TileLayer, 
-  Marker, 
-  Popup, 
-  Polyline, 
-  Rectangle, 
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+  Rectangle,
   WMSTileLayer,
   Tooltip,
-  useMap 
+  useMap
 } from 'react-leaflet';
 import { LatLngExpression, LatLngBoundsLiteral, DivIcon, divIcon, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
+import { Expand } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 // Fix for default markers in react-leaflet
 const defaultIconPrototype = L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => string };
@@ -74,20 +76,27 @@ interface GeoJSONResponse {
   features?: GeoJSONFeature[];
 }
 
-const MapControls: React.FC = () => {
+const MapControls: React.FC<{ centerLocation: { lat: number; lon: number } }> = ({ centerLocation }) => {
   const map = useMap();
-  
+  const router = useRouter();
+
   const handleZoomIn = (): void => {
     map.zoomIn();
   };
-  
+
   const handleZoomOut = (): void => {
     map.zoomOut();
   };
-  
+
+  const handleFullScreen = (): void => {
+    const lat = centerLocation.lat;
+    const lon = centerLocation.lon;
+    router.push(`/findr/map?lat=${lat}&lon=${lon}&zoom=10&layer=depth`);
+  };
+
   return (
     <div className="absolute top-2 right-2 flex flex-col gap-1 z-[1000]">
-      <button 
+      <button
         className="btn btn-circle btn-xs bg-black/50 border-white/20 text-white hover:bg-black/70"
         onClick={handleZoomIn}
         title="Zoom in"
@@ -95,13 +104,21 @@ const MapControls: React.FC = () => {
       >
         <span className="text-xs">+</span>
       </button>
-      <button 
+      <button
         className="btn btn-circle btn-xs bg-black/50 border-white/20 text-white hover:bg-black/70"
         onClick={handleZoomOut}
         title="Zoom out"
         type="button"
       >
         <span className="text-xs">−</span>
+      </button>
+      <button
+        className="btn btn-circle btn-xs bg-black/50 border-white/20 text-white hover:bg-black/70"
+        onClick={handleFullScreen}
+        title="Open full-screen map"
+        type="button"
+      >
+        <Expand className="h-3 w-3" />
       </button>
     </div>
   );
@@ -424,7 +441,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           <WMSTileLayer
             url="https://drive.emodnet-geology.eu/geoserver/wms"
             params={{
-              layers: 'seabed_substrate_1m',
+              layers: 'gtk:seabed_substrate_1m',
               styles: 'folk_7_substrate_class',
               format: 'image/png',
               transparent: true,
@@ -491,7 +508,7 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
           </React.Fragment>
         ))}
 
-        <MapControls />
+        <MapControls centerLocation={centerLocation} />
       </MapContainer>
 
       <div className="absolute bottom-2 left-2 bg-black/75 rounded-lg px-3 py-2 text-xs text-white z-[1000] max-w-[200px]">

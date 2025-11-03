@@ -178,6 +178,7 @@ interface FavouriteEntry {
   emoji: string;
   confidence: number | null;
   biteScore?: number | null;
+  dailyPredictionScore?: number | null;  // NEW: For day-to-day grouping
   bestBait: string;
   bestBaitSource: 'prediction' | 'mock' | 'supabase';
   season: string;
@@ -859,6 +860,7 @@ const FindrFavouritesPage: React.FC = () => {
         emoji: card?.emoji ?? '🐟',
         confidence: derivedConfidence,
         biteScore: card?.biteScore ?? null,
+        dailyPredictionScore: card?.dailyPredictionScore ?? null,
         bestBait,
         bestBaitSource,
         season: deriveSeasonLabel(derivedConfidence, insight?.seasonLabel ?? mock.seasonFallback, card?.seasonal_multiplier),
@@ -937,8 +939,10 @@ const FindrFavouritesPage: React.FC = () => {
     const waiting: FavouriteEntry[] = [];
 
     sortedFavourites.forEach((entry) => {
-      // Use bite score if available (includes tides + conditions), otherwise fall back to confidence
-      const score = entry.biteScore ?? entry.confidence ?? 0;
+      // Use daily prediction score for grouping (day-to-day environmental conditions)
+      // Falls back to confidence, then bite score if daily score not available
+      // Daily score excludes intra-day factors (tides, light, lunar) - these affect timing, not daily grouping
+      const score = entry.dailyPredictionScore ?? entry.confidence ?? entry.biteScore ?? 0;
       if (score >= 85) {
         active.push(entry);
       } else if (score >= 70) {
