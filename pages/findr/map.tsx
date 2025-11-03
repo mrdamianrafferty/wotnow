@@ -437,3 +437,8 @@ export default function FullScreenMapPage() {
     </div>
   );
 }
+
+// Disable SSR for this page (Leaflet requires browser environment)
+export async function getServerSideProps() {
+  return { props: {} };
+}
