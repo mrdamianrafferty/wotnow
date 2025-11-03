@@ -1,6 +1,7 @@
 // Added offline detection and UI warning for conditions page
-import { AlertTriangle, Eye, EyeOff, MapPin } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, MapPin, Maximize2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/router';
 // Offline detection hook
 function useOfflineStatus() {
   const [isOffline, setIsOffline] = useState(typeof window !== 'undefined' ? !navigator.onLine : false);
@@ -175,6 +176,7 @@ const normaliseHourlyIso = (raw: unknown, baseUtc: Date, index: number): string 
  */
 export function ConditionsDashboard({ data, loading, error, source: _source, onRetry, rectangleCode }: ConditionsDashboardProps) {
   const isOffline = useOfflineStatus();
+  const router = useRouter();
   const [showMap, setShowMap] = useState(true);
   const { location } = useUnifiedLocation();
   
@@ -617,10 +619,25 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <MapPin className="h-5 w-5" /> <TranslatedText text="Fishing Area Map" />
             </h2>
-            <button className="btn btn-sm btn-outline" onClick={() => setShowMap((value) => !value)} type="button">
-              {showMap ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showMap ? <TranslatedText text="Hide Map" /> : <TranslatedText text="Show Map" />}
-            </button>
+            <div className="flex gap-2">
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={() => {
+                  const lat = mapLocation.lat;
+                  const lon = mapLocation.lon;
+                  router.push(`/findr/map?lat=${lat}&lon=${lon}&zoom=10&layer=depth`);
+                }}
+                type="button"
+                title="Open full-screen marine data map"
+              >
+                <Maximize2 className="h-4 w-4" />
+                <TranslatedText text="Full Screen" />
+              </button>
+              <button className="btn btn-sm btn-outline" onClick={() => setShowMap((value) => !value)} type="button">
+                {showMap ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showMap ? <TranslatedText text="Hide Map" /> : <TranslatedText text="Show Map" />}
+              </button>
+            </div>
           </div>
 
           {showMap ? (
