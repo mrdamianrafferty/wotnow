@@ -37,14 +37,22 @@ describe('useFishIdentification', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Mock default stats
-    (fishIdService.getStats as jest.Mock).mockResolvedValue({
-      aiAvailable: true,
-      monthlyUsage: 2.5,
-      monthlyBudget: 10,
-      remainingBudget: 7.5,
-      pricePerCall: 0.01,
-      cacheSize: 5
+    // Mock fetch for stats endpoint
+    (global.fetch as jest.Mock).mockImplementation((url: string) => {
+      if (url === '/api/findr/identify-stats') {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            aiAvailable: true,
+            monthlyUsage: 2.5,
+            monthlyBudget: 10,
+            remainingBudget: 7.5,
+            pricePerCall: 0.01,
+            cacheSize: 5
+          })
+        });
+      }
+      return Promise.reject(new Error('Unhandled fetch call: ' + url));
     });
   });
 
@@ -89,7 +97,29 @@ describe('useFishIdentification', () => {
         reasoning: 'Clear identification'
       };
 
-      (fishIdService.identify as jest.Mock).mockResolvedValue(mockResult);
+      // Mock fetch for identify-fish endpoint
+      (global.fetch as jest.Mock).mockImplementation((url: string) => {
+        if (url === '/api/findr/identify-stats') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({
+              aiAvailable: true,
+              monthlyUsage: 2.5,
+              monthlyBudget: 10,
+              remainingBudget: 7.5,
+              pricePerCall: 0.01,
+              cacheSize: 5
+            })
+          });
+        }
+        if (url === '/api/findr/identify-fish') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockResult)
+          });
+        }
+        return Promise.reject(new Error('Unhandled fetch call: ' + url));
+      });
 
       const { result } = renderHook(() => useFishIdentification());
       const mockImage = createMockImage();

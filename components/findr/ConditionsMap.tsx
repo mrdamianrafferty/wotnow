@@ -394,17 +394,30 @@ const ConditionsMap: React.FC<ConditionsMapProps> = ({
         />
 
         {layerMode === 'depth' && (
-          <WMSTileLayer
-            url="https://ows.emodnet-bathymetry.eu/wms"
-            params={{
-              layers: 'emodnet:mean_rainbowcolour',
-              format: 'image/png',
-              transparent: true,
-              version: '1.3.0'
-            }}
-            opacity={0.5}
-            attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
-          />
+          <>
+            {/* EBWBL high-resolution bathymetry tiles (primary) */}
+            <TileLayer
+              url="https://tiles.emodnet-bathymetry.eu/2020/baselayer/web_mercator/{z}/{x}/{y}.png"
+              attribution='© <a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry Consortium (EBWBL)</a>'
+              maxZoom={14}
+              minZoom={2}
+              opacity={0.6}
+              errorTileUrl="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+            />
+
+            {/* WMS fallback layer (rendered underneath EBWBL, visible if tiles fail) */}
+            <WMSTileLayer
+              url="https://ows.emodnet-bathymetry.eu/wms"
+              params={{
+                layers: 'emodnet:mean_rainbowcolour',
+                format: 'image/png',
+                transparent: true,
+                version: '1.3.0'
+              }}
+              opacity={0.4}
+              attribution='<a href="https://www.emodnet-bathymetry.eu/">EMODnet Bathymetry</a>'
+            />
+          </>
         )}
 
         {layerMode === 'seabed' && (
