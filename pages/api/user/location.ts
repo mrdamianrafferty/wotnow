@@ -1,14 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import type { UnifiedLocationRecord } from '../../../context/UnifiedLocationContext';
+import type { SavedLocation, LocationSlot } from '../../../types/multiLocation';
+import {
+  parseLocationsArray,
+  toLegacyFormat,
+  buildLegacyHomeCoordinatesPayload,
+  type DatabaseRow,
+} from '../../../lib/multiLocation/apiHelpers';
 
 type ApiResponse =
   | { location: UnifiedLocationRecord | null }
+  | { locations: SavedLocation[]; activeLocationId: string | null }
   | { error: string };
 
 const ALLOWED_SOURCES = new Set(['manual', 'gps', 'ip']);
 
-function parseUnifiedLocation(row: Record<string, unknown> | null): UnifiedLocationRecord | null {
+function _parseUnifiedLocation(row: Record<string, unknown> | null): UnifiedLocationRecord | null {
   if (!row) return null;
 
   const coordinates = (row.home_coordinates as Record<string, unknown> | null) ?? null;
@@ -101,6 +109,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   switch (req.method) {
     case 'GET': {
       res.setHeader('Cache-Control', 'no-store');
+
+      // Check if client wants new multi-location format
+      const acceptMulti = req.headers['x-multi-location'] === 'true' || req.query.multiLocation === 'true';
+
       const { data, error } = await supabase
         .from('user_location_preferences')
         .select('*')
@@ -113,14 +125,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         return;
       }
 
+      const row = data as DatabaseRow | null;
+
+      // Return new multi-location format if requested
+      if (acceptMulti) {
+        const locations = row ? parseLocationsArray(row.locations) : [];
+        res.status(200).json({
+          locations,
+          activeLocationId: row?.active_location_id ?? null,
+        });
+        return;
+      }
+
+      // Return legacy format for backward compatibility
       res.status(200).json({
-        location: parseUnifiedLocation(data as Record<string, unknown> | null),
+        location: toLegacyFormat(row),
       });
       return;
     }
 
     case 'POST': {
       res.setHeader('Cache-Control', 'no-store');
+
+      // Check if this is a slot-based upsert
+      const slot = req.body.slot as LocationSlot | undefined;
+
+      if (slot) {
+        // New multi-location slot-based upsert
+        const locationData = req.body as {
+          slot: LocationSlot;
+          name?: string;
+          lat: number;
+          lon: number;
+          rectangleCode?: string | null;
+          rectangleRegion?: string | null;
+          accuracy?: number | null;
+          source?: string;
+          metadata?: Record<string, unknown>;
+        };
+
+        // Build location object for database function
+        const locationObj = {
+          name: locationData.name ?? locationData.rectangleRegion ?? 'Saved Location',
+          lat: locationData.lat,
+          lon: locationData.lon,
+          rectangleCode: locationData.rectangleCode ?? null,
+          rectangleRegion: locationData.rectangleRegion ?? null,
+          accuracy: locationData.accuracy ?? null,
+          source: ALLOWED_SOURCES.has(locationData.source ?? '') ? locationData.source : 'manual',
+          metadata: locationData.metadata,
+        };
+
+        // Call database function for latest-wins upsert
+        const { data: result, error: upsertError } = await supabase.rpc('upsert_location_by_slot', {
+          p_user_id: userId,
+          p_slot: slot,
+          p_location: locationObj,
+        });
+
+        if (upsertError) {
+          console.error('[user/location] POST slot upsert failed', upsertError);
+          res.status(500).json({ error: 'Failed to save location' });
+          return;
+        }
+
+        // Also update legacy columns for backward compatibility
+        if (slot === 'home' || slot === 'coastal') {
+          const legacyPayload = buildLegacyHomeCoordinatesPayload(result as SavedLocation);
+          const { error: legacyError } = await supabase
+            .from('user_location_preferences')
+            .update({
+              home_coordinates: legacyPayload,
+              home_region: locationData.rectangleRegion ?? null,
+              home_place_name: locationData.rectangleRegion ?? null,
+              home_location_name: locationData.name ?? locationData.rectangleRegion ?? null,
+              location_source: locationObj.source,
+            })
+            .eq('user_id', userId);
+
+          if (legacyError) {
+            console.warn('[user/location] Failed to update legacy columns', legacyError);
+            // Continue anyway - not critical
+          }
+        }
+
+        res.status(200).json(result);
+        return;
+      }
+
+      // Legacy format - UnifiedLocationRecord
       const record = req.body as UnifiedLocationRecord | null;
       if (!record) {
         res.status(400).json({ error: 'Missing location payload' });
@@ -186,12 +279,81 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
       }
 
+      // Also upsert to new locations array as 'home' slot for forward compatibility
+      const locationObj = {
+        name: record.rectangleLabel ?? record.rectangleRegion ?? 'Home Location',
+        lat: record.lat ?? 0,
+        lon: record.lon ?? 0,
+        rectangleCode: record.rectangleCode,
+        rectangleRegion: record.rectangleRegion,
+        accuracy: record.accuracy,
+        source: record.source,
+      };
+
+      await supabase.rpc('upsert_location_by_slot', {
+        p_user_id: userId,
+        p_slot: 'home',
+        p_location: locationObj,
+      });
+
       res.status(200).json({ location: record });
       return;
     }
 
     case 'DELETE': {
       res.setHeader('Cache-Control', 'no-store');
+
+      // Check if deleting a specific location by ID
+      const locationId = req.query.locationId as string | undefined;
+
+      if (locationId) {
+        // Delete specific location from locations array
+        const { data: row, error: fetchError } = await supabase
+          .from('user_location_preferences')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          console.error('[user/location] DELETE fetch failed', fetchError);
+          res.status(500).json({ error: 'Failed to delete location' });
+          return;
+        }
+
+        if (!row) {
+          res.status(204).end();
+          return;
+        }
+
+        const dbRow = row as DatabaseRow;
+        const locations = parseLocationsArray(dbRow.locations);
+        const updatedLocations = locations.filter((loc) => loc.id !== locationId);
+
+        // If we deleted the active location, clear active_location_id
+        const newActiveId = dbRow.active_location_id === locationId
+          ? (updatedLocations[0]?.id ?? null)
+          : dbRow.active_location_id;
+
+        const { error: updateError } = await supabase
+          .from('user_location_preferences')
+          .update({
+            locations: updatedLocations,
+            active_location_id: newActiveId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId);
+
+        if (updateError) {
+          console.error('[user/location] DELETE update failed', updateError);
+          res.status(500).json({ error: 'Failed to delete location' });
+          return;
+        }
+
+        res.status(204).end();
+        return;
+      }
+
+      // Clear all locations (legacy behavior)
       const { data: existing, error } = await supabase
         .from('user_location_preferences')
         .select('*')
@@ -214,6 +376,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         home_region: null,
         home_place_name: null,
         home_location_name: null,
+        locations: [],
+        active_location_id: null,
+        last_modified_slot: null,
         updated_at: new Date().toISOString(),
       };
 
