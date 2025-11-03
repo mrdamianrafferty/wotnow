@@ -107,11 +107,11 @@ const FindrInfoPage = () => {
                 <div className="card-body border-t border-base-300">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <h4 className="font-semibold"><TranslatedText text="What is ICES?" /></h4>
+                      <h4 className="font-semibold text-base-content"><TranslatedText text="What is ICES?" /></h4>
                       <p className="text-base-content/80 text-sm">
                         <TranslatedText text="Think of European waters as being divided into a giant fishing map with numbered squares. The International Council for the Exploration of the Sea (ICES) has been tracking which fish live in each square for decades." />
                       </p>
-                      <h4 className="font-semibold"><TranslatedText text="How We Use It" /></h4>
+                      <h4 className="font-semibold text-base-content"><TranslatedText text="How We Use It" /></h4>
                       <ul className="space-y-2">
                         <li className="flex items-start gap-2">
                           <span className="badge badge-primary badge-sm mt-1 shrink-0">•</span>
@@ -345,7 +345,7 @@ const FindrInfoPage = () => {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="card bg-base-100">
                   <div className="card-body">
-                    <h4 className="card-title text-base"><TranslatedText text="Season Score (70% weight)" /></h4>
+                    <h4 className="card-title text-base text-base-content"><TranslatedText text="Season Score (70% weight)" /></h4>
                     <p className="text-sm text-base-content/70 mb-3">
                       <TranslatedText text="This is the big one! If the fish aren't in your area right now because they've migrated somewhere else, perfect water won't help. Season trumps everything." />
                     </p>
@@ -361,7 +361,7 @@ const FindrInfoPage = () => {
                 </div>
                 <div className="card bg-base-100">
                   <div className="card-body">
-                    <h4 className="card-title text-base"><TranslatedText text="Water Conditions (30% weight)" /></h4>
+                    <h4 className="card-title text-base text-base-content"><TranslatedText text="Water Conditions (30% weight)" /></h4>
                     <p className="text-sm text-base-content/70 mb-3">
                       <TranslatedText text="Even if fish are in the area, bad water conditions can make them inactive. This fine-tunes our prediction." />
                     </p>
@@ -425,43 +425,43 @@ const FindrInfoPage = () => {
           {/* Data Sources Credits */}
           <div className="card bg-base-100 shadow-xl mt-8">
             <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">
+              <h2 className="card-title text-2xl mb-4 text-base-content">
                 <Database className="text-primary" size={24} />
                 <TranslatedText text="Data Sources & Credits" />
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm">ICES (International Council for the Exploration of the Sea)</h4>
+                    <h4 className="font-medium text-sm text-base-content">ICES (International Council for the Exploration of the Sea)</h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Official fish distribution data and marine grid system" /></p>
-                    <a href="https://www.ices.dk" className="text-primary text-xs hover:underline">www.ices.dk</a>
+                    <a href="https://www.ices.dk" className="text-primary text-xs hover:underline text-base-content">www.ices.dk</a>
                   </div>
                   <div className="border-l-4 border-success pl-3">
-                    <h4 className="font-medium text-sm">Copernicus Marine Service</h4>
+                    <h4 className="font-medium text-sm text-base-content">Copernicus Marine Service</h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Real-time marine biology and oceanographic data" /></p>
-                    <a href="https://marine.copernicus.eu" className="text-primary text-xs hover:underline">marine.copernicus.eu</a>
+                    <a href="https://marine.copernicus.eu" className="text-primary text-xs hover:underline text-base-content">marine.copernicus.eu</a>
                   </div>
                   <div className="border-l-4 border-info pl-3">
-                    <h4 className="font-medium text-sm">EMODnet (European Marine Observation and Data Network)</h4>
+                    <h4 className="font-medium text-sm text-base-content">EMODnet (European Marine Observation and Data Network)</h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="We're grateful for the amazing work done at this comprehensive European marine data portal" /></p>
-                    <a href="https://emodnet.ec.europa.eu" className="text-primary text-xs hover:underline">emodnet.ec.europa.eu</a>
+                    <a href="https://emodnet.ec.europa.eu" className="text-primary text-xs hover:underline text-base-content">emodnet.ec.europa.eu</a>
                   </div>
                   <div className="border-l-4 border-secondary pl-3">
-                    <h4 className="font-medium text-sm">Stormglass.io</h4>
+                    <h4 className="font-medium text-sm text-base-content">Stormglass.io</h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Marine weather API and oceanographic conditions" /></p>
-                    <a href="https://stormglass.io" className="text-primary text-xs hover:underline">stormglass.io</a>
+                    <a href="https://stormglass.io" className="text-primary text-xs hover:underline text-base-content">stormglass.io</a>
                   </div>
                   <div className="border-l-4 border-accent pl-3">
-                    <h4 className="font-medium text-sm">Norwegian Meteorological Institute</h4>
+                    <h4 className="font-medium text-sm text-base-content">Norwegian Meteorological Institute</h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Super-detailed weather data, forecasts, and atmospheric conditions" /></p>
-                    <a href="https://met.no/en" className="text-primary text-xs hover:underline">met.no/en</a>
+                    <a href="https://met.no/en" className="text-primary text-xs hover:underline text-base-content">met.no/en</a>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="border-l-4 border-warning pl-3">
-                    <h4 className="font-medium text-sm"><TranslatedText text="Fishing Associations" /></h4>
+                    <h4 className="font-medium text-sm text-base-content"><TranslatedText text="Fishing Associations" /></h4>
                     <p className="text-xs text-base-content/70 mb-2"><TranslatedText text="We're indebted to these great folks for their work on behavior patterns and their local knowledge" /></p>
-                    <div className="space-y-1 text-xs opacity-70">
+                    <div className="space-y-1 text-xs opacity-70 text-base-content">
                       <div>🇪🇸 Federación Española de Pesca Deportiva</div>
                       <div>🇬🇧 The Angling Trust & Sea Angling Association</div>
                       <div>🇮🇪 Irish Federation of Sea Anglers</div>
@@ -471,14 +471,14 @@ const FindrInfoPage = () => {
                     </div>
                   </div>
                   <div className="border-l-4 border-error pl-3">
-                    <h4 className="font-medium text-sm"><TranslatedText text="Scientific Literature" /></h4>
+                    <h4 className="font-medium text-sm text-base-content"><TranslatedText text="Scientific Literature" /></h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Fish physiology and environmental preferences" /></p>
-                    <p className="text-xs opacity-60"><TranslatedText text="Peer-reviewed marine biology research" /></p>
+                    <p className="text-xs opacity-60 text-base-content"><TranslatedText text="Peer-reviewed marine biology research" /></p>
                   </div>
                   <div className="border-l-4 border-primary pl-3">
-                    <h4 className="font-medium text-sm"><TranslatedText text="The findr Community" /></h4>
+                    <h4 className="font-medium text-sm text-base-content"><TranslatedText text="The findr Community" /></h4>
                     <p className="text-xs text-base-content/70"><TranslatedText text="Our amazing findr friends sharing catch reports, local insights, and fishing wisdom to build the world's best fishing knowledge resource" /></p>
-                    <p className="text-xs opacity-60"><TranslatedText text="Community-driven intelligence from passionate anglers worldwide" /></p>
+                    <p className="text-xs opacity-60 text-base-content"><TranslatedText text="Community-driven intelligence from passionate anglers worldwide" /></p>
                   </div>
                 </div>
               </div>
@@ -519,7 +519,7 @@ const FindrInfoPage = () => {
               {/* Nearby Tackle Shops Finder */}
               <div className="card bg-base-100 mt-4">
                 <div className="card-body">
-                  <h3 className="card-title text-base mb-2">
+                  <h3 className="card-title text-base mb-2 text-base-content">
                     <MapPin size={20} className="text-primary" />
                     <TranslatedText text="Find Your Nearest Tackle Shop" />
                   </h3>
