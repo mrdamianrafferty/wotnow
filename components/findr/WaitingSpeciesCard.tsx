@@ -68,13 +68,19 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
 
   return (
+
     <div 
       data-testid="species-card"
       data-species-id={species.id}
       data-confidence={species.confidence}
       className="card bg-base-100 border border-base-300 shadow hover:shadow-md transition-all duration-200"
-    >      <div className="card-body p-3">
-        <div className="flex items-center gap-3">
+    >
+      <div className="card-body p-2 sm:p-3">
+        {/* Species Name at Top */}
+        <h3 className="text-base font-semibold text-base-content truncate mb-1 text-center">
+          <TranslatedFishName name={species.name} />
+        </h3>
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Species Image/Emoji - Clickable */}
           <button
             onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
@@ -85,49 +91,37 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
             style={{ background: 'none', border: 'none', padding: 0, margin: 0 }}
           >
             {species.image ? (
-              <div className="w-10 h-10 relative rounded overflow-hidden bg-base-200">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 relative rounded overflow-hidden bg-base-200">
                 <Image
                   src={species.image.src}
                   alt={species.image.alt}
                   fill
                   className="object-contain"
-                  sizes="40px"
+                  sizes="36px"
                 />
               </div>
             ) : (
-              <div className="w-10 h-10 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10">
-                <Fish size={24} className="text-primary" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10">
+                <Fish size={22} className="text-primary" />
               </div>
             )}
           </button>
 
-          {/* Name & Confidence */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-base-content truncate">
-                <TranslatedFishName name={species.name} />
-              </h3>
-            </div>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="badge badge-sm badge-outline text-base-content border-base-content" data-testid="confidence-score">
-                {species.confidence}%
-                {species.seasonal_multiplier && species.original_confidence && (
-                  <span className="ml-1 opacity-75 text-xs">
-                    (from {Math.round(species.original_confidence)}%)
-                  </span>
-                )}
+          {/* Confidence Badge */}
+          <span className="badge badge-sm badge-outline text-base-content border-base-content ml-1" data-testid="confidence-score">
+            {species.confidence}%
+            {species.seasonal_multiplier && species.original_confidence && (
+              <span className="ml-1 opacity-75 text-xs">
+                (from {Math.round(species.original_confidence)}%)
               </span>
-              {species.seasonal_multiplier && (
-                <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
-              )}
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              {/* Removed clock and timing message for cleaner mobile UI */}
-            </div>
-          </div>
+            )}
+          </span>
+          {species.seasonal_multiplier && (
+            <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
+          )}
 
           {/* Mini Forecast */}
-          <div className="w-24 flex-shrink-0">
+          <div className="w-20 sm:w-24 flex-shrink-0 ml-1">
             <div className="text-[9px] text-base-content/50 text-center mb-0.5">
               <TranslatedText text="7-day" />
             </div>
@@ -135,16 +129,13 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-1 flex-shrink-0">
-            {/* Info button removed for cleaner mobile UI */}
-            <button
-              onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
-              className="btn btn-ghost btn-xs text-error"
-              title="Remove from favourites"
-            >
-              <Heart size={12} fill="currentColor" />
-            </button>
-          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
+            className="btn btn-ghost btn-xs text-error ml-1"
+            title="Remove from favourites"
+          >
+            <Heart size={12} fill="currentColor" />
+          </button>
         </div>
 
         {/* Improving message */}
