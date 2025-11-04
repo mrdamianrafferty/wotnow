@@ -28,6 +28,7 @@ import { getSpeciesAdvice } from '../../data/speciesAdvice';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useSpeciesDetails } from '../../hooks/useSpeciesDetails';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
+import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -123,7 +124,12 @@ function getDinnerMaterialText(rating: number | null | undefined): DinnerMateria
     return { text: 'We still need a tasting note for this one.', colorClass: 'text-base-content/60' };
   }
 
-  const rounded = Math.max(1, Math.min(10, Math.round(rating)));
+  // Scale database values (1-5) to display values (2-10) for consistent display
+  // Database has CHECK constraint (eating_quality <= 5), so multiply by 2
+  // Legacy hardcoded values (5-10) pass through unchanged
+  const scaledRating = rating <= 5 ? rating * 2 : rating;
+
+  const rounded = Math.max(1, Math.min(10, Math.round(scaledRating)));
   return DINNER_MATERIAL_MAP[rounded] ?? { text: 'Meh territory 😐', colorClass: 'text-warning' };
 }
 
@@ -311,7 +317,25 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               {card.playfulBio}
             </div>
           )}
-          
+
+          {/* Phase 1: Structured Species Information */}
+          {(card.recommendedBaits || card.preferredHabitats || card.effectiveTechniques || card.bestTimes || card.funFact || card.conservationStatus) && (
+            <div className="rounded-2xl border border-success/20 bg-success/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-success mb-3">
+                <TranslatedText text="How to catch" />
+              </p>
+              <Phase1SpeciesInfo
+                recommendedBaits={card.recommendedBaits}
+                preferredHabitats={card.preferredHabitats}
+                effectiveTechniques={card.effectiveTechniques}
+                bestTimes={card.bestTimes}
+                funFact={card.funFact}
+                conservationStatus={card.conservationStatus}
+                compact={false}
+              />
+            </div>
+          )}
+
           {/* Guild weather message */}
           {card.weather_score != null && card.current_wind_speed_ms != null && card.current_pressure_hpa != null && (
             <div className="rounded-xl border-l-4 border-info/40 bg-info/10 px-4 py-3">
