@@ -233,19 +233,19 @@ const FindrInfoPage = () => {
                       <ul className="space-y-2">
                         <li className="flex items-start gap-2">
                           <Thermometer size={16} className="text-error mt-1 shrink-0" />
-                          <span className="text-sm"><strong><TranslatedText text="Air Temperature:" /></strong> <TranslatedText text="Warms or cools the surface water, making fish more or less active" /></span>
+                          <span className="text-sm text-base-content"><strong><TranslatedText text="Air Temperature:" /></strong> <TranslatedText text="Warms or cools the surface water, making fish more or less active" /></span>
                         </li>
                         <li className="flex items-start gap-2">
                           <Waves size={16} className="text-info mt-1 shrink-0" />
-                          <span className="text-sm"><strong><TranslatedText text="Wave Height:" /></strong> <TranslatedText text="Big waves = dangerous conditions and some fishing methods won't work" /></span>
+                          <span className="text-sm text-base-content"><strong><TranslatedText text="Wave Height:" /></strong> <TranslatedText text="Big waves = dangerous conditions and some fishing methods won't work" /></span>
                         </li>
                         <li className="flex items-start gap-2">
                           <Wind size={16} className="text-success mt-1 shrink-0" />
-                          <span className="text-sm"><strong><TranslatedText text="Wind Speed:" /></strong> <TranslatedText text="Affects your casting distance, boat control, and mixes up the water" /></span>
+                          <span className="text-sm text-base-content"><strong><TranslatedText text="Wind Speed:" /></strong> <TranslatedText text="Affects your casting distance, boat control, and mixes up the water" /></span>
                         </li>
                         <li className="flex items-start gap-2">
                           <Droplets size={16} className="text-primary mt-1 shrink-0" />
-                          <span className="text-sm"><strong><TranslatedText text="Air Pressure:" /></strong> <TranslatedText text="Fish can 'feel' pressure changes and it affects when they want to feed" /></span>
+                          <span className="text-sm text-base-content"><strong><TranslatedText text="Air Pressure:" /></strong> <TranslatedText text="Fish can 'feel' pressure changes and it affects when they want to feed" /></span>
                         </li>
                       </ul>
                     </div>
