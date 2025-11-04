@@ -124,12 +124,8 @@ function getDinnerMaterialText(rating: number | null | undefined): DinnerMateria
     return { text: 'We still need a tasting note for this one.', colorClass: 'text-base-content/60' };
   }
 
-  // Scale database values (1-5) to display values (2-10) for consistent display
-  // Database has CHECK constraint (eating_quality <= 5), so multiply by 2
-  // Legacy hardcoded values (5-10) pass through unchanged
-  const scaledRating = rating <= 5 ? rating * 2 : rating;
-
-  const rounded = Math.max(1, Math.min(10, Math.round(scaledRating)));
+  // Rating is already scaled to 2-10 range by getScaledEdibility()
+  const rounded = Math.max(1, Math.min(10, Math.round(rating)));
   return DINNER_MATERIAL_MAP[rounded] ?? { text: 'Meh territory 😐', colorClass: 'text-warning' };
 }
 
@@ -204,6 +200,17 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const context: SpeciesModalContext = hasShore && hasBoat ? 'both' : hasBoat ? 'boat' : 'shore';
   const currentAdvice = context === 'boat' ? dbAdvice?.boat : dbAdvice?.shore;
 
+  // Helper to scale edibility rating from database (1-5) to display (2-10)
+  const getScaledEdibility = (): number | null => {
+    // Priority: database value > hardcoded advice value
+    const rawValue = speciesDetails?.eating_quality ?? advice?.detail?.edibility ?? null;
+    if (rawValue === null || rawValue === undefined) return null;
+
+    // Scale database values (1-5) to display values (2-10)
+    // Legacy hardcoded values (5-10) pass through unchanged
+    return rawValue <= 5 ? rawValue * 2 : rawValue;
+  };
+
   // Prefer database advice, fallback to hardcoded
   const detail = currentAdvice ? {
     regions: currentAdvice.regions ?? advice?.detail?.regions ?? 'Various regions',
@@ -214,7 +221,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     naturalDiet: advice?.detail?.naturalDiet,
     temperature: currentAdvice.temperature_effect ?? advice?.detail?.temperature ?? 'Varies',
     weather: currentAdvice.weather_effect ?? advice?.detail?.weather ?? 'Most conditions',
-    edibility: speciesDetails?.eating_quality ?? advice?.detail?.edibility ?? null,
+    edibility: getScaledEdibility(),
     restrictions: currentAdvice.restrictions ?? advice?.detail?.restrictions ?? 'Check local regulations',
     authority: currentAdvice.authority ?? advice?.detail?.authority ?? null,
   } : advice?.detail;
