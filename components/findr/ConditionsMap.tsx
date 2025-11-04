@@ -118,7 +118,7 @@ const MapControls: React.FC<{ centerLocation: { lat: number; lon: number } }> = 
         title="Open full-screen map"
         type="button"
       >
-        <Expand className="h-3 w-3" />
+        <Expand className="h-3 w-3 text-white" />
       </button>
     </div>
   );
