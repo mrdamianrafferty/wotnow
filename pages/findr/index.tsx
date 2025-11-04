@@ -928,23 +928,6 @@ const FindrPage: React.FC = () => {
                   </h1>
 
                 </div>
-                {/* Full-screen map access button */}
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm gap-2"
-                  onClick={() => {
-                    const lat = location?.lat ?? 43.5;
-                    const lon = location?.lon ?? -5.5;
-                    router.push(`/findr/map?lat=${lat}&lon=${lon}&zoom=10&layer=depth`);
-                  }}
-                  aria-label="Open full-screen marine data map"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                  </svg>
-                  <TranslatedText text="View Map" />
-                </button>
               </div>
               {rectangleOptionsError && (
                 <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
