@@ -65,15 +65,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
   // const nextBestTime = getGeneralTiming(); // removed, not needed after UI cleanup
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (typeof onAction === 'function') {
-      onAction(species.id);
-    } else {
-      // fallback: log for now
-      console.log('Waiting species card clicked:', species.id);
-    }
-  };
+
 
   return (
     <div 
@@ -85,7 +77,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
         <div className="flex items-center gap-3">
           {/* Species Image/Emoji - Clickable */}
           <button
-            onClick={handleCardClick}
+            onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
             className="flex-shrink-0 hover:opacity-80 transition-opacity focus:outline-none"
             type="button"
             aria-label={`View ${species.name} details`}
