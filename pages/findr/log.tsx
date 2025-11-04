@@ -97,15 +97,6 @@ const CatchHistoryDisplay = ({ catches }: { catches: CatchEntry[] }) => (
                 )}
               </div>
 
-              {catchEntry.bait_used && (
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-sm font-medium">Bait:</span>
-                  <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
-                    {catchEntry.bait_used}
-                  </span>
-                </div>
-              )}
-
               {catchEntry.habitat && (
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-sm font-medium text-gray-800">Habitat:</span>
@@ -122,7 +113,6 @@ const CatchHistoryDisplay = ({ catches }: { catches: CatchEntry[] }) => (
                     {catchEntry.bait_used}
                   </span>
                 </div>
-              )}
               )}
             </div>
 
