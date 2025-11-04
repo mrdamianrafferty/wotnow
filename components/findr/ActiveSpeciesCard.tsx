@@ -220,7 +220,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               className="btn btn-sm btn-ghost"
               title="View species details"
             >
-              <Info size={16} />
+              <Info size={16} className="text-base-content" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}

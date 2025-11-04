@@ -67,7 +67,7 @@ export function ScoreBreakdown({ data, speciesName }: ScoreBreakdownProps) {
         className="btn btn-circle btn-ghost btn-xs"
         aria-label="View score breakdown"
       >
-        <Info size={16} />
+        <Info size={16} className="text-base-content" />
       </button>
       <div
         tabIndex={0}

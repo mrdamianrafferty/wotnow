@@ -171,7 +171,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               className="btn btn-xs btn-ghost"
               title="View species details"
             >
-              <Info size={12} />
+              <Info size={12} className="text-base-content" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
