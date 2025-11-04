@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { TrendingUp, Info, Heart, Clock, Fish } from 'lucide-react';
+import { TrendingUp, Heart, Fish } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
@@ -58,28 +58,12 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   onAction,
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
-  const trend = getForecastTrend(species.forecast);
+  // const trend = getForecastTrend(species.forecast); // removed, not needed after UI cleanup
 
   // For low confidence species, show general timing rather than specific hours
-  const getGeneralTiming = (): string => {
-    const now = new Date().getHours();
 
-    // If conditions improve soon, mention that day
-    if (improvingDay) {
-      return improvingDay;
-    }
 
-    // Otherwise suggest dawn/dusk (general good fishing times)
-    if (now >= 5 && now < 9) {
-      return 'This evening';
-    } else if (now >= 9 && now < 17) {
-      return 'Dawn/dusk';
-    } else {
-      return 'Tomorrow dawn';
-    }
-  };
-
-  const nextBestTime = getGeneralTiming();
+  // const nextBestTime = getGeneralTiming(); // removed, not needed after UI cleanup
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -144,15 +128,9 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               {species.seasonal_multiplier && (
                 <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
               )}
-              {trend === 'improving' && (
-                <span className="text-xs text-success flex items-center gap-1">
-                  <TrendingUp size={12} /> <TranslatedText text="Improving" />
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-1 mt-1">
-              <Clock size={10} className="text-neutral" />
-              <span className="text-xs text-neutral">{nextBestTime}</span>
+              {/* Removed clock and timing message for cleaner mobile UI */}
             </div>
           </div>
 
@@ -166,13 +144,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
           {/* Actions */}
           <div className="flex gap-1 flex-shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
-              className="btn btn-xs btn-ghost"
-              title="View species details"
-            >
-              <Info size={12} className="text-base-content" />
-            </button>
+            {/* Info button removed for cleaner mobile UI */}
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-xs text-error"
@@ -246,18 +218,6 @@ function getImprovingDay(forecast: number[]): string | null {
 /**
  * Determine if forecast is improving or declining
  */
-function getForecastTrend(forecast: number[]): 'improving' | 'stable' | 'declining' {
-  const first3 = forecast.slice(0, 3);
-  const next3 = forecast.slice(3, 6);
-  
-  if (next3.length < 3) return 'stable';
-  
-  const avgFirst = first3.reduce((a, b) => a + b, 0) / first3.length;
-  const avgNext = next3.reduce((a, b) => a + b, 0) / next3.length;
-  
-  if (avgNext > avgFirst + 10) return 'improving';
-  if (avgNext < avgFirst - 10) return 'declining';
-  return 'stable';
-}
+
 
 export default WaitingSpeciesCard;
