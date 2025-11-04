@@ -109,6 +109,15 @@ const CatchHistoryDisplay = ({ catches }: { catches: CatchEntry[] }) => (
               {catchEntry.habitat && (
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-sm font-medium">Habitat:</span>
+              
+                      {catchEntry.habitat && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-sm font-medium">Habitat:</span>
+                          <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
+                            {catchEntry.habitat}
+                          </span>
+                        </div>
+                      )}
                   <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
                     {catchEntry.habitat}
                   </span>
