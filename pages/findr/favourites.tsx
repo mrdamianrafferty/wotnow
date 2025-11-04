@@ -1564,8 +1564,6 @@ const FindrFavouritesPage: React.FC = () => {
                               id: entry.id,
                               name: entry.name,
                               emoji: entry.emoji,
-                              // Show null confidence if we don't have live prediction data
-                              // This prevents showing stale database values like "50%"
                               confidence: entry.card ? (entry.confidence ?? 0) : 0,
                               forecast,
                               image: getPreferredImageUrl(entry.image ?? entry.card?.image ?? null)
@@ -1580,6 +1578,7 @@ const FindrFavouritesPage: React.FC = () => {
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
+                            onAction={() => handleFishClick(entry)}
                           />
                         );
                       })}
