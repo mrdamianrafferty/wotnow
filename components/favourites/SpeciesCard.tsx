@@ -51,14 +51,14 @@ export function SpeciesCard({
       text: 'text-xs'
     },
     md: {
-      container: 'w-48',
-      image: 'h-40',
+      container: 'w-56',
+      image: 'h-56',
       title: 'text-base',
       text: 'text-sm'
     },
     lg: {
       container: 'w-64',
-      image: 'h-48',
+      image: 'h-64',
       title: 'text-lg',
       text: 'text-base'
     }
@@ -85,8 +85,23 @@ export function SpeciesCard({
       `}
       onClick={() => onCardClick?.(species.species.id)}
     >
-      {/* Species Image */}
-      <figure className={`relative ${sizeConfig.image} overflow-hidden`}>
+      {/* Species Image - Clickable to view details */}
+      <figure
+        className={`relative ${sizeConfig.image} overflow-hidden cursor-pointer hover:opacity-90 transition-opacity`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCardClick?.(species.species.id);
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onCardClick?.(species.species.id);
+          }
+        }}
+        aria-label={`View details for ${species.species.commonName}`}
+      >
         {species.species.imageUrl ? (
           <Image
             src={species.species.imageUrl}
