@@ -12,6 +12,7 @@ import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
+import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 
 interface GoodSpeciesCardProps {
   species: {
@@ -38,6 +39,13 @@ interface GoodSpeciesCardProps {
     // Week 3: Seasonality data
     seasonal_multiplier?: number;
     original_confidence?: number;
+    // Phase 1: Structured fishing content
+    recommendedBaits?: string[] | null;
+    preferredHabitats?: string[] | null;
+    effectiveTechniques?: string[] | null;
+    bestTimes?: string[] | null;
+    funFact?: string | null;
+    conservationStatus?: string | null;
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -238,20 +246,33 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
         {expanded && (
           <div className="space-y-3 mt-3 pt-3 border-t border-base-300">
-            {/* How to Catch */}
-            <div className="bg-base-200 rounded-lg p-3 space-y-1">
-              <p className="text-sm">
-                <span className="font-medium"><TranslatedText text="Best bait:" /></span>{' '}
-                <TranslatedText text={species.bestBait} />
-              </p>
-              <p className="text-sm">
-                <span className="font-medium"><TranslatedText text="Season:" /></span>{' '}
-                <TranslatedText text={species.season} />
-              </p>
-              {species.scientificName && (
-                <p className="text-xs italic text-base-content/60">{species.scientificName}</p>
-              )}
-            </div>
+            {/* Phase 1: Structured Species Information */}
+            <Phase1SpeciesInfo
+              recommendedBaits={species.recommendedBaits}
+              preferredHabitats={species.preferredHabitats}
+              effectiveTechniques={species.effectiveTechniques}
+              bestTimes={species.bestTimes}
+              funFact={species.funFact}
+              conservationStatus={species.conservationStatus}
+              compact={true}
+            />
+
+            {/* Fallback: Show legacy data if no Phase 1 data available */}
+            {!species.recommendedBaits && !species.preferredHabitats && (
+              <div className="bg-base-200 rounded-lg p-3 space-y-1">
+                <p className="text-sm">
+                  <span className="font-medium"><TranslatedText text="Best bait:" /></span>{' '}
+                  <TranslatedText text={species.bestBait} />
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium"><TranslatedText text="Season:" /></span>{' '}
+                  <TranslatedText text={species.season} />
+                </p>
+                {species.scientificName && (
+                  <p className="text-xs italic text-base-content/60">{species.scientificName}</p>
+                )}
+              </div>
+            )}
 
             {/* Confidence Breakdown */}
             <ConfidenceBreakdownCard

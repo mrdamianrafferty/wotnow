@@ -136,6 +136,7 @@ export const SPECIES_IMAGE_MAP: Record<string, SpeciesImageInfo> = {
   'MED-SCAD': { code: 'MED-SCAD', name: 'Mediterranean Scad', scientificName: 'Trachurus mediterraneus', slug: 'mediterranean-scad', image: '/webp/mediterranean-scad.webp', mobile: '/webp/mediterranean-scad-mobile.webp', thumb: '/webp/mediterranean-scad-thumb.webp' },
   'MEN': { code: 'MEN', name: 'Atlantic Menhaden', scientificName: 'Brevoortia tyrannus', slug: 'atlantic-menhaden', image: '/webp/atlantic-menhaden.webp', mobile: '/webp/atlantic-menhaden-mobile.webp', thumb: '/webp/atlantic-menhaden-thumb.webp' },
   'MLS': { code: 'MLS', name: 'Striped Marlin', scientificName: 'Kajikia audax', slug: 'striped-marlin', image: '/webp/striped-marlin.webp', mobile: '/webp/striped-marlin-mobile.webp', thumb: '/webp/striped-marlin-thumb.webp' },
+  'MUG': { code: 'MUG', name: 'Thicklip Grey Mullet', scientificName: 'Chelon labrosus', slug: 'chelon-labrosus', image: '/webp/thicklip-grey-mullet.webp', mobile: '/webp/thicklip-grey-mullet-mobile.webp', thumb: '/webp/thicklip-grey-mullet-thumb.webp' },
   'MUL': { code: 'MUL', name: 'Red Mullet', scientificName: 'Mullus surmuletus', slug: 'red-mullet', image: '/webp/red-mullet.webp', mobile: '/webp/red-mullet-mobile.webp', thumb: '/webp/red-mullet-thumb.webp' },
   'MULA': { code: 'MULA', name: 'Golden grey mullet', scientificName: 'Chelon auratus', slug: 'chelon-auratus', image: '/webp/chelon-auratus.webp', mobile: '/webp/chelon-auratus-mobile.webp', thumb: '/webp/chelon-auratus-thumb.webp' },
   'MULR': { code: 'MULR', name: 'Thin-lipped grey mullet', scientificName: 'Chelon ramada', slug: 'chelon-ramada', image: '/webp/chelon-ramada.webp', mobile: '/webp/chelon-ramada-mobile.webp', thumb: '/webp/chelon-ramada-thumb.webp' },
@@ -196,7 +197,3 @@ export const SPECIES_IMAGE_MAP: Record<string, SpeciesImageInfo> = {
   'YEL-CUDA': { code: 'YEL-CUDA', name: 'Yellowmouth Barracuda', scientificName: 'Sphyraena viridensis', slug: 'yellowmouth-barracuda', image: '/webp/yellowmouth-barracuda.webp', mobile: '/webp/yellowmouth-barracuda-mobile.webp', thumb: '/webp/yellowmouth-barracuda-thumb.webp' },
   'YFT': { code: 'YFT', name: 'Yellowfin Tuna', scientificName: 'Thunnus albacares', slug: 'yellowfin-tuna', image: '/webp/yellowfin-tuna.webp', mobile: '/webp/yellowfin-tuna-mobile.webp', thumb: '/webp/yellowfin-tuna-thumb.webp' },
 };
-
-export const SPECIES_IMAGES_MISSING = [
-  { code: 'MUG', name: 'Thicklip Grey Mullet', scientificName: 'Chelon labrosus', message: 'No matching webp asset found [candidates: thicklip-grey-mullet, chelon-labrosus]' },
-] as const;

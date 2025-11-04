@@ -131,6 +131,15 @@ export interface CardData {
   substrates?: SubstrateInfo | null;
   inaturalist_url?: string | null;
 
+  // Phase 1 Species Consolidation: Structured fishing content
+  recommendedBaits?: string[] | null;         // Matches COMMON_BAITS from baitHabitatOptions.ts
+  preferredHabitats?: string[] | null;        // Matches HABITAT_OPTIONS from baitHabitatOptions.ts
+  effectiveTechniques?: string[] | null;      // Technique codes from fishing_techniques table
+  bestTimes?: string[] | null;                // Optimal fishing times (dawn/dusk/tides)
+  funFact?: string | null;                    // Fun fact about the species
+  conservationStatus?: string | null;         // IUCN status code (LC, NT, VU, EN, etc.)
+  contentLastReviewed?: string | null;        // ISO timestamp of last content review
+
   // Weather data (Phase 11) - weather_score is in score components above
   current_wind_speed_ms?: number | null;
   current_pressure_hpa?: number | null;
@@ -786,6 +795,15 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     // Week 3: Seasonality data
     seasonal_multiplier: extractNumber(prediction.seasonal_multiplier) ?? undefined,
     original_confidence: extractNumber(prediction.original_confidence) ?? undefined,
+
+    // Phase 1 Species Consolidation: Structured fishing content
+    recommendedBaits: parseStringArray(prediction.recommended_baits as JsonValue | undefined) ?? null,
+    preferredHabitats: parseStringArray(prediction.preferred_habitats as JsonValue | undefined) ?? null,
+    effectiveTechniques: parseStringArray(prediction.effective_techniques as JsonValue | undefined) ?? null,
+    bestTimes: parseStringArray(prediction.best_times as JsonValue | undefined) ?? null,
+    funFact: firstString(prediction.fun_fact_en) ?? null,
+    conservationStatus: firstString(prediction.conservation_status) ?? null,
+    contentLastReviewed: firstString(prediction.content_last_reviewed) ?? null,
   };
 }
 

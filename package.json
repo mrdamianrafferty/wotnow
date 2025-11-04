@@ -32,6 +32,7 @@
     "validate:taxonomy": "tsx scripts/validateTaxonomy.ts",
     "merge:activities": "tsx scripts/mergeActivityBackfill.ts",
     "env:sync": "tsx scripts/env-sync.ts",
+    "migrate:species-data": "tsx scripts/migrate-species-fishing-data.ts",
     "seed:findr:rectangles": "tsx scripts/seedFindrRectangles.ts",
     "seed:findr:conditions": "tsx scripts/seedFindrConditionsSnapshot.ts",
     "optimize-images": "tsx scripts/optimize-activity-images.ts",
