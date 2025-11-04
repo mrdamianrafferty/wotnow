@@ -8,6 +8,7 @@ import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFis
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 
 interface WaitingSpeciesCardProps {
   species: {
@@ -31,6 +32,13 @@ interface WaitingSpeciesCardProps {
     // Week 3: Seasonality data
     seasonal_multiplier?: number;
     original_confidence?: number;
+    // Phase 1: Structured fishing content
+    recommendedBaits?: string[] | null;
+    preferredHabitats?: string[] | null;
+    effectiveTechniques?: string[] | null;
+    bestTimes?: string[] | null;
+    funFact?: string | null;
+    conservationStatus?: string | null;
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -187,6 +195,21 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
         {species.environmental_factors && (
           <div className="mt-2">
             <EnvironmentalInfo factors={species.environmental_factors} data-testid="environmental-info" />
+          </div>
+        )}
+
+        {/* Phase 1: Structured Species Information */}
+        {(species.recommendedBaits || species.preferredHabitats || species.effectiveTechniques || species.bestTimes || species.funFact || species.conservationStatus) && (
+          <div className="mt-2">
+            <Phase1SpeciesInfo
+              recommendedBaits={species.recommendedBaits}
+              preferredHabitats={species.preferredHabitats}
+              effectiveTechniques={species.effectiveTechniques}
+              bestTimes={species.bestTimes}
+              funFact={species.funFact}
+              conservationStatus={species.conservationStatus}
+              compact={true}
+            />
           </div>
         )}
 

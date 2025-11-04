@@ -225,8 +225,14 @@ function buildLocalizedNamePayload(row: SpeciesLocalizationRow): LocalizedNameMa
     ['pt', row.name_pt],
   ];
 
+  // Filter out null/empty values AND English fallbacks (where localized name = English name)
   const defined = candidates
-    .filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    .filter(([, value]) => {
+      if (typeof value !== 'string' || value.trim().length === 0) return false;
+      // Exclude if the localized name is identical to English (case-insensitive)
+      if (row.name_en && value.trim().toLowerCase() === row.name_en.trim().toLowerCase()) return false;
+      return true;
+    })
     .map(([key, value]) => [key, (value as string).trim()] as const);
 
   if (defined.length === 0) {

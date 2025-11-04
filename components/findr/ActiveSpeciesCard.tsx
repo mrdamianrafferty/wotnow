@@ -12,6 +12,7 @@ import { ScoreBreakdown, type ScoreBreakdownData } from './ScoreBreakdown';
 import { TideConditions, type TideInfo } from './TideConditions';
 import { SeasonalityBadge } from './SeasonalityBadge';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
+import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 
 interface SpeciesAdvice {
   type?: string;
@@ -58,6 +59,13 @@ interface ActiveSpeciesCardProps {
     // Week 3: Seasonality data
     seasonal_multiplier?: number;
     original_confidence?: number;
+    // Phase 1: Structured fishing content
+    recommendedBaits?: string[] | null;
+    preferredHabitats?: string[] | null;
+    effectiveTechniques?: string[] | null;
+    bestTimes?: string[] | null;
+    funFact?: string | null;
+    conservationStatus?: string | null;
   };
   location?: { lat: number; lon: number } | null;
   tideInfo?: TideInfo | null;
@@ -265,65 +273,84 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
         {expanded && (
           <div className="space-y-4 mt-4 pt-4 border-t border-base-300">
-            {/* How to Catch */}
-            <div className="space-y-2">
-              <h4 className="font-semibold flex items-center gap-2 text-base-content">
-                <Fish size={16} /> <TranslatedText text="How to catch right now" />
-              </h4>
-              <div className="bg-base-200 rounded-lg p-3 space-y-2">
-                <p className="text-sm">
-                  <span className="font-medium"><TranslatedText text="Best bait:" /></span>{' '}
-                  <TranslatedText text={species.bestBait} />
-                </p>
-                <p className="text-sm">
-                  <span className="font-medium"><TranslatedText text="Season:" /></span>{' '}
-                  <TranslatedText text={species.season} />
-                </p>
-              </div>
-            </div>
+            {/* Phase 1: Structured Species Information */}
+            <Phase1SpeciesInfo
+              recommendedBaits={species.recommendedBaits}
+              preferredHabitats={species.preferredHabitats}
+              effectiveTechniques={species.effectiveTechniques}
+              bestTimes={species.bestTimes}
+              funFact={species.funFact}
+              conservationStatus={species.conservationStatus}
+              compact={false}
+            />
 
-            {/* Tactical Advice */}
-            <div className="space-y-2">
-              <h4 className="font-semibold flex items-center gap-2 text-base-content">
-                <Waves size={16} /> <TranslatedText text="Tactical advice" />
-              </h4>
-              <div className="text-sm text-base-content/70 space-y-2">
-                {species.advice && species.advice.length > 0 ? (
-                  <>
-                    {species.advice.map((adviceItem, index) => (
-                      <div key={index} className="space-y-1">
-                        {adviceItem.type && (
-                          <p className="font-semibold text-base-content/90">
-                            {adviceItem.type === 'Shore' ? '🏖️' : '🚤'} {adviceItem.type}
-                          </p>
-                        )}
-                        {adviceItem.best_time && (
-                          <p>• <TranslatedText text={`Best time: ${adviceItem.best_time}`} /></p>
-                        )}
-                        {adviceItem.favourite_baits_and_natural_diet && (
-                          <p>• <TranslatedText text={`Bait: ${adviceItem.favourite_baits_and_natural_diet}`} /></p>
-                        )}
-                        {adviceItem.tide_sensitivity && (
-                          <p>• <TranslatedText text={`Tide: ${adviceItem.tide_sensitivity}`} /></p>
-                        )}
-                        {adviceItem.typical_distance_depth && (
-                          <p>• <TranslatedText text={`Depth: ${adviceItem.typical_distance_depth}`} /></p>
-                        )}
-                        {adviceItem.effect_of_weather && (
-                          <p>• <TranslatedText text={`Weather: ${adviceItem.effect_of_weather}`} /></p>
-                        )}
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    <p>• <TranslatedText text="Fish the tide turns for best results" /></p>
-                    <p>• <TranslatedText text="Focus on structure and current breaks" /></p>
-                    <p>• <TranslatedText text="Be ready to move if action slows" /></p>
-                  </>
-                )}
-              </div>
-            </div>
+            {/* Fallback: Show legacy data if no Phase 1 data available */}
+            {!species.recommendedBaits && !species.preferredHabitats && (
+              <>
+                {/* How to Catch */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2 text-base-content">
+                    <Fish size={16} /> <TranslatedText text="How to catch right now" />
+                  </h4>
+                  <div className="bg-base-200 rounded-lg p-3 space-y-2">
+                    <p className="text-sm">
+                      <span className="font-medium"><TranslatedText text="Best bait:" /></span>{' '}
+                      <TranslatedText text={species.bestBait} />
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium"><TranslatedText text="Season:" /></span>{' '}
+                      <TranslatedText text={species.season} />
+                    </p>
+                    {species.scientificName && (
+                      <p className="text-xs italic text-base-content/60">{species.scientificName}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tactical Advice */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold flex items-center gap-2 text-base-content">
+                    <Waves size={16} /> <TranslatedText text="Tactical advice" />
+                  </h4>
+                  <div className="text-sm text-base-content/70 space-y-2">
+                    {species.advice && species.advice.length > 0 ? (
+                      <>
+                        {species.advice.map((adviceItem, index) => (
+                          <div key={index} className="space-y-1">
+                            {adviceItem.type && (
+                              <p className="font-semibold text-base-content/90">
+                                {adviceItem.type === 'Shore' ? '🏖️' : '🚤'} {adviceItem.type}
+                              </p>
+                            )}
+                            {adviceItem.best_time && (
+                              <p>• <TranslatedText text={`Best time: ${adviceItem.best_time}`} /></p>
+                            )}
+                            {adviceItem.favourite_baits_and_natural_diet && (
+                              <p>• <TranslatedText text={`Bait: ${adviceItem.favourite_baits_and_natural_diet}`} /></p>
+                            )}
+                            {adviceItem.tide_sensitivity && (
+                              <p>• <TranslatedText text={`Tide: ${adviceItem.tide_sensitivity}`} /></p>
+                            )}
+                            {adviceItem.typical_distance_depth && (
+                              <p>• <TranslatedText text={`Depth: ${adviceItem.typical_distance_depth}`} /></p>
+                            )}
+                            {adviceItem.effect_of_weather && (
+                              <p>• <TranslatedText text={`Weather: ${adviceItem.effect_of_weather}`} /></p>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <p>• <TranslatedText text="Fish the tide turns for best results" /></p>
+                        <p>• <TranslatedText text="Focus on structure and current breaks" /></p>
+                        <p>• <TranslatedText text="Be ready to move if action slows" /></p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Confidence Breakdown */}
             <ConfidenceBreakdownCard
