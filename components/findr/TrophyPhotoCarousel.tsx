@@ -524,7 +524,7 @@ export function PhotoGalleryGrid({
   photos, 
   onPhotoClickAction,
   onPinToggle,
-  columns = 3,
+  // columns prop removed; responsive grid classes now control columns
   aspectRatio = 'square' 
 }: {
   photos: PhotoData[];
@@ -540,12 +540,9 @@ export function PhotoGalleryGrid({
   };
   
   return (
-    <div className={`grid gap-2 ${
-      columns === 2 ? 'grid-cols-2' :
-      columns === 3 ? 'grid-cols-3' :
-      columns === 4 ? 'grid-cols-4' :
-      'grid-cols-3'
-    }`}>
+    <div className={
+      `grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+    }>
       {photos.map((photo, index) => {
         const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
 
