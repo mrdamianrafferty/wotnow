@@ -107,28 +107,22 @@ const CatchHistoryDisplay = ({ catches }: { catches: CatchEntry[] }) => (
               )}
 
               {catchEntry.habitat && (
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-sm font-medium">Habitat:</span>
-              
-                      {catchEntry.habitat && (
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="text-sm font-medium">Habitat:</span>
-                          <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
-                            {catchEntry.habitat}
-                          </span>
-                        </div>
-                      )}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-800">Habitat:</span>
                   <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
                     {catchEntry.habitat}
                   </span>
                 </div>
               )}
 
-              {catchEntry.location && (
-                <div className="mt-2 text-xs text-base-content/60 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {catchEntry.location.lat.toFixed(4)}, {catchEntry.location.lng.toFixed(4)}
+              {catchEntry.bait_used && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-800">Bait:</span>
+                  <span className="badge bg-white text-gray-800 border border-gray-300 text-sm font-medium px-3 py-1">
+                    {catchEntry.bait_used}
+                  </span>
                 </div>
+              )}
               )}
             </div>
 
