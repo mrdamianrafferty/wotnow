@@ -29,6 +29,7 @@ import { TranslatedText } from '../translation/TranslatedFishCard';
 import { useSpeciesDetails } from '../../hooks/useSpeciesDetails';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
+import { useLanguage } from '../../context/LanguageContext';
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -129,6 +130,35 @@ function getDinnerMaterialText(rating: number | null | undefined): DinnerMateria
   return DINNER_MATERIAL_MAP[rounded] ?? { text: 'Meh territory 😐', colorClass: 'text-warning' };
 }
 
+/**
+ * Get the localized species name for the current language
+ * Falls back to English common name if translation not available
+ */
+function getLocalizedSpeciesName(
+  commonName: string,
+  localized: CardData['localizedNames'] | undefined,
+  language: string
+): string {
+  if (!localized) return commonName;
+
+  // Map language codes to localized name keys
+  const langMap: Record<string, keyof NonNullable<CardData['localizedNames']>> = {
+    'fr': 'fr',
+    'es': 'es',
+    'pt': 'pt',
+    'it': 'it',
+    'de': 'de',
+  };
+
+  const key = langMap[language];
+  if (key && localized[key]) {
+    return localized[key] as string;
+  }
+
+  // Fallback to English
+  return commonName;
+}
+
 function buildLocalizedNameLine(localized?: CardData['localizedNames']): string | null {
   if (!localized) return null;
   const entries: Array<[keyof NonNullable<CardData['localizedNames']>, string]> = [
@@ -150,6 +180,9 @@ function sentenceCase(value: string): string {
 }
 
 export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, onClose }) => {
+  // Get current language for localized species names
+  const { language } = useLanguage();
+
   const advice = useMemo(() => {
     if (!card) return null;
     return getSpeciesAdvice(card.commonName, card.speciesCode ?? undefined);
@@ -228,6 +261,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
 
   const dinnerMaterial = getDinnerMaterialText(detail?.edibility ?? null);
   const localizedLine = buildLocalizedNameLine(card?.localizedNames);
+  const displayName = getLocalizedSpeciesName(card?.commonName ?? '', card?.localizedNames, language);
   const contextsAvailable = hasShore && hasBoat ? ['shore', 'boat'] : hasBoat ? ['boat'] : ['shore'];
 
   if (!open || !card) {
@@ -248,14 +282,14 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
         <div className="flex items-start justify-between gap-4 px-4 pt-4 pb-2 md:px-6">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-              Species profile
+              <TranslatedText text="Species profile" />
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <h1 id={titleId} className="text-3xl font-bold leading-tight text-base-content flex items-center gap-2">
                 <span className="text-3xl" aria-hidden>
                   {card.emoji}
                 </span>
-                {card.commonName}
+                {displayName}
               </h1>
               {advice && <ContextBadge context={advice.context} />}
             </div>
@@ -268,7 +302,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             {card.aliases && card.aliases.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 <span className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">
-                  Also known as:
+                  <TranslatedText text="Also known as:" />
                 </span>
                 {card.aliases.map((alias) => (
                   <span key={alias} className="badge badge-sm badge-outline">
@@ -279,7 +313,9 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             )}
             {contextsAvailable.length > 1 && advice?.alternate && (
               <p className="text-xs text-base-content/60">
-                Bonus tips available for {advice.alternate.context === 'shore' ? 'shore anglers' : 'boat crews'} below.
+                <TranslatedText
+                  text={`Bonus tips available for ${advice.alternate.context === 'shore' ? 'shore anglers' : 'boat crews'} below.`}
+                />
               </p>
             )}
           </div>
