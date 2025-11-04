@@ -166,10 +166,22 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
 
   return (
     <div className="card h-full bg-base-100 shadow-xl">
-      <div className="card-body !p-4 sm:!p-6 flex h-full flex-col gap-3 sm:gap-4 justify-start">
+      <div className="card-body !p-3 sm:!p-4 flex h-full flex-col gap-3 sm:gap-4 justify-start">
         <div className="space-y-3 sm:space-y-4">
           {card.image ? (
-            <div className="relative w-full max-h-64 sm:max-h-80 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0">
+            <div
+              className="relative w-full max-h-80 sm:max-h-96 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0 cursor-pointer hover:opacity-95 transition-opacity"
+              onClick={() => onShowSpeciesInfo?.(card)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onShowSpeciesInfo?.(card);
+                }
+              }}
+              aria-label={`View details for ${card.commonName}`}
+            >
               <Image
                 src={card.image.src}
                 alt={card.image.alt}

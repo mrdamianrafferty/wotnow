@@ -254,15 +254,15 @@ const FindrInfoPage = () => {
                         <Anchor size={20} className="text-primary" />
                         <TranslatedText text="Tidal Intelligence" />
                       </h4>
-                      <div className="card bg-base-200">
+                      <div className="card bg-blue-900/30">
                         <div className="card-body p-4">
-                          <p className="text-sm mb-3">
+                          <p className="text-sm mb-3 text-gray-300">
                             <TranslatedText text="Different fish like different tide times - it's like their dinner schedule! We tell you:" />
                           </p>
                           <ul className="space-y-1 text-xs">
-                            <li className="text-base-content">• <TranslatedText text="When each fish species prefers to feed (high tide, low tide, or moving water)" /></li>
-                            <li className="text-base-content">• <TranslatedText text="The best times to fish before or after tide changes" /></li>
-                            <li className="text-base-content">• <TranslatedText text="How strong currents affect where fish hang out" /></li>
+                            <li className="text-gray-300">• <TranslatedText text="When each fish species prefers to feed (high tide, low tide, or moving water)" /></li>
+                            <li className="text-gray-300">• <TranslatedText text="The best times to fish before or after tide changes" /></li>
+                            <li className="text-gray-300">• <TranslatedText text="How strong currents affect where fish hang out" /></li>
                           </ul>
                         </div>
                       </div>
