@@ -644,6 +644,7 @@ const FindrPage: React.FC = () => {
     setPredictionDate,
     language,
     setLanguage: _setLanguage,
+    saveLocationToCookie,
   } = usePersistentFindrSettings({ predictionDate: TODAY_ISO, language: 'en' });
   
   // Use favourites hook for hybrid localStorage + Supabase sync
@@ -706,7 +707,7 @@ const FindrPage: React.FC = () => {
       firstOption: rectangleOptions[0]?.code,
       hasValidSelection: selectedCode && rectangleOptions.some(opt => opt.code === selectedCode),
     });
-    
+
     // Don't auto-select if we have a rectangle from context or query
     if (rectangleFromContext || rectangleFromQuery) {
       console.log('[Findr] Skipping auto-select: rectangle from context/query');
@@ -726,6 +727,18 @@ const FindrPage: React.FC = () => {
     console.log('[Findr] AUTO-SELECTING first rectangle:', rectangleOptions[0].code);
     setSelectedCode(rectangleOptions[0].code);
   }, [rectangleFromContext, rectangleFromQuery, rectangleOptions, selectedCode, setSelectedCode]);
+
+  // Save location to cookie when activeOption changes (for incognito persistence)
+  useEffect(() => {
+    if (activeOption && activeOption.centerLat && activeOption.centerLon) {
+      saveLocationToCookie({
+        rectangleCode: activeOption.code,
+        rectangleRegion: activeOption.region,
+        lat: activeOption.centerLat,
+        lon: activeOption.centerLon,
+      });
+    }
+  }, [activeOption, saveLocationToCookie]);
 
   const { predictions, loading, error, lastUpdated, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
@@ -1041,12 +1054,36 @@ const FindrPage: React.FC = () => {
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-base-content">
-                            <span className="text-2xl" aria-hidden>
-                              {card.emoji}
-                            </span>
-                            <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
+                        <div className="flex items-start gap-3 flex-1">
+                          {/* Species thumbnail - clickable to open modal */}
+                          <button
+                            type="button"
+                            onClick={() => handleShowSpeciesInfo(card)}
+                            className="flex-shrink-0 focus:outline-none hover:opacity-90 transition-opacity"
+                            aria-label={`View ${card.commonName} details`}
+                          >
+                            {card.image?.thumb || card.image?.src ? (
+                              <div className="w-12 h-12 sm:w-14 sm:h-14 relative rounded-lg overflow-hidden bg-base-200 ring-2 ring-base-300 hover:ring-primary transition-all">
+                                <Image
+                                  src={card.image.thumb || card.image.src}
+                                  alt={card.image.alt}
+                                  fill
+                                  className="object-cover"
+                                  sizes="56px"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center rounded-lg bg-gradient-to-br from-info/10 to-primary/10 ring-2 ring-base-300 hover:ring-primary transition-all">
+                                <span className="text-2xl" aria-hidden>
+                                  {card.emoji}
+                                </span>
+                              </div>
+                            )}
+                          </button>
+
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2 text-base-content flex-wrap">
+                              <span className="font-semibold"><TranslatedFishName name={card.commonName} /></span>
                             {card.confidence !== null ? (
                               <span className={confidenceBadgeClasses(card.confidence, 'sm')} data-testid="confidence-score">
                                 {card.confidence}%
@@ -1061,6 +1098,7 @@ const FindrPage: React.FC = () => {
                           {card.scientificName && (
                             <p className="text-xs italic text-base-content/60">{card.scientificName}</p>
                           )}
+                          </div>
                         </div>
                         <button
                           type="button"

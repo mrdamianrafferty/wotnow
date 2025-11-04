@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { saveLastLocationToCookie, getLastLocationFromCookie } from '../lib/cookies';
 
 const STORAGE_KEY = 'findrSettings';
 
@@ -6,6 +7,13 @@ interface StoredSettings {
   selectedCode?: string;
   predictionDate?: string;
   language?: string;
+}
+
+export interface RectangleLocationDetails {
+  rectangleCode: string;
+  rectangleRegion: string;
+  lat: number;
+  lon: number;
 }
 
 interface UsePersistentFindrSettingsArgs {
@@ -20,13 +28,26 @@ interface UsePersistentFindrSettingsResult {
   setPredictionDate: (value: string) => void;
   language: string;
   setLanguage: (value: string) => void;
+  saveLocationToCookie: (details: RectangleLocationDetails) => void;
 }
 
 function readStoredSettings(): StoredSettings | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      // If no localStorage, check cookie as fallback
+      const cookieLocation = getLastLocationFromCookie();
+      if (cookieLocation) {
+        console.log('[PersistentFindrSettings] Found location in cookie:', cookieLocation.rectangleCode);
+        return {
+          selectedCode: cookieLocation.rectangleCode,
+          predictionDate: undefined,
+          language: undefined,
+        };
+      }
+      return null;
+    }
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object') {
       return {
@@ -88,6 +109,20 @@ export function usePersistentFindrSettings({
     }
   }, [language, predictionDate, selectedCode]);
 
+  // Callback to save location to cookie (for incognito/cross-session persistence)
+  const handleSaveLocationToCookie = useCallback((details: RectangleLocationDetails) => {
+    const success = saveLastLocationToCookie({
+      rectangleCode: details.rectangleCode,
+      rectangleRegion: details.rectangleRegion,
+      lat: details.lat,
+      lon: details.lon,
+      updatedAt: new Date().toISOString(),
+    });
+    if (success) {
+      console.log('[PersistentFindrSettings] Saved location to cookie:', details.rectangleCode);
+    }
+  }, []);
+
   return {
     selectedCode,
     setSelectedCode,
@@ -95,6 +130,7 @@ export function usePersistentFindrSettings({
     setPredictionDate,
     language,
     setLanguage,
+    saveLocationToCookie: handleSaveLocationToCookie,
   };
 }
 
