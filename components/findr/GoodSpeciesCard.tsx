@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -194,6 +194,13 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
+              className="btn btn-xs btn-ghost"
+              title="View species details"
+            >
+              <Info size={14} className="text-base-content" />
+            </button>
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
