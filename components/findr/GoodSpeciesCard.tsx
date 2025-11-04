@@ -196,10 +196,10 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
           <div className="flex gap-1">
             <button
               onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
-              className="btn btn-xs btn-ghost"
+              className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-300"
               title="View species details"
             >
-              <Info size={14} className="text-base-content" />
+              <Info size={14} className="text-neutral" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
