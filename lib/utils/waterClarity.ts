@@ -165,23 +165,45 @@ export function interpretClarity(clarity_index: number): {
 }
 
 /**
+ * Convert chlorophyll to water clarity index for stealth calculation (0-100 scale)
+ *
+ * Used by the stealth indicator to adjust light penetration based on water turbidity.
+ *
+ * @param chlorophyll - Chlorophyll-a concentration (mg/m³)
+ * @returns Water clarity index 0-100 (0 = very murky, 100 = crystal clear), or null if no data
+ */
+export function chlorophyllToWaterClarityIndex(chlorophyll?: number | null): number | null {
+  if (typeof chlorophyll !== 'number' || !Number.isFinite(chlorophyll)) {
+    return null;
+  }
+
+  // Convert 0-1 clarity index to 0-100 scale
+  const clarityIndex01 = clarityFromChlorophyll(chlorophyll);
+  return Math.round(clarityIndex01 * 100);
+}
+
+/**
  * Example usage:
- * 
+ *
  * ```typescript
  * // From Copernicus data
  * const kd490 = 0.15;  // From biogeochemical dataset
  * const chlorophyll = 1.2;  // Already fetched
- * 
+ *
  * const clarity = calculateWaterClarity(kd490, chlorophyll);
  * // Result: { clarity_index: 0.65, kd490: 0.15, chlorophyll_mg_m3: 1.2, method: 'combined', confidence: 'high' }
- * 
+ *
  * const interpretation = interpretClarity(clarity.clarity_index);
  * // Result: { label: 'Clear', description: 'Good visibility', fishingImpact: '+10% for sight feeders' }
- * 
+ *
  * // Use in bite score calculation
  * const conditions = {
  *   water_clarity_m: clarity.clarity_index,
  *   // ... other conditions
  * };
+ *
+ * // For stealth calculation
+ * const waterClarityIndex = chlorophyllToWaterClarityIndex(chlorophyll);
+ * // Result: 60 (on 0-100 scale for stealth)
  * ```
  */

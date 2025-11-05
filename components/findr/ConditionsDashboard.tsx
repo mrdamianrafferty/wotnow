@@ -530,7 +530,12 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
           data.rectangle.centerLat,
           data.rectangle.centerLon,
           environmentalSignals.cloudCover ?? null,
-          marine.waterClarityIndex ?? null
+          // TODO: Replace chlorophyll proxy with real kd490 from satellite optical datasets
+          // NOTE: kd490 requires separate satellite data fetch (different time lag than model data)
+          // See: lib/copernicus/regionRouterV2.ts for clarity dataset IDs
+          // Use kd490-based clarity index if available, otherwise use chlorophyll as proxy
+          marine.waterClarityIndex ??
+            (chlorophyllMgM3 != null ? Math.round((1 - Math.min(chlorophyllMgM3, 3.0) / 3.0) * 100) : null)
         ),
         // New indicators - use raw data for calculations
         mixedLayerDepth: marine.mixedLayerDepth ?? null,
