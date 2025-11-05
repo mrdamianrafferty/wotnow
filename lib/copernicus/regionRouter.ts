@@ -18,32 +18,16 @@ export interface CopernicusDatasetConfig {
 /**
  * Get dataset configuration directly from CMEMS region code (IBI, NWS, BAL, MED, BLK, ARC, GLO)
  * This is the preferred method when rectangles are pre-mapped to CMEMS regions
- * 
- * NOTE: Currently using GLO (Global Ocean) datasets for all regions as a pragmatic approach.
- * Regional models have complex split-dataset structures that require significant refactoring.
- * GLO provides 9km resolution globally with 100% coverage - good enough for fishing predictions.
- * Regional optimization can be added later as an enhancement.
+ *
+ * DECISION (2025-01-05): Switched from GLO to regional products after GLO showed 0% success rate
+ * for coastal rectangles. See docs/COPERNICUS_GLO_TO_REGIONAL_DECISION.md for rationale.
+ * Regional products provide better resolution (2-4.5x) and coastal coverage.
  */
 export function getDatasetForCmemsRegion(cmemsRegion: string): CopernicusDatasetConfig | null {
-  // Use Global Ocean datasets for all regions (pragmatic approach)
-  // Regional models require handling split datasets (MED, GLO) or don't exist (NWS)
   const region = cmemsRegion.toUpperCase();
 
-  // IMPORTANT: Global Ocean physics data is split into separate variable-specific datasets
-  // - Temperature: cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m (contains only 'thetao')
-  // - Salinity: cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m (contains only 'so')
-  // - Multi-variable: cmems_mod_glo_phy_anfc_0.083deg_P1D-m (contains surface/ice vars, NOT temp/salinity)
-  return {
-    physics: 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m', // Temperature dataset
-    salinity: 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m', // Salinity dataset (split from physics)
-    biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m',
-    waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
-    region: `Global Ocean (${region})`,
-    coverage: 'GLOBAL_ANALYSIS_FORECAST',
-  };
-  
-  /* Original regional routing - commented out for now
-  switch (cmemsRegion.toUpperCase()) {
+  // Use regional datasets for better coastal coverage and resolution
+  switch (region) {
     case 'BAL':
       return {
         physics: 'cmems_mod_bal_phy_anfc_P1D-m',
@@ -77,33 +61,36 @@ export function getDatasetForCmemsRegion(cmemsRegion: string): CopernicusDataset
         coverage: 'IBI_ANALYSIS_FORECAST',
       };
     case 'NWS':
+      // NWS has no analysis/forecast product, use GLO with split datasets
       return {
-        physics: 'cmems_mod_glo_phy_anfc_0.083deg_P1D-m', // NWS has no analysis/forecast product, use GLO
-        biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m', // NWS has no analysis/forecast product, use GLO
-        waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i', // NWS has no analysis/forecast product, use GLO
+        physics: 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m', // Temperature dataset
+        salinity: 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m', // Salinity dataset (split from physics)
+        biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m',
+        waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
         region: 'Northwest European Shelf',
         coverage: 'GLOBAL_ANALYSIS_FORECAST', // Using GLO fallback
       };
     case 'ARC':
       return {
-        physics: 'cmems_mod_arc_phy_anfc_6km_detided_P1D-m', // Fixed: was 3km, now 6km_detided
-        biogeochemistry: 'cmems_mod_arc_bgc_anfc_ecosmo_P1D-m', // Fixed: was 3km, now ecosmo
+        physics: 'cmems_mod_arc_phy_anfc_6km_detided_P1D-m',
+        biogeochemistry: 'cmems_mod_arc_bgc_anfc_ecosmo_P1D-m',
         waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i', // Arctic has no wave product, use GLO
         region: 'Arctic',
         coverage: 'ARCTIC_ANALYSIS_FORECAST',
       };
     case 'GLO':
+      // Global Ocean uses split datasets for temperature and salinity
       return {
-        physics: 'cmems_mod_glo_phy_anfc_0.083deg_P1D-m',
-        biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m', // Fixed: added -bio suffix
-        waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i', // Fixed: was 0.2deg, now 0.083deg
+        physics: 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m', // Temperature dataset
+        salinity: 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m', // Salinity dataset (split from physics)
+        biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m',
+        waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
         region: 'Global Ocean',
         coverage: 'GLOBAL_ANALYSIS_FORECAST',
       };
     default:
       return null;
   }
-  */
 }
 
 /**

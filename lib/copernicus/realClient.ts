@@ -99,7 +99,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
 
       // Try salinity with progressive padding (use same padding that worked for temperature)
       if (temperatureData) {
-        const successfulPadding = paddings.find(p => temperatureData !== null) || paddings[0];
+        const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
         try {
           const salinityFile = path.join(tempDir, `salinity_${successfulPadding}.nc`);
           await this.fetchDatasetWithPadding(
@@ -116,7 +116,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           if (salinityData && this.hasValidData(salinityData)) {
             console.log(`   ✅ Salinity data found with ${successfulPadding}° padding`);
           }
-        } catch (err) {
+        } catch (_err) {
           console.warn(`   ⚠️  No salinity data available`);
         }
       }
