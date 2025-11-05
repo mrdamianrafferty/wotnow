@@ -87,8 +87,9 @@ This section summarises Findr-specific schema. Cross-check against migrations in
 
 | Function | Notes |
 | --- | --- |
-| `get_fishing_predictions(rectangle_code_input text, prediction_date_input date, user_language text)` | Canonical RPC returning deck predictions, called by `/api/findr/predictions`. Typed table-returning version remains; JSON stub removed in `202509300002_remove_stub_get_fishing_predictions.sql` to avoid PostgREST conflicts. |
-| `get_monthly_abundance_json(...)` | Diagnostic helper introduced in same migration for quick JSON view of monthly abundance (not used by app). |
+| `get_environmental_predictions_enhanced(...)` | **CURRENT PRODUCTION RPC**: Returns species predictions with environmental scoring (temperature, BGC bands, substrate, depth, light, lunar, weather, pressure trends). Called by `/api/findr/predictions`. Parameters: `target_rectangle`, `target_date`, `user_lat`, `user_lon`, `substrate_type`, `depth_meters`, `current_wind_speed_ms`, `current_pressure_hpa`. Migration: `20251022191500_fix_enhanced_recent_conditions.sql`. Queries `findr_conditions_latest` view. |
+| `get_fishing_predictions(rectangle_code_input text, prediction_date_input date, user_language text)` | **LEGACY**: Old RPC for basic predictions. Replaced by `get_environmental_predictions_enhanced`. Typed table-returning version; JSON stub removed in `202509300002_remove_stub_get_fishing_predictions.sql`. |
+| `get_monthly_abundance_json(...)` | Diagnostic helper for quick JSON view of monthly abundance (not used by app). |
 
 ---
 
@@ -98,27 +99,30 @@ This section summarises Findr-specific schema. Cross-check against migrations in
 
 | Script | Description | Credentials |
 | --- | --- | --- |
-| `scripts/ingestFindrConditions.ts` | Hydrates `findr_conditions_snapshots` by probing MET Norway, Open-Meteo, and Stormglass. Supports env toggles (`FINDR_CONDITIONS_LIMIT`, `FINDR_MET_ONLY`, etc.). See `docs/FINDR_CONDITIONS_INGESTION.md` for full playbook. | Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, Stormglass key optional but recommended. |
-| `scripts/ingestFindrConditionsBatched.ts` | Batch variant for long-running schedules, respects batch size/interval envs. | Same as above. |
+| `scripts/ingest-copernicus-data.ts` | **PRIMARY INGESTION**: Hydrates `findr_conditions_snapshots` using Copernicus Marine Service (CMEMS). Fetches temperature (16 depths), salinity (16 depths), BGC data (2-14 variables), waves, and currents for 104 coastal rectangles. Supports `FINDR_CONDITIONS_LIMIT` for testing. See `docs/COPERNICUS_DATA_INGESTION_GUIDE.md` and `docs/COPERNICUS_BGC_FIX_COMPLETE.md` for details. | Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COPERNICUS_USERNAME`, `COPERNICUS_PASSWORD`. |
+| `scripts/ingestFindrConditions.ts` | **LEGACY**: Old weather-based ingestion using MET Norway, Open-Meteo, and Stormglass. Replaced by Copernicus ingestion but kept for reference. | Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, optional Stormglass key. |
 | `scripts/seedFindrConditionsSnapshot.ts` | Seeds fallback snapshot payloads for local/dev testing. | Needs Supabase service key. |
 | `scripts/seedFindrRectangles.ts` | Seeds `findr_rectangles` from `lib/findr/fallbackRectangles.ts`. | Service role key. |
 | `scripts/uploadMonthlyAbundance.ts` | Loads DATRAS JSON dumps into `species_monthly_abundance`. | Service role key. |
 | `scripts/env-sync.ts` | Syncs env variables across `.env` files (handy for Supabase creds). |
 
 ### Scheduled workflows (GitHub Actions)
-From `docs/FINDR_CONDITIONS_INGESTION.md`:
+
+**Current Production Workflow:**
 
 | Workflow | Cron | Command | Purpose |
 | --- | --- | --- | --- |
-| `FINDR MET Norway ingestion (4x daily)` | `0 */6 * * *` | `FINDR_MET_ONLY=1 FINDR_MET_SIMPLE_PROBES=1 npx tsx scripts/ingestFindrConditions.ts` | High-frequency MET refresh without fallbacks. |
-| `FINDR Open-Meteo ingestion (daily)` | `30 2 * * *` | `FINDR_MET_SIMPLE_PROBES=1 npx tsx scripts/ingestFindrConditions.ts` | Daily run allowing Open-Meteo fallback (no Stormglass). |
-| Optional Stormglass run | On-demand or separate cron | Provide `STORMGLASS_SECRET_KEY` | Fill metrics when MET + Open-Meteo fail. |
+| `FINDR Copernicus ingestion (twice daily)` | `0 3,15 * * *` | `npx tsx scripts/ingest-copernicus-data.ts` | Twice daily at 3 AM and 3 PM UTC. Ingests real CMEMS data for 104 coastal rectangles. ~64 minutes per run. See `.github/workflows/findr-copernicus-ingest.yml`. |
+
+**Legacy Workflows (Archived):**
+- MET Norway ingestion (4x daily) - Replaced by Copernicus
+- Open-Meteo ingestion (daily) - Replaced by Copernicus
 
 ### Data flow highlights
-1. `ingestFindrConditions.ts` reads rectangles (Supabase → fallback list). Nudges coordinates, fetches marine metrics, upserts snapshots.
-2. View `findr_conditions_latest` surfaces most recent snapshot; Next.js API returns fallback if missing.
-3. `uploadMonthlyAbundance.ts` populates DATRAS monthly data -> view pipeline -> exposed via `species_frequency_with_datras` for future UI use.
-4. Prediction RPC `get_fishing_predictions` composes weekly deck + JSON helpers; API caches responses in `findr_prediction_sessions` to prevent repeated RPC hits.
+1. **Copernicus Ingestion**: `ingest-copernicus-data.ts` queries 104 coastal rectangles from `ices_rectangles` (where `is_coastal_fishing_zone = true`). Uses real CMEMS API via `lib/copernicus/realClient.ts` with regional dataset routing (`lib/copernicus/regionRouter.ts`). Fetches temperature, salinity, BGC, waves, and currents. Upserts to `findr_conditions_snapshots`.
+2. **Data Access**: View `findr_conditions_latest` (DISTINCT ON rectangle_code, ORDER BY captured_at DESC) surfaces most recent snapshot per rectangle. Next.js API returns fallback if missing.
+3. **DATRAS Pipeline**: `uploadMonthlyAbundance.ts` populates DATRAS monthly data → view pipeline → exposed via `species_frequency_with_datras` for future UI use.
+4. **Predictions**: RPC `get_environmental_predictions_enhanced` queries `findr_conditions_latest` to score species by environmental matching. API caches responses in `findr_prediction_sessions` (3-hour TTL) to prevent repeated RPC hits.
 
 ---
 
@@ -161,7 +165,7 @@ From `docs/FINDR_CONDITIONS_INGESTION.md`:
 
 | Route | Method | Description | Supabase touchpoints |
 | --- | --- | --- | --- |
-| `/api/findr/predictions` | POST | Validates rectangle + date, reads cache (`findr_prediction_sessions`), falls back to Supabase REST RPC `get_fishing_predictions`. Augments with localized names from `species` table. | Uses service client via server-side; writes cache entries with TTL; warns if schema missing. |
+| `/api/findr/predictions` | POST | Validates rectangle + date, reads cache (`findr_prediction_sessions`), calls RPC functions in cascade: (1) `get_global_fishing_predictions` (global grid-based), (2) `get_fishing_predictions_v2` (region-aware Americas), (3) `get_environmental_predictions_enhanced` (ICES rectangle-based Europe). Augments with localized names from `species` table and applies seasonality multipliers. | Uses service client via server-side; fetches EMODnet bathymetry/substrate, MET Norway weather, tide data in parallel; writes cache entries with TTL; warns if schema missing. |
 | `/api/findr/conditions` | GET | Normalizes rectangle code, loads metadata from `findr_rectangles` or `ices_rectangles`, queries `findr_conditions_latest`, returns fallback payload if missing. | Accesses Supabase view; logs when falling back; respects `x-findr-conditions-source` header. |
 | `/api/findr/favourites-insights` | POST | Batch loads `findr_favourite_stats` rows for given species IDs. | Returns fallback on table missing/ errors. |
 | `/api/findr/rectangles` | GET | Attempts `findr_rectangles` (prefers coastal) then `ices_rectangles`, returning sorted options; handles missing tables gracefully. |
