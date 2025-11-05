@@ -1957,5 +1957,23 @@ abbr[title] {
 .modal .modal-box[data-theme="light"] .bg-base-300 {
   background-color: oklch(var(--b1)) !important;
 }
+
+/* --- PWA Safe Area Insets (for devices with notches/home indicators) --- */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
 /* Compact DaisyUI overrides (mobile) — must load last to win the cascade */
 @import "./compact.css";
