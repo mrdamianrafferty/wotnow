@@ -89,7 +89,7 @@ function selectSurfaceValue(records: CopernicusTimeseriesRecord[] | undefined, k
 
 export function toCopernicusMarineSnapshots(bundle: CopernicusMarineBundle): CopernicusMarineSnapshot[] {
   const physicsByTime = groupByTime(bundle.physics.records);
-  const bioByTime = groupByTime(bundle.biogeochemical.records);
+  const bioByTime = bundle.biogeochemical ? groupByTime(bundle.biogeochemical.records) : new Map<string, CopernicusTimeseriesRecord[]>();
   const waveByTime = bundle.waves ? groupByTime(bundle.waves.records) : new Map<string, CopernicusTimeseriesRecord[]>();
 
   const uniqueTimes = new Set<string>([
@@ -158,7 +158,7 @@ export function toCopernicusMarineSnapshots(bundle: CopernicusMarineBundle): Cop
 
 export function toCopernicusMarineData(bundle: CopernicusMarineBundle): CopernicusMarineData {
   const snapshots = toCopernicusMarineSnapshots(bundle);
-  const refRecord = bundle.physics.records[0] ?? bundle.biogeochemical.records[0];
+  const refRecord = bundle.physics.records[0] ?? bundle.biogeochemical?.records[0];
 
   return {
     location: {
@@ -167,7 +167,7 @@ export function toCopernicusMarineData(bundle: CopernicusMarineBundle): Copernic
     },
     snapshots,
     metadata: {
-      datasets: [bundle.physics.datasetId, bundle.biogeochemical.datasetId, bundle.waves?.datasetId].filter(Boolean) as string[],
+      datasets: [bundle.physics.datasetId, bundle.biogeochemical?.datasetId, bundle.waves?.datasetId].filter(Boolean) as string[],
       source: bundle.physics.source,
       generatedAt: bundle.generatedAt,
     },
