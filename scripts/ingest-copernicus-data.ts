@@ -302,16 +302,16 @@ async function main() {
     console.log('✅ Using REAL Copernicus Marine Service API\n');
   }
   
-  // Fetch rectangles within 30km of shore (optimized strategy)
-  // Focuses on fishing-relevant areas, eliminates known problem rectangles
-  // Expected: 224 rectangles with 97-99% success rate
-  console.log('📥 Fetching ICES rectangles (≤30km from shore)...');
-  
-  // Fetch all coastal rectangles (we removed offshore rectangles >50km)
+  // Fetch only coastal fishing zones (<10km from shore)
+  // Optimized strategy: focus on core recreational fishing areas
+  // Expected: 104 rectangles (46% of full set, 54% reduction in API calls)
+  console.log('📥 Fetching ICES rectangles (coastal fishing zones <10km)...');
+
+  // Fetch only rectangles marked as coastal fishing zones
   const { data: rectangles, error } = await supabase
     .from('ices_rectangles')
-    .select('rectangle_code, center_lat, center_lon, region, cmems_region, distance_to_shore_km, is_coastal')
-    .lte('distance_to_shore_km', 30)
+    .select('rectangle_code, center_lat, center_lon, region, cmems_region, distance_to_shore_km, is_coastal, is_coastal_fishing_zone')
+    .eq('is_coastal_fishing_zone', true)
     .order('rectangle_code');
   
 
