@@ -252,107 +252,111 @@ export function TrophyPhotoCarousel({
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-3">
-            <Camera className="w-5 h-5" />
-            <h2 className="text-lg font-semibold">
+            <Camera className="w-8 h-8" />
+            <h2 className="text-xl font-semibold">
               <TranslatedText text={title} />
             </h2>
-            <span className="text-sm opacity-70">
+            <span className="text-lg opacity-80">
               {currentIndex + 1} / {photos.length}
             </span>
           </div>
-          
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* Zoom Controls */}
             {allowZoom && (
               <>
                 <button
                   onClick={zoomOut}
-                  className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
+                  className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
                   disabled={zoomLevel <= 0.5}
                   title="Zoom Out (-)"
                 >
-                  <ZoomOut className="w-4 h-4" />
+                  <ZoomOut className="w-8 h-8" />
                 </button>
-                <span className="text-sm opacity-70 min-w-[3rem] text-center">
+                <span className="text-lg opacity-80 min-w-[3rem] text-center">
                   {Math.round(zoomLevel * 100)}%
                 </span>
                 <button
                   onClick={zoomIn}
-                  className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
+                  className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
                   disabled={zoomLevel >= 3}
                   title="Zoom In (+)"
                 >
-                  <ZoomIn className="w-4 h-4" />
+                  <ZoomIn className="w-8 h-8" />
                 </button>
               </>
             )}
-            
             {/* Fullscreen Toggle */}
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
+              className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
               title="Toggle Fullscreen (F)"
             >
-              <Maximize2 className="w-4 h-4" />
+              <Maximize2 className="w-8 h-8" />
             </button>
-            
             {/* Download */}
             {allowDownload && (
               <button
                 onClick={downloadImage}
-                className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
+                className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
                 title="Download"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-8 h-8" />
               </button>
             )}
-            
             {/* Share */}
             {allowShare && (
               <button
                 onClick={shareImage}
-                className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
+                className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
                 title="Share"
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-8 h-8" />
               </button>
             )}
-            
-            {/* Close */}
-            <button
-              onClick={onClose}
-              className="btn btn-ghost btn-sm btn-circle text-white hover:bg-white/20"
-              title="Close (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>
+
+      {/* Large Close Button (always visible, top-right) */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-50 btn btn-ghost btn-lg btn-circle bg-black/70 text-white hover:bg-white/20 min-w-[56px] min-h-[56px] shadow-xl"
+        title="Close (Esc)"
+        aria-label="Close full screen photo"
+      >
+        <X className="w-10 h-10" />
+      </button>
       
       {/* Main Image Area */}
       <div 
         ref={containerRef}
         className={`relative flex-1 flex items-center justify-center ${isFullscreen ? 'p-0' : 'p-16'}`}
+        onClick={e => {
+          // Only close if clicking outside the image area (mobile-friendly)
+          if (e.target === containerRef.current) {
+            onClose();
+          }
+        }}
+        style={{ touchAction: 'manipulation' }}
       >
-        
         {/* Navigation Arrows */}
         {photos.length > 1 && (
           <>
             <button
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg bg-black/50 border-white/20 text-white hover:bg-black/70"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 btn btn-circle btn-lg bg-black/70 border-white/30 text-white hover:bg-black/80 min-w-[56px] min-h-[56px] shadow-xl"
               title="Previous (←)"
+              aria-label="Previous photo"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-10 h-10" />
             </button>
-            
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 btn btn-circle btn-lg bg-black/50 border-white/20 text-white hover:bg-black/70"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 btn btn-circle btn-lg bg-black/70 border-white/30 text-white hover:bg-black/80 min-w-[56px] min-h-[56px] shadow-xl"
               title="Next (→)"
+              aria-label="Next photo"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-10 h-10" />
             </button>
           </>
         )}
