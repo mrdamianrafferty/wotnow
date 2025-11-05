@@ -35,7 +35,7 @@ export default function FindrUserMenu() {
 
   // Get avatar URL from OAuth provider (Google/Apple)
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
-  const hasAvatar = !!avatarUrl;
+  const hasAvatar = typeof avatarUrl === 'string' && avatarUrl.trim() !== '' && /^https?:\/\//.test(avatarUrl);
 
   if (loading) {
     return (
