@@ -195,30 +195,35 @@ export class RealCopernicusProvider implements CopernicusProvider {
     const startDate = start.split('T')[0];
     const endDate = end.split('T')[0];
 
-    // Build the CLI command
-    const cmdParts = [
-      this.cliPath,
+    // Build the CLI command with proper quoting
+    // Each argument must be a separate element for proper shell escaping
+    const cmdArgs = [
       'subset',
-      `--dataset-id ${datasetId}`,
+      '--dataset-id', datasetId,
     ];
-    
+
     // Only add variable flags if variables are specified
     if (variables.length > 0) {
-      variables.forEach(v => cmdParts.push(`--variable ${v}`));
+      variables.forEach(v => {
+        cmdArgs.push('--variable', v);
+      });
     }
-    
-    cmdParts.push(
-      `--minimum-longitude ${lonMin}`,
-      `--maximum-longitude ${lonMax}`,
-      `--minimum-latitude ${latMin}`,
-      `--maximum-latitude ${latMax}`,
-      `--start-datetime ${startDate}`,
-      `--end-datetime ${endDate}`,
-      `--output-filename ${outputFile}`,
+
+    cmdArgs.push(
+      '--minimum-longitude', lonMin.toString(),
+      '--maximum-longitude', lonMax.toString(),
+      '--minimum-latitude', latMin.toString(),
+      '--maximum-latitude', latMax.toString(),
+      '--start-datetime', startDate,
+      '--end-datetime', endDate,
+      '--output-filename', outputFile,
       '--overwrite'
     );
-    
-    const cmd = cmdParts.join(' ');
+
+    // Build command string with proper quoting for shell
+    const cmd = `${this.cliPath} ${cmdArgs.map(arg =>
+      arg.toString().includes(' ') ? `"${arg}"` : arg
+    ).join(' ')}`;
 
     const { stderr } = await execAsync(cmd, {
       timeout: 60000, // 60 second timeout to prevent indefinite hangs

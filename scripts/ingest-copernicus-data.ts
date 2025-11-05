@@ -134,9 +134,9 @@ async function fetchCopernicusData(
       const provider = new RealCopernicusProvider(cmemsRegion);
       
       // Use yesterday's date - forecast data for "today" may not be available yet
-      // Copernicus typically has a 1-2 day lag
+      // Copernicus ANFC (Analysis/Forecast) products typically have 1 day lag
       const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 2); // Use 2 days ago to be safe
+      yesterday.setDate(yesterday.getDate() - 1); // Use 1 day ago for ANFC products
       
       const bundle = await provider.fetchBundle({
         lat,
