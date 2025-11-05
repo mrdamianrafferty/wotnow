@@ -52,24 +52,27 @@ export class RealCopernicusProvider implements CopernicusProvider {
       console.log(`   🌊 Fetching Copernicus data for (${lat}, ${lon})...`);
       
       // Use regional datasets if configured, otherwise fall back to global
-      const physicsDataset = this.datasetConfig?.physics || 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m';
+      // Note: Global Ocean physics data is split into variable-specific datasets (temperature and salinity separate)
+      const temperatureDataset = this.datasetConfig?.physics || 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m';
+      const salinityDataset = this.datasetConfig?.salinity || 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m';
       const bioDataset = this.datasetConfig?.biogeochemistry || 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m';
       const waveDataset = this.datasetConfig?.waves || 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i';
-      
+
       // Progressive padding strategy for coastal locations
       // OPTIMIZED: Only try 2 padding values to reduce API calls from 10 to 5 per rectangle
       // This cuts ingestion time roughly in half (from 90+ minutes to ~45 minutes for 224 rectangles)
       const paddings = [0.25, 1.0]; // degrees (~28km, 111km) - skip 0.1° and 0.5° for speed
-      let physicsData: CopernicusTimeseries | null = null;
+      let temperatureData: CopernicusTimeseries | null = null;
+      let salinityData: CopernicusTimeseries | null = null;
       let bioData: CopernicusTimeseries | null = null;
       let waveData: CopernicusTimeseries | undefined;
 
-      // Try physics with progressive padding
+      // Try temperature with progressive padding
       for (const padding of paddings) {
         try {
           const thetaoFile = path.join(tempDir, `thetao_${padding}.nc`);
           await this.fetchDatasetWithPadding(
-            physicsDataset,
+            temperatureDataset,
             [],
             lat,
             lon,
@@ -78,19 +81,43 @@ export class RealCopernicusProvider implements CopernicusProvider {
             thetaoFile,
             padding
           );
-          physicsData = await this.parseNetCDF(thetaoFile, 'physics');
-          if (physicsData && this.hasValidData(physicsData)) {
-            console.log(`   ✅ Physics data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
+          temperatureData = await this.parseNetCDF(thetaoFile, 'physics');
+          if (temperatureData && this.hasValidData(temperatureData)) {
+            console.log(`   ✅ Temperature data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
             break;
           }
         } catch (err) {
           const isTimeout = err instanceof Error && err.message.includes('timeout');
           const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
           if (padding === paddings[paddings.length - 1]) {
-            console.warn(`   ⚠️  No physics data available after trying all paddings (last attempt: ${errorType})`);
+            console.warn(`   ⚠️  No temperature data available after trying all paddings (last attempt: ${errorType})`);
           } else if (isTimeout) {
             console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
           }
+        }
+      }
+
+      // Try salinity with progressive padding (use same padding that worked for temperature)
+      if (temperatureData) {
+        const successfulPadding = paddings.find(p => temperatureData !== null) || paddings[0];
+        try {
+          const salinityFile = path.join(tempDir, `salinity_${successfulPadding}.nc`);
+          await this.fetchDatasetWithPadding(
+            salinityDataset,
+            [],
+            lat,
+            lon,
+            start,
+            end,
+            salinityFile,
+            successfulPadding
+          );
+          salinityData = await this.parseNetCDF(salinityFile, 'physics');
+          if (salinityData && this.hasValidData(salinityData)) {
+            console.log(`   ✅ Salinity data found with ${successfulPadding}° padding`);
+          }
+        } catch (err) {
+          console.warn(`   ⚠️  No salinity data available`);
         }
       }
 
@@ -148,12 +175,28 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
+      // Merge temperature and salinity data into single physics timeseries
+      let physicsData: CopernicusTimeseries | null = null;
+      if (temperatureData) {
+        physicsData = temperatureData;
+        // Merge salinity variables into the temperature records
+        if (salinityData && salinityData.records.length > 0) {
+          physicsData.variables = [...physicsData.variables, ...salinityData.variables];
+          // Merge variable data for each record
+          physicsData.records.forEach((record, idx) => {
+            if (salinityData.records[idx]) {
+              record.variables = { ...record.variables, ...salinityData.records[idx].variables };
+            }
+          });
+        }
+      }
+
       if (!physicsData || !bioData) {
         throw new Error('No valid physics or biogeochemical data found');
       }
 
       return {
-        physics: physicsData!,
+        physics: physicsData,
         biogeochemical: bioData!,
         waves: waveData,
         generatedAt: new Date().toISOString(),

@@ -28,9 +28,14 @@ export function getDatasetForCmemsRegion(cmemsRegion: string): CopernicusDataset
   // Use Global Ocean datasets for all regions (pragmatic approach)
   // Regional models require handling split datasets (MED, GLO) or don't exist (NWS)
   const region = cmemsRegion.toUpperCase();
-  
+
+  // IMPORTANT: Global Ocean physics data is split into separate variable-specific datasets
+  // - Temperature: cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m (contains only 'thetao')
+  // - Salinity: cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m (contains only 'so')
+  // - Multi-variable: cmems_mod_glo_phy_anfc_0.083deg_P1D-m (contains surface/ice vars, NOT temp/salinity)
   return {
-    physics: 'cmems_mod_glo_phy_anfc_0.083deg_P1D-m',
+    physics: 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m', // Temperature dataset
+    salinity: 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m', // Salinity dataset (split from physics)
     biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m',
     waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
     region: `Global Ocean (${region})`,
