@@ -146,7 +146,7 @@ export const takePicture = async (options: CameraOptions = {}): Promise<Photo> =
             };
 
             reader.readAsDataURL(file);
-          } catch (error) {
+          } catch (_error) {
             reject(new CameraException('UNKNOWN', 'Failed to process file'));
             document.body.removeChild(input);
           }
@@ -257,7 +257,7 @@ export const selectFromGallery = async (options: CameraOptions = {}): Promise<Ph
             };
 
             reader.readAsDataURL(file);
-          } catch (error) {
+          } catch (_error) {
             reject(new CameraException('UNKNOWN', 'Failed to process file'));
             document.body.removeChild(input);
           }
