@@ -59,9 +59,9 @@ export class RealCopernicusProvider implements CopernicusProvider {
       const waveDataset = this.datasetConfig?.waves || 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i';
 
       // Progressive padding strategy for coastal locations
-      // OPTIMIZED: Only try 2 padding values to reduce API calls from 10 to 5 per rectangle
-      // This cuts ingestion time roughly in half (from 90+ minutes to ~45 minutes for 224 rectangles)
-      const paddings = [0.25, 1.0]; // degrees (~28km, 111km) - skip 0.1° and 0.5° for speed
+      // OPTIMIZED: Only try 1 padding value for probe, rely on global fallback
+      // This reduces timeouts and improves reliability
+      const paddings = [0.25]; // degrees (~28km) - single attempt before global fallback
       let temperatureData: CopernicusTimeseries | null = null;
       let salinityData: CopernicusTimeseries | null = null;
       let bioData: CopernicusTimeseries | null = null;
@@ -73,7 +73,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           const thetaoFile = path.join(tempDir, `thetao_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             temperatureDataset,
-            [],
+            ['thetao'],  // Explicitly request temperature variable
             lat,
             lon,
             start,
@@ -104,7 +104,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           const salinityFile = path.join(tempDir, `salinity_${successfulPadding}.nc`);
           await this.fetchDatasetWithPadding(
             salinityDataset,
-            [],
+            ['so'],  // Explicitly request salinity variable
             lat,
             lon,
             start,
@@ -127,7 +127,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           const bioFile = path.join(tempDir, `bio_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             bioDataset,
-            [],
+            ['phyc', 'zooc', 'nppv'],  // Request key biogeochemical variables
             lat,
             lon,
             start,
@@ -157,7 +157,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           const waveFile = path.join(tempDir, `waves_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             waveDataset,
-            [],
+            ['VHM0', 'VMDR', 'VTM02'],  // Request key wave variables
             lat,
             lon,
             start,
@@ -191,13 +191,14 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
-      if (!physicsData || !bioData) {
-        throw new Error('No valid physics or biogeochemical data found');
+      // Physics data is required, but BGC is optional
+      if (!physicsData) {
+        throw new Error('No valid physics data found');
       }
 
       return {
         physics: physicsData,
-        biogeochemical: bioData!,
+        biogeochemical: bioData || undefined,  // BGC is optional
         waves: waveData,
         generatedAt: new Date().toISOString(),
       };
@@ -268,17 +269,30 @@ export class RealCopernicusProvider implements CopernicusProvider {
       arg.toString().includes(' ') ? `"${arg}"` : arg
     ).join(' ')}`;
 
-    const { stderr } = await execAsync(cmd, {
-      timeout: 60000, // 60 second timeout to prevent indefinite hangs
+    // Use shorter timeout for probes (15s) to fail fast and try global fallback
+    // Only use longer timeout if we know data exists
+    const isProbe = padding <= 0.25;
+    const timeoutMs = isProbe ? 15000 : 45000; // 15s for probe, 45s for confirmed downloads
+
+    const { stdout, stderr } = await execAsync(cmd, {
+      timeout: timeoutMs,
       killSignal: 'SIGTERM', // Graceful termination
       env: {
         ...process.env,
         PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
+        // Pass Copernicus credentials to CLI (using new naming convention)
+        COPERNICUSMARINE_SERVICE_USERNAME: process.env.COPERNICUS_USERNAME,
+        COPERNICUSMARINE_SERVICE_PASSWORD: process.env.COPERNICUS_PASSWORD,
       },
     });
 
-    if (stderr && !stderr.includes('INFO')) {
+    if (stderr && !stderr.includes('INFO') && !stderr.includes('Fetching')) {
+      console.error(`   ⚠️  CLI stderr: ${stderr.substring(0, 200)}`);
       throw new Error(stderr);
+    }
+
+    if (stdout) {
+      console.log(`   ℹ️  CLI stdout: ${stdout.substring(0, 100)}`);
     }
   }
 
@@ -294,10 +308,10 @@ import sys
 
 try:
     ds = xr.open_dataset('${filePath}')
-    
+
     # Extract all variables
     records = []
-    
+
     # Get dimensions
     times = ds.time.values if 'time' in ds.dims else []
     depths = ds.depth.values if 'depth' in ds.dims else [0]
@@ -325,13 +339,16 @@ try:
                     else:
                         val = ds[var].isel(time=time_idx).values
                     
-                    # Handle various array shapes
-                    if hasattr(val, 'item'):
+                    # Handle various array shapes - spatial grids need aggregation
+                    if hasattr(val, 'shape') and len(val.shape) >= 2:
+                        # Spatial grid (lat x lon) - take mean of non-NaN values
+                        val = np.nanmean(val)
+                    elif hasattr(val, 'item'):
                         val = val.item()
                     elif hasattr(val, '__len__') and len(val) > 0:
-                        val = float(val[0]) if len(val.shape) == 1 else float(val[0, 0])
-                    
-                    # Check for NaN
+                        val = float(val[0])
+
+                    # Check for NaN (nanmean can still return NaN if all values are NaN)
                     if not np.isnan(val):
                         variables[var] = float(val)
                 except Exception as e:
@@ -368,15 +385,31 @@ except Exception as e:
         env: {
           ...process.env,
           PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
+          // Pass Copernicus credentials to CLI (using new naming convention)
+          COPERNICUSMARINE_SERVICE_USERNAME: process.env.COPERNICUS_USERNAME,
+          COPERNICUSMARINE_SERVICE_PASSWORD: process.env.COPERNICUS_PASSWORD,
         },
       });
 
-      if (stderr) {
-        const errorData = JSON.parse(stderr);
-        throw new Error(`Failed to parse NetCDF: ${errorData.error}`);
+      // Only treat stderr as error if it contains actual error JSON
+      // RuntimeWarnings from numpy (e.g., "Mean of empty slice") are normal and should be ignored
+      if (stderr && stderr.includes('"error"')) {
+        try {
+          const errorData = JSON.parse(stderr);
+          if (errorData.error) {
+            throw new Error(`Failed to parse NetCDF: ${errorData.error}`);
+          }
+        } catch (parseErr) {
+          // If we can't parse as JSON, it's probably just warnings - ignore
+        }
+      }
+
+      if (!stdout || stdout.trim() === '') {
+        throw new Error('Parser returned no output');
       }
 
       const result = JSON.parse(stdout);
+      console.log(`   ℹ️  Parsed ${result.records?.length || 0} records with ${result.variables?.length || 0} variables`);
       return result as CopernicusTimeseries;
     } finally {
       fs.unlinkSync(pythonFile);

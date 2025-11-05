@@ -70,9 +70,20 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// TODO: Replace with real Copernicus client when credentials are available
-// For now, use mock data to test the ingestion pipeline
+// Use real Copernicus client when credentials are available
 const USE_MOCK = !process.env.COPERNICUS_USERNAME || !process.env.COPERNICUS_PASSWORD;
+
+// Provider cache: reuse a single client per basin to avoid re-authentication
+const providerCache = new Map<string, RealCopernicusProvider>();
+
+function getProvider(region?: string): RealCopernicusProvider {
+  const key = region || 'GLOBAL';
+  if (!providerCache.has(key)) {
+    console.log(`   🔧 Creating new provider for region: ${key}`);
+    providerCache.set(key, new RealCopernicusProvider(region));
+  }
+  return providerCache.get(key)!;
+}
 
 interface Rectangle {
   rectangle_code: string;
@@ -126,53 +137,78 @@ async function fetchCopernicusData(
         start: now.toISOString(),
         end: now.toISOString(),
       });
-      
+
       const marineData = toCopernicusMarineData(bundle);
       return marineData.snapshots[0] ?? null;
     } else {
-      // Use real Copernicus Marine Service with CMEMS region routing
-      const provider = new RealCopernicusProvider(cmemsRegion);
-      
-      // Use yesterday's date - forecast data for "today" may not be available yet
-      // Copernicus ANFC (Analysis/Forecast) products typically have 1 day lag
+      // Use yesterday's date for ANFC data (current day minus 1)
+      // ANFC products provide analysis/forecast data with ~1 day lag
       const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1); // Use 1 day ago for ANFC products
-      
-      const bundle = await provider.fetchBundle({
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      // Try regional provider first if a region is specified
+      if (cmemsRegion) {
+        try {
+          console.log(`   📍 Trying ${cmemsRegion} regional model...`);
+          const provider = getProvider(cmemsRegion);
+          const bundle = await provider.fetchBundle({
+            lat,
+            lon,
+            start: yesterday.toISOString(),
+            end: yesterday.toISOString(),
+          });
+
+          const marineData = toCopernicusMarineData(bundle);
+          const snapshot = marineData.snapshots[0];
+
+          if (snapshot && hasValidSnapshot(snapshot)) {
+            console.log(`   ✅ Got data from ${cmemsRegion} regional model`);
+            return snapshot;
+          }
+
+          console.warn(`   ⚠️  ${cmemsRegion} returned no valid data, falling back to GLOBAL`);
+        } catch (err) {
+          console.warn(`   ⚠️  ${cmemsRegion} failed, falling back to GLOBAL:`, err instanceof Error ? err.message : String(err));
+        }
+      }
+
+      // Fallback to GLOBAL if regional failed or wasn't specified
+      console.log(`   🌍 Trying GLOBAL model...`);
+      const globalProvider = getProvider(undefined);
+      const bundle = await globalProvider.fetchBundle({
         lat,
         lon,
         start: yesterday.toISOString(),
         end: yesterday.toISOString(),
       });
-      
+
       const marineData = toCopernicusMarineData(bundle);
       const snapshot = marineData.snapshots[0];
-      
-      // Check if we actually got ANY valid data (not all undefined/null)
-      // Accept snapshot if it has at least currents OR clarity OR nutrients
-      if (!snapshot) {
-        console.warn(`   ⚠️  No snapshot data for (${lat}, ${lon})`);
+
+      if (!snapshot || !hasValidSnapshot(snapshot)) {
+        console.warn(`   ❌ No valid data from GLOBAL model for (${lat}, ${lon})`);
         return null;
       }
-      
-      const hasCurrents = snapshot.currentSpeedSurface !== undefined && snapshot.currentSpeedSurface !== null;
-      const hasClarity = snapshot.kd490Surface !== undefined && snapshot.kd490Surface !== null;
-      const hasNutrients = snapshot.zooplanktonSurface !== undefined && snapshot.zooplanktonSurface !== null;
-      const hasTemp = snapshot.temperatureSurface !== undefined && snapshot.temperatureSurface !== null;
-      
-      if (!hasCurrents && !hasClarity && !hasNutrients && !hasTemp) {
-        console.warn(`   ⚠️  No valid data for (${lat}, ${lon}) - all key fields are null/undefined`);
-        return null;
-      }
-      
-      console.log(`   ℹ️  Got data: temp=${hasTemp}, currents=${hasCurrents}, clarity=${hasClarity}, nutrients=${hasNutrients}`);
-      
+
+      console.log(`   ✅ Got data from GLOBAL model`);
       return snapshot;
     }
   } catch (error) {
-    console.error(`   ⚠️  Failed to fetch Copernicus data for (${lat}, ${lon}):`, error);
+    console.error(`   ❌ Failed to fetch Copernicus data for (${lat}, ${lon}):`, error);
     return null;
   }
+}
+
+/**
+ * Check if snapshot has at least some valid data
+ */
+function hasValidSnapshot(snapshot: CopernicusMarineSnapshot): boolean {
+  const hasCurrents = snapshot.currentSpeedSurface !== undefined && snapshot.currentSpeedSurface !== null;
+  const hasClarity = snapshot.kd490Surface !== undefined && snapshot.kd490Surface !== null;
+  const hasNutrients = snapshot.zooplanktonSurface !== undefined && snapshot.zooplanktonSurface !== null;
+  const hasTemp = snapshot.temperatureSurface !== undefined && snapshot.temperatureSurface !== null;
+
+  return hasCurrents || hasClarity || hasNutrients || hasTemp;
 }
 
 /**
@@ -360,31 +396,52 @@ async function main() {
     console.log(`\n`);
   }
   
-  // Process rectangles
+  // Group rectangles by CMEMS region for better provider reuse
+  const rectanglesByRegion = new Map<string, Rectangle[]>();
+  for (const rect of rectanglesToProcess) {
+    const region = rect.cmems_region || 'GLOBAL';
+    if (!rectanglesByRegion.has(region)) {
+      rectanglesByRegion.set(region, []);
+    }
+    rectanglesByRegion.get(region)!.push(rect);
+  }
+
+  console.log(`📦 Grouped into ${rectanglesByRegion.size} regions:\n`);
+  for (const [region, rects] of rectanglesByRegion.entries()) {
+    console.log(`   ${region}: ${rects.length} rectangles`);
+  }
+  console.log('');
+
+  // Process rectangles region by region
   let successCount = 0;
   let failCount = 0;
+  let processedCount = 0;
   const startTime = Date.now();
-  
-  for (let i = 0; i < totalRectangles; i++) {
-    const rectangle = rectanglesToProcess[i];
-    const success = await ingestRectangle(rectangle);
-    
-    if (success) {
-      successCount++;
-    } else {
-      failCount++;
-    }
-    
-    // Progress indicator
-    if ((i + 1) % 10 === 0) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
-      const rate = ((i + 1) / (Date.now() - startTime) * 1000).toFixed(1);
-      console.log(`\n📊 Progress: ${i + 1}/${totalRectangles} (${rate} rect/sec, ${elapsed}s elapsed)\n`);
-    }
-    
-    // Delay between requests to avoid rate limiting
-    if (i < totalRectangles - 1) {
-      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+
+  for (const [region, rectangles] of rectanglesByRegion.entries()) {
+    console.log(`\n🌊 Processing ${rectangles.length} rectangles in ${region} region...\n`);
+
+    for (const rectangle of rectangles) {
+      const success = await ingestRectangle(rectangle);
+      processedCount++;
+
+      if (success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+
+      // Progress indicator every 10 rectangles
+      if (processedCount % 10 === 0) {
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+        const rate = (processedCount / (Date.now() - startTime) * 1000).toFixed(1);
+        console.log(`\n📊 Progress: ${processedCount}/${totalRectangles} (${rate} rect/sec, ${elapsed}s elapsed)\n`);
+      }
+
+      // Delay between requests to avoid rate limiting
+      if (processedCount < totalRectangles) {
+        await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+      }
     }
   }
   

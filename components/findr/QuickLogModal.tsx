@@ -660,17 +660,21 @@ export function QuickLogModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center md:justify-center">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80" onClick={handleClose} />
 
-      {/* Modal */}
-      <div className="relative bg-base-100 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      {/* Modal (bottom-sheet on mobile, dialog on desktop) */}
+      <div className="relative bg-base-100 rounded-t-2xl md:rounded-2xl p-4 md:p-6 w-full md:max-w-md mx-0 md:mx-4 shadow-2xl max-h-[85vh] md:max-h-[90vh] overflow-y-auto">
+        {/* Grab handle (mobile only) */}
+        <div className="md:hidden flex justify-center mb-2">
+          <div className="w-10 h-1.5 bg-base-300 rounded-full" />
+        </div>
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-lg flex items-center gap-2 text-primary">
             <Zap className="w-5 h-5" />
-            <TranslatedText text="Quick Log Catch" />
+            <TranslatedText text="Add your catch" />
           </h3>
           <button
             onClick={handleClose}
@@ -731,73 +735,69 @@ export function QuickLogModal({
           <div className="space-y-4">
             <div className="text-center mb-2">
               <p className="text-sm opacity-70">
-                <TranslatedText text="How would you like to log your catch?" />
+                <TranslatedText text="Take a new photo or choose one you already have." />
               </p>
             </div>
 
-            {/* Take Photo */}
-            <button
-              onClick={() => photoInputRef.current?.click()}
-              className="btn btn-lg btn-primary w-full gap-2 h-auto p-4 flex-col"
-              disabled={isSubmitting}
-            >
-              <Camera className="w-6 h-6" />
-              <div className="text-center">
-                <div className="font-semibold"><TranslatedText text="Take Photo" /></div>
-                <div className="text-xs opacity-80 font-normal">
-                  <TranslatedText text="Capture with your camera" />
-                </div>
-              </div>
-            </button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoChange(e, 'camera')}
-              className="hidden"
-            />
+            {/* Action grid: two big square tiles side-by-side */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Take Photo (left) */}
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                className="w-full aspect-square rounded-xl grid place-items-center gap-2 bg-primary text-primary-content shadow-md active:shadow-sm transition"
+                disabled={isSubmitting}
+                aria-label="Take a Photo"
+              >
+                <Camera className="w-12 h-12 md:w-14 md:h-14" />
+                <span className="font-semibold text-sm md:text-base">
+                  <TranslatedText text="Take a Photo" />
+                </span>
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => handlePhotoChange(e, 'camera')}
+                className="hidden"
+              />
 
-            {/* Add from Gallery */}
-            <button
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => handlePhotoChange(e as Event, 'gallery');
-                input.click();
-              }}
-              className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
-              disabled={isSubmitting}
-            >
-              <ImageIcon className="w-6 h-6" />
-              <div className="text-center">
-                <div className="font-semibold"><TranslatedText text="Add from Gallery" /></div>
-                <div className="text-xs opacity-80 font-normal">
-                  <TranslatedText text="Choose existing photo" />
-                </div>
-              </div>
-            </button>
+              {/* Choose from Gallery (right) */}
+              <button
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => handlePhotoChange(e as Event, 'gallery');
+                  input.click();
+                }}
+                className="w-full aspect-square rounded-xl grid place-items-center gap-2 bg-secondary text-secondary-content shadow-md active:shadow-sm transition"
+                disabled={isSubmitting}
+                aria-label="Choose from Gallery"
+              >
+                <ImageIcon className="w-12 h-12 md:w-14 md:h-14" />
+                <span className="font-semibold text-sm md:text-base">
+                  <TranslatedText text="Choose from Gallery" />
+                </span>
+              </button>
 
-            {/* Skip Photo */}
-            <button
-              onClick={handleSkipPhoto}
-              className="btn btn-lg btn-outline w-full gap-2 h-auto p-4 flex-col"
-              disabled={isSubmitting}
-            >
-              <Zap className="w-6 h-6" />
-              <div className="text-center">
-                <div className="font-semibold"><TranslatedText text="Skip Photo" /></div>
-                <div className="text-xs opacity-80 font-normal">
-                  <TranslatedText text="Log catch quickly (fastest)" />
-                </div>
-              </div>
-            </button>
+              {/* Skip Photo (slimmer, spans both columns) */}
+              <button
+                onClick={handleSkipPhoto}
+                className="col-span-2 btn btn-outline w-full h-12 md:h-12 rounded-xl"
+                disabled={isSubmitting}
+                aria-label="Skip Photo and log manually"
+              >
+                <span className="font-semibold">
+                  <TranslatedText text="Skip Photo → Manual Log" />
+                </span>
+              </button>
+            </div>
 
             <div className="alert alert-info mt-4">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">
-                <TranslatedText text="Photos enable AI identification and save location automatically" />
+                <TranslatedText text="Photos unlock smart species ID + GPS tagging" />
               </span>
             </div>
           </div>
