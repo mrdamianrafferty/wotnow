@@ -57,12 +57,13 @@ export class RealCopernicusProvider implements CopernicusProvider {
       const waveDataset = this.datasetConfig?.waves || 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i';
       
       // Progressive padding strategy for coastal locations
-      // Try multiple buffer sizes to find data near shore
-      const paddings = [0.1, 0.25, 0.5, 1.0]; // degrees (~11km, 28km, 56km, 111km)
+      // OPTIMIZED: Only try 2 padding values to reduce API calls from 10 to 5 per rectangle
+      // This cuts ingestion time roughly in half (from 90+ minutes to ~45 minutes for 224 rectangles)
+      const paddings = [0.25, 1.0]; // degrees (~28km, 111km) - skip 0.1° and 0.5° for speed
       let physicsData: CopernicusTimeseries | null = null;
       let bioData: CopernicusTimeseries | null = null;
       let waveData: CopernicusTimeseries | undefined;
-      
+
       // Try physics with progressive padding
       for (const padding of paddings) {
         try {
@@ -115,8 +116,8 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
-      // Wave data is optional, try with smaller padding
-      for (const padding of [0.1, 0.25]) {
+      // Wave data is optional, try with single padding attempt
+      for (const padding of [0.25]) {
         try {
           const waveFile = path.join(tempDir, `waves_${padding}.nc`);
           await this.fetchDatasetWithPadding(
