@@ -16,6 +16,7 @@ import {
   fetchStormglassBio,
   fetchMetNoMarineSeries,
   fetchOpenMeteoMarineSeries,
+  fetchOpenMeteoWeather,
   fetchWorldTides,
   type WorldTidesResponse,
 } from '../lib/services/weatherService';
@@ -565,6 +566,9 @@ interface OpenMeteoFallbackBundle {
   windSpeedKts: number | null;
   windDirectionDeg: number | null;
   seaLevelMeters: number | null;
+  // Phase 1: Weather data from OpenMeteo forecast API (for European rectangles)
+  airPressureHpa: number | null;
+  cloudCoverPct: number | null;
 }
 
 async function buildMetNoMarineFallback(
@@ -641,6 +645,47 @@ async function buildOpenMeteoMarineFallback(
 
   const windSpeedKts = firstHour.windSpeedKts ?? toKnots(firstHour.windSpeedMS);
 
+  // Phase 1: Fetch weather data (pressure, cloud cover) from OpenMeteo weather API
+  // This supplements the marine data with atmospheric conditions for European rectangles
+  let airPressureHpa: number | null = null;
+  let cloudCoverPct: number | null = null;
+
+  try {
+    const startDate = start.toISOString().split('T')[0]; // YYYY-MM-DD
+    const endDate = end.toISOString().split('T')[0];
+
+    const weatherData = await fetchOpenMeteoWeather(
+      Number(lat.toFixed(4)),
+      Number(lon.toFixed(4)),
+      startDate,
+      endDate
+    ) as any;
+
+    if (weatherData?.hourly) {
+      const times = weatherData.hourly.time || [];
+      const pressures = weatherData.hourly.pressure_msl || [];
+      const cloudCovers = weatherData.hourly.cloud_cover || [];
+
+      // Get first hour data (matching marine data first hour)
+      if (times.length > 0 && pressures.length > 0) {
+        const pressure = pressures[0];
+        if (typeof pressure === 'number' && !isNaN(pressure)) {
+          airPressureHpa = toFixedOrNull(pressure, 1);
+        }
+      }
+
+      if (times.length > 0 && cloudCovers.length > 0) {
+        const cloudCover = cloudCovers[0];
+        if (typeof cloudCover === 'number' && !isNaN(cloudCover)) {
+          cloudCoverPct = toFixedOrNull(cloudCover, 0);
+        }
+      }
+    }
+  } catch (error) {
+    // Weather data is supplementary - don't fail if it's unavailable
+    console.warn(`[OpenMeteo] Weather data fetch failed for ${lat.toFixed(4)},${lon.toFixed(4)}:`, error);
+  }
+
   return {
     hourlySeries,
     seaTemperatureC: toFixedOrNull(firstHour.seaTemperatureC, 2),
@@ -648,6 +693,8 @@ async function buildOpenMeteoMarineFallback(
     windSpeedKts,
     windDirectionDeg: toFixedOrNull(firstHour.windDirectionDeg, 0),
     seaLevelMeters: toTide(firstHour.seaLevelMeters),
+    airPressureHpa,
+    cloudCoverPct,
   } satisfies OpenMeteoFallbackBundle;
 }
 
@@ -855,8 +902,9 @@ export async function ingestRectangle(
     }
   }
 
-  const airPressureHpa = metMarine?.airPressureHpa ?? null;
-  const cloudCoverPct = metMarine?.cloudCoverPct ?? null;
+  // Phase 1: Air pressure and cloud cover (from MET Norway or OpenMeteo weather API)
+  const airPressureHpa = metMarine?.airPressureHpa ?? openMeteoMarine?.airPressureHpa ?? null;
+  const cloudCoverPct = metMarine?.cloudCoverPct ?? openMeteoMarine?.cloudCoverPct ?? null;
 
   const row: UpsertRow = {
     rectangle_code: rectangleCode,

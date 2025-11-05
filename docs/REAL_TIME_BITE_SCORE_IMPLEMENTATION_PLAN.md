@@ -1,5 +1,5 @@
 # Real-Time Bite Score Implementation Plan
-**Date**: October 29, 2025
+**Date**: October 29, 2025 (Updated: November 5, 2025)
 **Focus**: Moment-specific factors that matter RIGHT NOW
 
 ## 🎯 New Scoring Framework (100 points total)
@@ -9,11 +9,11 @@
 | tide_moment_score | 25 | Flow turns fish on/off | WorldTides API + calculation | ⏳ TODO |
 | light_moment_score | 20 | Dawn/dusk/night flips feeding | Current (working) | ✅ DONE |
 | wind_wave_turbidity_score | 15 | Surface chop, stirred bait | findr_conditions_snapshots | ⏳ TODO |
-| pressure_trend_score | 10 | Rising/steady > falling | MET Norway | ⏳ TODO |
+| pressure_trend_score | 10 | Rising/steady > falling | MET Norway / findr_conditions_latest | ✅ DONE |
 | temp_bio_indicators_score | 10 | Within species band or penalize | grid_conditions_latest + species_bio_bands | ⏳ TODO |
 | water_clarity_score | 10 | Sight vs ambush species | kd490 (CMEMS) + clarity_weight | ⏳ TODO |
-| micro_weather_score | 5 | Clouds/drizzle/squalls | MET Norway / OpenMeteo | ⏳ TODO |
-| lunar_window_score | 5 | Solunar major/minor periods | John Alden Knight algorithm | ⏳ TODO |
+| micro_weather_score | 5 | Clouds/drizzle/squalls | MET Norway / findr_conditions_latest | ✅ PARTIAL (cloud cover) |
+| lunar_window_score | 5 | Solunar major/minor periods | John Alden Knight algorithm | ✅ DONE |
 
 **Realistic maximum**: 80-90 with everything firing
 
@@ -344,3 +344,62 @@ RETURNS TABLE (
 **Week 5**: Production rollout with monitoring
 
 **Rollback Plan**: Keep old `get_global_fishing_predictions` as fallback if new system fails.
+
+---
+
+## ✅ Completed Work (November 5, 2025)
+
+### Phase 2 Partial Implementation - Pressure, Cloud Cover & Solunar Theory
+
+**Completed Components:**
+
+1. **Pressure Trend Scoring** ✅
+   - Added database columns: `pressure_trend_3h_hpa`, `pressure_trend_6h_hpa`, `pressure_trend_category`
+   - Created calculation script: `scripts/calculate-pressure-trends.ts`
+   - Integrated into daily ingestion: `scripts/findr-conditions-daily-ingest.sh`
+   - Scoring implemented in `get_global_fishing_predictions()` with species-specific `pressure_sensitivity` weighting
+
+2. **Cloud Cover Scoring** ✅
+   - Added species table columns: `cloud_preference`, `cloud_weight`
+   - Set preferences for key species (overcast for ambush predators, partly_cloudy for visual feeders, clear for sight feeders)
+   - Scoring implemented with species-specific cloud preferences
+   - Light × Cloud interaction bonus for dawn/dusk + overcast conditions
+
+3. **Solunar Theory (Lunar Window) Scoring** ✅
+   - Added `moon_transit_iso` column to `moon_cache` table
+   - Created PostgreSQL functions:
+     - `calculate_moon_transit()` - Approximates transit as midpoint between moonrise/moonset
+     - `is_in_solunar_period()` - Checks if current time is within major/minor feeding periods
+   - Updated `moonService.ts` to calculate and store transit times for new moon data
+   - Implemented scoring in `get_global_fishing_predictions()`:
+     - Major period (±1hr from transit): 3-5 pts based on moon illumination
+     - Minor period (±1hr from moonrise/moonset): 2-4 pts based on moon illumination
+     - Outside periods: 0 pts (baseline)
+
+**Database Migrations Applied:**
+- `20251105000001_add_pressure_trend_columns.sql`
+- `20251105000002_add_cloud_preference_to_species.sql`
+- `20251105000003_add_pressure_cloud_scoring_to_bite_score.sql`
+- `20251105000004_add_moon_transit_for_solunar.sql`
+- `20251105000005_add_solunar_window_scoring.sql`
+
+**Files Modified:**
+- `lib/astro/moonService.ts` - Added moon transit calculation
+- `scripts/calculate-pressure-trends.ts` - New pressure trend calculation
+- `scripts/findr-conditions-daily-ingest.sh` - Integrated pressure trend calculation
+- Migration files (listed above)
+
+**New Bite Score Components:**
+- `lunar_score` - Base moon illumination score (existing, 5-20 pts)
+- `solunar_score` - NEW Solunar Theory window bonus (0-5 pts)
+- `weather_score` - NEW Pressure trend score (6-12 pts, species-weighted)
+- `cloud_score` - NEW Cloud cover score (4-10 pts, species-specific preferences)
+- `light_cloud_bonus` - NEW Light × Cloud interaction (0-3 pts)
+
+**Total New Potential Points:** +20 pts maximum (realistically 10-15 pts typical)
+
+**Next Steps:**
+- Collect hourly pressure data for real-time trend updates
+- Test scoring accuracy with catch validation data
+- Add UI display for new score components
+- Consider implementing remaining components (tide moment, water clarity, wind/wave)

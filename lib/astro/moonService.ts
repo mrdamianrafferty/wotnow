@@ -14,6 +14,7 @@ export interface MoonSunData {
   dayLengthMinutes?: number;
   moonriseISO?: string;
   moonsetISO?: string;
+  moonTransitISO?: string; // Solunar Theory: moon overhead/underfoot time
   moonPhaseName?: string;
   moonPhaseFraction?: number;
   moonIlluminationPct?: number;
@@ -36,6 +37,7 @@ interface MoonCacheRow {
   day_length_minutes: number | null;
   moonrise_iso: string | null;
   moonset_iso: string | null;
+  moon_transit_iso: string | null; // Solunar Theory: moon overhead/underfoot time
   moon_phase_name: string | null;
   moon_phase_fraction: number | null;
   moon_illumination_pct: number | null;
@@ -155,14 +157,14 @@ function getMoonPhaseStage(phaseFraction?: number): string | undefined {
 
 function calculateDaysUntilNextPhase(phaseFraction?: number): { daysUntilFullMoon?: number; daysUntilNewMoon?: number } {
   if (phaseFraction == null) return {};
-  
+
   const currentDay = phaseFraction * SYNODIC_MONTH_DAYS;
   const fullMoonDay = SYNODIC_MONTH_DAYS / 2; // Day 14.76
   const newMoonDay = SYNODIC_MONTH_DAYS; // Day 29.53
-  
+
   let daysUntilFullMoon: number;
   let daysUntilNewMoon: number;
-  
+
   if (currentDay < fullMoonDay) {
     // Before full moon
     daysUntilFullMoon = fullMoonDay - currentDay;
@@ -172,11 +174,48 @@ function calculateDaysUntilNextPhase(phaseFraction?: number): { daysUntilFullMoo
     daysUntilFullMoon = (SYNODIC_MONTH_DAYS - currentDay) + fullMoonDay;
     daysUntilNewMoon = newMoonDay - currentDay;
   }
-  
+
   return {
     daysUntilFullMoon: Math.round(daysUntilFullMoon),
     daysUntilNewMoon: Math.round(daysUntilNewMoon)
   };
+}
+
+/**
+ * Calculate moon transit time (upper culmination) for Solunar Theory
+ * Transit ≈ midpoint between moonrise and moonset
+ */
+function calculateMoonTransit(moonriseISO?: string, moonsetISO?: string): string | undefined {
+  if (!moonriseISO || !moonsetISO) {
+    // If we only have one, estimate transit 6 hours after moonrise or 6 hours before moonset
+    if (moonriseISO) {
+      const moonrise = new Date(moonriseISO);
+      moonrise.setHours(moonrise.getHours() + 6);
+      return moonrise.toISOString();
+    }
+    if (moonsetISO) {
+      const moonset = new Date(moonsetISO);
+      moonset.setHours(moonset.getHours() - 6);
+      return moonset.toISOString();
+    }
+    return undefined;
+  }
+
+  const moonrise = new Date(moonriseISO);
+  const moonset = new Date(moonsetISO);
+
+  // Handle case where moonset is before moonrise (crosses midnight)
+  if (moonset < moonrise) {
+    // Add 24 hours to moonset for calculation
+    const adjustedMoonset = new Date(moonset);
+    adjustedMoonset.setDate(adjustedMoonset.getDate() + 1);
+    const transitTime = moonrise.getTime() + (adjustedMoonset.getTime() - moonrise.getTime()) / 2;
+    return new Date(transitTime).toISOString();
+  }
+
+  // Calculate midpoint between moonrise and moonset
+  const transitTime = moonrise.getTime() + (moonset.getTime() - moonrise.getTime()) / 2;
+  return new Date(transitTime).toISOString();
 }
 
 function toZonedInstantISO(localDate: string, time: string | undefined, timeZone: string): string | undefined {
@@ -285,6 +324,7 @@ async function writeCache(
       day_length_minutes: payload.dayLengthMinutes ?? null,
       moonrise_iso: payload.moonriseISO ?? null,
       moonset_iso: payload.moonsetISO ?? null,
+      moon_transit_iso: payload.moonTransitISO ?? null,
       moon_phase_name: payload.moonPhaseName ?? null,
       moon_phase_fraction: payload.moonPhaseFraction ?? null,
       moon_illumination_pct: payload.moonIlluminationPct ?? null,
@@ -321,6 +361,7 @@ function mapRowToPayload(row: MoonCacheRow): MoonSunData {
     dayLengthMinutes: row.day_length_minutes ?? undefined,
     moonriseISO: row.moonrise_iso ?? undefined,
     moonsetISO: row.moonset_iso ?? undefined,
+    moonTransitISO: row.moon_transit_iso ?? undefined,
     moonPhaseName: row.moon_phase_name ?? undefined,
     moonPhaseFraction: row.moon_phase_fraction ?? undefined,
     moonIlluminationPct: row.moon_illumination_pct ?? undefined,
@@ -501,6 +542,7 @@ function buildPayload(
   
   const moonPhaseStage = getMoonPhaseStage(moonPhaseFraction);
   const { daysUntilFullMoon, daysUntilNewMoon } = calculateDaysUntilNextPhase(moonPhaseFraction);
+  const moonTransitISO = calculateMoonTransit(moonriseISO, moonsetISO);
 
   return {
     latBucket,
@@ -512,6 +554,7 @@ function buildPayload(
     dayLengthMinutes: parseDayLength(data.day_length as string | undefined),
     moonriseISO,
     moonsetISO,
+    moonTransitISO,
     moonPhaseName: data.moon_phase as string | undefined,
     moonPhaseFraction,
     moonIlluminationPct: illuminationPct,

@@ -1,5 +1,5 @@
 // Added offline detection and UI warning for conditions page
-import { AlertTriangle, Eye, EyeOff, MapPin, Maximize2 } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, Maximize2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 // Offline detection hook
@@ -616,12 +616,10 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
           <div className="divider" />
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <MapPin className="h-5 w-5" /> <TranslatedText text="Fishing Area Map" />
-            </h2>
+            
             <div className="flex gap-2">
               <button
-                className="btn btn-sm btn-outline"
+                className="btn btn-sm btn-outline !text-neutral !border-neutral hover:!bg-neutral hover:!text-neutral-content"
                 onClick={() => {
                   const lat = mapLocation.lat;
                   const lon = mapLocation.lon;
@@ -633,7 +631,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
                 <Maximize2 className="h-4 w-4" />
                 <TranslatedText text="Full Screen" />
               </button>
-              <button className="btn btn-sm btn-outline" onClick={() => setShowMap((value) => !value)} type="button">
+              <button className="btn btn-sm btn-outline !text-neutral !border-neutral hover:!bg-neutral hover:!text-neutral-content" onClick={() => setShowMap((value) => !value)} type="button">
                 {showMap ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 {showMap ? <TranslatedText text="Hide Map" /> : <TranslatedText text="Show Map" />}
               </button>

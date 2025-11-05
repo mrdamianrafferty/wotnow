@@ -512,13 +512,13 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
               className="pointer-events-none absolute left-6 top-6 rounded-xl border-2 border-success bg-success/20 px-4 py-2 text-2xl font-black uppercase tracking-[0.4rem] text-success"
               style={{ opacity: catchOpacity }}
             >
-              ADD TO TRIP
+              Like
             </motion.div>
             <motion.div
-              className="pointer-events-none absolute right-6 top-6 rounded-xl border-2 border-error bg-error/20 px-4 py-2 text-2xl font-black uppercase tracking-[0.4rem] text-error"
+              className="pointer-events-none absolute right-6 top-6 rounded-xl border-2 border-base-content/30 bg-base-content/10 px-4 py-2 text-2xl font-black uppercase tracking-[0.4rem] text-base-content/70"
               style={{ opacity: nopeOpacity }}
             >
-              SKIP
+              Later
             </motion.div>
           </>
         )}

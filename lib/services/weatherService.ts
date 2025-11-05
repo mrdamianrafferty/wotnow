@@ -1636,7 +1636,7 @@ function getOpenWeatherAssistantUrl(apiKey: string) {
  * This limit is enforced in the unified-weather.ts API endpoint file, but be careful when
  * calling this function directly from other places.
  */
-async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
+export async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string, endDate: string): Promise<unknown> {
   // Validate the date range doesn't exceed 5 days
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -1670,7 +1670,9 @@ async function fetchOpenMeteoWeather(lat: number, lon: number, startDate: string
     // Add pressure for reliable per-hour pressure series (hPa)
     'pressure_msl',
     // Add visibility for MET Norway supplement (meters)
-    'visibility'
+    'visibility',
+    // Add cloud cover for bite score calculations (percentage 0-100)
+    'cloud_cover'
   ].join(','));
   try {
     const note = JSON.stringify({ start: startDate, end: endDate });
@@ -2105,7 +2107,6 @@ export {
   fetchOpenWeatherDaySummary,
   fetchOpenWeatherOverview,
   getOpenWeatherAssistantUrl,
-  fetchOpenMeteoWeather,
   fetchOpenMeteoAirPollen,
   fetchOpenMeteoMarineSeries,
   fetchMetNoOceanForecast,

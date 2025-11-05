@@ -97,9 +97,7 @@ async function main() {
   console.info(`[conditions-ingest-batcher] All batches processed. ${totalSuccess}/${rectangles.length} rectangles ingested.`);
 }
 
-if (require.main === module) {
-  main().catch((error) => {
-    console.error('Unexpected error in batched ingestion script', error);
-    process.exit(1);
-  });
-}
+main().catch((error) => {
+  console.error('Unexpected error in batched ingestion script', error);
+  process.exit(1);
+});

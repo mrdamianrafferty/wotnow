@@ -256,7 +256,7 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
         catchTime,
         entryType: 'quick',
         sizeCategory: 'mixed',
-        baitUsed: baitUsed ?? 'Quick log - bait not specified',
+        baitUsed: baitUsed ?? 'Mystery bait 𖡄',
         habitatType: habitatType ?? null,
         notes: notes ?? null,
         method: 'shore',
