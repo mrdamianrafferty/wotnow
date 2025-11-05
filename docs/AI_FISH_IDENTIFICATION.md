@@ -1,9 +1,9 @@
 # AI Fish Identification System
 
-**Status**: ✅ **DEPLOYED** (October 30, 2025)
-**Version**: 1.0
-**Cost**: €0.01 per identification (GPT-4 Vision API, "low" detail)
-**Monthly Budget**: €10 (1000 identifications max)
+**Status**: ✅ **DEPLOYED** (October 30, 2025) - **FIXED** (November 5, 2025)
+**Version**: 1.1
+**Cost**: €0.05 per identification (GPT-4o Vision API, "high" detail)
+**Monthly Budget**: €50 (1000 identifications max)
 
 ## Overview
 
@@ -73,14 +73,16 @@ Photo Captured/Uploaded
 
 ### Budget Strategy
 
-**Monthly Budget**: €10 (1000 AI calls max)
+**Monthly Budget**: €50 (1000 AI calls max)
 
 **Cost Reduction Techniques:**
-1. **Low Detail Mode**: Use GPT-4 Vision "low" detail (€0.01 vs €0.03 per call)
-2. **Regional Narrowing**: Send only 8 regional species to AI (reduces token count)
-3. **Image Caching**: Perceptual hash caching for identical images
-4. **Database Shortcuts**: Skip AI for high-confidence database matches
-5. **Smart Routing**: Try cheaper methods first (cache, EXIF, database)
+1. **Regional Narrowing**: Send only 8 regional species to AI (reduces token count)
+2. **Image Caching**: Perceptual hash caching for identical images
+3. **Database Shortcuts**: Skip AI for high-confidence database matches
+4. **Smart Routing**: Try cheaper methods first (cache, EXIF, database)
+
+**Note**: Currently using GPT-4o with "high" detail (€0.05/call) for best accuracy.
+Can downgrade to gpt-4o-mini later if costs become prohibitive.
 
 **Target**: <20% AI usage rate through smart filtering
 
@@ -655,6 +657,32 @@ The system automatically handles AI failures:
 
 ---
 
-**Last Updated**: October 30, 2025
+## Bug Fixes
+
+### November 5, 2025 - OpenAI Client Initialization Fix
+
+**Problem**: AI identification was completely non-functional despite using an expensive GPT-4o model.
+
+**Root Cause**: The `FishIdentificationService` class was instantiated as a singleton on module load (line 629), which runs in both client and server environments. When the constructor tried to access `process.env.OPENAI_API_KEY` client-side:
+- Environment variable was `undefined` (Next.js doesn't expose non-`NEXT_PUBLIC_` env vars to the browser)
+- OpenAI client initialization failed silently
+- `aiAvailable` flag set to `false`
+- All AI calls fell through to manual selection with "AI uncertain - please select manually" message
+
+**Solution**: Refactored initialization to be server-only:
+1. Removed constructor initialization
+2. Created `initializeServerSide()` method that checks `typeof window !== 'undefined'`
+3. API route (`/api/findr/identify-fish.ts`) now calls `initializeServerSide()` before processing
+4. OpenAI client only initializes in Node.js environment with proper env var access
+
+**Files Modified**:
+- `lib/findr/fishIdentificationService.ts` (lines 58-101) - Server-only initialization
+- `pages/api/findr/identify-fish.ts` (line 104) - Call `initializeServerSide()`
+
+**Impact**: AI identification now functional. System can make confident predictions when image quality and species features are clear.
+
+---
+
+**Last Updated**: November 5, 2025
 **Authors**: Damian Rafferty, Claude (Anthropic)
-**Status**: ✅ Production Ready
+**Status**: ✅ Production Ready (AI system now operational)

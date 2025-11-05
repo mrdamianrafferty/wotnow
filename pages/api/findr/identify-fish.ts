@@ -100,6 +100,9 @@ export default async function handler(
       candidates: requestData.candidates,
     };
 
+    // Initialize AI service server-side (with OpenAI API key access)
+    await fishIdService.initializeServerSide();
+
     // Call identification service
     console.log('[identify-fish] Processing identification with', requestData.candidates.length, 'candidates');
     const result = await fishIdService.identify(imageFileObject, context);

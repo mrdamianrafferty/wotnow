@@ -67,26 +67,37 @@ class FishIdentificationService {
   // Feature flags
   private aiAvailable: boolean = true;
   private aiErrorCount: number = 0;
-
-  constructor() {
-    this.initialize();
-  }
+  private initialized: boolean = false;
 
   /**
-   * Initialize OpenAI client if API key is available
+   * Initialize OpenAI client - ONLY call this server-side (in API routes)
+   * This ensures process.env.OPENAI_API_KEY is available
    */
-  private async initialize() {
+  async initializeServerSide(): Promise<void> {
+    if (this.initialized) {
+      return; // Already initialized
+    }
+
+    // Only initialize on server-side (Node.js environment)
+    if (typeof window !== 'undefined') {
+      console.warn('[FishID] Cannot initialize OpenAI client-side');
+      this.aiAvailable = false;
+      return;
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (apiKey) {
       this.openai = new OpenAI({ apiKey });
-      console.log('[FishID] OpenAI initialized');
+      console.log('[FishID] OpenAI initialized server-side');
+      this.aiAvailable = true;
     } else {
       console.warn('[FishID] OpenAI API key not found - AI identification disabled');
       this.aiAvailable = false;
     }
 
     await this.loadMonthlyUsage();
+    this.initialized = true;
   }
 
   /**
