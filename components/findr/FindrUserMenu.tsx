@@ -63,7 +63,6 @@ export default function FindrUserMenu() {
               width={40}
               height={40}
               className="w-full h-full object-cover"
-              style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%' }}
               unoptimized // OAuth avatars are already optimized
             />
           ) : (
