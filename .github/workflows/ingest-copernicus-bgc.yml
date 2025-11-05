@@ -1,9 +1,14 @@
-name: Ingest Copernicus BGC
+name: Ingest Copernicus BGC (DISABLED - Redundant)
+
+# DISABLED: This workflow is redundant with findr-copernicus-ingest.yml
+# The main TypeScript ingestion script (scripts/ingest-copernicus-data.ts) already
+# collects biogeochemical data: zooplankton, phytoplankton, primary_production.
+# This Python-based workflow was an earlier approach that is no longer needed.
+# Keeping the file for reference but removing the schedule trigger.
 
 on:
-  schedule:
-    # every 6 hours
-    - cron: '0 */6 * * *'
+  # schedule:  # DISABLED - see comment above
+  #   - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       sample_date:
