@@ -399,7 +399,7 @@ except Exception as e:
           if (errorData.error) {
             throw new Error(`Failed to parse NetCDF: ${errorData.error}`);
           }
-        } catch (parseErr) {
+        } catch (_parseErr) {
           // If we can't parse as JSON, it's probably just warnings - ignore
         }
       }
