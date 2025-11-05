@@ -30,6 +30,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "botocore>=1.40.46,<1.40.62"
+          pip install copernicusmarine xarray fsspec s3fs zarr numpy netCDF4 dask pandas
+
       - name: Run Copernicus data ingestion
         id: ingest
         env:
@@ -56,30 +67,30 @@ jobs:
           
           async function verify() {
             const { count, error } = await supabase
-              .from('findr_conditions_snapshots')
+              .from('grid_conditions_latest')
               .select('*', { count: 'exact', head: true });
-              
+
             if (error) throw new Error(`Verification failed: ${error.message}`);
-            
-            console.log(`Total records in findr_conditions_snapshots: ${count}`);
-            
+
+            console.log(`Total records in grid_conditions_latest: ${count}`);
+
             if (!count || count === 0) {
-              throw new Error('No data in findr_conditions_snapshots after ingestion!');
+              throw new Error('No data in grid_conditions_latest after ingestion!');
             }
-            
+
             // Check for recent data
             const { data: recent } = await supabase
-              .from('findr_conditions_snapshots')
-              .select('captured_at')
-              .order('captured_at', { ascending: false })
+              .from('grid_conditions_latest')
+              .select('collected_at')
+              .order('collected_at', { ascending: false })
               .limit(1)
               .single();
               
-            const hoursSinceCapture = recent 
-              ? (Date.now() - new Date(recent.captured_at).getTime()) / (1000 * 60 * 60)
+            const hoursSinceCapture = recent
+              ? (Date.now() - new Date(recent.collected_at).getTime()) / (1000 * 60 * 60)
               : 999;
-              
-            console.log(`Latest data: ${recent?.captured_at} (${hoursSinceCapture.toFixed(1)} hours old)`);
+
+            console.log(`Latest data: ${recent?.collected_at} (${hoursSinceCapture.toFixed(1)} hours old)`);
             
             if (hoursSinceCapture > 48) {
               throw new Error(`Data is stale! Latest capture was ${hoursSinceCapture.toFixed(1)} hours ago`);
@@ -115,7 +126,7 @@ jobs:
             - Data validation failure
             
             ### Impact:
-            - \`findr_conditions_snapshots\` table may be empty or stale
+            - \`grid_conditions_latest\` table may be empty or stale
             - Predictions will show 0 results or outdated data
             
             ### Actions Required:
