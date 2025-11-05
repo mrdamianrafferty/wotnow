@@ -83,9 +83,13 @@ export class RealCopernicusProvider implements CopernicusProvider {
             console.log(`   ✅ Physics data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
             break;
           }
-        } catch (_err) {
+        } catch (err) {
+          const isTimeout = err instanceof Error && err.message.includes('timeout');
+          const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
           if (padding === paddings[paddings.length - 1]) {
-            console.warn(`   ⚠️  No physics data available after trying all paddings`);
+            console.warn(`   ⚠️  No physics data available after trying all paddings (last attempt: ${errorType})`);
+          } else if (isTimeout) {
+            console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
           }
         }
       }
@@ -109,9 +113,13 @@ export class RealCopernicusProvider implements CopernicusProvider {
             console.log(`   ✅ BGC data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
             break;
           }
-        } catch (_err) {
+        } catch (err) {
+          const isTimeout = err instanceof Error && err.message.includes('timeout');
+          const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
           if (padding === paddings[paddings.length - 1]) {
-            console.warn(`   ⚠️  No BGC data available after trying all paddings`);
+            console.warn(`   ⚠️  No BGC data available after trying all paddings (last attempt: ${errorType})`);
+          } else if (isTimeout) {
+            console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
           }
         }
       }
@@ -213,6 +221,8 @@ export class RealCopernicusProvider implements CopernicusProvider {
     const cmd = cmdParts.join(' ');
 
     const { stderr } = await execAsync(cmd, {
+      timeout: 60000, // 60 second timeout to prevent indefinite hangs
+      killSignal: 'SIGTERM', // Graceful termination
       env: {
         ...process.env,
         PATH: `${process.env.HOME}/.local/bin:${process.env.PATH}`,
