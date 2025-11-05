@@ -37,9 +37,10 @@ curl "http://localhost:3000/api/findr/predictions?rectangleCode=31E8&predictionD
    - Migration: `20251105000001_add_pressure_trend_columns.sql`
 
 3. **RPC Function** (`get_environmental_predictions_enhanced`)
-   - Queries: `findr_conditions_latest` view
+   - **PRIMARY RPC**: Proven function that queries `findr_conditions_latest` view
    - Migration: `20251022191500_fix_enhanced_recent_conditions.sql`
-   - Parameters: target_rectangle, target_date, user_lat, user_lon, etc.
+   - Parameters: target_rectangle, target_date, user_lat, user_lon, substrate, depth, wind, pressure, tide
+   - Fallback: `get_global_fishing_predictions` (global grid-based, new as of Nov 5 2025)
 
 4. **API Endpoint** (`pages/api/findr/predictions.ts`)
    - Calls RPC function via Supabase client

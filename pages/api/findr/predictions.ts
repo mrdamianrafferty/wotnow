@@ -933,30 +933,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })();
     }
 
-    // Prefer the global predictions function that works worldwide
-    // Falls back to rectangle-based functions for backward compatibility
+    // Prioritize proven RPC that uses Copernicus data ingested twice daily
+    // Falls back to newer global grid function for non-ICES areas
     const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
-      // NEW: Global grid-based predictions (works worldwide, never returns empty)
-      {
-        name: 'get_global_fishing_predictions',
-        params: {
-          user_lat: userLat || rectangleData?.center_lat || null,
-          user_lon: userLon || rectangleData?.center_lon || null,
-          target_date: predictionDate,
-          p_lang: language,
-        },
-      },
-      // FALLBACK: Region-aware v2 (for Americas, doesn't exist yet)
-      {
-        name: 'get_fishing_predictions_v2',
-        params: {
-          target_rectangle: rectangleCode,
-          target_date: predictionDate,
-          p_lang: language,
-          p_region_code: regionCode ?? inferredRegionCode,
-        },
-      },
-      // FALLBACK: Original ICES rectangle-based (European only)
+      // PRIMARY: Proven ICES rectangle-based (uses findr_conditions_latest from Copernicus ingestion)
       {
         name: 'get_environmental_predictions_enhanced',
         params: {
@@ -970,6 +950,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           current_pressure_hpa: currentPressureHPA,
           current_tide_stage: currentTideStage,
           current_flow_speed_ms: currentFlowSpeedMS,
+        },
+      },
+      // FALLBACK: Global grid-based predictions (for non-ICES areas, new as of Nov 5 2025)
+      {
+        name: 'get_global_fishing_predictions',
+        params: {
+          user_lat: userLat || rectangleData?.center_lat || null,
+          user_lon: userLon || rectangleData?.center_lon || null,
+          target_date: predictionDate,
+          p_lang: language,
         },
       },
     ];
