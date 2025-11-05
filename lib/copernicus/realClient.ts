@@ -127,7 +127,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
           const bioFile = path.join(tempDir, `bio_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             bioDataset,
-            ['phyc', 'zooc', 'nppv'],  // Request key biogeochemical variables
+            [],  // Don't specify variables - take whatever the dataset provides
             lat,
             lon,
             start,
