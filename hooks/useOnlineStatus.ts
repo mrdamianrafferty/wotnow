@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react';
 
+// Type for Capacitor window object (future-proof for native apps)
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    Plugins: {
+      Network?: {
+        getStatus: () => Promise<{ connected: boolean }>;
+        addListener: (
+          event: string,
+          callback: (status: { connected: boolean }) => void
+        ) => { remove: () => void };
+      };
+    };
+  };
+}
+
 /**
  * Hook to detect online/offline status
  *
@@ -53,8 +68,9 @@ export const useOnlineStatus = () => {
 
     // Check for Capacitor Network plugin (for native apps)
     // This will be available once Capacitor is installed
-    if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      const { Network } = (window as any).Capacitor.Plugins;
+    const capacitorWindow = window as CapacitorWindow;
+    if (typeof window !== 'undefined' && capacitorWindow.Capacitor) {
+      const { Network } = capacitorWindow.Capacitor.Plugins;
 
       if (Network) {
         // Get initial network status

@@ -85,7 +85,7 @@ export const InstallPrompt = () => {
                   <div>
                     <p className="font-medium">Tap the Share button</p>
                     <p className="text-sm text-base-content/70">
-                      Look for the <Share className="inline w-4 h-4 mx-1" /> icon in Safari's toolbar (bottom of screen)
+                      Look for the <Share className="inline w-4 h-4 mx-1" /> icon in Safari&apos;s toolbar (bottom of screen)
                     </p>
                   </div>
                 </div>
@@ -95,7 +95,7 @@ export const InstallPrompt = () => {
                     2
                   </div>
                   <div>
-                    <p className="font-medium">Select "Add to Home Screen"</p>
+                    <p className="font-medium">Select &ldquo;Add to Home Screen&rdquo;</p>
                     <p className="text-sm text-base-content/70">
                       Scroll down in the share menu to find this option
                     </p>
@@ -107,7 +107,7 @@ export const InstallPrompt = () => {
                     3
                   </div>
                   <div>
-                    <p className="font-medium">Tap "Add"</p>
+                    <p className="font-medium">Tap &ldquo;Add&rdquo;</p>
                     <p className="text-sm text-base-content/70">
                       Findr will appear on your home screen like a native app!
                     </p>
