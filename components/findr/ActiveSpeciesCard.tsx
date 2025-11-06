@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2 } from 'lucide-react';
+import { shareText } from '@/lib/capacitor/share';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -89,6 +90,16 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   const [expanded, setExpanded] = useState(false);
 
   const nextPeakHours = getNextPeakTime(species.forecast);
+
+  // Share handler
+  const handleShare = async () => {
+    try {
+      const shareContent = `🎣 ${species.name} - ${species.confidence}% confidence!\n\nBest conditions right NOW! Drop everything — they're biting! 🔥\n\nCheck predictions at fishfindr.eu`;
+      await shareText(shareContent, `Fishing Prediction: ${species.name}`);
+    } catch (error) {
+      console.error('[ActiveSpeciesCard] Share failed:', error);
+    }
+  };
   // Note: We now use database bite scores instead of client-side calculation
   const fishingTime = {
     time: 'Now',
@@ -221,6 +232,13 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               title="View species details"
             >
               <Info size={16} className="text-base-content" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="btn btn-sm btn-ghost"
+              title="Share prediction"
+            >
+              <Share2 size={16} className="text-base-content" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}

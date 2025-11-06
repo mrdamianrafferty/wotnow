@@ -190,7 +190,7 @@ export const canShare = async (): Promise<boolean> => {
     return true;
   } else {
     // Check for Web Share API
-    if (navigator.share) {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
       return true;
     }
 
@@ -209,7 +209,7 @@ export const canShareFiles = async (): Promise<boolean> => {
     return true;
   } else {
     // Check if Web Share API supports files
-    if (navigator.canShare && navigator.share) {
+    if (typeof navigator !== 'undefined' && 'canShare' in navigator && 'share' in navigator) {
       try {
         // Test with a dummy file
         const testFile = new File(['test'], 'test.txt', { type: 'text/plain' });
