@@ -23,6 +23,7 @@ import {
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { CatchLogInput } from '@/types/findr-enrichment';
+import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
 
 // Types
 interface SessionLogModalProps {
@@ -177,13 +178,44 @@ export function SessionLogModal({
   const removeCatch = useCallback((id: string) => {
     setCatches(prev => prev.filter(catch_ => catch_.id !== id));
   }, []);
-  
-  // Photo management
-  const handlePhotoAdd = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setPhotos(prev => [...prev, ...files].slice(0, 5)); // Max 5 photos
-  }, []);
-  
+
+  // Helper to convert data URL to File
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  };
+
+  // Photo management - Camera capture
+  const handleCameraCapture = useCallback(async () => {
+    if (photos.length >= 5) return;
+
+    try {
+      const photo = await takePicture({ quality: 90 });
+      const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
+      setPhotos(prev => [...prev, file].slice(0, 5));
+    } catch (err) {
+      if (err instanceof CameraException && err.type !== 'CANCELLED') {
+        console.error('[SessionLog] Camera error:', err.type, err.message);
+      }
+    }
+  }, [photos.length]);
+
+  // Photo management - Gallery selection
+  const handleGallerySelect = useCallback(async () => {
+    if (photos.length >= 5) return;
+
+    try {
+      const photo = await selectFromGallery({ quality: 90 });
+      const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
+      setPhotos(prev => [...prev, file].slice(0, 5));
+    } catch (err) {
+      if (err instanceof CameraException && err.type !== 'CANCELLED') {
+        console.error('[SessionLog] Gallery error:', err.type, err.message);
+      }
+    }
+  }, [photos.length]);
+
   const removePhoto = useCallback((index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   }, []);
@@ -651,26 +683,39 @@ export function SessionLogModal({
               </p>
             </div>
             
-            {/* Photo Upload */}
-            <div className="form-control">
-              <label className="label">
+            {/* Photo Upload - Using Capacitor camera wrapper */}
+            <div className="space-y-3">
+              <div className="label">
                 <span className="label-text font-medium">
                   <Camera className="w-4 h-4 inline mr-2" />
-                  <TranslatedText text="Photos" /> 
+                  <TranslatedText text="Photos" />
                   <span className="text-xs opacity-60 ml-1">
                     ({photos.length}/5)
                   </span>
                 </span>
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                multiple
-                onChange={handlePhotoAdd}
-                className="file-input file-input-bordered"
-                disabled={isSubmitting || photos.length >= 5}
-              />
+              </div>
+
+              <div className="flex gap-2">
+                {/* Camera Button */}
+                <button
+                  onClick={handleCameraCapture}
+                  className="btn btn-primary flex-1"
+                  disabled={isSubmitting || photos.length >= 5}
+                >
+                  <Camera className="w-5 h-5" />
+                  <TranslatedText text="Take Photo" />
+                </button>
+
+                {/* Gallery Button */}
+                <button
+                  onClick={handleGallerySelect}
+                  className="btn btn-secondary flex-1"
+                  disabled={isSubmitting || photos.length >= 5}
+                >
+                  <Plus className="w-5 h-5" />
+                  <TranslatedText text="From Gallery" />
+                </button>
+              </div>
             </div>
             
             {/* Photo Previews */}
