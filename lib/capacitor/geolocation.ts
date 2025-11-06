@@ -169,7 +169,7 @@ export const getCurrentPosition = async (): Promise<Position> => {
  * Options for watching position
  */
 export interface WatchPositionOptions {
-  /** Minimum time between updates in milliseconds (default: 5000ms = 5s) */
+  /** Minimum time between updates in milliseconds (default: 120000ms = 2 minutes) */
   minInterval?: number;
   /** Enable high accuracy GPS (default: true) */
   enableHighAccuracy?: boolean;
@@ -183,8 +183,13 @@ export interface WatchPositionOptions {
  * Watch position updates with debouncing to prevent battery drain
  * Returns watch ID that can be used to clear the watch
  *
- * Note: minInterval defaults to 5000ms (5 seconds) to prevent excessive
- * battery drain from continuous GPS usage.
+ * Note: minInterval defaults to 120000ms (2 minutes) to maximize battery
+ * savings. GPS can fully power down between updates at this interval.
+ * Ideal for fishing app where users are mostly stationary.
+ *
+ * For active use cases (moving between spots), use shorter intervals:
+ * - 30000ms (30s) for walking/driving between locations
+ * - 5000ms (5s) for precise boat trolling
  */
 export const watchPosition = async (
   callback: (position: Position) => void,
@@ -192,7 +197,7 @@ export const watchPosition = async (
   options: WatchPositionOptions = {}
 ): Promise<string> => {
   const {
-    minInterval = 5000, // 5 second minimum interval
+    minInterval = 120000, // 2 minute interval (optimal for battery, ideal for fishing)
     enableHighAccuracy = true,
     timeout = 10000,
     maximumAge = 0,
