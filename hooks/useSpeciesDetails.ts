@@ -43,6 +43,10 @@ export interface SpeciesDetails {
   fun_fact: string | null;
   min_depth: number | null;
   max_depth: number | null;
+  guild: string | null;
+  species_badges: string[] | null;
+  recommended_baits: string[] | null;
+  temp_opt_c: number[] | null;
 }
 
 interface UseSpeciesDetailsOptions {

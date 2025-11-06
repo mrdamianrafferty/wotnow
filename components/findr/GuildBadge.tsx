@@ -17,7 +17,7 @@ const GUILD_INFO: Record<string, {
   pelagic: {
     label: 'Pelagic',
     icon: '🌊',
-    description: 'Open water species - very temperature-sensitive',
+    description: 'Open water species - temperature-sensitive',
     color: 'badge-info'
   },
   surf_estuary: {
@@ -29,13 +29,13 @@ const GUILD_INFO: Record<string, {
   reef_kelp: {
     label: 'Reef/Kelp',
     icon: '🪨',
-    description: 'Rocky habitats essential',
+    description: 'Rocky habitats',
     color: 'badge-secondary'
   },
   benthic: {
     label: 'Benthic',
     icon: '⚓',
-    description: 'Bottom-dwellers - seabed type important',
+    description: 'Bottom-dwellers',
     color: 'badge-neutral'
   },
   cephalopod: {

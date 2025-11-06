@@ -288,8 +288,8 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               <TranslatedText text="Species profile" />
             </p>
             <div className="flex flex-wrap items-center gap-3">
-              <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
-              <h1 id={titleId} className="text-3xl font-bold leading-tight text-base-content flex items-center gap-2">
+              <h1 id={titleId} className="text-3xl font-bold leading-tight text-base-content flex items-center gap-3">
+                <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
                 {displayName}
               </h1>
             </div>

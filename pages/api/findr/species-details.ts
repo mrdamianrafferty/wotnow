@@ -66,6 +66,10 @@ interface SpeciesDetailResponse {
   fun_fact: string | null;
   min_depth: number | null;
   max_depth: number | null;
+  guild: string | null;
+  species_badges: string[] | null;
+  recommended_baits: string[] | null;
+  temp_opt_c: number[] | null;
 }
 
 export default async function handler(
@@ -101,7 +105,11 @@ export default async function handler(
         conservation_status,
         fun_fact,
         min_depth,
-        max_depth
+        max_depth,
+        guild,
+        species_badges,
+        recommended_baits,
+        temp_opt_c
       `)
       .limit(1);
 
@@ -215,6 +223,10 @@ export default async function handler(
       fun_fact: speciesData.fun_fact || null,
       min_depth: speciesData.min_depth || null,
       max_depth: speciesData.max_depth || null,
+      guild: speciesData.guild || null,
+      species_badges: speciesData.species_badges || null,
+      recommended_baits: speciesData.recommended_baits || null,
+      temp_opt_c: speciesData.temp_opt_c || null,
     };
 
     return res.status(200).json(response);
