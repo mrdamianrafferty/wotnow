@@ -16,11 +16,12 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { 
-  X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, 
+import {
+  X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
   Download, Share2, Calendar, MapPin, Fish, Camera,
   Maximize2, ChevronUp, ChevronDown, Trophy
 } from 'lucide-react';
+import { shareText } from '@/lib/capacitor/share';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
 // Types
@@ -62,7 +63,7 @@ export function TrophyPhotoCarousel({
   title = 'Trophy Photos',
   showThumbnails = true,
   allowDownload = true,
-  allowShare = false,
+  allowShare = true,
   allowZoom = true,
 }: TrophyPhotoCarouselProps) {
   
@@ -148,28 +149,45 @@ export function TrophyPhotoCarousel({
     }
   }, [currentPhoto, allowDownload]);
   
-  // Share function
+  // Share function - Using Capacitor wrapper
   const shareImage = useCallback(async () => {
     if (!currentPhoto || !allowShare) return;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'My Catch Photo',
-          text: currentPhoto.caption || 'Check out this catch!',
-          url: currentPhoto.url,
-        });
-      } catch (error) {
-        console.error('Failed to share:', error);
+
+    try {
+      // Build share content with metadata
+      let shareContent = '🎣 ';
+
+      if (currentPhoto.metadata?.speciesName) {
+        shareContent += `${currentPhoto.metadata.speciesName}`;
+      } else {
+        shareContent += 'My Fishing Trophy';
       }
-    } else {
-      // Fallback: copy URL to clipboard
-      try {
-        await navigator.clipboard.writeText(currentPhoto.url);
-        // Could show a toast notification here
-      } catch (error) {
-        console.error('Failed to copy to clipboard:', error);
+
+      if (currentPhoto.metadata?.date) {
+        shareContent += `\n📅 ${new Date(currentPhoto.metadata.date).toLocaleDateString()}`;
       }
+
+      if (currentPhoto.metadata?.location) {
+        shareContent += `\n📍 ${currentPhoto.metadata.location}`;
+      }
+
+      if (currentPhoto.metadata?.quantity) {
+        shareContent += `\n🐟 Quantity: ${currentPhoto.metadata.quantity}`;
+      }
+
+      if (currentPhoto.metadata?.size) {
+        shareContent += `\n📏 Size: ${currentPhoto.metadata.size}`;
+      }
+
+      if (currentPhoto.metadata?.bait) {
+        shareContent += `\n🎣 Bait: ${currentPhoto.metadata.bait}`;
+      }
+
+      shareContent += '\n\nCheck out fishfindr.eu for fishing predictions!';
+
+      await shareText(shareContent, 'My Fishing Trophy');
+    } catch (error) {
+      console.error('[TrophyPhotoCarousel] Share failed:', error);
     }
   }, [currentPhoto, allowShare]);
   
