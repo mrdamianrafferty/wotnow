@@ -61,7 +61,7 @@ async function getSentry() {
   try {
     SentryModule = await import('@sentry/nextjs');
     return SentryModule;
-  } catch (error) {
+  } catch (_error) {
     console.warn('[ErrorTracking] Sentry not installed. Run: npm install @sentry/nextjs');
     return null;
   }

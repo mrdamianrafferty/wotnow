@@ -118,7 +118,7 @@ export function UpdatePrompt() {
         {/* Release notes */}
         {releaseNotes && (
           <div className="bg-base-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold mb-2">What's New:</h3>
+            <h3 className="font-semibold mb-2">What&apos;s New:</h3>
             <p className="text-sm text-base-content/80 whitespace-pre-line">
               {releaseNotes}
             </p>

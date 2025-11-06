@@ -124,7 +124,7 @@ async function initializeAnalytics(): Promise<void> {
       // @ts-expect-error - gtag is loaded dynamically
       window.dataLayer = window.dataLayer || [];
       // @ts-expect-error - gtag is loaded dynamically
-      window.gtag = function gtag() { window.dataLayer.push(arguments); };
+      window.gtag = function gtag(...args: unknown[]) { window.dataLayer.push(args); };
       // @ts-expect-error - gtag is loaded dynamically
       window.gtag('js', new Date());
       // @ts-expect-error - gtag is loaded dynamically
@@ -203,7 +203,7 @@ export async function trackEvent(
           name: eventName,
           params: properties || {},
         });
-      } catch (error) {
+      } catch (_error) {
         // Silently fail if Firebase not available
       }
     }
@@ -274,7 +274,7 @@ export async function setUserProperties(
             value: String(value),
           });
         }
-      } catch (error) {
+      } catch (_error) {
         // Silently fail
       }
     }
@@ -316,7 +316,7 @@ export async function setUserId(userId: string): Promise<void> {
       try {
         const { FirebaseAnalytics } = await import('@capacitor-community/firebase-analytics');
         await FirebaseAnalytics.setUserId({ userId });
-      } catch (error) {
+      } catch (_error) {
         // Silently fail
       }
     }
@@ -346,7 +346,7 @@ export async function setAnalyticsEnabled(enabled: boolean): Promise<void> {
       try {
         const { FirebaseAnalytics } = await import('@capacitor-community/firebase-analytics');
         await FirebaseAnalytics.setCollectionEnabled({ enabled });
-      } catch (error) {
+      } catch (_error) {
         // Silently fail
       }
     }
@@ -371,7 +371,7 @@ export const analytics = {
   refreshPrediction: (rectangleCode: string) =>
     trackEvent('prediction_refreshed', { rectangle_code: rectangleCode }),
 
-  favoriteSpe...cies: (speciesId: string) =>
+  favoriteSpecies: (speciesId: string) =>
     trackEvent('species_favorited', { species_id: speciesId }),
 
   unfavoriteSpecies: (speciesId: string) =>
