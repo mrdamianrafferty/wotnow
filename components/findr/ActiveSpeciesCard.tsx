@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, Bell, BellOff } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -117,16 +118,30 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         }
       }
 
+      const title = `🔥 ${species.name} - Hot Bite Alert!`;
+      const body = `${species.confidence}% confidence! They're biting right now - drop everything and go fishing!`;
+
       // Schedule immediate notification (for hot bites happening NOW)
       const notificationId = await scheduleLocalNotification({
-        title: `🔥 ${species.name} - Hot Bite Alert!`,
-        body: `${species.confidence}% confidence! They're biting right now - drop everything and go fishing!`,
+        title,
+        body,
         extra: {
           speciesId: species.id,
           speciesName: species.name,
           confidence: species.confidence,
           type: 'hot_bite_alert',
         },
+      });
+
+      // Track notification for management UI
+      trackNotification({
+        id: notificationId,
+        title,
+        body,
+        scheduledAt: new Date().toISOString(),
+        speciesName: species.name,
+        speciesId: species.id,
+        type: 'hot_bite_alert',
       });
 
       console.log('[ActiveSpeciesCard] Alert scheduled:', notificationId);

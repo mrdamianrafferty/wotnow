@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, Bell, BellOff } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -118,9 +119,12 @@ Check predictions at fishfindr.eu`;
         reminderTime.setHours(reminderTime.getHours() + 2);
       }
 
+      const title = `🎣 ${species.name} - Peak Conditions Reminder`;
+      const body = `${species.confidence}% confidence! ${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to go fishing!'}`;
+
       const notificationId = await scheduleLocalNotification({
-        title: `🎣 ${species.name} - Peak Conditions Reminder`,
-        body: `${species.confidence}% confidence! ${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to go fishing!'}`,
+        title,
+        body,
         schedule: { at: reminderTime },
         extra: {
           speciesId: species.id,
@@ -128,6 +132,17 @@ Check predictions at fishfindr.eu`;
           confidence: species.confidence,
           type: 'peak_conditions_reminder',
         },
+      });
+
+      // Track notification for management UI
+      trackNotification({
+        id: notificationId,
+        title,
+        body,
+        scheduledAt: reminderTime.toISOString(),
+        speciesName: species.name,
+        speciesId: species.id,
+        type: 'peak_conditions_reminder',
       });
 
       console.log('[GoodSpeciesCard] Reminder scheduled:', notificationId, 'for', reminderTime);
