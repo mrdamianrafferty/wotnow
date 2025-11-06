@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2 } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, Bell, BellOff } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
+import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -66,6 +67,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [reminderScheduled, setReminderScheduled] = useState(false);
 
   // Fetch real tide data for location
   const tideInfo = useTideData(location ?? null);
@@ -84,6 +86,61 @@ Check predictions at fishfindr.eu`;
       await shareText(shareContent, `Fishing Prediction: ${species.name}`);
     } catch (error) {
       console.error('[GoodSpeciesCard] Share failed:', error);
+    }
+  };
+
+  // Notification reminder handler - Schedule for peak conditions
+  const handleSetReminder = async () => {
+    try {
+      // Check permissions first
+      const permissionStatus = await checkPermissions();
+
+      if (permissionStatus !== 'granted') {
+        const newStatus = await requestPermissions();
+        if (newStatus !== 'granted') {
+          console.warn('[GoodSpeciesCard] Notification permission denied');
+          return;
+        }
+      }
+
+      // Calculate when to send reminder (24 hours from now for "tomorrow" peak)
+      const reminderTime = new Date();
+      if (nextPeakDay && nextPeakDay.includes('tomorrow')) {
+        // Set reminder for tomorrow morning at 8am
+        reminderTime.setDate(reminderTime.getDate() + 1);
+        reminderTime.setHours(8, 0, 0, 0);
+      } else if (nextPeakDay && nextPeakDay.includes('2 days')) {
+        // Set reminder for day after tomorrow at 8am
+        reminderTime.setDate(reminderTime.getDate() + 2);
+        reminderTime.setHours(8, 0, 0, 0);
+      } else {
+        // Default to 2 hours from now if no specific peak day
+        reminderTime.setHours(reminderTime.getHours() + 2);
+      }
+
+      const notificationId = await scheduleLocalNotification({
+        title: `🎣 ${species.name} - Peak Conditions Reminder`,
+        body: `${species.confidence}% confidence! ${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to go fishing!'}`,
+        schedule: { at: reminderTime },
+        extra: {
+          speciesId: species.id,
+          speciesName: species.name,
+          confidence: species.confidence,
+          type: 'peak_conditions_reminder',
+        },
+      });
+
+      console.log('[GoodSpeciesCard] Reminder scheduled:', notificationId, 'for', reminderTime);
+      setReminderScheduled(true);
+
+      // Auto-reset after 5 seconds to allow re-scheduling
+      setTimeout(() => setReminderScheduled(false), 5000);
+    } catch (error) {
+      if (error instanceof NotificationException) {
+        console.error('[GoodSpeciesCard] Notification error:', error.type, error.message);
+      } else {
+        console.error('[GoodSpeciesCard] Failed to set reminder:', error);
+      }
     }
   };
   // Get real fishing time data based on species preferences, location, and tides
@@ -223,6 +280,14 @@ Check predictions at fishfindr.eu`;
               title="Share prediction"
             >
               <Share2 size={14} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
+              className={`btn btn-xs ${reminderScheduled ? 'btn-success' : 'btn-ghost'}`}
+              title={reminderScheduled ? 'Reminder scheduled!' : 'Set fishing reminder'}
+              disabled={reminderScheduled}
+            >
+              {reminderScheduled ? <BellOff size={14} /> : <Bell size={14} />}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
