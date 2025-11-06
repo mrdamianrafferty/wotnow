@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Production: Only allow HTTPS connections -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Development: Allow localhost for local testing -->
+    <!-- Remove or comment out for production builds -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Android emulator host -->
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <!-- Add your local IP for physical device testing -->
+        <!-- <domain includeSubdomains="true">192.168.1.X</domain> -->
+    </domain-config>
+
+    <!-- Production domain (HTTPS only) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">fishfindr.eu</domain>
+    </domain-config>
+</network-security-config>

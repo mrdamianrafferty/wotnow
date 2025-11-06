@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: 'Findr',
   webDir: '.capacitor-assets',
 
+  // Version info (synced with package.json, iOS project, Android gradle)
+  // Version: 1.0.0 (Build: 1)
+
   server: {
     // PRODUCTION: Load content from Vercel
     // This hybrid architecture keeps all API routes on the server (secure)

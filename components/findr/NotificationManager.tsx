@@ -16,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, BellOff, Trash2, Clock, Fish, AlertCircle } from 'lucide-react';
 import { cancelLocalNotification } from '@/lib/capacitor/notifications';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import { toast } from '@/lib/ui/toast';
 
 export interface ScheduledNotification {
   id: number;
@@ -117,7 +118,7 @@ export function NotificationManager() {
       setNotifications(prev => prev.filter(n => n.id !== notification.id));
     } catch (error) {
       console.error('[NotificationManager] Failed to cancel notification:', error);
-      alert('Failed to cancel notification. Please try again.');
+      await toast.error('Failed to cancel notification. Please try again.');
     } finally {
       setCancelingId(null);
     }
@@ -141,7 +142,7 @@ export function NotificationManager() {
       setNotifications([]);
     } catch (error) {
       console.error('[NotificationManager] Failed to clear all notifications:', error);
-      alert('Failed to cancel some notifications. Please try again.');
+      await toast.error('Failed to cancel some notifications. Please try again.');
     } finally {
       setCancelingId(null);
     }

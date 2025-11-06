@@ -26,6 +26,7 @@ import type { CatchLogInput } from '@/types/findr-enrichment';
 import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
 import { getStorage } from '@/lib/offline/storage';
 import { isOnline } from '@/lib/offline/network';
+import { toast } from '@/lib/ui/toast';
 
 // Types
 interface SessionLogModalProps {
@@ -375,7 +376,7 @@ export function SessionLogModal({
       // Success
       if (!online) {
         onSuccess(0); // 0 indicates queued for sync
-        alert(`${catches.length} catch${catches.length > 1 ? 'es' : ''} saved offline. They will be synced when you're back online.`);
+        await toast.info(`${catches.length} catch${catches.length > 1 ? 'es' : ''} saved offline. They will be synced when you're back online.`, 4000);
       } else {
         onSuccess(catches.length);
       }

@@ -66,6 +66,7 @@
     "@capacitor/share": "^7.0.2",
     "@capacitor/splash-screen": "^7.0.3",
     "@capacitor/status-bar": "^7.0.3",
+    "@capacitor/toast": "^7.0.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@js-temporal/polyfill": "^0.5.1",
     "@sentry/nextjs": "^8.38.0",
