@@ -287,15 +287,15 @@ export const registerForPushNotifications = async (): Promise<string | null> => 
  * Add listener for push notification received while app is in foreground
  * (Native only)
  */
-export const addPushNotificationListener = (
+export const addPushNotificationListener = async (
   callback: (notification: { title?: string; body?: string; data?: Record<string, unknown> }) => void
-): (() => void) | null => {
+): Promise<(() => void) | null> => {
   if (!isNative()) {
     console.warn('Push notifications are only available on native platforms');
     return null;
   }
 
-  const listener = PushNotifications.addListener('pushNotificationReceived', (notification) => {
+  const listener = await PushNotifications.addListener('pushNotificationReceived', (notification) => {
     callback({
       title: notification.title,
       body: notification.body,
@@ -313,18 +313,18 @@ export const addPushNotificationListener = (
  * Add listener for push notification action performed (user tapped notification)
  * (Native only)
  */
-export const addPushNotificationActionListener = (
-  callback: (action: { actionId: string; notification: Record<string, unknown> }) => void
-): (() => void) | null => {
+export const addPushNotificationActionListener = async (
+  callback: (action: { actionId: string; notification: unknown }) => void
+): Promise<(() => void) | null> => {
   if (!isNative()) {
     console.warn('Push notifications are only available on native platforms');
     return null;
   }
 
-  const listener = PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+  const listener = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
     callback({
       actionId: action.actionId,
-      notification: action.notification,
+      notification: action.notification as unknown,
     });
   });
 
