@@ -27,6 +27,9 @@
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { isNative } from './platform';
 import { optimizeImage, type ImageOptimizationResult } from './image-optimizer';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('Camera');
 
 /**
  * Photo result with data URL
@@ -103,7 +106,7 @@ async function maybeOptimizePhoto(
     };
   } catch (error) {
     // If optimization fails, return original photo
-    console.warn('[Camera] Image optimization failed, using original:', error);
+    logger.warn('Image optimization failed, using original', error);
     return photo;
   }
 }

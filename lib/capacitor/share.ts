@@ -37,6 +37,9 @@
 
 import { Share as CapacitorShare } from '@capacitor/share';
 import { isNative } from './platform';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('Share');
 
 /**
  * Share options
@@ -122,7 +125,7 @@ export const share = async (options: ShareOptions): Promise<void> => {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(shareText);
           // In a real app, you might want to show a toast notification here
-          console.log('Share content copied to clipboard:', shareText);
+          logger.info('Share content copied to clipboard:', shareText);
         } else {
           // Even older fallback: Create temporary textarea
           const textarea = document.createElement('textarea');
@@ -133,7 +136,7 @@ export const share = async (options: ShareOptions): Promise<void> => {
           textarea.select();
           document.execCommand('copy');
           document.body.removeChild(textarea);
-          console.log('Share content copied to clipboard:', shareText);
+          logger.info('Share content copied to clipboard:', shareText);
         }
       }
     }

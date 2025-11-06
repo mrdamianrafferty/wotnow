@@ -26,6 +26,9 @@
 
 import { getStorage, PendingCatchLog } from './storage';
 import { getNetworkMonitor, NetworkStatus } from './network';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('SyncService');
 
 /**
  * Sync result
@@ -65,9 +68,9 @@ export class SyncService {
     // Listen for network status changes
     this.networkUnsubscribe = this.networkMonitor.addListener((status: NetworkStatus) => {
       if (status.connected && !this.isSyncing) {
-        console.log('[SyncService] Network reconnected, starting sync...');
+        logger.info('Network reconnected, starting sync...');
         this.syncNow().catch((error) => {
-          console.error('[SyncService] Auto-sync failed:', error);
+          logger.error('Auto-sync failed', error);
         });
       }
     });
@@ -76,7 +79,7 @@ export class SyncService {
     this.networkMonitor.isOnline().then((online) => {
       if (online) {
         this.syncNow().catch((error) => {
-          console.error('[SyncService] Initial sync failed:', error);
+          logger.error('Initial sync failed', error);
         });
       }
     });
@@ -100,14 +103,14 @@ export class SyncService {
   async syncNow(): Promise<SyncResult> {
     // Check if already syncing
     if (this.isSyncing) {
-      console.log('[SyncService] Sync already in progress, skipping...');
+      logger.info('Sync already in progress, skipping...');
       return { syncedCount: 0, failedCount: 0, errors: [] };
     }
 
     // Check if online
     const online = await this.networkMonitor.isOnline();
     if (!online) {
-      console.log('[SyncService] Cannot sync while offline');
+      logger.info('Cannot sync while offline');
       return { syncedCount: 0, failedCount: 0, errors: [] };
     }
 
@@ -129,11 +132,11 @@ export class SyncService {
     const pendingLogs = await this.storage.getPendingCatchLogs();
 
     if (pendingLogs.length === 0) {
-      console.log('[SyncService] No pending catch logs to sync');
+      logger.info('No pending catch logs to sync');
       return { syncedCount: 0, failedCount: 0, errors: [] };
     }
 
-    console.log(`[SyncService] Syncing ${pendingLogs.length} pending catch logs...`);
+    logger.info(`Syncing ${pendingLogs.length} pending catch logs...`);
 
     const result: SyncResult = {
       syncedCount: 0,
@@ -145,25 +148,25 @@ export class SyncService {
       try {
         await this.syncSingleCatchLog(log);
         result.syncedCount++;
-        console.log(`[SyncService] Successfully synced catch log ${log.id}`);
+        logger.info(`Successfully synced catch log ${log.id}`);
       } catch (error) {
         result.failedCount++;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         result.errors.push({ id: log.id, error: errorMessage });
-        console.error(`[SyncService] Failed to sync catch log ${log.id}:`, errorMessage);
+        logger.error(`Failed to sync catch log ${log.id}:`, errorMessage);
 
         // Update retry count
         await this.storage.updateCatchLogRetryCount(log.id);
 
         // If too many retries, consider removing it
         if (log.retryCount >= 5) {
-          console.warn(`[SyncService] Catch log ${log.id} failed 5+ times, removing from queue`);
+          logger.warn(`Catch log ${log.id} failed 5+ times, removing from queue`);
           await this.storage.removeCatchLog(log.id);
         }
       }
     }
 
-    console.log(`[SyncService] Sync complete: ${result.syncedCount} synced, ${result.failedCount} failed`);
+    logger.info(`Sync complete: ${result.syncedCount} synced, ${result.failedCount} failed`);
     return result;
   }
 
@@ -250,7 +253,7 @@ export class SyncService {
       try {
         listener(result);
       } catch (error) {
-        console.error('[SyncService] Listener error:', error);
+        logger.error('Listener error', error);
       }
     }
   }

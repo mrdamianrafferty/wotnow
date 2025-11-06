@@ -38,6 +38,9 @@ import {
 } from '@capacitor/local-notifications';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { isNative } from './platform';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('Notifications');
 
 /**
  * Notification schedule options
@@ -184,7 +187,7 @@ export const cancelLocalNotification = async (id: number): Promise<void> => {
     // Web notifications can't be cancelled before they're shown
     // But we can close them if they're already displayed
     // (This is a limitation of Web Notifications API)
-    console.warn('Web notifications cannot be cancelled before display');
+    logger.warn('Web notifications cannot be cancelled before display');
   }
 };
 
@@ -195,7 +198,7 @@ export const cancelAllLocalNotifications = async (): Promise<void> => {
   if (isNative()) {
     await LocalNotifications.cancel({ notifications: [] });
   } else {
-    console.warn('Web notifications cannot be cancelled before display');
+    logger.warn('Web notifications cannot be cancelled before display');
   }
 };
 
@@ -240,7 +243,7 @@ export const requestPermissions = async (): Promise<PermissionStatus> => {
  */
 export const registerForPushNotifications = async (): Promise<string | null> => {
   if (!isNative()) {
-    console.warn('Push notifications are only available on native platforms');
+    logger.warn('Push notifications are only available on native platforms');
     return null;
   }
 
@@ -291,7 +294,7 @@ export const addPushNotificationListener = async (
   callback: (notification: { title?: string; body?: string; data?: Record<string, unknown> }) => void
 ): Promise<(() => void) | null> => {
   if (!isNative()) {
-    console.warn('Push notifications are only available on native platforms');
+    logger.warn('Push notifications are only available on native platforms');
     return null;
   }
 
@@ -317,7 +320,7 @@ export const addPushNotificationActionListener = async (
   callback: (action: { actionId: string; notification: unknown }) => void
 ): Promise<(() => void) | null> => {
   if (!isNative()) {
-    console.warn('Push notifications are only available on native platforms');
+    logger.warn('Push notifications are only available on native platforms');
     return null;
   }
 

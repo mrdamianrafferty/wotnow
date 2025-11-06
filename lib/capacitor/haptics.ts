@@ -29,6 +29,9 @@
 
 import { Haptics as CapacitorHaptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('Haptics');
 
 /**
  * Check if haptics are available on this platform
@@ -71,7 +74,7 @@ export async function impact(style: 'light' | 'medium' | 'heavy' = 'medium'): Pr
     }
   } catch (error) {
     // Silently fail - haptics are nice-to-have
-    console.debug('[Haptics] Impact failed:', error);
+    logger.debug('Impact failed', error);
   }
 }
 
@@ -111,7 +114,7 @@ export async function notification(
       navigator.vibrate(pattern);
     }
   } catch (error) {
-    console.debug('[Haptics] Notification failed:', error);
+    logger.debug('Notification failed', error);
   }
 }
 
@@ -135,7 +138,7 @@ export async function selection(): Promise<void> {
       navigator.vibrate(5);
     }
   } catch (error) {
-    console.debug('[Haptics] Selection failed:', error);
+    logger.debug('Selection failed', error);
   }
 }
 
@@ -277,7 +280,7 @@ export function setHapticsEnabled(enabled: boolean): void {
   }
 
   localStorage.setItem('haptics_enabled', String(enabled));
-  console.log(`[Haptics] ${enabled ? 'Enabled' : 'Disabled'}`);
+  logger.info(`${enabled ? 'Enabled' : 'Disabled'}`);
 }
 
 /**

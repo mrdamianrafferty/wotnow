@@ -25,6 +25,9 @@
 
 import { Network, ConnectionStatus } from '@capacitor/network';
 import { isNative } from '../capacitor/platform';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('NetworkMonitor');
 
 /**
  * Network status
@@ -121,7 +124,7 @@ export class NetworkMonitor {
       try {
         listener(status);
       } catch (error) {
-        console.error('[NetworkMonitor] Listener error:', error);
+        logger.error('Listener error', error);
       }
     }
   }

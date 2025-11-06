@@ -17,6 +17,9 @@
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('OfflineDB');
 
 /**
  * Database schema interface
@@ -187,7 +190,7 @@ export async function initDB(): Promise<IDBPDatabase<FindrOfflineDB>> {
 
     return dbInstance;
   } catch (error) {
-    console.error('[OfflineDB] Failed to initialize database:', error);
+    logger.error('Failed to initialize database', error);
     throw error;
   }
 }

@@ -68,16 +68,28 @@ export class RateLimitError extends Error {
 const rateLimitStore = new Map<string, RateLimitInfo>();
 
 /**
- * Clean up old entries periodically (every 5 minutes)
+ * Clean up old entries periodically (every 60 seconds)
+ * Removes entries that:
+ * 1. Have passed their reset time
+ * 2. Have no recent requests (inactive for 2x window duration)
  */
 setInterval(() => {
   const now = Date.now();
   for (const [key, info] of rateLimitStore.entries()) {
+    // Remove if reset time has passed
     if (info.resetTime < now) {
+      rateLimitStore.delete(key);
+      continue;
+    }
+
+    // Remove if no recent requests (stale for 2x window duration)
+    const lastRequest = info.requests[info.requests.length - 1] || 0;
+    const maxStaleTime = 2 * 60 * 1000; // 2 minutes (2x default window)
+    if (now - lastRequest > maxStaleTime) {
       rateLimitStore.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, 60 * 1000); // Every 60 seconds
 
 /**
  * Get identifier from request (user ID or IP address)

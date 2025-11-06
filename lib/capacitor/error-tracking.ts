@@ -36,6 +36,9 @@
 
 import { Capacitor } from '@capacitor/core';
 import { Device } from '@capacitor/device';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('ErrorTracking');
 
 /**
  * Check if Sentry is configured and available
@@ -62,7 +65,7 @@ async function getSentry() {
     SentryModule = await import('@sentry/nextjs');
     return SentryModule;
   } catch (_error) {
-    console.warn('[ErrorTracking] Sentry not installed. Run: npm install @sentry/nextjs');
+    logger.warn('Sentry not installed. Run: npm install @sentry/nextjs');
     return null;
   }
 }
@@ -140,9 +143,9 @@ async function initializeSentry(): Promise<void> {
     });
 
     sentryInitialized = true;
-    console.log('[ErrorTracking] Sentry initialized');
+    logger.info('Sentry initialized');
   } catch (error) {
-    console.error('[ErrorTracking] Failed to initialize Sentry:', error);
+    logger.error('Failed to initialize Sentry', error);
   }
 }
 
@@ -159,7 +162,7 @@ export async function captureError(
   }
 ): Promise<void> {
   // Always log to console
-  console.error('[ErrorTracking]', context?.context || 'Error:', error);
+  logger.error(context?.context || 'Error:', error);
 
   const Sentry = await getSentry();
   if (!Sentry) {
@@ -190,7 +193,7 @@ export async function captureMessage(
   level: 'fatal' | 'error' | 'warning' | 'info' | 'debug' = 'info',
   context?: Record<string, unknown>
 ): Promise<void> {
-  console.log(`[ErrorTracking] ${level}:`, message, context);
+  logger.info(`${level}:`, message, context);
 
   const Sentry = await getSentry();
   if (!Sentry) {
@@ -314,7 +317,7 @@ export async function wrapCapacitorCall<T>(
  */
 export async function initializeErrorTracking(): Promise<void> {
   if (!isSentryAvailable()) {
-    console.log('[ErrorTracking] Sentry not configured (NEXT_PUBLIC_SENTRY_DSN not set)');
+    logger.info('Sentry not configured (NEXT_PUBLIC_SENTRY_DSN not set)');
     return;
   }
 

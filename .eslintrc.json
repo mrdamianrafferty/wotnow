@@ -3,6 +3,7 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "plugins": ["@next/next"],
   "rules": {
-    "react/no-unescaped-entities": "off"
+    "react/no-unescaped-entities": "off",
+    "no-console": "error"
   }
 }
