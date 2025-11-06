@@ -484,11 +484,14 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             {/* Enhanced species data from database */}
             {speciesDetails && !detailsLoading && (
               <>
-                {/* Fishing Techniques */}
-                {speciesDetails.techniques && speciesDetails.techniques.length > 0 && (
+                {/* Fishing Techniques - Filter out auto-linked guild defaults */}
+                {speciesDetails.techniques && speciesDetails.techniques.length > 0 && (() => {
+                  const curatedTechniques = speciesDetails.techniques.filter(t => !t.notes?.includes('Auto-linked guild defaults'));
+                  return curatedTechniques.length > 0;
+                })() && (
                   <InfoSection icon={<Target size={20} />} title="Best fishing techniques">
                     <div className="space-y-3">
-                      {speciesDetails.techniques.slice(0, 3).map((technique) => (
+                      {speciesDetails.techniques.filter(t => !t.notes?.includes('Auto-linked guild defaults')).slice(0, 3).map((technique) => (
                         <div key={technique.technique_id} className="rounded-lg border border-base-200 bg-base-50 p-3">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-semibold text-sm">{technique.technique_name}</span>
@@ -499,7 +502,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                           {technique.beginner_tips && (
                             <p className="text-xs text-base-content/70 mt-1">{technique.beginner_tips}</p>
                           )}
-                          {technique.notes && (
+                          {technique.notes && !technique.notes.includes('Auto-linked guild defaults') && (
                             <p className="text-xs text-base-content/60 mt-1 italic">{technique.notes}</p>
                           )}
                         </div>
