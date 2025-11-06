@@ -508,11 +508,14 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                   </InfoSection>
                 )}
 
-                {/* Recommended Bait */}
-                {speciesDetails.bait && speciesDetails.bait.length > 0 && (
+                {/* Recommended Bait - Only show if no Phase 1 curated baits exist, and filter out auto-linked defaults */}
+                {speciesDetails.bait && speciesDetails.bait.length > 0 && !card.recommendedBaits && (() => {
+                  const curatedBaits = speciesDetails.bait.filter(b => !b.notes?.includes('Auto-linked guild bait defaults'));
+                  return curatedBaits.length > 0;
+                })() && (
                   <InfoSection icon={<Wand2 size={20} />} title="Top bait recommendations">
                     <div className="space-y-2">
-                      {speciesDetails.bait.slice(0, 5).map((baitItem) => (
+                      {speciesDetails.bait.filter(b => !b.notes?.includes('Auto-linked guild bait defaults')).slice(0, 5).map((baitItem) => (
                         <div key={baitItem.bait_id} className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <span className="font-medium text-sm">{baitItem.bait_name}</span>
