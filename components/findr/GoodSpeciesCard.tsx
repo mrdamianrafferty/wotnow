@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2 } from 'lucide-react';
+import { shareText } from '@/lib/capacitor/share';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -70,6 +71,21 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   const tideInfo = useTideData(location ?? null);
 
   const nextPeakDay = getNextPeakDay(species.forecast);
+
+  // Share handler
+  const handleShare = async () => {
+    try {
+      const shareContent = `🎣 ${species.name} - ${species.confidence}% confidence!
+
+⚡ Good fishing conditions predicted!
+${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to plan a fishing trip'}
+
+Check predictions at fishfindr.eu`;
+      await shareText(shareContent, `Fishing Prediction: ${species.name}`);
+    } catch (error) {
+      console.error('[GoodSpeciesCard] Share failed:', error);
+    }
+  };
   // Get real fishing time data based on species preferences, location, and tides
   const fishingTimeResult = getImmediateFishingTimes(
     [species], 
@@ -200,6 +216,13 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
               title="View species details"
             >
               <Info size={14} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="btn btn-xs btn-ghost text-base-content"
+              title="Share prediction"
+            >
+              <Share2 size={14} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
