@@ -25,6 +25,7 @@ import { SPECIES_IMAGE_MAP } from '@/data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { QuickLogParams } from '@/hooks/useCatchLogger';
 import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
+import { getCurrentPosition, GeolocationException } from '@/lib/capacitor/geolocation';
 
 // Types
 interface QuickLogModalProps {
@@ -191,8 +192,10 @@ export function QuickLogModal({
   useEffect(() => {
     if (isOpen && !location?.lat && !location?.lon && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
       console.log('[QuickLogModal] Requesting location...');
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+
+      // Use Capacitor geolocation wrapper (native on iOS/Android, web fallback in browser)
+      getCurrentPosition()
+        .then((position) => {
           console.log('[QuickLogModal] Location received:', position.coords);
           updateLocation({
             coordinates: {
@@ -200,14 +203,18 @@ export function QuickLogModal({
               lon: position.coords.longitude
             },
             source: 'gps',
-            accuracy: position.coords.accuracy,
+            accuracy: position.coords.accuracy ?? null,
             resolveRectangle: true
           }).catch((err: Error) => {
             console.warn('[QuickLogModal] Failed to update location:', err);
           });
-        },
-        (err: GeolocationPositionError) => {
-          console.warn('[QuickLogModal] Location request failed:', err.message);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof GeolocationException) {
+            console.warn('[QuickLogModal] Location request failed:', err.type, err.message);
+          } else {
+            console.warn('[QuickLogModal] Location request failed:', err);
+          }
           // Fallback to default location (Asturias coast, Spain) for development/testing
           console.log('[QuickLogModal] Using fallback location for testing');
           updateLocation({
@@ -220,13 +227,7 @@ export function QuickLogModal({
           }).catch((fallbackErr: Error) => {
             console.error('[QuickLogModal] Fallback location also failed:', fallbackErr);
           });
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
-        }
-      );
+        });
     }
   }, [isOpen, location?.lat, location?.lon, updateLocation]);
 
@@ -367,8 +368,10 @@ export function QuickLogModal({
     }
 
     setRequestingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+
+    // Use Capacitor geolocation wrapper (native on iOS/Android, web fallback in browser)
+    getCurrentPosition()
+      .then((position) => {
         console.log('[QuickLogModal] GPS location received:', position.coords);
         updateLocation({
           coordinates: {
@@ -376,24 +379,22 @@ export function QuickLogModal({
             lon: position.coords.longitude
           },
           source: 'gps',
-          accuracy: position.coords.accuracy,
+          accuracy: position.coords.accuracy ?? null,
           resolveRectangle: true
         }).catch((err: Error) => {
           console.warn('[QuickLogModal] Failed to update location:', err);
         }).finally(() => {
           setRequestingLocation(false);
         });
-      },
-      (err: GeolocationPositionError) => {
-        console.warn('[QuickLogModal] Location request failed:', err.message);
+      })
+      .catch((err: unknown) => {
+        if (err instanceof GeolocationException) {
+          console.warn('[QuickLogModal] Location request failed:', err.type, err.message);
+        } else {
+          console.warn('[QuickLogModal] Location request failed:', err);
+        }
         setRequestingLocation(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0 // Force fresh location
-      }
-    );
+      });
   }, [updateLocation]);
 
   // Species selection handlers (multi-select)
