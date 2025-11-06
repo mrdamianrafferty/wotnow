@@ -21,6 +21,9 @@ import exifr from 'exifr';
 // Do not import sharp statically; use dynamic import only on server
 import type { QuickLogSpecies } from '../../hooks/useQuickLogSpecies';
 import { getVisualFeatures } from '../../data/speciesVisualFeatures';
+import { createLogger } from '@/lib/utils/logger';
+
+const logger = createLogger('FishID');
 
 // ============================================================================
 // Types
@@ -80,7 +83,7 @@ class FishIdentificationService {
 
     // Only initialize on server-side (Node.js environment)
     if (typeof window !== 'undefined') {
-      console.warn('[FishID] Cannot initialize OpenAI client-side');
+      logger.warn('Cannot initialize OpenAI client-side');
       this.aiAvailable = false;
       return;
     }
@@ -89,10 +92,10 @@ class FishIdentificationService {
 
     if (apiKey) {
       this.openai = new OpenAI({ apiKey });
-      console.log('[FishID] OpenAI initialized server-side');
+      logger.info('OpenAI initialized server-side');
       this.aiAvailable = true;
     } else {
-      console.warn('[FishID] OpenAI API key not found - AI identification disabled');
+      logger.warn('OpenAI API key not found - AI identification disabled');
       this.aiAvailable = false;
     }
 
@@ -108,7 +111,7 @@ class FishIdentificationService {
     context: CatchContext
   ): Promise<IdentificationResult> {
     try {
-      console.log('[FishID] Starting identification:', {
+      logger.info('Starting identification:', {
         imageSize: image.size,
         candidateCount: context.candidates?.length || 0
       });
@@ -117,14 +120,14 @@ class FishIdentificationService {
       const cacheKey = await this.generateCacheKey(image, context);
       const cached = this.cache.get(cacheKey);
       if (cached) {
-        console.log('[FishID] Cache hit');
+        logger.info('Cache hit');
         return cached;
       }
 
       // 2. Extract EXIF data (GPS/timestamp)
       const exif = await this.extractExifData(image);
       if (exif?.location) {
-        console.log('[FishID] EXIF location found:', exif.location);
+        logger.info('EXIF location found:', exif.location);
         // TODO: Use EXIF location to refine context if different from user's current location
       }
 
@@ -136,7 +139,7 @@ class FishIdentificationService {
       // 4. If only 1-2 high-confidence candidates, use database match
       const highConfidenceCandidates = context.candidates.filter(c => c.confidence >= 75);
       if (highConfidenceCandidates.length === 1) {
-        console.log('[FishID] Single high-confidence match - database');
+        logger.info('Single high-confidence match - database');
         const result: IdentificationResult = {
           species: highConfidenceCandidates[0],
           method: 'database',
@@ -163,7 +166,7 @@ class FishIdentificationService {
           return aiResult;
 
         } catch (error) {
-          console.error('[FishID] AI identification failed:', error);
+          logger.error('AI identification failed:', error);
           return this.handleAIError(error as Error, context.candidates);
         }
       }
@@ -172,7 +175,7 @@ class FishIdentificationService {
       return this.handleManualSelection(context.candidates);
 
     } catch (_error) {
-      console.error('[FishID] Complete identification failure:', _error);
+      logger.error('Complete identification failure:', _error);
       return this.handleCompleteFailure(context);
     }
   }
@@ -194,7 +197,7 @@ class FishIdentificationService {
         };
       }
     } catch (_error) {
-      console.log('[FishID] No EXIF data found (this is normal for uploaded photos)');
+      logger.info('No EXIF data found (this is normal for uploaded photos)');
     }
     return null;
   }
@@ -216,7 +219,7 @@ class FishIdentificationService {
       const data = await response.json();
       return data.species || [];
     } catch (error) {
-      console.warn('[FishID] Failed to fetch recent catches:', error);
+      logger.warn('Failed to fetch recent catches:', error);
       return [];
     }
   }
@@ -257,7 +260,7 @@ class FishIdentificationService {
 
       return hint;
     } catch (error) {
-      console.warn('[FishID] Failed to fetch AI accuracy stats:', error);
+      logger.warn('Failed to fetch AI accuracy stats:', error);
       return '';
     }
   }
@@ -274,7 +277,7 @@ class FishIdentificationService {
       throw new Error('OpenAI not initialized');
     }
 
-    console.log('[FishID] Using AI identification with', candidates.length, 'candidates');
+    logger.info('Using AI identification with', candidates.length, 'candidates');
 
     // Convert image to base64
     const buffer = Buffer.from(await image.arrayBuffer());
@@ -366,11 +369,11 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
       response.choices[0].message.content || '{}'
     );
 
-    console.log('[FishID] AI response:', result);
+    logger.info('AI response:', result);
 
     // Check if multiple fish detected
     if (result.species === 'multiple_fish') {
-      console.log('[FishID] Multiple fish detected in image');
+      logger.info('Multiple fish detected in image');
       return {
         species: candidates.slice(0, 8),
         method: 'manual_selection',
@@ -382,7 +385,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
 
     // Check if AI returned uncertain response with alternatives
     if (result.species === 'uncertain' && result.alternatives && Array.isArray(result.alternatives)) {
-      console.log('[FishID] AI uncertain - provided', result.alternatives.length, 'alternatives');
+      logger.info('AI uncertain - provided', result.alternatives.length, 'alternatives');
 
       // Map AI alternatives to our candidate species
       const topGuesses: QuickLogSpecies[] = [];
@@ -482,7 +485,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
    * Handle scenario where no candidates are provided
    */
   private handleNoCandidates(_context: CatchContext): IdentificationResult {
-    console.warn('[FishID] No regional candidates available');
+    logger.warn('No regional candidates available');
     return {
       species: [],
       method: 'manual_selection',
@@ -512,7 +515,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
     error: Error,
     candidates: QuickLogSpecies[]
   ): IdentificationResult {
-    console.error('[FishID] AI Error:', error);
+    logger.error('AI Error:', error);
 
     // Check if it's a quota/rate limit error
     if (error.message?.includes('quota') ||
@@ -522,7 +525,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
       if (this.aiErrorCount > 3) {
         this.aiAvailable = false;
         this.scheduleAIRecheck();
-        console.warn('[FishID] AI disabled due to repeated errors');
+        logger.warn('AI disabled due to repeated errors');
       }
     }
 
@@ -553,14 +556,14 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
    */
   private async checkBudget(): Promise<boolean> {
     if (this.monthlyUsage >= this.monthlyBudget) {
-      console.warn('[FishID] Monthly budget exceeded');
+      logger.warn('Monthly budget exceeded');
       this.aiAvailable = false;
       return false;
     }
 
     // Warning at 80%
     if (this.monthlyUsage >= this.monthlyBudget * 0.8) {
-      console.warn(`[FishID] Budget warning: €${this.monthlyUsage.toFixed(2)} of €${this.monthlyBudget} used`);
+      logger.warn(`Budget warning: €${this.monthlyUsage.toFixed(2)} of €${this.monthlyBudget} used`);
     }
 
     return true;
@@ -574,7 +577,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
     setTimeout(() => {
       this.aiAvailable = true;
       this.aiErrorCount = 0;
-      console.log('[FishID] AI re-enabled after timeout');
+      logger.info('AI re-enabled after timeout');
     }, 60 * 60 * 1000);
   }
 
@@ -614,7 +617,7 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
   private async logIdentification(result: IdentificationResult): Promise<void> {
     await this.saveMonthlyUsage();
 
-    console.log('[FishID] Identification logged:', {
+    logger.info('Identification logged:', {
       method: result.method,
       cost: result.cost,
       confidence: result.confidence
