@@ -147,6 +147,9 @@ export interface CardData {
   // Week 3: Seasonality data
   seasonal_multiplier?: number;
   original_confidence?: number;
+
+  // Species badges (e.g., shark, ray_skate, etc.)
+  badges?: string[] | null;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
@@ -682,7 +685,23 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     parseStringArray(prediction.biogeographicRegions as JsonValue | undefined);
 
   const data_freshness = firstString(prediction.data_freshness) as CardData['data_freshness'];
-  const weight_profile = firstString(prediction.weight_profile) as CardData['weight_profile'];
+  // Prefer 'guild' or 'fish_guild' from DB, fallback to prediction.weight_profile
+  const weight_profile =
+    (firstString(prediction.guild) as CardData['weight_profile']) ||
+    (firstString(prediction.fish_guild) as CardData['weight_profile']) ||
+    (firstString(prediction.weight_profile) as CardData['weight_profile']);
+  // Map species_badges (array of strings) from DB to badges
+  let badges: string[] | null = null;
+  if (Array.isArray(prediction.species_badges)) {
+    badges = (prediction.species_badges as unknown[]).filter((b: unknown): b is string => typeof b === 'string' && b.length > 0);
+  } else if (typeof prediction.species_badges === 'string') {
+    try {
+      const parsed = JSON.parse(prediction.species_badges);
+      if (Array.isArray(parsed)) {
+        badges = (parsed as unknown[]).filter((b: unknown): b is string => typeof b === 'string' && b.length > 0);
+      }
+    } catch {}
+  }
   
   // Extract factors from JSONB (from get_environmental_predictions_basic function)
   let environmental_factors: CardData['environmental_factors'];
@@ -789,7 +808,8 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
 
     // Phase 10: Environmental data
     data_freshness,
-    weight_profile,
+  weight_profile,
+  badges,
     environmental_factors,
 
     // Week 3: Seasonality data

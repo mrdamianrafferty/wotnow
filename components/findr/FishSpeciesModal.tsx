@@ -31,6 +31,9 @@ import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 import { useLanguage } from '../../context/LanguageContext';
 
+import { GuildBadge } from './GuildBadge';
+import { SpeciesBadges } from './SpeciesBadges';
+
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
     return (
@@ -285,13 +288,14 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               <TranslatedText text="Species profile" />
             </p>
             <div className="flex flex-wrap items-center gap-3">
+              <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
               <h1 id={titleId} className="text-3xl font-bold leading-tight text-base-content flex items-center gap-2">
-                <span className="text-3xl" aria-hidden>
-                  {card.emoji}
-                </span>
                 {displayName}
               </h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
               {advice && <ContextBadge context={advice.context} />}
+              {card.badges && <SpeciesBadges badges={card.badges} size="sm" />}
             </div>
             {card.scientificName && (
               <p className="text-sm italic text-base-content/70">{card.scientificName}</p>

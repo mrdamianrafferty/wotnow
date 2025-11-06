@@ -987,7 +987,7 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && !loading && !error && currentCard && (
-              <div className="space-y-4 max-w-full sm:max-w-xl mx-0 sm:mx-auto px-0 sm:px-4">
+              <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
                   <div className="relative h-[460px] sm:h-[520px] w-full">
                     <AnimatePresence initial={false}>
                       {visibleCards.map((card, index) => (
