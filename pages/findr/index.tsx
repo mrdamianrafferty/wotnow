@@ -27,6 +27,8 @@ import { useFavourites } from '../../hooks/useFavourites';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
+import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
+import { DataFreshnessIndicator } from '../../components/findr/DataFreshnessIndicator';
 
 // Code-split modals - only loaded when opened (saves ~30KB from initial bundle)
 const FindrModal = dynamic(
@@ -752,7 +754,16 @@ const FindrPage: React.FC = () => {
     }
   }, [activeOption, saveLocationToCookie]);
 
-  const { predictions, loading, error, lastUpdated, reload } = useFishingPredictions({
+  const {
+    predictions,
+    loading,
+    error,
+    lastUpdated,
+    reload,
+    isFromCache,
+    cacheTimestamp,
+    freshness,
+  } = useFishingPredictions({
     rectangleCode: activeRectangle,
     predictionDate,
     language,
@@ -915,6 +926,9 @@ const FindrPage: React.FC = () => {
         url="https://fishfindr.eu"
       />
       <main className="min-h-screen bg-base-200 pb-16">
+        {/* Network status indicator */}
+        <NetworkStatusIndicator position="top" />
+
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />
 
@@ -946,6 +960,23 @@ const FindrPage: React.FC = () => {
                   <span>
                     <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
                   </span>
+                </div>
+              )}
+              {isFromCache && cacheTimestamp && freshness && (
+                <div className="flex items-center gap-2 px-4 sm:px-0">
+                  <DataFreshnessIndicator
+                    timestamp={cacheTimestamp}
+                    freshness={freshness}
+                  />
+                  {freshness === 'stale' || freshness === 'very-stale' ? (
+                    <span className="text-xs text-base-content/70">
+                      <TranslatedText text="Connect to refresh predictions" />
+                    </span>
+                  ) : (
+                    <span className="text-xs text-base-content/70">
+                      <TranslatedText text="Offline mode" />
+                    </span>
+                  )}
                 </div>
               )}
             </div>

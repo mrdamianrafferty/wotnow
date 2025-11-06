@@ -24,6 +24,8 @@ import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImag
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { CatchLogInput } from '@/types/findr-enrichment';
 import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
+import { getStorage } from '@/lib/offline/storage';
+import { isOnline } from '@/lib/offline/network';
 
 // Types
 interface SessionLogModalProps {
@@ -237,10 +239,10 @@ export function SessionLogModal({
       setError('Please complete all required fields');
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Convert session date to ISO timestamp for each catch
       const representativeTime = timePeriods.length
@@ -249,6 +251,9 @@ export function SessionLogModal({
 
       const userLocation = await requestUserLocation();
       const primaryPhoto = photos[0] ?? null;
+
+      // Check if online
+      const online = await isOnline();
 
       for (const [index, catch_] of catches.entries()) {
         const speciesInfo = getSpeciesInfo(catch_.species_id);
@@ -267,34 +272,115 @@ export function SessionLogModal({
           env.session_photo_count = photos.length;
         }
 
-        const result = await onSubmitCatch({
-          speciesId: catch_.species_id,
-          speciesCommonName: speciesInfo.name,
-          scientificName: speciesInfo.scientificName ?? null,
-          rectangleCode,
-          catchDate: sessionDate,
-          catchTime: representativeTime,
-          quantity: catch_.quantity,
-          sizeCategory: catch_.size_category,
-          baitUsed: catch_.bait_used,
-          habitatType: habitat,
-          method: 'shore',
-          notes: catch_.notes || undefined,
-          entryType: 'detailed',
-          photo: index === 0 ? primaryPhoto : null,
-          userLocation: userLocation ?? undefined,
-          environmentalConditions: env,
-        });
+        if (!online) {
+          // Queue for offline sync
+          console.log('[SessionLogModal] Offline - queueing catch for sync');
+          const storage = getStorage();
 
-        if (result == null) {
-          throw new Error('Session catch failed to log; please try again.');
+          // Convert photo to Blob if available
+          const photoBlobs: Blob[] = [];
+          if (index === 0 && primaryPhoto) {
+            photoBlobs.push(primaryPhoto);
+          }
+
+          await storage.queueCatchLog({
+            data: {
+              speciesId: catch_.species_id,
+              rectangleCode,
+              date: sessionDate,
+              bait: catch_.bait_used,
+              habitat,
+              photos: photoBlobs,
+              metadata: {
+                speciesCommonName: speciesInfo.name,
+                scientificName: speciesInfo.scientificName,
+                catchTime: representativeTime,
+                quantity: catch_.quantity,
+                sizeCategory: catch_.size_category,
+                method: 'shore',
+                notes: catch_.notes,
+                entryType: 'detailed',
+                userLocation,
+                environmentalConditions: env,
+              },
+            },
+          });
+        } else {
+          // Online - submit normally
+          try {
+            const result = await onSubmitCatch({
+              speciesId: catch_.species_id,
+              speciesCommonName: speciesInfo.name,
+              scientificName: speciesInfo.scientificName ?? null,
+              rectangleCode,
+              catchDate: sessionDate,
+              catchTime: representativeTime,
+              quantity: catch_.quantity,
+              sizeCategory: catch_.size_category,
+              baitUsed: catch_.bait_used,
+              habitatType: habitat,
+              method: 'shore',
+              notes: catch_.notes || undefined,
+              entryType: 'detailed',
+              photo: index === 0 ? primaryPhoto : null,
+              userLocation: userLocation ?? undefined,
+              environmentalConditions: env,
+            });
+
+            if (result == null) {
+              throw new Error('Session catch failed to log; please try again.');
+            }
+          } catch (submitError) {
+            // If network error, queue for offline sync
+            const errorMessage = submitError instanceof Error ? submitError.message : '';
+            if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('NetworkError')) {
+              console.log('[SessionLogModal] Network error - queueing catch for sync');
+              const storage = getStorage();
+
+              const photoBlobs: Blob[] = [];
+              if (index === 0 && primaryPhoto) {
+                photoBlobs.push(primaryPhoto);
+              }
+
+              await storage.queueCatchLog({
+                data: {
+                  speciesId: catch_.species_id,
+                  rectangleCode,
+                  date: sessionDate,
+                  bait: catch_.bait_used,
+                  habitat,
+                  photos: photoBlobs,
+                  metadata: {
+                    speciesCommonName: speciesInfo.name,
+                    scientificName: speciesInfo.scientificName,
+                    catchTime: representativeTime,
+                    quantity: catch_.quantity,
+                    sizeCategory: catch_.size_category,
+                    method: 'shore',
+                    notes: catch_.notes,
+                    entryType: 'detailed',
+                    userLocation,
+                    environmentalConditions: env,
+                  },
+                },
+              });
+            } else {
+              // Re-throw non-network errors
+              throw submitError;
+            }
+          }
         }
       }
 
       // Success
-      onSuccess(catches.length);
+      if (!online) {
+        onSuccess(0); // 0 indicates queued for sync
+        alert(`${catches.length} catch${catches.length > 1 ? 'es' : ''} saved offline. They will be synced when you're back online.`);
+      } else {
+        onSuccess(catches.length);
+      }
       handleClose();
-      
+
     } catch (err) {
       console.error('[SessionLogModal] Failed to log session:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to log session';
