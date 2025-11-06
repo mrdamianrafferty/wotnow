@@ -5,6 +5,7 @@ import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/find
 import { fetchMetNoLocationForecast } from '../../../lib/services/weatherService';
 import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/queryWithTiming';
 import { calculateTidePhase, type TideExtreme } from '../../../lib/tides/calculateTidePhase';
+import { rateLimiter, RateLimitError, addRateLimitHeaders } from '../../../lib/utils/rate-limiter';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -661,6 +662,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Rate limiting: 10 requests per minute
+  try {
+    await rateLimiter.check(req);
+    // Add rate limit headers to response
+    const status = rateLimiter.getStatus(req);
+    addRateLimitHeaders(res, status);
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      res.setHeader('Retry-After', error.retryAfter);
+      return res.status(429).json({
+        error: error.message,
+        retryAfter: error.retryAfter,
+        limit: error.limit
+      });
+    }
+    // Unknown error - let it propagate
+    throw error;
   }
 
   if (!SUPABASE_ANON_KEY) {

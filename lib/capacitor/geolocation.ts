@@ -166,20 +166,59 @@ export const getCurrentPosition = async (): Promise<Position> => {
 };
 
 /**
- * Watch position updates
+ * Options for watching position
+ */
+export interface WatchPositionOptions {
+  /** Minimum time between updates in milliseconds (default: 5000ms = 5s) */
+  minInterval?: number;
+  /** Enable high accuracy GPS (default: true) */
+  enableHighAccuracy?: boolean;
+  /** Maximum time to wait for a position (default: 10000ms) */
+  timeout?: number;
+  /** Maximum age of a cached position (default: 0) */
+  maximumAge?: number;
+}
+
+/**
+ * Watch position updates with debouncing to prevent battery drain
  * Returns watch ID that can be used to clear the watch
+ *
+ * Note: minInterval defaults to 5000ms (5 seconds) to prevent excessive
+ * battery drain from continuous GPS usage.
  */
 export const watchPosition = async (
   callback: (position: Position) => void,
-  errorCallback?: (error: GeolocationException) => void
+  errorCallback?: (error: GeolocationException) => void,
+  options: WatchPositionOptions = {}
 ): Promise<string> => {
+  const {
+    minInterval = 5000, // 5 second minimum interval
+    enableHighAccuracy = true,
+    timeout = 10000,
+    maximumAge = 0,
+  } = options;
+
+  let lastUpdateTime = 0;
+
+  // Debounced callback wrapper
+  const debouncedCallback = (position: Position) => {
+    const now = Date.now();
+
+    // Skip update if within debounce interval
+    if (now - lastUpdateTime < minInterval) {
+      return;
+    }
+
+    lastUpdateTime = now;
+    callback(position);
+  };
   if (isNative()) {
     // Use native Capacitor plugin
     const watchId = await CapacitorGeolocation.watchPosition(
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        enableHighAccuracy,
+        timeout,
+        maximumAge,
       },
       (position, error) => {
         if (error) {
@@ -193,7 +232,7 @@ export const watchPosition = async (
         }
 
         if (position) {
-          callback({
+          debouncedCallback({
             coords: {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
@@ -221,7 +260,7 @@ export const watchPosition = async (
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        callback({
+        debouncedCallback({
           coords: {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
@@ -249,9 +288,9 @@ export const watchPosition = async (
         }
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
+        enableHighAccuracy,
+        timeout,
+        maximumAge,
       }
     );
 

@@ -26,6 +26,7 @@
 
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { isNative } from './platform';
+import { optimizeImage, type ImageOptimizationResult } from './image-optimizer';
 
 /**
  * Photo result with data URL
@@ -35,6 +36,7 @@ export interface Photo {
   dataUrl: string; // "data:image/jpeg;base64,..."
   format: 'jpeg' | 'png' | 'gif' | 'webp';
   exif?: Record<string, unknown>; // Native platforms may include EXIF
+  optimization?: ImageOptimizationResult; // Present if image was optimized
 }
 
 /**
@@ -46,12 +48,65 @@ export interface CameraOptions {
   height?: number; // Max height in pixels
   allowEditing?: boolean; // Allow user to crop/edit (default false)
   saveToGallery?: boolean; // Save to device gallery (default false)
+  optimize?: boolean; // Apply image optimization (default true)
+  optimizeMaxWidth?: number; // Max width after optimization (default 960)
+  optimizeMaxHeight?: number; // Max height after optimization (default 540)
+  optimizeQuality?: number; // JPEG quality 0-1 (default 0.85)
 }
 
 /**
  * Camera error types
  */
 export type CameraError = 'PERMISSION_DENIED' | 'CANCELLED' | 'UNAVAILABLE' | 'UNKNOWN';
+
+/**
+ * Helper: Optimize a photo if requested
+ */
+async function maybeOptimizePhoto(
+  photo: Photo,
+  options: CameraOptions
+): Promise<Photo> {
+  const {
+    optimize = true,
+    optimizeMaxWidth = 960,
+    optimizeMaxHeight = 540,
+    optimizeQuality = 0.85,
+  } = options;
+
+  // Skip optimization if disabled
+  if (!optimize) {
+    return photo;
+  }
+
+  try {
+    // Optimize the image
+    const result = await optimizeImage(photo.dataUrl, {
+      maxWidth: optimizeMaxWidth,
+      maxHeight: optimizeMaxHeight,
+      quality: optimizeQuality,
+      format: 'image/jpeg', // Always convert to JPEG for best compression
+    });
+
+    // Convert blob back to data URL
+    const reader = new FileReader();
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read optimized image'));
+      reader.readAsDataURL(result.blob);
+    });
+
+    return {
+      ...photo,
+      dataUrl,
+      format: 'jpeg',
+      optimization: result,
+    };
+  } catch (error) {
+    // If optimization fails, return original photo
+    console.warn('[Camera] Image optimization failed, using original:', error);
+    return photo;
+  }
+}
 
 /**
  * Custom error class for camera errors
@@ -95,11 +150,13 @@ export const takePicture = async (options: CameraOptions = {}): Promise<Photo> =
         throw new CameraException('UNKNOWN', 'Failed to get image data');
       }
 
-      return {
+      const photo: Photo = {
         dataUrl: image.dataUrl,
         format: (image.format || 'jpeg') as Photo['format'],
         exif: image.exif,
       };
+
+      return await maybeOptimizePhoto(photo, options);
     } else {
       // Use web file input with camera capture
       return new Promise((resolve, reject) => {
@@ -122,7 +179,7 @@ export const takePicture = async (options: CameraOptions = {}): Promise<Photo> =
           try {
             // Read file as data URL
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
               const dataUrl = reader.result as string;
 
               // Determine format from MIME type
@@ -131,10 +188,13 @@ export const takePicture = async (options: CameraOptions = {}): Promise<Photo> =
               else if (file.type === 'image/gif') format = 'gif';
               else if (file.type === 'image/webp') format = 'webp';
 
-              resolve({
+              const photo: Photo = {
                 dataUrl,
                 format,
-              });
+              };
+
+              const optimizedPhoto = await maybeOptimizePhoto(photo, options);
+              resolve(optimizedPhoto);
 
               // Clean up
               document.body.removeChild(input);
@@ -207,11 +267,13 @@ export const selectFromGallery = async (options: CameraOptions = {}): Promise<Ph
         throw new CameraException('UNKNOWN', 'Failed to get image data');
       }
 
-      return {
+      const photo: Photo = {
         dataUrl: image.dataUrl,
         format: (image.format || 'jpeg') as Photo['format'],
         exif: image.exif,
       };
+
+      return await maybeOptimizePhoto(photo, options);
     } else {
       // Use web file input without camera capture
       return new Promise((resolve, reject) => {
@@ -233,7 +295,7 @@ export const selectFromGallery = async (options: CameraOptions = {}): Promise<Ph
           try {
             // Read file as data URL
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
               const dataUrl = reader.result as string;
 
               // Determine format from MIME type
@@ -242,10 +304,13 @@ export const selectFromGallery = async (options: CameraOptions = {}): Promise<Ph
               else if (file.type === 'image/gif') format = 'gif';
               else if (file.type === 'image/webp') format = 'webp';
 
-              resolve({
+              const photo: Photo = {
                 dataUrl,
                 format,
-              });
+              };
+
+              const optimizedPhoto = await maybeOptimizePhoto(photo, options);
+              resolve(optimizedPhoto);
 
               // Clean up
               document.body.removeChild(input);
