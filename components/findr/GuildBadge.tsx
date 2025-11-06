@@ -17,13 +17,13 @@ const GUILD_INFO: Record<string, {
   pelagic: {
     label: 'Pelagic',
     icon: '🌊',
-    description: 'Open water species - temperature-sensitive',
+    description: 'Open water baby!',
     color: 'badge-info'
   },
   surf_estuary: {
     label: 'Surf/Estuary',
     icon: '🏖️',
-    description: 'Coastal zones - OK with varied salt levels',
+    description: 'Not too far out man!',
     color: 'badge-accent'
   },
   reef_kelp: {
@@ -41,13 +41,13 @@ const GUILD_INFO: Record<string, {
   cephalopod: {
     label: 'Cephalopod',
     icon: '🦑',
-    description: 'Squid, cuttlefish and octopus family',
+    description: 'Squiddycuttlepus',
     color: 'badge-primary'
   },
   default_coastal: {
     label: 'Coastal',
     icon: '🐟',
-    description: 'Common coastal species',
+    description: 'Cruising the coast',
     color: 'badge-ghost'
   }
 };
@@ -73,7 +73,7 @@ export const GuildBadge: React.FC<GuildBadgeProps> = ({
   const badge = (
     <div className={`badge ${info.color} badge-outline badge-${size} gap-1 font-medium`}>
       <span role="img" aria-label={info.label}>{info.icon}</span>
-      <span className="hidden sm:inline">{info.label}</span>
+      <span>{info.label}</span>
     </div>
   );
 
