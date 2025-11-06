@@ -26,6 +26,7 @@ import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { QuickLogParams } from '@/hooks/useCatchLogger';
 import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 import { getCurrentPosition, GeolocationException } from '@/lib/capacitor/geolocation';
+import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
 
 // Types
 interface QuickLogModalProps {
@@ -37,7 +38,6 @@ interface QuickLogModalProps {
 }
 
 type Step = 'photo-decision' | 'photo-captured' | 'species-selection' | 'quantity' | 'extra-details' | 'submitting' | 'success';
-type PhotoSource = 'camera' | 'gallery' | 'skip';
 type HabitatType = 'rocky_shore' | 'sandy_beach' | 'pier_harbor' | 'estuary' | 'shallow_water' | 'deep_water' | 'wreck_reef' | 'open_sea';
 
 interface ExifData {
@@ -111,6 +111,13 @@ async function extractExif(file: File): Promise<ExifData | null> {
     console.log('[QuickLog] No EXIF data found:', err);
     return null;
   }
+}
+
+// Helper to convert data URL to File object
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: blob.type });
 }
 
 // Main component
@@ -295,20 +302,16 @@ export function QuickLogModal({
   // Refs
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Handle photo selection (camera or gallery)
-  const handlePhotoChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement> | Event, _source: PhotoSource) => {
-      const target = event.target as HTMLInputElement;
-      const file = target.files?.[0] ?? null;
-      target.value = ''; // Reset input
+  // Handle photo from Capacitor camera wrapper
+  const handleCameraCapture = useCallback(async () => {
+    try {
+      const photo = await takePicture({ quality: 90 });
 
-      if (!file) return;
+      // Convert data URL to File object
+      const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
 
       setPhotoFile(file);
-
-      // Create preview
-      const url = URL.createObjectURL(file);
-      setPhotoPreview(url);
+      setPhotoPreview(photo.dataUrl); // Use data URL directly for preview
 
       // Extract EXIF data
       const exif = await extractExif(file);
@@ -317,11 +320,9 @@ export function QuickLogModal({
       // Move to captured step
       setCurrentStep('photo-captured');
 
-      // Auto-trigger AI identification
-      // Use regional species if available, otherwise fall back to top European species
+      // Trigger AI identification (same logic as handlePhotoChange)
       let candidateSpecies = regionalSpecies;
       if (candidateSpecies.length === 0) {
-        // Fall back to top 8 European species
         candidateSpecies = Object.keys(SPECIES_IMAGE_MAP)
           .filter(code => EUROPEAN_SPECIES_CODES.has(code))
           .slice(0, 8)
@@ -351,9 +352,81 @@ export function QuickLogModal({
 
         void identify(file, candidateSpecies, context);
       }
-    },
-    [regionalSpecies, location, lookupRectangleCode, identify]
-  );
+    } catch (err) {
+      if (err instanceof CameraException) {
+        if (err.type === 'CANCELLED') {
+          console.log('[QuickLogModal] User cancelled camera');
+        } else {
+          console.error('[QuickLogModal] Camera error:', err.type, err.message);
+        }
+      } else {
+        console.error('[QuickLogModal] Unexpected camera error:', err);
+      }
+    }
+  }, [regionalSpecies, identify, location, lookupRectangleCode]);
+
+  // Handle photo from gallery
+  const handleGallerySelect = useCallback(async () => {
+    try {
+      const photo = await selectFromGallery({ quality: 90 });
+
+      // Convert data URL to File object
+      const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
+
+      setPhotoFile(file);
+      setPhotoPreview(photo.dataUrl);
+
+      // Extract EXIF data
+      const exif = await extractExif(file);
+      setExifData(exif);
+
+      // Move to captured step
+      setCurrentStep('photo-captured');
+
+      // Trigger AI identification
+      let candidateSpecies = regionalSpecies;
+      if (candidateSpecies.length === 0) {
+        candidateSpecies = Object.keys(SPECIES_IMAGE_MAP)
+          .filter(code => EUROPEAN_SPECIES_CODES.has(code))
+          .slice(0, 8)
+          .map(code => {
+            const info = SPECIES_IMAGE_MAP[code];
+            return {
+              id: code,
+              code,
+              name: info.name,
+              scientificName: info.scientificName,
+              thumbnail: info.thumb || info.image,
+              confidence: 0,
+              biteScore: 0,
+              badge: null as null,
+            };
+          });
+      }
+
+      if (candidateSpecies.length > 0) {
+        const context = {
+          location: {
+            coords: exif?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
+            rectangleCode: lookupRectangleCode,
+            rectangleLabel: location?.rectangleLabel,
+          }
+        };
+
+        void identify(file, candidateSpecies, context);
+      }
+    } catch (err) {
+      if (err instanceof CameraException) {
+        if (err.type === 'CANCELLED') {
+          console.log('[QuickLogModal] User cancelled gallery');
+        } else {
+          console.error('[QuickLogModal] Gallery error:', err.type, err.message);
+        }
+      } else {
+        console.error('[QuickLogModal] Unexpected gallery error:', err);
+      }
+    }
+  }, [regionalSpecies, identify, location, lookupRectangleCode]);
 
   // Skip photo and go directly to species selection
   const handleSkipPhoto = useCallback(() => {
@@ -736,9 +809,9 @@ export function QuickLogModal({
               </p>
             </div>
 
-            {/* Take Photo */}
+            {/* Take Photo - Uses Capacitor camera wrapper */}
             <button
-              onClick={() => photoInputRef.current?.click()}
+              onClick={handleCameraCapture}
               className="btn btn-lg btn-primary w-full gap-2 h-auto p-4 flex-col"
               disabled={isSubmitting}
             >
@@ -750,24 +823,10 @@ export function QuickLogModal({
                 </div>
               </div>
             </button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoChange(e, 'camera')}
-              className="hidden"
-            />
 
-            {/* Add from Gallery */}
+            {/* Add from Gallery - Uses Capacitor gallery wrapper */}
             <button
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => handlePhotoChange(e as Event, 'gallery');
-                input.click();
-              }}
+              onClick={handleGallerySelect}
               className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
               disabled={isSubmitting}
             >
