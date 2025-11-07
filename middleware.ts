@@ -20,26 +20,32 @@ export async function middleware(req: NextRequest) {
   });
 
   // Initialize Supabase client for session management
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
+  // Skip if env vars not available (e.g., during build)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
-  if (!isAuthCallback) {
-    await supabase.auth.getUser();
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    // Refresh session if expired - but skip during OAuth callback to avoid interfering with PKCE flow
+    if (!isAuthCallback) {
+      await supabase.auth.getUser();
+    }
   }
 
   // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
