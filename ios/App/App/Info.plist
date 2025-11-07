@@ -72,6 +72,6 @@
 
 	<!-- Motion Permission -->
 	<key>NSMotionUsageDescription</key>
-	<string>Findr uses motion data to detect when you're casting and improve your fishing session tracking.</string>
+	<string>Findr uses motion data to detect whether you are fishing from a boat or the shore to give you targeted advice.</string>
 </dict>
 </plist>
