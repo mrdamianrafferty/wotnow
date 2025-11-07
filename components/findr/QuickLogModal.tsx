@@ -806,64 +806,65 @@ export function QuickLogModal({
           <>
             {/* Step 1: Photo Decision */}
             {currentStep === 'photo-decision' && (
-          <div className="space-y-4">
-            <div className="text-center mb-2">
-              <p className="text-sm opacity-70">
-                <TranslatedText text="Take a new photo or choose one you already have." />
-              </p>
-            </div>
+              <>
+                <div className="space-y-4">
+                  <div className="text-center mb-2">
+                    <p className="text-sm opacity-70">
+                      <TranslatedText text="Take a new photo or choose one you already have." />
+                    </p>
+                  </div>
 
-            {/* Take Photo - Uses Capacitor camera wrapper */}
-            <button
-              onClick={handleCameraCapture}
-              className="btn btn-lg btn-primary w-full gap-2 h-auto p-4 flex-col"
-              disabled={isSubmitting}
-            >
-              <Camera className="w-6 h-6" />
-              <div className="text-center">
-                <div className="font-semibold"><TranslatedText text="Take Photo" /></div>
-                <div className="text-xs opacity-80 font-normal">
-                  <TranslatedText text="Capture with your camera" />
+                  {/* Take Photo - Uses Capacitor camera wrapper */}
+                  <button
+                    onClick={handleCameraCapture}
+                    className="btn btn-lg btn-primary w-full gap-2 h-auto p-4 flex-col"
+                    disabled={isSubmitting}
+                  >
+                    <Camera className="w-6 h-6" />
+                    <div className="text-center">
+                      <div className="font-semibold"><TranslatedText text="Take Photo" /></div>
+                      <div className="text-xs opacity-80 font-normal">
+                        <TranslatedText text="Capture with your camera" />
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Add from Gallery - Uses Capacitor gallery wrapper */}
+                  <button
+                    onClick={handleGallerySelect}
+                    className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
+                    disabled={isSubmitting}
+                  >
+                    <ImageIcon className="w-6 h-6" />
+                    <div className="text-center">
+                      <div className="font-semibold"><TranslatedText text="Add from Gallery" /></div>
+                      <div className="text-xs opacity-80 font-normal">
+                        <TranslatedText text="Choose existing photo" />
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Skip Photo (slimmer, full width) */}
+                  <button
+                    onClick={handleSkipPhoto}
+                    className="btn btn-outline w-full h-12 md:h-12 rounded-xl"
+                    disabled={isSubmitting}
+                    aria-label="Skip Photo and log manually"
+                  >
+                    <span className="font-semibold">
+                      <TranslatedText text="Skip Photo → Manual Log" />
+                    </span>
+                  </button>
                 </div>
-              </div>
-            </button>
 
-            {/* Add from Gallery - Uses Capacitor gallery wrapper */}
-            <button
-              onClick={handleGallerySelect}
-              className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
-              disabled={isSubmitting}
-            >
-              <ImageIcon className="w-6 h-6" />
-              <div className="text-center">
-                <div className="font-semibold"><TranslatedText text="Add from Gallery" /></div>
-                <div className="text-xs opacity-80 font-normal">
-                  <TranslatedText text="Choose existing photo" />
+                <div className="alert alert-info mt-4">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm">
+                    <TranslatedText text="Photos unlock smart species ID + GPS tagging" />
+                  </span>
                 </div>
-              </div>
-            </button>
-
-            {/* Skip Photo (slimmer, full width) */}
-            <button
-              onClick={handleSkipPhoto}
-              className="btn btn-outline w-full h-12 md:h-12 rounded-xl"
-              disabled={isSubmitting}
-              aria-label="Skip Photo and log manually"
-            >
-                <span className="font-semibold">
-                  <TranslatedText text="Skip Photo → Manual Log" />
-                </span>
-              </button>
-            </div>
-
-            <div className="alert alert-info mt-4">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm">
-                <TranslatedText text="Photos unlock smart species ID + GPS tagging" />
-              </span>
-            </div>
-          </div>
-        )}
+              </>
+            )}
 
         {/* Step 2: Photo Captured - AI Identifying */}
         {currentStep === 'photo-captured' && (
