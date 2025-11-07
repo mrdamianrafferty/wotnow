@@ -14,6 +14,7 @@ const eslintConfig = [
     '**/.vercel/**',
     '**/dist/**',
     '**/build/**',
+    '**/out/**',
     '**/public/**',
     '**/coverage/**',
     '**/__tests__/**',
@@ -27,6 +28,9 @@ const eslintConfig = [
     'services/astro_highlights/astro_highlights/.venv/**',
     'api/python/.venv/**',
     'datras-fetcher/**',
+    // Generated files
+    '**/*.generated.ts',
+    '**/*.generated.js',
     // Ignore config files to avoid parser/sourceType mismatches
     '**/*.config.js',
     '**/*.config.cjs',
