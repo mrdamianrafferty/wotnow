@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from '../lib/hooks/usePlacesAutocompleteNew';
 import dynamic from 'next/dynamic';
 import { loadGoogleMapsAPI } from '../lib/googleMapsLazy';
+import { getCurrentPosition, GeolocationException } from '../lib/capacitor/geolocation';
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false });
 
@@ -262,16 +263,11 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     }
     try {
       setIsLocating(true);
-      const { lat, lon } = await new Promise<{ lat: number; lon: number }>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            resolve({ lat: latitude, lon: longitude });
-          },
-          (err) => reject(err),
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-      });
+
+      // Use Capacitor geolocation wrapper (native on iOS/Android, web fallback in browser)
+      const position = await getCurrentPosition();
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
 
       // update local state for UI (optional)
       setSelectedCoords({ lat, lon });
@@ -285,15 +281,17 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
       onClose();
     } catch (e: unknown) {
       let msg = 'Unable to get your location.';
-      const errObj = (e as { code?: number } | Error | undefined) || undefined;
-      if (errObj && typeof errObj === 'object' && 'code' in errObj && typeof errObj.code === 'number') {
-        const code = errObj.code as number;
-        if (code === 1) msg = 'Location permission denied.';
-        if (code === 2) msg = 'Position unavailable.';
-        if (code === 3) msg = 'Location timeout.';
-      } else if (errObj instanceof Error) {
-        msg = errObj.message;
+
+      // Handle Capacitor GeolocationException
+      if (e instanceof GeolocationException) {
+        if (e.type === 'PERMISSION_DENIED') msg = 'Location permission denied.';
+        else if (e.type === 'POSITION_UNAVAILABLE') msg = 'Position unavailable.';
+        else if (e.type === 'TIMEOUT') msg = 'Location timeout.';
+        else msg = e.message;
+      } else if (e instanceof Error) {
+        msg = e.message;
       }
+
       setLocationError(msg);
     } finally {
       setIsLocating(false);

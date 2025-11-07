@@ -23,6 +23,10 @@ import {
 import { SPECIES_IMAGE_MAP, type SpeciesImageInfo } from '../../data/speciesImageMap';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { CatchLogInput } from '@/types/findr-enrichment';
+import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
+import { getStorage } from '@/lib/offline/storage';
+import { isOnline } from '@/lib/offline/network';
+import { toast } from '@/lib/ui/toast';
 
 // Types
 interface SessionLogModalProps {
@@ -177,13 +181,44 @@ export function SessionLogModal({
   const removeCatch = useCallback((id: string) => {
     setCatches(prev => prev.filter(catch_ => catch_.id !== id));
   }, []);
-  
-  // Photo management
-  const handlePhotoAdd = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setPhotos(prev => [...prev, ...files].slice(0, 5)); // Max 5 photos
-  }, []);
-  
+
+  // Helper to convert data URL to File
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  };
+
+  // Photo management - Camera capture
+  const handleCameraCapture = useCallback(async () => {
+    if (photos.length >= 5) return;
+
+    try {
+      const photo = await takePicture({ quality: 90 });
+      const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
+      setPhotos(prev => [...prev, file].slice(0, 5));
+    } catch (err) {
+      if (err instanceof CameraException && err.type !== 'CANCELLED') {
+        console.error('[SessionLog] Camera error:', err.type, err.message);
+      }
+    }
+  }, [photos.length]);
+
+  // Photo management - Gallery selection
+  const handleGallerySelect = useCallback(async () => {
+    if (photos.length >= 5) return;
+
+    try {
+      const photo = await selectFromGallery({ quality: 90 });
+      const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
+      setPhotos(prev => [...prev, file].slice(0, 5));
+    } catch (err) {
+      if (err instanceof CameraException && err.type !== 'CANCELLED') {
+        console.error('[SessionLog] Gallery error:', err.type, err.message);
+      }
+    }
+  }, [photos.length]);
+
   const removePhoto = useCallback((index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   }, []);
@@ -205,10 +240,10 @@ export function SessionLogModal({
       setError('Please complete all required fields');
       return;
     }
-    
+
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       // Convert session date to ISO timestamp for each catch
       const representativeTime = timePeriods.length
@@ -217,6 +252,9 @@ export function SessionLogModal({
 
       const userLocation = await requestUserLocation();
       const primaryPhoto = photos[0] ?? null;
+
+      // Check if online
+      const online = await isOnline();
 
       for (const [index, catch_] of catches.entries()) {
         const speciesInfo = getSpeciesInfo(catch_.species_id);
@@ -235,34 +273,115 @@ export function SessionLogModal({
           env.session_photo_count = photos.length;
         }
 
-        const result = await onSubmitCatch({
-          speciesId: catch_.species_id,
-          speciesCommonName: speciesInfo.name,
-          scientificName: speciesInfo.scientificName ?? null,
-          rectangleCode,
-          catchDate: sessionDate,
-          catchTime: representativeTime,
-          quantity: catch_.quantity,
-          sizeCategory: catch_.size_category,
-          baitUsed: catch_.bait_used,
-          habitatType: habitat,
-          method: 'shore',
-          notes: catch_.notes || undefined,
-          entryType: 'detailed',
-          photo: index === 0 ? primaryPhoto : null,
-          userLocation: userLocation ?? undefined,
-          environmentalConditions: env,
-        });
+        if (!online) {
+          // Queue for offline sync
+          console.log('[SessionLogModal] Offline - queueing catch for sync');
+          const storage = getStorage();
 
-        if (result == null) {
-          throw new Error('Session catch failed to log; please try again.');
+          // Convert photo to Blob if available
+          const photoBlobs: Blob[] = [];
+          if (index === 0 && primaryPhoto) {
+            photoBlobs.push(primaryPhoto);
+          }
+
+          await storage.queueCatchLog({
+            data: {
+              speciesId: catch_.species_id,
+              rectangleCode,
+              date: sessionDate,
+              bait: catch_.bait_used,
+              habitat,
+              photos: photoBlobs,
+              metadata: {
+                speciesCommonName: speciesInfo.name,
+                scientificName: speciesInfo.scientificName,
+                catchTime: representativeTime,
+                quantity: catch_.quantity,
+                sizeCategory: catch_.size_category,
+                method: 'shore',
+                notes: catch_.notes,
+                entryType: 'detailed',
+                userLocation,
+                environmentalConditions: env,
+              },
+            },
+          });
+        } else {
+          // Online - submit normally
+          try {
+            const result = await onSubmitCatch({
+              speciesId: catch_.species_id,
+              speciesCommonName: speciesInfo.name,
+              scientificName: speciesInfo.scientificName ?? null,
+              rectangleCode,
+              catchDate: sessionDate,
+              catchTime: representativeTime,
+              quantity: catch_.quantity,
+              sizeCategory: catch_.size_category,
+              baitUsed: catch_.bait_used,
+              habitatType: habitat,
+              method: 'shore',
+              notes: catch_.notes || undefined,
+              entryType: 'detailed',
+              photo: index === 0 ? primaryPhoto : null,
+              userLocation: userLocation ?? undefined,
+              environmentalConditions: env,
+            });
+
+            if (result == null) {
+              throw new Error('Session catch failed to log; please try again.');
+            }
+          } catch (submitError) {
+            // If network error, queue for offline sync
+            const errorMessage = submitError instanceof Error ? submitError.message : '';
+            if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('NetworkError')) {
+              console.log('[SessionLogModal] Network error - queueing catch for sync');
+              const storage = getStorage();
+
+              const photoBlobs: Blob[] = [];
+              if (index === 0 && primaryPhoto) {
+                photoBlobs.push(primaryPhoto);
+              }
+
+              await storage.queueCatchLog({
+                data: {
+                  speciesId: catch_.species_id,
+                  rectangleCode,
+                  date: sessionDate,
+                  bait: catch_.bait_used,
+                  habitat,
+                  photos: photoBlobs,
+                  metadata: {
+                    speciesCommonName: speciesInfo.name,
+                    scientificName: speciesInfo.scientificName,
+                    catchTime: representativeTime,
+                    quantity: catch_.quantity,
+                    sizeCategory: catch_.size_category,
+                    method: 'shore',
+                    notes: catch_.notes,
+                    entryType: 'detailed',
+                    userLocation,
+                    environmentalConditions: env,
+                  },
+                },
+              });
+            } else {
+              // Re-throw non-network errors
+              throw submitError;
+            }
+          }
         }
       }
 
       // Success
-      onSuccess(catches.length);
+      if (!online) {
+        onSuccess(0); // 0 indicates queued for sync
+        await toast.info(`${catches.length} catch${catches.length > 1 ? 'es' : ''} saved offline. They will be synced when you're back online.`, 4000);
+      } else {
+        onSuccess(catches.length);
+      }
       handleClose();
-      
+
     } catch (err) {
       console.error('[SessionLogModal] Failed to log session:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to log session';
@@ -651,26 +770,39 @@ export function SessionLogModal({
               </p>
             </div>
             
-            {/* Photo Upload */}
-            <div className="form-control">
-              <label className="label">
+            {/* Photo Upload - Using Capacitor camera wrapper */}
+            <div className="space-y-3">
+              <div className="label">
                 <span className="label-text font-medium">
                   <Camera className="w-4 h-4 inline mr-2" />
-                  <TranslatedText text="Photos" /> 
+                  <TranslatedText text="Photos" />
                   <span className="text-xs opacity-60 ml-1">
                     ({photos.length}/5)
                   </span>
                 </span>
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                multiple
-                onChange={handlePhotoAdd}
-                className="file-input file-input-bordered"
-                disabled={isSubmitting || photos.length >= 5}
-              />
+              </div>
+
+              <div className="flex gap-2">
+                {/* Camera Button */}
+                <button
+                  onClick={handleCameraCapture}
+                  className="btn btn-primary flex-1"
+                  disabled={isSubmitting || photos.length >= 5}
+                >
+                  <Camera className="w-5 h-5" />
+                  <TranslatedText text="Take Photo" />
+                </button>
+
+                {/* Gallery Button */}
+                <button
+                  onClick={handleGallerySelect}
+                  className="btn btn-secondary flex-1"
+                  disabled={isSubmitting || photos.length >= 5}
+                >
+                  <Plus className="w-5 h-5" />
+                  <TranslatedText text="From Gallery" />
+                </button>
+              </div>
             </div>
             
             {/* Photo Previews */}

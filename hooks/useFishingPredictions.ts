@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { TideInfo } from '../components/findr/TideConditions';
+import type { FreshnessLevel } from '@/lib/offline/storage';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -45,6 +46,10 @@ export interface UseFishingPredictionsState {
   region?: string | null;
   tideInfo?: TideInfo | null;
   reload: () => void;
+  // Offline-related fields
+  isFromCache?: boolean;
+  cacheTimestamp?: number;
+  freshness?: FreshnessLevel;
 }
 
 interface PredictionResponse {
@@ -73,47 +78,98 @@ async function fetchPredictions(params: {
   language: string;
   latitude?: number;
   longitude?: number;
-}): Promise<PredictionResponse> {
-  // Use absolute URL for fishfindr.eu and godaisy.io to avoid redirect issues
-  const apiUrl = typeof window !== 'undefined' &&
-    (window.location.hostname === 'fishfindr.eu' || window.location.hostname.includes('godaisy.io'))
-    ? `${window.location.protocol}//${window.location.host}/api/findr/predictions`
-    : '/api/findr/predictions';
+}): Promise<PredictionResponse & { isFromCache?: boolean; cacheTimestamp?: number; freshness?: FreshnessLevel }> {
+  const date = params.predictionDate || new Date().toISOString().split('T')[0];
 
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  });
+  // Try network fetch first
+  try {
+    // Use absolute URL for fishfindr.eu and godaisy.io to avoid redirect issues
+    const apiUrl = typeof window !== 'undefined' &&
+      (window.location.hostname === 'fishfindr.eu' || window.location.hostname.includes('godaisy.io'))
+      ? `${window.location.protocol}//${window.location.host}/api/findr/predictions`
+      : '/api/findr/predictions';
 
-  if (!response.ok) {
-    const json = await response.json();
-    const errMessage = typeof json?.error === 'string'
-      ? json.error
-      : json?.details?.message || 'Failed to load fishing predictions';
-    console.error('[useFishingPredictions] API error:', {
-      status: response.status,
-      error: json?.error,
-      details: json?.details,
-      fullResponse: json,
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
     });
-    throw new Error(errMessage);
+
+    if (!response.ok) {
+      const json = await response.json();
+      const errMessage = typeof json?.error === 'string'
+        ? json.error
+        : json?.details?.message || 'Failed to load fishing predictions';
+      console.error('[useFishingPredictions] API error:', {
+        status: response.status,
+        error: json?.error,
+        details: json?.details,
+        fullResponse: json,
+      });
+      throw new Error(errMessage);
+    }
+
+    const json = await response.json();
+    const typed = json as PredictionResponse;
+
+    console.log('[useFishingPredictions] Response:', {
+      rectangleCode: typed.rectangleCode,
+      predictionDate: typed.predictionDate,
+      predictionsCount: Array.isArray(typed.predictions) ? typed.predictions.length : 0,
+      firstPrediction: Array.isArray(typed.predictions) && typed.predictions.length > 0 ? typed.predictions[0] : null,
+      region: typed.metadata?.region,
+    });
+
+    // Cache successful response
+    try {
+      const { getStorage } = await import('@/lib/offline/storage');
+      const storage = getStorage();
+      await storage.cachePrediction({
+        rectangleCode: params.rectangleCode,
+        date,
+        data: typed,
+      });
+      console.log('[useFishingPredictions] Cached prediction for', params.rectangleCode, date);
+    } catch (cacheError) {
+      console.warn('[useFishingPredictions] Failed to cache prediction:', cacheError);
+      // Don't fail the request if caching fails
+    }
+
+    return typed;
+  } catch (networkError) {
+    // Network fetch failed - try offline cache
+    console.log('[useFishingPredictions] Network fetch failed, trying offline cache...');
+
+    try {
+      const { getStorage } = await import('@/lib/offline/storage');
+      const storage = getStorage();
+      const cached = await storage.getPrediction(params.rectangleCode, date);
+
+      if (cached) {
+        console.log('[useFishingPredictions] Loaded from offline cache:', {
+          rectangleCode: params.rectangleCode,
+          date,
+          freshness: cached.freshness,
+          age: Date.now() - cached.timestamp,
+        });
+
+        const cachedData = cached.data as PredictionResponse;
+        return {
+          ...cachedData,
+          isFromCache: true,
+          cacheTimestamp: cached.timestamp,
+          freshness: cached.freshness,
+        };
+      }
+    } catch (cacheError) {
+      console.warn('[useFishingPredictions] Failed to load from cache:', cacheError);
+    }
+
+    // No cache available - re-throw network error
+    throw networkError;
   }
-
-  const json = await response.json();
-  const typed = json as PredictionResponse;
-
-  console.log('[useFishingPredictions] Response:', {
-    rectangleCode: typed.rectangleCode,
-    predictionDate: typed.predictionDate,
-    predictionsCount: Array.isArray(typed.predictions) ? typed.predictions.length : 0,
-    firstPrediction: Array.isArray(typed.predictions) && typed.predictions.length > 0 ? typed.predictions[0] : null,
-    region: typed.metadata?.region,
-  });
-
-  return typed;
 }
 
 export function useFishingPredictions(options: UseFishingPredictionsOptions): UseFishingPredictionsState {
@@ -157,5 +213,9 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     region: query.data?.metadata?.region,
     tideInfo: query.data?.metadata?.conditions?.tide ?? null,
     reload: () => query.refetch(),
+    // Offline-related fields
+    isFromCache: query.data?.isFromCache,
+    cacheTimestamp: query.data?.cacheTimestamp,
+    freshness: query.data?.freshness,
   };
 }

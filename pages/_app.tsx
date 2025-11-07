@@ -17,6 +17,9 @@ import { AuthProvider } from '../context/AuthContext'
 import { useEffect, useState } from 'react'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { InstallPrompt } from '../components/InstallPrompt'
+import { OfflineIndicator } from '../components/OfflineIndicator'
+import { OfflineInit } from '../components/OfflineInit'
 
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
@@ -105,7 +108,13 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
               </Head>
               {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
               <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
+                {/* Initialize offline storage and sync service */}
+                <OfflineInit />
+                {/* Offline Indicator - shows at top when offline */}
+                <OfflineIndicator />
                 <Component {...pageProps} />
+                {/* PWA Install Prompt - shows at bottom, not in standalone mode */}
+                <InstallPrompt />
               </div>
             </UnifiedLocationProvider>
           </UserPreferencesProvider>

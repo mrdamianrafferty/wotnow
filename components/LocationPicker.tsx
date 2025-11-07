@@ -5,6 +5,7 @@ import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { detectUserLocation, findNearestRectangles } from '../lib/findr/locationDetection';
 import { useFindrRectangleOptions } from '../hooks/useFindrRectangleOptions';
 import { useUnifiedLocation } from '../context/UnifiedLocationContext';
+import { toast } from '@/lib/ui/toast';
 
 // Helper to get place name from coordinates using Google Maps reverse geocoding
 async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
@@ -140,7 +141,7 @@ export function LocationPicker() {
       }
     } catch (error) {
       console.error('[LocationPicker] GPS location failed', error);
-      alert('Location access denied or unavailable');
+      await toast.warning('Location access denied or unavailable');
     } finally {
       setIsDetecting(false);
     }

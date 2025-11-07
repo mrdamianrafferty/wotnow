@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import type { BasicLocation } from '../CoastalLocationDialog';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { toast } from '@/lib/ui/toast';
 
 // Dynamically import CoastalLocationDialog with no SSR
 const CoastalLocationDialog = dynamic(
@@ -118,7 +119,7 @@ export function LocationDisplay() {
       });
     } catch (error) {
       console.error('[LocationDisplay] Failed to save location:', error);
-      alert(`Could not save location: ${(error as Error).message}`);
+      await toast.error(`Could not save location: ${(error as Error).message}`);
     } finally {
       setIsLookingUp(false);
     }

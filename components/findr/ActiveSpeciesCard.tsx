@@ -2,7 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, Bell, BellOff } from 'lucide-react';
+import { shareText } from '@/lib/capacitor/share';
+import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -87,8 +90,73 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onAction,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [alertScheduled, setAlertScheduled] = useState(false);
 
   const nextPeakHours = getNextPeakTime(species.forecast);
+
+  // Share handler
+  const handleShare = async () => {
+    try {
+      const shareContent = `🎣 ${species.name} - ${species.confidence}% confidence!\n\nBest conditions right NOW! Drop everything — they're biting! 🔥\n\nCheck predictions at fishfindr.eu`;
+      await shareText(shareContent, `Fishing Prediction: ${species.name}`);
+    } catch (error) {
+      console.error('[ActiveSpeciesCard] Share failed:', error);
+    }
+  };
+
+  // Notification alert handler
+  const handleSetAlert = async () => {
+    try {
+      // Check permissions first
+      const permissionStatus = await checkPermissions();
+
+      if (permissionStatus !== 'granted') {
+        const newStatus = await requestPermissions();
+        if (newStatus !== 'granted') {
+          console.warn('[ActiveSpeciesCard] Notification permission denied');
+          return;
+        }
+      }
+
+      const title = `🔥 ${species.name} - Hot Bite Alert!`;
+      const body = `${species.confidence}% confidence! They're biting right now - drop everything and go fishing!`;
+
+      // Schedule immediate notification (for hot bites happening NOW)
+      const notificationId = await scheduleLocalNotification({
+        title,
+        body,
+        extra: {
+          speciesId: species.id,
+          speciesName: species.name,
+          confidence: species.confidence,
+          type: 'hot_bite_alert',
+        },
+      });
+
+      // Track notification for management UI
+      trackNotification({
+        id: notificationId,
+        title,
+        body,
+        scheduledAt: new Date().toISOString(),
+        speciesName: species.name,
+        speciesId: species.id,
+        type: 'hot_bite_alert',
+      });
+
+      console.log('[ActiveSpeciesCard] Alert scheduled:', notificationId);
+      setAlertScheduled(true);
+
+      // Auto-reset after 5 seconds to allow re-scheduling
+      setTimeout(() => setAlertScheduled(false), 5000);
+    } catch (error) {
+      if (error instanceof NotificationException) {
+        console.error('[ActiveSpeciesCard] Notification error:', error.type, error.message);
+      } else {
+        console.error('[ActiveSpeciesCard] Failed to set alert:', error);
+      }
+    }
+  };
   // Note: We now use database bite scores instead of client-side calculation
   const fishingTime = {
     time: 'Now',
@@ -221,6 +289,21 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               title="View species details"
             >
               <Info size={16} className="text-base-content" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleShare(); }}
+              className="btn btn-sm btn-ghost"
+              title="Share prediction"
+            >
+              <Share2 size={16} className="text-base-content" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSetAlert(); }}
+              className={`btn btn-sm ${alertScheduled ? 'btn-success' : 'btn-ghost'}`}
+              title={alertScheduled ? 'Alert scheduled!' : 'Set fishing alert'}
+              disabled={alertScheduled}
+            >
+              {alertScheduled ? <BellOff size={16} /> : <Bell size={16} />}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}

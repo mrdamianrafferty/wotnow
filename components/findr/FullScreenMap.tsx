@@ -8,6 +8,7 @@ import { LatLngExpression, Map as LeafletMap, DivIcon } from 'leaflet';
 import L from 'leaflet';
 import { X } from 'lucide-react';
 import { useUnifiedLocation } from '@/context/UnifiedLocationContext';
+import { toast } from '@/lib/ui/toast';
 
 // Fix for default markers in react-leaflet
 const defaultIconPrototype = L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => string };
@@ -168,7 +169,7 @@ const GeolocationButton: React.FC = () => {
 
     map.on('locationerror', () => {
       setLocating(false);
-      alert('Unable to get your location. Please enable location services.');
+      toast.error('Unable to get your location. Please enable location services.');
     });
   };
 

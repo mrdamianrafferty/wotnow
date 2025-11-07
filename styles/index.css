@@ -1957,5 +1957,216 @@ abbr[title] {
 .modal .modal-box[data-theme="light"] .bg-base-300 {
   background-color: oklch(var(--b1)) !important;
 }
+
+/* --- PWA Safe Area Insets (for devices with notches/home indicators) --- */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* --- APPLE DESIGN LANGUAGE ENHANCEMENTS (Added: Jan 2025) --- */
+
+/* 1. OUTDOOR READABILITY ENHANCEMENTS */
+/* Critical for fishing app usage in bright sunlight */
+
+/* Ensure solid backgrounds on prediction cards for outdoor readability */
+.prediction-card,
+.species-card,
+.good-species-card,
+.active-species-card,
+.catch-card {
+  background-color: oklch(var(--b1)) !important;
+  border: 1px solid oklch(var(--b3));
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Increase text contrast on overlays and badges */
+.overlay-text,
+.status-badge,
+.badge,
+.activity-card__badge {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  font-weight: 600;
+}
+
+/* Ensure buttons are always readable in bright light */
+.btn-primary,
+.btn-secondary,
+.btn-accent {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+}
+
+/* High contrast for critical text */
+.prediction-confidence,
+.species-name,
+.bite-score,
+.catch-time {
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Card hover states - more visible in sunlight */
+.card:hover,
+.species-card:hover,
+.prediction-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+}
+
+/* 2. BACKDROP BLUR FOR MODALS AND OVERLAYS */
+/* Apple-style depth with translucent backgrounds */
+
+/* Modal backdrop with blur */
+.modal::backdrop,
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* iOS safe fallback for older devices without backdrop-filter support */
+@supports not (backdrop-filter: blur(8px)) {
+  .modal::backdrop,
+  .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Bottom sheets and drawers */
+.drawer-overlay {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+/* Toast notifications with subtle blur */
+.toast,
+.custom-toast {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Quick log modal and catch modals */
+.modal-box {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+}
+
+/* 3. REDUCED MOTION SUPPORT */
+/* Respect user accessibility preferences (Apple design requirement) */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable transforms for users who prefer reduced motion */
+  .card:hover,
+  .species-card:hover,
+  .btn:hover {
+    transform: none !important;
+  }
+}
+
+/* 4. SUBTLE UI TRANSITIONS */
+/* Smooth, polished interactions throughout the app */
+
+/* Navigation transitions */
+.navbar,
+.bottom-nav,
+.findr-bottom-nav {
+  transition: transform 0.3s ease-out, opacity 0.2s ease-out, background-color 0.2s ease;
+}
+
+/* Card interactions */
+.card,
+.species-card,
+.prediction-card,
+.activity-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease;
+}
+
+/* Button interactions */
+.btn {
+  transition: all 0.2s ease-out;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Tab transitions */
+.tab,
+.day-tab,
+.category-tab {
+  transition: all 0.3s ease-out;
+}
+
+/* Badge and chip transitions */
+.badge,
+.chip {
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+/* Input focus transitions */
+input,
+textarea,
+select,
+.input {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Modal entrance/exit */
+.modal {
+  transition: opacity 0.3s ease-out;
+}
+
+.modal-box {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* Drawer slide-in */
+.drawer-side {
+  transition: transform 0.3s ease-out;
+}
+
+/* Loading spinner smooth fade */
+.loading {
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Link hover transitions */
+a {
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+/* Image loading fade-in */
+img {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Tooltip animations */
+.tooltip {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+/* --- END APPLE DESIGN LANGUAGE ENHANCEMENTS --- */
+
 /* Compact DaisyUI overrides (mobile) — must load last to win the cascade */
 @import "./compact.css";

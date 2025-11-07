@@ -36,7 +36,14 @@
     "seed:findr:rectangles": "tsx scripts/seedFindrRectangles.ts",
     "seed:findr:conditions": "tsx scripts/seedFindrConditionsSnapshot.ts",
     "optimize-images": "tsx scripts/optimize-activity-images.ts",
-    "smoke": "bash scripts/smoke-unified.sh"
+    "smoke": "bash scripts/smoke-unified.sh",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "mobile:dev:ios": "npx cap run ios --livereload --external --host=0.0.0.0",
+    "mobile:dev:android": "npx cap run android --livereload --external --host=0.0.0.0"
   },
   "resolutions": {
     "next": {
@@ -47,6 +54,22 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@capacitor-community/apple-sign-in": "^7.1.0",
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/browser": "^7.0.2",
+    "@capacitor/camera": "^7.0.2",
+    "@capacitor/geolocation": "^7.1.5",
+    "@capacitor/haptics": "^7.0.2",
+    "@capacitor/ios": "^7.4.4",
+    "@capacitor/local-notifications": "^7.0.3",
+    "@capacitor/network": "^7.0.2",
+    "@capacitor/preferences": "^7.0.2",
+    "@capacitor/push-notifications": "^7.0.3",
+    "@capacitor/share": "^7.0.2",
+    "@capacitor/splash-screen": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3",
+    "@capacitor/toast": "^7.0.2",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@js-temporal/polyfill": "^0.5.1",
     "@sentry/nextjs": "^8.38.0",
@@ -67,6 +90,7 @@
     "formidable": "^3.5.4",
     "framer-motion": "^12.23.12",
     "html2canvas": "^1.4.1",
+    "idb": "^8.0.3",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.542.0",
@@ -90,6 +114,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
+    "@capacitor/cli": "^7.4.4",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.34.0",
     "@next/bundle-analyzer": "^15.5.6",
