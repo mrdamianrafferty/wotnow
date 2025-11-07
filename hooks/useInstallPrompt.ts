@@ -10,10 +10,31 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 /**
+ * Platform detection result
+ */
+interface PlatformInfo {
+  isIOS: boolean;
+  isAndroid: boolean;
+  isSafari: boolean;
+  isChrome: boolean;
+  isStandalone: boolean;
+  isInstallable: boolean;
+}
+
+/**
  * Detects platform for install instructions
  */
-const detectPlatform = () => {
-  if (typeof window === 'undefined') return 'unknown';
+const detectPlatform = (): PlatformInfo => {
+  if (typeof window === 'undefined') {
+    return {
+      isIOS: false,
+      isAndroid: false,
+      isSafari: false,
+      isChrome: false,
+      isStandalone: false,
+      isInstallable: false,
+    };
+  }
 
   const ua = window.navigator.userAgent;
   const isIOS = /iPhone|iPad|iPod/.test(ua);
@@ -53,7 +74,7 @@ const detectPlatform = () => {
 export const useInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [platform, setPlatform] = useState(detectPlatform());
+  const [platform, setPlatform] = useState<PlatformInfo>(detectPlatform());
 
   useEffect(() => {
     const platformInfo = detectPlatform();
