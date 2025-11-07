@@ -90,36 +90,84 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
             console.log('Processing OAuth callback in-app');
 
             try {
-              // Parse the deep link URL to extract OAuth code
-              const url = new URL(event.url);
-              const code = url.searchParams.get('code');
+              // Parse the deep link URL - handle both query params and hash fragment
+              // OAuth providers can return tokens in either format
+              const normalizedUrl = event.url.replace('fishfindr://', 'https://fishfindr.eu/');
+              const url = new URL(normalizedUrl);
 
-              if (code) {
-                // Exchange OAuth code for session (stay in app!)
+              // Helper to get param from either query string or hash
+              const getParam = (name: string): string | null => {
+                // Try query params first
+                const queryValue = url.searchParams.get(name);
+                if (queryValue) return queryValue;
+
+                // Try hash fragment (format: #access_token=...&refresh_token=...)
+                const hashMatch = url.hash.match(new RegExp(`${name}=([^&]*)`));
+                return hashMatch ? hashMatch[1] : null;
+              };
+
+              const accessToken = getParam('access_token');
+              const refreshToken = getParam('refresh_token');
+              const expiresIn = getParam('expires_in');
+              const tokenType = getParam('token_type') || 'bearer';
+
+              console.log('Parsed OAuth tokens:', {
+                hasAccessToken: !!accessToken,
+                hasRefreshToken: !!refreshToken,
+                expiresIn,
+                tokenType
+              });
+
+              if (accessToken && refreshToken) {
+                // Create Supabase client
                 const { createBrowserClient } = await import('@supabase/ssr');
                 const supabase = createBrowserClient(
                   process.env.NEXT_PUBLIC_SUPABASE_URL!,
                   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
                 );
 
-                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                // Set the session (this alone doesn't trigger SIGNED_IN event properly)
+                await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
 
-                if (error) {
-                  console.error('OAuth code exchange error:', error);
-                  window.location.href = '/findr/simple-auth?error=oauth_failed';
-                } else {
-                  console.log('OAuth session established successfully:', data.session?.user?.email);
-                  // Navigate to Findr home page (stays in app!)
-                  window.location.href = '/findr';
-                }
+                console.log('Session set, refreshing to trigger auth state change...');
+
+                // ⭐ KEY: refreshSession triggers TOKEN_REFRESHED event
+                // This ensures AuthContext and other listeners are notified
+                await supabase.auth.refreshSession();
+
+                console.log('Session refreshed successfully');
+
+                // Close the in-app browser
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.close();
+
+                console.log('Browser closed, navigating to /findr');
+
+                // Navigate to Findr home page (stays in app!)
+                window.location.href = '/findr';
               } else {
-                console.error('No OAuth code found in deep link');
-                window.location.href = '/findr/simple-auth?error=no_code';
+                console.error('Missing OAuth tokens:', {
+                  hasAccessToken: !!accessToken,
+                  hasRefreshToken: !!refreshToken
+                });
+                window.location.href = '/findr/simple-auth?error=missing_tokens';
               }
             } catch (error) {
               console.error('Deep link OAuth processing error:', error);
-              // Fallback: redirect to Findr home
-              window.location.href = '/findr';
+
+              // Try to close browser even on error
+              try {
+                const { Browser } = await import('@capacitor/browser');
+                await Browser.close();
+              } catch (e) {
+                console.error('Failed to close browser:', e);
+              }
+
+              // Fallback: redirect to auth page with error
+              window.location.href = '/findr/simple-auth?error=processing_failed';
             }
           }
         });

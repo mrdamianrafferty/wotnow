@@ -122,7 +122,7 @@ async function _signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
 
 /**
  * Sign in with Apple on web
- * Uses Supabase OAuth redirect flow
+ * Uses Supabase OAuth redirect flow with Browser plugin for native apps
  */
 async function signInWithAppleWeb(
   supabase: SupabaseClient,
@@ -142,13 +142,15 @@ async function signInWithAppleWeb(
 
     logger.info('OAuth redirect URL:', finalRedirectTo);
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    // Get OAuth URL without auto-redirecting
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
         redirectTo: finalRedirectTo,
+        skipBrowserRedirect: true, // Don't auto-open browser - we'll control it manually
         queryParams: {
-          // Prompt user to select account (better UX for multi-account users)
-          prompt: 'select_account',
+          // Use consent flow for better compatibility
+          prompt: 'consent',
         },
       },
     });
@@ -157,9 +159,26 @@ async function signInWithAppleWeb(
       throw error;
     }
 
-    // User will be redirected to Apple's OAuth page
-    // After authentication, they'll return to /auth/callback (or custom scheme for native)
-    logger.info('Redirecting to Apple OAuth');
+    if (!data?.url) {
+      throw new Error('No OAuth URL returned from Supabase');
+    }
+
+    logger.info('OAuth URL obtained:', data.url);
+
+    // On native platforms, manually open in-app browser (SFSafariViewController)
+    // This keeps the flow in-app instead of launching Safari
+    if (isNative) {
+      logger.info('Opening in-app browser for OAuth');
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({
+        url: data.url,
+        presentationStyle: 'popover', // iOS: uses SFSafariViewController
+      });
+    } else {
+      // On web, redirect normally
+      logger.info('Redirecting to Apple OAuth (web)');
+      window.location.href = data.url;
+    }
   } catch (error) {
     logger.error('Web Apple Sign In failed', error);
     throw error;
