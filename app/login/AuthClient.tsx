@@ -199,6 +199,17 @@ export default function AuthClient() {
     setLoading(true);
     setError(null);
     try {
+      // Use native Apple Sign In on iOS for better UX
+      if (provider === "apple") {
+        const { signInWithApple, isAppleSignInAvailable } = await import("../../lib/auth/appleSignIn");
+        if (isAppleSignInAvailable()) {
+          await signInWithApple(supabase, `${BASE_URL}/auth/callback`);
+          return; // Native flow completed or user cancelled
+        }
+        // Fall through to web OAuth if native not available
+      }
+
+      // Standard OAuth flow for Google, GitHub, or web-based Apple
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
