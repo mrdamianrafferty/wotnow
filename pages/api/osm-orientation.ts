@@ -1,7 +1,27 @@
 // /api/osm-orientation.ts (Next.js API route or Vite serverless function)
 import type { NextApiRequest, NextApiResponse } from 'next';
-import * as turf from '@turf/turf';
+// Import only the specific Turf functions we need (reduces bundle from 20MB to ~200KB)
+import { lineString } from '@turf/helpers';
+import { polygon } from '@turf/helpers';
+import { point } from '@turf/helpers';
+import nearestPointOnLine from '@turf/nearest-point-on-line';
+import bearing from '@turf/bearing';
+import destination from '@turf/destination';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import distance from '@turf/distance';
 import type { Feature, LineString, Polygon, Point, Position } from 'geojson';
+
+// Create turf namespace for compatibility with existing code
+const turf = {
+  lineString,
+  polygon,
+  point,
+  nearestPointOnLine,
+  bearing,
+  destination,
+  booleanPointInPolygon,
+  distance,
+};
 
 function norm360(d: number) { return ((d % 360) + 360) % 360; }
 function snap5(d: number) { return (Math.round(norm360(d) / 5) * 5) % 360; }

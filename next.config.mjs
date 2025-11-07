@@ -37,6 +37,32 @@ const nextConfig = {
       };
     }
 
+    // SERVER-SIDE ONLY: Exclude Capacitor plugins from serverless functions
+    // These are native mobile libraries and should never be bundled for Vercel
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push(
+        '@capacitor/core',
+        '@capacitor/app',
+        '@capacitor/browser',
+        '@capacitor/camera',
+        '@capacitor/geolocation',
+        '@capacitor/haptics',
+        '@capacitor/local-notifications',
+        '@capacitor/network',
+        '@capacitor/preferences',
+        '@capacitor/push-notifications',
+        '@capacitor/share',
+        '@capacitor/splash-screen',
+        '@capacitor/status-bar',
+        '@capacitor/toast',
+        '@capacitor-community/apple-sign-in',
+        '@capgo/capacitor-social-login',
+        // Exclude dev-only database engine
+        'duckdb'
+      );
+    }
+
     // Ignore optional native bindings that may not be available in Vercel's environment
     config.plugins.push(
       new webpack.IgnorePlugin({
