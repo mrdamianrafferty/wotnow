@@ -131,7 +131,16 @@ async function signInWithAppleWeb(
   try {
     logger.info('Starting web Apple Sign In flow');
 
-    const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
+    // For native app, use custom URL scheme to return to app
+    // For web, use standard callback
+    const isNative = Capacitor.isNativePlatform();
+    const finalRedirectTo = redirectTo || (
+      isNative
+        ? 'fishfindr://auth/callback'  // Deep link back to app
+        : `${window.location.origin}/auth/callback`  // Standard web callback
+    );
+
+    logger.info('OAuth redirect URL:', finalRedirectTo);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
@@ -149,7 +158,7 @@ async function signInWithAppleWeb(
     }
 
     // User will be redirected to Apple's OAuth page
-    // After authentication, they'll return to /auth/callback
+    // After authentication, they'll return to /auth/callback (or custom scheme for native)
     logger.info('Redirecting to Apple OAuth');
   } catch (error) {
     logger.error('Web Apple Sign In failed', error);
