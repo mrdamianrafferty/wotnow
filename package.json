@@ -37,13 +37,13 @@
     "seed:findr:conditions": "tsx scripts/seedFindrConditionsSnapshot.ts",
     "optimize-images": "tsx scripts/optimize-activity-images.ts",
     "smoke": "bash scripts/smoke-unified.sh",
-    "cap:sync": "cap sync",
-    "cap:open:ios": "cap open ios",
-    "cap:open:android": "cap open android",
-    "cap:run:ios": "cap run ios",
-    "cap:run:android": "cap run android",
-    "mobile:dev:ios": "cap run ios --livereload --external --host=0.0.0.0",
-    "mobile:dev:android": "cap run android --livereload --external --host=0.0.0.0"
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "mobile:dev:ios": "npx cap run ios --livereload --external --host=0.0.0.0",
+    "mobile:dev:android": "npx cap run android --livereload --external --host=0.0.0.0"
   },
   "resolutions": {
     "next": {
