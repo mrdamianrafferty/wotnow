@@ -73,5 +73,18 @@
 	<!-- Motion Permission -->
 	<key>NSMotionUsageDescription</key>
 	<string>Findr uses motion data to detect whether you are fishing from a boat or the shore to give you targeted advice.</string>
+
+	<!-- URL Schemes for Deep Linking (OAuth callbacks) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>eu.fishfindr.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fishfindr</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

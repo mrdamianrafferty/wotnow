@@ -72,6 +72,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
+  // Note: Deep link handling removed - @capgo/capacitor-social-login handles OAuth internally
+  // using ASWebAuthenticationSession on iOS, which doesn't require deep link callbacks
+
   // Removed manual auth redirect logic - Supabase handles this via detectSessionInUrl
   // See lib/supabase/client.ts for configuration
 

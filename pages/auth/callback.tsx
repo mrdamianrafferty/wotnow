@@ -112,6 +112,21 @@ export default function AuthCallback() {
   useEffect(() => {
     if (!router.isReady) return;
 
+    // For Capacitor native apps: close the in-app browser when callback page loads
+    // This allows the deep link handler in _app.tsx to take over
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          console.log('[Auth Callback] Native platform detected - closing in-app browser');
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.close();
+        }
+      } catch (e) {
+        console.warn('[Auth Callback] Could not close browser:', e);
+      }
+    })();
+
     const typeParam = query.type as string | undefined;
     const tokenHash = (query.token_hash as string) || (query.token as string);
     const oauthError = (query.error as string) || (query.error_description as string);

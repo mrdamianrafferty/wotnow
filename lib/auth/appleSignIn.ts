@@ -1,12 +1,14 @@
 /**
  * Apple Sign In Wrapper
  *
- * Unified Apple Sign In that works across platforms.
+ * Unified Apple Sign In that works across platforms using ASWebAuthenticationSession.
  * Integrates with Supabase authentication.
  *
  * Features:
- * - Native Sign in with Apple on iOS (via Capacitor)
- * - Web fallback using Supabase OAuth (redirects to Apple)
+ * - Native Sign in with Apple on iOS (via @capgo/capacitor-social-login)
+ * - Web fallback using Supabase OAuth
+ * - Uses ASWebAuthenticationSession (correct iOS OAuth API)
+ * - No external browser redirects
  * - Automatic user profile creation
  * - Error handling and user-friendly messages
  * - iOS App Store compliance
@@ -27,7 +29,6 @@
  * - Apple Developer account with Services ID configured
  */
 
-import { SignInWithApple, SignInWithAppleResponse } from '@capacitor-community/apple-sign-in';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
 import { createLogger } from '@/lib/utils/logger';
@@ -39,7 +40,7 @@ const logger = createLogger('AppleSignIn');
  * Check if Apple Sign In is available on this platform
  */
 export function isAppleSignInAvailable(): boolean {
-  // Apple Sign In is only available on:
+  // Apple Sign In is available on:
   // 1. Native iOS apps
   // 2. Web browsers (via Supabase OAuth redirect)
   if (typeof window === 'undefined') {
@@ -62,34 +63,53 @@ export function isAppleSignInAvailable(): boolean {
 
 /**
  * Sign in with Apple on native iOS
- * Uses Capacitor plugin to trigger native Apple Sign In flow
+ * Uses @capgo/capacitor-social-login with ASWebAuthenticationSession
  */
 async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
   try {
-    logger.info('Starting native Apple Sign In flow');
+    logger.info('Starting native Apple Sign In flow with @capgo/capacitor-social-login');
 
-    // Trigger native Apple Sign In dialog
-    const result: SignInWithAppleResponse = await SignInWithApple.authorize({
-      clientId: 'io.godaisy.login', // Services ID (shared between Go Daisy and Findr)
-      redirectURI: 'https://fishfindr.eu/auth/callback',
-      scopes: 'email name',
-      state: 'findr-app',
-      nonce: generateNonce(), // Security: prevent replay attacks
+    // Import the plugin dynamically
+    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+
+    // Initialize the plugin for Apple
+    await SocialLogin.initialize({
+      apple: {
+        clientId: 'io.godaisy.login', // Services ID (shared between Go Daisy and Findr)
+      },
+    });
+
+    logger.info('Plugin initialized, requesting Apple login');
+
+    // Login with Apple (uses ASWebAuthenticationSession on iOS)
+    const result = await SocialLogin.login({
+      provider: 'apple',
+      options: {
+        scopes: ['email', 'name'],
+      },
     });
 
     logger.info('Apple Sign In successful', {
-      user: result.response?.user,
-      email: result.response?.email
+      hasIdToken: !!result.result.idToken,
+      hasAccessToken: !!result.result.accessToken,
+      email: result.result.profile?.email
     });
 
     // Exchange Apple identity token for Supabase session
+    if (!result.result.idToken) {
+      throw new Error('No identity token returned from Apple Sign In');
+    }
+
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
-      token: result.response.identityToken,
-      nonce: result.response.nonce,
+      token: result.result.idToken,
     });
 
     if (error) {
+      logger.error('Supabase signInWithIdToken failed', {
+        error,
+        hasToken: !!result.result.idToken,
+      });
       throw error;
     }
 
@@ -119,13 +139,14 @@ async function signInWithAppleWeb(
 
     const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
 
+    logger.info('OAuth redirect URL:', finalRedirectTo);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
         redirectTo: finalRedirectTo,
         queryParams: {
-          // Prompt user to select account (better UX for multi-account users)
-          prompt: 'select_account',
+          prompt: 'consent',
         },
       },
     });
@@ -135,7 +156,6 @@ async function signInWithAppleWeb(
     }
 
     // User will be redirected to Apple's OAuth page
-    // After authentication, they'll return to /auth/callback
     logger.info('Redirecting to Apple OAuth');
   } catch (error) {
     logger.error('Web Apple Sign In failed', error);
@@ -159,11 +179,13 @@ export async function signInWithApple(
   }
 
   try {
+    // On native iOS, use the native plugin with ASWebAuthenticationSession
     if (Capacitor.getPlatform() === 'ios' && Capacitor.isNativePlatform()) {
-      // Native iOS flow - better UX (no browser redirect)
+      logger.info('Using native Apple Sign In flow');
       await signInWithAppleNative(supabase);
     } else {
-      // Web flow (redirects to Apple OAuth)
+      // On web, use standard OAuth flow
+      logger.info('Using web OAuth flow for Apple Sign In');
       await signInWithAppleWeb(supabase, redirectTo);
     }
   } catch (error: unknown) {
@@ -177,33 +199,6 @@ export async function signInWithApple(
     const friendlyError = mapAuthError(error);
     throw new Error(friendlyError);
   }
-}
-
-/**
- * Generate a cryptographic nonce for Apple Sign In
- * Prevents replay attacks
- */
-function generateNonce(): string {
-  const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
-  let result = '';
-  const length = 32;
-
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    // Use Web Crypto API (secure random)
-    const randomValues = new Uint8Array(length);
-    crypto.getRandomValues(randomValues);
-
-    for (let i = 0; i < length; i++) {
-      result += charset[randomValues[i] % charset.length];
-    }
-  } else {
-    // Fallback to Math.random (less secure, but better than nothing)
-    for (let i = 0; i < length; i++) {
-      result += charset[Math.floor(Math.random() * charset.length)];
-    }
-  }
-
-  return result;
 }
 
 /**

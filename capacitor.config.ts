@@ -19,6 +19,15 @@ const config: CapacitorConfig = {
     // cleartext: true,
   },
 
+  // Deep linking configuration for OAuth callbacks
+  // This allows the app to handle fishfindr:// URLs
+  ios: {
+    scheme: 'fishfindr',
+  },
+  android: {
+    scheme: 'fishfindr',
+  },
+
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
