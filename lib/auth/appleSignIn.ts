@@ -63,8 +63,12 @@ export function isAppleSignInAvailable(): boolean {
 /**
  * Sign in with Apple on native iOS
  * Uses Capacitor plugin to trigger native Apple Sign In flow
+ *
+ * CURRENTLY UNUSED: Using web OAuth flow instead due to Supabase compatibility issues
+ * Keeping this for future restoration once signInWithIdToken is fixed
+ * Prefixed with _ to indicate intentionally unused
  */
-async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
+async function _signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
   try {
     logger.info('Starting native Apple Sign In flow');
 
@@ -169,13 +173,18 @@ export async function signInWithApple(
   }
 
   try {
-    if (Capacitor.getPlatform() === 'ios' && Capacitor.isNativePlatform()) {
-      // Native iOS flow - better UX (no browser redirect)
-      await signInWithAppleNative(supabase);
-    } else {
-      // Web flow (redirects to Apple OAuth)
-      await signInWithAppleWeb(supabase, redirectTo);
-    }
+    // TEMPORARY FIX: Use web OAuth flow for both web and native
+    // The native signInWithIdToken has compatibility issues with current Supabase version
+    // This works reliably on both platforms (user sees Apple login page in browser)
+    logger.info('Using web OAuth flow for Apple Sign In');
+    await signInWithAppleWeb(supabase, redirectTo);
+
+    // TODO: Restore native flow once Supabase better supports signInWithIdToken for Apple:
+    // if (Capacitor.getPlatform() === 'ios' && Capacitor.isNativePlatform()) {
+    //   await signInWithAppleNative(supabase);
+    // } else {
+    //   await signInWithAppleWeb(supabase, redirectTo);
+    // }
   } catch (error: unknown) {
     // Special handling for user cancellation (don't show error)
     if (isUserCancellation(error)) {
