@@ -80,7 +80,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
         <h3 className="text-base font-semibold text-base-content truncate mb-1 text-center">
           <TranslatedFishName name={species.name} />
         </h3>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
           {/* Species Image/Emoji - Clickable */}
           <button
             onClick={(e) => { e.stopPropagation(); onAction?.(species.id); }}
@@ -106,6 +106,9 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               </div>
             )}
           </button>
+
+          {/* GuildBadge placeholder: add if available */}
+          {/* <GuildBadge guild={species.guild || 'default_coastal'} size="sm" /> */}
 
           {/* Confidence Badge */}
           <span className="badge badge-sm badge-outline text-base-content border-base-content ml-1" data-testid="confidence-score">

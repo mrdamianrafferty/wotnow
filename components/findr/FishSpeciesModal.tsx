@@ -287,15 +287,21 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">
               <TranslatedText text="Species profile" />
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 id={titleId} className="text-3xl font-bold leading-tight text-base-content flex items-center gap-3">
-                <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+              <h1
+                id={titleId}
+                className="text-3xl font-bold leading-tight text-base-content flex items-center min-w-0 truncate md:truncate-none md:min-w-fit"
+              >
                 {displayName}
               </h1>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              {advice && <ContextBadge context={advice.context} />}
+              <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
+              {card.confidence != null && (
+                <span className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 text-base font-semibold flex-shrink-0" data-testid="confidence-score">
+                  {card.confidence}%&nbsp;<span className="lowercase">biting</span>
+                </span>
+              )}
               {card.badges && <SpeciesBadges badges={card.badges} size="sm" />}
+              {advice && <ContextBadge context={advice.context} />}
             </div>
             {card.scientificName && (
               <p className="text-sm italic text-base-content/70">{card.scientificName}</p>

@@ -1,4 +1,6 @@
+
 'use client';
+import { GuildBadge } from './GuildBadge';
 
 import React, { useState } from 'react';
 import Image from 'next/image';
@@ -26,7 +28,8 @@ interface GoodSpeciesCardProps {
     season: string;
     bestBait: string;
     isPriority: boolean;
-    // Phase 10: Environmental data
+  // Phase 10: Environmental data
+  weight_profile?: string; // Add this for GuildBadge support
     data_freshness?: 'fresh' | 'recent' | 'older' | 'stale';
     environmental_factors?: {
       temperature?: { actual: number; match: string; score: number };
@@ -129,18 +132,21 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 
             {/* Title & Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg sm:text-xl font-bold text-base-content">
+              <div className="flex flex-row flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-bold text-base-content truncate min-w-0">
                   <TranslatedFishName name={species.name} />
                 </h3>
                 {species.isPriority && (
                   <Target size={14} className="text-warning flex-shrink-0" />
                 )}
-              </div>
-              
-              {/* Confidence Badge */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3" data-testid="confidence-score">
+                {species.seasonal_multiplier && (
+                  <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
+                )}
+                <span className="text-xs font-semibold text-warning uppercase">
+                  ⚡ <TranslatedText text="Good conditions" />
+                </span>
+                <GuildBadge guild={species.weight_profile || 'default_coastal'} size="sm" />
+                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 flex-shrink-0" data-testid="confidence-score">
                   <span className="font-bold">{species.confidence}%</span>
                   {species.seasonal_multiplier && species.original_confidence && (
                     <span className="text-xs opacity-75">
@@ -148,12 +154,6 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
                     </span>
                   )}
                 </div>
-                {species.seasonal_multiplier && (
-                  <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
-                )}
-                <span className="text-xs font-semibold text-warning uppercase">
-                  ⚡ <TranslatedText text="Good conditions" />
-                </span>
               </div>
 
               {/* Best Fishing Time */}
