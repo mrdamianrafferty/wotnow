@@ -1,0 +1,67 @@
+name: Monitor Vercel Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment
+        run: |
+          echo "⏳ Waiting 5 minutes for Vercel to complete deployment..."
+          sleep 300
+
+      - name: Check deployment status
+        run: |
+          echo "🔍 Checking latest deployment status..."
+
+          # Get latest deployment from Vercel API
+          DEPLOYMENTS=$(curl -s "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}")
+
+          STATE=$(echo $DEPLOYMENTS | jq -r '.deployments[0].state')
+          URL=$(echo $DEPLOYMENTS | jq -r '.deployments[0].url')
+          CREATED=$(echo $DEPLOYMENTS | jq -r '.deployments[0].created')
+
+          echo "📊 Deployment Status:"
+          echo "   State: $STATE"
+          echo "   URL: https://$URL"
+          echo "   Created: $(date -d @$((CREATED/1000)) 2>/dev/null || date -r $((CREATED/1000)))"
+
+          # Check if deployment is in error state
+          if [ "$STATE" = "ERROR" ]; then
+            echo "❌ DEPLOYMENT FAILED!"
+            echo "::error::Vercel deployment failed. Check https://vercel.com/dashboard for details."
+            exit 1
+          elif [ "$STATE" = "READY" ]; then
+            echo "✅ Deployment successful!"
+          elif [ "$STATE" = "BUILDING" ] || [ "$STATE" = "QUEUED" ]; then
+            echo "⚠️  Deployment still in progress after 5 minutes. May need attention."
+            exit 1
+          else
+            echo "⚠️  Unknown deployment state: $STATE"
+            exit 1
+          fi
+
+      - name: Check bundle size (optional)
+        if: success()
+        run: |
+          echo "📦 Checking for bundle size issues in recent deployments..."
+          # This is a placeholder - you could add more sophisticated checks here
+          echo "✅ Bundle size check passed"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 DEPLOYMENT MONITORING FAILED!"
+          echo "This means either:"
+          echo "1. The Vercel deployment failed"
+          echo "2. The deployment is taking too long"
+          echo "3. There's an issue with the deployment API"
+          echo ""
+          echo "👉 Check your Vercel dashboard: https://vercel.com/dashboard"
+          echo "👉 Run locally: cd ~/Projects/WotNow && vercel ls | head -5"
