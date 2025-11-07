@@ -83,13 +83,23 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     });
 
     // Exchange Apple identity token for Supabase session
+    // Use the identity token directly (no PKCE needed for native flow)
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: result.response.identityToken,
       nonce: result.response.nonce,
+      options: {
+        // Specify this is a native flow, not OAuth code exchange
+        skipNonceCheck: false,
+      },
     });
 
     if (error) {
+      logger.error('Supabase signInWithIdToken failed', {
+        error,
+        hasToken: !!result.response.identityToken,
+        hasNonce: !!result.response.nonce,
+      });
       throw error;
     }
 
