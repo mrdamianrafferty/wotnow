@@ -69,5 +69,9 @@
 	<!-- Notifications Permission -->
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Findr can send you notifications about optimal fishing conditions and reminders for your scheduled sessions.</string>
+
+	<!-- Motion Permission -->
+	<key>NSMotionUsageDescription</key>
+	<string>Findr uses motion data to detect when you're casting and improve your fishing session tracking.</string>
 </dict>
 </plist>
