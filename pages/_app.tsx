@@ -86,13 +86,41 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
           console.log('Deep link opened:', event.url);
 
           // Check if this is an OAuth callback
-          if (event.url.startsWith('fishfindr://')) {
-            // Extract the full callback URL with query parameters
-            const callbackUrl = event.url.replace('fishfindr://', 'https://fishfindr.eu/');
-            console.log('Redirecting to:', callbackUrl);
+          if (event.url.startsWith('fishfindr://auth/callback')) {
+            console.log('Processing OAuth callback in-app');
 
-            // Navigate to the callback URL so Supabase can process OAuth tokens
-            window.location.href = callbackUrl;
+            try {
+              // Parse the deep link URL to extract OAuth code
+              const url = new URL(event.url);
+              const code = url.searchParams.get('code');
+
+              if (code) {
+                // Exchange OAuth code for session (stay in app!)
+                const { createBrowserClient } = await import('@supabase/ssr');
+                const supabase = createBrowserClient(
+                  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+
+                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+                if (error) {
+                  console.error('OAuth code exchange error:', error);
+                  window.location.href = '/findr/simple-auth?error=oauth_failed';
+                } else {
+                  console.log('OAuth session established successfully:', data.session?.user?.email);
+                  // Navigate to Findr home page (stays in app!)
+                  window.location.href = '/findr';
+                }
+              } else {
+                console.error('No OAuth code found in deep link');
+                window.location.href = '/findr/simple-auth?error=no_code';
+              }
+            } catch (error) {
+              console.error('Deep link OAuth processing error:', error);
+              // Fallback: redirect to Findr home
+              window.location.href = '/findr';
+            }
           }
         });
 
