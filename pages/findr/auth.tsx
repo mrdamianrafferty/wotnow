@@ -31,13 +31,20 @@ export default function FindrAuth() {
     try {
       console.log('[Findr Auth] Starting native Google Sign In');
 
+      // Check if Google Web Client ID is configured
+      const googleWebClientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      if (!googleWebClientId) {
+        console.warn('[Findr Auth] Google Web Client ID not configured, falling back to web OAuth');
+        throw new Error('GOOGLE_NOT_CONFIGURED');
+      }
+
       // Import the social login plugin
       const { SocialLogin } = await import('@capgo/capacitor-social-login');
 
       // Initialize for Google
       await SocialLogin.initialize({
         google: {
-          webClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
+          webClientId: googleWebClientId,
         },
       });
 
@@ -90,11 +97,22 @@ export default function FindrAuth() {
           await signInWithApple(supabase);
           console.log('[Findr Auth] Apple Sign In complete, redirecting to /findr');
           window.location.href = '/findr';
+          return;
         } else if (provider === 'google') {
-          await handleNativeGoogleSignIn();
+          try {
+            await handleNativeGoogleSignIn();
+            return;
+          } catch (googleError: unknown) {
+            // If Google native sign-in fails (e.g., not configured), fall through to web OAuth
+            const errorMessage = (googleError as Error)?.message;
+            if (errorMessage === 'GOOGLE_NOT_CONFIGURED') {
+              console.log('[Findr Auth] Falling back to web OAuth for Google');
+              // Continue to web flow below
+            } else {
+              throw googleError;
+            }
+          }
         }
-
-        return;
       }
 
       // Web platform: use standard OAuth flow
