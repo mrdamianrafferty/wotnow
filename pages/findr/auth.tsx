@@ -1,18 +1,104 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase/client';
 import { mapAuthError } from '../../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Fish } from 'lucide-react';
+import { signInWithApple } from '../../lib/auth/appleSignIn';
 
 export default function FindrAuth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isNativePlatform, setIsNativePlatform] = useState(false);
+
+  // Detect if we're on a native platform
+  useEffect(() => {
+    (async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        setIsNativePlatform(Capacitor.isNativePlatform());
+        console.log('[Findr Auth] Platform detection:', {
+          isNative: Capacitor.isNativePlatform(),
+          platform: Capacitor.getPlatform()
+        });
+      } catch (_e) {
+        console.log('[Findr Auth] Not on native platform');
+      }
+    })();
+  }, []);
+
+  const handleNativeGoogleSignIn = async () => {
+    try {
+      console.log('[Findr Auth] Starting native Google Sign In');
+
+      // Import the social login plugin
+      const { SocialLogin } = await import('@capgo/capacitor-social-login');
+
+      // Initialize for Google
+      await SocialLogin.initialize({
+        google: {
+          webClientId: process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID || '',
+        },
+      });
+
+      // Login with Google
+      const result = await SocialLogin.login({
+        provider: 'google',
+        options: {
+          scopes: ['email', 'profile'],
+        },
+      });
+
+      // Type guard for online response (has idToken)
+      if (!('idToken' in result.result) || !result.result.idToken) {
+        throw new Error('No ID token returned from Google Sign In. Make sure you are using online mode.');
+      }
+
+      console.log('[Findr Auth] Google Sign In successful', {
+        hasIdToken: true,
+        email: 'profile' in result.result ? result.result.profile?.email : undefined
+      });
+
+      // Exchange Google token for Supabase session
+      const { error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: result.result.idToken,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('[Findr Auth] Supabase session created, redirecting to /findr');
+      window.location.href = '/findr';
+    } catch (error) {
+      console.error('[Findr Auth] Native Google Sign In failed:', error);
+      throw error;
+    }
+  };
 
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
       setError(null);
+
+      // On native platforms, use native sign in
+      if (isNativePlatform) {
+        console.log('[Findr Auth] Using native sign in for', provider);
+
+        if (provider === 'apple') {
+          await signInWithApple(supabase);
+          console.log('[Findr Auth] Apple Sign In complete, redirecting to /findr');
+          window.location.href = '/findr';
+        } else if (provider === 'google') {
+          await handleNativeGoogleSignIn();
+        }
+
+        return;
+      }
+
+      // Web platform: use standard OAuth flow
+      console.log('[Findr Auth] Using web OAuth for', provider);
 
       // Store destination for callback page
       sessionStorage.setItem('oauth_origin', '/findr');
