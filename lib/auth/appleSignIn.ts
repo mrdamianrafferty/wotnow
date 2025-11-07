@@ -70,7 +70,7 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
 
     // Trigger native Apple Sign In dialog
     const result: SignInWithAppleResponse = await SignInWithApple.authorize({
-      clientId: 'eu.fishfindr.app', // Your iOS app bundle ID
+      clientId: 'io.godaisy.login', // Services ID (shared between Go Daisy and Findr)
       redirectURI: 'https://fishfindr.eu/auth/callback',
       scopes: 'email name',
       state: 'findr-app',
