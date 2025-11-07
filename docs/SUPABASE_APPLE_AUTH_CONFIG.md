@@ -1,48 +1,62 @@
 # Supabase Apple Authentication Configuration
 
-## The Problem
+## Shared Authentication Architecture
 
-When using native Apple Sign In on iOS, Apple includes the app's **Bundle ID** (`eu.fishfindr.app`) as the audience in the ID token. However, Supabase's Apple OAuth provider is configured to accept the **Services ID** (`io.godaisy.login`) by default.
+Go Daisy and Findr share the same authentication system using the Services ID: `io.godaisy.login`
 
-This causes the error:
+This Services ID is used for:
+- ✅ Web-based OAuth (both apps)
+- ✅ Native iOS Sign In (both apps)
+- ✅ Native Android Sign In (future)
+
+## The Setup
+
+The native iOS app is configured to use `io.godaisy.login` as the clientId. This requires proper configuration in **Apple Developer Console** to associate the Services ID with your app bundle IDs.
+
+## Apple Developer Console Configuration
+
+### Critical: Services ID Must Be Associated With App Bundle IDs
+
+1. Go to [Apple Developer Console](https://developer.apple.com/account/)
+2. Navigate to **Certificates, Identifiers & Profiles**
+3. Click **Identifiers** → **Services IDs**
+4. Select `io.godaisy.login`
+
+### Verify Configuration:
+
+**App IDs:**
+The Services ID should be associated with:
+- `eu.fishfindr.app` (Findr iOS app)
+- `io.godaisy.app` (Go Daisy iOS app - if exists)
+
+**Domains and Subdomains:**
+- Primary: `fishfindr.eu`
+- Additional: `godaisy.io`
+
+**Return URLs:**
+- `https://fishfindr.eu/auth/callback`
+- `https://godaisy.io/auth/callback`
+- Your Supabase callback URL (usually `https://[project-id].supabase.co/auth/v1/callback`)
+
+### If Services ID Not Properly Configured:
+
+You'll see this error:
 ```
-Unacceptable audience in id_token: [eu.fishfindr.app]
+Unacceptable audience in id_token
 ```
 
-## The Solution
+**Fix:** Ensure the Services ID (`io.godaisy.login`) is configured with your app bundle IDs in Apple Developer Console.
 
-You need to configure Supabase to accept both audiences:
-1. **Services ID** (`io.godaisy.login`) - for web-based OAuth
-2. **App Bundle ID** (`eu.fishfindr.app`) - for native iOS apps
+## Supabase Configuration
 
-## Configuration Steps
+### Should Already Be Configured
 
-### 1. Go to Supabase Dashboard
+Since you're using `io.godaisy.login` for web OAuth, Supabase should already accept this Services ID. No additional configuration needed in Supabase Dashboard.
 
-1. Open your Supabase project: https://supabase.com/dashboard
-2. Navigate to **Authentication** → **Providers**
-3. Click on **Apple**
-
-### 2. Add App Bundle ID
-
-In the Apple provider configuration, you should see:
-
-- **Client ID (Services ID):** `io.godaisy.login` (already configured)
-- **Authorized Client IDs:** Add `eu.fishfindr.app` here
-
-**Format:**
-```
-eu.fishfindr.app
-```
-
-**Alternative (if there's a comma-separated list):**
-```
-io.godaisy.login,eu.fishfindr.app
-```
-
-### 3. Save Changes
-
-Click **Save** to apply the configuration.
+**To Verify:**
+1. Go to Supabase Dashboard → Authentication → Providers → Apple
+2. Check that **Client ID (Services ID)** is set to: `io.godaisy.login`
+3. That's it! No need to add app bundle IDs to Supabase.
 
 ### 4. Test Native Sign In
 
