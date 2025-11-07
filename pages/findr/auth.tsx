@@ -31,20 +31,27 @@ export default function FindrAuth() {
     try {
       console.log('[Findr Auth] Starting native Google Sign In');
 
-      // Check if Google Web Client ID is configured
-      const googleWebClientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-      if (!googleWebClientId) {
-        console.warn('[Findr Auth] Google Web Client ID not configured, falling back to web OAuth');
-        throw new Error('GOOGLE_NOT_CONFIGURED');
-      }
+      // For Google native sign-in, we use the iOS client ID
+      // The app bundle ID (eu.fishfindr.app) must be added to Supabase's Authorized Client IDs
+      // See docs/APPLE_AUTH_FINAL_FIX.md for configuration
 
       // Import the social login plugin
       const { SocialLogin } = await import('@capgo/capacitor-social-login');
 
+      // Get Google iOS Client ID from environment
+      const googleIOSClientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+      const googleWebClientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+
+      if (!googleIOSClientId && !googleWebClientId) {
+        console.warn('[Findr Auth] Google Client ID not configured, falling back to web OAuth');
+        throw new Error('GOOGLE_NOT_CONFIGURED');
+      }
+
       // Initialize for Google
       await SocialLogin.initialize({
         google: {
-          webClientId: googleWebClientId,
+          // Use iOS client ID for native, fallback to web client ID
+          webClientId: googleIOSClientId || googleWebClientId || '',
         },
       });
 

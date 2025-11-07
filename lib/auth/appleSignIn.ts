@@ -73,12 +73,13 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     const { SocialLogin } = await import('@capgo/capacitor-social-login');
 
     // Initialize the plugin for Apple
-    // IMPORTANT: Use the Services ID (io.godaisy.login) for cross-platform auth
-    // This Services ID is shared between Go Daisy and Findr (web + native)
-    // Apple Developer Console must have this Services ID associated with the app bundle ID
+    // CRITICAL: For native iOS, we MUST use the app bundle ID
+    // Services ID (io.godaisy.login) is ONLY for web-based OAuth
+    // Native iOS Sign in with Apple uses the app's bundle identifier
+    // Supabase must be configured to accept BOTH identifiers (see docs/APPLE_AUTH_FINAL_FIX.md)
     await SocialLogin.initialize({
       apple: {
-        clientId: 'io.godaisy.login', // Services ID (shared auth across apps)
+        clientId: 'eu.fishfindr.app', // Bundle ID for native iOS (Findr app)
       },
     });
 
