@@ -43,11 +43,20 @@ post_install do |installer|
   end
 
   # Fix sandbox permissions for CocoaPods scripts in Xcode 15+
+  # Apply to both Pods and main App target
   installer.generated_projects.each do |project|
     project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
       end
+    end
+  end
+
+  # Also apply to the main App project
+  app_project = installer.aggregate_targets[0].user_project
+  app_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
     end
   end
 end
