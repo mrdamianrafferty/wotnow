@@ -81,11 +81,18 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
 
     logger.info('Plugin initialized, requesting Apple login');
 
+    // CRITICAL: Generate a nonce for security
+    // This nonce must be passed to both Apple AND Supabase
+    // Reference: https://supabase.com/docs/guides/auth/social-login/auth-apple
+    const rawNonce = crypto.randomUUID();
+    logger.info('Generated nonce for Apple Sign In', { nonceLength: rawNonce.length });
+
     // Login with Apple (uses ASWebAuthenticationSession on iOS)
     const result = await SocialLogin.login({
       provider: 'apple',
       options: {
         scopes: ['email', 'name'],
+        nonce: rawNonce,  // ⭐ Pass nonce to Apple
       },
     });
 
@@ -103,6 +110,7 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: result.result.idToken,
+      nonce: rawNonce,  // ⭐ Pass THE SAME nonce to Supabase
     });
 
     if (error) {
