@@ -72,6 +72,37 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
+  // Handle deep link OAuth callbacks (for native app)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Only needed for Capacitor native apps
+    import('@capacitor/app').then(({ App }) => {
+      import('@capacitor/core').then(({ Capacitor }) => {
+        if (!Capacitor.isNativePlatform()) return;
+
+        // Listen for app opening via deep link (OAuth callback)
+        const listener = App.addListener('appUrlOpen', async (event) => {
+          console.log('Deep link opened:', event.url);
+
+          // Check if this is an OAuth callback
+          if (event.url.startsWith('fishfindr://')) {
+            // Extract the full callback URL with query parameters
+            const callbackUrl = event.url.replace('fishfindr://', 'https://fishfindr.eu/');
+            console.log('Redirecting to:', callbackUrl);
+
+            // Navigate to the callback URL so Supabase can process OAuth tokens
+            window.location.href = callbackUrl;
+          }
+        });
+
+        return () => {
+          listener.then(l => l.remove());
+        };
+      });
+    });
+  }, []);
+
   // Removed manual auth redirect logic - Supabase handles this via detectSessionInUrl
   // See lib/supabase/client.ts for configuration
 
