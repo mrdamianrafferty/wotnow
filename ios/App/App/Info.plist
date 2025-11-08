@@ -85,6 +85,14 @@
 				<string>fishfindr</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Google OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

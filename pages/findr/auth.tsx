@@ -55,6 +55,10 @@ export default function FindrAuth() {
       }
 
       // Initialize for Google
+      console.log('[Findr Auth] Initializing SocialLogin plugin with:', {
+        webClientId: (googleIOSClientId || googleWebClientId || '').substring(0, 30) + '...'
+      });
+
       await SocialLogin.initialize({
         google: {
           // Use iOS client ID for native, fallback to web client ID
@@ -62,13 +66,18 @@ export default function FindrAuth() {
         },
       });
 
+      console.log('[Findr Auth] SocialLogin plugin initialized successfully');
+
       // Login with Google
+      console.log('[Findr Auth] Calling SocialLogin.login()');
       const result = await SocialLogin.login({
         provider: 'google',
         options: {
           scopes: ['email', 'profile'],
         },
       });
+
+      console.log('[Findr Auth] SocialLogin.login() returned');
 
       // Type guard for online response (has idToken)
       if (!('idToken' in result.result) || !result.result.idToken) {
