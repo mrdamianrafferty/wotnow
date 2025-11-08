@@ -13,6 +13,16 @@ interface EnvironmentalFactors {
   data_source?: string;
 }
 
+interface BiteScoreFactors {
+  tempScore?: number;
+  tideScore?: number;
+  lightScore?: number;
+  lunarScore?: number;
+  weatherScore?: number;
+  bioBandScore?: number;
+  habitatBonus?: number;
+}
+
 interface ConfidenceBreakdownCardProps {
   speciesName?: string; // Optional since not currently used, but may be needed for future features
   confidence: number;
@@ -20,6 +30,8 @@ interface ConfidenceBreakdownCardProps {
   seasonalMultiplier?: number;
   environmentalFactors?: EnvironmentalFactors;
   dataFreshness?: 'fresh' | 'recent' | 'older' | 'stale';
+  biteScoreFactors?: BiteScoreFactors;
+  biteScore?: number;
   defaultExpanded?: boolean;
   compact?: boolean;
 }
@@ -62,6 +74,8 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
   seasonalMultiplier,
   environmentalFactors,
   dataFreshness,
+  biteScoreFactors,
+  biteScore,
   defaultExpanded = false,
   compact = false,
 }) => {
@@ -127,6 +141,169 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
                 <span className="text-lg font-bold text-primary">{confidence}%</span>
               </div>
             </div>
+
+            {/* Bite Score Factors - Show if we have bite score data */}
+            {biteScore !== undefined && biteScore !== null && biteScoreFactors && (
+              <div>
+                <h4 className="text-xs font-semibold text-base-content/70 mb-2 flex items-center gap-1">
+                  <TrendingUp size={12} />
+                  <TranslatedText text="Bite Prediction Factors" />
+                </h4>
+                <div className="alert alert-info alert-sm mb-2">
+                  <AlertCircle size={14} />
+                  <span className="text-xs">
+                    <TranslatedText text="Bite score predicts when fish are likely to feed. Each factor contributes to the overall prediction." />
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {/* Temperature Score */}
+                  {biteScoreFactors.tempScore !== undefined && biteScoreFactors.tempScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.tempScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Temperature Score" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Water temperature matches species feeding preference" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.tempScore)}`}>
+                        {biteScoreFactors.tempScore}/40
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Tide Score */}
+                  {biteScoreFactors.tideScore !== undefined && biteScoreFactors.tideScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.tideScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Tide Score" />
+                          </p>
+                          <p className="text-base-content/60">
+                            {biteScoreFactors.tideScore === 0 ? (
+                              <span className="text-warning">
+                                <TranslatedText text="Tide data not yet integrated - coming soon!" />
+                              </span>
+                            ) : (
+                              <TranslatedText text="Current tide stage and flow matches species preference" />
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${biteScoreFactors.tideScore === 0 ? 'text-warning' : getScoreColor(biteScoreFactors.tideScore)}`}>
+                        {biteScoreFactors.tideScore}/40
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Light/Time Score */}
+                  {biteScoreFactors.lightScore !== undefined && biteScoreFactors.lightScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.lightScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Light/Time of Day" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Dawn, dusk, day, or night feeding patterns" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.lightScore)}`}>
+                        {biteScoreFactors.lightScore}/15
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Lunar Score */}
+                  {biteScoreFactors.lunarScore !== undefined && biteScoreFactors.lunarScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.lunarScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Moon Phase" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Lunar cycle effect on feeding behavior" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.lunarScore)}`}>
+                        {biteScoreFactors.lunarScore}/10
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Weather Score */}
+                  {biteScoreFactors.weatherScore !== undefined && biteScoreFactors.weatherScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.weatherScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Weather Conditions" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Wind speed and barometric pressure effects" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.weatherScore)}`}>
+                        {biteScoreFactors.weatherScore}/25
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Water Quality/Bio Score */}
+                  {biteScoreFactors.bioBandScore !== undefined && biteScoreFactors.bioBandScore !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.bioBandScore)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Water Quality" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Oxygen, salinity, and chlorophyll levels" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.bioBandScore)}`}>
+                        {biteScoreFactors.bioBandScore}/30
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Habitat Bonus */}
+                  {biteScoreFactors.habitatBonus !== undefined && biteScoreFactors.habitatBonus !== null && (
+                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start gap-2 flex-1">
+                        {getMatchIcon('', biteScoreFactors.habitatBonus)}
+                        <div>
+                          <p className="font-medium">
+                            <TranslatedText text="Habitat Bonus" />
+                          </p>
+                          <p className="text-base-content/60">
+                            <TranslatedText text="Species-specific location advantages" />
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-bold ${getScoreColor(biteScoreFactors.habitatBonus)}`}>
+                        {biteScoreFactors.habitatBonus}/10
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Environmental Factors */}
             {hasEnvironmentalData && (

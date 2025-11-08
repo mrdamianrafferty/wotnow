@@ -1507,6 +1507,7 @@ const FindrFavouritesPage: React.FC = () => {
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {groupedFavourites.good.map((entry) => {
                         const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
+                        const scoreBreakdown = entry.card ? buildScoreBreakdown(entry.card) : undefined;
                         return (
                           <GoodSpeciesCard
                             key={entry.id}
@@ -1527,6 +1528,7 @@ const FindrFavouritesPage: React.FC = () => {
                               environmental_factors: entry.card?.environmental_factors,
                               seasonal_multiplier: entry.card?.seasonal_multiplier,
                               original_confidence: entry.card?.original_confidence,
+                              scoreBreakdown,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
@@ -1557,6 +1559,7 @@ const FindrFavouritesPage: React.FC = () => {
                                         <div className="space-y-2">
                       {groupedFavourites.waiting.map((entry) => {
                         const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
+                        const scoreBreakdown = entry.card ? buildScoreBreakdown(entry.card) : undefined;
                         return (
                           <WaitingSpeciesCard
                             key={entry.id}
@@ -1574,6 +1577,7 @@ const FindrFavouritesPage: React.FC = () => {
                               environmental_factors: entry.card?.environmental_factors,
                               seasonal_multiplier: entry.card?.seasonal_multiplier,
                               original_confidence: entry.card?.original_confidence,
+                              scoreBreakdown,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}

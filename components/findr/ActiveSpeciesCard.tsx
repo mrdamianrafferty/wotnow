@@ -443,6 +443,16 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               seasonalMultiplier={species.seasonal_multiplier}
               environmentalFactors={species.environmental_factors}
               dataFreshness={species.data_freshness}
+              biteScore={species.scoreBreakdown?.biteScore}
+              biteScoreFactors={species.scoreBreakdown ? {
+                tempScore: species.scoreBreakdown.tempScore,
+                tideScore: species.scoreBreakdown.tideScore,
+                lightScore: species.scoreBreakdown.lightScore,
+                lunarScore: species.scoreBreakdown.lunarScore,
+                weatherScore: species.scoreBreakdown.weatherScore,
+                bioBandScore: species.scoreBreakdown.bioBandScore,
+                habitatBonus: species.scoreBreakdown.habitatBonus,
+              } : undefined}
               compact={false}
             />
           </div>
