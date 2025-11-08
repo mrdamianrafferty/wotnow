@@ -24,11 +24,11 @@ export default async function handler(
 
     console.log('[Google Token Exchange] Exchanging code for tokens');
 
-    // Get client secret from environment
-    const clientSecret = process.env.GOOGLE_IOS_CLIENT_SECRET;
+    // Get client secret from environment (using Web client credentials)
+    const clientSecret = process.env.GOOGLE_WEB_CLIENT_SECRET;
 
     if (!clientSecret) {
-      console.error('[Google Token Exchange] GOOGLE_IOS_CLIENT_SECRET not configured');
+      console.error('[Google Token Exchange] GOOGLE_WEB_CLIENT_SECRET not configured');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 

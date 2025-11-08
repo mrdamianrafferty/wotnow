@@ -71,7 +71,8 @@ export default function FindrAuth() {
               console.log('[Findr Auth] Retrieved code verifier from Preferences');
 
               // Exchange code for tokens via our API endpoint
-              const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+              // Use Web Client ID (matches what we used to initiate OAuth)
+              const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
               const response = await fetch('/api/auth/google-token-exchange', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -166,7 +167,8 @@ export default function FindrAuth() {
 
       // Build Google OAuth URL with our deep link redirect
       const redirectUri = 'fishfindr://auth/callback';
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      // Use Web Client ID for OAuth flow (iOS client doesn't support custom redirect URIs)
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
       if (!clientId) {
         throw new Error('Google Client ID not configured');
