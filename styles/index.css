@@ -2119,7 +2119,12 @@ abbr[title] {
 }
 
 /* Badge and chip transitions */
-.badge,
+/* Remove drop shadow from all badges globally */
+.badge {
+  box-shadow: none !important;
+  filter: none !important;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
 .chip {
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
