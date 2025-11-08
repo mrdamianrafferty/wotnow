@@ -143,10 +143,41 @@ if (!googleIOSClientId) {
 - [ ] Verify no redirects to `/auth/callback` happen
 - [ ] Check Xcode logs for successful session creation
 
-## Status: November 7, 2025
+## Status: November 8, 2025
 
-✅ **Apple Sign In:** Working (ID token flow, stays in app)
-🔧 **Google Sign In:** Configured with iOS Client ID, ready for testing
+✅ **Apple Sign In:** **WORKING** - Tested and confirmed (ID token flow, stays in app)
+🔧 **Google Sign In:** Configured with iOS Client ID, awaiting testing
+
+### Apple Sign In - Confirmed Working ✅
+
+**Date tested:** November 8, 2025
+**Platform:** iOS physical device
+**Result:** SUCCESS
+
+**What works:**
+- ✅ Native Apple modal appears (stays in app, no Safari redirect)
+- ✅ User authentication completes successfully
+- ✅ ID token returned from Apple
+- ✅ Supabase session created with bundle ID audience
+- ✅ Redirects to `/findr` page
+- ✅ No "auth code and code verifier" errors
+- ✅ No "unacceptable audience" errors
+
+**Configuration used:**
+- Plugin: `@capacitor-community/apple-sign-in@7.1.0`
+- Client ID: `eu.fishfindr.app` (app bundle ID)
+- Nonce: SHA-256 hashed
+- Supabase Authorized Client IDs: `io.godaisy.login,eu.fishfindr.app`
+
+### Google Sign In - Pending Test 🔧
+
+**Configuration complete:**
+- iOS Client ID: `666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps.apps.googleusercontent.com`
+- Web Client ID: `666271903016-pd983f77iaghcdogrik25sipscdpr92q.apps.googleusercontent.com`
+- Supabase Authorized Client IDs: `666271903016-pd983f77iaghcdogrik25sipscdpr92q.apps.googleusercontent.com,eu.fishfindr.app`
+- Environment variables cleaned (removed newline characters)
+
+**Ready for testing** after App Store Connect upload completes.
 
 ## Testing
 
