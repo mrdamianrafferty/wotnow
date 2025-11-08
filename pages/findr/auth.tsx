@@ -71,8 +71,8 @@ export default function FindrAuth() {
               console.log('[Findr Auth] Retrieved code verifier from Preferences');
 
               // Exchange code for tokens via our API endpoint
-              // Use Web Client ID (matches what we used to initiate OAuth)
-              const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+              // Use Findr Mobile Client ID (matches what we used to initiate OAuth)
+              const clientId = process.env.NEXT_PUBLIC_GOOGLE_FINDR_MOBILE_CLIENT_ID;
               const response = await fetch('/api/auth/google-token-exchange', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -167,8 +167,8 @@ export default function FindrAuth() {
 
       // Build Google OAuth URL with universal link redirect
       const redirectUri = 'https://fishfindr.eu/auth/callback';
-      // Use Web Client ID for OAuth flow
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      // Use Findr Mobile Client ID for OAuth flow (dedicated client with Universal Links redirect)
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_FINDR_MOBILE_CLIENT_ID;
 
       if (!clientId) {
         throw new Error('Google Client ID not configured');
