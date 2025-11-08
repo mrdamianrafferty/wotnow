@@ -42,8 +42,8 @@ export default function FindrAuth() {
         const listener = await App.addListener('appUrlOpen', async (data: { url: string }) => {
           console.log('[Findr Auth] Deep link received:', data.url);
 
-          // Check if this is a Google OAuth callback
-          if (data.url.startsWith('fishfindr://auth/callback')) {
+          // Check if this is a Google OAuth callback (universal link)
+          if (data.url.includes('/auth/callback')) {
             try {
               // Close the browser
               await Browser.close();
@@ -80,7 +80,7 @@ export default function FindrAuth() {
                   code,
                   codeVerifier,
                   clientId,
-                  redirectUri: 'fishfindr://auth/callback',
+                  redirectUri: 'https://fishfindr.eu/auth/callback',
                 }),
               });
 
@@ -165,9 +165,9 @@ export default function FindrAuth() {
 
       console.log('[Findr Auth] PKCE code verifier stored in Preferences');
 
-      // Build Google OAuth URL with our deep link redirect
-      const redirectUri = 'fishfindr://auth/callback';
-      // Use Web Client ID for OAuth flow (iOS client doesn't support custom redirect URIs)
+      // Build Google OAuth URL with universal link redirect
+      const redirectUri = 'https://fishfindr.eu/auth/callback';
+      // Use Web Client ID for OAuth flow
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
       if (!clientId) {
