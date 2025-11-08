@@ -63,64 +63,70 @@ export function isAppleSignInAvailable(): boolean {
 
 /**
  * Sign in with Apple on native iOS
- * Uses @capgo/capacitor-social-login with ASWebAuthenticationSession
+ * Uses @capacitor-community/apple-sign-in (official plugin)
+ *
+ * CRITICAL: This uses ID token flow, NOT OAuth authorization code flow
+ * See docs/NATIVE_AUTH_ROOT_CAUSE_FIX.md for why this matters
  */
 async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
   try {
-    logger.info('Starting native Apple Sign In flow with @capgo/capacitor-social-login');
+    logger.info('Starting native Apple Sign In flow with official plugin');
 
-    // Import the plugin dynamically
-    const { SocialLogin } = await import('@capgo/capacitor-social-login');
+    // Import the official Apple Sign In plugin
+    const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
 
-    // Initialize the plugin for Apple
-    // CRITICAL: For native iOS, we MUST use the app bundle ID
-    // Services ID (io.godaisy.login) is ONLY for web-based OAuth
-    // Native iOS Sign in with Apple uses the app's bundle identifier
-    // Supabase must be configured to accept BOTH identifiers (see docs/APPLE_AUTH_FINAL_FIX.md)
-    await SocialLogin.initialize({
-      apple: {
-        clientId: 'eu.fishfindr.app', // Bundle ID for native iOS (Findr app)
-      },
-    });
+    logger.info('Plugin loaded, preparing nonce');
 
-    logger.info('Plugin initialized, requesting Apple login');
-
-    // CRITICAL: Generate a nonce for security
-    // This nonce must be passed to both Apple AND Supabase
+    // CRITICAL: Apple requires SHA-256 hashed nonce, Supabase needs raw nonce
     // Reference: https://supabase.com/docs/guides/auth/social-login/auth-apple
     const rawNonce = crypto.randomUUID();
-    logger.info('Generated nonce for Apple Sign In', { nonceLength: rawNonce.length });
 
-    // Login with Apple (uses ASWebAuthenticationSession on iOS)
-    const result = await SocialLogin.login({
-      provider: 'apple',
-      options: {
-        scopes: ['email', 'name'],
-        nonce: rawNonce,  // ⭐ Pass nonce to Apple
-      },
+    // Hash the nonce with SHA-256 for Apple
+    const encoder = new TextEncoder();
+    const data = encoder.encode(rawNonce);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashedNonce = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    logger.info('Nonce prepared', {
+      rawLength: rawNonce.length,
+      hashedLength: hashedNonce.length
+    });
+
+    // Sign in with Apple using official plugin
+    // NOTE: redirectURI is required by type but not used for native iOS
+    // Using custom URL scheme to ensure no web redirects happen
+    const result = await SignInWithApple.authorize({
+      clientId: 'eu.fishfindr.app', // Bundle ID for native iOS
+      redirectURI: 'fishfindr://auth/callback', // Custom scheme (not used for native)
+      scopes: 'email name',
+      nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
     });
 
     logger.info('Apple Sign In successful', {
-      hasIdToken: !!result.result.idToken,
-      hasAccessToken: !!result.result.accessToken,
-      email: result.result.profile?.email
+      hasIdentityToken: !!result.response?.identityToken,
+      hasAuthorizationCode: !!result.response?.authorizationCode,
+      email: result.response?.email,
     });
 
-    // Exchange Apple identity token for Supabase session
-    if (!result.result.idToken) {
+    // The plugin returns an identity token (JWT)
+    if (!result.response?.identityToken) {
       throw new Error('No identity token returned from Apple Sign In');
     }
 
+    logger.info('Exchanging Apple ID token for Supabase session');
+
+    // Exchange Apple identity token for Supabase session
     const { error } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
-      token: result.result.idToken,
-      nonce: rawNonce,  // ⭐ Pass THE SAME nonce to Supabase
+      token: result.response.identityToken,
+      nonce: rawNonce, // ⭐ Pass THE RAW (unhashed) nonce to Supabase
     });
 
     if (error) {
       logger.error('Supabase signInWithIdToken failed', {
         error,
-        hasToken: !!result.result.idToken,
+        hasToken: !!result.response.identityToken,
       });
       throw error;
     }
