@@ -2,7 +2,7 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
 import { queryEMODnetBathymetry, queryEMODnetSubstrate } from '../../../lib/findr/enrichCatchData';
-import { fetchMetNoLocationForecast } from '../../../lib/services/weatherService';
+import { fetchMetNoLocationForecast, fetchWorldTides } from '../../../lib/services/weatherService';
 import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/queryWithTiming';
 import { calculateTidePhase, type TideExtreme } from '../../../lib/tides/calculateTidePhase';
 import { rateLimiter, RateLimitError, addRateLimitHeaders } from '../../../lib/utils/rate-limiter';
@@ -858,26 +858,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Fetch current tide data for the rectangle center
+    // Fetch current tide data for the rectangle center (directly via WorldTides API)
     let currentTideStage: string | null = null;
     let currentFlowSpeedMS: number | null = null;
 
     if (rectangleData?.center_lat != null && rectangleData?.center_lon != null) {
       try {
-        const tideResponse = await queryWithTiming(
+        const tideData = await queryWithTiming(
           async () => {
-            const response = await fetch(
-              `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/tides?lat=${rectangleData.center_lat}&lon=${rectangleData.center_lon}`,
-              { signal: AbortSignal.timeout(3000) }
-            );
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return response.json();
+            const result = await fetchWorldTides(rectangleData.center_lat!, rectangleData.center_lon!, 7);
+            return result;
           },
           'fetch_tide_data'
         );
 
-        if (tideResponse?.success && Array.isArray(tideResponse.data) && tideResponse.data.length > 0) {
-          const tideExtremes: TideExtreme[] = tideResponse.data;
+        if (tideData && tideData.extremes && tideData.extremes.length > 0) {
+          // Convert WorldTides format to TideExtreme format
+          const tideExtremes: TideExtreme[] = tideData.extremes.map(e => ({
+            time: e.date,
+            height: e.height,
+            type: e.type.toLowerCase() as 'high' | 'low'
+          }));
+
           const tidePhase = calculateTidePhase(tideExtremes);
 
           if (tidePhase) {
@@ -889,9 +891,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               flow_speed_ms: currentFlowSpeedMS,
               current_height: tidePhase.currentHeight,
               next_extreme: tidePhase.nextExtreme,
-              location: { lat: rectangleData.center_lat, lon: rectangleData.center_lon }
+              location: { lat: rectangleData.center_lat, lon: rectangleData.center_lon },
+              source: 'worldtides_direct'
             });
+          } else {
+            console.warn('[Findr API] Tide phase calculation returned null (insufficient tide data)');
           }
+        } else {
+          console.warn('[Findr API] WorldTides returned no extremes data');
         }
       } catch (tideError) {
         console.warn('[Findr API] Tide fetch failed, using neutral tide score:', (tideError as Error).message);
