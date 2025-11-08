@@ -21,7 +21,7 @@ export function SpeciesBadges({ badges, size = "sm", condensed = false }: Props)
       {meta.map(b => (
         <div
           key={b.key}
-          className={`badge ${b.color ? `badge-${b.color}` : ""} ${sizeClass} gap-1`}
+          className={`badge ${b.color ? `badge-${b.color}` : ""} ${sizeClass} gap-1`} style={{ boxShadow: 'none', filter: 'none' }}
           title={b.tooltip ?? b.label}
           aria-label={b.label}
         >

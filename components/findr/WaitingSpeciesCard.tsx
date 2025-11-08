@@ -111,7 +111,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           {/* <GuildBadge guild={species.guild || 'default_coastal'} size="sm" /> */}
 
           {/* Confidence Badge */}
-          <span className="badge badge-sm badge-outline text-base-content border-base-content ml-1" data-testid="confidence-score">
+          <span className="badge badge-sm badge-outline text-base-content border-base-content ml-1" data-testid="confidence-score" style={{ boxShadow: 'none', filter: 'none' }}>
             {species.confidence}%
             {species.seasonal_multiplier && species.original_confidence && (
               <span className="ml-1 opacity-75 text-xs">

@@ -234,7 +234,7 @@ Check predictions at fishfindr.eu`;
                   ⚡ <TranslatedText text="Good conditions" />
                 </span>
                 <GuildBadge guild={species.weight_profile || 'default_coastal'} size="sm" />
-                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 flex-shrink-0" data-testid="confidence-score">
+                <div className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 flex-shrink-0" data-testid="confidence-score" style={{ boxShadow: 'none', filter: 'none' }}>
                   <span className="font-bold">{species.confidence}%</span>
                   {species.seasonal_multiplier && species.original_confidence && (
                     <span className="text-xs opacity-75">
@@ -246,7 +246,7 @@ Check predictions at fishfindr.eu`;
 
               {/* Best Fishing Time */}
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <div className="badge badge-info gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3">
+                <div className="badge badge-info gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3" style={{ boxShadow: 'none', filter: 'none' }}>
                   <Clock size={12} />
                   <span className="font-semibold text-xs">{fishingTime.time}</span>
                 </div>

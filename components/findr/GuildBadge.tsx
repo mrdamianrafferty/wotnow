@@ -71,7 +71,7 @@ export const GuildBadge: React.FC<GuildBadgeProps> = ({
   const info = GUILD_INFO[guild] || GUILD_INFO.default_coastal;
 
   const badge = (
-    <div className={`badge ${info.color} badge-outline badge-${size} gap-1 font-medium`}>
+  <div className={`badge ${info.color} badge-outline badge-${size} gap-1 font-medium`} style={{ boxShadow: 'none', filter: 'none' }}>
       <span role="img" aria-label={info.label}>{info.icon}</span>
       <span>{info.label}</span>
     </div>

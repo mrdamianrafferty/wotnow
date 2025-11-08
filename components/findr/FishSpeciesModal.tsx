@@ -85,10 +85,10 @@ const ContextBadge: React.FC<{ context: SpeciesModalContext }> = ({ context }) =
   if (context === 'both') {
     return (
       <div className="flex flex-wrap gap-2">
-        <span className="badge badge-info gap-1">
+  <span className="badge badge-info gap-1" style={{ boxShadow: 'none', filter: 'none' }}>
           <Footprints className="h-3 w-3" /> <TranslatedText text="Shore" />
         </span>
-        <span className="badge badge-accent gap-1">
+  <span className="badge badge-accent gap-1" style={{ boxShadow: 'none', filter: 'none' }}>
           <Ship className="h-3 w-3" /> <TranslatedText text="Boat" />
         </span>
       </div>
@@ -97,14 +97,14 @@ const ContextBadge: React.FC<{ context: SpeciesModalContext }> = ({ context }) =
 
   if (context === 'shore') {
     return (
-      <span className="badge badge-info gap-1">
+  <span className="badge badge-info gap-1" style={{ boxShadow: 'none', filter: 'none' }}>
         <Footprints className="h-3 w-3" /> <TranslatedText text="Shore" />
       </span>
     );
   }
 
   return (
-    <span className="badge badge-accent gap-1">
+  <span className="badge badge-accent gap-1" style={{ boxShadow: 'none', filter: 'none' }}>
       <Ship className="h-3 w-3" /> <TranslatedText text="Boat" />
     </span>
   );
@@ -296,7 +296,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               </h1>
               <GuildBadge guild={card.weight_profile || 'default_coastal'} size="md" />
               {card.confidence != null && (
-                <span className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 text-base font-semibold flex-shrink-0" data-testid="confidence-score">
+                <span className="badge badge-warning gap-1 py-1.5 px-2.5 sm:py-2 sm:px-3 text-base font-semibold flex-shrink-0" data-testid="confidence-score" style={{ boxShadow: 'none', filter: 'none' }}>
                   {card.confidence}%&nbsp;<span className="lowercase">biting</span>
                 </span>
               )}
