@@ -57,24 +57,26 @@ export async function middleware(req: NextRequest) {
     // - Static assets (/webp/*, /images/*, /weather-icons/*, etc.)
     // - PWA files (sw.js, manifest.json, workbox files)
     // - Auth callbacks (/auth/callback)
+    // - Well-known files (/.well-known/* for Apple App Site Association, etc.)
     // - Already on findr paths
     const isApiRoute = url.pathname.startsWith('/api/');
     const isNextInternal = url.pathname.startsWith('/_next/');
     const isFindrPath = url.pathname.startsWith('/findr');
     const isAuthPath = url.pathname.startsWith('/auth/');
-    const isPWAFile = url.pathname === '/sw.js' || 
+    const isWellKnown = url.pathname.startsWith('/.well-known/');
+    const isPWAFile = url.pathname === '/sw.js' ||
                       url.pathname === '/manifest.json' ||
                       url.pathname.startsWith('/workbox-') ||
                       url.pathname.match(/^\/sw\.js/);
-    const isStaticAsset = url.pathname.startsWith('/webp/') || 
-                          url.pathname.startsWith('/images/') || 
+    const isStaticAsset = url.pathname.startsWith('/webp/') ||
+                          url.pathname.startsWith('/images/') ||
                           url.pathname.startsWith('/weather-icons/') ||
                           url.pathname.startsWith('/waves/') ||
                           url.pathname.startsWith('/skies/') ||
                           url.pathname.startsWith('/findr-favicon/') ||
                           url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
-    
-    if (!isApiRoute && !isNextInternal && !isFindrPath && !isAuthPath && !isPWAFile && !isStaticAsset) {
+
+    if (!isApiRoute && !isNextInternal && !isFindrPath && !isAuthPath && !isWellKnown && !isPWAFile && !isStaticAsset) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
       response = NextResponse.redirect(findrUrl);
