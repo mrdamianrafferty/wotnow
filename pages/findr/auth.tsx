@@ -42,6 +42,13 @@ export default function FindrAuth() {
       const googleIOSClientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
       const googleWebClientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
+      console.log('[Findr Auth] Google Client IDs check:', {
+        hasIOSClientId: !!googleIOSClientId,
+        hasWebClientId: !!googleWebClientId,
+        iosClientIdPrefix: googleIOSClientId?.substring(0, 20),
+        webClientIdPrefix: googleWebClientId?.substring(0, 20)
+      });
+
       if (!googleIOSClientId && !googleWebClientId) {
         console.warn('[Findr Auth] Google Client ID not configured, falling back to web OAuth');
         throw new Error('GOOGLE_NOT_CONFIGURED');
