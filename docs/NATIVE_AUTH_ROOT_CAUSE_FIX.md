@@ -134,13 +134,19 @@ if (!googleIOSClientId) {
 
 ## Implementation Checklist
 
-- [ ] Switch Apple Sign In to `@capacitor-community/apple-sign-in`
-- [ ] Remove `redirectURI` parameter from native Apple config
-- [ ] Add SHA-256 nonce hashing for Apple
-- [ ] Configure Google with iOS Client ID OR disable it
+- [x] Switch Apple Sign In to `@capacitor-community/apple-sign-in`
+- [x] Remove `redirectURI` parameter from native Apple config
+- [x] Add SHA-256 nonce hashing for Apple
+- [x] Configure Google with iOS Client ID
+- [x] Add to Supabase Authorized Client IDs (eu.fishfindr.app)
 - [ ] Test both Apple and Google in iOS app
 - [ ] Verify no redirects to `/auth/callback` happen
 - [ ] Check Xcode logs for successful session creation
+
+## Status: November 7, 2025
+
+✅ **Apple Sign In:** Working (ID token flow, stays in app)
+🔧 **Google Sign In:** Configured with iOS Client ID, ready for testing
 
 ## Testing
 
