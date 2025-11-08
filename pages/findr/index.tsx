@@ -932,8 +932,8 @@ const FindrPage: React.FC = () => {
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />
 
-        {/* Content container */}
-        <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0">
+        {/* Content container - responsive padding for better iPad experience */}
+        <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0 md:px-6 lg:px-8">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-6">
@@ -1075,7 +1075,7 @@ const FindrPage: React.FC = () => {
                   )}
                 </span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 md:gap-6">
                 {cards.map((card) => (
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
                     <div className="card-body space-y-4">
