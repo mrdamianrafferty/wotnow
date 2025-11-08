@@ -52,6 +52,11 @@ interface WaitingSpeciesCardProps {
     conservationStatus?: string | null;
     // Bite score breakdown
     scoreBreakdown?: BiteScoreBreakdown;
+    // Weather conditions
+    weatherConditions?: {
+      windSpeedMS?: number;
+      pressureHPA?: number;
+    };
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -203,6 +208,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
               bioBandScore: species.scoreBreakdown.bioBandScore ?? undefined,
               habitatBonus: species.scoreBreakdown.habitatBonus ?? undefined,
             } : undefined}
+            weatherConditions={species.weatherConditions}
             compact={true}
           />
         </div>

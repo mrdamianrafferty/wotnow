@@ -1476,6 +1476,10 @@ const FindrFavouritesPage: React.FC = () => {
                               scoreBreakdown,
                               seasonal_multiplier: entry.card?.seasonal_multiplier,
                               original_confidence: entry.card?.original_confidence,
+                              weatherConditions: entry.card?.current_wind_speed_ms !== undefined || entry.card?.current_pressure_hpa !== undefined ? {
+                                windSpeedMS: entry.card?.current_wind_speed_ms ?? undefined,
+                                pressureHPA: entry.card?.current_pressure_hpa ?? undefined,
+                              } : undefined,
                             }}
                             location={cleanLocation}
                             tideInfo={tideInfo}
@@ -1529,6 +1533,10 @@ const FindrFavouritesPage: React.FC = () => {
                               seasonal_multiplier: entry.card?.seasonal_multiplier,
                               original_confidence: entry.card?.original_confidence,
                               scoreBreakdown,
+                              weatherConditions: entry.card?.current_wind_speed_ms !== undefined || entry.card?.current_pressure_hpa !== undefined ? {
+                                windSpeedMS: entry.card?.current_wind_speed_ms ?? undefined,
+                                pressureHPA: entry.card?.current_pressure_hpa ?? undefined,
+                              } : undefined,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}
@@ -1578,6 +1586,10 @@ const FindrFavouritesPage: React.FC = () => {
                               seasonal_multiplier: entry.card?.seasonal_multiplier,
                               original_confidence: entry.card?.original_confidence,
                               scoreBreakdown,
+                              weatherConditions: entry.card?.current_wind_speed_ms !== undefined || entry.card?.current_pressure_hpa !== undefined ? {
+                                windSpeedMS: entry.card?.current_wind_speed_ms ?? undefined,
+                                pressureHPA: entry.card?.current_pressure_hpa ?? undefined,
+                              } : undefined,
                             }}
                             location={cleanLocation}
                             onRemove={(id) => removeFavourite(id)}

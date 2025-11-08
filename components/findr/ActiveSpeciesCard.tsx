@@ -69,6 +69,11 @@ interface ActiveSpeciesCardProps {
     bestTimes?: string[] | null;
     funFact?: string | null;
     conservationStatus?: string | null;
+    // Weather conditions
+    weatherConditions?: {
+      windSpeedMS?: number;
+      pressureHPA?: number;
+    };
   };
   location?: { lat: number; lon: number } | null;
   tideInfo?: TideInfo | null;
@@ -453,6 +458,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 bioBandScore: species.scoreBreakdown.bioBandScore,
                 habitatBonus: species.scoreBreakdown.habitatBonus,
               } : undefined}
+              weatherConditions={species.weatherConditions}
               compact={false}
             />
           </div>

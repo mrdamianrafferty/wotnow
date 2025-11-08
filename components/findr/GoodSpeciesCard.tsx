@@ -65,6 +65,11 @@ interface GoodSpeciesCardProps {
     conservationStatus?: string | null;
     // Bite score breakdown
     scoreBreakdown?: BiteScoreBreakdown;
+    // Weather conditions
+    weatherConditions?: {
+      windSpeedMS?: number;
+      pressureHPA?: number;
+    };
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -415,6 +420,7 @@ Check predictions at fishfindr.eu`;
                 bioBandScore: species.scoreBreakdown.bioBandScore ?? undefined,
                 habitatBonus: species.scoreBreakdown.habitatBonus ?? undefined,
               } : undefined}
+              weatherConditions={species.weatherConditions}
               compact={true}
             />
 

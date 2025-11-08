@@ -23,6 +23,11 @@ interface BiteScoreFactors {
   habitatBonus?: number;
 }
 
+interface WeatherConditions {
+  windSpeedMS?: number;
+  pressureHPA?: number;
+}
+
 interface ConfidenceBreakdownCardProps {
   speciesName?: string; // Optional since not currently used, but may be needed for future features
   confidence: number;
@@ -32,6 +37,7 @@ interface ConfidenceBreakdownCardProps {
   dataFreshness?: 'fresh' | 'recent' | 'older' | 'stale';
   biteScoreFactors?: BiteScoreFactors;
   biteScore?: number;
+  weatherConditions?: WeatherConditions;
   defaultExpanded?: boolean;
   compact?: boolean;
 }
@@ -76,6 +82,7 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
   dataFreshness,
   biteScoreFactors,
   biteScore,
+  weatherConditions,
   defaultExpanded = false,
   compact = false,
 }) => {
@@ -244,21 +251,60 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
 
                   {/* Weather Score */}
                   {biteScoreFactors.weatherScore !== undefined && biteScoreFactors.weatherScore !== null && (
-                    <div className="flex items-start justify-between p-2 bg-base-100 rounded text-xs">
-                      <div className="flex items-start gap-2 flex-1">
-                        {getMatchIcon('', biteScoreFactors.weatherScore)}
-                        <div>
-                          <p className="font-medium">
-                            <TranslatedText text="Weather Conditions" />
-                          </p>
-                          <p className="text-base-content/60">
-                            <TranslatedText text="Wind speed and barometric pressure effects" />
-                          </p>
+                    <div className="p-2 bg-base-100 rounded text-xs">
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-start gap-2 flex-1">
+                          {getMatchIcon('', biteScoreFactors.weatherScore)}
+                          <div>
+                            <p className="font-medium">
+                              <TranslatedText text="Weather Conditions" />
+                            </p>
+                            <p className="text-base-content/60">
+                              <TranslatedText text="Wind speed and barometric pressure effects" />
+                            </p>
+                          </div>
                         </div>
+                        <span className={`font-bold ${getScoreColor(biteScoreFactors.weatherScore)}`}>
+                          {biteScoreFactors.weatherScore}/25
+                        </span>
                       </div>
-                      <span className={`font-bold ${getScoreColor(biteScoreFactors.weatherScore)}`}>
-                        {biteScoreFactors.weatherScore}/25
-                      </span>
+
+                      {/* Show actual weather conditions if available */}
+                      {weatherConditions && (weatherConditions.windSpeedMS !== undefined || weatherConditions.pressureHPA !== undefined) && (
+                        <div className="ml-6 mt-2 space-y-1 border-l-2 border-base-300 pl-2">
+                          {weatherConditions.windSpeedMS !== undefined && (
+                            <div className="text-xs">
+                              <span className="font-medium text-base-content/70">Wind: </span>
+                              <span className="text-base-content/90">{weatherConditions.windSpeedMS.toFixed(1)} m/s</span>
+                              <span className="text-base-content/50"> (</span>
+                              <span className="text-base-content/50">
+                                {weatherConditions.windSpeedMS < 3 ? '😌 Calm - Ideal' :
+                                 weatherConditions.windSpeedMS < 7 ? '✓ Light - Good' :
+                                 weatherConditions.windSpeedMS < 12 ? '⚠ Moderate - Challenging' :
+                                 '❌ Strong - Difficult'}
+                              </span>
+                              <span className="text-base-content/50">)</span>
+                            </div>
+                          )}
+                          {weatherConditions.pressureHPA !== undefined && (
+                            <div className="text-xs">
+                              <span className="font-medium text-base-content/70">Pressure: </span>
+                              <span className="text-base-content/90">{weatherConditions.pressureHPA.toFixed(0)} hPa</span>
+                              <span className="text-base-content/50"> (</span>
+                              <span className="text-base-content/50">
+                                {weatherConditions.pressureHPA > 1020 ? '😊 High - Excellent' :
+                                 weatherConditions.pressureHPA > 1010 ? '✓ Normal - Good' :
+                                 weatherConditions.pressureHPA > 1000 ? '⚠ Low - Fair' :
+                                 '❌ Very Low - Poor'}
+                              </span>
+                              <span className="text-base-content/50">)</span>
+                            </div>
+                          )}
+                          <div className="text-xs text-base-content/50 italic mt-1">
+                            💡 <TranslatedText text="Fish feed more actively in calm conditions with stable/rising pressure" />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
