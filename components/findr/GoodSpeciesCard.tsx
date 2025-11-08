@@ -19,6 +19,17 @@ import { useTideData } from '../../hooks/useTideData';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 
+interface BiteScoreBreakdown {
+  biteScore?: number | null;
+  tempScore?: number | null;
+  tideScore?: number | null;
+  lightScore?: number | null;
+  lunarScore?: number | null;
+  weatherScore?: number | null;
+  bioBandScore?: number | null;
+  habitatBonus?: number | null;
+}
+
 interface GoodSpeciesCardProps {
   species: {
     id: string;
@@ -52,6 +63,13 @@ interface GoodSpeciesCardProps {
     bestTimes?: string[] | null;
     funFact?: string | null;
     conservationStatus?: string | null;
+    // Bite score breakdown
+    scoreBreakdown?: BiteScoreBreakdown;
+    // Weather conditions
+    weatherConditions?: {
+      windSpeedMS?: number;
+      pressureHPA?: number;
+    };
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -392,6 +410,17 @@ Check predictions at fishfindr.eu`;
               seasonalMultiplier={species.seasonal_multiplier}
               environmentalFactors={species.environmental_factors}
               dataFreshness={species.data_freshness}
+              biteScore={species.scoreBreakdown?.biteScore ?? undefined}
+              biteScoreFactors={species.scoreBreakdown ? {
+                tempScore: species.scoreBreakdown.tempScore ?? undefined,
+                tideScore: species.scoreBreakdown.tideScore ?? undefined,
+                lightScore: species.scoreBreakdown.lightScore ?? undefined,
+                lunarScore: species.scoreBreakdown.lunarScore ?? undefined,
+                weatherScore: species.scoreBreakdown.weatherScore ?? undefined,
+                bioBandScore: species.scoreBreakdown.bioBandScore ?? undefined,
+                habitatBonus: species.scoreBreakdown.habitatBonus ?? undefined,
+              } : undefined}
+              weatherConditions={species.weatherConditions}
               compact={true}
             />
 

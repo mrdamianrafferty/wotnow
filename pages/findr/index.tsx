@@ -29,6 +29,7 @@ import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../com
 import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
 import { DataFreshnessIndicator } from '../../components/findr/DataFreshnessIndicator';
+import { ConfidenceBreakdownCard } from '../../components/findr/ConfidenceBreakdownCard';
 
 // Code-split modals - only loaded when opened (saves ~30KB from initial bundle)
 const FindrModal = dynamic(
@@ -113,6 +114,37 @@ function confidenceBadgeClasses(confidence: number | null, size: 'lg' | 'sm' = '
     return `${base} badge-warning text-warning-content`;
   }
   return `${base} badge-info text-info-content`;
+}
+
+interface BiteScoreBreakdown {
+  biteScore: number;
+  confidence: number;
+  tempScore?: number;
+  tideScore?: number;
+  lightScore?: number;
+  lunarScore?: number;
+  weatherScore?: number;
+  bioBandScore?: number;
+  habitatBonus?: number;
+}
+
+function buildScoreBreakdown(card: CardData): BiteScoreBreakdown | undefined {
+  // Only build if we have bite score data
+  if (card.biteScore == null || card.confidence == null) {
+    return undefined;
+  }
+
+  return {
+    biteScore: card.biteScore,
+    confidence: card.confidence,
+    tempScore: card.temp_score ?? undefined,
+    tideScore: card.tide_score ?? undefined,
+    lightScore: card.light_score ?? undefined,
+    lunarScore: card.lunar_score ?? undefined,
+    weatherScore: card.weather_score ?? undefined,
+    bioBandScore: card.bio_band_score ?? undefined,
+    habitatBonus: card.habitat_bonus ?? undefined,
+  };
 }
 
 interface PredictionCardContentProps {
@@ -331,6 +363,46 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               <EnvironmentalInfo factors={card.environmental_factors} />
             </div>
           )}
+
+          {/* Bite Score Breakdown - shown in expanded view */}
+          {(expanded || !interactive) && (() => {
+            const scoreBreakdown = buildScoreBreakdown(card);
+            if (!scoreBreakdown) return null;
+
+            return (
+              <div className="rounded-xl border border-success/20 bg-success/5 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-success mb-2 flex items-center gap-2">
+                  <Sparkles size={14} />
+                  <span><TranslatedText text="Bite Score Breakdown" /></span>
+                </p>
+                <ConfidenceBreakdownCard
+                  confidence={scoreBreakdown.confidence}
+                  biteScore={scoreBreakdown.biteScore}
+                  biteScoreFactors={{
+                    tempScore: scoreBreakdown.tempScore,
+                    tideScore: scoreBreakdown.tideScore,
+                    lightScore: scoreBreakdown.lightScore,
+                    lunarScore: scoreBreakdown.lunarScore,
+                    weatherScore: scoreBreakdown.weatherScore,
+                    bioBandScore: scoreBreakdown.bioBandScore,
+                    habitatBonus: scoreBreakdown.habitatBonus,
+                  }}
+                  weatherConditions={
+                    card.current_wind_speed_ms !== undefined || card.current_pressure_hpa !== undefined
+                      ? {
+                          windSpeedMS: card.current_wind_speed_ms ?? undefined,
+                          pressureHPA: card.current_pressure_hpa ?? undefined,
+                        }
+                      : undefined
+                  }
+                  environmentalFactors={card.environmental_factors}
+                  dataFreshness={card.data_freshness}
+                  defaultExpanded={false}
+                  compact={true}
+                />
+              </div>
+            );
+          })()}
         </div>
 
         {card.playfulBio && (
@@ -1180,6 +1252,41 @@ const FindrPage: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {/* Bite Score Breakdown */}
+                      {(() => {
+                        const scoreBreakdown = buildScoreBreakdown(card);
+                        if (!scoreBreakdown) return null;
+
+                        return (
+                          <div className="pt-2 border-t border-base-200">
+                            <ConfidenceBreakdownCard
+                              confidence={scoreBreakdown.confidence}
+                              biteScore={scoreBreakdown.biteScore}
+                              biteScoreFactors={{
+                                tempScore: scoreBreakdown.tempScore,
+                                tideScore: scoreBreakdown.tideScore,
+                                lightScore: scoreBreakdown.lightScore,
+                                lunarScore: scoreBreakdown.lunarScore,
+                                weatherScore: scoreBreakdown.weatherScore,
+                                bioBandScore: scoreBreakdown.bioBandScore,
+                                habitatBonus: scoreBreakdown.habitatBonus,
+                              }}
+                              weatherConditions={
+                                card.current_wind_speed_ms !== undefined || card.current_pressure_hpa !== undefined
+                                  ? {
+                                      windSpeedMS: card.current_wind_speed_ms ?? undefined,
+                                      pressureHPA: card.current_pressure_hpa ?? undefined,
+                                    }
+                                  : undefined
+                              }
+                              environmentalFactors={card.environmental_factors}
+                              dataFreshness={card.data_freshness}
+                              defaultExpanded={false}
+                              compact={true}
+                            />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </article>
                 ))}
