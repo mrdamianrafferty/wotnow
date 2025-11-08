@@ -74,6 +74,10 @@
 	<key>NSMotionUsageDescription</key>
 	<string>Findr uses motion data to detect whether you are fishing from a boat or the shore to give you targeted advice.</string>
 
+	<!-- Google Sign-In Configuration -->
+	<key>GIDClientID</key>
+	<string>666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps.apps.googleusercontent.com</string>
+
 	<!-- URL Schemes for Deep Linking (OAuth callbacks) -->
 	<key>CFBundleURLTypes</key>
 	<array>
