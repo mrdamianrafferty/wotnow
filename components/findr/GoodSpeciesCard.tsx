@@ -4,7 +4,7 @@ import { GuildBadge } from './GuildBadge';
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, Bell, BellOff } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, Bell, BellOff, BellPlus } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification } from './NotificationManager';
@@ -75,6 +75,8 @@ interface GoodSpeciesCardProps {
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
+  notificationsEnabled?: boolean;
+  onSetupNotifications?: (id: string) => void;
 }
 
 /**
@@ -87,6 +89,8 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   onRemove,
   onTogglePriority,
   onAction,
+  notificationsEnabled,
+  onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [reminderScheduled, setReminderScheduled] = useState(false);
@@ -322,6 +326,15 @@ Check predictions at fishfindr.eu`;
             >
               {reminderScheduled ? <BellOff size={14} /> : <Bell size={14} />}
             </button>
+            {onSetupNotifications && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+                className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
+              >
+                {notificationsEnabled ? <BellOff size={14} /> : <BellPlus size={14} />}
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}

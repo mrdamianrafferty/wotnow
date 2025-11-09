@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { TrendingUp, Heart, Fish } from 'lucide-react';
+import { TrendingUp, Heart, Fish, BellPlus, BellOff } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
@@ -62,6 +62,8 @@ interface WaitingSpeciesCardProps {
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
+  notificationsEnabled?: boolean;
+  onSetupNotifications?: (id: string) => void;
 }
 
 /**
@@ -74,6 +76,8 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
+  notificationsEnabled,
+  onSetupNotifications,
 }) => {
   const improvingDay = getImprovingDay(species.forecast);
   // const trend = getForecastTrend(species.forecast); // removed, not needed after UI cleanup
@@ -150,13 +154,24 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           </div>
 
           {/* Actions */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
-            className="btn btn-ghost btn-xs text-error ml-1"
-            title="Remove from favourites"
-          >
-            <Heart size={12} fill="currentColor" />
-          </button>
+          <div className="flex gap-1 ml-1">
+            {onSetupNotifications && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+                className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
+              >
+                {notificationsEnabled ? <BellOff size={12} /> : <BellPlus size={12} />}
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
+              className="btn btn-ghost btn-xs text-error"
+              title="Remove from favourites"
+            >
+              <Heart size={12} fill="currentColor" />
+            </button>
+          </div>
         </div>
 
         {/* Improving message */}

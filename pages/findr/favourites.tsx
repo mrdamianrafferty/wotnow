@@ -1567,6 +1567,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1623,6 +1625,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1676,6 +1680,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
