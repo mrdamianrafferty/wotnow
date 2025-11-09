@@ -554,7 +554,12 @@ const FindrFavouritesPage: React.FC = () => {
   // Notification setup modal state
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [notificationModalSpecies, setNotificationModalSpecies] = useState<FavouriteEntry | null>(null);
-  const [notificationPreferences, setNotificationPreferences] = useState<Map<string, { enabled: boolean; threshold: number }>>(new Map());
+  const [notificationPreferences, setNotificationPreferences] = useState<Map<string, {
+    enabled: boolean;
+    threshold: number;
+    channels: { push: boolean; email: boolean; sms: boolean };
+    maxPerDay?: number;
+  }>>(new Map());
 
   const { selectedCode, predictionDate, language } = usePersistentFindrSettings({
     predictionDate: TODAY_ISO,
@@ -624,7 +629,12 @@ const FindrFavouritesPage: React.FC = () => {
         const speciesIds: string[] = [];
         const idMap = new Map<string, string>();
         const metadataMap = new Map<string, FavouriteMetadata>();
-        const notifPrefsMap = new Map<string, { enabled: boolean; threshold: number }>();
+        const notifPrefsMap = new Map<string, {
+          enabled: boolean;
+          threshold: number;
+          channels: { push: boolean; email: boolean; sms: boolean };
+          maxPerDay?: number;
+        }>();
 
         (data.favourites as FavouritesApiResponseItem[]).forEach((fav) => {
           const rawSpeciesId = fav.speciesId ?? fav.species_id ?? '';
@@ -682,6 +692,11 @@ const FindrFavouritesPage: React.FC = () => {
             notifPrefsMap.set(speciesId, {
               enabled: fav.notificationsEnabled,
               threshold: fav.notificationThreshold ?? 75,
+              channels: fav.notificationChannels ?? {
+                push: true,
+                email: false,
+                sms: false,
+              },
             });
           }
         });
@@ -1107,6 +1122,7 @@ const FindrFavouritesPage: React.FC = () => {
           next.set(preferences.speciesId, {
             enabled: preferences.enabled,
             threshold: preferences.threshold,
+            channels: preferences.channels,
           });
           return next;
         });
@@ -1835,12 +1851,12 @@ const FindrFavouritesPage: React.FC = () => {
               speciesId: notificationModalSpecies.id,
               enabled: notificationPreferences.get(notificationModalSpecies.id)?.enabled ?? false,
               threshold: notificationPreferences.get(notificationModalSpecies.id)?.threshold ?? 75,
-              channels: {
+              channels: notificationPreferences.get(notificationModalSpecies.id)?.channels ?? {
                 push: true,
                 email: false,
                 sms: false,
               },
-              maxPerDay: 3, // Default max notifications per day
+              maxPerDay: notificationPreferences.get(notificationModalSpecies.id)?.maxPerDay ?? 3,
             }}
             onSave={async (preferences) => {
               await handleSaveNotificationPreferences({
