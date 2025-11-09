@@ -18,7 +18,9 @@ import type {
 } from '@/types/findr-enrichment';
 
 // Disable Next.js body parser for file uploads
+// Force Node.js runtime (not Edge) to support formidable
 export const config = {
+  runtime: 'nodejs',
   api: {
     bodyParser: false,
   },
