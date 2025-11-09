@@ -111,6 +111,7 @@
     "react-icons": "^5.5.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.22.1",
+    "resend": "^6.4.2",
     "suncalc": "^1.9.0",
     "swr": "^2.3.6",
     "use-places-autocomplete": "^4.0.1",
