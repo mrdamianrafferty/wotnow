@@ -89,7 +89,7 @@ async function getUserLocation(userId: string): Promise<string | null> {
 /**
  * Get live predictions for a species in a rectangle
  */
-async function getPredictions(rectangleCode: string, speciesCodes: string[]): Promise<Map<string, number>> {
+async function getPredictions(rectangleCode: string, _speciesCodes: string[]): Promise<Map<string, number>> {
   try {
     const { data, error } = await supabase.rpc('get_fishing_predictions', {
       p_rectangle_code: rectangleCode,
