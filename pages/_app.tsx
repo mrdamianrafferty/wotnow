@@ -17,7 +17,6 @@ import { AuthProvider } from '../context/AuthContext'
 import { useEffect, useState } from 'react'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { InstallPrompt } from '../components/InstallPrompt'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import { OfflineInit } from '../components/OfflineInit'
 
@@ -116,8 +115,6 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 {/* Offline Indicator - shows at top when offline */}
                 <OfflineIndicator />
                 <Component {...pageProps} />
-                {/* PWA Install Prompt - shows at bottom, not in standalone mode */}
-                <InstallPrompt />
               </div>
             </UnifiedLocationProvider>
           </UserPreferencesProvider>
