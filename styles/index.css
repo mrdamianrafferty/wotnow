@@ -2199,3 +2199,31 @@ img {
 
 /* Compact DaisyUI overrides (mobile) — must load last to win the cascade */
 @import "./compact.css";
+
+/*
+ * CRITICAL: Badge shadow removal - MUST be last to override DaisyUI defaults
+ * This appears after compact.css import to ensure highest specificity
+ */
+.badge,
+.badge-primary,
+.badge-secondary,
+.badge-accent,
+.badge-success,
+.badge-warning,
+.badge-error,
+.badge-info,
+.badge-ghost,
+.badge-outline,
+.badge-sm,
+.badge-md,
+.badge-lg,
+.badge-xs,
+.chip,
+span.badge,
+div.badge,
+[class*="badge"] {
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
