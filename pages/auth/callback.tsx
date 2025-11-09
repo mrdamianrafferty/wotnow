@@ -113,30 +113,34 @@ export default function AuthCallback() {
   useEffect(() => {
     if (!router.isReady) return;
 
-    // For Capacitor native apps: close the in-app browser when callback page loads
-    // This allows the deep link handler in _app.tsx to take over
+    // Detect platform and decide whether to process auth
     (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core');
         const isNative = Capacitor.isNativePlatform();
+        const hasOAuthParams = router.query.code || router.query.access_token || router.query.token_hash;
 
         if (isNative) {
           console.log('[Auth Callback] Native platform detected - closing in-app browser');
           const { Browser } = await import('@capacitor/browser');
           await Browser.close();
-        } else {
-          // Not in Capacitor - this is an external browser (Safari/Chrome)
-          // Check if we have OAuth params - if so, show Universal Link prompt
-          const hasOAuthParams = router.query.code || router.query.access_token || router.query.token_hash;
-          if (hasOAuthParams) {
-            console.log('[Auth Callback] External browser with OAuth params - show Universal Link prompt');
-            setIsExternalBrowser(true);
-            setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
-            return; // Don't process auth - let the app handle it via Universal Link
-          }
+          // Let the deep link handler in the app process the auth
+          return;
         }
+
+        // Not in Capacitor - check if this is an external browser with OAuth params
+        if (hasOAuthParams) {
+          console.log('[Auth Callback] External browser with OAuth params - showing Universal Link prompt');
+          setIsExternalBrowser(true);
+          setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
+          // STOP HERE - don't process auth, let Universal Link handle it
+          return;
+        }
+
+        // No OAuth params and not native - this might be a direct visit or email link
+        // Fall through to normal auth processing below
       } catch (e) {
-        console.warn('[Auth Callback] Could not close browser:', e);
+        console.warn('[Auth Callback] Could not detect platform:', e);
       }
     })();
 
@@ -159,6 +163,17 @@ export default function AuthCallback() {
 
     (async () => {
       try {
+        // Check if we're in external browser mode - if so, don't process auth
+        const { Capacitor } = await import('@capacitor/core');
+        const isNative = Capacitor.isNativePlatform();
+        const hasOAuthParams = code || access_token || tokenHash;
+
+        if (!isNative && hasOAuthParams) {
+          console.log('[Auth Callback] External browser mode - skipping auth processing');
+          clearTimeout(timeoutId);
+          return; // Exit early - let Universal Link handle it
+        }
+
         // Detect which app this is for
         const isFindr =
           app === 'findr' ||
