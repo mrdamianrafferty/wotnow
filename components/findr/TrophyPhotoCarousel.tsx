@@ -265,10 +265,21 @@ export function TrophyPhotoCarousel({
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95">
-      
+
+      {/* Large Close Button (MUST be first for proper layering) */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-[100] btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-red-600 hover:border-red-400 min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
+        title="Close (Esc)"
+        aria-label="Close full screen photo"
+        style={{ pointerEvents: 'auto' }}
+      >
+        <X className="w-12 h-12 stroke-[3]" />
+      </button>
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
-        <div className="flex items-center justify-between text-white">
+      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4" style={{ pointerEvents: 'none' }}>
+        <div className="flex items-center justify-between text-white" style={{ pointerEvents: 'auto' }}>
           <div className="flex items-center gap-3">
             <Camera className="w-8 h-8" />
             <h2 className="text-xl font-semibold">
@@ -335,16 +346,6 @@ export function TrophyPhotoCarousel({
         </div>
       </div>
 
-      {/* Large Close Button (always visible, top-right) */}
-      <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-50 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-red-600 hover:border-red-400 min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
-        title="Close (Esc)"
-        aria-label="Close full screen photo"
-      >
-        <X className="w-12 h-12 stroke-[3]" />
-      </button>
-      
       {/* Main Image Area */}
       <div 
         ref={containerRef}
