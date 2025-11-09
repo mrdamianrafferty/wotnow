@@ -90,6 +90,13 @@ interface FavouriteRecord {
   species_id: string;
   added_at: string;
   last_checked: string;
+  notifications_enabled: boolean;
+  notification_threshold: number;
+  notification_channels: {
+    push: boolean;
+    email: boolean;
+    sms: boolean;
+  };
 }
 
 interface SpeciesRecord {
@@ -307,7 +314,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Fetch user's favourites first (without JOIN since species_id is TEXT, not FK)
         const { data: favourites, error: favError } = await supabase
           .from('user_favourites')
-          .select('id, species_id, added_at, last_checked')
+          .select('id, species_id, added_at, last_checked, notifications_enabled, notification_threshold, notification_channels')
           .eq('user_id', userId)
           .order('added_at', { ascending: false });
 
@@ -404,6 +411,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             confidence,
             addedAt: fav.added_at,
             lastChecked: fav.last_checked,
+            notificationsEnabled: fav.notifications_enabled,
+            notificationThreshold: fav.notification_threshold,
+            notificationChannels: fav.notification_channels,
             stats: {
               catches: 0, // TODO: Query from user_catches table
               lastCaught: null

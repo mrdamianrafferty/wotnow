@@ -62,6 +62,12 @@ const WaitingSpeciesCard = dynamic(
   { ssr: false, loading: () => <div className="h-48 bg-base-200 animate-pulse rounded-xl"></div> }
 );
 
+// Code-split NotificationSetupModal - only loaded when opened
+const NotificationSetupModal = dynamic(
+  () => import('../../components/favourites/NotificationSetupModal').then(mod => ({ default: mod.NotificationSetupModal })),
+  { ssr: false, loading: () => null }
+);
+
 const TODAY_ISO = getTodayIso();
 const PRIORITY_STORAGE_KEY = 'findrFavoritePriorities';
 // Temporarily disabled next/font to fix Vercel build
@@ -233,6 +239,13 @@ interface FavouritesApiResponseItem {
   } | null;
   addedAt?: string;
   added_at?: string;
+  notificationsEnabled?: boolean;
+  notificationThreshold?: number;
+  notificationChannels?: {
+    push: boolean;
+    email: boolean;
+    sms: boolean;
+  };
 }
 
 function hashString(input: string): number {
@@ -538,6 +551,11 @@ const FindrFavouritesPage: React.FC = () => {
   const [priorityIds, setPriorityIds] = useState<string[]>([]);
   const [isLoadingFavourites, setIsLoadingFavourites] = useState(false);
 
+  // Notification setup modal state
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+  const [notificationModalSpecies, setNotificationModalSpecies] = useState<FavouriteEntry | null>(null);
+  const [notificationPreferences, setNotificationPreferences] = useState<Map<string, { enabled: boolean; threshold: number }>>(new Map());
+
   const { selectedCode, predictionDate, language } = usePersistentFindrSettings({
     predictionDate: TODAY_ISO,
     language: 'en',
@@ -606,7 +624,8 @@ const FindrFavouritesPage: React.FC = () => {
         const speciesIds: string[] = [];
         const idMap = new Map<string, string>();
         const metadataMap = new Map<string, FavouriteMetadata>();
-        
+        const notifPrefsMap = new Map<string, { enabled: boolean; threshold: number }>();
+
         (data.favourites as FavouritesApiResponseItem[]).forEach((fav) => {
           const rawSpeciesId = fav.speciesId ?? fav.species_id ?? '';
           const speciesId = rawSpeciesId.trim();
@@ -657,12 +676,21 @@ const FindrFavouritesPage: React.FC = () => {
             baitTips: baitTips && baitTips.length > 0 ? baitTips : undefined,
             addedAt: fav.addedAt ?? fav.added_at,
           });
+
+          // Extract notification preferences
+          if (typeof fav.notificationsEnabled === 'boolean') {
+            notifPrefsMap.set(speciesId, {
+              enabled: fav.notificationsEnabled,
+              threshold: fav.notificationThreshold ?? 75,
+            });
+          }
         });
         
         setFavorites(speciesIds);
         setFavouriteIdMap(idMap);
         setFavouriteMetadata(metadataMap);
-        
+        setNotificationPreferences(notifPrefsMap);
+
         // TODO: Extract priority flags when we add that to the API
         // For now, keep local storage for priorities as fallback
         try {
@@ -1041,6 +1069,59 @@ const FindrFavouritesPage: React.FC = () => {
       prev.includes(fishId) ? prev.filter((item) => item !== fishId) : [...prev, fishId]
     );
   }, []);
+
+  // Notification setup handlers
+  const handleOpenNotificationModal = useCallback((entry: FavouriteEntry) => {
+    setNotificationModalSpecies(entry);
+    setNotificationModalOpen(true);
+  }, []);
+
+  const handleCloseNotificationModal = useCallback(() => {
+    setNotificationModalOpen(false);
+    setNotificationModalSpecies(null);
+  }, []);
+
+  const handleSaveNotificationPreferences = useCallback(async (preferences: { speciesId: string; enabled: boolean; threshold: number; channels: { push: boolean; email: boolean; sms: boolean } }) => {
+    if (!userId) return;
+
+    try {
+      const response = await fetch('/api/findr/favourites/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          speciesId: preferences.speciesId,
+          preferences: {
+            enabled: preferences.enabled,
+            threshold: preferences.threshold,
+            channels: preferences.channels,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setNotificationPreferences((prev) => {
+          const next = new Map(prev);
+          next.set(preferences.speciesId, {
+            enabled: preferences.enabled,
+            threshold: preferences.threshold,
+          });
+          return next;
+        });
+
+        // Reload favourites to get updated notification settings
+        await loadFavourites();
+
+        console.log('[Favourites] Notification preferences saved successfully');
+      } else {
+        console.error('[Favourites] Failed to save notification preferences:', data.error);
+      }
+    } catch (error) {
+      console.error('[Favourites] Error saving notification preferences:', error);
+    }
+  }, [userId, loadFavourites]);
 
   // stopPropagation removed - now handled inline with preventDefault
 
@@ -1486,6 +1567,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1542,6 +1625,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1595,6 +1680,8 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
+                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
+                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1731,6 +1818,38 @@ const FindrFavouritesPage: React.FC = () => {
             setSpeciesModalCard(null);
           }}
         />
+
+        {/* Notification Setup Modal */}
+        {notificationModalSpecies && (
+          <NotificationSetupModal
+            isOpen={notificationModalOpen}
+            onClose={handleCloseNotificationModal}
+            species={{
+              id: notificationModalSpecies.id,
+              commonName: notificationModalSpecies.name,
+              scientificName: notificationModalSpecies.scientificName,
+            }}
+            initialPreferences={{
+              speciesId: notificationModalSpecies.id,
+              enabled: notificationPreferences.get(notificationModalSpecies.id)?.enabled ?? false,
+              threshold: notificationPreferences.get(notificationModalSpecies.id)?.threshold ?? 75,
+              channels: {
+                push: true,
+                email: false,
+                sms: false,
+              },
+            }}
+            onSave={async (preferences) => {
+              await handleSaveNotificationPreferences({
+                speciesId: notificationModalSpecies.id,
+                enabled: preferences.enabled,
+                threshold: preferences.threshold,
+                channels: preferences.channels,
+              });
+              handleCloseNotificationModal();
+            }}
+          />
+        )}
       </main>
     </>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, Bell, BellOff } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, Bell, BellOff, BellPlus } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification } from './NotificationManager';
@@ -80,6 +80,8 @@ interface ActiveSpeciesCardProps {
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
+  notificationsEnabled?: boolean;
+  onSetupNotifications?: (id: string) => void;
 }
 
 /**
@@ -93,6 +95,8 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
+  notificationsEnabled,
+  onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [alertScheduled, setAlertScheduled] = useState(false);
@@ -310,6 +314,15 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
             >
               {alertScheduled ? <BellOff size={16} /> : <Bell size={16} />}
             </button>
+            {onSetupNotifications && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
+              >
+                {notificationsEnabled ? <BellOff size={16} /> : <BellPlus size={16} />}
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-sm text-error"
