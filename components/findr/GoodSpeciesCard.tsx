@@ -246,6 +246,16 @@ Check predictions at fishfindr.eu`;
                 <h3 className="text-lg sm:text-xl font-bold text-base-content truncate min-w-0">
                   <TranslatedFishName name={species.name} />
                 </h3>
+                {/* Notification Setup Button - Prominent header position */}
+                {onSetupNotifications && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+                    className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+                    title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
+                  >
+                    {notificationsEnabled ? <BellOff size={14} /> : <BellPlus size={14} />}
+                  </button>
+                )}
                 {species.isPriority && (
                   <Target size={14} className="text-warning flex-shrink-0" />
                 )}
@@ -326,15 +336,6 @@ Check predictions at fishfindr.eu`;
             >
               {reminderScheduled ? <BellOff size={14} /> : <Bell size={14} />}
             </button>
-            {onSetupNotifications && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
-              >
-                {notificationsEnabled ? <BellOff size={18} /> : <BellPlus size={18} />}
-              </button>
-            )}
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
               className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}

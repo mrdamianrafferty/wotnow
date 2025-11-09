@@ -99,9 +99,21 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
     >
       <div className="card-body p-2 sm:p-3">
         {/* Species Name at Top */}
-        <h3 className="text-base font-semibold text-base-content truncate mb-1 text-center">
-          <TranslatedFishName name={species.name} />
-        </h3>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <h3 className="text-base font-semibold text-base-content truncate text-center">
+            <TranslatedFishName name={species.name} />
+          </h3>
+          {/* Notification Setup Button - Prominent header position */}
+          {onSetupNotifications && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+              className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+              title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
+            >
+              {notificationsEnabled ? <BellOff size={12} /> : <BellPlus size={12} />}
+            </button>
+          )}
+        </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
           {/* Species Image/Emoji - Clickable */}
           <button
@@ -155,15 +167,6 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
           {/* Actions */}
           <div className="flex gap-1 ml-1">
-            {onSetupNotifications && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
-              >
-                {notificationsEnabled ? <BellOff size={16} /> : <BellPlus size={16} />}
-              </button>
-            )}
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-xs text-error"
