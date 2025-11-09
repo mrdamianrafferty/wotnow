@@ -108,6 +108,7 @@ export default function AuthCallback() {
   const [phase, setPhase] = useState<Phase>(Phase.Checking);
   const [error, setError] = useState<string | null>(null);
   const [detectedApp, setDetectedApp] = useState<'godaisy' | 'findr'>('godaisy');
+  const [isExternalBrowser, setIsExternalBrowser] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -117,10 +118,22 @@ export default function AuthCallback() {
     (async () => {
       try {
         const { Capacitor } = await import('@capacitor/core');
-        if (Capacitor.isNativePlatform()) {
+        const isNative = Capacitor.isNativePlatform();
+
+        if (isNative) {
           console.log('[Auth Callback] Native platform detected - closing in-app browser');
           const { Browser } = await import('@capacitor/browser');
           await Browser.close();
+        } else {
+          // Not in Capacitor - this is an external browser (Safari/Chrome)
+          // Check if we have OAuth params - if so, show Universal Link prompt
+          const hasOAuthParams = router.query.code || router.query.access_token || router.query.token_hash;
+          if (hasOAuthParams) {
+            console.log('[Auth Callback] External browser with OAuth params - show Universal Link prompt');
+            setIsExternalBrowser(true);
+            setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
+            return; // Don't process auth - let the app handle it via Universal Link
+          }
         }
       } catch (e) {
         console.warn('[Auth Callback] Could not close browser:', e);
@@ -378,16 +391,36 @@ export default function AuthCallback() {
 
   return (
     <main className="max-w-md mx-auto p-6 space-y-4 min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-2xl font-semibold text-center">Signing you in…</h1>
+      {isExternalBrowser ? (
+        <>
+          <div className="flex flex-col items-center gap-4">
+            <svg className="w-20 h-20 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            <h1 className="text-2xl font-semibold text-center">Continue in the {detectedApp === 'findr' ? 'Findr' : 'Go Daisy'} app</h1>
+            <p className="text-center text-base-content/70">
+              Tap <span className="font-semibold text-primary">&quot;OPEN&quot;</span> at the top of this page to complete sign-in
+            </p>
+            <div className="alert alert-info mt-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Look for the banner at the top of this page</span>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold text-center">Signing you in…</h1>
 
-      {phase === Phase.Checking && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="text-sm text-base-content/70">Please wait while we verify your authentication...</p>
-        </div>
-      )}
+          {phase === Phase.Checking && (
+            <div className="flex flex-col items-center gap-3">
+              <div className="loading loading-spinner loading-lg text-primary"></div>
+              <p className="text-sm text-base-content/70">Please wait while we verify your authentication...</p>
+            </div>
+          )}
 
-      {phase === Phase.Error && (
+          {phase === Phase.Error && (
         <div className="space-y-4">
           <div className="alert alert-error">
             <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -415,13 +448,15 @@ export default function AuthCallback() {
         </div>
       )}
 
-      {phase === Phase.Done && (
-        <div className="flex flex-col items-center gap-3">
-          <svg className="w-16 h-16 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          <p className="text-success font-medium">Success! Redirecting...</p>
-        </div>
+          {phase === Phase.Done && (
+            <div className="flex flex-col items-center gap-3">
+              <svg className="w-16 h-16 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-success font-medium">Success! Redirecting...</p>
+            </div>
+          )}
+        </>
       )}
     </main>
   );

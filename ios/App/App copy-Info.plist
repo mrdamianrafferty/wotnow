@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Findr</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- Scene Configuration -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+
+	<!-- PERMISSIONS -->
+
+	<!-- Location Permissions -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Findr needs your location to show fishing predictions for your area and help you discover the best spots nearby.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Findr can use your location in the background to send you timely fishing notifications when conditions are ideal.</string>
+
+	<!-- Camera Permission -->
+	<key>NSCameraUsageDescription</key>
+	<string>Findr needs camera access to let you take photos of your catches and document your fishing sessions.</string>
+
+	<!-- Photo Library Permissions -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Findr needs access to your photo library to let you select and upload photos of your catches.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Findr needs permission to save catch photos to your photo library.</string>
+
+	<!-- Notifications Permission -->
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Findr can send you notifications about optimal fishing conditions and reminders for your scheduled sessions.</string>
+
+	<!-- Motion Permission -->
+	<key>NSMotionUsageDescription</key>
+	<string>Findr uses motion data to detect whether you are fishing from a boat or the shore to give you targeted advice.</string>
+
+	<!-- Google Sign-In Configuration -->
+	<key>GIDClientID</key>
+	<string>666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps.apps.googleusercontent.com</string>
+
+	<!-- URL Schemes for Deep Linking (OAuth callbacks) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>eu.fishfindr.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fishfindr</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Google OAuth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.666271903016-7mqeehtbrl2osvk3i2fg3320t2au1kps</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
