@@ -2,12 +2,12 @@
 'use client';
 import { GuildBadge } from './GuildBadge';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, Bell, BellOff, BellPlus } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, BellOff, BellPlus } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
-import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification } from './NotificationManager';
+import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -93,12 +93,18 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   onSetupNotifications: _onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [reminderScheduled, setReminderScheduled] = useState(false);
+  const [notificationId, setNotificationId] = useState<number | null>(null);
 
   // Fetch real tide data for location
   const tideInfo = useTideData(location ?? null);
 
   const nextPeakDay = getNextPeakDay(species.forecast);
+
+  // Check on mount if notification already exists for this species
+  useEffect(() => {
+    const existingId = getNotificationForSpecies(species.id);
+    setNotificationId(existingId);
+  }, [species.id]);
 
   // Share handler
   const handleShare = async () => {
@@ -115,12 +121,20 @@ Check predictions at fishfindr.eu`;
     }
   };
 
-  // Notification reminder handler - Schedule for peak conditions
+  // Notification reminder handler - Toggle between scheduling and cancelling
   const handleSetReminder = async () => {
     try {
-      // Check permissions first
-      const permissionStatus = await checkPermissions();
+      // If notification exists, cancel it
+      if (notificationId !== null) {
+        await cancelLocalNotification(notificationId);
+        untrackNotification(notificationId);
+        setNotificationId(null);
+        console.log('[GoodSpeciesCard] Reminder cancelled:', notificationId);
+        return;
+      }
 
+      // Otherwise, schedule new notification
+      const permissionStatus = await checkPermissions();
       if (permissionStatus !== 'granted') {
         const newStatus = await requestPermissions();
         if (newStatus !== 'granted') {
@@ -147,7 +161,7 @@ Check predictions at fishfindr.eu`;
       const title = `🎣 ${species.name} - Peak Conditions Reminder`;
       const body = `${species.confidence}% confidence! ${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to go fishing!'}`;
 
-      const notificationId = await scheduleLocalNotification({
+      const newNotificationId = await scheduleLocalNotification({
         title,
         body,
         schedule: { at: reminderTime },
@@ -161,7 +175,7 @@ Check predictions at fishfindr.eu`;
 
       // Track notification for management UI
       trackNotification({
-        id: notificationId,
+        id: newNotificationId,
         title,
         body,
         scheduledAt: reminderTime.toISOString(),
@@ -170,16 +184,13 @@ Check predictions at fishfindr.eu`;
         type: 'peak_conditions_reminder',
       });
 
-      console.log('[GoodSpeciesCard] Reminder scheduled:', notificationId, 'for', reminderTime);
-      setReminderScheduled(true);
-
-      // Auto-reset after 5 seconds to allow re-scheduling
-      setTimeout(() => setReminderScheduled(false), 5000);
+      console.log('[GoodSpeciesCard] Reminder scheduled:', newNotificationId, 'for', reminderTime);
+      setNotificationId(newNotificationId);
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[GoodSpeciesCard] Notification error:', error.type, error.message);
       } else {
-        console.error('[GoodSpeciesCard] Failed to set reminder:', error);
+        console.error('[GoodSpeciesCard] Failed to toggle reminder:', error);
       }
     }
   };
@@ -246,14 +257,13 @@ Check predictions at fishfindr.eu`;
                 <h3 className="text-lg sm:text-xl font-bold text-base-content truncate min-w-0">
                   <TranslatedFishName name={species.name} />
                 </h3>
-                {/* Notification Setup Button - Prominent header position */}
+                {/* Notification Setup Button - Toggle on/off */}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
-                  className={`btn btn-xs ${reminderScheduled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-                  title={reminderScheduled ? 'Peak conditions reminder set!' : 'Set peak conditions reminder'}
-                  disabled={reminderScheduled}
+                  className={`btn btn-xs ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+                  title={notificationId !== null ? 'Cancel peak conditions reminder' : 'Set peak conditions reminder'}
                 >
-                  {reminderScheduled ? <BellOff size={14} /> : <BellPlus size={14} />}
+                  {notificationId !== null ? <BellOff size={14} /> : <BellPlus size={14} />}
                 </button>
                 {species.isPriority && (
                   <Target size={14} className="text-warning flex-shrink-0" />
@@ -326,14 +336,6 @@ Check predictions at fishfindr.eu`;
               title="Share prediction"
             >
               <Share2 size={14} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
-              className={`btn btn-xs ${reminderScheduled ? 'btn-success' : 'btn-ghost'}`}
-              title={reminderScheduled ? 'Reminder scheduled!' : 'Set fishing reminder'}
-              disabled={reminderScheduled}
-            >
-              {reminderScheduled ? <BellOff size={14} /> : <Bell size={14} />}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}

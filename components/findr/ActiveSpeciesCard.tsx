@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, Bell, BellOff, BellPlus } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, BellOff, BellPlus } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
-import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification } from './NotificationManager';
+import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -99,9 +99,15 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onSetupNotifications: _onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [alertScheduled, setAlertScheduled] = useState(false);
+  const [notificationId, setNotificationId] = useState<number | null>(null);
 
   const nextPeakHours = getNextPeakTime(species.forecast);
+
+  // Check on mount if notification already exists for this species
+  useEffect(() => {
+    const existingId = getNotificationForSpecies(species.id);
+    setNotificationId(existingId);
+  }, [species.id]);
 
   // Share handler
   const handleShare = async () => {
@@ -113,12 +119,20 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
     }
   };
 
-  // Notification alert handler
+  // Notification alert handler - toggles between scheduling and cancelling
   const handleSetAlert = async () => {
     try {
-      // Check permissions first
-      const permissionStatus = await checkPermissions();
+      // If notification exists, cancel it
+      if (notificationId !== null) {
+        await cancelLocalNotification(notificationId);
+        untrackNotification(notificationId);
+        setNotificationId(null);
+        console.log('[ActiveSpeciesCard] Alert cancelled:', notificationId);
+        return;
+      }
 
+      // Otherwise, schedule new notification
+      const permissionStatus = await checkPermissions();
       if (permissionStatus !== 'granted') {
         const newStatus = await requestPermissions();
         if (newStatus !== 'granted') {
@@ -131,7 +145,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
       const body = `${species.confidence}% confidence! They're biting right now - drop everything and go fishing!`;
 
       // Schedule immediate notification (for hot bites happening NOW)
-      const notificationId = await scheduleLocalNotification({
+      const newNotificationId = await scheduleLocalNotification({
         title,
         body,
         extra: {
@@ -144,7 +158,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
       // Track notification for management UI
       trackNotification({
-        id: notificationId,
+        id: newNotificationId,
         title,
         body,
         scheduledAt: new Date().toISOString(),
@@ -153,16 +167,13 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         type: 'hot_bite_alert',
       });
 
-      console.log('[ActiveSpeciesCard] Alert scheduled:', notificationId);
-      setAlertScheduled(true);
-
-      // Auto-reset after 5 seconds to allow re-scheduling
-      setTimeout(() => setAlertScheduled(false), 5000);
+      console.log('[ActiveSpeciesCard] Alert scheduled:', newNotificationId);
+      setNotificationId(newNotificationId);
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[ActiveSpeciesCard] Notification error:', error.type, error.message);
       } else {
-        console.error('[ActiveSpeciesCard] Failed to set alert:', error);
+        console.error('[ActiveSpeciesCard] Failed to toggle alert:', error);
       }
     }
   };
@@ -220,14 +231,13 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 <h3 className="text-xl sm:text-2xl font-bold text-base-content">
                   <TranslatedFishName name={species.name} />
                 </h3>
-                {/* Notification Setup Button - Prominent header position */}
+                {/* Notification Setup Button - Toggle on/off */}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleSetAlert(); }}
-                  className={`btn btn-sm ${alertScheduled ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                  title={alertScheduled ? 'Hot bite alert set!' : 'Set hot bite alert'}
-                  disabled={alertScheduled}
+                  className={`btn btn-sm ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                  title={notificationId !== null ? 'Cancel hot bite alert' : 'Set hot bite alert'}
                 >
-                  {alertScheduled ? <BellOff size={18} /> : <BellPlus size={18} />}
+                  {notificationId !== null ? <BellOff size={18} /> : <BellPlus size={18} />}
                 </button>
               </div>
               {species.scientificName && (
@@ -314,14 +324,6 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
               title="Share prediction"
             >
               <Share2 size={16} className="text-base-content" />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleSetAlert(); }}
-              className={`btn btn-sm ${alertScheduled ? 'btn-success' : 'btn-ghost'}`}
-              title={alertScheduled ? 'Alert scheduled!' : 'Set fishing alert'}
-              disabled={alertScheduled}
-            >
-              {alertScheduled ? <BellOff size={16} /> : <Bell size={16} />}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}

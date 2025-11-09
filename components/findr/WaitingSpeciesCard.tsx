@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { TrendingUp, Heart, Fish, BellPlus, BellOff } from 'lucide-react';
-import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification } from './NotificationManager';
+import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
@@ -81,9 +81,15 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   notificationsEnabled: _notificationsEnabled,
   onSetupNotifications: _onSetupNotifications,
 }) => {
-  const [reminderScheduled, setReminderScheduled] = useState(false);
+  const [notificationId, setNotificationId] = useState<number | null>(null);
 
   const improvingDay = getImprovingDay(species.forecast);
+
+  // Check on mount if notification already exists for this species
+  useEffect(() => {
+    const existingId = getNotificationForSpecies(species.id);
+    setNotificationId(existingId);
+  }, [species.id]);
   // const trend = getForecastTrend(species.forecast); // removed, not needed after UI cleanup
 
   // For low confidence species, show general timing rather than specific hours
@@ -91,10 +97,19 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
   // const nextBestTime = getGeneralTiming(); // removed, not needed after UI cleanup
 
-  // Handle setting up improvement reminder
+  // Handle setting up improvement reminder - Toggle between scheduling and cancelling
   const handleSetReminder = async () => {
     try {
-      // Check/request notification permissions
+      // If notification exists, cancel it
+      if (notificationId !== null) {
+        await cancelLocalNotification(notificationId);
+        untrackNotification(notificationId);
+        setNotificationId(null);
+        console.log('[WaitingSpeciesCard] Reminder cancelled:', notificationId);
+        return;
+      }
+
+      // Otherwise, schedule new notification
       let permission = await checkPermissions();
       if (permission !== 'granted') {
         permission = await requestPermissions();
@@ -125,7 +140,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
       const title = `🎯 ${species.name} - Conditions Improving!`;
       const body = `Forecast shows improvement! Check the latest predictions for ${species.name}.`;
 
-      const notificationId = await scheduleLocalNotification({
+      const newNotificationId = await scheduleLocalNotification({
         title,
         body,
         schedule: { at: reminderTime },
@@ -139,7 +154,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
       // Track notification for management UI
       trackNotification({
-        id: notificationId,
+        id: newNotificationId,
         title,
         body,
         scheduledAt: reminderTime.toISOString(),
@@ -148,16 +163,13 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
         type: 'peak_conditions_reminder',
       });
 
-      console.log('[WaitingSpeciesCard] Improvement reminder scheduled:', notificationId, 'for', reminderTime);
-      setReminderScheduled(true);
-
-      // Auto-reset after 5 seconds to allow re-scheduling
-      setTimeout(() => setReminderScheduled(false), 5000);
+      console.log('[WaitingSpeciesCard] Improvement reminder scheduled:', newNotificationId, 'for', reminderTime);
+      setNotificationId(newNotificationId);
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[WaitingSpeciesCard] Notification error:', error.type, error.message);
       } else {
-        console.error('[WaitingSpeciesCard] Failed to set reminder:', error);
+        console.error('[WaitingSpeciesCard] Failed to toggle reminder:', error);
       }
     }
   };
@@ -178,14 +190,13 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           <h3 className="text-base font-semibold text-base-content truncate text-center">
             <TranslatedFishName name={species.name} />
           </h3>
-          {/* Notification Setup Button - Prominent header position */}
+          {/* Notification Setup Button - Toggle on/off */}
           <button
             onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
-            className={`btn btn-xs ${reminderScheduled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-            title={reminderScheduled ? 'Improvement reminder set!' : 'Remind when conditions improve'}
-            disabled={reminderScheduled}
+            className={`btn btn-xs ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+            title={notificationId !== null ? 'Cancel improvement reminder' : 'Remind when conditions improve'}
           >
-            {reminderScheduled ? <BellOff size={12} /> : <BellPlus size={12} />}
+            {notificationId !== null ? <BellOff size={12} /> : <BellPlus size={12} />}
           </button>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">

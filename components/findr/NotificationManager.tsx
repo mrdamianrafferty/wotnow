@@ -90,6 +90,16 @@ export function untrackNotification(id: number): void {
   }
 }
 
+/**
+ * Check if a notification exists for a specific species
+ * Returns the notification ID if found, null otherwise
+ */
+export function getNotificationForSpecies(speciesId: string): number | null {
+  const notifications = getScheduledNotifications();
+  const found = notifications.find(n => n.speciesId === speciesId);
+  return found ? found.id : null;
+}
+
 export function NotificationManager() {
   const [notifications, setNotifications] = useState<ScheduledNotification[]>([]);
   const [cancelingId, setCancelingId] = useState<number | null>(null);
