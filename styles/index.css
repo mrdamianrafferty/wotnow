@@ -2130,16 +2130,27 @@ abbr[title] {
 .badge-info,
 .badge-ghost,
 .badge-outline,
-.chip {
+.badge-sm,
+.badge-md,
+.badge-lg,
+.badge-xs,
+.chip,
+[class*="badge"] {
   box-shadow: none !important;
   filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 /* Also remove shadows from DaisyUI status badge */
-.status-badge {
+.status-badge,
+span.badge,
+div.badge {
   box-shadow: none !important;
   filter: none !important;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
 }
 
 /* Input focus transitions */
