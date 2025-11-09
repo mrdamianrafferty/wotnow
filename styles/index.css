@@ -1991,10 +1991,9 @@ abbr[title] {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Increase text contrast on overlays and badges */
+/* Increase text contrast on overlays (excluding general badges) */
 .overlay-text,
 .status-badge,
-.badge,
 .activity-card__badge {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   font-weight: 600;
@@ -2224,6 +2223,8 @@ div.badge,
 [class*="badge"] {
   box-shadow: none !important;
   filter: none !important;
+  text-shadow: none !important;
   -webkit-box-shadow: none !important;
   -moz-box-shadow: none !important;
+  -webkit-text-shadow: none !important;
 }
