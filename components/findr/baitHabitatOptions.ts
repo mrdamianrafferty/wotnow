@@ -8,6 +8,7 @@ export const COMMON_BAITS = [
   '🦐 Prawns',
   '🍞 Bread',
   '🪶 Feather rigs',
+  '🪰 Fly',
   '💫 Spinners',
   '🪸 Soft plastics',
   '⥿ Egis',
