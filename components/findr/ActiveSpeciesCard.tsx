@@ -220,6 +220,16 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 <h3 className="text-xl sm:text-2xl font-bold text-base-content">
                   <TranslatedFishName name={species.name} />
                 </h3>
+                {/* Notification Setup Button - Prominent header position */}
+                {onSetupNotifications && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
+                    className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                    title={notificationsEnabled ? 'Auto-alerts enabled - click to manage' : 'Set up auto-alerts'}
+                  >
+                    {notificationsEnabled ? <BellOff size={18} /> : <BellPlus size={18} />}
+                  </button>
+                )}
               </div>
               {species.scientificName && (
                 <p className="text-sm italic text-base-content/60 mb-2">{species.scientificName}</p>
@@ -314,15 +324,6 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
             >
               {alertScheduled ? <BellOff size={16} /> : <Bell size={16} />}
             </button>
-            {onSetupNotifications && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
-              >
-                {notificationsEnabled ? <BellOff size={20} /> : <BellPlus size={20} />}
-              </button>
-            )}
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
               className="btn btn-ghost btn-sm text-error"
