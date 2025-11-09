@@ -146,7 +146,13 @@ export default function FindrCatchLogPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoadingCatches, setIsLoadingCatches] = useState(true);
 
-  const quickCatchLog = useQuickCatchLog();
+  const quickCatchLog = useQuickCatchLog({
+    onError: (error) => {
+      console.error('[CatchLog] API Error:', error);
+      setToastMessage(error.message || 'Failed to log catch');
+      setShowToast(true);
+    },
+  });
   const queryClient = useQueryClient();
 
   // Fetch user authentication status
