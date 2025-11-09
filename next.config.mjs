@@ -12,6 +12,16 @@ const nextConfig = {
   // Disable Babel completely (SWC is used by default in Next.js 15+)
   experimental: {
     forceSwcTransforms: true,
+    // Exclude large packages from function bundles to stay under 250MB limit
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/react-icons/**/*',
+        'node_modules/duckdb/**/*',
+        'node_modules/@img/**/*',
+        'node_modules/playwright-core/**/*',
+        'node_modules/@esbuild/**/*',
+      ],
+    },
   },
   
   // Disable ESLint during production builds; lint enforced via `prebuild` script
@@ -59,7 +69,17 @@ const nextConfig = {
         '@capacitor-community/apple-sign-in',
         '@capgo/capacitor-social-login',
         // Exclude dev-only database engine
-        'duckdb'
+        'duckdb',
+        // Exclude large UI libraries that are only used client-side
+        'react-icons',
+        'lucide-react',
+        'framer-motion',
+        'html2canvas',
+        // Exclude test/dev dependencies
+        'playwright-core',
+        '@playwright/test',
+        '@esbuild/darwin-arm64',
+        '@esbuild/linux-x64'
       );
     }
 
