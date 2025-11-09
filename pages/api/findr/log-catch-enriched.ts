@@ -92,6 +92,15 @@ export default async function handler(
   }
 
   try {
+    // Validate environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('[log-catch-enriched] Missing Supabase environment variables', {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+      });
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     // Extract and verify user from authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -103,8 +112,8 @@ export default async function handler(
 
     // Initialize Supabase client for auth verification
     const supabaseAuth = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     // Verify user session with Supabase
@@ -137,8 +146,17 @@ export default async function handler(
 
     // Validate required fields
     if (!speciesName || !quantity || !catchDate) {
+      console.error('[log-catch-enriched] Missing required fields:', {
+        hasSpeciesName: !!speciesName,
+        hasQuantity: !!quantity,
+        hasCatchDate: !!catchDate,
+        receivedFields: Object.keys(fields),
+        speciesNameValue: speciesName,
+        quantityValue: quantity,
+        catchDateValue: catchDate
+      });
       return res.status(400).json({
-        error: 'Missing required fields: species_name, quantity, catch_date',
+        error: `Missing required fields - species_name: ${!!speciesName}, quantity: ${!!quantity}, catch_date: ${!!catchDate}`
       });
     }
 
