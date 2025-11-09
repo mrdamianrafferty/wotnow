@@ -140,7 +140,7 @@ export default function AccountPage() {
             <h1 className="text-2xl font-semibold">Your account</h1>
             <div className="flex items-center gap-2">
               <Link href="/" className="btn btn-ghost btn-sm">Home</Link>
-              <button className="btn btn-outline btn-sm" onClick={signOut}>Sign out</button>
+              <button className="btn btn-error btn-outline btn-sm hover:btn-error" onClick={signOut}>Sign out</button>
             </div>
           </header>
 
