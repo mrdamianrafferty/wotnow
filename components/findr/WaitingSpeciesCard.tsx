@@ -158,10 +158,10 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
             {onSetupNotifications && (
               <button
                 onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
                 title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
               >
-                {notificationsEnabled ? <BellOff size={12} /> : <BellPlus size={12} />}
+                {notificationsEnabled ? <BellOff size={16} /> : <BellPlus size={16} />}
               </button>
             )}
             <button

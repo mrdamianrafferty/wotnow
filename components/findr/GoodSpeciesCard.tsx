@@ -329,10 +329,10 @@ Check predictions at fishfindr.eu`;
             {onSetupNotifications && (
               <button
                 onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-ghost'}`}
+                className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
                 title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
               >
-                {notificationsEnabled ? <BellOff size={14} /> : <BellPlus size={14} />}
+                {notificationsEnabled ? <BellOff size={18} /> : <BellPlus size={18} />}
               </button>
             )}
             <button
