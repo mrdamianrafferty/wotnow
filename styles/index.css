@@ -2120,13 +2120,26 @@ abbr[title] {
 
 /* Badge and chip transitions */
 /* Remove drop shadow from all badges globally */
-.badge {
+.badge,
+.badge-primary,
+.badge-secondary,
+.badge-accent,
+.badge-success,
+.badge-warning,
+.badge-error,
+.badge-info,
+.badge-ghost,
+.badge-outline,
+.chip {
   box-shadow: none !important;
   filter: none !important;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
-.chip {
-  transition: background-color 0.2s ease, transform 0.15s ease;
+
+/* Also remove shadows from DaisyUI status badge */
+.status-badge {
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 /* Input focus transitions */
