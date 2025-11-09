@@ -266,10 +266,45 @@ export function TrophyPhotoCarousel({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95">
 
-      {/* Large Close Button (MUST be first for proper layering) */}
+      {/* Mobile-optimized action buttons - bottom right */}
+      <div className="fixed bottom-6 right-4 z-[100] flex flex-col gap-3 sm:hidden">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="btn btn-circle bg-red-600 border-2 border-white text-white hover:bg-red-700 min-w-[72px] min-h-[72px] shadow-2xl"
+          title="Close"
+          aria-label="Close gallery"
+        >
+          <X className="w-10 h-10 stroke-[3]" />
+        </button>
+
+        {/* Share button */}
+        {allowShare && (
+          <button
+            onClick={shareImage}
+            className="btn btn-circle bg-blue-600 border-2 border-white text-white hover:bg-blue-700 min-w-[64px] min-h-[64px] shadow-2xl"
+            title="Share"
+          >
+            <Share2 className="w-8 h-8 stroke-[2.5]" />
+          </button>
+        )}
+
+        {/* Download button */}
+        {allowDownload && (
+          <button
+            onClick={downloadImage}
+            className="btn btn-circle bg-green-600 border-2 border-white text-white hover:bg-green-700 min-w-[64px] min-h-[64px] shadow-2xl"
+            title="Download"
+          >
+            <Download className="w-8 h-8 stroke-[2.5]" />
+          </button>
+        )}
+      </div>
+
+      {/* Desktop Close Button - top right (hidden on mobile) */}
       <button
         onClick={onClose}
-        className="fixed top-4 right-4 z-[100] btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-red-600 hover:border-red-400 min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
+        className="hidden sm:block fixed top-4 right-4 z-[100] btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-red-600 hover:border-red-400 min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
         title="Close (Esc)"
         aria-label="Close full screen photo"
         style={{ pointerEvents: 'auto' }}
@@ -277,8 +312,15 @@ export function TrophyPhotoCarousel({
         <X className="w-12 h-12 stroke-[3]" />
       </button>
 
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4" style={{ pointerEvents: 'none' }}>
+      {/* Mobile Header - Simple counter only */}
+      <div className="sm:hidden absolute top-4 left-4 z-10 bg-black/80 px-4 py-2 rounded-full border-2 border-white/30 shadow-xl backdrop-blur-sm">
+        <span className="text-white text-lg font-semibold">
+          {currentIndex + 1} / {photos.length}
+        </span>
+      </div>
+
+      {/* Header - Desktop only */}
+      <div className="hidden sm:block absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4" style={{ pointerEvents: 'none' }}>
         <div className="flex items-center justify-between text-white" style={{ pointerEvents: 'auto' }}>
           <div className="flex items-center gap-3">
             <Camera className="w-8 h-8" />
@@ -358,24 +400,26 @@ export function TrophyPhotoCarousel({
         }}
         style={{ touchAction: 'manipulation' }}
       >
-        {/* Navigation Arrows */}
+        {/* Navigation Arrows - responsive sizing and positioning */}
         {photos.length > 1 && (
           <>
+            {/* Previous button - left side, positioned lower on mobile to avoid conflict */}
             <button
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
+              className="absolute left-2 sm:left-4 bottom-6 sm:top-1/2 sm:-translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[56px] min-h-[56px] sm:min-w-[64px] sm:min-h-[64px] shadow-2xl backdrop-blur-sm"
               title="Previous (←)"
               aria-label="Previous photo"
             >
-              <ChevronLeft className="w-10 h-10 stroke-[3]" />
+              <ChevronLeft className="w-8 h-8 sm:w-10 sm:h-10 stroke-[3]" />
             </button>
+            {/* Next button - left side below Previous on mobile, right side on desktop */}
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
+              className="absolute left-2 bottom-24 sm:left-auto sm:right-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[56px] min-h-[56px] sm:min-w-[64px] sm:min-h-[64px] shadow-2xl backdrop-blur-sm"
               title="Next (→)"
               aria-label="Next photo"
             >
-              <ChevronRight className="w-10 h-10 stroke-[3]" />
+              <ChevronRight className="w-8 h-8 sm:w-10 sm:h-10 stroke-[3]" />
             </button>
           </>
         )}
