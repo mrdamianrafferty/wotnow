@@ -284,51 +284,51 @@ export function TrophyPhotoCarousel({
               <>
                 <button
                   onClick={zoomOut}
-                  className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
+                  className="btn btn-circle bg-black/80 border-2 border-white/30 text-white hover:bg-purple-600 hover:border-purple-400 min-w-[48px] min-h-[48px] shadow-xl backdrop-blur-sm disabled:opacity-40"
                   disabled={zoomLevel <= 0.5}
                   title="Zoom Out (-)"
                 >
-                  <ZoomOut className="w-8 h-8" />
+                  <ZoomOut className="w-6 h-6 stroke-[2.5]" />
                 </button>
-                <span className="text-lg opacity-80 min-w-[3rem] text-center">
+                <span className="text-lg font-semibold text-white min-w-[4rem] text-center bg-black/80 px-3 py-1 rounded-lg border-2 border-white/30 shadow-xl backdrop-blur-sm">
                   {Math.round(zoomLevel * 100)}%
                 </span>
                 <button
                   onClick={zoomIn}
-                  className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
+                  className="btn btn-circle bg-black/80 border-2 border-white/30 text-white hover:bg-purple-600 hover:border-purple-400 min-w-[48px] min-h-[48px] shadow-xl backdrop-blur-sm disabled:opacity-40"
                   disabled={zoomLevel >= 3}
                   title="Zoom In (+)"
                 >
-                  <ZoomIn className="w-8 h-8" />
+                  <ZoomIn className="w-6 h-6 stroke-[2.5]" />
                 </button>
               </>
             )}
             {/* Fullscreen Toggle */}
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
+              className="btn btn-circle bg-black/80 border-2 border-white/30 text-white hover:bg-indigo-600 hover:border-indigo-400 min-w-[48px] min-h-[48px] shadow-xl backdrop-blur-sm"
               title="Toggle Fullscreen (F)"
             >
-              <Maximize2 className="w-8 h-8" />
+              <Maximize2 className="w-6 h-6 stroke-[2.5]" />
             </button>
             {/* Download */}
             {allowDownload && (
               <button
                 onClick={downloadImage}
-                className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
+                className="btn btn-circle bg-black/80 border-2 border-white/30 text-white hover:bg-green-600 hover:border-green-400 min-w-[56px] min-h-[56px] shadow-xl backdrop-blur-sm"
                 title="Download"
               >
-                <Download className="w-8 h-8" />
+                <Download className="w-8 h-8 stroke-[2.5]" />
               </button>
             )}
             {/* Share */}
             {allowShare && (
               <button
                 onClick={shareImage}
-                className="btn btn-ghost btn-lg btn-circle text-white hover:bg-white/20 min-w-[44px] min-h-[44px]"
+                className="btn btn-circle bg-black/80 border-2 border-white/30 text-white hover:bg-blue-600 hover:border-blue-400 min-w-[56px] min-h-[56px] shadow-xl backdrop-blur-sm"
                 title="Share"
               >
-                <Share2 className="w-8 h-8" />
+                <Share2 className="w-8 h-8 stroke-[2.5]" />
               </button>
             )}
           </div>
@@ -338,11 +338,11 @@ export function TrophyPhotoCarousel({
       {/* Large Close Button (always visible, top-right) */}
       <button
         onClick={onClose}
-        className="fixed top-4 right-4 z-50 btn btn-ghost btn-lg btn-circle bg-black/70 text-white hover:bg-white/20 min-w-[56px] min-h-[56px] shadow-xl"
+        className="fixed top-4 right-4 z-50 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-red-600 hover:border-red-400 min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
         title="Close (Esc)"
         aria-label="Close full screen photo"
       >
-        <X className="w-10 h-10" />
+        <X className="w-12 h-12 stroke-[3]" />
       </button>
       
       {/* Main Image Area */}
@@ -362,19 +362,19 @@ export function TrophyPhotoCarousel({
           <>
             <button
               onClick={goToPrevious}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 btn btn-circle btn-lg bg-black/70 border-white/30 text-white hover:bg-black/80 min-w-[56px] min-h-[56px] shadow-xl"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
               title="Previous (←)"
               aria-label="Previous photo"
             >
-              <ChevronLeft className="w-10 h-10" />
+              <ChevronLeft className="w-10 h-10 stroke-[3]" />
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 btn btn-circle btn-lg bg-black/70 border-white/30 text-white hover:bg-black/80 min-w-[56px] min-h-[56px] shadow-xl"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 btn btn-circle bg-black/90 border-2 border-white/40 text-white hover:bg-black hover:border-white min-w-[64px] min-h-[64px] shadow-2xl backdrop-blur-sm"
               title="Next (→)"
               aria-label="Next photo"
             >
-              <ChevronRight className="w-10 h-10" />
+              <ChevronRight className="w-10 h-10 stroke-[3]" />
             </button>
           </>
         )}
