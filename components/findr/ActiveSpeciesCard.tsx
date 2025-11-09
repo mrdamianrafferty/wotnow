@@ -95,8 +95,8 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
-  notificationsEnabled,
-  onSetupNotifications,
+  notificationsEnabled: _notificationsEnabled,
+  onSetupNotifications: _onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [alertScheduled, setAlertScheduled] = useState(false);
@@ -221,15 +221,14 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                   <TranslatedFishName name={species.name} />
                 </h3>
                 {/* Notification Setup Button - Prominent header position */}
-                {onSetupNotifications && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                    className={`btn btn-sm ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                    title={notificationsEnabled ? 'Auto-alerts enabled - click to manage' : 'Set up auto-alerts'}
-                  >
-                    {notificationsEnabled ? <BellOff size={18} /> : <BellPlus size={18} />}
-                  </button>
-                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleSetAlert(); }}
+                  className={`btn btn-sm ${alertScheduled ? 'btn-primary' : 'btn-outline btn-primary'}`}
+                  title={alertScheduled ? 'Hot bite alert set!' : 'Set hot bite alert'}
+                  disabled={alertScheduled}
+                >
+                  {alertScheduled ? <BellOff size={18} /> : <BellPlus size={18} />}
+                </button>
               </div>
               {species.scientificName && (
                 <p className="text-sm italic text-base-content/60 mb-2">{species.scientificName}</p>

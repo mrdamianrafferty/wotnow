@@ -89,8 +89,8 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   onRemove,
   onTogglePriority,
   onAction,
-  notificationsEnabled,
-  onSetupNotifications,
+  notificationsEnabled: _notificationsEnabled,
+  onSetupNotifications: _onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [reminderScheduled, setReminderScheduled] = useState(false);
@@ -247,15 +247,14 @@ Check predictions at fishfindr.eu`;
                   <TranslatedFishName name={species.name} />
                 </h3>
                 {/* Notification Setup Button - Prominent header position */}
-                {onSetupNotifications && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-                    className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-                    title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
-                  >
-                    {notificationsEnabled ? <BellOff size={14} /> : <BellPlus size={14} />}
-                  </button>
-                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
+                  className={`btn btn-xs ${reminderScheduled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+                  title={reminderScheduled ? 'Peak conditions reminder set!' : 'Set peak conditions reminder'}
+                  disabled={reminderScheduled}
+                >
+                  {reminderScheduled ? <BellOff size={14} /> : <BellPlus size={14} />}
+                </button>
                 {species.isPriority && (
                   <Target size={14} className="text-warning flex-shrink-0" />
                 )}

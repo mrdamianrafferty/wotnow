@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { TrendingUp, Heart, Fish, BellPlus, BellOff } from 'lucide-react';
+import { scheduleLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
+import { trackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
@@ -76,9 +78,11 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
-  notificationsEnabled,
-  onSetupNotifications,
+  notificationsEnabled: _notificationsEnabled,
+  onSetupNotifications: _onSetupNotifications,
 }) => {
+  const [reminderScheduled, setReminderScheduled] = useState(false);
+
   const improvingDay = getImprovingDay(species.forecast);
   // const trend = getForecastTrend(species.forecast); // removed, not needed after UI cleanup
 
@@ -86,6 +90,77 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
 
 
   // const nextBestTime = getGeneralTiming(); // removed, not needed after UI cleanup
+
+  // Handle setting up improvement reminder
+  const handleSetReminder = async () => {
+    try {
+      // Check/request notification permissions
+      let permission = await checkPermissions();
+      if (permission !== 'granted') {
+        permission = await requestPermissions();
+        if (permission !== 'granted') {
+          console.warn('[WaitingSpeciesCard] Notification permission denied');
+          return;
+        }
+      }
+
+      // Schedule reminder for when conditions improve
+      const reminderTime = new Date();
+
+      // Find when conditions are expected to improve
+      const improvingDayIndex = species.forecast.findIndex((conf, idx) =>
+        idx > 0 && conf >= 70 && conf > species.forecast[0] + 10
+      );
+
+      if (improvingDayIndex > 0 && improvingDayIndex < 4) {
+        // Schedule for 8am on the improving day
+        reminderTime.setDate(reminderTime.getDate() + improvingDayIndex);
+        reminderTime.setHours(8, 0, 0, 0);
+      } else {
+        // Default to tomorrow morning if no clear improvement
+        reminderTime.setDate(reminderTime.getDate() + 1);
+        reminderTime.setHours(8, 0, 0, 0);
+      }
+
+      const title = `🎯 ${species.name} - Conditions Improving!`;
+      const body = `Forecast shows improvement! Check the latest predictions for ${species.name}.`;
+
+      const notificationId = await scheduleLocalNotification({
+        title,
+        body,
+        schedule: { at: reminderTime },
+        extra: {
+          speciesId: species.id,
+          speciesName: species.name,
+          confidence: species.confidence,
+          type: 'improvement_reminder',
+        },
+      });
+
+      // Track notification for management UI
+      trackNotification({
+        id: notificationId,
+        title,
+        body,
+        scheduledAt: reminderTime.toISOString(),
+        speciesName: species.name,
+        speciesId: species.id,
+        type: 'peak_conditions_reminder',
+      });
+
+      console.log('[WaitingSpeciesCard] Improvement reminder scheduled:', notificationId, 'for', reminderTime);
+      setReminderScheduled(true);
+
+      // Auto-reset after 5 seconds to allow re-scheduling
+      setTimeout(() => setReminderScheduled(false), 5000);
+    } catch (error) {
+      if (error instanceof NotificationException) {
+        console.error('[WaitingSpeciesCard] Notification error:', error.type, error.message);
+      } else {
+        console.error('[WaitingSpeciesCard] Failed to set reminder:', error);
+      }
+    }
+  };
 
 
 
@@ -104,15 +179,14 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
             <TranslatedFishName name={species.name} />
           </h3>
           {/* Notification Setup Button - Prominent header position */}
-          {onSetupNotifications && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onSetupNotifications(species.id); }}
-              className={`btn btn-xs ${notificationsEnabled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-              title={notificationsEnabled ? 'Auto-alerts enabled' : 'Set up auto-alerts'}
-            >
-              {notificationsEnabled ? <BellOff size={12} /> : <BellPlus size={12} />}
-            </button>
-          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
+            className={`btn btn-xs ${reminderScheduled ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
+            title={reminderScheduled ? 'Improvement reminder set!' : 'Remind when conditions improve'}
+            disabled={reminderScheduled}
+          >
+            {reminderScheduled ? <BellOff size={12} /> : <BellPlus size={12} />}
+          </button>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
           {/* Species Image/Emoji - Clickable */}
