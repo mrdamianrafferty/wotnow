@@ -1828,8 +1828,8 @@ const FindrFavouritesPage: React.FC = () => {
               id: notificationModalSpecies.id,
               commonName: notificationModalSpecies.name,
               scientificName: notificationModalSpecies.scientificName,
-              primaryHabitat: notificationModalSpecies.primaryHabitat || [],
-              seasonalPeaks: notificationModalSpecies.seasonalPeaks || [],
+              primaryHabitat: [], // Not used in notification modal
+              seasonalPeaks: [], // Not used in notification modal
             }}
             initialPreferences={{
               speciesId: notificationModalSpecies.id,
@@ -1840,7 +1840,7 @@ const FindrFavouritesPage: React.FC = () => {
                 email: false,
                 sms: false,
               },
-              maxPerDay: notificationPreferences.get(notificationModalSpecies.id)?.maxPerDay ?? 3,
+              maxPerDay: 3, // Default max notifications per day
             }}
             onSave={async (preferences) => {
               await handleSaveNotificationPreferences({
