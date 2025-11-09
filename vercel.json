@@ -11,6 +11,7 @@
   },
   "functions": {
     "pages/api/**/*.ts": { "maxDuration": 30 },
+    "pages/api/findr/log-catch-enriched.ts": { "maxDuration": 60, "runtime": "@vercel/node@18.x" },
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "rewrites": [
