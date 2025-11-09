@@ -175,13 +175,13 @@ const GeolocationButton: React.FC = () => {
 
   return (
     <button
-      className={`absolute top-4 right-4 btn btn-circle btn-sm bg-base-100 shadow-xl z-[1000] ${locating ? 'loading' : ''}`}
+      className={`absolute top-24 right-4 btn btn-circle bg-base-100 shadow-xl z-[1000] min-w-[56px] min-h-[56px] ${locating ? 'loading' : ''}`}
       onClick={handleGeolocate}
       type="button"
       title="Center map on your location"
     >
       {!locating && (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
         </svg>
@@ -218,16 +218,23 @@ const ZoomControls: React.FC = () => {
 const LocationMarker: React.FC<{ position: [number, number]; name: string }> = ({ position, name }) => {
   const locationIcon = new DivIcon({
     html: `<div style="
-      background-color: #ef4444;
-      width: 16px;
-      height: 16px;
+      background-color: #3b82f6;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    "></div>`,
+      border: 4px solid white;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6), 0 0 0 8px rgba(59,130,246,0.2);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    "></div>
+    <style>
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.1); opacity: 0.9; }
+      }
+    </style>`,
     className: 'custom-location-marker',
-    iconSize: [16, 16],
-    iconAnchor: [8, 8]
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
   });
 
   return (
@@ -293,22 +300,19 @@ export default function FullScreenMap({ initialLat, initialLon, initialZoom, ini
 
   return (
     <div className="fixed inset-0 bg-base-200">
+      {/* Close button - mobile optimized, top-right */}
+      <button
+        onClick={() => router.back()}
+        className="fixed top-4 right-4 z-[1002] btn btn-circle bg-red-600 border-4 border-white text-white hover:bg-red-700 min-w-[72px] min-h-[72px] shadow-2xl sm:min-w-[64px] sm:min-h-[64px]"
+        type="button"
+        title="Close map"
+      >
+        <X className="w-10 h-10 sm:w-8 sm:h-8 stroke-[3]" />
+      </button>
+
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 h-16 bg-base-100/95 shadow-lg z-[1001] flex items-center justify-between px-4">
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => router.back()}
-          type="button"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-          <span className="ml-2">Back</span>
-        </button>
-
+      <div className="absolute top-0 left-0 right-0 h-16 bg-base-100/95 shadow-lg z-[1001] flex items-center justify-center px-4">
         <h1 className="text-lg font-semibold">Marine Data Map</h1>
-
-        <div className="w-20"></div> {/* Spacer for centering */}
       </div>
 
       {/* Map Container */}
