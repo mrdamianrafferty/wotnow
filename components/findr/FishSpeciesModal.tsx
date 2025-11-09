@@ -34,6 +34,7 @@ import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 import { useLanguage } from '../../context/LanguageContext';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
+import { toast } from '@/lib/ui/toast';
 
 import { GuildBadge } from './GuildBadge';
 import { SpeciesBadges } from './SpeciesBadges';
@@ -301,6 +302,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
         permission = await requestPermissions();
         if (permission !== 'granted') {
           console.warn('[FishSpeciesModal] Notification permission denied');
+          await toast.warning('Notification permission denied. Please enable notifications in your browser settings to receive fishing alerts.');
           return;
         }
       }
@@ -360,11 +362,19 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
 
       console.log('[FishSpeciesModal] Notification scheduled:', newNotificationId, notificationType);
       setNotificationId(newNotificationId);
+
+      // Show success message
+      const successMessage = notificationType === 'hot_bite_alert'
+        ? `🔥 Hot bite alert set for ${card.commonName}!`
+        : `🎣 Fishing reminder set for ${card.commonName}`;
+      await toast.success(successMessage);
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[FishSpeciesModal] Notification error:', error.type, error.message);
+        await toast.error(`Failed to set notification: ${error.message}`);
       } else {
         console.error('[FishSpeciesModal] Failed to toggle notification:', error);
+        await toast.error('Failed to set notification. Please try again.');
       }
     }
   };
