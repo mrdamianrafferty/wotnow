@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Service Worker Cache - Findr</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .step {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0052a3;
+        }
+        .success {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .warning {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        #status {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧹 Clear Service Worker Cache</h1>
+
+    <div class="warning">
+        <strong>⚠️ Cache Issue Detected</strong><br>
+        Your browser is serving old cached iNaturalist URLs. This tool will help clear the cache.
+    </div>
+
+    <div id="status"></div>
+
+    <h2>Automatic Fix</h2>
+    <button onclick="clearAllCaches()">🗑️ Clear All Caches & Unregister Service Workers</button>
+    <button onclick="window.location.reload(true)">🔄 Hard Reload Page</button>
+
+    <h2>Manual Steps (if automatic fails)</h2>
+
+    <div class="step">
+        <strong>Step 1:</strong> Open DevTools (F12 or Cmd+Option+I)
+    </div>
+
+    <div class="step">
+        <strong>Step 2:</strong> Go to <strong>Application</strong> tab (Chrome/Edge) or <strong>Storage</strong> tab (Firefox)
+    </div>
+
+    <div class="step">
+        <strong>Step 3:</strong> Click <strong>Service Workers</strong> in left sidebar<br>
+        Click <strong>Unregister</strong> next to any fishfindr.eu workers
+    </div>
+
+    <div class="step">
+        <strong>Step 4:</strong> Click <strong>Cache Storage</strong> in left sidebar<br>
+        Right-click each cache → <strong>Delete</strong>
+    </div>
+
+    <div class="step">
+        <strong>Step 5:</strong> Close DevTools and do a hard refresh (Cmd+Shift+R or Ctrl+Shift+F5)
+    </div>
+
+    <h2>Verify the Fix</h2>
+    <button onclick="testApiEndpoint()">🧪 Test API Endpoint</button>
+    <div id="apiTest"></div>
+
+    <script>
+        async function clearAllCaches() {
+            const status = document.getElementById('status');
+            status.innerHTML = '<div class="warning">Clearing caches...</div>';
+
+            try {
+                // Unregister all service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                    console.log('Unregistered service worker:', registration.scope);
+                }
+
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                for (let cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                    console.log('Deleted cache:', cacheName);
+                }
+
+                status.innerHTML = `
+                    <div class="success">
+                        ✅ Success!<br>
+                        • Unregistered ${registrations.length} service worker(s)<br>
+                        • Deleted ${cacheNames.length} cache(s)<br>
+                        <br>
+                        <strong>Now do a hard refresh:</strong> Cmd+Shift+R (Mac) or Ctrl+Shift+F5 (Windows)
+                    </div>
+                `;
+            } catch (error) {
+                status.innerHTML = `
+                    <div class="warning">
+                        ⚠️ Error: ${error.message}<br>
+                        Please use the manual steps below.
+                    </div>
+                `;
+            }
+        }
+
+        async function testApiEndpoint() {
+            const testDiv = document.getElementById('apiTest');
+            testDiv.innerHTML = '<p>Testing API endpoint...</p>';
+
+            try {
+                const response = await fetch('/api/findr/species-details?species_code=BSS', {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const data = await response.json();
+
+                const correctUrl = 'https://www.inaturalist.org/taxa/99269-Dicentrarchus-labrax';
+                const isCorrect = data.inaturalist_url === correctUrl;
+
+                testDiv.innerHTML = `
+                    <div class="${isCorrect ? 'success' : 'warning'}">
+                        <strong>${isCorrect ? '✅ Correct!' : '❌ Still Cached'}</strong><br>
+                        Current URL: <code>${data.inaturalist_url}</code><br>
+                        Expected: <code>${correctUrl}</code><br>
+                        ${isCorrect ? 'The cache has been cleared successfully!' : 'Please try the manual steps below.'}
+                    </div>
+                `;
+            } catch (error) {
+                testDiv.innerHTML = `<div class="warning">Error testing: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

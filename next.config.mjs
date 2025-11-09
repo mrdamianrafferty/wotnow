@@ -165,6 +165,8 @@ const pwaConfig = withPWA({
   ],
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
+  // Force cache refresh by changing buildId
+  buildId: '20251109-inat-fix',
   runtimeCaching: [
     // Cache all HTML pages (SSR/SSG)
     {
