@@ -127,7 +127,7 @@ h1, h2, h3 {
 
 button:not(.btn) {
   /* background-color: #4a90e2; */
-  color: #fff;
+  /* color: #fff; - Removed: causes white text on white background when bg-color is not set */
   border: none;
   padding: 0.5rem 1rem;
   cursor: pointer;
