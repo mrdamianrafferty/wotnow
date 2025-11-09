@@ -128,17 +128,20 @@ export default function AuthCallback() {
           return;
         }
 
-        // Not in Capacitor - check if this is an external browser with OAuth params
-        if (hasOAuthParams) {
-          console.log('[Auth Callback] External browser with OAuth params - showing Universal Link prompt');
+        // Detect if this is a mobile browser (iOS Safari/Chrome on mobile)
+        const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        // Only show Universal Link prompt for mobile browsers with OAuth params
+        // Desktop browsers should process auth normally
+        if (hasOAuthParams && isMobileBrowser) {
+          console.log('[Auth Callback] Mobile browser with OAuth params - showing Universal Link prompt');
           setIsExternalBrowser(true);
           setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
           // STOP HERE - don't process auth, let Universal Link handle it
           return;
         }
 
-        // No OAuth params and not native - this might be a direct visit or email link
-        // Fall through to normal auth processing below
+        // Desktop browser or no OAuth params - fall through to normal auth processing
       } catch (e) {
         console.warn('[Auth Callback] Could not detect platform:', e);
       }
@@ -168,8 +171,13 @@ export default function AuthCallback() {
         const isNative = Capacitor.isNativePlatform();
         const hasOAuthParams = code || access_token || tokenHash;
 
-        if (!isNative && hasOAuthParams) {
-          console.log('[Auth Callback] External browser mode - skipping auth processing');
+        // Detect if this is a mobile browser (iOS Safari/Chrome on mobile)
+        const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        // Only show Universal Link prompt for mobile browsers with OAuth params
+        // Desktop browsers should always process auth normally
+        if (!isNative && hasOAuthParams && isMobileBrowser) {
+          console.log('[Auth Callback] Mobile browser mode - skipping auth processing for Universal Link');
           clearTimeout(timeoutId);
           return; // Exit early - let Universal Link handle it
         }
