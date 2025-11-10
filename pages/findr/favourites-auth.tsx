@@ -168,7 +168,7 @@ export default function ModernFavouritesPage() {
     }
   };
   
-  const handleToggleNotifications = (speciesId: string) => {
+  const _handleToggleNotifications = (speciesId: string) => {
     const species = favourites.find(f => f.species.id === speciesId);
     if (species) {
       setSelectedSpeciesForNotification(species.species);

@@ -31,7 +31,7 @@ interface StatusCardBaseProps {
 export function ActiveSpeciesCard({
   species,
   onToggleFavourite,
-  onCardClick,
+  onCardClick: _onCardClick,
   className = ''
 }: StatusCardBaseProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -73,10 +73,7 @@ export function ActiveSpeciesCard({
                     Active Now
                   </span>
                 </div>
-                <h3 
-                  className="text-xl font-bold text-base-content cursor-pointer hover:text-success transition-colors"
-                  onClick={() => onCardClick?.(species.species.id)}
-                >
+                <h3 className="text-xl font-bold text-base-content">
                   {species.species.commonName}
                 </h3>
                 {species.species.scientificName && (
@@ -170,7 +167,7 @@ export function ActiveSpeciesCard({
 export function GoodSpeciesCard({
   species,
   onToggleFavourite,
-  onCardClick,
+  onCardClick: _onCardClick,
   className = ''
 }: StatusCardBaseProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -211,10 +208,7 @@ export function GoodSpeciesCard({
                     Good Conditions
                   </span>
                 </div>
-                <h3 
-                  className="text-lg font-bold text-base-content cursor-pointer hover:text-info transition-colors"
-                  onClick={() => onCardClick?.(species.species.id)}
-                >
+                <h3 className="text-lg font-bold text-base-content">
                   {species.species.commonName}
                 </h3>
               </div>
@@ -270,7 +264,7 @@ export function GoodSpeciesCard({
 export function WaitingSpeciesCard({
   species,
   onToggleFavourite,
-  onCardClick,
+  onCardClick: _onCardClick,
   className = ''
 }: Omit<StatusCardBaseProps, 'onToggleNotifications'>) {
   return (
@@ -307,10 +301,7 @@ export function WaitingSpeciesCard({
                 Waiting
               </span>
             </div>
-            <h4 
-              className="text-sm font-bold text-base-content/80 cursor-pointer hover:text-warning transition-colors"
-              onClick={() => onCardClick?.(species.species.id)}
-            >
+            <h4 className="text-sm font-bold text-base-content/80">
               {species.species.commonName}
             </h4>
           </div>
