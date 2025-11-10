@@ -41,7 +41,7 @@ function initWebToastContainer(): void {
 
   toastContainer = document.createElement('div');
   toastContainer.id = 'web-toast-container';
-  toastContainer.className = 'fixed z-[9999] pointer-events-none';
+  toastContainer.className = 'fixed z-[999999] pointer-events-none';
   toastContainer.style.cssText = `
     top: 1rem;
     right: 1rem;
