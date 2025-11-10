@@ -6,16 +6,34 @@
  *
  * Runs every 30-60 minutes via Vercel Cron
  *
- * Email Strategy: Daily Digest
+ * Notification Strategy:
+ *
+ * Push Notifications (Hot Bite Alerts):
+ * - Sent immediately for species crossing 85%+ confidence threshold
+ * - Rate-limited to prevent spam (6-hour cooldown per species)
+ * - User must have hot_bite_alerts_enabled: true
+ *
+ * Email Strategy (Tiered Daily Digest):
  * - One email per user per day maximum
- * - Contains ALL species alerts for that day
- * - Batched together to avoid overwhelming users
+ * - Shows ALL favourite species grouped by confidence bands:
+ *   • HOT BITES (85%+) - Urgent, action encouraged
+ *   • GOOD CONDITIONS (60-84%) - Worth considering
+ *   • STATUS UPDATES (<60%) - Informational
+ * - User must have daily_email_enabled: true
  */
 
 import { createClient } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Resend } from 'resend';
-import { generateDailyDigestHTML, generateDailyDigestText, type EmailSpeciesAlert } from '../../../lib/findr/emailTemplates';
+import {
+  generateDailyDigestHTML,
+  generateDailyDigestText,
+  generateTieredDailyDigestHTML,
+  generateTieredDailyDigestText,
+  type EmailSpeciesAlert,
+  type TieredEmailSpeciesAlert,
+  type TieredDailyDigestData
+} from '../../../lib/findr/emailTemplates';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -203,10 +221,13 @@ async function sendPushNotification(notification: NotificationToSend): Promise<b
 /**
  * Send daily digest email to a user with all their species alerts
  *
+ * @deprecated Replaced by sendTieredDailyDigestEmail which groups species by confidence bands
+ * This function is kept for reference but is no longer called by the cron job.
+ *
  * NOTE: This function is NOT called per-notification.
  * It's called once per user with ALL their alerts batched together.
  */
-async function sendDailyDigestEmail(
+async function _sendDailyDigestEmail_DEPRECATED(
   userId: string,
   alerts: NotificationToSend[],
   locationName: string
@@ -298,6 +319,141 @@ async function sendDailyDigestEmail(
     return true;
   } catch (error) {
     console.error('[Cron] Exception sending daily digest email:', error);
+    return false;
+  }
+}
+
+/**
+ * Send tiered daily digest email with species grouped by confidence bands
+ * HOT BITES (85%+), GOOD CONDITIONS (60-84%), STATUS UPDATES (<60%)
+ */
+async function sendTieredDailyDigestEmail(
+  userId: string,
+  allSpecies: Map<string, { speciesCode: string; speciesName: string; confidence: number }>,
+  locationName: string,
+  rectangleCode: string
+): Promise<boolean> {
+  if (!resend) {
+    console.log('[Cron] Resend not configured, skipping email for user:', userId);
+    return false;
+  }
+
+  if (allSpecies.size === 0) {
+    console.log('[Cron] No species to include in digest for user:', userId);
+    return false;
+  }
+
+  try {
+    // 1. Get user's email from auth.users
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+
+    if (userError || !userData.user?.email) {
+      console.error('[Cron] Could not get user email:', userError);
+      return false;
+    }
+
+    const userEmail = userData.user.email;
+    const userName = userData.user.user_metadata?.name || undefined;
+
+    // 2. Group species by confidence tiers
+    const hotBites: TieredEmailSpeciesAlert[] = [];
+    const goodConditions: TieredEmailSpeciesAlert[] = [];
+    const statusUpdates: TieredEmailSpeciesAlert[] = [];
+
+    for (const [_, species] of allSpecies) {
+      const alert: TieredEmailSpeciesAlert = {
+        speciesName: species.speciesName,
+        confidence: species.confidence,
+        locationName,
+        rectangleCode,
+        imageUrl: undefined, // TODO: Add species image URLs
+        tier: species.confidence >= 85 ? 'hot_bites' : species.confidence >= 60 ? 'good_conditions' : 'status_updates'
+      };
+
+      if (species.confidence >= 85) {
+        hotBites.push(alert);
+      } else if (species.confidence >= 60) {
+        goodConditions.push(alert);
+      } else {
+        statusUpdates.push(alert);
+      }
+    }
+
+    // Sort each tier by confidence (highest first)
+    hotBites.sort((a, b) => b.confidence - a.confidence);
+    goodConditions.sort((a, b) => b.confidence - a.confidence);
+    statusUpdates.sort((a, b) => b.confidence - a.confidence);
+
+    // 3. Build tiered email data
+    const emailData: TieredDailyDigestData = {
+      userName,
+      hotBites,
+      goodConditions,
+      statusUpdates,
+      date: new Date().toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      locationName
+    };
+
+    // 4. Generate HTML and text versions using tiered templates
+    const htmlContent = generateTieredDailyDigestHTML(emailData);
+    const textContent = generateTieredDailyDigestText(emailData);
+
+    // 5. Create email subject based on what's included
+    let subject = '🎣 Your Daily Fishing Digest';
+    if (hotBites.length > 0) {
+      subject = `🔥 ${hotBites.length} Hot Bite${hotBites.length > 1 ? 's' : ''} + Your Fishing Digest`;
+    }
+
+    // 6. Send via Resend
+    const { data, error } = await resend.emails.send({
+      from: 'Findr <notifications@fishfindr.eu>',
+      to: userEmail,
+      subject,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      console.error('[Cron] Error sending tiered email via Resend:', error);
+      return false;
+    }
+
+    console.log('[Cron] Tiered daily digest email sent successfully:', {
+      userId,
+      email: userEmail,
+      totalSpecies: allSpecies.size,
+      hotBites: hotBites.length,
+      goodConditions: goodConditions.length,
+      statusUpdates: statusUpdates.length,
+      resendId: data?.id,
+    });
+
+    // 7. Log the daily digest send
+    await supabase.from('notification_log').insert({
+      user_id: userId,
+      species_id: null,
+      notification_type: 'daily_digest',
+      channel: 'email',
+      confidence_at_send: null,
+      threshold_value: null,
+      notification_data: {
+        total_species: allSpecies.size,
+        hot_bites: hotBites.length,
+        good_conditions: goodConditions.length,
+        status_updates: statusUpdates.length,
+        location: locationName,
+      },
+      sent_at: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (error) {
+    console.error('[Cron] Exception sending tiered daily digest email:', error);
     return false;
   }
 }
@@ -464,35 +620,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 5b. Send daily digest emails (batched by user)
-    // Group notifications by user, but only for users with daily_email_enabled
-    const userEmailAlerts = new Map<string, NotificationToSend[]>();
-    const userLocations = new Map<string, string>();
+    // 5b. Send tiered daily digest emails (ALL favourites grouped by confidence)
+    // Process ALL users with daily_email_enabled, not just those with hot bites
+    const usersWithDailyEmail = preferences.filter(p => p.daily_email_enabled);
+    console.log('[Cron] Found', usersWithDailyEmail.length, 'users with daily email enabled');
 
-    for (const notification of notificationsToSend) {
-      // Check if this user has daily email enabled
-      const prefs = userPreferences.get(notification.userId);
-      if (prefs?.daily_email_enabled) {
-        const existing = userEmailAlerts.get(notification.userId) || [];
-        existing.push(notification);
-        userEmailAlerts.set(notification.userId, existing);
+    for (const pref of usersWithDailyEmail) {
+      const userId = pref.user_id;
 
-        // Store location for email context
-        if (!userLocations.has(notification.userId)) {
-          // Get location name from rectangle code
-          const { data: rectangle } = await supabase
-            .from('ices_rectangles')
-            .select('code')
-            .eq('code', notification.rectangleCode)
-            .single();
-
-          userLocations.set(notification.userId, rectangle?.code || notification.rectangleCode);
-        }
-      }
-    }
-
-    // Send one digest email per user (if they haven't received one today)
-    for (const [userId, alerts] of userEmailAlerts.entries()) {
       // Check if user already received digest today
       const alreadySentToday = await hasReceivedDailyDigestToday(userId);
       if (alreadySentToday) {
@@ -500,9 +635,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-      // Send digest with ALL hot bite species for this user
-      const locationName = userLocations.get(userId) || 'your location';
-      const digestSent = await sendDailyDigestEmail(userId, alerts, locationName);
+      // Get user's location
+      const rectangleCode = await getUserLocation(userId);
+      if (!rectangleCode) {
+        console.log('[Cron] No location for user', userId, '- skipping email');
+        continue;
+      }
+
+      // Get ALL favourites for this user
+      const userFavs = userFavourites.get(userId);
+      if (!userFavs || userFavs.length === 0) {
+        console.log('[Cron] No favourites for user', userId, '- skipping email');
+        continue;
+      }
+
+      // Get predictions for ALL favourite species
+      const speciesCodes = userFavs.map((f) => f.species_id.toUpperCase());
+      const predictions = await getPredictions(rectangleCode, speciesCodes);
+
+      // Build map of all species with confidence scores
+      const allSpeciesData = new Map<string, { speciesCode: string; speciesName: string; confidence: number }>();
+
+      for (const fav of userFavs) {
+        const speciesCode = fav.species_id.toUpperCase();
+        const confidence = predictions.get(speciesCode);
+
+        if (confidence !== undefined) {
+          allSpeciesData.set(fav.species_id, {
+            speciesCode,
+            speciesName: speciesCode, // TODO: Get actual species name from species table
+            confidence
+          });
+        }
+      }
+
+      // Only send email if we have at least one species with predictions
+      if (allSpeciesData.size === 0) {
+        console.log('[Cron] No predictions available for user', userId, '- skipping email');
+        continue;
+      }
+
+      // Get location name for email context
+      const { data: rectangle } = await supabase
+        .from('ices_rectangles')
+        .select('code')
+        .eq('code', rectangleCode)
+        .single();
+      const locationName = rectangle?.code || rectangleCode;
+
+      // Send tiered digest with ALL species grouped by confidence
+      const digestSent = await sendTieredDailyDigestEmail(
+        userId,
+        allSpeciesData,
+        locationName,
+        rectangleCode
+      );
 
       if (digestSent) {
         emailDigestCount++;
