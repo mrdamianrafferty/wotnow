@@ -12,6 +12,7 @@
   "functions": {
     "pages/api/**/*.ts": { "maxDuration": 30 },
     "pages/api/findr/log-catch-enriched.ts": { "maxDuration": 60 },
+    "pages/api/findr/identify-fish.ts": { "maxDuration": 60 },
     "app/api/**/*.ts": { "maxDuration": 30 }
   },
   "rewrites": [
