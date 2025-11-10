@@ -40,13 +40,16 @@ interface UserFavourite {
   id: string;
   user_id: string;
   species_id: string;
-  notifications_enabled: boolean;
-  notification_threshold: number;
-  notification_channels: {
-    push: boolean;
-    email: boolean;
-    sms: boolean;
-  };
+}
+
+interface UserNotificationPreferences {
+  user_id: string;
+  hot_bite_alerts_enabled: boolean;
+  daily_email_enabled: boolean;
+  daily_email_time: string;
+  weekly_forecast_enabled: boolean;
+  weekly_forecast_day: number;
+  weekly_forecast_time: string;
 }
 
 interface UserLocationPreference {
@@ -68,12 +71,6 @@ interface NotificationToSend {
   speciesCode: string;
   speciesName: string;
   confidence: number;
-  threshold: number;
-  channels: {
-    push: boolean;
-    email: boolean;
-    sms: boolean;
-  };
   rectangleCode: string;
 }
 
@@ -193,7 +190,6 @@ async function sendPushNotification(notification: NotificationToSend): Promise<b
     userId: notification.userId,
     species: notification.speciesName,
     confidence: notification.confidence,
-    threshold: notification.threshold,
   });
 
   // In a real implementation, this would:
@@ -324,10 +320,10 @@ async function logNotification(notification: NotificationToSend, channel: 'push'
   await supabase.from('notification_log').insert({
     user_id: notification.userId,
     species_id: notification.speciesId,
-    notification_type: 'threshold_crossed',
+    notification_type: 'hot_bite_alert',
     channel,
     confidence_at_send: notification.confidence,
-    threshold_value: notification.threshold,
+    threshold_value: 85, // Hot bite threshold is hardcoded at 85%
     notification_data: {
       species_code: notification.speciesCode,
       species_name: notification.speciesName,
@@ -346,11 +342,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     console.log('[Cron] Starting notification check...');
 
-    // 1. Get all users with notifications enabled
+    // 1. Get all users with hot bite alerts enabled
+    const { data: preferences, error: prefError } = await supabase
+      .from('user_notification_preferences')
+      .select('user_id, hot_bite_alerts_enabled, daily_email_enabled')
+      .eq('hot_bite_alerts_enabled', true);
+
+    if (prefError) {
+      console.error('[Cron] Error fetching notification preferences:', prefError);
+      throw prefError;
+    }
+
+    if (!preferences || preferences.length === 0) {
+      console.log('[Cron] No users with hot bite alerts enabled');
+      return res.status(200).json({ success: true, message: 'No notifications to check', processed: 0 });
+    }
+
+    console.log('[Cron] Found', preferences.length, 'users with hot bite alerts enabled');
+
+    // 2. Get all favourites for these users
+    const userIds = preferences.map(p => p.user_id);
     const { data: favourites, error: favError } = await supabase
       .from('user_favourites')
-      .select('id, user_id, species_id, notifications_enabled, notification_threshold, notification_channels')
-      .eq('notifications_enabled', true);
+      .select('id, user_id, species_id')
+      .in('user_id', userIds);
 
     if (favError) {
       console.error('[Cron] Error fetching favourites:', favError);
@@ -358,14 +373,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (!favourites || favourites.length === 0) {
-      console.log('[Cron] No users with notifications enabled');
-      return res.status(200).json({ success: true, message: 'No notifications to check', processed: 0 });
+      console.log('[Cron] No favourites found for users with notifications enabled');
+      return res.status(200).json({ success: true, message: 'No favourites to check', processed: 0 });
     }
 
     const typedFavourites = favourites as UserFavourite[];
-    console.log('[Cron] Found', typedFavourites.length, 'favourites with notifications enabled');
+    console.log('[Cron] Found', typedFavourites.length, 'favourites to check');
 
-    // 2. Group favourites by user
+    // 3. Group favourites by user
     const userFavourites = new Map<string, UserFavourite[]>();
     typedFavourites.forEach((fav) => {
       const existing = userFavourites.get(fav.user_id) || [];
@@ -373,10 +388,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userFavourites.set(fav.user_id, existing);
     });
 
+    // Create user preferences map for easy lookup
+    const userPreferences = new Map<string, UserNotificationPreferences>();
+    preferences.forEach((pref) => {
+      userPreferences.set(pref.user_id, pref as UserNotificationPreferences);
+    });
+
     console.log('[Cron] Processing', userFavourites.size, 'users');
 
-    // 3. Check predictions for each user
+    // 4. Check predictions for each user
     const notificationsToSend: NotificationToSend[] = [];
+    const HOT_BITE_THRESHOLD = 85; // Hardcoded hot bite threshold
 
     for (const [userId, favs] of userFavourites.entries()) {
       // Get user's location
@@ -392,7 +414,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Get predictions for this location
       const predictions = await getPredictions(rectangleCode, speciesCodes);
 
-      // Check each favourite against threshold
+      // Check each favourite against hot bite threshold (85%)
       for (const fav of favs) {
         const speciesCode = fav.species_id.toUpperCase();
         const confidence = predictions.get(speciesCode);
@@ -401,8 +423,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           continue; // No prediction available
         }
 
-        // Check if confidence crossed threshold
-        if (confidence >= fav.notification_threshold) {
+        // Check if confidence crossed hot bite threshold (85%+)
+        if (confidence >= HOT_BITE_THRESHOLD) {
           // Check if we recently sent a notification for this species
           const recentlySent = await wasRecentlySent(userId, fav.species_id);
           if (recentlySent) {
@@ -417,46 +439,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             speciesCode,
             speciesName: speciesCode, // TODO: Get actual species name from species table
             confidence,
-            threshold: fav.notification_threshold,
-            channels: fav.notification_channels,
             rectangleCode,
           });
         }
       }
     }
 
-    console.log('[Cron] Found', notificationsToSend.length, 'threshold-crossing species');
+    console.log('[Cron] Found', notificationsToSend.length, 'hot bite species (85%+)');
 
-    // 4. Send notifications - DAILY DIGEST APPROACH
-    // Push notifications: Send individually (real-time)
-    // Email notifications: Batch by user (one email per day max)
+    // 5. Send notifications
+    // Push notifications: Send individually for all hot bite alerts (real-time)
+    // Email notifications: Batch by user (one daily digest per day max)
 
     let pushCount = 0;
     let emailDigestCount = 0;
 
-    // 4a. Send push notifications individually (real-time alerts)
+    // 5a. Send push notifications individually (real-time hot bite alerts)
+    // All users in notificationsToSend have hot_bite_alerts_enabled=true
     for (const notification of notificationsToSend) {
-      if (notification.channels.push) {
-        const pushSent = await sendPushNotification(notification);
-        if (pushSent) {
-          await logNotification(notification, 'push');
-          pushCount++;
-        }
-      }
-
-      // Note: SMS not implemented yet
-      if (notification.channels.sms) {
-        console.log('[Cron] SMS notifications not implemented yet');
+      const pushSent = await sendPushNotification(notification);
+      if (pushSent) {
+        await logNotification(notification, 'push');
+        pushCount++;
       }
     }
 
-    // 4b. Send daily digest emails (batched by user)
-    // Group email-enabled notifications by user
+    // 5b. Send daily digest emails (batched by user)
+    // Group notifications by user, but only for users with daily_email_enabled
     const userEmailAlerts = new Map<string, NotificationToSend[]>();
     const userLocations = new Map<string, string>();
 
     for (const notification of notificationsToSend) {
-      if (notification.channels.email) {
+      // Check if this user has daily email enabled
+      const prefs = userPreferences.get(notification.userId);
+      if (prefs?.daily_email_enabled) {
         const existing = userEmailAlerts.get(notification.userId) || [];
         existing.push(notification);
         userEmailAlerts.set(notification.userId, existing);
@@ -484,7 +500,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-      // Send digest with ALL species for this user
+      // Send digest with ALL hot bite species for this user
       const locationName = userLocations.get(userId) || 'your location';
       const digestSent = await sendDailyDigestEmail(userId, alerts, locationName);
 

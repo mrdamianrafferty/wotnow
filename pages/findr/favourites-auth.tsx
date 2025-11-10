@@ -259,7 +259,6 @@ export default function ModernFavouritesPage() {
             <FavouritesDashboard
               favourites={favourites}
               onToggleFavourite={handleRemoveSpecies}
-              onToggleNotifications={handleToggleNotifications}
               onCardClick={handleCardClick}
               onAddMore={handleAddMore}
             />
