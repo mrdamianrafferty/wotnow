@@ -86,6 +86,7 @@
     "@turf/helpers": "^7.2.0",
     "@turf/nearest-point-on-line": "^7.2.0",
     "axios": "^1.12.2",
+    "browser-image-compression": "^2.0.2",
     "cally": "^0.8.0",
     "cheerio": "^1.1.2",
     "date-fns": "^4.1.0",

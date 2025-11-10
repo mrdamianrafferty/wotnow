@@ -27,6 +27,7 @@ import type { QuickLogParams } from '@/hooks/useCatchLogger';
 import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 import { getCurrentPosition, GeolocationException } from '@/lib/capacitor/geolocation';
 import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
+import imageCompression from 'browser-image-compression';
 
 // Types
 interface QuickLogModalProps {
@@ -118,6 +119,32 @@ async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
   const response = await fetch(dataUrl);
   const blob = await response.blob();
   return new File([blob], filename, { type: blob.type });
+}
+
+/**
+ * Compress image client-side while preserving EXIF data
+ * Server will extract GPS/timestamp from EXIF before stripping it
+ */
+async function compressImage(file: File): Promise<File> {
+  try {
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 800,
+      useWebWorker: true,
+      preserveExif: true,  // Keep EXIF so server can extract GPS/time
+    };
+
+    const compressedFile = await imageCompression(file, options);
+    console.log('[QuickLogModal] Image compressed:', {
+      original: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      compressed: `${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
+      reduction: `${(((file.size - compressedFile.size) / file.size) * 100).toFixed(1)}%`
+    });
+    return compressedFile;
+  } catch (error) {
+    console.warn('[QuickLogModal] Image compression failed, using original:', error);
+    return file; // Fallback to original if compression fails
+  }
 }
 
 // Main component
@@ -310,7 +337,10 @@ export function QuickLogModal({
       // Convert data URL to File object
       const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
 
-      setPhotoFile(file);
+      // Compress image client-side (preserves EXIF for server extraction)
+      const compressedFile = await compressImage(file);
+
+      setPhotoFile(compressedFile);
       setPhotoPreview(photo.dataUrl); // Use data URL directly for preview
 
       // Extract EXIF data
@@ -367,7 +397,10 @@ export function QuickLogModal({
       // Convert data URL to File object
       const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
 
-      setPhotoFile(file);
+      // Compress image client-side (preserves EXIF for server extraction)
+      const compressedFile = await compressImage(file);
+
+      setPhotoFile(compressedFile);
       setPhotoPreview(photo.dataUrl);
 
       // Extract EXIF data
