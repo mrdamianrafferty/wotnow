@@ -9,8 +9,8 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { 
-  Target, ThumbsUp, Clock, Heart, Bell, BellOff, 
+import {
+  Target, ThumbsUp, Clock, Heart,
   ChevronDown, ChevronUp
 } from 'lucide-react';
 import { ConfidenceRing } from './shared/ConfidenceRing';
@@ -20,7 +20,6 @@ import type { TrackedSpecies } from '../../types/favourites';
 interface StatusCardBaseProps {
   species: TrackedSpecies;
   onToggleFavourite?: (speciesId: string) => void;
-  onToggleNotifications?: (speciesId: string) => void;
   onCardClick?: (speciesId: string) => void;
   className?: string;
 }
@@ -32,7 +31,6 @@ interface StatusCardBaseProps {
 export function ActiveSpeciesCard({
   species,
   onToggleFavourite,
-  onToggleNotifications,
   onCardClick,
   className = ''
 }: StatusCardBaseProps) {
@@ -109,20 +107,9 @@ export function ActiveSpeciesCard({
               className="btn btn-circle btn-sm btn-ghost"
               aria-label="Toggle favourite"
             >
-              <Heart 
+              <Heart
                 className={`w-4 h-4 ${species.isFavourite ? 'fill-error text-error' : 'text-base-content/50'}`}
               />
-            </button>
-            <button
-              onClick={() => onToggleNotifications?.(species.species.id)}
-              className="btn btn-circle btn-sm btn-ghost"
-              aria-label="Toggle notifications"
-            >
-              {species.notificationsEnabled ? (
-                <Bell className="w-4 h-4 text-primary" />
-              ) : (
-                <BellOff className="w-4 h-4 text-base-content/50" />
-              )}
             </button>
           </div>
         </div>
@@ -183,7 +170,6 @@ export function ActiveSpeciesCard({
 export function GoodSpeciesCard({
   species,
   onToggleFavourite,
-  onToggleNotifications,
   onCardClick,
   className = ''
 }: StatusCardBaseProps) {
@@ -251,19 +237,9 @@ export function GoodSpeciesCard({
               onClick={() => onToggleFavourite?.(species.species.id)}
               className="btn btn-circle btn-xs btn-ghost"
             >
-              <Heart 
+              <Heart
                 className={`w-3 h-3 ${species.isFavourite ? 'fill-error text-error' : 'text-base-content/50'}`}
               />
-            </button>
-            <button
-              onClick={() => onToggleNotifications?.(species.species.id)}
-              className="btn btn-circle btn-xs btn-ghost"
-            >
-              {species.notificationsEnabled ? (
-                <Bell className="w-3 h-3 text-primary" />
-              ) : (
-                <BellOff className="w-3 h-3 text-base-content/50" />
-              )}
             </button>
           </div>
         </div>

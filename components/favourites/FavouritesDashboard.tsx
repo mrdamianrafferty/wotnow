@@ -16,7 +16,6 @@ import { getConfidenceBand, STATUS_CONFIGS } from '../../types/favourites';
 interface FavouritesDashboardProps {
   favourites: TrackedSpecies[];
   onToggleFavourite: (speciesId: string) => void;
-  onToggleNotifications: (speciesId: string) => void;
   onCardClick: (speciesId: string) => void;
   onAddMore: () => void;
   onSettings?: () => void;
@@ -27,7 +26,6 @@ interface FavouritesDashboardProps {
 export function FavouritesDashboard({
   favourites,
   onToggleFavourite,
-  onToggleNotifications,
   onCardClick,
   onAddMore,
   onSettings,
@@ -156,7 +154,6 @@ export function FavouritesDashboard({
                   key={species.species.id}
                   species={species}
                   onToggleFavourite={onToggleFavourite}
-                  onToggleNotifications={onToggleNotifications}
                   onCardClick={onCardClick}
                 />
               ))}
@@ -198,7 +195,6 @@ export function FavouritesDashboard({
                   key={species.species.id}
                   species={species}
                   onToggleFavourite={onToggleFavourite}
-                  onToggleNotifications={onToggleNotifications}
                   onCardClick={onCardClick}
                 />
               ))}
