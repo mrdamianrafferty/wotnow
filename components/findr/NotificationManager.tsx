@@ -13,11 +13,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, BellOff, Trash2, Clock, Fish, AlertCircle, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, BellOff, Trash2, Clock, Fish, AlertCircle } from 'lucide-react';
 import { cancelLocalNotification } from '@/lib/capacitor/notifications';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { toast } from '@/lib/ui/toast';
-import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 
 export interface ScheduledNotification {
   id: number;
@@ -104,8 +103,6 @@ export function getNotificationForSpecies(speciesId: string): number | null {
 export function NotificationManager() {
   const [notifications, setNotifications] = useState<ScheduledNotification[]>([]);
   const [cancelingId, setCancelingId] = useState<number | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const { preferences, updatePreferences } = useNotificationPreferences();
 
   // Load notifications on mount and set up refresh interval
   useEffect(() => {
@@ -185,102 +182,16 @@ export function NotificationManager() {
 
   if (notifications.length === 0) {
     return (
-      <div className="space-y-4">
-        {/* Settings Section - Always Visible */}
-        <div className="card bg-base-100 border border-base-300 p-4">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center justify-between w-full"
-          >
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Settings size={20} />
-              <TranslatedText text="Notification Settings" />
+      <div className="card bg-base-100 border border-base-300 p-6">
+        <div className="flex flex-col items-center justify-center text-center space-y-3 py-4">
+          <BellOff size={48} className="text-base-content/30" />
+          <div>
+            <h3 className="font-semibold text-lg mb-1">
+              <TranslatedText text="No Active Alerts" />
             </h3>
-            {showSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
-
-          {showSettings && (
-            <div className="mt-4 space-y-4 pt-4 border-t border-base-300">
-              {/* Master Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-base-content">
-                    <TranslatedText text="Enable Notifications" />
-                  </h4>
-                  <p className="text-sm text-base-content/60">
-                    <TranslatedText text="Master switch for all fishing alerts" />
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="toggle toggle-primary"
-                  checked={preferences.enabled}
-                  onChange={(e) => updatePreferences({ enabled: e.target.checked })}
-                />
-              </div>
-
-              {/* Confidence Threshold Slider */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium text-base-content">
-                    <TranslatedText text="Minimum Confidence" />
-                  </h4>
-                  <span className="badge badge-primary">{preferences.minConfidence}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="70"
-                  max="100"
-                  step="5"
-                  value={preferences.minConfidence}
-                  onChange={(e) => updatePreferences({ minConfidence: parseInt(e.target.value, 10) })}
-                  className="range range-primary range-sm"
-                  disabled={!preferences.enabled}
-                />
-                <div className="flex justify-between text-xs text-base-content/60">
-                  <span>70%</span>
-                  <span>85%</span>
-                  <span>100%</span>
-                </div>
-                <p className="text-xs text-base-content/60">
-                  <TranslatedText text="Only send alerts when confidence is at or above this threshold" />
-                </p>
-              </div>
-
-              {/* Peak Reminders Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-base-content">
-                    <TranslatedText text="Peak Conditions Reminders" />
-                  </h4>
-                  <p className="text-sm text-base-content/60">
-                    <TranslatedText text="Get reminders for good (70-84%) fishing conditions" />
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  className="toggle toggle-warning"
-                  checked={preferences.peakRemindersEnabled}
-                  onChange={(e) => updatePreferences({ peakRemindersEnabled: e.target.checked })}
-                  disabled={!preferences.enabled}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Empty State */}
-        <div className="card bg-base-100 border border-base-300 p-6">
-          <div className="flex flex-col items-center justify-center text-center space-y-3 py-4">
-            <BellOff size={48} className="text-base-content/30" />
-            <div>
-              <h3 className="font-semibold text-lg mb-1">
-                <TranslatedText text="No Active Alerts" />
-              </h3>
-              <p className="text-sm text-base-content/60">
-                <TranslatedText text="Set fishing alerts from prediction cards to get notified about hot bites and peak conditions." />
-              </p>
-            </div>
+            <p className="text-sm text-base-content/60">
+              <TranslatedText text="Set fishing alerts from prediction cards to get notified about hot bites and peak conditions." />
+            </p>
           </div>
         </div>
       </div>
@@ -289,94 +200,11 @@ export function NotificationManager() {
 
   return (
     <div className="space-y-4">
-      {/* Settings Section */}
-      <div className="card bg-base-100 border border-base-300 p-4">
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="flex items-center justify-between w-full"
-        >
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Settings size={20} />
-            <TranslatedText text="Notification Settings" />
-          </h3>
-          {showSettings ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </button>
-
-        {showSettings && (
-          <div className="mt-4 space-y-4 pt-4 border-t border-base-300">
-            {/* Master Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-base-content">
-                  <TranslatedText text="Enable Notifications" />
-                </h4>
-                <p className="text-sm text-base-content/60">
-                  <TranslatedText text="Master switch for all fishing alerts" />
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={preferences.enabled}
-                onChange={(e) => updatePreferences({ enabled: e.target.checked })}
-              />
-            </div>
-
-            {/* Confidence Threshold Slider */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-base-content">
-                  <TranslatedText text="Minimum Confidence" />
-                </h4>
-                <span className="badge badge-primary">{preferences.minConfidence}%</span>
-              </div>
-              <input
-                type="range"
-                min="70"
-                max="100"
-                step="5"
-                value={preferences.minConfidence}
-                onChange={(e) => updatePreferences({ minConfidence: parseInt(e.target.value, 10) })}
-                className="range range-primary range-sm"
-                disabled={!preferences.enabled}
-              />
-              <div className="flex justify-between text-xs text-base-content/60">
-                <span>70%</span>
-                <span>85%</span>
-                <span>100%</span>
-              </div>
-              <p className="text-xs text-base-content/60">
-                <TranslatedText text="Only send alerts when confidence is at or above this threshold" />
-              </p>
-            </div>
-
-            {/* Peak Reminders Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-base-content">
-                  <TranslatedText text="Peak Conditions Reminders" />
-                </h4>
-                <p className="text-sm text-base-content/60">
-                  <TranslatedText text="Get reminders for good (70-84%) fishing conditions" />
-                </p>
-              </div>
-              <input
-                type="checkbox"
-                className="toggle toggle-warning"
-                checked={preferences.peakRemindersEnabled}
-                onChange={(e) => updatePreferences({ peakRemindersEnabled: e.target.checked })}
-                disabled={!preferences.enabled}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Bell size={20} />
-          <TranslatedText text="Active Alerts" />
+          <TranslatedText text="Fishing Alerts" />
           <span className="badge badge-sm badge-primary">{notifications.length}</span>
         </h3>
         {notifications.length > 1 && (
