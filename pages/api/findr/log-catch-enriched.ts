@@ -216,20 +216,28 @@ export default async function handler(
 
       // Step 2: Process photo - strip EXIF, optimize for mobile, auto-rotate
       // Lazy-load Sharp only when processing photos (avoids crashes when no photo is uploaded)
-      const sharp = (await import('sharp')).default;
-      const processedBuffer = await sharp(originalBuffer)
-        .rotate() // Auto-rotate based on EXIF orientation
-        .resize(800, 800, {
-          fit: 'inside', // Maintain aspect ratio, max 800px on longest side
-          withoutEnlargement: true, // Don't upscale smaller images
-        })
-        .jpeg({
-          quality: 85, // High quality, good compression
-          progressive: true, // Progressive JPEG for faster loading
-          mozjpeg: true, // Use mozjpeg for better compression
-        })
-        .toBuffer();
-      // Note: Re-encoding to JPEG automatically strips ALL EXIF data
+      // If Sharp fails to load, fallback to using original buffer
+      let processedBuffer: Buffer = originalBuffer;
+      try {
+        const sharp = (await import('sharp')).default;
+        processedBuffer = await sharp(originalBuffer)
+          .rotate() // Auto-rotate based on EXIF orientation
+          .resize(800, 800, {
+            fit: 'inside', // Maintain aspect ratio, max 800px on longest side
+            withoutEnlargement: true, // Don't upscale smaller images
+          })
+          .jpeg({
+            quality: 85, // High quality, good compression
+            progressive: true, // Progressive JPEG for faster loading
+            mozjpeg: true, // Use mozjpeg for better compression
+          })
+          .toBuffer();
+        // Note: Re-encoding to JPEG automatically strips ALL EXIF data
+      } catch (sharpError) {
+        console.warn('[log-catch-enriched] Sharp processing failed, using original photo:', sharpError);
+        warnings.push('Photo uploaded without optimization (image processing unavailable)');
+        // Use original buffer as fallback
+      }
 
       const safeUserId = userId || 'anonymous';
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
