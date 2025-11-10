@@ -18,6 +18,19 @@ export interface DailyDigestData {
   date: string;
 }
 
+export interface TieredEmailSpeciesAlert extends EmailSpeciesAlert {
+  tier: 'hot_bites' | 'good_conditions' | 'status_updates';
+}
+
+export interface TieredDailyDigestData {
+  userName?: string;
+  hotBites: TieredEmailSpeciesAlert[];
+  goodConditions: TieredEmailSpeciesAlert[];
+  statusUpdates: TieredEmailSpeciesAlert[];
+  date: string;
+  locationName: string;
+}
+
 /**
  * Generate HTML email template for daily fishing digest
  */
@@ -190,4 +203,232 @@ function getConfidenceColor(confidence: number): string {
   if (confidence >= 75) return '#0ea5e9'; // blue
   if (confidence >= 65) return '#f59e0b'; // amber
   return '#6b7280'; // gray
+}
+
+/**
+ * Generate tiered daily digest HTML with species grouped by confidence bands
+ * HOT BITES (85%+), GOOD CONDITIONS (60-84%), STATUS UPDATES (<60%)
+ */
+export function generateTieredDailyDigestHTML(data: TieredDailyDigestData): string {
+  const { userName, hotBites, goodConditions, statusUpdates, date, locationName } = data;
+  const greeting = userName ? `Hi ${userName}` : 'Hello';
+
+  const totalSpecies = hotBites.length + goodConditions.length + statusUpdates.length;
+
+  // Helper to render species card
+  const renderSpeciesCard = (alert: TieredEmailSpeciesAlert, bgColor: string) => `
+    <tr>
+      <td style="padding: 0 24px 12px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${bgColor}; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="padding: 12px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="vertical-align: top; width: 50px;">
+                    ${alert.imageUrl ? `
+                    <img src="${alert.imageUrl}" alt="${alert.speciesName}" width="40" height="40" style="border-radius: 6px; display: block;" />
+                    ` : `
+                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                      🐟
+                    </div>
+                    `}
+                  </td>
+                  <td style="vertical-align: top; padding-left: 12px;">
+                    <h4 style="margin: 0 0 2px; font-size: 16px; font-weight: 600; color: #111827;">
+                      ${alert.speciesName}
+                    </h4>
+                    <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                      ${alert.rectangleCode || ''}
+                    </p>
+                  </td>
+                  <td style="vertical-align: top; text-align: right;">
+                    <div style="display: inline-block; background-color: ${getConfidenceColor(alert.confidence)}; color: #ffffff; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;">
+                      ${alert.confidence}%
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Findr - Daily Fishing Digest</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 32px 24px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                🎣 Daily Fishing Digest
+              </h1>
+              <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
+                ${date} • ${locationName}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding: 24px 24px 16px;">
+              <p style="margin: 0; font-size: 16px; color: #374151; line-height: 1.5;">
+                ${greeting},
+              </p>
+              <p style="margin: 12px 0 0; font-size: 16px; color: #374151; line-height: 1.5;">
+                Here's your fishing forecast for <strong>${totalSpecies} species</strong>:
+              </p>
+            </td>
+          </tr>
+
+          ${hotBites.length > 0 ? `
+          <!-- Hot Bites Section (85%+) -->
+          <tr>
+            <td style="padding: 8px 24px 12px;">
+              <div style="background-color: #10b981; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                🔥 HOT BITES (${hotBites.length}) - Go Fish Now!
+              </div>
+            </td>
+          </tr>
+          ${hotBites.map(alert => renderSpeciesCard(alert, '#f0fdf4')).join('')}
+          ` : ''}
+
+          ${goodConditions.length > 0 ? `
+          <!-- Good Conditions Section (60-84%) -->
+          <tr>
+            <td style="padding: 16px 24px 12px;">
+              <div style="background-color: #0ea5e9; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                👍 GOOD CONDITIONS (${goodConditions.length}) - Worth a Trip
+              </div>
+            </td>
+          </tr>
+          ${goodConditions.map(alert => renderSpeciesCard(alert, '#f0f9ff')).join('')}
+          ` : ''}
+
+          ${statusUpdates.length > 0 ? `
+          <!-- Status Updates Section (<60%) -->
+          <tr>
+            <td style="padding: 16px 24px 12px;">
+              <div style="background-color: #6b7280; color: #ffffff; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                📊 STATUS UPDATES (${statusUpdates.length})
+              </div>
+            </td>
+          </tr>
+          ${statusUpdates.map(alert => renderSpeciesCard(alert, '#f9fafb')).join('')}
+          ` : ''}
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 24px 24px 32px;" align="center">
+              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
+                View Full Forecast →
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-align: center;">
+                You're receiving this daily digest because you enabled email notifications.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
+                <a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage notification preferences</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Footer Text -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 16px;">
+          <tr>
+            <td style="text-align: center; padding: 16px;">
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                © 2025 Findr • <a href="https://fishfindr.eu" style="color: #0ea5e9; text-decoration: none;">fishfindr.eu</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Generate plain text version of tiered daily digest email
+ */
+export function generateTieredDailyDigestText(data: TieredDailyDigestData): string {
+  const { userName, hotBites, goodConditions, statusUpdates, date, locationName } = data;
+  const greeting = userName ? `Hi ${userName}` : 'Hello';
+  const totalSpecies = hotBites.length + goodConditions.length + statusUpdates.length;
+
+  let text = `
+FINDR DAILY FISHING DIGEST
+${date} • ${locationName}
+
+${greeting},
+
+Here's your fishing forecast for ${totalSpecies} species:
+`;
+
+  if (hotBites.length > 0) {
+    text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 HOT BITES (${hotBites.length}) - Go Fish Now!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    hotBites.forEach(alert => {
+      text += `\n🐟 ${alert.speciesName}
+📍 ${alert.rectangleCode || locationName}
+📊 ${alert.confidence}% Confidence\n`;
+    });
+  }
+
+  if (goodConditions.length > 0) {
+    text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👍 GOOD CONDITIONS (${goodConditions.length}) - Worth a Trip
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    goodConditions.forEach(alert => {
+      text += `\n🐟 ${alert.speciesName}
+📍 ${alert.rectangleCode || locationName}
+📊 ${alert.confidence}% Confidence\n`;
+    });
+  }
+
+  if (statusUpdates.length > 0) {
+    text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 STATUS UPDATES (${statusUpdates.length})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    statusUpdates.forEach(alert => {
+      text += `\n🐟 ${alert.speciesName}
+📍 ${alert.rectangleCode || locationName}
+📊 ${alert.confidence}% Confidence\n`;
+    });
+  }
+
+  text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+View full forecast: https://fishfindr.eu/findr/predictions
+
+---
+You're receiving this daily digest because you enabled email notifications.
+Manage notification preferences: https://fishfindr.eu/findr/favourites
+
+© 2025 Findr • fishfindr.eu
+  `;
+
+  return text.trim();
 }
