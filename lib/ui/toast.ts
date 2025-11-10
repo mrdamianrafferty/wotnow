@@ -52,6 +52,9 @@ function initWebToastContainer(): void {
     flex-direction: column !important;
     gap: 0.5rem !important;
     align-items: center !important;
+    transform: translateZ(1000px) !important;
+    will-change: transform !important;
+    isolation: isolate !important;
   `;
   document.body.appendChild(toastContainer);
 }
@@ -85,8 +88,15 @@ function showWebToast(options: ToastOptions): void {
     info: 'ℹ',
   };
 
+  toast.style.cssText = `
+    position: relative !important;
+    z-index: 2147483647 !important;
+    transform: translateZ(999px) !important;
+    will-change: transform !important;
+  `;
+
   toast.innerHTML = `
-    <div class="${typeStyles[type]} rounded-lg shadow-lg px-4 py-3 max-w-md flex items-center gap-2 animate-fade-in">
+    <div class="${typeStyles[type]} rounded-lg shadow-lg px-4 py-3 max-w-md flex items-center gap-2 animate-fade-in" style="position: relative; z-index: 2147483647;">
       <span class="text-lg font-bold">${typeIcons[type]}</span>
       <span class="flex-1">${escapeHtml(message)}</span>
     </div>
