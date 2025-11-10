@@ -5,7 +5,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable, { type File as FormidableFile } from 'formidable';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
-import sharp from 'sharp';
 import { extractExifGPS, enrichCatchData } from '@/lib/findr/enrichCatchData';
 import { calculateDataQualityScore, calculateCatchPoints } from '@/lib/findr/dataQuality';
 import type {
@@ -218,6 +217,8 @@ export default async function handler(
       }
 
       // Step 2: Process photo - strip EXIF, optimize for mobile, auto-rotate
+      // Lazy-load Sharp only when processing photos (avoids crashes when no photo is uploaded)
+      const sharp = (await import('sharp')).default;
       const processedBuffer = await sharp(originalBuffer)
         .rotate() // Auto-rotate based on EXIF orientation
         .resize(800, 800, {
