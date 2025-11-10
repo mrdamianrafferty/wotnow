@@ -341,16 +341,10 @@ export function QuickLogModal({
           });
       }
 
+      // Skip automatic AI - let user choose to use AI or select manually
+      // Auto-advance to species selection step
       if (candidateSpecies.length > 0) {
-        const context = {
-          location: {
-            coords: exif?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
-            rectangleCode: lookupRectangleCode,
-            rectangleLabel: location?.rectangleLabel,
-          }
-        };
-
-        void identify(file, candidateSpecies, context);
+        setCurrentStep('species-selection');
       }
     } catch (err) {
       if (err instanceof CameraException) {
@@ -363,7 +357,7 @@ export function QuickLogModal({
         console.error('[QuickLogModal] Unexpected camera error:', err);
       }
     }
-  }, [regionalSpecies, identify, location, lookupRectangleCode]);
+  }, [regionalSpecies]);
 
   // Handle photo from gallery
   const handleGallerySelect = useCallback(async () => {
@@ -404,16 +398,10 @@ export function QuickLogModal({
           });
       }
 
+      // Skip automatic AI - let user choose to use AI or select manually
+      // Auto-advance to species selection step
       if (candidateSpecies.length > 0) {
-        const context = {
-          location: {
-            coords: exif?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
-            rectangleCode: lookupRectangleCode,
-            rectangleLabel: location?.rectangleLabel,
-          }
-        };
-
-        void identify(file, candidateSpecies, context);
+        setCurrentStep('species-selection');
       }
     } catch (err) {
       if (err instanceof CameraException) {
@@ -426,7 +414,7 @@ export function QuickLogModal({
         console.error('[QuickLogModal] Unexpected gallery error:', err);
       }
     }
-  }, [regionalSpecies, identify, location, lookupRectangleCode]);
+  }, [regionalSpecies]);
 
   // Skip photo and go directly to species selection
   const handleSkipPhoto = useCallback(() => {
@@ -1072,6 +1060,26 @@ export function QuickLogModal({
                     <p className="text-xs opacity-50 mt-1">
                       <TranslatedText text="AI uncertain - please select manually" />
                     </p>
+                  )}
+
+{/* Try AI ID Button - Only show if photo exists and AI hasn't been used yet */}
+                  {photoFile && !isIdentifying && !aiResult && regionalSpecies.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const context = {
+                          location: {
+                            coords: exifData?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
+                            rectangleCode: lookupRectangleCode,
+                            rectangleLabel: location?.rectangleLabel,
+                          }
+                        };
+                        void identify(photoFile, regionalSpecies, context);
+                      }}
+                      className="btn btn-outline btn-sm gap-2 mt-3"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <TranslatedText text="Not sure? Try AI ID" />
+                    </button>
                   )}
                 </div>
 
