@@ -43,9 +43,9 @@ function initWebToastContainer(): void {
   toastContainer.id = 'web-toast-container';
   toastContainer.style.cssText = `
     position: fixed !important;
-    bottom: 7rem !important;
-    right: 1rem !important;
-    left: 1rem !important;
+    top: 1rem !important;
+    right: 0 !important;
+    left: 0 !important;
     z-index: 2147483647 !important;
     pointer-events: none !important;
     display: flex !important;
@@ -55,8 +55,18 @@ function initWebToastContainer(): void {
     transform: translateZ(1000px) !important;
     will-change: transform !important;
     isolation: isolate !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 32rem !important;
+    padding: 0 1rem !important;
   `;
-  document.body.appendChild(toastContainer);
+
+  // Ensure it's the last child of body for maximum stacking priority
+  if (document.body.lastChild) {
+    document.body.appendChild(toastContainer);
+  } else {
+    document.body.appendChild(toastContainer);
+  }
 }
 
 /**
@@ -96,7 +106,7 @@ function showWebToast(options: ToastOptions): void {
   `;
 
   toast.innerHTML = `
-    <div class="${typeStyles[type]} rounded-lg shadow-lg px-4 py-3 max-w-md flex items-center gap-2 animate-fade-in" style="position: relative; z-index: 2147483647;">
+    <div class="${typeStyles[type]} rounded-lg px-4 py-3 max-w-md flex items-center gap-2 animate-fade-in" style="position: relative; z-index: 2147483647; box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
       <span class="text-lg font-bold">${typeIcons[type]}</span>
       <span class="flex-1">${escapeHtml(message)}</span>
     </div>
