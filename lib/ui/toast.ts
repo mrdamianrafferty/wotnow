@@ -41,15 +41,17 @@ function initWebToastContainer(): void {
 
   toastContainer = document.createElement('div');
   toastContainer.id = 'web-toast-container';
-  toastContainer.className = 'fixed z-[999999] pointer-events-none';
   toastContainer.style.cssText = `
-    top: 1rem;
-    right: 1rem;
-    left: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: center;
+    position: fixed !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    left: 1rem !important;
+    z-index: 2147483647 !important;
+    pointer-events: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
   `;
   document.body.appendChild(toastContainer);
 }
