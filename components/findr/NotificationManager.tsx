@@ -13,11 +13,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, BellOff, Trash2, Clock, Fish, AlertCircle, Settings } from 'lucide-react';
+import { Bell, BellOff, Trash2, Clock, Fish, AlertCircle } from 'lucide-react';
 import { cancelLocalNotification } from '@/lib/capacitor/notifications';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { toast } from '@/lib/ui/toast';
-import Link from 'next/link';
 
 export interface ScheduledNotification {
   id: number;
@@ -235,12 +234,12 @@ export function NotificationManager() {
               {/* Icon */}
               <div className="flex-shrink-0">
                 {notification.type === 'hot_bite_alert' ? (
-                  <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center">
-                    <AlertCircle size={20} className="text-error" />
+                  <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+                    <AlertCircle size={24} className="text-error" />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
-                    <Fish size={20} className="text-warning" />
+                  <div className="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
+                    <Fish size={24} className="text-warning" />
                   </div>
                 )}
               </div>
@@ -271,24 +270,17 @@ export function NotificationManager() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-1 flex-shrink-0">
-                {/* Edit Settings Button */}
-                {notification.speciesId && (
-                  <Link href="/findr/favourites" className="btn btn-sm btn-ghost btn-circle flex-shrink-0" title="Edit notification settings">
-                    <Settings size={16} />
-                  </Link>
-                )}
-
-                {/* Cancel Button */}
+                {/* Cancel Button - Made larger and more prominent */}
                 <button
                   onClick={() => handleCancel(notification)}
-                  className="btn btn-sm btn-ghost btn-circle text-error flex-shrink-0"
+                  className="btn btn-sm btn-ghost text-error flex-shrink-0 min-w-[44px] min-h-[44px]"
                   disabled={cancelingId === notification.id}
                   title="Cancel alert"
                 >
                   {cancelingId === notification.id ? (
-                    <span className="loading loading-spinner loading-xs" />
+                    <span className="loading loading-spinner loading-sm" />
                   ) : (
-                    <Trash2 size={16} />
+                    <Trash2 size={20} />
                   )}
                 </button>
               </div>

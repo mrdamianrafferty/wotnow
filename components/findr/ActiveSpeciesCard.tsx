@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, BellOff, BellPlus } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
@@ -98,6 +99,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   notificationsEnabled: _notificationsEnabled,
   onSetupNotifications: _onSetupNotifications,
 }) => {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [notificationId, setNotificationId] = useState<number | null>(null);
 
@@ -128,6 +130,8 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         untrackNotification(notificationId);
         setNotificationId(null);
         console.log('[ActiveSpeciesCard] Alert cancelled:', notificationId);
+        // Redirect to notifications page
+        await router.push('/findr/notifications');
         return;
       }
 
@@ -169,6 +173,9 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
       console.log('[ActiveSpeciesCard] Alert scheduled:', newNotificationId);
       setNotificationId(newNotificationId);
+
+      // Redirect to notifications page
+      await router.push('/findr/notifications');
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[ActiveSpeciesCard] Notification error:', error.type, error.message);
