@@ -8,6 +8,8 @@ import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Sh
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { toast } from '@/lib/ui/toast';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -94,6 +96,7 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [notificationId, setNotificationId] = useState<number | null>(null);
+  const { shouldNotify, preferences } = useNotificationPreferences();
 
   // Fetch real tide data for location
   const tideInfo = useTideData(location ?? null);
@@ -130,6 +133,21 @@ Check predictions at fishfindr.eu`;
         untrackNotification(notificationId);
         setNotificationId(null);
         console.log('[GoodSpeciesCard] Reminder cancelled:', notificationId);
+        await toast.success('Reminder cancelled');
+        return;
+      }
+
+      // Check user preferences before scheduling
+      if (!shouldNotify(species.confidence)) {
+        if (!preferences.enabled) {
+          await toast.warning('Notifications are disabled. Enable them in notification settings.');
+        } else if (!preferences.peakRemindersEnabled) {
+          await toast.warning('Peak conditions reminders are disabled. Enable them in notification settings.');
+        } else if (species.confidence < preferences.minConfidence) {
+          await toast.warning(`Confidence (${species.confidence}%) is below your threshold (${preferences.minConfidence}%). Lower your threshold in notification settings.`);
+        } else {
+          await toast.warning('Peak conditions reminders are disabled in your notification settings.');
+        }
         return;
       }
 
@@ -139,6 +157,7 @@ Check predictions at fishfindr.eu`;
         const newStatus = await requestPermissions();
         if (newStatus !== 'granted') {
           console.warn('[GoodSpeciesCard] Notification permission denied');
+          await toast.error('Notification permission denied. Please enable notifications in your device settings.');
           return;
         }
       }
@@ -186,6 +205,7 @@ Check predictions at fishfindr.eu`;
 
       console.log('[GoodSpeciesCard] Reminder scheduled:', newNotificationId, 'for', reminderTime);
       setNotificationId(newNotificationId);
+      await toast.success('Peak conditions reminder set!');
     } catch (error) {
       if (error instanceof NotificationException) {
         console.error('[GoodSpeciesCard] Notification error:', error.type, error.message);

@@ -7,6 +7,8 @@ import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, B
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { toast } from '@/lib/ui/toast';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -102,6 +104,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [notificationId, setNotificationId] = useState<number | null>(null);
+  const { shouldNotify, preferences } = useNotificationPreferences();
 
   const nextPeakHours = getNextPeakTime(species.forecast);
 
@@ -130,7 +133,22 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         untrackNotification(notificationId);
         setNotificationId(null);
         console.log('[ActiveSpeciesCard] Alert cancelled:', notificationId);
+        await toast.success('Alert cancelled');
         // Redirect to notifications page
+        await router.push('/findr/notifications');
+        return;
+      }
+
+      // Check user preferences before scheduling
+      if (!shouldNotify(species.confidence)) {
+        if (!preferences.enabled) {
+          await toast.warning('Notifications are disabled. Enable them in notification settings.');
+        } else if (species.confidence < preferences.minConfidence) {
+          await toast.warning(`Confidence (${species.confidence}%) is below your threshold (${preferences.minConfidence}%). Lower your threshold in notification settings.`);
+        } else {
+          await toast.warning('Hot bite alerts are disabled in your notification settings.');
+        }
+        // Still navigate to notifications page so user can adjust settings
         await router.push('/findr/notifications');
         return;
       }
@@ -141,6 +159,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
         const newStatus = await requestPermissions();
         if (newStatus !== 'granted') {
           console.warn('[ActiveSpeciesCard] Notification permission denied');
+          await toast.error('Notification permission denied. Please enable notifications in your device settings.');
           return;
         }
       }
@@ -173,6 +192,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
 
       console.log('[ActiveSpeciesCard] Alert scheduled:', newNotificationId);
       setNotificationId(newNotificationId);
+      await toast.success('Hot bite alert set!');
 
       // Redirect to notifications page
       await router.push('/findr/notifications');
