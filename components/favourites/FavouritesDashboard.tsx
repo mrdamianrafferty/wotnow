@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Settings, Plus } from 'lucide-react';
 import { ActiveSpeciesCard, GoodSpeciesCard, WaitingSpeciesCard } from './StatusCards';
 import { LoadingSpinner } from './shared/LoadingSpinner';
+import { NotificationBanner } from '../findr/NotificationBanner';
 import type { TrackedSpecies } from '../../types/favourites';
 import { getConfidenceBand, STATUS_CONFIGS } from '../../types/favourites';
 
@@ -116,7 +117,12 @@ export function FavouritesDashboard({
           </button>
         </div>
       </div>
-      
+
+      {/* Notification Banner */}
+      {onSettings && favourites.length > 0 && (
+        <NotificationBanner onManageSettings={onSettings} />
+      )}
+
       {/* Active Now Section (85%+) */}
       {activeCount > 0 && (
         <section className="space-y-3">
