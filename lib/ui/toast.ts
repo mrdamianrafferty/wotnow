@@ -43,7 +43,7 @@ function initWebToastContainer(): void {
   toastContainer.id = 'web-toast-container';
   toastContainer.style.cssText = `
     position: fixed !important;
-    top: 1rem !important;
+    bottom: 7rem !important;
     right: 1rem !important;
     left: 1rem !important;
     z-index: 2147483647 !important;
