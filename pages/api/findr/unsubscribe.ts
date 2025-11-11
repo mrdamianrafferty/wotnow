@@ -24,6 +24,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 interface UnsubscribeTokenPayload {
   userId: string;
   type: 'unsubscribe';
+  [key: string]: unknown;
 }
 
 /**
