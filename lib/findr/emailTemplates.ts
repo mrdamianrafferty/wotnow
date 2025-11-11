@@ -435,3 +435,229 @@ Manage notification preferences: https://fishfindr.eu/findr/favourites${unsubscr
 
   return text.trim();
 }
+
+/**
+ * Weekly Forecast Email Types
+ */
+export interface WeeklyForecastDay {
+  date: string;         // e.g., "Mon 15"
+  confidence: number;   // 0-100
+}
+
+export interface WeeklyForecastSpecies {
+  speciesName: string;
+  speciesCode: string;
+  imageUrl: string;     // Full URL to species image
+  forecast: WeeklyForecastDay[];  // 7 days
+  peakDay: string;      // e.g., "Wednesday" - best day of the week
+  peakConfidence: number;
+}
+
+export interface WeeklyForecastData {
+  userName?: string;
+  species: WeeklyForecastSpecies[];
+  weekStart: string;    // e.g., "Week of January 15, 2025"
+  locationName: string;
+  unsubscribeUrl?: string;
+}
+
+/**
+ * Generate HTML version of weekly forecast email with species images and 7-day charts
+ */
+export function generateWeeklyForecastHTML(data: WeeklyForecastData): string {
+  const { userName, species, weekStart, locationName, unsubscribeUrl } = data;
+  const greeting = userName ? `Hi ${userName}` : 'Hello';
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Weekly Fishing Forecast</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <!-- Main Container -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 24px 0;">
+    <tr>
+      <td align="center">
+        <!-- Email Content -->
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); padding: 32px 24px; text-align: center;">
+              <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; color: #ffffff;">
+                📅 Your Weekly Fishing Forecast
+              </h1>
+              <p style="margin: 0; font-size: 16px; color: #e0f2fe;">
+                ${weekStart} • ${locationName}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Greeting -->
+          <tr>
+            <td style="padding: 24px 24px 16px;">
+              <p style="margin: 0; font-size: 16px; color: #374151;">
+                ${greeting},
+              </p>
+              <p style="margin: 12px 0 0; font-size: 16px; color: #374151;">
+                Plan your week with confidence forecasts for your ${species.length} favourite species:
+              </p>
+            </td>
+          </tr>
+
+          ${species.map(s => `
+          <!-- Species Card: ${s.speciesName} -->
+          <tr>
+            <td style="padding: 0 24px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                <tr>
+                  <td style="padding: 16px;">
+                    <!-- Species Header with Image -->
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="80" valign="top">
+                          <img src="https://fishfindr.eu${s.imageUrl}" alt="${s.speciesName}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: block;" />
+                        </td>
+                        <td style="padding-left: 16px;" valign="top">
+                          <h3 style="margin: 0 0 4px; font-size: 18px; font-weight: 600; color: #111827;">
+                            ${s.speciesName}
+                          </h3>
+                          <p style="margin: 0 0 8px; font-size: 14px; color: #6b7280;">
+                            Best day: <strong style="color: #0ea5e9;">${s.peakDay}</strong> (${s.peakConfidence}% confidence)
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- 7-Day Forecast Chart -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px;">
+                      <tr>
+                        ${s.forecast.map(day => `
+                        <td style="width: 14.28%; text-align: center; vertical-align: bottom; padding: 0 2px;">
+                          <!-- Bar Chart -->
+                          <div style="background-color: #e5e7eb; border-radius: 4px 4px 0 0; height: 60px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative;">
+                            <div style="width: 100%; background: ${day.confidence >= 85 ? 'linear-gradient(180deg, #ef4444 0%, #dc2626 100%)' : day.confidence >= 60 ? 'linear-gradient(180deg, #22c55e 0%, #16a34a 100%)' : 'linear-gradient(180deg, #94a3b8 0%, #64748b 100%)'}; border-radius: 4px 4px 0 0; height: ${day.confidence}%; display: flex; align-items: center; justify-content: center;">
+                              <span style="font-size: 10px; font-weight: 600; color: #ffffff;">${day.confidence}%</span>
+                            </div>
+                          </div>
+                          <!-- Day Label -->
+                          <p style="margin: 4px 0 0; font-size: 11px; font-weight: 500; color: #6b7280;">
+                            ${day.date}
+                          </p>
+                        </td>
+                        `).join('')}
+                      </tr>
+                    </table>
+
+                    <!-- Legend -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+                      <tr>
+                        <td style="text-align: center; padding: 8px; background-color: #ffffff; border-radius: 6px;">
+                          <span style="font-size: 11px; color: #6b7280;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-radius: 3px; margin-right: 4px; vertical-align: middle;"></span>
+                            Hot Bites (85%+) •
+                            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border-radius: 3px; margin: 0 4px 0 8px; vertical-align: middle;"></span>
+                            Good (60-84%) •
+                            <span style="display: inline-block; width: 12px; height: 12px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); border-radius: 3px; margin: 0 4px 0 8px; vertical-align: middle;"></span>
+                            Moderate (<60%)
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          `).join('')}
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding: 24px 24px 32px;" align="center">
+              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
+                View Full Forecast →
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-align: center;">
+                You're receiving this weekly forecast because you enabled email notifications.
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
+                <a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage notification preferences</a>${unsubscribeUrl ? ` • <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>` : ''}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Footer Text -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 16px;">
+          <tr>
+            <td style="text-align: center; padding: 16px;">
+              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                © 2025 Findr • <a href="https://fishfindr.eu" style="color: #0ea5e9; text-decoration: none;">fishfindr.eu</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+/**
+ * Generate plain text version of weekly forecast email
+ */
+export function generateWeeklyForecastText(data: WeeklyForecastData): string {
+  const { userName, species, weekStart, locationName, unsubscribeUrl } = data;
+  const greeting = userName ? `Hi ${userName}` : 'Hello';
+
+  let text = `
+FINDR WEEKLY FISHING FORECAST
+${weekStart} • ${locationName}
+
+${greeting},
+
+Plan your week with 7-day confidence forecasts for your ${species.length} favourite species:
+
+`;
+
+  species.forEach(s => {
+    text += `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐟 ${s.speciesName}
+Best day: ${s.peakDay} (${s.peakConfidence}% confidence)
+
+7-Day Forecast:
+${s.forecast.map(day => {
+  const bar = '█'.repeat(Math.round(day.confidence / 10));
+  const confidence = day.confidence >= 85 ? '🔥' : day.confidence >= 60 ? '👍' : '📊';
+  return `${day.date}: ${bar} ${day.confidence}% ${confidence}`;
+}).join('\n')}
+
+`;
+  });
+
+  text += `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+View full forecast: https://fishfindr.eu/findr/predictions
+
+---
+You're receiving this weekly forecast because you enabled email notifications.
+Manage notification preferences: https://fishfindr.eu/findr/favourites${unsubscribeUrl ? `\nUnsubscribe: ${unsubscribeUrl}` : ''}
+
+© 2025 Findr • fishfindr.eu
+  `;
+
+  return text.trim();
+}
