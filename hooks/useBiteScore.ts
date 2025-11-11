@@ -347,17 +347,118 @@ function getSolarElevation(lat: number, _lon: number): number {
   // TODO: Replace with proper solar position calculation
   const now = new Date();
   const hour = now.getHours() + now.getMinutes() / 60;
-  
+
   // Simple approximation: peak at noon, negative at night
   const solarNoon = 12;
   const hourAngle = (hour - solarNoon) * 15; // 15 degrees per hour
-  
+
   // Very rough approximation - replace with proper calculation
   const declination = -23.44 * Math.cos((360/365) * (now.getMonth() * 30 + now.getDate() + 10));
   const elevation = Math.asin(
     Math.sin(lat * Math.PI / 180) * Math.sin(declination * Math.PI / 180) +
     Math.cos(lat * Math.PI / 180) * Math.cos(declination * Math.PI / 180) * Math.cos(hourAngle * Math.PI / 180)
   ) * 180 / Math.PI;
-  
+
   return elevation;
+}
+
+/**
+ * Generate human-readable bite windows from species parameters
+ * Returns an array of recommendation strings for displaying optimal fishing times/conditions
+ */
+export interface BiteWindow {
+  type: 'time' | 'tide' | 'temperature' | 'conditions';
+  label: string;
+  description: string;
+}
+
+export function getBiteWindows(params: SpeciesParams): BiteWindow[] {
+  const windows: BiteWindow[] = [];
+
+  // Diurnal sensitivity (time of day)
+  if (params.diurnalSensitivity) {
+    let timeDesc = '';
+    switch (params.diurnalSensitivity) {
+      case 'strong':
+        timeDesc = 'Dawn and dusk - peak feeding activity at low light';
+        break;
+      case 'moderate':
+        timeDesc = 'Early morning and late afternoon - increased activity';
+        break;
+      case 'weak':
+        timeDesc = 'Active throughout the day';
+        break;
+    }
+    windows.push({
+      type: 'time',
+      label: 'Best Time',
+      description: timeDesc
+    });
+  }
+
+  // Tide preferences
+  if (params.preferredTideStage && params.preferredTideStage.length > 0) {
+    const tideStages = params.preferredTideStage.map(stage => {
+      switch (stage) {
+        case 'early_flood': return 'early flood';
+        case 'mid_flood': return 'mid flood';
+        case 'high': return 'high tide';
+        case 'high_slack': return 'high slack';
+        case 'early_ebb': return 'early ebb';
+        case 'mid_ebb': return 'mid ebb';
+        case 'low': return 'low tide';
+        case 'low_slack': return 'low slack';
+        default: return stage;
+      }
+    });
+
+    const tideDesc = tideStages.length > 2
+      ? `Best on ${tideStages.slice(0, -1).join(', ')} and ${tideStages[tideStages.length - 1]}`
+      : tideStages.length === 2
+      ? `Optimal on ${tideStages.join(' and ')}`
+      : `Optimal on ${tideStages[0]}`;
+
+    windows.push({
+      type: 'tide',
+      label: 'Tide Stage',
+      description: tideDesc
+    });
+  }
+
+  // Temperature preferences
+  if (params.tempOptC && params.tempOptC.length === 2) {
+    const [minTemp, maxTemp] = params.tempOptC;
+    const avgTemp = Math.round((minTemp + maxTemp) / 2);
+    windows.push({
+      type: 'temperature',
+      label: 'Water Temp',
+      description: `Optimal: ${minTemp}°C - ${maxTemp}°C (avg ${avgTemp}°C)`
+    });
+  }
+
+  // Flow/current preferences
+  if (params.flowPreference) {
+    let flowDesc = '';
+    switch (params.flowPreference) {
+      case 'slack_avoid':
+        flowDesc = 'Prefers moving water - avoid slack tides';
+        break;
+      case 'gentle':
+        flowDesc = 'Best in gentle currents';
+        break;
+      case 'moderate':
+        flowDesc = 'Thrives in moderate flow';
+        break;
+      case 'strong':
+        flowDesc = 'Active in strong currents';
+        break;
+    }
+    windows.push({
+      type: 'conditions',
+      label: 'Current',
+      description: flowDesc
+    });
+  }
+
+  return windows;
 }

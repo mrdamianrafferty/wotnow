@@ -4,7 +4,7 @@ import { GuildBadge } from './GuildBadge';
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, BellOff, BellPlus } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, BellOff, BellPlus, Waves, Thermometer, Wind } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
@@ -18,6 +18,7 @@ import { SeasonalityBadge } from './SeasonalityBadge';
 import { useTideData } from '../../hooks/useTideData';
 import { ConfidenceBreakdownCard } from './ConfidenceBreakdownCard';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
+import { getBiteWindows } from '../../hooks/useBiteScore';
 
 interface BiteScoreBreakdown {
   biteScore?: number | null;
@@ -28,6 +29,13 @@ interface BiteScoreBreakdown {
   weatherScore?: number | null;
   bioBandScore?: number | null;
   habitatBonus?: number | null;
+}
+
+interface BiteScoreParams {
+  diurnalSensitivity?: 'strong' | 'moderate' | 'weak' | null;
+  preferredTideStage?: string[] | null;
+  tempOptC?: [number, number] | null;
+  flowPreference?: 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | null;
 }
 
 interface GoodSpeciesCardProps {
@@ -70,6 +78,8 @@ interface GoodSpeciesCardProps {
       windSpeedMS?: number;
       pressureHPA?: number;
     };
+    // Bite score parameters for generating bite windows
+    biteScoreParams?: BiteScoreParams;
   };
   location?: { lat: number; lon: number } | null;
   onRemove: (id: string) => void;
@@ -399,6 +409,61 @@ Check predictions at fishfindr.eu`;
               conservationStatus={species.conservationStatus}
               compact={true}
             />
+
+            {/* Bite Windows - Optimal fishing times/conditions */}
+            {species.biteScoreParams && (() => {
+              // Filter out null values to match SpeciesParams type
+              const params = {
+                diurnalSensitivity: species.biteScoreParams.diurnalSensitivity ?? undefined,
+                preferredTideStage: species.biteScoreParams.preferredTideStage ?? undefined,
+                tempOptC: species.biteScoreParams.tempOptC ?? undefined,
+                flowPreference: species.biteScoreParams.flowPreference ?? undefined,
+              };
+              const biteWindows = getBiteWindows(params);
+              if (biteWindows.length > 0) {
+                const getWindowIcon = (type: string) => {
+                  switch (type) {
+                    case 'time':
+                      return <Clock size={16} className="text-warning" />;
+                    case 'tide':
+                      return <Waves size={16} className="text-info" />;
+                    case 'temperature':
+                      return <Thermometer size={16} className="text-error" />;
+                    case 'conditions':
+                      return <Wind size={16} className="text-accent" />;
+                    default:
+                      return <Info size={16} />;
+                  }
+                };
+
+                return (
+                  <div className="bg-warning/10 rounded-lg p-3 space-y-2 border border-warning/20">
+                    <h4 className="font-semibold text-sm flex items-center gap-2 text-warning">
+                      <Target size={16} />
+                      <TranslatedText text="Best Bite Windows" />
+                    </h4>
+                    <div className="space-y-2">
+                      {biteWindows.map((window, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-sm">
+                          <div className="mt-0.5 flex-shrink-0">
+                            {getWindowIcon(window.type)}
+                          </div>
+                          <div className="flex-1">
+                            <span className="font-medium text-base-content">
+                              <TranslatedText text={window.label} />:
+                            </span>{' '}
+                            <span className="text-base-content/80">
+                              <TranslatedText text={window.description} />
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Fallback: Show legacy data if no Phase 1 data available */}
             {!species.recommendedBaits && !species.preferredHabitats && (

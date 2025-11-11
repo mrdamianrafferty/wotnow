@@ -2,9 +2,10 @@
 
 import React, { useMemo } from 'react';
 import Image from 'next/image';
-import { Calendar, TrendingUp, Star, AlertTriangle, X, Fish } from 'lucide-react';
+import { Calendar, TrendingUp, Star, AlertTriangle, X, Fish, Flame } from 'lucide-react';
 import { TranslatedText, TranslatedFishName } from '../translation/TranslatedFishCard';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
+import { getBiteWindows, type BiteWindow } from '../../hooks/useBiteScore';
 
 // Helper to find species image by name
 function getSpeciesImageByName(name: string): string | null {
@@ -22,6 +23,10 @@ interface FavouriteWithForecast {
     environmental_factors?: {
       temperature?: { actual: number };
     };
+    diurnal_sensitivity?: 'strong' | 'moderate' | 'weak' | null;
+    preferred_tide_stage?: string[] | null;
+    temp_opt_c?: [number, number] | null;
+    flow_preference?: 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | null;
   } | null;
 }
 
@@ -38,7 +43,7 @@ interface DayPlan {
   opportunities: {
     name: string;
     confidence: number;
-    timeWindow: string;
+    biteWindows?: BiteWindow[];
     bestBait?: string;
     image?: { src: string; alt: string } | null;
   }[];
@@ -47,18 +52,6 @@ interface DayPlan {
 }
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-function getTimeWindow(confidence: number, dayIndex: number): string {
-  // Higher confidence species get prime times
-  if (confidence >= 80) {
-    return dayIndex % 2 === 0 ? '6-8 AM' : '5-7 PM';
-  } else if (confidence >= 70) {
-    return dayIndex % 2 === 0 ? '7-9 AM' : '4-6 PM';
-  } else if (confidence >= 60) {
-    return 'Dawn/Dusk';
-  }
-  return 'Variable';
-}
 
 function getDayQuality(avgConfidence: number, topConfidence: number): 'excellent' | 'good' | 'fair' | 'poor' {
   if (topConfidence >= 85 || avgConfidence >= 75) return 'excellent';
@@ -89,13 +82,27 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
           const forecastConfidence = fav.forecast[dayIndex];
           return forecastConfidence !== undefined && forecastConfidence >= 50;
         })
-        .map(fav => ({
-          name: fav.name,
-          confidence: fav.forecast![dayIndex],
-          timeWindow: getTimeWindow(fav.forecast![dayIndex], dayIndex),
-          bestBait: fav.bestBait,
-          image: fav.image,
-        }))
+        .map(fav => {
+          // Extract bite score params and generate bite windows
+          let biteWindows: BiteWindow[] | undefined;
+          if (fav.card) {
+            const params = {
+              diurnalSensitivity: fav.card.diurnal_sensitivity ?? undefined,
+              preferredTideStage: fav.card.preferred_tide_stage ?? undefined,
+              tempOptC: fav.card.temp_opt_c ?? undefined,
+              flowPreference: fav.card.flow_preference ?? undefined,
+            };
+            biteWindows = getBiteWindows(params);
+          }
+
+          return {
+            name: fav.name,
+            confidence: fav.forecast![dayIndex],
+            biteWindows,
+            bestBait: fav.bestBait,
+            image: fav.image,
+          };
+        })
         .sort((a, b) => b.confidence - a.confidence)
         .slice(0, 3); // Top 3 species per day
 
@@ -276,15 +283,32 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm truncate text-base-content">
+                                <p className="font-semibold text-sm truncate text-base-content flex items-center gap-1">
                                   <TranslatedFishName name={opp.name} />
+                                  {opp.confidence >= 85 && (
+                                    <Flame size={14} className="text-orange-500 flex-shrink-0" fill="currentColor" />
+                                  )}
                                 </p>
                                 <p className="text-xs text-base-content/60">
-                                  {opp.timeWindow}
-                                  {opp.bestBait && (
+                                  {opp.biteWindows && opp.biteWindows.length > 0 ? (
                                     <>
-                                      {' • '}
-                                      <TranslatedText text={opp.bestBait} />
+                                      {opp.biteWindows[0].description}
+                                      {opp.bestBait && (
+                                        <>
+                                          {' • '}
+                                          <TranslatedText text={opp.bestBait} />
+                                        </>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <>
+                                      Active
+                                      {opp.bestBait && (
+                                        <>
+                                          {' • '}
+                                          <TranslatedText text={opp.bestBait} />
+                                        </>
+                                      )}
                                     </>
                                   )}
                                 </p>

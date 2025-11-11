@@ -856,9 +856,9 @@ const FindrFavouritesPage: React.FC = () => {
       const bestBaitFromInsights = insight?.bestBait?.trim();
       const bestBaitFromMetadata = metadata?.baitTips?.find((item) => item.trim().length > 0);
 
-      // ONLY use confidence from live prediction card, never from stale database metadata
-      // This ensures we show real-time conditions, not outdated stored values
-      const derivedConfidence = card?.biteScore ?? card?.confidence ?? null;
+      // Use environmental confidence score (not time-enhanced biteScore) for consistency across all views
+      // biteScore parameters are used to generate "bite windows" instead of showing different percentages
+      const derivedConfidence = card?.confidence ?? null;
 
       const bestBait =
         bestBaitFromPrediction ??
@@ -942,12 +942,12 @@ const FindrFavouritesPage: React.FC = () => {
   }, [favouriteEntries, sortBy]);
 
   const _hotRightNow = useMemo(() => {
-    // Sort by bite score (includes real-time tides) or confidence
+    // Sort by confidence (environmental matching score)
     const scored = sortedFavourites
-      .filter((entry) => (entry.biteScore ?? entry.confidence) !== null)
+      .filter((entry) => entry.confidence !== null)
       .sort((a, b) => {
-        const scoreA = a.biteScore ?? a.confidence ?? 0;
-        const scoreB = b.biteScore ?? b.confidence ?? 0;
+        const scoreA = a.confidence ?? 0;
+        const scoreB = b.confidence ?? 0;
         return scoreB - scoreA;
       });
     return scored.slice(0, 3);
@@ -1618,7 +1618,7 @@ const FindrFavouritesPage: React.FC = () => {
                               name: entry.name,
                               scientificName: entry.scientificName,
                               emoji: entry.emoji,
-                              confidence: entry.biteScore ?? entry.confidence ?? 0,
+                              confidence: entry.confidence ?? 0,
                               forecast,
                               bestBait: entry.bestBait,
                               season: entry.season,
@@ -1634,6 +1634,13 @@ const FindrFavouritesPage: React.FC = () => {
                               weatherConditions: entry.card?.current_wind_speed_ms !== undefined || entry.card?.current_pressure_hpa !== undefined ? {
                                 windSpeedMS: entry.card?.current_wind_speed_ms ?? undefined,
                                 pressureHPA: entry.card?.current_pressure_hpa ?? undefined,
+                              } : undefined,
+                              // Bite score parameters for generating bite windows
+                              biteScoreParams: entry.card ? {
+                                diurnalSensitivity: entry.card.diurnal_sensitivity as 'strong' | 'moderate' | 'weak' | undefined,
+                                preferredTideStage: entry.card.preferred_tide_stage,
+                                tempOptC: entry.card.temp_opt_c ? [entry.card.temp_opt_c[0], entry.card.temp_opt_c[1]] as [number, number] : undefined,
+                                flowPreference: entry.card.flow_preference as 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | undefined,
                               } : undefined,
                             }}
                             location={cleanLocation}

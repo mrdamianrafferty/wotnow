@@ -150,6 +150,12 @@ export interface CardData {
 
   // Species badges (e.g., shark, ray_skate, etc.)
   badges?: string[] | null;
+
+  // Bite score parameters for generating bite windows
+  diurnal_sensitivity?: 'strong' | 'moderate' | 'weak' | null;
+  preferred_tide_stage?: string[] | null;
+  temp_opt_c?: [number, number] | null;
+  flow_preference?: 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | null;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {

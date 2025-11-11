@@ -91,11 +91,11 @@ async function fetch7DayPredictions(params: {
       const speciesCode = pred.species_code || pred.species_id;
       if (typeof speciesCode !== 'string') return;
 
-      // Get confidence score (prefer bite_score over confidence)
-      const confidence = typeof pred.bite_score === 'number'
-        ? pred.bite_score
-        : typeof pred.confidence === 'number'
+      // Get confidence score (prefer confidence over bite_score for consistency)
+      const confidence = typeof pred.confidence === 'number'
         ? pred.confidence
+        : typeof pred.bite_score === 'number'
+        ? pred.bite_score
         : null;
 
       if (confidence === null) return;
