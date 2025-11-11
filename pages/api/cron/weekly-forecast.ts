@@ -232,9 +232,8 @@ async function sendWeeklyForecastEmail(userId: string): Promise<boolean> {
 }
 
 /**
- * Fetch 7-day confidence predictions for a species
- * This is a simplified version - in production, you'd call your prediction API
- * or directly query the prediction logic for multiple days
+ * Fetch 7-day confidence predictions for a species using real CMEMS data
+ * Calls get_environmental_predictions_enhanced RPC for each day
  */
 async function fetch7DayPredictions(
   speciesCode: string,
@@ -244,11 +243,9 @@ async function fetch7DayPredictions(
     const forecast: WeeklyForecastDay[] = [];
     const today = new Date();
 
-    // For each of the next 7 days, fetch predictions
-    // Note: This is a placeholder. In production, you'd want to:
-    // - Use your existing prediction logic (lib/findr/mapPrediction.ts)
-    // - Fetch CMEMS data for future dates
-    // - Cache results to avoid repeated calculations
+    // For each of the next 7 days, fetch real predictions
+    // Uses the same RPC function as /api/findr/predictions
+    // This ensures consistent predictions with real CMEMS environmental data
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(today);
@@ -258,9 +255,7 @@ async function fetch7DayPredictions(
       const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
       const dayNum = date.getDate();
 
-      // TODO: Call prediction API or logic here
-      // For now, using a placeholder that fetches current prediction
-      // In production, this should fetch predictions for the specific date
+      // Fetch real prediction with CMEMS data for this specific date
       const confidence = await fetchPredictionForDate(speciesCode, rectangleCode, date);
 
       forecast.push({
@@ -277,23 +272,89 @@ async function fetch7DayPredictions(
 }
 
 /**
- * Fetch prediction for a specific date
- * This is a placeholder - in production, you'd integrate with your prediction system
+ * Fetch prediction for a specific date using real CMEMS data
+ * Calls the same RPC function used by the main predictions API
  */
 async function fetchPredictionForDate(
-  _speciesCode: string,
-  _rectangleCode: string,
-  _date: Date
+  speciesCode: string,
+  rectangleCode: string,
+  date: Date
 ): Promise<number> {
-  // TODO: Integrate with actual prediction system
-  // For now, return a mock confidence score
-  // In production, this should:
-  // 1. Fetch CMEMS data for the date
-  // 2. Run the prediction algorithm
-  // 3. Return the calculated confidence
+  try {
+    // Format date as YYYY-MM-DD for RPC call
+    const targetDate = date.toISOString().split('T')[0];
 
-  // Placeholder: return a value between 40-90
-  return Math.floor(Math.random() * 50) + 40;
+    // Call the same RPC function used by /api/findr/predictions
+    // This ensures we're using the exact same prediction logic with real CMEMS data
+    const { data, error } = await supabase.rpc('get_environmental_predictions_enhanced', {
+      target_rectangle: rectangleCode,
+      target_date: targetDate,
+      user_lat: null,
+      user_lon: null,
+    });
+
+    if (error) {
+      console.error('[Weekly Forecast] RPC error for', speciesCode, 'on', targetDate, ':', error);
+      return 50; // Fallback to neutral confidence
+    }
+
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.warn('[Weekly Forecast] No predictions returned for', rectangleCode, 'on', targetDate);
+      return 50; // Fallback to neutral confidence
+    }
+
+    // Find the specific species in the predictions
+    const speciesPrediction = data.find((pred: {species_code?: string}) =>
+      pred.species_code === speciesCode
+    );
+
+    if (!speciesPrediction) {
+      console.warn('[Weekly Forecast] Species', speciesCode, 'not found in predictions for', targetDate);
+      return 50; // Fallback to neutral confidence
+    }
+
+    // Extract confidence score (same logic as mapPrediction.ts)
+    const confidence = extractConfidence(speciesPrediction);
+    return Math.round(Math.min(Math.max(confidence, 0), 100));
+
+  } catch (error) {
+    console.error('[Weekly Forecast] Error fetching prediction for', speciesCode, ':', error);
+    return 50; // Fallback to neutral confidence
+  }
+}
+
+/**
+ * Extract confidence score from prediction data
+ * Uses the same logic as parseConfidence in lib/findr/mapPrediction.ts
+ */
+function extractConfidence(prediction: Record<string, unknown>): number {
+  const candidateKeys = [
+    'confidence_percent',
+    'environmental_score',
+    'confidence',
+    'confidencePercentage',
+    'confidence_score',
+    'bite_score',
+  ];
+
+  for (const key of candidateKeys) {
+    const raw = prediction[key];
+    if (raw == null || typeof raw !== 'number' || Number.isNaN(raw)) continue;
+
+    let value = raw;
+    // If value is 0-1 (probability), convert to percentage
+    if (value > 0 && value <= 1) {
+      value *= 100;
+    }
+    // If value is 0-10 (environmental_score), convert to percentage
+    if (key === 'environmental_score' && value >= 0 && value <= 10) {
+      value *= 10;
+    }
+    if (value < 0) continue;
+    return value;
+  }
+
+  return 50; // Default neutral confidence
 }
 
 /**
