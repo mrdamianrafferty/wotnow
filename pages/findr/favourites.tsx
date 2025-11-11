@@ -1404,21 +1404,8 @@ const FindrFavouritesPage: React.FC = () => {
                   <Calendar size={14} className="text-primary mr-2" />
                   <span><TranslatedText text="Forecast day" />: {predictionDate}</span>
                 </div>
-                <div className="badge badge-outline">
-                  <RefreshCw size={14} className="text-secondary mr-2" />
-                  <span>
-                    {lastUpdated ? (
-                      <>
-                        <TranslatedText text="Refreshed" /> {new Date(lastUpdated).toLocaleTimeString(undefined, {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </>
-                    ) : (
-                      <TranslatedText text="Awaiting live predictions" />
-                    )}
-                  </span>
-                  <button
+                {/* Timestamp hidden to simplify UI */}
+                <button
                     onClick={handleReloadPredictions}
                     className="btn btn-ghost btn-xs ml-2"
                     type="button"
@@ -1461,13 +1448,13 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Best Window Today Hero Section */}
-            {hasFavourites && (
+            {/* Best Window Today Hero Section - Hidden to simplify UI */}
+            {/* {hasFavourites && (
               <BestWindowToday
                 favourites={favouriteEntries}
                 loading={loading}
               />
-            )}
+            )} */}
 
             {/* Weekly Planner */}
             {hasFavourites && (
