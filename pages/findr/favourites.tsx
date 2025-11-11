@@ -15,7 +15,6 @@ import {
   Clock,
   Flame,
   HeartOff,
-  RefreshCw,
   Loader2,
   LogIn,
   UserPlus,
@@ -37,7 +36,6 @@ import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
-import { BestWindowToday } from '../../components/findr/BestWindowToday';
 import { WeeklyPlannerCard } from '../../components/findr/WeeklyPlannerCard';
 
 // Code-split species card components - loaded as user scrolls to them
@@ -768,7 +766,7 @@ const FindrFavouritesPage: React.FC = () => {
     }
   }, [favoritesList.length, insightsSource, insights.length, insightsError]);
 
-  const { predictions, loading, error, lastUpdated, tideInfo, reload } = useFishingPredictions({
+  const { predictions, loading, error, tideInfo, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
     predictionDate,
     language,
@@ -1414,7 +1412,6 @@ const FindrFavouritesPage: React.FC = () => {
                     ↻
                   </button>
                 </div>
-              </div>
               {missingLiveDataCount > 0 && (
                 <div className="alert alert-warning mt-3">
                   <span className="text-xs">
