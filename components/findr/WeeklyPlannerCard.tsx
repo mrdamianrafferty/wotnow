@@ -289,7 +289,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                     <Flame size={14} className="text-orange-500 flex-shrink-0" fill="currentColor" />
                                   )}
                                 </p>
-                                <p className="text-xs text-base-content/60">
+                                <p className="text-xs text-base-content/80 font-medium">
                                   {opp.biteWindows && opp.biteWindows.length > 0 ? (
                                     <>
                                       {opp.biteWindows[0].description}
@@ -302,7 +302,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                     </>
                                   ) : (
                                     <>
-                                      Active
+                                      Active throughout the day
                                       {opp.bestBait && (
                                         <>
                                           {' • '}
@@ -314,7 +314,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                 </p>
                               </div>
                             </div>
-                            <div className="badge badge-sm badge-outline font-bold">
+                            <div className="badge badge-sm bg-base-100 border-base-300 text-base-content font-bold">
                               {opp.confidence}%
                             </div>
                           </div>
