@@ -16,6 +16,7 @@ export interface DailyDigestData {
   userName?: string;
   alerts: EmailSpeciesAlert[];
   date: string;
+  unsubscribeUrl?: string;
 }
 
 export interface TieredEmailSpeciesAlert extends EmailSpeciesAlert {
@@ -29,13 +30,14 @@ export interface TieredDailyDigestData {
   statusUpdates: TieredEmailSpeciesAlert[];
   date: string;
   locationName: string;
+  unsubscribeUrl?: string;
 }
 
 /**
  * Generate HTML email template for daily fishing digest
  */
 export function generateDailyDigestHTML(data: DailyDigestData): string {
-  const { userName, alerts, date } = data;
+  const { userName, alerts, date, unsubscribeUrl } = data;
   const greeting = userName ? `Hi ${userName}` : 'Hello';
 
   return `
@@ -135,6 +137,7 @@ export function generateDailyDigestHTML(data: DailyDigestData): string {
               </p>
               <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
                 <a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage notification preferences</a>
+                ${unsubscribeUrl ? ` • <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>` : ''}
               </p>
             </td>
           </tr>
@@ -165,7 +168,7 @@ export function generateDailyDigestHTML(data: DailyDigestData): string {
  * Generate plain text version of daily digest email
  */
 export function generateDailyDigestText(data: DailyDigestData): string {
-  const { userName, alerts, date } = data;
+  const { userName, alerts, date, unsubscribeUrl } = data;
   const greeting = userName ? `Hi ${userName}` : 'Hello';
 
   return `
@@ -189,7 +192,7 @@ View full forecast: https://fishfindr.eu/findr/predictions
 
 ---
 You're receiving this email because you enabled email notifications for these species.
-Manage notification preferences: https://fishfindr.eu/findr/favourites
+Manage notification preferences: https://fishfindr.eu/findr/favourites${unsubscribeUrl ? `\nUnsubscribe: ${unsubscribeUrl}` : ''}
 
 © 2025 Findr • fishfindr.eu
   `.trim();
@@ -210,7 +213,7 @@ function getConfidenceColor(confidence: number): string {
  * HOT BITES (85%+), GOOD CONDITIONS (60-84%), STATUS UPDATES (<60%)
  */
 export function generateTieredDailyDigestHTML(data: TieredDailyDigestData): string {
-  const { userName, hotBites, goodConditions, statusUpdates, date, locationName } = data;
+  const { userName, hotBites, goodConditions, statusUpdates, date, locationName, unsubscribeUrl } = data;
   const greeting = userName ? `Hi ${userName}` : 'Hello';
 
   const totalSpecies = hotBites.length + goodConditions.length + statusUpdates.length;
@@ -345,7 +348,7 @@ export function generateTieredDailyDigestHTML(data: TieredDailyDigestData): stri
                 You're receiving this daily digest because you enabled email notifications.
               </p>
               <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
-                <a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage notification preferences</a>
+                <a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage notification preferences</a>${unsubscribeUrl ? ` • <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>` : ''}
               </p>
             </td>
           </tr>
@@ -373,7 +376,7 @@ export function generateTieredDailyDigestHTML(data: TieredDailyDigestData): stri
  * Generate plain text version of tiered daily digest email
  */
 export function generateTieredDailyDigestText(data: TieredDailyDigestData): string {
-  const { userName, hotBites, goodConditions, statusUpdates, date, locationName } = data;
+  const { userName, hotBites, goodConditions, statusUpdates, date, locationName, unsubscribeUrl } = data;
   const greeting = userName ? `Hi ${userName}` : 'Hello';
   const totalSpecies = hotBites.length + goodConditions.length + statusUpdates.length;
 
@@ -425,7 +428,7 @@ View full forecast: https://fishfindr.eu/findr/predictions
 
 ---
 You're receiving this daily digest because you enabled email notifications.
-Manage notification preferences: https://fishfindr.eu/findr/favourites
+Manage notification preferences: https://fishfindr.eu/findr/favourites${unsubscribeUrl ? `\nUnsubscribe: ${unsubscribeUrl}` : ''}
 
 © 2025 Findr • fishfindr.eu
   `;
