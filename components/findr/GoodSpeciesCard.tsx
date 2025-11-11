@@ -2,12 +2,10 @@
 'use client';
 import { GuildBadge } from './GuildBadge';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { Calendar, ChevronDown, ChevronUp, Target, Trash2, Fish, Clock, Info, Share2, BellOff, BellPlus, Waves, Thermometer, Wind } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Trash2, Fish, Clock, Info, Share2, Waves, Thermometer, Wind } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
-import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -97,24 +95,17 @@ export const GoodSpeciesCard: React.FC<GoodSpeciesCardProps> = ({
   species,
   location,
   onRemove,
-  onTogglePriority,
+  onTogglePriority: _onTogglePriority,
   onAction,
   notificationsEnabled: _notificationsEnabled,
   onSetupNotifications: _onSetupNotifications,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [notificationId, setNotificationId] = useState<number | null>(null);
 
   // Fetch real tide data for location
   const tideInfo = useTideData(location ?? null);
 
   const nextPeakDay = getNextPeakDay(species.forecast);
-
-  // Check on mount if notification already exists for this species
-  useEffect(() => {
-    const existingId = getNotificationForSpecies(species.id);
-    setNotificationId(existingId);
-  }, [species.id]);
 
   // Share handler
   const handleShare = async () => {
@@ -128,80 +119,6 @@ Check predictions at fishfindr.eu`;
       await shareText(shareContent, `Fishing Prediction: ${species.name}`);
     } catch (error) {
       console.error('[GoodSpeciesCard] Share failed:', error);
-    }
-  };
-
-  // Notification reminder handler - Toggle between scheduling and cancelling
-  const handleSetReminder = async () => {
-    try {
-      // If notification exists, cancel it
-      if (notificationId !== null) {
-        await cancelLocalNotification(notificationId);
-        untrackNotification(notificationId);
-        setNotificationId(null);
-        console.log('[GoodSpeciesCard] Reminder cancelled:', notificationId);
-        return;
-      }
-
-      // Otherwise, schedule new notification
-      const permissionStatus = await checkPermissions();
-      if (permissionStatus !== 'granted') {
-        const newStatus = await requestPermissions();
-        if (newStatus !== 'granted') {
-          console.warn('[GoodSpeciesCard] Notification permission denied');
-          return;
-        }
-      }
-
-      // Calculate when to send reminder (24 hours from now for "tomorrow" peak)
-      const reminderTime = new Date();
-      if (nextPeakDay && nextPeakDay.includes('tomorrow')) {
-        // Set reminder for tomorrow morning at 8am
-        reminderTime.setDate(reminderTime.getDate() + 1);
-        reminderTime.setHours(8, 0, 0, 0);
-      } else if (nextPeakDay && nextPeakDay.includes('2 days')) {
-        // Set reminder for day after tomorrow at 8am
-        reminderTime.setDate(reminderTime.getDate() + 2);
-        reminderTime.setHours(8, 0, 0, 0);
-      } else {
-        // Default to 2 hours from now if no specific peak day
-        reminderTime.setHours(reminderTime.getHours() + 2);
-      }
-
-      const title = `🎣 ${species.name} - Peak Conditions Reminder`;
-      const body = `${species.confidence}% confidence! ${nextPeakDay ? `Peak conditions ${nextPeakDay}` : 'Great time to go fishing!'}`;
-
-      const newNotificationId = await scheduleLocalNotification({
-        title,
-        body,
-        schedule: { at: reminderTime },
-        extra: {
-          speciesId: species.id,
-          speciesName: species.name,
-          confidence: species.confidence,
-          type: 'peak_conditions_reminder',
-        },
-      });
-
-      // Track notification for management UI
-      trackNotification({
-        id: newNotificationId,
-        title,
-        body,
-        scheduledAt: reminderTime.toISOString(),
-        speciesName: species.name,
-        speciesId: species.id,
-        type: 'peak_conditions_reminder',
-      });
-
-      console.log('[GoodSpeciesCard] Reminder scheduled:', newNotificationId, 'for', reminderTime);
-      setNotificationId(newNotificationId);
-    } catch (error) {
-      if (error instanceof NotificationException) {
-        console.error('[GoodSpeciesCard] Notification error:', error.type, error.message);
-      } else {
-        console.error('[GoodSpeciesCard] Failed to toggle reminder:', error);
-      }
     }
   };
   // Get real fishing time data based on species preferences, location, and tides
@@ -267,17 +184,6 @@ Check predictions at fishfindr.eu`;
                 <h3 className="text-lg sm:text-xl font-bold text-base-content truncate min-w-0">
                   <TranslatedFishName name={species.name} />
                 </h3>
-                {/* Notification Setup Button - Toggle on/off */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
-                  className={`btn btn-xs ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-                  title={notificationId !== null ? 'Cancel peak conditions reminder' : 'Set peak conditions reminder'}
-                >
-                  {notificationId !== null ? <BellOff size={14} /> : <BellPlus size={14} />}
-                </button>
-                {species.isPriority && (
-                  <Target size={14} className="text-warning flex-shrink-0" />
-                )}
                 {species.seasonal_multiplier && (
                   <SeasonalityBadge multiplier={species.seasonal_multiplier} compact />
                 )}
@@ -346,13 +252,6 @@ Check predictions at fishfindr.eu`;
               title="Share prediction"
             >
               <Share2 size={14} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onTogglePriority(species.id); }}
-              className={`btn btn-xs ${species.isPriority ? 'btn-warning' : 'btn-ghost'}`}
-              title={species.isPriority ? 'Remove priority' : 'Make priority'}
-            >
-              <Target size={14} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(species.id); }}
@@ -438,8 +337,7 @@ Check predictions at fishfindr.eu`;
 
                 return (
                   <div className="bg-warning/10 rounded-lg p-3 space-y-2 border border-warning/20">
-                    <h4 className="font-semibold text-sm flex items-center gap-2 text-warning">
-                      <Target size={16} />
+                    <h4 className="font-semibold text-sm text-warning">
                       <TranslatedText text="Best Bite Windows" />
                     </h4>
                     <div className="space-y-2">

@@ -1531,7 +1531,7 @@ const FindrFavouritesPage: React.FC = () => {
                     <p className="text-base-content/70 mb-4 text-sm">
                       <TranslatedText text="Peak conditions — drop everything and go fish these species now!" />
                     </p>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {groupedFavourites.active.map((entry) => {
                         const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
                         const scoreBreakdown = entry.card ? buildScoreBreakdown(entry.card) : undefined;

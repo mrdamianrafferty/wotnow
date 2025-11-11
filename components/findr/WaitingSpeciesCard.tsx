@@ -1,10 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
-import { TrendingUp, Heart, Fish, BellPlus, BellOff } from 'lucide-react';
-import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
+import { TrendingUp, Heart, Fish } from 'lucide-react';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { SeasonalityBadge } from './SeasonalityBadge';
@@ -81,100 +79,7 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
   notificationsEnabled: _notificationsEnabled,
   onSetupNotifications: _onSetupNotifications,
 }) => {
-  const [notificationId, setNotificationId] = useState<number | null>(null);
-
   const improvingDay = getImprovingDay(species.forecast);
-
-  // Check on mount if notification already exists for this species
-  useEffect(() => {
-    const existingId = getNotificationForSpecies(species.id);
-    setNotificationId(existingId);
-  }, [species.id]);
-  // const trend = getForecastTrend(species.forecast); // removed, not needed after UI cleanup
-
-  // For low confidence species, show general timing rather than specific hours
-
-
-  // const nextBestTime = getGeneralTiming(); // removed, not needed after UI cleanup
-
-  // Handle setting up improvement reminder - Toggle between scheduling and cancelling
-  const handleSetReminder = async () => {
-    try {
-      // If notification exists, cancel it
-      if (notificationId !== null) {
-        await cancelLocalNotification(notificationId);
-        untrackNotification(notificationId);
-        setNotificationId(null);
-        console.log('[WaitingSpeciesCard] Reminder cancelled:', notificationId);
-        return;
-      }
-
-      // Otherwise, schedule new notification
-      let permission = await checkPermissions();
-      if (permission !== 'granted') {
-        permission = await requestPermissions();
-        if (permission !== 'granted') {
-          console.warn('[WaitingSpeciesCard] Notification permission denied');
-          return;
-        }
-      }
-
-      // Schedule reminder for when conditions improve
-      const reminderTime = new Date();
-
-      // Find when conditions are expected to improve
-      const improvingDayIndex = species.forecast.findIndex((conf, idx) =>
-        idx > 0 && conf >= 70 && conf > species.forecast[0] + 10
-      );
-
-      if (improvingDayIndex > 0 && improvingDayIndex < 4) {
-        // Schedule for 8am on the improving day
-        reminderTime.setDate(reminderTime.getDate() + improvingDayIndex);
-        reminderTime.setHours(8, 0, 0, 0);
-      } else {
-        // Default to tomorrow morning if no clear improvement
-        reminderTime.setDate(reminderTime.getDate() + 1);
-        reminderTime.setHours(8, 0, 0, 0);
-      }
-
-      const title = `🎯 ${species.name} - Conditions Improving!`;
-      const body = `Forecast shows improvement! Check the latest predictions for ${species.name}.`;
-
-      const newNotificationId = await scheduleLocalNotification({
-        title,
-        body,
-        schedule: { at: reminderTime },
-        extra: {
-          speciesId: species.id,
-          speciesName: species.name,
-          confidence: species.confidence,
-          type: 'improvement_reminder',
-        },
-      });
-
-      // Track notification for management UI
-      trackNotification({
-        id: newNotificationId,
-        title,
-        body,
-        scheduledAt: reminderTime.toISOString(),
-        speciesName: species.name,
-        speciesId: species.id,
-        type: 'peak_conditions_reminder',
-      });
-
-      console.log('[WaitingSpeciesCard] Improvement reminder scheduled:', newNotificationId, 'for', reminderTime);
-      setNotificationId(newNotificationId);
-    } catch (error) {
-      if (error instanceof NotificationException) {
-        console.error('[WaitingSpeciesCard] Notification error:', error.type, error.message);
-      } else {
-        console.error('[WaitingSpeciesCard] Failed to toggle reminder:', error);
-      }
-    }
-  };
-
-
 
   return (
 
@@ -190,14 +95,6 @@ export const WaitingSpeciesCard: React.FC<WaitingSpeciesCardProps> = ({
           <h3 className="text-base font-semibold text-base-content truncate text-center">
             <TranslatedFishName name={species.name} />
           </h3>
-          {/* Notification Setup Button - Toggle on/off */}
-          <button
-            onClick={(e) => { e.stopPropagation(); handleSetReminder(); }}
-            className={`btn btn-xs ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'} flex-shrink-0`}
-            title={notificationId !== null ? 'Cancel improvement reminder' : 'Remind when conditions improve'}
-          >
-            {notificationId !== null ? <BellOff size={12} /> : <BellPlus size={12} />}
-          </button>
         </div>
         <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
           {/* Species Image/Emoji - Clickable */}
