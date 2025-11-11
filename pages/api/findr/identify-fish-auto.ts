@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { fishIdService, type IdentificationResult } from '@/lib/findr/fishIdentificationService';
+import { getFishIdProvider } from '@/lib/findr/fishIdProviderConfig';
+import { fishIdService, type IdentificationResult as OpenAIResult } from '@/lib/findr/fishIdentificationService';
+import { hfFishIdService, type IdentificationResult as HFResult } from '@/lib/findr/huggingfaceFishService';
 import { logIdentificationMetrics, extractSpeciesInfo } from '@/lib/findr/fishIdentificationMetrics';
 import type { QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
 import formidable from 'formidable';
@@ -25,19 +27,16 @@ interface IdentifyRequest {
   };
 }
 
+type IdentificationResult = OpenAIResult | HFResult;
+
 /**
- * Fish identification API endpoint
+ * Automatic Provider Selection Endpoint
  *
- * Accepts multipart/form-data with:
- * - image: File (the photo to identify)
- * - data: JSON string with candidates and context
+ * Routes to OpenAI or Hugging Face based on FISH_ID_PROVIDER env var
+ * - FISH_ID_PROVIDER=openai (default): Uses OpenAI GPT-4o
+ * - FISH_ID_PROVIDER=huggingface: Uses Hugging Face ViT local model
  *
- * Returns:
- * - species: Identified species or list of candidates
- * - method: Identification method used
- * - confidence: 0-1 confidence score
- * - cost: Cost in euros
- * - reasoning: Explanation of identification
+ * This allows easy A/B testing and rollback without code changes
  */
 export default async function handler(
   req: NextApiRequest,
@@ -49,6 +48,9 @@ export default async function handler(
   }
 
   const startTime = Date.now();
+  const provider = getFishIdProvider();
+
+  console.log(`[identify-fish-auto] Using provider: ${provider}`);
 
   try {
     // Parse multipart form data
@@ -85,12 +87,8 @@ export default async function handler(
 
     // Read image file and convert to File object
     const imageBuffer = await fs.readFile(imageFile.filepath);
-
-    // Convert Buffer to Uint8Array for Blob compatibility
     const uint8Array = new Uint8Array(imageBuffer);
     const imageBlob = new Blob([uint8Array], { type: imageFile.mimetype || 'image/jpeg' });
-
-    // Convert to File object (polyfill for Node.js)
     const imageFileObject = new File([imageBlob], imageFile.originalFilename || 'catch.jpg', {
       type: imageFile.mimetype || 'image/jpeg',
     });
@@ -103,12 +101,20 @@ export default async function handler(
       candidates: requestData.candidates,
     };
 
-    // Initialize AI service server-side (with OpenAI API key access)
-    await fishIdService.initializeServerSide();
+    // Route to appropriate provider
+    let result: IdentificationResult;
 
-    // Call identification service
-    console.log('[identify-fish] Processing identification with', requestData.candidates.length, 'candidates');
-    const result = await fishIdService.identify(imageFileObject, context);
+    if (provider === 'huggingface') {
+      // Use Hugging Face
+      await hfFishIdService.initializeServerSide();
+      console.log('[identify-fish-auto] Processing with Hugging Face');
+      result = await hfFishIdService.identify(imageFileObject, context);
+    } else {
+      // Use OpenAI (default)
+      await fishIdService.initializeServerSide();
+      console.log('[identify-fish-auto] Processing with OpenAI');
+      result = await fishIdService.identify(imageFileObject, context);
+    }
 
     // Calculate latency
     const latencyMs = Date.now() - startTime;
@@ -116,7 +122,7 @@ export default async function handler(
     // Log metrics (async, don't wait)
     const { speciesId, speciesName } = extractSpeciesInfo(result);
     logIdentificationMetrics({
-      provider: 'openai',
+      provider,
       rectangleCode: requestData.context?.location?.rectangleCode || null,
       latencyMs,
       costEur: result.cost,
@@ -125,18 +131,21 @@ export default async function handler(
       suggestedSpeciesId: speciesId,
       suggestedSpeciesName: speciesName,
       numCandidates: requestData.candidates.length,
-    }).catch(err => console.error('[identify-fish] Failed to log metrics:', err));
+    }).catch(err => console.error('[identify-fish-auto] Failed to log metrics:', err));
 
     // Clean up temp file
     await fs.unlink(imageFile.filepath).catch(() => {
       // Ignore cleanup errors
     });
 
-    console.log(`[identify-fish] Completed in ${latencyMs}ms`);
+    console.log(`[identify-fish-auto] Completed with ${provider} in ${latencyMs}ms`);
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error('[identify-fish] Error:', error);
+    console.error('[identify-fish-auto] Error:', error);
+
+    const totalTime = Date.now() - startTime;
+    console.log(`[identify-fish-auto] Failed after ${totalTime}ms`);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return res.status(500).json({
