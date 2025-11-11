@@ -30,6 +30,10 @@
     {
       "path": "/api/cron/check-notifications",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-forecast",
+      "schedule": "0 8 * * 3"
     }
   ],
   "headers": [
