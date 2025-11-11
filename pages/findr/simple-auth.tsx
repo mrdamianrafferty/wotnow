@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Fish } from 'lucide-react';
 import { supabase } from '../../lib/supabase/client';
 import { normalizeEmail, mapAuthError, validateAndCleanSession } from '../../lib/auth/utils';
+import { registerPushNotifications } from '../../lib/findr/pushNotifications';
 
 export default function SimpleAuth() {
   const router = useRouter();
@@ -20,15 +21,30 @@ export default function SimpleAuth() {
     let isSubscribed = true;
 
     // Validate and check session
-    validateAndCleanSession(supabase).then((hasValidSession) => {
+    validateAndCleanSession(supabase).then(async (hasValidSession) => {
       if (isSubscribed && hasValidSession) {
+        // Register for push notifications (iOS only, non-blocking)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          registerPushNotifications(user.id).catch(err => {
+            console.error('[Auth] Failed to register push notifications:', err);
+          });
+        }
         router.push('/findr');
       }
     });
 
     // Listen for auth state changes (but don't double-redirect)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (isSubscribed && event === 'SIGNED_IN' && session) {
+        // Register for push notifications (iOS only, non-blocking)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          registerPushNotifications(user.id).catch(err => {
+            console.error('[Auth] Failed to register push notifications:', err);
+          });
+        }
+
         // Small delay to prevent race condition with manual redirect
         setTimeout(() => {
           if (isSubscribed) router.push('/findr');

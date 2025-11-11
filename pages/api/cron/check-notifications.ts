@@ -35,6 +35,7 @@ import {
   type TieredDailyDigestData
 } from '../../../lib/findr/emailTemplates';
 import { generateUnsubscribeToken } from '../findr/unsubscribe';
+import { sendApnsPushNotification } from '../../../lib/findr/apnsClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -207,23 +208,58 @@ async function hasReceivedDailyDigestToday(userId: string): Promise<boolean> {
 }
 
 /**
- * Send push notification (placeholder - will be implemented with actual push service)
+ * Send push notification via APNS (iOS only)
+ *
+ * Queries user_push_tokens table for iOS device token and sends via APNS.
+ * Removes invalid tokens from database if delivery fails.
  */
 async function sendPushNotification(notification: NotificationToSend): Promise<boolean> {
-  // TODO: Implement actual push notification sending
-  // For now, just log to console
-  console.log('[Cron] Would send push notification:', {
-    userId: notification.userId,
-    species: notification.speciesName,
-    confidence: notification.confidence,
-  });
+  try {
+    // 1. Get user's iOS push token from database
+    const { data: tokenData, error: tokenError } = await supabase
+      .from('user_push_tokens')
+      .select('token, platform')
+      .eq('user_id', notification.userId)
+      .eq('platform', 'ios')
+      .single();
 
-  // In a real implementation, this would:
-  // 1. Get user's push token from database
-  // 2. Send via Firebase Cloud Messaging (FCM) or Apple Push Notification Service (APNS)
-  // 3. Use the Capacitor Push Notifications plugin token
+    if (tokenError || !tokenData) {
+      console.log('[Push] No iOS token found for user:', notification.userId);
+      return false;
+    }
 
-  return true; // Simulated success
+    console.log('[Push] Sending notification to iOS device for user:', notification.userId);
+
+    // 2. Send via APNS
+    const success = await sendApnsPushNotification(tokenData.token, {
+      title: '🎣 Hot Bite Alert!',
+      body: `${notification.speciesName} at ${notification.confidence}% confidence in ${notification.rectangleCode}`,
+      data: {
+        type: 'hot_bite',
+        speciesId: notification.speciesId,
+        rectangleCode: notification.rectangleCode,
+        confidence: notification.confidence.toString(),
+      },
+      badge: 1,
+      sound: 'default',
+    });
+
+    // 3. If sending failed (invalid token), remove it from database
+    if (!success) {
+      console.log('[Push] Removing invalid token for user:', notification.userId);
+      await supabase
+        .from('user_push_tokens')
+        .delete()
+        .eq('token', tokenData.token);
+      return false;
+    }
+
+    console.log('[Push] Notification sent successfully to user:', notification.userId);
+    return true;
+  } catch (error) {
+    console.error('[Push] Error sending push notification:', error);
+    return false;
+  }
 }
 
 /**
