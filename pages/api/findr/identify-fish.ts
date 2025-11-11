@@ -1,5 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fishIdService, type IdentificationResult } from '@/lib/findr/fishIdentificationService';
+import { hfFishIdService } from '@/lib/findr/huggingfaceService';
+import { getFishIdProvider, getProviderConfig } from '@/lib/findr/fishIdProviderConfig';
 import type { QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
 import formidable from 'formidable';
 import fs from 'fs/promises';
@@ -100,12 +102,27 @@ export default async function handler(
       candidates: requestData.candidates,
     };
 
-    // Initialize AI service server-side (with OpenAI API key access)
-    await fishIdService.initializeServerSide();
+    // Get configured provider
+    const provider = getFishIdProvider();
+    const providerConfig = getProviderConfig(provider);
+    console.log('[identify-fish] Using provider:', provider, '-', providerConfig.name);
 
-    // Call identification service
-    console.log('[identify-fish] Processing identification with', requestData.candidates.length, 'candidates');
-    const result = await fishIdService.identify(imageFileObject, context);
+    // Initialize and call appropriate AI service
+    let result: IdentificationResult;
+    const startTime = Date.now();
+
+    if (provider === 'huggingface') {
+      await hfFishIdService.initializeServerSide();
+      console.log('[identify-fish] Processing with HuggingFace -', requestData.candidates.length, 'candidates');
+      result = await hfFishIdService.identify(imageFileObject, context);
+    } else {
+      await fishIdService.initializeServerSide();
+      console.log('[identify-fish] Processing with OpenAI -', requestData.candidates.length, 'candidates');
+      result = await fishIdService.identify(imageFileObject, context);
+    }
+
+    const latencyMs = Date.now() - startTime;
+    console.log(`[identify-fish] Completed in ${latencyMs}ms using ${provider} (method: ${result.method}, cost: €${result.cost})`);
 
     // Clean up temp file
     await fs.unlink(imageFile.filepath).catch(() => {
