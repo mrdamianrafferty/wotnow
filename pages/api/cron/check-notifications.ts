@@ -34,6 +34,7 @@ import {
   type TieredEmailSpeciesAlert,
   type TieredDailyDigestData
 } from '../../../lib/findr/emailTemplates';
+import { generateUnsubscribeToken } from '../findr/unsubscribe';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -384,7 +385,11 @@ async function sendTieredDailyDigestEmail(
     goodConditions.sort((a, b) => b.confidence - a.confidence);
     statusUpdates.sort((a, b) => b.confidence - a.confidence);
 
-    // 3. Build tiered email data
+    // 3. Generate unsubscribe token and URL
+    const unsubscribeToken = await generateUnsubscribeToken(userId);
+    const unsubscribeUrl = `https://fishfindr.eu/findr/unsubscribe?token=${unsubscribeToken}`;
+
+    // 4. Build tiered email data
     const emailData: TieredDailyDigestData = {
       userName,
       hotBites,
@@ -396,20 +401,21 @@ async function sendTieredDailyDigestEmail(
         month: 'long',
         day: 'numeric'
       }),
-      locationName
+      locationName,
+      unsubscribeUrl
     };
 
-    // 4. Generate HTML and text versions using tiered templates
+    // 5. Generate HTML and text versions using tiered templates
     const htmlContent = generateTieredDailyDigestHTML(emailData);
     const textContent = generateTieredDailyDigestText(emailData);
 
-    // 5. Create email subject based on what's included
+    // 6. Create email subject based on what's included
     let subject = '🎣 Your Daily Fishing Digest';
     if (hotBites.length > 0) {
       subject = `🔥 ${hotBites.length} Hot Bite${hotBites.length > 1 ? 's' : ''} + Your Fishing Digest`;
     }
 
-    // 6. Send via Resend
+    // 7. Send via Resend
     const { data, error } = await resend.emails.send({
       from: 'Findr <notifications@fishfindr.eu>',
       to: userEmail,
