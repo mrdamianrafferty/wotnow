@@ -830,6 +830,16 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     funFact: firstString(prediction.fun_fact_en) ?? null,
     conservationStatus: firstString(prediction.conservation_status) ?? null,
     contentLastReviewed: firstString(prediction.content_last_reviewed) ?? null,
+
+    // Bite score parameters for generating bite windows
+    diurnal_sensitivity: firstString(prediction.diurnal_sensitivity) as CardData['diurnal_sensitivity'],
+    preferred_tide_stage: parseStringArray(prediction.preferred_tide_stage as JsonValue | undefined),
+    temp_opt_c: prediction.temp_opt_c ?
+      (Array.isArray(prediction.temp_opt_c) && prediction.temp_opt_c.length === 2
+        ? [Number(prediction.temp_opt_c[0]), Number(prediction.temp_opt_c[1])] as [number, number]
+        : null)
+      : null,
+    flow_preference: firstString(prediction.flow_preference) as CardData['flow_preference'],
   };
 }
 
