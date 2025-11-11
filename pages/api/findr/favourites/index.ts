@@ -485,6 +485,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .insert({
             user_id: userId,
             species_id: species.id,
+            notifications_enabled: true, // Auto-enable notifications when favoriting
+            notification_threshold: 85, // Default threshold for hot bite alerts (85%+)
+            notification_channels: { email: true, push: false, sms: false }, // Default to email notifications
           })
           .select()
           .single();

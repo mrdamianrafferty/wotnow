@@ -59,6 +59,13 @@ interface UserFavourite {
   id: string;
   user_id: string;
   species_id: string;
+  notifications_enabled: boolean;
+  notification_threshold: number;
+  notification_channels: {
+    push: boolean;
+    email: boolean;
+    sms: boolean;
+  };
 }
 
 interface UserNotificationPreferences {
@@ -522,12 +529,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('[Cron] Found', preferences.length, 'users with hot bite alerts enabled');
 
-    // 2. Get all favourites for these users
+    // 2. Get all favourites for these users (only those with notifications enabled)
     const userIds = preferences.map(p => p.user_id);
     const { data: favourites, error: favError } = await supabase
       .from('user_favourites')
-      .select('id, user_id, species_id')
-      .in('user_id', userIds);
+      .select('id, user_id, species_id, notifications_enabled, notification_threshold, notification_channels')
+      .in('user_id', userIds)
+      .eq('notifications_enabled', true);
 
     if (favError) {
       console.error('[Cron] Error fetching favourites:', favError);
@@ -560,7 +568,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 4. Check predictions for each user
     const notificationsToSend: NotificationToSend[] = [];
-    const HOT_BITE_THRESHOLD = 85; // Hardcoded hot bite threshold
 
     for (const [userId, favs] of userFavourites.entries()) {
       // Get user's location
@@ -576,7 +583,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Get predictions for this location
       const predictions = await getPredictions(rectangleCode, speciesCodes);
 
-      // Check each favourite against hot bite threshold (85%)
+      // Check each favourite against its custom threshold
       for (const fav of favs) {
         const speciesCode = fav.species_id.toUpperCase();
         const confidence = predictions.get(speciesCode);
@@ -585,8 +592,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           continue; // No prediction available
         }
 
-        // Check if confidence crossed hot bite threshold (85%+)
-        if (confidence >= HOT_BITE_THRESHOLD) {
+        // Use the favorite's custom notification threshold (per-species setting)
+        const threshold = fav.notification_threshold || 85; // Default to 85 if not set
+
+        // Check if confidence crossed the threshold
+        if (confidence >= threshold) {
           // Check if we recently sent a notification for this species
           const recentlySent = await wasRecentlySent(userId, fav.species_id);
           if (recentlySent) {
@@ -607,7 +617,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    console.log('[Cron] Found', notificationsToSend.length, 'hot bite species (85%+)');
+    console.log('[Cron] Found', notificationsToSend.length, 'species crossing their notification thresholds');
 
     // 5. Send notifications
     // Push notifications: Send individually for all hot bite alerts (real-time)

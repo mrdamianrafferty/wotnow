@@ -1086,7 +1086,8 @@ const FindrFavouritesPage: React.FC = () => {
   }, []);
 
   // Notification setup handlers
-  const handleOpenNotificationModal = useCallback((entry: FavouriteEntry) => {
+  // TODO: Remove this old per-species notification modal system (unified with favorites now)
+  const _handleOpenNotificationModal = useCallback((entry: FavouriteEntry) => {
     setNotificationModalSpecies(entry);
     setNotificationModalOpen(true);
   }, []);
@@ -1583,8 +1584,6 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
-                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
-                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1641,8 +1640,6 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
-                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
-                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}
@@ -1696,8 +1693,6 @@ const FindrFavouritesPage: React.FC = () => {
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
-                            notificationsEnabled={notificationPreferences.get(entry.id)?.enabled ?? false}
-                            onSetupNotifications={() => handleOpenNotificationModal(entry)}
                           />
                         );
                       })}

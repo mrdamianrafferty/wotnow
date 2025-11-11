@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2, BellOff, BellPlus } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2 } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
-import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
 import { GradientFish } from '../GradientFish';
@@ -81,8 +78,6 @@ interface ActiveSpeciesCardProps {
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
-  notificationsEnabled?: boolean;
-  onSetupNotifications?: (id: string) => void;
 }
 
 /**
@@ -96,20 +91,10 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
-  notificationsEnabled: _notificationsEnabled,
-  onSetupNotifications: _onSetupNotifications,
 }) => {
-  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
-  const [notificationId, setNotificationId] = useState<number | null>(null);
 
   const nextPeakHours = getNextPeakTime(species.forecast);
-
-  // Check on mount if notification already exists for this species
-  useEffect(() => {
-    const existingId = getNotificationForSpecies(species.id);
-    setNotificationId(existingId);
-  }, [species.id]);
 
   // Share handler
   const handleShare = async () => {
@@ -121,69 +106,6 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
     }
   };
 
-  // Notification alert handler - toggles between scheduling and cancelling
-  const handleSetAlert = async () => {
-    try {
-      // If notification exists, cancel it
-      if (notificationId !== null) {
-        await cancelLocalNotification(notificationId);
-        untrackNotification(notificationId);
-        setNotificationId(null);
-        console.log('[ActiveSpeciesCard] Alert cancelled:', notificationId);
-        // Redirect to notifications page
-        await router.push('/findr/notifications');
-        return;
-      }
-
-      // Otherwise, schedule new notification
-      const permissionStatus = await checkPermissions();
-      if (permissionStatus !== 'granted') {
-        const newStatus = await requestPermissions();
-        if (newStatus !== 'granted') {
-          console.warn('[ActiveSpeciesCard] Notification permission denied');
-          return;
-        }
-      }
-
-      const title = `🔥 ${species.name} - Hot Bite Alert!`;
-      const body = `${species.confidence}% confidence! They're biting right now - drop everything and go fishing!`;
-
-      // Schedule immediate notification (for hot bites happening NOW)
-      const newNotificationId = await scheduleLocalNotification({
-        title,
-        body,
-        extra: {
-          speciesId: species.id,
-          speciesName: species.name,
-          confidence: species.confidence,
-          type: 'hot_bite_alert',
-        },
-      });
-
-      // Track notification for management UI
-      trackNotification({
-        id: newNotificationId,
-        title,
-        body,
-        scheduledAt: new Date().toISOString(),
-        speciesName: species.name,
-        speciesId: species.id,
-        type: 'hot_bite_alert',
-      });
-
-      console.log('[ActiveSpeciesCard] Alert scheduled:', newNotificationId);
-      setNotificationId(newNotificationId);
-
-      // Redirect to notifications page
-      await router.push('/findr/notifications');
-    } catch (error) {
-      if (error instanceof NotificationException) {
-        console.error('[ActiveSpeciesCard] Notification error:', error.type, error.message);
-      } else {
-        console.error('[ActiveSpeciesCard] Failed to toggle alert:', error);
-      }
-    }
-  };
   // Note: We now use database bite scores instead of client-side calculation
   const fishingTime = {
     time: 'Now',
@@ -238,14 +160,6 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
                 <h3 className="text-xl sm:text-2xl font-bold text-base-content">
                   <TranslatedFishName name={species.name} />
                 </h3>
-                {/* Notification Setup Button - Toggle on/off */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleSetAlert(); }}
-                  className={`btn btn-sm ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'}`}
-                  title={notificationId !== null ? 'Cancel hot bite alert' : 'Set hot bite alert'}
-                >
-                  {notificationId !== null ? <BellOff size={18} /> : <BellPlus size={18} />}
-                </button>
               </div>
               {species.scientificName && (
                 <p className="text-sm italic text-base-content/60 mb-2">{species.scientificName}</p>

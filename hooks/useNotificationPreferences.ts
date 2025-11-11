@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import type { NotificationPreferences, UpdatePreferencesRequest } from '@/pages/api/findr/notification-preferences';
 
 /**
  * Fetch notification preferences from the API
  */
 async function fetchNotificationPreferences(): Promise<NotificationPreferences> {
-  const supabase = getSupabaseBrowserClient();
+  const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
@@ -35,7 +35,7 @@ async function fetchNotificationPreferences(): Promise<NotificationPreferences> 
 async function updateNotificationPreferences(
   updates: UpdatePreferencesRequest
 ): Promise<NotificationPreferences> {
-  const supabase = getSupabaseBrowserClient();
+  const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.access_token) {
@@ -82,7 +82,6 @@ async function updateNotificationPreferences(
  */
 export function useNotificationPreferences() {
   const queryClient = useQueryClient();
-  const supabase = getSupabaseBrowserClient();
 
   // Fetch preferences
   const query = useQuery<NotificationPreferences>({
@@ -105,16 +104,12 @@ export function useNotificationPreferences() {
     },
   });
 
-  // Check if user is authenticated
-  const { data: { session } } = supabase.auth.getSession();
-  const isAuthenticated = !!session;
-
   return {
     preferences: query.data,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
-    isAuthenticated,
+    isAuthenticated: !query.isError, // If query succeeds, user is authenticated
     updatePreferences: mutation,
     refetch: query.refetch,
   };
