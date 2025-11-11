@@ -19,6 +19,7 @@ import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import { OfflineInit } from '../components/OfflineInit'
+import { Toaster } from 'react-hot-toast'
 
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
@@ -114,6 +115,30 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <OfflineInit />
                 {/* Offline Indicator - shows at top when offline */}
                 <OfflineIndicator />
+                {/* Toast notifications */}
+                <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: 'hsl(var(--b1))',
+                      color: 'hsl(var(--bc))',
+                      border: '1px solid hsl(var(--b3))',
+                    },
+                    success: {
+                      iconTheme: {
+                        primary: 'hsl(var(--su))',
+                        secondary: 'hsl(var(--suc))',
+                      },
+                    },
+                    error: {
+                      iconTheme: {
+                        primary: 'hsl(var(--er))',
+                        secondary: 'hsl(var(--erc))',
+                      },
+                    },
+                  }}
+                />
                 <Component {...pageProps} />
               </div>
             </UnifiedLocationProvider>

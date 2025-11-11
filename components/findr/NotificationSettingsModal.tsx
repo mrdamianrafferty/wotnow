@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Bell, Mail, TrendingUp, AlertCircle, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import type { UpdatePreferencesRequest } from '@/pages/api/findr/notification-preferences';
@@ -60,9 +61,11 @@ export function NotificationSettingsModal({
     try {
       await updatePreferences.mutateAsync(localPrefs);
       setHasChanges(false);
+      toast.success('Notification settings saved successfully!');
       onClose();
     } catch (error) {
       console.error('[NotificationSettingsModal] Failed to save:', error);
+      toast.error('Failed to save notification settings. Please try again.');
     }
   };
 
