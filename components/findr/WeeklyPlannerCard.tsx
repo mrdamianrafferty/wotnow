@@ -201,7 +201,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
         </div>
 
         {/* Weekly Grid */}
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {weeklyPlan.map((day) => {
             const isBestDay = bestDay?.dayIndex === day.dayIndex && day.dayIndex > 0;
 
@@ -292,7 +292,13 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                 <p className="text-xs text-base-content/80 font-medium">
                                   {opp.biteWindows && opp.biteWindows.length > 0 ? (
                                     <>
-                                      {opp.biteWindows[0].description}
+                                      {/* Show first 2 bite windows for specificity (e.g., time + tide) */}
+                                      {opp.biteWindows.slice(0, 2).map((window, idx) => (
+                                        <span key={idx}>
+                                          {idx > 0 && ' • '}
+                                          {window.description}
+                                        </span>
+                                      ))}
                                       {opp.bestBait && (
                                         <>
                                           {' • '}
@@ -302,12 +308,10 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                                     </>
                                   ) : (
                                     <>
-                                      Active throughout the day
-                                      {opp.bestBait && (
-                                        <>
-                                          {' • '}
-                                          <TranslatedText text={opp.bestBait} />
-                                        </>
+                                      {opp.bestBait ? (
+                                        <TranslatedText text={opp.bestBait} />
+                                      ) : (
+                                        'Check local conditions'
                                       )}
                                     </>
                                   )}
