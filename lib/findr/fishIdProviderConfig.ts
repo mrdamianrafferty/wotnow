@@ -23,12 +23,13 @@ export function getFishIdProvider(): FishIdProvider {
 
   const provider = process.env.FISH_ID_PROVIDER?.toLowerCase();
 
-  if (provider === 'huggingface' || provider === 'hf') {
-    return 'huggingface';
+  if (provider === 'openai') {
+    return 'openai';
   }
 
-  // Default to OpenAI
-  return 'openai';
+  // Default to Hugging Face (faster, cheaper, local inference)
+  // Easy rollback: set FISH_ID_PROVIDER=openai
+  return 'huggingface';
 }
 
 /**
