@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fishIdService, type IdentificationResult } from '@/lib/findr/fishIdentificationService';
-import { logIdentificationMetrics, extractSpeciesInfo } from '@/lib/findr/fishIdentificationMetrics';
 import type { QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
 import formidable from 'formidable';
 import fs from 'fs/promises';
@@ -47,8 +46,6 @@ export default async function handler(
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
-
-  const startTime = Date.now();
 
   try {
     // Parse multipart form data
@@ -110,29 +107,11 @@ export default async function handler(
     console.log('[identify-fish] Processing identification with', requestData.candidates.length, 'candidates');
     const result = await fishIdService.identify(imageFileObject, context);
 
-    // Calculate latency
-    const latencyMs = Date.now() - startTime;
-
-    // Log metrics (async, don't wait)
-    const { speciesId, speciesName } = extractSpeciesInfo(result);
-    logIdentificationMetrics({
-      provider: 'openai',
-      rectangleCode: requestData.context?.location?.rectangleCode || null,
-      latencyMs,
-      costEur: result.cost,
-      method: result.method,
-      confidence: result.confidence,
-      suggestedSpeciesId: speciesId,
-      suggestedSpeciesName: speciesName,
-      numCandidates: requestData.candidates.length,
-    }).catch(err => console.error('[identify-fish] Failed to log metrics:', err));
-
     // Clean up temp file
     await fs.unlink(imageFile.filepath).catch(() => {
       // Ignore cleanup errors
     });
 
-    console.log(`[identify-fish] Completed in ${latencyMs}ms`);
     return res.status(200).json(result);
 
   } catch (error) {
