@@ -195,8 +195,10 @@ export class RealCopernicusProvider implements CopernicusProvider {
         } catch (err) {
           const isTimeout = err instanceof Error && err.message.includes('timeout');
           const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
+          const errorMsg = err instanceof Error ? err.message : String(err);
           if (padding === paddings[paddings.length - 1]) {
             console.warn(`   ⚠️  No BGC data available after trying all paddings (last attempt: ${errorType})`);
+            console.warn(`   📋 BGC Error details: ${errorMsg.substring(0, 200)}`);
           } else if (isTimeout) {
             console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
           }
