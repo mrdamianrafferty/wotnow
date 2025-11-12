@@ -20,7 +20,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import { OfflineInit } from '../components/OfflineInit'
 import { Toaster } from 'react-hot-toast'
-
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
 // const roboto = Roboto({
@@ -140,6 +141,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                   }}
                 />
                 <Component {...pageProps} />
+                <Analytics />
+                <SpeedInsights />
               </div>
             </UnifiedLocationProvider>
           </UserPreferencesProvider>

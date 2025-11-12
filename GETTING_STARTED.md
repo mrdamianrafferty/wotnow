@@ -584,6 +584,9 @@ rock_dwelling: {
 
 ## 📊 Database Schema (Key Tables)
 
+> **📚 COMPREHENSIVE REFERENCE:** For complete table schemas with exact column types, see [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md)
+> **⚠️ RPC DEVELOPMENT:** Before creating or modifying RPC functions, see [RPC_TYPE_CASTING_GUIDE.md](./RPC_TYPE_CASTING_GUIDE.md)
+
 ### Species & Taxonomy
 
 ```sql

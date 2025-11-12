@@ -221,6 +221,8 @@ See `docs/FINDR_VALIDATION_SYSTEM.md` for complete details.
 
 ## Database Schema
 
+**📚 ESSENTIAL REFERENCE:** See [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md) for comprehensive table schemas, column types, and type casting requirements.
+
 **Key Tables:**
 - `species` - Fish species with environmental preferences and localized names
 - `ices_rectangles` - ICES fishing zones with geometry
@@ -235,7 +237,10 @@ See `docs/FINDR_VALIDATION_SYSTEM.md` for complete details.
 
 All tables include Row-Level Security (RLS) policies for data protection.
 
-See `docs/Supabase Snippet Public Schema Column Inventory-2.csv` for complete schema reference.
+**When Working with RPC Functions:**
+- **ALWAYS** consult [RPC_TYPE_CASTING_GUIDE.md](./RPC_TYPE_CASTING_GUIDE.md) before creating or modifying RPC functions
+- Common pitfalls: VARCHAR vs TEXT, ENUM types, INTEGER vs NUMERIC in CASE statements
+- All column names and types documented in [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md)
 
 ## Key Development Patterns
 
@@ -407,6 +412,10 @@ This comprehensive guide covers:
 
 **Core System Documentation:**
 - `CLAUDE.md` - **THIS FILE** - Main guidance document
+- `DATABASE_SCHEMA_REFERENCE.md` - ✅ **ESSENTIAL** Complete table/column reference with types (Nov 12, 2025)
+- `RPC_TYPE_CASTING_GUIDE.md` - ✅ **ESSENTIAL** Guide to preventing RPC type mismatches (Nov 12, 2025)
+- `RPC_REGION_MAPPING_FIX_20251112.md` - ✅ **DEPLOYED** Biogeographic region mapping fix (Nov 12, 2025)
+- `RPC_FIX_AND_DOCUMENTATION_SUMMARY_20251112.md` - Complete RPC fix summary (Nov 12, 2025)
 - `CONFIDENCE_SCORING_ALGORITHM.md` - How prediction confidence is calculated
 - `FINDR_PREDICTIONS_DATA_SOURCES.md` - Data sources for predictions
 - `COPERNICUS_DATA_INGESTION_GUIDE.md` - CMEMS data ingestion process
