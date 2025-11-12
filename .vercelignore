@@ -72,7 +72,7 @@ scripts/
 docs/
 examples/
 archive/
-services/
+/services/
 ios/
 android/
 test-*.js
