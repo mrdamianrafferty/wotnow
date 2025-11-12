@@ -174,6 +174,111 @@ jobs:
               });
             }
 
+      - name: Send Slack notification on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST "$SLACK_WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d "{
+                \"text\": \"🚨 CMEMS Data Ingestion Failed\",
+                \"blocks\": [
+                  {
+                    \"type\": \"header\",
+                    \"text\": {
+                      \"type\": \"plain_text\",
+                      \"text\": \"🚨 CMEMS Data Ingestion Failed\"
+                    }
+                  },
+                  {
+                    \"type\": \"section\",
+                    \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"The scheduled Copernicus data ingestion workflow failed.\\n\\n*Workflow Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>\\n*Time:* ${{ github.event.schedule || github.event.head_commit.timestamp }}\"
+                    }
+                  },
+                  {
+                    \"type\": \"section\",
+                    \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"*Possible Causes:*\\n• Copernicus API credentials expired\\n• Network issues\\n• API rate limiting\\n• Data validation failure\"
+                    }
+                  },
+                  {
+                    \"type\": \"section\",
+                    \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"*Impact:*\\n• Predictions will have reduced accuracy\\n• Environmental data may be stale\\n• System may fall back to mock data\"
+                    }
+                  },
+                  {
+                    \"type\": \"actions\",
+                    \"elements\": [
+                      {
+                        \"type\": \"button\",
+                        \"text\": {
+                          \"type\": \"plain_text\",
+                          \"text\": \"View Logs\"
+                        },
+                        \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                      },
+                      {
+                        \"type\": \"button\",
+                        \"text\": {
+                          \"type\": \"plain_text\",
+                          \"text\": \"Health Check\"
+                        },
+                        \"url\": \"https://www.fishfindr.eu/api/health/cmems-status\"
+                      }
+                    ]
+                  }
+                ]
+              }"
+          else
+            echo "⚠️  SLACK_WEBHOOK_URL not configured, skipping Slack notification"
+          fi
+
+      - name: Send email notification on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: '🚨 CMEMS Data Ingestion Failed - Findr'
+          to: ${{ secrets.ALERT_EMAIL }}
+          from: 'GitHub Actions <noreply@github.com>'
+          body: |
+            CMEMS Data Ingestion Failed
+
+            The scheduled Copernicus Marine data ingestion workflow has failed.
+
+            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Time: ${{ github.event.schedule || github.event.head_commit.timestamp }}
+
+            Possible Causes:
+            - Copernicus API credentials expired
+            - Network issues
+            - API rate limiting
+            - Data validation failure
+
+            Impact:
+            - Predictions will have reduced accuracy
+            - Environmental data may be stale
+            - System may fall back to mock data
+
+            Actions Required:
+            1. Check workflow logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            2. Verify Copernicus credentials in GitHub Secrets
+            3. Check health status: https://www.fishfindr.eu/api/health/cmems-status
+            4. Manually trigger workflow if needed
+
+            This is an automated alert from GitHub Actions.
+        continue-on-error: true
+
       - name: Close success issues
         if: success()
         uses: actions/github-script@v7
@@ -199,3 +304,26 @@ jobs:
                 state: 'closed'
               });
             }
+
+      - name: Send success notification to Slack
+        if: success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -X POST "$SLACK_WEBHOOK_URL" \
+              -H 'Content-Type: application/json' \
+              -d "{
+                \"text\": \"✅ CMEMS Data Ingestion Successful\",
+                \"blocks\": [
+                  {
+                    \"type\": \"section\",
+                    \"text\": {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"✅ *CMEMS Data Ingestion Successful*\\n\\nFresh environmental data has been ingested and is now available for predictions.\\n\\n<https://www.fishfindr.eu/api/health/cmems-status|View Health Status>\"
+                    }
+                  }
+                ]
+              }"
+          fi
+        continue-on-error: true
