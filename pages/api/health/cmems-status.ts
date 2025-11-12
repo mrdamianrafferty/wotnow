@@ -32,10 +32,11 @@ export default async function handler(
       .from('findr_conditions_latest')
       .select('*', { count: 'exact', head: true });
 
-    // Get latest data timestamp
+    // Get latest data timestamp (exclude fallback source which has no environmental data)
     const { data: latest } = await supabase
       .from('findr_conditions_latest')
       .select('captured_at, sea_temp_c, salinity_psu, chlorophyll_mg_m3')
+      .not('source', 'eq', 'fallback')
       .order('captured_at', { ascending: false })
       .limit(1)
       .single();

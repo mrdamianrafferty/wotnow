@@ -10,10 +10,22 @@
     }
   },
   "functions": {
-    "pages/api/**/*.ts": { "maxDuration": 30 },
-    "pages/api/findr/log-catch-enriched.ts": { "maxDuration": 60 },
-    "pages/api/findr/identify-fish.ts": { "maxDuration": 60 },
-    "app/api/**/*.ts": { "maxDuration": 30 }
+    "pages/api/**/*.ts": {
+      "maxDuration": 30,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    },
+    "pages/api/findr/log-catch-enriched.ts": {
+      "maxDuration": 60,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    },
+    "pages/api/findr/identify-fish.ts": {
+      "maxDuration": 60,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    },
+    "app/api/**/*.ts": {
+      "maxDuration": 30,
+      "excludeFiles": "{tmp/**,__tests__/**,*.test.ts,*.test.tsx,docs/**,archive/**,supabase/migrations/**,scripts/**,*.md}"
+    }
   },
   "rewrites": [
     { "source": "/api/python/(.*)", "destination": "/api/python/$1" }
