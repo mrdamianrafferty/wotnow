@@ -32,6 +32,12 @@ const eslintConfig = [
     // Generated files
     '**/*.generated.ts',
     '**/*.generated.js',
+    // Environment and system files
+    '**/.env',
+    '**/.env.local',
+    '**/.env*.local',
+    '**/*.log',
+    '**/.DS_Store',
     // Ignore config files to avoid parser/sourceType mismatches
     '**/*.config.js',
     '**/*.config.cjs',
