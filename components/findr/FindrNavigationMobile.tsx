@@ -10,7 +10,6 @@ import {
   CloudSun,
   Info,
   Camera,
-  Bell,
 } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -102,14 +101,7 @@ export function FindrNavigation() {
         </nav>
         <div className="ml-4 flex-shrink-0 flex items-center gap-3">
           <LocationDisplay />
-          <button
-            onClick={() => setIsNotificationModalOpen(true)}
-            className="btn btn-ghost btn-sm"
-            title="Notification Settings"
-            aria-label="Notification Settings"
-          >
-            <Bell size={18} className="text-base-content" />
-          </button>
+          {/* Notification bell removed: now managed in settings page */}
           <FindrUserMenu />
           <LanguageSelector compact />
         </div>
@@ -149,14 +141,7 @@ export function FindrNavigation() {
       <div className="md:hidden flex items-center justify-between gap-2 px-3 py-2 bg-base-200">
         <LocationDisplay />
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsNotificationModalOpen(true)}
-            className="btn btn-ghost btn-sm"
-            title="Notification Settings"
-            aria-label="Notification Settings"
-          >
-            <Bell size={18} className="text-base-content" />
-          </button>
+          {/* Notification bell removed: now managed in settings page */}
           <FindrUserMenu />
           <LanguageSelector compact />
         </div>
