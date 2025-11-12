@@ -243,7 +243,8 @@ export function getDatasetForRegion(region: string): CopernicusDatasetConfig | n
     regionLower.includes('thames')
   ) {
     return {
-      physics: 'cmems_mod_glo_phy_anfc_0.083deg_P1D-m',
+      physics: 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m', // Temperature dataset (split from salinity)
+      salinity: 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m', // Salinity dataset (split from physics)
       biogeochemistry: 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m',
       transparency: 'cmems_obs-oc_atl_bgc-transp_nrt_l3-multi-1km_P1D', // NRT for current data (MY has ~1 week lag)
       waves: 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i',
