@@ -306,6 +306,82 @@ import xarray as xr
 import json
 import sys
 
+def is_valid_value(val, var_name):
+    """
+    Filter out fill values and physically impossible values.
+    CMEMS datasets use various fill values: 9999, 9.96921e+36, -32767, etc.
+    """
+    if val is None:
+        return False
+
+    import numpy as np
+
+    # Check for NaN and infinite values
+    if np.isnan(val) or np.isinf(val):
+        return False
+
+    # Common fill value patterns
+    abs_val = abs(val)
+    if abs_val > 9000:  # e.g., 9999, 9345, 15442, 9.96921e+36
+        return False
+    if abs_val > 1000 and abs_val < 10000:  # e.g., 9999, -32767
+        return False
+
+    # Variable-specific validation (physically plausible ranges)
+    var_lower = var_name.lower()
+
+    # Temperature variables (thetao, to, sst, etc.)
+    if 'temp' in var_lower or 'thetao' in var_lower or 'to' in var_lower or 'sst' in var_lower:
+        if val < -5 or val > 50:  # °C
+            return False
+
+    # Salinity variables (so, sal, salinity, etc.)
+    if 'sal' in var_lower or 'so' in var_lower:
+        if val < 0 or val > 50:  # PSU
+            return False
+
+    # Chlorophyll (chl, chlorophyll, chla)
+    if 'chl' in var_lower:
+        if val < 0 or val > 100:  # mg/m³
+            return False
+
+    # Light attenuation coefficient (kd490, kd, attenuation)
+    if 'kd' in var_lower or 'atten' in var_lower:
+        if val < 0 or val > 10:  # m⁻¹
+            return False
+
+    # Oxygen (o2, oxygen, dissolved_oxygen)
+    if 'o2' in var_lower or 'oxygen' in var_lower:
+        if val < 0 or val > 500:  # mmol/m³
+            return False
+
+    # Nitrate (no3, nitrate)
+    if 'no3' in var_lower or 'nitrate' in var_lower:
+        if val < 0 or val > 100:  # mmol/m³
+            return False
+
+    # Phosphate (po4, phosphate)
+    if 'po4' in var_lower or 'phosphate' in var_lower:
+        if val < 0 or val > 20:  # mmol/m³
+            return False
+
+    # Currents (uo, vo, velocity)
+    if any(x in var_lower for x in ['uo', 'vo', 'velocity', 'current']):
+        if abs_val > 10:  # m/s (10 m/s = 20 knots, extreme)
+            return False
+
+    # Wave height (VHM0, wave_height)
+    if 'vhm' in var_lower or 'wave' in var_lower and 'height' in var_lower:
+        if val < 0 or val > 30:  # meters
+            return False
+
+    # Wave period (VTM, period)
+    if 'vtm' in var_lower or 'period' in var_lower:
+        if val < 0 or val > 30:  # seconds
+            return False
+
+    return True
+
 try:
     ds = xr.open_dataset('${filePath}')
 
@@ -317,17 +393,17 @@ try:
     depths = ds.depth.values if 'depth' in ds.dims else [0]
     lats = ds.latitude.values if 'latitude' in ds.dims else ds.lat.values
     lons = ds.longitude.values if 'longitude' in ds.dims else ds.lon.values
-    
+
     # Convert to Python lists
     import numpy as np
     times = [str(t) for t in times]
     depths = [float(d) for d in depths]
     lat = float(lats[0] if len(lats.shape) == 1 else lats[0, 0])
     lon = float(lons[0] if len(lons.shape) == 1 else lons[0, 0])
-    
+
     # Get variable names (exclude coordinates)
     var_names = [v for v in ds.data_vars if v not in ['latitude', 'longitude', 'lat', 'lon', 'time', 'depth']]
-    
+
     # Extract data for each time/depth combination
     for time_idx, time in enumerate(times):
         for depth_idx, depth in enumerate(depths):
@@ -338,7 +414,7 @@ try:
                         val = ds[var].isel(time=time_idx, depth=depth_idx).values
                     else:
                         val = ds[var].isel(time=time_idx).values
-                    
+
                     # Handle various array shapes - spatial grids need aggregation
                     if hasattr(val, 'shape') and len(val.shape) >= 2:
                         # Spatial grid (lat x lon) - take mean of non-NaN values
@@ -348,12 +424,12 @@ try:
                     elif hasattr(val, '__len__') and len(val) > 0:
                         val = float(val[0])
 
-                    # Check for NaN (nanmean can still return NaN if all values are NaN)
-                    if not np.isnan(val):
+                    # Validate value (filter fill values and implausible data)
+                    if is_valid_value(val, var):
                         variables[var] = float(val)
                 except Exception as e:
                     pass
-            
+
             if variables:  # Only add if we have data
                 records.append({
                     'time': time,
@@ -362,16 +438,16 @@ try:
                     'lon': lon,
                     'variables': variables
                 })
-    
+
     result = {
         'datasetId': ds.attrs.get('id', 'unknown'),
         'variables': var_names,
         'records': records,
         'source': 'copernicus'
     }
-    
+
     print(json.dumps(result))
-    
+
 except Exception as e:
     print(json.dumps({'error': str(e)}), file=sys.stderr)
     sys.exit(1)
