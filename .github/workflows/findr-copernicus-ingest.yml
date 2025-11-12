@@ -90,21 +90,21 @@ jobs:
           const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
           async function verify() {
             const { count, error } = await supabase
-              .from('grid_conditions_latest')
+              .from('findr_conditions_latest')
               .select('*', { count: 'exact', head: true });
             if (error) throw new Error(`Verification failed: ${error.message}`);
-            console.log(`Total records in grid_conditions_latest: ${count}`);
-            if (!count || count === 0) throw new Error('No data in grid_conditions_latest after ingestion!');
+            console.log(`Total records in findr_conditions_latest: ${count}`);
+            if (!count || count === 0) throw new Error('No data in findr_conditions_latest after ingestion!');
             const { data: recent } = await supabase
-              .from('grid_conditions_latest')
-              .select('collected_at')
-              .order('collected_at', { ascending: false })
+              .from('findr_conditions_latest')
+              .select('captured_at')
+              .order('captured_at', { ascending: false })
               .limit(1)
               .single();
             const hoursSinceCapture = recent
-              ? (Date.now() - new Date(recent.collected_at).getTime()) / (1000 * 60 * 60)
+              ? (Date.now() - new Date(recent.captured_at).getTime()) / (1000 * 60 * 60)
               : 999;
-            console.log(`Latest data: ${recent?.collected_at} (${hoursSinceCapture.toFixed(1)} hours old)`);
+            console.log(`Latest data: ${recent?.captured_at} (${hoursSinceCapture.toFixed(1)} hours old)`);
             if (hoursSinceCapture > 48) throw new Error(`Data is stale! Latest capture was ${hoursSinceCapture.toFixed(1)} hours ago`);
             console.log('✅ Verification passed');
           }
@@ -143,8 +143,8 @@ jobs:
             - Data validation failure
 
             ### Impact:
-            - \`grid_conditions_latest\` table may be empty or stale
-            - Predictions will show 0 results or outdated data
+            - \`findr_conditions_latest\` table may be empty or stale
+            - Predictions will show reduced accuracy or outdated data
 
             ### Actions Required:
             1. Check workflow logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
