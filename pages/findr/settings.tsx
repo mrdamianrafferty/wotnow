@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Head from 'next/head';
-import { Bell, Mail, TrendingUp, AlertCircle } from 'lucide-react';
+import { Mail, TrendingUp, AlertCircle } from 'lucide-react';
 import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
 import { supabase } from '../../lib/supabase/client';
 import { useFavourites } from '../../hooks/useFavourites';
@@ -246,7 +247,7 @@ export default function FindrSettingsPage() {
           {/* Unsaved changes warning */}
           {isDirty && (
             <div className="alert alert-warning">
-              <span>You have unsaved changes. Don't forget to click <strong>Save Settings</strong>.</span>
+              <span>You have unsaved changes. Don&apos;t forget to click <strong>Save Settings</strong>.</span>
             </div>
           )}
 
@@ -565,9 +566,9 @@ export default function FindrSettingsPage() {
               </div>
               <p className="text-sm">
                 Add favorite species from the predictions page or{' '}
-                <a href="/findr/favourites" className="link link-primary">
+                <Link href="/findr/favourites" className="link link-primary">
                   manage your favorites
-                </a>
+                </Link>
                 .
               </p>
             </div>
