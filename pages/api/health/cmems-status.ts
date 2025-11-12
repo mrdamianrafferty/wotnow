@@ -88,7 +88,7 @@ export default async function handler(
           expected: 3
         }
       },
-      issues: []
+      issues: [] as string[]
     };
 
     // Collect issues
@@ -101,7 +101,7 @@ export default async function handler(
     if (variablesAvailable < 1) {
       status.issues.push(`No environmental variables available`);
     }
-    if (staleCount && staleCount > rectsWithData * 0.2) {
+    if (staleCount && rectsWithData && staleCount > rectsWithData * 0.2) {
       status.issues.push(`${staleCount} rectangles have stale data (>${((staleCount || 0) / rectsWithData * 100).toFixed(0)}%)`);
     }
 
@@ -117,7 +117,7 @@ export default async function handler(
     return res.status(503).json({
       healthy: false,
       timestamp: new Date().toISOString(),
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       issues: ['Failed to query database']
     });
   }
