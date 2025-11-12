@@ -13,54 +13,6 @@ const nextConfig = {
   experimental: {
     forceSwcTransforms: true,
   },
-
-  // Exclude large packages from function bundles to stay under 250MB limit
-  outputFileTracingExcludes: {
-    '*': [
-      // Large node_modules that are never used server-side
-      'node_modules/react-icons/**/*',
-      'node_modules/duckdb/**/*',
-      'node_modules/@img/**/*',
-      'node_modules/playwright-core/**/*',
-      'node_modules/@esbuild/**/*',
-      'node_modules/@playwright/**/*',
-      'node_modules/jest/**/*',
-      'node_modules/@jest/**/*',
-      'node_modules/@testing-library/**/*',
-      'node_modules/typescript/**/*',
-      'node_modules/eslint/**/*',
-      'node_modules/@typescript-eslint/**/*',
-      'node_modules/lucide-react/**/*',
-      'node_modules/@capacitor/**/*',
-      'node_modules/@babel/**/*',
-      'node_modules/lightningcss-**/**/*',
-      'node_modules/svix/**/*',
-      'node_modules/@sinclair/**/*',
-      // Project directories that should never be in functions
-      '.git/**/*',
-      'tmp/**/*',
-      '__tests__/**/*',
-      'docs/**/*',
-      'archive/**/*',
-      'supabase/migrations/**/*',
-      'scripts/**/*',
-      'ios/**/*',
-      'android/**/*',
-      'services/astro_highlights/**/*',  // Python services only
-      'services/web/**/*',
-      '.venv/**/*',
-      'venv/**/*',
-      '__pycache__/**/*',
-      // Test and doc files
-      '**.md',
-      '**.test.ts',
-      '**.test.tsx',
-      '**.spec.ts',
-      '**.spec.tsx',
-      '**/test-*.ts',
-      '**/test-*.js',
-    ],
-  },
   
   // Disable ESLint during production builds; lint enforced via `prebuild` script
   eslint: {
