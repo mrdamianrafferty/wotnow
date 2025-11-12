@@ -10,6 +10,7 @@ import {
   CloudSun,
   Info,
   Camera,
+  Settings,
 } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
 import { TranslatedText } from '../translation/TranslatedFishCard';
@@ -28,6 +29,7 @@ const LINKS: NavLink[] = [
   { href: '/findr/log', label: 'catches', translationKey: 'catches', Icon: ClipboardList },
   { href: '/findr/my-catches', label: 'gallery', translationKey: 'gallery', Icon: Camera },
   { href: '/findr/conditions', label: 'conditions', translationKey: 'conditions', Icon: CloudSun },
+  { href: '/findr/settings', label: 'settings', translationKey: 'settings', Icon: Settings },
   { href: '/findr/info', label: 'info', translationKey: 'info', Icon: Info },
 ];
 
