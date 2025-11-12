@@ -50,21 +50,21 @@ export const EnvironmentalInfo: React.FC<EnvironmentalInfoProps> = ({
   if (compact) {
     return (
       <div className={`flex flex-wrap gap-2 text-xs ${className}`}>
-        {factors.temperature && (
+        {factors.temperature && factors.temperature.actual != null && (
           <span className={`flex items-center gap-1 ${getMatchColor(factors.temperature.match)}`}>
             <span role="img" aria-label="Temperature">🌡️</span>
             <span className="font-medium">{factors.temperature.actual}°C</span>
             <span className="opacity-60">{getMatchIcon(factors.temperature.match)}</span>
           </span>
         )}
-        {factors.salinity && (
+        {factors.salinity && factors.salinity.actual != null && (
           <span className={`flex items-center gap-1 ${getMatchColor(factors.salinity.match)}`}>
             <span role="img" aria-label="Salinity">🧂</span>
             <span className="font-medium">{factors.salinity.actual} ppt</span>
             <span className="opacity-60">{getMatchIcon(factors.salinity.match)}</span>
           </span>
         )}
-        {factors.substrate && (
+        {factors.substrate && factors.substrate.actual != null && (
           <span className={`flex items-center gap-1 ${getMatchColor(factors.substrate.match)}`}>
             <span role="img" aria-label="Substrate">🪨</span>
             <span className="font-medium capitalize">{factors.substrate.actual}</span>
@@ -79,7 +79,7 @@ export const EnvironmentalInfo: React.FC<EnvironmentalInfoProps> = ({
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        {factors.temperature && (
+        {factors.temperature && factors.temperature.actual != null && (
           <div className="flex items-center justify-between">
             <span className="text-base-content/60 flex items-center gap-1">
               <span role="img" aria-label="Temperature">🌡️</span>
@@ -91,8 +91,8 @@ export const EnvironmentalInfo: React.FC<EnvironmentalInfoProps> = ({
             </span>
           </div>
         )}
-        
-        {factors.salinity && (
+
+        {factors.salinity && factors.salinity.actual != null && (
           <div className="flex items-center justify-between">
             <span className="text-base-content/60 flex items-center gap-1">
               <span role="img" aria-label="Salinity">🧂</span>
@@ -104,8 +104,8 @@ export const EnvironmentalInfo: React.FC<EnvironmentalInfoProps> = ({
             </span>
           </div>
         )}
-        
-        {factors.depth && (
+
+        {factors.depth && factors.depth.actual != null && (
           <div className="flex items-center justify-between">
             <span className="text-base-content/60 flex items-center gap-1">
               <span role="img" aria-label="Depth">📏</span>
@@ -117,8 +117,8 @@ export const EnvironmentalInfo: React.FC<EnvironmentalInfoProps> = ({
             </span>
           </div>
         )}
-        
-        {factors.substrate && (
+
+        {factors.substrate && factors.substrate.actual != null && (
           <div className="flex items-center justify-between">
             <span className="text-base-content/60 flex items-center gap-1">
               <span role="img" aria-label="Substrate">🪨</span>
