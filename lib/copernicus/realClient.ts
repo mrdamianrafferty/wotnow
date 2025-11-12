@@ -57,6 +57,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
       const salinityDataset = this.datasetConfig?.salinity || 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m';
       const currentsDataset = this.datasetConfig?.currents || 'cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m';
       const bioDataset = this.datasetConfig?.biogeochemistry || 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m';
+      const transparencyDataset = this.datasetConfig?.transparency || 'cmems_obs-oc_glo_bgc-transp_my_l4-gapfree-multi-4km_P1D';
       const waveDataset = this.datasetConfig?.waves || 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i';
 
       // Progressive padding strategy for coastal locations
@@ -66,6 +67,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
       let temperatureData: CopernicusTimeseries | null = null;
       let salinityData: CopernicusTimeseries | null = null;
       let currentsData: CopernicusTimeseries | null = null;
+      let transparencyData: CopernicusTimeseries | null = null;
       let bioData: CopernicusTimeseries | null = null;
       let waveData: CopernicusTimeseries | undefined;
 
@@ -147,13 +149,37 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
+      // Try transparency (satellite kd490) with same padding as temperature
+      if (temperatureData) {
+        const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
+        try {
+          const transparencyFile = path.join(tempDir, `transparency_${successfulPadding}.nc`);
+          await this.fetchDatasetWithPadding(
+            transparencyDataset,
+            ['KD490'],  // Satellite transparency variable (uppercase)
+            lat,
+            lon,
+            start,
+            end,
+            transparencyFile,
+            successfulPadding
+          );
+          transparencyData = await this.parseNetCDF(transparencyFile, 'biogeochemical');
+          if (transparencyData && this.hasValidData(transparencyData)) {
+            console.log(`   ✅ Transparency data (kd490) found with ${successfulPadding}° padding`);
+          }
+        } catch (_err) {
+          console.warn(`   ⚠️  No transparency data available (satellite may have gaps)`);
+        }
+      }
+
       // Try biogeochemical with progressive padding
       for (const padding of paddings) {
         try {
           const bioFile = path.join(tempDir, `bio_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             bioDataset,
-            ['kd490'],  // Explicitly request kd490 (water clarity)
+            [],  // Don't specify variables - let dataset return what it has (chlorophyll, oxygen, nutrients)
             lat,
             lon,
             start,
@@ -224,6 +250,22 @@ export class RealCopernicusProvider implements CopernicusProvider {
               record.variables = { ...record.variables, ...currentsData.records[idx].variables };
             }
           });
+        }
+      }
+
+      // Merge transparency (kd490) into biogeochemical data
+      if (transparencyData && transparencyData.records.length > 0) {
+        if (bioData) {
+          // Merge into existing BGC data
+          bioData.variables = [...bioData.variables, ...transparencyData.variables];
+          bioData.records.forEach((record, idx) => {
+            if (transparencyData.records[idx]) {
+              record.variables = { ...record.variables, ...transparencyData.records[idx].variables };
+            }
+          });
+        } else {
+          // Use transparency as the BGC data if no other BGC data exists
+          bioData = transparencyData;
         }
       }
 
