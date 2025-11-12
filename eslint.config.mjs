@@ -23,6 +23,7 @@ const eslintConfig = [
     'debug/**',
     'scripts/**',
     'examples/**',
+    'tmp/**',
     'final-card-audit.js',
     'img-optimizer/**',
     'services/astro_highlights/astro_highlights/.venv/**',

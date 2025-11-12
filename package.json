@@ -87,7 +87,7 @@
     "@turf/nearest-point-on-line": "^7.2.0",
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.2.0",
-    "apn": "^1.6.2",
+    "apn": "^2.2.0",
     "axios": "^1.12.2",
     "browser-image-compression": "^2.0.2",
     "cally": "^0.8.0",

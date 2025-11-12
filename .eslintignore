@@ -1,0 +1,20 @@
+# Temporary test scripts
+tmp/
+
+# Build output
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.log
+.DS_Store
