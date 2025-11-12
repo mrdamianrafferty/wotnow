@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '../../lib/supabase/client';
 import { User as UserType } from '@supabase/supabase-js';
-import { User, LogIn, LogOut, Bell } from 'lucide-react';
+import { User, LogIn, LogOut, Settings } from 'lucide-react';
 
 export default function FindrUserMenu() {
   const router = useRouter();
@@ -77,9 +77,9 @@ export default function FindrUserMenu() {
           </span>
         </li>
         <li>
-          <Link href="/findr/notifications" className="flex items-center gap-2 text-base-content hover:text-base-content">
-            <Bell className="w-4 h-4" />
-            Fishing Alerts
+          <Link href="/findr/settings" className="flex items-center gap-2 text-base-content hover:text-base-content">
+            <Settings className="w-4 h-4" />
+            Settings
           </Link>
         </li>
         <li>
