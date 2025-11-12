@@ -93,13 +93,15 @@ export default function FindrSettingsPage() {
     }
   }, [user]);
 
+  // Only fetch settings when user is loaded and not loading
   useEffect(() => {
-    if (user) {
+    if (!favLoading && user) {
       loadSettings();
     }
-  }, [user, loadSettings]);
+  }, [user, favLoading, loadSettings]);
 
   // Check if user is authenticated
+  // Wait for both favLoading and Supabase session to finish before redirecting
   useEffect(() => {
     if (!favLoading && !user) {
       router.push('/findr/auth?redirect=/findr/settings');
