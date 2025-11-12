@@ -576,7 +576,8 @@ try:
 
                     # Validate value (filter fill values and implausible data)
                     if is_valid_value(val, var):
-                        variables[var] = float(val)
+                        # Normalize variable name to lowercase for consistent transformer mapping
+                        variables[var.lower()] = float(val)
                 except Exception as e:
                     pass
 
