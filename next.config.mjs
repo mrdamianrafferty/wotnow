@@ -20,6 +20,7 @@ const nextConfig = {
         'node_modules/@img/**/*',
         'node_modules/playwright-core/**/*',
         'node_modules/@esbuild/**/*',
+        '.next/cache/**/*',  // Exclude build cache (can be 400MB+)
       ],
     },
   },

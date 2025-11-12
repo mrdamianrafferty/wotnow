@@ -45,7 +45,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
   }
 
   async fetchBundle(options: CopernicusFetchOptions): Promise<CopernicusMarineBundle> {
-    const { lat, lon, start, end } = options;
+    const { lat, lon, start, end: _end } = options;
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'copernicus-'));
 
     try {

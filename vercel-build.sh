@@ -43,7 +43,14 @@ npx next build
 # Verify build output
 if [ -d ".next" ]; then
   echo "✅ Build completed successfully!"
-  echo "📊 Build statistics:"
+  echo "📊 Build statistics (before cache cleanup):"
+  du -sh .next
+
+  # Clean up build cache to reduce serverless function size
+  echo "🧹 Removing build cache..."
+  rm -rf .next/cache
+
+  echo "📊 Final build size:"
   du -sh .next
 else
   echo "❌ Build failed - .next directory not found"
