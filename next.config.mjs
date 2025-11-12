@@ -18,6 +18,7 @@ const nextConfig = {
     // Exclude large packages from function bundles to stay under 250MB limit
     outputFileTracingExcludes: {
       '*': [
+        // Large node_modules that are never used server-side
         'node_modules/react-icons/**/*',
         'node_modules/duckdb/**/*',
         'node_modules/@img/**/*',
@@ -30,6 +31,13 @@ const nextConfig = {
         'node_modules/typescript/**/*',
         'node_modules/eslint/**/*',
         'node_modules/@typescript-eslint/**/*',
+        'node_modules/lucide-react/**/*',
+        'node_modules/@capacitor/**/*',
+        'node_modules/@babel/**/*',
+        'node_modules/lightningcss-**/**/*',
+        'node_modules/svix/**/*',
+        'node_modules/@sinclair/**/*',
+        // Project directories that should never be in functions
         '.git/**/*',
         'tmp/**/*',
         '__tests__/**/*',
@@ -37,9 +45,20 @@ const nextConfig = {
         'archive/**/*',
         'supabase/migrations/**/*',
         'scripts/**/*',
+        'ios/**/*',
+        'android/**/*',
+        'services/**/*',
+        '.venv/**/*',
+        'venv/**/*',
+        '__pycache__/**/*',
+        // Test and doc files
         '**.md',
         '**.test.ts',
         '**.test.tsx',
+        '**.spec.ts',
+        '**.spec.tsx',
+        '**/test-*.ts',
+        '**/test-*.js',
       ],
     },
   },

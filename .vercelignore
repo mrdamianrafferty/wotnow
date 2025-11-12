@@ -71,6 +71,10 @@ temp
 scripts/
 docs/
 examples/
+archive/
+services/
+ios/
+android/
 test-*.js
 test-*.ts
 debug-*.js
