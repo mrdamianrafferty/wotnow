@@ -134,7 +134,7 @@ jobs:
             The scheduled Copernicus data ingestion workflow failed.
 
             **Workflow Run**: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            **Time**: ${{ github.event.head_commit?.timestamp || github.event.schedule || new Date().toISOString() }}
+            **Time**: ${new Date().toISOString()}
 
             ### Possible Causes:
             - Copernicus API credentials expired
@@ -170,7 +170,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issues.data[0].number,
-                body: `Another failure occurred on ${{ github.event.head_commit?.timestamp || github.event.schedule || new Date().toISOString() }}\n\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+                body: `Another failure occurred at ${new Date().toISOString()}\n\nWorkflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
               });
             }
 
