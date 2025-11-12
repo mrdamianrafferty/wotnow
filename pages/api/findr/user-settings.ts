@@ -18,9 +18,6 @@ export interface FindrUserSettings {
   displayName: string | null;
   email: string | null;
 
-  // Species preferences
-  speciesNamingPreference: 'common' | 'scientific' | 'both';
-
   // Fishing style
   hasBoat: boolean;
   fishingTechniques: string[];
@@ -75,7 +72,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const settings: FindrUserSettings = {
         displayName: preferences?.display_name || null,
         email: user.email || null,
-        speciesNamingPreference: preferences?.species_naming_preference || 'common',
         hasBoat: preferences?.has_boat || false,
         fishingTechniques: preferences?.fishing_techniques || [],
         favoriteHabitats: preferences?.favorite_habitats || [],
@@ -108,7 +104,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const {
         displayName,
-        speciesNamingPreference,
         hasBoat,
         fishingTechniques,
         favoriteHabitats,
@@ -120,7 +115,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Update or insert findr_user_preferences
       if (
         displayName !== undefined ||
-        speciesNamingPreference !== undefined ||
         hasBoat !== undefined ||
         fishingTechniques !== undefined ||
         favoriteHabitats !== undefined ||
@@ -128,7 +122,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ) {
         const updateData: Record<string, unknown> = {};
         if (displayName !== undefined) updateData.display_name = displayName;
-        if (speciesNamingPreference !== undefined) updateData.species_naming_preference = speciesNamingPreference;
         if (hasBoat !== undefined) updateData.has_boat = hasBoat;
         if (fishingTechniques !== undefined) updateData.fishing_techniques = fishingTechniques;
         if (favoriteHabitats !== undefined) updateData.favorite_habitats = favoriteHabitats;

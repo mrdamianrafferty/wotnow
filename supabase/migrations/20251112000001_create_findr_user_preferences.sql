@@ -8,9 +8,6 @@ CREATE TABLE IF NOT EXISTS findr_user_preferences (
     -- Personal info
     display_name TEXT,
 
-    -- Species naming preference
-    species_naming_preference TEXT DEFAULT 'common' CHECK (species_naming_preference IN ('common', 'scientific', 'both')),
-
     -- Fishing style
     has_boat BOOLEAN DEFAULT false,
     fishing_techniques TEXT[] DEFAULT '{}', -- e.g., ['spinning', 'fly_fishing', 'bottom_fishing', 'trolling']
@@ -62,9 +59,8 @@ CREATE TRIGGER update_findr_user_preferences_updated_at
     EXECUTE FUNCTION update_findr_user_preferences_updated_at();
 
 -- Add helpful comments
-COMMENT ON TABLE findr_user_preferences IS 'Stores Findr-specific user preferences for fishing style and display options';
+COMMENT ON TABLE findr_user_preferences IS 'Stores Findr-specific user preferences for fishing style';
 COMMENT ON COLUMN findr_user_preferences.display_name IS 'User display name for Findr (may differ from auth email)';
-COMMENT ON COLUMN findr_user_preferences.species_naming_preference IS 'How to display species names: common, scientific, or both';
 COMMENT ON COLUMN findr_user_preferences.has_boat IS 'Whether user has access to a boat for offshore fishing';
 COMMENT ON COLUMN findr_user_preferences.fishing_techniques IS 'Array of preferred fishing techniques';
 COMMENT ON COLUMN findr_user_preferences.favorite_habitats IS 'Array of preferred fishing habitats';

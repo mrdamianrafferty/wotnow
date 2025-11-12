@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { Bell, Mail, TrendingUp, AlertCircle } from 'lucide-react';
 import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
 import { supabase } from '../../lib/supabase/client';
 import { useFavourites } from '../../hooks/useFavourites';
+import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import FindrFooter from '../../components/FindrFooter';
 import type { FindrUserSettings } from '../api/findr/user-settings';
@@ -32,6 +34,11 @@ const HABITATS = [
 export default function FindrSettingsPage() {
   const router = useRouter();
   const { favourites, user, loading: favLoading } = useFavourites();
+  const {
+    preferences: notificationPrefs,
+    isLoading: notifLoading,
+    updatePreferences: updateNotifPrefs,
+  } = useNotificationPreferences();
 
   const [settings, setSettings] = useState<FindrUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +75,6 @@ export default function FindrSettingsPage() {
         setSettings({
           displayName: null,
           email: user.email || null,
-          speciesNamingPreference: 'common',
           hasBoat: false,
           fishingTechniques: [],
           favoriteHabitats: [],
@@ -186,6 +192,16 @@ export default function FindrSettingsPage() {
     setIsDirty(true);
   };
 
+  const handleNotificationToggle = async (field: 'hot_bite_alerts_enabled' | 'daily_email_enabled' | 'weekly_forecast_enabled', value: boolean) => {
+    try {
+      await updateNotifPrefs.mutateAsync({ [field]: value });
+      setMessage({ type: 'success', text: 'Notification settings updated!' });
+    } catch (error) {
+      console.error('Failed to update notifications:', error);
+      setMessage({ type: 'error', text: 'Failed to update notification settings' });
+    }
+  };
+
   if (favLoading || loading) {
     return (
       <>
@@ -279,67 +295,110 @@ export default function FindrSettingsPage() {
             </div>
           </section>
 
-          {/* Species Display Preferences */}
+          {/* Notifications */}
           <section className="card bg-base-100 shadow-sm">
             <div className="card-body space-y-4">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🐟</span>
+                <span className="text-xl">🔔</span>
                 <div>
-                  <h2 className="card-title">Species Names</h2>
-                  <p className="text-sm opacity-70 -mt-1">How would you like us to refer to fish?</p>
+                  <h2 className="card-title">Fishing Alerts</h2>
+                  <p className="text-sm opacity-70 -mt-1">Get notified when conditions are perfect for your favorite species</p>
                 </div>
               </div>
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-4">
-                  <input
-                    type="radio"
-                    name="naming"
-                    className="radio"
-                    checked={settings.speciesNamingPreference === 'common'}
-                    onChange={() => {
-                      setSettings({ ...settings, speciesNamingPreference: 'common' });
-                      setIsDirty(true);
-                    }}
-                  />
-                  <span className="label-text">
-                    <strong>Common names</strong> (e.g., Sea Bass, Mackerel)
-                  </span>
-                </label>
-              </div>
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-4">
-                  <input
-                    type="radio"
-                    name="naming"
-                    className="radio"
-                    checked={settings.speciesNamingPreference === 'scientific'}
-                    onChange={() => {
-                      setSettings({ ...settings, speciesNamingPreference: 'scientific' });
-                      setIsDirty(true);
-                    }}
-                  />
-                  <span className="label-text">
-                    <strong>Scientific names</strong> (e.g., Dicentrarchus labrax, Scomber scombrus)
-                  </span>
-                </label>
-              </div>
-              <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-4">
-                  <input
-                    type="radio"
-                    name="naming"
-                    className="radio"
-                    checked={settings.speciesNamingPreference === 'both'}
-                    onChange={() => {
-                      setSettings({ ...settings, speciesNamingPreference: 'both' });
-                      setIsDirty(true);
-                    }}
-                  />
-                  <span className="label-text">
-                    <strong>Both</strong> (e.g., Sea Bass <em>Dicentrarchus labrax</em>)
-                  </span>
-                </label>
-              </div>
+
+              {notifLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <span className="loading loading-spinner loading-lg text-primary" />
+                </div>
+              ) : notificationPrefs ? (
+                <div className="space-y-4">
+                  {/* Hot Bite Alerts */}
+                  <div className="card bg-base-200 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+                            <AlertCircle size={20} className="text-error" />
+                          </div>
+                          <h4 className="font-semibold">Hot Bite Alerts</h4>
+                        </div>
+                        <p className="text-xs text-base-content/60 ml-12">
+                          Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-error"
+                        checked={notificationPrefs.hot_bite_alerts_enabled ?? true}
+                        onChange={(e) => handleNotificationToggle('hot_bite_alerts_enabled', e.target.checked)}
+                        disabled={updateNotifPrefs.isPending}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Daily Email Digest */}
+                  <div className="card bg-base-200 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center flex-shrink-0">
+                            <Mail size={20} className="text-info" />
+                          </div>
+                          <h4 className="font-semibold">Daily Email Digest</h4>
+                        </div>
+                        <p className="text-xs text-base-content/60 ml-12 mb-3">
+                          Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (&lt;70%). Maximum 1 email per day.
+                        </p>
+                        <div className="ml-12 text-xs text-base-content/50">
+                          Sent daily at 8:00 AM
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-info"
+                        checked={notificationPrefs.daily_email_enabled ?? false}
+                        onChange={(e) => handleNotificationToggle('daily_email_enabled', e.target.checked)}
+                        disabled={updateNotifPrefs.isPending}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Weekly Forecast Email */}
+                  <div className="card bg-base-200 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
+                            <TrendingUp size={20} className="text-success" />
+                          </div>
+                          <h4 className="font-semibold">Weekly Forecast</h4>
+                        </div>
+                        <p className="text-xs text-base-content/60 ml-12 mb-3">
+                          7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!
+                        </p>
+                        <div className="ml-12 text-xs text-base-content/50">
+                          Sent every Monday at 8:00 AM
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-success"
+                        checked={notificationPrefs.weekly_forecast_enabled ?? false}
+                        onChange={(e) => handleNotificationToggle('weekly_forecast_enabled', e.target.checked)}
+                        disabled={updateNotifPrefs.isPending}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Info Banner */}
+                  <div className="alert alert-info">
+                    <AlertCircle size={16} />
+                    <div className="text-xs">
+                      Add species to your favourites to start receiving personalized fishing alerts and forecasts.
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 
