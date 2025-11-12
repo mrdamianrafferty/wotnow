@@ -35,7 +35,7 @@ export interface FindrUserSettings {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = getSupabaseServerClient(req, res);
+  const supabase = getSupabaseServerClient();
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();
