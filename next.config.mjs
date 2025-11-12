@@ -9,9 +9,6 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Use standalone output for smaller serverless functions
-  output: 'standalone',
-
   // Disable Babel completely (SWC is used by default in Next.js 15+)
   experimental: {
     forceSwcTransforms: true,
