@@ -46,6 +46,7 @@ export default function FindrSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   // Dialog states
   const [showHomeDialog, setShowHomeDialog] = useState(false);
@@ -93,6 +94,15 @@ export default function FindrSettingsPage() {
     }
   }, [user]);
 
+  // Check session on mount to prevent premature redirects
+  useEffect(() => {
+    const checkSession = async () => {
+      await supabase.auth.getSession();
+      setSessionChecked(true);
+    };
+    checkSession();
+  }, []);
+
   // Only fetch settings when user is loaded and not loading
   useEffect(() => {
     if (!favLoading && user) {
@@ -100,13 +110,13 @@ export default function FindrSettingsPage() {
     }
   }, [user, favLoading, loadSettings]);
 
-  // Check if user is authenticated
-  // Wait for both favLoading and Supabase session to finish before redirecting
+  // Check if user is authenticated - but only after we've verified the session
+  // This prevents redirect race conditions during initial page load
   useEffect(() => {
-    if (!favLoading && !user) {
+    if (sessionChecked && !favLoading && !user) {
       router.push('/findr/auth?redirect=/findr/settings');
     }
-  }, [user, favLoading, router]);
+  }, [sessionChecked, user, favLoading, router]);
 
   const handleSave = async () => {
     if (!settings) return;
@@ -205,7 +215,8 @@ export default function FindrSettingsPage() {
     }
   };
 
-  if (favLoading || loading) {
+  // Show loading spinner while checking session or loading data
+  if (!sessionChecked || favLoading || loading) {
     return (
       <>
         <Head>
