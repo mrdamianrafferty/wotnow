@@ -55,6 +55,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
       // Note: Global Ocean physics data is split into variable-specific datasets (temperature and salinity separate)
       const temperatureDataset = this.datasetConfig?.physics || 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m';
       const salinityDataset = this.datasetConfig?.salinity || 'cmems_mod_glo_phy-so_anfc_0.083deg_P1D-m';
+      const currentsDataset = this.datasetConfig?.currents || 'cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m';
       const bioDataset = this.datasetConfig?.biogeochemistry || 'cmems_mod_glo_bgc-bio_anfc_0.25deg_P1D-m';
       const waveDataset = this.datasetConfig?.waves || 'cmems_mod_glo_wav_anfc_0.083deg_PT3H-i';
 
@@ -64,6 +65,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
       const paddings = [0.25]; // degrees (~28km) - single attempt before global fallback
       let temperatureData: CopernicusTimeseries | null = null;
       let salinityData: CopernicusTimeseries | null = null;
+      let currentsData: CopernicusTimeseries | null = null;
       let bioData: CopernicusTimeseries | null = null;
       let waveData: CopernicusTimeseries | undefined;
 
@@ -121,13 +123,37 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
+      // Try currents with same padding as temperature
+      if (temperatureData) {
+        const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
+        try {
+          const currentsFile = path.join(tempDir, `currents_${successfulPadding}.nc`);
+          await this.fetchDatasetWithPadding(
+            currentsDataset,
+            ['uo', 'vo'],  // Eastward and northward currents
+            lat,
+            lon,
+            start,
+            end,
+            currentsFile,
+            successfulPadding
+          );
+          currentsData = await this.parseNetCDF(currentsFile, 'physics');
+          if (currentsData && this.hasValidData(currentsData)) {
+            console.log(`   ✅ Currents data found with ${successfulPadding}° padding`);
+          }
+        } catch (_err) {
+          console.warn(`   ⚠️  No currents data available`);
+        }
+      }
+
       // Try biogeochemical with progressive padding
       for (const padding of paddings) {
         try {
           const bioFile = path.join(tempDir, `bio_${padding}.nc`);
           await this.fetchDatasetWithPadding(
             bioDataset,
-            [],  // Don't specify variables - take whatever the dataset provides
+            ['kd490'],  // Explicitly request kd490 (water clarity)
             lat,
             lon,
             start,
@@ -175,7 +201,7 @@ export class RealCopernicusProvider implements CopernicusProvider {
         }
       }
 
-      // Merge temperature and salinity data into single physics timeseries
+      // Merge temperature, salinity, and currents data into single physics timeseries
       let physicsData: CopernicusTimeseries | null = null;
       if (temperatureData) {
         physicsData = temperatureData;
@@ -186,6 +212,16 @@ export class RealCopernicusProvider implements CopernicusProvider {
           physicsData.records.forEach((record, idx) => {
             if (salinityData.records[idx]) {
               record.variables = { ...record.variables, ...salinityData.records[idx].variables };
+            }
+          });
+        }
+        // Merge currents variables into the physics records
+        if (currentsData && currentsData.records.length > 0) {
+          physicsData.variables = [...physicsData.variables, ...currentsData.variables];
+          // Merge variable data for each record
+          physicsData.records.forEach((record, idx) => {
+            if (currentsData.records[idx]) {
+              record.variables = { ...record.variables, ...currentsData.records[idx].variables };
             }
           });
         }
