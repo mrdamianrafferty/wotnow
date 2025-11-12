@@ -11,6 +11,7 @@ import {
   CloudSun,
   Info,
   Camera,
+  Settings,
 } from 'lucide-react';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
@@ -26,6 +27,7 @@ const LINKS: NavLink[] = [
   { href: '/findr/log', label: 'catches', Icon: ClipboardList },
   { href: '/findr/my-catches', label: 'gallery', Icon: Camera },
   { href: '/findr/conditions', label: 'conditions', Icon: CloudSun },
+  { href: '/findr/settings', label: 'settings', Icon: Settings },
   { href: '/findr/info', label: 'info', Icon: Info },
 ];
 
