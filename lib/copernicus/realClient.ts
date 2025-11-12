@@ -47,10 +47,10 @@ export class RealCopernicusProvider implements CopernicusProvider {
   async fetchBundle(options: CopernicusFetchOptions): Promise<CopernicusMarineBundle> {
     const { lat, lon, start, end } = options;
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'copernicus-'));
-    
+
     try {
       console.log(`   🌊 Fetching Copernicus data for (${lat}, ${lon})...`);
-      
+
       // Use regional datasets if configured, otherwise fall back to global
       // Note: Global Ocean physics data is split into variable-specific datasets (temperature and salinity separate)
       const temperatureDataset = this.datasetConfig?.physics || 'cmems_mod_glo_phy-thetao_anfc_0.083deg_P1D-m';
@@ -64,6 +64,15 @@ export class RealCopernicusProvider implements CopernicusProvider {
       // OPTIMIZED: Only try 1 padding value for probe, rely on global fallback
       // This reduces timeouts and improves reliability
       const paddings = [0.25]; // degrees (~28km) - single attempt before global fallback
+
+      // Date fallback strategy: try earlier dates when data is unavailable
+      // Stable data (temp/salinity/BGC/transparency): up to 3 days back
+      // Dynamic data (currents/waves): max 1 day back
+      const stableDateFallbacks = [0, 1, 2, 3]; // days back for stable data
+      const dynamicDateFallbacks = [0, 1]; // days back for dynamic data
+      let successfulDate: string = start;
+      let daysBack = 0;
+
       let temperatureData: CopernicusTimeseries | null = null;
       let salinityData: CopernicusTimeseries | null = null;
       let currentsData: CopernicusTimeseries | null = null;
@@ -71,161 +80,222 @@ export class RealCopernicusProvider implements CopernicusProvider {
       let bioData: CopernicusTimeseries | null = null;
       let waveData: CopernicusTimeseries | undefined;
 
-      // Try temperature with progressive padding
-      for (const padding of paddings) {
-        try {
-          const thetaoFile = path.join(tempDir, `thetao_${padding}.nc`);
-          await this.fetchDatasetWithPadding(
-            temperatureDataset,
-            ['thetao'],  // Explicitly request temperature variable
-            lat,
-            lon,
-            start,
-            end,
-            thetaoFile,
-            padding
-          );
-          temperatureData = await this.parseNetCDF(thetaoFile, 'physics');
-          if (temperatureData && this.hasValidData(temperatureData)) {
-            console.log(`   ✅ Temperature data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
-            break;
-          }
-        } catch (err) {
-          const isTimeout = err instanceof Error && err.message.includes('timeout');
-          const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
-          if (padding === paddings[paddings.length - 1]) {
-            console.warn(`   ⚠️  No temperature data available after trying all paddings (last attempt: ${errorType})`);
-          } else if (isTimeout) {
-            console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
+      // Try temperature with date fallback THEN padding
+      // Temperature is stable over several days
+      for (const dayOffset of stableDateFallbacks) {
+        if (temperatureData) break; // Stop if we found data
+
+        // Calculate fallback date
+        const fallbackDate = new Date(start);
+        fallbackDate.setDate(fallbackDate.getDate() - dayOffset);
+        const fallbackDateStr = fallbackDate.toISOString();
+
+        for (const padding of paddings) {
+          try {
+            const thetaoFile = path.join(tempDir, `thetao_${padding}_d${dayOffset}.nc`);
+            await this.fetchDatasetWithPadding(
+              temperatureDataset,
+              ['thetao'],  // Explicitly request temperature variable
+              lat,
+              lon,
+              fallbackDateStr,
+              fallbackDateStr,
+              thetaoFile,
+              padding
+            );
+            temperatureData = await this.parseNetCDF(thetaoFile, 'physics');
+            if (temperatureData && this.hasValidData(temperatureData)) {
+              daysBack = dayOffset;
+              successfulDate = fallbackDateStr;
+              const ageNote = dayOffset > 0 ? ` (${dayOffset}d old)` : '';
+              console.log(`   ✅ Temperature data found with ${padding}° padding (~${Math.round(padding * 111)}km)${ageNote}`);
+              break;
+            }
+          } catch (err) {
+            const isTimeout = err instanceof Error && err.message.includes('timeout');
+            const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
+            const isLastAttempt = dayOffset === stableDateFallbacks[stableDateFallbacks.length - 1] &&
+                                 padding === paddings[paddings.length - 1];
+            if (isLastAttempt) {
+              console.warn(`   ⚠️  No temperature data available after trying ${stableDateFallbacks.length} days × ${paddings.length} paddings (last: ${errorType})`);
+            } else if (isTimeout && dayOffset === 0) {
+              console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
+            }
           }
         }
       }
 
-      // Try salinity with progressive padding (use same padding that worked for temperature)
+      // Try salinity with same date/padding as temperature
       if (temperatureData) {
         const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
         try {
-          const salinityFile = path.join(tempDir, `salinity_${successfulPadding}.nc`);
+          const salinityFile = path.join(tempDir, `salinity_${successfulPadding}_d${daysBack}.nc`);
           await this.fetchDatasetWithPadding(
             salinityDataset,
             ['so'],  // Explicitly request salinity variable
             lat,
             lon,
-            start,
-            end,
+            successfulDate,
+            successfulDate,
             salinityFile,
             successfulPadding
           );
           salinityData = await this.parseNetCDF(salinityFile, 'physics');
           if (salinityData && this.hasValidData(salinityData)) {
-            console.log(`   ✅ Salinity data found with ${successfulPadding}° padding`);
+            const ageNote = daysBack > 0 ? ` (${daysBack}d old)` : '';
+            console.log(`   ✅ Salinity data found with ${successfulPadding}° padding${ageNote}`);
           }
         } catch (_err) {
           console.warn(`   ⚠️  No salinity data available`);
         }
       }
 
-      // Try currents with same padding as temperature
+      // Try currents (max 1 day old) with same padding as temperature
       if (temperatureData) {
         const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
-        try {
-          const currentsFile = path.join(tempDir, `currents_${successfulPadding}.nc`);
-          await this.fetchDatasetWithPadding(
-            currentsDataset,
-            ['uo', 'vo'],  // Eastward and northward currents
-            lat,
-            lon,
-            start,
-            end,
-            currentsFile,
-            successfulPadding
-          );
-          currentsData = await this.parseNetCDF(currentsFile, 'physics');
-          if (currentsData && this.hasValidData(currentsData)) {
-            console.log(`   ✅ Currents data found with ${successfulPadding}° padding`);
+
+        // Currents are dynamic - only try current date and 1 day back
+        for (const dayOffset of dynamicDateFallbacks) {
+          if (currentsData) break;
+
+          const currentsDate = new Date(start);
+          currentsDate.setDate(currentsDate.getDate() - dayOffset);
+          const currentsDateStr = currentsDate.toISOString();
+
+          try {
+            const currentsFile = path.join(tempDir, `currents_${successfulPadding}_d${dayOffset}.nc`);
+            await this.fetchDatasetWithPadding(
+              currentsDataset,
+              ['uo', 'vo'],  // Eastward and northward currents
+              lat,
+              lon,
+              currentsDateStr,
+              currentsDateStr,
+              currentsFile,
+              successfulPadding
+            );
+            currentsData = await this.parseNetCDF(currentsFile, 'physics');
+            if (currentsData && this.hasValidData(currentsData)) {
+              const ageNote = dayOffset > 0 ? ` (${dayOffset}d old)` : '';
+              console.log(`   ✅ Currents data found with ${successfulPadding}° padding${ageNote}`);
+            }
+          } catch (_err) {
+            if (dayOffset === dynamicDateFallbacks[dynamicDateFallbacks.length - 1]) {
+              console.warn(`   ⚠️  No currents data available`);
+            }
           }
-        } catch (_err) {
-          console.warn(`   ⚠️  No currents data available`);
         }
       }
 
-      // Try transparency (satellite kd490) with same padding as temperature
+      // Try transparency with date fallback (satellite data - stable, but gaps common)
       if (temperatureData) {
         const successfulPadding = paddings.find(_p => temperatureData !== null) || paddings[0];
-        try {
-          const transparencyFile = path.join(tempDir, `transparency_${successfulPadding}.nc`);
-          await this.fetchDatasetWithPadding(
-            transparencyDataset,
-            ['KD490'],  // Satellite transparency variable (uppercase)
-            lat,
-            lon,
-            start,
-            end,
-            transparencyFile,
-            successfulPadding
-          );
-          transparencyData = await this.parseNetCDF(transparencyFile, 'biogeochemical');
-          if (transparencyData && this.hasValidData(transparencyData)) {
-            console.log(`   ✅ Transparency data (kd490) found with ${successfulPadding}° padding`);
-          }
-        } catch (_err) {
-          console.warn(`   ⚠️  No transparency data available (satellite may have gaps)`);
-        }
-      }
 
-      // Try biogeochemical with progressive padding
-      for (const padding of paddings) {
-        try {
-          const bioFile = path.join(tempDir, `bio_${padding}.nc`);
-          await this.fetchDatasetWithPadding(
-            bioDataset,
-            [],  // Don't specify variables - let dataset return what it has (chlorophyll, oxygen, nutrients)
-            lat,
-            lon,
-            start,
-            end,
-            bioFile,
-            padding
-          );
-          bioData = await this.parseNetCDF(bioFile, 'biogeochemical');
-          if (bioData && this.hasValidData(bioData)) {
-            console.log(`   ✅ BGC data found with ${padding}° padding (~${Math.round(padding * 111)}km)`);
-            break;
-          }
-        } catch (err) {
-          const isTimeout = err instanceof Error && err.message.includes('timeout');
-          const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
-          const errorMsg = err instanceof Error ? err.message : String(err);
-          if (padding === paddings[paddings.length - 1]) {
-            console.warn(`   ⚠️  No BGC data available after trying all paddings (last attempt: ${errorType})`);
-            console.warn(`   📋 BGC Error details: ${errorMsg.substring(0, 200)}`);
-          } else if (isTimeout) {
-            console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
+        for (const dayOffset of stableDateFallbacks) {
+          if (transparencyData) break;
+
+          const transDate = new Date(start);
+          transDate.setDate(transDate.getDate() - dayOffset);
+          const transDateStr = transDate.toISOString();
+
+          try {
+            const transparencyFile = path.join(tempDir, `transparency_${successfulPadding}_d${dayOffset}.nc`);
+            await this.fetchDatasetWithPadding(
+              transparencyDataset,
+              ['KD490'],  // Satellite transparency variable (uppercase)
+              lat,
+              lon,
+              transDateStr,
+              transDateStr,
+              transparencyFile,
+              successfulPadding
+            );
+            transparencyData = await this.parseNetCDF(transparencyFile, 'biogeochemical');
+            if (transparencyData && this.hasValidData(transparencyData)) {
+              const ageNote = dayOffset > 0 ? ` (${dayOffset}d old)` : '';
+              console.log(`   ✅ Transparency data (kd490) found with ${successfulPadding}° padding${ageNote}`);
+            }
+          } catch (_err) {
+            if (dayOffset === stableDateFallbacks[stableDateFallbacks.length - 1]) {
+              console.warn(`   ⚠️  No transparency data available (satellite gaps after ${stableDateFallbacks.length} days)`);
+            }
           }
         }
       }
 
-      // Wave data is optional, try with single padding attempt
-      for (const padding of [0.25]) {
-        try {
-          const waveFile = path.join(tempDir, `waves_${padding}.nc`);
-          await this.fetchDatasetWithPadding(
-            waveDataset,
-            ['VHM0', 'VMDR', 'VTM02'],  // Request key wave variables
-            lat,
-            lon,
-            start,
-            end,
-            waveFile,
-            padding
-          );
-          waveData = await this.parseNetCDF(waveFile, 'waves');
-          if (waveData && this.hasValidData(waveData)) {
-            console.log(`   ✅ Wave data found with ${padding}° padding`);
-            break;
+      // Try biogeochemical with date fallback (BGC is stable over days)
+      for (const dayOffset of stableDateFallbacks) {
+        if (bioData) break;
+
+        const bgcDate = new Date(start);
+        bgcDate.setDate(bgcDate.getDate() - dayOffset);
+        const bgcDateStr = bgcDate.toISOString();
+
+        for (const padding of paddings) {
+          try {
+            const bioFile = path.join(tempDir, `bio_${padding}_d${dayOffset}.nc`);
+            await this.fetchDatasetWithPadding(
+              bioDataset,
+              [],  // Don't specify variables - let dataset return what it has (chlorophyll, oxygen, nutrients)
+              lat,
+              lon,
+              bgcDateStr,
+              bgcDateStr,
+              bioFile,
+              padding
+            );
+            bioData = await this.parseNetCDF(bioFile, 'biogeochemical');
+            if (bioData && this.hasValidData(bioData)) {
+              const ageNote = dayOffset > 0 ? ` (${dayOffset}d old)` : '';
+              console.log(`   ✅ BGC data found with ${padding}° padding (~${Math.round(padding * 111)}km)${ageNote}`);
+              break;
+            }
+          } catch (err) {
+            const isTimeout = err instanceof Error && err.message.includes('timeout');
+            const errorType = isTimeout ? '⏱️  Timeout' : '❌ Error';
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            const isLastAttempt = dayOffset === stableDateFallbacks[stableDateFallbacks.length - 1] &&
+                                 padding === paddings[paddings.length - 1];
+            if (isLastAttempt) {
+              console.warn(`   ⚠️  No BGC data available after trying ${stableDateFallbacks.length} days × ${paddings.length} paddings (last: ${errorType})`);
+              console.warn(`   📋 BGC Error details: ${errorMsg.substring(0, 200)}`);
+            } else if (isTimeout && dayOffset === 0) {
+              console.log(`   ⏱️  Timeout at ${padding}° padding, trying next...`);
+            }
           }
-        } catch (_err) {
-          // Waves are optional, don't warn
+        }
+      }
+
+      // Wave data is optional, try with date fallback (max 1 day old)
+      for (const dayOffset of dynamicDateFallbacks) {
+        if (waveData) break;
+
+        const waveDate = new Date(start);
+        waveDate.setDate(waveDate.getDate() - dayOffset);
+        const waveDateStr = waveDate.toISOString();
+
+        for (const padding of [0.25]) {
+          try {
+            const waveFile = path.join(tempDir, `waves_${padding}_d${dayOffset}.nc`);
+            await this.fetchDatasetWithPadding(
+              waveDataset,
+              ['VHM0', 'VMDR', 'VTM02'],  // Request key wave variables
+              lat,
+              lon,
+              waveDateStr,
+              waveDateStr,
+              waveFile,
+              padding
+            );
+            waveData = await this.parseNetCDF(waveFile, 'waves');
+            if (waveData && this.hasValidData(waveData)) {
+              const ageNote = dayOffset > 0 ? ` (${dayOffset}d old)` : '';
+              console.log(`   ✅ Wave data found with ${padding}° padding${ageNote}`);
+              break;
+            }
+          } catch (_err) {
+            // Waves are optional, don't warn
+          }
         }
       }
 
