@@ -245,12 +245,12 @@ export default function FindrSettingsPage() {
         <meta name="description" content="Manage your Findr settings and preferences" />
       </Head>
       <FindrNavigation />
-        <main className="max-w-4xl mx-auto p-6 space-y-8 mb-20">
+        <main className="max-w-4xl mx-auto p-6 space-y-8 mb-20 bg-base-200 min-h-screen">
           {/* Header */}
           <header className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
-              <p className="opacity-70 text-sm">Customize your fishing experience</p>
+              <h1 className="text-3xl font-semibold tracking-tight text-base-content">{greeting}</h1>
+              <p className="text-base-content/70 text-sm">Customize your fishing experience</p>
             </div>
             <button className="btn btn-ghost" onClick={handleSignOut}>
               Sign out
@@ -277,8 +277,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">👤</span>
                 <div>
-                  <h2 className="card-title">Personal Details</h2>
-                  <p className="text-sm opacity-70 -mt-1">How we address you in Findr</p>
+                  <h2 className="card-title text-base-content">Personal Details</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">How we address you in Findr</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -315,8 +315,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔔</span>
                 <div>
-                  <h2 className="card-title">Fishing Alerts</h2>
-                  <p className="text-sm opacity-70 -mt-1">Get notified when conditions are perfect for your favorite species</p>
+                  <h2 className="card-title text-base-content">Fishing Alerts</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">Get notified when conditions are perfect for your favorite species</p>
                 </div>
               </div>
 
@@ -422,8 +422,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">⛵</span>
                 <div>
-                  <h2 className="card-title">Your Fishing Style</h2>
-                  <p className="text-sm opacity-70 -mt-1">Help us tailor recommendations to your setup</p>
+                  <h2 className="card-title text-base-content">Your Fishing Style</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">Help us tailor recommendations to your setup</p>
                 </div>
               </div>
 
@@ -491,15 +491,15 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">📍</span>
                 <div>
-                  <h2 className="card-title">Your Locations</h2>
-                  <p className="text-sm opacity-70 -mt-1">Set your home and favorite fishing spots</p>
+                  <h2 className="card-title text-base-content">Your Locations</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">Set your home and favorite fishing spots</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Home Location */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold opacity-70 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
                     🏠 Home Location
                   </h3>
                   {settings.homeLocation ? (
@@ -530,7 +530,7 @@ export default function FindrSettingsPage() {
 
                 {/* Fishing Location */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold opacity-70 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
                     🎣 Fishing Location
                   </h3>
                   {settings.fishingLocation ? (
@@ -569,8 +569,8 @@ export default function FindrSettingsPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xl">⭐</span>
                   <div>
-                    <h2 className="card-title">Favorite Species</h2>
-                    <p className="text-sm opacity-70">Manage your favorite fish to track</p>
+                    <h2 className="card-title text-base-content">Favorite Species</h2>
+                    <p className="text-sm text-base-content/70">Manage your favorite fish to track</p>
                   </div>
                 </div>
                 <div className="badge badge-primary badge-outline">
@@ -593,8 +593,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔐</span>
                 <div>
-                  <h2 className="card-title">Security</h2>
-                  <p className="text-sm opacity-70 -mt-1">Update your password</p>
+                  <h2 className="card-title text-base-content">Security</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">Update your password</p>
                 </div>
               </div>
 
@@ -660,7 +660,7 @@ export default function FindrSettingsPage() {
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div>
                   <p className="font-semibold">Ready to save your changes?</p>
-                  <p className="text-sm opacity-70">Your settings will be updated immediately</p>
+                  <p className="text-sm text-base-content/70">Your settings will be updated immediately</p>
                 </div>
                 <button
                   className="btn btn-primary btn-lg"
