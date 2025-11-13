@@ -118,6 +118,20 @@ export default function FindrSettingsPage() {
     }
   }, [sessionChecked, user, favLoading, router]);
 
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const handleSave = async () => {
     if (!settings) return;
 
@@ -283,9 +297,9 @@ export default function FindrSettingsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="form-control w-full">
-                  <span className="label-text">Display Name</span>
+                  <span className="label-text text-base-content">Display Name</span>
                   <input
-                    className="input input-bordered w-full"
+                    className="input input-bordered w-full placeholder:text-base-content/50"
                     placeholder="e.g. Captain Hook"
                     value={settings.displayName || ''}
                     onChange={(e) => {
@@ -296,9 +310,9 @@ export default function FindrSettingsPage() {
                 </label>
 
                 <label className="form-control w-full">
-                  <span className="label-text">Email (account)</span>
+                  <span className="label-text text-base-content">Email (account)</span>
                   <input
-                    className="input input-bordered w-full"
+                    className="input input-bordered w-full text-base-content"
                     value={settings.email || ''}
                     readOnly
                     aria-readonly
@@ -438,7 +452,7 @@ export default function FindrSettingsPage() {
                       setIsDirty(true);
                     }}
                   />
-                  <span className="label-text">I fish from a boat</span>
+                  <span className="label-text text-base-content">I fish from a boat</span>
                 </label>
               </div>
 
@@ -505,13 +519,13 @@ export default function FindrSettingsPage() {
                   {settings.homeLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base">{settings.homeLocation.name || 'Home'}</div>
-                        <div className="text-sm opacity-60">
+                        <div className="font-semibold text-base text-base-content">{settings.homeLocation.name || 'Home'}</div>
+                        <div className="text-sm text-base-content/60">
                           {settings.homeLocation.lat.toFixed(4)}°, {settings.homeLocation.lon.toFixed(4)}°
                         </div>
                       </div>
                       <button
-                        className="btn btn-sm btn-outline w-full"
+                        className="btn btn-sm btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 w-full"
                         onClick={() => setShowHomeDialog(true)}
                       >
                         Change Location
@@ -519,11 +533,11 @@ export default function FindrSettingsPage() {
                     </div>
                   ) : (
                     <button
-                      className="btn btn-outline btn-block h-auto py-6 flex-col gap-2"
+                      className="btn btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 btn-block h-auto py-6 flex-col gap-2"
                       onClick={() => setShowHomeDialog(true)}
                     >
                       <span className="text-2xl">📍</span>
-                      <span>Set Home Location</span>
+                      <span className="text-base-content">Set Home Location</span>
                     </button>
                   )}
                 </div>
@@ -536,13 +550,13 @@ export default function FindrSettingsPage() {
                   {settings.fishingLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base">{settings.fishingLocation.name || 'Fishing Spot'}</div>
-                        <div className="text-sm opacity-60">
+                        <div className="font-semibold text-base text-base-content">{settings.fishingLocation.name || 'Fishing Spot'}</div>
+                        <div className="text-sm text-base-content/60">
                           {settings.fishingLocation.lat.toFixed(4)}°, {settings.fishingLocation.lon.toFixed(4)}°
                         </div>
                       </div>
                       <button
-                        className="btn btn-sm btn-outline w-full"
+                        className="btn btn-sm btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 w-full"
                         onClick={() => setShowFishingDialog(true)}
                       >
                         Change Location
@@ -550,11 +564,11 @@ export default function FindrSettingsPage() {
                     </div>
                   ) : (
                     <button
-                      className="btn btn-outline btn-block h-auto py-6 flex-col gap-2"
+                      className="btn btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 btn-block h-auto py-6 flex-col gap-2"
                       onClick={() => setShowFishingDialog(true)}
                     >
                       <span className="text-2xl">📍</span>
-                      <span>Set Fishing Location</span>
+                      <span className="text-base-content">Set Fishing Location</span>
                     </button>
                   )}
                 </div>
@@ -600,10 +614,10 @@ export default function FindrSettingsPage() {
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="form-control">
-                  <span className="label-text">New password</span>
+                  <span className="label-text text-base-content">New password</span>
                   <div className="join w-full">
                     <input
-                      className="input input-bordered join-item w-full"
+                      className="input input-bordered join-item w-full text-base-content placeholder:text-base-content/50"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="At least 8 characters"
                       value={newPassword}
@@ -612,7 +626,7 @@ export default function FindrSettingsPage() {
                     />
                     <button
                       type="button"
-                      className="btn join-item"
+                      className="btn join-item text-base-content"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? 'Hide' : 'Show'}
@@ -620,10 +634,11 @@ export default function FindrSettingsPage() {
                   </div>
                 </div>
                 <div className="form-control">
-                  <span className="label-text">Confirm new password</span>
+                  <span className="label-text text-base-content">Confirm new password</span>
                   <input
-                    className="input input-bordered"
+                    className="input input-bordered text-base-content placeholder:text-base-content/50"
                     type={showPassword ? 'text' : 'password'}
+                    placeholder="Re-enter password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
