@@ -353,7 +353,7 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
                             <AlertCircle size={20} className="text-error" />
                           </div>
-                          <h4 className="font-semibold">Hot Bite Alerts</h4>
+                          <h4 className="font-semibold text-base-content">Hot Bite Alerts</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12">
                           Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!
@@ -377,7 +377,7 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center flex-shrink-0">
                             <Mail size={20} className="text-info" />
                           </div>
-                          <h4 className="font-semibold">Daily Email Digest</h4>
+                          <h4 className="font-semibold text-base-content">Daily Email Digest</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12 mb-3">
                           Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (&lt;70%). Maximum 1 email per day.
@@ -404,7 +404,7 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
                             <TrendingUp size={20} className="text-success" />
                           </div>
-                          <h4 className="font-semibold">Weekly Forecast</h4>
+                          <h4 className="font-semibold text-base-content">Weekly Forecast</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12 mb-3">
                           7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!
