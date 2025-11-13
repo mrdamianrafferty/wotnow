@@ -7,6 +7,7 @@ import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLo
 import { supabase } from '../../lib/supabase/client';
 import { useFavourites } from '../../hooks/useFavourites';
 import { useNotificationPreferences } from '../../hooks/useNotificationPreferences';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import FindrFooter from '../../components/FindrFooter';
 import type { FindrUserSettings } from '../api/findr/user-settings';
@@ -40,6 +41,7 @@ export default function FindrSettingsPage() {
     isLoading: notifLoading,
     updatePreferences: updateNotifPrefs,
   } = useNotificationPreferences();
+  const { homeLocation, coastalLocation, updateLocationBySlot } = useUnifiedLocation();
 
   const [settings, setSettings] = useState<FindrUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,11 +141,14 @@ export default function FindrSettingsPage() {
       setSaving(true);
       setMessage(null);
 
+      // Don't send locations - they're managed by UnifiedLocationContext
+      const { homeLocation: _, fishingLocation: __, ...settingsToSave } = settings;
+
       const response = await fetch('/api/findr/user-settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(settings),
+        body: JSON.stringify(settingsToSave),
       });
 
       const data = await response.json();
@@ -516,12 +521,12 @@ export default function FindrSettingsPage() {
                   <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
                     🏠 Home Location
                   </h3>
-                  {settings.homeLocation ? (
+                  {homeLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base text-base-content">{settings.homeLocation.name || 'Home'}</div>
+                        <div className="font-semibold text-base text-base-content">{homeLocation.name || 'Home'}</div>
                         <div className="text-sm text-base-content/60">
-                          {settings.homeLocation.lat.toFixed(4)}°, {settings.homeLocation.lon.toFixed(4)}°
+                          {homeLocation.lat.toFixed(4)}°, {homeLocation.lon.toFixed(4)}°
                         </div>
                       </div>
                       <button
@@ -547,12 +552,12 @@ export default function FindrSettingsPage() {
                   <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
                     🎣 Fishing Location
                   </h3>
-                  {settings.fishingLocation ? (
+                  {coastalLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base text-base-content">{settings.fishingLocation.name || 'Fishing Spot'}</div>
+                        <div className="font-semibold text-base text-base-content">{coastalLocation.name || 'Fishing Spot'}</div>
                         <div className="text-sm text-base-content/60">
-                          {settings.fishingLocation.lat.toFixed(4)}°, {settings.fishingLocation.lon.toFixed(4)}°
+                          {coastalLocation.lat.toFixed(4)}°, {coastalLocation.lon.toFixed(4)}°
                         </div>
                       </div>
                       <button
@@ -701,20 +706,21 @@ export default function FindrSettingsPage() {
           open={showHomeDialog}
           onClose={() => setShowHomeDialog(false)}
           title="Set your home location"
-          onSave={(loc: BasicLocation) => {
-            setSettings({
-              ...settings,
-              homeLocation: { lat: loc.lat, lon: loc.lon, name: loc.name },
+          onSave={async (loc: BasicLocation) => {
+            await updateLocationBySlot({
+              slot: 'home',
+              coordinates: { lat: loc.lat, lon: loc.lon },
+              name: loc.name,
             });
-            setIsDirty(true);
             setShowHomeDialog(false);
+            setMessage({ type: 'success', text: 'Home location saved!' });
           }}
           homeLocation={
-            settings.homeLocation
+            homeLocation
               ? {
-                  name: settings.homeLocation.name || 'Home',
-                  lat: settings.homeLocation.lat,
-                  lon: settings.homeLocation.lon,
+                  name: homeLocation.name || 'Home',
+                  lat: homeLocation.lat,
+                  lon: homeLocation.lon,
                   type: 'home',
                 }
               : undefined
@@ -725,30 +731,31 @@ export default function FindrSettingsPage() {
           open={showFishingDialog}
           onClose={() => setShowFishingDialog(false)}
           title="Set your fishing location"
-          onSave={(loc: BasicLocation) => {
-            setSettings({
-              ...settings,
-              fishingLocation: { lat: loc.lat, lon: loc.lon, name: loc.name },
+          onSave={async (loc: BasicLocation) => {
+            await updateLocationBySlot({
+              slot: 'coastal',
+              coordinates: { lat: loc.lat, lon: loc.lon },
+              name: loc.name,
             });
-            setIsDirty(true);
             setShowFishingDialog(false);
+            setMessage({ type: 'success', text: 'Fishing location saved!' });
           }}
           homeLocation={
-            settings.homeLocation
+            homeLocation
               ? {
-                  name: settings.homeLocation.name || 'Home',
-                  lat: settings.homeLocation.lat,
-                  lon: settings.homeLocation.lon,
+                  name: homeLocation.name || 'Home',
+                  lat: homeLocation.lat,
+                  lon: homeLocation.lon,
                   type: 'home',
                 }
               : undefined
           }
           coastalLocation={
-            settings.fishingLocation
+            coastalLocation
               ? {
-                  name: settings.fishingLocation.name || 'Fishing Spot',
-                  lat: settings.fishingLocation.lat,
-                  lon: settings.fishingLocation.lon,
+                  name: coastalLocation.name || 'Fishing Spot',
+                  lat: coastalLocation.lat,
+                  lon: coastalLocation.lon,
                   type: 'coastal',
                 }
               : undefined
