@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -49,6 +49,7 @@ export default function FindrSettingsPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const hasMounted = useRef(false);
 
   // Dialog states
   const [showHomeDialog, setShowHomeDialog] = useState(false);
@@ -63,9 +64,13 @@ export default function FindrSettingsPage() {
 
   // Load settings
   const loadSettings = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('[Settings] Cannot load - no user');
+      return;
+    }
 
     try {
+      console.log('[Settings] Loading settings for user:', user.id);
       setLoading(true);
       const response = await fetch('/api/findr/user-settings', {
         credentials: 'include',
@@ -73,8 +78,14 @@ export default function FindrSettingsPage() {
       const data = await response.json();
 
       if (data.success && data.settings) {
+        console.log('[Settings] Loaded settings from API:', {
+          hasDisplayName: !!data.settings.displayName,
+          techniquesCount: data.settings.fishingTechniques?.length ?? 0,
+          habitatsCount: data.settings.favoriteHabitats?.length ?? 0,
+        });
         setSettings(data.settings);
       } else {
+        console.log('[Settings] No settings found, using defaults');
         // Initialize with defaults if no settings exist
         setSettings({
           displayName: null,
@@ -89,7 +100,7 @@ export default function FindrSettingsPage() {
         });
       }
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      console.error('[Settings] Failed to load settings:', error);
       setMessage({ type: 'error', text: 'Failed to load settings' });
     } finally {
       setLoading(false);
@@ -105,12 +116,29 @@ export default function FindrSettingsPage() {
     checkSession();
   }, []);
 
-  // Only fetch settings when user is loaded and not loading
+  // Load settings on mount - this ensures settings reload every time user visits the page
   useEffect(() => {
-    if (!favLoading && user) {
+    console.log('[Settings] Mount effect triggered:', {
+      favLoading,
+      hasUser: !!user,
+      hasMounted: hasMounted.current,
+    });
+
+    if (!favLoading && user && !hasMounted.current) {
+      console.log('[Settings] Conditions met - loading settings');
+      hasMounted.current = true;
       loadSettings();
     }
-  }, [user, favLoading, loadSettings]);
+  }, [favLoading, user, loadSettings]);
+
+  // Reset mount flag when component unmounts so it loads again on next mount
+  useEffect(() => {
+    console.log('[Settings] Component mounted');
+    return () => {
+      console.log('[Settings] Component unmounting - resetting hasMounted flag');
+      hasMounted.current = false;
+    };
+  }, []);
 
   // Check if user is authenticated - but only after we've verified the session
   // This prevents redirect race conditions during initial page load

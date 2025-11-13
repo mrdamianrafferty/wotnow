@@ -196,12 +196,16 @@ async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Pro
 
 async function loadRemoteLocations(): Promise<StoredState | null> {
   try {
+    console.log('[UnifiedLocation] Loading remote locations...');
     const res = await fetch('/api/user/location?multiLocation=true', { method: 'GET' });
+
     if (res.status === 401) {
+      console.log('[UnifiedLocation] Not authenticated (401)');
       return null;
     }
 
     if (!res.ok) {
+      console.warn('[UnifiedLocation] Remote fetch failed with status:', res.status);
       return null;
     }
 
@@ -209,6 +213,11 @@ async function loadRemoteLocations(): Promise<StoredState | null> {
       locations: SavedLocation[];
       activeLocationId: string | null;
     };
+
+    console.log('[UnifiedLocation] Remote locations loaded:', {
+      locationCount: payload.locations?.length ?? 0,
+      activeLocationId: payload.activeLocationId,
+    });
 
     return {
       locations: payload.locations ?? [],
