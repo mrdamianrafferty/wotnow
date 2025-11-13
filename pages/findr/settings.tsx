@@ -23,14 +23,14 @@ const TECHNIQUES = [
 ];
 
 const HABITATS = [
-  { id: 'pier', label: 'Pier', icon: '🏗️' },
-  { id: 'sandy_beach', label: 'Sandy Beach', icon: '🏖️' },
-  { id: 'rocky_shore', label: 'Rocky Shore', icon: '🪨' },
-  { id: 'estuary', label: 'Estuary', icon: '🌊' },
-  { id: 'deep_sea', label: 'Deep Sea', icon: '⛴️' },
-  { id: 'reef', label: 'Reef', icon: '🪸' },
-  { id: 'harbour', label: 'Harbour', icon: '⚓' },
-  { id: 'river_mouth', label: 'River Mouth', icon: '🌊' },
+  { id: 'rocky_shores', label: 'Rocky Shores', icon: '🪨' },
+  { id: 'sandy_beaches', label: 'Sandy Beaches', icon: '🏖️' },
+  { id: 'rocky_reefs', label: 'Rocky Reefs', icon: '🪸' },
+  { id: 'piers', label: 'Piers & Jetties', icon: '🏗️' },
+  { id: 'harbours', label: 'Harbours & Marinas', icon: '⚓' },
+  { id: 'estuaries', label: 'Estuaries', icon: '🌊' },
+  { id: 'seagrass_beds', label: 'Seagrass Beds', icon: '🌿' },
+  { id: 'wrecks', label: 'Wrecks', icon: '🚢' },
 ];
 
 export default function FindrSettingsPage() {
