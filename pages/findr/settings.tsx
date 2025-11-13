@@ -316,7 +316,7 @@ export default function FindrSettingsPage() {
                 <span className="text-xl">🔔</span>
                 <div>
                   <h2 className="card-title text-base-content">Fishing Alerts</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Get notified when conditions are perfect for your favorite species</p>
+                  <p className="text-sm text-base-content/70 -mt-1">Get notified when conditions are perfect for your favourite species</p>
                 </div>
               </div>
 
@@ -443,7 +443,7 @@ export default function FindrSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="label-text font-semibold">Favorite Techniques</label>
+                <label className="label-text font-semibold text-base-content">Favourite Techniques</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {TECHNIQUES.map((tech) => (
                     <button
@@ -453,7 +453,7 @@ export default function FindrSettingsPage() {
                       className={`btn btn-sm ${
                         settings.fishingTechniques.includes(tech.id)
                           ? 'btn-primary'
-                          : 'btn-outline'
+                          : 'btn-outline border-base-content/30 text-base-content hover:bg-base-content/10'
                       }`}
                     >
                       {settings.fishingTechniques.includes(tech.id) && '✓ '}
@@ -464,7 +464,7 @@ export default function FindrSettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="label-text font-semibold">Favorite Habitats</label>
+                <label className="label-text font-semibold text-base-content">Favourite Habitats</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {HABITATS.map((habitat) => (
                     <button
@@ -474,7 +474,7 @@ export default function FindrSettingsPage() {
                       className={`btn btn-sm ${
                         settings.favoriteHabitats.includes(habitat.id)
                           ? 'btn-primary'
-                          : 'btn-outline'
+                          : 'btn-outline border-base-content/30 text-base-content hover:bg-base-content/10'
                       }`}
                     >
                       {habitat.icon} {habitat.label}
@@ -492,7 +492,7 @@ export default function FindrSettingsPage() {
                 <span className="text-xl">📍</span>
                 <div>
                   <h2 className="card-title text-base-content">Your Locations</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Set your home and favorite fishing spots</p>
+                  <p className="text-sm text-base-content/70 -mt-1">Set your home and favourite fishing spots</p>
                 </div>
               </div>
 
@@ -562,25 +562,25 @@ export default function FindrSettingsPage() {
             </div>
           </section>
 
-          {/* Favorite Species */}
+          {/* Favourite Species */}
           <section className="card bg-base-100 shadow-sm">
             <div className="card-body space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">⭐</span>
                   <div>
-                    <h2 className="card-title text-base-content">Favorite Species</h2>
-                    <p className="text-sm text-base-content/70">Manage your favorite fish to track</p>
+                    <h2 className="card-title text-base-content">Favourite Species</h2>
+                    <p className="text-sm text-base-content/70">Manage your favourite fish to track</p>
                   </div>
                 </div>
                 <div className="badge badge-primary badge-outline">
                   {favourites.length} species
                 </div>
               </div>
-              <p className="text-sm">
-                Add favorite species from the predictions page or{' '}
+              <p className="text-sm text-base-content">
+                Add favourite species from the predictions page or{' '}
                 <Link href="/findr/favourites" className="link link-primary">
-                  manage your favorites
+                  manage your favourites
                 </Link>
                 .
               </p>
