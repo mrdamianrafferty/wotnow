@@ -513,6 +513,218 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
 }
 
 /**
+ * Calculate community boost multiplier based on catch count
+ * Higher catch counts = higher boost (1.0 - 1.5x)
+ */
+function calculateCommunityBoost(catchCount: number): number {
+  if (catchCount === 0) return 1.0;
+  if (catchCount <= 5) return 1.1;
+  if (catchCount <= 10) return 1.2;
+  if (catchCount <= 25) return 1.3;
+  if (catchCount <= 50) return 1.4;
+  return 1.5; // 50+ catches
+}
+
+/**
+ * Merge environmental predictions with regional availability data
+ * Species with catch data get boosted confidence and metadata
+ */
+async function mergeWithRegionalAvailability(
+  predictions: unknown,
+  rectangleCode: string
+): Promise<unknown> {
+  if (!Array.isArray(predictions) || predictions.length === 0) {
+    return predictions;
+  }
+
+  let supabase;
+  try {
+    supabase = getSupabaseServerClient();
+  } catch (error) {
+    console.warn('[regional_availability] Unable to load Supabase client', (error as Error).message);
+    return predictions;
+  }
+
+  // Fetch regional availability data for this ICES rectangle
+  const { data: regionalData, error: regionalError } = await queryWithTiming(
+    async () => {
+      const result = await supabase
+        .from('species_regional_availability')
+        .select('species_code, availability_score, confidence, catch_count, last_catch_at, data_source, is_primary_habitat')
+        .eq('region_type', 'ices')
+        .eq('region_id', rectangleCode);
+      return result;
+    },
+    'fetch_regional_availability'
+  );
+
+  if (regionalError) {
+    console.warn('[regional_availability] Query error:', regionalError.message);
+    return predictions;
+  }
+
+  if (!regionalData || regionalData.length === 0) {
+    console.log('[regional_availability] No regional availability data for rectangle:', rectangleCode);
+    // Return predictions with default metadata (all environmental)
+    return predictions.map(pred => {
+      if (!pred || typeof pred !== 'object') return pred;
+      return {
+        ...pred,
+        data_source: 'environmental',
+        catch_count: 0,
+        community_boost: 1.0,
+      };
+    });
+  }
+
+  // Build lookup map by species_code
+  const regionalMap = new Map<string, typeof regionalData[0]>();
+  for (const row of regionalData) {
+    if (row.species_code) {
+      regionalMap.set(row.species_code.toUpperCase(), row);
+    }
+  }
+
+  console.log('[regional_availability] Found regional data for', regionalMap.size, 'species in rectangle:', rectangleCode);
+
+  // Merge predictions with regional data
+  const merged = predictions.map((pred) => {
+    if (!pred || typeof pred !== 'object') return pred;
+    const record = pred as Record<string, JsonValue>;
+
+    // Extract species code
+    const speciesCode =
+      firstString(record.species_code) ||
+      firstString(record.speciesCode) ||
+      firstString(record.species_id) ||
+      firstString(record.speciesId);
+
+    if (!speciesCode) {
+      // No species code - return with environmental defaults
+      return {
+        ...record,
+        data_source: 'environmental',
+        catch_count: 0,
+        community_boost: 1.0,
+      };
+    }
+
+    const regional = regionalMap.get(speciesCode.toUpperCase());
+
+    if (!regional) {
+      // No regional data - use environmental matching
+      return {
+        ...record,
+        data_source: 'environmental',
+        catch_count: 0,
+        community_boost: 1.0,
+      };
+    }
+
+    // Check if this has catch-validated data
+    const hasCatchData = regional.catch_count > 0;
+
+    if (hasCatchData) {
+      // Use catch-validated data with community boost
+      const communityBoost = calculateCommunityBoost(regional.catch_count);
+
+      return {
+        ...record,
+        // Override confidence with catch-validated confidence
+        confidence: regional.confidence,
+        // Add regional availability score
+        availability_score: regional.availability_score,
+        // Mark as catch-validated
+        data_source: 'catch_validated',
+        // Add catch metadata
+        catch_count: regional.catch_count,
+        last_catch_at: regional.last_catch_at,
+        community_boost: communityBoost,
+        is_primary_habitat: regional.is_primary_habitat,
+      };
+    } else {
+      // Has regional data but no catches - blend environmental + baseline regional
+      // Keep environmental confidence but add regional metadata
+      return {
+        ...record,
+        data_source: 'environmental',
+        catch_count: 0,
+        community_boost: 1.0,
+        // Optionally add regional availability score as supplementary info
+        regional_availability_score: regional.availability_score,
+        regional_confidence: regional.confidence,
+      };
+    }
+  });
+
+  const dataSourceCounts = merged.reduce<{ catch_validated: number; environmental: number }>((acc, entry) => {
+    if (entry && typeof entry === 'object') {
+      const record = entry as Record<string, JsonValue>;
+      const dataSource = record.data_source;
+
+      if (typeof dataSource === 'string') {
+        if (dataSource === 'catch_validated') {
+          acc.catch_validated += 1;
+        } else if (dataSource === 'environmental') {
+          acc.environmental += 1;
+        }
+      }
+    }
+
+    return acc;
+  }, { catch_validated: 0, environmental: 0 });
+
+  console.log('[regional_availability] Merged predictions:', {
+    total: merged.length,
+    catch_validated: dataSourceCounts.catch_validated,
+    environmental: dataSourceCounts.environmental,
+  });
+
+  return merged;
+}
+
+/**
+ * Re-rank predictions using combined confidence × community boost scoring
+ */
+function reRankPredictions(predictions: unknown): unknown {
+  if (!Array.isArray(predictions) || predictions.length === 0) {
+    return predictions;
+  }
+
+  // Sort by (confidence * community_boost) descending
+  const ranked = [...predictions].sort((a, b) => {
+    if (!a || typeof a !== 'object' || !b || typeof b !== 'object') return 0;
+
+    const aRecord = a as Record<string, JsonValue>;
+    const bRecord = b as Record<string, JsonValue>;
+
+    // Handle both confidence_percent (from RPC) and confidence (from regional data)
+    const aConfidence = typeof aRecord.confidence_percent === 'number'
+      ? aRecord.confidence_percent
+      : typeof aRecord.confidence === 'number'
+        ? aRecord.confidence
+        : 0;
+    const bConfidence = typeof bRecord.confidence_percent === 'number'
+      ? bRecord.confidence_percent
+      : typeof bRecord.confidence === 'number'
+        ? bRecord.confidence
+        : 0;
+
+    const aBoost = typeof aRecord.community_boost === 'number' ? aRecord.community_boost : 1.0;
+    const bBoost = typeof bRecord.community_boost === 'number' ? bRecord.community_boost : 1.0;
+
+    const aScore = aConfidence * aBoost;
+    const bScore = bConfidence * bBoost;
+
+    return bScore - aScore;
+  });
+
+  console.log('[rerank] Re-ranked predictions by confidence × community boost');
+
+  return ranked;
+}
+
+/**
  * Apply seasonality multipliers to prediction confidence scores
  * @param preFetchedGridData - Optional pre-fetched grid data to avoid duplicate queries
  */
@@ -1077,7 +1289,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cacheControl = 's-maxage=900, stale-while-revalidate=3600';
     res.setHeader('Cache-Control', cacheControl);
 
-    const enriched = await augmentPredictionsWithLocalizedNames(data);
+    // **HYBRID PREDICTION SYSTEM: Merge environmental predictions with catch-validated data**
+    const withRegionalData = await mergeWithRegionalAvailability(data, rectangleCode);
+
+    // **Re-rank predictions using confidence × community boost**
+    const reranked = reRankPredictions(withRegionalData);
+
+    const enriched = await augmentPredictionsWithLocalizedNames(reranked);
 
     // **OPTIMIZATION: Use pre-fetched seasonality grid data**
     // Await the grid data that's been fetching in parallel

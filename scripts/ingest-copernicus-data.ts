@@ -42,6 +42,9 @@
  *   SUPABASE_SERVICE_ROLE_KEY - Supabase service role key
  *   FINDR_CONDITIONS_LIMIT - Optional: limit number of rectangles to process
  *   FINDR_CONDITIONS_DELAY_MS - Optional: delay between rectangle requests (default 500ms)
+ *   FINDR_CONDITIONS_FRESHNESS_HOURS - Optional: skip rectangles with data fresher than N hours (default 24)
+ *   FINDR_CONDITIONS_BATCH_SIZE - Optional: process N rectangles in parallel (default 5)
+ *   FINDR_CONDITIONS_FORCE_REFRESH - Optional: force refresh all rectangles, ignoring freshness (default false)
  */
 
 import { config } from 'dotenv';
@@ -60,6 +63,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 const LIMIT = process.env.FINDR_CONDITIONS_LIMIT ? parseInt(process.env.FINDR_CONDITIONS_LIMIT) : undefined;
 const DELAY_MS = process.env.FINDR_CONDITIONS_DELAY_MS ? parseInt(process.env.FINDR_CONDITIONS_DELAY_MS) : 500;
+const FRESHNESS_HOURS = process.env.FINDR_CONDITIONS_FRESHNESS_HOURS ? parseInt(process.env.FINDR_CONDITIONS_FRESHNESS_HOURS) : 24;
+const BATCH_SIZE = process.env.FINDR_CONDITIONS_BATCH_SIZE ? parseInt(process.env.FINDR_CONDITIONS_BATCH_SIZE) : 5;
+const FORCE_REFRESH = process.env.FINDR_CONDITIONS_FORCE_REFRESH === 'true';
 
 // Validate credentials
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -69,6 +75,24 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/**
+ * Coordinate overrides for specific rectangles
+ *
+ * Some rectangles have very little sea area or their center point falls on land.
+ * For these cases, we hardcode specific coordinates that are guaranteed to be in
+ * the sea and representative of the fishing conditions in that rectangle.
+ *
+ * Format: { rectangle_code: { lat, lon, reason } }
+ */
+const COORDINATE_OVERRIDES: Record<string, { lat: number; lon: number; reason: string }> = {
+  '25E0': {
+    lat: 43.502371,
+    lon: -5.261184,
+    reason: 'Bay of Biscay - rectangle has very little sea area'
+  },
+  // Add more overrides here as needed
+};
 
 // Use real Copernicus client when credentials are available
 const USE_MOCK = !process.env.COPERNICUS_USERNAME || !process.env.COPERNICUS_PASSWORD;
@@ -249,17 +273,28 @@ function snapshotToRow(
  */
 async function ingestRectangle(rectangle: Rectangle): Promise<boolean> {
   const { rectangle_code, center_lat, center_lon, region, cmems_region } = rectangle;
-  
-  // Validate coordinates
-  if (center_lat == null || center_lon == null) {
-    console.log(`📍 ${rectangle_code}: ⚠️  Invalid coordinates (null)`);
-    return false;
+
+  // Check for coordinate overrides
+  const override = COORDINATE_OVERRIDES[rectangle_code];
+  let lat = center_lat;
+  let lon = center_lon;
+
+  if (override) {
+    lat = override.lat;
+    lon = override.lon;
+    console.log(`📍 ${rectangle_code}: (${lat.toFixed(2)}, ${lon.toFixed(2)}) 🔧 OVERRIDE`);
+    console.log(`   Reason: ${override.reason}`);
+  } else {
+    // Validate default coordinates
+    if (center_lat == null || center_lon == null) {
+      console.log(`📍 ${rectangle_code}: ⚠️  Invalid coordinates (null)`);
+      return false;
+    }
+    console.log(`📍 ${rectangle_code}: (${lat.toFixed(2)}, ${lon.toFixed(2)})`);
   }
-  
-  console.log(`📍 ${rectangle_code}: (${center_lat.toFixed(2)}, ${center_lon.toFixed(2)})`);
-  
-  // Fetch Copernicus data using pre-mapped CMEMS region
-  const snapshot = await fetchCopernicusData(center_lat, center_lon, cmems_region);
+
+  // Fetch Copernicus data using override or default coordinates
+  const snapshot = await fetchCopernicusData(lat, lon, cmems_region);
   
   if (!snapshot) {
     console.log(`   ❌ No Copernicus data available`);
@@ -412,34 +447,81 @@ async function main() {
   }
   console.log('');
 
-  // Process rectangles region by region
+  // Filter out rectangles with fresh data (incremental ingestion)
+  let rectanglesToIngest = rectanglesToProcess;
+  let skippedCount = 0;
+
+  if (!FORCE_REFRESH) {
+    console.log(`🔍 Checking data freshness (threshold: ${FRESHNESS_HOURS}h)...\n`);
+
+    const freshnessThreshold = new Date();
+    freshnessThreshold.setHours(freshnessThreshold.getHours() - FRESHNESS_HOURS);
+
+    // Fetch latest data timestamps for all rectangles
+    const { data: freshData } = await supabase
+      .from('findr_conditions_latest')
+      .select('rectangle_code, captured_at')
+      .gte('captured_at', freshnessThreshold.toISOString());
+
+    const freshRectangles = new Set(freshData?.map(d => d.rectangle_code) || []);
+    rectanglesToIngest = rectanglesToProcess.filter(r => !freshRectangles.has(r.rectangle_code));
+    skippedCount = rectanglesToProcess.length - rectanglesToIngest.length;
+
+    console.log(`✅ ${skippedCount} rectangles have fresh data (<${FRESHNESS_HOURS}h old)`);
+    console.log(`📥 ${rectanglesToIngest.length} rectangles need updates\n`);
+  } else {
+    console.log(`⚠️  FORCE_REFRESH enabled - processing all rectangles\n`);
+  }
+
+  // Regroup rectangles by region after freshness filtering
+  const rectanglesByRegionFiltered = new Map<string, Rectangle[]>();
+  for (const rect of rectanglesToIngest) {
+    const region = rect.cmems_region || 'GLOBAL';
+    if (!rectanglesByRegionFiltered.has(region)) {
+      rectanglesByRegionFiltered.set(region, []);
+    }
+    rectanglesByRegionFiltered.get(region)!.push(rect);
+  }
+
+  // Process rectangles region by region with parallelization
   let successCount = 0;
   let failCount = 0;
   let processedCount = 0;
   const startTime = Date.now();
+  const totalToProcess = rectanglesToIngest.length;
 
-  for (const [region, rectangles] of rectanglesByRegion.entries()) {
-    console.log(`\n🌊 Processing ${rectangles.length} rectangles in ${region} region...\n`);
+  for (const [region, rectangles] of rectanglesByRegionFiltered.entries()) {
+    console.log(`\n🌊 Processing ${rectangles.length} rectangles in ${region} region (batch size: ${BATCH_SIZE})...\n`);
 
-    for (const rectangle of rectangles) {
-      const success = await ingestRectangle(rectangle);
-      processedCount++;
+    // Process in batches for parallelization
+    for (let i = 0; i < rectangles.length; i += BATCH_SIZE) {
+      const batch = rectangles.slice(i, i + BATCH_SIZE);
 
-      if (success) {
-        successCount++;
-      } else {
-        failCount++;
-      }
+      // Process batch in parallel
+      const results = await Promise.all(
+        batch.map(rectangle => ingestRectangle(rectangle))
+      );
+
+      // Count successes and failures
+      results.forEach(success => {
+        if (success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      });
+
+      processedCount += batch.length;
 
       // Progress indicator every 10 rectangles
-      if (processedCount % 10 === 0) {
+      if (processedCount % 10 === 0 || processedCount === totalToProcess) {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
         const rate = (processedCount / (Date.now() - startTime) * 1000).toFixed(1);
-        console.log(`\n📊 Progress: ${processedCount}/${totalRectangles} (${rate} rect/sec, ${elapsed}s elapsed)\n`);
+        console.log(`\n📊 Progress: ${processedCount}/${totalToProcess} (${rate} rect/sec, ${elapsed}s elapsed)\n`);
       }
 
-      // Delay between requests to avoid rate limiting
-      if (processedCount < totalRectangles) {
+      // Delay between batches to avoid rate limiting
+      if (i + BATCH_SIZE < rectangles.length) {
         await new Promise(resolve => setTimeout(resolve, DELAY_MS));
       }
     }
@@ -447,14 +529,15 @@ async function main() {
   
   // Summary
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(0);
-  const avgRate = (totalRectangles / (Date.now() - startTime) * 1000).toFixed(2);
-  
+  const avgRate = totalToProcess > 0 ? (totalToProcess / (Date.now() - startTime) * 1000).toFixed(2) : '0.00';
+
   console.log('\n╔══════════════════════════════════════════════════════════════════╗');
   console.log('║                      INGESTION COMPLETE                          ║');
   console.log('╚══════════════════════════════════════════════════════════════════╝\n');
-  console.log(`✅ Success: ${successCount}/${totalRectangles} rectangles`);
-  console.log(`❌ Failed: ${failCount}/${totalRectangles} rectangles`);
-  console.log(`📊 Success rate: ${((successCount / totalRectangles) * 100).toFixed(1)}% (97-99% expected)`);
+  console.log(`✅ Success: ${successCount}/${totalToProcess} rectangles processed`);
+  console.log(`❌ Failed: ${failCount}/${totalToProcess} rectangles`);
+  console.log(`⏭️  Skipped: ${skippedCount} rectangles (fresh data <${FRESHNESS_HOURS}h old)`);
+  console.log(`📊 Success rate: ${totalToProcess > 0 ? ((successCount / totalToProcess) * 100).toFixed(1) : '0.0'}% (97-99% expected)`);
   console.log(`⏱️  Total time: ${totalTime}s (${avgRate} rectangles/sec)`);
   console.log(`\n🎯 30km Strategy Benefits:`);
   console.log(`   ✅ ${totalRectangles} rectangles (within 30km of shore)`);

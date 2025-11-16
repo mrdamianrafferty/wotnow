@@ -72,17 +72,17 @@ BEGIN
         WHEN c.sea_temp_c IS NULL THEN NULL
         WHEN c.sea_temp_c BETWEEN COALESCE(
           (s.environmental_preferences->'temperature'->>'optimal_min')::NUMERIC,
-          (s.temp_opt_c->0)::NUMERIC
+          s.temp_opt_c[1]
         ) AND COALESCE(
           (s.environmental_preferences->'temperature'->>'optimal_max')::NUMERIC,
-          (s.temp_opt_c->1)::NUMERIC
+          s.temp_opt_c[2]
         ) THEN 10 -- Full score (10/10)
         WHEN c.sea_temp_c BETWEEN COALESCE(
           (s.environmental_preferences->'temperature'->>'tolerance_min')::NUMERIC,
-          (s.temp_opt_c->0)::NUMERIC - 4
+          s.temp_opt_c[1] - 4
         ) AND COALESCE(
           (s.environmental_preferences->'temperature'->>'tolerance_max')::NUMERIC,
-          (s.temp_opt_c->1)::NUMERIC + 4
+          s.temp_opt_c[2] + 4
         ) THEN 7 -- Good (7/10)
         ELSE 3 -- Marginal (3/10)
       END AS temp_score_raw,

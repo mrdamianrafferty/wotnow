@@ -548,6 +548,18 @@ try:
     import numpy as np
     times = [str(t) for t in times]
     depths = [float(d) for d in depths]
+
+    # Filter depths to only keep 0m, 5m, and 10m (within 1m tolerance)
+    target_depths = [0, 5, 10]
+    filtered_depths = []
+    for target in target_depths:
+        # Find closest depth to target
+        closest = min(depths, key=lambda d: abs(d - target)) if depths else None
+        if closest is not None and abs(closest - target) <= 1.5:  # Within 1.5m tolerance
+            if closest not in filtered_depths:  # Avoid duplicates
+                filtered_depths.append(closest)
+    depths = filtered_depths if filtered_depths else [0]  # Fallback to surface if no matches
+
     lat = float(lats[0] if len(lats.shape) == 1 else lats[0, 0])
     lon = float(lons[0] if len(lons.shape) == 1 else lons[0, 0])
 
