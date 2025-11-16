@@ -215,6 +215,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               {/* Use root path for Home */}
               <li><Link href="/">Home</Link></li>
               <li><Link href="/weather">My Weather</Link></li>
+              <li><Link href="/grow">Grow garden</Link></li>
               <li><Link href="/activities">Activity dashboard</Link></li>
               <li><Link href="/interests">Set activities</Link></li>
               <li className="mt-1 border-t border-base-200" />

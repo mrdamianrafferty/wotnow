@@ -12,17 +12,18 @@ const nextConfig = {
   // Disable Babel completely (SWC is used by default in Next.js 15+)
   experimental: {
     forceSwcTransforms: true,
-    // Exclude large packages from function bundles to stay under 250MB limit
-    outputFileTracingExcludes: {
-      '*': [
-        'node_modules/react-icons/**/*',
-        'node_modules/duckdb/**/*',
-        'node_modules/@img/**/*',
-        'node_modules/playwright-core/**/*',
-        'node_modules/@esbuild/**/*',
-        '.next/cache/**/*',  // Exclude build cache (can be 400MB+)
-      ],
-    },
+  },
+
+  // Exclude large packages from function bundles to stay under 250MB limit
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/react-icons/**/*',
+      'node_modules/duckdb/**/*',
+      'node_modules/@img/**/*',
+      'node_modules/playwright-core/**/*',
+      'node_modules/@esbuild/**/*',
+      '.next/cache/**/*',  // Exclude build cache (can be 400MB+)
+    ],
   },
   
   // Disable ESLint during production builds; lint enforced via `prebuild` script
