@@ -159,7 +159,7 @@ BEGIN
 
     FROM species s
     CROSS JOIN latest_conditions c
-    WHERE s.code IS NOT NULL
+    WHERE s.species_code IS NOT NULL
   ),
 
   -- Calculate normalized environmental match
