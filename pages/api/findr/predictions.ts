@@ -861,6 +861,10 @@ async function applySeasonalityMultipliers(
 
     return {
       ...record,
+      // Ensure downstream consumers know which NA region powered seasonality data
+      region_code: typeof record.region_code === 'string' && record.region_code.trim().length > 0
+        ? record.region_code
+        : regionCode,
       confidence: adjustedConfidence,
       seasonal_multiplier: multiplier,
       original_confidence: confidence,
@@ -1127,51 +1131,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       region_code: regionCode ?? inferredRegionCode,
     });
 
-    // **OPTIMIZATION: Pre-fetch seasonality grid data in parallel with RPC**
-    // Calculate grid cell_id and fetch data NOW instead of waiting until after RPC
-    let gridCellIdForSeasonality: string | null = null;
-    let seasonalityDataPromise: Promise<{
-      gridData: { region_code: string } | null;
-      speciesCodes: Set<string>;
-      availabilityMap: Map<string, number>
-    }> | null = null;
-
-    const lat = userLat ?? rectangleData?.center_lat ?? null;
-    const lon = userLon ?? rectangleData?.center_lon ?? null;
-
-    if (lat !== null && lon !== null) {
-      // Calculate grid cell_id (same logic as in applySeasonalityMultipliers)
-      const latRounded = Math.floor(lat / 0.25) * 0.25;
-      const lonRounded = Math.floor(lon / 0.25) * 0.25;
-      const latIndex = Math.floor(latRounded + 0.5);
-      const lonIndex = Math.floor(Math.abs(lonRounded) + 0.5);
-      const latStr = `N${latIndex.toString().padStart(2, '0')}`;
-      const lonStr = `${lon >= 0 ? 'E' : 'W'}${lonIndex.toString().padStart(3, '0')}`;
-      gridCellIdForSeasonality = `G025_${latStr}${lonStr}`;
-
-      console.log('[seasonality] Pre-fetching grid data for cell:', { cellId: gridCellIdForSeasonality, lat, lon });
-
-      // Start fetching grid data in parallel (don't await yet)
-      seasonalityDataPromise = (async () => {
-        try {
-          const { data: gridData, error: gridError } = await supabase
-            .from('grid_025deg')
-            .select('region_code')
-            .eq('cell_id', gridCellIdForSeasonality)
-            .maybeSingle();
-
-          if (gridError || !gridData?.region_code) {
-            return { gridData: null, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
-          }
-
-          return { gridData, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
-        } catch (error) {
-          console.warn('[seasonality] Grid pre-fetch failed:', (error as Error).message);
-          return { gridData: null, speciesCodes: new Set<string>(), availabilityMap: new Map<string, number>() };
-        }
-      })();
-    }
-
     // Use Confidence V3 with regional seasonality integration
     // Falls back to global grid function for non-ICES areas
     const targetMonth = new Date(predictionDate).getMonth() + 1; // 1-12
@@ -1292,27 +1251,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enriched = await augmentPredictionsWithLocalizedNames(reranked);
 
-    // **OPTIMIZATION: Use pre-fetched seasonality grid data**
-    // Await the grid data that's been fetching in parallel
-    let gridDataForSeasonality: { gridData: { region_code: string } | null; cellId: string } | null = null;
-    if (seasonalityDataPromise && gridCellIdForSeasonality) {
-      const seasonalityData = await seasonalityDataPromise;
-      if (seasonalityData.gridData) {
-        gridDataForSeasonality = {
-          gridData: seasonalityData.gridData,
-          cellId: gridCellIdForSeasonality,
-        };
-      }
-    }
-
-    // Apply seasonality multipliers to predictions (using pre-fetched data!)
-    const withSeasonality = await applySeasonalityMultipliers(
-      enriched,
-      userLat,
-      userLon,
-      rectangleData,
-      gridDataForSeasonality
-    );
+    // **NOTE: V3 function already includes regional seasonality, so no need to apply old grid-based seasonality**
+    // The old applySeasonalityMultipliers() has been removed to avoid conflicts with v3's built-in seasonality
+    const withSeasonality = enriched;
 
     // Cache predictions using the cache key (rectangleCode or lat/lon hash)
     if (cacheKey) {
