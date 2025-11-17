@@ -1172,23 +1172,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })();
     }
 
-    // Prioritize proven RPC that uses Copernicus data ingested twice daily
-    // Falls back to newer global grid function for non-ICES areas
+    // Use Confidence V3 with regional seasonality integration
+    // Falls back to global grid function for non-ICES areas
+    const targetMonth = new Date(predictionDate).getMonth() + 1; // 1-12
+
     const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
-      // PRIMARY: Proven ICES rectangle-based (uses findr_conditions_latest from Copernicus ingestion)
+      // PRIMARY: Confidence V3 with regional seasonality
       {
-        name: 'get_environmental_predictions_enhanced',
+        name: 'get_fishing_confidence_v3',
         params: {
           target_rectangle: rectangleCode,
           target_date: predictionDate,
-          user_lat: userLat || null,
-          user_lon: userLon || null,
-          substrate_type: substrateData?.substrate || null,
-          depth_meters: bathymetryData?.depth_meters || null,
-          current_wind_speed_ms: currentWindSpeedMS,
-          current_pressure_hpa: currentPressureHPA,
-          current_tide_stage: currentTideStage,
-          current_flow_speed_ms: currentFlowSpeedMS,
+          target_month: targetMonth,
         },
       },
       // FALLBACK: Global grid-based predictions (for non-ICES areas, new as of Nov 5 2025)
