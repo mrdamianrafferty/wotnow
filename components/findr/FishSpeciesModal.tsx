@@ -594,7 +594,7 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                 <InfoSection icon={<Clock size={20} />} title="Prime time">
                   {sentenceCase(detail.bestTime)}
                 </InfoSection>
-                {canRenderSeasonalityCard && seasonalityCurve && seasonalityProfile && (
+                {canRenderSeasonalityCard && seasonalityCurve && seasonalityProfile && regionCode && (
                   <SpeciesSeasonalityCard
                     speciesName={displayName}
                     speciesCode={card?.speciesCode ?? card?.speciesId ?? ''}

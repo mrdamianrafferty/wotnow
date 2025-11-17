@@ -880,7 +880,7 @@ const FindrPage: React.FC = () => {
 
     const defaultRegionCode = location?.rectangleRegion ?? null;
     const locationLabelFromContext = location?.rectangleLabel ?? null;
-    const fallbackLocationLabel = regionLabel ?? activeOption?.label ?? (activeRectangle ? `ICES ${activeRectangle}` : 'Selected waters');
+    const fallbackLocationLabel = activeOption?.region ?? activeOption?.label ?? (activeRectangle ? `ICES ${activeRectangle}` : 'Selected waters');
     const effectiveLocationLabel = locationLabelFromContext ?? fallbackLocationLabel;
 
     const mapped = predictions
@@ -896,12 +896,12 @@ const FindrPage: React.FC = () => {
 
         return {
           ...card,
-          rectangleCode: activeRectangle ?? null,
+          rectangleCode: activeRectangle,
           regionCode: predictionRegionCode ?? null,
           locationLabel: effectiveLocationLabel,
-        } satisfies CardData;
+        };
       })
-      .filter((card): card is CardData => card !== null)
+      .filter((card): card is NonNullable<typeof card> => card !== null)
       .sort((a, b) => {
         const scoreB = b.biteScore ?? b.confidence ?? -Infinity;
         const scoreA = a.biteScore ?? a.confidence ?? -Infinity;
@@ -919,7 +919,7 @@ const FindrPage: React.FC = () => {
     });
 
     return mapped;
-  }, [predictions, activeRectangle, location, regionLabel, activeOption]);
+  }, [predictions, activeRectangle, location, activeOption]);
 
   useEffect(() => {
     console.log('[Findr] Updating cardQueue:', {
@@ -935,10 +935,6 @@ const FindrPage: React.FC = () => {
 
   const currentCard = cardQueue[0] ?? null;
   const visibleCards = useMemo(() => cardQueue.slice(0, 3), [cardQueue]);
-  // Use region from user-selected location (matches header display)
-  // This is authoritative as it's what the user chose, not derived from API
-  const regionLabel = activeOption?.region;
-
   const favoriteCards = useMemo(
     () => cards.filter((card) => favoritesSet.has(getFavouriteKeyFromCard(card))),
     [cards, favoritesSet]
@@ -1089,7 +1085,7 @@ const FindrPage: React.FC = () => {
                 <div className="alert alert-info">
                   <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
                   <span>
-                    <TranslatedText text="Looking for fish activity near" /> {regionLabel ?? `area ${activeRectangle}`}…
+                    <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
                   </span>
                 </div>
                 <div className="relative h-[460px] sm:h-[520px] w-full">
@@ -1124,7 +1120,7 @@ const FindrPage: React.FC = () => {
                           isTop={index === 0}
                           total={visibleCards.length}
                           rectangleCode={activeRectangle}
-                          regionName={regionLabel}
+                          regionName={activeOption?.region}
                           onSwipedLeft={handleSkip}
                           onSwipedRight={handleLike}
                           isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
@@ -1163,7 +1159,7 @@ const FindrPage: React.FC = () => {
                   <ListChecks size={18} aria-hidden="true" /> <TranslatedText text="Full species lineup" />
                 </h3>
                 <span className="text-sm text-base-content/60">
-                  <TranslatedText text="Sorted by confidence for" /> {regionLabel ?? (
+                  <TranslatedText text="Sorted by confidence for" /> {activeOption?.region ?? (
                     <>
                       <TranslatedText text="area" /> {activeRectangle}
                     </>
