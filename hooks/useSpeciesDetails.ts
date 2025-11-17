@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { TechniqueInfo, BaitInfo, SubstrateInfo } from '../lib/findr/mapPrediction';
+import type { SeasonalityCurve, SeasonalityProfile } from '@/types/findrSeasonality';
 
 interface AdviceInfo {
   shore?: {
@@ -47,11 +48,17 @@ export interface SpeciesDetails {
   species_badges: string[] | null;
   recommended_baits: string[] | null;
   temp_opt_c: number[] | null;
+  seasonalityProfile: SeasonalityProfile | null;
+  isSeasonal: boolean;
+  regionCode: string | null;
+  seasonalityCurve: SeasonalityCurve | null;
 }
 
 interface UseSpeciesDetailsOptions {
   speciesId?: string | null;
   speciesCode?: string | null;
+  regionCode?: string | null;
+  rectangleCode?: string | null;
   enabled?: boolean;
 }
 
@@ -63,7 +70,7 @@ interface UseSpeciesDetailsState {
 }
 
 export function useSpeciesDetails(options: UseSpeciesDetailsOptions): UseSpeciesDetailsState {
-  const { speciesId, speciesCode, enabled = true } = options;
+  const { speciesId, speciesCode, regionCode, rectangleCode, enabled = true } = options;
   const [details, setDetails] = useState<SpeciesDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,16 +92,33 @@ export function useSpeciesDetails(options: UseSpeciesDetailsOptions): UseSpecies
       } else if (speciesCode) {
         params.append('species_code', speciesCode);
       }
+      if (regionCode) {
+        params.append('region_code', regionCode);
+      } else if (rectangleCode) {
+        params.append('rectangle_code', rectangleCode);
+      }
 
-      const response = await fetch(`/api/findr/species-details?${params.toString()}`);
+  const response = await fetch(`/api/findr/species-details?${params.toString()}`);
       
       if (!response.ok) {
         const json = await response.json();
         throw new Error(json.error || 'Failed to load species details');
       }
 
-      const data = await response.json();
-      setDetails(data);
+      const raw = (await response.json()) as Partial<SpeciesDetails> & Record<string, unknown>;
+      const normalised: SpeciesDetails = {
+        ...(raw as SpeciesDetails),
+        seasonalityProfile: (raw?.seasonalityProfile ?? (raw as Record<string, unknown>)?.seasonality_profile ?? null) as SeasonalityProfile | null,
+        isSeasonal: Boolean(raw?.isSeasonal ?? (raw as Record<string, unknown>)?.is_seasonal ?? false),
+        regionCode: typeof raw?.regionCode === 'string'
+          ? raw.regionCode
+          : typeof (raw as Record<string, unknown>)?.region_code === 'string'
+            ? String((raw as Record<string, unknown>).region_code)
+            : regionCode ?? null,
+        seasonalityCurve: (raw?.seasonalityCurve ?? (raw as Record<string, unknown>)?.seasonality_curve ?? null) as SeasonalityCurve | null,
+      };
+
+      setDetails(normalised);
       setError(null);
     } catch (err) {
       console.error('[useSpeciesDetails] Error:', err);
@@ -103,7 +127,7 @@ export function useSpeciesDetails(options: UseSpeciesDetailsOptions): UseSpecies
     } finally {
       setLoading(false);
     }
-  }, [speciesId, speciesCode, enabled]);
+  }, [speciesId, speciesCode, regionCode, rectangleCode, enabled]);
 
   useEffect(() => {
     fetchDetails();

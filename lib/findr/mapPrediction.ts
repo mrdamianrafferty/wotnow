@@ -3,6 +3,7 @@ import blurPlaceholders from '../../data/blur-placeholders.json';
 import { generateBlurDataURL } from '../image/placeholder';
 import { getFindrFishBio } from '../../data/findrFishBios';
 import type { FishingPrediction } from '../../hooks/useFishingPredictions';
+import type { SeasonalityProfile } from '@/types/findrSeasonality';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -156,6 +157,12 @@ export interface CardData {
   preferred_tide_stage?: string[] | null;
   temp_opt_c?: [number, number] | null;
   flow_preference?: 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | null;
+  // Region + seasonality metadata for species modal
+  rectangleCode?: string | null;
+  regionCode?: string | null;
+  locationLabel?: string | null;
+  seasonalityProfile?: SeasonalityProfile | null;
+  isSeasonal?: boolean;
 }
 
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
@@ -788,7 +795,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     localizedNames,
     advice,
     
-    // Extract user-friendly species characteristics
+  // Extract user-friendly species characteristics
     depthRange: formatDepthRange(prediction),
    seasonality: formatSeasonality(prediction),
    habitatType: formatHabitatType(prediction),
@@ -840,6 +847,10 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
         : null)
       : null,
     flow_preference: firstString(prediction.flow_preference) as CardData['flow_preference'],
+    seasonalityProfile: firstString(prediction.seasonality_profile) as SeasonalityProfile | null,
+    isSeasonal: typeof prediction.is_seasonal === 'boolean'
+      ? prediction.is_seasonal
+      : undefined,
   };
 }
 

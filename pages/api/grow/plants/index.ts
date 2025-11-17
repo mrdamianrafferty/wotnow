@@ -42,7 +42,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const plants = (data as PlantRow[]).map(serializePlant);
-    return res.status(200).json({ plants });
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('grow_onboarding_completed, grow_onboarding_completed_at')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn('[grow] Failed to load onboarding status for user', userId, profileError);
+    }
+
+    return res.status(200).json({
+      plants,
+      onboardingCompleted: Boolean(profile?.grow_onboarding_completed),
+      onboardingCompletedAt: profile?.grow_onboarding_completed_at ?? null,
+    });
   }
 
   const { name, type, location, health, planted, lastWatered, notes } = req.body ?? {};

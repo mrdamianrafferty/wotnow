@@ -32,12 +32,15 @@ import { useSpeciesDetails } from '../../hooks/useSpeciesDetails';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
 import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
 import { toast } from '@/lib/ui/toast';
 
 import { GuildBadge } from './GuildBadge';
 import { SpeciesBadges } from './SpeciesBadges';
+import { SpeciesSeasonalityCard } from './SpeciesSeasonalityCard';
+import type { SeasonalityProfile } from '@/types/findrSeasonality';
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -190,6 +193,7 @@ function sentenceCase(value: string): string {
 export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, onClose }) => {
   // Get current language for localized species names
   const { language } = useLanguage();
+  const { location: unifiedLocation } = useUnifiedLocation();
 
   // Notification state
   const [notificationId, setNotificationId] = useState<number | null>(null);
@@ -210,6 +214,8 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const { details: speciesDetails, loading: detailsLoading } = useSpeciesDetails({
     speciesId: card?.speciesId,
     speciesCode: card?.speciesCode,
+    regionCode: card?.regionCode ?? unifiedLocation?.rectangleRegion ?? null,
+    rectangleCode: card?.rectangleCode ?? unifiedLocation?.rectangleCode ?? null,
     enabled: open && Boolean(card),
   });
 
@@ -281,6 +287,27 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const localizedLine = buildLocalizedNameLine(card?.localizedNames);
   const displayName = getLocalizedSpeciesName(card?.commonName ?? '', card?.localizedNames, language);
   const contextsAvailable = hasShore && hasBoat ? ['shore', 'boat'] : hasBoat ? ['boat'] : ['shore'];
+
+  const seasonalityProfile: SeasonalityProfile | null = speciesDetails?.seasonalityProfile ?? card?.seasonalityProfile ?? null;
+  const isSeasonalSpecies = Boolean(speciesDetails?.isSeasonal ?? card?.isSeasonal ?? false);
+  const seasonalityCurve = speciesDetails?.seasonalityCurve ?? null;
+  const regionCode = speciesDetails?.regionCode ?? card?.regionCode ?? unifiedLocation?.rectangleRegion ?? null;
+  const locationLabel = card?.locationLabel
+    ?? unifiedLocation?.rectangleLabel
+    ?? (card?.rectangleCode ? `ICES ${card.rectangleCode}` : 'Selected waters');
+  const hasCurveData = Boolean(
+    seasonalityCurve &&
+    (seasonalityCurve.peak_months.length > 0 || seasonalityCurve.good_months.length > 0 || seasonalityCurve.possible_months.length > 0)
+  );
+  const profileSupportsSeasonality = seasonalityProfile === 'partial_resident' || seasonalityProfile === 'seasonal_visitor';
+  const canRenderSeasonalityCard = Boolean(
+    !detailsLoading &&
+    seasonalityCurve &&
+    regionCode &&
+    hasCurveData &&
+    (isSeasonalSpecies || profileSupportsSeasonality) &&
+    seasonalityProfile
+  );
 
   // Handler for notifications - Toggle between scheduling and cancelling
   const handleSetupNotification = async () => {
@@ -567,6 +594,17 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                 <InfoSection icon={<Clock size={20} />} title="Prime time">
                   {sentenceCase(detail.bestTime)}
                 </InfoSection>
+                {canRenderSeasonalityCard && seasonalityCurve && seasonalityProfile && (
+                  <SpeciesSeasonalityCard
+                    speciesName={displayName}
+                    speciesCode={card?.speciesCode ?? card?.speciesId ?? ''}
+                    locationLabel={locationLabel}
+                    regionCode={regionCode}
+                    seasonalityProfile={seasonalityProfile}
+                    isSeasonal={Boolean(isSeasonalSpecies || profileSupportsSeasonality)}
+                    curve={seasonalityCurve}
+                  />
+                )}
                 <InfoSection icon={<Waves size={20} />} title="Tide game">
                   {sentenceCase(detail.tideSensitivity)}
                 </InfoSection>

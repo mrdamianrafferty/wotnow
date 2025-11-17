@@ -877,15 +877,37 @@ const FindrPage: React.FC = () => {
 
   const cards = useMemo(() => {
     if (!predictions) return [];
+
+    const defaultRegionCode = location?.rectangleRegion ?? null;
+    const locationLabelFromContext = location?.rectangleLabel ?? null;
+    const fallbackLocationLabel = regionLabel ?? activeOption?.label ?? (activeRectangle ? `ICES ${activeRectangle}` : 'Selected waters');
+    const effectiveLocationLabel = locationLabelFromContext ?? fallbackLocationLabel;
+
     const mapped = predictions
-      .map((prediction, index) => mapPrediction(prediction, index))
+      .map((prediction, index) => {
+        const card = mapPrediction(prediction, index);
+        if (!card) {
+          return null;
+        }
+
+        const predictionRegionCode = typeof prediction.region_code === 'string' && prediction.region_code.trim().length > 0
+          ? prediction.region_code.trim().toUpperCase()
+          : defaultRegionCode;
+
+        return {
+          ...card,
+          rectangleCode: activeRectangle ?? null,
+          regionCode: predictionRegionCode ?? null,
+          locationLabel: effectiveLocationLabel,
+        } satisfies CardData;
+      })
       .filter((card): card is CardData => card !== null)
       .sort((a, b) => {
         const scoreB = b.biteScore ?? b.confidence ?? -Infinity;
         const scoreA = a.biteScore ?? a.confidence ?? -Infinity;
         return scoreB - scoreA;
       });
-    
+
     console.log('[Findr] Cards computed:', {
       rectangleCode: activeRectangle,
       predictionCount: predictions.length,
@@ -893,10 +915,11 @@ const FindrPage: React.FC = () => {
       firstCardSpecies: mapped[0]?.commonName,
       firstCardConfidence: mapped[0]?.confidence,
       firstCardBiteScore: mapped[0]?.biteScore,
+      regionCode: mapped[0]?.regionCode,
     });
-    
+
     return mapped;
-  }, [predictions, activeRectangle]);
+  }, [predictions, activeRectangle, location, regionLabel, activeOption]);
 
   useEffect(() => {
     console.log('[Findr] Updating cardQueue:', {

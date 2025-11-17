@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import type { SeasonalityCurve, SeasonalityProfile } from '@/types/findrSeasonality';
 
 interface TechniqueData {
   technique_id: number;
@@ -70,6 +71,22 @@ interface SpeciesDetailResponse {
   species_badges: string[] | null;
   recommended_baits: string[] | null;
   temp_opt_c: number[] | null;
+  seasonalityProfile: SeasonalityProfile | null;
+  isSeasonal: boolean;
+  regionCode: string | null;
+  seasonalityCurve: SeasonalityCurve | null;
+}
+
+function parseMonthArray(value: unknown): number[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => {
+      const numberValue = typeof entry === 'number' ? entry : Number(entry);
+      return Number.isFinite(numberValue) ? Number(numberValue) : null;
+    })
+    .filter((entry): entry is number => entry != null && entry >= 1 && entry <= 12);
 }
 
 export default async function handler(
@@ -80,7 +97,7 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { species_id, species_code } = req.query;
+  const { species_id, species_code, region_code, rectangle_code } = req.query;
 
   if (!species_id && !species_code) {
     return res.status(400).json({ 
@@ -90,6 +107,25 @@ export default async function handler(
 
   try {
     const supabase = getSupabaseServerClient();
+
+    let resolvedRegionCode: string | null = null;
+    if (typeof region_code === 'string' && region_code.trim().length > 0) {
+      resolvedRegionCode = region_code.trim().toUpperCase();
+    } else if (typeof rectangle_code === 'string' && rectangle_code.trim().length > 0) {
+      const { data: rectangleRow, error: rectangleError } = await supabase
+        .from('ices_rectangles')
+        .select('region')
+        .eq('rectangle_code', rectangle_code.trim().toUpperCase())
+        .maybeSingle();
+
+      if (rectangleError) {
+        console.warn('[species-details] Failed to resolve region for rectangle', rectangle_code, rectangleError.message);
+      }
+
+      if (rectangleRow?.region) {
+        resolvedRegionCode = rectangleRow.region;
+      }
+    }
 
     // Build the base query
     let query = supabase
@@ -109,7 +145,9 @@ export default async function handler(
         guild,
         species_badges,
         recommended_baits,
-        temp_opt_c
+        temp_opt_c,
+        seasonality_profile,
+        is_seasonal
       `)
       .limit(1);
 
@@ -125,6 +163,40 @@ export default async function handler(
     if (speciesError || !speciesData) {
       console.error('[species-details] Species not found:', speciesError);
       return res.status(404).json({ error: 'Species not found' });
+    }
+
+    let seasonalityCurve: SeasonalityCurve | null = null;
+    if (resolvedRegionCode && speciesData.species_code) {
+      const { data: seasonalityData, error: seasonalityError } = await supabase
+        .from('species_region_seasonality')
+        .select('peak_months, good_months, possible_months, availability_multiplier, source, source_confidence')
+        .eq('species_code', speciesData.species_code)
+        .eq('region_code', resolvedRegionCode)
+        .limit(1)
+        .maybeSingle();
+
+      if (seasonalityError) {
+        console.warn('[species-details] Error fetching seasonality curve:', seasonalityError.message);
+      }
+
+      if (seasonalityData) {
+        seasonalityCurve = {
+          peak_months: parseMonthArray(seasonalityData.peak_months),
+          good_months: parseMonthArray(seasonalityData.good_months),
+          possible_months: parseMonthArray(seasonalityData.possible_months),
+          availability_multiplier: typeof seasonalityData.availability_multiplier === 'number'
+            ? seasonalityData.availability_multiplier
+            : Number.isFinite(Number(seasonalityData.availability_multiplier))
+              ? Number(seasonalityData.availability_multiplier)
+              : null,
+          source: typeof seasonalityData.source === 'string' ? seasonalityData.source : null,
+          source_confidence: typeof seasonalityData.source_confidence === 'number'
+            ? seasonalityData.source_confidence
+            : Number.isFinite(Number(seasonalityData.source_confidence))
+              ? Number(seasonalityData.source_confidence)
+              : null,
+        } satisfies SeasonalityCurve;
+      }
     }
 
     // Fetch techniques for this species
@@ -227,6 +299,10 @@ export default async function handler(
       species_badges: speciesData.species_badges || null,
       recommended_baits: speciesData.recommended_baits || null,
       temp_opt_c: speciesData.temp_opt_c || null,
+      seasonalityProfile: (speciesData.seasonality_profile as SeasonalityProfile | null) ?? null,
+      isSeasonal: Boolean(speciesData.is_seasonal),
+      regionCode: resolvedRegionCode,
+      seasonalityCurve,
     };
 
     return res.status(200).json(response);

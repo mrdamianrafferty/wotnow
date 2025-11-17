@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
@@ -142,7 +142,6 @@ const interestActivityMap: Record<string, string[]> = {
   wildlife: ['pollinator-support', 'habitat-building'],
   indoor_plants: ['indoor-watering', 'repotting'],
 };
-
 const totalSteps: Step[] = [0, 1, 2, 3];
 
 const defaultFormState = {
@@ -275,6 +274,13 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
 
   const progressPercent = useMemo(() => ((currentStep + 1) / totalSteps.length) * 100, [currentStep]);
   const activities = useMemo(() => deriveActivities(formState), [formState]);
+  const markOnboardingComplete = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.localStorage.setItem('grow:onboarding-complete', 'true');
+  }, []);
 
   const stepTitles = [
     'Garden Basics',
@@ -435,10 +441,9 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
 
     try {
       await api.updateUserInterests(payload);
+      await api.completeOnboarding();
+      markOnboardingComplete();
       mergeIntoLocalStorage(result);
-      if (isBrowser) {
-        window.localStorage.setItem('grow:onboarding-complete', 'true');
-      }
       setStatusMessage('Profile saved. Preparing your personalised dashboard...');
       if (onComplete) {
         onComplete(result);
@@ -454,6 +459,33 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
       setTimeout(() => setStatusMessage(null), 2500);
     }
   };
+
+  const handleSkipOnboarding = useCallback(async () => {
+    if (isBusy || isSubmitting) {
+      return;
+    }
+
+    setStepError(null);
+    setStatusMessage('Skipping onboarding...');
+    setIsSubmitting(true);
+
+    try {
+      await api.completeOnboarding({ skipped: true });
+      markOnboardingComplete();
+      setTimeout(() => {
+        router.push('/grow');
+      }, 300);
+    } catch (error) {
+      const message = error instanceof Error
+        ? error.message
+        : 'We could not skip onboarding right now. Please try again.';
+      setStepError(message);
+    } finally {
+      setIsSubmitting(false);
+      setIsBusy(false);
+      setTimeout(() => setStatusMessage(null), 2500);
+    }
+  }, [isBusy, isSubmitting, markOnboardingComplete, router]);
 
   const toggleFeature = (featureId: string, checked: boolean) => {
     setFormState((previous) => ({
@@ -785,8 +817,18 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
             Help us learn about your garden so we can deliver the most relevant guidance.
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-          Step {currentStep + 1} of {totalSteps.length}
+        <div className="hidden sm:flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">
+            Step {currentStep + 1} of {totalSteps.length}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSkipOnboarding}
+            disabled={isBusy || isSubmitting}
+          >
+            Skip onboarding
+          </Button>
         </div>
       </div>
 
@@ -816,7 +858,7 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
           <Separator />
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button
                 variant="ghost"
                 onClick={goToPreviousStep}
@@ -824,6 +866,14 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleSkipOnboarding}
+                disabled={isBusy || isSubmitting}
+                className="sm:hidden"
+              >
+                Skip onboarding
               </Button>
             </div>
 

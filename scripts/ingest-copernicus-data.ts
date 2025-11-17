@@ -42,7 +42,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY - Supabase service role key
  *   FINDR_CONDITIONS_LIMIT - Optional: limit number of rectangles to process
  *   FINDR_CONDITIONS_DELAY_MS - Optional: delay between rectangle requests (default 500ms)
- *   FINDR_CONDITIONS_FRESHNESS_HOURS - Optional: skip rectangles with data fresher than N hours (default 24)
+ *   FINDR_CONDITIONS_FRESHNESS_HOURS - Optional: skip rectangles with data fresher than N hours (default 12)
  *   FINDR_CONDITIONS_BATCH_SIZE - Optional: process N rectangles in parallel (default 5)
  *   FINDR_CONDITIONS_FORCE_REFRESH - Optional: force refresh all rectangles, ignoring freshness (default false)
  */
@@ -63,7 +63,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 const LIMIT = process.env.FINDR_CONDITIONS_LIMIT ? parseInt(process.env.FINDR_CONDITIONS_LIMIT) : undefined;
 const DELAY_MS = process.env.FINDR_CONDITIONS_DELAY_MS ? parseInt(process.env.FINDR_CONDITIONS_DELAY_MS) : 500;
-const FRESHNESS_HOURS = process.env.FINDR_CONDITIONS_FRESHNESS_HOURS ? parseInt(process.env.FINDR_CONDITIONS_FRESHNESS_HOURS) : 24;
+const FRESHNESS_HOURS = process.env.FINDR_CONDITIONS_FRESHNESS_HOURS ? parseInt(process.env.FINDR_CONDITIONS_FRESHNESS_HOURS) : 12;
 const BATCH_SIZE = process.env.FINDR_CONDITIONS_BATCH_SIZE ? parseInt(process.env.FINDR_CONDITIONS_BATCH_SIZE) : 5;
 const FORCE_REFRESH = process.env.FINDR_CONDITIONS_FORCE_REFRESH === 'true';
 

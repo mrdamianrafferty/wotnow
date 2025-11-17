@@ -6,6 +6,13 @@ import type { PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from 
 const API_BASE = EDGE_FUNCTION_BASE;
 const GROW_PLANTS_API_BASE = '/api/grow/plants';
 const GROW_SPECIES_API_BASE = '/api/grow/species';
+const GROW_ONBOARDING_COMPLETE_API = '/api/grow/onboarding/complete';
+
+type GrowPlantsResponse = {
+  plants: any[];
+  onboardingCompleted?: boolean;
+  onboardingCompletedAt?: string | null;
+};
 
 export class ApiClient {
   private isRefreshing = false;
@@ -495,7 +502,7 @@ export class ApiClient {
 
         if (response.status >= 500) {
           console.warn('📡 [API] getUserPlants fallback: treating 5xx as empty garden');
-          return { plants: [] };
+          return { plants: [], onboardingCompleted: false } satisfies GrowPlantsResponse;
         }
 
         const message = typeof errorPayload?.error === 'string'
@@ -504,7 +511,7 @@ export class ApiClient {
         throw new Error(message);
       }
 
-      const data = await response.json();
+      const data = await response.json() as GrowPlantsResponse;
       console.log('📡 [API] getUserPlants response:', data);
       return data;
     } catch (error: unknown) {
@@ -515,12 +522,27 @@ export class ApiClient {
         const normalized = message.toLowerCase();
         if (normalized.includes('timed out') || normalized.includes('network') || normalized.includes('failed to fetch')) {
           console.warn('📡 [API] getUserPlants fallback: treating network issue as empty garden');
-          return { plants: [] };
+          return { plants: [], onboardingCompleted: false } satisfies GrowPlantsResponse;
         }
       }
 
       throw error instanceof Error ? error : new Error(message);
     }
+  }
+
+  async completeOnboarding(payload: Record<string, unknown> = {}) {
+    const response = await this.fetchWithAuth(GROW_ONBOARDING_COMPLETE_API, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to update onboarding status');
+    }
+
+    return response.json();
   }
 
   async addPlant(plantData: any) {

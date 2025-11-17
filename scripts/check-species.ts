@@ -12,37 +12,32 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 async function check() {
-  // Check total species
-  const { count: totalCount } = await supabase
+  // Get all species data
+  const { data: allSpecies, error } = await supabase
     .from('species')
-    .select('*', { count: 'exact', head: true });
+    .select('species_code, name_en, catches_2024')
+    .order('species_code');
 
-  console.log(`Total species: ${totalCount}`);
+  if (error) {
+    console.error('Error:', error);
+    return;
+  }
 
-  // Check species with name_en
-  const { count: withNameEn } = await supabase
-    .from('species')
-    .select('*', { count: 'exact', head: true })
-    .not('name_en', 'is', null);
+  if (!allSpecies) {
+    console.log('No species found');
+    return;
+  }
 
-  console.log(`Species with name_en: ${withNameEn}`);
+  console.log(`Total species: ${allSpecies.length}`);
 
-  // Check species without name_en
-  const { count: withoutNameEn } = await supabase
-    .from('species')
-    .select('*', { count: 'exact', head: true })
-    .is('name_en', null);
+  const withData = allSpecies.filter(sp => sp.catches_2024 !== null);
+  const needData = allSpecies.filter(sp => sp.catches_2024 === null);
 
-  console.log(`Species without name_en: ${withoutNameEn}`);
+  console.log(`\n✅ Species with preference data (${withData.length}):`);
+  withData.forEach(sp => console.log(`  ${sp.species_code} - ${sp.name_en}`));
 
-  // Sample of species
-  const { data: sample } = await supabase
-    .from('species')
-    .select('name_en, scientific_name')
-    .limit(3);
-
-  console.log('\nSample species:');
-  sample?.forEach(s => console.log(`  - ${s.name_en} (${s.scientific_name})`));
+  console.log(`\n⚠️  Species needing preference data (${needData.length}):`);
+  needData.forEach(sp => console.log(`  ${sp.species_code} - ${sp.name_en}`));
 }
 
 check().catch(console.error);
