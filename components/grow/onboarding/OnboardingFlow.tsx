@@ -436,6 +436,9 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
     try {
       await api.updateUserInterests(payload);
       mergeIntoLocalStorage(result);
+      if (isBrowser) {
+        window.localStorage.setItem('grow:onboarding-complete', 'true');
+      }
       setStatusMessage('Profile saved. Preparing your personalised dashboard...');
       if (onComplete) {
         onComplete(result);

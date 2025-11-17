@@ -34,7 +34,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .order('created_at', { ascending: true });
 
     if (error) {
-      return res.status(500).json({ error: 'Failed to load plants' });
+      console.error('[grow] Failed to load plants for user', userId, error);
+      return res.status(500).json({
+        error: error.message || 'Failed to load plants',
+        details: process.env.NODE_ENV === 'development' ? error : undefined,
+      });
     }
 
     const plants = (data as PlantRow[]).map(serializePlant);
@@ -69,7 +73,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .single();
 
   if (error) {
-    return res.status(500).json({ error: 'Failed to add plant' });
+    console.error('[grow] Failed to add plant for user', userId, error);
+    return res.status(500).json({
+      error: error.message || 'Failed to add plant',
+      details: process.env.NODE_ENV === 'development' ? error : undefined,
+    });
   }
 
   return res.status(201).json({ plant: serializePlant(data as PlantRow) });

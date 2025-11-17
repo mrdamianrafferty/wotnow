@@ -140,9 +140,11 @@ export function GrowExperience() {
           }
 
           const plantCount = Array.isArray(response?.plants) ? response.plants.length : 0;
+          const onboardingComplete = typeof window !== 'undefined'
+            && window.localStorage.getItem('grow:onboarding-complete') === 'true';
           setHasCheckedPlants(true);
 
-          if (plantCount === 0) {
+          if (plantCount === 0 && !onboardingComplete) {
             router.replace(GROW_ONBOARDING_PATH);
           }
         } catch (error) {

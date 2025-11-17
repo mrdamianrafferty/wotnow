@@ -473,25 +473,53 @@ export class ApiClient {
       
       const response = await this.fetchWithAuth(GROW_PLANTS_API_BASE, {
         headers: this.getHeaders(true), // Require auth to get user-specific plants
-      }, 5000);
+      }, 15000);
 
       console.log('📡 [API] Response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('📡 [API] getUserPlants error:', response.status, errorText);
+        let errorPayload: Record<string, unknown> | null = null;
+        let errorText = '';
+        try {
+          errorText = await response.text();
+          errorPayload = errorText ? JSON.parse(errorText) : null;
+        } catch (_parseError) {
+          // keep original text for logging, fall through to fallback handling
+        }
+
+        console.error('📡 [API] getUserPlants error:', response.status, errorText || '<no-body>');
+
         if (response.status === 401) {
           throw new Error('Not authenticated');
         }
-        throw new Error(`Service unavailable (${response.status})`);
+
+        if (response.status >= 500) {
+          console.warn('📡 [API] getUserPlants fallback: treating 5xx as empty garden');
+          return { plants: [] };
+        }
+
+        const message = typeof errorPayload?.error === 'string'
+          ? errorPayload.error
+          : `Service unavailable (${response.status})`;
+        throw new Error(message);
       }
 
       const data = await response.json();
       console.log('📡 [API] getUserPlants response:', data);
       return data;
-    } catch (error: any) {
-      console.error('📡 [API] getUserPlants exception:', error.message);
-      throw error;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('📡 [API] getUserPlants exception:', message);
+
+      if (typeof message === 'string') {
+        const normalized = message.toLowerCase();
+        if (normalized.includes('timed out') || normalized.includes('network') || normalized.includes('failed to fetch')) {
+          console.warn('📡 [API] getUserPlants fallback: treating network issue as empty garden');
+          return { plants: [] };
+        }
+      }
+
+      throw error instanceof Error ? error : new Error(message);
     }
   }
 
