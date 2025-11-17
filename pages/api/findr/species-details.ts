@@ -147,7 +147,10 @@ export default async function handler(
         recommended_baits,
         temp_opt_c,
         seasonality_profile,
-        is_seasonal
+        is_seasonal,
+        peak_months,
+        good_months,
+        possible_months
       `)
       .limit(1);
 
@@ -166,11 +169,11 @@ export default async function handler(
     }
 
     let seasonalityCurve: SeasonalityCurve | null = null;
-    if (resolvedRegionCode && speciesData.species_code) {
+    if (resolvedRegionCode) {
       const { data: seasonalityData, error: seasonalityError } = await supabase
         .from('species_region_seasonality')
         .select('peak_months, good_months, possible_months, availability_multiplier, source, source_confidence')
-        .eq('species_code', speciesData.species_code)
+        .eq('species_id', speciesData.id)
         .eq('region_code', resolvedRegionCode)
         .limit(1)
         .maybeSingle();
@@ -196,6 +199,32 @@ export default async function handler(
               ? Number(seasonalityData.source_confidence)
               : null,
         } satisfies SeasonalityCurve;
+      }
+    }
+
+    if (!seasonalityCurve) {
+      const fallbackPeakMonths = parseMonthArray((speciesData as Record<string, unknown>).peak_months);
+      const fallbackGoodMonths = parseMonthArray((speciesData as Record<string, unknown>).good_months);
+      const fallbackPossibleMonths = parseMonthArray((speciesData as Record<string, unknown>).possible_months);
+
+      const hasFallbackCurve =
+        fallbackPeakMonths.length > 0 ||
+        fallbackGoodMonths.length > 0 ||
+        fallbackPossibleMonths.length > 0;
+
+      if (hasFallbackCurve) {
+        seasonalityCurve = {
+          peak_months: fallbackPeakMonths,
+          good_months: fallbackGoodMonths,
+          possible_months: fallbackPossibleMonths,
+          availability_multiplier: null,
+          source: 'species_baseline',
+          source_confidence: null,
+        } satisfies SeasonalityCurve;
+
+        if (!resolvedRegionCode) {
+          resolvedRegionCode = 'GLOBAL';
+        }
       }
     }
 

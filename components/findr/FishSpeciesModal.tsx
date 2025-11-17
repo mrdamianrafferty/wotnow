@@ -288,25 +288,32 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const displayName = getLocalizedSpeciesName(card?.commonName ?? '', card?.localizedNames, language);
   const contextsAvailable = hasShore && hasBoat ? ['shore', 'boat'] : hasBoat ? ['boat'] : ['shore'];
 
-  const seasonalityProfile: SeasonalityProfile | null = speciesDetails?.seasonalityProfile ?? card?.seasonalityProfile ?? null;
+  const rawSeasonalityProfile: SeasonalityProfile | null = speciesDetails?.seasonalityProfile ?? card?.seasonalityProfile ?? null;
   const isSeasonalSpecies = Boolean(speciesDetails?.isSeasonal ?? card?.isSeasonal ?? false);
   const seasonalityCurve = speciesDetails?.seasonalityCurve ?? null;
   const regionCode = speciesDetails?.regionCode ?? card?.regionCode ?? unifiedLocation?.rectangleRegion ?? null;
   const locationLabel = card?.locationLabel
     ?? unifiedLocation?.rectangleLabel
     ?? (card?.rectangleCode ? `ICES ${card.rectangleCode}` : 'Selected waters');
-  const hasCurveData = Boolean(
-    seasonalityCurve &&
-    (seasonalityCurve.peak_months.length > 0 || seasonalityCurve.good_months.length > 0 || seasonalityCurve.possible_months.length > 0)
-  );
-  const profileSupportsSeasonality = seasonalityProfile === 'partial_resident' || seasonalityProfile === 'seasonal_visitor';
+  const { peakMonths, goodMonths, possibleMonths } = useMemo(() => {
+    if (!seasonalityCurve) {
+      return { peakMonths: [], goodMonths: [], possibleMonths: [] };
+    }
+
+    return {
+      peakMonths: Array.isArray(seasonalityCurve.peak_months) ? seasonalityCurve.peak_months : [],
+      goodMonths: Array.isArray(seasonalityCurve.good_months) ? seasonalityCurve.good_months : [],
+      possibleMonths: Array.isArray(seasonalityCurve.possible_months) ? seasonalityCurve.possible_months : [],
+    };
+  }, [seasonalityCurve]);
+  const hasCurveData = peakMonths.length > 0 || goodMonths.length > 0 || possibleMonths.length > 0;
+  const effectiveSeasonalityProfile: SeasonalityProfile = (rawSeasonalityProfile ?? 'year_round_resident') as SeasonalityProfile;
+  const profileSupportsSeasonality = rawSeasonalityProfile === 'partial_resident' || rawSeasonalityProfile === 'seasonal_visitor';
   const canRenderSeasonalityCard = Boolean(
     !detailsLoading &&
     seasonalityCurve &&
     regionCode &&
-    hasCurveData &&
-    (isSeasonalSpecies || profileSupportsSeasonality) &&
-    seasonalityProfile
+    hasCurveData
   );
 
   // Handler for notifications - Toggle between scheduling and cancelling
@@ -594,17 +601,23 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
                 <InfoSection icon={<Clock size={20} />} title="Prime time">
                   {sentenceCase(detail.bestTime)}
                 </InfoSection>
-                {canRenderSeasonalityCard && seasonalityCurve && seasonalityProfile && regionCode && (
-                  <SpeciesSeasonalityCard
-                    speciesName={displayName}
-                    speciesCode={card?.speciesCode ?? card?.speciesId ?? ''}
-                    locationLabel={locationLabel}
-                    regionCode={regionCode}
-                    seasonalityProfile={seasonalityProfile}
-                    isSeasonal={Boolean(isSeasonalSpecies || profileSupportsSeasonality)}
-                    curve={seasonalityCurve}
-                  />
-                )}
+              </>
+            )}
+
+            {canRenderSeasonalityCard && seasonalityCurve && regionCode && (
+              <SpeciesSeasonalityCard
+                speciesName={displayName}
+                speciesCode={card?.speciesCode ?? card?.speciesId ?? ''}
+                locationLabel={locationLabel}
+                regionCode={regionCode}
+                seasonalityProfile={effectiveSeasonalityProfile}
+                isSeasonal={Boolean(isSeasonalSpecies || profileSupportsSeasonality)}
+                curve={seasonalityCurve}
+              />
+            )}
+
+            {detail && (
+              <>
                 <InfoSection icon={<Waves size={20} />} title="Tide game">
                   {sentenceCase(detail.tideSensitivity)}
                 </InfoSection>

@@ -20,7 +20,7 @@ async function testV3Integration() {
   console.log('║  Simulating what the API endpoint will call                                  ║');
   console.log('╚═══════════════════════════════════════════════════════════════════════════════╝');
 
-  const testRectangle = '31F2'; // English Channel
+  const testRectangle = '25E0'; // Lastres, Spain
   const testDate = '2025-11-17';
   const testMonth = 11; // November
 

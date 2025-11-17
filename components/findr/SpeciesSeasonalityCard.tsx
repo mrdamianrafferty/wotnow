@@ -20,6 +20,7 @@ const REGION_LABELS: Record<string, string> = {
   NEA: 'North-East Atlantic',
   NSEA: 'North Sea',
   SCA: 'Scandinavia & Barents',
+  GLOBAL: 'All regions',
 };
 
 const PROFILE_LABELS: Record<SeasonalityProfile, string> = {

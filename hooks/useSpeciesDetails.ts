@@ -92,13 +92,17 @@ export function useSpeciesDetails(options: UseSpeciesDetailsOptions): UseSpecies
       } else if (speciesCode) {
         params.append('species_code', speciesCode);
       }
-      if (regionCode) {
-        params.append('region_code', regionCode);
+      const normalisedRegionCode = typeof regionCode === 'string'
+        ? regionCode.trim().toUpperCase()
+        : null;
+
+      if (normalisedRegionCode && /^[A-Z]{2,6}$/u.test(normalisedRegionCode)) {
+        params.append('region_code', normalisedRegionCode);
       } else if (rectangleCode) {
         params.append('rectangle_code', rectangleCode);
       }
 
-  const response = await fetch(`/api/findr/species-details?${params.toString()}`);
+    const response = await fetch(`/api/findr/species-details?${params.toString()}`);
       
       if (!response.ok) {
         const json = await response.json();
