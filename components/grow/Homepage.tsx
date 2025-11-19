@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -25,7 +25,12 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
+import { GardenAlertBox } from '../gardening/GardenAlertBox';
+import type { GardenAlertResult } from '../../lib/gardening/gardenAlerts';
 import { LocationSettings } from './LocationSettings';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+
+type Translator = (value: string) => string;
 
 interface GardenTask {
   id: string;
@@ -193,9 +198,10 @@ interface SwipeCardProps {
   onSwipeLeft: (taskId: string) => void;
   isTop: boolean;
   index: number;
+  t: Translator;
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, isTop, index }) => {
+const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, isTop, index, t }) => {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-15, 15]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
@@ -225,13 +231,29 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
   const getUrgencyBadge = () => {
     switch (task.urgency) {
       case 'critical':
-        return <Badge variant="destructive" className="flex items-center gap-1"><Flame className="h-3 w-3" /> URGENT</Badge>;
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1 uppercase">
+            <Flame className="h-3 w-3" /> {t('Urgent')}
+          </Badge>
+        );
       case 'optimal':
-        return <Badge className="bg-green-600 hover:bg-green-700 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> PERFECT TIMING</Badge>;
+        return (
+          <Badge className="bg-green-600 hover:bg-green-700 flex items-center gap-1 uppercase">
+            <CheckCircle className="h-3 w-3" /> {t('Perfect timing')}
+          </Badge>
+        );
       case 'good':
-        return <Badge variant="secondary" className="flex items-center gap-1"><Sprout className="h-3 w-3" /> GOOD TIMING</Badge>;
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 uppercase">
+            <Sprout className="h-3 w-3" /> {t('Good timing')}
+          </Badge>
+        );
       case 'upcoming':
-        return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" /> UPCOMING</Badge>;
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 uppercase">
+            <Clock className="h-3 w-3" /> {t('Upcoming')}
+          </Badge>
+        );
     }
   };
 
@@ -281,7 +303,9 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{task.timeRequired} minutes</span>
+              <span>
+                {task.timeRequired} {t('minutes')}
+              </span>
             </div>
             {task.soilTemp && (
               <div className="flex items-center gap-2 text-sm col-span-2">
@@ -291,13 +315,15 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
             )}
             <div className="flex items-center gap-2 text-sm col-span-2">
               <span className="text-lg">{task.weatherIcon}</span>
-              <span>Weather: {task.weatherContext}</span>
+              <span>
+                {t('Weather')}: {task.weatherContext}
+              </span>
             </div>
           </div>
 
           {/* Reasoning */}
           <div>
-            <h3 className="font-semibold mb-2">Why now?</h3>
+            <h3 className="font-semibold mb-2">{t('Why now?')}</h3>
             <ul className="space-y-1">
               {task.reasoning.map((reason, idx) => (
                 <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
@@ -317,7 +343,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
               className="border-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
             >
               <X className="h-5 w-5 mr-2" />
-              Dismiss
+              {t('Dismiss')}
             </Button>
             <Button
               size="lg"
@@ -325,7 +351,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
               className="bg-green-600 hover:bg-green-700"
             >
               <CheckCircle2 className="h-5 w-5 mr-2" />
-              Add to List
+              {t('Add to List')}
             </Button>
           </div>
         </CardContent>
@@ -346,6 +372,48 @@ export function Homepage() {
   const [sortBy, setSortBy] = useState<'urgency' | 'date' | 'plant' | 'time'>('urgency');
   const [filterBy, setFilterBy] = useState<string>('all');
   const [userLocation, setUserLocation] = useState<string>('');
+  const [gardenAlerts, setGardenAlerts] = useState<GardenAlertResult[]>([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+  const alertCacheRef = useRef<Map<string, GardenAlertResult[]>>(new Map()); // cache alerts per ~0.1 degree to limit refetching
+
+  const staticCopy = React.useMemo(
+    () => [
+      'My Home',
+      "You're All Caught Up!",
+      "You've reviewed all high-priority tasks for today.",
+      'Show More Tasks',
+      'Connected',
+      'Urgent',
+      'Perfect timing',
+      'Good timing',
+      'Upcoming',
+      'minutes',
+      'Weather',
+      'Why now?',
+      'Dismiss',
+      'Add to List',
+      'Recommended Tasks',
+      'Score',
+      'min',
+      'Urgent Only',
+      'All Tasks',
+      'Planting',
+      'Watering',
+      'Maintenance',
+      'Fertilizing',
+      'Sort: Urgency',
+      'Sort: Time',
+      'Sort: Plant',
+      'Optimal',
+      'Good',
+      'Zone',
+      'Soil',
+      'Last Frost',
+      'days ago'
+    ],
+    [],
+  );
+  const { t } = useTranslationMap(staticCopy);
 
   const loadTasks = useCallback(async (location?: string) => {
     setIsLoading(true);
@@ -387,6 +455,54 @@ export function Homepage() {
             zone: response.context.zone || '8b',
             growingWeek: response.context.growingWeek || 4
           });
+
+          const latCandidate =
+            response.context.coordinates?.lat ??
+            response.context.coordinates?.latitude ??
+            response.context.lat ??
+            response.context.latitude ??
+            response.context.weather?.lat ??
+            response.context.weather?.latitude ??
+            null;
+          const lonCandidate =
+            response.context.coordinates?.lon ??
+            response.context.coordinates?.lng ??
+            response.context.coordinates?.longitude ??
+            response.context.lon ??
+            response.context.longitude ??
+            response.context.weather?.lon ??
+            response.context.weather?.longitude ??
+            null;
+
+          if (latCandidate != null && lonCandidate != null) {
+            const latNum = Number(latCandidate);
+            const lonNum = Number(lonCandidate);
+            if (Number.isFinite(latNum) && Number.isFinite(lonNum)) {
+              const cacheKey = `${latNum.toFixed(1)},${lonNum.toFixed(1)}`;
+              if (alertCacheRef.current.has(cacheKey)) {
+                setGardenAlerts(alertCacheRef.current.get(cacheKey) ?? []);
+                setAlertsLoading(false);
+              } else {
+                setAlertsLoading(true);
+                try {
+                  const alertPayload = await api.getGardenAlerts(latNum, lonNum);
+                  const resolvedAlerts = Array.isArray(alertPayload?.alerts) ? alertPayload.alerts : [];
+                  alertCacheRef.current.set(cacheKey, resolvedAlerts);
+                  setGardenAlerts(resolvedAlerts);
+                } catch (error) {
+                  console.warn('Garden alerts unavailable:', error);
+                  alertCacheRef.current.set(cacheKey, []);
+                  setGardenAlerts([]);
+                } finally {
+                  setAlertsLoading(false);
+                }
+              }
+            } else {
+              setGardenAlerts([]);
+            }
+          } else {
+            setGardenAlerts([]);
+          }
         }
         
         if (response.realWeatherAvailable) {
@@ -402,6 +518,8 @@ export function Homepage() {
       // Fallback to mock data (offline mode)
       console.log('📱 Running in demo mode with mock data');
       setTasks(MOCK_TASKS);
+      setGardenAlerts([]);
+      setAlertsLoading(false);
     } finally {
       setIsLoading(false);
     }
@@ -566,7 +684,7 @@ export function Homepage() {
         <div>
           <h1 className="text-3xl font-semibold flex items-center gap-2">
             <Home className="h-8 w-8 text-green-600" />
-            My Home
+            {t('My Home')}
           </h1>
           <p className="text-muted-foreground mt-1">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -582,7 +700,7 @@ export function Homepage() {
           {/* Connection status indicator */}
           {localStorage.getItem('access_token') && (
             <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 text-xs hidden sm:flex">
-              🔗 Connected
+              🔗 {t('Connected')}
             </Badge>
           )}
           <Button variant="ghost" size="icon" onClick={() => loadTasks()}>
@@ -590,6 +708,10 @@ export function Homepage() {
           </Button>
         </div>
       </div>
+
+      {(alertsLoading || gardenAlerts.length > 0) && (
+        <GardenAlertBox alerts={gardenAlerts} isLoading={alertsLoading} />
+      )}
 
       {/* Swipeable Card Deck */}
       {activeCards.length > 0 ? (
@@ -602,6 +724,7 @@ export function Homepage() {
               onSwipeLeft={handleSwipeLeft}
               isTop={index === 0}
               index={index}
+              t={t}
             />
           ))}
         </div>
@@ -609,9 +732,9 @@ export function Homepage() {
         <Card className="p-12 text-center bg-gradient-to-br from-green-50 to-emerald-50">
           <div className="space-y-4">
             <span className="text-6xl">🎉</span>
-            <h2 className="text-2xl font-semibold">You&apos;re All Caught Up!</h2>
+            <h2 className="text-2xl font-semibold">{t("You're All Caught Up!")}</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              You&apos;ve reviewed all high-priority tasks for today.
+              {t("You've reviewed all high-priority tasks for today.")}
             </p>
             <Button
               variant="outline"
@@ -621,7 +744,7 @@ export function Homepage() {
                 element?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
-              Show More Tasks <ArrowDown className="h-4 w-4 ml-2" />
+              {t('Show More Tasks')} <ArrowDown className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </Card>
@@ -635,7 +758,9 @@ export function Homepage() {
               <MapPin className="h-4 w-4 text-blue-600" />
               <div className="text-sm">
                 <p className="font-medium">{userLocation || weatherContext.location}</p>
-                <p className="text-xs text-muted-foreground">Zone {weatherContext.zone}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('Zone')} {weatherContext.zone}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -648,14 +773,20 @@ export function Homepage() {
             <div className="flex items-center gap-2">
               <Droplets className="h-4 w-4 text-blue-600" />
               <div className="text-sm">
-                <p className="font-medium">Soil: {weatherContext.soilMoisture}</p>
+                <p className="font-medium">
+                  {t('Soil')}: {weatherContext.soilMoisture}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Thermometer className="h-4 w-4 text-purple-600" />
               <div className="text-sm">
-                <p className="font-medium">Last Frost: {weatherContext.lastFrostDate}</p>
-                <p className="text-xs text-muted-foreground">({weatherContext.daysSinceFrost} days ago)</p>
+                <p className="font-medium">
+                  {t('Last Frost')}: {weatherContext.lastFrostDate}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  ({weatherContext.daysSinceFrost} {t('days ago')})
+                </p>
               </div>
             </div>
           </div>
@@ -671,17 +802,17 @@ export function Homepage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-2xl">📋</span>
-                  Recommended Tasks ({filteredTasks.length})
+                  {t('Recommended Tasks')} ({filteredTasks.length})
                 </CardTitle>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <Badge variant="destructive" className="text-xs">
-                    🔥 {taskCounts.urgent} Urgent
+                    🔥 {taskCounts.urgent} {t('Urgent')}
                   </Badge>
                   <Badge className="text-xs bg-green-600">
-                    ✅ {taskCounts.optimal} Optimal
+                    ✅ {taskCounts.optimal} {t('Optimal')}
                   </Badge>
                   <Badge variant="secondary" className="text-xs">
-                    🌱 {taskCounts.good} Good
+                    🌱 {taskCounts.good} {t('Good')}
                   </Badge>
                 </div>
               </div>
@@ -691,21 +822,21 @@ export function Homepage() {
                   onChange={(e) => setSortBy(e.target.value as 'urgency' | 'date' | 'plant' | 'time')}
                   className="px-3 py-2 text-sm border rounded-md"
                 >
-                  <option value="urgency">Sort: Urgency</option>
-                  <option value="time">Sort: Time</option>
-                  <option value="plant">Sort: Plant</option>
+                  <option value="urgency">{t('Sort: Urgency')}</option>
+                  <option value="time">{t('Sort: Time')}</option>
+                  <option value="plant">{t('Sort: Plant')}</option>
                 </select>
                 <select
                   value={filterBy}
                   onChange={(e) => setFilterBy(e.target.value)}
                   className="px-3 py-2 text-sm border rounded-md"
                 >
-                  <option value="all">All Tasks</option>
-                  <option value="urgent">Urgent Only</option>
-                  <option value="planting">Planting</option>
-                  <option value="watering">Watering</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="fertilizing">Fertilizing</option>
+                  <option value="all">{t('All Tasks')}</option>
+                  <option value="urgent">{t('Urgent Only')}</option>
+                  <option value="planting">{t('Planting')}</option>
+                  <option value="watering">{t('Watering')}</option>
+                  <option value="maintenance">{t('Maintenance')}</option>
+                  <option value="fertilizing">{t('Fertilizing')}</option>
                 </select>
               </div>
             </div>
@@ -748,11 +879,17 @@ export function Homepage() {
                         {task.shortDescription}
                       </p>
                       <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                        <span>Score: {task.score}/100</span>
+                        <span>
+                          {t('Score')}: {task.score}/100
+                        </span>
                         <span>•</span>
-                        <span>Weather: {task.weatherContext}</span>
+                        <span>
+                          {t('Weather')}: {task.weatherContext}
+                        </span>
                         <span>•</span>
-                        <span>{task.timeRequired}min</span>
+                        <span>
+                          {task.timeRequired} {t('min')}
+                        </span>
                       </div>
 
                       {/* Expanded Content */}
@@ -770,7 +907,7 @@ export function Homepage() {
                             </div>
                           </div>
                           <div>
-                            <h4 className="font-medium text-sm mb-1">Why now?</h4>
+                            <h4 className="font-medium text-sm mb-1">{t('Why now?')}</h4>
                             <ul className="space-y-1">
                               {task.reasoning.map((reason, idx) => (
                                 <li key={idx} className="text-xs text-muted-foreground flex items-start gap-2">

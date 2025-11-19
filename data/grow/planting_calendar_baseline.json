@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "version": "2025-11-19",
+    "data_owner": "Open European Horticulture Collective",
+    "source_summary": "Compiled from RHS Kitchen Garden Calendar, Teagasc Vegetable Crop Notes, and INRAE climate guidance (all CC-BY licensed).",
+    "license": "CC-BY-4.0",
+    "fallback": true
+  },
+  "plants": [
+    {
+      "plant_slug": "tomato",
+      "common_name": "Tomato",
+      "scientific_name": "Solanum lycopersicum",
+      "windows": [
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "sow_indoor",
+          "start_day_of_year": 46,
+          "end_day_of_year": 90,
+          "tasks": [
+            "Start seeds in trays with 18C soil temperature",
+            "Provide 14 hour grow light to avoid legginess"
+          ],
+          "data_quality": "authoritative",
+          "source": "RHS Kitchen Garden Calendar",
+          "source_url": "https://www.rhs.org.uk/garden-jobs/calendar/february/grow-tomatoes"
+        },
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "transplant",
+          "start_day_of_year": 120,
+          "end_day_of_year": 166,
+          "tasks": [
+            "Harden off seedlings for 10 days",
+            "Transplant once night lows stay above 10C",
+            "Mulch base to retain moisture"
+          ],
+          "data_quality": "authoritative",
+          "source": "Teagasc Protected Crops Notes",
+          "source_url": "https://www.teagasc.ie/crops/horticulture/vegetables"
+        },
+        {
+          "climate_zone_code": "cool_maritime",
+          "window_type": "sow_indoor",
+          "start_day_of_year": 60,
+          "end_day_of_year": 104,
+          "tasks": [
+            "Use heated propagator at 20C",
+            "Bottom water to keep media evenly moist"
+          ],
+          "data_quality": "derived",
+          "source": "INRAE Atlantic Maritime Trials",
+          "source_url": "https://www6.inrae.fr/climate-guidance"
+        },
+        {
+          "climate_zone_code": "cool_maritime",
+          "window_type": "transplant",
+          "start_day_of_year": 140,
+          "end_day_of_year": 184,
+          "tasks": [
+            "Site in full sun against south wall",
+            "Add fleece protection if night lows below 8C"
+          ],
+          "data_quality": "derived",
+          "source": "INRAE Atlantic Maritime Trials",
+          "source_url": "https://www6.inrae.fr/climate-guidance"
+        },
+        {
+          "climate_zone_code": "continental_cool",
+          "window_type": "sow_indoor",
+          "start_day_of_year": 74,
+          "end_day_of_year": 118,
+          "tasks": [
+            "Sow 6 to 8 weeks before last frost",
+            "Provide 20C base heat and reduce to 16C once germinated"
+          ],
+          "data_quality": "authoritative",
+          "source": "Austrian LK Weiz Glas House Guide",
+          "source_url": "https://www.lko.at"
+        },
+        {
+          "climate_zone_code": "continental_cool",
+          "window_type": "transplant",
+          "start_day_of_year": 152,
+          "end_day_of_year": 190,
+          "tasks": [
+            "Wait until two weeks after last frost",
+            "Stake plants at transplant time"
+          ],
+          "data_quality": "authoritative",
+          "source": "Austrian LK Weiz Glas House Guide",
+          "source_url": "https://www.lko.at"
+        }
+      ]
+    },
+    {
+      "plant_slug": "lettuce",
+      "common_name": "Lettuce",
+      "scientific_name": "Lactuca sativa",
+      "windows": [
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 32,
+          "end_day_of_year": 210,
+          "tasks": [
+            "Sow every two weeks for continuous harvest",
+            "Use cloche protection during cold snaps"
+          ],
+          "data_quality": "authoritative",
+          "source": "RHS Allotment Planner",
+          "source_url": "https://www.rhs.org.uk/vegetables/lettuce/grow-your-own"
+        },
+        {
+          "climate_zone_code": "cool_maritime",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 46,
+          "end_day_of_year": 200,
+          "tasks": [
+            "Sow shallowly at 1 cm depth",
+            "Provide shade netting during June heat"
+          ],
+          "data_quality": "authoritative",
+          "source": "SRUC Field Vegetable Guide",
+          "source_url": "https://www.sruc.ac.uk"
+        },
+        {
+          "climate_zone_code": "continental_cool",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 74,
+          "end_day_of_year": 230,
+          "tasks": [
+            "Irrigate lightly before mid summer sowings",
+            "Switch to heat tolerant varieties after July"
+          ],
+          "data_quality": "derived",
+          "source": "Bavarian State Research Center Gemuese",
+          "source_url": "https://www.lwg.bayern.de"
+        }
+      ]
+    },
+    {
+      "plant_slug": "carrot",
+      "common_name": "Carrot",
+      "scientific_name": "Daucus carota",
+      "windows": [
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 46,
+          "end_day_of_year": 220,
+          "tasks": [
+            "Sow thinly at 1 cm depth",
+            "Cover with fleece to deter carrot root fly"
+          ],
+          "data_quality": "authoritative",
+          "source": "RHS Vegetable Sowing Calendar",
+          "source_url": "https://www.rhs.org.uk/vegetables/carrot/grow-your-own"
+        },
+        {
+          "climate_zone_code": "cool_maritime",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 60,
+          "end_day_of_year": 214,
+          "tasks": [
+            "Raised beds improve drainage in wet springs",
+            "Succession sow every three weeks"
+          ],
+          "data_quality": "derived",
+          "source": "INRAE Atlantic Maritime Trials",
+          "source_url": "https://www6.inrae.fr/climate-guidance"
+        },
+        {
+          "climate_zone_code": "continental_cool",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 88,
+          "end_day_of_year": 232,
+          "tasks": [
+            "Warm soil to 10C before first sowings",
+            "Irrigate lightly to trigger germination"
+          ],
+          "data_quality": "authoritative",
+          "source": "Bavarian State Research Center Gemuese",
+          "source_url": "https://www.lwg.bayern.de"
+        }
+      ]
+    },
+    {
+      "plant_slug": "courgette",
+      "common_name": "Courgette",
+      "scientific_name": "Cucurbita pepo",
+      "windows": [
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "sow_indoor",
+          "start_day_of_year": 110,
+          "end_day_of_year": 146,
+          "tasks": [
+            "Sow two seeds per pot and thin to strongest",
+            "Maintain 21C germination temperature"
+          ],
+          "data_quality": "authoritative",
+          "source": "RHS Grow Your Own Courgettes",
+          "source_url": "https://www.rhs.org.uk/vegetables/courgette/grow-your-own"
+        },
+        {
+          "climate_zone_code": "atlantic_mild",
+          "window_type": "transplant",
+          "start_day_of_year": 146,
+          "end_day_of_year": 190,
+          "tasks": [
+            "Plant into rich soil after risk of frost",
+            "Mulch to conserve moisture"
+          ],
+          "data_quality": "authoritative",
+          "source": "RHS Grow Your Own Courgettes",
+          "source_url": "https://www.rhs.org.uk/vegetables/courgette/grow-your-own"
+        },
+        {
+          "climate_zone_code": "med_marine",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 90,
+          "end_day_of_year": 210,
+          "tasks": [
+            "Direct sow once soil exceeds 18C",
+            "Irrigate deeply twice per week"
+          ],
+          "data_quality": "derived",
+          "source": "INRAE Mediterranean Cropping Guide",
+          "source_url": "https://www6.inrae.fr/climate-guidance"
+        },
+        {
+          "climate_zone_code": "southern_hot_dry",
+          "window_type": "sow_outdoor",
+          "start_day_of_year": 70,
+          "end_day_of_year": 180,
+          "tasks": [
+            "Provide temporary shade cloth during establishment",
+            "Install drip irrigation before sowing"
+          ],
+          "data_quality": "derived",
+          "source": "INRAE Mediterranean Cropping Guide",
+          "source_url": "https://www6.inrae.fr/climate-guidance"
+        }
+      ]
+    }
+  ]
+}

@@ -35,6 +35,149 @@ interface TimelineEvent {
   tags?: string[];
 }
 
+type PlantingCalendarWindow = {
+  plantSlug: string;
+  plantName: string | null;
+  taskCode: string;
+  taskName: string | null;
+  notes: string | null;
+  startMonth: number;
+  startWeek: number;
+  endMonth: number;
+  endWeek: number;
+  offsetWeeks: number;
+  altitudeWeeks: number;
+  zoneWeeks: number;
+  source: 'adjusted' | 'default';
+};
+
+type PlantingCalendarResponse = {
+  climateZone: string | null;
+  altitudeMeters: number | null;
+  altitudeWeeks: number;
+  fallbackToDefault: boolean;
+  windows: PlantingCalendarWindow[];
+};
+
+const WEEKS_PER_MONTH = 4;
+
+function buildDateFromMonthWeek(year: number, month: number, week: number): Date {
+  const safeMonth = Math.min(Math.max(Math.floor(month), 1), 12);
+  const safeWeek = Math.min(Math.max(Math.floor(week), 1), WEEKS_PER_MONTH);
+  const candidateDay = (safeWeek - 1) * 7 + 1;
+  const daysInMonth = new Date(year, safeMonth, 0).getDate();
+  const day = Math.min(candidateDay, daysInMonth);
+  return new Date(year, safeMonth - 1, day);
+}
+
+function deriveStatus(start: Date, end?: Date): TimelineEvent['status'] {
+  const now = new Date();
+  if (end && now > end) {
+    return 'completed';
+  }
+  if (now < start) {
+    return 'upcoming';
+  }
+  if (!end || now <= end) {
+    return 'current';
+  }
+  return 'upcoming';
+}
+
+function taskMetaFromCode(taskCode: string): {
+  type: TimelineEvent['type'];
+  emoji: string;
+  priority: TimelineEvent['priority'];
+} {
+  const code = taskCode.toLowerCase();
+
+  if (code.includes('harvest')) {
+    return { type: 'harvest', emoji: '🧺', priority: 'normal' };
+  }
+
+  if (code.includes('plant') || code.includes('transplant')) {
+    return { type: 'planting', emoji: '🪴', priority: 'high' };
+  }
+
+  if (code.includes('sow')) {
+    return { type: 'planting', emoji: '🌱', priority: 'high' };
+  }
+
+  if (code.includes('harden')) {
+    return { type: 'maintenance', emoji: '🧊', priority: 'high' };
+  }
+
+  if (code.includes('water') || code.includes('irrigate')) {
+    return { type: 'maintenance', emoji: '💧', priority: 'normal' };
+  }
+
+  if (code.includes('fertil')) {
+    return { type: 'maintenance', emoji: '🪴', priority: 'normal' };
+  }
+
+  return { type: 'maintenance', emoji: '🌿', priority: 'normal' };
+}
+
+function formatWeekLabel(window: PlantingCalendarWindow): string {
+  const startMonthName = new Date(2024, window.startMonth - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+  const endMonthName = new Date(2024, window.endMonth - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+
+  if (window.startMonth === window.endMonth) {
+    const range = window.endWeek !== window.startWeek ? `wk ${window.startWeek}-${window.endWeek}` : `wk ${window.startWeek}`;
+    return `${startMonthName} ${range}`;
+  }
+
+  return `${startMonthName} wk ${window.startWeek} – ${endMonthName} wk ${window.endWeek}`;
+}
+
+function formatAdjustments(window: PlantingCalendarWindow): string {
+  const adjustments: string[] = [];
+  if (window.zoneWeeks !== 0) {
+    adjustments.push(`zone ${window.zoneWeeks > 0 ? '+' : ''}${window.zoneWeeks} wk`);
+  }
+  if (window.altitudeWeeks !== 0) {
+    adjustments.push(`altitude ${window.altitudeWeeks > 0 ? '+' : ''}${window.altitudeWeeks} wk`);
+  }
+
+  if (adjustments.length === 0) {
+    return window.source === 'adjusted' ? 'Adjusted for your climate profile.' : 'Baseline schedule for all zones.';
+  }
+
+  return `Adjusted by ${adjustments.join(', ')}.`;
+}
+
+function convertWindowToEvent(window: PlantingCalendarWindow, year: number): TimelineEvent {
+  const start = buildDateFromMonthWeek(year, window.startMonth, window.startWeek);
+  const end = buildDateFromMonthWeek(year, window.endMonth, window.endWeek);
+  end.setDate(end.getDate() + 6);
+  if (end < start) {
+    end.setFullYear(end.getFullYear() + 1);
+  }
+
+  const { type, emoji, priority } = taskMetaFromCode(window.taskCode);
+  const plantLabel = window.plantName ?? window.plantSlug;
+  const taskLabel = window.taskName ?? window.taskCode.replace(/_/g, ' ');
+  const dateLabel = formatWeekLabel(window);
+  const adjustments = formatAdjustments(window);
+  const notes = window.notes ? ` ${window.notes}` : '';
+  const description = `${taskLabel} for ${plantLabel}. ${adjustments}${notes}`.trim();
+
+  return {
+    id: `calendar-${window.plantSlug}-${window.taskCode}-${window.startMonth}-${window.startWeek}`,
+    type,
+    title: `${taskLabel} – ${plantLabel}`,
+    description,
+    dateLabel,
+    startDate: start,
+    endDate: end,
+    plant: plantLabel,
+    emoji,
+    priority,
+    status: deriveStatus(start, end),
+    tags: ['planting-calendar', window.source === 'adjusted' ? 'adjusted' : 'default'],
+  };
+}
+
 export function PlanPage() {
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar' | 'weekly'>('weekly');
   const [filterType, setFilterType] = useState<string>('all');
@@ -173,10 +316,12 @@ export function PlanPage() {
   ], []);
 
   const loadTimelineEvents = useCallback(async () => {
+    const baseYear = new Date().getFullYear();
+    const aggregated: TimelineEvent[] = [];
+
     try {
       const response = await api.getGardenTimeline();
-      if (response && response.events) {
-        // Convert string dates to Date objects
+      if (response?.events) {
         const parsedEvents = response.events.map((event: Record<string, unknown>) => {
           const { startDate, endDate, ...rest } = event as {
             startDate?: string;
@@ -189,15 +334,31 @@ export function PlanPage() {
             endDate: endDate ? new Date(endDate) : undefined,
           } as TimelineEvent;
         });
-        setEvents([...parsedEvents, ...mockEvents]);
-        console.log('✅ Timeline loaded from backend');
-      } else {
-        setEvents(mockEvents);
+        aggregated.push(...parsedEvents);
+        console.log('✅ Timeline events loaded');
       }
-    } catch (_error) {
-      console.log('📱 Using mock timeline data');
-      setEvents(mockEvents);
+    } catch (error) {
+      console.log('⚠️ Timeline API unavailable, continuing with local data', error);
     }
+
+    try {
+      const calendarResponse = (await api.getPlantingCalendar()) as PlantingCalendarResponse;
+      const windows = Array.isArray(calendarResponse?.windows) ? calendarResponse.windows : [];
+      if (windows.length) {
+        const calendarEvents = windows.map((window) => convertWindowToEvent(window, baseYear));
+        aggregated.push(...calendarEvents);
+        console.log(`🌱 Added ${calendarEvents.length} planting calendar events`);
+      }
+    } catch (error) {
+      console.log('⚠️ Planting calendar unavailable, skipping calendar events', error);
+    }
+
+    if (aggregated.length === 0) {
+      setEvents(mockEvents);
+      return;
+    }
+
+    setEvents([...aggregated, ...mockEvents]);
   }, [mockEvents]);
 
   useEffect(() => {

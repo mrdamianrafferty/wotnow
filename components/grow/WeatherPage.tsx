@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
 import { LocationSettings } from './LocationSettings';
+import { GrowLanguageSelector } from './GrowLanguageSelector';
 import {
   type UnitSystem,
   formatTemperature,
@@ -45,6 +46,7 @@ import {
   formatPressure
 } from '../../lib/grow/units';
 import { getClimateZoneInfo, type ClimateZoneCode } from '../../lib/grow/climate';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 interface ProgressProps {
   value: number;
@@ -161,6 +163,8 @@ interface WeatherApiResponse {
   soil?: SoilData;
   alerts?: WeatherAlert[];
 }
+
+type Translator = (value: string) => string;
 
 const locationOptions = [
   { value: 'home', label: 'Home Garden' },
@@ -282,6 +286,81 @@ export function WeatherPage() {
   const [climateZone, setClimateZone] = useState<ClimateZoneCode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem>('metric');
 
+  const staticCopy = React.useMemo(
+    () => [
+      'Garden Location',
+      'Location not set',
+      'Select bed',
+      'Marine overlay',
+      'Home Garden',
+      'Greenhouse Beds',
+      'Community Plot',
+      'No marine overlay',
+      'Oyster Point Harbor',
+      'Central Bay Buoy',
+      'Ocean Beach Pier',
+      'Showing demo weather data (live service unavailable)',
+      'Wind',
+      'Humidity',
+      'UV Index',
+      'Feels like',
+      'High',
+      'Low',
+      'Wave',
+      'Precip',
+      'UV',
+      'Marine Overlay',
+      'Wave Height',
+      'Swell',
+      'Water Temp',
+      'Wind Waves',
+      'High Tide',
+      'Low Tide',
+      'Surf',
+      'Gusts',
+      'Hourly Outlook',
+      'Rain',
+      'Rain chance',
+      '5-Day Forecast',
+      'Sun & Moon',
+      'Sunrise',
+      'Sunset',
+      'Moon Phase',
+      'Daylight',
+      'Growing Season',
+      'Season Status',
+      'Active',
+      'Dormant',
+      'Days Remaining',
+      'Next Frost',
+      'Visibility & Pressure',
+      'Visibility',
+      'Pressure',
+      'Dew Point',
+      'Temperature Trend',
+      'Next 3 days',
+      'Air Quality',
+      'AQI',
+      'Dominant',
+      'Pollen Outlook',
+      'Trees',
+      'Grass',
+      'Weeds',
+      'Low',
+      'Moderate',
+      'High',
+      'Very High',
+      'Recommendation',
+      'Soil Status',
+      'Soil Temp',
+      'Moisture',
+      'Soil structure',
+      'hrs'
+    ],
+    []
+  );
+  const { t } = useTranslationMap(staticCopy);
+
   useEffect(() => {
     const loadUserSettings = async () => {
       const interestsStr = localStorage.getItem('userInterests');
@@ -335,12 +414,12 @@ export function WeatherPage() {
       }
     } catch (err) {
       console.error('Failed to fetch weather data, using mock data:', err);
-      setError('Showing demo weather data (live service unavailable)');
+      setError(t('Showing demo weather data (live service unavailable)'));
       setWeatherData(null);
     } finally {
       setIsLoading(false);
     }
-  }, [marineLocation, userLocation]);
+  }, [marineLocation, t, userLocation]);
 
   useEffect(() => {
     if (userLocation) {
@@ -382,9 +461,9 @@ export function WeatherPage() {
             <div className="flex items-start gap-3">
               <MapPin className="mt-1 h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Garden Location</p>
+                <p className="text-sm text-muted-foreground">{t('Garden Location')}</p>
                 <p className="font-medium">
-                  {userLocation || 'Location not set'}
+                  {userLocation || t('Location not set')}
                   {climateZone ? (
                     <span className="font-normal text-muted-foreground">
                       {' — '}
@@ -395,12 +474,12 @@ export function WeatherPage() {
                 <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground">
                   <Select value={selectedLocation} onValueChange={setSelectedLocation}>
                     <SelectTrigger className="w-[170px]">
-                      <SelectValue placeholder="Select bed" />
+                      <SelectValue placeholder={t('Select bed')} />
                     </SelectTrigger>
                     <SelectContent>
                       {locationOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -408,12 +487,12 @@ export function WeatherPage() {
 
                   <Select value={marineLocation} onValueChange={setMarineLocation}>
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Marine overlay" />
+                      <SelectValue placeholder={t('Marine overlay')} />
                     </SelectTrigger>
                     <SelectContent>
                       {marineLocationOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -423,6 +502,7 @@ export function WeatherPage() {
             </div>
 
             <div className="flex gap-2">
+              <GrowLanguageSelector buttonVariant="outline" />
               <Button variant="outline" size="sm" onClick={handleUnitToggle} className="gap-1">
                 <Thermometer className="h-4 w-4" />
                 {unitSystem === 'imperial' ? '°F' : '°C'}
@@ -452,14 +532,14 @@ export function WeatherPage() {
         </CardContent>
       </Card>
 
-      <HeroWeatherCard data={currentWeather} marine={marineData} WeatherIcon={WeatherIcon} unitSystem={unitSystem} />
+      <HeroWeatherCard data={currentWeather} marine={marineData} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wind className="h-5 w-5" />
-              Wind
+              {t('Wind')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -476,7 +556,7 @@ export function WeatherPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Droplets className="h-5 w-5" />
-              Humidity
+              {t('Humidity')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -491,38 +571,38 @@ export function WeatherPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sun className="h-5 w-5" />
-              UV Index
+              {t('UV Index')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-center">
               <div className="text-2xl font-bold">{currentWeather.uvIndex}</div>
               <Badge variant="secondary" className="mt-2">
-                {getUvCategory(currentWeather.uvIndex)}
+                {getUvCategory(currentWeather.uvIndex, t)}
               </Badge>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {marineData ? <MarineConditionsCard data={marineData} unitSystem={unitSystem} /> : null}
+      {marineData ? <MarineConditionsCard data={marineData} unitSystem={unitSystem} t={t} /> : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <HourlyForecastCard data={currentWeatherData.hourly} unitSystem={unitSystem} />
-        <DailyForecastCard data={currentWeatherData.daily} unitSystem={unitSystem} />
+        <HourlyForecastCard data={currentWeatherData.hourly} unitSystem={unitSystem} t={t} />
+        <DailyForecastCard data={currentWeatherData.daily} unitSystem={unitSystem} t={t} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <SunCycleCard data={currentWeather} />
-        <GrowingSeasonCard data={currentWeather} />
-        <VisibilityPressureCard data={currentWeather} unitSystem={unitSystem} />
+        <SunCycleCard data={currentWeather} t={t} />
+        <GrowingSeasonCard data={currentWeather} t={t} />
+        <VisibilityPressureCard data={currentWeather} unitSystem={unitSystem} t={t} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <TemperatureTrendCard data={currentWeatherData.daily} unitSystem={unitSystem} />
-        {currentWeatherData.airQuality ? <AirQualityCard data={currentWeatherData.airQuality} /> : null}
-        {currentWeatherData.pollen ? <PollenCard data={currentWeatherData.pollen} /> : null}
-        {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} /> : null}
+        <TemperatureTrendCard data={currentWeatherData.daily} unitSystem={unitSystem} t={t} />
+        {currentWeatherData.airQuality ? <AirQualityCard data={currentWeatherData.airQuality} t={t} /> : null}
+        {currentWeatherData.pollen ? <PollenCard data={currentWeatherData.pollen} t={t} /> : null}
+        {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} t={t} /> : null}
       </div>
     </div>
   );
@@ -584,12 +664,14 @@ function HeroWeatherCard({
   data,
   marine,
   WeatherIcon,
-  unitSystem
+  unitSystem,
+  t
 }: {
   data: CurrentWeather;
   marine: MarineConditions | null;
   WeatherIcon: React.ComponentType<{ className?: string }>;
   unitSystem: UnitSystem;
+  t: Translator;
 }) {
   return (
     <Card className="overflow-hidden">
@@ -601,10 +683,10 @@ function HeroWeatherCard({
               <div className="text-5xl font-bold">{formatTemperature(data.temperature, unitSystem, false)}</div>
               <div className="mt-1 text-lg capitalize text-muted-foreground">{data.condition}</div>
               <div className="mt-2 text-sm text-muted-foreground">
-                Feels like {formatTemperature(data.feelsLike, unitSystem, false)}
+                {t('Feels like')} {formatTemperature(data.feelsLike, unitSystem, false)}
               </div>
               <div className="text-sm text-muted-foreground">
-                High {formatTemperature(data.high, unitSystem, false)} | Low {formatTemperature(data.low, unitSystem, false)}
+                {t('High')} {formatTemperature(data.high, unitSystem, false)} | {t('Low')} {formatTemperature(data.low, unitSystem, false)}
               </div>
             </div>
           </div>
@@ -613,25 +695,25 @@ function HeroWeatherCard({
             <div className="text-center">
               <Wind className="mx-auto h-5 w-5 text-muted-foreground" />
               <div className="text-sm font-medium">{formatWindSpeed(data.windSpeed, unitSystem, false)}</div>
-              <div className="text-xs text-muted-foreground">Wind</div>
+              <div className="text-xs text-muted-foreground">{t('Wind')}</div>
             </div>
             {marine && marine.waveHeight ? (
               <div className="text-center">
                 <Waves className="mx-auto h-5 w-5 text-muted-foreground" />
                 <div className="text-sm font-medium">{formatWaveHeight(marine.waveHeight, unitSystem)}</div>
-                <div className="text-xs text-muted-foreground">Wave</div>
+                <div className="text-xs text-muted-foreground">{t('Wave')}</div>
               </div>
             ) : (
               <div className="text-center">
                 <Umbrella className="mx-auto h-5 w-5 text-muted-foreground" />
                 <div className="text-sm font-medium">{data.precipitation}%</div>
-                <div className="text-xs text-muted-foreground">Precip</div>
+                <div className="text-xs text-muted-foreground">{t('Precip')}</div>
               </div>
             )}
             <div className="text-center">
               <Sun className="mx-auto h-5 w-5 text-muted-foreground" />
               <div className="text-sm font-medium">{data.uvIndex}</div>
-              <div className="text-xs text-muted-foreground">UV</div>
+              <div className="text-xs text-muted-foreground">{t('UV')}</div>
             </div>
           </div>
         </div>
@@ -640,36 +722,36 @@ function HeroWeatherCard({
   );
 }
 
-function MarineConditionsCard({ data, unitSystem }: { data: MarineConditions; unitSystem: UnitSystem }) {
+function MarineConditionsCard({ data, unitSystem, t }: { data: MarineConditions; unitSystem: UnitSystem; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Anchor className="h-5 w-5" />
-          Marine Overlay
+          {t('Marine Overlay')}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatBlock label="Wave Height" icon={<Waves className="h-4 w-4" />} value={formatWaveHeight(data.waveHeight, unitSystem)} />
-        <StatBlock label="Swell" icon={<Compass className="h-4 w-4" />} value={`${data.swellDirection} • ${data.swellPeriod}s`} />
-        <StatBlock label="Water Temp" icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.waterTemp, unitSystem, false)} />
-        <StatBlock label="Wind Waves" icon={<Wind className="h-4 w-4" />} value={formatWaveHeight(data.windWaves, unitSystem)} />
-        <StatBlock label="High Tide" icon={<ArrowUp className="h-4 w-4" />} value={`${data.tideHigh} • ${formatWaveHeight(data.tideHighHeight, unitSystem)}`} />
-        <StatBlock label="Low Tide" icon={<ArrowDown className="h-4 w-4" />} value={`${data.tideLow} • ${formatWaveHeight(data.tideLowHeight, unitSystem)}`} />
-        <StatBlock label="Surf" icon={<Waves className="h-4 w-4" />} value={`${data.surfConditions} (${data.surfRating}/5)`} />
-        <StatBlock label="Gusts" icon={<Zap className="h-4 w-4" />} value={formatWindSpeed(data.gusts, unitSystem, false)} />
+        <StatBlock label={t('Wave Height')} icon={<Waves className="h-4 w-4" />} value={formatWaveHeight(data.waveHeight, unitSystem)} />
+        <StatBlock label={t('Swell')} icon={<Compass className="h-4 w-4" />} value={`${data.swellDirection} • ${data.swellPeriod}s`} />
+        <StatBlock label={t('Water Temp')} icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.waterTemp, unitSystem, false)} />
+        <StatBlock label={t('Wind Waves')} icon={<Wind className="h-4 w-4" />} value={formatWaveHeight(data.windWaves, unitSystem)} />
+        <StatBlock label={t('High Tide')} icon={<ArrowUp className="h-4 w-4" />} value={`${data.tideHigh} • ${formatWaveHeight(data.tideHighHeight, unitSystem)}`} />
+        <StatBlock label={t('Low Tide')} icon={<ArrowDown className="h-4 w-4" />} value={`${data.tideLow} • ${formatWaveHeight(data.tideLowHeight, unitSystem)}`} />
+        <StatBlock label={t('Surf')} icon={<Waves className="h-4 w-4" />} value={`${data.surfConditions} (${data.surfRating}/5)`} />
+        <StatBlock label={t('Gusts')} icon={<Zap className="h-4 w-4" />} value={formatWindSpeed(data.gusts, unitSystem, false)} />
       </CardContent>
     </Card>
   );
 }
 
-function HourlyForecastCard({ data, unitSystem }: { data: HourlyForecastEntry[]; unitSystem: UnitSystem }) {
+function HourlyForecastCard({ data, unitSystem, t }: { data: HourlyForecastEntry[]; unitSystem: UnitSystem; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock3 className="h-5 w-5" />
-          Hourly Outlook
+          {t('Hourly Outlook')}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -681,7 +763,7 @@ function HourlyForecastCard({ data, unitSystem }: { data: HourlyForecastEntry[];
               <Icon className="mx-auto my-2 h-5 w-5 text-blue-500" />
               <p className="text-lg font-semibold">{formatTemperature(entry.temperature, unitSystem, false)}</p>
               <div className="mt-1 text-xs text-muted-foreground">
-                Rain {entry.precipitation}% • {formatWindSpeed(entry.windSpeed, unitSystem, false)}
+                {t('Rain')} {entry.precipitation}% • {formatWindSpeed(entry.windSpeed, unitSystem, false)}
               </div>
             </div>
           );
@@ -691,13 +773,13 @@ function HourlyForecastCard({ data, unitSystem }: { data: HourlyForecastEntry[];
   );
 }
 
-function DailyForecastCard({ data, unitSystem }: { data: DailyForecastEntry[]; unitSystem: UnitSystem }) {
+function DailyForecastCard({ data, unitSystem, t }: { data: DailyForecastEntry[]; unitSystem: UnitSystem; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5" />
-          5-Day Forecast
+          {t('5-Day Forecast')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -709,7 +791,7 @@ function DailyForecastCard({ data, unitSystem }: { data: DailyForecastEntry[]; u
                 <Icon className="h-5 w-5 text-blue-500" />
                 <div>
                   <p className="text-sm font-medium">{entry.day}</p>
-                  <p className="text-xs text-muted-foreground">Rain chance {entry.rainChance}%</p>
+                  <p className="text-xs text-muted-foreground">{t('Rain chance')} {entry.rainChance}%</p>
                 </div>
               </div>
               <div className="flex items-center gap-6 text-sm">
@@ -734,51 +816,51 @@ function DailyForecastCard({ data, unitSystem }: { data: DailyForecastEntry[]; u
   );
 }
 
-function SunCycleCard({ data }: { data: CurrentWeather }) {
+function SunCycleCard({ data, t }: { data: CurrentWeather; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sunrise className="h-5 w-5" />
-          Sun & Moon
+          {t('Sun & Moon')}
         </CardTitle>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <StatBlock label="Sunrise" icon={<Sunrise className="h-4 w-4" />} value={data.sunrise} />
-        <StatBlock label="Sunset" icon={<Sunset className="h-4 w-4" />} value={data.sunset} />
-        <StatBlock label="Moon Phase" icon={<Moon className="h-4 w-4" />} value={data.moonPhase} />
-        <StatBlock label="Daylight" icon={<Sun className="h-4 w-4" />} value={calculateDaylightHours(data.sunrise, data.sunset)} />
+        <StatBlock label={t('Sunrise')} icon={<Sunrise className="h-4 w-4" />} value={data.sunrise} />
+        <StatBlock label={t('Sunset')} icon={<Sunset className="h-4 w-4" />} value={data.sunset} />
+        <StatBlock label={t('Moon Phase')} icon={<Moon className="h-4 w-4" />} value={data.moonPhase} />
+        <StatBlock label={t('Daylight')} icon={<Sun className="h-4 w-4" />} value={calculateDaylightHours(data.sunrise, data.sunset, t)} />
       </CardContent>
     </Card>
   );
 }
 
-function GrowingSeasonCard({ data }: { data: CurrentWeather }) {
+function GrowingSeasonCard({ data, t }: { data: CurrentWeather; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Leaf className="h-5 w-5" />
-          Growing Season
+          {t('Growing Season')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Season Status</p>
+            <p className="text-sm font-medium">{t('Season Status')}</p>
             <p className="text-xs text-muted-foreground">{data.soilWorkability}</p>
           </div>
           <Badge variant={data.growingSeason ? 'default' : 'secondary'}>
-            {data.growingSeason ? 'Active' : 'Dormant'}
+            {data.growingSeason ? t('Active') : t('Dormant')}
           </Badge>
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-lg bg-muted/40 p-3">
-            <p className="text-xs text-muted-foreground">Days Remaining</p>
+            <p className="text-xs text-muted-foreground">{t('Days Remaining')}</p>
             <p className="text-lg font-semibold">{data.growingDaysRemaining}</p>
           </div>
           <div className="rounded-lg bg-muted/40 p-3">
-            <p className="text-xs text-muted-foreground">Next Frost</p>
+            <p className="text-xs text-muted-foreground">{t('Next Frost')}</p>
             <p className="flex items-center gap-2 text-lg font-semibold">
               <Snowflake className="h-4 w-4 text-sky-500" />
               {data.nextFrostDate}
@@ -793,34 +875,34 @@ function GrowingSeasonCard({ data }: { data: CurrentWeather }) {
   );
 }
 
-function VisibilityPressureCard({ data, unitSystem }: { data: CurrentWeather; unitSystem: UnitSystem }) {
+function VisibilityPressureCard({ data, unitSystem, t }: { data: CurrentWeather; unitSystem: UnitSystem; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Eye className="h-5 w-5" />
-          Visibility & Pressure
+          {t('Visibility & Pressure')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
           <div className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-blue-500" />
-            <p className="font-medium">Visibility</p>
+            <p className="font-medium">{t('Visibility')}</p>
           </div>
           <p>{formatVisibility(data.visibility, unitSystem)}</p>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
           <div className="flex items-center gap-2">
             <Gauge className="h-4 w-4 text-green-500" />
-            <p className="font-medium">Pressure</p>
+            <p className="font-medium">{t('Pressure')}</p>
           </div>
           <p>{formatPressure(data.pressure, unitSystem)}</p>
         </div>
         <div className="flex items-center justify-between rounded-lg bg-muted/30 p-3">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-purple-500" />
-            <p className="font-medium">Dew Point</p>
+            <p className="font-medium">{t('Dew Point')}</p>
           </div>
           <p>{formatTemperature(data.dewPoint, unitSystem, false)}</p>
         </div>
@@ -829,7 +911,7 @@ function VisibilityPressureCard({ data, unitSystem }: { data: CurrentWeather; un
   );
 }
 
-function TemperatureTrendCard({ data, unitSystem }: { data: DailyForecastEntry[]; unitSystem: UnitSystem }) {
+function TemperatureTrendCard({ data, unitSystem, t }: { data: DailyForecastEntry[]; unitSystem: UnitSystem; t: Translator }) {
   const upcoming = data.slice(0, 3);
   const maxHigh = Math.max(...upcoming.map((entry) => entry.high));
   const minLow = Math.min(...upcoming.map((entry) => entry.low));
@@ -839,12 +921,12 @@ function TemperatureTrendCard({ data, unitSystem }: { data: DailyForecastEntry[]
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Thermometer className="h-5 w-5" />
-          Temperature Trend
+          {t('Temperature Trend')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex items-center justify-between">
-          <p className="font-medium">Next 3 days</p>
+          <p className="font-medium">{t('Next 3 days')}</p>
           <p>
             {formatTemperature(minLow, unitSystem, false)} – {formatTemperature(maxHigh, unitSystem, false)}
           </p>
@@ -863,22 +945,22 @@ function TemperatureTrendCard({ data, unitSystem }: { data: DailyForecastEntry[]
   );
 }
 
-function AirQualityCard({ data }: { data: AirQualityData }) {
+function AirQualityCard({ data, t }: { data: AirQualityData; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Air Quality
+          {t('Air Quality')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold">AQI {data.index}</p>
+            <p className="text-sm font-semibold">{t('AQI')} {data.index}</p>
             <p className="text-xs text-muted-foreground">{data.category}</p>
           </div>
-          <Badge variant="secondary">Dominant: {data.dominantPollutant}</Badge>
+          <Badge variant="secondary">{t('Dominant')}: {data.dominantPollutant}</Badge>
         </div>
         <div className="space-y-2">
           {data.pollutants.map((pollutant) => (
@@ -896,49 +978,49 @@ function AirQualityCard({ data }: { data: AirQualityData }) {
   );
 }
 
-function PollenCard({ data }: { data: PollenData }) {
+function PollenCard({ data, t }: { data: PollenData; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TreePine className="h-5 w-5" />
-          Pollen Outlook
+          {t('Pollen Outlook')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="flex items-center justify-between">
-          <p className="font-medium">Dominant</p>
+          <p className="font-medium">{t('Dominant')}</p>
           <Badge variant="outline">{data.dominant}</Badge>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <PollenLevel label="Trees" value={data.trees} />
-          <PollenLevel label="Grass" value={data.grass} />
-          <PollenLevel label="Weeds" value={data.weeds} />
+          <PollenLevel label={t('Trees')} value={data.trees} t={t} />
+          <PollenLevel label={t('Grass')} value={data.grass} t={t} />
+          <PollenLevel label={t('Weeds')} value={data.weeds} t={t} />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function SoilConditionsCard({ data, unitSystem }: { data: SoilData; unitSystem: UnitSystem }) {
+function SoilConditionsCard({ data, unitSystem, t }: { data: SoilData; unitSystem: UnitSystem; t: Translator }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Leaf className="h-5 w-5" />
-          Soil Status
+          {t('Soil Status')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <div className="grid grid-cols-2 gap-3">
-          <StatBlock label="Soil Temp" icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.temperature, unitSystem, false)} />
-          <StatBlock label="Moisture" icon={<Droplets className="h-4 w-4" />} value={`${data.moisture}%`} />
+          <StatBlock label={t('Soil Temp')} icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.temperature, unitSystem, false)} />
+          <StatBlock label={t('Moisture')} icon={<Droplets className="h-4 w-4" />} value={`${data.moisture}%`} />
         </div>
         <div className="rounded border border-dashed border-muted/60 bg-muted/20 p-3 text-muted-foreground">
-          <p className="text-xs uppercase tracking-wide">Recommendation</p>
+          <p className="text-xs uppercase tracking-wide">{t('Recommendation')}</p>
           <p className="mt-1 text-sm">{data.recommendation}</p>
         </div>
-        <div className="rounded bg-muted/20 p-3 text-xs text-muted-foreground">Soil structure: {data.compaction}</div>
+        <div className="rounded bg-muted/20 p-3 text-xs text-muted-foreground">{t('Soil structure')}: {data.compaction}</div>
       </CardContent>
     </Card>
   );
@@ -956,12 +1038,13 @@ function StatBlock({ label, icon, value }: { label: string; icon: React.ReactNod
   );
 }
 
-function PollenLevel({ label, value }: { label: string; value: number }) {
-  const level = value <= 2 ? 'Low' : value <= 4 ? 'Moderate' : 'High';
+function PollenLevel({ label, value, t }: { label: string; value: number; t: Translator }) {
+  const levelKey = value <= 2 ? 'Low' : value <= 4 ? 'Moderate' : 'High';
+  const translatedLevel = t(levelKey);
   return (
     <div className="rounded bg-muted/30 p-3 text-center">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{level}</p>
+      <p className="mt-1 text-lg font-semibold">{translatedLevel}</p>
       <Progress value={(value / 5) * 100} className="mt-2" />
     </div>
   );
@@ -974,7 +1057,7 @@ function formatWaveHeight(heightMeters: number, unitSystem: UnitSystem) {
   return `${heightMeters.toFixed(1)} m`;
 }
 
-function calculateDaylightHours(sunrise: string, sunset: string) {
+function calculateDaylightHours(sunrise: string, sunset: string, t?: Translator) {
   try {
     const sunriseTime = parseTimeString(sunrise);
     const sunsetTime = parseTimeString(sunset);
@@ -991,7 +1074,8 @@ function calculateDaylightHours(sunrise: string, sunset: string) {
     }
 
     const diffHours = (sunsetDate.getTime() - sunriseDate.getTime()) / (1000 * 60 * 60);
-    return `${diffHours.toFixed(1)} hrs`;
+    const suffix = t ? t('hrs') : 'hrs';
+    return `${diffHours.toFixed(1)} ${suffix}`;
   } catch (_error) {
     console.debug('Failed to compute daylight hours', _error);
     return '—';
@@ -1045,9 +1129,9 @@ function getWindDirectionIndicator(direction: string) {
   return directions[direction] || '→';
 }
 
-function getUvCategory(index: number) {
-  if (index <= 2) return 'Low';
-  if (index <= 5) return 'Moderate';
-  if (index <= 7) return 'High';
-  return 'Very High';
+function getUvCategory(index: number, t: Translator) {
+  if (index <= 2) return t('Low');
+  if (index <= 5) return t('Moderate');
+  if (index <= 7) return t('High');
+  return t('Very High');
 }

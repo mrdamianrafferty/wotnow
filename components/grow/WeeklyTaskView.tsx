@@ -23,19 +23,28 @@ import { auth } from '../../lib/grow/auth';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
-type WeeklyTask = {
-  week_in_month: number;
-  plant_slug: string;
-  plant_name: string;
-  category?: string;
-  task_code: string;
-  task_name: string;
-  notes?: string;
-  start_month: number;
-  start_week: number;
-  end_month: number;
-  end_week: number;
-  climate_zone_code?: string;
+type PlantingCalendarWindow = {
+  plantSlug: string;
+  plantName: string | null;
+  taskCode: string;
+  taskName: string | null;
+  notes: string | null;
+  startMonth: number;
+  startWeek: number;
+  endMonth: number;
+  endWeek: number;
+  offsetWeeks: number;
+  altitudeWeeks: number;
+  zoneWeeks: number;
+  source: 'adjusted' | 'default';
+};
+
+type PlantingCalendarResponse = {
+  climateZone: string | null;
+  altitudeMeters: number | null;
+  altitudeWeeks: number;
+  fallbackToDefault: boolean;
+  windows: PlantingCalendarWindow[];
 };
 
 type TaskCompletion = {
@@ -53,9 +62,45 @@ interface WeeklyTaskViewProps {
 
 const WEEK_COUNT = 4;
 const MONTHS_IN_YEAR = 12;
+const TOTAL_WEEKS = WEEK_COUNT * MONTHS_IN_YEAR;
 
-function isWeeklyTaskArray(value: unknown): value is WeeklyTask[] {
-  return Array.isArray(value);
+const CLIMATE_ZONE_CODES: ClimateZoneCode[] = [
+  'atlantic_mild',
+  'cool_maritime',
+  'continental_cool',
+  'med_marine',
+  'southern_hot_dry',
+  'mountain_cool',
+];
+
+function isClimateZoneCode(value: string | null | undefined): value is ClimateZoneCode {
+  if (!value) {
+    return false;
+  }
+  return CLIMATE_ZONE_CODES.includes(value as ClimateZoneCode);
+}
+
+function clampWeekIndex(index: number): number {
+  if (!Number.isFinite(index)) {
+    return 0;
+  }
+  return Math.min(Math.max(index, 0), TOTAL_WEEKS - 1);
+}
+
+function toWeekIndex(month: number, week: number): number {
+  const safeMonth = Math.min(Math.max(Math.floor(month), 1), MONTHS_IN_YEAR);
+  const safeWeek = Math.min(Math.max(Math.floor(week), 1), WEEK_COUNT);
+  return (safeMonth - 1) * WEEK_COUNT + (safeWeek - 1);
+}
+
+function windowCoversIndex(window: PlantingCalendarWindow, index: number): boolean {
+  const start = clampWeekIndex(toWeekIndex(window.startMonth, window.startWeek));
+  const end = clampWeekIndex(toWeekIndex(window.endMonth, window.endWeek));
+  if (end < start) {
+    return clampWeekIndex(index) === start;
+  }
+  const target = clampWeekIndex(index);
+  return target >= start && target <= end;
 }
 
 function isTaskCompletionArray(value: unknown): value is TaskCompletion[] {
@@ -67,11 +112,17 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   const [currentMonth, setCurrentMonth] = useState(() => now.getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(() => now.getFullYear());
   const [currentWeek, setCurrentWeek] = useState(() => Math.max(1, Math.min(WEEK_COUNT, Math.ceil(now.getDate() / 7))));
-  const [tasks, setTasks] = useState<WeeklyTask[]>([]);
+  const [calendarWindows, setCalendarWindows] = useState<PlantingCalendarWindow[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [climateZone, setClimateZone] = useState<ClimateZoneCode | null>(null);
+  const [calendarMeta, setCalendarMeta] = useState<{
+    climateZone: ClimateZoneCode | null;
+    altitudeMeters: number | null;
+    fallbackToDefault: boolean;
+    altitudeWeeks: number;
+  } | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [userId, setUserId] = useState<string | null>(propUserId ?? null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -142,7 +193,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     return `${monthName} ${startDay}-${endDay}, ${currentYear}`;
   }, [currentMonth, currentWeek, currentYear]);
 
-  const loadWeeklyTasks = useCallback(async () => {
+  const loadPlantingCalendar = useCallback(async () => {
     if (!userId) {
       return;
     }
@@ -151,28 +202,39 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     setError(null);
 
     try {
-      const response = await api.getTasksForUserMonth(userId, currentMonth);
-      const extracted = (response as { tasks?: WeeklyTask[] | unknown }).tasks;
-      const allTasks = isWeeklyTaskArray(extracted) ? extracted : [];
-      const weekTasks = allTasks.filter((task) => task.week_in_month === currentWeek);
-      setTasks(weekTasks);
+      const response = (await api.getPlantingCalendar()) as PlantingCalendarResponse;
+      const windows = Array.isArray(response?.windows) ? response.windows : [];
+      setCalendarWindows(windows);
+
+      const zoneCode = response?.climateZone && isClimateZoneCode(response.climateZone)
+        ? response.climateZone
+        : null;
+
+      if (zoneCode) {
+        setClimateZone(zoneCode);
+      }
+
+      setCalendarMeta({
+        climateZone: zoneCode,
+        altitudeMeters: typeof response?.altitudeMeters === 'number' ? response.altitudeMeters : null,
+        fallbackToDefault: Boolean(response?.fallbackToDefault),
+        altitudeWeeks: typeof response?.altitudeWeeks === 'number' ? response.altitudeWeeks : 0,
+      });
     } catch (err) {
       const errorLike = err as { message?: string };
       const message = errorLike.message ?? 'Failed to load tasks';
 
-      if (message.includes('Unauthorized') || message.includes('Not authenticated')) {
+      if (message.includes('Not authenticated') || message.includes('Unauthorized')) {
         setError('Please sign in to view your personalized tasks');
-      } else if (message.includes('get_tasks_for_user_month')) {
-        setError('Database function not yet configured. Please check the setup guide.');
       } else {
         setError(message);
       }
 
-      setTasks([]);
+      setCalendarWindows([]);
     } finally {
       setIsLoading(false);
     }
-  }, [currentMonth, currentWeek, userId]);
+  }, [userId]);
 
   const loadCompletions = useCallback(async () => {
     if (!userId) {
@@ -197,17 +259,9 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
       return;
     }
 
-    void loadWeeklyTasks();
+    void loadPlantingCalendar();
     void loadCompletions();
-  }, [userId, isAuthChecking, loadWeeklyTasks, loadCompletions]);
-
-  useEffect(() => {
-    if (!userId || isAuthChecking) {
-      return;
-    }
-
-    void loadWeeklyTasks();
-  }, [currentWeek, userId, isAuthChecking, loadWeeklyTasks]);
+  }, [userId, isAuthChecking, loadPlantingCalendar, loadCompletions]);
 
   const isTaskCompleted = useCallback(
     (plantSlug: string, taskCode: string) =>
@@ -216,18 +270,18 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   );
 
   const handleToggleComplete = useCallback(
-    async (task: WeeklyTask) => {
+    async (task: PlantingCalendarWindow) => {
       if (!userId) {
         alert('Please sign in to track task completion');
         return;
       }
 
-      const completed = isTaskCompleted(task.plant_slug, task.task_code);
+      const completed = isTaskCompleted(task.plantSlug, task.taskCode);
 
       try {
         if (completed) {
           const completion = completions.find(
-            (item) => item.plant_slug === task.plant_slug && item.task_code === task.task_code,
+            (item) => item.plant_slug === task.plantSlug && item.task_code === task.taskCode,
           );
 
           if (completion) {
@@ -237,8 +291,8 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
         } else {
           const response = await api.completeTask(
             userId,
-            task.plant_slug,
-            task.task_code,
+            task.plantSlug,
+            task.taskCode,
             `Completed in ${getWeekDateRange()}`,
           );
 
@@ -302,12 +356,25 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   }, []);
 
   const taskList = useMemo(() => {
-    if (!showCompleted) {
-      return tasks.filter((task) => !isTaskCompleted(task.plant_slug, task.task_code));
+    const targetIndex = toWeekIndex(currentMonth, currentWeek);
+    const weekly = calendarWindows.filter((window) => windowCoversIndex(window, targetIndex));
+    const sorted = [...weekly].sort((a, b) => {
+      const startDelta = toWeekIndex(a.startMonth, a.startWeek) - toWeekIndex(b.startMonth, b.startWeek);
+      if (startDelta !== 0) {
+        return startDelta;
+      }
+
+      const aName = a.plantName ?? a.plantSlug;
+      const bName = b.plantName ?? b.plantSlug;
+      return aName.localeCompare(bName, undefined, { sensitivity: 'base' });
+    });
+
+    if (showCompleted) {
+      return sorted;
     }
 
-    return tasks;
-  }, [isTaskCompleted, showCompleted, tasks]);
+    return sorted.filter((task) => !isTaskCompleted(task.plantSlug, task.taskCode));
+  }, [calendarWindows, currentMonth, currentWeek, isTaskCompleted, showCompleted]);
 
   const completionCount = completions.length;
   const weekDateRange = getWeekDateRange();
@@ -372,37 +439,6 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     return 'bg-gray-50 border-gray-200 text-gray-700';
   }, []);
 
-  const getPriorityBadge = useCallback((priority?: string) => {
-    switch (priority) {
-      case 'critical':
-        return (
-          <Badge variant="destructive" className="text-xs">
-            Critical
-          </Badge>
-        );
-      case 'high':
-        return (
-          <Badge className="text-xs bg-orange-600">
-            High Priority
-          </Badge>
-        );
-      case 'normal':
-        return (
-          <Badge variant="secondary" className="text-xs">
-            Normal
-          </Badge>
-        );
-      case 'low':
-        return (
-          <Badge variant="outline" className="text-xs">
-            Low
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  }, []);
-
   return (
     <div className="space-y-4">
       <Card>
@@ -450,6 +486,19 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
 
       {climateZone && userId && <ClimateZoneInfo climateZone={climateZone} variant="compact" />}
 
+      {calendarMeta?.fallbackToDefault && userId && !error && (
+        <Alert variant="default">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <p className="font-medium">Showing baseline schedule</p>
+            <p className="mt-1 text-sm">
+              We haven’t calibrated this task for your zone yet, so you’re seeing the default timing. Adjusted windows will
+              appear automatically once we have more data.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {!isAuthChecking && !userId && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -492,16 +541,21 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
       {!isLoading && !isAuthChecking && !error && userId && taskList.length > 0 && (
         <div className="space-y-3">
           {taskList.map((task, index) => {
-            const weekRange = `Week ${task.start_week}${task.end_week !== task.start_week ? `-${task.end_week}` : ''}`;
-            const monthName = new Date(currentYear, task.start_month - 1, 1).toLocaleDateString('en-US', {
+            const weekRange = `Week ${task.startWeek}${task.endWeek !== task.startWeek ? `-${task.endWeek}` : ''}`;
+            const monthName = new Date(currentYear, task.startMonth - 1, 1).toLocaleDateString('en-US', {
               month: 'short',
             });
-            const completed = isTaskCompleted(task.plant_slug, task.task_code);
-            const priorityBadge = getPriorityBadge(task.category ?? '');
+            const completed = isTaskCompleted(task.plantSlug, task.taskCode);
+            const taskLabel = task.taskName ?? task.taskCode.replace(/_/g, ' ');
+            const plantLabel = task.plantName ?? task.plantSlug;
+            const totalOffset = task.offsetWeeks;
+            const hasOffset = totalOffset !== 0;
+            const zoneOffset = task.zoneWeeks !== 0 ? `Zone ${task.zoneWeeks > 0 ? '+' : ''}${task.zoneWeeks}` : null;
+            const altitudeOffset = task.altitudeWeeks !== 0 ? `Altitude ${task.altitudeWeeks > 0 ? '+' : ''}${task.altitudeWeeks}` : null;
 
             return (
               <Card
-                key={`${task.plant_slug}-${task.task_code}-${index}`}
+                key={`${task.plantSlug}-${task.taskCode}-${index}`}
                 className={`border-l-4 transition-all hover:shadow-md ${
                   completed ? 'border-l-green-600 bg-green-50/30 opacity-80' : 'border-l-green-500'
                 }`}
@@ -510,22 +564,26 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="mb-2 flex items-start gap-2">
-                        <div className={`rounded-lg p-2 ${getTaskColor(task.task_code)}`}>{getTaskIcon(task.task_code)}</div>
+                        <div className={`rounded-lg p-2 ${getTaskColor(task.taskCode)}`}>{getTaskIcon(task.taskCode)}</div>
                         <div className="flex-1">
-                          <div className="mb-1 flex items-center gap-2">
+                          <div className="mb-1 flex flex-wrap items-center gap-2">
                             <h3 className={`font-medium ${completed ? 'line-through text-muted-foreground' : ''}`}>
-                              {task.task_name}
+                              {taskLabel}
                             </h3>
+                            <Badge
+                              className="text-xs"
+                              variant={task.source === 'adjusted' ? 'secondary' : 'outline'}
+                            >
+                              {task.source === 'adjusted' ? 'Adjusted timing' : 'Default timing'}
+                            </Badge>
                             {completed && (
                               <Badge className="bg-green-600 text-xs text-white" variant="default">
                                 ✓ Complete
                               </Badge>
                             )}
-                            {priorityBadge}
                           </div>
                           <p className={`text-sm ${completed ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                            {task.plant_name}
-                            {task.category && <span className="ml-2 text-xs opacity-70">• {task.category}</span>}
+                            {plantLabel}
                           </p>
                         </div>
                       </div>
@@ -542,11 +600,26 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                           {monthName} {weekRange}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {task.task_code.replace(/_/g, ' ')}
+                          {task.taskCode.replace(/_/g, ' ')}
                         </Badge>
-                        {task.climate_zone_code && (
+                        {hasOffset && (
+                          <Badge variant="outline" className="text-xs bg-amber-50 border-amber-200">
+                            Offset {totalOffset > 0 ? `+${totalOffset}` : totalOffset} wk
+                          </Badge>
+                        )}
+                        {zoneOffset && (
                           <Badge variant="outline" className="text-xs bg-green-50 border-green-200">
-                            🌍 {task.climate_zone_code.replace(/_/g, ' ')}
+                            🌍 {zoneOffset}
+                          </Badge>
+                        )}
+                        {altitudeOffset && (
+                          <Badge variant="outline" className="text-xs bg-slate-50 border-slate-200">
+                            ⛰️ {altitudeOffset}
+                          </Badge>
+                        )}
+                        {calendarMeta?.climateZone && (
+                          <Badge variant="outline" className="text-xs bg-emerald-50 border-emerald-200">
+                            Zone {calendarMeta.climateZone.replace(/_/g, ' ')}
                           </Badge>
                         )}
                       </div>
@@ -592,9 +665,14 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
 
       {!error && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-muted-foreground">
-          💡 <span className="font-medium">Tip:</span> Tasks are personalized based on your location
-          {climateZone ? ` and climate zone (${climateZone.replace('_', ' ')})` : ''}. Weather conditions and frost
-          dates help determine optimal timing.
+          💡 <span className="font-medium">Tip:</span> Tasks lean on your saved home location to adjust for climate
+          zone{(calendarMeta?.climateZone || climateZone)
+            ? ` (${(calendarMeta?.climateZone || climateZone)?.replace(/_/g, ' ')})`
+            : ''}
+          {calendarMeta?.altitudeWeeks
+            ? ` and altitude (${calendarMeta.altitudeWeeks > 0 ? '+' : ''}${calendarMeta.altitudeWeeks} week shift).`
+            : '.'}
+          Weather and frost data refine these windows each season.
         </div>
       )}
     </div>
