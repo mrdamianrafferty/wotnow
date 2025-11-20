@@ -705,6 +705,50 @@ export class ApiClient {
     }
   }
 
+  async getGardenAlerts(lat?: number, lon?: number) {
+    try {
+      const url = new URL(`${API_BASE}/garden/alerts`);
+      if (lat !== undefined && lon !== undefined) {
+        url.searchParams.set('lat', lat.toString());
+        url.searchParams.set('lon', lon.toString());
+      }
+
+      const response = await this.fetchWithTimeout(url.toString(), {
+        headers: this.getHeaders(false),
+      }, 5000);
+
+      if (!response.ok) {
+        throw new Error('Service unavailable');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getPlantingCalendar(lat?: number, lon?: number) {
+    try {
+      const url = new URL(`${API_BASE}/garden/planting-calendar`);
+      if (lat !== undefined && lon !== undefined) {
+        url.searchParams.set('lat', lat.toString());
+        url.searchParams.set('lon', lon.toString());
+      }
+
+      const response = await this.fetchWithTimeout(url.toString(), {
+        headers: this.getHeaders(false),
+      }, 5000);
+
+      if (!response.ok) {
+        throw new Error('Service unavailable');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Unit preferences
   async getUserPreferences() {
     try {

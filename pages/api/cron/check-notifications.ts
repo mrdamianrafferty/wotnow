@@ -67,6 +67,10 @@ interface UserFavourite {
     email: boolean;
     sms: boolean;
   };
+  species: {
+    species_code: string;
+    name_en: string;
+  };
 }
 
 interface UserNotificationPreferences {
@@ -77,13 +81,6 @@ interface UserNotificationPreferences {
   weekly_forecast_enabled: boolean;
   weekly_forecast_day: number;
   weekly_forecast_time: string;
-}
-
-interface UserLocationPreference {
-  user_id: string;
-  rectangle_code: string | null;
-  latitude: number | null;
-  longitude: number | null;
 }
 
 interface PredictionResult {
@@ -107,7 +104,7 @@ interface NotificationToSend {
 async function getUserLocation(userId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('user_location_preferences')
-    .select('rectangle_code, latitude, longitude')
+    .select('preferred_rectangles, home_region')
     .eq('user_id', userId)
     .order('updated_at', { ascending: false })
     .limit(1)
@@ -117,8 +114,13 @@ async function getUserLocation(userId: string): Promise<string | null> {
     return null;
   }
 
-  const location = data as UserLocationPreference;
-  return location.rectangle_code;
+  // Return first preferred rectangle if available
+  if (data.preferred_rectangles && data.preferred_rectangles.length > 0) {
+    return data.preferred_rectangles[0];
+  }
+
+  // Fallback to home_region if no preferred rectangles
+  return data.home_region || null;
 }
 
 /**
@@ -126,15 +128,21 @@ async function getUserLocation(userId: string): Promise<string | null> {
  */
 async function getPredictions(rectangleCode: string, _speciesCodes: string[]): Promise<Map<string, number>> {
   try {
+    const today = new Date().toISOString().split('T')[0];
+    console.log('[Cron] Fetching predictions for', rectangleCode, 'on', today);
+
     const { data, error } = await supabase.rpc('get_fishing_predictions', {
-      p_rectangle_code: rectangleCode,
-      p_prediction_date: new Date().toISOString().split('T')[0], // Today's date
+      rectangle_code_input: rectangleCode,
+      prediction_date_input: today,
+      user_language: 'en'
     });
 
     if (error) {
       console.error('[Cron] Error fetching predictions:', error);
       return new Map();
     }
+
+    console.log('[Cron] Got', data?.length || 0, 'predictions from RPC');
 
     if (!data || !Array.isArray(data)) {
       return new Map();
@@ -147,6 +155,9 @@ async function getPredictions(rectangleCode: string, _speciesCodes: string[]): P
         predictions.set(prediction.species_code.toUpperCase(), prediction.confidence);
       }
     });
+
+    console.log('[Cron] Predictions map keys:', Array.from(predictions.keys()).join(', '));
+    console.log('[Cron] Looking for species codes:', _speciesCodes.join(', '));
 
     return predictions;
   } catch (error) {
@@ -483,7 +494,7 @@ async function sendTieredDailyDigestEmail(
     });
 
     // 7. Log the daily digest send
-    await supabase.from('notification_log').insert({
+    const { error: logError } = await supabase.from('notification_log').insert({
       user_id: userId,
       species_id: null,
       notification_type: 'daily_digest',
@@ -499,6 +510,12 @@ async function sendTieredDailyDigestEmail(
       },
       sent_at: new Date().toISOString(),
     });
+
+    if (logError) {
+      console.error('[Cron] Error logging notification:', logError);
+    } else {
+      console.log('[Cron] Notification logged to database');
+    }
 
     return true;
   } catch (error) {
@@ -566,10 +583,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[Cron] Found', preferences.length, 'users with hot bite alerts enabled');
 
     // 2. Get all favourites for these users (only those with notifications enabled)
+    // Join with species table to get species_code
     const userIds = preferences.map(p => p.user_id);
     const { data: favourites, error: favError } = await supabase
       .from('user_favourites')
-      .select('id, user_id, species_id, notifications_enabled, notification_threshold, notification_channels')
+      .select('id, user_id, species_id, notifications_enabled, notification_threshold, notification_channels, species!inner(species_code, name_en)')
       .in('user_id', userIds)
       .eq('notifications_enabled', true);
 
@@ -583,7 +601,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ success: true, message: 'No favourites to check', processed: 0 });
     }
 
-    const typedFavourites = favourites as UserFavourite[];
+    // Map to handle Supabase inner join returning species as array
+    const typedFavourites: UserFavourite[] = favourites.map((fav: Record<string, unknown>) => ({
+      ...fav,
+      species: Array.isArray(fav.species) ? fav.species[0] : fav.species
+    })) as UserFavourite[];
     console.log('[Cron] Found', typedFavourites.length, 'favourites to check');
 
     // 3. Group favourites by user
@@ -614,14 +636,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Get species codes from favourites
-      const speciesCodes = favs.map((f) => f.species_id.toUpperCase());
+      const speciesCodes = favs.map((f) => f.species.species_code.toUpperCase());
 
       // Get predictions for this location
       const predictions = await getPredictions(rectangleCode, speciesCodes);
 
       // Check each favourite against its custom threshold
       for (const fav of favs) {
-        const speciesCode = fav.species_id.toUpperCase();
+        const speciesCode = fav.species.species_code.toUpperCase();
         const confidence = predictions.get(speciesCode);
 
         if (confidence === undefined) {
@@ -645,7 +667,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             userId,
             speciesId: fav.species_id,
             speciesCode,
-            speciesName: speciesCode, // TODO: Get actual species name from species table
+            speciesName: fav.species.name_en,
             confidence,
             rectangleCode,
           });
@@ -702,20 +724,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       // Get predictions for ALL favourite species
-      const speciesCodes = userFavs.map((f) => f.species_id.toUpperCase());
+      const speciesCodes = userFavs.map((f) => f.species.species_code.toUpperCase());
       const predictions = await getPredictions(rectangleCode, speciesCodes);
 
       // Build map of all species with confidence scores
       const allSpeciesData = new Map<string, { speciesCode: string; speciesName: string; confidence: number }>();
 
       for (const fav of userFavs) {
-        const speciesCode = fav.species_id.toUpperCase();
+        const speciesCode = fav.species.species_code.toUpperCase();
         const confidence = predictions.get(speciesCode);
 
         if (confidence !== undefined) {
-          allSpeciesData.set(fav.species_id, {
+          allSpeciesData.set(speciesCode, {
             speciesCode,
-            speciesName: speciesCode, // TODO: Get actual species name from species table
+            speciesName: fav.species.name_en,
             confidence
           });
         }
