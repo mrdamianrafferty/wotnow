@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef } from 'react';
 import {
   Anchor,
   AlertTriangle,
@@ -22,8 +22,6 @@ import {
   Mountain,
   ExternalLink,
   ArrowDownUp,
-  BellPlus,
-  BellOff,
 } from 'lucide-react';
 import type { CardData } from '../../lib/findr/mapPrediction';
 import { getSpeciesAdvice } from '../../data/speciesAdvice';
@@ -33,9 +31,6 @@ import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 import { useLanguage } from '../../context/LanguageContext';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
-import { scheduleLocalNotification, cancelLocalNotification, checkPermissions, requestPermissions, NotificationException } from '@/lib/capacitor/notifications';
-import { trackNotification, getNotificationForSpecies, untrackNotification } from './NotificationManager';
-import { toast } from '@/lib/ui/toast';
 
 import { GuildBadge } from './GuildBadge';
 import { SpeciesBadges } from './SpeciesBadges';
@@ -195,16 +190,6 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const { language } = useLanguage();
   const { location: unifiedLocation } = useUnifiedLocation();
 
-  // Notification state
-  const [notificationId, setNotificationId] = useState<number | null>(null);
-
-  // Check on mount if notification already exists for this species
-  useEffect(() => {
-    if (!card) return;
-    const existingId = getNotificationForSpecies(card.speciesId ?? card.id);
-    setNotificationId(existingId);
-  }, [card]);
-
   const advice = useMemo(() => {
     if (!card) return null;
     return getSpeciesAdvice(card.commonName, card.speciesCode ?? undefined);
@@ -218,6 +203,18 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     rectangleCode: card?.rectangleCode ?? unifiedLocation?.rectangleCode ?? null,
     enabled: open && Boolean(card),
   });
+
+  // Debug: Log what IDs are being passed
+  useEffect(() => {
+    if (open && card) {
+      console.log('[FishSpeciesModal] Opening modal with:', {
+        speciesId: card.speciesId,
+        speciesCode: card.speciesCode,
+        commonName: card.commonName,
+        cardId: card.id,
+      });
+    }
+  }, [open, card]);
 
   const titleId = useId();
   const contentId = useId();
@@ -316,103 +313,6 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
     hasCurveData
   );
 
-  // Handler for notifications - Toggle between scheduling and cancelling
-  const handleSetupNotification = async () => {
-    if (!card) return;
-
-    try {
-      // If notification exists, cancel it
-      if (notificationId !== null) {
-        await cancelLocalNotification(notificationId);
-        untrackNotification(notificationId);
-        setNotificationId(null);
-        console.log('[FishSpeciesModal] Notification cancelled:', notificationId);
-        return;
-      }
-
-      // Otherwise, schedule new notification
-      let permission = await checkPermissions();
-      if (permission !== 'granted') {
-        permission = await requestPermissions();
-        if (permission !== 'granted') {
-          console.warn('[FishSpeciesModal] Notification permission denied');
-          await toast.warning('Notification permission denied. Please enable notifications in your browser settings to receive fishing alerts.');
-          return;
-        }
-      }
-
-      const confidence = card.confidence ?? 0;
-      const reminderTime = new Date();
-      let title = '';
-      let body = '';
-      let notificationType: 'hot_bite_alert' | 'peak_conditions_reminder' = 'peak_conditions_reminder';
-
-      // Determine notification type based on confidence
-      if (confidence >= 85) {
-        // Hot bite alert - immediate
-        title = `🔥 ${card.commonName} - Hot Bite Alert!`;
-        body = `${confidence}% confidence! They're biting right now - drop everything and go fishing!`;
-        notificationType = 'hot_bite_alert';
-      } else if (confidence >= 70) {
-        // Peak conditions reminder - schedule for 8am tomorrow
-        reminderTime.setDate(reminderTime.getDate() + 1);
-        reminderTime.setHours(8, 0, 0, 0);
-
-        title = `🎣 ${card.commonName} - Peak Conditions Reminder`;
-        body = `${confidence}% confidence! Great time to go fishing tomorrow.`;
-        notificationType = 'peak_conditions_reminder';
-      } else {
-        // Low confidence - schedule reminder for tomorrow morning
-        reminderTime.setDate(reminderTime.getDate() + 1);
-        reminderTime.setHours(8, 0, 0, 0);
-
-        title = `🎯 ${card.commonName} - Fishing Reminder`;
-        body = `Check the latest predictions for ${card.commonName} - conditions may improve!`;
-        notificationType = 'peak_conditions_reminder';
-      }
-
-      const newNotificationId = await scheduleLocalNotification({
-        title,
-        body,
-        schedule: notificationType === 'hot_bite_alert' ? undefined : { at: reminderTime },
-        extra: {
-          speciesId: card.speciesId ?? card.id,
-          speciesName: card.commonName,
-          confidence,
-          type: notificationType,
-        },
-      });
-
-      // Track notification for management UI
-      trackNotification({
-        id: newNotificationId,
-        title,
-        body,
-        scheduledAt: notificationType === 'hot_bite_alert' ? new Date().toISOString() : reminderTime.toISOString(),
-        speciesName: card.commonName,
-        speciesId: card.speciesId ?? card.id,
-        type: notificationType,
-      });
-
-      console.log('[FishSpeciesModal] Notification scheduled:', newNotificationId, notificationType);
-      setNotificationId(newNotificationId);
-
-      // Show success message
-      const successMessage = notificationType === 'hot_bite_alert'
-        ? `🔥 Hot bite alert set for ${card.commonName}!`
-        : `🎣 Fishing reminder set for ${card.commonName}`;
-      await toast.success(successMessage);
-    } catch (error) {
-      if (error instanceof NotificationException) {
-        console.error('[FishSpeciesModal] Notification error:', error.type, error.message);
-        await toast.error(`Failed to set notification: ${error.message}`);
-      } else {
-        console.error('[FishSpeciesModal] Failed to toggle notification:', error);
-        await toast.error('Failed to set notification. Please try again.');
-      }
-    }
-  };
-
   if (!open || !card) {
     return null;
   }
@@ -475,26 +375,14 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* Notification Button - Toggle on/off */}
-            <button
-              type="button"
-              className={`btn btn-sm ${notificationId !== null ? 'btn-primary' : 'btn-outline btn-primary'}`}
-              onClick={handleSetupNotification}
-              title={notificationId !== null ? 'Cancel fishing alert' : 'Set fishing alert'}
-            >
-              {notificationId !== null ? <BellOff size={18} /> : <BellPlus size={18} />}
-            </button>
-            {/* Close Button */}
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm h-10 w-10"
-              onClick={onClose}
-              aria-label="Close species profile"
-            >
-              <X size={18} />
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm h-10 w-10"
+            onClick={onClose}
+            aria-label="Close species profile"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {card.image ? (

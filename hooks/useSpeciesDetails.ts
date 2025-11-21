@@ -102,10 +102,25 @@ export function useSpeciesDetails(options: UseSpeciesDetailsOptions): UseSpecies
         params.append('rectangle_code', rectangleCode);
       }
 
-    const response = await fetch(`/api/findr/species-details?${params.toString()}`);
-      
+      const url = `/api/findr/species-details?${params.toString()}`;
+      console.log('[useSpeciesDetails] Fetching:', url, {
+        speciesId,
+        speciesCode,
+        regionCode: normalisedRegionCode,
+        rectangleCode
+      });
+
+    const response = await fetch(url);
+
       if (!response.ok) {
         const json = await response.json();
+        console.error('[useSpeciesDetails] API error:', {
+          status: response.status,
+          error: json.error,
+          url,
+          speciesId,
+          speciesCode
+        });
         throw new Error(json.error || 'Failed to load species details');
       }
 
