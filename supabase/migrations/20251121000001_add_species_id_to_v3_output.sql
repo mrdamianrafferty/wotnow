@@ -1,7 +1,9 @@
 -- Add species_id to get_fishing_confidence_v3 output
 -- Fixes issue where modal can't look up species details because UUID is missing
 
-DROP FUNCTION IF EXISTS get_fishing_confidence_v3(VARCHAR, DATE, INTEGER);
+-- Drop all existing versions of the function
+DROP FUNCTION IF EXISTS get_fishing_confidence_v3(VARCHAR, DATE, INTEGER) CASCADE;
+DROP FUNCTION IF EXISTS get_fishing_confidence_v3 CASCADE;
 
 CREATE OR REPLACE FUNCTION get_fishing_confidence_v3(
   target_rectangle VARCHAR,
