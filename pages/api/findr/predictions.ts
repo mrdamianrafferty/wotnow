@@ -44,6 +44,7 @@ interface SpeciesLocalizationRow {
   playful_bio_en: string | null;
   slug: string | null;
   aliases: string[] | null;
+  best_times: string[] | null;
 }
 
 type LocalizedNameMap = Partial<Record<'fr' | 'es' | 'de' | 'it' | 'pt', string>>;
@@ -359,19 +360,19 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
       speciesCodes.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
             .in('species_code', Array.from(speciesCodes))
         : Promise.resolve({ data: null, error: null }),
       scientificNames.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
             .in('scientific_name', Array.from(scientificNames))
         : Promise.resolve({ data: null, error: null }),
       commonNames.size > 0
         ? supabase
             .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases')
+            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
             .in('name_en', Array.from(commonNames))
         : Promise.resolve({ data: null, error: null }),
     ]);
@@ -506,6 +507,11 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     // Add aliases from species schema migration (Phase 4 API-layer enrichment)
     if (!result.aliases && match.aliases && Array.isArray(match.aliases) && match.aliases.length > 0) {
       result.aliases = match.aliases as unknown as JsonValue;
+    }
+
+    // Add best_times from species table (Phase 1 structured content)
+    if (!result.best_times && match.best_times && Array.isArray(match.best_times) && match.best_times.length > 0) {
+      result.best_times = match.best_times as unknown as JsonValue;
     }
 
     return result;

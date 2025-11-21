@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Calendar, TrendingUp, Star, AlertTriangle, X, Fish, Flame } from 'lucide-react';
+import { Calendar, TrendingUp, Star, AlertTriangle, X, Fish, Flame, ChevronDown, ChevronUp } from 'lucide-react';
 import { TranslatedText, TranslatedFishName } from '../translation/TranslatedFishCard';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
-import { getBiteWindows, type BiteWindow } from '../../hooks/useBiteScore';
 
 // Helper to find species image by name
 function getSpeciesImageByName(name: string): string | null {
@@ -18,6 +17,10 @@ interface FavouriteWithForecast {
   confidence: number | null;
   forecast?: number[] | null;
   bestBait?: string;
+  bestBaitSource?: 'prediction' | 'mock' | 'supabase';
+  baitReasoning?: string; // Explanation for why this bait is recommended
+  alternativeTechniques?: string[]; // Other good techniques
+  alternativeHabitats?: string[]; // Other good habitats
   image?: { src: string; alt: string } | null;
   card?: {
     environmental_factors?: {
@@ -27,6 +30,7 @@ interface FavouriteWithForecast {
     preferred_tide_stage?: string[] | null;
     temp_opt_c?: [number, number] | null;
     flow_preference?: 'slack_avoid' | 'gentle' | 'moderate' | 'strong' | null;
+    bestTimes?: string[] | null;
   } | null;
 }
 
@@ -43,8 +47,12 @@ interface DayPlan {
   opportunities: {
     name: string;
     confidence: number;
-    biteWindows?: BiteWindow[];
+    bestTimes?: string[];
     bestBait?: string;
+    bestBaitSource?: 'prediction' | 'mock' | 'supabase';
+    baitReasoning?: string;
+    alternativeTechniques?: string[];
+    alternativeHabitats?: string[];
     image?: { src: string; alt: string } | null;
   }[];
   quality: 'excellent' | 'good' | 'fair' | 'poor';
@@ -61,6 +69,21 @@ function getDayQuality(avgConfidence: number, topConfidence: number): 'excellent
 }
 
 export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites, loading }) => {
+  // Track which species are expanded (for today only)
+  const [expandedSpecies, setExpandedSpecies] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (speciesName: string) => {
+    setExpandedSpecies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(speciesName)) {
+        newSet.delete(speciesName);
+      } else {
+        newSet.add(speciesName);
+      }
+      return newSet;
+    });
+  };
+
   const weeklyPlan = useMemo((): DayPlan[] => {
     if (!favourites || favourites.length === 0) return [];
 
@@ -83,23 +106,31 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
           return forecastConfidence !== undefined && forecastConfidence >= 50;
         })
         .map(fav => {
-          // Extract bite score params and generate bite windows
-          let biteWindows: BiteWindow[] | undefined;
-          if (fav.card) {
-            const params = {
-              diurnalSensitivity: fav.card.diurnal_sensitivity ?? undefined,
-              preferredTideStage: fav.card.preferred_tide_stage ?? undefined,
-              tempOptC: fav.card.temp_opt_c ?? undefined,
-              flowPreference: fav.card.flow_preference ?? undefined,
-            };
-            biteWindows = getBiteWindows(params);
+          // Use bestTimes from species table (simpler approach)
+          const bestTimes = fav.card?.bestTimes ?? undefined;
+
+          // Debug logging for first day
+          if (dayIndex === 0) {
+            console.log(`[WeeklyPlanner] ${fav.name}:`, {
+              hasCard: !!fav.card,
+              cardKeys: fav.card ? Object.keys(fav.card) : [],
+              bestTimes: bestTimes,
+              bestTimesType: typeof bestTimes,
+              bestTimesLength: bestTimes?.length,
+              alternativeTechniques: fav.alternativeTechniques,
+              alternativeHabitats: fav.alternativeHabitats
+            });
           }
 
           return {
             name: fav.name,
             confidence: fav.forecast![dayIndex],
-            biteWindows,
+            bestTimes,
             bestBait: fav.bestBait,
+            bestBaitSource: fav.bestBaitSource,
+            baitReasoning: fav.baitReasoning,
+            alternativeTechniques: fav.alternativeTechniques,
+            alternativeHabitats: fav.alternativeHabitats,
             image: fav.image,
           };
         })
@@ -177,7 +208,7 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
   }
 
   return (
-    <div className="card bg-gradient-to-br from-primary/10 to-secondary/5 shadow-xl">
+    <div className="card bg-base-200 shadow-xl">
       <div className="card-body p-4 sm:p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -210,11 +241,11 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                 key={day.dayIndex}
                 className={`card ${
                   day.quality === 'excellent'
-                    ? 'bg-gradient-to-r from-success/20 to-success/10 border-2 border-success'
+                    ? 'bg-base-100 border-2 border-success'
                     : day.quality === 'good'
-                    ? 'bg-gradient-to-r from-warning/20 to-warning/10 border-2 border-warning'
+                    ? 'bg-base-100 border-2 border-warning'
                     : day.quality === 'fair'
-                    ? 'bg-base-100 border border-info'
+                    ? 'bg-base-100 border border-base-300'
                     : 'bg-base-100 border border-base-300 opacity-60'
                 } ${isBestDay ? 'ring-2 ring-success ring-offset-2' : ''}`}
               >
@@ -263,64 +294,154 @@ export const WeeklyPlannerCard: React.FC<WeeklyPlannerCardProps> = ({ favourites
                     <div className="space-y-2">
                       {day.opportunities.map((opp, idx) => {
                         const imagePath = getSpeciesImageByName(opp.name);
+                        const isExpanded = expandedSpecies.has(opp.name);
+                        const hasExpandableContent = (
+                          (opp.bestTimes && opp.bestTimes.length > 0) ||
+                          (opp.alternativeTechniques && opp.alternativeTechniques.length > 0) ||
+                          (opp.alternativeHabitats && opp.alternativeHabitats.length > 0)
+                        );
+
+                        // Debug log for first day
+                        if (day.dayIndex === 0 && idx === 0) {
+                          console.log(`[WeeklyPlanner] Expandable check for ${opp.name}:`, {
+                            hasBestTimes: !!(opp.bestTimes && opp.bestTimes.length > 0),
+                            bestTimes: opp.bestTimes,
+                            hasTechniques: !!(opp.alternativeTechniques && opp.alternativeTechniques.length > 0),
+                            hasHabitats: !!(opp.alternativeHabitats && opp.alternativeHabitats.length > 0),
+                            hasExpandableContent
+                          });
+                        }
+
                         return (
-                          <div key={idx} className="flex items-center justify-between p-2 bg-base-200/50 rounded">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {/* Species Thumbnail */}
-                              {imagePath ? (
-                                <div className="w-8 h-8 relative rounded overflow-hidden bg-base-200 flex-shrink-0">
-                                  <Image
-                                    src={imagePath}
-                                    alt={opp.name}
-                                    fill
-                                    className="object-contain"
-                                    sizes="32px"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-8 h-8 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10 flex-shrink-0">
-                                  <Fish size={20} className="text-primary" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-sm truncate text-base-content flex items-center gap-1">
-                                  <TranslatedFishName name={opp.name} />
-                                  {opp.confidence >= 85 && (
-                                    <Flame size={14} className="text-orange-500 flex-shrink-0" fill="currentColor" />
+                          <div key={idx} className="bg-base-200/50 rounded overflow-hidden">
+                            <div className="flex items-center justify-between p-2">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {/* Species Thumbnail */}
+                                {imagePath ? (
+                                  <div className="w-8 h-8 relative rounded overflow-hidden bg-base-200 flex-shrink-0">
+                                    <Image
+                                      src={imagePath}
+                                      alt={opp.name}
+                                      fill
+                                      className="object-contain"
+                                      sizes="32px"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="w-8 h-8 flex items-center justify-center rounded overflow-hidden bg-gradient-to-br from-info/10 to-primary/10 flex-shrink-0">
+                                    <Fish size={20} className="text-primary" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm truncate text-base-content flex items-center gap-1">
+                                    <TranslatedFishName name={opp.name} />
+                                    {opp.confidence >= 85 && (
+                                      <Flame size={14} className="text-orange-500 flex-shrink-0" fill="currentColor" />
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-base-content/80 font-medium">
+                                    {opp.bestBait && opp.bestBaitSource !== 'mock' ? (
+                                      <TranslatedText text={opp.bestBait} />
+                                    ) : (
+                                      'Check local conditions'
+                                    )}
+                                  </p>
+                                  {/* Bait reasoning - only show for today and if available */}
+                                  {day.isToday && opp.baitReasoning && (
+                                    <p className="text-xs text-base-content/60 italic mt-0.5">
+                                      {opp.baitReasoning}
+                                    </p>
                                   )}
-                                </p>
-                                <p className="text-xs text-base-content/80 font-medium">
-                                  {opp.biteWindows && opp.biteWindows.length > 0 ? (
-                                    <>
-                                      {/* Show first 2 bite windows for specificity (e.g., time + tide) */}
-                                      {opp.biteWindows.slice(0, 2).map((window, idx) => (
-                                        <span key={idx}>
-                                          {idx > 0 && ' • '}
-                                          {window.description}
-                                        </span>
-                                      ))}
-                                      {opp.bestBait && (
-                                        <>
-                                          {' • '}
-                                          <TranslatedText text={opp.bestBait} />
-                                        </>
-                                      )}
-                                    </>
-                                  ) : (
-                                    <>
-                                      {opp.bestBait ? (
-                                        <TranslatedText text={opp.bestBait} />
-                                      ) : (
-                                        'Check local conditions'
-                                      )}
-                                    </>
-                                  )}
-                                </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="badge badge-sm bg-base-100 border-base-300 text-base-content font-bold">
+                                  {opp.confidence}%
+                                </div>
+                                {/* Chevron to expand techniques/habitats */}
+                                {hasExpandableContent && (
+                                  <button
+                                    onClick={() => toggleExpanded(opp.name)}
+                                    className="btn btn-ghost btn-xs p-1"
+                                    aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp size={16} className="text-base-content/60" />
+                                    ) : (
+                                      <ChevronDown size={16} className="text-base-content/60" />
+                                    )}
+                                  </button>
+                                )}
                               </div>
                             </div>
-                            <div className="badge badge-sm bg-base-100 border-base-300 text-base-content font-bold">
-                              {opp.confidence}%
-                            </div>
+
+                            {/* Expandable content - techniques, habitats, and timing */}
+                            {hasExpandableContent && isExpanded && (
+                              <div className="px-2 pb-2 pt-0 space-y-2 border-t border-base-300 mt-2">
+                                {/* Best Times */}
+                                {opp.bestTimes && opp.bestTimes.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-base-content/80 mb-1">
+                                      <TranslatedText text="Best times:" />
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {opp.bestTimes.map((time, timeIdx) => {
+                                        // Debug: log what we're rendering
+                                        if (day.dayIndex === 0 && idx === 0 && timeIdx === 0) {
+                                          console.log(`[WeeklyPlanner] Rendering best_times for ${opp.name}:`, opp.bestTimes);
+                                        }
+                                        return (
+                                        <span
+                                          key={timeIdx}
+                                          className="badge badge-sm badge-primary"
+                                        >
+                                          {time}
+                                        </span>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Alternative Techniques */}
+                                {opp.alternativeTechniques && opp.alternativeTechniques.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-base-content/80 mb-1">
+                                      <TranslatedText text="Good techniques:" />
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {opp.alternativeTechniques.map((technique, techIdx) => (
+                                        <span
+                                          key={techIdx}
+                                          className="badge badge-sm badge-outline badge-info"
+                                        >
+                                          {technique}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Alternative Habitats */}
+                                {opp.alternativeHabitats && opp.alternativeHabitats.length > 0 && (
+                                  <div>
+                                    <p className="text-xs font-semibold text-base-content/80 mb-1">
+                                      <TranslatedText text="Where to fish:" />
+                                    </p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {opp.alternativeHabitats.map((habitat, habIdx) => (
+                                        <span
+                                          key={habIdx}
+                                          className="badge badge-sm badge-outline badge-success"
+                                        >
+                                          {habitat}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

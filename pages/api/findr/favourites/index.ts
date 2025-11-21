@@ -119,6 +119,11 @@ interface SpeciesRecord {
   tide_sensitivity: string;
   conservation_status: string | null;
   fun_fact: string | null;
+  // Phase 1: Structured fishing content
+  recommended_baits: string[] | null;
+  preferred_habitats: string[] | null;
+  effective_techniques: string[] | null;
+  best_times: string[] | null;
   advice: Array<{
     type: string;
     regions: string;
@@ -179,6 +184,10 @@ const SPECIES_SELECT_COLUMNS = `
   tide_sensitivity,
   conservation_status,
   fun_fact,
+  recommended_baits,
+  preferred_habitats,
+  effective_techniques,
+  best_times,
   advice
 `;
 
@@ -356,6 +365,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             tide_sensitivity,
             conservation_status,
             fun_fact,
+            recommended_baits,
+            preferred_habitats,
+            effective_techniques,
             advice
           `)
           .in('id', speciesIds);
@@ -425,6 +437,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               waveHeight: 0.5
             },
             forecast,
+            // Phase 1: Structured fishing content
+            recommendedBaits: species.recommended_baits,
+            preferredHabitats: species.preferred_habitats,
+            effectiveTechniques: species.effective_techniques,
+            best_times: species.best_times,
             advice: species.advice,
             eatingQuality: species.eating_quality,
             funFact: species.fun_fact,

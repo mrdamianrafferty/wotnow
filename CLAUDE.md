@@ -242,6 +242,24 @@ All tables include Row-Level Security (RLS) policies for data protection.
 - Common pitfalls: VARCHAR vs TEXT, ENUM types, INTEGER vs NUMERIC in CASE statements
 - All column names and types documented in [DATABASE_SCHEMA_REFERENCE.md](./DATABASE_SCHEMA_REFERENCE.md)
 
+**Common Column Name Pitfalls:**
+- ❌ **WRONG**: `ices_rectangles.name` → ✅ **CORRECT**: `ices_rectangles.region`
+- ❌ **WRONG**: `ices_rectangles.code` → ✅ **CORRECT**: `ices_rectangles.rectangle_code`
+- ❌ **WRONG**: `ices_rectangles.biogeographic_region` → ✅ **CORRECT**: `ices_rectangles.region`
+- ❌ **WRONG**: `findr_conditions_latest.temperature_c` → ✅ **CORRECT**: `findr_conditions_latest.sea_temp_c` or `water_temp_c`
+- ❌ **WRONG**: `findr_conditions_latest.salinity_ppt` → ✅ **CORRECT**: `findr_conditions_latest.salinity_psu`
+- **IMPORTANT**: When querying ices_rectangles, ALWAYS use `rectangle_code` (not `code`) and `region` (not `name` or `biogeographic_region`)
+
+**Species Table RLS:**
+- The `species` table has Row-Level Security policies that block direct reads by authenticated users
+- **ALWAYS** use service role client to fetch species data in API endpoints:
+  ```typescript
+  const speciesClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  });
+  ```
+- See `/pages/api/findr/favourites/index.ts` and `/pages/api/findr/advice/tactical.ts` for examples
+
 ## Key Development Patterns
 
 ### Hooks Usage
@@ -420,6 +438,14 @@ This comprehensive guide covers:
 - `FINDR_PREDICTIONS_DATA_SOURCES.md` - Data sources for predictions
 - `COPERNICUS_DATA_INGESTION_GUIDE.md` - CMEMS data ingestion process
 - `DIAGNOSIS_QUICK_REF.md` - Quick troubleshooting guide
+
+**Fishing Advice System (Nov 2025):**
+- `FISHING_ADVICE_SYSTEM_COMPLETE.md` - ✅ **READY** Tactical and strategic advice implementation (Nov 20, 2025)
+- `FISHING_ADVICE_QUICK_REF.md` - Quick reference for API and UI integration
+- `APPROACH_SCORING_SYSTEM.md` - Complete approach scoring guide (habitats + techniques)
+- `APPROACH_SCORING_QUICK_START.md` - Quick start for approach scoring integration
+- `CONDITION_HELPERS_INTEGRATION_GUIDE.md` - Tide stage and time of day helpers
+- `HELPER_FUNCTIONS_COMPLETE.md` - Helper functions implementation summary
 
 ### 🟡 Reference (Still Relevant But Historical)
 

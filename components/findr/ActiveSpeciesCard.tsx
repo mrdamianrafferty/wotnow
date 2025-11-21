@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Waves, Clock, Share2 } from 'lucide-react';
+import { Zap, ChevronDown, ChevronUp, Info, Heart, Fish, Clock, Share2 } from 'lucide-react';
 import { shareText } from '@/lib/capacitor/share';
 import { MiniCalendar } from './MiniCalendar';
 import { TranslatedFishName, TranslatedText } from '../translation/TranslatedFishCard';
@@ -78,6 +78,12 @@ interface ActiveSpeciesCardProps {
   onRemove: (id: string) => void;
   onTogglePriority: (id: string) => void;
   onAction?: (id: string) => void;
+  // Today's tactical advice
+  tacticalAdvice?: {
+    approach?: { habitat: string; technique: string; score: number; summary: string; explanation: string };
+    baits: string[];
+    timing?: string;
+  };
 }
 
 /**
@@ -91,6 +97,7 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
   onRemove,
   onTogglePriority: _onTogglePriority,
   onAction,
+  tacticalAdvice,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -271,6 +278,38 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
           </div>
         </div>
 
+        {/* Today's Tactical Advice */}
+        {tacticalAdvice && (
+          <div className="bg-base-200/50 rounded-lg p-3 mt-4 space-y-2">
+            <h4 className="font-semibold text-sm text-base-content flex items-center gap-2">
+              <Fish size={14} /> <TranslatedText text="Today's Plan" />
+            </h4>
+
+            {tacticalAdvice.approach && (
+              <div className="text-sm text-base-content/80 space-y-1">
+                <p className="font-medium">
+                  {tacticalAdvice.approach.habitat} • {tacticalAdvice.approach.technique}
+                </p>
+                <p className="text-xs text-base-content/60 italic">
+                  {tacticalAdvice.approach.explanation || 'No explanation available'}
+                </p>
+              </div>
+            )}
+
+            {tacticalAdvice.baits.length > 0 && (
+              <p className="text-sm text-base-content/70">
+                <span className="font-medium"><TranslatedText text="Baits:" /></span> {tacticalAdvice.baits.join(', ')}
+              </p>
+            )}
+
+            {tacticalAdvice.timing && (
+              <p className="text-sm text-base-content/70">
+                <span className="font-medium"><TranslatedText text="Timing:" /></span> {tacticalAdvice.timing}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* 7-Day Forecast */}
         <div className="mt-4">
           <h4 className="text-xs font-semibold text-base-content/70 mb-2">
@@ -311,65 +350,18 @@ export const ActiveSpeciesCard: React.FC<ActiveSpeciesCardProps> = ({
             {/* Fallback: Show legacy data if no Phase 1 data available */}
             {!species.recommendedBaits && !species.preferredHabitats && (
               <>
-                {/* How to Catch */}
+                {/* Basic Info (Fallback only - no generic advice) */}
                 <div className="space-y-2">
                   <h4 className="font-semibold flex items-center gap-2 text-base-content">
-                    <Fish size={16} /> <TranslatedText text="How to catch right now" />
+                    <Fish size={16} /> <TranslatedText text="Basic info" />
                   </h4>
                   <div className="bg-base-200 rounded-lg p-3 space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium"><TranslatedText text="Best bait:" /></span>{' '}
-                      <TranslatedText text={species.bestBait} />
-                    </p>
                     <p className="text-sm">
                       <span className="font-medium"><TranslatedText text="Season:" /></span>{' '}
                       <TranslatedText text={species.season} />
                     </p>
                     {species.scientificName && (
                       <p className="text-xs italic text-base-content/60">{species.scientificName}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tactical Advice */}
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2 text-base-content">
-                    <Waves size={16} /> <TranslatedText text="Tactical advice" />
-                  </h4>
-                  <div className="text-sm text-base-content/70 space-y-2">
-                    {species.advice && species.advice.length > 0 ? (
-                      <>
-                        {species.advice.map((adviceItem, index) => (
-                          <div key={index} className="space-y-1">
-                            {adviceItem.type && (
-                              <p className="font-semibold text-base-content/90">
-                                {adviceItem.type === 'Shore' ? '🏖️' : '🚤'} {adviceItem.type}
-                              </p>
-                            )}
-                            {adviceItem.best_time && (
-                              <p>• <TranslatedText text={`Best time: ${adviceItem.best_time}`} /></p>
-                            )}
-                            {adviceItem.favourite_baits_and_natural_diet && (
-                              <p>• <TranslatedText text={`Bait: ${adviceItem.favourite_baits_and_natural_diet}`} /></p>
-                            )}
-                            {adviceItem.tide_sensitivity && (
-                              <p>• <TranslatedText text={`Tide: ${adviceItem.tide_sensitivity}`} /></p>
-                            )}
-                            {adviceItem.typical_distance_depth && (
-                              <p>• <TranslatedText text={`Depth: ${adviceItem.typical_distance_depth}`} /></p>
-                            )}
-                            {adviceItem.effect_of_weather && (
-                              <p>• <TranslatedText text={`Weather: ${adviceItem.effect_of_weather}`} /></p>
-                            )}
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        <p>• <TranslatedText text="Fish the tide turns for best results" /></p>
-                        <p>• <TranslatedText text="Focus on structure and current breaks" /></p>
-                        <p>• <TranslatedText text="Be ready to move if action slows" /></p>
-                      </>
                     )}
                   </div>
                 </div>

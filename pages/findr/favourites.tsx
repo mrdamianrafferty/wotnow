@@ -8,9 +8,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
   Fish,
-  Star,
+
   TrendingUp,
-  Calendar,
+
   Heart,
   Clock,
   Flame,
@@ -32,11 +32,11 @@ import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
-import { useCatchStatistics } from '../../hooks/useCatchStatistics';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '../../components/EnhancedFishDeck';
 import { type ScoreBreakdownData } from '../../components/findr/ScoreBreakdown';
 import { WeeklyPlannerCard } from '../../components/findr/WeeklyPlannerCard';
+import { useFavoritesTacticalAdvice } from '../../hooks/useFavoritesTacticalAdvice';
 
 // Code-split species card components - loaded as user scrolls to them
 const ActiveSpeciesCard = dynamic(
@@ -228,6 +228,11 @@ interface FavouritesApiResponseItem {
   image?: string | null;
   confidence?: number | null;
   forecast?: number[] | null;
+  // Phase 1: Structured fishing content
+  recommendedBaits?: string[] | null;
+  preferredHabitats?: string[] | null;
+  effectiveTechniques?: string[] | null;
+  best_times?: string[] | null;
   advice?: Array<{
     favourite_baits_and_natural_diet?: string | null;
   }> | null;
@@ -648,10 +653,14 @@ const FindrFavouritesPage: React.FC = () => {
             fav.image ?? null,
             fav.name ?? fav.name_en ?? null
           );
-          const adviceEntries = Array.isArray(fav.advice) ? fav.advice : [];
-          const baitTips = adviceEntries
-            .map((advice) => advice?.favourite_baits_and_natural_diet?.trim())
-            .filter((value): value is string => Boolean(value && value.length > 0));
+          // Phase 1: Use structured recommendedBaits, fallback to old advice field
+          const baitTips = Array.isArray(fav.recommendedBaits) && fav.recommendedBaits.length > 0
+            ? fav.recommendedBaits.filter(b => b && b.trim().length > 0)
+            : Array.isArray(fav.advice)
+              ? fav.advice
+                  .map((advice) => advice?.favourite_baits_and_natural_diet?.trim())
+                  .filter((value): value is string => Boolean(value && value.length > 0))
+              : [];
 
           const nameHint =
             fav.name ??
@@ -748,13 +757,15 @@ const FindrFavouritesPage: React.FC = () => {
   }, [priorityIds]);
 
   const favoritesList = favorites ?? [];
+  const hasFavourites = favoritesList.length > 0;
   const prioritySet = useMemo(() => new Set(priorityIds), [priorityIds]);
 
   const { insights, loading: _insightsLoading, error: insightsError, source: insightsSource } = useFavouriteInsights(favoritesList);
   const insightMap = useMemo(() => new Map(insights.map((insight) => [insight.id, insight])), [insights]);
 
-  // Fetch real catch statistics
-  const { data: catchStats, isLoading: catchStatsLoading } = useCatchStatistics();
+  // DISABLED: Catch statistics not needed for current UI (WeeklyPlannerCard only)
+  // Can re-enable if Active/Good/Waiting cards are restored
+  // const { data: catchStats, isLoading: catchStatsLoading } = useCatchStatistics();
 
   useEffect(() => {
     if (favoritesList.length === 0) return;
@@ -782,6 +793,51 @@ const FindrFavouritesPage: React.FC = () => {
     latitude: cleanLocation?.lat ?? null,
     longitude: cleanLocation?.lon ?? null,
   });
+
+  // Fetch tactical advice for today's fish
+  const { advice: tacticalAdvice } = useFavoritesTacticalAdvice({
+    rectangleCode: activeRectangle,
+    latitude: cleanLocation?.lat ?? null,
+    longitude: cleanLocation?.lon ?? null,
+    enabled: Boolean(activeRectangle) && hasFavourites,
+  });
+
+  // Create map of species tactical advice
+  const tacticalAdviceMap = useMemo(() => {
+    const map = new Map<string, {
+      approach?: { habitat: string; technique: string; score: number; summary: string; explanation: string };
+      alternativeTechniques?: string[];
+      alternativeHabitats?: string[];
+      baits: string[];
+      timing?: string;
+    }>();
+
+    if (tacticalAdvice) {
+      // Add active species
+      tacticalAdvice.activeNow?.forEach(item => {
+        map.set(item.species.code.toLowerCase(), {
+          approach: item.approach,
+          alternativeTechniques: item.alternativeTechniques,
+          alternativeHabitats: item.alternativeHabitats,
+          baits: item.baits,
+          timing: item.timing,
+        });
+      });
+
+      // Add upcoming species
+      tacticalAdvice.upcomingSoon?.forEach(item => {
+        map.set(item.species.code.toLowerCase(), {
+          approach: item.approach,
+          alternativeTechniques: item.alternativeTechniques,
+          alternativeHabitats: item.alternativeHabitats,
+          baits: item.baits,
+          timing: item.timing,
+        });
+      });
+    }
+
+    return map;
+  }, [tacticalAdvice]);
 
   const cards = useMemo(() => {
     if (!predictions) return [];
@@ -880,15 +936,11 @@ const FindrFavouritesPage: React.FC = () => {
       const name = card?.commonName ?? metadata?.name ?? 'Saved fish';
       const scientificName = card?.scientificName ?? metadata?.scientificName;
 
-      // Get real catch data from statistics, fallback to insight/metadata, then mock as last resort
-      const realCatchData = catchStats?.bySpecies.get(id.toLowerCase());
-      const catches = realCatchData?.totalCatches ?? insight?.catches ?? metadata?.catches ?? mock.catches;
+      // Get real catch data from insight/metadata, fallback to mock as last resort
+      const catches = insight?.catches ?? metadata?.catches ?? mock.catches;
 
-      // Use real last caught date if available
-      const lastCaughtDate = realCatchData?.lastCaughtDate;
-      const recentActivity = lastCaughtDate
-        ? `Last caught ${new Date(lastCaughtDate).toLocaleDateString()}`
-        : (insight?.recentActivity ?? card?.summary ?? mock.recentActivity);
+      // Use recent activity from insight or fallback to mock
+      const recentActivity = insight?.recentActivity ?? card?.summary ?? mock.recentActivity;
 
       // Use real 7-day forecast if available, fallback to synthetic forecast
       const forecast = forecastsBySpecies.get(id) ?? generate7DayForecast(derivedConfidence, id);
@@ -920,7 +972,7 @@ const FindrFavouritesPage: React.FC = () => {
         forecast,
       } satisfies FavouriteEntry;
     });
-  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, catchStats, forecastsBySpecies]);
+  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, forecastsBySpecies]);
 
   const sortedFavourites = useMemo(() => {
     const entries = [...favouriteEntries];
@@ -956,13 +1008,13 @@ const FindrFavouritesPage: React.FC = () => {
     [favouriteEntries]
   );
 
-  // Use real catch statistics if available, otherwise fall back to summing favouriteEntries
+  // Sum catches from favouriteEntries
   const _totalCatches = useMemo(
-    () => catchStats?.totalCatches ?? favouriteEntries.reduce((sum, entry) => sum + entry.catches, 0),
-    [catchStats, favouriteEntries]
+    () => favouriteEntries.reduce((sum, entry) => sum + entry.catches, 0),
+    [favouriteEntries]
   );
 
-  const missingLiveDataCount = useMemo(
+  const _missingLiveDataCount = useMemo(
     () => favouriteEntries.filter((entry) => entry.isMockOnly).length,
     [favouriteEntries]
   );
@@ -997,7 +1049,7 @@ const FindrFavouritesPage: React.FC = () => {
   }, [sortedFavourites]);
 
 
-  const handleSortChange = useCallback((sortOption: SortOption) => {
+  const _handleSortChange = useCallback((sortOption: SortOption) => {
     setSortBy(sortOption);
   }, []);
 
@@ -1223,11 +1275,9 @@ const FindrFavouritesPage: React.FC = () => {
     return `Most likely to pull on ${day}`;
   }, []);
 
-  const handleReloadPredictions = useCallback(() => {
+  const _handleReloadPredictions = useCallback(() => {
     reload();
   }, [reload]);
-
-  const hasFavourites = favoritesList.length > 0;
 
   return (
     <>
@@ -1381,15 +1431,16 @@ const FindrFavouritesPage: React.FC = () => {
             </div>
           )}
 
-          {/* Catch Statistics Loading State */}
-          {catchStatsLoading && !isLoadingFavourites && (
+          {/* DISABLED: Catch Statistics Loading State - not needed for current UI */}
+          {/* {catchStatsLoading && !isLoadingFavourites && (
             <div className="alert alert-info mb-6">
               <Loader2 size={20} className="animate-spin" />
               <span>Loading catch statistics...</span>
             </div>
-          )}
+          )} */}
             
-            <header className="text-center mb-8">
+            {/* ARCHIVED: Page header - Starting directly with WeeklyPlannerCard instead */}
+            {/* <header className="text-center mb-8">
               <div className="flex justify-center items-center mb-4">
                 <Heart size={32} className="text-pink-400 mr-3 fish-shimmer" />
                 <h1 className="text-3xl font-bold text-base-content"><TranslatedText text="Your findr faves" /></h1>
@@ -1402,7 +1453,6 @@ const FindrFavouritesPage: React.FC = () => {
                   <Calendar size={14} className="text-primary mr-2" />
                   <span><TranslatedText text="Forecast day" />: {predictionDate}</span>
                 </div>
-                {/* Timestamp hidden to simplify UI */}
                 <button
                     onClick={handleReloadPredictions}
                     className="btn btn-ghost btn-xs ml-2"
@@ -1421,7 +1471,7 @@ const FindrFavouritesPage: React.FC = () => {
                   </span>
                 </div>
               )}
-            </header>            {activeRectangle && loading && (
+            </header> */}            {activeRectangle && loading && (
               <div className="alert alert-info mb-6">
                 <span className="loading loading-ring loading-xs text-blue-400" aria-hidden />
                 <span><TranslatedText text="Fetching live activity for" /> {activeRectangle}…</span>
@@ -1445,26 +1495,53 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Best Window Today Hero Section - Hidden to simplify UI */}
-            {/* {hasFavourites && (
-              <BestWindowToday
-                favourites={favouriteEntries}
-                loading={loading}
-              />
-            )} */}
-
-            {/* Weekly Planner */}
-            {hasFavourites && (
+            {/* Weekly Planner - 7-day forecast grid */}
+            {hasFavourites && activeRectangle && (
               <div className="mb-8">
                 <WeeklyPlannerCard
-                  favourites={favouriteEntries}
+                  favourites={favouriteEntries.map(entry => {
+                    // Get tactical advice for this species (for today's reasoning)
+                    // Use species code for lookup (matches tactical advice API keys)
+                    const lookupKey = (entry.card?.speciesCode || entry.id).toLowerCase();
+                    const advice = tacticalAdviceMap.get(lookupKey);
+
+                    // Debug logging - check what data we have
+                    console.log(`[Favourites] Processing ${entry.name}:`, {
+                      hasCard: !!entry.card,
+                      cardBestTimes: entry.card?.bestTimes,
+                      hasAdvice: !!advice,
+                      adviceAlternativeTechniques: advice?.alternativeTechniques,
+                      adviceAlternativeHabitats: advice?.alternativeHabitats
+                    });
+
+                    // Use tactical advice baits if available (more specific), otherwise use entry baits
+                    const baits = advice?.baits && advice.baits.length > 0
+                      ? advice.baits.join(', ')
+                      : entry.bestBait;
+                    const baitSource = advice?.baits && advice.baits.length > 0
+                      ? 'prediction' as const
+                      : entry.bestBaitSource;
+
+                    return {
+                      name: entry.name,
+                      confidence: entry.confidence,
+                      forecast: entry.forecast,
+                      bestBait: baits,
+                      bestBaitSource: baitSource,
+                      baitReasoning: advice?.approach?.explanation,
+                      alternativeTechniques: advice?.alternativeTechniques,
+                      alternativeHabitats: advice?.alternativeHabitats,
+                      image: entry.image,
+                      card: entry.card,
+                    };
+                  })}
                   loading={loading || forecasts7DayLoading}
                 />
               </div>
             )}
 
-            {/* Sorting Controls */}
-            {hasFavourites && (
+            {/* ARCHIVED: Sorting Controls - Not needed with WeeklyPlannerCard only */}
+            {/* {hasFavourites && (
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                 <h2 className="text-2xl font-bold text-base-content mb-4 sm:mb-0 flex items-center">
                   <Star className="mr-3 text-yellow-300 fish-combo" />
@@ -1506,7 +1583,7 @@ const FindrFavouritesPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Favourites Grid */}
             {favorites === null ? (
@@ -1516,8 +1593,10 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             ) : hasFavourites ? (
               <div className="space-y-8">
+                {/* ARCHIVED: Active/Good/Waiting species cards - Focusing on WeeklyPlannerCard only for now */}
+                {/* Can restore these sections later if needed */}
                 {/* 🔥 Active Species (85%+) - Peak Conditions */}
-                {groupedFavourites.active.length > 0 && (
+                {false && groupedFavourites.active.length > 0 && (
                   <section>
                     <div className="flex items-center mb-4">
                       <Flame size={24} className="mr-3 text-error animate-pulse" />
@@ -1535,6 +1614,7 @@ const FindrFavouritesPage: React.FC = () => {
                       {groupedFavourites.active.map((entry) => {
                         const forecast = entry.forecast ?? generate7DayForecast(entry.confidence, entry.id);
                         const scoreBreakdown = entry.card ? buildScoreBreakdown(entry.card) : undefined;
+                        const entryTacticalAdvice = tacticalAdviceMap.get(entry.id.toLowerCase());
                         return (
                                                     <ActiveSpeciesCard
                             key={entry.id}
@@ -1565,6 +1645,7 @@ const FindrFavouritesPage: React.FC = () => {
                             }}
                             location={cleanLocation}
                             tideInfo={tideInfo}
+                            tacticalAdvice={entryTacticalAdvice}
                             onRemove={(id) => removeFavourite(id)}
                             onTogglePriority={(id) => togglePriority(id)}
                             onAction={() => handleFishClick(entry)}
@@ -1576,7 +1657,7 @@ const FindrFavouritesPage: React.FC = () => {
                 )}
 
                 {/* ⚡ Good Species (70-84%) - Plan Your Trip */}
-                {groupedFavourites.good.length > 0 && (
+                {false && groupedFavourites.good.length > 0 && (
                   <section>
                     <div className="flex items-center mb-4">
                       <TrendingUp size={24} className="mr-3 text-warning" />
@@ -1639,7 +1720,7 @@ const FindrFavouritesPage: React.FC = () => {
                 )}
 
                 {/* ⏳ Waiting Species (<60%) - Watching for Improvement */}
-                {groupedFavourites.waiting.length > 0 && (
+                {false && groupedFavourites.waiting.length > 0 && (
                   <section>
                     <div className="flex items-center mb-4">
                       <Clock size={24} className="mr-3 text-base-content/50" />
@@ -1707,10 +1788,10 @@ const FindrFavouritesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Info about data sources */}
-            <p className="text-xs text-gray-400 mt-8 text-center max-w-3xl mx-auto">
+            {/* ARCHIVED: Info about data sources - Not relevant with WeeklyPlannerCard only */}
+            {/* <p className="text-xs text-gray-400 mt-8 text-center max-w-3xl mx-auto">
               <TranslatedText text="Catch totals reflect your logged catches. Bite scores include real-time tides, environmental conditions, and species preferences. Confidence scores, species bios, and bait tips update live from Findr predictions." />
-            </p>
+            </p> */}
             {missingImageCount > 0 && (
               <p className="text-xs text-base-content/40 mt-2 text-center">
                 <TranslatedText text={`${missingImageCount} favourite${missingImageCount === 1 ? '' : 's'} are still using emoji stand-ins while we source artwork.`} />
