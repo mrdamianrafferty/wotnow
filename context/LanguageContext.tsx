@@ -1,7 +1,12 @@
 // context/LanguageContext.tsx
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getUserLanguage, setUserLanguage } from '../lib/user/language';
+import {
+  fetchRemoteUserLanguage,
+  getUserLanguage,
+  isSupportedLanguage,
+  setUserLanguage,
+} from '../lib/user/language';
 
 interface LanguageContextType {
   language: string;
@@ -17,20 +22,43 @@ interface LanguageProviderProps {
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<string>('en');
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    // Only run on client side to avoid hydration mismatches
-    setIsClient(true);
-    const userLang = getUserLanguage();
-    setLanguageState(userLang);
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    let cancelled = false;
+    const localLanguage = getUserLanguage();
+    setLanguageState(localLanguage);
+
+    const handleLanguageChanged = (event: Event) => {
+      const custom = event as CustomEvent<{ language?: string }>;
+      const nextLanguage = custom.detail?.language;
+      if (!isSupportedLanguage(nextLanguage)) return;
+      setLanguageState((current) => (current === nextLanguage ? current : nextLanguage));
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChanged as EventListener);
+
+    void (async () => {
+      const remoteLanguage = await fetchRemoteUserLanguage();
+      if (!cancelled && isSupportedLanguage(remoteLanguage) && remoteLanguage !== localLanguage) {
+        setLanguageState(remoteLanguage);
+        setUserLanguage(remoteLanguage, { syncRemote: false });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('languageChanged', handleLanguageChanged as EventListener);
+    };
   }, []);
 
   const setLanguage = (lang: string) => {
-    setLanguageState(lang);
-    if (isClient) {
-      setUserLanguage(lang);
-    }
+    const safeLang = isSupportedLanguage(lang) ? lang : 'en';
+    setLanguageState((current) => (current === safeLang ? current : safeLang));
+    setUserLanguage(safeLang);
   };
 
   const isSpanish = language === 'es';
@@ -47,10 +75,8 @@ export function useLanguage() {
   
   // Fallback state for when provider is not available
   const [fallbackLanguage, setFallbackLanguage] = useState<string>('en');
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
     if (typeof window !== 'undefined' && context === undefined) {
       const userLang = getUserLanguage();
       setFallbackLanguage(userLang);
@@ -66,10 +92,9 @@ export function useLanguage() {
   console.warn('useLanguage used outside LanguageProvider, using fallbacks');
   
   const setLanguage = (lang: string) => {
-    setFallbackLanguage(lang);
-    if (isClient) {
-      setUserLanguage(lang);
-    }
+    const safeLang = isSupportedLanguage(lang) ? lang : 'en';
+    setFallbackLanguage(safeLang);
+    setUserLanguage(safeLang);
   };
 
   const isSpanish = fallbackLanguage === 'es';

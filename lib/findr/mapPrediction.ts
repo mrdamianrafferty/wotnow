@@ -165,6 +165,12 @@ export interface CardData {
   isSeasonal?: boolean;
 }
 
+// Map known alternate slugs to the canonical species slug.
+const SPECIES_IMAGE_SLUG_ALIASES: Record<string, string> = {
+  'mediterranean-horse-mackerel-scad': 'mediterranean-scad',
+  'mediterranean-horse-mackerel': 'mediterranean-scad',
+};
+
 const SPECIES_IMAGES_BY_SLUG: Record<string, SpeciesImageInfo> = (() => {
   const lookup: Record<string, SpeciesImageInfo> = {};
   for (const info of Object.values(SPECIES_IMAGE_MAP)) {
@@ -551,8 +557,20 @@ export function resolveSpeciesImage(
     if (SPECIES_IMAGES_BY_SLUG[slug]) {
       return SPECIES_IMAGES_BY_SLUG[slug];
     }
+    const aliasSlug = SPECIES_IMAGE_SLUG_ALIASES[slug];
+    if (aliasSlug && SPECIES_IMAGES_BY_SLUG[aliasSlug]) {
+      return SPECIES_IMAGES_BY_SLUG[aliasSlug];
+    }
     if (SPECIES_IMAGES_BY_SLUG[normalizedName]) {
       return SPECIES_IMAGES_BY_SLUG[normalizedName];
+    }
+    const sanitizedName = normalizedName.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+    if (sanitizedName && SPECIES_IMAGES_BY_SLUG[sanitizedName]) {
+      return SPECIES_IMAGES_BY_SLUG[sanitizedName];
+    }
+    const sanitizedSlug = sanitizedName.replace(/[^a-z0-9]+/g, '-');
+    if (sanitizedSlug && SPECIES_IMAGES_BY_SLUG[sanitizedSlug]) {
+      return SPECIES_IMAGES_BY_SLUG[sanitizedSlug];
     }
   }
   return undefined;
@@ -577,13 +595,20 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
       ? speciesIdCandidate.trim()
       : undefined;
 
-  const commonName =
+  const localizedCommonName =
     firstString(prediction.species_common_name) ||
     firstString(prediction.common_name) ||
+    undefined;
+
+  const englishCommonName =
     firstString(prediction.name_en) ||
+    firstString(prediction.species_name) ||
     firstString(prediction.target_species) ||
     firstString(prediction.catch_name) ||
+    firstString(prediction.species_common_name) ||
     'Unidentified species';
+
+  const commonName = englishCommonName ?? localizedCommonName ?? 'Unidentified species';
 
   const fallbackId = speciesCode ?? `species-${index}`;
   const idSource = rawSpeciesId && rawSpeciesId.length > 0 ? rawSpeciesId : fallbackId;
@@ -657,7 +682,7 @@ export function mapPrediction(prediction: FishingPrediction, index: number): Car
     'fun_facts',
   ]);
 
-  const imageInfo = resolveSpeciesImage(speciesCode, commonName);
+  const imageInfo = resolveSpeciesImage(speciesCode, englishCommonName ?? commonName);
   
   // Prefer bio from prediction data (Supabase), fallback to hardcoded bios
   const bioFromPrediction = typeof prediction.playful_bio === 'string' && prediction.playful_bio.trim().length > 0

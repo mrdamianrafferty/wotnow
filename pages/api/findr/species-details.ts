@@ -100,10 +100,14 @@ export default async function handler(
   const { species_id, species_code, region_code, rectangle_code } = req.query;
 
   if (!species_id && !species_code) {
-    return res.status(400).json({ 
-      error: 'Missing required parameter: species_id or species_code' 
+    return res.status(400).json({
+      error: 'Missing required parameter: species_id or species_code'
     });
   }
+
+  // Validate species_id is a UUID, not a species code
+  const isValidUUID = typeof species_id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(species_id);
+  const useSpeciesId = isValidUUID;
 
   try {
     const supabase = getSupabaseServerClient();
@@ -154,11 +158,14 @@ export default async function handler(
       `)
       .limit(1);
 
-    // Filter by either species_id or species_code
-    if (species_id) {
+    // Filter by either species_id (if valid UUID) or species_code
+    if (useSpeciesId) {
       query = query.eq('id', species_id);
     } else if (species_code) {
       query = query.eq('species_code', species_code);
+    } else {
+      // species_id was provided but it's not a valid UUID, treat it as a code
+      query = query.eq('species_code', species_id);
     }
 
     const { data: speciesData, error: speciesError } = await query.single();

@@ -1,3 +1,9 @@
+import {
+	getUserLanguage as getGlobalUserLanguage,
+	isSupportedLanguage as isGloballySupportedLanguage,
+	setUserLanguage as setGlobalUserLanguage,
+} from '../user/language';
+
 type PlantCategoryId = 'vegetables' | 'herbs' | 'fruit' | 'flowers' | 'trees';
 
 export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'it';
@@ -102,8 +108,6 @@ const PLANTS: PlantRecord[] = [
 	},
 ];
 
-const LANGUAGE_STORAGE_KEY = 'grow_daisy_language';
-
 export const SUPPORTED_LANGUAGES: Record<SupportedLanguage, string> = {
 	en: 'English',
 	es: 'Español',
@@ -186,18 +190,16 @@ export function getAllNames(plant: PlantSearchResult): string[] {
 }
 
 export function getUserLanguage(): SupportedLanguage {
-	if (typeof window === 'undefined') {
-		return 'en';
+	const globalLanguage = getGlobalUserLanguage();
+	if (isGloballySupportedLanguage(globalLanguage) && globalLanguage in SUPPORTED_LANGUAGES) {
+		return globalLanguage as SupportedLanguage;
 	}
-	const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-	return (stored as SupportedLanguage) || 'en';
+	return 'en';
 }
 
 export function setUserLanguage(lang: SupportedLanguage) {
-	if (typeof window === 'undefined') {
-		return;
-	}
-	window.localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+	const safeLang = SUPPORTED_LANGUAGES[lang] ? lang : 'en';
+	setGlobalUserLanguage(safeLang);
 }
 
 export function getCategoryLabel(category: string): string {

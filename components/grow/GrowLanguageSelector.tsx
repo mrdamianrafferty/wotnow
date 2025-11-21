@@ -19,6 +19,9 @@ const LANGUAGE_FLAGS: Record<string, string> = {
   de: '🇩🇪',
   it: '🇮🇹',
   nl: '🇳🇱',
+  pl: '🇵🇱',
+  tr: '🇹🇷',
+  sv: '🇸🇪',
 };
 
 interface GrowLanguageSelectorProps {

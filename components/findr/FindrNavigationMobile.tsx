@@ -26,10 +26,10 @@ interface NavLink {
 
 const LINKS: NavLink[] = [
   { href: '/findr', label: 'findr', translationKey: 'findr', Icon: Fish },
-  { href: '/findr/favourites', label: 'faves', translationKey: 'favourites', Icon: Heart },
+  { href: '/findr/favourites', label: 'go fish!', translationKey: 'favourites', Icon: Heart },
   { href: '/findr/log', label: 'catches', translationKey: 'catches', Icon: ClipboardList },
-  { href: '/findr/my-catches', label: 'gallery', translationKey: 'gallery', Icon: Camera },
-  { href: '/findr/conditions', label: 'conditions', translationKey: 'conditions', Icon: CloudSun },
+  { href: '/findr/my-catches', label: 'gallery', translationKey: 'photos', Icon: Camera },
+  { href: '/findr/conditions', label: 'conditions', translationKey: 'weather', Icon: CloudSun },
   { href: '/findr/info', label: 'info', translationKey: 'info', Icon: Info },
 ];
 

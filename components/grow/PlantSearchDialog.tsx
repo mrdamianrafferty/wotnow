@@ -17,8 +17,6 @@ import {
   getPlantsByCategory,
   getPlantCategories,
   getAllNames,
-  getUserLanguage,
-  setUserLanguage,
   SUPPORTED_LANGUAGES,
   getCategoryLabel,
   getCategoryIcon,
@@ -26,6 +24,7 @@ import {
   type PlantCategory,
   type SupportedLanguage,
 } from '../../lib/grow/plantSearch';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface PlantSearchDialogProps {
   open: boolean;
@@ -50,6 +49,7 @@ export function PlantSearchDialog({
   const [userLang, setUserLang] = useState<SupportedLanguage>('en');
   const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<'search' | 'browse'>('search');
+  const { language: globalLanguage, setLanguage: setGlobalLanguage } = useLanguage();
 
   const loadCategories = useCallback(async () => {
     try {
@@ -96,8 +96,12 @@ export function PlantSearchDialog({
   );
 
   useEffect(() => {
-    setUserLang(getUserLanguage());
-  }, []);
+    if (globalLanguage in SUPPORTED_LANGUAGES) {
+      setUserLang(globalLanguage as SupportedLanguage);
+    } else if (userLang !== 'en') {
+      setUserLang('en');
+    }
+  }, [globalLanguage, userLang]);
 
   useEffect(() => {
     if (open) {
@@ -129,7 +133,7 @@ export function PlantSearchDialog({
   const handleLanguageChange = (lang: string) => {
     const newLang = lang as SupportedLanguage;
     setUserLang(newLang);
-    setUserLanguage(newLang);
+    setGlobalLanguage(newLang);
   };
 
   const handleSelectPlant = (plant: PlantSearchResult) => {

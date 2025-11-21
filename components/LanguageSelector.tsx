@@ -21,6 +21,9 @@ const LANGUAGE_FLAGS: Record<string, string> = {
   de: '🇩🇪',
   it: '🇮🇹',
   nl: '🇳🇱',
+  pl: '🇵🇱',
+  tr: '🇹🇷',
+  sv: '🇸🇪',
 };
 
 export function LanguageSelector({ className = '', compact = false, showLabel = false }: LanguageSelectorProps) {

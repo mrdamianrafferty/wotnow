@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { clientTranslate, clientTranslateBatch } from '../lib/translation/clientTranslate';
-import { getUserLanguage } from '../lib/user/language';
+import { getUserLanguage, setUserLanguage } from '../lib/user/language';
 import { useLanguage } from '../context/LanguageContext';
 
 /**
@@ -81,7 +81,7 @@ export function useUserLanguage() {
   }, []);
 
   const updateLanguage = (newLang: string) => {
-    localStorage.setItem('findr-language', newLang);
+    setUserLanguage(newLang);
     setLanguage(newLang);
     // Note: You might want to trigger a re-render of the entire app
     // or use a context provider for global language state

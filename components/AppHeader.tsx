@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { supabase } from '../lib/supabase/client';
+import { LanguageSelector } from './LanguageSelector';
+import { useTranslationMap } from '../lib/translation/useTranslationMap';
 
 export type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
@@ -40,6 +42,32 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   // Access user preferences to infer locations when not provided via props
   const { preferences } = useUserPreferences();
+  const translationInputs = React.useMemo(
+    () => [
+      'Skip to main content',
+      'Open menu',
+      'Locations',
+      'Set home location',
+      'Set beach location',
+      'Home',
+      'Beach',
+      'Switch to Home',
+      'Switch to Beach',
+      'Showing beach — switch to home',
+      'Showing home — switch to beach',
+      'My Weather',
+      'Grow garden',
+      'Activity dashboard',
+      'Set activities',
+      'My Account',
+      'Log in / Register',
+      'Go to settings',
+      'Log in or register',
+      'Log in',
+    ] as const,
+    [],
+  );
+  const { t } = useTranslationMap(translationInputs);
 
   const [authReady, setAuthReady] = React.useState(false);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -107,12 +135,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
-  const resolvedHomeLabel = mounted && effectiveHome?.name
-    ? `🏡 ${effectiveHome.name.split(',')[0]} ✓`
-    : 'Set home location';
-  const resolvedCoastLabel = mounted && effectiveCoast?.name
-    ? `🏖️ ${effectiveCoast.name.split(',')[0]} ✓`
-    : 'Set beach location';
+  const resolvedHomeLabel = React.useMemo(() => {
+    if (mounted && effectiveHome?.name) {
+      return `🏡 ${effectiveHome.name.split(',')[0]} ✓`;
+    }
+    return t('Set home location');
+  }, [effectiveHome?.name, mounted, t]);
+
+  const resolvedCoastLabel = React.useMemo(() => {
+    if (mounted && effectiveCoast?.name) {
+      return `🏖️ ${effectiveCoast.name.split(',')[0]} ✓`;
+    }
+    return t('Set beach location');
+  }, [effectiveCoast?.name, mounted, t]);
 
   // Toggle click handler with fallbacks to open dialogs if missing
   const handleSwapClick = () => {
@@ -136,7 +171,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 btn btn-primary btn-sm"
       >
-        Skip to main content
+        {t('Skip to main content')}
       </a>
 
       <div className="navbar bg-base-100 shadow-sm">
@@ -147,7 +182,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <label
               tabIndex={0}
               className="btn btn-ghost swap swap-rotate text-gray-800"
-              aria-label="Open menu"
+              aria-label={t('Open menu')}
               role="button"
               aria-haspopup="menu"
             >
@@ -162,7 +197,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             >
               {/* Mobile: Location buttons at top */}
               <li className="menu-title md:hidden">
-                <span>Locations</span>
+                <span>{t('Locations')}</span>
               </li>
               <li className="md:hidden">
                 <button
@@ -175,7 +210,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   className="justify-start"
                 >
                   <span suppressHydrationWarning>
-                    {effectiveHome?.name ? `🏡 ${effectiveHome.name.split(',')[0]}` : '🏡 Set home location'}
+                    {effectiveHome?.name ? `🏡 ${effectiveHome.name.split(',')[0]}` : `🏡 ${t('Set home location')}`}
                   </span>
                 </button>
               </li>
@@ -189,7 +224,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   className="justify-start"
                 >
                   <span suppressHydrationWarning>
-                    {effectiveCoast?.name ? `🏖️ ${effectiveCoast.name.split(',')[0]}` : '🏖️ Set beach location'}
+                    {effectiveCoast?.name ? `🏖️ ${effectiveCoast.name.split(',')[0]}` : `🏖️ ${t('Set beach location')}`}
                   </span>
                 </button>
               </li>
@@ -205,24 +240,30 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     className="justify-start"
                   >
                     <span>
-                      🔄 {activeLocationType === 'coastal' ? 'Switch to Home' : 'Switch to Beach'}
+                      🔄 {activeLocationType === 'coastal' ? t('Switch to Home') : t('Switch to Beach')}
                     </span>
                   </button>
                 </li>
               )}
               <li className="mt-1 border-t border-base-200 md:hidden" />
+
+              <li className="md:hidden">
+                <div className="px-2 py-1">
+                  <LanguageSelector className="w-full" showLabel />
+                </div>
+              </li>
               
               {/* Use root path for Home */}
-              <li><Link href="/">Home</Link></li>
-              <li><Link href="/weather">My Weather</Link></li>
-              <li><Link href="/grow">Grow garden</Link></li>
-              <li><Link href="/activities">Activity dashboard</Link></li>
-              <li><Link href="/interests">Set activities</Link></li>
+              <li><Link href="/">{t('Home')}</Link></li>
+              <li><Link href="/weather">{t('My Weather')}</Link></li>
+              <li><Link href="/grow">{t('Grow garden')}</Link></li>
+              <li><Link href="/activities">{t('Activity dashboard')}</Link></li>
+              <li><Link href="/interests">{t('Set activities')}</Link></li>
               <li className="mt-1 border-t border-base-200" />
               {authReady && userId ? (
-                <li><Link href="/settings">🤾 My Account</Link></li>
+                <li><Link href="/settings">🤾 {t('My Account')}</Link></li>
               ) : (
-                <li><Link href="/login">🪵 Log in / Register</Link></li>
+                <li><Link href="/login">🪵 {t('Log in / Register')}</Link></li>
               )}
             </ul>
           </div>
@@ -244,17 +285,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="navbar-end gap-2 items-center">
           {/* Desktop: Show all controls (hidden on mobile) */}
           <div className="hidden md:flex gap-2 items-center">
+            <LanguageSelector compact className="hidden md:flex" />
+
             {/* DaisyUI swap-text toggle (render only when controlled) */}
             {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
               <button
                 type="button"
                 className={`swap swap-text btn btn-ghost btn-md ${activeLocationType === 'coastal' ? 'swap-active' : ''}`}
                 onClick={handleSwapClick}
-                aria-label={activeLocationType === 'coastal' ? 'Showing beach — switch to home' : 'Showing home — switch to beach'}
-                title={activeLocationType === 'coastal' ? 'Beach' : 'Home'}
+                aria-label={activeLocationType === 'coastal' ? t('Showing beach — switch to home') : t('Showing home — switch to beach')}
+                title={activeLocationType === 'coastal' ? t('Beach') : t('Home')}
               >
-                <div className="swap-on">Beach</div>
-                <div className="swap-off">Home</div>
+                <div className="swap-on">{t('Beach')}</div>
+                <div className="swap-off">{t('Home')}</div>
               </button>
             )}
 
@@ -282,21 +325,21 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <Link
                   href="/settings"
                   className="badge badge-outline badge-success gap-1 whitespace-nowrap"
-                  title="Go to settings"
-                  aria-label="Go to settings"
+                  title={t('Go to settings')}
+                  aria-label={t('Go to settings')}
                 >
                   <span aria-hidden="true">🤾</span>
-                  <span>{displayName ?? 'My Account'}</span>
+                  <span>{displayName ?? t('My Account')}</span>
                 </Link>
               ) : (
                 <Link
                   href="/login"
                   className="badge badge-outline badge-info gap-1 whitespace-nowrap"
-                  title="Log in or register"
-                  aria-label="Log in or register"
+                  title={t('Log in or register')}
+                  aria-label={t('Log in or register')}
                 >
                   <span aria-hidden="true">🪵</span>
-                  <span>Log in / Register</span>
+                  <span>{t('Log in / Register')}</span>
                 </Link>
               )
             )}
@@ -309,8 +352,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <Link
                   href="/settings"
                   className="btn btn-ghost btn-sm btn-circle"
-                  title="My Account"
-                  aria-label="My Account"
+                  title={t('My Account')}
+                  aria-label={t('My Account')}
                 >
                   <span className="text-xl">🤾</span>
                 </Link>
@@ -318,8 +361,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <Link
                   href="/login"
                   className="btn btn-ghost btn-sm btn-circle"
-                  title="Log in"
-                  aria-label="Log in"
+                  title={t('Log in')}
+                  aria-label={t('Log in')}
                 >
                   <span className="text-xl">🪵</span>
                 </Link>

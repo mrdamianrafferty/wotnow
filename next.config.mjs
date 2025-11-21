@@ -194,6 +194,21 @@ const pwaConfig = withPWA({
         },
       },
     },
+    // Cache Google-hosted OAuth avatars (no extensions in URL)
+    {
+      urlPattern: /^https?:\/\/(?:lh[0-9]|profiles)\.googleusercontent\.com\/.*$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-avatar-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 24 * 60 * 60, // 1 day
+        },
+        cacheableResponse: {
+          statuses: [0, 200],
+        },
+      },
+    },
     // Cache images
     {
       urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,

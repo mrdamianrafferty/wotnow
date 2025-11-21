@@ -565,10 +565,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         if (normalizedSpeciesId) {
+          // Check if speciesId is a UUID or a species_code
+          const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedSpeciesId);
+
+          let actualSpeciesId = normalizedSpeciesId;
+
+          // If it's not a UUID, look it up by species_code
+          if (!isValidUUID && supabaseServiceClient) {
+            const { data: speciesData } = await supabaseServiceClient
+              .from('species')
+              .select('id')
+              .eq('species_code', normalizedSpeciesId.toUpperCase())
+              .single();
+
+            if (speciesData?.id) {
+              actualSpeciesId = speciesData.id;
+            }
+          }
+
           const { error, count } = await supabase
             .from('user_favourites')
             .delete({ count: 'exact' })
-            .eq('species_id', normalizedSpeciesId)
+            .eq('species_id', actualSpeciesId)
             .eq('user_id', userId);
 
           if (error) {

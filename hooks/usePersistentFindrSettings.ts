@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { saveLastLocationToCookie, getLastLocationFromCookie } from '../lib/cookies';
 
 const STORAGE_KEY = 'findrSettings';
@@ -6,7 +7,6 @@ const STORAGE_KEY = 'findrSettings';
 interface StoredSettings {
   selectedCode?: string;
   predictionDate?: string;
-  language?: string;
 }
 
 export interface RectangleLocationDetails {
@@ -18,7 +18,7 @@ export interface RectangleLocationDetails {
 
 interface UsePersistentFindrSettingsArgs {
   predictionDate: string;
-  language?: string;
+  language?: string; // Deprecated - retained for backward compatibility
 }
 
 interface UsePersistentFindrSettingsResult {
@@ -36,14 +36,12 @@ function readStoredSettings(): StoredSettings | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      // If no localStorage, check cookie as fallback
       const cookieLocation = getLastLocationFromCookie();
       if (cookieLocation) {
         console.log('[PersistentFindrSettings] Found location in cookie:', cookieLocation.rectangleCode);
         return {
           selectedCode: cookieLocation.rectangleCode,
           predictionDate: undefined,
-          language: undefined,
         };
       }
       return null;
@@ -53,7 +51,6 @@ function readStoredSettings(): StoredSettings | null {
       return {
         selectedCode: typeof parsed.selectedCode === 'string' ? parsed.selectedCode : undefined,
         predictionDate: typeof parsed.predictionDate === 'string' ? parsed.predictionDate : undefined,
-        language: typeof parsed.language === 'string' ? parsed.language : undefined,
       };
     }
   } catch (error) {
@@ -64,52 +61,46 @@ function readStoredSettings(): StoredSettings | null {
 
 export function usePersistentFindrSettings({
   predictionDate: defaultPredictionDate,
-  language: defaultLanguage = 'en',
 }: UsePersistentFindrSettingsArgs): UsePersistentFindrSettingsResult {
   const [selectedCode, setSelectedCode] = useState('');
   const [predictionDate, setPredictionDate] = useState(defaultPredictionDate);
-  const [language, setLanguage] = useState(defaultLanguage);
   const hasHydrated = useRef(typeof window === 'undefined');
+  const { language, setLanguage } = useLanguage();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
     const stored = readStoredSettings();
     if (stored?.selectedCode) {
       setSelectedCode(stored.selectedCode);
     }
-    // Don't load old prediction dates - always use today's date
-    // The stored date might be days/weeks old which would show stale predictions
+
     if (stored?.predictionDate) {
       const storedDate = new Date(stored.predictionDate);
       const today = new Date(defaultPredictionDate);
-      // Only use stored date if it's today or in the future
       if (storedDate >= today) {
         setPredictionDate(stored.predictionDate);
       }
-      // Otherwise stick with defaultPredictionDate (today)
     }
-    if (stored?.language) {
-      setLanguage(stored.language);
-    }
+
     hasHydrated.current = true;
   }, [defaultPredictionDate]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!hasHydrated.current) return;
+    if (typeof window === 'undefined' || !hasHydrated.current) return;
+
     const payload: StoredSettings = {
       selectedCode: selectedCode || undefined,
       predictionDate: predictionDate || undefined,
-      language: language || undefined,
     };
+
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch (error) {
       console.warn('Unable to persist Findr settings', error);
     }
-  }, [language, predictionDate, selectedCode]);
+  }, [predictionDate, selectedCode]);
 
-  // Callback to save location to cookie (for incognito/cross-session persistence)
   const handleSaveLocationToCookie = useCallback((details: RectangleLocationDetails) => {
     const success = saveLastLocationToCookie({
       rectangleCode: details.rectangleCode,

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import AppHeader from '../components/AppHeader';
 import Footer from '../components/footer';
 import { supabase } from '@/lib/supabase/client';
+import { LanguageSelector } from '@/components/LanguageSelector';
 
 type UserMetadata = { selectedActivities?: string[]; interests?: string[]; activities?: string[] };
 
@@ -143,6 +144,18 @@ export default function AccountPage() {
               <button className="btn btn-error btn-outline btn-sm hover:btn-error" onClick={signOut}>Sign out</button>
             </div>
           </header>
+
+          {/* Language preference */}
+          <section className="card bg-base-100 shadow-xl mb-4">
+            <div className="card-body">
+              <h2 className="card-title">Language</h2>
+              <p className="text-sm opacity-70 mb-3">Update your preferred language for Go Daisy, Findr, and Grow Daisy.</p>
+              <div className="max-w-xs">
+                <LanguageSelector showLabel className="w-full" />
+                <p className="text-xs opacity-60 mt-2">We save your choice locally and sync it when you are signed in.</p>
+              </div>
+            </div>
+          </section>
 
           {/* Locations */}
           <section className="card bg-base-100 shadow-xl mb-4">

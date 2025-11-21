@@ -22,6 +22,7 @@ import {
   Mountain,
   ExternalLink,
   ArrowDownUp,
+  Heart,
 } from 'lucide-react';
 import type { CardData } from '../../lib/findr/mapPrediction';
 import { getSpeciesAdvice } from '../../data/speciesAdvice';
@@ -31,11 +32,23 @@ import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { Phase1SpeciesInfo } from './Phase1SpeciesInfo';
 import { useLanguage } from '../../context/LanguageContext';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { useFavourites } from '../../hooks/useFavourites';
 
 import { GuildBadge } from './GuildBadge';
 import { SpeciesBadges } from './SpeciesBadges';
 import { SpeciesSeasonalityCard } from './SpeciesSeasonalityCard';
 import type { SeasonalityProfile } from '@/types/findrSeasonality';
+
+// Helper to get favourite key from card
+function getFavouriteKeyFromCard(card: CardData): string {
+  if (card.speciesId && card.speciesId.trim().length > 0) {
+    return card.speciesId.trim();
+  }
+  if (card.speciesCode && card.speciesCode.trim().length > 0) {
+    return card.speciesCode.trim().toUpperCase();
+  }
+  return card.id?.trim() ?? '';
+}
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -46,11 +59,11 @@ const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: strin
       </span>
     );
   }
-  
-  const weather = getWeatherMessage(speciesCode, scientificName, { 
-    windSpeedMS, 
-    pressureHPA, 
-    weatherScore 
+
+  const weather = getWeatherMessage(speciesCode, scientificName, {
+    windSpeedMS,
+    pressureHPA,
+    weatherScore
   });
   return <span>{weather.message}</span>;
 };
@@ -190,6 +203,8 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const { language } = useLanguage();
   const { location: unifiedLocation } = useUnifiedLocation();
 
+  // Use favourites hook
+  const { toggleFavourite, isFavourited } = useFavourites({ autoSync: true });
   const advice = useMemo(() => {
     if (!card) return null;
     return getSpeciesAdvice(card.commonName, card.speciesCode ?? undefined);
@@ -219,6 +234,19 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
   const titleId = useId();
   const contentId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Check if current species is favourited
+  const isFavourite = card ? isFavourited(getFavouriteKeyFromCard(card)) : false;
+
+  // Handle favourite toggle
+  const handleToggleFavourite = () => {
+    if (!card) return;
+    const favouriteKey = getFavouriteKeyFromCard(card);
+    toggleFavourite(favouriteKey, {
+      speciesCode: card.speciesCode,
+      speciesName: card.commonName
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -375,14 +403,26 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               </p>
             )}
           </div>
-          <button
-            type="button"
-            className="btn btn-ghost btn-sm h-10 w-10"
-            onClick={onClose}
-            aria-label="Close species profile"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Favourite Button - Toggle on/off */}
+            <button
+              type="button"
+              className={`btn btn-sm ${isFavourite ? 'btn-error' : 'btn-outline btn-primary'}`}
+              onClick={handleToggleFavourite}
+              title={isFavourite ? 'Remove from favourites' : 'Add to favourites'}
+            >
+              <Heart size={18} fill={isFavourite ? 'currentColor' : 'none'} />
+            </button>
+            {/* Close Button */}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm h-10 w-10"
+              onClick={onClose}
+              aria-label="Close species profile"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {card.image ? (

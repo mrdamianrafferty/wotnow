@@ -5,24 +5,20 @@
  * Uses stock species photos as fallback when user hasn't uploaded a photo.
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
-import { Camera, Upload, Info, ClipboardList, Fish, TrendingUp } from 'lucide-react';
+import { Camera, Upload, Info, ClipboardList, Fish } from 'lucide-react';
 import Link from 'next/link';
 import { TrophyPhotoCarousel, PhotoGalleryGrid, type PhotoData } from '@/components/findr/TrophyPhotoCarousel';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 import { useAuth } from '@/context/AuthContext';
 import { TranslatedText } from '@/components/translation/TranslatedFishCard';
 import { FindrNavigation } from '@/components/findr/FindrNavigationMobile';
-import { BadgeShowcase } from '@/components/findr/BadgeShowcase';
-import { MemberStatus } from '@/components/findr/MemberStatus';
-import { getFishingEncouragement } from '@/lib/findr/encouragementMessages';
 
 export default function MyCatchesPage() {
   const { user } = useAuth();
   const { data, isLoading, error, refetch } = useMyCatchPhotos();
   const photosRaw = data?.photos || [];
-  const sessions = useMemo(() => data?.sessions || [], [data?.sessions]);
   const [_pinning, setPinning] = useState<string | null>(null);
 
   // Sort: pinned photos first, then by caught_at descending (if available)
@@ -77,22 +73,6 @@ export default function MyCatchesPage() {
   // Count user photos vs stock photos
   const userPhotos = photos.filter(p => p.metadata?.photographer !== 'Stock photo');
   const stockPhotos = photos.filter(p => p.metadata?.photographer === 'Stock photo');
-
-  // Calculate species diversity and total fish count from sessions
-  const speciesCount = useMemo(() => {
-    const uniqueSpecies = new Set(sessions.map(s => s.species_common_name));
-    return uniqueSpecies.size;
-  }, [sessions]);
-
-  const totalFishCount = useMemo(() => {
-    return sessions.reduce((total, session) => total + session.quantity, 0);
-  }, [sessions]);
-
-  // Get unique species names for display
-  const speciesNamesList = useMemo(() => {
-    const uniqueNames = Array.from(new Set(sessions.map(s => s.species_common_name)));
-    return uniqueNames.sort();
-  }, [sessions]);
 
   return (
     <>
@@ -258,57 +238,6 @@ export default function MyCatchesPage() {
                    </div>
                  )}
                </div>
-
-              {/* Quick stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-title">
-                    <TranslatedText text="Species Caught" />
-                  </div>
-                  <div className="stat-value flex items-center gap-2">
-                    <span className="text-primary">{speciesCount}</span>
-                    <Fish className="w-7 h-7 text-primary" />
-                    <Fish className="w-7 h-7 text-secondary" />
-                  </div>
-                  {speciesNamesList.length > 0 && (
-                    <div className="stat-desc mt-2">
-                      <div className="flex flex-col gap-1 max-h-32 overflow-y-auto">
-                        {speciesNamesList.slice(0, 8).map((name, idx) => (
-                          <span key={idx} className="badge badge-sm badge-primary badge-outline">
-                            {name}
-                          </span>
-                        ))}
-                        {speciesNamesList.length > 8 && (
-                          <span className="text-xs opacity-60 mt-1">
-                            +{speciesNamesList.length - 8} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="stat bg-base-100 shadow rounded-lg">
-                  <div className="stat-title">
-                    <TranslatedText text="Total Fish" />
-                  </div>
-                  <div className="stat-value flex items-center gap-2">
-                    <span className="text-success">{totalFishCount}</span>
-                    <TrendingUp className="w-7 h-7 text-success" />
-                  </div>
-                  <div className="stat-desc mt-2">
-                    <span className="badge badge-success gap-1">
-                      {getFishingEncouragement(totalFishCount)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Member Status - Shows medals earned */}
-                <MemberStatus sessions={sessions} />
-
-                {/* Badge Showcase */}
-                <BadgeShowcase sessions={sessions} />
-              </div>
             </>
           )}
         </div>

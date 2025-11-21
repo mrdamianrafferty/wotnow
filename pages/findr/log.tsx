@@ -8,6 +8,8 @@ import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { useQuickCatchLog } from '@/hooks/useCatchLogger';
 import { supabase } from '@/lib/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { CatchSummaryStats } from '../../components/findr/CatchSummaryStats';
+import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
 const RecentCatchesWidget = dynamic(() => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })), { ssr: false, loading: () => null });
@@ -236,6 +238,9 @@ export default function FindrCatchLogPage() {
 
   // Calculate stats
   const totalSpeciesCaught = new Set(catches.map(c => c.species_common_name)).size;
+  const { data: catchSummaryData, isLoading: isLoadingCatchSummary } = useMyCatchPhotos();
+  const summarySessions = catchSummaryData?.sessions ?? [];
+  const shouldRenderSummary = isAuthenticated && !isLoadingCatchSummary && summarySessions.length > 0;
 
   return (
     <>
@@ -294,6 +299,10 @@ export default function FindrCatchLogPage() {
         </div>
 
         <div className="container mx-auto px-4 pt-6 max-w-6xl">
+
+          {shouldRenderSummary && (
+            <CatchSummaryStats sessions={summarySessions} className="mt-2 mb-6" />
+          )}
 
           {/* Recent Catches Widget */}
           <div className="mt-6">

@@ -68,6 +68,7 @@ interface MetNoMarineSeriesHour {
   timeISO: string;
   waveHeightM: number | null;
   waveDirectionDeg: number | null;
+  wavePeriodSeconds: number | null;
   seaTemperatureC: number | null;
   windSpeedMS: number | null;
   windSpeedKts: number | null;
@@ -245,7 +246,10 @@ async function fetchMetNoMarineSeries(
     const timeISO = new Date(entry.time).toISOString();
 
     const waveHeight = typeof details.sea_surface_wave_height === 'number' ? details.sea_surface_wave_height : null;
-  const waveDirection = typeof details.sea_surface_wave_from_direction === 'number' ? details.sea_surface_wave_from_direction : null;
+    const waveDirection = typeof details.sea_surface_wave_from_direction === 'number' ? details.sea_surface_wave_from_direction : null;
+    const wavePeriod = typeof (details as { sea_surface_wave_period?: number }).sea_surface_wave_period === 'number'
+      ? (details as { sea_surface_wave_period: number }).sea_surface_wave_period
+      : null;
     const seaTemp = typeof details.sea_water_temperature === 'number' ? details.sea_water_temperature : null;
     const currentSpeed = typeof details.sea_water_speed === 'number' ? details.sea_water_speed : null;
     const currentDirection = typeof details.sea_water_to_direction === 'number' ? details.sea_water_to_direction : null;
@@ -259,7 +263,8 @@ async function fetchMetNoMarineSeries(
     hours.push({
       timeISO,
       waveHeightM: toFixedOrNull(waveHeight, 2),
-  waveDirectionDeg: toFixedOrNull(waveDirection, 0),
+        waveDirectionDeg: toFixedOrNull(waveDirection, 0),
+        wavePeriodSeconds: toFixedOrNull(wavePeriod, 1),
       seaTemperatureC: toFixedOrNull(seaTemp, 2),
       currentSpeedMS: currentSpeed,
       currentDirectionDeg: currentDirection,

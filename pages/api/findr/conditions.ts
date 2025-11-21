@@ -6,6 +6,10 @@ import { FALLBACK_CONDITIONS, type FallbackConditionPayload } from '../../../lib
 import { FALLBACK_RECTANGLE_OPTIONS } from '../../../lib/findr/fallbackRectangles';
 import { normalizeRectangleCode } from '../../../lib/findr/rectangle';
 import { calculateWaterClarity } from '../../../lib/utils/waterClarity';
+import {
+  fetchMetNoMarineSeries,
+  fetchOpenMeteoMarineSeries,
+} from '../../../lib/services/weatherService';
 
 
 type ConditionsSource = 'supabase' | 'fallback';
@@ -277,6 +281,112 @@ async function fetchAndMergeWeatherData(
   } catch (error) {
     console.error('[findr] Failed to fetch/merge weather data:', error);
     // Don't throw - weather is supplementary, marine data is still valid
+  }
+}
+
+/**
+ * Fetch live wave data for user's precise fishing location (not rectangle center).
+ * Uses the same waterfall strategy as weather: MET Norway → Open-Meteo → cached fallback.
+ *
+ * Why this matters:
+ * - Nearshore waves are typically 30-70% lower than offshore (rectangle center) predictions
+ * - Shore anglers see actual conditions at their fishing spot, not open ocean
+ * - Wave height varies significantly within a 30km x 60km ICES rectangle
+ */
+async function fetchAndMergeWaveData(
+  payload: FallbackConditionPayload,
+  preciseLat: number,
+  preciseLon: number
+): Promise<void> {
+  try {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    // Try MET Norway first (best for Norwegian/North Sea waters, includes nearshore attenuation)
+    try {
+      const metMarine = await fetchMetNoMarineSeries(
+        preciseLat,
+        preciseLon,
+        now.toISOString(),
+        tomorrow.toISOString(),
+        { maxHours: 24 }
+      );
+
+      if (metMarine && metMarine.hours.length > 0) {
+        // Override cached wave data with live nearshore data
+        const firstHour = metMarine.firstHour;
+        if (firstHour.waveHeightM !== null) {
+          payload.snapshot.marine.waveHeightM = firstHour.waveHeightM;
+        }
+        if (firstHour.waveDirectionDeg !== null) {
+          payload.snapshot.marine.waveDirection = firstHour.waveDirectionDeg;
+        }
+
+        // Update hourly series with live wave data
+        for (let i = 0; i < Math.min(payload.snapshot.hourly.length, metMarine.hours.length); i++) {
+          const metHour = metMarine.hours[i];
+          if (metHour.waveHeightM !== null) {
+            payload.snapshot.hourly[i].waveHeightM = metHour.waveHeightM;
+          }
+          if (metHour.waveDirectionDeg !== null) {
+            payload.snapshot.hourly[i].waveDirectionDeg = metHour.waveDirectionDeg;
+          }
+          if (metHour.wavePeriodSeconds !== null) {
+            payload.snapshot.hourly[i].wavePeriodS = metHour.wavePeriodSeconds;
+          }
+        }
+
+        console.log(`[findr] ✅ Used MET Norway nearshore wave data for ${preciseLat.toFixed(4)},${preciseLon.toFixed(4)} (${firstHour.waveHeightM}m)`);
+        return;
+      }
+    } catch (metError) {
+      console.warn('[findr] MET Norway wave fetch failed, trying Open-Meteo:', metError instanceof Error ? metError.message : String(metError));
+    }
+
+    // Fallback to Open-Meteo (global coverage)
+    try {
+      const openMeteoMarine = await fetchOpenMeteoMarineSeries(
+        preciseLat,
+        preciseLon,
+        now.toISOString(),
+        tomorrow.toISOString(),
+        { maxHours: 24 }
+      );
+
+      if (openMeteoMarine && openMeteoMarine.hours.length > 0) {
+        const firstHour = openMeteoMarine.firstHour;
+        if (firstHour.waveHeightM !== null) {
+          payload.snapshot.marine.waveHeightM = firstHour.waveHeightM;
+        }
+        if (firstHour.waveDirectionDeg !== null) {
+          payload.snapshot.marine.waveDirection = firstHour.waveDirectionDeg;
+        }
+
+        for (let i = 0; i < Math.min(payload.snapshot.hourly.length, openMeteoMarine.hours.length); i++) {
+          const omHour = openMeteoMarine.hours[i];
+          if (omHour.waveHeightM !== null) {
+            payload.snapshot.hourly[i].waveHeightM = omHour.waveHeightM;
+          }
+          if (omHour.waveDirectionDeg !== null) {
+            payload.snapshot.hourly[i].waveDirectionDeg = omHour.waveDirectionDeg;
+          }
+          if (omHour.wavePeriodSeconds !== null) {
+            payload.snapshot.hourly[i].wavePeriodS = omHour.wavePeriodSeconds;
+          }
+        }
+
+        console.log(`[findr] ✅ Used Open-Meteo nearshore wave data for ${preciseLat.toFixed(4)},${preciseLon.toFixed(4)} (${firstHour.waveHeightM}m)`);
+        return;
+      }
+    } catch (omError) {
+      console.warn('[findr] Open-Meteo wave fetch failed:', omError instanceof Error ? omError.message : String(omError));
+    }
+
+    // Final fallback: keep cached rectangle data from CMEMS
+    console.warn(`[findr] ⚠️  No live wave data available for ${preciseLat.toFixed(4)},${preciseLon.toFixed(4)}, using cached rectangle data`);
+  } catch (error) {
+    console.error('[findr] Failed to fetch/merge wave data:', error);
+    // Don't throw - cached wave data from rectangle is still a valid fallback
   }
 }
 
@@ -554,6 +664,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const weatherLat = hasUserLocation ? userLat! : meta.centerLat;
     const weatherLon = hasUserLocation ? userLon! : meta.centerLon;
     await fetchAndMergeWeatherData(payload, weatherLat, weatherLon);
+
+    // Fetch and merge wave data for user's precise fishing location (not rectangle center!)
+    // This provides accurate nearshore wave conditions that shore anglers actually see
+    // Waterfall: MET Norway → Open-Meteo → cached CMEMS (from rectangle)
+    const waveLat = hasUserLocation ? userLat! : meta.centerLat;
+    const waveLon = hasUserLocation ? userLon! : meta.centerLon;
+    await fetchAndMergeWaveData(payload, waveLat, waveLon);
 
     res.setHeader('Cache-Control', 's-maxage=900, stale-while-revalidate=43200');
     res.setHeader('x-findr-conditions-source', 'supabase');
