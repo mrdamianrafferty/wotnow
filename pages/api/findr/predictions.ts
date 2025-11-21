@@ -21,6 +21,9 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const CACHE_TABLE = 'findr_prediction_sessions';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 3; // 3 hours
 
+// PERFORMANCE FIX: Debug logging controlled by env var (default: off in production)
+const DEBUG_LOGGING = process.env.FINDR_DEBUG_LOGGING === 'true';
+
 interface CachedPredictionRow {
   rectangle_code: string;
   prediction_date: string;
@@ -118,17 +121,21 @@ async function readCachedPredictions(params: {
     const now = Date.now();
 
     if (expiresAt && expiresAt <= now) {
-      console.log('[Findr Cache] Cache expired:', { rectangleCode, predictionDate, expiresAt: new Date(expiresAt), now: new Date(now) });
+      if (DEBUG_LOGGING) {
+        console.log('[Findr Cache] Cache expired:', { rectangleCode, predictionDate, expiresAt: new Date(expiresAt), now: new Date(now) });
+      }
       return { data: null, source: null };
     }
 
-    console.log('[Findr Cache] Returning cached data:', {
-      rectangleCode,
-      predictionDate,
-      language,
-      payloadType: Array.isArray(data.payload) ? 'array' : typeof data.payload,
-      payloadLength: Array.isArray(data.payload) ? data.payload.length : 'N/A',
-    });
+    if (DEBUG_LOGGING) {
+      console.log('[Findr Cache] Returning cached data:', {
+        rectangleCode,
+        predictionDate,
+        language,
+        payloadType: Array.isArray(data.payload) ? 'array' : typeof data.payload,
+        payloadLength: Array.isArray(data.payload) ? data.payload.length : 'N/A',
+      });
+    }
 
     return { data: data.payload, source: 'cache' as const };
   } catch (cacheError) {
@@ -349,57 +356,60 @@ async function augmentPredictionsWithLocalizedNames(predictions: unknown): Promi
     return predictions;
   }
 
-  // **OPTIMIZATION: Batch all localization lookups into parallel queries**
-  // Instead of 3 sequential queries (by code, by scientific name, by common name),
-  // run them in parallel and deduplicate
+  // **PHASE 2 OPTIMIZATION: Consolidate 3 parallel queries into 1 single query**
+  // Uses OR conditions to fetch all species in one query instead of 3
+  // Reduces network overhead and query planning time
   const localizationRows: SpeciesLocalizationRow[] = [];
 
   try {
-    // Fetch by species_code, scientific_name, and name_en in parallel
-    const [codeResults, scientificResults, commonResults] = await Promise.all([
-      speciesCodes.size > 0
-        ? supabase
-            .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
-            .in('species_code', Array.from(speciesCodes))
-        : Promise.resolve({ data: null, error: null }),
-      scientificNames.size > 0
-        ? supabase
-            .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
-            .in('scientific_name', Array.from(scientificNames))
-        : Promise.resolve({ data: null, error: null }),
-      commonNames.size > 0
-        ? supabase
-            .from('species')
-            .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
-            .in('name_en', Array.from(commonNames))
-        : Promise.resolve({ data: null, error: null }),
-    ]);
+    // Build OR conditions for single consolidated query
+    const orConditions: string[] = [];
 
-    // Combine results and deduplicate by species_code
-    const seen = new Set<string>();
-    for (const result of [codeResults, scientificResults, commonResults]) {
-      if (result.data) {
-        for (const row of result.data) {
+    if (speciesCodes.size > 0) {
+      const codes = Array.from(speciesCodes).map(c => `"${c}"`).join(',');
+      orConditions.push(`species_code.in.(${codes})`);
+    }
+
+    if (scientificNames.size > 0) {
+      const names = Array.from(scientificNames).map(n => `"${n}"`).join(',');
+      orConditions.push(`scientific_name.in.(${names})`);
+    }
+
+    if (commonNames.size > 0) {
+      const names = Array.from(commonNames).map(n => `"${n}"`).join(',');
+      orConditions.push(`name_en.in.(${names})`);
+    }
+
+    if (orConditions.length > 0) {
+      // SINGLE query with OR conditions - much faster than 3 queries
+      const { data, error } = await supabase
+        .from('species')
+        .select('species_code, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt, playful_bio_en, slug, aliases, best_times')
+        .or(orConditions.join(','));
+
+      if (error) {
+        console.warn('[findr] Localization query error:', error.message);
+      } else if (data) {
+        // Deduplicate by species_code
+        const seen = new Set<string>();
+        for (const row of data) {
           if (row.species_code && !seen.has(row.species_code)) {
             localizationRows.push(row);
             seen.add(row.species_code);
           }
         }
       }
-      if (result.error) {
-        console.warn('[findr] Localization query error:', result.error.message);
+
+      if (DEBUG_LOGGING) {
+        console.log('[findr] Consolidated localization query completed:', {
+          totalRows: localizationRows.length,
+          queriesRun: 1, // Now just 1 query!
+          orConditions: orConditions.length
+        });
       }
     }
-
-    console.log('[findr] Batched localization query completed:', {
-      totalRows: localizationRows.length,
-      queriesRun: 3,
-      parallelExecution: true
-    });
   } catch (error) {
-    console.warn('[findr] Localization batch query failed:', (error as Error).message);
+    console.warn('[findr] Localization query failed:', (error as Error).message);
   }
 
   if (localizationRows.length === 0) {
@@ -837,19 +847,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  console.log('[Findr API] Calling RPC with params:', {
-    rectangle_code_input: useGlobalGrid ? gridCellId : rectangleCode,
-    prediction_date_input: predictionDate,
-    user_language: language,
-  });
+  if (DEBUG_LOGGING) {
+    console.log('[Findr API] Calling RPC with params:', {
+      rectangle_code_input: useGlobalGrid ? gridCellId : rectangleCode,
+      prediction_date_input: predictionDate,
+      user_language: language,
+    });
+  }
 
   // Use Supabase client instead of raw fetch to call the RPC
   let supabase;
   try {
+    // PERFORMANCE FIX: No longer need auth.signOut() workaround
+    // getSupabaseServerClient() now creates fresh client per request (no caching)
     supabase = getSupabaseServerClient();
-    
-    // Ensure no auth state pollution - create a fresh anonymous session
-    await supabase.auth.signOut();
   } catch (error) {
     console.error('[Findr API] Failed to get Supabase client:', error);
     return res.status(500).json({ error: 'Supabase client unavailable' });
@@ -985,15 +996,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    console.log('[Findr API] About to call RPC with params:', {
-      target_rectangle: rectangleCode,
-      target_date: predictionDate,
-      user_lat: userLat,
-      user_lon: userLon,
-      user_substrate: substrateData?.substrate,
-      user_depth_m: bathymetryData?.depth_meters,
-      region_code: regionCode ?? inferredRegionCode,
-    });
+    if (DEBUG_LOGGING) {
+      console.log('[Findr API] About to call RPC with params:', {
+        target_rectangle: rectangleCode,
+        target_date: predictionDate,
+        user_lat: userLat,
+        user_lon: userLon,
+        user_substrate: substrateData?.substrate,
+        user_depth_m: bathymetryData?.depth_meters,
+        region_code: regionCode ?? inferredRegionCode,
+      });
+    }
 
     // Use Confidence V3 with regional seasonality integration
     // Falls back to global grid function for non-ICES areas
@@ -1025,8 +1038,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let rpcError: PostgrestError | null = null;
 
     for (const candidate of rpcCandidates) {
+      // PERFORMANCE FIX: Reduced timeout from 25s to 10s for faster failure detection
+      // Vercel has 30s limit, so 10s allows time for fallback RPC + response
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`RPC ${candidate.name} timeout after 25 seconds`)), 25000)
+        setTimeout(() => reject(new Error(`RPC ${candidate.name} timeout after 10 seconds`)), 10000)
       );
     
       const attempt = await queryWithTiming(
@@ -1042,10 +1057,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       rpcError = attempt.error;
     
       if (!rpcError) {
-        console.log('[Findr API] RPC succeeded:', candidate.name, {
-          dataType: Array.isArray(data) ? 'array' : typeof data,
-          dataLength: Array.isArray(data) ? data.length : 'N/A',
-        });
+        if (DEBUG_LOGGING) {
+          console.log('[Findr API] RPC succeeded:', candidate.name, {
+            dataType: Array.isArray(data) ? 'array' : typeof data,
+            dataLength: Array.isArray(data) ? data.length : 'N/A',
+          });
+        }
         break;
       } else {
         console.warn('[Findr API] RPC failed, will try next candidate if any:', {
@@ -1059,17 +1076,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     }
-    console.log('[Findr API] RPC response via client:', {
-      hasError: Boolean(rpcError),
-      errorCode: rpcError?.code,
-      errorMessage: rpcError?.message,
-      errorDetails: rpcError?.details,
-      errorHint: rpcError?.hint,
-      dataType: Array.isArray(data) ? 'array' : typeof data,
-      dataLength: Array.isArray(data) ? data.length : 'N/A',
-      firstItem: Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]).substring(0, 200) : null,
-      region: rectangleData?.region,
-    });
+
+    if (DEBUG_LOGGING) {
+      console.log('[Findr API] RPC response via client:', {
+        hasError: Boolean(rpcError),
+        errorCode: rpcError?.code,
+        errorMessage: rpcError?.message,
+        errorDetails: rpcError?.details,
+        errorHint: rpcError?.hint,
+        dataType: Array.isArray(data) ? 'array' : typeof data,
+        dataLength: Array.isArray(data) ? data.length : 'N/A',
+        firstItem: Array.isArray(data) && data.length > 0 ? JSON.stringify(data[0]).substring(0, 200) : null,
+        region: rectangleData?.region,
+      });
+    }
 
     if (rpcError) {
       console.error('[Findr API] RPC error details:', {
@@ -1107,17 +1127,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cacheControl = 's-maxage=900, stale-while-revalidate=3600';
     res.setHeader('Cache-Control', cacheControl);
 
-    // **HYBRID PREDICTION SYSTEM: Merge environmental predictions with catch-validated data**
-    const withRegionalData = await mergeWithRegionalAvailability(data, rectangleCode);
+    // **PHASE 2 OPTIMIZATION: Parallelize regional availability and localization queries**
+    // Both queries operate on the same RPC data and can run concurrently
+    // Regional query adds community_boost; localization adds translated names
+    const [withRegionalData, localizedData] = await Promise.all([
+      mergeWithRegionalAvailability(data, rectangleCode),
+      augmentPredictionsWithLocalizedNames(data) // Run on original data in parallel
+    ]);
+
+    // Merge the localized names into the regional data
+    // Both arrays should have the same species in the same order
+    const merged = Array.isArray(withRegionalData) && Array.isArray(localizedData)
+      ? withRegionalData.map((pred, idx) => {
+          if (!pred || typeof pred !== 'object') return pred;
+          const localized = localizedData[idx];
+          if (!localized || typeof localized !== 'object') return pred;
+          return { ...(pred as Record<string, JsonValue>), ...(localized as Record<string, JsonValue>) };
+        })
+      : withRegionalData;
 
     // **Re-rank predictions using confidence × community boost**
-    const reranked = reRankPredictions(withRegionalData);
-
-    const enriched = await augmentPredictionsWithLocalizedNames(reranked);
+    const reranked = reRankPredictions(merged);
 
     // **NOTE: V3 function already includes regional seasonality, so no need to apply old grid-based seasonality**
     // The old applySeasonalityMultipliers() has been removed to avoid conflicts with v3's built-in seasonality
-    const withSeasonality = enriched;
+    const withSeasonality = reranked;
 
     // Cache predictions using the cache key (rectangleCode or lat/lon hash)
     if (cacheKey) {

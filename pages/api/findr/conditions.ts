@@ -221,11 +221,14 @@ function parseDailySeries(input: unknown): FallbackConditionPayload['snapshot'][
 async function fetchAndMergeWeatherData(
   payload: FallbackConditionPayload,
   preciseLat: number,
-  preciseLon: number
+  preciseLon: number,
+  host?: string
 ): Promise<void> {
   try {
-    // Use precise coordinates - unified-weather endpoint has its own caching strategy
-    const weatherUrl = `http://localhost:3000/api/unified-weather?lat=${preciseLat}&lon=${preciseLon}`;
+    // **PHASE 2 FIX**: Use dynamic host instead of hardcoded localhost:3000
+    // Prevents failures in production and when dev server runs on different ports
+    const baseUrl = host || 'http://localhost:3002';
+    const weatherUrl = `${baseUrl}/api/unified-weather?lat=${preciseLat}&lon=${preciseLon}`;
     const response = await fetch(weatherUrl, {
       headers: { 'User-Agent': 'WotNow-Findr-Conditions' }
     });
@@ -658,12 +661,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     applyConditionsRow(payload, data);
 
+    // **PHASE 2 FIX**: Construct base URL from request headers for weather fetch
+    // This ensures the internal API call works in development and production
+    const protocol = req.headers['x-forwarded-proto'] || (req.headers.host?.includes('localhost') ? 'http' : 'https');
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3002';
+    const baseUrl = `${protocol}://${host}`;
+
     // Fetch and merge weather data from the waterfall (FREE: NWS/Met.no/Open-Meteo)
     // Use user's precise location if provided, otherwise fall back to rectangle center
     // This adds airTempC, weatherIcon, precipMM, precipProbability to hourly data
     const weatherLat = hasUserLocation ? userLat! : meta.centerLat;
     const weatherLon = hasUserLocation ? userLon! : meta.centerLon;
-    await fetchAndMergeWeatherData(payload, weatherLat, weatherLon);
+    await fetchAndMergeWeatherData(payload, weatherLat, weatherLon, baseUrl);
 
     // Fetch and merge wave data for user's precise fishing location (not rectangle center!)
     // This provides accurate nearshore wave conditions that shore anglers actually see
