@@ -1,11 +1,12 @@
 import { fetchWeatherApi } from 'openmeteo';
 import { monitoredFetch, weatherMetrics } from '../monitoring/weatherMetrics';
-import { 
-  round3dp as round3dpUtil, 
-  round1dp, 
-  createCacheKey, 
+import {
+  round3dp as round3dpUtil,
+  round1dp,
+  createCacheKey,
   COORDINATE_PRECISION
 } from '../utils/coordinates';
+import { getSupabaseServerClient } from '../supabase/serverClient';
 
 /**
  * Normalize and merge core weather fields (clouds, rain, snow, etc.) with fallback logic
@@ -2141,16 +2142,23 @@ export interface WorldTidesExtreme {
 }
 
 export interface WorldTidesResponse {
-  status: number;
+  status?: number;
   extremes: WorldTidesExtreme[];
   responseTime?: number;
   copyright?: string;
   stationDistance?: number;
+  datum?: string; // Tide datum (e.g., 'CD' = Chart Datum)
 }
 
 /**
- * Fetch tide extremes (high/low) from WorldTides API
- * Uses 3dp rounding (~110m) as WorldTides is free tier
+ * Fetch tide extremes (high/low) from WorldTides API with database caching
+ *
+ * **PHASE 2.1 OPTIMIZATION: Database-backed cache for tide data**
+ * - Tides are predictable and change slowly (cache for 24 hours)
+ * - Uses spatial bucketing at 3dp (~110m resolution)
+ * - Eliminates 680-1686ms external API latency on cache hit
+ * - Expected cache hit rate: >90% for common fishing locations
+ *
  * @param lat Latitude
  * @param lon Longitude
  * @param days Number of days to fetch (default 7)
@@ -2162,13 +2170,55 @@ async function fetchWorldTides(
   days: number = 7
 ): Promise<WorldTidesResponse | null> {
   const WORLDTIDES_API_KEY = process.env.WORLDTIDES_API_KEY;
-  
+
   if (!WORLDTIDES_API_KEY) {
     console.warn('[WorldTides] API key not configured');
     return null;
   }
 
+  // Round coordinates to 3dp for cache bucketing (~110m resolution)
+  const latBucket = round3dp(lat);
+  const lonBucket = round3dp(lon);
+  const startDate = new Date().toISOString().split('T')[0]; // Today's date (YYYY-MM-DD)
+
   try {
+    // **PHASE 2.1: Check cache first**
+    const supabase = getSupabaseServerClient();
+
+    const { data: cachedData, error: cacheError } = await supabase
+      .from('tide_cache')
+      .select('extremes, datum, expires_at')
+      .eq('lat_bucket', latBucket)
+      .eq('lon_bucket', lonBucket)
+      .eq('start_date', startDate)
+      .eq('days', days)
+      .gte('expires_at', new Date().toISOString()) // Not expired
+      .order('cached_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!cacheError && cachedData) {
+      console.log('[WorldTides] Cache hit', {
+        lat_bucket: latBucket,
+        lon_bucket: lonBucket,
+        start_date: startDate,
+        expires_at: cachedData.expires_at,
+      });
+
+      return {
+        extremes: cachedData.extremes as WorldTidesExtreme[],
+        datum: cachedData.datum || 'CD',
+      };
+    }
+
+    // **Cache miss or error - fetch from WorldTides API**
+    console.log('[WorldTides] Cache miss, fetching from API', {
+      lat_bucket: latBucket,
+      lon_bucket: lonBucket,
+      start_date: startDate,
+      cache_error: cacheError?.message,
+    });
+
     // Use full-precision coordinates for API call
     const url = new URL('https://www.worldtides.info/api/v3');
     url.searchParams.set('extremes', '');
@@ -2199,11 +2249,44 @@ async function fetchWorldTides(
       return null;
     }
 
-    const data = await response.json() as WorldTidesResponse;
+    const data = (await response.json()) as WorldTidesResponse;
 
     if (!data.extremes || data.extremes.length === 0) {
       console.warn('[WorldTides] No tide extremes returned');
       return null;
+    }
+
+    // **PHASE 2.1: Store in cache for future requests**
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
+
+      await supabase
+        .from('tide_cache')
+        .upsert(
+          {
+            lat_bucket: latBucket,
+            lon_bucket: lonBucket,
+            start_date: startDate,
+            days,
+            extremes: data.extremes,
+            datum: data.datum || 'CD',
+            expires_at: expiresAt,
+          },
+          {
+            onConflict: 'lat_bucket,lon_bucket,start_date',
+          }
+        );
+
+      console.log('[WorldTides] Cached API response', {
+        lat_bucket: latBucket,
+        lon_bucket: lonBucket,
+        start_date: startDate,
+        expires_at: expiresAt,
+        extremes_count: data.extremes.length,
+      });
+    } catch (cacheWriteError) {
+      // Non-fatal: log and continue
+      console.warn('[WorldTides] Failed to cache response:', (cacheWriteError as Error).message);
     }
 
     return data;
