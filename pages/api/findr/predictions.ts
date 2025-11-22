@@ -19,7 +19,7 @@ interface PredictionRequestBody {
 
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const CACHE_TABLE = 'findr_prediction_sessions';
-const CACHE_TTL_MS = 1000 * 60 * 60 * 3; // 3 hours
+const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 hours (Phase 2.2: Increased from 3h for better cache hit rate)
 
 // PERFORMANCE FIX: Debug logging controlled by env var (default: off in production)
 const DEBUG_LOGGING = process.env.FINDR_DEBUG_LOGGING === 'true';
