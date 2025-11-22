@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -11,6 +11,8 @@ import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import FindrFooter from '../../components/FindrFooter';
 import type { FindrUserSettings } from '../api/findr/user-settings';
+import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
+import type { SavedLocation } from '../../types/multiLocation';
 
 const TECHNIQUES = [
   { id: 'spinning', label: 'Spinning' },
@@ -33,9 +35,87 @@ const HABITATS = [
   { id: 'wrecks', label: 'Wrecks', icon: '🚢' },
 ];
 
+const MAX_REGIONAL_SUGGESTIONS = 50;
+const MAX_GLOBAL_FALLBACK_SUGGESTIONS = 12;
+const REGIONAL_FETCH_MIN_RESULTS = 200; // Request extra rows so we still have 50 after filtering favourites/dismissals.
+const REGIONAL_DEFAULT_MIN_SCORE = 0.35;
+const REGIONAL_MIN_SCORE_FLOOR = 0.0;
+const REGIONAL_MIN_SCORE_STEP = 0.05;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const GLOBAL_FALLBACK_SPECIES_CODES = [
+  'SNR',
+  '91F278',
+  '17799E',
+  'E0E710',
+  '34CD60',
+  'C413E5',
+  '04BC28',
+  '4B29C0',
+  '779F9B',
+  'D1A073',
+  '2A5836',
+  'SBA',
+  'SBR',
+  '2BD-BREAM',
+  '28A108',
+  '5726F7',
+  '4F1DB2',
+  '720F4B',
+  '92F10A',
+  'FD782D',
+  'YFT',
+  'ALB',
+  'BET',
+  'DOL',
+  'WAH',
+  'SWO',
+  'SMA',
+  'AD05CC',
+  '9A2958',
+  'A3C183',
+  '6093F7',
+  '8CE959',
+  'ROO',
+  '7F6482',
+  '8F5EC6',
+  'B4F26D',
+  'PTR',
+  'PHS',
+  'HAL',
+  'COD',
+  'HAD',
+  'CHI',
+  'ATS',
+  'SOK',
+  'STB',
+  'CDA012',
+  'BDF304',
+  'DD85DD',
+  '3DD951',
+];
+const GLOBAL_FALLBACK_NOTE = 'Findr staple pick while we gather more data for your waters';
+
+interface FavouriteChipDisplay {
+  code: string;
+  label: string;
+  scientificName: string | null;
+  slug: string | null;
+}
+
+function dedupeFavouriteChips(items: FavouriteChipDisplay[]): FavouriteChipDisplay[] {
+  if (items.length <= 1) return items;
+  const unique = new Map<string, FavouriteChipDisplay>();
+  for (const item of items) {
+    if (!unique.has(item.code)) {
+      unique.set(item.code, item);
+    }
+  }
+  return Array.from(unique.values());
+}
+
 export default function FindrSettingsPage() {
   const router = useRouter();
-  const { favourites, user, loading: favLoading } = useFavourites();
+  const { favourites, favouriteDetails, user, loading: favLoading, addFavourite, removeFavourite, isFavourited } = useFavourites();
   const {
     preferences: notificationPrefs,
     isLoading: notifLoading,
@@ -61,6 +141,164 @@ export default function FindrSettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingAddCode, setPendingAddCode] = useState<string | null>(null);
+  const [pendingRemoveCode, setPendingRemoveCode] = useState<string | null>(null);
+  const [pendingDismissCode, setPendingDismissCode] = useState<string | null>(null);
+  const [dismissedSuggestionCodes, setDismissedSuggestionCodes] = useState<string[]>([]);
+  const {
+    suggestions: regionalSuggestions,
+    loading: regionalSuggestionsLoading,
+    error: regionalSuggestionsError,
+    regionId: regionalSuggestionsRegionId,
+    refresh: refreshRegionalSuggestions,
+    canSuggest: hasRegionalSuggestions,
+    requestMore: requestMoreRegionalSuggestions,
+    canRequestMore: canRequestMoreRegionalSuggestions,
+  } = useRegionalSpeciesSuggestions(homeLocation);
+  const favouriteCodeSet = useMemo(() => {
+    const codes = favouriteDetails
+      .map((detail) => detail.speciesCode)
+      .filter((code): code is string => Boolean(code))
+      .map((code) => code.trim().toUpperCase());
+
+    if (codes.length > 0) {
+      return new Set(codes);
+    }
+
+    const fallbackCodes = favourites
+      .filter((id) => !UUID_PATTERN.test(id))
+      .map((code) => code.trim().toUpperCase());
+
+    return new Set(fallbackCodes);
+  }, [favouriteDetails, favourites]);
+
+  const favouriteItems = useMemo(() => {
+    const sortByLabel = (items: FavouriteChipDisplay[]) => items.sort((a, b) => a.label.localeCompare(b.label));
+
+    if (favouriteDetails.length > 0) {
+      const mapped = favouriteDetails
+        .map((detail) => {
+          const fallbackCode = detail.speciesCode ?? detail.speciesId;
+          const code = fallbackCode?.trim().toUpperCase();
+          if (!code) return null;
+          const mapInfo = SPECIES_IMAGE_MAP[code];
+          return {
+            code,
+            label: detail.name || mapInfo?.name || code,
+            scientificName: detail.scientificName || mapInfo?.scientificName || null,
+            slug: mapInfo?.slug || null,
+          } satisfies FavouriteChipDisplay;
+        })
+        .filter((item): item is FavouriteChipDisplay => Boolean(item));
+
+      return sortByLabel(dedupeFavouriteChips(mapped));
+    }
+
+    const mapped = favourites
+      .map((rawCode) => {
+        const code = rawCode?.trim().toUpperCase();
+        if (!code) return null;
+        const speciesInfo = SPECIES_IMAGE_MAP[code];
+        return {
+          code,
+          label: speciesInfo?.name || code,
+          scientificName: speciesInfo?.scientificName || null,
+          slug: speciesInfo?.slug || null,
+        } satisfies FavouriteChipDisplay;
+      })
+      .filter((item): item is FavouriteChipDisplay => Boolean(item));
+
+    return sortByLabel(dedupeFavouriteChips(mapped));
+  }, [favouriteDetails, favourites]);
+  const dismissedSuggestionSet = useMemo(() => new Set(dismissedSuggestionCodes.map((code) => code.toUpperCase())), [dismissedSuggestionCodes]);
+  const filteredRegionalSuggestions = useMemo(() => {
+    return regionalSuggestions
+      .filter((suggestion) => {
+        if (favouriteCodeSet.has(suggestion.code)) return false;
+        return !isFavourited(suggestion.code);
+      })
+      .filter((suggestion) => !dismissedSuggestionSet.has(suggestion.code));
+  }, [regionalSuggestions, isFavourited, dismissedSuggestionSet, favouriteCodeSet]);
+
+  const availableRegionalSuggestions = useMemo(() => {
+    const regionalLimited = filteredRegionalSuggestions.slice(0, MAX_REGIONAL_SUGGESTIONS);
+    const shouldPadWithFallbacks =
+      regionalLimited.length < MAX_REGIONAL_SUGGESTIONS &&
+      (!hasRegionalSuggestions || (!regionalSuggestionsLoading && !canRequestMoreRegionalSuggestions));
+
+    if (!shouldPadWithFallbacks) {
+      return regionalLimited;
+    }
+
+    const neededFallbacks = Math.min(
+      MAX_GLOBAL_FALLBACK_SUGGESTIONS,
+      MAX_REGIONAL_SUGGESTIONS - regionalLimited.length,
+    );
+
+    if (neededFallbacks <= 0) {
+      return regionalLimited;
+    }
+
+    const exclusions = new Set<string>();
+    regionalLimited.forEach((suggestion) => exclusions.add(suggestion.code));
+    favouriteCodeSet.forEach((code) => exclusions.add(code));
+    dismissedSuggestionSet.forEach((code) => exclusions.add(code));
+
+    const fallbackSuggestions: RegionalSpeciesSuggestion[] = [];
+    for (const code of GLOBAL_FALLBACK_SPECIES_CODES) {
+      if (fallbackSuggestions.length >= neededFallbacks) break;
+      if (exclusions.has(code)) continue;
+      if (isFavourited(code)) continue;
+
+      const info = SPECIES_IMAGE_MAP[code];
+      if (!info) continue;
+
+      fallbackSuggestions.push({
+        code,
+        label: info.name || code,
+        scientificName: info.scientificName || null,
+        availabilityScore: 0,
+        confidence: 0,
+        source: 'global-fallback',
+        originNote: GLOBAL_FALLBACK_NOTE,
+      });
+      exclusions.add(code);
+    }
+
+    return [...regionalLimited, ...fallbackSuggestions];
+  }, [
+    filteredRegionalSuggestions,
+    favouriteCodeSet,
+    dismissedSuggestionSet,
+    isFavourited,
+    hasRegionalSuggestions,
+    regionalSuggestionsLoading,
+    canRequestMoreRegionalSuggestions,
+  ]);
+
+  const hasGlobalFallbacks = useMemo(
+    () => availableRegionalSuggestions.some((suggestion) => suggestion.source === 'global-fallback'),
+    [availableRegionalSuggestions],
+  );
+
+  useEffect(() => {
+    setDismissedSuggestionCodes([]);
+  }, [homeLocation?.rectangleCode]);
+
+  useEffect(() => {
+    if (!hasRegionalSuggestions) return;
+    if (regionalSuggestionsLoading) return;
+    if (filteredRegionalSuggestions.length >= MAX_REGIONAL_SUGGESTIONS) return;
+    if (!canRequestMoreRegionalSuggestions) return;
+    void requestMoreRegionalSuggestions();
+  }, [
+    filteredRegionalSuggestions.length,
+    hasRegionalSuggestions,
+    regionalSuggestionsLoading,
+    canRequestMoreRegionalSuggestions,
+    requestMoreRegionalSuggestions,
+  ]);
 
   // Load settings
   const loadSettings = useCallback(async () => {
@@ -162,6 +400,29 @@ export default function FindrSettingsPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
 
+  // Auto-clear transient status messages
+  useEffect(() => {
+    if (!message) {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    messageTimeoutRef.current = setTimeout(() => {
+      setMessage(null);
+      messageTimeoutRef.current = null;
+    }, 6000);
+
+    return () => {
+      if (messageTimeoutRef.current) {
+        clearTimeout(messageTimeoutRef.current);
+        messageTimeoutRef.current = null;
+      }
+    };
+  }, [message]);
+
   const handleSave = async () => {
     if (!settings) return;
 
@@ -241,6 +502,67 @@ export default function FindrSettingsPage() {
       : [...settings.fishingTechniques, technique];
     setSettings({ ...settings, fishingTechniques: techniques });
     setIsDirty(true);
+  };
+
+  const favouriteCount = favouriteDetails.length || favouriteItems.length;
+
+  const requestSuggestionTopUp = useCallback(async () => {
+    if (!hasRegionalSuggestions) return;
+    try {
+      if (canRequestMoreRegionalSuggestions) {
+        await requestMoreRegionalSuggestions();
+      } else {
+        await refreshRegionalSuggestions();
+      }
+    } catch (error) {
+      console.error('[Settings] Failed to refresh regional suggestions', error);
+    }
+  }, [
+    hasRegionalSuggestions,
+    canRequestMoreRegionalSuggestions,
+    requestMoreRegionalSuggestions,
+    refreshRegionalSuggestions,
+  ]);
+
+  const handleRemoveFavouriteChip = async (code: string, label: string) => {
+    try {
+      setPendingRemoveCode(code);
+      await removeFavourite(code);
+      setMessage({ type: 'success', text: `${label} removed from favourites` });
+    } catch (error) {
+      console.error('Failed to remove favourite', error);
+      setMessage({ type: 'error', text: `Failed to remove ${label}` });
+    } finally {
+      setPendingRemoveCode(null);
+    }
+  };
+
+  const handleAddFavouriteFromSuggestion = async (code: string, label: string) => {
+    const normalizedCode = code.trim().toUpperCase();
+    try {
+      setPendingAddCode(normalizedCode);
+      await addFavourite(normalizedCode, { speciesCode: normalizedCode, speciesName: label });
+      setMessage({ type: 'success', text: `${label} added to favourites` });
+      setDismissedSuggestionCodes((prev) => prev.filter((item) => item !== normalizedCode));
+      void requestSuggestionTopUp();
+    } catch (error) {
+      console.error('Failed to add favourite', error);
+      setMessage({ type: 'error', text: `Failed to add ${label}` });
+    } finally {
+      setPendingAddCode(null);
+    }
+  };
+
+  const handleDismissSuggestion = async (code: string, label: string) => {
+    const normalizedCode = code.trim().toUpperCase();
+    setPendingDismissCode(normalizedCode);
+    setDismissedSuggestionCodes((prev) => (prev.includes(normalizedCode) ? prev : [...prev, normalizedCode]));
+    setMessage({ type: 'success', text: `${label} hidden from suggestions` });
+    try {
+      await requestSuggestionTopUp();
+    } finally {
+      setPendingDismissCode(null);
+    }
   };
 
   const toggleHabitat = (habitat: string) => {
@@ -332,7 +654,7 @@ export default function FindrSettingsPage() {
                 <label className="form-control w-full">
                   <span className="label-text text-base-content">Display Name</span>
                   <input
-                    className="input input-bordered w-full placeholder:text-base-content/50"
+                    className="input input-bordered w-full text-base-content bg-base-100 placeholder:text-base-content/50"
                     placeholder="e.g. Captain Hook"
                     value={settings.displayName || ''}
                     onChange={(e) => {
@@ -612,25 +934,173 @@ export default function FindrSettingsPage() {
           {/* Favourite Species */}
           <section className="card bg-base-100 shadow-sm">
             <div className="card-body space-y-4">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">⭐</span>
                   <div>
                     <h2 className="card-title text-base-content">Favourite Species</h2>
-                    <p className="text-sm text-base-content/70">Manage your favourite fish to track</p>
+                    <p className="text-sm text-base-content/70">Add or remove species so alerts stay focused</p>
                   </div>
                 </div>
                 <div className="badge badge-primary badge-outline">
-                  {favourites.length} species
+                  {favouriteCount} species
                 </div>
               </div>
-              <p className="text-sm text-base-content">
-                Add favourite species from the predictions page or{' '}
-                <Link href="/findr/favourites" className="link link-primary">
-                  manage your favourites
-                </Link>
-                .
-              </p>
+
+              {favouriteItems.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {favouriteItems.map((fav) => (
+                    <span
+                      key={fav.code}
+                      className="badge badge-lg gap-2 bg-base-200 text-base-content border border-base-300"
+                    >
+                      <span>{fav.label}</span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-xs p-0 min-h-0 h-4 w-4"
+                        onClick={() => handleRemoveFavouriteChip(fav.code, fav.label)}
+                        aria-label={`Remove ${fav.label}`}
+                        disabled={pendingRemoveCode === fav.code}
+                      >
+                        {pendingRemoveCode === fav.code ? (
+                          <span className="loading loading-spinner loading-xs" />
+                        ) : (
+                          '×'
+                        )}
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="border border-dashed border-base-300 rounded-lg p-4 text-sm text-base-content/70">
+                  No favourite species yet. Add a few below to personalise your alerts.
+                </div>
+              )}
+
+              <div className="divider my-0" />
+
+              <div className="space-y-3 border border-base-300 rounded-xl p-4 bg-base-200/40">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="font-semibold text-base-content">Add from your home water</p>
+                    <p className="text-sm text-base-content/70">
+                      We pull regional staples for {homeLocation?.name || 'your saved home location'}
+                      {regionalSuggestionsRegionId ? ` (${regionalSuggestionsRegionId})` : ''}.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={() => refreshRegionalSuggestions()}
+                    disabled={!hasRegionalSuggestions || regionalSuggestionsLoading}
+                  >
+                    {regionalSuggestionsLoading ? 'Refreshing…' : 'Refresh list'}
+                  </button>
+                </div>
+
+                {!homeLocation ? (
+                  <p className="text-sm text-base-content/70">
+                    Set a home location above to unlock quick-add suggestions.
+                  </p>
+                ) : !hasRegionalSuggestions ? (
+                  <p className="text-sm text-base-content/70">
+                    We need an ICES rectangle for {homeLocation.name}. Update the location using the button above so we can
+                    suggest species from the correct home waters.
+                  </p>
+                ) : regionalSuggestionsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-base-content/70">
+                    <span className="loading loading-spinner loading-sm" />
+                    Loading regional species…
+                  </div>
+                ) : availableRegionalSuggestions.length ? (
+                  <div className="space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {availableRegionalSuggestions.map((suggestion) => (
+                        <div
+                          key={suggestion.code}
+                          className="rounded-lg border border-base-300 bg-base-100/70 p-3 space-y-2 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-semibold text-base-content">{suggestion.label}</p>
+                              {suggestion.scientificName && (
+                                <p className="text-xs text-base-content/60 italic">{suggestion.scientificName}</p>
+                              )}
+                            </div>
+                            {suggestion.source === 'global-fallback' && (
+                              <span className="badge badge-outline badge-xs text-[10px]">Global staple</span>
+                            )}
+                          </div>
+                          {suggestion.source === 'global-fallback' ? (
+                            <p className="text-xs text-base-content/60">
+                              {suggestion.originNote || GLOBAL_FALLBACK_NOTE}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-base-content/60">
+                              Availability score {suggestion.availabilityScore.toFixed(2)} · Confidence {Math.round(suggestion.confidence)}%
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-primary flex-1"
+                              onClick={() => handleAddFavouriteFromSuggestion(suggestion.code, suggestion.label)}
+                              disabled={pendingAddCode === suggestion.code}
+                            >
+                              {pendingAddCode === suggestion.code ? (
+                                <span className="loading loading-spinner loading-xs" />
+                              ) : (
+                                'Add'
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-ghost text-base-content/70"
+                              onClick={() => handleDismissSuggestion(suggestion.code, suggestion.label)}
+                              disabled={pendingDismissCode === suggestion.code}
+                            >
+                              {pendingDismissCode === suggestion.code ? (
+                                <span className="loading loading-spinner loading-xs" />
+                              ) : (
+                                'Dismiss'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {hasGlobalFallbacks && (
+                      <p className="text-xs text-base-content/60">
+                        We topped up the list with Findr staples while your region is quiet. Tap refresh later to see new local
+                        action as it arrives.
+                      </p>
+                    )}
+                    {!regionalSuggestionsLoading &&
+                      !canRequestMoreRegionalSuggestions &&
+                      availableRegionalSuggestions.length < MAX_REGIONAL_SUGGESTIONS && (
+                        <p className="text-xs text-base-content/60">
+                          That&apos;s everything we have for this region right now. We&apos;ll surface more once new data lands.
+                        </p>
+                      )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-base-content/70">
+                    All suggested species for this region are already in your favourites. Great work!
+                  </p>
+                )}
+
+                {regionalSuggestionsError && (
+                  <p className="text-sm text-error">{regionalSuggestionsError}</p>
+                )}
+
+                <p className="text-xs text-base-content/60">
+                  Need more control? You can also{' '}
+                  <Link href="/findr/favourites" className="link link-primary">
+                    manage your favourites
+                  </Link>{' '}
+                  from the dedicated page.
+                </p>
+              </div>
             </div>
           </section>
 
@@ -735,13 +1205,20 @@ export default function FindrSettingsPage() {
           onClose={() => setShowHomeDialog(false)}
           title="Set your home location"
           onSave={async (loc: BasicLocation) => {
-            await updateLocationBySlot({
-              slot: 'home',
-              coordinates: { lat: loc.lat, lon: loc.lon },
-              name: loc.name,
-            });
-            setShowHomeDialog(false);
-            setMessage({ type: 'success', text: 'Home location saved!' });
+            try {
+              await updateLocationBySlot({
+                slot: 'home',
+                coordinates: { lat: loc.lat, lon: loc.lon },
+                name: loc.name,
+                resolveRectangle: true,
+                makeActive: true,
+              });
+              setShowHomeDialog(false);
+              setMessage({ type: 'success', text: 'Home location saved!' });
+            } catch (error) {
+              console.error('[Settings] Failed to save home location', error);
+              setMessage({ type: 'error', text: 'Failed to save home location. Please try again.' });
+            }
           }}
           homeLocation={
             homeLocation
@@ -760,13 +1237,19 @@ export default function FindrSettingsPage() {
           onClose={() => setShowFishingDialog(false)}
           title="Set your fishing location"
           onSave={async (loc: BasicLocation) => {
-            await updateLocationBySlot({
-              slot: 'coastal',
-              coordinates: { lat: loc.lat, lon: loc.lon },
-              name: loc.name,
-            });
-            setShowFishingDialog(false);
-            setMessage({ type: 'success', text: 'Fishing location saved!' });
+            try {
+              await updateLocationBySlot({
+                slot: 'coastal',
+                coordinates: { lat: loc.lat, lon: loc.lon },
+                name: loc.name,
+                resolveRectangle: true,
+              });
+              setShowFishingDialog(false);
+              setMessage({ type: 'success', text: 'Fishing location saved!' });
+            } catch (error) {
+              console.error('[Settings] Failed to save fishing location', error);
+              setMessage({ type: 'error', text: 'Failed to save fishing location. Please try again.' });
+            }
           }}
           homeLocation={
             homeLocation
@@ -792,4 +1275,194 @@ export default function FindrSettingsPage() {
       <FindrFooter />
     </>
   );
+}
+
+interface RegionalSpeciesSuggestion {
+  code: string;
+  label: string;
+  scientificName: string | null;
+  availabilityScore: number;
+  confidence: number;
+  source: 'regional' | 'global-fallback';
+  originNote?: string;
+}
+
+interface RegionalSpeciesApiRow {
+  code?: string;
+  id?: string;
+  commonName?: string;
+  scientificName?: string | null;
+  availabilityScore?: number | string;
+  confidence?: number | string;
+}
+
+function useRegionalSpeciesSuggestions(homeLocation: SavedLocation | null) {
+  const rectangleCode = homeLocation?.rectangleCode?.trim().toUpperCase() || null;
+  const [suggestions, setSuggestions] = useState<RegionalSpeciesSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [regionId, setRegionId] = useState<string | null>(null);
+  const [currentMinScore, setCurrentMinScore] = useState(REGIONAL_DEFAULT_MIN_SCORE);
+  const [exhausted, setExhausted] = useState(false);
+
+  type FetchMode = 'replace' | 'merge';
+  interface FetchOptions {
+    minScore?: number;
+    mode?: FetchMode;
+  }
+
+  const clampMinScore = (value: number) => {
+    return Number(Math.max(REGIONAL_MIN_SCORE_FLOOR, Math.min(REGIONAL_DEFAULT_MIN_SCORE, value)).toFixed(2));
+  };
+
+  const fetchSuggestions = useCallback(async (options: FetchOptions = {}) => {
+    if (!rectangleCode) {
+      setSuggestions([]);
+      setError(null);
+      setRegionId(null);
+      setLoading(false);
+      setCurrentMinScore(REGIONAL_DEFAULT_MIN_SCORE);
+      setExhausted(false);
+      return;
+    }
+
+    const mode: FetchMode = options.mode ?? 'replace';
+    const targetMinScore = clampMinScore(
+      typeof options.minScore === 'number' ? options.minScore : REGIONAL_DEFAULT_MIN_SCORE
+    );
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({
+        icesSquare: rectangleCode,
+        minScore: targetMinScore.toFixed(2),
+        minResults: REGIONAL_FETCH_MIN_RESULTS.toString(),
+      });
+
+      const response = await fetch(`/api/findr/species/regional?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch species (${response.status})`);
+      }
+
+      const data = await response.json();
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to load regional species');
+      }
+
+      const rows: RegionalSpeciesSuggestion[] = Array.isArray(data.species)
+        ? (data.species as RegionalSpeciesApiRow[])
+            .map<RegionalSpeciesSuggestion>((item) => ({
+              code: (item.code || item.id || '').toString().trim().toUpperCase(),
+              label: item.commonName || item.code || 'Unnamed species',
+              scientificName: item.scientificName || null,
+              availabilityScore: Number(item.availabilityScore) || 0,
+              confidence: Number(item.confidence) || 0,
+              source: 'regional',
+            }))
+            .filter((item): item is RegionalSpeciesSuggestion => Boolean(item.code))
+        : [];
+
+      let newlyAdded = 0;
+      setSuggestions((prev) => {
+        const base = mode === 'merge' ? prev : [];
+        const map = new Map(base.map((item) => [item.code, item]));
+        newlyAdded = 0;
+
+        rows.forEach((item) => {
+          const existing = map.get(item.code);
+          if (!existing) {
+            newlyAdded++;
+            map.set(item.code, item);
+            return;
+          }
+
+          if (
+            item.availabilityScore > existing.availabilityScore ||
+            (item.availabilityScore === existing.availabilityScore && item.confidence > existing.confidence)
+          ) {
+            map.set(item.code, item);
+          }
+        });
+
+        const merged = Array.from(map.values()).sort((a, b) => {
+          if (b.availabilityScore !== a.availabilityScore) {
+            return b.availabilityScore - a.availabilityScore;
+          }
+          if (b.confidence !== a.confidence) {
+            return b.confidence - a.confidence;
+          }
+          return a.code.localeCompare(b.code);
+        });
+
+        return merged;
+      });
+
+      setRegionId(data.regionId || rectangleCode);
+      setCurrentMinScore(targetMinScore);
+      if (targetMinScore <= REGIONAL_MIN_SCORE_FLOOR + 1e-6) {
+        setExhausted(newlyAdded === 0);
+      } else {
+        setExhausted(false);
+      }
+    } catch (err) {
+      console.error('[settings] Regional species fetch failed', err);
+      setError(err instanceof Error ? err.message : 'Failed to load regional species');
+      setSuggestions([]);
+      setRegionId(rectangleCode);
+    } finally {
+      setLoading(false);
+    }
+  }, [rectangleCode]);
+
+  useEffect(() => {
+    if (!rectangleCode) {
+      setSuggestions([]);
+      setError(null);
+      setRegionId(null);
+      setLoading(false);
+      setCurrentMinScore(REGIONAL_DEFAULT_MIN_SCORE);
+      setExhausted(false);
+      return;
+    }
+
+    setSuggestions([]);
+    setRegionId(null);
+    setError(null);
+    setExhausted(false);
+    void fetchSuggestions({ mode: 'replace', minScore: REGIONAL_DEFAULT_MIN_SCORE });
+  }, [rectangleCode, fetchSuggestions]);
+
+  const refreshRegionalSuggestions = useCallback(async () => {
+    await fetchSuggestions({ mode: 'replace', minScore: REGIONAL_DEFAULT_MIN_SCORE });
+  }, [fetchSuggestions]);
+
+  const requestMoreRegionalSuggestions = useCallback(async () => {
+    if (!rectangleCode) return;
+    if (loading) return;
+    if (exhausted) return;
+
+    const nextMinScore = clampMinScore(currentMinScore - REGIONAL_MIN_SCORE_STEP);
+    if (nextMinScore === currentMinScore) {
+      setExhausted(true);
+      return;
+    }
+
+    await fetchSuggestions({ mode: 'merge', minScore: nextMinScore });
+  }, [rectangleCode, loading, exhausted, currentMinScore, fetchSuggestions]);
+
+  const canRequestMore = Boolean(rectangleCode) && !exhausted && currentMinScore > REGIONAL_MIN_SCORE_FLOOR + 1e-6;
+
+  return {
+    suggestions,
+    loading,
+    error,
+    regionId,
+    refresh: refreshRegionalSuggestions,
+    canSuggest: Boolean(rectangleCode),
+    requestMore: requestMoreRegionalSuggestions,
+    canRequestMore,
+    currentMinScore,
+  };
 }

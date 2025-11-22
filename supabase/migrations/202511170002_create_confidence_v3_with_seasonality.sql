@@ -12,6 +12,9 @@
 CREATE INDEX IF NOT EXISTS idx_srs_species_region
 ON public.species_region_seasonality (species_id, region_code);
 
+-- Ensure idempotent creation when migrating repeatedly
+DROP FUNCTION IF EXISTS get_fishing_confidence_v3(TEXT, DATE, INTEGER);
+
 -- Create V3 function
 CREATE FUNCTION get_fishing_confidence_v3(
   target_rectangle TEXT,

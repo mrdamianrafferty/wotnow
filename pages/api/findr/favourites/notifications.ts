@@ -17,12 +17,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createServerSupabaseClient({ req, res });
   
   // Get authenticated user
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !session) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
     return res.status(401).json({ error: 'Unauthorized - Please sign in' });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   try {
     const { speciesId, preferences } = req.body;

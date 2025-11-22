@@ -7,7 +7,7 @@ This migration creates the `user_favourites` table for the findr favourites trac
 - **Table**: `user_favourites` with columns:
   - `id` - UUID primary key
   - `user_id` - Foreign key to auth.users
-  - `species_id` - Species identifier (e.g., "COD", "BASS")
+  - `species_id` - Canonical species UUID (FK to `species.id`)
   - `notifications_enabled` - Boolean for notification preferences
   - `notification_threshold` - Confidence level (0-100) to trigger alerts
   - `notification_channels` - JSONB with push/email/sms preferences
@@ -23,8 +23,13 @@ This migration creates the `user_favourites` table for the findr favourites trac
   - Users can only view/insert/update/delete their own favourites
   - Enforced at database level for security
 
-- **Triggers**:
   - Auto-update `updated_at` on any change
+
+> **2025-11 Canonicalization (Migration `20251122000005`)**
+>
+> - Legacy text `species_id` values (codes/names) are now converted to UUIDs that reference `species.id`.
+> - Unresolved favourites are logged to `user_favourite_canonicalization_audit` before being deleted.
+> - `(user_id, species_id)` uniqueness is enforced on the UUID column plus a cascading FK.
 
 ## How to apply:
 

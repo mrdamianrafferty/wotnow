@@ -27,6 +27,7 @@ COMMENT ON COLUMN species.oxygen_survival IS 'Survival dissolved oxygen level (m
 COMMENT ON COLUMN species.wave_tolerance IS 'Maximum wave height tolerance (meters) - NULL means indifferent';
 
 -- Add CHECK constraint for chlorophyll preference
+ALTER TABLE species DROP CONSTRAINT IF EXISTS species_chlorophyll_preference_check;
 ALTER TABLE species ADD CONSTRAINT species_chlorophyll_preference_check
   CHECK (chlorophyll_preference IS NULL OR chlorophyll_preference IN ('high', 'medium', 'low', 'indifferent'));
 

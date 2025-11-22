@@ -47,6 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_tide_cache_expiry
 ALTER TABLE tide_cache ENABLE ROW LEVEL SECURITY;
 
 -- Allow all authenticated users to read from cache
+DROP POLICY IF EXISTS "Allow authenticated users to read tide cache" ON tide_cache;
 CREATE POLICY "Allow authenticated users to read tide cache"
   ON tide_cache
   FOR SELECT
@@ -54,6 +55,7 @@ CREATE POLICY "Allow authenticated users to read tide cache"
   USING (true);
 
 -- Only service role can write to cache (API routes)
+DROP POLICY IF EXISTS "Allow service role to write tide cache" ON tide_cache;
 CREATE POLICY "Allow service role to write tide cache"
   ON tide_cache
   FOR ALL

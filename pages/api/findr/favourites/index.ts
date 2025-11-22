@@ -307,12 +307,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = createServerSupabaseClient({ req, res });
   
   // Get authenticated user
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !session) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
     return res.status(401).json({ error: 'Unauthorized - Please sign in' });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   switch (req.method) {
     case 'GET':
@@ -569,30 +572,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedSpeciesId);
 
           let actualSpeciesId = normalizedSpeciesId;
+          let legacySpeciesCode: string | null = null;
 
-          // If it's not a UUID, look it up by species_code
-          if (!isValidUUID && supabaseServiceClient) {
-            const { data: speciesData } = await supabaseServiceClient
-              .from('species')
-              .select('id')
-              .eq('species_code', normalizedSpeciesId.toUpperCase())
-              .single();
+          // If it's not a UUID, remember the uppercase code for legacy rows and try resolving the real species.id
+          if (!isValidUUID) {
+            legacySpeciesCode = normalizedSpeciesId.toUpperCase();
+            if (supabaseServiceClient) {
+              const { data: speciesData } = await supabaseServiceClient
+                .from('species')
+                .select('id')
+                .eq('species_code', legacySpeciesCode)
+                .single();
 
-            if (speciesData?.id) {
-              actualSpeciesId = speciesData.id;
+              if (speciesData?.id) {
+                actualSpeciesId = speciesData.id;
+              }
             }
           }
 
-          const { error, count } = await supabase
-            .from('user_favourites')
-            .delete({ count: 'exact' })
-            .eq('species_id', actualSpeciesId)
-            .eq('user_id', userId);
+          const deleteBySpeciesId = async (speciesId: string) => {
+            const { error, count } = await supabase
+              .from('user_favourites')
+              .delete({ count: 'exact' })
+              .eq('species_id', speciesId)
+              .eq('user_id', userId);
 
-          if (error) {
-            lastError = error;
-          } else if ((count ?? 0) > 0) {
+            if (error) {
+              lastError = error;
+              return false;
+            }
+
+            return (count ?? 0) > 0;
+          };
+
+          if (await deleteBySpeciesId(actualSpeciesId)) {
             return res.status(200).json({ success: true });
+          }
+
+          if (legacySpeciesCode && legacySpeciesCode !== actualSpeciesId) {
+            if (await deleteBySpeciesId(legacySpeciesCode)) {
+              return res.status(200).json({ success: true });
+            }
           }
         }
 

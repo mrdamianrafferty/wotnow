@@ -22,6 +22,7 @@ import exifr from 'exifr';
 import type { QuickLogSpecies } from '../../hooks/useQuickLogSpecies';
 import { getVisualFeatures } from '../../data/speciesVisualFeatures';
 import { createLogger } from '@/lib/utils/logger';
+import { loadBudget, incrementUsage, type BudgetData } from './budgetTracking';
 
 const logger = createLogger('FishID');
 
@@ -62,8 +63,8 @@ class FishIdentificationService {
   private openai: OpenAI | null = null;
   private cache: Map<string, IdentificationResult> = new Map();
 
-  // Budget tracking
-  private monthlyUsage: number = 0;
+  // Budget tracking (now stored in database, not localStorage)
+  private budgetData: BudgetData | null = null;
   private monthlyBudget: number = 50; // €50/month (increased for premium model)
   private pricePerCall: number = 0.05; // €0.05 per AI identification (gpt-4o with high detail)
 
@@ -99,7 +100,8 @@ class FishIdentificationService {
       this.aiAvailable = false;
     }
 
-    await this.loadMonthlyUsage();
+    // Load budget data from database
+    this.budgetData = await loadBudget('openai');
     this.initialized = true;
   }
 
@@ -156,9 +158,9 @@ class FishIdentificationService {
         try {
           const aiResult = await this.identifyWithAI(image, context.candidates);
 
-          // Update budget and cache
-          this.monthlyUsage += this.pricePerCall;
-          await this.saveMonthlyUsage();
+          // Update budget in database and cache
+          await incrementUsage('openai', this.pricePerCall);
+          this.budgetData = await loadBudget('openai'); // Refresh local data
           this.cache.set(cacheKey, aiResult);
 
           await this.logIdentification(aiResult);
@@ -552,18 +554,24 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
   }
 
   /**
-   * Budget checking
+   * Budget checking - Uses database-tracked budget
    */
   private async checkBudget(): Promise<boolean> {
-    if (this.monthlyUsage >= this.monthlyBudget) {
+    if (!this.budgetData) {
+      this.budgetData = await loadBudget('openai');
+    }
+
+    const currentUsage = this.budgetData.usage_amount;
+
+    if (currentUsage >= this.monthlyBudget) {
       logger.warn('Monthly budget exceeded');
       this.aiAvailable = false;
       return false;
     }
 
     // Warning at 80%
-    if (this.monthlyUsage >= this.monthlyBudget * 0.8) {
-      logger.warn(`Budget warning: €${this.monthlyUsage.toFixed(2)} of €${this.monthlyBudget} used`);
+    if (currentUsage >= this.monthlyBudget * 0.8) {
+      logger.warn(`Budget warning: €${currentUsage.toFixed(2)} of €${this.monthlyBudget} used`);
     }
 
     return true;
@@ -582,41 +590,9 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
   }
 
   /**
-   * Load monthly usage from localStorage (browser-side)
-   */
-  private async loadMonthlyUsage(): Promise<void> {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('ai_usage_current_month');
-      const data = stored ? JSON.parse(stored) : { amount: 0, month: new Date().getMonth() };
-
-      // Reset if new month
-      if (data.month !== new Date().getMonth()) {
-        this.monthlyUsage = 0;
-        this.saveMonthlyUsage();
-      } else {
-        this.monthlyUsage = data.amount;
-      }
-    }
-  }
-
-  /**
-   * Save monthly usage to localStorage
-   */
-  private async saveMonthlyUsage(): Promise<void> {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('ai_usage_current_month', JSON.stringify({
-        amount: this.monthlyUsage,
-        month: new Date().getMonth()
-      }));
-    }
-  }
-
-  /**
    * Log identification for analytics
    */
   private async logIdentification(result: IdentificationResult): Promise<void> {
-    await this.saveMonthlyUsage();
-
     logger.info('Identification logged:', {
       method: result.method,
       cost: result.cost,
@@ -625,14 +601,18 @@ Match visible features (fins, patterns, colors, body shape) to the species descr
   }
 
   /**
-   * Get service statistics
+   * Get service statistics - Now uses database-tracked budget
    */
   async getStats() {
+    if (!this.budgetData) {
+      this.budgetData = await loadBudget('openai');
+    }
+
     return {
       aiAvailable: this.aiAvailable,
-      monthlyUsage: this.monthlyUsage,
+      monthlyUsage: this.budgetData.usage_amount,
       monthlyBudget: this.monthlyBudget,
-      remainingBudget: this.monthlyBudget - this.monthlyUsage,
+      remainingBudget: this.monthlyBudget - this.budgetData.usage_amount,
       cacheSize: this.cache.size,
       pricePerCall: this.pricePerCall
     };

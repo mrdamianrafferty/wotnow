@@ -1,6 +1,5 @@
--- New confidence scoring formula with data normalization
--- November 16, 2025
--- Formula: Base Availability (40) + Environmental Match (60) with normalization
+-- Ensure we can recreate function even if it already exists with stale signature
+DROP FUNCTION IF EXISTS get_fishing_confidence_v2(TEXT, DATE, INTEGER);
 
 CREATE OR REPLACE FUNCTION get_fishing_confidence_v2(
   target_rectangle TEXT,

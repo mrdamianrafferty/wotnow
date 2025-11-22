@@ -39,6 +39,7 @@ export interface UsePlacesAutocompleteReturn {
   };
   setValue: (value: string, shouldFetchData?: boolean) => void;
   clearSuggestions: () => void;
+  errorMessage: string | null;
 }
 
 export function usePlacesAutocompleteNew(
@@ -55,6 +56,7 @@ export function usePlacesAutocompleteNew(
     status: '',
     data: [],
   });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
@@ -184,11 +186,13 @@ export function usePlacesAutocompleteNew(
             status: 'OK',
             data,
           });
+          setErrorMessage(null);
         } else {
           setSuggestions({
             status: 'ZERO_RESULTS',
             data: [],
           });
+          setErrorMessage(null);
         }
       } catch (error) {
         console.error('❌ AutocompleteSuggestion fetch error:', error);
@@ -196,6 +200,7 @@ export function usePlacesAutocompleteNew(
           status: 'ERROR',
           data: [],
         });
+        setErrorMessage(error instanceof Error ? error.message : 'Autocomplete request failed');
       }
     },
     [ready, requestOptions]
@@ -251,6 +256,7 @@ export function usePlacesAutocompleteNew(
     suggestions,
     setValue: handleSetValue,
     clearSuggestions,
+    errorMessage,
   };
 }
 

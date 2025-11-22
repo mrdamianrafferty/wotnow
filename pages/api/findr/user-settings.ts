@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { createPagesServerClient } from '../../../lib/supabase/pages-api';
 
 /**
  * Findr User Settings API
@@ -35,7 +35,7 @@ export interface FindrUserSettings {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = getSupabaseServerClient();
+  const supabase = createPagesServerClient({ req, res });
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();

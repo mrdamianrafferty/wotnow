@@ -47,6 +47,7 @@ CREATE INDEX IF NOT EXISTS idx_weather_cache_expiry
 ALTER TABLE weather_cache ENABLE ROW LEVEL SECURITY;
 
 -- Allow all authenticated users to read from cache
+DROP POLICY IF EXISTS "Allow authenticated users to read weather cache" ON weather_cache;
 CREATE POLICY "Allow authenticated users to read weather cache"
   ON weather_cache
   FOR SELECT
@@ -54,6 +55,7 @@ CREATE POLICY "Allow authenticated users to read weather cache"
   USING (true);
 
 -- Only service role can write to cache (API routes)
+DROP POLICY IF EXISTS "Allow service role to write weather cache" ON weather_cache;
 CREATE POLICY "Allow service role to write weather cache"
   ON weather_cache
   FOR ALL

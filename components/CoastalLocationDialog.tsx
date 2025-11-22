@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from '../lib/hooks/usePlacesAutocompleteNew';
 import dynamic from 'next/dynamic';
 import { loadGoogleMapsAPI } from '../lib/googleMapsLazy';
@@ -24,6 +24,7 @@ type NominatimResponse = {
     county?: string;
     state?: string;
     region?: string;
+    country?: string;
   };
 };
 
@@ -35,6 +36,47 @@ interface SuggestionItem {
     main_text?: string;
     secondary_text?: string;
   };
+  provider?: 'google' | 'fallback';
+  lat?: number;
+  lon?: number;
+  note?: string;
+}
+
+interface NominatimSearchResult extends NominatimResponse {
+  place_id?: number | string;
+  display_name?: string;
+  lat: string;
+  lon: string;
+}
+
+const NOMINATIM_USER_AGENT = 'WotNowFindr/1.0 (support@wotnow.app)';
+const FALLBACK_ERROR_MSG = 'Fallback search is temporarily unavailable. Try again or drop a pin on the map.';
+
+function formatFallbackMainText(result: NominatimSearchResult): string {
+  const addr = result.address;
+  const primary = addr?.beach || addr?.water || addr?.amenity || addr?.road || addr?.neighbourhood || addr?.suburb || addr?.village || addr?.town || addr?.city || addr?.state || addr?.region;
+  if (primary) return primary;
+  if (result.display_name) {
+    const [first] = result.display_name.split(',');
+    if (first?.trim()) return first.trim();
+  }
+  return 'Selected location';
+}
+
+function formatFallbackSecondaryText(result: NominatimSearchResult): string | undefined {
+  const addr = result.address;
+  const parts: string[] = [];
+  const maybeAdd = (value?: string | null) => {
+    if (value && !parts.includes(value)) parts.push(value);
+  };
+  maybeAdd(addr?.city ?? addr?.town ?? addr?.village ?? addr?.county);
+  maybeAdd(addr?.state ?? addr?.region);
+  maybeAdd(addr?.country);
+  if (!parts.length && result.display_name) {
+    const [, ...rest] = result.display_name.split(',');
+    rest.map((segment) => segment.trim()).filter(Boolean).slice(0, 2).forEach((segment) => parts.push(segment));
+  }
+  return parts.length ? parts.join(', ') : undefined;
 }
 
 // Location-like shape used across components
@@ -192,12 +234,124 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     suggestions: { status, data },
     setValue,
     clearSuggestions,
+    errorMessage: autocompleteError,
   } = usePlacesAutocomplete({
     debounce: 300,
     requestOptions: {
       types: ['geocode'],
     }
   });
+
+  const [useFallbackSearch, setUseFallbackSearch] = useState(false);
+  const [fallbackSuggestions, setFallbackSuggestions] = useState<SuggestionItem[]>([]);
+  const fallbackAbortRef = useRef<AbortController | null>(null);
+  const autoFallbackTriggeredRef = useRef(false);
+
+  const enableFallbackSearch = useCallback(() => {
+    setUseFallbackSearch((prev) => {
+      if (prev) return prev;
+      setFallbackSuggestions([]);
+      return true;
+    });
+  }, []);
+
+  const disableFallbackSearch = useCallback(() => {
+    setUseFallbackSearch((prev) => {
+      if (!prev) return prev;
+      setFallbackSuggestions([]);
+      if (fallbackAbortRef.current) {
+        fallbackAbortRef.current.abort();
+        fallbackAbortRef.current = null;
+      }
+      if (value.trim()) {
+        setValue(value, true);
+      }
+      return false;
+    });
+  }, [setValue, value]);
+
+  useEffect(() => {
+    if (!autocompleteError) return;
+    if (autoFallbackTriggeredRef.current) return;
+    if (/referer|blocked|denied|key/i.test(autocompleteError)) {
+      autoFallbackTriggeredRef.current = true;
+      enableFallbackSearch();
+    }
+  }, [autocompleteError, enableFallbackSearch]);
+
+  useEffect(() => {
+    if (!open) {
+      disableFallbackSearch();
+    }
+  }, [open, disableFallbackSearch]);
+
+  useEffect(() => {
+    if (!useFallbackSearch) {
+      if (fallbackAbortRef.current) {
+        fallbackAbortRef.current.abort();
+        fallbackAbortRef.current = null;
+      }
+      setFallbackSuggestions([]);
+      return;
+    }
+
+    const query = value.trim();
+    if (!query) {
+      setFallbackSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    fallbackAbortRef.current = controller;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const url = new URL('https://nominatim.openstreetmap.org/search');
+        url.searchParams.set('q', query);
+        url.searchParams.set('format', 'jsonv2');
+        url.searchParams.set('addressdetails', '1');
+        url.searchParams.set('limit', '6');
+
+        const res = await fetch(url.toString(), {
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': NOMINATIM_USER_AGENT,
+          },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Fallback search failed (${res.status})`);
+        }
+
+        const payload = (await res.json()) as NominatimSearchResult[];
+        const normalized: SuggestionItem[] = payload.map((item, index) => ({
+          place_id: `osm-${item.place_id ?? index}`,
+          description: item.display_name || formatFallbackMainText(item),
+          structured_formatting: {
+            main_text: formatFallbackMainText(item),
+            secondary_text: formatFallbackSecondaryText(item),
+          },
+          provider: 'fallback',
+          lat: Number(item.lat),
+          lon: Number(item.lon),
+        }));
+
+        setFallbackSuggestions(normalized);
+        setLocationError((prev) => (prev === FALLBACK_ERROR_MSG ? null : prev));
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error('Fallback location search failed', error);
+        setFallbackSuggestions([]);
+        setLocationError(FALLBACK_ERROR_MSG);
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [useFallbackSearch, value]);
 
   // Lock scroll + set/restore focus when opened/closed
   useEffect(() => {
@@ -316,8 +470,16 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     setIsLoadingSuggestion(true);
 
     try {
-      const placeId: string | undefined = suggestion?.place_id;
       const label: string = suggestion?.structured_formatting?.main_text || suggestion?.description || 'Selected place';
+      if (suggestion.provider === 'fallback') {
+        if (typeof suggestion.lat !== 'number' || typeof suggestion.lon !== 'number') {
+          throw new Error('Fallback suggestion missing coordinates');
+        }
+        saveAndClose({ name: label, lat: suggestion.lat, lon: suggestion.lon });
+        return;
+      }
+
+      const placeId: string | undefined = suggestion?.place_id;
 
       if (!placeId) {
         throw new Error('No place ID found for this location');
@@ -330,8 +492,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
       }
 
       const { lat, lng } = await getLatLng(results[0]);
-      const loc: BasicLocation = { name: label, lat, lon: lng };
-      saveAndClose(loc);
+      saveAndClose({ name: label, lat, lon: lng });
     } catch (err) {
       console.error('❌ Failed to geocode location:', err);
       const message = err instanceof Error ? err.message : 'Failed to get location details. Please try again.';
@@ -352,6 +513,18 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
     setSelectedName(name);
     saveAndClose({ name, lat, lon });
   };
+
+  const googleSuggestions: SuggestionItem[] = status === 'OK'
+    ? data.map((prediction) => ({
+        place_id: prediction.place_id,
+        description: prediction.description,
+        structured_formatting: prediction.structured_formatting,
+        provider: 'google',
+      }))
+    : [];
+
+  const suggestionItems = useFallbackSearch ? fallbackSuggestions : googleSuggestions;
+  const refererBlocked = Boolean(autocompleteError && /referer/i.test(autocompleteError));
 
   if (!open) return null;
 
@@ -379,26 +552,25 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
             ref={inputRef}
             type="text"
             className="input input-bordered w-full pr-10"
-            placeholder={ready ? 'Search a place…' : 'Loading Google Maps…'}
+            placeholder={ready || useFallbackSearch ? 'Search a place…' : 'Loading Google Maps…'}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => setValue(e.target.value, !useFallbackSearch)}
             aria-autocomplete="list"
-            disabled={!ready || isLoadingSuggestion}
+            disabled={(!ready && !useFallbackSearch) || isLoadingSuggestion}
           />
-          {(!ready || isLoadingSuggestion) && (
+          {((!ready && !useFallbackSearch) || isLoadingSuggestion) && (
             <span className="absolute right-3 top-1/2 -translate-y-1/2">
               <span className="loading loading-spinner loading-sm"></span>
             </span>
           )}
 
-          {status === 'OK' && data?.length > 0 && (
+          {suggestionItems.length > 0 && (
             <ul
               className="absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ring-base-300/60 max-h-64 overflow-auto shadow-lg"
               role="listbox"
             >
-              {data.map((s: unknown, idx: number) => {
-                const sug = (s as SuggestionItem);
-                const key = sug.place_id || idx.toString();
+              {suggestionItems.map((sug, idx) => {
+                const key = sug.place_id || `${sug.provider || 'suggestion'}-${idx}`;
                 const main = sug?.structured_formatting?.main_text || sug?.description;
                 const secondary = sug?.structured_formatting?.secondary_text;
                 return (
@@ -407,9 +579,14 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
                       className="w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200 text-base-content"
                       onClick={() => handleSuggestionClick(sug)}
                     >
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium leading-tight text-base-content">{main}</span>
-                        {secondary ? <span className="text-xs opacity-70 leading-tight text-base-content">{secondary}</span> : null}
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium leading-tight text-base-content">{main}</span>
+                          {secondary ? <span className="text-xs opacity-70 leading-tight text-base-content">{secondary}</span> : null}
+                        </div>
+                        {sug.provider === 'fallback' && (
+                          <span className="badge badge-outline badge-xs text-[10px]">OSM</span>
+                        )}
                       </div>
                     </button>
                   </li>
@@ -418,6 +595,28 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
             </ul>
           )}
         </div>
+
+        {useFallbackSearch && (
+          <div className="alert alert-info mt-2 flex flex-wrap items-center gap-2 text-sm">
+            <span>Using OpenStreetMap suggestions while Google Places is unavailable.</span>
+            <button type="button" className="btn btn-xs" onClick={disableFallbackSearch}>
+              Retry Google
+            </button>
+          </div>
+        )}
+
+        {!useFallbackSearch && autocompleteError && (
+          <div className="alert alert-warning mt-2 flex flex-wrap items-center gap-2 text-sm">
+            <span>
+              {refererBlocked
+                ? 'Google Places blocked this localhost origin. Add the port to your API key or switch to the fallback search below.'
+                : 'Google Places is unavailable. You can keep typing, drop a pin, or switch to the fallback search.'}
+            </span>
+            <button type="button" className="btn btn-xs" onClick={enableFallbackSearch}>
+              Use fallback search
+            </button>
+          </div>
+        )}
 
         <div className="flex gap-2 mt-3">
           <button className="btn btn-primary" onClick={getCurrentLocation} disabled={isLocating}>
@@ -434,7 +633,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
           </div>
         ) : null}
 
-        {!ready && !locationError ? (
+        {!ready && !useFallbackSearch && !locationError ? (
           <div className="alert alert-info mt-3">
             <span>
               {showLoadingTimeout

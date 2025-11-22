@@ -17,6 +17,7 @@
 import { createLogger } from '@/lib/utils/logger';
 import type { CatchContext, IdentificationResult } from '@/lib/findr/fishIdentificationService';
 import type { QuickLogSpecies } from '@/hooks/useQuickLogSpecies';
+import { loadBudget, incrementUsage, type BudgetData } from './budgetTracking';
 
 const logger = createLogger('HuggingFaceFishID');
 
@@ -41,8 +42,8 @@ class HuggingFaceFishIdentificationService {
   private readonly modelId = 'google/vit-base-patch16-224'; // Vision Transformer model
   private readonly apiUrl = `https://api-inference.huggingface.co/models/${this.modelId}`;
 
-  // Budget tracking (HF is much cheaper than OpenAI)
-  private monthlyUsage: number = 0;
+  // Budget tracking (now stored in database, not localStorage)
+  private budgetData: BudgetData | null = null;
   private monthlyBudget: number = 10; // €10/month (HF is ~20x cheaper)
   private pricePerCall: number = 0.001; // ~€0.001 per request
 
@@ -77,7 +78,8 @@ class HuggingFaceFishIdentificationService {
       this.aiAvailable = false;
     }
 
-    await this.loadMonthlyUsage();
+    // Load budget data from database
+    this.budgetData = await loadBudget('huggingface');
     this.initialized = true;
   }
 
@@ -123,11 +125,11 @@ class HuggingFaceFishIdentificationService {
       }
 
       // 4. Use HuggingFace AI if available and within budget
-      if (this.aiAvailable && this.isWithinBudget()) {
+      if (this.aiAvailable && await this.isWithinBudget()) {
         const aiResult = await this.identifyWithAI(image, context.candidates);
         if (aiResult) {
           logger.info('AI identification successful');
-          this.trackUsage();
+          await this.trackUsage();
           this.cache.set(cacheKey, aiResult);
           return aiResult;
         }
@@ -314,33 +316,34 @@ class HuggingFaceFishIdentificationService {
   }
 
   /**
-   * Budget management
+   * Budget management - Uses database-tracked budget
    */
-  private isWithinBudget(): boolean {
-    return this.monthlyUsage < this.monthlyBudget;
+  private async isWithinBudget(): Promise<boolean> {
+    if (!this.budgetData) {
+      this.budgetData = await loadBudget('huggingface');
+    }
+    return this.budgetData.usage_amount < this.monthlyBudget;
   }
 
-  private trackUsage(): void {
-    this.monthlyUsage += this.pricePerCall;
-    logger.info(`Monthly usage: €${this.monthlyUsage.toFixed(3)} / €${this.monthlyBudget}`);
+  private async trackUsage(): Promise<void> {
+    await incrementUsage('huggingface', this.pricePerCall);
+    this.budgetData = await loadBudget('huggingface'); // Refresh local data
 
-    // TODO: Persist usage to database for accurate tracking across deployments
-  }
-
-  private async loadMonthlyUsage(): Promise<void> {
-    // TODO: Load from database
-    // For now, reset monthly (could integrate with Supabase)
-    this.monthlyUsage = 0;
+    logger.info(`Monthly usage: €${this.budgetData.usage_amount.toFixed(3)} / €${this.monthlyBudget}`);
   }
 
   /**
-   * Get current usage stats
+   * Get current usage stats - Now uses database-tracked budget
    */
-  public getUsageStats() {
+  public async getUsageStats() {
+    if (!this.budgetData) {
+      this.budgetData = await loadBudget('huggingface');
+    }
+
     return {
-      monthlyUsage: this.monthlyUsage,
+      monthlyUsage: this.budgetData.usage_amount,
       monthlyBudget: this.monthlyBudget,
-      percentUsed: (this.monthlyUsage / this.monthlyBudget) * 100,
+      percentUsed: (this.budgetData.usage_amount / this.monthlyBudget) * 100,
       pricePerCall: this.pricePerCall,
       aiAvailable: this.aiAvailable,
       errorCount: this.aiErrorCount

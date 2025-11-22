@@ -27,6 +27,7 @@ end;
 $$ language plpgsql;
 
 -- Trigger to automatically update the updated_at column
+drop trigger if exists grow_user_plants_set_updated_at on public.grow_user_plants;
 create trigger grow_user_plants_set_updated_at
 before update on public.grow_user_plants
 for each row
@@ -35,22 +36,26 @@ execute function public.handle_updated_at();
 -- Enable Row Level Security so users only see their own plants
 alter table public.grow_user_plants enable row level security;
 
+drop policy if exists "Users can view own plants" on public.grow_user_plants;
 create policy "Users can view own plants"
     on public.grow_user_plants
     for select
     using (auth.uid() = user_id);
 
+drop policy if exists "Users can add own plants" on public.grow_user_plants;
 create policy "Users can add own plants"
     on public.grow_user_plants
     for insert
     with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own plants" on public.grow_user_plants;
 create policy "Users can update own plants"
     on public.grow_user_plants
     for update
     using (auth.uid() = user_id)
     with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own plants" on public.grow_user_plants;
 create policy "Users can delete own plants"
     on public.grow_user_plants
     for delete

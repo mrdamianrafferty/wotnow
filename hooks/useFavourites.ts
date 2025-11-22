@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { SPECIES_IMAGE_MAP } from '../data/speciesImageMap';
 
 const LOCAL_STORAGE_KEY = 'findrFavorites';
 
@@ -23,15 +24,60 @@ interface ToggleFavouriteOptions {
   favouriteId?: string;
 }
 
+interface FavouriteDetail {
+  id: string | null;
+  speciesId: string;
+  speciesCode: string | null;
+  name: string | null;
+  scientificName: string | null;
+}
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+// Always store UUIDs lowercase (DB canonical) and species codes uppercase so comparisons stay stable.
 const normalizeFavouriteId = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
   if (UUID_PATTERN.test(trimmed)) {
-    return trimmed;
+    return trimmed.toLowerCase();
   }
   return trimmed.toUpperCase();
+};
+
+const speciesInfoForCode = (code?: string | null) => {
+  if (!code) return null;
+  return SPECIES_IMAGE_MAP[code.trim().toUpperCase()] ?? null;
+};
+
+const buildLocalFavouriteDetails = (ids: string[]): FavouriteDetail[] => {
+  return ids.map((id) => {
+    const normalizedId = normalizeFavouriteId(id);
+    const speciesCode = UUID_PATTERN.test(normalizedId) ? null : normalizedId;
+    const info = speciesInfoForCode(speciesCode);
+    return {
+      id: null,
+      speciesId: normalizedId,
+      speciesCode,
+      name: info?.name ?? speciesCode ?? normalizedId,
+      scientificName: info?.scientificName ?? null,
+    };
+  });
+};
+
+const mapApiFavouriteToDetail = (fav: Record<string, unknown>): FavouriteDetail | null => {
+  const rawSpeciesId = typeof fav.speciesId === 'string' ? fav.speciesId : null;
+  if (!rawSpeciesId) return null;
+  const normalizedId = normalizeFavouriteId(rawSpeciesId);
+  const speciesCode = typeof fav.speciesCode === 'string' ? fav.speciesCode.trim().toUpperCase() : null;
+  const info = speciesInfoForCode(speciesCode ?? normalizedId);
+
+  return {
+    id: typeof fav.id === 'string' ? fav.id : null,
+    speciesId: normalizedId,
+    speciesCode,
+    name: (typeof fav.name === 'string' ? fav.name : null) ?? info?.name ?? speciesCode ?? normalizedId,
+    scientificName: (typeof fav.scientificName === 'string' ? fav.scientificName : null) ?? info?.scientificName ?? null,
+  };
 };
 
 export function useFavourites(options: UseFavouritesOptions = {}) {
@@ -43,11 +89,17 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [favouriteDetails, setFavouriteDetails] = useState<FavouriteDetail[]>([]);
+  const favouriteDetailsRef = useRef<FavouriteDetail[]>([]);
 
   // Sync ref whenever favourites state changes
   useEffect(() => {
     favouritesRef.current = favourites;
   }, [favourites]);
+
+  useEffect(() => {
+    favouriteDetailsRef.current = favouriteDetails;
+  }, [favouriteDetails]);
 
   // Load user session
   useEffect(() => {
@@ -79,11 +131,11 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           });
           const data = await response.json();
           
-          if (data.success && data.favourites) {
+          if (data.success && Array.isArray(data.favourites)) {
             const speciesIds: string[] = Array.from(
               new Set(
                 data.favourites
-                  .map((fav: { speciesId: string }) =>
+                  .map((fav: { speciesId?: string }) =>
                     typeof fav.speciesId === 'string' ? normalizeFavouriteId(fav.speciesId) : null
                   )
                   .filter((id: string | null): id is string => Boolean(id))
@@ -92,8 +144,15 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
             console.log('[useFavourites] Loaded from Supabase:', speciesIds.length, 'favourites');
             setFavourites(speciesIds);
 
+            const details = data.favourites
+              .map((fav: Record<string, unknown>) => mapApiFavouriteToDetail(fav))
+              .filter((detail: FavouriteDetail | null): detail is FavouriteDetail => Boolean(detail));
+            setFavouriteDetails(details);
+
             // Update localStorage to match Supabase
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(speciesIds));
+          } else {
+            setFavouriteDetails([]);
           }
         } catch (error) {
           console.error('Failed to load favourites from Supabase:', error);
@@ -128,10 +187,14 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           );
           setFavourites(normalized);
           localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+          setFavouriteDetails(buildLocalFavouriteDetails(normalized));
+          return;
         }
       }
+      setFavouriteDetails([]);
     } catch (error) {
       console.warn('Failed to load favourites from localStorage:', error);
+      setFavouriteDetails([]);
     }
   };
 
@@ -191,9 +254,21 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   // Add favourite
   const addFavourite = useCallback(async (speciesId: string, options?: ToggleFavouriteOptions) => {
     const normalizedId = normalizeFavouriteId(speciesId);
-    
+    const previousIds = favouritesRef.current.slice();
+    const previousDetails = favouriteDetailsRef.current.slice();
+
     console.log('[useFavourites] Adding favourite:', { speciesId, normalizedId, isAuthenticated: Boolean(user) });
-    
+
+    const fallbackCode = options?.speciesCode?.trim().toUpperCase() ?? (UUID_PATTERN.test(normalizedId) ? null : normalizedId);
+    const fallbackInfo = speciesInfoForCode(fallbackCode ?? normalizedId);
+    const optimisticDetail: FavouriteDetail = {
+      id: null,
+      speciesId: normalizedId,
+      speciesCode: fallbackCode,
+      name: options?.speciesName ?? fallbackInfo?.name ?? fallbackCode ?? normalizedId,
+      scientificName: fallbackInfo?.scientificName ?? null,
+    };
+
     // Optimistically update UI
     setFavourites((prev) => {
       if (prev.includes(normalizedId)) {
@@ -203,6 +278,17 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       console.log('[useFavourites] Optimistic update: adding to local state');
       return [...prev, normalizedId];
     });
+    setFavouriteDetails((prev) => {
+      if (prev.some((detail) => detail.speciesId === normalizedId)) {
+        return prev;
+      }
+      return [...prev, optimisticDetail];
+    });
+
+    const revertOptimisticUpdate = () => {
+      setFavourites(previousIds);
+      setFavouriteDetails(previousDetails);
+    };
 
     // Sync to storage
     if (user && autoSync) {
@@ -217,9 +303,9 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         if (options?.speciesName) {
           bodyPayload.speciesName = options.speciesName;
         }
-        
+
         console.log('[useFavourites] Sending to API:', bodyPayload);
-        
+
         const response = await fetch('/api/findr/favourites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -228,32 +314,59 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         });
 
         const data = await response.json();
-        
+
         console.log('[useFavourites] API response:', { success: data.success, error: data.error, status: response.status });
-        
+
         // Treat 409 (already favorited) as success - species is in database
         if (!data.success && response.status !== 409) {
           console.error('Failed to add favourite to Supabase:', data.error);
-          // Revert optimistic update
-          setFavourites((prev) => prev.filter((id) => id !== normalizedId));
+          revertOptimisticUpdate();
         } else {
           console.log('[useFavourites] Successfully added to Supabase (or already exists)');
+          if (data.favourite) {
+            const detail = mapApiFavouriteToDetail(data.favourite);
+            if (detail) {
+              setFavouriteDetails((prev) => {
+                const updated = [...prev];
+                const matchById = updated.findIndex((item) => item.speciesId === detail.speciesId);
+                if (matchById !== -1) {
+                  updated[matchById] = detail;
+                  return updated;
+                }
+
+                if (detail.speciesCode) {
+                  const matchByCode = updated.findIndex((item) => item.speciesCode === detail.speciesCode);
+                  if (matchByCode !== -1) {
+                    updated[matchByCode] = detail;
+                    return updated;
+                  }
+                }
+
+                updated.push(detail);
+                return updated;
+              });
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to add favourite:', error);
-        // Revert optimistic update
-        setFavourites((prev) => prev.filter((id) => id !== normalizedId));
+        revertOptimisticUpdate();
       }
     } else {
       // Not authenticated: Save to localStorage
-      const updated = favouritesRef.current.includes(normalizedId) ? favouritesRef.current : [...favouritesRef.current, normalizedId];
+      const updated = favouritesRef.current.includes(normalizedId)
+        ? favouritesRef.current
+        : [...favouritesRef.current, normalizedId];
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      setFavouriteDetails(buildLocalFavouriteDetails(updated));
     }
   }, [user, autoSync]);
 
   // Remove favourite
   const removeFavourite = useCallback(async (speciesId: string, favouriteId?: string) => {
     const normalizedId = normalizeFavouriteId(speciesId);
+    const previousIds = favouritesRef.current.slice();
+    const previousDetails = favouriteDetailsRef.current.slice();
     
     console.log('[useFavourites] Removing favourite:', { speciesId, normalizedId, favouriteId, isAuthenticated: Boolean(user) });
     
@@ -262,6 +375,16 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       console.log('[useFavourites] Optimistic update: removing from local state');
       return prev.filter((id) => id !== normalizedId);
     });
+    setFavouriteDetails((prev) => prev.filter((detail) => {
+      if (detail.speciesId === normalizedId) return false;
+      if (favouriteId && detail.id === favouriteId) return false;
+      return true;
+    }));
+
+    const revertOptimisticUpdate = () => {
+      setFavourites(previousIds);
+      setFavouriteDetails(previousDetails);
+    };
 
     // Sync to storage
     if (user && autoSync) {
@@ -286,18 +409,17 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
         const data = await response.json();
         if (!data.success) {
           console.error('Failed to remove favourite from Supabase:', data.error);
-          // Revert optimistic update
-          setFavourites((prev) => [...prev, normalizedId]);
+          revertOptimisticUpdate();
         }
       } catch (error) {
         console.error('Failed to remove favourite:', error);
-        // Revert optimistic update
-        setFavourites((prev) => [...prev, normalizedId]);
+        revertOptimisticUpdate();
       }
     } else {
       // Not authenticated: Save to localStorage
       const updated = favouritesRef.current.filter((id) => id !== normalizedId);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+      setFavouriteDetails(buildLocalFavouriteDetails(updated));
     }
   }, [user, autoSync]);
 
@@ -333,6 +455,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
 
   return {
     favourites,
+    favouriteDetails,
     user,
     loading,
     syncing,

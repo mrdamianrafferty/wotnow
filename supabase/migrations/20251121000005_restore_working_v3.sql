@@ -3,6 +3,8 @@
 -- Reverts to the last working version from 202511170004_fix_v3_region_mapping.sql
 -- This was broken by migration 20251121000003 which introduced ambiguous species_id references
 
+DROP FUNCTION IF EXISTS get_fishing_confidence_v3(TEXT, DATE, INTEGER);
+
 CREATE OR REPLACE FUNCTION get_fishing_confidence_v3(
   target_rectangle TEXT,
   target_date DATE DEFAULT CURRENT_DATE,
@@ -352,4 +354,4 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION get_fishing_confidence_v3 IS 'Confidence V3 with regional seasonality integration (RESTORED: working version). Maps CMEMS regions to biogeographic regions (IBI→{BIS,IBR}, NWS→{NEA,NSEA,SCA}, BAL→BALT, MED→MED). Joins species_region_seasonality on biogeographic region codes. Returns seasonally-adjusted confidence_percent multiplied by seasonal_weight * availability_multiplier.';
+COMMENT ON FUNCTION get_fishing_confidence_v3(TEXT, DATE, INTEGER) IS 'Confidence V3 with regional seasonality integration (RESTORED: working version). Maps CMEMS regions to biogeographic regions (IBI→{BIS,IBR}, NWS→{NEA,NSEA,SCA}, BAL→BALT, MED→MED). Joins species_region_seasonality on biogeographic region codes. Returns seasonally-adjusted confidence_percent multiplied by seasonal_weight * availability_multiplier.';
