@@ -154,14 +154,76 @@ async function fetchMetNoOceanForecast(
   }
 }
 
+/**
+ * Fetch weather forecast from Met.no API with database caching
+ *
+ * **PHASE 2.3 OPTIMIZATION: Database-backed cache for weather data**
+ * - Weather forecasts are valid for ~1 hour (cache accordingly)
+ * - Uses spatial bucketing at 4dp (~11m resolution for weather accuracy)
+ * - Uses hourly time bucketing
+ * - Eliminates 100-300ms external API latency on cache hit
+ * - Expected cache hit rate: >85% for active fishing times
+ *
+ * @param lat Latitude
+ * @param lon Longitude
+ * @param options Fetch options (signal, etc.)
+ * @returns Met.no location forecast response
+ */
 async function fetchMetNoLocationForecast(
   lat: number,
   lon: number,
   options?: MetNoFetchOptions
 ): Promise<MetNoLocationForecastResponse | null> {
+  // Round coordinates to 4dp for cache bucketing (~11m resolution)
+  const latBucket = round4dp(lat);
+  const lonBucket = round4dp(lon);
+
+  // Truncate to current hour for cache bucketing
+  const now = new Date();
+  const forecastHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours()).toISOString();
+
+  try {
+    // **PHASE 2.3: Check cache first**
+    const supabase = getSupabaseServerClient();
+
+    const { data: cachedData, error: cacheError } = await supabase
+      .from('weather_cache')
+      .select('forecast_data, expires_at')
+      .eq('lat_bucket', latBucket)
+      .eq('lon_bucket', lonBucket)
+      .eq('forecast_hour', forecastHour)
+      .gte('expires_at', new Date().toISOString()) // Not expired
+      .order('cached_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!cacheError && cachedData) {
+      console.log('[Met.no] Cache hit', {
+        lat_bucket: latBucket,
+        lon_bucket: lonBucket,
+        forecast_hour: forecastHour,
+        expires_at: cachedData.expires_at,
+      });
+
+      return cachedData.forecast_data as MetNoLocationForecastResponse;
+    }
+
+    // **Cache miss or error - fetch from Met.no API**
+    console.log('[Met.no] Cache miss, fetching from API', {
+      lat_bucket: latBucket,
+      lon_bucket: lonBucket,
+      forecast_hour: forecastHour,
+      cache_error: cacheError?.message,
+    });
+  } catch (supabaseError) {
+    // Non-fatal: if cache check fails, continue to API fetch
+    console.warn('[Met.no] Cache check failed, falling back to API:', (supabaseError as Error).message);
+  }
+
+  // Fetch from Met.no API
   const url = new URL('https://api.met.no/weatherapi/locationforecast/2.0/compact');
-  url.searchParams.set('lat', round4dp(lat).toFixed(4));
-  url.searchParams.set('lon', round4dp(lon).toFixed(4));
+  url.searchParams.set('lat', latBucket.toFixed(4));
+  url.searchParams.set('lon', lonBucket.toFixed(4));
 
   const span = weatherMetrics.start('metno', 'locationforecast');
 
@@ -181,6 +243,38 @@ async function fetchMetNoLocationForecast(
       return null;
     }
     span.success({ status: statusCode });
+
+    // **PHASE 2.3: Store in cache for future requests**
+    try {
+      const supabase = getSupabaseServerClient();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour from now
+
+      await supabase
+        .from('weather_cache')
+        .upsert(
+          {
+            lat_bucket: latBucket,
+            lon_bucket: lonBucket,
+            forecast_hour: forecastHour,
+            forecast_data: data,
+            expires_at: expiresAt,
+          },
+          {
+            onConflict: 'lat_bucket,lon_bucket,forecast_hour',
+          }
+        );
+
+      console.log('[Met.no] Cached API response', {
+        lat_bucket: latBucket,
+        lon_bucket: lonBucket,
+        forecast_hour: forecastHour,
+        expires_at: expiresAt,
+      });
+    } catch (cacheWriteError) {
+      // Non-fatal: log and continue
+      console.warn('[Met.no] Failed to cache response:', (cacheWriteError as Error).message);
+    }
+
     return data as MetNoLocationForecastResponse;
   } catch (error) {
     span.failure(error);
