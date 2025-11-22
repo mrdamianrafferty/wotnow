@@ -87,17 +87,17 @@ function normalizeFavouriteKey(value?: string | null): string {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
   if (UUID_PATTERN.test(trimmed)) {
-    return trimmed;
+    return trimmed.toLowerCase();
   }
   return trimmed.toUpperCase();
 }
 
 function getFavouriteKeyFromCard(card: CardData): string {
-  if (card.speciesId && card.speciesId.trim().length > 0) {
-    return normalizeFavouriteKey(card.speciesId);
-  }
   if (card.speciesCode && card.speciesCode.trim().length > 0) {
     return normalizeFavouriteKey(card.speciesCode);
+  }
+  if (card.speciesId && card.speciesId.trim().length > 0) {
+    return normalizeFavouriteKey(card.speciesId);
   }
   return normalizeFavouriteKey(card.id);
 }
