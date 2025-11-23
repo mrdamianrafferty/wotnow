@@ -37,6 +37,18 @@ async function callIngestFunction(options: {
 
   if (error) {
     console.error('❌ Edge Function error:', error);
+
+    // Try to read the error body from the Edge Function response (Supabase attaches it as `context`)
+    const context = (error as any)?.context;
+    if (context && typeof context.text === 'function') {
+      try {
+        const bodyText = await context.text();
+        console.error('❌ Edge Function error body:', bodyText);
+      } catch (readErr) {
+        console.error('⚠️ Failed to read error body from context:', readErr);
+      }
+    }
+
     process.exit(1);
   }
 
@@ -81,6 +93,12 @@ const bbox: [number, number, number, number] = args.includes('--americas')
   ? [-98, 18, -88, 31] // Gulf of Mexico coast (excludes deep inland)
   : args.includes('--hawaii')
   ? [-161, 18, -154, 23] // Hawaii (already island-only)
+  : args.includes('--alaska')
+  ? [-170, 50, -130, 70] // Alaska coast
+  : args.includes('--canada-west')
+  ? [-135, 48, -120, 60] // Canada West Coast (BC)
+  : args.includes('--canada-east')
+  ? [-70, 42, -52, 55] // Canada East Coast (Atlantic provinces)
   : [-125, 32, -120, 42]; // Default: California coast ONLY
 
 const providers = args.includes('--cmems') ? ['CMEMS'] : ['NOAA']; // NOAA only for American waters
@@ -96,6 +114,9 @@ else if (args.includes('--newyork')) regionName = 'New York';
 else if (args.includes('--pacific-nw')) regionName = 'Pacific Northwest';
 else if (args.includes('--gulf')) regionName = 'Gulf of Mexico';
 else if (args.includes('--hawaii')) regionName = 'Hawaii';
+else if (args.includes('--alaska')) regionName = 'Alaska';
+else if (args.includes('--canada-west')) regionName = 'Canada West Coast';
+else if (args.includes('--canada-east')) regionName = 'Canada East Coast';
 console.log(`Region: ${regionName}`);
 console.log(`Provider: ${providers.join(', ')}`);
 console.log(`Max cells: ${limit}\n`);
