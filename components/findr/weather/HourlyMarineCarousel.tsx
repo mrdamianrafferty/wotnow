@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { WiDayWindy, WiHot, WiBarometer } from 'react-icons/wi';
 import { Waves, ArrowUp } from 'lucide-react';
 import Image from 'next/image';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import WeatherCarousel from './WeatherCarousel';
 import { formatDisplayTime, formatWaveHeight, formatWindSpeed, formatTemperature } from '../../../lib/findr/weatherFormatting';
 import type { FallbackConditionPayload } from '../../../lib/findr/fallbackConditions';
@@ -18,7 +17,6 @@ interface HourlyMarineCarouselProps {
  * Calculate tide state for a given time based on tide events
  * Returns: 'High', 'Low', 'Rising', or 'Falling'
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getTideState(timeISO: string, tideEvents: TideEvent[]): string {
   if (!tideEvents || tideEvents.length === 0) return '—';
   
@@ -81,7 +79,6 @@ interface HourlyCardProps {
   tideState: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function HourlyCard({ entry, tideState }: HourlyCardProps) {
   const [showPrecipAmount, setShowPrecipAmount] = useState(false);
   
@@ -184,14 +181,30 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
 }
 
 /**
- * HourlyMarineCarousel component (WIP)
- * TODO: Implement carousel layout using WeatherCarousel or custom carousel
+ * HourlyMarineCarousel component
+ * Displays hourly marine forecast in a horizontal scrollable carousel
  */
-export default function HourlyMarineCarousel({ entries, tideEvents: _tideEvents }: HourlyMarineCarouselProps) {
+export default function HourlyMarineCarousel({ entries, tideEvents }: HourlyMarineCarouselProps) {
+  // Create hourly cards with tide state calculation
+  const hourlyCards = entries.map((entry, index) => {
+    const tideState = tideEvents ? getTideState(entry.time, tideEvents) : '—';
+    return (
+      <HourlyCard
+        key={`hourly-${index}-${entry.time}`}
+        entry={entry}
+        tideState={tideState}
+      />
+    );
+  });
+
   return (
-    <div className="text-base-content/60 p-4 text-center">
-      <p><TranslatedText text="Hourly marine forecast coming soon" /></p>
-      <p className="text-xs mt-2">{entries.length} hourly entries available</p>
-    </div>
+    <WeatherCarousel
+      title="Next 24 Hours"
+      description="Hourly marine forecast"
+      items={hourlyCards}
+      itemWidth={200}
+      controlsAriaLabel="Hourly forecast"
+      translateTitle={true}
+    />
   );
 }
