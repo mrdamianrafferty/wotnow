@@ -36,12 +36,30 @@ async function callIngestFunction(options: {
   });
 
   if (error) {
-    console.error('❌ Error:', error);
-    return;
+    console.error('❌ Edge Function error:', error);
+    process.exit(1);
   }
 
-  console.log('✅ Success!\n');
-  console.log('Results:', JSON.stringify(data, null, 2));
+  if (!data) {
+    console.error('❌ No data returned from ingest-conditions function');
+    process.exit(1);
+  }
+
+  // The ingest function returns diagnostics so we can tell whether any NOAA data was actually written
+  const result = data as any;
+  const diagnostics = result.diagnostics ?? {};
+  const noaa = diagnostics.noaa ?? {};
+  const noaaSuccesses = typeof noaa.successes === 'number' ? noaa.successes : 0;
+
+  if (!noaaSuccesses) {
+    console.error('❌ No NOAA data ingested for this run. Treating as failure.');
+    console.error('Full result for debugging:');
+    console.error(JSON.stringify(result, null, 2));
+    process.exit(1);
+  }
+
+  console.log('✅ Success! NOAA ingested cells:', noaaSuccesses, '\n');
+  console.log('Results:', JSON.stringify(result, null, 2));
 }
 
 // Parse command line arguments
@@ -87,4 +105,7 @@ callIngestFunction({
   providers,
   vars,
   limit,
-}).catch(console.error);
+}).catch(err => {
+  console.error('❌ Unhandled error while calling ingest-conditions:', err);
+  process.exit(1);
+});
