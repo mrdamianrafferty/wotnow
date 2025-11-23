@@ -54,42 +54,36 @@ jobs:
         run: |
           echo "🌊 Ingesting California coastal grids..."
           npx tsx scripts/call-ingest-function.ts --california --limit=50
-        continue-on-error: true
 
       - name: Ingest Florida (20 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'florida' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting Florida coastal grids..."
           npx tsx scripts/call-ingest-function.ts --florida --limit=50
-        continue-on-error: true
 
       - name: Ingest New York (20 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'newyork' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting New York coastal grids..."
           npx tsx scripts/call-ingest-function.ts --newyork --limit=50
-        continue-on-error: true
 
       - name: Ingest Gulf of Mexico (20 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'gulf'
         run: |
           echo "🌊 Ingesting Gulf of Mexico grids..."
           npx tsx scripts/call-ingest-function.ts --gulf --limit=50
-        continue-on-error: true
 
       - name: Ingest Pacific Northwest (20 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'pacific-nw'
         run: |
           echo "🌊 Ingesting Pacific Northwest grids..."
           npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=50
-        continue-on-error: true
 
       - name: Ingest Hawaii (20 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii'
         run: |
           echo "🌊 Ingesting Hawaii grids..."
           npx tsx scripts/call-ingest-function.ts --hawaii --limit=50
-        continue-on-error: true
 
       - name: Check coverage
         if: always()
@@ -103,5 +97,10 @@ jobs:
       - name: Report status
         if: always()
         run: |
-          echo "✅ NOAA data ingestion workflow completed"
+          echo "Job status: ${{ job.status }}"
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ NOAA data ingestion workflow completed successfully"
+          else
+            echo "❌ NOAA data ingestion workflow encountered failures. Check logs above for details."
+          fi
           echo "See coverage summary above for current status"
