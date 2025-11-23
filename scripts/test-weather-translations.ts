@@ -4,7 +4,7 @@
  * Tests Beaufort scale descriptions and wave state labels
  */
 
-import { autoTranslate } from '../lib/translation/autoTranslate';
+import { translateText } from '../lib/i18n/translate';
 
 const WEATHER_TERMS = {
   beaufort: [
@@ -43,7 +43,7 @@ async function testTranslations() {
   console.log('📊 BEAUFORT SCALE:');
   console.log('='.repeat(60));
   for (const term of WEATHER_TERMS.beaufort) {
-    const translated = await autoTranslate(term, 'pt');
+    const translated = await translateText(term, { targetLang: 'pt' });
     const status = translated === term ? '❌ NOT TRANSLATED' : '✅ TRANSLATED';
     console.log(`${status} | ${term.padEnd(20)} → ${translated}`);
   }
@@ -51,7 +51,7 @@ async function testTranslations() {
   console.log('\n🌊 WAVE STATES:');
   console.log('='.repeat(60));
   for (const term of WEATHER_TERMS.waveStates) {
-    const translated = await autoTranslate(term, 'pt');
+    const translated = await translateText(term, { targetLang: 'pt' });
     const status = translated === term ? '❌ NOT TRANSLATED' : '✅ TRANSLATED';
     console.log(`${status} | ${term.padEnd(20)} → ${translated}`);
   }

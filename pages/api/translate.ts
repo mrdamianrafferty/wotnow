@@ -1,7 +1,12 @@
 // pages/api/translate.ts
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { autoTranslate, autoTranslateBatch } from '../../lib/translation/autoTranslate';
+import {
+  translateText,
+  translateTextBatch,
+  isSupportedLanguage,
+  normalizeLanguageCode,
+} from '../../lib/i18n/translate';
 
 interface TranslateRequest {
   text?: string;
@@ -77,9 +82,20 @@ export default async function handler(
       });
     }
 
+    if (!isSupportedLanguage(targetLang)) {
+      return res.status(400).json({
+        success: false,
+        error: `Language ${targetLang} is not supported`,
+      });
+    }
+
+    const normalizedLang = normalizeLanguageCode(targetLang);
+
     // Handle batch translation
     if (texts && Array.isArray(texts)) {
-      const translations = await autoTranslateBatch(texts, targetLang);
+      const translations = await translateTextBatch(texts, {
+        targetLang: normalizedLang,
+      });
       return res.status(200).json({
         success: true,
         translations,
@@ -88,7 +104,9 @@ export default async function handler(
 
     // Handle single translation
     if (text) {
-      const translation = await autoTranslate(text, targetLang);
+      const translation = await translateText(text, {
+        targetLang: normalizedLang,
+      });
       return res.status(200).json({
         success: true,
         translation,

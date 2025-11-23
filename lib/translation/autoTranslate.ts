@@ -20,15 +20,21 @@ if (typeof window !== 'undefined') {
 }
 
 import * as deepl from 'deepl-node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 // In-memory cache stores translations for the duration of the Node.js process
 // This provides instant lookups without hitting the database
 const memoryCache = new Map<string, string>();
 
+// Manual override cache keeps high-priority translations available without re-querying
+const MANUAL_OVERRIDE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+type ManualOverrideCacheEntry = { value: string | null; expiresAt: number };
+const manualOverrideCache = new Map<string, ManualOverrideCacheEntry>();
+
 // DeepL translator instance - initialized lazily when first needed
 let translator: deepl.Translator | null = null;
+let supabaseAdminClient: SupabaseClient | null = null;
 
 /**
  * Get or initialize the DeepL translator instance.
@@ -53,6 +59,24 @@ function getTranslator(): deepl.Translator {
 }
 
 /**
+ * Lazily create a Supabase client that can access privileged tables.
+ */
+function getSupabaseAdminClient(): SupabaseClient {
+  if (!supabaseAdminClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      throw new Error('Supabase admin credentials are missing for translation service.');
+    }
+
+    supabaseAdminClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+  }
+
+  return supabaseAdminClient;
+}
+
+/**
  * DeepL language code mapping.
  * Some languages have regional variants that DeepL distinguishes.
  * For example, Portuguese has PT-PT (Portugal) and PT-BR (Brazil).
@@ -66,6 +90,8 @@ const DEEPL_LANGUAGE_MAP: Record<string, deepl.TargetLanguageCode> = {
   it: 'it',        // Italian
   nl: 'nl',        // Dutch
   pl: 'pl',        // Polish
+  sv: 'sv',        // Swedish
+  tr: 'tr',        // Turkish
   ru: 'ru',        // Russian
   ja: 'ja',        // Japanese
   zh: 'zh',        // Chinese (simplified)
@@ -92,6 +118,133 @@ function hashText(text: string): string {
     .update(text.trim())
     .digest('hex')
     .substring(0, 16);
+}
+
+function setManualOverrideCache(
+  text: string,
+  targetLang: string,
+  value: string | null
+) {
+  const cacheKey = getCacheKey(text, targetLang);
+  manualOverrideCache.set(cacheKey, {
+    value,
+    expiresAt: Date.now() + MANUAL_OVERRIDE_TTL_MS,
+  });
+
+  if (value) {
+    memoryCache.set(cacheKey, value);
+  } else {
+    memoryCache.delete(cacheKey);
+  }
+}
+
+function getCachedManualOverride(
+  text: string,
+  targetLang: string
+): string | null | undefined {
+  const cacheKey = getCacheKey(text, targetLang);
+  const cached = manualOverrideCache.get(cacheKey);
+
+  if (!cached) {
+    return undefined;
+  }
+
+  if (cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  manualOverrideCache.delete(cacheKey);
+  return undefined;
+}
+
+async function checkManualOverride(
+  text: string,
+  targetLang: string
+): Promise<string | null> {
+  const cached = getCachedManualOverride(text, targetLang);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('translation_overrides')
+      .select('translated_text')
+      .eq('source_text', text.trim())
+      .eq('target_language', targetLang.toLowerCase())
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      setManualOverrideCache(text, targetLang, null);
+      return null;
+    }
+
+    setManualOverrideCache(text, targetLang, data.translated_text);
+    return data.translated_text;
+  } catch (error) {
+    console.error('Manual override lookup failed:', error);
+    // Cache miss briefly to avoid repeated errors
+    manualOverrideCache.set(getCacheKey(text, targetLang), {
+      value: null,
+      expiresAt: Date.now() + MANUAL_OVERRIDE_TTL_MS / 2,
+    });
+    return null;
+  }
+}
+
+async function checkManualOverridesBatch(
+  texts: string[],
+  targetLang: string
+): Promise<Map<string, string>> {
+  const overrides = new Map<string, string>();
+  const textsNeedingLookup: string[] = [];
+
+  for (const text of texts) {
+    const trimmed = text.trim();
+    const cached = getCachedManualOverride(text, targetLang);
+    if (cached === undefined) {
+      textsNeedingLookup.push(trimmed);
+    } else if (cached) {
+      overrides.set(trimmed, cached);
+    }
+  }
+
+  if (textsNeedingLookup.length === 0) {
+    return overrides;
+  }
+
+  try {
+    const supabase = getSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('translation_overrides')
+      .select('source_text, translated_text')
+      .in('source_text', textsNeedingLookup)
+      .eq('target_language', targetLang.toLowerCase())
+      .eq('is_active', true);
+
+    if (data && !error) {
+      for (const row of data) {
+        setManualOverrideCache(row.source_text, targetLang, row.translated_text);
+        overrides.set(row.source_text, row.translated_text);
+      }
+    }
+
+    // Cache misses to avoid repeated lookups
+    const foundTexts = new Set(data?.map(row => row.source_text) ?? []);
+    for (const text of textsNeedingLookup) {
+      if (!foundTexts.has(text)) {
+        setManualOverrideCache(text, targetLang, null);
+      }
+    }
+  } catch (error) {
+    console.error('Manual override batch lookup failed:', error);
+  }
+
+  return overrides;
 }
 
 /**
@@ -126,10 +279,7 @@ async function checkDatabaseCache(
   targetLang: string
 ): Promise<{ translation: string; source: string } | null> {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseAdminClient();
 
     // **PHASE 2.4: Simplified query - index handles ordering, no ORDER BY needed**
     const { data, error } = await supabase
@@ -167,10 +317,7 @@ async function storeDatabaseCache(
   translatedText: string
 ): Promise<void> {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseAdminClient();
 
     const hasFishingTerms = hasFishingTerminology(sourceText);
     const contentHash = hashText(sourceText);
@@ -249,6 +396,11 @@ export async function autoTranslate(
     return text;
   }
 
+  const manualOverride = await checkManualOverride(text, targetLang);
+  if (manualOverride) {
+    return manualOverride;
+  }
+
   // Check in-memory cache (fastest)
   const cacheKey = getCacheKey(text, targetLang);
   const memoryCached = memoryCache.get(cacheKey);
@@ -290,10 +442,7 @@ async function checkDatabaseCacheBatch(
   }
 
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseAdminClient();
 
     // Normalize texts for cache lookup
     const normalizedTexts = texts.map(t => t.trim());
@@ -340,9 +489,17 @@ export async function autoTranslateBatch(
     return texts;
   }
 
+  const manualOverrides = await checkManualOverridesBatch(texts, targetLang);
+
   // Check in-memory cache first
   const results: (string | null)[] = texts.map((text) => {
     if (!text || !text.trim()) return text;
+    const trimmed = text.trim();
+    const override = manualOverrides.get(trimmed);
+    if (override) {
+      memoryCache.set(getCacheKey(text, targetLang), override);
+      return override;
+    }
     const cacheKey = getCacheKey(text, targetLang);
     return memoryCache.get(cacheKey) || null;
   });
@@ -397,4 +554,21 @@ export async function autoTranslateBatch(
 
   // Return results, ensuring non-null values
   return results.map((r, i) => r || texts[i]);
+}
+
+/**
+ * Allow other modules (e.g., admin endpoints) to invalidate override cache entries.
+ */
+export function invalidateManualOverrideCache(
+  text?: string,
+  targetLang?: string
+): void {
+  if (text && targetLang) {
+    const cacheKey = getCacheKey(text, targetLang);
+    manualOverrideCache.delete(cacheKey);
+    memoryCache.delete(cacheKey);
+    return;
+  }
+
+  manualOverrideCache.clear();
 }

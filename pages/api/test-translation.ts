@@ -1,7 +1,7 @@
 // pages/api/test-translation.ts
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import { autoTranslate } from '../../lib/translation/autoTranslate';
+import { translateText } from '../../lib/i18n/translate';
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,16 +11,19 @@ export default async function handler(
     // Test translations in multiple languages
     const testPhrase = 'Sea Bass caught at dawn with ragworm';
     
-    const spanish = await autoTranslate(testPhrase, 'es');
-    const french = await autoTranslate(testPhrase, 'fr');
-    const portuguese = await autoTranslate(testPhrase, 'pt');
+    const spanish = await translateText(testPhrase, { targetLang: 'es' });
+    const french = await translateText(testPhrase, { targetLang: 'fr' });
+    const portuguese = await translateText(testPhrase, { targetLang: 'pt' });
+    const swedish = await translateText(testPhrase, { targetLang: 'sv' });
+    const turkish = await translateText(testPhrase, { targetLang: 'tr' });
+    const polish = await translateText(testPhrase, { targetLang: 'pl' });
     
     // Test that English returns unchanged
-    const english = await autoTranslate(testPhrase, 'en');
+    const english = await translateText(testPhrase, { targetLang: 'en' });
     
     // Test caching - second call should be instant
     const start = Date.now();
-    await autoTranslate(testPhrase, 'es');
+    await translateText(testPhrase, { targetLang: 'es' });
     const cacheTime = Date.now() - start;
     
     return res.status(200).json({
@@ -30,6 +33,9 @@ export default async function handler(
         spanish,
         french,
         portuguese,
+        swedish,
+        turkish,
+        polish,
         english,
       },
       cache_time_ms: cacheTime,
