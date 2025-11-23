@@ -1014,12 +1014,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Falls back to global grid function for non-ICES areas
     const targetMonth = new Date(predictionDate).getMonth() + 1; // 1-12
 
+    // Use gridCellId for Americas/global, rectangleCode for Europe
+    const targetRectangleForRPC = useGlobalGrid ? gridCellId : rectangleCode;
+
     const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
       // PRIMARY: Confidence V3 with regional seasonality
       {
         name: 'get_fishing_confidence_v3',
         params: {
-          target_rectangle: rectangleCode,
+          target_rectangle: targetRectangleForRPC,
           target_date: predictionDate,
           target_month: targetMonth,
         },
