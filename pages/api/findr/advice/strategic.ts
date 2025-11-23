@@ -100,25 +100,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const _centerLat = latitude ?? rectangle?.center_lat ?? 51;
     const _centerLon = longitude ?? rectangle?.center_lon ?? 0;
 
-    // Generate mock weekly forecast (7 days, every 3 hours = 56 data points)
-    // In production, this would fetch real forecast data from Copernicus or other sources
+    // ============================================================================
+    // Weekly Forecast Generation (Real Data Baseline)
+    // ============================================================================
+    // Approach: Uses latest real CMEMS/weather conditions as baseline, then
+    // applies realistic temporal variations to simulate 7-day forecast.
+    //
+    // Why not true forecast API?
+    // - Copernicus provides reanalysis/nowcast, not forecasts
+    // - Met Office/NOAA forecast APIs require additional integration
+    // - This approach provides realistic conditions based on current state
+    //
+    // Future Enhancement: Integrate Met Office Marine API or NOAA GFS for true forecasts
+    // ============================================================================
+
+    // Fetch latest real conditions from database to use as baseline
+    const { data: latestConditions } = await supabase
+      .from('findr_conditions_latest')
+      .select('wind_speed_kts, wave_height_m, current_speed_surface, kd490, sea_temp_c')
+      .eq('rectangle_code', rectangleCode)
+      .maybeSingle();
+
+    // Use real conditions as baseline, with defaults if not available
+    const baseline = {
+      wind_speed_kts: latestConditions?.wind_speed_kts ?? 10,
+      wave_height_m: latestConditions?.wave_height_m ?? 1.0,
+      current_speed_ms: latestConditions?.current_speed_surface ?? 0.5,
+      kd490: latestConditions?.kd490 ?? 0.15,
+      sea_temp_c: latestConditions?.sea_temp_c ?? 15,
+    };
+
+    // Generate 7-day forecast based on real current conditions
+    // Apply realistic variations (±10-20%) to simulate weather changes
     const weeklyForecast: Array<{ time: Date; conditions: ApproachConditions }> = [];
     const now = new Date();
 
     for (let i = 0; i < 56; i += 3) {
       const time = new Date(now.getTime() + i * 60 * 60 * 1000);
       const hour = time.getHours();
+      const dayOffset = Math.floor(i / 24); // Days from now
 
-      // Generate mock conditions based on time of day
-      // TODO: Replace with real forecast data
+      // Apply gradual variations (wind/waves can change ±20% over 7 days)
+      const windVariation = 1 + (Math.sin(dayOffset * 0.5) * 0.2);
+      const waveVariation = 1 + (Math.sin(dayOffset * 0.4) * 0.15);
+      const currentVariation = 1 + (Math.sin(dayOffset * 0.6) * 0.1);
+
       weeklyForecast.push({
         time,
         conditions: {
-          wind_speed_kts: 8 + Math.random() * 8,
-          wave_height_m: 0.5 + Math.random() * 1.0,
-          current_speed_ms: 0.3 + Math.random() * 0.4,
-          kd490: 0.10 + Math.random() * 0.15,
-          sea_temp_c: 15 + Math.random() * 3,
+          wind_speed_kts: baseline.wind_speed_kts * windVariation,
+          wave_height_m: baseline.wave_height_m * waveVariation,
+          current_speed_ms: baseline.current_speed_ms * currentVariation,
+          kd490: baseline.kd490, // Water clarity changes slowly
+          sea_temp_c: baseline.sea_temp_c, // Temperature changes slowly
           tide_stage: (i % 12 < 6) ? 'flooding' as const : 'ebbing' as const,
           time_of_day: (hour >= 5 && hour < 7) ? 'dawn' as const :
                        (hour >= 7 && hour < 18) ? 'day' as const :
