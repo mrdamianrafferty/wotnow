@@ -51,11 +51,26 @@ serve(async (req) => {
   });
 
   try {
-    // Pull a manageable batch of cells; we'll filter by bbox in-memory since aliases aren't filterable server-side.
-    const { data: cells, error: cellsError } = await supabase
+    // Apply bbox filtering in SQL query for efficiency (instead of fetching all rows and filtering in JS)
+    let query = supabase
       .from("grid_025deg")
-      .select("cell_id, lat_min, lat_max, lon_min, lon_max")
-      .limit(Number(env.GRID_FETCH_LIMIT ?? 50000));
+      .select("cell_id, lat_min, lat_max, lon_min, lon_max");
+
+    // If bbox provided, filter in SQL for better performance
+    if (bbox) {
+      const [minLon, minLat, maxLon, maxLat] = bbox;
+      // Filter by overlapping bounds (cell overlaps with bbox if cell's max >= bbox's min AND cell's min <= bbox's max)
+      query = query
+        .gte('lon_max', Math.min(minLon, maxLon))
+        .lte('lon_min', Math.max(minLon, maxLon))
+        .gte('lat_max', Math.min(minLat, maxLat))
+        .lte('lat_min', Math.max(minLat, maxLat));
+    }
+
+    // Limit to reasonable number (bbox filtering should reduce this significantly)
+    query = query.limit(Number(env.GRID_FETCH_LIMIT ?? 50000));
+
+    const { data: cells, error: cellsError } = await query;
 
     if (cellsError) {
       console.error("Failed to load grid cells", cellsError);
@@ -66,17 +81,6 @@ serve(async (req) => {
     let candidateCells = rawCells
       .map(buildGridCellFromBounds)
       .filter((c): c is GridCell => Boolean(c));
-
-    // Apply bbox if provided: [minLon, minLat, maxLon, maxLat]
-    if (bbox) {
-      const [minLon, minLat, maxLon, maxLat] = bbox;
-      candidateCells = candidateCells.filter(c =>
-        c.lon >= Math.min(minLon, maxLon) &&
-        c.lon <= Math.max(minLon, maxLon) &&
-        c.lat >= Math.min(minLat, maxLat) &&
-        c.lat <= Math.max(minLat, maxLat)
-      );
-    }
 
     if (candidateCells.length === 0) {
       return jsonResponse({ message: "No grid cells in selection" });
