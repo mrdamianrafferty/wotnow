@@ -7,7 +7,7 @@
 
 import { findNearestGridCellId, getWaterRegion } from '../lib/findr/gridCellLookup';
 
-const API_BASE = 'https://wotnow-542l6bovo-damians-projects-06bbadaa.vercel.app';
+const API_BASE = 'https://wotnow-10r20okd8-damians-projects-06bbadaa.vercel.app';
 
 // Test locations
 const testLocations = [
