@@ -88,11 +88,11 @@ jobs:
           echo "🌊 Ingesting Hawaii grids..."
           npx tsx scripts/call-ingest-function.ts --hawaii --limit=100
 
-      - name: Ingest Alaska (100 grids)
+      - name: Ingest Alaska (200 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'alaska'
         run: |
           echo "🌊 Ingesting Alaska grids..."
-          npx tsx scripts/call-ingest-function.ts --alaska --limit=100
+          npx tsx scripts/call-ingest-function.ts --alaska --limit=200
 
       - name: Ingest Canada West Coast (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-west'
