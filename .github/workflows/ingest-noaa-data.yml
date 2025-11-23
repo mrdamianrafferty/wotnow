@@ -79,11 +79,11 @@ jobs:
           echo "🌊 Ingesting Pacific Northwest grids..."
           npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=50
 
-      - name: Ingest Hawaii (20 grids)
+      - name: Ingest Hawaii (10 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii'
         run: |
           echo "🌊 Ingesting Hawaii grids..."
-          npx tsx scripts/call-ingest-function.ts --hawaii --limit=50
+          npx tsx scripts/call-ingest-function.ts --hawaii --limit=10
 
       - name: Check coverage
         if: always()

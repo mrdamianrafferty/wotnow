@@ -1,3 +1,8 @@
+
+// If using Deno, ensure your editor supports Deno types (e.g., VSCode Deno extension).
+// If using Node.js, replace with a Node.js HTTP server, e.g.:
+// import { createServer } from "http";
+// For Deno, keep as-is and install Deno extension for type support.
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -170,22 +175,20 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-// NOAA ERDDAP (MUR SST) ------------------------------------------------------
+// NOAA ERDDAP (SST) ------------------------------------------------------
 
-const NOAA_ERDDAP_BASE_URL = env.NOAA_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
-const NOAA_DEFAULT_DATASET_ID = "ncdcOisst21Agg_LonPM180";
-const NOAA_DEFAULT_VARIABLE = "sst";
-const NOAA_DATASET_ID = (() => {
-  const configured = env.NOAA_ERDDAP_DATASET_ID?.trim();
-  if (configured && configured !== "jplMURSST41_L4") return configured;
-  return NOAA_DEFAULT_DATASET_ID;
-})();
-const NOAA_VARIABLE = (() => {
-  const configured = env.NOAA_ERDDAP_VARIABLE?.trim();
-  if (configured && configured !== "analysed_sst") return configured;
-  return NOAA_DEFAULT_VARIABLE;
-})();
-const NOAA_DEPTH_DIMENSION = env.NOAA_ERDDAP_DEPTH_DIMENSION ?? "zlev";
+const NOAA_ERDDAP_BASE_URL =
+  env.NOAA_ERDDAP_BASE_URL ?? "https://coastwatch.noaa.gov/erddap";
+
+const NOAA_DEFAULT_DATASET_ID = "noaacwBLENDEDsstDaily";
+const NOAA_DEFAULT_VARIABLE = "analysed_sst";
+
+// Simple env override: if NOAA_ERDDAP_DATASET_ID / NOAA_ERDDAP_VARIABLE are set, use them; otherwise fall back to defaults.
+const NOAA_DATASET_ID = env.NOAA_ERDDAP_DATASET_ID?.trim() || NOAA_DEFAULT_DATASET_ID;
+const NOAA_VARIABLE = env.NOAA_ERDDAP_VARIABLE?.trim() || NOAA_DEFAULT_VARIABLE;
+
+// Default to no depth axis (time, latitude, longitude only) unless explicitly configured.
+const NOAA_DEPTH_DIMENSION = env.NOAA_ERDDAP_DEPTH_DIMENSION ?? "";
 const NOAA_DEPTH_VALUE = env.NOAA_ERDDAP_DEPTH_VALUE ?? "0";
 const NOAA_SEARCH_RADIUS = Number(env.NOAA_ERDDAP_SEARCH_RADIUS ?? "0.25");
 const NOAA_CONCURRENCY = Number(env.NOAA_ERDDAP_CONCURRENCY ?? "4");
@@ -195,6 +198,15 @@ const NOAA_TIME_OFFSETS: number[] = (env.NOAA_ERDDAP_TIME_OFFSETS ?? "0,24,72,16
   .split(",")
   .map((value) => Number(value.trim()))
   .filter((value) => Number.isFinite(value) && value >= 0);
+
+console.log("NOAA Configuration:", {
+  datasetId: NOAA_DATASET_ID,
+  variable: NOAA_VARIABLE,
+  baseUrl: NOAA_ERDDAP_BASE_URL,
+  interface: NOAA_INTERFACE,
+  depthDim: NOAA_DEPTH_DIMENSION,
+  depthValue: NOAA_DEPTH_VALUE
+});
 
 async function fetchNoaaSurfaceTemperatures(cells: GridCell[], vars: string[], diagnostics?: ProviderDiagnostics): Promise<ProviderSample[]> {
   const results: ProviderSample[] = [];
@@ -216,7 +228,9 @@ async function fetchNoaaSurfaceTemperatures(cells: GridCell[], vars: string[], d
 }
 
 async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
-  const offsets = NOAA_TIME_OFFSETS.length > 0 ? NOAA_TIME_OFFSETS : [0];
+  // For griddap with [(last)], only attempt once - no need to iterate offsets
+  const useGriddap = NOAA_INTERFACE === "griddap";
+  const offsets = useGriddap ? [0] : (NOAA_TIME_OFFSETS.length > 0 ? NOAA_TIME_OFFSETS : [0]);
   const windowMs = Math.max(NOAA_TIME_WINDOW_HOURS, 1) * 60 * 60 * 1000;
   const now = new Date();
 
@@ -262,19 +276,43 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
       }
       url.search = `?${params.join("&")}`;
     } else {
-      const timeSlice = `[(${startTime.toISOString()}):1:(${endTime.toISOString()})]`;
-      const depthSlice = depthValue !== null ? `[(${depthValue.toFixed(3)}):1:(${depthValue.toFixed(3)})]` : "";
+      // For griddap with noaacwBLENDEDsstDaily: use [(last)] for time, then stride format for lat/lon
+      const timeSlice = "[(last)]";
+      const depthSlice =
+        depthValue !== null
+          ? `[(${depthValue.toFixed(3)}):1:(${depthValue.toFixed(3)})]`
+          : "";
       const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
       const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
       url.search = `?${NOAA_VARIABLE}${timeSlice}${depthSlice}${latSlice}${lonSlice}`;
     }
 
     try {
-      const resp = await fetch(url.toString());
+      console.log("NOAA ERDDAP request URL:", url.toString());
+
+      // Add 30-second timeout to prevent hanging on slow/unresponsive servers
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      let resp: Response;
+      try {
+        resp = await fetch(url.toString(), { signal: controller.signal });
+        clearTimeout(timeoutId);
+      } catch (fetchError: unknown) {
+        clearTimeout(timeoutId);
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          const warning = `Timeout (30s) for cell ${cell.cell_id} (offset ${offsetHours}h)`;
+          recordProviderError(diagnostics, warning);
+          console.warn("NOAA ERDDAP request timeout", { cell: cell.cell_id, offsetHours, url: url.toString() });
+          continue;
+        }
+        throw fetchError;
+      }
+
       if (!resp.ok) {
         const warning = `HTTP ${resp.status} ${resp.statusText} for cell ${cell.cell_id} (offset ${offsetHours}h)`;
         recordProviderError(diagnostics, warning);
-        console.warn("NOAA ERDDAP request failed", resp.status, resp.statusText, { cell: cell.cell_id, offsetHours });
+        console.warn("NOAA ERDDAP request failed", resp.status, resp.statusText, { cell: cell.cell_id, offsetHours, url: url.toString() });
         continue;
       }
 
