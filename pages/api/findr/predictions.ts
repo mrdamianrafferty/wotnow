@@ -1014,30 +1014,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Falls back to global grid function for non-ICES areas
     const targetMonth = new Date(predictionDate).getMonth() + 1; // 1-12
 
-    // Use gridCellId for Americas/global, rectangleCode for Europe
-    const targetRectangleForRPC = useGlobalGrid ? gridCellId : rectangleCode;
-
-    const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = [
-      // PRIMARY: Confidence V3 with regional seasonality
-      {
-        name: 'get_fishing_confidence_v3',
-        params: {
-          target_rectangle: targetRectangleForRPC,
-          target_date: predictionDate,
-          target_month: targetMonth,
-        },
-      },
-      // FALLBACK: Global grid-based predictions (for non-ICES areas, new as of Nov 5 2025)
-      {
-        name: 'get_global_fishing_predictions',
-        params: {
-          user_lat: userLat || rectangleData?.center_lat || null,
-          user_lon: userLon || rectangleData?.center_lon || null,
-          target_date: predictionDate,
-          p_lang: language,
-        },
-      },
-    ];
+    // CRITICAL FIX: get_fishing_confidence_v3 only works with ICES rectangles
+    // For grid cells (Americas/global), use get_global_fishing_predictions directly
+    const rpcCandidates: Array<{ name: string; params: Record<string, unknown> }> = useGlobalGrid
+      ? [
+          // For grid cells: use global/grid-based predictions (lat/lon)
+          {
+            name: 'get_global_fishing_predictions',
+            params: {
+              user_lat: userLat || rectangleData?.center_lat || null,
+              user_lon: userLon || rectangleData?.center_lon || null,
+              target_date: predictionDate,
+              p_lang: language,
+            },
+          },
+        ]
+      : [
+          // For ICES rectangles: use V3 with regional seasonality
+          {
+            name: 'get_fishing_confidence_v3',
+            params: {
+              target_rectangle: rectangleCode,
+              target_date: predictionDate,
+              target_month: targetMonth,
+            },
+          },
+          // FALLBACK: Global grid-based predictions (for non-ICES areas)
+          {
+            name: 'get_global_fishing_predictions',
+            params: {
+              user_lat: userLat || rectangleData?.center_lat || null,
+              user_lon: userLon || rectangleData?.center_lon || null,
+              target_date: predictionDate,
+              p_lang: language,
+            },
+          },
+        ];
     
     let data: unknown = null;
     let rpcError: PostgrestError | null = null;
