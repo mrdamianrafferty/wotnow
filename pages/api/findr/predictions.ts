@@ -6,6 +6,7 @@ import { fetchMetNoLocationForecast, fetchWorldTides } from '../../../lib/servic
 import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/queryWithTiming';
 import { calculateTidePhase, type TideExtreme } from '../../../lib/tides/calculateTidePhase';
 import { rateLimiter, RateLimitError, addRateLimitHeaders } from '../../../lib/utils/rate-limiter';
+import { findNearestGridCellId } from '../../../lib/findr/gridCellLookup';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -818,9 +819,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const iso = inferCountryISOFromLatLon(userLat, userLon);
     if (iso === 'US' || iso === 'CA' || iso === 'MX') {
       useGlobalGrid = true;
-      // Here you would implement logic to resolve lat/lon to grid_025deg.cell_id
-      // For now, just use a placeholder or pass lat/lon to the RPC
-      gridCellId = `LAT${userLat.toFixed(2)}LON${userLon.toFixed(2)}`;
+      // Use real grid cell lookup (CRITICAL-3 implementation)
+      // Format: G025_N41W074 (compatible with rectangles_025deg, grid_conditions_latest)
+      gridCellId = findNearestGridCellId(userLat, userLon);
+      console.log('[Findr API] Resolved grid cell for Americas:', { lat: userLat, lon: userLon, gridCellId, iso });
     }
   }
 
