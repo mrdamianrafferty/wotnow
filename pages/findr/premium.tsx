@@ -51,7 +51,7 @@ export default function PremiumPage() {
       // Redirect to Stripe Checkout
       const stripe = await getStripe();
       if (stripe) {
-        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+        await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
       }
     } catch (err) {
       console.error('Checkout error:', err);

@@ -34,13 +34,13 @@ export const config = {
  * Update user profile based on subscription status.
  */
 async function updateProfileFromSubscription(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string,
   subscription: Stripe.Subscription
 ) {
   const status = subscription.status === 'active' || subscription.status === 'trialing' ? 'premium' : 'free';
 
-  const updateData: Record<string, string | null> = {
+  const updateData: any = {
     subscription_status: status,
     payment_platform: 'web',
     stripe_subscription_id: subscription.id,
@@ -51,15 +51,15 @@ async function updateProfileFromSubscription(
     updateData.subscription_start_date = new Date(subscription.created * 1000).toISOString();
 
     // Trial end date
-    if (subscription.trial_end) {
-      updateData.trial_ends_at = new Date(subscription.trial_end * 1000).toISOString();
+    if ((subscription as any).trial_end) {
+      updateData.trial_ends_at = new Date((subscription as any).trial_end * 1000).toISOString();
     }
 
     // Subscription end date (if canceled)
-    if (subscription.cancel_at) {
-      updateData.subscription_end_date = new Date(subscription.cancel_at * 1000).toISOString();
-    } else if (subscription.current_period_end) {
-      updateData.subscription_end_date = new Date(subscription.current_period_end * 1000).toISOString();
+    if ((subscription as any).cancel_at) {
+      updateData.subscription_end_date = new Date((subscription as any).cancel_at * 1000).toISOString();
+    } else if ((subscription as any).current_period_end) {
+      updateData.subscription_end_date = new Date((subscription as any).current_period_end * 1000).toISOString();
     }
   }
 
@@ -87,8 +87,8 @@ async function updateProfileFromSubscription(
       const price = await stripe.prices.retrieve(priceId);
       const originalPrice = (price.unit_amount || 0) / 100;
 
-      // Calculate discount from subscription discount
-      const discount = subscription.discount;
+      // Calculate discount from subscription discounts (use first discount if present)
+      const discount = (subscription as any).discount;
       let finalPrice = originalPrice;
 
       if (discount?.coupon) {
@@ -113,11 +113,11 @@ async function updateProfileFromSubscription(
  * Record subscription event in audit log.
  */
 async function recordEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string,
   eventType: string,
   stripeEventId: string,
-  eventData: unknown
+  eventData: any
 ) {
   await supabase.from('subscription_events').insert({
     user_id: userId,

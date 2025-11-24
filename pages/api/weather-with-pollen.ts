@@ -158,7 +158,7 @@ export function createWeatherWithPollenHandler(customDeps?: Partial<WeatherWithP
       const hourly = pollenResponse?.hourly;
       const times = hourly?.time ?? [];
 
-      if (times.length) {
+      if (hourly && times.length) {
         for (let i = 0; i < times.length; i++) {
           const stamp = times[i];
           if (!stamp) continue;
