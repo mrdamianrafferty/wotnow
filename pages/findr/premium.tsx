@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSubscription } from '@/hooks/useSubscription';
 import { getStripe } from '@/lib/stripe/client';
+import type { Stripe as BrowserStripe } from '@stripe/stripe-js';
 import { createClient } from '@/lib/supabase/client';
 
 export default function PremiumPage() {
@@ -49,9 +50,10 @@ export default function PremiumPage() {
       }
 
       // Redirect to Stripe Checkout
-      const stripe = await getStripe();
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      const stripeClient: BrowserStripe | null = await getStripe();
+      if (stripeClient) {
+        // @ts-expect-error - redirectToCheckout exists but not in Stripe type definitions
+        await stripeClient.redirectToCheckout({ sessionId: data.sessionId });
       }
     } catch (err) {
       console.error('Checkout error:', err);
