@@ -94,13 +94,35 @@ serve(async (req) => {
       providers,
     };
 
-    shuffleInPlace(candidateCells);
+    // Optimize: prioritize grids without data to fill gaps faster
+    const cellIds = candidateCells.map(c => c.cell_id);
+    const { data: existingData } = await supabase
+      .from("grid_conditions_latest")
+      .select("cell_id")
+      .in("cell_id", cellIds);
 
-    // Cap the number of sampled cells to avoid timeouts
-    if (candidateCells.length > maxPoints) {
-      candidateCells = candidateCells.slice(0, maxPoints);
-      diagnostics.truncatedTo = candidateCells.length;
-    }
+    const existingIds = new Set((existingData || []).map(row => row.cell_id));
+    const withoutData = candidateCells.filter(c => !existingIds.has(c.cell_id));
+    const withData = candidateCells.filter(c => existingIds.has(c.cell_id));
+
+    // Shuffle both groups
+    shuffleInPlace(withoutData);
+    shuffleInPlace(withData);
+
+    // Prioritize grids without data (80%), keep 20% for refreshing existing data
+    const targetNew = Math.min(withoutData.length, Math.floor(maxPoints * 0.8));
+    const targetRefresh = Math.min(withData.length, maxPoints - targetNew);
+
+    candidateCells = [
+      ...withoutData.slice(0, targetNew),
+      ...withData.slice(0, targetRefresh)
+    ];
+
+    diagnostics.truncatedTo = candidateCells.length;
+    diagnostics.gridsWithoutData = withoutData.length;
+    diagnostics.gridsWithData = withData.length;
+    diagnostics.selectedNew = targetNew;
+    diagnostics.selectedRefresh = targetRefresh;
 
     const sampledRows = await fetchAndSampleProviders(candidateCells, { providers, vars }, diagnostics);
 
@@ -641,6 +663,10 @@ type IngestDiagnostics = {
   truncatedTo: number;
   bboxApplied: boolean;
   providers: string[];
+  gridsWithoutData?: number;
+  gridsWithData?: number;
+  selectedNew?: number;
+  selectedRefresh?: number;
   noaa?: ProviderDiagnostics;
   cmems?: ProviderDiagnostics;
 };

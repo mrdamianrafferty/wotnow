@@ -37,9 +37,10 @@ export default async function handler(
       .from('findr_conditions_latest')
       .select('captured_at, sea_temp_c, salinity_psu, chlorophyll_mg_m3')
       .not('source', 'eq', 'fallback')
+      .or('sea_temp_c.not.is.null,salinity_psu.not.is.null,chlorophyll_mg_m3.not.is.null')
       .order('captured_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     // Get count of stale data (>48h old)
     const staleThreshold = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
