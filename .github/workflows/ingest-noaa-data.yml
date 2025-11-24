@@ -73,38 +73,38 @@ jobs:
       - name: Ingest Gulf of Mexico (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'gulf' || github.event_name == 'schedule'
         run: |
-        echo "🌊 Ingesting Gulf of Mexico grids..."
-        npx tsx scripts/call-ingest-function.ts --gulf --limit=100
+          echo "🌊 Ingesting Gulf of Mexico grids..."
+          npx tsx scripts/call-ingest-function.ts --gulf --limit=100
 
-        - name: Ingest Pacific Northwest (100 grids)
-        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'pacific-nw' || github.event_name == 'schedule'
+      - name: Ingest Pacific Northwest (100 grids)
+        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'pacific-nw'
         run: |
-        echo "🌊 Ingesting Pacific Northwest grids..."
-        npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=100
+          echo "🌊 Ingesting Pacific Northwest grids..."
+          npx tsx scripts/call-ingest-function.ts --pacific-nw --limit=100
 
-        - name: Ingest Hawaii (100 grids)
-        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii' || github.event_name == 'schedule'
+      - name: Ingest Hawaii (100 grids)
+        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii'
         run: |
-         echo "🌊 Ingesting Hawaii grids..."
-        npx tsx scripts/call-ingest-function.ts --hawaii --limit=100
+          echo "🌊 Ingesting Hawaii grids..."
+          npx tsx scripts/call-ingest-function.ts --hawaii --limit=100
 
-        - name: Ingest Alaska (150 grids)
-        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'alaska' || github.event_name == 'schedule'
+      - name: Ingest Alaska (150 grids)
+        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'alaska'
         run: |
-        echo "🌊 Ingesting Alaska grids..."
-        npx tsx scripts/call-ingest-function.ts --alaska --limit=150
+          echo "🌊 Ingesting Alaska grids..."
+          npx tsx scripts/call-ingest-function.ts --alaska --limit=150
 
-- name: Ingest Canada West Coast (100 grids)
-  if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-west' || github.event_name == 'schedule'
-  run: |
-    echo "🌊 Ingesting Canada West Coast grids..."
-    npx tsx scripts/call-ingest-function.ts --canada-west --limit=100
+      - name: Ingest Canada West Coast (100 grids)
+        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-west'
+        run: |
+          echo "🌊 Ingesting Canada West Coast grids..."
+          npx tsx scripts/call-ingest-function.ts --canada-west --limit=100
 
-- name: Ingest Canada East Coast (100 grids)
-  if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-east' || github.event_name == 'schedule'
-  run: |
-    echo "🌊 Ingesting Canada East Coast grids..."
-    npx tsx scripts/call-ingest-function.ts --canada-east --limit=100
+      - name: Ingest Canada East Coast (100 grids)
+        if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-east'
+        run: |
+          echo "🌊 Ingesting Canada East Coast grids..."
+          npx tsx scripts/call-ingest-function.ts --canada-east --limit=100
 
       - name: Check coverage
         if: always()
