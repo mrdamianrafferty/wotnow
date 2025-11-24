@@ -136,12 +136,24 @@ Added 3 new regions to achieve full North American coastline coverage:
 - ✅ Workflow updated: committed to main branch
 - ✅ Production tested: Alaska, Canada West, Canada East all working
 
+## Known Issues
+
+### Edge Function Timeout with Optimization
+The prioritization optimization adds a database query that can cause timeouts with high limits:
+- **Symptom**: 504 Gateway Timeout or 546 WORKER_LIMIT errors
+- **Cause**: Extra query to check existing data for all candidate cells
+- **Workaround**: Use lower limits (50-100 instead of 150-200)
+- **Future Fix**: Make optimization conditional or more efficient
+
+Regions already at 100% coverage (California coastal: 60/60 grids) don't benefit from optimization and may experience slower performance.
+
 ## Next Steps
 
 1. Monitor next scheduled workflow run (hourly at :15 past the hour)
 2. Verify all 9 regions complete within 30-minute timeout
 3. Check coverage growth over next few hours
 4. Confirm NOAA OISST dataset covers high-latitude waters (Alaska/Canada)
+5. Consider reducing workflow limits if timeouts occur (150 → 100, 200 → 150)
 
 ## Performance Notes
 

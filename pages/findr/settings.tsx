@@ -13,6 +13,7 @@ import FindrFooter from '../../components/FindrFooter';
 import type { FindrUserSettings } from '../api/findr/user-settings';
 import { SPECIES_IMAGE_MAP } from '../../data/speciesImageMap';
 import type { SavedLocation } from '../../types/multiLocation';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 const TECHNIQUES = [
   { id: 'spinning', label: 'Spinning' },
@@ -94,6 +95,103 @@ const GLOBAL_FALLBACK_SPECIES_CODES = [
   '3DD951',
 ];
 const GLOBAL_FALLBACK_NOTE = 'Findr staple pick while we gather more data for your waters';
+const SETTINGS_TRANSLATABLE_STRINGS = [
+  'Settings - Findr',
+  'Manage your Findr settings and preferences',
+  'Hello {name} 🎣',
+  'Hello 🎣',
+  'Customize your fishing experience',
+  'Sign out',
+  'You have unsaved changes. Don\'t forget to click {action}.',
+  'Settings saved successfully!',
+  'Failed to save settings',
+  'Failed to load settings',
+  'Personal Details',
+  'How we address you in Findr',
+  'Display Name',
+  'e.g. Captain Hook',
+  'Email (account)',
+  'Your account email',
+  'Fishing Alerts',
+  'Get notified when conditions are perfect for your favourite species',
+  'Hot Bite Alerts',
+  'Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!',
+  'Daily Email Digest',
+  'Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (<70%). Maximum 1 email per day.',
+  'Sent daily at 8:00 AM',
+  'Weekly Forecast',
+  '7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!',
+  'Sent every Monday at 8:00 AM',
+  'Add species to your favourites to start receiving personalized fishing alerts and forecasts.',
+  'Notification settings updated!',
+  'Failed to update notification settings',
+  'Your Fishing Style',
+  'Help us tailor recommendations to your setup',
+  'I fish from a boat',
+  'Favourite Techniques',
+  'Favourite Habitats',
+  'Your Locations',
+  'Set your home and favourite fishing spots',
+  'Home Location',
+  'Change Location',
+  'Set Home Location',
+  'Set your home location',
+  'Fishing Location',
+  'Set Fishing Location',
+  'Set your fishing location',
+  'Home',
+  'Fishing Spot',
+  'Favourite Species',
+  'Add or remove species so alerts stay focused',
+  '{count} species',
+  'No favourite species yet. Add a few below to personalise your alerts.',
+  'Add from your home water',
+  'We pull regional staples for {location}{region}.',
+  'Refresh list',
+  'Refreshing…',
+  'Set a home location above to unlock quick-add suggestions.',
+  'We need an ICES rectangle for {location}. Update the location using the button above so we can suggest species from the correct home waters.',
+  'Loading regional species…',
+  'Availability score {score} · Confidence {confidence}%',
+  'Add',
+  'Dismiss',
+  'Global staple',
+  'We topped up the list with Findr staples while your region is quiet. Tap refresh later to see new local action as it arrives.',
+  'That\'s everything we have for this region right now. We\'ll surface more once new data lands.',
+  'All suggested species for this region are already in your favourites. Great work!',
+  'Need more control? You can also {link} from the dedicated page.',
+  'manage your favourites',
+  'Security',
+  'Update your password',
+  'New password',
+  'At least 8 characters',
+  'Show',
+  'Hide',
+  'Confirm new password',
+  'Re-enter password',
+  'Update password',
+  'Updating...',
+  'Password must be at least 8 characters',
+  'Passwords do not match',
+  'Password updated successfully!',
+  'Failed to update password',
+  'Ready to save your changes?',
+  'Your settings will be updated immediately',
+  'Save Settings',
+  'Saving...',
+  'Home location saved!',
+  'Failed to save home location. Please try again.',
+  'Fishing location saved!',
+  'Failed to save fishing location. Please try again.',
+  'your saved home location',
+  '{label} removed from favourites',
+  'Failed to remove {label}',
+  '{label} added to favourites',
+  'Failed to add {label}',
+  '{label} hidden from suggestions',
+  'Remove {label}',
+  GLOBAL_FALLBACK_NOTE,
+] as const;
 
 interface FavouriteChipDisplay {
   code: string;
@@ -122,6 +220,14 @@ export default function FindrSettingsPage() {
     updatePreferences: updateNotifPrefs,
   } = useNotificationPreferences();
   const { homeLocation, coastalLocation, updateLocationBySlot } = useUnifiedLocation();
+  const translationInputs = useMemo(() => (
+    [
+      ...SETTINGS_TRANSLATABLE_STRINGS,
+      ...TECHNIQUES.map((tech) => tech.label),
+      ...HABITATS.map((habitat) => habitat.label),
+    ]
+  ), []);
+  const { t } = useTranslationMap(translationInputs);
 
   const [settings, setSettings] = useState<FindrUserSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -281,6 +387,20 @@ export default function FindrSettingsPage() {
     () => availableRegionalSuggestions.some((suggestion) => suggestion.source === 'global-fallback'),
     [availableRegionalSuggestions],
   );
+  const homeLocationLabel = homeLocation?.name || t('your saved home location');
+  const regionSuffix = regionalSuggestionsRegionId ? ` (${regionalSuggestionsRegionId})` : '';
+  const regionalIntroCopy = t('We pull regional staples for {location}{region}.')
+    .replace('{location}', homeLocationLabel)
+    .replace('{region}', regionSuffix);
+  const icesCopy = t('We need an ICES rectangle for {location}. Update the location using the button above so we can suggest species from the correct home waters.')
+    .replace('{location}', homeLocation?.name || homeLocationLabel);
+  const manageFavouritesSentenceTemplate = t('Need more control? You can also {link} from the dedicated page.');
+  const manageLinkText = t('manage your favourites');
+  const manageFavouritesSentenceParts = useMemo(() => {
+    const parts = manageFavouritesSentenceTemplate.split('{link}');
+    if (parts.length === 2) return parts;
+    return [parts[0] ?? '', parts[1] ?? ''];
+  }, [manageFavouritesSentenceTemplate]);
 
   useEffect(() => {
     setDismissedSuggestionCodes([]);
@@ -321,7 +441,15 @@ export default function FindrSettingsPage() {
           techniquesCount: data.settings.fishingTechniques?.length ?? 0,
           habitatsCount: data.settings.favoriteHabitats?.length ?? 0,
         });
-        setSettings(data.settings);
+        setSettings({
+          displayName: data.settings.displayName ?? null,
+          email: data.settings.email ?? user.email ?? null,
+          hasBoat: Boolean(data.settings.hasBoat),
+          fishingTechniques: Array.isArray(data.settings.fishingTechniques) ? data.settings.fishingTechniques : [],
+          favoriteHabitats: Array.isArray(data.settings.favoriteHabitats) ? data.settings.favoriteHabitats : [],
+          preferencesJson: data.settings.preferencesJson ?? {},
+          updatedAt: data.settings.updatedAt ?? null,
+        });
       } else {
         console.log('[Settings] No settings found, using defaults');
         // Initialize with defaults if no settings exist
@@ -331,19 +459,17 @@ export default function FindrSettingsPage() {
           hasBoat: false,
           fishingTechniques: [],
           favoriteHabitats: [],
-          homeLocation: null,
-          fishingLocation: null,
           preferencesJson: {},
           updatedAt: null,
         });
       }
     } catch (error) {
       console.error('[Settings] Failed to load settings:', error);
-      setMessage({ type: 'error', text: 'Failed to load settings' });
+      setMessage({ type: 'error', text: t('Failed to load settings') });
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [t, user]);
 
   // Check session on mount to prevent premature redirects
   useEffect(() => {
@@ -430,28 +556,34 @@ export default function FindrSettingsPage() {
       setSaving(true);
       setMessage(null);
 
-      // Don't send locations - they're managed by UnifiedLocationContext
-      const { homeLocation: _, fishingLocation: __, ...settingsToSave } = settings;
+      // Only send persisted preference fields – email/metadata are read-only
+      const payload = {
+        displayName: settings.displayName,
+        hasBoat: settings.hasBoat,
+        fishingTechniques: settings.fishingTechniques,
+        favoriteHabitats: settings.favoriteHabitats,
+        preferencesJson: settings.preferencesJson,
+      } satisfies Pick<FindrUserSettings, 'displayName' | 'hasBoat' | 'fishingTechniques' | 'favoriteHabitats' | 'preferencesJson'>;
 
       const response = await fetch('/api/findr/user-settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(settingsToSave),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setMessage({ type: 'success', text: 'Settings saved successfully!' });
+        setMessage({ type: 'success', text: t('Settings saved successfully!') });
         setIsDirty(false);
         await loadSettings(); // Reload to get updated timestamp
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to save settings' });
+        setMessage({ type: 'error', text: data.error || t('Failed to save settings') });
       }
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      setMessage({ type: 'error', text: t('Failed to save settings') });
     } finally {
       setSaving(false);
     }
@@ -459,12 +591,12 @@ export default function FindrSettingsPage() {
 
   const handlePasswordChange = async () => {
     if (!newPassword || newPassword.length < 8) {
-      setPasswordMessage({ type: 'error', text: 'Password must be at least 8 characters' });
+      setPasswordMessage({ type: 'error', text: t('Password must be at least 8 characters') });
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'Passwords do not match' });
+      setPasswordMessage({ type: 'error', text: t('Passwords do not match') });
       return;
     }
 
@@ -477,14 +609,14 @@ export default function FindrSettingsPage() {
       if (error) {
         setPasswordMessage({ type: 'error', text: error.message });
       } else {
-        setPasswordMessage({ type: 'success', text: 'Password updated successfully!' });
+        setPasswordMessage({ type: 'success', text: t('Password updated successfully!') });
         setNewPassword('');
         setConfirmPassword('');
         setShowPassword(false);
       }
     } catch (error) {
       console.error('Failed to update password:', error);
-      setPasswordMessage({ type: 'error', text: 'Failed to update password' });
+      setPasswordMessage({ type: 'error', text: t('Failed to update password') });
     } finally {
       setPasswordBusy(false);
     }
@@ -505,6 +637,7 @@ export default function FindrSettingsPage() {
   };
 
   const favouriteCount = favouriteDetails.length || favouriteItems.length;
+  const favouriteCountLabel = t('{count} species').replace('{count}', favouriteCount.toString());
 
   const requestSuggestionTopUp = useCallback(async () => {
     if (!hasRegionalSuggestions) return;
@@ -528,10 +661,10 @@ export default function FindrSettingsPage() {
     try {
       setPendingRemoveCode(code);
       await removeFavourite(code);
-      setMessage({ type: 'success', text: `${label} removed from favourites` });
+      setMessage({ type: 'success', text: t('{label} removed from favourites').replace('{label}', label) });
     } catch (error) {
       console.error('Failed to remove favourite', error);
-      setMessage({ type: 'error', text: `Failed to remove ${label}` });
+      setMessage({ type: 'error', text: t('Failed to remove {label}').replace('{label}', label) });
     } finally {
       setPendingRemoveCode(null);
     }
@@ -542,12 +675,12 @@ export default function FindrSettingsPage() {
     try {
       setPendingAddCode(normalizedCode);
       await addFavourite(normalizedCode, { speciesCode: normalizedCode, speciesName: label });
-      setMessage({ type: 'success', text: `${label} added to favourites` });
+      setMessage({ type: 'success', text: t('{label} added to favourites').replace('{label}', label) });
       setDismissedSuggestionCodes((prev) => prev.filter((item) => item !== normalizedCode));
       void requestSuggestionTopUp();
     } catch (error) {
       console.error('Failed to add favourite', error);
-      setMessage({ type: 'error', text: `Failed to add ${label}` });
+      setMessage({ type: 'error', text: t('Failed to add {label}').replace('{label}', label) });
     } finally {
       setPendingAddCode(null);
     }
@@ -557,7 +690,7 @@ export default function FindrSettingsPage() {
     const normalizedCode = code.trim().toUpperCase();
     setPendingDismissCode(normalizedCode);
     setDismissedSuggestionCodes((prev) => (prev.includes(normalizedCode) ? prev : [...prev, normalizedCode]));
-    setMessage({ type: 'success', text: `${label} hidden from suggestions` });
+    setMessage({ type: 'success', text: t('{label} hidden from suggestions').replace('{label}', label) });
     try {
       await requestSuggestionTopUp();
     } finally {
@@ -577,10 +710,10 @@ export default function FindrSettingsPage() {
   const handleNotificationToggle = async (field: 'hot_bite_alerts_enabled' | 'daily_email_enabled' | 'weekly_forecast_enabled', value: boolean) => {
     try {
       await updateNotifPrefs.mutateAsync({ [field]: value });
-      setMessage({ type: 'success', text: 'Notification settings updated!' });
+      setMessage({ type: 'success', text: t('Notification settings updated!') });
     } catch (error) {
       console.error('Failed to update notifications:', error);
-      setMessage({ type: 'error', text: 'Failed to update notification settings' });
+      setMessage({ type: 'error', text: t('Failed to update notification settings') });
     }
   };
 
@@ -589,8 +722,8 @@ export default function FindrSettingsPage() {
     return (
       <>
         <Head>
-          <title>Settings - Findr</title>
-          <meta name="description" content="Manage your Findr settings and preferences" />
+          <title>{t('Settings - Findr')}</title>
+          <meta name="description" content={t('Manage your Findr settings and preferences')} />
         </Head>
         <FindrNavigation />
         <div className="flex items-center justify-center min-h-screen">
@@ -605,13 +738,15 @@ export default function FindrSettingsPage() {
     return null;
   }
 
-  const greeting = settings.displayName ? `Hello ${settings.displayName} 🎣` : 'Hello 🎣';
+  const greeting = settings.displayName
+    ? t('Hello {name} 🎣').replace('{name}', settings.displayName)
+    : t('Hello 🎣');
 
   return (
     <>
       <Head>
-        <title>Settings - Findr</title>
-        <meta name="description" content="Manage your Findr settings and preferences" />
+        <title>{t('Settings - Findr')}</title>
+        <meta name="description" content={t('Manage your Findr settings and preferences')} />
       </Head>
       <FindrNavigation />
         <main className="max-w-4xl mx-auto p-6 space-y-8 mb-20 bg-base-200 min-h-screen">
@@ -619,17 +754,27 @@ export default function FindrSettingsPage() {
           <header className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-semibold tracking-tight text-base-content">{greeting}</h1>
-              <p className="text-base-content/70 text-sm">Customize your fishing experience</p>
+              <p className="text-base-content/70 text-sm">{t('Customize your fishing experience')}</p>
             </div>
             <button className="btn btn-ghost" onClick={handleSignOut}>
-              Sign out
+              {t('Sign out')}
             </button>
           </header>
 
           {/* Unsaved changes warning */}
           {isDirty && (
             <div className="alert alert-warning">
-              <span>You have unsaved changes. Don&apos;t forget to click <strong>Save Settings</strong>.</span>
+              {(() => {
+                const warningTemplate = t("You have unsaved changes. Don't forget to click {action}.");
+                const [beforeAction, afterAction] = warningTemplate.split('{action}');
+                return (
+                  <span>
+                    {beforeAction}
+                    <strong>{t('Save Settings')}</strong>
+                    {afterAction}
+                  </span>
+                );
+              })()}
             </div>
           )}
 
@@ -646,16 +791,16 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">👤</span>
                 <div>
-                  <h2 className="card-title text-base-content">Personal Details</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">How we address you in Findr</p>
+                  <h2 className="card-title text-base-content">{t('Personal Details')}</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">{t('How we address you in Findr')}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="form-control w-full">
-                  <span className="label-text text-base-content">Display Name</span>
+                  <span className="label-text text-base-content">{t('Display Name')}</span>
                   <input
                     className="input input-bordered w-full text-base-content bg-base-100 placeholder:text-base-content/50"
-                    placeholder="e.g. Captain Hook"
+                    placeholder={t('e.g. Captain Hook')}
                     value={settings.displayName || ''}
                     onChange={(e) => {
                       setSettings({ ...settings, displayName: e.target.value });
@@ -665,13 +810,13 @@ export default function FindrSettingsPage() {
                 </label>
 
                 <label className="form-control w-full">
-                  <span className="label-text text-base-content">Email (account)</span>
+                  <span className="label-text text-base-content">{t('Email (account)')}</span>
                   <input
                     className="input input-bordered w-full text-base-content"
                     value={settings.email || ''}
                     readOnly
                     aria-readonly
-                    title="Your account email"
+                    title={t('Your account email')}
                   />
                 </label>
               </div>
@@ -684,8 +829,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔔</span>
                 <div>
-                  <h2 className="card-title text-base-content">Fishing Alerts</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Get notified when conditions are perfect for your favourite species</p>
+                  <h2 className="card-title text-base-content">{t('Fishing Alerts')}</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">{t('Get notified when conditions are perfect for your favourite species')}</p>
                 </div>
               </div>
 
@@ -703,10 +848,10 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
                             <AlertCircle size={20} className="text-error" />
                           </div>
-                          <h4 className="font-semibold text-base-content">Hot Bite Alerts</h4>
+                          <h4 className="font-semibold text-base-content">{t('Hot Bite Alerts')}</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12">
-                          Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!
+                          {t('Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!')}
                         </p>
                       </div>
                       <input
@@ -727,13 +872,13 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center flex-shrink-0">
                             <Mail size={20} className="text-info" />
                           </div>
-                          <h4 className="font-semibold text-base-content">Daily Email Digest</h4>
+                          <h4 className="font-semibold text-base-content">{t('Daily Email Digest')}</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12 mb-3">
-                          Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (&lt;70%). Maximum 1 email per day.
+                          {t('Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (<70%). Maximum 1 email per day.')}
                         </p>
                         <div className="ml-12 text-xs text-base-content/50">
-                          Sent daily at 8:00 AM
+                          {t('Sent daily at 8:00 AM')}
                         </div>
                       </div>
                       <input
@@ -754,13 +899,13 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
                             <TrendingUp size={20} className="text-success" />
                           </div>
-                          <h4 className="font-semibold text-base-content">Weekly Forecast</h4>
+                          <h4 className="font-semibold text-base-content">{t('Weekly Forecast')}</h4>
                         </div>
                         <p className="text-xs text-base-content/60 ml-12 mb-3">
-                          7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!
+                          {t('7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!')}
                         </p>
                         <div className="ml-12 text-xs text-base-content/50">
-                          Sent every Monday at 8:00 AM
+                          {t('Sent every Monday at 8:00 AM')}
                         </div>
                       </div>
                       <input
@@ -777,7 +922,7 @@ export default function FindrSettingsPage() {
                   <div className="alert alert-info">
                     <AlertCircle size={16} />
                     <div className="text-xs">
-                      Add species to your favourites to start receiving personalized fishing alerts and forecasts.
+                      {t('Add species to your favourites to start receiving personalized fishing alerts and forecasts.')}
                     </div>
                   </div>
                 </div>
@@ -791,8 +936,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">⛵</span>
                 <div>
-                  <h2 className="card-title text-base-content">Your Fishing Style</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Help us tailor recommendations to your setup</p>
+                  <h2 className="card-title text-base-content">{t('Your Fishing Style')}</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">{t('Help us tailor recommendations to your setup')}</p>
                 </div>
               </div>
 
@@ -807,12 +952,12 @@ export default function FindrSettingsPage() {
                       setIsDirty(true);
                     }}
                   />
-                  <span className="label-text text-base-content">I fish from a boat</span>
+                  <span className="label-text text-base-content">{t('I fish from a boat')}</span>
                 </label>
               </div>
 
               <div className="space-y-2">
-                <label className="label-text font-semibold text-base-content">Favourite Techniques</label>
+                <label className="label-text font-semibold text-base-content">{t('Favourite Techniques')}</label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {TECHNIQUES.map((tech) => (
                     <button
@@ -826,14 +971,14 @@ export default function FindrSettingsPage() {
                       }`}
                     >
                       {settings.fishingTechniques.includes(tech.id) && '✓ '}
-                      {tech.label}
+                      {t(tech.label)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="label-text font-semibold text-base-content">Favourite Habitats</label>
+                <label className="label-text font-semibold text-base-content">{t('Favourite Habitats')}</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {HABITATS.map((habitat) => (
                     <button
@@ -846,7 +991,7 @@ export default function FindrSettingsPage() {
                           : 'btn-outline border-base-content/30 text-base-content hover:bg-base-content/10'
                       }`}
                     >
-                      {habitat.icon} {habitat.label}
+                      {habitat.icon} {t(habitat.label)}
                     </button>
                   ))}
                 </div>
@@ -860,8 +1005,8 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">📍</span>
                 <div>
-                  <h2 className="card-title text-base-content">Your Locations</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Set your home and favourite fishing spots</p>
+                  <h2 className="card-title text-base-content">{t('Your Locations')}</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">{t('Set your home and favourite fishing spots')}</p>
                 </div>
               </div>
 
@@ -869,12 +1014,12 @@ export default function FindrSettingsPage() {
                 {/* Home Location */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
-                    🏠 Home Location
+                    🏠 {t('Home Location')}
                   </h3>
                   {homeLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base text-base-content">{homeLocation.name || 'Home'}</div>
+                        <div className="font-semibold text-base text-base-content">{homeLocation.name || t('Home')}</div>
                         <div className="text-sm text-base-content/60">
                           {homeLocation.lat.toFixed(4)}°, {homeLocation.lon.toFixed(4)}°
                         </div>
@@ -883,7 +1028,7 @@ export default function FindrSettingsPage() {
                         className="btn btn-sm btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 w-full"
                         onClick={() => setShowHomeDialog(true)}
                       >
-                        Change Location
+                        {t('Change Location')}
                       </button>
                     </div>
                   ) : (
@@ -892,7 +1037,7 @@ export default function FindrSettingsPage() {
                       onClick={() => setShowHomeDialog(true)}
                     >
                       <span className="text-2xl">📍</span>
-                      <span className="text-base-content">Set Home Location</span>
+                      <span className="text-base-content">{t('Set Home Location')}</span>
                     </button>
                   )}
                 </div>
@@ -900,12 +1045,12 @@ export default function FindrSettingsPage() {
                 {/* Fishing Location */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-base-content/70 flex items-center gap-2">
-                    🎣 Fishing Location
+                    🎣 {t('Fishing Location')}
                   </h3>
                   {coastalLocation ? (
                     <div className="border border-base-300 rounded-lg p-4 space-y-3 bg-base-100">
                       <div className="space-y-1">
-                        <div className="font-semibold text-base text-base-content">{coastalLocation.name || 'Fishing Spot'}</div>
+                        <div className="font-semibold text-base text-base-content">{coastalLocation.name || t('Fishing Spot')}</div>
                         <div className="text-sm text-base-content/60">
                           {coastalLocation.lat.toFixed(4)}°, {coastalLocation.lon.toFixed(4)}°
                         </div>
@@ -914,7 +1059,7 @@ export default function FindrSettingsPage() {
                         className="btn btn-sm btn-outline border-base-content/30 text-base-content hover:bg-base-content/10 w-full"
                         onClick={() => setShowFishingDialog(true)}
                       >
-                        Change Location
+                        {t('Change Location')}
                       </button>
                     </div>
                   ) : (
@@ -923,7 +1068,7 @@ export default function FindrSettingsPage() {
                       onClick={() => setShowFishingDialog(true)}
                     >
                       <span className="text-2xl">📍</span>
-                      <span className="text-base-content">Set Fishing Location</span>
+                      <span className="text-base-content">{t('Set Fishing Location')}</span>
                     </button>
                   )}
                 </div>
@@ -938,12 +1083,12 @@ export default function FindrSettingsPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-xl">⭐</span>
                   <div>
-                    <h2 className="card-title text-base-content">Favourite Species</h2>
-                    <p className="text-sm text-base-content/70">Add or remove species so alerts stay focused</p>
+                    <h2 className="card-title text-base-content">{t('Favourite Species')}</h2>
+                    <p className="text-sm text-base-content/70">{t('Add or remove species so alerts stay focused')}</p>
                   </div>
                 </div>
                 <div className="badge badge-primary badge-outline">
-                  {favouriteCount} species
+                  {favouriteCountLabel}
                 </div>
               </div>
 
@@ -959,7 +1104,7 @@ export default function FindrSettingsPage() {
                         type="button"
                         className="btn btn-ghost btn-xs p-0 min-h-0 h-4 w-4"
                         onClick={() => handleRemoveFavouriteChip(fav.code, fav.label)}
-                        aria-label={`Remove ${fav.label}`}
+                        aria-label={t('Remove {label}').replace('{label}', fav.label)}
                         disabled={pendingRemoveCode === fav.code}
                       >
                         {pendingRemoveCode === fav.code ? (
@@ -973,7 +1118,7 @@ export default function FindrSettingsPage() {
                 </div>
               ) : (
                 <div className="border border-dashed border-base-300 rounded-lg p-4 text-sm text-base-content/70">
-                  No favourite species yet. Add a few below to personalise your alerts.
+                  {t('No favourite species yet. Add a few below to personalise your alerts.')}
                 </div>
               )}
 
@@ -982,11 +1127,8 @@ export default function FindrSettingsPage() {
               <div className="space-y-3 border border-base-300 rounded-xl p-4 bg-base-200/40">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="font-semibold text-base-content">Add from your home water</p>
-                    <p className="text-sm text-base-content/70">
-                      We pull regional staples for {homeLocation?.name || 'your saved home location'}
-                      {regionalSuggestionsRegionId ? ` (${regionalSuggestionsRegionId})` : ''}.
-                    </p>
+                    <p className="font-semibold text-base-content">{t('Add from your home water')}</p>
+                    <p className="text-sm text-base-content/70">{regionalIntroCopy}</p>
                   </div>
                   <button
                     type="button"
@@ -994,23 +1136,22 @@ export default function FindrSettingsPage() {
                     onClick={() => refreshRegionalSuggestions()}
                     disabled={!hasRegionalSuggestions || regionalSuggestionsLoading}
                   >
-                    {regionalSuggestionsLoading ? 'Refreshing…' : 'Refresh list'}
+                    {regionalSuggestionsLoading ? t('Refreshing…') : t('Refresh list')}
                   </button>
                 </div>
 
                 {!homeLocation ? (
                   <p className="text-sm text-base-content/70">
-                    Set a home location above to unlock quick-add suggestions.
+                    {t('Set a home location above to unlock quick-add suggestions.')}
                   </p>
                 ) : !hasRegionalSuggestions ? (
                   <p className="text-sm text-base-content/70">
-                    We need an ICES rectangle for {homeLocation.name}. Update the location using the button above so we can
-                    suggest species from the correct home waters.
+                    {icesCopy}
                   </p>
                 ) : regionalSuggestionsLoading ? (
                   <div className="flex items-center gap-2 text-sm text-base-content/70">
                     <span className="loading loading-spinner loading-sm" />
-                    Loading regional species…
+                    {t('Loading regional species…')}
                   </div>
                 ) : availableRegionalSuggestions.length ? (
                   <div className="space-y-3">
@@ -1028,16 +1169,18 @@ export default function FindrSettingsPage() {
                               )}
                             </div>
                             {suggestion.source === 'global-fallback' && (
-                              <span className="badge badge-outline badge-xs text-[10px]">Global staple</span>
+                              <span className="badge badge-outline badge-xs text-[10px]">{t('Global staple')}</span>
                             )}
                           </div>
                           {suggestion.source === 'global-fallback' ? (
                             <p className="text-xs text-base-content/60">
-                              {suggestion.originNote || GLOBAL_FALLBACK_NOTE}
+                              {t(suggestion.originNote || GLOBAL_FALLBACK_NOTE)}
                             </p>
                           ) : (
                             <p className="text-xs text-base-content/60">
-                              Availability score {suggestion.availabilityScore.toFixed(2)} · Confidence {Math.round(suggestion.confidence)}%
+                              {t('Availability score {score} · Confidence {confidence}%')
+                                .replace('{score}', suggestion.availabilityScore.toFixed(2))
+                                .replace('{confidence}', Math.round(suggestion.confidence).toString())}
                             </p>
                           )}
                           <div className="flex items-center gap-2">
@@ -1050,7 +1193,7 @@ export default function FindrSettingsPage() {
                               {pendingAddCode === suggestion.code ? (
                                 <span className="loading loading-spinner loading-xs" />
                               ) : (
-                                'Add'
+                                t('Add')
                               )}
                             </button>
                             <button
@@ -1062,7 +1205,7 @@ export default function FindrSettingsPage() {
                               {pendingDismissCode === suggestion.code ? (
                                 <span className="loading loading-spinner loading-xs" />
                               ) : (
-                                'Dismiss'
+                                t('Dismiss')
                               )}
                             </button>
                           </div>
@@ -1071,21 +1214,20 @@ export default function FindrSettingsPage() {
                     </div>
                     {hasGlobalFallbacks && (
                       <p className="text-xs text-base-content/60">
-                        We topped up the list with Findr staples while your region is quiet. Tap refresh later to see new local
-                        action as it arrives.
+                        {t('We topped up the list with Findr staples while your region is quiet. Tap refresh later to see new local action as it arrives.')}
                       </p>
                     )}
                     {!regionalSuggestionsLoading &&
                       !canRequestMoreRegionalSuggestions &&
                       availableRegionalSuggestions.length < MAX_REGIONAL_SUGGESTIONS && (
                         <p className="text-xs text-base-content/60">
-                          That&apos;s everything we have for this region right now. We&apos;ll surface more once new data lands.
+                          {t("That's everything we have for this region right now. We'll surface more once new data lands.")}
                         </p>
                       )}
                   </div>
                 ) : (
                   <p className="text-sm text-base-content/70">
-                    All suggested species for this region are already in your favourites. Great work!
+                    {t('All suggested species for this region are already in your favourites. Great work!')}
                   </p>
                 )}
 
@@ -1094,11 +1236,11 @@ export default function FindrSettingsPage() {
                 )}
 
                 <p className="text-xs text-base-content/60">
-                  Need more control? You can also{' '}
+                  {manageFavouritesSentenceParts[0]}
                   <Link href="/findr/favourites" className="link link-primary">
-                    manage your favourites
-                  </Link>{' '}
-                  from the dedicated page.
+                    {manageLinkText}
+                  </Link>
+                  {manageFavouritesSentenceParts[1]}
                 </p>
               </div>
             </div>
@@ -1110,19 +1252,19 @@ export default function FindrSettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔐</span>
                 <div>
-                  <h2 className="card-title text-base-content">Security</h2>
-                  <p className="text-sm text-base-content/70 -mt-1">Update your password</p>
+                  <h2 className="card-title text-base-content">{t('Security')}</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">{t('Update your password')}</p>
                 </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="form-control">
-                  <span className="label-text text-base-content">New password</span>
+                  <span className="label-text text-base-content">{t('New password')}</span>
                   <div className="join w-full">
                     <input
                       className="input input-bordered join-item w-full text-base-content placeholder:text-base-content/50"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="At least 8 characters"
+                      placeholder={t('At least 8 characters')}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       autoComplete="new-password"
@@ -1132,16 +1274,16 @@ export default function FindrSettingsPage() {
                       className="btn join-item text-base-content"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? 'Hide' : 'Show'}
+                      {showPassword ? t('Hide') : t('Show')}
                     </button>
                   </div>
                 </div>
                 <div className="form-control">
-                  <span className="label-text text-base-content">Confirm new password</span>
+                  <span className="label-text text-base-content">{t('Confirm new password')}</span>
                   <input
                     className="input input-bordered text-base-content placeholder:text-base-content/50"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Re-enter password"
+                    placeholder={t('Re-enter password')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     autoComplete="new-password"
@@ -1157,10 +1299,10 @@ export default function FindrSettingsPage() {
               >
                 {passwordBusy ? (
                   <>
-                    <span className="loading loading-dots" /> Updating...
+                    <span className="loading loading-dots" /> {t('Updating...')}
                   </>
                 ) : (
-                  'Update password'
+                  t('Update password')
                 )}
               </button>
 
@@ -1177,8 +1319,8 @@ export default function FindrSettingsPage() {
             <div className="card-body">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div>
-                  <p className="font-semibold">Ready to save your changes?</p>
-                  <p className="text-sm text-base-content/70">Your settings will be updated immediately</p>
+                  <p className="font-semibold">{t('Ready to save your changes?')}</p>
+                  <p className="text-sm text-base-content/70">{t('Your settings will be updated immediately')}</p>
                 </div>
                 <button
                   className="btn btn-primary btn-lg"
@@ -1188,10 +1330,10 @@ export default function FindrSettingsPage() {
                   {saving ? (
                     <>
                       <span className="loading loading-spinner" />
-                      Saving...
+                      {t('Saving...')}
                     </>
                   ) : (
-                    'Save Settings'
+                    t('Save Settings')
                   )}
                 </button>
               </div>
@@ -1203,7 +1345,7 @@ export default function FindrSettingsPage() {
         <CoastalLocationDialog
           open={showHomeDialog}
           onClose={() => setShowHomeDialog(false)}
-          title="Set your home location"
+          title={t('Set your home location')}
           onSave={async (loc: BasicLocation) => {
             try {
               await updateLocationBySlot({
@@ -1214,16 +1356,16 @@ export default function FindrSettingsPage() {
                 makeActive: true,
               });
               setShowHomeDialog(false);
-              setMessage({ type: 'success', text: 'Home location saved!' });
+              setMessage({ type: 'success', text: t('Home location saved!') });
             } catch (error) {
               console.error('[Settings] Failed to save home location', error);
-              setMessage({ type: 'error', text: 'Failed to save home location. Please try again.' });
+              setMessage({ type: 'error', text: t('Failed to save home location. Please try again.') });
             }
           }}
           homeLocation={
             homeLocation
               ? {
-                  name: homeLocation.name || 'Home',
+                  name: homeLocation.name || t('Home'),
                   lat: homeLocation.lat,
                   lon: homeLocation.lon,
                   type: 'home',
@@ -1235,7 +1377,7 @@ export default function FindrSettingsPage() {
         <CoastalLocationDialog
           open={showFishingDialog}
           onClose={() => setShowFishingDialog(false)}
-          title="Set your fishing location"
+          title={t('Set your fishing location')}
           onSave={async (loc: BasicLocation) => {
             try {
               await updateLocationBySlot({
@@ -1245,16 +1387,16 @@ export default function FindrSettingsPage() {
                 resolveRectangle: true,
               });
               setShowFishingDialog(false);
-              setMessage({ type: 'success', text: 'Fishing location saved!' });
+              setMessage({ type: 'success', text: t('Fishing location saved!') });
             } catch (error) {
               console.error('[Settings] Failed to save fishing location', error);
-              setMessage({ type: 'error', text: 'Failed to save fishing location. Please try again.' });
+              setMessage({ type: 'error', text: t('Failed to save fishing location. Please try again.') });
             }
           }}
           homeLocation={
             homeLocation
               ? {
-                  name: homeLocation.name || 'Home',
+                  name: homeLocation.name || t('Home'),
                   lat: homeLocation.lat,
                   lon: homeLocation.lon,
                   type: 'home',
@@ -1264,7 +1406,7 @@ export default function FindrSettingsPage() {
           coastalLocation={
             coastalLocation
               ? {
-                  name: coastalLocation.name || 'Fishing Spot',
+                  name: coastalLocation.name || t('Fishing Spot'),
                   lat: coastalLocation.lat,
                   lon: coastalLocation.lon,
                   type: 'coastal',

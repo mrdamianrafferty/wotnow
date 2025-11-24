@@ -23,10 +23,6 @@ export interface FindrUserSettings {
   fishingTechniques: string[];
   favoriteHabitats: string[];
 
-  // Locations
-  homeLocation: { lat: number; lon: number; name?: string } | null;
-  fishingLocation: { lat: number; lon: number; name?: string } | null;
-
   // Additional preferences
   preferencesJson: Record<string, unknown>;
 
@@ -52,21 +48,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Fetch location preferences
-      const { data: locations, error: locsError } = await supabase
-        .from('user_location_preferences')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
       if (prefsError && prefsError.code !== 'PGRST116') {
         console.error('Error fetching preferences:', prefsError);
         return res.status(500).json({ success: false, error: 'Failed to fetch preferences' });
-      }
-
-      if (locsError && locsError.code !== 'PGRST116') {
-        console.error('Error fetching locations:', locsError);
-        return res.status(500).json({ success: false, error: 'Failed to fetch locations' });
       }
 
       const settings: FindrUserSettings = {
@@ -75,20 +59,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         hasBoat: preferences?.has_boat || false,
         fishingTechniques: preferences?.fishing_techniques || [],
         favoriteHabitats: preferences?.favorite_habitats || [],
-        homeLocation: locations?.home_lat && locations?.home_lon
-          ? {
-              lat: locations.home_lat,
-              lon: locations.home_lon,
-              name: locations.home_name || 'Home',
-            }
-          : null,
-        fishingLocation: locations?.coast_lat && locations?.coast_lon
-          ? {
-              lat: locations.coast_lat,
-              lon: locations.coast_lon,
-              name: locations.coast_name || 'Fishing Spot',
-            }
-          : null,
         preferencesJson: (preferences?.preferences_json as Record<string, unknown>) || {},
         updatedAt: preferences?.updated_at || null,
       };
@@ -107,8 +77,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         hasBoat,
         fishingTechniques,
         favoriteHabitats,
-        homeLocation,
-        fishingLocation,
         preferencesJson,
       } = req.body;
 
@@ -139,35 +107,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (prefsError) {
           console.error('Error updating preferences:', prefsError);
           return res.status(500).json({ success: false, error: 'Failed to update preferences' });
-        }
-      }
-
-      // Update user_location_preferences
-      if (homeLocation !== undefined || fishingLocation !== undefined) {
-        const locationData: Record<string, unknown> = {};
-        if (homeLocation) {
-          locationData.home_lat = homeLocation.lat;
-          locationData.home_lon = homeLocation.lon;
-          if (homeLocation.name) locationData.home_name = homeLocation.name;
-        }
-        if (fishingLocation) {
-          locationData.coast_lat = fishingLocation.lat;
-          locationData.coast_lon = fishingLocation.lon;
-          if (fishingLocation.name) locationData.coast_name = fishingLocation.name;
-        }
-
-        const { error: locsError } = await supabase
-          .from('user_location_preferences')
-          .upsert({
-            user_id: user.id,
-            ...locationData,
-          }, {
-            onConflict: 'user_id',
-          });
-
-        if (locsError) {
-          console.error('Error updating locations:', locsError);
-          return res.status(500).json({ success: false, error: 'Failed to update locations' });
         }
       }
 
