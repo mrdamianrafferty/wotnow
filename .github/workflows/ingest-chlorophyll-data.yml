@@ -2,8 +2,8 @@ name: Ingest Chlorophyll Data
 
 on:
   schedule:
-    # Run every 6 hours (chlorophyll is monthly composite, doesn't need hourly updates)
-    - cron: '30 */6 * * *'
+    # Run every 3 hours at :30 past the hour
+    - cron: '30 */3 * * *'
   workflow_dispatch:
     inputs:
       region:

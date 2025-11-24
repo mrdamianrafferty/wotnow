@@ -2,8 +2,8 @@ name: Ingest Kd490 Data
 
 on:
   schedule:
-    # Run every 6 hours (Kd490 is monthly composite, doesn't need hourly updates)
-    - cron: '45 */6 * * *'
+    # Run every 3 hours at :45 past the hour
+    - cron: '45 */3 * * *'
   workflow_dispatch:
     inputs:
       region:
