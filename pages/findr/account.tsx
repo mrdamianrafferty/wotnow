@@ -14,6 +14,8 @@ export default function AccountPage() {
   const router = useRouter();
   const { subscription, isPremium, isTrial, isLoading, refetch } = useSubscription();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const supabase = useMemo(() => createClient(), []);
 
@@ -70,6 +72,41 @@ export default function AccountPage() {
       alert('Failed to open subscription portal. Please try again.');
     } finally {
       setPortalLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    try {
+      setCancelLoading(true);
+
+      if (!user) {
+        router.push('/findr/auth?redirect=/findr/account');
+        return;
+      }
+
+      const response = await fetch('/api/stripe/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to cancel subscription');
+      }
+
+      // Refresh subscription data
+      await refetch();
+      setShowCancelModal(false);
+
+      // Show success message
+      alert(`Subscription cancelled. You'll retain access until ${formatDate(data.cancelsAt)}`);
+    } catch (err) {
+      console.error('Cancel error:', err);
+      alert(err instanceof Error ? err.message : 'Failed to cancel subscription. Please try again.');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -159,7 +196,7 @@ export default function AccountPage() {
                 </div>
 
                 {subscription.paymentPlatform === 'web' && (
-                  <div className="card-actions mt-4">
+                  <div className="card-actions mt-4 flex flex-col gap-2">
                     <button
                       onClick={handleManageSubscription}
                       disabled={portalLoading}
@@ -173,6 +210,14 @@ export default function AccountPage() {
                       ) : (
                         'Manage Subscription'
                       )}
+                    </button>
+
+                    <button
+                      onClick={() => setShowCancelModal(true)}
+                      disabled={cancelLoading}
+                      className="btn btn-outline btn-error btn-block"
+                    >
+                      Cancel Subscription
                     </button>
                   </div>
                 )}
@@ -261,6 +306,50 @@ export default function AccountPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancellation Confirmation Modal */}
+      {showCancelModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Cancel Subscription?</h3>
+
+            <p className="mb-4">
+              Your subscription will be cancelled, but you&apos;ll keep access to Premium features
+              until the end of your current billing period on{' '}
+              <span className="font-semibold">{formatDate(subscription?.subscriptionEndDate)}</span>.
+            </p>
+
+            <p className="text-sm text-base-content/70 mb-6">
+              You won&apos;t be charged again, and you can resubscribe anytime.
+            </p>
+
+            <div className="modal-action">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                disabled={cancelLoading}
+                className="btn btn-ghost"
+              >
+                Keep Subscription
+              </button>
+              <button
+                onClick={handleCancelSubscription}
+                disabled={cancelLoading}
+                className="btn btn-error"
+              >
+                {cancelLoading ? (
+                  <>
+                    <span className="loading loading-spinner"></span>
+                    Cancelling...
+                  </>
+                ) : (
+                  'Yes, Cancel'
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => !cancelLoading && setShowCancelModal(false)}></div>
+        </div>
+      )}
     </div>
   );
 }
