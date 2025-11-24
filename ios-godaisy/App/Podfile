@@ -1,4 +1,5 @@
 require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+require 'fileutils'
 
 platform :ios, '14.0'
 use_frameworks!
@@ -26,6 +27,32 @@ def capacitor_pods
   pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
   pod 'CapacitorToast', :path => '../../node_modules/@capacitor/toast'
   pod 'CapgoCapacitorSocialLogin', :path => '../../node_modules/@capgo/capacitor-social-login'
+end
+
+def fix_gtm_session_fetcher_includes!(base_dir)
+  gtm_files = [
+    'Pods/GTMSessionFetcher/Sources/Core/Public/GTMSessionFetcher/GTMSessionFetcherLogging.h',
+    'Pods/GTMSessionFetcher/Sources/Core/Public/GTMSessionFetcher/GTMSessionFetcherService.h',
+    'Pods/GTMSessionFetcher/Sources/Core/Public/GTMSessionFetcher/GTMSessionUploadFetcher.h',
+    'Pods/Target Support Files/GTMSessionFetcher/GTMSessionFetcher-umbrella.h'
+  ]
+
+  gtm_files.each do |relative_path|
+    path = File.join(base_dir, relative_path)
+    next unless File.exist?(path)
+
+    contents = File.read(path)
+    updated = contents.gsub(/#import "GTMSessionFetcher\/(.+?)"/) do
+      "#import <GTMSessionFetcher/#{$1}>"
+    end
+    updated = updated.gsub(/#import "GTMSessionFetcher\.h"/, '#import <GTMSessionFetcher/GTMSessionFetcher.h>')
+
+    next if contents == updated
+
+    FileUtils.chmod('u+w', path) unless File.writable?(path)
+    File.write(path, updated)
+    puts "🔧 Patched quoted imports in #{relative_path}"
+  end
 end
 
 target 'App' do
@@ -66,4 +93,6 @@ post_install do |installer|
       config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'complete'
     end
   end
+
+  fix_gtm_session_fetcher_includes!(__dir__)
 end
