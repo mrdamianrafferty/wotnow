@@ -16,7 +16,15 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Handle HEAD requests - return 200 without body for quick health checks
+  if (req.method === 'HEAD') {
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).end();
+    return;
   }
 
   try {
