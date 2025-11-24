@@ -83,9 +83,15 @@ async function fetchJsonWithTimeout(url: string): Promise<{ response: Response; 
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<TideHealthResponse | { error: string }>) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Handle HEAD requests - return 200 without body for quick health checks
+  if (req.method === 'HEAD') {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).end();
   }
 
   const lat = parseCoordinate(req.query.lat, DEFAULT_LAT);
