@@ -99,10 +99,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   weatherUrl.searchParams.set('lon', lon.toFixed(4));
   const units = getScalarParam(req.query.units) || 'metric';
   weatherUrl.searchParams.set('units', units);
-  if (req.query.bypassCache === 'false') {
-    weatherUrl.searchParams.set('bypassCache', 'false');
-  } else {
+  // Use cache by default for faster health checks (bypass only when explicitly requested)
+  if (req.query.bypassCache === 'true') {
     weatherUrl.searchParams.set('bypassCache', 'true');
+  } else {
+    weatherUrl.searchParams.set('bypassCache', 'false');
   }
 
   const started = Date.now();
