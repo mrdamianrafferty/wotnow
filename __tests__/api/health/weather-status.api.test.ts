@@ -3,6 +3,12 @@ import handler from '../../../pages/api/health/weather-status';
 
 const originalFetch = global.fetch;
 
+const buildResponse = (body: unknown, status = 200): Response => ({
+  ok: status >= 200 && status < 300,
+  status,
+  text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+} as Response);
+
 const basePayload = {
   current: { temp: 15 },
   daily: [{ dt: 1 }],
@@ -18,7 +24,7 @@ describe('GET /api/health/weather-status', () => {
   });
 
   it('returns 200 when weather endpoint is healthy', async () => {
-    const mockFetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(basePayload), { status: 200 }));
+    const mockFetch = jest.fn().mockResolvedValue(buildResponse(basePayload, 200));
     global.fetch = mockFetch as typeof fetch;
 
     const { req, res } = createMocks({
@@ -33,7 +39,7 @@ describe('GET /api/health/weather-status', () => {
   });
 
   it('returns 503 when upstream returns error', async () => {
-    const mockFetch = jest.fn().mockResolvedValue(new Response('error', { status: 500 }));
+    const mockFetch = jest.fn().mockResolvedValue(buildResponse('error', 500));
     global.fetch = mockFetch as typeof fetch;
 
     const { req, res } = createMocks({

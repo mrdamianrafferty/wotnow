@@ -3,6 +3,12 @@ import handler from '../../../pages/api/health/tides-status';
 
 const originalFetch = global.fetch;
 
+const buildResponse = (body: unknown, status = 200): Response => ({
+  ok: status >= 200 && status < 300,
+  status,
+  text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+} as Response);
+
 describe('GET /api/health/tides-status', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -19,7 +25,7 @@ describe('GET /api/health/tides-status', () => {
       ],
     };
 
-    const mockFetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }));
+    const mockFetch = jest.fn().mockResolvedValue(buildResponse(payload, 200));
     global.fetch = mockFetch as typeof fetch;
 
     const { req, res } = createMocks({
@@ -35,7 +41,7 @@ describe('GET /api/health/tides-status', () => {
 
   it('returns 503 when tides endpoint is empty', async () => {
     const payload = { success: true, source: 'worldtides', data: [] };
-    const mockFetch = jest.fn().mockResolvedValue(new Response(JSON.stringify(payload), { status: 200 }));
+    const mockFetch = jest.fn().mockResolvedValue(buildResponse(payload, 200));
     global.fetch = mockFetch as typeof fetch;
 
     const { req, res } = createMocks({
