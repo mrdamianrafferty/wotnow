@@ -40,7 +40,7 @@ async function updateProfileFromSubscription(
 ) {
   const status = subscription.status === 'active' || subscription.status === 'trialing' ? 'premium' : 'free';
 
-  const updateData: any = {
+  const updateData: Record<string, string | null> = {
     subscription_status: status,
     payment_platform: 'web',
     stripe_subscription_id: subscription.id,
@@ -117,7 +117,7 @@ async function recordEvent(
   userId: string,
   eventType: string,
   stripeEventId: string,
-  eventData: any
+  eventData: unknown
 ) {
   await supabase.from('subscription_events').insert({
     user_id: userId,

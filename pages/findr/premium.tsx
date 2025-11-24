@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function PremiumPage() {
   const router = useRouter();
-  const { subscription, isPremium, isLoading } = useSubscription();
+  const { isPremium, isLoading } = useSubscription();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [voucherCode, setVoucherCode] = useState('');
   const [error, setError] = useState('');
@@ -74,7 +74,7 @@ export default function PremiumPage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="card bg-base-100 shadow-xl max-w-md w-full">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl">You're Premium!</h2>
+            <h2 className="card-title justify-center text-2xl">You&rsquo;re Premium!</h2>
             <p className="text-base-content/70">
               You already have an active Findr Premium subscription.
             </p>
@@ -196,7 +196,7 @@ export default function PremiumPage() {
               <div className="collapse-content">
                 <p>
                   You get 7 days of free access to all Premium features. You can cancel
-                  anytime during the trial and won't be charged.
+                  anytime during the trial and won&rsquo;t be charged.
                 </p>
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function PremiumPage() {
               </div>
               <div className="collapse-content">
                 <p>
-                  Yes! Cancel anytime from your account page. You'll keep access until
+                  Yes! Cancel anytime from your account page. You&rsquo;ll keep access until
                   the end of your billing period.
                 </p>
               </div>
@@ -221,7 +221,7 @@ export default function PremiumPage() {
               </div>
               <div className="collapse-content">
                 <p>
-                  We accept all major credit and debit cards through Stripe's secure
+                  We accept all major credit and debit cards through Stripe&rsquo;s secure
                   payment processing.
                 </p>
               </div>

@@ -14,7 +14,6 @@ import { createClient } from '@/lib/supabase/client';
 import {
   getCachedSubscription,
   setCachedSubscription,
-  clearCachedSubscription,
 } from '@/lib/offline/subscriptionCache';
 
 export interface SubscriptionStatus {

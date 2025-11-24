@@ -4,31 +4,42 @@
  * Shows subscription status and allows management via Stripe Customer Portal.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSubscription } from '@/hooks/useSubscription';
 import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 export default function AccountPage() {
   const router = useRouter();
   const { subscription, isPremium, isTrial, isLoading, refetch } = useSubscription();
   const [portalLoading, setPortalLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
+  const supabase = useMemo(() => createClient(), []);
+
+  const sessionId = router.query.session_id;
 
   useEffect(() => {
+    let isMounted = true;
+
     // Get user info
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
+      setUser(data.user);
+    });
 
     // Check for successful checkout
-    const sessionId = router.query.session_id;
     if (sessionId) {
       // Refetch subscription after successful checkout
       refetch();
       // Remove session_id from URL
       router.replace('/findr/account', undefined, { shallow: true });
     }
-  }, [router.query.session_id]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [refetch, router, sessionId, supabase]);
 
   const handleManageSubscription = async () => {
     try {
@@ -178,7 +189,7 @@ export default function AccountPage() {
             ) : (
               <div className="space-y-4">
                 <p className="text-base-content/70">
-                  You're currently on the free plan. Upgrade to Premium to unlock
+                  You&rsquo;re currently on the free plan. Upgrade to Premium to unlock
                   advanced features!
                 </p>
 
