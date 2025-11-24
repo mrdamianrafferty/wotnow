@@ -93,7 +93,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   // Handle HEAD requests - return 200 without body for quick health checks
   if (req.method === 'HEAD') {
     res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   const lat = parseCoordinate(req.query.lat, DEFAULT_LAT);
