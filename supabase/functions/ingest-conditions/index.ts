@@ -162,14 +162,18 @@ async function fetchAndSampleProviders(
     diagnostics.chlorophyll = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
     tasks.push(fetchChlorophyllData(cells, opts.vars, diagnostics.chlorophyll));
   }
+  if (opts.providers.includes("KD490")) {
+    diagnostics.kd490 = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
+    tasks.push(fetchKd490Data(cells, opts.vars, diagnostics.kd490));
+  }
   if (opts.providers.includes("CMEMS")) {
     diagnostics.cmems = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
     tasks.push(fetchCmemsMetrics(cells, opts.vars, diagnostics.cmems));
   }
   const providerResults = await Promise.all(tasks);
-  const [noaaSamples = [], chlorophyllSamples = [], cmemsSamples = []] = providerResults.length === 3 ? providerResults : [providerResults[0] ?? [], providerResults[1] ?? [], providerResults[2] ?? []];
+  const [noaaSamples = [], chlorophyllSamples = [], kd490Samples = [], cmemsSamples = []] = providerResults.length === 4 ? providerResults : [providerResults[0] ?? [], providerResults[1] ?? [], providerResults[2] ?? [], providerResults[3] ?? []];
 
-  for (const sample of [...noaaSamples, ...chlorophyllSamples, ...cmemsSamples]) {
+  for (const sample of [...noaaSamples, ...chlorophyllSamples, ...kd490Samples, ...cmemsSamples]) {
     const existing: ConditionRow = aggregator.get(sample.cell_id) ?? { cell_id: sample.cell_id };
     if (sample.collected_at && (!existing.collected_at || existing.collected_at < sample.collected_at)) {
       existing.collected_at = sample.collected_at;
@@ -507,6 +511,129 @@ async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDia
   }
 }
 
+// KD490 ERDDAP (erdMH1kd490mday) - Water Clarity -----------------------------
+
+const KD490_ERDDAP_BASE_URL =
+  env.KD490_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
+
+const KD490_DEFAULT_DATASET_ID = "erdMH1kd490mday";
+const KD490_DEFAULT_VARIABLE = "k490";
+
+const KD490_DATASET_ID = env.KD490_ERDDAP_DATASET_ID?.trim() || KD490_DEFAULT_DATASET_ID;
+const KD490_VARIABLE = env.KD490_ERDDAP_VARIABLE?.trim() || KD490_DEFAULT_VARIABLE;
+const KD490_CONCURRENCY = Number(env.KD490_ERDDAP_CONCURRENCY ?? "4");
+
+console.log("Kd490 Configuration:", {
+  datasetId: KD490_DATASET_ID,
+  variable: KD490_VARIABLE,
+  baseUrl: KD490_ERDDAP_BASE_URL,
+});
+
+async function fetchKd490Data(cells: GridCell[], vars: string[], diagnostics?: ProviderDiagnostics): Promise<ProviderSample[]> {
+  const results: ProviderSample[] = [];
+
+  if (!vars.includes("kd490")) {
+    if (diagnostics) diagnostics.sampledCells = 0;
+    return results;
+  }
+
+  const limitedCells = cells.slice(0, Number(env.KD490_ERDDAP_MAX_POINTS ?? "500"));
+  if (diagnostics) diagnostics.sampledCells = limitedCells.length;
+
+  await mapWithConcurrency(limitedCells, KD490_CONCURRENCY, async (cell) => {
+    const sample = await fetchKd490ForCell(cell, diagnostics);
+    if (sample) results.push(sample);
+  });
+
+  return results;
+}
+
+async function fetchKd490ForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
+  if (diagnostics) diagnostics.attempted++;
+
+  const normalizedBase = KD490_ERDDAP_BASE_URL.replace(/\/+$/, "");
+  const apiRoot = normalizedBase.endsWith("/erddap")
+    ? normalizedBase
+    : `${normalizedBase}/erddap`;
+
+  const url = new URL(`${apiRoot}/griddap/${KD490_DATASET_ID}.json`);
+
+  const latCenter = clamp(cell.lat, -90, 90);
+  const lonCenter = wrapLongitude(cell.lon);
+
+  // Snap to ERDDAP grid increments (0.001 precision)
+  const latIndex = Number(latCenter.toFixed(3));
+  const lonIndex = Number(lonCenter.toFixed(3));
+
+  // Always use [(last)] for time - get the most recent available data
+  const timeSlice = "[(last)]";
+  const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
+  const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
+
+  url.search = `?${KD490_VARIABLE}${timeSlice}${latSlice}${lonSlice}`;
+
+  try {
+    console.log("Kd490 ERDDAP request URL:", url.toString());
+
+    // Add 30-second timeout like NOAA and chlorophyll
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let resp: Response;
+    try {
+      resp = await fetch(url.toString(), { signal: controller.signal });
+      clearTimeout(timeoutId);
+    } catch (fetchError: unknown) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        const warning = `Timeout (30s) for Kd490 cell ${cell.cell_id}`;
+        recordProviderError(diagnostics, warning);
+        console.warn("Kd490 ERDDAP request timeout", { cell: cell.cell_id, url: url.toString() });
+        return null;
+      }
+      throw fetchError;
+    }
+
+    if (!resp.ok) {
+      const warning = `HTTP ${resp.status} ${resp.statusText} for Kd490 cell ${cell.cell_id}`;
+      recordProviderError(diagnostics, warning);
+      console.warn("Kd490 ERDDAP request failed", resp.status, resp.statusText, { cell: cell.cell_id, url: url.toString() });
+      return null;
+    }
+
+    const json = await resp.json();
+    const rows: unknown[] = json?.table?.rows ?? [];
+    if (!Array.isArray(rows) || rows.length === 0) {
+      recordProviderError(diagnostics, `No Kd490 rows for cell ${cell.cell_id}`);
+      return null;
+    }
+
+    const firstRow = rows[0] as unknown[];
+    const timeValue = String(firstRow[0]);
+    const kd490 = Number(firstRow[firstRow.length - 1]);
+
+    if (!Number.isFinite(kd490) || kd490 < 0) {
+      recordProviderError(diagnostics, `Invalid Kd490 value for cell ${cell.cell_id}: ${kd490}`);
+      return null;
+    }
+
+    if (diagnostics) diagnostics.successes++;
+
+    return {
+      cell_id: cell.cell_id,
+      collected_at: timeValue,
+      source: `${KD490_DATASET_ID}.${KD490_VARIABLE}`,
+      values: {
+        kd490: Number(kd490.toFixed(3)),
+      },
+    };
+  } catch (error) {
+    console.error("Kd490 ERDDAP fetch error", error);
+    recordProviderError(diagnostics, `Fetch error for Kd490 cell ${cell.cell_id}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
+
 // CMEMS (Thredds NCSS) -------------------------------------------------------
 
 const CMEMS_NCSS_BASE_URL =
@@ -796,6 +923,7 @@ type IngestDiagnostics = {
   selectedRefresh?: number;
   noaa?: ProviderDiagnostics;
   chlorophyll?: ProviderDiagnostics;
+  kd490?: ProviderDiagnostics;
   cmems?: ProviderDiagnostics;
 };
 
