@@ -38,6 +38,7 @@ import {
   calculateFeedingPotential,
   calculateBaitfishActivity,
 } from '../../utils/bioMarineLevels';
+import { clarityFromKd490, chlorophyllToWaterClarityIndex } from '../../lib/utils/waterClarity';
 import type { MarineHourlyPoint, TideEvent } from '../../types/weather';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
@@ -104,6 +105,7 @@ const DEFAULT_MAP_LOCATION: MapLocation = {
 
 const KTS_TO_MS = 0.514444;
 const HOUR_MS = 60 * 60 * 1000;
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 const toFiniteNumber = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -515,6 +517,23 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
   } = marine;
   // ==================================================================================
 
+  const waterClarityPercent = useMemo(() => {
+    const kd490 = toFiniteNumber(marine.waterClarityKd490);
+    if (typeof kd490 === 'number') {
+      return Math.round(clamp(clarityFromKd490(kd490), 0, 1) * 100);
+    }
+
+    if (typeof marine.waterClarityIndex === 'number' && Number.isFinite(marine.waterClarityIndex)) {
+      return Math.round(clamp(marine.waterClarityIndex, 0, 1) * 100);
+    }
+
+    if (typeof chlorophyllMgM3 === 'number' && Number.isFinite(chlorophyllMgM3)) {
+      return chlorophyllToWaterClarityIndex(chlorophyllMgM3);
+    }
+
+    return null;
+  }, [marine.waterClarityKd490, marine.waterClarityIndex, chlorophyllMgM3]);
+
   const marineBioIndicators = useMemo(
     () =>
       buildMarineBioIndicators({
@@ -530,12 +549,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
           data.rectangle.centerLat,
           data.rectangle.centerLon,
           environmentalSignals.cloudCover ?? null,
-          // TODO: Replace chlorophyll proxy with real kd490 from satellite optical datasets
-          // NOTE: kd490 requires separate satellite data fetch (different time lag than model data)
-          // See: lib/copernicus/regionRouterV2.ts for clarity dataset IDs
-          // Use kd490-based clarity index if available, otherwise use chlorophyll as proxy
-          marine.waterClarityIndex ??
-            (chlorophyllMgM3 != null ? Math.round((1 - Math.min(chlorophyllMgM3, 3.0) / 3.0) * 100) : null)
+          waterClarityPercent ?? null
         ),
         // New indicators - use raw data for calculations
         mixedLayerDepth: marine.mixedLayerDepth ?? null,
@@ -568,7 +582,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
       data.rectangle.centerLat,
       data.rectangle.centerLon,
       environmentalSignals.cloudCover,
-      marine.waterClarityIndex,
+      waterClarityPercent,
       marine.mixedLayerDepth,
       marine.zooplanktonSurface,
       marine.phytoplanktonSurface,

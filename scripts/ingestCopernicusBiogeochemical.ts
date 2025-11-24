@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { getRegionalProducts } from '../lib/copernicus/regionRouterV2';
+import { fileURLToPath } from 'url';
 
 // Load environment variables from .env.local
 config({ path: '.env.local' });
@@ -29,6 +30,63 @@ config({ path: '.env.local' });
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+interface DatasetTemporalExtent {
+  start: Date | null;
+  end: Date | null;
+}
+
+const datasetTemporalCache = new Map<string, DatasetTemporalExtent>();
+const SURFACE_MIN_DEPTH_METERS = 1.0; // Copernicus PHY grids start ~0.5-1m below surface
+
+function formatDateOnly(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+function getDatasetTemporalExtent(datasetId: string): DatasetTemporalExtent {
+  const cached = datasetTemporalCache.get(datasetId);
+  if (cached) {
+    return cached;
+  }
+  try {
+    const output = execSync(
+      `copernicusmarine describe --dataset-id ${datasetId}`,
+      { encoding: 'utf-8', stdio: 'pipe', timeout: 45000 }
+    );
+    const startMatch = output.match(/temporal_extent_start[:\s]+(\d{4}-\d{2}-\d{2})/i);
+    const endMatch = output.match(/temporal_extent_end[:\s]+(\d{4}-\d{2}-\d{2})/i);
+    const extent: DatasetTemporalExtent = {
+      start: startMatch ? new Date(`${startMatch[1]}T00:00:00Z`) : null,
+      end: endMatch ? new Date(`${endMatch[1]}T00:00:00Z`) : null,
+    };
+    datasetTemporalCache.set(datasetId, extent);
+    return extent;
+  } catch (error) {
+    const extent: DatasetTemporalExtent = { start: null, end: null };
+    datasetTemporalCache.set(datasetId, extent);
+    console.warn(`    ⚠️  Unable to read metadata for ${datasetId}: ${error instanceof Error ? error.message : error}`);
+    return extent;
+  }
+}
+
+function clampDateToDatasetRange(datasetId: string, requestedDate: Date): { date: Date; message?: string } {
+  const extent = getDatasetTemporalExtent(datasetId);
+  let date = new Date(requestedDate);
+  let message: string | undefined;
+  const requestedStr = formatDateOnly(requestedDate);
+  
+  if (extent.end && date > extent.end) {
+    date = extent.end;
+    const maxStr = formatDateOnly(extent.end);
+    message = `Requested ${requestedStr} exceeds ${datasetId} max ${maxStr}; clamped to ${maxStr}.`;
+  } else if (extent.start && date < extent.start) {
+    date = extent.start;
+    const minStr = formatDateOnly(extent.start);
+    message = `Requested ${requestedStr} predates ${datasetId} min ${minStr}; clamped to ${minStr}.`;
+  }
+  
+  return { date, message };
+}
 
 /**
  * Determine CMEMS region from coordinates
@@ -125,7 +183,12 @@ async function fetchWaterClarity(
     try {
       console.log(`  Fetching clarity from ${product.datasetId}...`);
       
-      const variable = 'KD490'; // Standard light attenuation variable
+      // Satellite products always expose KD490 directly; BGC fallbacks often expose zeu (euphotic depth)
+      const variable = product.quality === 'satellite'
+        ? 'KD490'
+        : (product.variables.find((name) => name.toLowerCase().includes('kd') || name.toLowerCase().includes('zeu'))
+          ?? product.variables[0]
+          ?? 'KD490');
       
       const value = await fetchCopernicusVariable(
         product.datasetId,
@@ -135,7 +198,8 @@ async function fetchWaterClarity(
       );
       
       if (value !== null) {
-        console.log(`    ✓ Water Clarity (KD490): ${value.toFixed(3)} m⁻¹`);
+        const label = variable.toUpperCase() === 'KD490' ? 'Water Clarity (KD490)' : `Water Clarity (${variable})`;
+        console.log(`    ✓ ${label}: ${value.toFixed(3)} m⁻¹`);
         return value;
       }
     } catch (error) {
@@ -161,11 +225,21 @@ async function fetchDissolvedOxygen(
   
   for (const product of products) {
     try {
-      console.log(`  Fetching oxygen from ${product.datasetId}...`);
+      const oxygenVariable = product.variables.find((name) => {
+        const lower = name.toLowerCase();
+        return lower.includes('o2') || lower.includes('oxygen');
+      });
+
+      if (!oxygenVariable) {
+        console.log(`  Skipping ${product.datasetId} (no oxygen variable exposed)`);
+        continue;
+      }
+
+      console.log(`  Fetching oxygen (${oxygenVariable}) from ${product.datasetId}...`);
       
       const valueInMmolM3 = await fetchCopernicusVariable(
         product.datasetId,
-        'o2',
+        oxygenVariable,
         rectangle,
         date,
         { depth: { min: 0, max: 10 } } // Surface layer 0-10m
@@ -267,16 +341,21 @@ async function fetchSalinity(
     try {
       console.log(`  Fetching salinity from ${product.datasetId}...`);
       
+      const salinityVariable = product.variables.find((name) => {
+        const lower = name.toLowerCase();
+        return lower === 'so' || lower.includes('sal');
+      }) || 'so';
+      
       const value = await fetchCopernicusVariable(
         product.datasetId,
-        'so',
+        salinityVariable,
         rectangle,
         date,
         { depth: { min: 0, max: 10 } }
       );
       
       if (value !== null) {
-        console.log(`    ✓ Salinity: ${value.toFixed(1)} PSU`);
+        console.log(`    ✓ Salinity (${salinityVariable}): ${value.toFixed(1)} PSU`);
         return value;
       }
     } catch (error) {
@@ -302,17 +381,21 @@ async function fetchTemperature(
   for (const product of products) {
     try {
       console.log(`  Fetching temperature from ${product.datasetId}...`);
+      const temperatureVariable = product.variables.find((name) => {
+        const lower = name.toLowerCase();
+        return lower.includes('thetao') || lower.includes('temp');
+      }) || product.variables[0] || 'thetao';
       
       const value = await fetchCopernicusVariable(
         product.datasetId,
-        'thetao',
+        temperatureVariable,
         rectangle,
         date,
         { depth: { min: 0, max: 10 } }
       );
       
       if (value !== null) {
-        console.log(`    ✓ Temperature: ${value.toFixed(1)}°C`);
+        console.log(`    ✓ Temperature (${temperatureVariable}): ${value.toFixed(1)}°C`);
         return value;
       }
     } catch (error) {
@@ -396,8 +479,12 @@ async function fetchCopernicusVariable(
   const outputFile = path.join(tmpDir, 'data.nc');
   
   try {
-    // Format date for Copernicus
-    const dateStr = date.toISOString().split('T')[0];
+    // Format date for Copernicus (auto-clamp to dataset availability)
+    const { date: effectiveDate, message: clampMessage } = clampDateToDatasetRange(datasetId, date);
+    if (clampMessage) {
+      console.log(`    ℹ️  ${clampMessage}`);
+    }
+    const dateStr = formatDateOnly(effectiveDate);
     
     // Build bbox (expand to capture valid data from model grid)
     // Use larger margin to account for ICES rectangles covering land/masked cells
@@ -420,9 +507,11 @@ async function fetchCopernicusVariable(
     
     // Add depth constraint for 3D datasets
     if (options?.depth) {
+      const safeMinDepth = Math.max(options.depth.min, SURFACE_MIN_DEPTH_METERS);
+      const safeMaxDepth = Math.max(safeMinDepth, options.depth.max);
       cmd += ` \\
-      --minimum-depth ${options.depth.min} \\
-      --maximum-depth ${options.depth.max}`;
+      --minimum-depth ${safeMinDepth.toFixed(3)} \\
+      --maximum-depth ${safeMaxDepth.toFixed(3)}`;
     }
     
     cmd += ` \\
@@ -445,62 +534,53 @@ async function fetchCopernicusVariable(
     });
     
     // Parse NetCDF output - handle multiline data
-    const dataMatch = ncdumpOutput.match(new RegExp(`${variable}\\s*=\\s*([\\d.eE+\\-,\\s_]+);`, 's'));
+    const dataMatch = ncdumpOutput.match(new RegExp(`${variable}\\s*=\\s*([\\d.eE+\-,\\s_]+);`, 's'));
     if (!dataMatch) return null;
+    const variableLower = variable.toLowerCase();
     
-    const values = dataMatch[1]
+    const rawTokens = dataMatch[1]
       .split(',')
-      .map((v) => v.trim())
-      .filter((v) => v && v !== '_' && !v.includes('_')) // Filter out underscore fill values
+      .map((v) => v.trim());
+    const numericValues = rawTokens
+      .filter((v) => v && v !== '_' && !v.includes('_'))
       .map((v) => parseFloat(v))
-      .filter((v) => !isNaN(v) && isFinite(v))
-      .filter((v) => {
-        // Filter out numeric fill values (IBI uses -32767, some use -999)
-        // Also filter impossible/unrealistic values for ocean data
-        if (v < -100) return false; // Catch numeric fill values like -32767, -999
-        
-        // Variable-specific sanity checks
-        if (variable === 'so' && (v < -1000 || v > 50000)) return false; // Salinity: allow scaled values
-        if (variable === 'thetao' && (v < -5 || v > 40)) return false; // Temp: -5 to 40°C
-        if (variable === 'CHL' && (v < 0 || v > 100)) return false; // Chlorophyll: 0-100 mg/m³
-        if (variable === 'chl' && (v < 0 || v > 100)) return false;
-        if (variable === 'KD490' && (v < 0 || v > 10)) return false; // Clarity: 0-10 m⁻¹
-        if (variable === 'o2' && (v < 0 || v > 500)) return false; // Oxygen: 0-500 mmol/m³
-        if (variable === 'no3' && (v < 0 || v > 50)) return false; // Nitrate: 0-50 mmol/m³
-        if (variable === 'po4' && (v < 0 || v > 5)) return false; // Phosphate: 0-5 mmol/m³
-        
-        return true;
-      })
+      .filter((v) => !isNaN(v) && isFinite(v));
+    const normalizedValues = numericValues
+      .filter((v) => v > -1e6 && v < 1e6) // Drop obvious fill values while keeping scaled salinity/nutrients
       .map((v) => {
-        // Apply descaling for known scaled variables
-        // IBI stores salinity as: (value × 0.001) + 20
-        if (variable === 'so' && v > 100) {
-          // Scaled salinity detected (typical range 15000-18000)
-          // Formula: actual = (stored × 0.001) + 20
-          return (v * 0.001) + 20;
+        let val = v;
+        if (variableLower === 'so' && Math.abs(v) > 100) {
+          val = (v * 0.001) + 20;
+        } else if (variableLower === 'no3' && Math.abs(v) > 100) {
+          val = Math.abs(v) / 1000;
+        } else if (variableLower === 'po4' && Math.abs(v) > 50) {
+          val = Math.abs(v) / 1000;
+        } else if ((variableLower === 'o2' || variableLower.includes('oxygen')) && Math.abs(v) > 1000) {
+          val = v / 1000;
         }
-        
-        // Detect and fix other common scaling patterns
-        if (variable === 'no3' && Math.abs(v) > 1000) {
-          // Nutrients sometimes scaled by 1000
-          return Math.abs(v) / 1000;
-        }
-        if (variable === 'po4' && Math.abs(v) > 100) {
-          // Phosphate sometimes scaled by 1000
-          return Math.abs(v) / 1000;
-        }
-        if (variable === 'o2' && v > 10000) {
-          // Oxygen sometimes scaled
-          return v / 1000;
-        }
-        
-        return v;
+        return val;
       });
-    
-    if (values.length === 0) return null;
+    const filteredValues = normalizedValues
+      .filter((v) => {
+        if (variableLower === 'so' && (v < 0 || v > 50)) return false;
+        if (variableLower === 'thetao' && (v < -5 || v > 40)) return false;
+        if (variableLower === 'chl' && (v < 0 || v > 100)) return false;
+        if (variableLower === 'kd490' && (v < 0 || v > 10)) return false;
+        if ((variableLower === 'o2' || variableLower.includes('oxygen')) && (v < 0 || v > 500)) return false;
+        if (variableLower === 'no3' && (v < 0 || v > 50)) return false;
+        if (variableLower === 'po4' && (v < 0 || v > 5)) return false;
+        return true;
+      });
+        
+    if (filteredValues.length === 0 && ['so', 'no3', 'po4'].includes(variableLower)) {
+      const preview = rawTokens.slice(0, 6).join(', ');
+      console.log(`    ℹ️  Filtered out all values for ${variable} (raw preview: ${preview || 'n/a'})`);
+    }
+        
+    if (filteredValues.length === 0) return null;
     
     // Return mean of available values (handles multiple depth layers)
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const mean = filteredValues.reduce((a, b) => a + b, 0) / filteredValues.length;
     
     // Final sanity check on the computed mean
     if (!isFinite(mean) || mean < -100) {
@@ -509,23 +589,23 @@ async function fetchCopernicusVariable(
     }
     
     // Variable-specific final validation
-    if (variable === 'so' && (mean < 0 || mean > 50)) {
+    if (variableLower === 'so' && (mean < 0 || mean > 50)) {
       console.log(`    ⚠️  Suspicious salinity: ${mean.toFixed(2)} PSU (expected 0-50)`);
       return null;
     }
-    if (variable === 'o2' && (mean < 0 || mean > 500)) {
+    if ((variableLower === 'o2' || variableLower.includes('oxygen')) && (mean < 0 || mean > 500)) {
       console.log(`    ⚠️  Suspicious oxygen: ${mean.toFixed(2)} mmol/m³ (expected 0-500)`);
       return null;
     }
-    if ((variable === 'no3' || variable === 'po4') && (mean < 0 || mean > 100)) {
+    if ((variableLower === 'no3' || variableLower === 'po4') && (mean < 0 || mean > 100)) {
       console.log(`    ⚠️  Suspicious nutrient ${variable}: ${mean.toFixed(3)} (expected 0-100)`);
       return null;
     }
-    if ((variable === 'CHL' || variable === 'chl') && (mean < 0 || mean > 100)) {
+    if (variableLower === 'chl' && (mean < 0 || mean > 100)) {
       console.log(`    ⚠️  Suspicious chlorophyll: ${mean.toFixed(2)} mg/m³ (expected 0-100)`);
       return null;
     }
-    if (variable === 'KD490' && (mean < 0 || mean > 10)) {
+    if (variableLower === 'kd490' && (mean < 0 || mean > 10)) {
       console.log(`    ⚠️  Suspicious clarity: ${mean.toFixed(3)} m⁻¹ (expected 0-10)`);
       return null;
     }
@@ -683,8 +763,23 @@ async function ingestBiogeochemicalData(testRectangleCode?: string, testDate?: s
   console.log('🎉 Ingestion complete!');
 }
 
+const isMainModule = (() => {
+  if (typeof process === 'undefined' || !process.argv?.length) {
+    return false;
+  }
+  const entryFile = process.argv[1];
+  if (!entryFile) {
+    return false;
+  }
+  try {
+    return fileURLToPath(import.meta.url) === path.resolve(entryFile);
+  } catch {
+    return false;
+  }
+})();
+
 // Run if called directly
-if (require.main === module) {
+if (isMainModule) {
   // Parse command line arguments
   const args = process.argv.slice(2);
   const rectangleArg = args.find(arg => arg.startsWith('--rectangle='));

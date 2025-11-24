@@ -10,7 +10,7 @@ process.env.NEXT_PUBLIC_OPENWEATHER_KEY = '748bd0822b74e58605964652c38d0796';
  */
 
 import { createMocks } from 'node-mocks-http';
-import handler from '../../pages/api/weather-with-pollen';
+import { createWeatherWithPollenHandler, type OpenMeteoAirPollenResponse } from '../../pages/api/weather-with-pollen';
 
 const baseWeatherPayload = {
   current: {
@@ -72,29 +72,44 @@ const basePollenPayload = {
   },
 };
 
-jest.mock('../../lib/services/weatherService', () => ({
-  getWeatherData: jest.fn(() => Promise.resolve(baseWeatherPayload)),
-  fetchOpenMeteoAirPollen: jest.fn(() => Promise.resolve(basePollenPayload)),
-}));
+const loggerMock = {
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+};
 
-// Mock coordinatePrecision utility
-jest.mock('../../utils/coordinatePrecision', () => ({
-  roundCoordinates: jest.fn((lat, lon) => ({ lat, lon })),
-}));
+const weatherMock = jest.fn<
+  Promise<typeof baseWeatherPayload>,
+  [{ lat: number | string; lon: number | string; apiKey: string; options?: Record<string, unknown> }]
+>(async () => baseWeatherPayload);
 
-const weatherService = require('../../lib/services/weatherService');
+const pollenMock = jest.fn<
+  Promise<OpenMeteoAirPollenResponse | null>,
+  [number, number, string, string]
+>(async () => basePollenPayload as OpenMeteoAirPollenResponse);
+
+const buildHandler = (
+  overrides?: Parameters<typeof createWeatherWithPollenHandler>[0]
+) =>
+  createWeatherWithPollenHandler({
+    getFullWeather: weatherMock,
+    fetchAirPollen: pollenMock,
+    now: () => new Date('2025-10-19T00:00:00Z'),
+    logger: loggerMock,
+    getApiKey: () => 'test-api-key',
+    ...overrides,
+  });
 
 describe('GET /api/weather-with-pollen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Mock environment variable
-    process.env.OPENWEATHER_KEY = 'test-api-key';
-    weatherService.getWeatherData.mockResolvedValue(baseWeatherPayload);
-    weatherService.fetchOpenMeteoAirPollen.mockResolvedValue(basePollenPayload);
+    weatherMock.mockResolvedValue(baseWeatherPayload);
+    pollenMock.mockResolvedValue(basePollenPayload);
   });
 
   describe('Basic Request Validation', () => {
     it('should return 405 for non-GET requests', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'POST',
       });
@@ -107,6 +122,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should return 400 if lat parameter is missing', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -123,6 +139,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should return 400 if lon parameter is missing', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -139,6 +156,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should return 400 if lat is invalid', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -156,6 +174,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should return 400 if lon is invalid', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -173,10 +192,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should return 500 if OPENWEATHER_KEY is not configured', async () => {
-      delete process.env.OPENWEATHER_KEY;
-      delete process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
-      weatherService.getWeatherData.mockRejectedValueOnce(new Error('API key missing'));
-
+      const handler = buildHandler({ getApiKey: () => undefined });
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -196,7 +212,12 @@ describe('GET /api/weather-with-pollen', () => {
   });
 
   describe('Successful Requests', () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_OPENWEATHER_KEY = '748bd0822b74e58605964652c38d0796';
+    });
+
     it('should return combined weather and pollen data for valid coordinates', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -225,6 +246,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should support units parameter (metric)', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -242,6 +264,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should support units parameter (imperial)', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -259,6 +282,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should default to metric units if not specified', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -277,6 +301,7 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Pollen Data Aggregation', () => {
     it('should aggregate grass pollen by date', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -301,6 +326,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should aggregate tree pollen (max of alder and birch)', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -326,6 +352,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should aggregate weed pollen (max of ragweed and mugwort)', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -351,6 +378,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include olive pollen if available', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -378,6 +406,7 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Air Quality Data Aggregation', () => {
     it('should aggregate US AQI by date', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -403,6 +432,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include PM2.5 data', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -428,6 +458,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include PM10 data', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -453,6 +484,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include NO2 data', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -478,6 +510,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include O3 data', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -505,6 +538,7 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Coordinate Handling', () => {
     it('should accept valid latitude range (-90 to 90)', async () => {
+      const handler = buildHandler();
       const coords = [
         { lat: '-90.0', lon: '0.0' },   // South Pole
         { lat: '0.0', lon: '0.0' },     // Equator
@@ -525,6 +559,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should accept valid longitude range (-180 to 180)', async () => {
+      const handler = buildHandler();
       const coords = [
         { lat: '0.0', lon: '-180.0' },  // International Date Line West
         { lat: '0.0', lon: '0.0' },     // Prime Meridian
@@ -545,6 +580,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should handle decimal coordinates', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -563,6 +599,7 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Error Handling', () => {
     it('should handle weather service errors gracefully', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -571,7 +608,7 @@ describe('GET /api/weather-with-pollen', () => {
         },
       });
 
-      weatherService.getWeatherData.mockRejectedValueOnce(new Error('Weather API failed'));
+      weatherMock.mockRejectedValueOnce(new Error('Weather API failed'));
 
       await handler(req, res);
 
@@ -582,7 +619,8 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should handle pollen API failures gracefully', async () => {
-      weatherService.fetchOpenMeteoAirPollen.mockRejectedValueOnce(new Error('Pollen API failed'));
+      const handler = buildHandler();
+      pollenMock.mockRejectedValueOnce(new Error('Pollen API failed'));
 
       const { req, res } = createMocks({
         method: 'GET',
@@ -601,6 +639,7 @@ describe('GET /api/weather-with-pollen', () => {
 
   describe('Response Structure', () => {
     it('should return valid JSON', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -616,6 +655,7 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should include weather current data', async () => {
+      const handler = buildHandler();
       const { req, res } = createMocks({
         method: 'GET',
         query: {
@@ -635,7 +675,8 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should not include pollenByDate if no data', async () => {
-      weatherService.fetchOpenMeteoAirPollen.mockResolvedValueOnce(null);
+      const handler = buildHandler();
+      pollenMock.mockResolvedValueOnce(null);
 
       const { req, res } = createMocks({
         method: 'GET',
@@ -653,7 +694,8 @@ describe('GET /api/weather-with-pollen', () => {
     });
 
     it('should not include airQualityByDate if no data', async () => {
-      weatherService.fetchOpenMeteoAirPollen.mockResolvedValueOnce(null);
+      const handler = buildHandler();
+      pollenMock.mockResolvedValueOnce(null);
 
       const { req, res } = createMocks({
         method: 'GET',
@@ -668,6 +710,41 @@ describe('GET /api/weather-with-pollen', () => {
       expect(res._getStatusCode()).toBe(200);
       const data = JSON.parse(res._getData());
       expect(data.airQualityByDate).toBeUndefined();
+    });
+    it('should set no-store cache header when bypassCache is true', async () => {
+      const handler = buildHandler();
+      const { req, res } = createMocks({
+        method: 'GET',
+        query: {
+          lat: '50.0',
+          lon: '-5.0',
+          bypassCache: 'true',
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res.getHeader('Cache-Control')).toBe('no-store');
+      expect(weatherMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({ bypassCache: true }),
+        })
+      );
+    });
+
+    it('should set revalidation headers by default', async () => {
+      const handler = buildHandler();
+      const { req, res } = createMocks({
+        method: 'GET',
+        query: {
+          lat: '50.0',
+          lon: '-5.0',
+        },
+      });
+
+      await handler(req, res);
+
+      expect(res.getHeader('Cache-Control')).toBe('s-maxage=300, stale-while-revalidate=900');
     });
   });
 });

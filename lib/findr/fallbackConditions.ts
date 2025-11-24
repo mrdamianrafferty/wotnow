@@ -26,6 +26,7 @@ export interface FallbackConditionPayload {
       windDirectionDeg: number;
       waterClarityIndex?: number;
       waterClarityMethod?: string;
+      waterClarityKd490?: number | null;
       // Ocean currents (Phase 2)
       currentEastSurface?: number;
       currentNorthSurface?: number;

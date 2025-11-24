@@ -407,6 +407,7 @@ function applyConditionsRow(base: FallbackConditionPayload, row: ConditionsRow):
   
   // Calculate water clarity from kd490 (if available) and chlorophyll
   const maybeKd490 = normaliseNumber(row.kd490);
+  marine.waterClarityKd490 = maybeKd490 ?? null;
   if (maybeKd490 !== undefined || maybeChl !== undefined) {
     const clarity = calculateWaterClarity(maybeKd490, maybeChl);
     if (clarity) {

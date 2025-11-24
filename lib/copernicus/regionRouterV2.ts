@@ -117,7 +117,7 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     chlorophyll: [
       {
-        datasetId: 'cmems_obs-oc_atl_bgc-plankton_my_l4-gapfree-multi-1km_P1D',  // VERIFIED: Gap-free L4, covers IBI/NWS/Nordic
+        datasetId: 'cmems_obs-oc_atl_bgc-plankton_nrt_l4-gapfree-multi-1km_P1D',  // VERIFIED: Gap-free L4, covers IBI/NWS/Nordic (NRT for freshest data)
         variables: ['CHL'],  // Chlorophyll-a in mg/m³
         source: 'regional-oc',
         quality: 'satellite',
@@ -136,7 +136,7 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     clarity: [
       {
-        datasetId: 'cmems_obs-oc_atl_bgc-transp_my_l3-multi-1km_P1D',  // VERIFIED: KD490 light attenuation
+        datasetId: 'cmems_obs-oc_atl_bgc-transp_nrt_l3-multi-1km_P1D',  // VERIFIED: KD490 light attenuation (NRT avoids MY lag)
         variables: ['KD490'],  // Light attenuation coefficient in m⁻¹
         source: 'regional-oc',
         quality: 'satellite',
@@ -203,7 +203,7 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     chlorophyll: [
       {
-        datasetId: 'cmems_obs-oc_med_bgc-plankton_my_l4-gapfree-multi-1km_P1D',  // VERIFIED: Gap-free L4
+        datasetId: 'cmems_obs-oc_med_bgc-plankton_nrt_l4-gapfree-multi-1km_P1D',  // VERIFIED: Gap-free L4 (NRT for freshest data)
         variables: ['CHL'],  // Chlorophyll-a in mg/m³, case 1 + case 2 algorithms
         source: 'regional-oc',
         quality: 'satellite',
@@ -222,7 +222,7 @@ const REGIONAL_PRODUCT_BUNDLES: Record<string, RegionalDatasetBundle> = {
     
     clarity: [
       {
-        datasetId: 'cmems_obs-oc_med_bgc-transp_my_l3-multi-1km_P1D',  // VERIFIED: KD490 light attenuation
+        datasetId: 'cmems_obs-oc_med_bgc-transp_nrt_l3-multi-1km_P1D',  // VERIFIED: KD490 light attenuation (NRT avoids MY lag)
         variables: ['KD490'],  // Light attenuation coefficient in m⁻¹
         source: 'regional-oc',
         quality: 'satellite',

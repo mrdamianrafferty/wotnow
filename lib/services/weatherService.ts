@@ -1074,7 +1074,12 @@ async function getAirQualityWithCache(lat: number, lon: number): Promise<unknown
  *   - description: string (detailed info)
  *   - tags: array of strings (categories)
  */
-type WeatherOptions = { units?: 'metric'|'imperial'|'standard'; exclude?: string };
+type WeatherOptions = {
+  units?: 'metric' | 'imperial' | 'standard';
+  exclude?: string;
+  /** Optional flag for API routes to force fresh fetches (used by tests/debug tools) */
+  bypassCache?: boolean;
+};
 
 async function getWeatherAlerts({ lat, lon, apiKey, options = {} }: { lat: number|string, lon: number|string, apiKey: string, options?: WeatherOptions }) {
   const params = new URLSearchParams({
