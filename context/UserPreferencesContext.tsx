@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { activityTypes } from '../data/activityTypes';
+import { useUnifiedLocation } from './UnifiedLocationContext';
+import { useAuth } from './AuthContext';
+import type { SavedLocation } from '../types/multiLocation';
 
 // --- Types ---
 type LocationType = 'home' | 'coastal';
@@ -100,6 +103,42 @@ const defaultPreferences: Preferences = {
   eventPreferences: { ...defaultEventPreferences },
 };
 
+const COORD_TOLERANCE = 0.0001;
+
+const normalizeLocationType = (type?: LocationType): LocationType => (type === 'coastal' ? 'coastal' : 'home');
+
+const getTypedLocation = (locations: Location[], type: LocationType): Location | null => {
+  const found = locations.find((loc) => normalizeLocationType(loc.type) === type);
+  return found ? { ...found, type } : null;
+};
+
+const coordsEqual = (a: number, b: number) => Math.abs(a - b) <= COORD_TOLERANCE;
+
+const locationsEqual = (a?: Location | null, b?: Location | null) => {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return (
+    normalizeLocationType(a.type) === normalizeLocationType(b.type) &&
+    coordsEqual(a.lat, b.lat) &&
+    coordsEqual(a.lon, b.lon) &&
+    (a.name || '') === (b.name || '')
+  );
+};
+
+const savedToPreferenceLocation = (saved: SavedLocation, type: LocationType): Location => ({
+  name: saved.name || saved.rectangleRegion || 'Saved Location',
+  lat: saved.lat,
+  lon: saved.lon,
+  type,
+});
+
+const shouldSyncLocation = (local: Location | null, remote: SavedLocation | null | undefined) => {
+  if (!local) return false;
+  if (!Number.isFinite(local.lat) || !Number.isFinite(local.lon)) return false;
+  if (!remote) return true;
+  return !locationsEqual(local, savedToPreferenceLocation(remote, normalizeLocationType(local.type)));
+};
+
 const toStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
@@ -192,6 +231,14 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     return loadPreferencesFromStorage() ?? defaultPreferences;
   });
   const ipBootstrapAttempted = useRef(false);
+  const { user } = useAuth();
+  const {
+    homeLocation: unifiedHome,
+    coastalLocation: unifiedCoastal,
+    updateLocationBySlot,
+    refreshRemote,
+    loading: unifiedLoading,
+  } = useUnifiedLocation();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -282,6 +329,83 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
       }
     })();
   }, [setPreferences]);
+
+  useEffect(() => {
+    if (!user) return;
+    void refreshRemote();
+  }, [user, user?.id, refreshRemote]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (unifiedLoading) return;
+
+    if (!unifiedHome && !unifiedCoastal) return;
+
+    setPreferences((prev) => {
+      const nextLocations = Array.isArray(prev.locations) ? [...prev.locations] : [];
+      let changed = false;
+
+      const applyRemote = (type: LocationType, remote: SavedLocation | null | undefined) => {
+        if (!remote) return;
+        const normalizedType = normalizeLocationType(type);
+        const candidate = savedToPreferenceLocation(remote, normalizedType);
+        const index = nextLocations.findIndex((loc) => normalizeLocationType(loc.type) === normalizedType);
+        const current = index >= 0 ? nextLocations[index] : null;
+        if (!locationsEqual(current, candidate)) {
+          changed = true;
+          if (index >= 0) {
+            nextLocations[index] = candidate;
+          } else {
+            nextLocations.push(candidate);
+          }
+        }
+      };
+
+      applyRemote('home', unifiedHome);
+      applyRemote('coastal', unifiedCoastal);
+
+      if (!changed) return prev;
+      return { ...prev, locations: nextLocations };
+    });
+  }, [user, user?.id, unifiedHome, unifiedCoastal, unifiedLoading]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (unifiedLoading) return;
+
+    const home = getTypedLocation(preferences.locations, 'home');
+    const coastal = getTypedLocation(preferences.locations, 'coastal');
+
+    const syncPromises: Promise<unknown>[] = [];
+
+    if (shouldSyncLocation(home, unifiedHome)) {
+      syncPromises.push(
+        updateLocationBySlot({
+          slot: 'home',
+          coordinates: { lat: home!.lat, lon: home!.lon },
+          name: home!.name,
+          rectangleRegion: home!.name,
+          makeActive: false,
+        })
+      );
+    }
+
+    if (shouldSyncLocation(coastal, unifiedCoastal)) {
+      syncPromises.push(
+        updateLocationBySlot({
+          slot: 'coastal',
+          coordinates: { lat: coastal!.lat, lon: coastal!.lon },
+          name: coastal!.name,
+          rectangleRegion: coastal!.name,
+          makeActive: false,
+        })
+      );
+    }
+
+    if (syncPromises.length > 0) {
+      void Promise.allSettled(syncPromises);
+    }
+  }, [user, user?.id, preferences.locations, unifiedHome, unifiedCoastal, unifiedLoading, updateLocationBySlot]);
 
   // --- Auto-detect home location if not set ---
   useEffect(() => {

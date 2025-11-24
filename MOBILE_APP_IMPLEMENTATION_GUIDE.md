@@ -22,6 +22,13 @@ We are prioritising an iOS release for Go Daisy while Findr remains live on both
 
 All engineers should reference this section when working on mobile features so Go Daisy’s native timeline stays aligned with shared infrastructure.
 
+#### Swift 6 / Capacitor Upgrade Strategy (Nov 2025)
+
+- **Option A locked in:** stay on Capacitor 7.4.x for both shells and relax Swift strict concurrency to `minimal` so third-party pods (Capgo, FBSDK, AppAuth) compile cleanly under Xcode 16 without Swift 6 annotations.
+- **Defer experiments:** no Capacitor 8 / Swift 6 migrations on `main` until Findr + Go Daisy have shippable builds. When ready, branch (`cap8-experiments`) and pilot upgrades separately.
+- **Monitoring:** track upstream Swift 6 readiness for Capacitor core/plugins and Capgo social login; revisit once official GA notes confirm coverage of our plugin set.
+- **Rollback plan:** if relaxed concurrency surfaces new warnings, re-apply per-target overrides or revert to `targeted`, but avoid enabling `complete` until dependencies are Swift 6-safe.
+
 ### ✅ What's Already Implemented
 
 **PWA Foundation:**

@@ -68,7 +68,7 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
       config.build_settings['SWIFT_VERSION'] = '5.0'
-      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'complete'
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
     end
   end
 
@@ -79,7 +79,7 @@ post_install do |installer|
       target.build_configurations.each do |config|
         config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
         config.build_settings['SWIFT_VERSION'] = '5.0'
-        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'complete'
+        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
       end
     end
   end
@@ -90,7 +90,7 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
       config.build_settings['SWIFT_VERSION'] = '5.0'
-      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'complete'
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
     end
   end
 

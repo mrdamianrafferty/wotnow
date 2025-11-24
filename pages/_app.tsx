@@ -88,8 +88,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LanguageProvider>
-          <UserPreferencesProvider>
-            <UnifiedLocationProvider>
+          <UnifiedLocationProvider>
+            <UserPreferencesProvider>
               <Head>
               {/* Ensure proper scaling and colour on iPad/phones */}
               <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -144,8 +144,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <Analytics />
                 <SpeedInsights />
               </div>
-            </UnifiedLocationProvider>
-          </UserPreferencesProvider>
+            </UserPreferencesProvider>
+          </UnifiedLocationProvider>
         </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
