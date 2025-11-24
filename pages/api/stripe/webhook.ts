@@ -34,12 +34,14 @@ export const config = {
  * Update user profile based on subscription status.
  */
 async function updateProfileFromSubscription(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string,
   subscription: Stripe.Subscription
 ) {
   const status = subscription.status === 'active' || subscription.status === 'trialing' ? 'premium' : 'free';
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: any = {
     subscription_status: status,
     payment_platform: 'web',
@@ -51,14 +53,20 @@ async function updateProfileFromSubscription(
     updateData.subscription_start_date = new Date(subscription.created * 1000).toISOString();
 
     // Trial end date
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((subscription as any).trial_end) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       updateData.trial_ends_at = new Date((subscription as any).trial_end * 1000).toISOString();
     }
 
     // Subscription end date (if canceled)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((subscription as any).cancel_at) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       updateData.subscription_end_date = new Date((subscription as any).cancel_at * 1000).toISOString();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } else if ((subscription as any).current_period_end) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       updateData.subscription_end_date = new Date((subscription as any).current_period_end * 1000).toISOString();
     }
   }
@@ -88,6 +96,7 @@ async function updateProfileFromSubscription(
       const originalPrice = (price.unit_amount || 0) / 100;
 
       // Calculate discount from subscription discounts (use first discount if present)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const discount = (subscription as any).discount;
       let finalPrice = originalPrice;
 
@@ -113,10 +122,12 @@ async function updateProfileFromSubscription(
  * Record subscription event in audit log.
  */
 async function recordEvent(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string,
   eventType: string,
   stripeEventId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   eventData: any
 ) {
   await supabase.from('subscription_events').insert({
