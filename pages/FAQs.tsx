@@ -152,18 +152,21 @@ export default function SurfSiteFAQ() {
                   </p>
                 </Item>
 
-                {/* --- TODOs for you to complete --- */}
-                <Item title="To-dos / next improvements (for the team)">
+                {/* Roadmap */}
+                <Item title="What improvements are coming next?">
+                  <p>
+                    We ship updates every week. The current roadmap focuses on richer local context and personalisation:
+                  </p>
                   <ul>
-                    <li><b>TODO:</b> Add a per-spot <i>beach orientation</i> list (bearing in degrees) and a quick editor.</li>
-                    <li><b>TODO:</b> Define <i>tide profiles</i> per spot (min/max workable height, stage weights, near-turn bonus).</li>
-                    <li><b>TODO:</b> Add an <i>Attribution</i> page (if using any CC-BY icons) — include names/links.</li>
-                    <li><b>TODO:</b> Expose <i>unit preferences</i> (metres/feet, knots/km h) and persist per user.</li>
-                    <li><b>TODO:</b> Implement <i>multi-skill</i> views (Novice / Intermediate / Advanced toggle) affecting safety gates.</li>
-                    <li><b>TODO:</b> Add <i>push notifications</i> for “green window starts in X minutes”.</li>
-                    <li><b>TODO:</b> Add an <i>accessibility contrast check</i> to the colour ramp (WCAG AA for badges).</li>
-                    <li><b>TODO:</b> Optional “<i>local knowledge</i>” notes per spot (e.g., wind shelter, mid-tide banks).</li>
+                    <li><b>Spot metadata:</b> rolling out editable beach orientations plus curated tide profiles so grades respect each break’s quirks.</li>
+                    <li><b>Personal settings:</b> finer control over units, skill presets, and favourite gear so recommendations feel bespoke.</li>
+                    <li><b>Notifications:</b> optional alerts before a green window opens, with quiet hours and per-spot subscriptions.</li>
+                    <li><b>Accessibility & attribution:</b> automated contrast checks and an in-app credits page covering every CC-BY asset.</li>
+                    <li><b>Local knowledge:</b> vetted notes from trusted contributors highlighting wind shelter, rip hotspots and parking tips.</li>
                   </ul>
+                  <p>
+                    If you want early access to any of these, drop us a line and we’ll add you to the beta list.
+                  </p>
                 </Item>
 
                 {/* Legal */}

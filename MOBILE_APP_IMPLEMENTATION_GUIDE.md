@@ -9,6 +9,19 @@
 
 ## 📊 Current State Analysis
 
+### 🆕 November 2025 Update — Go Daisy iOS-First Rollout
+
+We are prioritising an iOS release for Go Daisy while Findr remains live on both web and iOS. Android for Go Daisy stays mobile-web/PWA until post-launch telemetry confirms retention goals. Key actions:
+
+- **Shared Supabase/Auth Foundations** — keep the single auth stack defined in `pages/auth/shared-login.tsx`, `pages/auth/receive-session.tsx`, and `docs/SUPABASE_APPLE_AUTH_CONFIG.md`; register bundle IDs `io.godaisy.app` + TestFlight variants with the existing Services ID `io.godaisy.login` and update Supabase redirect URLs (see `docs/NATIVE_APPLE_SIGN_IN_SETUP.md`).
+- **Capacitor Shell Duplication** — clone Findr’s `capacitor.config.ts`, `.capacitor-assets`, and `ios/App` projects into a Go Daisy variant pointing at `https://godaisy.io`, reusing the same plugins (Apple Sign In, geolocation, camera, share). Add a Go Daisy job to `.github/workflows/mobile-build.yml` so TestFlight builds stay automated.
+- **Store Collateral** — adapt `APP_STORE_CONNECT_SUBMISSION.md` and `FINDR_IOS_RELEASE_CHECKLIST.md` with Go Daisy copy sourced from `pages/FAQs.tsx`, `SUPPORT_CONTACTS.md`, and `PRIVACY_POLICY.md`. Define screenshot storyboards for `/`, `/activities`, `/support`, and the onboarding flow used in Playwright (`e2e/go-daisy-navigation.spec.ts`).
+- **PWA Polish Before Wrapping** — close outstanding items in `GO_DAISY_PERFORMANCE_FIXES.md` and `LAUNCH_CHECKLIST.md` (service worker audit, canonical tags, console noise, offline splash) so Apple accepts the hybrid build.
+- **Monitoring & Data Readiness** — extend existing NOAA/CMEMS jobs (`.github/workflows/ingest-noaa-data.yml`, `scripts/call-ingest-function.ts`) with Go Daisy alerts; ensure weather/tides endpoints under `/api` expose health metrics before TestFlight.
+- **Android Delay Messaging** — document in release notes and support docs that native Android is deferred; track the re-evaluation trigger (target DAU + retention) inside `MOBILE_APP_IMPLEMENTATION_GUIDE.md` and `MORNING_CHECKLIST.md`.
+
+All engineers should reference this section when working on mobile features so Go Daisy’s native timeline stays aligned with shared infrastructure.
+
 ### ✅ What's Already Implemented
 
 **PWA Foundation:**

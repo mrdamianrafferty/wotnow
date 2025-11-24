@@ -25,9 +25,9 @@ The native iOS app is configured to use `io.godaisy.login` as the clientId. This
 ### Verify Configuration:
 
 **App IDs:**
-The Services ID should be associated with:
+Associate the Services ID with both native shells:
 - `eu.fishfindr.app` (Findr iOS app)
-- `io.godaisy.app` (Go Daisy iOS app - if exists)
+- `io.godaisy.app` (Go Daisy iOS app defined in `capacitor.godaisy.config.ts` / `ios-godaisy`)
 
 **Domains and Subdomains:**
 - Primary: `fishfindr.eu`
@@ -64,6 +64,8 @@ Since you're using `io.godaisy.login` for web OAuth, Supabase should already acc
 2. Run on a device
 3. Try "Sign in with Apple"
 4. Should now work without audience errors!
+
+> **Tip:** When running the Go Daisy shell (`ios-godaisy`), confirm the app parameter hitting `pages/auth/shared-login.tsx` is `godaisy`. The shared callback stores this in `sessionStorage` (`oauth_app`) so Supabase routes tokens back to the correct domain.
 
 ## How It Works
 

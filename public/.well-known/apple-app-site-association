@@ -8,6 +8,13 @@
           "/auth/callback",
           "/auth/callback/*"
         ]
+      },
+      {
+        "appID": "T7754BV8QM.io.godaisy.app",
+        "paths": [
+          "/auth/callback",
+          "/auth/callback/*"
+        ]
       }
     ]
   }
