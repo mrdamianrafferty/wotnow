@@ -158,14 +158,18 @@ async function fetchAndSampleProviders(
     diagnostics.noaa = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
     tasks.push(fetchNoaaSurfaceTemperatures(cells, opts.vars, diagnostics.noaa));
   }
+  if (opts.providers.includes("CHLOROPHYLL")) {
+    diagnostics.chlorophyll = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
+    tasks.push(fetchChlorophyllData(cells, opts.vars, diagnostics.chlorophyll));
+  }
   if (opts.providers.includes("CMEMS")) {
     diagnostics.cmems = { sampledCells: 0, attempted: 0, successes: 0, errors: [] };
     tasks.push(fetchCmemsMetrics(cells, opts.vars, diagnostics.cmems));
   }
   const providerResults = await Promise.all(tasks);
-  const [noaaSamples = [], cmemsSamples = []] = providerResults.length === 2 ? providerResults : [providerResults[0] ?? [], providerResults[1] ?? []];
+  const [noaaSamples = [], chlorophyllSamples = [], cmemsSamples = []] = providerResults.length === 3 ? providerResults : [providerResults[0] ?? [], providerResults[1] ?? [], providerResults[2] ?? []];
 
-  for (const sample of [...noaaSamples, ...cmemsSamples]) {
+  for (const sample of [...noaaSamples, ...chlorophyllSamples, ...cmemsSamples]) {
     const existing: ConditionRow = aggregator.get(sample.cell_id) ?? { cell_id: sample.cell_id };
     if (sample.collected_at && (!existing.collected_at || existing.collected_at < sample.collected_at)) {
       existing.collected_at = sample.collected_at;
@@ -378,6 +382,129 @@ async function fetchNoaaForCell(cell: GridCell, diagnostics?: ProviderDiagnostic
   }
 
   return null;
+}
+
+// CHLOROPHYLL ERDDAP (erdMH1chlamday) ---------------------------------------
+
+const CHL_ERDDAP_BASE_URL =
+  env.CHL_ERDDAP_BASE_URL ?? "https://coastwatch.pfeg.noaa.gov/erddap";
+
+const CHL_DEFAULT_DATASET_ID = "erdMH1chlamday";
+const CHL_DEFAULT_VARIABLE = "chlorophyll";
+
+const CHL_DATASET_ID = env.CHL_ERDDAP_DATASET_ID?.trim() || CHL_DEFAULT_DATASET_ID;
+const CHL_VARIABLE = env.CHL_ERDDAP_VARIABLE?.trim() || CHL_DEFAULT_VARIABLE;
+const CHL_CONCURRENCY = Number(env.CHL_ERDDAP_CONCURRENCY ?? "4");
+
+console.log("Chlorophyll Configuration:", {
+  datasetId: CHL_DATASET_ID,
+  variable: CHL_VARIABLE,
+  baseUrl: CHL_ERDDAP_BASE_URL,
+});
+
+async function fetchChlorophyllData(cells: GridCell[], vars: string[], diagnostics?: ProviderDiagnostics): Promise<ProviderSample[]> {
+  const results: ProviderSample[] = [];
+
+  if (!vars.includes("chlorophyll_mg_m3")) {
+    if (diagnostics) diagnostics.sampledCells = 0;
+    return results;
+  }
+
+  const limitedCells = cells.slice(0, Number(env.CHL_ERDDAP_MAX_POINTS ?? "500"));
+  if (diagnostics) diagnostics.sampledCells = limitedCells.length;
+
+  await mapWithConcurrency(limitedCells, CHL_CONCURRENCY, async (cell) => {
+    const sample = await fetchChlorophyllForCell(cell, diagnostics);
+    if (sample) results.push(sample);
+  });
+
+  return results;
+}
+
+async function fetchChlorophyllForCell(cell: GridCell, diagnostics?: ProviderDiagnostics): Promise<ProviderSample | null> {
+  if (diagnostics) diagnostics.attempted++;
+
+  const normalizedBase = CHL_ERDDAP_BASE_URL.replace(/\/+$/, "");
+  const apiRoot = normalizedBase.endsWith("/erddap")
+    ? normalizedBase
+    : `${normalizedBase}/erddap`;
+
+  const url = new URL(`${apiRoot}/griddap/${CHL_DATASET_ID}.json`);
+
+  const latCenter = clamp(cell.lat, -90, 90);
+  const lonCenter = wrapLongitude(cell.lon);
+
+  // Snap to ERDDAP grid increments (0.001 precision)
+  const latIndex = Number(latCenter.toFixed(3));
+  const lonIndex = Number(lonCenter.toFixed(3));
+
+  // Always use [(last)] for time - get the most recent available data
+  const timeSlice = "[(last)]";
+  const latSlice = `[(${latIndex.toFixed(3)}):1:(${latIndex.toFixed(3)})]`;
+  const lonSlice = `[(${lonIndex.toFixed(3)}):1:(${lonIndex.toFixed(3)})]`;
+
+  url.search = `?${CHL_VARIABLE}${timeSlice}${latSlice}${lonSlice}`;
+
+  try {
+    console.log("Chlorophyll ERDDAP request URL:", url.toString());
+
+    // Add 30-second timeout like NOAA
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    let resp: Response;
+    try {
+      resp = await fetch(url.toString(), { signal: controller.signal });
+      clearTimeout(timeoutId);
+    } catch (fetchError: unknown) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        const warning = `Timeout (30s) for chlorophyll cell ${cell.cell_id}`;
+        recordProviderError(diagnostics, warning);
+        console.warn("Chlorophyll ERDDAP request timeout", { cell: cell.cell_id, url: url.toString() });
+        return null;
+      }
+      throw fetchError;
+    }
+
+    if (!resp.ok) {
+      const warning = `HTTP ${resp.status} ${resp.statusText} for chlorophyll cell ${cell.cell_id}`;
+      recordProviderError(diagnostics, warning);
+      console.warn("Chlorophyll ERDDAP request failed", resp.status, resp.statusText, { cell: cell.cell_id, url: url.toString() });
+      return null;
+    }
+
+    const json = await resp.json();
+    const rows: unknown[] = json?.table?.rows ?? [];
+    if (!Array.isArray(rows) || rows.length === 0) {
+      recordProviderError(diagnostics, `No chlorophyll rows for cell ${cell.cell_id}`);
+      return null;
+    }
+
+    const firstRow = rows[0] as unknown[];
+    const timeValue = String(firstRow[0]);
+    const chl = Number(firstRow[firstRow.length - 1]);
+
+    if (!Number.isFinite(chl) || chl < 0) {
+      recordProviderError(diagnostics, `Invalid chlorophyll value for cell ${cell.cell_id}: ${chl}`);
+      return null;
+    }
+
+    if (diagnostics) diagnostics.successes++;
+
+    return {
+      cell_id: cell.cell_id,
+      collected_at: timeValue,
+      source: `${CHL_DATASET_ID}.${CHL_VARIABLE}`,
+      values: {
+        chlorophyll_mg_m3: Number(chl.toFixed(3)),
+      },
+    };
+  } catch (error) {
+    console.error("Chlorophyll ERDDAP fetch error", error);
+    recordProviderError(diagnostics, `Fetch error for chlorophyll cell ${cell.cell_id}: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
 }
 
 // CMEMS (Thredds NCSS) -------------------------------------------------------
@@ -668,6 +795,7 @@ type IngestDiagnostics = {
   selectedNew?: number;
   selectedRefresh?: number;
   noaa?: ProviderDiagnostics;
+  chlorophyll?: ProviderDiagnostics;
   cmems?: ProviderDiagnostics;
 };
 

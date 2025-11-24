@@ -147,13 +147,45 @@ The prioritization optimization adds a database query that can cause timeouts wi
 
 Regions already at 100% coverage (California coastal: 60/60 grids) don't benefit from optimization and may experience slower performance.
 
+## Environmental Data Availability
+
+**Confirmed**: NOAA ERDDAP `noaacwBLENDEDsstDaily` dataset provides **ONLY sea surface temperature**.
+
+✅ **Available from NOAA:**
+- Surface temperature (°C)
+
+❌ **NOT Available from NOAA (all NULL):**
+- Chlorophyll (mg/m³)
+- Dissolved oxygen (mg/L)
+- Salinity (PSU)
+- Nitrate (μmol/L)
+- Phosphate (μmol/L)
+- Bottom temperature (°C)
+- Water clarity / Kd490
+- pH
+- Wind speed/direction
+- Wave height/period/direction
+- Current speed/direction
+- Sea level anomaly
+- Ice fraction
+
+**Test Script**: `scripts/check-noaa-env-data.ts`
+
+**To Add More Environmental Variables:**
+1. Search NOAA ERDDAP for additional datasets (biogeochemical, ocean currents, etc.)
+2. Consider integrating CMEMS data for American waters (currently only used for European waters)
+3. Modify Edge Function to fetch from multiple ERDDAP datasets per grid cell
+4. Update `grid_conditions_latest` table upsert logic to merge data from multiple sources
+
+**Note**: The `noaacwBLENDEDsstDaily` dataset is specifically a sea surface temperature product. Other environmental variables would require different datasets.
+
 ## Next Steps
 
-1. Monitor next scheduled workflow run (hourly at :15 past the hour)
-2. Verify all 9 regions complete within 30-minute timeout
-3. Check coverage growth over next few hours
-4. Confirm NOAA OISST dataset covers high-latitude waters (Alaska/Canada)
-5. Consider reducing workflow limits if timeouts occur (150 → 100, 200 → 150)
+1. ✅ Workflow limits reduced to prevent optimization timeouts
+2. ✅ Environmental data availability confirmed (temperature only)
+3. Monitor next scheduled workflow run (hourly at :15 past the hour)
+4. Verify all 9 regions complete within 30-minute timeout
+5. Check coverage growth over next few hours
 
 ## Performance Notes
 
