@@ -51,59 +51,59 @@ jobs:
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.local
           echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.local
 
-      - name: Ingest California (50 grids)
+      - name: Ingest California (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'california' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting California Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --california --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --california --limit=100
 
-      - name: Ingest Florida (50 grids)
+      - name: Ingest Florida (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'florida' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting Florida Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --florida --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --florida --limit=100
 
-      - name: Ingest New York (50 grids)
+      - name: Ingest New York (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'newyork' || github.event_name == 'schedule'
         run: |
           echo "🌊 Ingesting New York Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --newyork --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --newyork --limit=100
 
-      - name: Ingest Gulf of Mexico (75 grids)
+      - name: Ingest Gulf of Mexico (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'gulf'
         run: |
           echo "🌊 Ingesting Gulf of Mexico Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --gulf --limit=75
+          npx tsx scripts/test-kd490-ingestion.ts --gulf --limit=100
 
-      - name: Ingest Pacific Northwest (75 grids)
+      - name: Ingest Pacific Northwest (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'pacific-nw'
         run: |
           echo "🌊 Ingesting Pacific Northwest Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --pacific-nw --limit=75
+          npx tsx scripts/test-kd490-ingestion.ts --pacific-nw --limit=100
 
-      - name: Ingest Hawaii (50 grids)
+      - name: Ingest Hawaii (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'hawaii'
         run: |
           echo "🌊 Ingesting Hawaii Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --hawaii --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --hawaii --limit=100
 
-      - name: Ingest Alaska (75 grids)
+      - name: Ingest Alaska (150 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'alaska'
         run: |
           echo "🌊 Ingesting Alaska Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --alaska --limit=75
+          npx tsx scripts/test-kd490-ingestion.ts --alaska --limit=150
 
-      - name: Ingest Canada West Coast (50 grids)
+      - name: Ingest Canada West Coast (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-west'
         run: |
           echo "🌊 Ingesting Canada West Coast Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --canada-west --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --canada-west --limit=100
 
-      - name: Ingest Canada East Coast (50 grids)
+      - name: Ingest Canada East Coast (100 grids)
         if: github.event.inputs.region == 'all' || github.event.inputs.region == 'canada-east'
         run: |
           echo "🌊 Ingesting Canada East Coast Kd490..."
-          npx tsx scripts/test-kd490-ingestion.ts --canada-east --limit=50
+          npx tsx scripts/test-kd490-ingestion.ts --canada-east --limit=100
 
       - name: Check coverage
         if: always()
