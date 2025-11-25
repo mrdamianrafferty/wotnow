@@ -3,6 +3,7 @@ import { activityTypes } from '../data/activityTypes';
 import { useUnifiedLocation } from './UnifiedLocationContext';
 import { useAuth } from './AuthContext';
 import type { SavedLocation } from '../types/multiLocation';
+import { supabase } from '../lib/supabase/client';
 
 // --- Types ---
 type LocationType = 'home' | 'coastal';
@@ -69,6 +70,8 @@ const DEFAULT_COASTAL_LOCATION: Location = {
   lon: -0.1367,
   type: 'coastal',
 };
+
+const VALID_ACTIVITY_IDS = new Set(activityTypes.map(a => a.id));
 
 const DEFAULT_INTEREST_IDS = [
   'hiking',
@@ -142,16 +145,28 @@ const shouldSyncLocation = (local: Location | null, remote: SavedLocation | null
 const toStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
+const sanitizeInterestList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.filter((id): id is string => typeof id === 'string' && VALID_ACTIVITY_IDS.has(id));
+};
+
+const interestsEqual = (a?: string[] | null, b?: string[] | null) => {
+  const left = a ?? [];
+  const right = b ?? [];
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) return false;
+  }
+  return true;
+};
+
 function normalisePreferences(value: unknown): Preferences {
   if (!value || typeof value !== 'object') {
     return { ...defaultPreferences };
   }
 
   const parsed = value as Partial<Preferences>;
-  const validIds = new Set(activityTypes.map(a => a.id));
-  const parsedInterests = Array.isArray(parsed.interests)
-    ? parsed.interests.filter((id): id is string => typeof id === 'string' && validIds.has(id))
-    : [];
+  const parsedInterests = sanitizeInterestList(parsed.interests);
   
   // Use default interests if none are saved
   const interests = parsedInterests.length > 0 ? parsedInterests : [...DEFAULT_INTEREST_IDS];
@@ -239,6 +254,88 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     refreshRemote,
     loading: unifiedLoading,
   } = useUnifiedLocation();
+  const remoteActivitiesLoaded = useRef(false);
+  const lastSyncedActivities = useRef<string[] | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      remoteActivitiesLoaded.current = false;
+      lastSyncedActivities.current = null;
+      return;
+    }
+
+    remoteActivitiesLoaded.current = false;
+    lastSyncedActivities.current = null;
+    let cancelled = false;
+
+    const hydrateActivities = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('activities')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (error) {
+          console.warn('[UserPreferences] Failed to fetch activities', error);
+        } else {
+          const remoteActivities = sanitizeInterestList(data?.activities);
+          if (remoteActivities.length > 0) {
+            setPreferences((prev) => {
+              if (interestsEqual(prev.interests, remoteActivities)) return prev;
+              return { ...prev, interests: remoteActivities };
+            });
+          }
+          lastSyncedActivities.current = remoteActivities;
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('[UserPreferences] Error loading activities from Supabase', err);
+        }
+      } finally {
+        if (!cancelled) {
+          remoteActivitiesLoaded.current = true;
+        }
+      }
+    };
+
+    void hydrateActivities();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, setPreferences]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!remoteActivitiesLoaded.current) return;
+
+    const nextInterests = preferences.interests ?? [];
+    if (interestsEqual(lastSyncedActivities.current, nextInterests)) return;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ activities: nextInterests })
+          .eq('id', user.id);
+
+        if (error) {
+          console.warn('[UserPreferences] Failed to persist activities', error);
+          return;
+        }
+        lastSyncedActivities.current = [...nextInterests];
+      } catch (err) {
+        console.warn('[UserPreferences] Error saving activities', err);
+      }
+    }, 1200);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [user?.id, preferences.interests]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;

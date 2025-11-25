@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import type { UnifiedLocationRecord } from '../../../context/UnifiedLocationContext';
 import type { SavedLocation, LocationSlot } from '../../../types/multiLocation';
+import { fromLegacyFormat } from '../../../types/multiLocation';
 import {
   parseLocationsArray,
   toLegacyFormat,
@@ -129,10 +130,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       // Return new multi-location format if requested
       if (acceptMulti) {
-        const locations = row ? parseLocationsArray(row.locations) : [];
+        let locations = row ? parseLocationsArray(row.locations) : [];
+        let activeLocationId = row?.active_location_id ?? null;
+
+        if (row && locations.length === 0) {
+          const legacyRecord = toLegacyFormat(row);
+          if (legacyRecord && legacyRecord.lat != null && legacyRecord.lon != null) {
+            const fallbackLocation = fromLegacyFormat(legacyRecord, 'home');
+            locations = [fallbackLocation];
+            activeLocationId = fallbackLocation.id;
+          }
+        }
+
         res.status(200).json({
           locations,
-          activeLocationId: row?.active_location_id ?? null,
+          activeLocationId,
         });
         return;
       }
