@@ -28,6 +28,16 @@ interface TextString {
  * Check if text should be excluded (not user-facing)
  */
 function shouldExclude(text: string): boolean {
+  // DaisyUI/Tailwind class names (multiple hyphenated words)
+  // e.g., "card-body space-y-4", "badge badge-outline"
+  if (
+    text.match(/^[\w-]+(\s+[\w-]+)+$/) && // Multiple space-separated tokens
+    text.split(' ').every(token => token.includes('-')) && // All tokens have hyphens
+    text.split(' ').length <= 5 // Max 5 tokens (class lists)
+  ) {
+    return true;
+  }
+
   // CSS filter/style values
   if (
     text.includes('drop-shadow') ||

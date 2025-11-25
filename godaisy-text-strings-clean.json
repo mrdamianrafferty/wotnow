@@ -70,25 +70,11 @@
     "category": "paragraph"
   },
   {
-    "text_key": "support.label.card_body_space_y_4_20",
-    "text_en": "card-body space-y-4",
-    "context": "Line 56: <div className=\"card-body space-y-4\">",
-    "page": "support",
-    "category": "label"
-  },
-  {
     "text_key": "support.heading.keep_go_daisy_blooming_21",
     "text_en": "Keep Go Daisy Blooming",
     "context": "Line 57: <h2 className=\"card-title text-3xl text-base-content\">Keep Go Daisy Blooming</h2",
     "page": "support",
     "category": "heading"
-  },
-  {
-    "text_key": "support.label.leading_relaxed_text_base_cont_22",
-    "text_en": "leading-relaxed text-base-content",
-    "context": "Line 58: <p className=\"leading-relaxed text-base-content\">",
-    "page": "support",
-    "category": "label"
   },
   {
     "text_key": "support.label.badge_badge_outline_23",
@@ -115,13 +101,6 @@
     "text_key": "support.label.card_bg_base_200_28",
     "text_en": "card bg-base-200",
     "context": "Line 75: <div className=\"card bg-base-200\">",
-    "page": "support",
-    "category": "label"
-  },
-  {
-    "text_key": "support.label.card_body_space_y_3_29",
-    "text_en": "card-body space-y-3",
-    "context": "Line 76: <div className=\"card-body space-y-3\">",
     "page": "support",
     "category": "label"
   },
@@ -222,13 +201,6 @@
     "context": "Line 151: <p className=\"text-base-content\">Tell a friend, start a plan, or share your favo",
     "page": "support",
     "category": "paragraph"
-  },
-  {
-    "text_key": "whether-weather.label.min_h_screen_bg_base_200_47",
-    "text_en": "min-h-screen bg-base-200",
-    "context": "Line 25: <main className=\"min-h-screen bg-base-200\">",
-    "page": "whether-weather",
-    "category": "label"
   },
   {
     "text_key": "whether-weather.label.hero_bg_base_100_70_48",
@@ -448,13 +420,6 @@
     "category": "label"
   },
   {
-    "text_key": "activities.label.activity_card_activity_card_bg_84",
-    "text_en": "activity-card activity-card__bg-image",
-    "context": "Line 283: className=\"activity-card activity-card__bg-image\"",
-    "page": "activities",
-    "category": "label"
-  },
-  {
     "text_key": "activities.label._indoor_85",
     "text_en": "🛋️ indoor",
     "context": "Line 311: <>🛋️ indoor</>",
@@ -476,32 +441,11 @@
     "category": "label"
   },
   {
-    "text_key": "activities.label.bg_red_600_text_white_88",
-    "text_en": "bg-red-600 text-white",
-    "context": "Line 343: (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(sn",
-    "page": "activities",
-    "category": "label"
-  },
-  {
-    "text_key": "activities.label.bg_emerald_500_text_white_89",
-    "text_en": "bg-emerald-500 text-white",
-    "context": "Line 344: : 'bg-emerald-500 text-white')",
-    "page": "activities",
-    "category": "label"
-  },
-  {
     "text_key": "activities.label.snow_advisory_90",
     "text_en": "Snow advisory",
     "context": "Line 346: <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/",
     "page": "activities",
     "category": "label"
-  },
-  {
-    "text_key": "activities.paragraph.activity_card_data_item_activi_93",
-    "text_en": "activity-card__data-item activity-card__data-item--wrap",
-    "context": "Line 394: <li className=\"activity-card__data-item activity-card__data-item--wrap\">",
-    "page": "activities",
-    "category": "paragraph"
   },
   {
     "text_key": "activities.label._reasonsstrings_join__96",
@@ -593,13 +537,6 @@
     "context": "Line 106: <div className=\"card bg-slate-800/35 backdrop-blur-sm text-white border border-w",
     "page": "weather",
     "category": "paragraph"
-  },
-  {
-    "text_key": "weather.label.card_body_p_4_116",
-    "text_en": "card-body p-4",
-    "context": "Line 107: <div className=\"card-body p-4\">",
-    "page": "weather",
-    "category": "label"
   },
   {
     "text_key": "weather.heading.precip_next_24_hours_117",
@@ -805,13 +742,6 @@
     "category": "label"
   },
   {
-    "text_key": "weather.label.weather_card_bg_text_base_cont_162",
-    "text_en": "weather-card-bg text-base-content",
-    "context": "Line 642: className=\"weather-card-bg text-base-content\"",
-    "page": "weather",
-    "category": "label"
-  },
-  {
     "text_key": "weather.label.atmospheric_conditions_163",
     "text_en": "Atmospheric Conditions",
     "context": "Line 648: <SectionHeader icon=\"🌡️\" title=\"Atmospheric Conditions\" />",
@@ -920,13 +850,6 @@
     "text_key": "weather.label.text_xl_md_text_2xl_capitalize_200",
     "text_en": "text-xl md:text-2xl capitalize",
     "context": "Line 955: <div className=\"text-xl md:text-2xl capitalize\">{condition}</div>",
-    "page": "weather",
-    "category": "label"
-  },
-  {
-    "text_key": "weather.label.text_sm_opacity_70_201",
-    "text_en": "text-sm opacity-70",
-    "context": "Line 956: <div className=\"text-sm opacity-70\">Feels like {Math.round(feelsLikeC)}° {highC ",
     "page": "weather",
     "category": "label"
   },
@@ -1145,13 +1068,6 @@
     "text_en": ") stage =",
     "context": "Line 1363: if (prev.type === 'LOW' && next.type === 'HIGH') stage = 'flood';",
     "page": "weather",
-    "category": "label"
-  },
-  {
-    "text_key": "faqs.label.max_w_4xl_mx_auto_236",
-    "text_en": "max-w-4xl mx-auto",
-    "context": "Line 26: <div className=\"max-w-4xl mx-auto\">",
-    "page": "FAQs",
     "category": "label"
   },
   {
@@ -1421,13 +1337,6 @@
     "category": "paragraph"
   },
   {
-    "text_key": "howwedoit.label.object_contain_h_full_275",
-    "text_en": "object-contain h-full",
-    "context": "Line 26: className=\"object-contain h-full\"",
-    "page": "HowWeDoIt",
-    "category": "label"
-  },
-  {
     "text_key": "howwedoit.label.rank_the_best_activities_for_a_277",
     "text_en": "rank the best activities for any given day",
     "context": "Line 43: This nuanced understanding allows us to <strong>rank the best activities for any",
@@ -1452,13 +1361,6 @@
     "text_key": "cookiepolicy.label._localstorage_getitem__280",
     "text_en": "? localStorage.getItem(",
     "context": "Line 12: const consent = typeof window !== 'undefined' ? localStorage.getItem(\"cookieCons",
-    "page": "CookiePolicy",
-    "category": "label"
-  },
-  {
-    "text_key": "cookiepolicy.label.max_w_lg_text_sm_281",
-    "text_en": "max-w-lg text-sm",
-    "context": "Line 35: <p className=\"max-w-lg text-sm\">",
     "page": "CookiePolicy",
     "category": "label"
   },
@@ -1636,13 +1538,6 @@
     "context": "Line 52: We <strong>cannot be held responsible for any harm, injury, loss, or damage</str",
     "page": "TermsAndConditions",
     "category": "paragraph"
-  },
-  {
-    "text_key": "termsandconditions.label.text_base_content_mb_2_307",
-    "text_en": "text-base-content mb-2",
-    "context": "Line 60: <p className=\"text-base-content mb-2\">",
-    "page": "TermsAndConditions",
-    "category": "label"
   },
   {
     "text_key": "termsandconditions.heading.legal_terms_explanation_plain__309",
@@ -1855,27 +1750,6 @@
     "category": "label"
   },
   {
-    "text_key": "interests.label.card_body_py_3_339",
-    "text_en": "card-body py-3",
-    "context": "Line 359: <div className=\"card-body py-3\">",
-    "page": "interests",
-    "category": "label"
-  },
-  {
-    "text_key": "interests.label.card_body_py_4_340",
-    "text_en": "card-body py-4",
-    "context": "Line 423: <div className=\"card-body py-4\">",
-    "page": "interests",
-    "category": "label"
-  },
-  {
-    "text_key": "interests.heading.font_semibold_text_lg_341",
-    "text_en": "font-semibold text-lg",
-    "context": "Line 427: <h3 className=\"font-semibold text-lg\">",
-    "page": "interests",
-    "category": "heading"
-  },
-  {
     "text_key": "interests.label.popular_activities_you_might_e_342",
     "text_en": "Popular activities you might enjoy",
     "context": "Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'}",
@@ -1911,13 +1785,6 @@
     "category": "button"
   },
   {
-    "text_key": "interests.label.text_accent_font_bold_348",
-    "text_en": "text-accent font-bold",
-    "context": "Line 451: <span className=\"text-accent font-bold\">+</span>",
-    "page": "interests",
-    "category": "label"
-  },
-  {
     "text_key": "interests.label.dismiss_suggestion_349",
     "text_en": "Dismiss suggestion",
     "context": "Line 458: aria-label=\"Dismiss suggestion\"",
@@ -1928,13 +1795,6 @@
     "text_key": "interests.label.not_interested_350",
     "text_en": "Not interested",
     "context": "Line 461: title=\"Not interested\"",
-    "page": "interests",
-    "category": "label"
-  },
-  {
-    "text_key": "interests.label.card_body_p_0_351",
-    "text_en": "card-body p-0",
-    "context": "Line 490: <div className=\"card-body p-0\">",
     "page": "interests",
     "category": "label"
   },
@@ -1967,13 +1827,6 @@
     "category": "paragraph"
   },
   {
-    "text_key": "interests.label.text_3xl_mb_2_358",
-    "text_en": "text-3xl mb-2",
-    "context": "Line 757: <div className=\"text-3xl mb-2\">⏳</div>",
-    "page": "interests",
-    "category": "label"
-  },
-  {
     "text_key": "interests.label.loading_your_interests__359",
     "text_en": "Loading your interests…",
     "context": "Line 758: <p>Loading your interests…</p>",
@@ -1988,13 +1841,6 @@
     "category": "heading"
   },
   {
-    "text_key": "interests.heading.text_3xl_font_bold_361",
-    "text_en": "text-3xl font-bold",
-    "context": "Line 782: <h1 className=\"text-3xl font-bold\">Your Interests</h1>",
-    "page": "interests",
-    "category": "heading"
-  },
-  {
     "text_key": "interests.label.alert_alert_success_362",
     "text_en": "alert alert-success",
     "context": "Line 851: <div className=\"alert alert-success\">",
@@ -2002,23 +1848,9 @@
     "category": "label"
   },
   {
-    "text_key": "onboarding.heading.text_lg_font_semibold_363",
-    "text_en": "text-lg font-semibold",
-    "context": "Line 58: <h2 className=\"text-lg font-semibold\">{title}</h2>",
-    "page": "onboarding",
-    "category": "heading"
-  },
-  {
     "text_key": "onboarding.label.text_sm_text_base_content_60_364",
     "text_en": "text-sm text-base-content/60",
     "context": "Line 60: <p className=\"text-sm text-base-content/60\">{subtitle}</p>",
-    "page": "onboarding",
-    "category": "label"
-  },
-  {
-    "text_key": "onboarding.label.text_sm_font_semibold_365",
-    "text_en": "text-sm font-semibold",
-    "context": "Line 119: <span className=\"text-sm font-semibold\">",
     "page": "onboarding",
     "category": "label"
   },
@@ -2047,13 +1879,6 @@
     "text_key": "onboarding.label.nearly_there_keep_going_370",
     "text_en": "Nearly there, keep going",
     "context": "Line 143: {isLast ? \"Complete Setup\" : \"Nearly there, keep going\"}",
-    "page": "onboarding",
-    "category": "label"
-  },
-  {
-    "text_key": "onboarding.label.text_sm_font_medium_371",
-    "text_en": "text-sm font-medium",
-    "context": "Line 332: <span className=\"text-sm font-medium\">Selected ({items.length})</span>",
     "page": "onboarding",
     "category": "label"
   },
@@ -2105,13 +1930,6 @@
     "context": "Line 618: aria-label=\"Confirm selection\"",
     "page": "onboarding",
     "category": "button"
-  },
-  {
-    "text_key": "onboarding.label.font_medium_leading_tight_379",
-    "text_en": "font-medium leading-tight",
-    "context": "Line 633: <span className=\"font-medium leading-tight\">{main}</span>",
-    "page": "onboarding",
-    "category": "label"
   },
   {
     "text_key": "onboarding.label.use_current_location_380",
@@ -2268,13 +2086,6 @@
     "category": "paragraph"
   },
   {
-    "text_key": "onboarding.label.form_control_w_full_404",
-    "text_en": "form-control w-full",
-    "context": "Line 933: <div className=\"form-control w-full\">",
-    "page": "onboarding",
-    "category": "label"
-  },
-  {
     "text_key": "onboarding.label.search_for_your_home_location_405",
     "text_en": "Search for your home location",
     "context": "Line 935: <span className=\"label-text\">Search for your home location</span>",
@@ -2301,13 +2112,6 @@
     "context": "Line 957: <button className=\"btn btn-ghost\" onClick={() => { setHomeSpot(null); setHomeLoc",
     "page": "onboarding",
     "category": "button"
-  },
-  {
-    "text_key": "onboarding.label.text_error_text_sm_411",
-    "text_en": "text-error text-sm",
-    "context": "Line 958: {homeLocateError && <span className=\"text-error text-sm\">{homeLocateError}</span",
-    "page": "onboarding",
-    "category": "label"
   },
   {
     "text_key": "onboarding.paragraph.you_can_change_this_any_time_i_413",
@@ -2371,13 +2175,6 @@
     "context": "Line 1126: <button className=\"btn btn-ghost btn-sm\" onClick={() => setStep(s => s + 1)}>Ski",
     "page": "onboarding",
     "category": "button"
-  },
-  {
-    "text_key": "onboarding.heading.card_title_text_sm_434",
-    "text_en": "card-title text-sm",
-    "context": "Line 1135: <h3 className=\"card-title text-sm\">Home location</h3>",
-    "page": "onboarding",
-    "category": "heading"
   },
   {
     "text_key": "onboarding.heading.coastal_spot_437",
