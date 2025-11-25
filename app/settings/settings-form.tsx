@@ -53,7 +53,7 @@ function writeDeviceProfileCache(current: Profile, patch: Partial<Profile>) {
     localStorage.setItem(LS_KEY, JSON.stringify(merged));
   } catch {/* ignore */}
 }
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // import dynamic from 'next/dynamic';
 // import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { supabase } from '../../lib/supabase/client';
@@ -169,14 +169,17 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
   const { preferences, setPreferences } = useUserPreferences();
 
-  // Track unsaved changes and intercept navigation
-  const [isDirty, setIsDirty] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-
-  const [_saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [_source, setSource] = useState<'server' | 'device'>('server');
+  const [pendingChanges, setPendingChanges] = useState(0);
+  const [appliedChanges, setAppliedChanges] = useState(0);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'queued' | 'saving' | 'saved' | 'error'>('idle');
+  const hasPendingChanges = pendingChanges > appliedChanges;
+  const autoSaveTimer = useRef<number | null>(null);
+  const queueAutoSave = useCallback(() => {
+    setPendingChanges((prev) => prev + 1);
+    setSaveStatus((prev) => (prev === 'saving' ? prev : 'queued'));
+  }, []);
 
   const [homeName, setHomeName] = useState(getSpotNames(p).home_name);
   const [coastName, setCoastName] = useState(getSpotNames(p).coast_name);
@@ -210,36 +213,49 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     });
   }
 
-  // Baselines to detect per-section changes
-  const [baselineName, setBaselineName] = useState<string>(initial?.name ?? '');
-  const [baselineActivities, setBaselineActivities] = useState<string[]>(
-    Array.isArray(initial?.activities) ? [...(initial!.activities as string[])] : []
-  );
-  const [baselineHome, setBaselineHome] = useState<{lat: number|null, lon: number|null, name: string}>(
-    { lat: initial?.home_lat ?? null, lon: initial?.home_lon ?? null, name: getSpotNames(initial).home_name }
-  );
-  const [baselineCoast, setBaselineCoast] = useState<{lat: number|null, lon: number|null, name: string}>(
-    { lat: initial?.coast_lat ?? null, lon: initial?.coast_lon ?? null, name: getSpotNames(initial).coast_name }
-  );
   const [hydrated, setHydrated] = useState(false);
 
-  // Derived dirtiness
-  const dirtyBasics = (p.name ?? '') !== baselineName;
-  const dirtyInterests = (() => {
-    const a = new Set(p.activities ?? []);
-    const b = new Set(baselineActivities);
-    if (a.size !== b.size) return true;
-    for (const x of a) if (!b.has(x)) return true;
-    return false;
-  })();
-  const dirtyLocations = (
-    p.home_lat !== baselineHome.lat ||
-    p.home_lon !== baselineHome.lon ||
-    homeName !== baselineHome.name ||
-    p.coast_lat !== baselineCoast.lat ||
-    p.coast_lon !== baselineCoast.lon ||
-    coastName !== baselineCoast.name
-  );
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!hasPendingChanges) {
+      if (autoSaveTimer.current) {
+        window.clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+      }
+      return;
+    }
+    if (saving) {
+      if (autoSaveTimer.current) {
+        window.clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+      }
+      return;
+    }
+
+    if (autoSaveTimer.current) {
+      window.clearTimeout(autoSaveTimer.current);
+    }
+
+    autoSaveTimer.current = window.setTimeout(() => {
+      autoSaveTimer.current = null;
+      void _save();
+    }, 800);
+
+    return () => {
+      if (autoSaveTimer.current) {
+        window.clearTimeout(autoSaveTimer.current);
+        autoSaveTimer.current = null;
+      }
+    };
+    // _save is intentionally omitted because it is stable within this scope
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, hasPendingChanges, pendingChanges, saving]);
+
+  useEffect(() => {
+    if (saveStatus !== 'saved') return;
+    const t = window.setTimeout(() => setSaveStatus('idle'), 2500);
+    return () => window.clearTimeout(t);
+  }, [saveStatus]);
 
 
   const [newActivity, setNewActivity] = useState('');
@@ -276,16 +292,10 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
           preferences_json: device.preferences_json ?? {},
           updated_at: device.updated_at ?? new Date(deviceUpdated).toISOString(),
         });
-        setBaselineName(device.name ?? '');
-        setBaselineActivities(Array.isArray(device.activities) ? [...device.activities] : []);
-        setSource('device');
         const dn = getSpotNames(device);
         setHomeName(dn.home_name);
         setCoastName(dn.coast_name);
       } else {
-        setSource('server');
-        setBaselineName(initial?.name ?? '');
-        setBaselineActivities(Array.isArray(initial?.activities) ? [...(initial!.activities as string[])] : []);
         const sn = getSpotNames(initial ?? null);
         setHomeName(sn.home_name);
         setCoastName(sn.coast_name);
@@ -306,59 +316,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
       if (Array.isArray(arr)) setDismissedRecos(new Set(arr.filter((x: unknown) => typeof x === 'string')));
     } catch { /* ignore */ }
   }, []);
-  // Patch helper and global dirty refresh
-  async function patchProfile(partial: Partial<Profile>) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      location.href = '/login';
-      return;
-    }
-    const prevUpdatedAt = p.updated_at || null;
-
-    const { data: after, error } = await supabase
-      .from('profiles')
-      .update(partial)
-      .eq('id', user.id)
-      .eq('updated_at', prevUpdatedAt)
-      .select('updated_at')
-      .maybeSingle();
-
-    if (error) {
-      setMsg(`🌧️ Something went sideways: ${error.message}`);
-      return false;
-    }
-    if (!after) {
-      // Could refetch here; for simplicity, show a gentle hint.
-      setMsg('Your data changed elsewhere. Please refresh and try again.');
-      return false;
-    }
-
-    const updatedAt = after.updated_at as string | null;
-    const next = { ...p, ...partial, updated_at: updatedAt || new Date().toISOString() } as Profile;
-    setP(next);
-
-    // write to device cache
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(next));
-    } catch { /* ignore */ }
-
-    setSource('server');
-    return true;
-  }
-
-  function refreshGlobalDirty() {
-    if (!hydrated) { setIsDirty(false); return; }
-    const anyDirty = dirtyBasics || dirtyInterests || dirtyLocations || (pwTouched && (!!newPw || !!newPw2));
-    setIsDirty(anyDirty);
-  }
-
-  useEffect(() => {
-    refreshGlobalDirty();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirtyBasics, dirtyInterests, newPw, newPw2, pwTouched, hydrated]);
-
   // One-time sync from UserPreferences context into the form so UI reflects current interests/locations
   const [didSyncContext, setDidSyncContext] = useState(false);
   useEffect(() => {
@@ -381,9 +338,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     }));
 
     if (!hydrated) {
-      if (Array.isArray(preferences.interests)) {
-        setBaselineActivities([...(preferences.interests as string[])]);
-      }
       setHydrated(true);
     }
 
@@ -416,7 +370,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
             const { home_name, coast_name } = getSpotNames(fresh as Profile);
             setHomeName(home_name);
             setCoastName(coast_name);
-            setSource('server');
           }
         })
         .subscribe();
@@ -440,46 +393,37 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     })();
   }, [p.email]);
 
-  // Warn when leaving the page with unsaved changes (browser close/refresh)
-  useEffect(() => {
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isDirty) return;
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [isDirty]);
-
-  // Intercept in-app link clicks within the settings page
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onClick = (evt: MouseEvent) => {
-      if (!isDirty) return;
-      const target = evt.target as HTMLElement | null;
-      const anchor = target?.closest('a') as HTMLAnchorElement | null;
-      if (!anchor) return;
-      const href = anchor.getAttribute('href') || '';
-      if (!href || href.startsWith('#')) return;
-      const ok = window.confirm('You have unsaved changes. Leave without saving?');
-      if (!ok) {
-        evt.preventDefault();
-        evt.stopPropagation();
-      }
-    };
-    el.addEventListener('click', onClick);
-    return () => el.removeEventListener('click', onClick);
-  }, [isDirty]);
-
   // A friendly, Go Daisy–style heading blurb derived from user name
   const greeting = useMemo(() => {
     const first = toFirstName(p.name);
     return first ? `Hello ${first} 🌼` : 'Hello 🌼';
   }, [p.name]);
 
+  const autoSaveIndicator = useMemo(() => {
+    if (saveStatus === 'error') {
+      return { text: 'We couldn’t save — retrying…', tone: 'error' as const, showSpinner: false };
+    }
+    if (saving || saveStatus === 'saving') {
+      return { text: 'Saving your changes…', tone: 'neutral' as const, showSpinner: true };
+    }
+    if (saveStatus === 'queued' || hasPendingChanges) {
+      return { text: 'Auto-saving…', tone: 'neutral' as const, showSpinner: true };
+    }
+    if (saveStatus === 'saved') {
+      return { text: 'All changes saved ✓', tone: 'success' as const, showSpinner: false };
+    }
+    return { text: 'Changes save automatically', tone: 'neutral' as const, showSpinner: false };
+  }, [hasPendingChanges, saveStatus, saving]);
+  const indicatorToneClass = autoSaveIndicator.tone === 'error'
+    ? 'text-error'
+    : autoSaveIndicator.tone === 'success'
+      ? 'text-success'
+      : 'opacity-70';
+
   async function _save() {
+    if (!hasPendingChanges) return;
     setSaving(true);
+    setSaveStatus('saving');
     setMsg(null);
 
     // make sure we have a user
@@ -487,6 +431,8 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
+      setSaveStatus('error');
+      setSaving(false);
       location.href = '/login';
       return;
     }
@@ -518,6 +464,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
     if (error) {
       setMsg(`🌧️ Something went sideways: ${error.message}`);
+      setSaveStatus('error');
       setSaving(false);
       return;
     }
@@ -532,6 +479,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
 
       if (refetchErr || !fresh) {
         setMsg('We couldn’t save because your data changed elsewhere. Please try again.');
+        setSaveStatus('error');
         setSaving(false);
         return;
       }
@@ -551,9 +499,9 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
       setHomeName(spots.home_name);
       setCoastName(spots.coast_name);
 
-      setMsg('Your settings were updated in another session. We refreshed your latest data — please review and Save again.');
+      setMsg('Your settings were updated in another session. We refreshed your latest data — keep editing and we’ll sync automatically.');
+      setSaveStatus('error');
       setSaving(false);
-      setSource('server');
       return;
     }
 
@@ -598,10 +546,9 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     } catch { /* ignore */ }
 
     setP(prev => ({ ...prev, updated_at: nextUpdatedAt || nowIso }));
-    setMsg('Saved ✓');
+    setAppliedChanges(pendingChanges);
     setSaving(false);
-    setSource('server');
-    setIsDirty(false);
+    setSaveStatus('saved');
   }
 
   async function signOut() {
@@ -614,7 +561,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     const next = Array.from(set);
     setP({ ...p, activities: next });
     writeDeviceProfileCache(p, { activities: next });
-    setIsDirty(true);
+    queueAutoSave();
     // Also mark suggestion as consumed so it doesn't reappear
     setDismissedRecos(prev => {
       if (prev.has(id)) return prev;
@@ -626,7 +573,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     const next = (p.activities || []).filter(x => x !== a);
     setP({ ...p, activities: next });
     writeDeviceProfileCache(p, { activities: next });
-    setIsDirty(true);
+    queueAutoSave();
   }
 
   function addActivityFromInput() {
@@ -714,23 +661,26 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
   const getActivityLabel = activityLabel;
 
   return (
-    <main ref={containerRef} className="max-w-3xl mx-auto p-6 space-y-8">
+    <main className="max-w-3xl mx-auto p-6 space-y-8">
       {/* Header with sign out */}
-      <header className="flex items-start justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
           <p className="opacity-70 text-sm">Help us personalise your experience and recommendations.</p>
         </div>
-        <button className="btn btn-ghost" onClick={signOut}>
-          Sign out
-        </button>
-      </header>
-
-      {hydrated && isDirty && (
-        <div className="alert alert-warning">
-          <span>You have unsaved changes. Don’t forget to click <strong>Save changes</strong>.</span>
+        <div className="flex flex-col items-end gap-2 text-right">
+          <button className="btn btn-ghost" onClick={signOut}>
+            Sign out
+          </button>
+          <div className={`text-xs flex items-center gap-2 ${indicatorToneClass}`}>
+            {autoSaveIndicator.showSpinner && (
+              <span className="loading loading-dots loading-xs" aria-hidden="true" />
+            )}
+            <span>{autoSaveIndicator.text}</span>
+          </div>
         </div>
-      )}
+      </header>
+      
 
       {/* Name */}
       <section className="card bg-base-100 shadow-sm">
@@ -749,7 +699,12 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
                 className="input input-bordered w-full"
                 placeholder="e.g. Alex"
                 value={p.name ?? ''}
-                onChange={(e) => { setP({ ...p, name: e.target.value }); setIsDirty(true); }}
+                onChange={(e) => {
+                  const nextName = e.target.value;
+                  setP({ ...p, name: nextName });
+                  writeDeviceProfileCache(p, { name: nextName });
+                  queueAutoSave();
+                }}
               />
             </label>
 
@@ -764,31 +719,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
               />
             </label>
           </div>
-          {/* Inline actions for basics */}
-          {dirtyBasics && (
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  setP(prev => ({ ...prev, name: baselineName }));
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  const ok = await patchProfile({ name: p.name });
-                  if (ok) {
-                    setBaselineName(p.name ?? '');
-                    setMsg('Name saved ✓');
-                  }
-                }}
-              >
-                Save
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
@@ -867,46 +797,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
               )}
             </div>
           </div>
-          {/* Inline actions for locations */}
-          {dirtyLocations && (
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  setP(prev => ({
-                    ...prev,
-                    home_lat: baselineHome.lat,
-                    home_lon: baselineHome.lon,
-                    coast_lat: baselineCoast.lat,
-                    coast_lon: baselineCoast.lon,
-                  }));
-                  setHomeName(baselineHome.name);
-                  setCoastName(baselineCoast.name);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  const ok = await patchProfile({
-                    home_lat: p.home_lat,
-                    home_lon: p.home_lon,
-                    coast_lat: p.coast_lat,
-                    coast_lon: p.coast_lon,
-                    preferences_json: setSpotNames(p.preferences_json as Record<string, Json>, homeName, coastName),
-                  });
-                  if (ok) {
-                    setBaselineHome({ lat: p.home_lat, lon: p.home_lon, name: homeName });
-                    setBaselineCoast({ lat: p.coast_lat, lon: p.coast_lon, name: coastName });
-                    setMsg('Locations saved ✓');
-                  }
-                }}
-              >
-                Save
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
@@ -1008,32 +898,6 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
               ))}
             </datalist>
           </div>
-          {/* Inline actions for interests */}
-          {dirtyInterests && (
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  setP(prev => ({ ...prev, activities: [...baselineActivities] }));
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={async () => {
-                  const ok = await patchProfile({ activities: p.activities ?? [] });
-                  if (ok) {
-                    setBaselineActivities([...(p.activities ?? [])]);
-                    setMsg('Interests saved ✓');
-                  }
-                }}
-              >
-                Save
-              </button>
-            </div>
-          )}
-
           {msg && <div className="text-sm opacity-80">{msg}</div>}
         </div>
       </section>
@@ -1125,7 +989,12 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
         onSave={(loc: BasicLocation) => {
           setP({ ...p, home_lat: loc.lat, home_lon: loc.lon });
           setHomeName(loc.name);
-          setIsDirty(true);
+          writeDeviceProfileCache(p, {
+            home_lat: loc.lat,
+            home_lon: loc.lon,
+            preferences_json: setSpotNames(p.preferences_json as Record<string, Json>, loc.name, coastName),
+          });
+          queueAutoSave();
           setShowHomeLocationDialog(false);
         }}
         homeLocation={p.home_lat && p.home_lon ? { name: homeName, lat: p.home_lat, lon: p.home_lon, type: 'home' } : undefined}
@@ -1138,7 +1007,12 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
         onSave={(loc: BasicLocation) => {
           setP({ ...p, coast_lat: loc.lat, coast_lon: loc.lon });
           setCoastName(loc.name);
-          setIsDirty(true);
+          writeDeviceProfileCache(p, {
+            coast_lat: loc.lat,
+            coast_lon: loc.lon,
+            preferences_json: setSpotNames(p.preferences_json as Record<string, Json>, homeName, loc.name),
+          });
+          queueAutoSave();
           setShowCoastalLocationDialog(false);
         }}
         homeLocation={p.home_lat && p.home_lon ? { name: homeName, lat: p.home_lat, lon: p.home_lon, type: 'home' } : undefined}
