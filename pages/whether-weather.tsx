@@ -32,10 +32,10 @@ export default function WeatherExplainerPage() {
               transition={{ duration: 0.4 }}
               className="w-full"
             >
-              
-              <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight">
+
+              <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight text-base-content">
                 Why the Weather Forecast Sometimes Gets It Wrong
-              
+
               </h1>
               
              
@@ -50,16 +50,16 @@ export default function WeatherExplainerPage() {
             <aside className="lg:col-span-3 order-last lg:order-first">
               <nav className="card bg-base-100 shadow-sm sticky top-4">
                 <div className="card-body">
-                  <h2 className="card-title text-base">On this page</h2>
-                  <ul className="menu menu-sm">
-                    <li><a href="#opening">A familiar frustration</a></li>
-                    <li><a href="#coverage">Sparse sensors & microclimates</a></li>
-                    <li><a href="#instruments">Instrument quirks & data sharing</a></li>
-                    <li><a href="#models">Models & resolution limits</a></li>
-                    <li><a href="#politics">Politics in the weather</a></li>
-                    <li><a href="#cope">Coping smartly</a></li>
-                    <li><a href="#wrap">In short…</a></li>
-                    
+                  <h2 className="card-title text-base text-base-content">On this page</h2>
+                  <ul className="menu menu-sm text-base-content">
+                    <li><a href="#opening" className="text-base-content">A familiar frustration</a></li>
+                    <li><a href="#coverage" className="text-base-content">Sparse sensors & microclimates</a></li>
+                    <li><a href="#instruments" className="text-base-content">Instrument quirks & data sharing</a></li>
+                    <li><a href="#models" className="text-base-content">Models & resolution limits</a></li>
+                    <li><a href="#politics" className="text-base-content">Politics in the weather</a></li>
+                    <li><a href="#cope" className="text-base-content">Coping smartly</a></li>
+                    <li><a href="#wrap" className="text-base-content">In short…</a></li>
+
                   </ul>
                   <div className="divider my-2"></div>
                   <div className="text-sm text-base-content/70">
@@ -75,7 +75,7 @@ export default function WeatherExplainerPage() {
             <article className="lg:col-span-9">
               <div className="card bg-base-100 shadow">
                 <div className="card-body">
-                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none">
+                  <div className="prose prose-sm sm:prose lg:prose-lg max-w-none text-base-content">
                     <section id="opening">
                       <p>
                         Ah, the weather forecast: that trusty companion we all consult, only to find ourselves caught
@@ -122,11 +122,11 @@ export default function WeatherExplainerPage() {
 
                     <section id="politics">
                       <h2 className="mt-8">A dash of politics</h2>
-                      <div className="alert alert-warning">
+                      <div className="alert alert-warning text-base-content">
                         <Cloud className="w-5 h-5" />
                         <span>
                           Some politicians love to pick fights with internationally recognised, world‑class weather services.
-                          Whether it’s budget cuts or public sniping, they sometimes run down these invaluable institutions—perhaps
+                          Whether it&apos;s budget cuts or public sniping, they sometimes run down these invaluable institutions—perhaps
                           because blaming weather agencies is easier than addressing climate change or infrastructure needs.
                         </span>
                       </div>
@@ -156,13 +156,13 @@ export default function WeatherExplainerPage() {
                       <div className="grid sm:grid-cols-2 gap-4 mt-4">
                         <div className="card bg-base-200">
                           <div className="card-body">
-                            <h3 className="card-title text-base"><Zap className="w-4 h-4"/> Quick practice</h3>
+                            <h3 className="card-title text-base text-base-content"><Zap className="w-4 h-4"/> Quick practice</h3>
                             <p className="text-sm text-base-content/70">Pick two forecast apps and compare their next‑24‑hour outlook; note which one handles showers best in your area.</p>
                           </div>
                         </div>
                         <div className="card bg-base-200">
                           <div className="card-body">
-                            <h3 className="card-title text-base"><Wind className="w-4 h-4"/> Local cues</h3>
+                            <h3 className="card-title text-base text-base-content"><Wind className="w-4 h-4"/> Local cues</h3>
                             <p className="text-sm text-base-content/70">Watch flags, tree‑tops, hills and sea‑breeze patterns—your microclimate has tells the grid might miss.</p>
                           </div>
                         </div>
