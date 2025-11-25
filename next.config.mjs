@@ -3,6 +3,8 @@ import { withSentryConfig } from '@sentry/nextjs';
 import withPWA from 'next-pwa';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
+const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true' || process.env.ENABLE_PWA === 'true';
+
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
@@ -155,9 +157,9 @@ const nextConfig = {
 // Wrap nextConfig with PWA configuration
 const pwaConfig = withPWA({
   dest: 'public',
-  // Enable PWA except in development
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
+  // Temporarily disable the Workbox service worker until we deliberately re-enable it
+  disable: !enablePWA || process.env.NODE_ENV === 'development',
+  register: enablePWA,
   skipWaiting: true,
   // Exclude auth pages from precaching to prevent stale cached versions
   publicExcludes: [
