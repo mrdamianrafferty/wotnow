@@ -56,7 +56,7 @@ export default function SupportPage() {
             <div className="card-body space-y-4">
               <h2 className="card-title text-3xl text-base-content">Keep Go Daisy Blooming</h2>
               <p className="leading-relaxed text-base-content">
-                Go Daisy isn't just an app — it's a small, friendly community of people who
+                Go Daisy isn&apos;t just an app — it&apos;s a small, friendly community of people who
                 prefer doing to doom-scrolling. If our forecasts and nudges helped you rally mates,
                 discover a cracking day out, or dodge a downpour, you can support the project and
                 keep it blooming.
