@@ -1,33 +1,33 @@
 text_key,text_en,text_es,text_fr,text_pt,text_de,text_it,text_nl,text_pl,text_tr,text_sv,context,page,category
-index.nav.marine_conditions_are_temporar_4,Marine conditions are temporarily unavailable. We’ll show land‑based suggestions for now.,,,,,,,,,,"Line 229: setMarineError(""Marine conditions are temporarily unavailable. We’ll show land‑b",index,nav
-index.paragraph.please_set_your_home_location__5,Please set your home location to see suggestions.,,,,,,,,,,Line 646: return <div>Please set your home location to see suggestions.</div>;,index,paragraph
-index.heading.no_activities_selected_7,No Activities Selected,,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
-index.paragraph.loading_your_smart_recommendat_8,Loading your smart recommendations...,,,,,,,,,,Line 685: return <div>Loading your smart recommendations...</div>;,index,paragraph
-index.label.pick_your_home_location_9,Pick your home location,,,,,,,,,,"Line 700: title=""Pick your home location""",index,label
-index.heading._also_perfect_today_11,💯 Also Perfect Today,,,,,,,,,,"Line 918: <h4 className=""also-good-title"">💯 Also Perfect Today</h4>",index,heading
-index.heading._good_options_today_12,👍 Good Options Today,,,,,,,,,,"Line 970: <h4 className=""also-good-title"">👍 Good Options Today</h4>",index,heading
-index.heading._staying_indoors__13,👺 Staying Indoors?,,,,,,,,,,"Line 1026: <h4 className=""also-good-title"">👺 Staying Indoors?</h4>",index,heading
-support.label.support_go_daisy_14,Support Go Daisy,,,,,,,,,,Line 28: <title>Support Go Daisy</title>,support,label
-support.paragraph.join_the_go_daisy_community_on_15,"Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.",,,,,,,,,,"Line 31: content=""Join the Go Daisy community on Patreon or tip via Apple. Help cover wea",support,paragraph
-support.heading.keep_go_daisy_blooming_21,Keep Go Daisy Blooming,,,,,,,,,,"Line 57: <h2 className=""card-title text-3xl text-base-content"">Keep Go Daisy Blooming</h2",support,heading
+index.nav.marine_conditions_are_temporar_4,Marine conditions are temporarily unavailable. We’ll show land‑based suggestions for now.,Las condiciones del mar no están disponibles por ahora. Te mostramos planes en tierra mientras tanto.,,,,,,,,"Line 229: setMarineError(""Marine conditions are temporarily unavailable. We’ll show land‑b",index,nav
+index.paragraph.please_set_your_home_location__5,Please set your home location to see suggestions.,Elige tu ubicación de casa para ver sugerencias.,,,,,,,,Line 646: return <div>Please set your home location to see suggestions.</div>;,index,paragraph
+index.heading.no_activities_selected_7,No Activities Selected,Ninguna actividad seleccionada,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
+index.paragraph.loading_your_smart_recommendat_8,Loading your smart recommendations...,Cargando tus recomendaciones inteligentes...,,,,,,,,,Line 685: return <div>Loading your smart recommendations...</div>;,index,paragraph
+index.label.pick_your_home_location_9,Pick your home location,Elige tu ubicación de casa,,,,,,,,,"Line 700: title=""Pick your home location""",index,label
+index.heading._also_perfect_today_11,💯 Also Perfect Today,💯 También perfectas hoy,,,,,,,,,"Line 918: <h4 className=""also-good-title"">💯 Also Perfect Today</h4>",index,heading
+index.heading._good_options_today_12,👍 Good Options Today,👍 Buenas opciones para hoy,,,,,,,,,"Line 970: <h4 className=""also-good-title"">👍 Good Options Today</h4>",index,heading
+index.heading._staying_indoors__13,👺 Staying Indoors?,👺 ¿Te quedas en casa?,,,,,,,,,"Line 1026: <h4 className=""also-good-title"">👺 Staying Indoors?</h4>",index,heading
+support.label.support_go_daisy_14,Support Go Daisy,Apoya a Go Daisy,,,,,,,,,Line 28: <title>Support Go Daisy</title>,support,label
+support.paragraph.join_the_go_daisy_community_on_15,"Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.",Únete a la comunidad de Go Daisy en Patreon o deja una propina con Apple. Nos ayudas a pagar datos de meteo, servidor… y las galletas de Damian y Bruno.,,,,,,,,,"Line 31: content=""Join the Go Daisy community on Patreon or tip via Apple. Help cover wea",support,paragraph
+support.heading.keep_go_daisy_blooming_21,Keep Go Daisy Blooming,Mantén a Go Daisy en plena forma,,,,,,,,,"Line 57: <h2 className=""card-title text-3xl text-base-content"">Keep Go Daisy Blooming</h2",support,heading
 support.label.badge_badge_outline_23,badge badge-outline,,,,,,,,,,"Line 65: <span className=""badge badge-outline"">Community-first</span>",support,label
-support.label.no_paywalls_24,No paywalls,,,,,,,,,,"Line 66: <span className=""badge badge-outline"">No paywalls</span>",support,label
-support.label.indie_friendly_26,Indie & friendly,,,,,,,,,,"Line 67: <span className=""badge badge-outline"">Indie & friendly</span>",support,label
+support.label.no_paywalls_24,No paywalls,Sin muros de pago,,,,,,,,,"Line 66: <span className=""badge badge-outline"">No paywalls</span>",support,label
+support.label.indie_friendly_26,Indie & friendly,Indie y cercano,,,,,,,,,"Line 67: <span className=""badge badge-outline"">Indie & friendly</span>",support,label
 support.label.card_bg_base_200_28,card bg-base-200,,,,,,,,,,"Line 75: <div className=""card bg-base-200"">",support,label
-support.heading.join_us_on_patreon_30,Join us on Patreon,,,,,,,,,,"Line 77: <h2 className=""card-title text-lg text-base-content"">Join us on Patreon</h2>",support,heading
+support.heading.join_us_on_patreon_30,Join us on Patreon,Únete en Patreon,,,,,,,,,"Line 77: <h2 className=""card-title text-lg text-base-content"">Join us on Patreon</h2>",support,heading
 support.button.btn_btn_primary_31,btn btn-primary,,,,,,,,,,"Line 83: className=""btn btn-primary""",support,button
 support.label.noopener_noreferrer_32,noopener noreferrer,,,,,,,,,,"Line 86: rel=""noopener noreferrer""",support,label
-support.heading.apple_tip_jar_35,Apple Tip Jar,,,,,,,,,,"Line 96: <h2 className=""card-title text-lg text-base-content"">Apple Tip Jar</h2>",support,heading
+support.heading.apple_tip_jar_35,Apple Tip Jar,Bote de propinas en Apple,,,,,,,,,"Line 96: <h2 className=""card-title text-lg text-base-content"">Apple Tip Jar</h2>",support,heading
 support.button.btn_btn_outline_36,btn btn-outline,,,,,,,,,,"Line 104: className=""btn btn-outline""",support,button
-support.paragraph.no_features_are_gated_behind_s_38,No features are gated behind support. Everyone gets the same forecast.,,,,,,,,,,Line 121: <li>No features are gated behind support. Everyone gets the same forecast.</li>,support,paragraph
-support.paragraph.patreon_updates_and_progress_n_39,Patreon updates and progress notes are shared with supporters; feature launches land for all users.,,,,,,,,,,Line 122: <li>Patreon updates and progress notes are shared with supporters; feature launc,support,paragraph
-support.heading.frequently_asked_questions_40,Frequently asked questions,,,,,,,,,,"Line 129: <h2 className=""text-lg font-semibold text-base-content"">Frequently asked questio",support,heading
-support.paragraph.does_support_unlock_features__41,Does support unlock features?,,,,,,,,,,"Line 133: <div className=""collapse-title text-base font-medium text-base-content"">Does sup",support,paragraph
-support.paragraph.afraid_not_support_keeps_the_l_42,"Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.",,,,,,,,,,"Line 135: <p className=""text-base-content"">Afraid not. Support keeps the lights on and the",support,paragraph
-support.paragraph.can_i_cancel_any_time__43,Can I cancel any time?,,,,,,,,,,"Line 141: <div className=""collapse-title text-base font-medium text-base-content"">Can I ca",support,paragraph
-support.paragraph.yes_patreon_manages_billing_yo_44,Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.,,,,,,,,,,"Line 143: <p className=""text-base-content"">Yes — Patreon manages billing. You can switch t",support,paragraph
-support.paragraph.other_ways_to_help__45,Other ways to help?,,,,,,,,,,"Line 149: <div className=""collapse-title text-base font-medium text-base-content"">Other wa",support,paragraph
-support.paragraph.tell_a_friend_start_a_plan_or__46,"Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.",,,,,,,,,,"Line 151: <p className=""text-base-content"">Tell a friend, start a plan, or share your favo",support,paragraph
+support.paragraph.no_features_are_gated_behind_s_38,No features are gated behind support. Everyone gets the same forecast.,Ninguna función está bloqueada por ser mecenas. Todo el mundo ve el mismo pronóstico.,,,,,,,,Line 121: <li>No features are gated behind support. Everyone gets the same forecast.</li>,support,paragraph
+support.paragraph.patreon_updates_and_progress_n_39,Patreon updates and progress notes are shared with supporters; feature launches land for all users.,En Patreon compartimos novedades y avances con quienes apoyan el proyecto, pero las nuevas funciones llegan para todo el mundo.,,,,,,,,Line 122: <li>Patreon updates and progress notes are shared with supporters; feature launc,support,paragraph
+support.heading.frequently_asked_questions_40,Frequently asked questions,Preguntas frecuentes,,,,,,,,,"Line 129: <h2 className=""text-lg font-semibold text-base-content"">Frequently asked questio",support,heading
+support.paragraph.does_support_unlock_features__41,Does support unlock features?,¿Apoyar desbloquea funciones?,,,,,,,,,"Line 133: <div className=""collapse-title text-base font-medium text-base-content"">Does sup",support,paragraph
+support.paragraph.afraid_not_support_keeps_the_l_42,"Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.",Pues no. El apoyo mantiene las luces encendidas y los datos fluyendo, pero las funciones se publican para todos.,,,,,,,,,"Line 135: <p className=""text-base-content"">Afraid not. Support keeps the lights on and the",support,paragraph
+support.paragraph.can_i_cancel_any_time__43,Can I cancel any time?,¿Puedo cancelar cuando quiera?,,,,,,,,,"Line 141: <div className=""collapse-title text-base font-medium text-base-content"">Can I ca",support,paragraph
+support.paragraph.yes_patreon_manages_billing_yo_44,Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.,Sí. Patreon se encarga de los pagos: puedes cambiar de nivel o cancelar cuando te apetezca. Las propinas de Apple son puntuales.,,,,,,,,,"Line 143: <p className=""text-base-content"">Yes — Patreon manages billing. You can switch t",support,paragraph
+support.paragraph.other_ways_to_help__45,Other ways to help?,¿Hay otras formas de ayudar?,,,,,,,,,"Line 149: <div className=""collapse-title text-base font-medium text-base-content"">Other wa",support,paragraph
+support.paragraph.tell_a_friend_start_a_plan_or__46,"Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.",Cuéntale Go Daisy a alguien, monta un plan o comparte tu momento favorito con la app. El boca a boca vale oro.,,,,,,,,,"Line 151: <p className=""text-base-content"">Tell a friend, start a plan, or share your favo",support,paragraph
 whether-weather.label.hero_bg_base_100_70_48,hero bg-base-100/70,,,,,,,,,,"Line 27: <section className=""hero bg-base-100/70"">",whether-weather,label
 whether-weather.heading.text_3xl_sm_text_5xl_font_extr_49,text-3xl sm:text-5xl font-extrabold leading-tight text-base-content,,,,,,,,,,"Line 36: <h1 className=""text-3xl sm:text-5xl font-extrabold leading-tight text-base-conte",whether-weather,heading
 whether-weather.label.lg_col_span_3_order_last_lg_or_50,lg:col-span-3 order-last lg:order-first,,,,,,,,,,"Line 50: <aside className=""lg:col-span-3 order-last lg:order-first"">",whether-weather,label
@@ -224,97 +224,97 @@ termsandconditions.paragraph.we_try_our_best_but_don_t_prom_310,We try our best 
 termsandconditions.paragraph.if_you_get_hurt_or_something_g_311,"If you get hurt or something goes wrong, it’s on you, not us.",,,,,,,,,,Line 75: <li><strong>Use at your own risk:</strong> If you get hurt or something goes wro,TermsAndConditions,paragraph
 termsandconditions.paragraph.it_means_legal_responsibility__312,"It means legal responsibility; here, we say we are not legally responsible for any problems.",,,,,,,,,,"Line 76: <li><strong>Liability:</strong> It means legal responsibility; here, we say we a",TermsAndConditions,paragraph
 termsandconditions.paragraph.the_app_and_weather_info_come__313,The app and weather info come with no promises about quality or accuracy.,,,,,,,,,,Line 77: <li><strong>“As is” basis:</strong> The app and weather info come with no promis,TermsAndConditions,paragraph
-interests.label.active_sports_314,Active Sports,,,,,,,,,,"Line 14: key: ""Active Sports"",",interests,label
-interests.label.team_sports_315,Team Sports,,,,,,,,,,"Line 18: key: ""Team Sports"",",interests,label
-interests.label.individual_sports_316,Individual Sports,,,,,,,,,,"Line 36: key: ""Individual Sports"",",interests,label
-interests.label.water_sports_317,Water Sports,,,,,,,,,,"Line 52: key: ""Water Sports"",",interests,label
-interests.label.action_sports_318,Action Sports,,,,,,,,,,"Line 76: key: ""Action Sports"",",interests,label
-interests.label.fitness_wellness_319,Fitness & Wellness,,,,,,,,,,"Line 93: key: ""Fitness & Wellness"",",interests,label
-interests.label.cardio_running_320,Cardio & Running,,,,,,,,,,"Line 110: key: ""Cardio & Running"",",interests,label
-interests.label.strength_gym_321,Strength & Gym,,,,,,,,,,"Line 115: key: ""Strength & Gym"",",interests,label
-interests.label.outdoor_activities_322,Outdoor Activities,,,,,,,,,,"Line 122: key: ""Outdoor Activities"",",interests,label
-interests.label.nature_activities_323,Nature Activities,,,,,,,,,,"Line 126: key: ""Nature Activities"",",interests,label
-interests.label.kicking_back_and_relaxing_324,Kicking Back and Relaxing,,,,,,,,,,"Line 151: key: ""Kicking Back and Relaxing"",",interests,label
-interests.label.winter_sports_325,Winter Sports,,,,,,,,,,"Line 173: key: ""Winter Sports"",",interests,label
-interests.label.snow_sports_326,Snow Sports,,,,,,,,,,"Line 177: key: ""Snow Sports"",",interests,label
-interests.label.ice_sports_327,Ice Sports,,,,,,,,,,"Line 182: key: ""Ice Sports"",",interests,label
-interests.label.creative_arts_328,Creative & Arts,,,,,,,,,,"Line 195: key: ""Creative & Arts"",",interests,label
-interests.label.visual_arts_329,Visual Arts,,,,,,,,,,"Line 199: key: ""Visual Arts"",",interests,label
-interests.label.music_performance_330,Music & Performance,,,,,,,,,,"Line 211: key: ""Music & Performance"",",interests,label
-interests.label.literature_learning_331,Literature & Learning,,,,,,,,,,"Line 221: key: ""Literature & Learning"",",interests,label
-interests.label.indoor_recreation_332,Indoor Recreation,,,,,,,,,,"Line 228: key: ""Indoor Recreation"",",interests,label
-interests.label.home_activities_333,Home Activities,,,,,,,,,,"Line 232: key: ""Home Activities"",",interests,label
-interests.label.social_activities_334,Social Activities,,,,,,,,,,"Line 248: key: ""Social Activities"",",interests,label
-interests.label.indoor_sports_335,Indoor Sports,,,,,,,,,,"Line 265: key: ""Indoor Sports"",",interests,label
+interests.label.active_sports_314,Active Sports,Deportes activos,,,,,,,,,"Line 14: key: ""Active Sports"",",interests,label
+interests.label.team_sports_315,Team Sports,Deportes de equipo,,,,,,,,,"Line 18: key: ""Team Sports"",",interests,label
+interests.label.individual_sports_316,Individual Sports,Deportes individuales,,,,,,,,,"Line 36: key: ""Individual Sports"",",interests,label
+interests.label.water_sports_317,Water Sports,Deportes acuáticos,,,,,,,,,"Line 52: key: ""Water Sports"",",interests,label
+interests.label.action_sports_318,Action Sports,Deportes de acción,,,,,,,,,"Line 76: key: ""Action Sports"",",interests,label
+interests.label.fitness_wellness_319,Fitness & Wellness,Fitness y bienestar,,,,,,,,,"Line 93: key: ""Fitness & Wellness"",",interests,label
+interests.label.cardio_running_320,Cardio & Running,Cardio y running,,,,,,,,,"Line 110: key: ""Cardio & Running"",",interests,label
+interests.label.strength_gym_321,Strength & Gym,Fuerza y gimnasio,,,,,,,,,"Line 115: key: ""Strength & Gym"",",interests,label
+interests.label.outdoor_activities_322,Outdoor Activities,Actividades al aire libre,,,,,,,,,"Line 122: key: ""Outdoor Activities"",",interests,label
+interests.label.nature_activities_323,Nature Activities,Actividades en la naturaleza,,,,,,,,,"Line 126: key: ""Nature Activities"",",interests,label
+interests.label.kicking_back_and_relaxing_324,Kicking Back and Relaxing,Descansar y relajarse,,,,,,,,,"Line 151: key: ""Kicking Back and Relaxing"",",interests,label
+interests.label.winter_sports_325,Winter Sports,Deportes de invierno,,,,,,,,,"Line 173: key: ""Winter Sports"",",interests,label
+interests.label.snow_sports_326,Snow Sports,Deportes de nieve,,,,,,,,,"Line 177: key: ""Snow Sports"",",interests,label
+interests.label.ice_sports_327,Ice Sports,Deportes sobre hielo,,,,,,,,,"Line 182: key: ""Ice Sports"",",interests,label
+interests.label.creative_arts_328,Creative & Arts,Creatividad y arte,,,,,,,,,"Line 195: key: ""Creative & Arts"",",interests,label
+interests.label.visual_arts_329,Visual Arts,Artes visuales,,,,,,,,,"Line 199: key: ""Visual Arts"",",interests,label
+interests.label.music_performance_330,Music & Performance,Música y espectáculos,,,,,,,,,"Line 211: key: ""Music & Performance"",",interests,label
+interests.label.literature_learning_331,Literature & Learning,Lectura y aprendizaje,,,,,,,,,"Line 221: key: ""Literature & Learning"",",interests,label
+interests.label.indoor_recreation_332,Indoor Recreation,Ocio de interior,,,,,,,,,"Line 228: key: ""Indoor Recreation"",",interests,label
+interests.label.home_activities_333,Home Activities,Actividades en casa,,,,,,,,,"Line 232: key: ""Home Activities"",",interests,label
+interests.label.social_activities_334,Social Activities,Actividades sociales,,,,,,,,,"Line 248: key: ""Social Activities"",",interests,label
+interests.label.indoor_sports_335,Indoor Sports,Deportes de interior,,,,,,,,,"Line 265: key: ""Indoor Sports"",",interests,label
 interests.label.alert_alert_info_336,alert alert-info,,,,,,,,,,"Line 348: <div className=""alert alert-info"">",interests,label
-interests.paragraph._start_by_selecting_activities_337,👋 Start by selecting activities from the suggestions below or browse categories,,,,,,,,,,Line 349: <span>👋 Start by selecting activities from the suggestions below or browse cate,interests,paragraph
+interests.paragraph._start_by_selecting_activities_337,👋 Start by selecting activities from the suggestions below or browse categories,👋 Empieza eligiendo actividades de las sugerencias de abajo o explora por categorías.,,,,,,,,Line 349: <span>👋 Start by selecting activities from the suggestions below or browse cate,interests,paragraph
 interests.label.card_bg_base_200_50_border_bor_338,card bg-base-200/50 border border-base-300,,,,,,,,,,"Line 358: <div className=""card bg-base-200/50 border border-base-300"">",interests,label
-interests.label.popular_activities_you_might_e_342,Popular activities you might enjoy,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
-interests.label.you_might_also_like_343,You might also like,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
-interests.paragraph.these_popular_activities_are_e_345,These popular activities are enjoyed by people with diverse interests,,,,,,,,,,Line 432: ? 'These popular activities are enjoyed by people with diverse interests',interests,paragraph
-interests.label.based_on_your_interests_we_thi_346,"Based on your interests, we think you",,,,,,,,,,"Line 433: : ""Based on your interests, we think you'd enjoy these activities""}",interests,label
-interests.button.add_to_your_interests_347,Add to your interests,,,,,,,,,,"Line 449: title=""Add to your interests""",interests,button
-interests.label.dismiss_suggestion_349,Dismiss suggestion,,,,,,,,,,"Line 458: aria-label=""Dismiss suggestion""",interests,label
-interests.label.not_interested_350,Not interested,,,,,,,,,,"Line 461: title=""Not interested""",interests,label
+interests.label.popular_activities_you_might_e_342,Popular activities you might enjoy,Actividades populares que te pueden gustar,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
+interests.label.you_might_also_like_343,You might also like,También te puede gustar,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
+interests.paragraph.these_popular_activities_are_e_345,These popular activities are enjoyed by people with diverse interests,Estas actividades populares las disfrutan personas con gustos muy distintos.,,,,,,,,Line 432: ? 'These popular activities are enjoyed by people with diverse interests',interests,paragraph
+interests.label.based_on_your_interests_we_thi_346,"Based on your interests, we think you",Según tus intereses, creemos que estas actividades te van a gustar.,,,,,,,,Line 433: : ""Based on your interests, we think you'd enjoy these activities""}",interests,label
+interests.button.add_to_your_interests_347,Add to your interests,Añadir a tus intereses,,,,,,,,,"Line 449: title=""Add to your interests""",interests,button
+interests.label.dismiss_suggestion_349,Dismiss suggestion,Descartar sugerencia,,,,,,,,,"Line 458: aria-label=""Dismiss suggestion""",interests,label
+interests.label.not_interested_350,Not interested,No me interesa,,,,,,,,,"Line 461: title=""Not interested""",interests,label
 interests.paragraph._expanded__353,>{expanded ?,,,,,,,,,,"Line 508: <span className=""text-xl"">{expanded ? '▼' : '▶'}</span>",interests,paragraph
-interests.button.saved_locally_supabase_sync_fa_354,Saved locally! (Supabase sync failed),,,,,,,,,,Line 726: showSuccessToast('Saved locally! (Supabase sync failed)');,interests,button
-interests.paragraph.your_interests_have_been_saved_355,Your interests have been saved!,,,,,,,,,,Line 728: showSuccessToast('Your interests have been saved!');,interests,paragraph
-interests.paragraph.your_interests_have_been_saved_356,Your interests have been saved locally!,,,,,,,,,,Line 732: showSuccessToast('Your interests have been saved locally!');,interests,paragraph
-interests.label.loading_your_interests__359,Loading your interests…,,,,,,,,,,Line 758: <p>Loading your interests…</p>,interests,label
-interests.heading.your_interests_360,Your Interests,,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
+interests.button.saved_locally_supabase_sync_fa_354,Saved locally! (Supabase sync failed),Guardado en local. (Error al sincronizar con Supabase).,,,,,,,,,Line 726: showSuccessToast('Saved locally! (Supabase sync failed)');,interests,button
+interests.paragraph.your_interests_have_been_saved_355,Your interests have been saved!,Hemos guardado tus intereses.,,,,,,,,Line 728: showSuccessToast('Your interests have been saved!');,interests,paragraph
+interests.paragraph.your_interests_have_been_saved_356,Your interests have been saved locally!,Hemos guardado tus intereses solo en este dispositivo.,,,,,,,,Line 732: showSuccessToast('Your interests have been saved locally!');,interests,paragraph
+interests.label.loading_your_interests__359,Loading your interests…,Cargando tus intereses…,,,,,,,,,Line 758: <p>Loading your interests…</p>,interests,label
+interests.heading.your_interests_360,Your Interests,Tus intereses,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
 interests.label.alert_alert_success_362,alert alert-success,,,,,,,,,,"Line 851: <div className=""alert alert-success"">",interests,label
 onboarding.label.text_sm_text_base_content_60_364,text-sm text-base-content/60,,,,,,,,,,"Line 60: <p className=""text-sm text-base-content/60"">{subtitle}</p>",onboarding,label
 onboarding.label.void_promise_366,void | Promise,,,,,,,,,,Line 129: onNext: () => void | Promise<void>;,onboarding,label
-onboarding.link.settings_interests_368,Settings → Interests,,,,,,,,,,"Line 138: You can edit your interests any time in <Link className=""link"" href=""/interests""",onboarding,link
-onboarding.label.complete_setup_369,Complete Setup,,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
-onboarding.label.nearly_there_keep_going_370,"Nearly there, keep going",,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
-onboarding.button.clear_all_372,Clear all,,,,,,,,,,"Line 333: <button type=""button"" className=""btn btn-ghost btn-xs text-base-content"" onClick",onboarding,button
-onboarding.label.search_a_place__373,Search a place…,,,,,,,,,,"Line 371: placeholder = ""Search a place…"",",onboarding,label
-onboarding.nav.geolocation_is_not_available_i_374,Geolocation is not available in this browser.,,,,,,,,,,Line 495: if (!('geolocation' in navigator)) { setLocationError('Geolocation is not availa,onboarding,nav
+onboarding.link.settings_interests_368,Settings → Interests,Ajustes → Intereses,,,,,,,,,"Line 138: You can edit your interests any time in <Link className=""link"" href=""/interests""",onboarding,link
+onboarding.label.complete_setup_369,Complete Setup,Terminar configuración,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
+onboarding.label.nearly_there_keep_going_370,"Nearly there, keep going",Ya casi está, sigue un poco más,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
+onboarding.button.clear_all_372,Clear all,Borrar todo,,,,,,,,,"Line 333: <button type=""button"" className=""btn btn-ghost btn-xs text-base-content"" onClick",onboarding,button
+onboarding.label.search_a_place__373,Search a place…,Busca un lugar…,,,,,,,,,"Line 371: placeholder = ""Search a place…"",",onboarding,label
+onboarding.nav.geolocation_is_not_available_i_374,Geolocation is not available in this browser.,La geolocalización no está disponible en este navegador.,,,,,,,,Line 495: if (!('geolocation' in navigator)) { setLocationError('Geolocation is not availa,onboarding,nav
 onboarding.paragraph.in_e_string_e_as_message_strin_375,in e) ? String((e as { message?: string }).message) :,,,,,,,,,,Line 517: const msg = (typeof e === 'object' && e !== null && 'message' in e) ? String((e ,onboarding,paragraph
-onboarding.button.selected_place_376,Selected place,,,,,,,,,,Line 534: const label = s?.structured_formatting?.main_text || s?.description || 'Selected,onboarding,button
+onboarding.button.selected_place_376,Selected place,Lugar seleccionado,,,,,,,,,Line 534: const label = s?.structured_formatting?.main_text || s?.description || 'Selected,onboarding,button
 onboarding.label.form_control_relative_377,form-control relative,,,,,,,,,,"Line 584: <div className=""form-control relative"">",onboarding,label
-onboarding.button.confirm_selection_378,Confirm selection,,,,,,,,,,"Line 618: aria-label=""Confirm selection""",onboarding,button
-onboarding.label.use_current_location_380,Use current location,,,,,,,,,,Line 646: {isLocating ? 'Locating…' : 'Use current location'},onboarding,label
-onboarding.label.pick_from_map_381,Pick from map,,,,,,,,,,Line 650: {showMap ? 'Hide map' : 'Pick from map'},onboarding,label
+onboarding.button.confirm_selection_378,Confirm selection,Confirmar selección,,,,,,,,,"Line 618: aria-label=""Confirm selection""",onboarding,button
+onboarding.label.use_current_location_380,Use current location,Usar ubicación actual,,,,,,,,,Line 646: {isLocating ? 'Locating…' : 'Use current location'},onboarding,label
+onboarding.label.pick_from_map_381,Pick from map,Elegir en el mapa,,,,,,,,,Line 650: {showMap ? 'Hide map' : 'Pick from map'},onboarding,label
 onboarding.label.truncate_max_w_14rem__382,truncate max-w-[14rem],,,,,,,,,,"Line 678: <span className=""truncate max-w-[14rem]"">{r.name}</span>",onboarding,label
 onboarding.nav.geolocation_not_available__383,Geolocation not available.,,,,,,,,,,Line 780: if (!('geolocation' in navigator)) { setHomeLocateError('Geolocation not availab,onboarding,nav
 onboarding.paragraph.in_e_string_e_as_message_strin_384,in e ? String((e as { message?: string }).message) :,,,,,,,,,,Line 794: const msg = typeof e === 'object' && e && 'message' in e ? String((e as { messag,onboarding,paragraph
-onboarding.button.choose_areas_387,Choose areas,,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,button
+onboarding.button.choose_areas_387,Choose areas,Elige áreas,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,button
 onboarding.label._ismarinechosen__388,", ...(isMarineChosen ? [",,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,label
 onboarding.label.steps_w_full_389,steps w-full,,,,,,,,,,"Line 910: <ul className=""steps w-full"">",onboarding,label
-onboarding.paragraph._welcome_to_godaisy__390,👋 Welcome to GoDaisy!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
-onboarding.label.set_your_home_location__391,Set your home location 📍,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
-onboarding.label.set_a_coastal_spot__392,Set a coastal spot 🌊,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
-onboarding.paragraph._all_set__393,🎉 All set!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
-onboarding.label.fine_tune__394,Fine-tune 🎯,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.paragraph._welcome_to_godaisy__390,👋 Welcome to GoDaisy!,👋 ¡Bienvenido a Go Daisy!,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
+onboarding.label.set_your_home_location__391,Set your home location 📍,Configura tu ubicación de casa 📍,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.label.set_a_coastal_spot__392,Set a coastal spot 🌊,Elige un punto costero 🌊,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.paragraph._all_set__393,🎉 All set!,🎉 ¡Todo listo!,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
+onboarding.label.fine_tune__394,Fine-tune 🎯,Ajustar detalles 🎯,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
 onboarding.label.text_base_content_70_text_sm_395,text-base-content/70 text-sm,,,,,,,,,,"Line 917: <p className=""text-base-content/70 text-sm"">",onboarding,label
-onboarding.paragraph.deselect_any_areas_you_re_not__396,Deselect any areas you’re not into. You can change this any time.,,,,,,,,,,"Line 918: {phase.type === 'clusters' && ""Deselect any areas you’re not into. You can chang",onboarding,paragraph
-onboarding.paragraph.great_deselect_anything_that_s_397,Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started.,,,,,,,,,,"Line 919: {phase.type === 'activities-combined' && ""Great! Deselect anything that’s not yo",onboarding,paragraph
-onboarding.paragraph.short_lists_better_choices_you_398,"Short lists, better choices. You can add more later.",,,,,,,,,,"Line 920: {phase.type === 'activities-chunk' && ""Short lists, better choices. You can add ",onboarding,paragraph
-onboarding.paragraph.set_your_home_location_so_we_c_399,Set your home location so we can personalise local recommendations and forecasts.,,,,,,,,,,"Line 921: {phase.type === 'home' && ""Set your home location so we can personalise local re",onboarding,paragraph
-onboarding.paragraph.because_you_chose_sea_activiti_400,"Because you chose sea activities, adding a coastal spot helps us give you seaside advice.",,,,,,,,,,"Line 922: {phase.type === 'marine' && ""Because you chose sea activities, adding a coastal ",onboarding,paragraph
-onboarding.paragraph.we_ve_saved_your_activities_yo_401,We’ve saved your activities. You can always add more later.,,,,,,,,,,"Line 923: {phase.type === 'confirm' && ""We’ve saved your activities. You can always add mo",onboarding,paragraph
-onboarding.label.home_location_402,Home location,,,,,,,,,,"Line 929: title=""Home location""",onboarding,label
-onboarding.paragraph.helps_us_tailor_forecasts_and__403,Helps us tailor forecasts and nearby suggestions.,,,,,,,,,,"Line 930: subtitle=""Helps us tailor forecasts and nearby suggestions.""",onboarding,paragraph
-onboarding.label.search_for_your_home_location_405,Search for your home location,,,,,,,,,,"Line 935: <span className=""label-text"">Search for your home location</span>",onboarding,label
-onboarding.label.type_a_place_postcode_or_addre_406,"Type a place, postcode, or address",,,,,,,,,,"Line 944: placeholder=""Type a place, postcode, or address""",onboarding,label
-onboarding.label.autocomplete_map_inline_same_l_407,Autocomplete + map inline (same logic as header).,,,,,,,,,,"Line 950: <span className=""label-text-alt"">Autocomplete + map inline (same logic as header",onboarding,label
+onboarding.paragraph.deselect_any_areas_you_re_not__396,Deselect any areas you’re not into. You can change this any time.,Quita las áreas que no vayan contigo. Puedes cambiarlo cuando quieras.,,,,,,,,Line 918: {phase.type === 'clusters' && ""Deselect any areas you’re not into. You can chang",onboarding,paragraph
+onboarding.paragraph.great_deselect_anything_that_s_397,Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started.,Genial. Quita todo lo que no sea tu rollo. Hemos preseleccionado algunas cosas para que empieces.,,,,,,,,Line 919: {phase.type === 'activities-combined' && ""Great! Deselect anything that’s not yo",onboarding,paragraph
+onboarding.paragraph.short_lists_better_choices_you_398,"Short lists, better choices. You can add more later.",Listas cortas, mejores decisiones. Siempre podrás añadir más después.,,,,,,,,Line 920: {phase.type === 'activities-chunk' && ""Short lists, better choices. You can add ",onboarding,paragraph
+onboarding.paragraph.set_your_home_location_so_we_c_399,Set your home location so we can personalise local recommendations and forecasts.,Elige tu ubicación de casa para que podamos personalizar recomendaciones y previsiones locales.,,,,,,,,Line 921: {phase.type === 'home' && ""Set your home location so we can personalise local re",onboarding,paragraph
+onboarding.paragraph.because_you_chose_sea_activiti_400,"Because you chose sea activities, adding a coastal spot helps us give you seaside advice.",Como has elegido actividades de mar, añadir un punto costero nos ayuda a darte consejos junto al agua.,,,,,,,,Line 922: {phase.type === 'marine' && ""Because you chose sea activities, adding a coastal ",onboarding,paragraph
+onboarding.paragraph.we_ve_saved_your_activities_yo_401,We’ve saved your activities. You can always add more later.,Hemos guardado tus actividades. Siempre podrás añadir más actividades más adelante.,,,,,,,,Line 923: {phase.type === 'confirm' && ""We’ve saved your activities. You can always add mo",onboarding,paragraph
+onboarding.label.home_location_402,Home location,Ubicación de casa,,,,,,,,,"Line 929: title=""Home location""",onboarding,label
+onboarding.paragraph.helps_us_tailor_forecasts_and__403,Helps us tailor forecasts and nearby suggestions.,Nos ayuda a ajustar las previsiones y las sugerencias cercanas.,,,,,,,,Line 930: subtitle=""Helps us tailor forecasts and nearby suggestions.""",onboarding,paragraph
+onboarding.label.search_for_your_home_location_405,Search for your home location,Busca tu ubicación de casa,,,,,,,,,"Line 935: <span className=""label-text"">Search for your home location</span>",onboarding,label
+onboarding.label.type_a_place_postcode_or_addre_406,"Type a place, postcode, or address",Escribe un lugar, código postal o dirección,,,,,,,,,"Line 944: placeholder=""Type a place, postcode, or address""",onboarding,label
+onboarding.label.autocomplete_map_inline_same_l_407,Autocomplete + map inline (same logic as header).,Autocompletar + mapa incrustado (mismo funcionamiento que en la cabecera).,,,,,,,,,"Line 950: <span className=""label-text-alt"">Autocomplete + map inline (same logic as header",onboarding,label
 onboarding.button.btn_btn_ghost_410,btn btn-ghost,,,,,,,,,,"Line 957: <button className=""btn btn-ghost"" onClick={() => { setHomeSpot(null); setHomeLoc",onboarding,button
-onboarding.paragraph.you_can_change_this_any_time_i_413,You can change this any time in Settings → Location.,,,,,,,,,,"Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,paragraph
+onboarding.paragraph.you_can_change_this_any_time_i_413,You can change this any time in Settings → Location.,Puedes cambiar esto cuando quieras en Ajustes → Ubicación.,,,,,,,,Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,paragraph
 onboarding.label.text_xs_text_base_content_60_414,text-xs text-base-content/60,,,,,,,,,,"Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,label
-onboarding.paragraph.deselect_anything_that_s_not_y_415,Deselect anything that’s not your vibe.,,,,,,,,,,"Line 997: subtitle=""Deselect anything that’s not your vibe.""",onboarding,paragraph
+onboarding.paragraph.deselect_anything_that_s_not_y_415,Deselect anything that’s not your vibe.,Quita todo lo que no sea tu rollo.,,,,,,,,Line 997: subtitle=""Deselect anything that’s not your vibe.""",onboarding,paragraph
 onboarding.label.divider_my_1_416,divider my-1,,,,,,,,,,"Line 1000: <div className=""divider my-1""></div>",onboarding,label
-onboarding.paragraph.because_you_chose_sea_activiti_419,"Because you chose sea activities, setting a coastal spot lets us give tide, swell and wind‑aware advice.",,,,,,,,,,"Line 1096: <p className=""text-sm text-base-content/70"">Because you chose sea activities, se",onboarding,paragraph
-onboarding.label.search_for_a_coastal_spot_422,Search for a coastal spot,,,,,,,,,,"Line 1099: <span className=""label-text"">Search for a coastal spot</span>",onboarding,label
-onboarding.label.type_a_beach_harbour_or_coastl_423,"Type a beach, harbour, or coastline",,,,,,,,,,"Line 1107: placeholder=""Type a beach, harbour, or coastline""",onboarding,label
-onboarding.button.save_continue_427,Save & Continue,,,,,,,,,,"Line 1118: <button className=""btn btn-primary"" onClick={() => setStep(s => s + 1)} disabled",onboarding,button
-onboarding.button.skip_for_now_430,Skip for now,,,,,,,,,,"Line 1126: <button className=""btn btn-ghost btn-sm"" onClick={() => setStep(s => s + 1)}>Ski",onboarding,button
-onboarding.heading.coastal_spot_437,Coastal spot,,,,,,,,,,"Line 1142: <h3 className=""card-title text-sm"">Coastal spot</h3>",onboarding,heading
-onboarding.link.tip_you_can_edit_locations_any_439,Tip: you can edit locations any time in,,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
-onboarding.link.account_locations_440,Account → Locations,,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
-onboarding.button.save_these_to_your_account__442,Save these to your account?,,,,,,,,,,"Line 1153: <div className=""font-medium"">Save these to your account?</div>",onboarding,button
-onboarding.paragraph.register_to_sync_your_interest_443,Register to sync your interests and locations across devices.,,,,,,,,,,"Line 1154: <div className=""text-sm opacity-70"">Register to sync your interests and location",onboarding,paragraph
-onboarding.button.maybe_later_445,Maybe later,,,,,,,,,,"Line 1157: <button className=""btn btn-ghost btn-sm"" onClick={() => setShowRegisterNudge(fal",onboarding,button
-onboarding.paragraph.we_ll_use_your_locally_saved_p_446,We’ll use your locally saved preferences on this device for now.,,,,,,,,,,"Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,paragraph
+onboarding.paragraph.because_you_chose_sea_activiti_419,"Because you chose sea activities, setting a coastal spot lets us give tide, swell and wind‑aware advice.",Como has elegido actividades de mar, al fijar un punto costero podemos darte consejos teniendo en cuenta mareas, mar de fondo y viento.,,,,,,,,Line 1096: <p className=""text-sm text-base-content/70"">Because you chose sea activities, se",onboarding,paragraph
+onboarding.label.search_for_a_coastal_spot_422,Search for a coastal spot,Busca un punto costero,,,,,,,,,"Line 1099: <span className=""label-text"">Search for a coastal spot</span>",onboarding,label
+onboarding.label.type_a_beach_harbour_or_coastl_423,"Type a beach, harbour, or coastline",Escribe una playa, puerto o tramo de costa,,,,,,,,,"Line 1107: placeholder=""Type a beach, harbour, or coastline""",onboarding,label
+onboarding.button.save_continue_427,Save & Continue,Guardar y seguir,,,,,,,,,"Line 1118: <button className=""btn btn-primary"" onClick={() => setStep(s => s + 1)} disabled",onboarding,button
+onboarding.button.skip_for_now_430,Skip for now,Omitir por ahora,,,,,,,,,"Line 1126: <button className=""btn btn-ghost btn-sm"" onClick={() => setStep(s => s + 1)}>Ski",onboarding,button
+onboarding.heading.coastal_spot_437,Coastal spot,Punto costero,,,,,,,,,"Line 1142: <h3 className=""card-title text-sm"">Coastal spot</h3>",onboarding,heading
+onboarding.link.tip_you_can_edit_locations_any_439,Tip: you can edit locations any time in,Consejo: puedes editar las ubicaciones cuando quieras en,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
+onboarding.link.account_locations_440,Account → Locations,Cuenta → Ubicaciones,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
+onboarding.button.save_these_to_your_account__442,Save these to your account?,¿Guardar esto en tu cuenta?,,,,,,,,,"Line 1153: <div className=""font-medium"">Save these to your account?</div>",onboarding,button
+onboarding.paragraph.register_to_sync_your_interest_443,Register to sync your interests and locations across devices.,Regístrate para sincronizar tus intereses y ubicaciones entre dispositivos.,,,,,,,,Line 1154: <div className=""text-sm opacity-70"">Register to sync your interests and location",onboarding,paragraph
+onboarding.button.maybe_later_445,Maybe later,Quizá más tarde,,,,,,,,,"Line 1157: <button className=""btn btn-ghost btn-sm"" onClick={() => setShowRegisterNudge(fal",onboarding,button
+onboarding.paragraph.we_ll_use_your_locally_saved_p_446,We’ll use your locally saved preferences on this device for now.,Por ahora usaremos las preferencias guardadas solo en este dispositivo.,,,,,,,,Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,paragraph
 onboarding.label.text_xs_text_base_content_60_m_447,text-xs text-base-content/60 mt-2,,,,,,,,,,"Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,label

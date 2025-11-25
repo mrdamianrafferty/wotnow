@@ -135,8 +135,8 @@ export default function AccountPage() {
         onOpenCoastDialog={() => setOpenMarine(true)}
       />
 
-      <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content">
-        <div className="max-w-4xl mx-auto p-4">
+      <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content safe-top pt-4">
+        <div className="max-w-4xl mx-auto px-4 pb-12">
           <header className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-semibold">Your account</h1>
             <div className="flex items-center gap-2">

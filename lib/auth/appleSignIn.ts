@@ -35,6 +35,25 @@ import { createLogger } from '@/lib/utils/logger';
 import { mapAuthError } from './utils';
 
 const logger = createLogger('AppleSignIn');
+const DEFAULT_APPLE_BUNDLE_ID = process.env.NEXT_PUBLIC_APPLE_BUNDLE_ID ?? 'io.godaisy.app';
+const DEFAULT_APPLE_REDIRECT_URI = process.env.NEXT_PUBLIC_APPLE_REDIRECT_URI ?? 'godaisy://auth/callback';
+const DEFAULT_AUTH_CALLBACK = process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? 'https://godaisy.io/auth/callback';
+
+function resolveWebCallback(override?: string): string {
+  if (override) {
+    return override;
+  }
+  if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
+    return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
+  }
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    if (origin.startsWith('http')) {
+      return `${origin}/auth/callback`;
+    }
+  }
+  return DEFAULT_AUTH_CALLBACK;
+}
 
 /**
  * Check if Apple Sign In is available on this platform
@@ -97,8 +116,8 @@ async function signInWithAppleNative(supabase: SupabaseClient): Promise<void> {
     // NOTE: redirectURI is required by type but not used for native iOS
     // Using custom URL scheme to ensure no web redirects happen
     const result = await SignInWithApple.authorize({
-      clientId: 'eu.fishfindr.app', // Bundle ID for native iOS
-      redirectURI: 'fishfindr://auth/callback', // Custom scheme (not used for native)
+      clientId: DEFAULT_APPLE_BUNDLE_ID,
+      redirectURI: DEFAULT_APPLE_REDIRECT_URI,
       scopes: 'email name',
       nonce: hashedNonce, // SHA-256 hashed nonce (required by Apple)
     });
@@ -155,7 +174,7 @@ async function signInWithAppleWeb(
   try {
     logger.info('Starting web Apple Sign In flow');
 
-    const finalRedirectTo = redirectTo || `${window.location.origin}/auth/callback`;
+    const finalRedirectTo = resolveWebCallback(redirectTo);
 
     logger.info('OAuth redirect URL:', finalRedirectTo);
 

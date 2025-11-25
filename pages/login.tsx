@@ -19,10 +19,16 @@ export default function GoDaisyLogin() {
   const [isNativePlatform, setIsNativePlatform] = useState(false);
   const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? `${window.location.origin}/auth/callback`;
+    if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
+      return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
     }
-    return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? 'https://godaisy.io/auth/callback';
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      if (origin.startsWith('http')) {
+        return `${origin}/auth/callback`;
+      }
+    }
+    return 'https://godaisy.io/auth/callback';
   });
 
   // Get returnTo parameter for redirect after login
@@ -30,10 +36,18 @@ export default function GoDaisyLogin() {
   const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const resolved = process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? `${window.location.origin}/auth/callback`;
-      setAuthCallbackUrl(resolved);
+    if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
+      return;
     }
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const origin = window.location.origin;
+    if (!origin.startsWith('http')) {
+      return;
+    }
+    const resolved = `${origin}/auth/callback`;
+    setAuthCallbackUrl(resolved);
   }, []);
 
   useEffect(() => {
