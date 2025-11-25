@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase/client';
 import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
 import { Cloud, Sun, Waves } from 'lucide-react';
+import { signInWithApple } from '../lib/auth/appleSignIn';
+import type { PluginListenerHandle } from '@capacitor/core';
 
 export default function GoDaisyLogin() {
   const router = useRouter();
@@ -14,9 +16,161 @@ export default function GoDaisyLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [isNativePlatform, setIsNativePlatform] = useState(false);
+  const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
 
   // Get returnTo parameter for redirect after login
   const returnTo = router.query.returnTo as string | undefined;
+  const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (typeof window === 'undefined') return;
+
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) {
+        return;
+      }
+
+      if (cancelled) return;
+      setIsNativePlatform(true);
+
+      const { App } = await import('@capacitor/app');
+
+      nativeListenerRef.current = await App.addListener('appUrlOpen', async ({ url }) => {
+        if (!url || !url.startsWith('godaisy://auth/callback')) {
+          return;
+        }
+
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.close();
+        } catch (err) {
+          console.warn('[Go Daisy Auth] Could not close browser:', err);
+        }
+
+        try {
+          setLoading(true);
+
+          const parsed = new URL(url);
+          const code = parsed.searchParams.get('code');
+          if (!code) {
+            throw new Error('No authorization code returned');
+          }
+
+          const { Preferences } = await import('@capacitor/preferences');
+          const { value: codeVerifier } = await Preferences.get({ key: 'google_oauth_code_verifier' });
+          if (!codeVerifier) {
+            throw new Error('Could not resume Google Sign In. Please try again.');
+          }
+
+          const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+          if (!clientId) {
+            throw new Error('Google Sign In is temporarily unavailable (client missing).');
+          }
+
+          const tokenResponse = await fetch('/api/auth/google-token-exchange', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code,
+              codeVerifier,
+              clientId,
+              redirectUri: 'https://godaisy.io/auth/callback',
+            }),
+          });
+
+          if (!tokenResponse.ok) {
+            const payload = await tokenResponse.json().catch(() => ({}));
+            throw new Error(payload.error || 'Could not complete Google Sign In');
+          }
+
+          const { idToken } = (await tokenResponse.json()) as { idToken: string };
+          if (!idToken) {
+            throw new Error('Missing ID token from Google');
+          }
+
+          const { error: supabaseError } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+          });
+
+          if (supabaseError) {
+            throw supabaseError;
+          }
+
+          await Preferences.remove({ key: 'google_oauth_code_verifier' });
+
+          const storedDestination = sessionStorage.getItem('oauth_origin');
+          const redirectTarget = storedDestination && storedDestination.startsWith('/')
+            ? storedDestination
+            : destination;
+
+          window.location.href = redirectTarget;
+        } catch (err) {
+          console.error('[Go Daisy Auth] Deep link handling failed:', err);
+          setError(mapAuthError(err));
+          setLoading(false);
+        }
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      nativeListenerRef.current?.remove?.();
+      nativeListenerRef.current = null;
+    };
+  }, [destination]);
+
+  const handleNativeGoogleSignIn = async () => {
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      const { Preferences } = await import('@capacitor/preferences');
+
+      const generateCodeVerifier = () => {
+        const array = new Uint8Array(32);
+        crypto.getRandomValues(array);
+        return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
+      };
+
+      const generateCodeChallenge = async (verifier: string) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(verifier);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return btoa(String.fromCharCode(...hashArray))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+/g, '');
+      };
+
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      await Preferences.set({ key: 'google_oauth_code_verifier', value: codeVerifier });
+
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+      if (!clientId) {
+        throw new Error('GOOGLE_NOT_CONFIGURED');
+      }
+
+      const redirectUri = 'https://godaisy.io/auth/callback';
+      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      authUrl.searchParams.set('client_id', clientId);
+      authUrl.searchParams.set('redirect_uri', redirectUri);
+      authUrl.searchParams.set('response_type', 'code');
+      authUrl.searchParams.set('scope', 'openid email profile');
+      authUrl.searchParams.set('code_challenge', codeChallenge);
+      authUrl.searchParams.set('code_challenge_method', 'S256');
+      authUrl.searchParams.set('prompt', 'select_account');
+
+      await Browser.open({ url: authUrl.toString(), presentationStyle: 'popover' });
+    } catch (err) {
+      throw err;
+    }
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,10 +219,31 @@ export default function GoDaisyLogin() {
       setLoading(true);
       setError(null);
 
-      // Store destination for callback page
-      const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
       sessionStorage.setItem('oauth_origin', destination);
       sessionStorage.setItem('oauth_app', 'godaisy');
+
+      if (isNativePlatform) {
+        console.log('[Go Daisy Auth] Native platform detected for', provider);
+
+        if (provider === 'apple') {
+          await signInWithApple(supabase, `${window.location.origin}/auth/callback`);
+          window.location.href = destination;
+          return;
+        }
+
+        if (provider === 'google') {
+          try {
+            await handleNativeGoogleSignIn();
+            return;
+          } catch (nativeError) {
+            if ((nativeError as Error)?.message === 'GOOGLE_NOT_CONFIGURED') {
+              console.warn('[Go Daisy Auth] Google native flow not configured, falling back to web OAuth');
+            } else {
+              throw nativeError;
+            }
+          }
+        }
+      }
 
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('[Go Daisy Auth] Starting OAuth:', {
@@ -78,7 +253,6 @@ export default function GoDaisyLogin() {
         hostname: window.location.hostname
       });
 
-      // Start OAuth directly from current domain (no cross-domain redirect)
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -95,11 +269,6 @@ export default function GoDaisyLogin() {
 
       console.log('[Go Daisy Auth] OAuth response:', { url: data.url, provider: data.provider });
 
-      // DEBUG: Check what cookies exist BEFORE redirect
-      console.log('[Go Daisy Auth] Cookies before redirect:', document.cookie);
-      console.log('[Go Daisy Auth] LocalStorage before redirect:', Object.keys(localStorage));
-
-      // Redirect to OAuth provider (SSR client doesn't auto-redirect)
       if (data.url) {
         window.location.href = data.url;
       }

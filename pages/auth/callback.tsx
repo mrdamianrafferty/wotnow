@@ -43,6 +43,17 @@ function getErrorMessage(err: unknown): string {
   return 'That link could not be used. Please start again from the login page.';
 }
 
+function isStandaloneDisplayMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  const standaloneMediaQuery = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(display-mode: standalone)').matches
+    : false;
+  const navigatorStandalone = typeof navigator !== 'undefined' && 'standalone' in navigator
+    ? Boolean((navigator as unknown as { standalone?: boolean }).standalone)
+    : false;
+  return standaloneMediaQuery || navigatorStandalone;
+}
+
 // Determine the correct destination based on context
 function getDestination(params: {
   returnTo?: string | null;
@@ -129,11 +140,12 @@ export default function AuthCallback() {
         }
 
         // Detect if this is a mobile browser (iOS Safari/Chrome on mobile)
-        const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isMobileBrowser = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const standaloneMode = isStandaloneDisplayMode();
 
-        // Only show Universal Link prompt for mobile browsers with OAuth params
-        // Desktop browsers should process auth normally
-        if (hasOAuthParams && isMobileBrowser) {
+        // Only show Universal Link prompt for mobile browsers with OAuth params that
+        // are NOT already running in standalone/PWA mode (where we control the experience)
+        if (hasOAuthParams && isMobileBrowser && !standaloneMode) {
           console.log('[Auth Callback] Mobile browser with OAuth params - showing Universal Link prompt');
           setIsExternalBrowser(true);
           setDetectedApp(window.location.hostname.includes('fishfindr.eu') ? 'findr' : 'godaisy');
@@ -172,11 +184,11 @@ export default function AuthCallback() {
         const hasOAuthParams = code || access_token || tokenHash;
 
         // Detect if this is a mobile browser (iOS Safari/Chrome on mobile)
-        const isMobileBrowser = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isMobileBrowser = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const standaloneMode = isStandaloneDisplayMode();
 
-        // Only show Universal Link prompt for mobile browsers with OAuth params
-        // Desktop browsers should always process auth normally
-        if (!isNative && hasOAuthParams && isMobileBrowser) {
+        // Only show Universal Link prompt for mobile browsers with OAuth params that are not in standalone/PWA mode
+        if (!isNative && hasOAuthParams && isMobileBrowser && !standaloneMode) {
           console.log('[Auth Callback] Mobile browser mode - skipping auth processing for Universal Link');
           clearTimeout(timeoutId);
           return; // Exit early - let Universal Link handle it

@@ -165,7 +165,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="w-full" data-theme="light">
+    <header className="w-full safe-top pt-2 md:pt-0" data-theme="light">
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
@@ -345,8 +345,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             )}
           </div>
 
-          {/* Mobile: Show only auth badge */}
-          <div className="flex md:hidden">
+          {/* Mobile: Language selector stays visible next to auth */}
+          <div className="flex items-center gap-1 md:hidden">
+            <LanguageSelector compact className="md:hidden" />
             {authReady && (
               userId ? (
                 <Link
