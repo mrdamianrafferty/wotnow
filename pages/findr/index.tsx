@@ -715,7 +715,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 
 const FindrPage: React.FC = () => {
   const router = useRouter();
-  const { location, findrLocation } = useUnifiedLocation();
+  const { location, findrLocation, homeLocation } = useUnifiedLocation();
   const {
     options: rectangleOptions,
     loading: _rectangleOptionsLoading,
@@ -766,7 +766,7 @@ const FindrPage: React.FC = () => {
   // 1. Rectangle from UnifiedLocationContext (from header picker)
   // 2. Rectangle from URL query parameter
   // 3. selectedCode from persisted settings (fallback)
-  const contextRectangleSource = findrLocation ?? location;
+  const contextRectangleSource = findrLocation ?? homeLocation ?? location;
   const rectangleFromContext = contextRectangleSource?.rectangleCode ?? null;
   const rectangleFromQuery = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
   const effectiveSelectedCode = rectangleFromContext ?? rectangleFromQuery ?? selectedCode;
@@ -879,8 +879,16 @@ const FindrPage: React.FC = () => {
   const cards = useMemo(() => {
     if (!predictions) return [];
 
-    const defaultRegionCode = findrLocation?.rectangleRegion ?? location?.rectangleRegion ?? null;
-    const locationLabelFromContext = location?.rectangleLabel ?? findrLocation?.name ?? null;
+    const defaultRegionCode =
+      findrLocation?.rectangleRegion ??
+      homeLocation?.rectangleRegion ??
+      location?.rectangleRegion ??
+      null;
+    const locationLabelFromContext =
+      findrLocation?.name ??
+      homeLocation?.name ??
+      location?.rectangleLabel ??
+      null;
     const fallbackLocationLabel = activeOption?.region ?? activeOption?.label ?? (activeRectangle ? `ICES ${activeRectangle}` : 'Selected waters');
     const effectiveLocationLabel = locationLabelFromContext ?? fallbackLocationLabel;
 
@@ -920,7 +928,7 @@ const FindrPage: React.FC = () => {
     });
 
     return mapped;
-  }, [predictions, activeRectangle, location, findrLocation, activeOption]);
+  }, [predictions, activeRectangle, location, findrLocation, homeLocation, activeOption]);
 
   useEffect(() => {
     console.log('[Findr] Updating cardQueue:', {

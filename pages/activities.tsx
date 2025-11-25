@@ -47,6 +47,7 @@ import { resolveBeachOrientationAsync, computeSimulatedOrientation } from '../ut
 import Footer from '../components/footer'; // <-- add this import
 import type { SnowRecommendationLevel } from '../utils/snowRecommendations';
 import { useRouter } from 'next/router';
+import { useUIText } from '../hooks/useUIText';
 
 
 import SimplifiedShareModal from '../components/sharing/SimplifiedShareModal';
@@ -147,17 +148,17 @@ function getAssessmentCategory(score: number, activityId?: string): {
 /**
  * Format day labels for display (Today, Tomorrow, Day Name)
  */
-function getDayLabel(dateStr: string | number, idx: number, serverTime?: Date): string {
+function getDayLabel(dateStr: string | number, idx: number, todayText: string, tomorrowText: string, serverTime?: Date): string {
   const date = typeof dateStr === 'string' ? new Date(dateStr) : new Date(dateStr * 1000);
   const today = serverTime || new Date();
-  
+
   const isSameDay = date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
-  
-  if (isSameDay) return 'Today';
-  if (idx === 1) return 'Tomorrow';
-  
+
+  if (isSameDay) return todayText;
+  if (idx === 1) return tomorrowText;
+
   return date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric' });
 }
 
@@ -187,12 +188,19 @@ interface ActivityCardProps {
 }
 
 function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _reasoning, day, dayLabel: _dayLabel, coastalLocation, homeLocation, snow }: ActivityCardProps) {
-  console.log('🎯 ActivityCard for:', activityId, 'with day data:', { 
-    pollen: day.pollen, 
+  console.log('🎯 ActivityCard for:', activityId, 'with day data:', {
+    pollen: day.pollen,
     airQuality: day.airQuality,
     hasPollenData: !!day.pollen,
-    hasAirQualityData: !!day.airQuality 
+    hasAirQualityData: !!day.airQuality
   });
+
+  // Translation hooks for ActivityCard
+  const indoorLabel = useUIText('activities.label._indoor_85', '🛋️ indoor');
+  const offseasonLabel = useUIText('activities.label._offseason_86', '🍂 offseason');
+  const shareButton = useUIText('activities.button.share', '📤 Share');
+  const scoreLabel = useUIText('activities.label.score', 'Score');
+  const snowAdvisoryLabel = useUIText('activities.label.snow_advisory_90', 'Snow advisory');
 
   // Get activity data and styling
   const activity = activityTypes.find(a => a.id === activityId);
@@ -302,27 +310,27 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
         {/* Assessment Badge and Share Button */}
         <div className="activity-card__badges">
           <div className={`activity-card__badge ${
-            activityId && !isOutdoor(activityId) ? 'activity-card__badge--indoor' : 
+            activityId && !isOutdoor(activityId) ? 'activity-card__badge--indoor' :
             assessment.status === 'offseason' ? 'activity-card__badge--offseason' : ''
           }`} style={{
             background: activityId && !isOutdoor(activityId) ? undefined : assessment.color,
           }}>
             {activityId && !isOutdoor(activityId) ? (
-              <>🛋️ indoor</>
+              <>{indoorLabel}</>
             ) : assessment.status === 'offseason' ? (
-              <>🍂 offseason</>
+              <>{offseasonLabel}</>
             ) : (
               <>{assessment.emoji} {assessment.status}</>
             )}
           </div>
-          
+
           {/* Share Button */}
           <button
             onClick={handleShare}
             className="activity-card__share-btn"
             aria-label={`Share ${activity?.name || activityId}`}
           >
-            📤 Share
+            {shareButton}
           </button>
         </div>
       </div>
@@ -343,7 +351,7 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
           (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(snow.level)) ? 'bg-red-600 text-white'
            : 'bg-emerald-500 text-white')
         }`}>
-          <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/fill/final/overcast-snow.svg' : '/weather-icons/design/fill/final/snowman.svg'} alt="Snow advisory" width={18} height={18} />
+          <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/fill/final/overcast-snow.svg' : '/weather-icons/design/fill/final/snowman.svg'} alt={snowAdvisoryLabel} width={18} height={18} />
           <span>{snow.message}</span>
         </div>
       )}
@@ -531,7 +539,7 @@ function ActivityCard({ activityId, score, evaluation: _evaluation, reasoning: _
 
       {/* Score Display */}
       <div className="activity-card__score">
-        Score: {score}%
+        {scoreLabel}: {score}%
       </div>
 
       {/* Share Modal */}
@@ -563,11 +571,16 @@ interface DayTabsProps {
 }
 
 function DayTabs({ days, activeDay, onDayChange, serverTime }: DayTabsProps) {
+  // Call hooks at the top level
+  const forecastDaysLabel = useUIText('activities.label.forecast_days_97', 'Forecast days');
+  const todayText = useUIText('activities.label.today', 'Today');
+  const tomorrowText = useUIText('activities.label.tomorrow', 'Tomorrow');
+
   return (
     <nav
       role="tablist"
       className="day-tabs"
-      aria-label="Forecast days"
+      aria-label={forecastDaysLabel}
     >
       {days.map((day, idx) => {
         const isActive = activeDay === idx;
@@ -612,7 +625,7 @@ function DayTabs({ days, activeDay, onDayChange, serverTime }: DayTabsProps) {
           >
             <div className="text-center">
               <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>
-                {getDayLabel(day.date, idx, serverTime)}
+                {getDayLabel(day.date, idx, todayText, tomorrowText, serverTime)}
               </div>
               <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '2px' }}>
                 {day.temperature}°
@@ -692,6 +705,40 @@ export default function ActivitiesPage() {
 
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
   const needsInterests = selectedInterests.length === 0;
+
+  // Translation hooks
+  const todayLabel = useUIText('activities.label.today', 'Today');
+  const tomorrowLabel = useUIText('activities.label.tomorrow', 'Tomorrow');
+  const indoorLabel = useUIText('activities.label._indoor_85', '🛋️ indoor');
+  const offseasonLabel = useUIText('activities.label._offseason_86', '🍂 offseason');
+  const shareButton = useUIText('activities.button.share', '📤 Share');
+  const scoreLabel = useUIText('activities.label.score', 'Score');
+  const snowAdvisoryLabel = useUIText('activities.label.snow_advisory_90', 'Snow advisory');
+  const forecastDaysLabel = useUIText('activities.label.forecast_days_97', 'Forecast days');
+  const loadingActivities = useUIText('activities.label.loading_your_activities_107', 'Loading your activities');
+  const activitiesTitle = useUIText('activities.label.activities', 'Activities');
+  const activitiesDescription = useUIText('activities.paragraph.browse_all_your_selected_activ_108',
+    'Browse all your selected activities with detailed weather conditions, scores, and recommendations for the next 8 days.');
+  const locationRequiredTitle = useUIText('activities.heading.location_required_110', 'Location Required');
+  const locationRequiredText = useUIText('activities.paragraph.please_set_your_location',
+    'Please set your location on the homepage to view activity assessments.');
+  const goToHomepageButton = useUIText('activities.button.go_to_homepage', 'Go to Homepage');
+  const noActivitiesTitle = useUIText('activities.heading.no_activities_selected', 'No Activities Selected');
+  const noActivitiesText = useUIText('activities.paragraph.choose_your_outdoor_interests',
+    'Choose your outdoor interests to see personalised activity assessments.');
+  const chooseActivitiesButton = useUIText('activities.button.choose_activities', 'Choose Activities');
+  const availableOptionLabel = useUIText('activities.label.available_option_104', 'Available option');
+  const conditionsVaryText = useUIText('activities.paragraph.conditions_vary_but_available__105',
+    'Conditions vary, but available based on your interests');
+  const noDataText = useUIText('activities.paragraph.no_activity_data',
+    'No activity data available for');
+  const airTempLabel = useUIText('activities.label.air_temperature', 'Air temperature');
+  const waterTempLabel = useUIText('activities.label.water_temperature', 'Water temperature');
+  const precipitationLabel = useUIText('activities.label.precipitation', 'Precipitation');
+  const windLabel = useUIText('activities.label.wind', 'Wind');
+  const humidityLabel = useUIText('activities.label.humidity', 'Humidity');
+  const highTempLabel = useUIText('activities.label.high_temperature', 'High');
+  const lowTempLabel = useUIText('activities.label.low_temperature', 'Low');
 
   // =============================================================================
   // DATA FETCHING (Same pipeline as homepage)
@@ -926,8 +973,8 @@ export default function ActivitiesPage() {
         return {
           activityId: id,
           score: 50,
-          evaluation: 'Available option',
-          reasoning: 'Conditions vary, but available based on your interests',
+          evaluation: availableOptionLabel,
+          reasoning: conditionsVaryText,
           outOfSeason: false
         };
       }).filter((a): a is Exclude<typeof a, null> => a !== null);
@@ -977,7 +1024,7 @@ export default function ActivitiesPage() {
         <section className="flex items-center justify-center py-16">
           <div className="flex items-center">
             <span className="loading loading-dots loading-lg text-secondary" aria-hidden="true"></span>
-            <span className="ml-3 text-base-content/80">Loading your activities</span>
+            <span className="ml-3 text-base-content/80">{loadingActivities}</span>
           </div>
         </section>
         <BottomNav />
@@ -989,8 +1036,8 @@ export default function ActivitiesPage() {
   return (
     <>
       <SEO
-        title="Activities"
-        description="Browse all your selected activities with detailed weather conditions, scores, and recommendations for the next 8 days."
+        title={activitiesTitle}
+        description={activitiesDescription}
         url="https://godaisy.io/activities"
       />
       {/* ✅ ADD HEADER BANNER */}
@@ -1013,13 +1060,13 @@ export default function ActivitiesPage() {
             border: '1px solid #fecaca' 
           }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📍</div>
-            <h2 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>Location Required</h2>
+            <h2 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>{locationRequiredTitle}</h2>
             <p style={{ color: '#7f1d1d' }}>
-              Please set your location on the homepage to view activity assessments.
+              {locationRequiredText}
             </p>
-            <Link 
-              href="/" 
-              style={{ 
+            <Link
+              href="/"
+              style={{
                 display: 'inline-block',
                 marginTop: '1rem',
                 padding: '8px 16px',
@@ -1030,7 +1077,7 @@ export default function ActivitiesPage() {
                 fontWeight: 600
               }}
             >
-              Go to Homepage
+              {goToHomepageButton}
             </Link>
           </div>
         )}
@@ -1044,13 +1091,13 @@ export default function ActivitiesPage() {
             border: '1px solid #fed7aa' 
           }}>
             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
-            <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected</h2>
+            <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>{noActivitiesTitle}</h2>
             <p style={{ color: '#92400e' }}>
-              Choose your outdoor interests to see personalised activity assessments.
+              {noActivitiesText}
             </p>
-            <Link 
-              href="/interests" 
-              style={{ 
+            <Link
+              href="/interests"
+              style={{
                 display: 'inline-block',
                 marginTop: '1rem',
                 padding: '8px 16px',
@@ -1061,7 +1108,7 @@ export default function ActivitiesPage() {
                 fontWeight: 600
               }}
             >
-              Choose Activities
+              {chooseActivitiesButton}
             </Link>
           </div>
         )}
@@ -1105,7 +1152,7 @@ export default function ActivitiesPage() {
                     <div className="empty-state">
                       <div className="empty-state__icon">🤔</div>
                       <div className="empty-state__text">
-                        No activity data available for {getDayLabel(currentDayData?.date || 0, activeDay, timeInfo?.serverTime)}
+                        {noDataText} {getDayLabel(currentDayData?.date || 0, activeDay, todayLabel, tomorrowLabel, timeInfo?.serverTime)}
                       </div>
                     </div>
                   ) : (
@@ -1119,7 +1166,7 @@ export default function ActivitiesPage() {
                          evaluation={activity.evaluation}
                          reasoning={activity.reasoning}
                          day={currentDayData}
-                         dayLabel={getDayLabel(currentDayData?.date || 0, activeDay, timeInfo?.serverTime)}
+                         dayLabel={getDayLabel(currentDayData?.date || 0, activeDay, todayLabel, tomorrowLabel, timeInfo?.serverTime)}
                          coastalLocation={coastalLocation}
                          homeLocation={homeLocation}
                          snow={activity.snow}

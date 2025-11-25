@@ -20,6 +20,7 @@ import Footer from '../components/footer';
 import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
+import { useUIText } from '../hooks/useUIText';
 type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
@@ -318,14 +319,14 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 const _hasMarineInterest = (interests: string[]) =>
   interests.some((id) => MARINE_ACTIVITY_IDS.includes(id));
 
-const getDayLabel = (dateNum: number, idx: number, serverTime?: Date) => {
+const getDayLabel = (dateNum: number, idx: number, todayText: string, serverTime?: Date) => {
   const date = new Date(dateNum * 1000);
   const today = serverTime || new Date();
   const isSameDay =
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
-  return isSameDay ? 'Today' : date.toLocaleDateString('en-GB', { weekday: 'long' });
+  return isSameDay ? todayText : date.toLocaleDateString('en-GB', { weekday: 'long' });
 };
 
 const getScoreCategory = (score: number) => {
@@ -489,6 +490,35 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
   interests
 );
 
+  // Translation hooks
+  const marineErrorText = useUIText('index.nav.marine_conditions_are_temporar_4',
+    "Marine conditions are temporarily unavailable. We'll show land‑based suggestions for now.");
+  const needsLocationText = useUIText('index.paragraph.please_set_your_home_location__5',
+    'Please set your home location to see suggestions.');
+  const noActivitiesTitle = useUIText('index.heading.no_activities_selected_7',
+    'No Activities Selected');
+  const noActivitiesText = useUIText('index.paragraph.choose_your_outdoor_interests',
+    'Choose your outdoor interests to see personalised activity recommendations based on the weather.');
+  const chooseActivitiesButton = useUIText('index.button.choose_activities',
+    'Choose Activities');
+  const loadingRecommendations = useUIText('index.paragraph.loading_your_smart_recommendat_8',
+    'Loading your smart recommendations...');
+  const errorPrefix = useUIText('index.label.error', 'Error');
+  const pickHomeLocation = useUIText('index.label.pick_your_home_location_9',
+    'Pick your home location');
+  const todayLabel = useUIText('index.label.today', 'Today');
+  const initialLoadingText = useUIText('index.paragraph.loading', 'Loading...');
+  const alsoPerfectToday = useUIText('index.heading._also_perfect_today_11',
+    '💯 Also Perfect Today');
+  const goodOptionsToday = useUIText('index.heading._good_options_today_12',
+    '👍 Good Options Today');
+  const stayingIndoors = useUIText('index.heading._staying_indoors__13',
+    '👺 Staying Indoors?');
+  const moreActivitiesButton = useUIText('index.button.more_activities',
+    '+ More activities');
+  const allMyActivitiesButton = useUIText('index.button.all_my_activities',
+    '👀 All my activities');
+
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
   if (!weatherData?.daily) return [];
@@ -627,7 +657,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
       alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
       suggestionsData,
       indoorList,
-      dayLabel: getDayLabel(day.date, idx)
+      dayLabel: getDayLabel(day.date, idx, todayLabel)
     };
   });
 
@@ -639,31 +669,31 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   console.log('marineHours before building forecast:', marineHours);
 
   if (!hasMounted) {
-    return <div>Loading...</div>;
+    return <div>{initialLoadingText}</div>;
   }
 
   if (needsLocation) {
-    return <div>Please set your home location to see suggestions.</div>;
+    return <div>{needsLocationText}</div>;
   }
 
   if (isFirstTimeUser) {
     return (
-      <div style={{ 
-        textAlign: 'center' as const, 
-        padding: '3rem', 
-        background: '#fefbf2', 
+      <div style={{
+        textAlign: 'center' as const,
+        padding: '3rem',
+        background: '#fefbf2',
         borderRadius: '8px',
         border: '1px solid #fed7aa',
         margin: '2rem'
       }}>
         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>
-        <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected</h2>
+        <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>{noActivitiesTitle}</h2>
         <p style={{ color: '#92400e' }}>
-          Choose your outdoor interests to see personalised activity recommendations based on the weather.
+          {noActivitiesText}
         </p>
-        <Link 
-          href="/interests" 
-          style={{ 
+        <Link
+          href="/interests"
+          style={{
             display: 'inline-block',
             marginTop: '1rem',
             padding: '12px 24px',
@@ -675,18 +705,18 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
             fontSize: '1.1rem'
           }}
         >
-          Choose Activities
+          {chooseActivitiesButton}
         </Link>
       </div>
     );
   }
 
   if (loading) {
-    return <div>Loading your smart recommendations...</div>;
+    return <div>{loadingRecommendations}</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return <div>{errorPrefix}: {error}</div>;
   }
 
   // MAIN RETURN - Enhanced version preserving all your functionality
@@ -697,7 +727,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         <CoastalLocationDialog
           open={showHomeDialog}
           onClose={() => setShowHomeDialog(false)}
-          title="Pick your home location"
+          title={pickHomeLocation}
           homeLocation={homeLocation}
           coastalLocation={coastalLocation}
           setHomeLocation={setHomeLocation}
@@ -733,7 +763,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 />
 {marineError ? (
   <div className="alert alert-warning mx-4 my-2">
-    <span>{marineError}</span>
+    <span>{marineErrorText}</span>
   </div>
 ) : null}
 <div className="main-grid">
@@ -915,7 +945,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
             {/* Perfect Activities */}
             {alsoGoodPerfect.length > 0 && (
               <div className="activity-section">
-                <h4 className="also-good-title">💯 Also Perfect Today</h4>
+                <h4 className="also-good-title">{alsoPerfectToday}</h4>
                 <ul className="also-good-list">
                   {alsoGoodPerfect.map(suggestion => {
                     const activity = activityTypes.find(a => a.id === suggestion.activityId);
@@ -967,7 +997,7 @@ const popupPayload = buildPopupActivityPayload({
 
               return (
                 <div className="activity-section">
-                  <h4 className="also-good-title">👍 Good Options Today</h4>
+                  <h4 className="also-good-title">{goodOptionsToday}</h4>
                   <ul className="activity-list-good">
                     {goodActivities.map(suggestion => {
                       const activity = activityTypes.find(a => a.id === suggestion.activityId);
@@ -1023,7 +1053,7 @@ const popupPayload = buildPopupActivityPayload({
 
   return (
     <div className="also-good-section">
-      <h4 className="also-good-title">👺 Staying Indoors?</h4>
+      <h4 className="also-good-title">{stayingIndoors}</h4>
       <ul className="also-good-list">
         {indoorListFiltered.map((s) => {
           const activity = activityTypes.find((a) => a.id === s.activityId);
@@ -1055,17 +1085,17 @@ const popupPayload = buildPopupActivityPayload({
           
           {/* Add back the bottom-aligned action buttons */}
           <div className="activity-card-actions">
-            <Link 
-              href="/interests" 
+            <Link
+              href="/interests"
               className="activity-card-btn"
             >
-              + More activities
+              {moreActivitiesButton}
             </Link>
-            <Link 
-              href="/activities" 
+            <Link
+              href="/activities"
               className="activity-card-btn"
             >
-              👀 All my activities
+              {allMyActivitiesButton}
             </Link>
           </div>
           

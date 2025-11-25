@@ -7,6 +7,7 @@ import AppHeader, { LocationLite } from '../components/AppHeader';
 import { rankRecommendations } from '../app/settings/recommendations';
 import { supabase } from '../lib/supabase/client';
 import { getActivityEmoji } from '../data/emojiMap';
+import { useUIText } from '../hooks/useUIText';
 
 // The full set of activity IDs for each grouping
 const mainCategories = [
@@ -343,10 +344,20 @@ function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivi
   const [expanded, setExpanded] = useState(false);
   const displayLimit = 6;
 
+  // Translation hooks
+  const startSelectingText = useUIText('interests.paragraph._start_by_selecting_activities_337',
+    '👋 Start by selecting activities from the suggestions below or browse categories');
+  const yourSelectedText = useUIText('interests.label.your_selected_activities',
+    'Your Selected Activities');
+  const clearAllText = useUIText('interests.button.clear_all', 'Clear all');
+  const moreText = useUIText('interests.button.more', 'more');
+  const showLessText = useUIText('interests.button.show_less', 'Show less');
+  const removeText = useUIText('interests.button.remove', 'Remove');
+
   if (activities.length === 0) {
     return (
       <div className="alert alert-info">
-        <span>👋 Start by selecting activities from the suggestions below or browse categories</span>
+        <span>{startSelectingText}</span>
       </div>
     );
   }
@@ -360,14 +371,14 @@ function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivi
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-lg">📌</span>
-            <span className="font-semibold">Your Selected Activities ({activities.length})</span>
+            <span className="font-semibold">{yourSelectedText} ({activities.length})</span>
           </div>
           <button
             type="button"
             className="btn btn-ghost btn-xs"
             onClick={onClear}
           >
-            Clear all
+            {clearAllText}
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -377,7 +388,7 @@ function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivi
               type="button"
               onClick={() => onRemove(id)}
               className="btn btn-sm btn-primary gap-1 normal-case"
-              title={`Remove ${name}`}
+              title={`${removeText} ${name}`}
             >
               <span>{icon}</span>
               <span>{name}</span>
@@ -390,7 +401,7 @@ function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivi
               className="btn btn-sm btn-ghost"
               onClick={() => setExpanded(true)}
             >
-              +{hiddenCount} more
+              +{hiddenCount} {moreText}
             </button>
           )}
           {expanded && activities.length > displayLimit && (
@@ -399,7 +410,7 @@ function SelectedActivitiesBar({ activities, onRemove, onClear }: SelectedActivi
               className="btn btn-sm btn-ghost"
               onClick={() => setExpanded(false)}
             >
-              Show less
+              {showLessText}
             </button>
           )}
         </div>
@@ -416,6 +427,19 @@ interface RecommendationsSectionProps {
 }
 
 function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = false }: RecommendationsSectionProps) {
+  // Translation hooks
+  const youMightAlsoLike = useUIText('interests.label.you_might_also_like_343', 'You might also like');
+  const popularActivities = useUIText('interests.label.popular_activities_you_might_enj_344', 'Popular activities you might enjoy');
+  const basedOnInterests = useUIText('interests.paragraph.based_on_your_interests_we_th_345',
+    "Based on your interests, we think you'd enjoy these activities");
+  const thesePopular = useUIText('interests.paragraph.these_popular_activities_are_e_346',
+    'These popular activities are enjoyed by people with diverse interests');
+  const addToInterests = useUIText('interests.button.add_to_your_interests_347', 'Add to your interests');
+  const dismissSuggestion = useUIText('interests.label.dismiss_suggestion_349', 'Dismiss suggestion');
+  const notInterested = useUIText('interests.label.not_interested_350', 'Not interested');
+  const tipDismiss = useUIText('interests.paragraph.tip_dismiss_suggestions_you_re_351',
+    "💡 Tip: Dismiss suggestions you're not interested in right now - they'll come back later");
+
   if (suggestions.length === 0) return null;
 
   return (
@@ -425,12 +449,10 @@ function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = 
           <span className="text-2xl">✨</span>
           <div>
             <h3 className="font-semibold text-lg">
-              {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'}
+              {hasFallbacks ? popularActivities : youMightAlsoLike}
             </h3>
             <p className="text-sm opacity-70">
-              {hasFallbacks
-                ? 'These popular activities are enjoyed by people with diverse interests'
-                : "Based on your interests, we think you'd enjoy these activities"}
+              {hasFallbacks ? thesePopular : basedOnInterests}
             </p>
           </div>
         </div>
@@ -446,7 +468,7 @@ function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = 
                   type="button"
                   onClick={() => onAdd(id)}
                   className="btn btn-outline justify-start h-10 normal-case rounded-xl flex items-center gap-2 border-accent text-accent hover:bg-accent/10 flex-1"
-                  title="Add to your interests"
+                  title={addToInterests}
                 >
                   <span className="text-accent font-bold">+</span>
                   {icon && <span>{icon}</span>}
@@ -455,10 +477,10 @@ function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = 
 
                 <button
                   type="button"
-                  aria-label="Dismiss suggestion"
+                  aria-label={dismissSuggestion}
                   className="btn btn-ghost btn-xs"
                   onClick={() => onDismiss(id)}
-                  title="Not interested"
+                  title={notInterested}
                 >
                   ×
                 </button>
@@ -468,7 +490,7 @@ function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = 
         </div>
 
         <div className="text-xs opacity-60 mt-2">
-          💡 Tip: Dismiss suggestions you&apos;re not interested in right now - they&apos;ll come back later
+          {tipDismiss}
         </div>
       </div>
     </div>
@@ -485,6 +507,21 @@ interface CategoryCardProps {
 }
 
 function CategoryCard({ category, selectedCount, expanded, onToggle, hasSelections, children }: CategoryCardProps) {
+  // Translation hooks
+  const selectedLabel = useUIText('interests.label.selected_352', 'selected');
+
+  // Category translations - map category key to translation
+  const categoryTranslations: Record<string, string> = {
+    'Active Sports': useUIText('interests.label.active_sports_314', 'Active Sports'),
+    'Fitness & Wellness': useUIText('interests.label.fitness_wellness_319', 'Fitness & Wellness'),
+    'Outdoor Activities': useUIText('interests.label.outdoor_activities_322', 'Outdoor Activities'),
+    'Winter Sports': useUIText('interests.label.winter_sports_325', 'Winter Sports'),
+    'Creative & Arts': useUIText('interests.label.creative_arts_328', 'Creative & Arts'),
+    'Indoor Recreation': useUIText('interests.label.indoor_recreation_332', 'Indoor Recreation'),
+  };
+
+  const translatedCategoryName = categoryTranslations[category.key] || category.key;
+
   return (
     <div className={`card bg-base-100 border ${hasSelections ? 'border-primary/30' : 'border-base-300'}`}>
       <div className="card-body p-0">
@@ -497,10 +534,10 @@ function CategoryCard({ category, selectedCount, expanded, onToggle, hasSelectio
           <div className="flex items-center gap-3">
             <span className="text-2xl">{category.icon}</span>
             <div className="text-left">
-              <span className="font-semibold text-lg">{category.key}</span>
+              <span className="font-semibold text-lg">{translatedCategoryName}</span>
               {selectedCount > 0 && (
                 <span className="ml-2 badge badge-primary badge-sm">
-                  {selectedCount} selected
+                  {selectedCount} {selectedLabel}
                 </span>
               )}
             </div>
@@ -527,11 +564,35 @@ interface SubcategorySectionProps {
 function SubcategorySection({ subcategory, selectedIds, onToggle }: SubcategorySectionProps) {
   const selectedSet = new Set(selectedIds);
 
+  // Subcategory translations
+  const subcategoryTranslations: Record<string, string> = {
+    'Team Sports': useUIText('interests.label.team_sports_315', 'Team Sports'),
+    'Individual Sports': useUIText('interests.label.individual_sports_316', 'Individual Sports'),
+    'Water Sports': useUIText('interests.label.water_sports_317', 'Water Sports'),
+    'Action Sports': useUIText('interests.label.action_sports_318', 'Action Sports'),
+    'Mindfulness': useUIText('interests.label.mindfulness_336', 'Mindfulness'),
+    'Cardio & Running': useUIText('interests.label.cardio_running_320', 'Cardio & Running'),
+    'Strength & Gym': useUIText('interests.label.strength_gym_321', 'Strength & Gym'),
+    'Nature Activities': useUIText('interests.label.nature_activities_323', 'Nature Activities'),
+    'Fishing': useUIText('interests.label.fishing_338', 'Fishing'),
+    'Kicking Back and Relaxing': useUIText('interests.label.kicking_back_and_relaxing_324', 'Kicking Back and Relaxing'),
+    'Snow Sports': useUIText('interests.label.snow_sports_326', 'Snow Sports'),
+    'Ice Sports': useUIText('interests.label.ice_sports_327', 'Ice Sports'),
+    'Visual Arts': useUIText('interests.label.visual_arts_329', 'Visual Arts'),
+    'Music & Performance': useUIText('interests.label.music_performance_330', 'Music & Performance'),
+    'Literature & Learning': useUIText('interests.label.literature_learning_331', 'Literature & Learning'),
+    'Home Activities': useUIText('interests.label.home_activities_333', 'Home Activities'),
+    'Social Activities': useUIText('interests.label.social_activities_334', 'Social Activities'),
+    'Indoor Sports': useUIText('interests.label.indoor_sports_335', 'Indoor Sports'),
+  };
+
+  const translatedSubcategoryName = subcategoryTranslations[subcategory.key] || subcategory.key;
+
   return (
     <div className="mt-3">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-lg">{subcategory.icon}</span>
-        <span className="font-medium" style={{ color: 'rgb(31, 41, 55)' }}>{subcategory.key}</span>
+        <span className="font-medium" style={{ color: 'rgb(31, 41, 55)' }}>{translatedSubcategoryName}</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {subcategory.acts.map((actId) => {
@@ -568,6 +629,17 @@ const InterestsTest: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const hasMounted = useHasMounted();
+
+  // Translation hooks
+  const pageTitle = useUIText('interests.heading.your_interests_360', 'Your Interests');
+  const pageDescription = useUIText('interests.paragraph.select_activities_you_enjoy_or__361',
+    "Select activities you enjoy or want to try. We'll suggest the best days for each.");
+  const loadingInterests = useUIText('interests.label.loading_your_interests__359', 'Loading your interests…');
+  const saveChangesButton = useUIText('interests.button.save_changes', '✅ Save Changes');
+  const addedActivity = useUIText('interests.message.added_activity', 'Added');
+  const savedLocallySupabaseFail = useUIText('interests.button.saved_locally_supabase_sync_fa_354', 'Saved locally! (Supabase sync failed)');
+  const interestsSaved = useUIText('interests.paragraph.your_interests_have_been_saved_355', 'Your interests have been saved!');
+  const interestsSavedLocally = useUIText('interests.paragraph.your_interests_have_been_saved_356', 'Your interests have been saved locally!');
 
   const interests = useMemo(() => preferences.interests || [], [preferences.interests]);
 
@@ -700,7 +772,7 @@ const InterestsTest: React.FC = () => {
   const addActivity = (id: string) => {
     toggleInterest(id);
     dismissSuggestion(id); // Move to back of queue after adding
-    showSuccessToast(`Added ${getActivityName(id)}!`);
+    showSuccessToast(`${addedActivity} ${getActivityName(id)}!`);
   };
 
   const showSuccessToast = (message: string) => {
@@ -723,17 +795,17 @@ const InterestsTest: React.FC = () => {
 
         if (error) {
           console.error('Error saving to Supabase:', error);
-          showSuccessToast('Saved locally! (Supabase sync failed)');
+          showSuccessToast(savedLocallySupabaseFail);
         } else {
-          showSuccessToast('Your interests have been saved!');
+          showSuccessToast(interestsSaved);
         }
       } else {
         // User not signed in - just localStorage (already handled by setPreferences)
-        showSuccessToast('Your interests have been saved locally!');
+        showSuccessToast(interestsSavedLocally);
       }
     } catch (error) {
       console.error('Error in handleSave:', error);
-      showSuccessToast('Your interests have been saved locally!');
+      showSuccessToast(interestsSavedLocally);
     }
 
     // Redirect after toast
@@ -748,14 +820,14 @@ const InterestsTest: React.FC = () => {
     return (
       <>
         <Head>
-          <title>My Interests - Go Daisy</title>
+          <title>{pageTitle} - Go Daisy</title>
         </Head>
         <AppHeader />
         <div data-theme="light" className="min-h-[60vh] bg-base-100 text-base-content">
           <div className="container mx-auto max-w-3xl px-4 py-12">
             <div className="text-center">
               <div className="text-3xl mb-2">⏳</div>
-              <p>Loading your interests…</p>
+              <p>{loadingInterests}</p>
             </div>
           </div>
         </div>
@@ -766,7 +838,7 @@ const InterestsTest: React.FC = () => {
   return (
     <>
       <Head>
-        <title>My Interests - Go Daisy</title>
+        <title>{pageTitle} - Go Daisy</title>
       </Head>
       <div data-theme="light" className="min-h-screen bg-base-100 text-base-content">
         <AppHeader
@@ -779,9 +851,9 @@ const InterestsTest: React.FC = () => {
         <div className="container mx-auto max-w-4xl px-4 py-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold">Your Interests</h1>
+            <h1 className="text-3xl font-bold">{pageTitle}</h1>
             <p className="text-base-content/70">
-              Select activities you enjoy or want to try. We&apos;ll suggest the best days for each.
+              {pageDescription}
             </p>
           </div>
 
@@ -840,7 +912,7 @@ const InterestsTest: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex justify-center mt-8">
             <button onClick={handleSave} className="btn btn-primary btn-lg">
-              ✅ Save Changes
+              {saveChangesButton}
             </button>
           </div>
         </div>

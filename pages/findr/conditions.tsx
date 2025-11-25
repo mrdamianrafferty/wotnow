@@ -46,8 +46,8 @@ const FindrConditionsRoute: React.FC = () => {
     setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
-  const { location, findrLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
-  const contextLocation = findrLocation ?? location;
+  const { location, findrLocation, homeLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
+  const contextLocation = findrLocation ?? homeLocation ?? location;
   const locationRectangle = contextLocation?.rectangleCode ?? null;
   const hasLocation = Boolean(contextLocation?.lat && contextLocation?.lon);
 

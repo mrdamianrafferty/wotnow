@@ -39,6 +39,26 @@ export default class MyDocument extends Document {
 
   {/* Google Maps API - now loaded lazily via lib/googleMapsLazy.ts when needed */}
   {/* Removed synchronous script to improve initial page load performance */}
+
+  {/* Cookie consent banner (Go Daisy + Findr) */}
+  <script
+    dangerouslySetInnerHTML={{
+      __html: `(() => {
+        if (typeof window === 'undefined') return;
+        const host = window.location.hostname || '';
+        let src = '//cdn.cookie-script.com/s/3f706315ee259f92cd8374e4d3d1d9ad.js';
+        if (host.includes('fishfindr') || host.includes('findr')) {
+          src = '//cdn.cookie-script.com/s/cbca916912f8ea2e15a91f35dc2880e5.js';
+        }
+        const node = document.createElement('script');
+        node.type = 'text/javascript';
+        node.charset = 'UTF-8';
+        node.src = src;
+        node.async = true;
+        document.head.appendChild(node);
+      })();`,
+    }}
+  />
 </Head>
         <body>
           <Main />
