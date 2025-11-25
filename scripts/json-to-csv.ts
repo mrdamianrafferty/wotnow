@@ -28,7 +28,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Configuration
-const INPUT_FILE = path.join(process.cwd(), 'godaisy-text-strings.json');
+const DEFAULT_INPUT_FILE = path.join(process.cwd(), 'godaisy-text-strings-clean.json');
 const OUTPUT_FILE = path.join(process.cwd(), 'godaisy-text-strings.csv');
 
 interface TextString {
@@ -104,14 +104,19 @@ function convertToCSV(strings: TextString[]): string {
 function main() {
   console.log('📄 Converting JSON to CSV...\n');
 
+  // Get input file (use command line arg or default)
+  const inputFile = process.argv[2] || DEFAULT_INPUT_FILE;
+
   // Read JSON file
-  if (!fs.existsSync(INPUT_FILE)) {
-    console.error(`❌ Error: ${INPUT_FILE} not found`);
+  if (!fs.existsSync(inputFile)) {
+    console.error(`❌ Error: ${inputFile} not found`);
     console.error('   Run "npx tsx scripts/extract-godaisy-text.ts" first');
+    console.error('   Then run "npx tsx scripts/clean-extracted-text.ts"');
     process.exit(1);
   }
 
-  const jsonContent = fs.readFileSync(INPUT_FILE, 'utf-8');
+  console.log(`📂 Reading: ${path.basename(inputFile)}`);
+  const jsonContent = fs.readFileSync(inputFile, 'utf-8');
   const strings: TextString[] = JSON.parse(jsonContent);
 
   console.log(`📊 Processing ${strings.length} strings...`);

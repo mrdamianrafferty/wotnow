@@ -1,858 +1,349 @@
 text_key,text_en,text_es,text_fr,text_pt,text_de,text_it,text_nl,text_pl,text_tr,text_sv,context,page,category
-index.label._utils_weatherlabels_1,../utils/weatherLabels,,,,,,,,,,Line 29: } from '../utils/weatherLabels';,index,label
-index.label.__2,: ''},,,,,,,,,,Line 51: destination: `/auth/callback${params.toString() ? `?${params.toString()}` : ''}`,index,label
-index.label.indooralternative_3,indoorAlternative,,,,,,,,,,Line 86: evaluation: 'perfect' | 'good' | 'fair' | 'poor' | 'indoor' | 'indoorAlternative,index,label
-index.label.windsock_svg_4,windsock.svg,,,,,,,,,,Line 100: iconName = 'windsock.svg';,index,label
-index.label.wind_svg_5,wind.svg,,,,,,,,,,Line 106: iconName = 'wind.svg';,index,label
-index.paragraph.drop_shadow_0px_0px_3px_rgba_2_6,"drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))",,,,,,,,,,"Line 120: ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgb",index,paragraph
-index.label.no_store_7,no-store,,,,,,,,,,Line 189: cache: 'no-store',index,label
-index.label.failed_to_fetch_weather_data_8,Failed to fetch weather data,,,,,,,,,,Line 193: throw new Error('Failed to fetch weather data');,index,label
-index.label.marine_data_error__10,Marine data error:,,,,,,,,,,"Line 227: console.warn('Marine data error:', err);",index,label
-index.nav.marine_conditions_are_temporar_11,Marine conditions are temporarily unavailable. We’ll show land‑based suggestions for now.,,,,,,,,,,"Line 229: setMarineError(""Marine conditions are temporarily unavailable. We’ll show land‑b",index,nav
-index.label.12_00_00_12,12:00:00,,,,,,,,,,Line 276: currentEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntri,index,label
-index.label.en_gb_13,en-GB,,,,,,,,,,"Line 328: return isSameDay ? 'Today' : date.toLocaleDateString('en-GB', { weekday: 'long' ",index,label
-index.label._label__14,", label:",,,,,,,,,,"Line 332: if (score >= 90) return { emoji: '💯', label: 'Perfect', color: '#10b981' };",index,label
-index.label._color__15,", color:",,,,,,,,,,"Line 332: if (score >= 90) return { emoji: '💯', label: 'Perfect', color: '#10b981' };",index,label
-index.label.01d_24,01d,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.01n_25,01n,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.02d_26,02d,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.02n_27,02n,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.03d_28,03d,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.03n_29,03n,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.04d_30,04d,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.04n_31,04n,,,,,,,,,,"Line 346: '01d','01n','02d','02n','03d','03n','04d','04n',",index,label
-index.label.09d_32,09d,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.09n_33,09n,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.10d_34,10d,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.10n_35,10n,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.11d_36,11d,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.11n_37,11n,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.13d_38,13d,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.13n_39,13n,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.50d_40,50d,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label.50n_41,50n,,,,,,,,,,"Line 347: '09d','09n','10d','10n','11d','11n','13d','13n','50d','50n'",index,label
-index.label._weather_icons_design_fill_fin_42,/weather-icons/design/fill/final/na.svg,,,,,,,,,,Line 352: return '/weather-icons/design/fill/final/na.svg'; // fallback icon,index,label
-index.paragraph.loading__45,Loading...,,,,,,,,,,Line 642: return <div>Loading...</div>;,index,paragraph
-index.paragraph.please_set_your_home_location__46,Please set your home location to see suggestions.,,,,,,,,,,Line 646: return <div>Please set your home location to see suggestions.</div>;,index,paragraph
-index.label.3rem_47,3rem,,,,,,,,,,"Line 653: padding: '3rem',",index,label
-index.label._fefbf2_48,#fefbf2,,,,,,,,,,"Line 654: background: '#fefbf2',",index,label
-index.label.8px_49,8px,,,,,,,,,,"Line 655: borderRadius: '8px',",index,label
-index.label.1px_solid_fed7aa_50,1px solid #fed7aa,,,,,,,,,,"Line 656: border: '1px solid #fed7aa',",index,label
-index.label.2rem_51,2rem,,,,,,,,,,Line 657: margin: '2rem',index,label
-index.label.1rem_53,1rem,,,,,,,,,,"Line 659: <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎯</div>",index,label
-index.heading.no_activities_selected_54,No Activities Selected,,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
-index.heading._d97706_55,#d97706,,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
-index.heading.0_5rem_56,0.5rem,,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
-index.label._92400e_57,#92400e,,,,,,,,,,Line 661: <p style={{ color: '#92400e' }}>,index,label
-index.label._interests_58,/interests,,,,,,,,,,"Line 665: href=""/interests""",index,label
-index.label.inline_block_59,inline-block,,,,,,,,,,"Line 667: display: 'inline-block',",index,label
-index.label.12px_24px_61,12px 24px,,,,,,,,,,"Line 669: padding: '12px 24px',",index,label
-index.label.6px_63,6px,,,,,,,,,,"Line 673: borderRadius: '6px',",index,label
-index.label.1_1rem_64,1.1rem,,,,,,,,,,Line 675: fontSize: '1.1rem',index,label
-index.paragraph.loading_your_smart_recommendat_65,Loading your smart recommendations...,,,,,,,,,,Line 685: return <div>Loading your smart recommendations...</div>;,index,paragraph
-index.label.pick_your_home_location_66,Pick your home location,,,,,,,,,,"Line 700: title=""Pick your home location""",index,label
-index.label.alert_alert_warning_mx_4_my_2_67,alert alert-warning mx-4 my-2,,,,,,,,,,"Line 735: <div className=""alert alert-warning mx-4 my-2"">",index,label
-index.label.main_grid_68,main-grid,,,,,,,,,,"Line 739: <div className=""main-grid"">",index,label
-index.label.stargazing_69,stargazing,,,,,,,,,,Line 745: const hasStargazing = interests.includes('stargazing');,index,label
-index.label.astronomy_card_70,astronomy-card,,,,,,,,,,"Line 787: key=""astronomy-card""",index,label
-index.label.activity_card_enhanced_71,activity-card-enhanced,,,,,,,,,,"Line 795: className=""activity-card-enhanced""",index,label
-index.label.activity_card_overlay_72,activity-card-overlay,,,,,,,,,,"Line 803: <div className=""activity-card-overlay"" />",index,label
-index.label.activity_card_content_73,activity-card-content,,,,,,,,,,"Line 804: <div className=""activity-card-content"">",index,label
-index.label.weather_icon_topright_74,weather-icon-topright,,,,,,,,,,"Line 805: <div className=""weather-icon-topright"">",index,label
-index.label.weather_icon_77,weather icon,,,,,,,,,,Line 809: alt={day.description || 'weather icon'},index,label
-index.label.forecast_header_78,forecast-header,,,,,,,,,,"Line 819: <div className=""forecast-header"">",index,label
-index.label.date_info_79,date-info,,,,,,,,,,"Line 820: <div className=""date-info"">",index,label
-index.heading.date_label_80,date-label,,,,,,,,,,"Line 821: <h3 className=""date-label"">{dayLabel}</h3>",index,heading
-index.label.temperature_info_81,temperature-info,,,,,,,,,,"Line 824: <div className=""temperature-info"">",index,label
-index.label.temperature_label_82,temperature-label,,,,,,,,,,"Line 826: <span className=""temperature-label"">",index,label
-index.label.card_hero_activity_83,card__hero-activity,,,,,,,,,,"Line 867: className=""card__hero-activity""",index,label
-index.label.card_hero_icon_84,card__hero-icon,,,,,,,,,,"Line 878: <div className=""card__hero-icon"">",index,label
-index.label.50__85,50%,,,,,,,,,,"Line 885: style={{ borderRadius: '50%', cursor: 'pointer' }}",index,label
-index.label.card_hero_title_86,card__hero-title,,,,,,,,,,"Line 891: <div className=""card__hero-title"">",index,label
-index.label._activity_name_activityid_repl_87,"}`}>{activity?.name || activityId.replace(/_/g,",,,,,,,,,,Line 892: <div className={`card__hero-name ${isOutdoorActivity ? 'outdoor' : ''}`}>{activi,index,label
-index.label.card_hero_message_88,card__hero-message,,,,,,,,,,"Line 893: <div className=""card__hero-message"">{activityMessage}</div>",index,label
-index.label.card_score_badge_89,card__score-badge,,,,,,,,,,"Line 896: className=""card__score-badge""",index,label
-index.label.activity_suggestions_90,activity-suggestions,,,,,,,,,,"Line 914: <div className=""activity-suggestions"">",index,label
-index.label.activity_section_91,activity-section,,,,,,,,,,"Line 917: <div className=""activity-section"">",index,label
-index.heading.also_good_title_92,also-good-title,,,,,,,,,,"Line 918: <h4 className=""also-good-title"">💯 Also Perfect Today</h4>",index,heading
-index.label.also_good_list_93,also-good-list,,,,,,,,,,"Line 919: <ul className=""also-good-list"">",index,label
-index.label.also_good_item_94,also-good-item,,,,,,,,,,"Line 929: className=""also-good-item""",index,label
-index.label.also_good_score_95,also-good-score,,,,,,,,,,"Line 949: <span className=""also-good-score"">",index,label
-index.label.activity_list_good_98,activity-list-good,,,,,,,,,,"Line 971: <ul className=""activity-list-good"">",index,label
-index.label.activity_item_good_99,activity-item-good,,,,,,,,,,"Line 981: className=""activity-item-good""",index,label
-index.label.also_good_section_101,also-good-section,,,,,,,,,,"Line 1025: <div className=""also-good-section"">",index,label
-index.label.activity_card_actions_106,activity-card-actions,,,,,,,,,,"Line 1057: <div className=""activity-card-actions"">",index,label
-index.button.activity_card_btn_108,activity-card-btn,,,,,,,,,,"Line 1060: className=""activity-card-btn""",index,button
-index.label._activities_109,/activities,,,,,,,,,,"Line 1065: href=""/activities""",index,label
-support.label.https_apps_apple_com_app_id675_111,https://apps.apple.com/app/id6755695873,,,,,,,,,,"Line 16: const fallback = ""https://apps.apple.com/app/id6755695873"";",support,label
-support.label.support_go_daisy_112,Support Go Daisy,,,,,,,,,,Line 28: <title>Support Go Daisy</title>,support,label
-support.label.description_113,description,,,,,,,,,,"Line 30: name=""description""",support,label
-support.paragraph.join_the_go_daisy_community_on_114,"Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.",,,,,,,,,,"Line 31: content=""Join the Go Daisy community on Patreon or tip via Apple. Help cover wea",support,paragraph
-support.label.og_title_115,og:title,,,,,,,,,,"Line 33: <meta property=""og:title"" content=""Support Go Daisy"" />",support,label
-support.label.og_description_117,og:description,,,,,,,,,,"Line 35: property=""og:description""",support,label
-support.label.og_image_119,og:image,,,,,,,,,,"Line 38: <meta property=""og:image"" content=""/doggy.jpg"" />",support,label
-support.label._doggy_jpg_120,/doggy.jpg,,,,,,,,,,"Line 38: <meta property=""og:image"" content=""/doggy.jpg"" />",support,label
-support.label.og_type_121,og:type,,,,,,,,,,"Line 39: <meta property=""og:type"" content=""website"" />",support,label
-support.label.twitter_card_122,twitter:card,,,,,,,,,,"Line 40: <meta name=""twitter:card"" content=""summary_large_image"" />",support,label
-support.label.summary_large_image_123,summary_large_image,,,,,,,,,,"Line 40: <meta name=""twitter:card"" content=""summary_large_image"" />",support,label
-support.label.twitter_title_124,twitter:title,,,,,,,,,,"Line 41: <meta name=""twitter:title"" content=""Support Go Daisy"" />",support,label
-support.label.twitter_description_126,twitter:description,,,,,,,,,,"Line 43: name=""twitter:description""",support,label
-support.label.twitter_image_128,twitter:image,,,,,,,,,,"Line 46: <meta name=""twitter:image"" content=""/doggy.jpg"" />",support,label
-support.label.min_h_screen_bg_base_100_text__130,min-h-screen bg-base-100 text-base-content,,,,,,,,,,"Line 50: <div data-theme=""light"" className=""min-h-screen bg-base-100 text-base-content"">",support,label
-support.label.container_mx_auto_max_w_3xl_px_131,container mx-auto max-w-3xl px-4 py-10 space-y-10,,,,,,,,,,"Line 53: <main className=""container mx-auto max-w-3xl px-4 py-10 space-y-10"">",support,label
-support.label.card_bg_base_200_shadow_sm_132,card bg-base-200 shadow-sm,,,,,,,,,,"Line 55: <div className=""card bg-base-200 shadow-sm"">",support,label
-support.label.card_body_space_y_4_133,card-body space-y-4,,,,,,,,,,"Line 56: <div className=""card-body space-y-4"">",support,label
-support.heading.keep_go_daisy_blooming_134,Keep Go Daisy Blooming,,,,,,,,,,"Line 57: <h2 className=""card-title text-3xl text-base-content"">Keep Go Daisy Blooming</h2",support,heading
-support.heading.card_title_text_3xl_text_base__135,card-title text-3xl text-base-content,,,,,,,,,,"Line 57: <h2 className=""card-title text-3xl text-base-content"">Keep Go Daisy Blooming</h2",support,heading
-support.label.leading_relaxed_text_base_cont_136,leading-relaxed text-base-content,,,,,,,,,,"Line 58: <p className=""leading-relaxed text-base-content"">",support,label
-support.paragraph.flex_flex_wrap_gap_2_text_xs_o_137,flex flex-wrap gap-2 text-xs opacity-80 text-base-content,,,,,,,,,,"Line 64: <div className=""flex flex-wrap gap-2 text-xs opacity-80 text-base-content"">",support,paragraph
-support.label.community_first_138,Community-first,,,,,,,,,,"Line 65: <span className=""badge badge-outline"">Community-first</span>",support,label
-support.label.badge_badge_outline_139,badge badge-outline,,,,,,,,,,"Line 65: <span className=""badge badge-outline"">Community-first</span>",support,label
-support.label.no_paywalls_140,No paywalls,,,,,,,,,,"Line 66: <span className=""badge badge-outline"">No paywalls</span>",support,label
-support.label.grid_gap_6_sm_grid_cols_2_143,grid gap-6 sm:grid-cols-2,,,,,,,,,,"Line 73: <div className=""grid gap-6 sm:grid-cols-2"">",support,label
-support.label.card_bg_base_200_144,card bg-base-200,,,,,,,,,,"Line 75: <div className=""card bg-base-200"">",support,label
-support.label.card_body_space_y_3_145,card-body space-y-3,,,,,,,,,,"Line 76: <div className=""card-body space-y-3"">",support,label
-support.heading.join_us_on_patreon_146,Join us on Patreon,,,,,,,,,,"Line 77: <h2 className=""card-title text-lg text-base-content"">Join us on Patreon</h2>",support,heading
-support.heading.card_title_text_lg_text_base_c_147,card-title text-lg text-base-content,,,,,,,,,,"Line 77: <h2 className=""card-title text-lg text-base-content"">Join us on Patreon</h2>",support,heading
-support.label.text_base_content_148,text-base-content,,,,,,,,,,"Line 78: <p className=""text-base-content"">",support,label
-support.button.btn_btn_primary_149,btn btn-primary,,,,,,,,,,"Line 83: className=""btn btn-primary""",support,button
-support.label.https_patreon_com_godaisy_150,https://patreon.com/GoDaisy,,,,,,,,,,"Line 84: href=""https://patreon.com/GoDaisy""",support,label
-support.label.noopener_noreferrer_151,noopener noreferrer,,,,,,,,,,"Line 86: rel=""noopener noreferrer""",support,label
-support.heading.apple_tip_jar_154,Apple Tip Jar,,,,,,,,,,"Line 96: <h2 className=""card-title text-lg text-base-content"">Apple Tip Jar</h2>",support,heading
-support.label._coffee_157,☕ Coffee,,,,,,,,,,"Line 101: {[{label:""☕ Coffee"", amount:2}, {label:""🍺 Pint"", amount:5}, {label:""🌼 Daisy Bo",support,label
-support.label._pint_158,🍺 Pint,,,,,,,,,,"Line 101: {[{label:""☕ Coffee"", amount:2}, {label:""🍺 Pint"", amount:5}, {label:""🌼 Daisy Bo",support,label
-support.label._daisy_boost_159,🌼 Daisy Boost,,,,,,,,,,"Line 101: {[{label:""☕ Coffee"", amount:2}, {label:""🍺 Pint"", amount:5}, {label:""🌼 Daisy Bo",support,label
-support.button.btn_btn_outline_160,btn btn-outline,,,,,,,,,,"Line 104: className=""btn btn-outline""",support,button
-support.label.ml_2_font_semibold_161,ml-2 font-semibold,,,,,,,,,,"Line 108: <span className=""ml-2 font-semibold"">€{t.amount}</span>",support,label
-support.label.card_body_163,card-body,,,,,,,,,,"Line 117: <div className=""card-body"">",support,label
-support.heading.transparency_164,Transparency,,,,,,,,,,"Line 118: <h2 className=""card-title text-lg text-base-content"">Transparency</h2>",support,heading
-support.other.list_disc_pl_5_space_y_2_text__166,list-disc pl-5 space-y-2 text-sm text-base-content,,,,,,,,,,"Line 119: <ul className=""list-disc pl-5 space-y-2 text-sm text-base-content"">",support,other
-support.paragraph.no_features_are_gated_behind_s_167,No features are gated behind support. Everyone gets the same forecast.,,,,,,,,,,Line 121: <li>No features are gated behind support. Everyone gets the same forecast.</li>,support,paragraph
-support.label.space_y_3_168,space-y-3,,,,,,,,,,"Line 128: <div className=""space-y-3"">",support,label
-support.heading.frequently_asked_questions_169,Frequently asked questions,,,,,,,,,,"Line 129: <h2 className=""text-lg font-semibold text-base-content"">Frequently asked questio",support,heading
-support.heading.text_lg_font_semibold_text_bas_170,text-lg font-semibold text-base-content,,,,,,,,,,"Line 129: <h2 className=""text-lg font-semibold text-base-content"">Frequently asked questio",support,heading
-support.label.collapse_collapse_arrow_bg_bas_171,collapse collapse-arrow bg-base-200,,,,,,,,,,"Line 131: <div className=""collapse collapse-arrow bg-base-200"">",support,label
-support.paragraph.does_support_unlock_features__172,Does support unlock features?,,,,,,,,,,"Line 133: <div className=""collapse-title text-base font-medium text-base-content"">Does sup",support,paragraph
-support.paragraph.collapse_title_text_base_font__173,collapse-title text-base font-medium text-base-content,,,,,,,,,,"Line 133: <div className=""collapse-title text-base font-medium text-base-content"">Does sup",support,paragraph
-support.label.collapse_content_174,collapse-content,,,,,,,,,,"Line 134: <div className=""collapse-content"">",support,label
-support.paragraph.afraid_not_support_keeps_the_l_175,"Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.",,,,,,,,,,"Line 135: <p className=""text-base-content"">Afraid not. Support keeps the lights on and the",support,paragraph
-support.paragraph.can_i_cancel_any_time__178,Can I cancel any time?,,,,,,,,,,"Line 141: <div className=""collapse-title text-base font-medium text-base-content"">Can I ca",support,paragraph
-support.paragraph.other_ways_to_help__183,Other ways to help?,,,,,,,,,,"Line 149: <div className=""collapse-title text-base font-medium text-base-content"">Other wa",support,paragraph
-support.paragraph.tell_a_friend_start_a_plan_or__186,"Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.",,,,,,,,,,"Line 151: <p className=""text-base-content"">Tell a friend, start a plan, or share your favo",support,paragraph
-whether-weather.label.whether_weather_go_daisy_188,Whether Weather - Go Daisy,,,,,,,,,,Line 21: <title>Whether Weather - Go Daisy</title>,whether-weather,label
-whether-weather.label.min_h_screen_bg_base_200_189,min-h-screen bg-base-200,,,,,,,,,,"Line 25: <main className=""min-h-screen bg-base-200"">",whether-weather,label
-whether-weather.label.hero_bg_base_100_70_190,hero bg-base-100/70,,,,,,,,,,"Line 27: <section className=""hero bg-base-100/70"">",whether-weather,label
-whether-weather.label.hero_content_text_center_max_w_191,hero-content text-center max-w-5xl,,,,,,,,,,"Line 28: <div className=""hero-content text-center max-w-5xl"">",whether-weather,label
-whether-weather.label.w_full_192,w-full,,,,,,,,,,"Line 33: className=""w-full""",whether-weather,label
-whether-weather.heading.text_3xl_sm_text_5xl_font_extr_193,text-3xl sm:text-5xl font-extrabold leading-tight text-base-content,,,,,,,,,,"Line 36: <h1 className=""text-3xl sm:text-5xl font-extrabold leading-tight text-base-conte",whether-weather,heading
-whether-weather.paragraph.mx_auto_max_w_6xl_px_4_sm_px_6_194,mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12,,,,,,,,,,"Line 47: <section className=""mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12"">",whether-weather,paragraph
-whether-weather.label.grid_grid_cols_1_lg_grid_cols__195,grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10,,,,,,,,,,"Line 48: <div className=""grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10"">",whether-weather,label
-whether-weather.label.lg_col_span_3_order_last_lg_or_196,lg:col-span-3 order-last lg:order-first,,,,,,,,,,"Line 50: <aside className=""lg:col-span-3 order-last lg:order-first"">",whether-weather,label
-whether-weather.label.card_bg_base_100_shadow_sm_sti_197,card bg-base-100 shadow-sm sticky top-4,,,,,,,,,,"Line 51: <nav className=""card bg-base-100 shadow-sm sticky top-4"">",whether-weather,label
-whether-weather.heading.on_this_page_199,On this page,,,,,,,,,,"Line 53: <h2 className=""card-title text-base text-base-content"">On this page</h2>",whether-weather,heading
-whether-weather.heading.card_title_text_base_text_base_200,card-title text-base text-base-content,,,,,,,,,,"Line 53: <h2 className=""card-title text-base text-base-content"">On this page</h2>",whether-weather,heading
-whether-weather.label.menu_menu_sm_text_base_content_201,menu menu-sm text-base-content,,,,,,,,,,"Line 54: <ul className=""menu menu-sm text-base-content"">",whether-weather,label
-whether-weather.link.a_familiar_frustration_202,A familiar frustration,,,,,,,,,,"Line 55: <li><a href=""#opening"" className=""text-base-content"">A familiar frustration</a><",whether-weather,link
-whether-weather.link._opening_203,#opening,,,,,,,,,,"Line 55: <li><a href=""#opening"" className=""text-base-content"">A familiar frustration</a><",whether-weather,link
-whether-weather.link._coverage_205,#coverage,,,,,,,,,,"Line 56: <li><a href=""#coverage"" className=""text-base-content"">Sparse sensors & microclim",whether-weather,link
-whether-weather.link._instruments_207,#instruments,,,,,,,,,,"Line 57: <li><a href=""#instruments"" className=""text-base-content"">Instrument quirks & dat",whether-weather,link
-whether-weather.link._models_209,#models,,,,,,,,,,"Line 58: <li><a href=""#models"" className=""text-base-content"">Models & resolution limits</",whether-weather,link
-whether-weather.link.politics_in_the_weather_211,Politics in the weather,,,,,,,,,,"Line 59: <li><a href=""#politics"" className=""text-base-content"">Politics in the weather</a",whether-weather,link
-whether-weather.link._politics_212,#politics,,,,,,,,,,"Line 59: <li><a href=""#politics"" className=""text-base-content"">Politics in the weather</a",whether-weather,link
-whether-weather.link.coping_smartly_214,Coping smartly,,,,,,,,,,"Line 60: <li><a href=""#cope"" className=""text-base-content"">Coping smartly</a></li>",whether-weather,link
-whether-weather.link._cope_215,#cope,,,,,,,,,,"Line 60: <li><a href=""#cope"" className=""text-base-content"">Coping smartly</a></li>",whether-weather,link
-whether-weather.link._wrap_217,#wrap,,,,,,,,,,"Line 61: <li><a href=""#wrap"" className=""text-base-content"">In short…</a></li>",whether-weather,link
-whether-weather.label.divider_my_2_219,divider my-2,,,,,,,,,,"Line 64: <div className=""divider my-2""></div>",whether-weather,label
-whether-weather.label.text_sm_text_base_content_70_220,text-sm text-base-content/70,,,,,,,,,,"Line 65: <div className=""text-sm text-base-content/70"">",whether-weather,label
-whether-weather.label.mb_2_221,mb-2,,,,,,,,,,"Line 66: <p className=""mb-2"">Quick tip:</p>",whether-weather,label
-whether-weather.paragraph.always_keep_a_compact_brolly_i_222,Always keep a compact brolly in your bag.,,,,,,,,,,"Line 67: <p className=""flex items-start gap-2""><Umbrella className=""w-4 h-4 mt-0.5""/> Alw",whether-weather,paragraph
-whether-weather.label.flex_items_start_gap_2_223,flex items-start gap-2,,,,,,,,,,"Line 67: <p className=""flex items-start gap-2""><Umbrella className=""w-4 h-4 mt-0.5""/> Alw",whether-weather,label
-whether-weather.label.w_4_h_4_mt_0_5_224,w-4 h-4 mt-0.5,,,,,,,,,,"Line 67: <p className=""flex items-start gap-2""><Umbrella className=""w-4 h-4 mt-0.5""/> Alw",whether-weather,label
-whether-weather.paragraph.check_two_sources_when_it_look_225,Check two sources when it looks marginal.,,,,,,,,,,"Line 68: <p className=""flex items-start gap-2 mt-1""><Wind className=""w-4 h-4 mt-0.5""/> Ch",whether-weather,paragraph
-whether-weather.label.flex_items_start_gap_2_mt_1_226,flex items-start gap-2 mt-1,,,,,,,,,,"Line 68: <p className=""flex items-start gap-2 mt-1""><Wind className=""w-4 h-4 mt-0.5""/> Ch",whether-weather,label
-whether-weather.label.lg_col_span_9_228,lg:col-span-9,,,,,,,,,,"Line 75: <article className=""lg:col-span-9"">",whether-weather,label
-whether-weather.label.card_bg_base_100_shadow_229,card bg-base-100 shadow,,,,,,,,,,"Line 76: <div className=""card bg-base-100 shadow"">",whether-weather,label
-whether-weather.paragraph.prose_prose_sm_sm_prose_lg_pro_231,prose prose-sm sm:prose lg:prose-lg max-w-none text-base-content,,,,,,,,,,"Line 78: <div className=""prose prose-sm sm:prose lg:prose-lg max-w-none text-base-content",whether-weather,paragraph
-whether-weather.heading.mt_8_232,mt-8,,,,,,,,,,"Line 89: <h2 className=""mt-8"">Sensors aren’t everywhere (and microclimates are sneaky)</h",whether-weather,heading
-whether-weather.label.instruments_233,instruments,,,,,,,,,,"Line 102: <section id=""instruments"">",whether-weather,label
-whether-weather.heading.a_dash_of_politics_236,A dash of politics,,,,,,,,,,"Line 124: <h2 className=""mt-8"">A dash of politics</h2>",whether-weather,heading
-whether-weather.label.alert_alert_warning_text_base__238,alert alert-warning text-base-content,,,,,,,,,,"Line 125: <div className=""alert alert-warning text-base-content"">",whether-weather,label
-whether-weather.label.w_5_h_5_239,w-5 h-5,,,,,,,,,,"Line 126: <Cloud className=""w-5 h-5"" />",whether-weather,label
-whether-weather.label.mt_2_240,mt-2,,,,,,,,,,"Line 133: <p className=""mt-2"">",whether-weather,label
-whether-weather.heading.how_to_keep_calm_and_weather_o_241,How to keep calm and weather on,,,,,,,,,,"Line 140: <h2 className=""mt-8"">How to keep calm and weather on</h2>",whether-weather,heading
-whether-weather.label.grid_sm_grid_cols_2_gap_4_mt_4_243,grid sm:grid-cols-2 gap-4 mt-4,,,,,,,,,,"Line 156: <div className=""grid sm:grid-cols-2 gap-4 mt-4"">",whether-weather,label
-whether-weather.heading.quick_practice_246,Quick practice,,,,,,,,,,"Line 159: <h3 className=""card-title text-base text-base-content""><Zap className=""w-4 h-4""/",whether-weather,heading
-whether-weather.heading.w_4_h_4_248,w-4 h-4,,,,,,,,,,"Line 159: <h3 className=""card-title text-base text-base-content""><Zap className=""w-4 h-4""/",whether-weather,heading
-whether-weather.heading.local_cues_252,Local cues,,,,,,,,,,"Line 165: <h3 className=""card-title text-base text-base-content""><Wind className=""w-4 h-4""",whether-weather,heading
-whether-weather.label.container_mx_auto_p_4_257,container mx-auto p-4,,,,,,,,,,"Line 197: <div className=""container mx-auto p-4"">",whether-weather,label
-aboutus.label.about_us_go_daisy_258,About Us - Go Daisy,,,,,,,,,,Line 10: <title>About Us - Go Daisy</title>,AboutUs,label
-aboutus.paragraph.min_h_screen_bg_base_100_text__259,min-h-screen bg-base-100 text-base-content p-6 md:p-12,,,,,,,,,,"Line 14: <main className=""min-h-screen bg-base-100 text-base-content p-6 md:p-12"">",AboutUs,paragraph
-aboutus.paragraph.max_w_4xl_mx_auto_bg_base_200__260,max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg,,,,,,,,,,"Line 15: <div className=""max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg"">",AboutUs,paragraph
-aboutus.heading.about_us_261,About Us,,,,,,,,,,"Line 16: <h1 className=""text-4xl font-bold mb-6"">About Us</h1>",AboutUs,heading
-aboutus.heading.text_4xl_font_bold_mb_6_262,text-4xl font-bold mb-6,,,,,,,,,,"Line 16: <h1 className=""text-4xl font-bold mb-6"">About Us</h1>",AboutUs,heading
-aboutus.label.mb_8_flex_flex_col_items_cente_263,mb-8 flex flex-col items-center,,,,,,,,,,"Line 18: <div className=""mb-8 flex flex-col items-center"">",AboutUs,label
-aboutus.label._bruno_jpeg_264,/bruno.jpeg,,,,,,,,,,"Line 20: src=""/bruno.jpeg""",AboutUs,label
-aboutus.label.bruno_enjoying_the_river_265,Bruno enjoying the river,,,,,,,,,,"Line 21: alt=""Bruno enjoying the river""",AboutUs,label
-aboutus.label.rounded_xl_shadow_lg_w_full_ma_266,rounded-xl shadow-lg w-full max-w-md,,,,,,,,,,"Line 24: className=""rounded-xl shadow-lg w-full max-w-md""",AboutUs,label
-aboutus.label.bruno_chief_happiness_officer_267,"Bruno, Chief Happiness Officer",,,,,,,,,,"Line 26: <span className=""text-secondary mt-4 text-lg font-semibold"">Bruno, Chief Happine",AboutUs,label
-aboutus.label.text_secondary_mt_4_text_lg_fo_268,text-secondary mt-4 text-lg font-semibold,,,,,,,,,,"Line 26: <span className=""text-secondary mt-4 text-lg font-semibold"">Bruno, Chief Happine",AboutUs,label
-aboutus.label.mb_4_leading_relaxed_269,mb-4 leading-relaxed,,,,,,,,,,"Line 29: <p className=""mb-4 leading-relaxed"">",AboutUs,label
-aboutus.label.go_daisy_270,Go Daisy,,,,,,,,,,Line 30: Welcome to <strong>Go Daisy</strong> — where it’s pretty much just one man and h,AboutUs,label
-aboutus.label.get_people_off_their_phones_273,get people off their phones,,,,,,,,,,"Line 42: not just to predict or inform, but to <em>get people off their phones</em> and b",AboutUs,label
-aboutus.label.mb_6_leading_relaxed_276,mb-6 leading-relaxed,,,,,,,,,,"Line 55: <p className=""mb-6 leading-relaxed"">",AboutUs,label
-aboutus.label.mt_8_text_sm_text_secondary_277,mt-8 text-sm text-secondary,,,,,,,,,,"Line 64: <p className=""mt-8 text-sm text-secondary"">",AboutUs,label
-activities.label.use_client_278,use client,,,,,,,,,,Line 18: 'use client';,activities,label
-activities.label.kitesurfing_280,kitesurfing,,,,,,,,,,"Line 62: 'surfing', 'kitesurfing', 'windsurfing', 'sea_kayaking', 'canoeing',",activities,label
-activities.label.windsurfing_281,windsurfing,,,,,,,,,,"Line 62: 'surfing', 'kitesurfing', 'windsurfing', 'sea_kayaking', 'canoeing',",activities,label
-activities.label.sea_kayaking_282,sea_kayaking,,,,,,,,,,"Line 62: 'surfing', 'kitesurfing', 'windsurfing', 'sea_kayaking', 'canoeing',",activities,label
-activities.label.snorkeling_283,snorkeling,,,,,,,,,,"Line 63: 'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea'",activities,label
-activities.label.scuba_diving_284,scuba_diving,,,,,,,,,,"Line 63: 'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea'",activities,label
-activities.label.jet_skiing_285,jet_skiing,,,,,,,,,,"Line 63: 'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea'",activities,label
-activities.label.stand_up_paddleboarding_286,stand_up_paddleboarding,,,,,,,,,,"Line 63: 'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea'",activities,label
-activities.label.sea_swimming_287,sea_swimming,,,,,,,,,,"Line 63: 'snorkeling', 'scuba_diving', 'jet_skiing', 'stand_up_paddleboarding', 'sup_sea'",activities,label
-activities.label.sea_fishing_shore_288,sea_fishing_shore,,,,,,,,,,"Line 64: 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'",activities,label
-activities.label.beach_volleyball_289,beach_volleyball,,,,,,,,,,"Line 64: 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'",activities,label
-activities.label.sea_fishing_boat_290,sea_fishing_boat,,,,,,,,,,"Line 64: 'sea_fishing_shore', 'beach', 'beach_volleyball', 'sea_fishing_boat'",activities,label
-activities.label._weather_icons_design_fill_fin_291,/weather-icons/design/fill/final/humidity.svg,,,,,,,,,,Line 68: const humidityIcon = '/weather-icons/design/fill/final/humidity.svg';,activities,label
-activities.paragraph._weather_icons_design_fill_fin_292,/weather-icons/design/fill/final/raindrop-measure.svg,,,,,,,,,,Line 69: const rainIcon = '/weather-icons/design/fill/final/raindrop-measure.svg';,activities,paragraph
-activities.label._weather_icons_design_fill_fin_312,/weather-icons/design/fill/final/windsock.svg,,,,,,,,,,Line 94: if (beaufort < 3) return '/weather-icons/design/fill/final/windsock.svg';,activities,label
-activities.label._weather_icons_design_fill_fin_313,/weather-icons/design/fill/final/wind.svg,,,,,,,,,,Line 96: return '/weather-icons/design/fill/final/wind.svg';,activities,label
-activities.label._8b5cf6_314,#8b5cf6,,,,,,,,,,"Line 111: color: '#8b5cf6',",activities,label
-activities.label._10b981_315,#10b981,,,,,,,,,,"Line 118: color: '#10b981',",activities,label
-activities.label._3b82f6_316,#3b82f6,,,,,,,,,,"Line 123: color: '#3b82f6',",activities,label
-activities.label._f59e0b_317,#f59e0b,,,,,,,,,,"Line 128: color: '#f59e0b',",activities,label
-activities.label._ef4444_318,#ef4444,,,,,,,,,,"Line 133: color: '#ef4444',",activities,label
-activities.label._dc2626_319,#dc2626,,,,,,,,,,"Line 138: color: '#dc2626',",activities,label
-activities.label.snowboarding_321,snowboarding,,,,,,,,,,"Line 208: const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice",activities,label
-activities.label.cross_country_skiing_322,cross_country_skiing,,,,,,,,,,"Line 208: const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice",activities,label
-activities.label.ice_skating_323,ice_skating,,,,,,,,,,"Line 208: const winterActivities = ['skiing', 'snowboarding', 'cross_country_skiing', 'ice",activities,label
-activities.label.__324,) :,,,,,,,,,,"Line 228: ? `${activity?.name || (activityId ? activityId.replace(/_/g, ' ') : 'Activity')",activities,label
-activities.paragraph.weather_conditions_vary_check__325,Weather conditions vary - check the details below.,,,,,,,,,,"Line 229: : activityId ? getActivityMessage(activityId, assessment.status, reasonsObjects)",activities,paragraph
-activities.label.impossible_326,impossible,,,,,,,,,,"Line 264: 'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'",activities,label
-activities.label.unplayable_327,unplayable,,,,,,,,,,"Line 264: 'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'",activities,label
-activities.label.snowfall_unsafe_328,snowfall_unsafe,,,,,,,,,,"Line 264: 'dangerous', 'unsafe', 'impossible', 'unplayable', 'too_deep', 'snowfall_unsafe'",activities,label
-activities.label.activity_card_activity_card_bg_329,activity-card activity-card__bg-image,,,,,,,,,,"Line 283: className=""activity-card activity-card__bg-image""",activities,label
-activities.label.activity_card_header_330,activity-card__header,,,,,,,,,,"Line 292: <div className=""activity-card__header"">",activities,label
-activities.label.activity_card_title_section_331,activity-card__title-section,,,,,,,,,,"Line 293: <div className=""activity-card__title-section"">",activities,label
-activities.label.activity_card_emoji_332,activity-card__emoji,,,,,,,,,,"Line 294: <span className=""activity-card__emoji"">",activities,label
-activities.heading.activity_card_title_333,activity-card__title,,,,,,,,,,"Line 297: <h3 className=""activity-card__title"">",activities,heading
-activities.label.activity_card_badges_335,activity-card__badges,,,,,,,,,,"Line 303: <div className=""activity-card__badges"">",activities,label
-activities.label.activity_card_badge_indoor_336,activity-card__badge--indoor,,,,,,,,,,Line 305: activityId && !isOutdoor(activityId) ? 'activity-card__badge--indoor' :,activities,label
-activities.label.activity_card_badge_offseason_337,activity-card__badge--offseason,,,,,,,,,,Line 306: assessment.status === 'offseason' ? 'activity-card__badge--offseason' : '',activities,label
-activities.button.activity_card_share_btn_338,activity-card__share-btn,,,,,,,,,,"Line 322: className=""activity-card__share-btn""",activities,button
-activities.label.activity_card_message_339,activity-card__message,,,,,,,,,,"Line 332: <div className=""activity-card__message"">",activities,label
-activities.label._but_still_an_option_if_you_341,")}, but still an option if you",,,,,,,,,,Line 334: `Not ideal weather for ${activity?.name || (activityId ? activityId.replace(/_/g,activities,label
-activities.label.bg_red_600_text_white_342,bg-red-600 text-white,,,,,,,,,,Line 343: (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(sn,activities,label
-activities.label.bg_emerald_500_text_white_343,bg-emerald-500 text-white,,,,,,,,,,Line 344: : 'bg-emerald-500 text-white'),activities,label
-activities.other._weather_icons_design_fill_fin_344,/weather-icons/design/fill/final/overcast-snow.svg,,,,,,,,,,Line 346: <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/,activities,other
-activities.label._weather_icons_design_fill_fin_345,/weather-icons/design/fill/final/snowman.svg,,,,,,,,,,Line 346: <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/,activities,label
-activities.label.snow_advisory_346,Snow advisory,,,,,,,,,,Line 346: <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/,activities,label
-activities.label.activity_card_data_bar_347,activity-card__data-bar,,,,,,,,,,"Line 352: <div className=""activity-card__data-bar"">",activities,label
-activities.label.activity_card_data_list_348,activity-card__data-list,,,,,,,,,,"Line 353: <ul className=""activity-card__data-list"">",activities,label
-activities.label.activity_card_data_item_349,activity-card__data-item,,,,,,,,,,"Line 358: <li className=""activity-card__data-item"">",activities,label
-activities.paragraph._weather_icons_design_fill_fin_350,/weather-icons/design/fill/final/thermometer-celsius.svg,,,,,,,,,,"Line 359: <Image src=""/weather-icons/design/fill/final/thermometer-celsius.svg"" alt=""Air t",activities,paragraph
-activities.label.air_temperature_351,Air temperature,,,,,,,,,,"Line 359: <Image src=""/weather-icons/design/fill/final/thermometer-celsius.svg"" alt=""Air t",activities,label
-activities.label.activity_card_data_icon_352,activity-card__data-icon,,,,,,,,,,"Line 360: className=""activity-card__data-icon"" width={24} height={24} />",activities,label
-activities.paragraph._weather_icons_design_fill_fin_354,/weather-icons/design/fill/final/thermometer-water.svg,,,,,,,,,,"Line 366: <Image src=""/weather-icons/design/fill/final/thermometer-water.svg"" alt=""Water t",activities,paragraph
-activities.label.water_temperature_355,Water temperature,,,,,,,,,,"Line 366: <Image src=""/weather-icons/design/fill/final/thermometer-water.svg"" alt=""Water t",activities,label
-activities.label.activity_card_data_icon_lg_358,activity-card__data-icon--lg,,,,,,,,,,"Line 375: className=""activity-card__data-icon--lg"" width={32} height={32} />",activities,label
-activities.label.precipitation_359,Precipitation,,,,,,,,,,"Line 380: <Image src={rainIcon} alt=""Precipitation""",activities,label
-activities.paragraph.activity_card_data_item_activi_363,activity-card__data-item activity-card__data-item--wrap,,,,,,,,,,"Line 394: <li className=""activity-card__data-item activity-card__data-item--wrap"">",activities,paragraph
-activities.label.wind_direction_wrapper_365,wind-direction-wrapper,,,,,,,,,,"Line 403: <div className=""wind-direction-wrapper"">",activities,label
-activities.label.wind_direction_icon_366,wind-direction-icon,,,,,,,,,,"Line 407: className=""wind-direction-icon""",activities,label
-activities.label.high_temperature_371,High Temperature,,,,,,,,,,"Line 438: <Image src=""/weather-icons/design/fill/final/thermometer-celsius.svg"" alt=""High ",activities,label
-activities.paragraph._weather_icons_design_fill_fin_374,/weather-icons/design/fill/final/thermometer-colder.svg,,,,,,,,,,"Line 445: <Image src=""/weather-icons/design/fill/final/thermometer-colder.svg"" alt=""Low Te",activities,paragraph
-activities.label.low_temperature_375,Low Temperature,,,,,,,,,,"Line 445: <Image src=""/weather-icons/design/fill/final/thermometer-colder.svg"" alt=""Low Te",activities,label
-activities.label.temperature_379,Temperature,,,,,,,,,,"Line 455: <Image src=""/weather-icons/design/fill/final/thermometer-celsius.svg"" alt=""Tempe",activities,label
-activities.label.wind_speed_additional_388,wind-speed-additional,,,,,,,,,,"Line 482: <span className=""wind-speed-additional"">",activities,label
-activities.label.activity_card_score_395,activity-card__score,,,,,,,,,,"Line 533: <div className=""activity-card__score"">",activities,label
-activities.label.day_tabs_397,day-tabs,,,,,,,,,,"Line 569: className=""day-tabs""",activities,label
-activities.label.forecast_days_398,Forecast days,,,,,,,,,,"Line 570: aria-label=""Forecast days""",activities,label
-activities.label._f8f9fa_400,#f8f9fa,,,,,,,,,,"Line 582: backgroundColor: isActive ? '#3b82f6' : '#f8f9fa',",activities,label
-activities.label._e5e7eb_402,#e5e7eb,,,,,,,,,,"Line 583: borderColor: isActive ? '#3b82f6' : '#e5e7eb',",activities,label
-activities.label._ffffff_403,#ffffff,,,,,,,,,,"Line 584: color: isActive ? '#ffffff' : '#374151',",activities,label
-activities.label._374151_404,#374151,,,,,,,,,,"Line 584: color: isActive ? '#ffffff' : '#374151',",activities,label
-activities.label.2px_405,2px,,,,,,,,,,"Line 585: borderWidth: '2px',",activities,label
-activities.label.0_75rem_1rem_406,0.75rem 1rem,,,,,,,,,,"Line 587: padding: '0.75rem 1rem',",activities,label
-activities.label.all_0_3s_ease_408,all 0.3s ease,,,,,,,,,,"Line 590: transition: 'all 0.3s ease',",activities,label
-activities.label.120px_409,120px,,,,,,,,,,"Line 591: minWidth: '120px',",activities,label
-activities.label.0_4px_12px_rgba_59_130_246_0_3_410,"0 4px 12px rgba(59, 130, 246, 0.3)",,,,,,,,,,"Line 595: boxShadow: isActive ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',",activities,label
-activities.label._e5f3ff_411,#e5f3ff,,,,,,,,,,Line 599: e.currentTarget.style.backgroundColor = '#e5f3ff';,activities,label
-activities.label._1e40af_413,#1e40af,,,,,,,,,,Line 601: e.currentTarget.style.color = '#1e40af';,activities,label
-activities.label.text_center_417,text-center,,,,,,,,,,"Line 613: <div className=""text-center"">",activities,label
-activities.label.0_9rem_418,0.9rem,,,,,,,,,,"Line 614: <div style={{ fontSize: '0.9rem', fontWeight: '600' }}>",activities,label
-activities.label.0_8rem_419,0.8rem,,,,,,,,,,"Line 617: <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: '2px' }}>",activities,label
-activities.label._router_query_all__421,|| router.query.all ===,,,,,,,,,,Line 665: const useAllActivities = router.query.allActivities === '1' || router.query.all ,activities,label
-activities.label._math_max_0_math_round_noonent_426,"] ? Math.max(0, Math.round(((noonEntry.snow[",,,,,,,,,,"Line 827: const snowfallRateMmH = noonEntry?.snow?.['3h'] ? Math.max(0, Math.round(((noonE",activities,label
-activities.label.basketball_outdoor_427,basketball_outdoor,,,,,,,,,,Line 875: if (currentDayData && selectedInterests.includes('basketball_outdoor')) {,activities,label
-activities.label.available_option_428,Available option,,,,,,,,,,"Line 929: evaluation: 'Available option',",activities,label
-activities.paragraph.conditions_vary_but_available__429,"Conditions vary, but available based on your interests",,,,,,,,,,"Line 930: reasoning: 'Conditions vary, but available based on your interests',",activities,paragraph
-activities.label.flex_items_center_justify_cent_430,flex items-center justify-center py-16,,,,,,,,,,"Line 977: <section className=""flex items-center justify-center py-16"">",activities,label
-activities.label.flex_items_center_431,flex items-center,,,,,,,,,,"Line 978: <div className=""flex items-center"">",activities,label
-activities.label.loading_loading_dots_loading_l_432,loading loading-dots loading-lg text-secondary,,,,,,,,,,"Line 979: <span className=""loading loading-dots loading-lg text-secondary"" aria-hidden=""tr",activities,label
-activities.label.loading_your_activities_433,Loading your activities,,,,,,,,,,"Line 980: <span className=""ml-3 text-base-content/80"">Loading your activities</span>",activities,label
-activities.label.ml_3_text_base_content_80_434,ml-3 text-base-content/80,,,,,,,,,,"Line 980: <span className=""ml-3 text-base-content/80"">Loading your activities</span>",activities,label
-activities.label.activities_435,Activities,,,,,,,,,,"Line 992: title=""Activities""",activities,label
-activities.paragraph.browse_all_your_selected_activ_436,"Browse all your selected activities with detailed weather conditions, scores, and recommendations for the next 8 days.",,,,,,,,,,"Line 993: description=""Browse all your selected activities with detailed weather condition",activities,paragraph
-activities.label.https_godaisy_io_activities_437,https://godaisy.io/activities,,,,,,,,,,"Line 994: url=""https://godaisy.io/activities""",activities,label
-activities.label.1200px_439,1200px,,,,,,,,,,"Line 1005: <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>",activities,label
-activities.label.0_auto_440,0 auto,,,,,,,,,,"Line 1005: <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>",activities,label
-activities.label._fef2f2_442,#fef2f2,,,,,,,,,,"Line 1011: background: '#fef2f2',",activities,label
-activities.label.1px_solid_fecaca_444,1px solid #fecaca,,,,,,,,,,Line 1013: border: '1px solid #fecaca',activities,label
-activities.heading.location_required_447,Location Required,,,,,,,,,,"Line 1016: <h2 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>Location Required</h2>",activities,heading
-activities.label._7f1d1d_450,#7f1d1d,,,,,,,,,,Line 1017: <p style={{ color: '#7f1d1d' }}>,activities,label
-activities.label.8px_16px_453,8px 16px,,,,,,,,,,"Line 1025: padding: '8px 16px',",activities,label
-activities.label.px_4_py_8_472,px-4 py-8,,,,,,,,,,"Line 1073: <div className=""px-4 py-8"">",activities,label
-activities.label.day_panel__480,day-panel-,,,,,,,,,,Line 1100: id={`${'day-panel-'}${String(activeDay)}`},activities,label
-activities.label.day_tab__481,day-tab-,,,,,,,,,,Line 1101: aria-labelledby={`${'day-tab-'}${String(activeDay)}`},activities,label
-activities.label.activities_grid_482,activities-grid,,,,,,,,,,"Line 1102: className=""activities-grid""",activities,label
-activities.label.empty_state_483,empty-state,,,,,,,,,,"Line 1105: <div className=""empty-state"">",activities,label
-activities.label.empty_state_icon_484,empty-state__icon,,,,,,,,,,"Line 1106: <div className=""empty-state__icon"">🤔</div>",activities,label
-activities.label.empty_state_text_485,empty-state__text,,,,,,,,,,"Line 1107: <div className=""empty-state__text"">",activities,label
-weather.label._types_weather_486,../types/weather,,,,,,,,,,"Line 28: } from ""../types/weather"";",weather,label
-weather.label._components_appheader_487,../components/AppHeader,,,,,,,,,,"Line 33: const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: false ",weather,label
-weather.label._components_coastallocationdia_488,../components/CoastalLocationDialog,,,,,,,,,,"Line 34: const CoastalLocationDialog = dynamic(() => import(""../components/CoastalLocatio",weather,label
-weather.paragraph.card_bg_slate_800_35_backdrop__489,card bg-slate-800/35 backdrop-blur-sm border border-white/10 shadow-sm animate-pulse,,,,,,,,,,"Line 39: <div className=""card bg-slate-800/35 backdrop-blur-sm border border-white/10 sha",weather,paragraph
-weather.label.card_body_p_4_h_32_490,card-body p-4 h-32,,,,,,,,,,"Line 40: <div className=""card-body p-4 h-32""></div>",weather,label
-weather.label._components_weather_cards_sunr_491,../components/weather-cards/SunriseSunsetCard,,,,,,,,,,"Line 45: () => import(""../components/weather-cards/SunriseSunsetCard"").then(m => ({ defau",weather,label
-weather.label._components_weather_cards_humi_492,../components/weather-cards/HumidityCard,,,,,,,,,,"Line 50: () => import(""../components/weather-cards/HumidityCard"").then(m => ({ default: m",weather,label
-weather.label._components_weather_cards_tide_493,../components/weather-cards/TidesCard,,,,,,,,,,"Line 55: () => import(""../components/weather-cards/TidesCard"").then(m => ({ default: m.Ti",weather,label
-weather.label._components_weather_cards_wind_494,../components/weather-cards/WindCard,,,,,,,,,,"Line 61: () => import(""../components/weather-cards/WindCard"").then(m => ({ default: m.Win",weather,label
-weather.label._components_weather_cards_wave_495,../components/weather-cards/WaveCard,,,,,,,,,,"Line 66: () => import(""../components/weather-cards/WaveCard"").then(m => ({ default: m.Wav",weather,label
-weather.label._components_weather_cards_next_496,../components/weather-cards/NextFewDaysCard,,,,,,,,,,"Line 72: () => import(""../components/weather-cards/NextFewDaysCard"").then(m => ({ default",weather,label
-weather.label._components_weather_cards_uvca_497,../components/weather-cards/UVCard,,,,,,,,,,"Line 78: () => import(""../components/weather-cards/UVCard"").then(m => ({ default: m.UVCar",weather,label
-weather.label._components_weather_cards_airq_498,../components/weather-cards/AirQualityCard,,,,,,,,,,"Line 83: () => import(""../components/weather-cards/AirQualityCard"").then(m => ({ default:",weather,label
-weather.label._components_weather_cards_poll_499,../components/weather-cards/PollenCard,,,,,,,,,,"Line 88: () => import(""../components/weather-cards/PollenCard"").then(m => ({ default: m.P",weather,label
-weather.label._components_weather_cards_visi_500,../components/weather-cards/VisibilityCard,,,,,,,,,,"Line 93: () => import(""../components/weather-cards/VisibilityCard"").then(m => ({ default:",weather,label
-weather.label._components_weather_cards_seat_501,../components/weather-cards/SeaTempCard,,,,,,,,,,"Line 98: () => import(""../components/weather-cards/SeaTempCard""),",weather,label
-weather.label._components_weather_cards_prec_502,../components/weather-cards/PrecipNext24hCard,,,,,,,,,,"Line 104: () => import(""../components/weather-cards/PrecipNext24hCard"").then(m => m.Precip",weather,label
-weather.paragraph.card_bg_slate_800_35_backdrop__503,card bg-slate-800/35 backdrop-blur-sm text-white border border-white/10 shadow-sm,,,,,,,,,,"Line 106: <div className=""card bg-slate-800/35 backdrop-blur-sm text-white border border-w",weather,paragraph
-weather.label.card_body_p_4_504,card-body p-4,,,,,,,,,,"Line 107: <div className=""card-body p-4"">",weather,label
-weather.heading.precip_next_24_hours_505,Precip next 24 hours,,,,,,,,,,"Line 108: <h3 className=""card__header-title text-sm font-semibold mb-2"">Precip next 24 hou",weather,heading
-weather.heading.card_header_title_text_sm_font_506,card__header-title text-sm font-semibold mb-2,,,,,,,,,,"Line 108: <h3 className=""card__header-title text-sm font-semibold mb-2"">Precip next 24 hou",weather,heading
-weather.label.flex_items_center_py_2_507,flex items-center py-2,,,,,,,,,,"Line 109: <div className=""flex items-center py-2""><span className=""loading loading-ring lo",weather,label
-weather.label.loading_loading_ring_loading_s_508,loading loading-ring loading-sm text-secondary,,,,,,,,,,"Line 109: <div className=""flex items-center py-2""><span className=""loading loading-ring lo",weather,label
-weather.label.ml_2_opacity_70_509,ml-2 opacity-70,,,,,,,,,,"Line 109: <div className=""flex items-center py-2""><span className=""loading loading-ring lo",weather,label
-weather.label._components_weather_cards_moon_510,../components/weather-cards/MoonCard,,,,,,,,,,"Line 143: () => import(""../components/weather-cards/MoonCard"").then(m => m.MoonCard),",weather,label
-weather.label.m_soilcard_as_react_componentt_511,m.SoilCard as React.ComponentType,,,,,,,,,,"Line 149: () => import(""../components/weather-cards/SoilCard"").then(m => m.SoilCard as Rea",weather,label
-weather.label._components_weather_cards_soil_512,../components/weather-cards/SoilCard,,,,,,,,,,"Line 149: () => import(""../components/weather-cards/SoilCard"").then(m => m.SoilCard as Rea",weather,label
-weather.label.m_default_as_react_componentty_513,m.default as React.ComponentType,,,,,,,,,,Line 155: () => import('../components/weather-cards/SurfDayGrade').then(m => m.default as ,weather,label
-weather.label._components_weather_cards_surf_514,../components/weather-cards/SurfDayGrade,,,,,,,,,,Line 155: () => import('../components/weather-cards/SurfDayGrade').then(m => m.default as ,weather,label
-weather.label.2_digit_516,2-digit,,,,,,,,,,"Line 195: return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });",weather,label
-weather.label.flat_calm_518,Flat calm,,,,,,,,,,Line 199: if (h < 0.10) return 'Flat calm';,weather,label
-weather.label.very_rough_519,Very rough,,,,,,,,,,Line 206: if (h < 4.00) return 'Very rough';,weather,label
-weather.label.high_seas_520,High seas,,,,,,,,,,Line 207: if (h < 6.00) return 'High seas';,weather,label
-weather.label.stormy_seas_521,Stormy seas,,,,,,,,,,Line 208: return 'Stormy seas';,weather,label
-weather.label._until__522,", until:",,,,,,,,,,"Line 219: if (!tides?.length) return { trend: '—', until: '—', nextTimeISO: null as string",weather,label
-weather.paragraph._nexttimeiso_null_as_string_nu_523,", nextTimeISO: null as string | null, nextType: null as",,,,,,,,,,"Line 219: if (!tides?.length) return { trend: '—', until: '—', nextTimeISO: null as string",weather,paragraph
-weather.label._weather_icons_design_fill_fin_524,/weather-icons/design/fill/final/wave-moving.svg,,,,,,,,,,Line 259: function waveIconPath(): string { return `/weather-icons/design/fill/final/wave-,weather,label
-weather.label._weather_icons_design_fill_fin_525,/weather-icons/design/fill/final/tide-high.svg,,,,,,,,,,Line 260: function tideIconPath(): string { return `/weather-icons/design/fill/final/tide-,weather,label
-weather.label.activelocationtype_526,activeLocationType,,,,,,,,,,Line 287: const stored = localStorage.getItem('activeLocationType');,weather,label
-weather.label._prefers_reduced_motion_reduce_531,(prefers-reduced-motion: reduce),,,,,,,,,,"Line 351: const reduced = window.matchMedia?.(""(prefers-reduced-motion: reduce)"")?.matches",weather,label
-weather.label.temp0cm_532,temp0cm,,,,,,,,,,"Line 407: 'temp0cm','temp6cm','temp18cm','temp54cm',",weather,label
-weather.label.temp6cm_533,temp6cm,,,,,,,,,,"Line 407: 'temp0cm','temp6cm','temp18cm','temp54cm',",weather,label
-weather.label.temp18cm_534,temp18cm,,,,,,,,,,"Line 407: 'temp0cm','temp6cm','temp18cm','temp54cm',",weather,label
-weather.label.temp54cm_535,temp54cm,,,,,,,,,,"Line 407: 'temp0cm','temp6cm','temp18cm','temp54cm',",weather,label
-weather.label.moisture0to1_536,moisture0to1,,,,,,,,,,"Line 408: 'moisture0to1','moisture1to3','moisture3to9','moisture9to27'",weather,label
-weather.label.moisture1to3_537,moisture1to3,,,,,,,,,,"Line 408: 'moisture0to1','moisture1to3','moisture3to9','moisture9to27'",weather,label
-weather.label.moisture3to9_538,moisture3to9,,,,,,,,,,"Line 408: 'moisture0to1','moisture1to3','moisture3to9','moisture9to27'",weather,label
-weather.label.moisture9to27_539,moisture9to27,,,,,,,,,,"Line 408: 'moisture0to1','moisture1to3','moisture3to9','moisture9to27'",weather,label
-weather.label.weather_go_daisy_542,Weather - Go Daisy,,,,,,,,,,Line 474: <title>Weather - Go Daisy</title>,weather,label
-weather.label.relative_min_h_screen_543,relative min-h-screen,,,,,,,,,,"Line 477: className=""relative min-h-screen""",weather,label
-weather.label.page_new_weather_544,page-new-weather,,,,,,,,,,"Line 478: data-testid=""page-new-weather""",weather,label
-weather.label.relative_z_20_545,relative z-20,,,,,,,,,,"Line 480: <div className=""relative z-20"">",weather,label
-weather.label.set_your_home_location_546,Set your home location,,,,,,,,,,"Line 493: title=""Set your home location""",weather,label
-weather.label.set_your_beach_location_547,Set your beach location,,,,,,,,,,"Line 507: title=""Set your beach location""",weather,label
-weather.label.absolute_inset_0_z_0_pointer_e_548,absolute inset-0 z-0 pointer-events-none,,,,,,,,,,"Line 521: <div className=""absolute inset-0 z-0 pointer-events-none"">",weather,label
-weather.paragraph.absolute_inset_0_bg_gradient_t_549,absolute inset-0 bg-gradient-to-b from-sky-300/35 via-sky-100/20 to-sky-300/35,,,,,,,,,,"Line 524: <div className=""absolute inset-0 bg-gradient-to-b from-sky-300/35 via-sky-100/20",weather,paragraph
-weather.paragraph.relative_z_10_bg_transparent_t_550,relative z-10 bg-transparent text-base-content min-h-screen overflow-x-hidden,,,,,,,,,,"Line 542: <main className=""relative z-10 bg-transparent text-base-content min-h-screen ove",weather,paragraph
-weather.label.mx_auto_w_full_max_w_6xl_px_4__551,mx-auto w-full max-w-6xl px-4 py-6,,,,,,,,,,"Line 543: <section className=""mx-auto w-full max-w-6xl px-4 py-6"">",weather,label
-weather.label.alert_alert_error_mt_3_text_sm_552,alert alert-error mt-3 text-sm,,,,,,,,,,"Line 552: <div className=""alert alert-error mt-3 text-sm"">",weather,label
-weather.label.weather_data_error_553,Weather data error,,,,,,,,,,"Line 554: <span className=""font-semibold"">Weather data error</span>",weather,label
-weather.label.font_semibold_554,font-semibold,,,,,,,,,,"Line 554: <span className=""font-semibold"">Weather data error</span>",weather,label
-weather.label.ml_2_opacity_80_555,ml-2 opacity-80,,,,,,,,,,"Line 555: <span className=""ml-2 opacity-80"">{apiError}</span>",weather,label
-weather.label.mx_auto_w_full_max_w_6xl_px_4__556,mx-auto w-full max-w-6xl px-4 pb-10 space-y-4,,,,,,,,,,"Line 562: <div className=""mx-auto w-full max-w-6xl px-4 pb-10 space-y-4"">",weather,label
-weather.label.title__557,title=,,,,,,,,,,"Line 567: <SectionHeader icon=""🌊"" title=""Surf & Marine Conditions"" />",weather,label
-weather.label.grid_grid_cols_1_gap_4_558,grid grid-cols-1 gap-4,,,,,,,,,,"Line 570: <Row className=""grid grid-cols-1 gap-4"">",weather,label
-weather.label.card_hourly_562,card-hourly,,,,,,,,,,"Line 579: <div data-testid=""card-hourly"">",weather,label
-weather.label.badge_warning_563,badge-warning,,,,,,,,,,"Line 584: pollenBadgeClass=""badge-warning""",weather,label
-weather.label.card_wave_567,card-wave,,,,,,,,,,"Line 594: <div data-testid=""card-wave"">",weather,label
-weather.label.card_wind_571,card-wind,,,,,,,,,,"Line 612: <div data-testid=""card-wind"">",weather,label
-weather.label.card_tides_575,card-tides,,,,,,,,,,"Line 621: <div data-testid=""card-tides"">",weather,label
-weather.label.next_few_days_578,Next Few Days,,,,,,,,,,"Line 630: <Safe fallback={<Card title=""Next Few Days""><div className=""flex items-center py",weather,label
-weather.label.lg_col_span_2_582,lg:col-span-2,,,,,,,,,,"Line 631: <div className=""lg:col-span-2"" data-testid=""card-nextdays"">",weather,label
-weather.label.card_nextdays_583,card-nextdays,,,,,,,,,,"Line 631: <div className=""lg:col-span-2"" data-testid=""card-nextdays"">",weather,label
-weather.label.card_sea_temp_584,card-sea-temp,,,,,,,,,,"Line 635: <div data-testid=""card-sea-temp"">",weather,label
-weather.label.weather_card_bg_text_base_cont_585,weather-card-bg text-base-content,,,,,,,,,,"Line 642: className=""weather-card-bg text-base-content""",weather,label
-weather.label.__586,🌡️,,,,,,,,,,"Line 648: <SectionHeader icon=""🌡️"" title=""Atmospheric Conditions"" />",weather,label
-weather.label.atmospheric_conditions_587,Atmospheric Conditions,,,,,,,,,,"Line 648: <SectionHeader icon=""🌡️"" title=""Atmospheric Conditions"" />",weather,label
-weather.label.card_pressure_591,card-pressure,,,,,,,,,,"Line 651: <div data-testid=""card-pressure""><SimplePressureCardDial weather={data} lat={act",weather,label
-weather.label.feels_like_592,Feels Like,,,,,,,,,,"Line 653: <Safe fallback={<Card title=""Feels Like""><div className=""flex items-center py-2""",weather,label
-weather.label.card_feelslike_596,card-feelslike,,,,,,,,,,"Line 654: <div data-testid=""card-feelslike"">",weather,label
-weather.label.card_precip24_597,card-precip24,,,,,,,,,,"Line 666: <div data-testid=""card-precip24"">",weather,label
-weather.label.precip_next_24h_598,Precip next 24h,,,,,,,,,,"Line 668: title=""Precip next 24h""",weather,label
-weather.label.__599,👁️,,,,,,,,,,"Line 683: <SectionHeader icon=""👁️"" title=""Visibility & Comfort"" />",weather,label
-weather.label.visibility_comfort_600,Visibility & Comfort,,,,,,,,,,"Line 683: <SectionHeader icon=""👁️"" title=""Visibility & Comfort"" />",weather,label
-weather.label.card_visibility_601,card-visibility,,,,,,,,,,"Line 685: <div data-testid=""card-visibility"">",weather,label
-weather.label.card_humidity_602,card-humidity,,,,,,,,,,"Line 688: <div data-testid=""card-humidity"">",weather,label
-weather.label.card_sunrise_603,card-sunrise,,,,,,,,,,"Line 691: <div data-testid=""card-sunrise"">",weather,label
-weather.label.card_uv_605,card-uv,,,,,,,,,,"Line 699: <div data-testid=""card-uv""><ExternalUVCard weather={{ uvi: data.uvi, sunriseISO:",weather,label
-weather.label.card_aqi_606,card-aqi,,,,,,,,,,"Line 700: <div data-testid=""card-aqi""><ExternalAirQualityCard weather={{ airQuality: airQu",weather,label
-weather.label.card_pollen_607,card-pollen,,,,,,,,,,"Line 701: <div data-testid=""card-pollen""><ExternalPollenCard",weather,label
-weather.label.card_moon_608,card-moon,,,,,,,,,,"Line 717: <div data-testid=""card-moon"">",weather,label
-weather.label.sunrise_sunset_630,Sunrise & Sunset,,,,,,,,,,"Line 799: <Safe fallback={<Card title=""Sunrise & Sunset""><div className=""flex items-center",weather,label
-weather.label.atmospheric_environment_636,Atmospheric & Environment,,,,,,,,,,"Line 807: <SectionHeader icon=""🌡️"" title=""Atmospheric & Environment"" />",weather,label
-weather.label.card_feels_655,card-feels,,,,,,,,,,"Line 836: <div data-testid=""card-feels""><FeelsLike tempC={data.header.tempC ?? 0} humidity",weather,label
-weather.label.relative_z_10_658,relative z-10,,,,,,,,,,"Line 852: <div className=""relative z-10"">",weather,label
-weather.paragraph.grid_grid_cols_1_gap_4_sm_grid_659,grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3,,,,,,,,,,"Line 863: return (<section className={className || ""grid grid-cols-1 gap-4 sm:grid-cols-2 ",weather,paragraph
-weather.label.col_span_full_mb_2_mt_6_first__660,col-span-full mb-2 mt-6 first:mt-0,,,,,,,,,,"Line 868: <div className=""col-span-full mb-2 mt-6 first:mt-0"">",weather,label
-weather.paragraph.flex_items_center_gap_2_text_s_661,flex items-center gap-2 text-sm font-semibold text-white/70 uppercase tracking-wide,,,,,,,,,,"Line 869: <div className=""flex items-center gap-2 text-sm font-semibold text-white/70 uppe",weather,paragraph
-weather.label.text_lg_662,text-lg,,,,,,,,,,"Line 870: <span className=""text-lg"">{icon}</span>",weather,label
-weather.label.flex_1_h_px_bg_white_20_663,flex-1 h-px bg-white/20,,,,,,,,,,"Line 872: <div className=""flex-1 h-px bg-white/20""></div>",weather,label
-weather.heading.flex_items_start_justify_betwe_666,flex items-start justify-between,,,,,,,,,,"Line 882: <div className=""flex items-start justify-between""><h3 className=""card-title"">{ti",weather,heading
-weather.heading.card_title_667,card-title,,,,,,,,,,"Line 882: <div className=""flex items-start justify-between""><h3 className=""card-title"">{ti",weather,heading
-weather.label.opacity_70_668,opacity-70,,,,,,,,,,"Line 883: {subtitle && <p className=""opacity-70"">{subtitle}</p>}",weather,label
-weather.paragraph.hero_rounded_2xl_bg_slate_800__669,hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm,,,,,,,,,,"Line 909: <div className=""hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white bor",weather,paragraph
-weather.paragraph.hero_content_w_full_flex_col_i_670,hero-content w-full flex-col items-stretch py-10 md:py-14,,,,,,,,,,"Line 910: <div className=""hero-content w-full flex-col items-stretch py-10 md:py-14"">",weather,paragraph
-weather.label.flex_items_center_gap_3_text_l_671,flex items-center gap-3 text-lg,,,,,,,,,,"Line 911: <div className=""flex items-center gap-3 text-lg"">",weather,label
-weather.label.loading_loading_spinner_text_p_672,loading loading-spinner text-primary,,,,,,,,,,"Line 912: <span className=""loading loading-spinner text-primary""></span>",weather,label
-weather.label.loading_loading_spinner_text_s_673,loading loading-spinner text-secondary,,,,,,,,,,"Line 913: <span className=""loading loading-spinner text-secondary""></span>",weather,label
-weather.label.loading_loading_spinner_text_a_674,loading loading-spinner text-accent,,,,,,,,,,"Line 914: <span className=""loading loading-spinner text-accent""></span>",weather,label
-weather.paragraph.weather_gods_what_have_you_got_675,"Weather gods, what have you got for us mortals?",,,,,,,,,,"Line 915: <span className=""opacity-80"">Weather gods, what have you got for us mortals?</sp",weather,paragraph
-weather.label.opacity_80_676,opacity-80,,,,,,,,,,"Line 915: <span className=""opacity-80"">Weather gods, what have you got for us mortals?</sp",weather,label
-weather.paragraph.hero_content_w_full_flex_col_i_678,hero-content w-full flex-col items-stretch py-6 md:py-8,,,,,,,,,,"Line 947: <div className=""hero-content w-full flex-col items-stretch py-6 md:py-8"">",weather,paragraph
-weather.paragraph.flex_flex_col_md_flex_row_md_i_679,flex flex-col md:flex-row md:items-end md:justify-between gap-4,,,,,,,,,,"Line 948: <div className=""flex flex-col md:flex-row md:items-end md:justify-between gap-4""",weather,paragraph
-weather.label.flex_items_start_gap_4_680,flex items-start gap-4,,,,,,,,,,"Line 949: <div className=""flex items-start gap-4"">",weather,label
-weather.other.hidden_sm_block_w_24_h_24_md_w_681,hidden sm:block w-24 h-24 md:w-28 md:h-28 relative,,,,,,,,,,"Line 950: <div className=""hidden sm:block w-24 h-24 md:w-28 md:h-28 relative"">",weather,other
-weather.label.object_contain_drop_shadow_682,object-contain drop-shadow,,,,,,,,,,"Line 951: <Image src={iconPath} alt={condition} fill className=""object-contain drop-shadow",weather,label
-weather.paragraph.text_6xl_md_text_7xl_font_extr_683,text-6xl md:text-7xl font-extrabold leading-none flex items-center gap-3,,,,,,,,,,"Line 954: <div className=""text-6xl md:text-7xl font-extrabold leading-none flex items-cent",weather,paragraph
-weather.label.text_xl_md_text_2xl_capitalize_684,text-xl md:text-2xl capitalize,,,,,,,,,,"Line 955: <div className=""text-xl md:text-2xl capitalize"">{condition}</div>",weather,label
-weather.label.text_sm_opacity_70_685,text-sm opacity-70,,,,,,,,,,"Line 956: <div className=""text-sm opacity-70"">Feels like {Math.round(feelsLikeC)}° {highC ",weather,label
-weather.label.flex_flex_col_items_end_gap_1_686,flex flex-col items-end gap-1,,,,,,,,,,"Line 959: <div className=""flex flex-col items-end gap-1"">",weather,label
-weather.paragraph.text_xl_md_text_2xl_font_mediu_687,text-xl md:text-2xl font-medium capitalize text-right mb-2,,,,,,,,,,"Line 961: <div className=""text-xl md:text-2xl font-medium capitalize text-right mb-2"">",weather,paragraph
-weather.label.flex_flex_wrap_gap_3_justify_e_688,flex flex-wrap gap-3 justify-end,,,,,,,,,,"Line 965: <div className=""flex flex-wrap gap-3 justify-end"">",weather,label
-weather.paragraph.rounded_md_bg_slate_900_80_tex_689,rounded-md bg-slate-900/80 text-white border border-white/15 px-3 py-2 min-w-[9.5rem] min-h-[3.0rem] shadow-sm,,,,,,,,,,"Line 969: className=""rounded-md bg-slate-900/80 text-white border border-white/15 px-3 py-",weather,paragraph
-weather.paragraph.grid_grid_cols_40px_1fr_grid_r_690,"grid grid-cols-[40px,1fr] grid-rows-2 gap-x-2 items-center",,,,,,,,,,"Line 971: <div className=""grid grid-cols-[40px,1fr] grid-rows-2 gap-x-2 items-center"">",weather,paragraph
-weather.paragraph.row_span_2_col_start_1_flex_it_691,row-span-2 col-start-1 flex items-center justify-center w-12 h-12,,,,,,,,,,"Line 973: <span aria-hidden=""true"" className=""row-span-2 col-start-1 flex items-center jus",weather,paragraph
-weather.paragraph.col_start_2_text_base_font_sem_692,col-start-2 text-base font-semibold leading-tight truncate,,,,,,,,,,"Line 977: <span className=""col-start-2 text-base font-semibold leading-tight truncate"">{m.",weather,paragraph
-weather.paragraph.col_start_2_text_11px_opacity__693,col-start-2 text-[11px] opacity-80 leading-none truncate,,,,,,,,,,"Line 978: <span className=""col-start-2 text-[11px] opacity-80 leading-none truncate"">{m.su",weather,paragraph
-weather.label.mt_4_694,mt-4,,,,,,,,,,"Line 986: <div className=""mt-4"">",weather,label
-weather.paragraph.communing_with_the_weather_god_696,Communing with the weather gods...,,,,,,,,,,"Line 988: <span className=""ml-2 opacity-70"">Communing with the weather gods...</span>",weather,paragraph
-weather.label.x_mode_700,X-Mode,,,,,,,,,,"Line 1020: mode: response.headers.get('X-Mode'),",weather,label
-weather.label.x_weather_source_701,X-Weather-Source,,,,,,,,,,"Line 1021: source: response.headers.get('X-Weather-Source'),",weather,label
-weather.label.x_has_ow_key_702,X-Has-OW-Key,,,,,,,,,,"Line 1022: hasOwKey: response.headers.get('X-Has-OW-Key'),",weather,label
-weather.label.x_has_sg_key_703,X-Has-SG-Key,,,,,,,,,,"Line 1023: hasSgKey: response.headers.get('X-Has-SG-Key'),",weather,label
-weather.label.x_error_reason_704,X-Error-Reason,,,,,,,,,,"Line 1024: reason: response.headers.get('X-Error-Reason'),",weather,label
-weather.label._unifiedweather_diagnostics__705,[UnifiedWeather diagnostics],,,,,,,,,,"Line 1028: console.debug('[UnifiedWeather diagnostics]', diag);",weather,label
-weather.label.wind_beaufort__707,Wind (Beaufort),,,,,,,,,,"Line 1097: <Image src={beaufortIconPath(w.windSpeedMS)} alt=""Wind (Beaufort)"" width={60} he",weather,label
-weather.label.opacity_90_708,opacity-90,,,,,,,,,,"Line 1097: <Image src={beaufortIconPath(w.windSpeedMS)} alt=""Wind (Beaufort)"" width={60} he",weather,label
-weather.label.until__712,until —,,,,,,,,,,Line 1125: sub: (() => { const t = tideSummary(tidesForMini); return t.nextTimeISO ? `until,weather,label
-weather.label._weather_icons_design_fill_fin_715,/weather-icons/design/fill/final/raindrop.svg,,,,,,,,,,"Line 1147: <Image src=""/weather-icons/design/fill/final/raindrop.svg"" alt=""Rain"" width={60}",weather,label
-weather.label.text_20px_leading_none_717,text-[20px] leading-none,,,,,,,,,,"Line 1166: <span role=""img"" aria-label=""Ground"" className=""text-[20px] leading-none"">🥾</sp",weather,label
-weather.label.openweather_718,OpenWeather,,,,,,,,,,"Line 1216: aqi: w.airQuality ? { aqi: w.airQuality.aqi ?? undefined, pm25: w.airQuality.com",weather,label
-weather.label.open_meteo_719,Open-Meteo,,,,,,,,,,"Line 1218: pollen: w.pollen ? { tree: w.pollen.tree, grass: w.pollen.grass, weed: w.pollen.",weather,label
-weather.label.good_air_quality_720,Good air quality,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
-weather.label.moderate_air_quality_721,Moderate air quality,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
-weather.label.unhealthy_for_sensitive_groups_722,Unhealthy for sensitive groups,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
-weather.label.very_unhealthy_723,Very unhealthy,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
-weather.label.unable_to_determine_air_qualit_724,Unable to determine air quality,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.label.enjoy_outdoor_activities_725,Enjoy outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.label.consider_reducing_prolonged_ou_726,Consider reducing prolonged outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.paragraph.limit_outdoor_activities_espec_727,"Limit outdoor activities, especially for sensitive groups",,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,paragraph
-weather.label.avoid_outdoor_activities_728,Avoid outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.label.stay_indoors_729,Stay indoors,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.label.emergency_conditions_stay_indo_730,Emergency conditions - stay indoors,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
-weather.label.no_pollen_data_available_731,No pollen data available,,,,,,,,,,"Line 1270: if (!pollen) return ""No pollen data available"";",weather,label
-weather.label.no_pollen_data_732,No pollen data,,,,,,,,,,"Line 1272: if (levels.length === 0) return ""No pollen data"";",weather,label
-weather.label.very_low_pollen_levels_minimal_733,Very low pollen levels - minimal allergy risk,,,,,,,,,,Line 1274: if (maxLevel <= 1) return `Very low pollen levels - minimal allergy risk`;,weather,label
-weather.paragraph.low_pollen_levels_slight_risk__734,Low pollen levels - slight risk for sensitive individuals,,,,,,,,,,Line 1275: if (maxLevel === 2) return `Low pollen levels - slight risk for sensitive indivi,weather,paragraph
-weather.paragraph.moderate_pollen_levels_noticea_735,Moderate pollen levels - noticeable for allergy sufferers,,,,,,,,,,Line 1276: if (maxLevel === 3) return `Moderate pollen levels - noticeable for allergy suff,weather,paragraph
-weather.label.high_pollen_levels_significant_736,High pollen levels - significant allergy risk,,,,,,,,,,Line 1277: if (maxLevel === 4) return `High pollen levels - significant allergy risk`;,weather,label
-weather.label.very_high_pollen_levels_severe_737,Very high pollen levels - severe allergy risk,,,,,,,,,,Line 1278: return `Very high pollen levels - severe allergy risk`;,weather,label
-weather.label.monitor_local_pollen_reports_738,Monitor local pollen reports,,,,,,,,,,"Line 1281: if (!pollen) return ""Monitor local pollen reports"";",weather,label
-weather.paragraph.perfect_conditions_for_outdoor_739,Perfect conditions for outdoor activities. Minimal allergy symptoms expected.,,,,,,,,,,"Line 1283: if (maxLevel <= 1) return ""Perfect conditions for outdoor activities. Minimal al",weather,paragraph
-weather.paragraph.generally_safe_outdoors_sensit_740,Generally safe outdoors. Sensitive individuals may experience mild symptoms.,,,,,,,,,,"Line 1284: if (maxLevel === 2) return ""Generally safe outdoors. Sensitive individuals may e",weather,paragraph
-weather.label.moderate_risk_consider_antihis_741,Moderate risk - consider antihistamines if you,,,,,,,,,,"Line 1285: if (maxLevel === 3) return ""Moderate risk - consider antihistamines if you're al",weather,label
-weather.paragraph.high_pollen_alert_limit_outdoo_742,"High pollen alert - limit outdoor time, keep windows closed.",,,,,,,,,,"Line 1286: if (maxLevel === 4) return ""High pollen alert - limit outdoor time, keep windows",weather,paragraph
-weather.paragraph.extreme_pollen_levels_stay_ind_743,"Extreme pollen levels - stay indoors if possible, take allergy medication.",,,,,,,,,,"Line 1287: return ""Extreme pollen levels - stay indoors if possible, take allergy medicatio",weather,paragraph
-weather.label.very_high_744,very high,,,,,,,,,,Line 1292: const lower = String(level).toLowerCase(); if (lower.includes('low')) return 1; ,weather,label
-weather.label.local_spot_756,Local Spot,,,,,,,,,,Line 1324: name: 'Local Spot',weather,label
-weather.label.intermediate_757,intermediate,,,,,,,,,,"Line 1411: return { beachFacingDeg: null, skill: 'intermediate' as const, tideProfile, hour",weather,label
-faqs.paragraph.collapse_collapse_arrow_join_i_758,collapse collapse-arrow join-item border border-base-300 bg-base-100,,,,,,,,,,"Line 11: <div className=""collapse collapse-arrow join-item border border-base-300 bg-base",FAQs,paragraph
-faqs.label.collapse_title_text_lg_font_me_759,collapse-title text-lg font-medium,,,,,,,,,,"Line 13: <div className=""collapse-title text-lg font-medium"">{title}</div>",FAQs,label
-faqs.label.collapse_content_prose_prose_s_760,collapse-content prose prose-sm max-w-none,,,,,,,,,,"Line 14: <div className=""collapse-content prose prose-sm max-w-none"">{children}</div>",FAQs,label
-faqs.label.faqs_go_daisy_761,FAQs - Go Daisy,,,,,,,,,,Line 21: <title>FAQs - Go Daisy</title>,FAQs,label
-faqs.label.max_w_4xl_mx_auto_763,max-w-4xl mx-auto,,,,,,,,,,"Line 26: <div className=""max-w-4xl mx-auto"">",FAQs,label
-faqs.label.card_bg_base_100_shadow_xl_764,card bg-base-100 shadow-xl,,,,,,,,,,"Line 27: <div className=""card bg-base-100 shadow-xl"">",FAQs,label
-faqs.label.join_join_vertical_w_full_mt_4_767,join join-vertical w-full mt-4,,,,,,,,,,"Line 31: <div className=""join join-vertical w-full mt-4"">",FAQs,label
-faqs.heading.how_does_the_surf_traffic_ligh_768,How does the surf traffic-light work?,,,,,,,,,,"Line 33: <Item title=""How does the surf traffic-light work?"">",FAQs,heading
-faqs.label.wave_size_769,wave size,,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
-faqs.label.swell_direction_770,swell direction,,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
-faqs.label._and_771,", and",,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
-faqs.label.safety_gates_772,safety gates,,,,,,,,,,Line 43: We apply strict <b>safety gates</b> so conditions that are too large or powerful,FAQs,label
-faqs.label.stormglass_tides_api_773,Stormglass Tides API,,,,,,,,,,Line 43: We apply strict <b>safety gates</b> so conditions that are too large or powerful,FAQs,label
-faqs.heading.where_does_the_data_come_from__774,Where does the data come from?,,,,,,,,,,"Line 48: <Item title=""Where does the data come from?"">",FAQs,heading
-faqs.paragraph.beach_orientation_tide_windows_775,"beach orientation, tide windows and local notes stored in Go Daisy.",,,,,,,,,,"Line 52: <li><b>Spot metadata:</b> beach orientation, tide windows and local notes stored",FAQs,paragraph
-faqs.label.swell_specific_776,swell-specific,,,,,,,,,,Line 55: We prefer <b>swell-specific</b> variables (height/period/direction) over “combin,FAQs,label
-faqs.heading.how_often_is_the_forecast_upda_777,How often is the forecast updated?,,,,,,,,,,"Line 60: <Item title=""How often is the forecast updated?"">",FAQs,heading
-faqs.heading.what_if_the_beach_orientation__778,What if the beach orientation isn’t known?,,,,,,,,,,"Line 67: <Item title=""What if the beach orientation isn’t known?"">",FAQs,heading
-faqs.heading.why_do_tides_matter_so_much__779,Why do tides matter so much?,,,,,,,,,,"Line 74: <Item title=""Why do tides matter so much?"">",FAQs,heading
-faqs.label.tide_safety_flags_780,tide safety flags,,,,,,,,,,Line 76: Many breaks only work within a certain tide height band. Big spring ranges ampli,FAQs,label
-faqs.heading.how_do_you_keep_it_safe_for_in_781,How do you keep it safe for intermediates?,,,,,,,,,,"Line 81: <Item title=""How do you keep it safe for intermediates?"">",FAQs,heading
-faqs.heading.how_do_you_choose_the_best_hou_782,How do you choose the best hour of the day?,,,,,,,,,,"Line 88: <Item title=""How do you choose the best hour of the day?"">",FAQs,heading
-faqs.heading.what_do_the_colours_mean_exact_783,What do the colours mean exactly?,,,,,,,,,,"Line 95: <Item title=""What do the colours mean exactly?"">",FAQs,heading
-faqs.paragraph.which_icons_do_you_use_and_are_784,"Which icons do you use, and are they royalty-free?",,,,,,,,,,"Line 107: <Item title=""Which icons do you use, and are they royalty-free?"">",FAQs,paragraph
-faqs.label.svg_repo_785,SVG Repo,,,,,,,,,,"Line 109: We stick to royalty-free libraries like <b>Lucide</b> (MIT), <b>Heroicons</b> (M",FAQs,label
-faqs.paragraph.is_the_design_accessible__786,Is the design accessible?,,,,,,,,,,"Line 119: <Item title=""Is the design accessible?"">",FAQs,paragraph
-faqs.label.prefers_reduced_motion_787,prefers-reduced-motion,,,,,,,,,,"Line 121: We use high-contrast colour choices, avoid relying on colour alone (badges + lab",FAQs,label
-faqs.paragraph.which_regions_are_supported__788,Which regions are supported?,,,,,,,,,,"Line 126: <Item title=""Which regions are supported?"">",FAQs,paragraph
-faqs.heading.what_data_do_you_store_about_m_789,What data do you store about me?,,,,,,,,,,"Line 133: <Item title=""What data do you store about me?"">",FAQs,heading
-faqs.label.known_limitations_790,Known limitations,,,,,,,,,,"Line 140: <Item title=""Known limitations"">",FAQs,label
-faqs.heading.how_can_i_give_feedback_or_rep_791,How can I give feedback or report an issue?,,,,,,,,,,"Line 149: <Item title=""How can I give feedback or report an issue?"">",FAQs,heading
-faqs.button.mailto_hello_godaisy_app_792,mailto:hello@godaisy.app,,,,,,,,,,"Line 151: Please use the in-app feedback button or email <a href=""mailto:hello@godaisy.app",FAQs,button
-faqs.heading.what_improvements_are_coming_n_793,What improvements are coming next?,,,,,,,,,,"Line 156: <Item title=""What improvements are coming next?"">",FAQs,heading
-faqs.paragraph.finer_control_over_units_skill_794,"finer control over units, skill presets, and favourite gear so recommendations feel bespoke.",,,,,,,,,,"Line 162: <li><b>Personal settings:</b> finer control over units, skill presets, and favou",FAQs,paragraph
-faqs.paragraph.optional_alerts_before_a_green_795,"optional alerts before a green window opens, with quiet hours and per-spot subscriptions.",,,,,,,,,,"Line 163: <li><b>Notifications:</b> optional alerts before a green window opens, with quie",FAQs,paragraph
-faqs.paragraph.automated_contrast_checks_and__796,automated contrast checks and an in-app credits page covering every CC-BY asset.,,,,,,,,,,Line 164: <li><b>Accessibility & attribution:</b> automated contrast checks and an in-app ,FAQs,paragraph
-faqs.paragraph.vetted_notes_from_trusted_cont_797,"vetted notes from trusted contributors highlighting wind shelter, rip hotspots and parking tips.",,,,,,,,,,Line 165: <li><b>Local knowledge:</b> vetted notes from trusted contributors highlighting ,FAQs,paragraph
-faqs.label.disclaimer_798,Disclaimer,,,,,,,,,,"Line 173: <Item title=""Disclaimer"">",FAQs,label
-howwedoit.heading.how_we_do_it_go_daisy_799,How We Do It - Go Daisy,,,,,,,,,,Line 11: <title>How We Do It - Go Daisy</title>,HowWeDoIt,heading
-howwedoit.heading.how_do_we_do_what_we_do__802,How do we do what we do?,,,,,,,,,,"Line 17: <h1 className=""text-4xl font-bold mb-6 text-primary"">How do we do what we do?</h",HowWeDoIt,heading
-howwedoit.heading.text_4xl_font_bold_mb_6_text_p_803,text-4xl font-bold mb-6 text-primary,,,,,,,,,,"Line 17: <h1 className=""text-4xl font-bold mb-6 text-primary"">How do we do what we do?</h",HowWeDoIt,heading
-howwedoit.paragraph.w_full_h_64_bg_base_300_rounde_804,w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justify-center,,,,,,,,,,"Line 20: <div className=""w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justif",HowWeDoIt,paragraph
-howwedoit.label._howwedo_png_805,/howwedo.png,,,,,,,,,,"Line 22: src=""/howwedo.png""",HowWeDoIt,label
-howwedoit.paragraph.illustration_of_a_person_with__806,Illustration of a person with many measuring devices watched by Bruno,,,,,,,,,,"Line 23: alt=""Illustration of a person with many measuring devices watched by Bruno""",HowWeDoIt,paragraph
-howwedoit.label.object_contain_h_full_807,object-contain h-full,,,,,,,,,,"Line 26: className=""object-contain h-full""",HowWeDoIt,label
-howwedoit.label.mb_6_text_base_content_leading_808,mb-6 text-base-content leading-relaxed,,,,,,,,,,"Line 30: <p className=""mb-6 text-base-content leading-relaxed"">",HowWeDoIt,label
-howwedoit.label.rank_the_best_activities_for_a_813,rank the best activities for any given day,,,,,,,,,,Line 43: This nuanced understanding allows us to <strong>rank the best activities for any,HowWeDoIt,label
-howwedoit.heading.how_the_waves_will_feel_at_any_815,how the waves will feel at any given beach,,,,,,,,,,Line 47: Take the ocean as an example. Anyone can find out if the wind is blowing. But Go,HowWeDoIt,heading
-howwedoit.label.text_base_content_italic_817,text-base-content italic,,,,,,,,,,"Line 54: <p className=""text-base-content italic"">",HowWeDoIt,label
-cookiepolicy.label.cookieconsent_818,cookieConsent,,,,,,,,,,"Line 12: const consent = typeof window !== 'undefined' ? localStorage.getItem(""cookieCons",CookiePolicy,label
-cookiepolicy.paragraph.fixed_bottom_0_left_0_right_0__821,fixed bottom-0 left-0 right-0 bg-base-300 text-base-content p-4 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 z-50,,,,,,,,,,"Line 32: className=""fixed bottom-0 left-0 right-0 bg-base-300 text-base-content p-4 shado",CookiePolicy,paragraph
-cookiepolicy.label.max_w_lg_text_sm_822,max-w-lg text-sm,,,,,,,,,,"Line 35: <p className=""max-w-lg text-sm"">",CookiePolicy,label
-cookiepolicy.link._privacy_policy_823,/privacy-policy,,,,,,,,,,"Line 37: <Link href=""/privacy-policy"" className=""underline text-primary"">",CookiePolicy,link
-cookiepolicy.link.underline_text_primary_824,underline text-primary,,,,,,,,,,"Line 37: <Link href=""/privacy-policy"" className=""underline text-primary"">",CookiePolicy,link
-cookiepolicy.label.flex_gap_2_825,flex gap-2,,,,,,,,,,"Line 42: <div className=""flex gap-2"">",CookiePolicy,label
-cookiepolicy.button.btn_btn_primary_btn_sm_826,btn btn-primary btn-sm,,,,,,,,,,"Line 43: <button onClick={acceptCookies} className=""btn btn-primary btn-sm"">",CookiePolicy,button
-cookiepolicy.button.btn_btn_outline_btn_sm_827,btn btn-outline btn-sm,,,,,,,,,,"Line 46: <button onClick={declineCookies} className=""btn btn-outline btn-sm"">",CookiePolicy,button
-cookiepolicy.label.cookie_policy_go_daisy_828,Cookie Policy - Go Daisy,,,,,,,,,,Line 58: <title>Cookie Policy - Go Daisy</title>,CookiePolicy,label
-cookiepolicy.paragraph.max_w_4xl_mx_auto_bg_base_200__830,max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg space-y-4,,,,,,,,,,"Line 63: <div className=""max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg space-y-4",CookiePolicy,paragraph
-cookiepolicy.heading.cookie_policy_831,Cookie Policy,,,,,,,,,,"Line 64: <h1 className=""text-4xl font-bold mb-2 text-primary"">Cookie Policy</h1>",CookiePolicy,heading
-cookiepolicy.heading.text_4xl_font_bold_mb_2_text_p_832,text-4xl font-bold mb-2 text-primary,,,,,,,,,,"Line 64: <h1 className=""text-4xl font-bold mb-2 text-primary"">Cookie Policy</h1>",CookiePolicy,heading
-privacypolicy.label.privacy_policy_go_daisy_833,Privacy Policy - Go Daisy,,,,,,,,,,Line 9: <title>Privacy Policy - Go Daisy</title>,PrivacyPolicy,label
-privacypolicy.paragraph.max_w_3xl_mx_auto_bg_base_200__835,max-w-3xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg,,,,,,,,,,"Line 14: <div className=""max-w-3xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg"">",PrivacyPolicy,paragraph
-privacypolicy.heading.privacy_policy_836,Privacy Policy,,,,,,,,,,"Line 15: <h1 className=""text-4xl font-bold mb-6 text-primary"">Privacy Policy</h1>",PrivacyPolicy,heading
-privacypolicy.label.mb_6_838,mb-6,,,,,,,,,,"Line 17: <section className=""mb-6"">",PrivacyPolicy,label
-privacypolicy.heading.1_user_set_locations_only_839,1. User-Set Locations Only,,,,,,,,,,"Line 18: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">1. User-Set Locations",PrivacyPolicy,heading
-privacypolicy.heading.text_2xl_font_semibold_mb_2_te_840,text-2xl font-semibold mb-2 text-secondary,,,,,,,,,,"Line 18: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">1. User-Set Locations",PrivacyPolicy,heading
-privacypolicy.label.not_track_your_actual_location_842,not track your actual location automatically,,,,,,,,,,Line 20: We do <strong>not track your actual location automatically</strong>. You can set,PrivacyPolicy,label
-privacypolicy.heading.2_use_of_data_844,2. Use of Data,,,,,,,,,,"Line 25: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">2. Use of Data</h2>",PrivacyPolicy,heading
-privacypolicy.heading.3_data_sharing_and_advertising_848,3. Data Sharing and Advertising,,,,,,,,,,"Line 32: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">3. Data Sharing and A",PrivacyPolicy,heading
-privacypolicy.paragraph.do_not_share_your_location_or__851,do not share your location or personal data with third-party advertisers,,,,,,,,,,Line 34: We <strong>do not share your location or personal data with third-party advertis,PrivacyPolicy,paragraph
-privacypolicy.heading.4_future_advertising_853,4. Future Advertising,,,,,,,,,,"Line 39: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">4. Future Advertising",PrivacyPolicy,heading
-privacypolicy.label.personalised_advertising_in_th_856,personalised advertising in the future,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,label
-privacypolicy.paragraph.to_enhance_your_experience_in__857,to enhance your experience in the app. Such advertising will only be implemented,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,paragraph
-privacypolicy.label.with_your_explicit_consent_858,with your explicit consent,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,label
-privacypolicy.heading.5_gdpr_and_legal_compliance_860,5. GDPR and Legal Compliance,,,,,,,,,,"Line 46: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">5. GDPR and Legal Com",PrivacyPolicy,heading
-privacypolicy.heading.plain_english_summary_864,Plain English Summary,,,,,,,,,,"Line 56: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">Plain English Summary",PrivacyPolicy,heading
-privacypolicy.label.list_disc_list_inside_space_y__866,list-disc list-inside space-y-1 text-base-content,,,,,,,,,,"Line 57: <ul className=""list-disc list-inside space-y-1 text-base-content"">",PrivacyPolicy,label
-privacypolicy.paragraph.your_data_is_used_only_to_make_867,Your data is used only to make your experience better.,,,,,,,,,,Line 59: <li>Your data is used only to make your experience better.</li>,PrivacyPolicy,paragraph
-privacypolicy.paragraph.we_never_share_or_sell_your_da_868,We never share or sell your data.,,,,,,,,,,Line 60: <li>We never share or sell your data.</li>,PrivacyPolicy,paragraph
-termsandconditions.label.always_double_check_local_weat_875,always double check local weather sources,,,,,,,,,,Line 25: The weather information and forecasts provided by this app are based on data mod,TermsAndConditions,label
-termsandconditions.label.no_guarantees_or_warranties_879,no guarantees or warranties,,,,,,,,,,"Line 34: While we strive to provide accurate and up-to-date weather information, we make ",TermsAndConditions,label
-termsandconditions.label.at_your_own_risk_883,at your own risk,,,,,,,,,,"Line 43: By using this app and relying on the weather forecasts or recommendations, you a",TermsAndConditions,label
-termsandconditions.paragraph.cannot_be_held_responsible_for_887,"cannot be held responsible for any harm, injury, loss, or damage",,,,,,,,,,"Line 52: We <strong>cannot be held responsible for any harm, injury, loss, or damage</str",TermsAndConditions,paragraph
-termsandconditions.label.text_base_content_mb_2_890,text-base-content mb-2,,,,,,,,,,"Line 60: <p className=""text-base-content mb-2"">",TermsAndConditions,label
-termsandconditions.paragraph.the_app_and_weather_info_come__895,The app and weather info come with no promises about quality or accuracy.,,,,,,,,,,Line 77: <li><strong>“As is” basis:</strong> The app and weather info come with no promis,TermsAndConditions,paragraph
-interests.label.active_sports_896,Active Sports,,,,,,,,,,"Line 14: key: ""Active Sports"",",interests,label
-interests.label.__897,🏃‍♂️,,,,,,,,,,"Line 15: icon: ""🏃‍♂️"",",interests,label
-interests.label.team_sports_898,Team Sports,,,,,,,,,,"Line 18: key: ""Team Sports"",",interests,label
-interests.label.__899,🤾‍♂️,,,,,,,,,,"Line 19: icon: ""🤾‍♂️"",",interests,label
-interests.label.football_soccer_900,football_soccer,,,,,,,,,,"Line 21: ""football_soccer"",",interests,label
-interests.label.american_football_903,american_football,,,,,,,,,,"Line 26: ""american_football"",",interests,label
-interests.label.hurling_camogie_904,hurling_camogie,,,,,,,,,,"Line 28: ""hurling_camogie"",",interests,label
-interests.label.gaelic_football_905,gaelic_football,,,,,,,,,,"Line 29: ""gaelic_football"",",interests,label
-interests.label.ice_hockey_us_906,ice_hockey_us,,,,,,,,,,"Line 32: ""ice_hockey_us"",",interests,label
-interests.label.individual_sports_907,Individual Sports,,,,,,,,,,"Line 36: key: ""Individual Sports"",",interests,label
-interests.label.tennis_indoor_908,tennis_indoor,,,,,,,,,,"Line 41: ""tennis_indoor"",",interests,label
-interests.label.table_tennis_909,table_tennis,,,,,,,,,,"Line 44: ""table_tennis"",",interests,label
-interests.label.pickleball_910,pickleball,,,,,,,,,,"Line 46: ""pickleball"",",interests,label
-interests.label.volleyball_indoor_911,volleyball_indoor,,,,,,,,,,"Line 47: ""volleyball_indoor"",",interests,label
-interests.label.water_sports_912,Water Sports,,,,,,,,,,"Line 52: key: ""Water Sports"",",interests,label
-interests.label.indoor_swimming_916,indoor_swimming,,,,,,,,,,"Line 62: ""indoor_swimming"",",interests,label
-interests.label.sailing_inland_924,sailing_inland,,,,,,,,,,"Line 71: ""sailing_inland"",",interests,label
-interests.label.windsurfing_inland_925,windsurfing_inland,,,,,,,,,,"Line 72: ""windsurfing_inland"",",interests,label
-interests.label.action_sports_926,Action Sports,,,,,,,,,,"Line 76: key: ""Action Sports"",",interests,label
-interests.label.__927,🚵‍♂️,,,,,,,,,,"Line 77: icon: ""🚵‍♂️"",",interests,label
-interests.label.mountain_biking_928,mountain_biking,,,,,,,,,,"Line 79: ""mountain_biking"",",interests,label
-interests.label.road_cycling_929,road_cycling,,,,,,,,,,"Line 80: ""road_cycling"",",interests,label
-interests.label.gravel_biking_930,gravel_biking,,,,,,,,,,"Line 81: ""gravel_biking"",",interests,label
-interests.label.rock_climbing_931,rock_climbing,,,,,,,,,,"Line 82: ""rock_climbing"",",interests,label
-interests.label.rock_hopping_932,rock_hopping,,,,,,,,,,"Line 83: ""rock_hopping"",",interests,label
-interests.label.indoor_climbing_933,indoor_climbing,,,,,,,,,,"Line 84: ""indoor_climbing"",",interests,label
-interests.label.skateboarding_934,skateboarding,,,,,,,,,,"Line 85: ""skateboarding"",",interests,label
-interests.label.rollerblading_935,rollerblading,,,,,,,,,,"Line 86: ""rollerblading"",",interests,label
-interests.label.riding_motorbike_936,riding_motorbike,,,,,,,,,,"Line 87: ""riding_motorbike"",",interests,label
-interests.label.fitness_wellness_937,Fitness & Wellness,,,,,,,,,,"Line 93: key: ""Fitness & Wellness"",",interests,label
-interests.label.mindfulness_938,Mindfulness,,,,,,,,,,"Line 97: key: ""Mindfulness"",",interests,label
-interests.label.__939,🧘‍♂️,,,,,,,,,,"Line 98: icon: ""🧘‍♂️"",",interests,label
-interests.label.outdoor_yoga_940,outdoor_yoga,,,,,,,,,,"Line 101: ""outdoor_yoga"",",interests,label
-interests.label.meditation_941,meditation,,,,,,,,,,"Line 102: ""meditation"",",interests,label
-interests.label.outdoor_meditation_942,outdoor_meditation,,,,,,,,,,"Line 103: ""outdoor_meditation"",",interests,label
-interests.label.martial_arts_943,martial_arts,,,,,,,,,,"Line 105: ""martial_arts"",",interests,label
-interests.label.cardio_running_944,Cardio & Running,,,,,,,,,,"Line 110: key: ""Cardio & Running"",",interests,label
-interests.label.trail_running_945,trail_running,,,,,,,,,,"Line 112: acts: [""running"", ""trail_running"", ""cycling"", ""urban_exploring""],",interests,label
-interests.label.urban_exploring_946,urban_exploring,,,,,,,,,,"Line 112: acts: [""running"", ""trail_running"", ""cycling"", ""urban_exploring""],",interests,label
-interests.label.strength_gym_947,Strength & Gym,,,,,,,,,,"Line 115: key: ""Strength & Gym"",",interests,label
-interests.label.__948,🏋️‍♂️,,,,,,,,,,"Line 116: icon: ""🏋️‍♂️"",",interests,label
-interests.label.gym_workout_949,gym_workout,,,,,,,,,,"Line 117: acts: [""gym_workout"", ""outdoor_gym"", ""zumba"", ""boxing"", ""spinning""],",interests,label
-interests.label.outdoor_gym_950,outdoor_gym,,,,,,,,,,"Line 117: acts: [""gym_workout"", ""outdoor_gym"", ""zumba"", ""boxing"", ""spinning""],",interests,label
-interests.label.outdoor_activities_951,Outdoor Activities,,,,,,,,,,"Line 122: key: ""Outdoor Activities"",",interests,label
-interests.label.nature_activities_952,Nature Activities,,,,,,,,,,"Line 126: key: ""Nature Activities"",",interests,label
-interests.label.birdwatching_953,birdwatching,,,,,,,,,,"Line 130: ""birdwatching"",",interests,label
-interests.label.photography_954,photography,,,,,,,,,,"Line 131: ""photography"",",interests,label
-interests.label.mushroom_hunting_955,mushroom_hunting,,,,,,,,,,"Line 133: ""mushroom_hunting"",",interests,label
-interests.label.wild_swimming_956,wild_swimming,,,,,,,,,,"Line 134: ""wild_swimming"",",interests,label
-interests.label.outdoor_gardening_957,outdoor_gardening,,,,,,,,,,"Line 135: ""outdoor_gardening"",",interests,label
-interests.label.fly_fishing_freshwater_959,fly_fishing_freshwater,,,,,,,,,,"Line 143: ""fly_fishing_freshwater"",",interests,label
-interests.label.coarse_fishing_960,coarse_fishing,,,,,,,,,,"Line 144: ""coarse_fishing"",",interests,label
-interests.label.ice_fishing_963,ice_fishing,,,,,,,,,,"Line 147: ""ice_fishing"",",interests,label
-interests.label.kicking_back_and_relaxing_964,Kicking Back and Relaxing,,,,,,,,,,"Line 151: key: ""Kicking Back and Relaxing"",",interests,label
-interests.label.picnicking_965,picnicking,,,,,,,,,,"Line 154: ""picnicking"",",interests,label
-interests.label.going_to_pub_967,going_to_pub,,,,,,,,,,"Line 161: ""going_to_pub"",",interests,label
-interests.label.outdoor_reading_968,outdoor_reading,,,,,,,,,,"Line 162: ""outdoor_reading"",",interests,label
-interests.label.dog_walking_969,dog_walking,,,,,,,,,,"Line 163: ""dog_walking"",",interests,label
-interests.label.outdoor_playground_970,outdoor_playground,,,,,,,,,,"Line 164: ""outdoor_playground"",",interests,label
-interests.label.outdoor_chess_971,outdoor_chess,,,,,,,,,,"Line 165: ""outdoor_chess"",",interests,label
-interests.label.outdoor_painting_972,outdoor_painting,,,,,,,,,,"Line 166: ""outdoor_painting"",",interests,label
-interests.label.outdoor_music_973,outdoor_music,,,,,,,,,,"Line 167: ""outdoor_music"",",interests,label
-interests.label.winter_sports_974,Winter Sports,,,,,,,,,,"Line 173: key: ""Winter Sports"",",interests,label
-interests.label.snow_sports_975,Snow Sports,,,,,,,,,,"Line 177: key: ""Snow Sports"",",interests,label
-interests.label.ice_sports_978,Ice Sports,,,,,,,,,,"Line 182: key: ""Ice Sports"",",interests,label
-interests.label.ice_hockey_980,ice_hockey,,,,,,,,,,"Line 187: ""ice_hockey"",",interests,label
-interests.label.ice_hockey_indoor_982,ice_hockey_indoor,,,,,,,,,,"Line 189: ""ice_hockey_indoor"",",interests,label
-interests.label.creative_arts_983,Creative & Arts,,,,,,,,,,"Line 195: key: ""Creative & Arts"",",interests,label
-interests.label.visual_arts_984,Visual Arts,,,,,,,,,,"Line 199: key: ""Visual Arts"",",interests,label
-interests.label.music_performance_987,Music & Performance,,,,,,,,,,"Line 211: key: ""Music & Performance"",",interests,label
-interests.label.playing_records_988,playing_records,,,,,,,,,,"Line 214: ""playing_records"",",interests,label
-interests.label.make_music_989,make_music,,,,,,,,,,"Line 215: ""make_music"",",interests,label
-interests.label.literature_learning_991,Literature & Learning,,,,,,,,,,"Line 221: key: ""Literature & Learning"",",interests,label
-interests.label.indoor_recreation_993,Indoor Recreation,,,,,,,,,,"Line 228: key: ""Indoor Recreation"",",interests,label
-interests.label.home_activities_994,Home Activities,,,,,,,,,,"Line 232: key: ""Home Activities"",",interests,label
-interests.label.social_activities_996,Social Activities,,,,,,,,,,"Line 248: key: ""Social Activities"",",interests,label
-interests.label.playing_cards_999,playing_cards,,,,,,,,,,"Line 253: ""playing_cards"",",interests,label
-interests.label.watch_a_movie_1000,watch_a_movie,,,,,,,,,,"Line 254: ""watch_a_movie"",",interests,label
-interests.label.indoor_sports_1001,Indoor Sports,,,,,,,,,,"Line 265: key: ""Indoor Sports"",",interests,label
-interests.label.godaisy_reco_dismissed_1007,godaisy.reco.dismissed,,,,,,,,,,Line 283: const RECO_DISMISSED_LS = 'godaisy.reco.dismissed';,interests,label
-interests.label.alert_alert_info_1022,alert alert-info,,,,,,,,,,"Line 348: <div className=""alert alert-info"">",interests,label
-interests.label.card_bg_base_200_50_border_bor_1023,card bg-base-200/50 border border-base-300,,,,,,,,,,"Line 358: <div className=""card bg-base-200/50 border border-base-300"">",interests,label
-interests.label.card_body_py_3_1024,card-body py-3,,,,,,,,,,"Line 359: <div className=""card-body py-3"">",interests,label
-interests.label.flex_items_center_justify_betw_1025,flex items-center justify-between mb-2,,,,,,,,,,"Line 360: <div className=""flex items-center justify-between mb-2"">",interests,label
-interests.label.flex_items_center_gap_2_1026,flex items-center gap-2,,,,,,,,,,"Line 361: <div className=""flex items-center gap-2"">",interests,label
-interests.button.btn_btn_ghost_btn_xs_1029,btn btn-ghost btn-xs,,,,,,,,,,"Line 367: className=""btn btn-ghost btn-xs""",interests,button
-interests.label.flex_flex_wrap_gap_2_1030,flex flex-wrap gap-2,,,,,,,,,,"Line 373: <div className=""flex flex-wrap gap-2"">",interests,label
-interests.button.btn_btn_sm_btn_primary_gap_1_n_1031,btn btn-sm btn-primary gap-1 normal-case,,,,,,,,,,"Line 379: className=""btn btn-sm btn-primary gap-1 normal-case""",interests,button
-interests.label.ml_1_1032,ml-1,,,,,,,,,,"Line 384: <span className=""ml-1"">×</span>",interests,label
-interests.button.btn_btn_sm_btn_ghost_1033,btn btn-sm btn-ghost,,,,,,,,,,"Line 390: className=""btn btn-sm btn-ghost""",interests,button
-interests.paragraph.card_bg_gradient_to_br_from_ac_1035,card bg-gradient-to-br from-accent/5 to-accent/10 border border-accent/20,,,,,,,,,,"Line 422: <div className=""card bg-gradient-to-br from-accent/5 to-accent/10 border border-",interests,paragraph
-interests.label.card_body_py_4_1036,card-body py-4,,,,,,,,,,"Line 423: <div className=""card-body py-4"">",interests,label
-interests.label.flex_items_center_gap_2_mb_3_1037,flex items-center gap-2 mb-3,,,,,,,,,,"Line 424: <div className=""flex items-center gap-2 mb-3"">",interests,label
-interests.label.text_2xl_1038,text-2xl,,,,,,,,,,"Line 425: <span className=""text-2xl"">✨</span>",interests,label
-interests.heading.font_semibold_text_lg_1039,font-semibold text-lg,,,,,,,,,,"Line 427: <h3 className=""font-semibold text-lg"">",interests,heading
-interests.label.popular_activities_you_might_e_1040,Popular activities you might enjoy,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
-interests.label.you_might_also_like_1041,You might also like,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
-interests.paragraph.these_popular_activities_are_e_1043,These popular activities are enjoyed by people with diverse interests,,,,,,,,,,Line 432: ? 'These popular activities are enjoyed by people with diverse interests',interests,paragraph
-interests.label.based_on_your_interests_we_thi_1044,"Based on your interests, we think you",,,,,,,,,,"Line 433: : ""Based on your interests, we think you'd enjoy these activities""}",interests,label
-interests.paragraph.grid_grid_cols_1_sm_grid_cols__1045,grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2,,,,,,,,,,"Line 438: <div className=""grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"">",interests,paragraph
-interests.label.flex_items_center_gap_1_1046,flex items-center gap-1,,,,,,,,,,"Line 444: <div key={id} className=""flex items-center gap-1"">",interests,label
-interests.button.btn_btn_outline_justify_start__1047,btn btn-outline justify-start h-10 normal-case rounded-xl flex items-center gap-2 border-accent text-accent hover:bg-accent/10 flex-1,,,,,,,,,,"Line 448: className=""btn btn-outline justify-start h-10 normal-case rounded-xl flex items-",interests,button
-interests.button.add_to_your_interests_1048,Add to your interests,,,,,,,,,,"Line 449: title=""Add to your interests""",interests,button
-interests.label.text_accent_font_bold_1049,text-accent font-bold,,,,,,,,,,"Line 451: <span className=""text-accent font-bold"">+</span>",interests,label
-interests.label.dismiss_suggestion_1050,Dismiss suggestion,,,,,,,,,,"Line 458: aria-label=""Dismiss suggestion""",interests,label
-interests.label.not_interested_1052,Not interested,,,,,,,,,,"Line 461: title=""Not interested""",interests,label
-interests.label.text_xs_opacity_60_mt_2_1053,text-xs opacity-60 mt-2,,,,,,,,,,"Line 470: <div className=""text-xs opacity-60 mt-2"">",interests,label
-interests.label.border_primary_30_1054,border-primary/30,,,,,,,,,,Line 489: <div className={`card bg-base-100 border ${hasSelections ? 'border-primary/30' :,interests,label
-interests.label.border_base_300_1055,border-base-300,,,,,,,,,,Line 489: <div className={`card bg-base-100 border ${hasSelections ? 'border-primary/30' :,interests,label
-interests.label.card_body_p_0_1056,card-body p-0,,,,,,,,,,"Line 490: <div className=""card-body p-0"">",interests,label
-interests.paragraph.flex_items_center_justify_betw_1057,flex items-center justify-between p-4 hover:bg-base-200/50 transition-colors,,,,,,,,,,"Line 494: className=""flex items-center justify-between p-4 hover:bg-base-200/50 transition",interests,paragraph
-interests.label.flex_items_center_gap_3_1058,flex items-center gap-3,,,,,,,,,,"Line 497: <div className=""flex items-center gap-3"">",interests,label
-interests.label.text_left_1060,text-left,,,,,,,,,,"Line 499: <div className=""text-left"">",interests,label
-interests.label.ml_2_badge_badge_primary_badge_1062,ml-2 badge badge-primary badge-sm,,,,,,,,,,"Line 502: <span className=""ml-2 badge badge-primary badge-sm"">",interests,label
-interests.label.text_xl_1063,text-xl,,,,,,,,,,"Line 508: <span className=""text-xl"">{expanded ? '▼' : '▶'}</span>",interests,label
-interests.label.px_4_pb_4_1064,px-4 pb-4,,,,,,,,,,"Line 512: <div className=""px-4 pb-4"">",interests,label
-interests.label.mt_3_1065,mt-3,,,,,,,,,,"Line 531: <div className=""mt-3"">",interests,label
-interests.label.flex_items_center_gap_2_mb_2_1066,flex items-center gap-2 mb-2,,,,,,,,,,"Line 532: <div className=""flex items-center gap-2 mb-2"">",interests,label
-interests.label.font_medium_1068,font-medium,,,,,,,,,,"Line 534: <span className=""font-medium"" style={{ color: 'rgb(31, 41, 55)' }}>{subcategory.",interests,label
-interests.paragraph.grid_grid_cols_2_sm_grid_cols__1069,grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2,,,,,,,,,,"Line 536: <div className=""grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2"">",interests,paragraph
-interests.button.btn_primary_1070,btn-primary,,,,,,,,,,Line 548: selected ? 'btn-primary' : 'btn-outline',interests,button
-interests.button.btn_outline_1071,btn-outline,,,,,,,,,,Line 548: selected ? 'btn-primary' : 'btn-outline',interests,button
-interests.button.saved_locally_supabase_sync_fa_1072,Saved locally! (Supabase sync failed),,,,,,,,,,Line 726: showSuccessToast('Saved locally! (Supabase sync failed)');,interests,button
-interests.paragraph.your_interests_have_been_saved_1073,Your interests have been saved!,,,,,,,,,,Line 728: showSuccessToast('Your interests have been saved!');,interests,paragraph
-interests.paragraph.your_interests_have_been_saved_1074,Your interests have been saved locally!,,,,,,,,,,Line 732: showSuccessToast('Your interests have been saved locally!');,interests,paragraph
-interests.label.my_interests_go_daisy_1076,My Interests - Go Daisy,,,,,,,,,,Line 751: <title>My Interests - Go Daisy</title>,interests,label
-interests.label.min_h_60vh_bg_base_100_text_ba_1077,min-h-[60vh] bg-base-100 text-base-content,,,,,,,,,,"Line 754: <div data-theme=""light"" className=""min-h-[60vh] bg-base-100 text-base-content"">",interests,label
-interests.label.container_mx_auto_max_w_3xl_px_1078,container mx-auto max-w-3xl px-4 py-12,,,,,,,,,,"Line 755: <div className=""container mx-auto max-w-3xl px-4 py-12"">",interests,label
-interests.label.text_3xl_mb_2_1080,text-3xl mb-2,,,,,,,,,,"Line 757: <div className=""text-3xl mb-2"">⏳</div>",interests,label
-interests.label.container_mx_auto_max_w_4xl_px_1083,container mx-auto max-w-4xl px-4 py-8,,,,,,,,,,"Line 779: <div className=""container mx-auto max-w-4xl px-4 py-8"">",interests,label
-interests.heading.your_interests_1085,Your Interests,,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
-interests.heading.text_3xl_font_bold_1086,text-3xl font-bold,,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
-interests.label.text_base_content_70_1087,text-base-content/70,,,,,,,,,,"Line 783: <p className=""text-base-content/70"">",interests,label
-interests.paragraph.sticky_top_16_z_10_bg_base_100_1088,sticky top-16 z-10 bg-base-100/95 backdrop-blur pb-4,,,,,,,,,,"Line 789: <div className=""sticky top-16 z-10 bg-base-100/95 backdrop-blur pb-4"">",interests,paragraph
-interests.label.space_y_3_mt_6_1090,space-y-3 mt-6,,,,,,,,,,"Line 812: <div className=""space-y-3 mt-6"">",interests,label
-interests.label.flex_justify_center_mt_8_1091,flex justify-center mt-8,,,,,,,,,,"Line 841: <div className=""flex justify-center mt-8"">",interests,label
-interests.button.btn_btn_primary_btn_lg_1092,btn btn-primary btn-lg,,,,,,,,,,"Line 842: <button onClick={handleSave} className=""btn btn-primary btn-lg"">",interests,button
-interests.label.toast_toast_top_toast_center_z_1093,toast toast-top toast-center z-50,,,,,,,,,,"Line 850: <div className=""toast toast-top toast-center z-50"">",interests,label
-interests.label.alert_alert_success_1094,alert alert-success,,,,,,,,,,"Line 851: <div className=""alert alert-success"">",interests,label
-onboarding.label._components_mappicker_1095,@/components/MapPicker,,,,,,,,,,"Line 10: const MapPicker = dynamic(() => import(""@/components/MapPicker""), { ssr: false }",onboarding,label
-onboarding.label._b1_1096,--b1,,,,,,,,,,"Line 14: '--b1': '0 0% 100%',   // white",onboarding,label
-onboarding.label.0_0_100__1097,0 0% 100%,,,,,,,,,,"Line 14: '--b1': '0 0% 100%',   // white",onboarding,label
-onboarding.label._b2_1098,--b2,,,,,,,,,,"Line 15: '--b2': '0 0% 95%',",onboarding,label
-onboarding.label.0_0_95__1099,0 0% 95%,,,,,,,,,,"Line 15: '--b2': '0 0% 95%',",onboarding,label
-onboarding.label._b3_1100,--b3,,,,,,,,,,"Line 16: '--b3': '0 0% 90%',",onboarding,label
-onboarding.label.0_0_90__1101,0 0% 90%,,,,,,,,,,"Line 16: '--b3': '0 0% 90%',",onboarding,label
-onboarding.label._bc_1102,--bc,,,,,,,,,,"Line 17: '--bc': '215 28% 17%', // slate-800-ish text",onboarding,label
-onboarding.label.215_28_17__1103,215 28% 17%,,,,,,,,,,"Line 17: '--bc': '215 28% 17%', // slate-800-ish text",onboarding,label
-onboarding.label._p_1104,--p,,,,,,,,,,"Line 20: '--p':  '262 92% 58%', // primary",onboarding,label
-onboarding.label.262_92_58__1105,262 92% 58%,,,,,,,,,,"Line 20: '--p':  '262 92% 58%', // primary",onboarding,label
-onboarding.label._pc_1106,--pc,,,,,,,,,,"Line 21: '--pc': '0 0% 100%',",onboarding,label
-onboarding.label._s_1108,--s,,,,,,,,,,"Line 22: '--s':  '316 80% 49%', // secondary",onboarding,label
-onboarding.label.316_80_49__1109,316 80% 49%,,,,,,,,,,"Line 22: '--s':  '316 80% 49%', // secondary",onboarding,label
-onboarding.label._sc_1110,--sc,,,,,,,,,,"Line 23: '--sc': '0 0% 100%',",onboarding,label
-onboarding.label._a_1112,--a,,,,,,,,,,"Line 24: '--a':  '173 64% 47%', // accent (teal)",onboarding,label
-onboarding.label.173_64_47__1113,173 64% 47%,,,,,,,,,,"Line 24: '--a':  '173 64% 47%', // accent (teal)",onboarding,label
-onboarding.label._ac_1114,--ac,,,,,,,,,,"Line 25: '--ac': '0 0% 100%',",onboarding,label
-onboarding.label._n_1116,--n,,,,,,,,,,"Line 26: '--n':  '220 13% 46%', // neutral",onboarding,label
-onboarding.label.220_13_46__1117,220 13% 46%,,,,,,,,,,"Line 26: '--n':  '220 13% 46%', // neutral",onboarding,label
-onboarding.label._nc_1118,--nc,,,,,,,,,,"Line 27: '--nc': '0 0% 100%',",onboarding,label
-onboarding.label._in_1120,--in,,,,,,,,,,"Line 30: '--in': '204 86% 53%',",onboarding,label
-onboarding.label.204_86_53__1121,204 86% 53%,,,,,,,,,,"Line 30: '--in': '204 86% 53%',",onboarding,label
-onboarding.label._su_1122,--su,,,,,,,,,,"Line 31: '--su': '166 100% 34%',",onboarding,label
-onboarding.label.166_100_34__1123,166 100% 34%,,,,,,,,,,"Line 31: '--su': '166 100% 34%',",onboarding,label
-onboarding.label._wa_1124,--wa,,,,,,,,,,"Line 32: '--wa': '37 100% 50%',",onboarding,label
-onboarding.label.37_100_50__1125,37 100% 50%,,,,,,,,,,"Line 32: '--wa': '37 100% 50%',",onboarding,label
-onboarding.label._er_1126,--er,,,,,,,,,,"Line 33: '--er': '14 100% 50%',",onboarding,label
-onboarding.label.14_100_50__1127,14 100% 50%,,,,,,,,,,"Line 33: '--er': '14 100% 50%',",onboarding,label
-onboarding.label.godaisy_demo_place_1128,godaisy.demo.place,,,,,,,,,,Line 36: const DEMO_PLACE_LS_KEY = 'godaisy.demo.place';,onboarding,label
-onboarding.label.flex_items_start_justify_betwe_1129,flex items-start justify-between gap-4 mb-2,,,,,,,,,,"Line 56: <div className=""flex items-start justify-between gap-4 mb-2"">",onboarding,label
-onboarding.heading.text_lg_font_semibold_1130,text-lg font-semibold,,,,,,,,,,"Line 58: <h2 className=""text-lg font-semibold"">{title}</h2>",onboarding,heading
-onboarding.label.text_sm_text_base_content_60_1131,text-sm text-base-content/60,,,,,,,,,,"Line 60: <p className=""text-sm text-base-content/60"">{subtitle}</p>",onboarding,label
-onboarding.button.btn_btn_sm_rounded_xl_normal_c_1133,btn btn-sm rounded-xl normal-case transition-shadow,,,,,,,,,,"Line 91: ""btn btn-sm rounded-xl normal-case transition-shadow"",",onboarding,button
-onboarding.button.btn_primary_ring_2_ring_offset_1134,btn-primary ring-2 ring-offset-1 ring-primary/60,,,,,,,,,,"Line 93: ? ""btn-primary ring-2 ring-offset-1 ring-primary/60""",onboarding,button
-onboarding.button.btn_outline_hover_bg_base_200_1135,btn-outline hover:bg-base-200,,,,,,,,,,"Line 94: : ""btn-outline hover:bg-base-200""",onboarding,button
-onboarding.label.mr_1_1136,mr-1,,,,,,,,,,"Line 98: {selected && <span className=""mr-1"">✓</span>}",onboarding,label
-onboarding.label.mr_2_inline_flex_items_center_1137,mr-2 inline-flex items-center,,,,,,,,,,"Line 99: {icon && <span className=""mr-2 inline-flex items-center"">{icon}</span>}",onboarding,label
-onboarding.button.relative_btn_btn_lg_h_24_w_ful_1138,relative btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex flex-col gap-1,,,,,,,,,,"Line 111: ""relative btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex f",onboarding,button
-onboarding.label.text_sm_font_semibold_1142,text-sm font-semibold,,,,,,,,,,"Line 119: <span className=""text-sm font-semibold"">",onboarding,label
-onboarding.label.mt_4_flex_items_center_justify_1144,mt-4 flex items-center justify-between gap-3,,,,,,,,,,"Line 135: <div className=""mt-4 flex items-center justify-between gap-3"">",onboarding,label
-onboarding.button.btn_btn_ghost_1145,btn btn-ghost,,,,,,,,,,"Line 136: <button type=""button"" className=""btn btn-ghost"" onClick={onBack}>Back</button>",onboarding,button
-onboarding.label.text_sm_1149,text-sm,,,,,,,,,,"Line 141: <span className=""text-sm"">Total selected: {totalSelected}</span>",onboarding,label
-onboarding.label.complete_setup_1151,Complete Setup,,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
-onboarding.label.nearly_there_keep_going_1152,"Nearly there, keep going",,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
-onboarding.label.__1153,🏄‍♂️,,,,,,,,,,"Line 165: surfing: ""🏄‍♂️"",",onboarding,label
-onboarding.label.__1154,🌬️,,,,,,,,,,"Line 211: tai_chi: ""🌬️"",",onboarding,label
-onboarding.label.__1155,🏙️,,,,,,,,,,"Line 214: urban_exploring: ""🏙️"",",onboarding,label
-onboarding.label.__1156,🏋️,,,,,,,,,,"Line 215: gym_workout: ""🏋️"",",onboarding,label
-onboarding.label.__1158,🛠️,,,,,,,,,,"Line 225: diy: ""🛠️"",",onboarding,label
-onboarding.label.__1159,🖼️,,,,,,,,,,"Line 229: gallery: ""🖼️"",",onboarding,label
-onboarding.label.__1160,🎞️,,,,,,,,,,"Line 238: cinema: ""🎞️"",",onboarding,label
-onboarding.label.__1161,🏛️,,,,,,,,,,"Line 239: museum: ""🏛️"",",onboarding,label
-onboarding.label.__1162,🛍️,,,,,,,,,,"Line 240: shopping: ""🛍️"",",onboarding,label
-onboarding.label.__1163,🏖️,,,,,,,,,,"Line 243: beach: ""🏖️"",",onboarding,label
-onboarding.label.data_theme_1164,data-theme,,,,,,,,,,Line 268: const previous = html.getAttribute('data-theme');,onboarding,label
-onboarding.label.force_light_scope_1165,force-light-scope,,,,,,,,,,Line 269: html.classList.add('force-light-scope');,onboarding,label
-onboarding.label.get_started_go_daisy_1170,Get Started - Go Daisy,,,,,,,,,,Line 281: <title>Get Started - Go Daisy</title>,onboarding,label
-onboarding.paragraph.force_light_min_h_screen_bg_ba_1171,force-light min-h-screen bg-base-100 text-base-content p-4,,,,,,,,,,"Line 283: <div data-theme=""light"" className=""force-light min-h-screen bg-base-100 text-bas",onboarding,paragraph
-onboarding.label.bg_base_200_rounded_box_p_2_mt_1173,bg-base-200 rounded-box p-2 mt-2,,,,,,,,,,"Line 330: <div className=""bg-base-200 rounded-box p-2 mt-2"">",onboarding,label
-onboarding.label.text_sm_font_medium_1175,text-sm font-medium,,,,,,,,,,"Line 332: <span className=""text-sm font-medium"">Selected ({items.length})</span>",onboarding,label
-onboarding.button.clear_all_1176,Clear all,,,,,,,,,,"Line 333: <button type=""button"" className=""btn btn-ghost btn-xs text-base-content"" onClick",onboarding,button
-onboarding.button.btn_btn_ghost_btn_xs_text_base_1177,btn btn-ghost btn-xs text-base-content,,,,,,,,,,"Line 333: <button type=""button"" className=""btn btn-ghost btn-xs text-base-content"" onClick",onboarding,button
-onboarding.label.flex_flex_wrap_gap_1_1178,flex flex-wrap gap-1,,,,,,,,,,"Line 335: <div className=""flex flex-wrap gap-1"">",onboarding,label
-onboarding.paragraph.badge_bg_base_200_text_base_co_1179,badge bg-base-200 text-base-content border border-base-300 gap-1,,,,,,,,,,"Line 337: <span key={id} className=""badge bg-base-200 text-base-content border border-base",onboarding,paragraph
-onboarding.label.card_bg_base_100_shadow_xl_w_f_1181,card bg-base-100 shadow-xl w-full,,,,,,,,,,"Line 359: className=""card bg-base-100 shadow-xl w-full""",onboarding,label
-onboarding.label.search_a_place__1183,Search a place…,,,,,,,,,,"Line 371: placeholder = ""Search a place…"",",onboarding,label
-onboarding.label.coastal_recent_locations_v1_1184,coastal_recent_locations_v1,,,,,,,,,,"Line 373: storageKey = 'coastal_recent_locations_v1',",onboarding,label
-onboarding.label.recentcoastallocations_1185,recentCoastalLocations,,,,,,,,,,"Line 374: legacyKey = 'recentCoastalLocations',",onboarding,label
-onboarding.label._setquery_initialquery__1186,); setQuery(initialQuery ||,,,,,,,,,,"Line 407: useEffect(() => { setValue(initialQuery || """"); setQuery(initialQuery || """"); },",onboarding,label
-onboarding.label.application_json_1187,application/json,,,,,,,,,,"Line 455: 'Accept': 'application/json',",onboarding,label
-onboarding.label.user_agent_1188,User-Agent,,,,,,,,,,Line 456: 'User-Agent': 'GoDaisy/1.0 (contact: app)',onboarding,label
-onboarding.label.godaisy_1_0_contact_app__1189,GoDaisy/1.0 (contact: app),,,,,,,,,,Line 456: 'User-Agent': 'GoDaisy/1.0 (contact: app)',onboarding,label
-onboarding.label.geolocation_1190,geolocation,,,,,,,,,,Line 495: if (!('geolocation' in navigator)) { setLocationError('Geolocation is not availa,onboarding,label
-onboarding.nav.geolocation_is_not_available_i_1191,Geolocation is not available in this browser.,,,,,,,,,,Line 495: if (!('geolocation' in navigator)) { setLocationError('Geolocation is not availa,onboarding,nav
-onboarding.paragraph.unable_to_get_your_location__1192,Unable to get your location.,,,,,,,,,,Line 517: const msg = (typeof e === 'object' && e !== null && 'message' in e) ? String((e ,onboarding,paragraph
-onboarding.label.selected_place_1193,Selected place,,,,,,,,,,Line 534: const label = s?.structured_formatting?.main_text || s?.description || 'Selected,onboarding,label
-onboarding.label.form_control_relative_1195,form-control relative,,,,,,,,,,"Line 584: <div className=""form-control relative"">",onboarding,label
-onboarding.label.input_input_bordered_w_full_pr_1196,input input-bordered w-full pr-24,,,,,,,,,,"Line 588: className=""input input-bordered w-full pr-24""",onboarding,label
-onboarding.label.loading__1197,Loading…,,,,,,,,,,Line 589: placeholder={ready ? placeholder : 'Loading…'},onboarding,label
-onboarding.button.btn_btn_primary_btn_sm_absolut_1198,btn btn-primary btn-sm absolute right-2 top-1/2 -translate-y-1/2,,,,,,,,,,"Line 616: className=""btn btn-primary btn-sm absolute right-2 top-1/2 -translate-y-1/2""",onboarding,button
-onboarding.button.confirm_selection_1199,Confirm selection,,,,,,,,,,"Line 618: aria-label=""Confirm selection""",onboarding,button
-onboarding.paragraph.absolute_left_0_right_0_z_50_m_1200,absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ring-base-300/60 max-h-64 overflow-auto shadow-lg,,,,,,,,,,"Line 624: <ul className=""absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ",onboarding,paragraph
-onboarding.button.w_full_text_left_px_3_py_2_hov_1201,w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-200,,,,,,,,,,"Line 631: <button className=""w-full text-left px-3 py-2 hover:bg-base-200 focus:bg-base-20",onboarding,button
-onboarding.label.flex_flex_col_items_start_1202,flex flex-col items-start,,,,,,,,,,"Line 632: <div className=""flex flex-col items-start"">",onboarding,label
-onboarding.label.font_medium_leading_tight_1203,font-medium leading-tight,,,,,,,,,,"Line 633: <span className=""font-medium leading-tight"">{main}</span>",onboarding,label
-onboarding.label.text_xs_opacity_70_leading_tig_1204,text-xs opacity-70 leading-tight,,,,,,,,,,"Line 634: {secondary ? <span className=""text-xs opacity-70 leading-tight"">{secondary}</spa",onboarding,label
-onboarding.label.mt_2_flex_flex_wrap_gap_2_1205,mt-2 flex flex-wrap gap-2,,,,,,,,,,"Line 644: <div className=""mt-2 flex flex-wrap gap-2"">",onboarding,label
-onboarding.label.locating__1207,Locating…,,,,,,,,,,Line 646: {isLocating ? 'Locating…' : 'Use current location'},onboarding,label
-onboarding.label.use_current_location_1208,Use current location,,,,,,,,,,Line 646: {isLocating ? 'Locating…' : 'Use current location'},onboarding,label
-onboarding.label.hide_map_1210,Hide map,,,,,,,,,,Line 650: {showMap ? 'Hide map' : 'Pick from map'},onboarding,label
-onboarding.label.pick_from_map_1211,Pick from map,,,,,,,,,,Line 650: {showMap ? 'Hide map' : 'Pick from map'},onboarding,label
-onboarding.label.alert_alert_error_mt_2_1212,alert alert-error mt-2,,,,,,,,,,"Line 654: {locationError && <div className=""alert alert-error mt-2""><span>{locationError}<",onboarding,label
-onboarding.paragraph.mt_3_rounded_box_overflow_hidd_1213,mt-3 rounded-box overflow-hidden ring-1 ring-base-300/60,,,,,,,,,,"Line 657: <div className=""mt-3 rounded-box overflow-hidden ring-1 ring-base-300/60"">",onboarding,paragraph
-onboarding.label.text_sm_font_semibold_mb_2_1215,text-sm font-semibold mb-2,,,,,,,,,,"Line 674: <div className=""text-sm font-semibold mb-2"">Recent</div>",onboarding,label
-onboarding.button.btn_btn_sm_btn_outline_rounded_1217,btn btn-sm btn-outline rounded-full,,,,,,,,,,"Line 677: <button key={`${r.name}-${i}`} className=""btn btn-sm btn-outline rounded-full"" o",onboarding,button
-onboarding.label.truncate_max_w_14rem__1218,truncate max-w-[14rem],,,,,,,,,,"Line 678: <span className=""truncate max-w-[14rem]"">{r.name}</span>",onboarding,label
-onboarding.nav.geolocation_not_available__1223,Geolocation not available.,,,,,,,,,,Line 780: if (!('geolocation' in navigator)) { setHomeLocateError('Geolocation not availab,onboarding,nav
-onboarding.label.activities_combined_1229,activities-combined,,,,,,,,,,"Line 875: if (useCombined) return { type: ""activities-combined"" as const };",onboarding,label
-onboarding.label.activities_chunk_1230,activities-chunk,,,,,,,,,,"Line 877: return { type: ""activities-chunk"" as const, chunkIndex };",onboarding,label
-onboarding.label.choose_areas_1232,Choose areas,,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,label
-onboarding.paragraph.sticky_top_0_z_10_bg_base_100__1236,sticky top-0 z-10 bg-base-100/95 backdrop-blur pt-1,,,,,,,,,,"Line 909: <div className=""sticky top-0 z-10 bg-base-100/95 backdrop-blur pt-1"">",onboarding,paragraph
-onboarding.label.steps_w_full_1237,steps w-full,,,,,,,,,,"Line 910: <ul className=""steps w-full"">",onboarding,label
-onboarding.label.step_primary_1238,step-primary,,,,,,,,,,"Line 911: {items.map((label, i) => (<li key={label} className={`step ${i <= currentIndex ?",onboarding,label
-onboarding.label.text_center_space_y_1_mt_2_1239,text-center space-y-1 mt-2,,,,,,,,,,"Line 913: <div className=""text-center space-y-1 mt-2"">",onboarding,label
-onboarding.heading.card_title_justify_center_text_1240,card-title justify-center text-2xl,,,,,,,,,,"Line 914: <h1 className=""card-title justify-center text-2xl"">",onboarding,heading
-onboarding.paragraph._welcome_to_godaisy__1241,👋 Welcome to GoDaisy!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
-onboarding.label.set_your_home_location__1242,Set your home location 📍,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
-onboarding.label.set_a_coastal_spot__1243,Set a coastal spot 🌊,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
-onboarding.paragraph._all_set__1244,🎉 All set!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
-onboarding.label.fine_tune__1245,Fine-tune 🎯,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
-onboarding.label.text_base_content_70_text_sm_1246,text-base-content/70 text-sm,,,,,,,,,,"Line 917: <p className=""text-base-content/70 text-sm"">",onboarding,label
-onboarding.paragraph.deselect_any_areas_you_re_not__1247,Deselect any areas you’re not into. You can change this any time.,,,,,,,,,,"Line 918: {phase.type === 'clusters' && ""Deselect any areas you’re not into. You can chang",onboarding,paragraph
-onboarding.paragraph.great_deselect_anything_that_s_1249,Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started.,,,,,,,,,,"Line 919: {phase.type === 'activities-combined' && ""Great! Deselect anything that’s not yo",onboarding,paragraph
-onboarding.paragraph.short_lists_better_choices_you_1251,"Short lists, better choices. You can add more later.",,,,,,,,,,"Line 920: {phase.type === 'activities-chunk' && ""Short lists, better choices. You can add ",onboarding,paragraph
-onboarding.paragraph.set_your_home_location_so_we_c_1252,Set your home location so we can personalise local recommendations and forecasts.,,,,,,,,,,"Line 921: {phase.type === 'home' && ""Set your home location so we can personalise local re",onboarding,paragraph
-onboarding.paragraph.because_you_chose_sea_activiti_1253,"Because you chose sea activities, adding a coastal spot helps us give you seaside advice.",,,,,,,,,,"Line 922: {phase.type === 'marine' && ""Because you chose sea activities, adding a coastal ",onboarding,paragraph
-onboarding.paragraph.we_ve_saved_your_activities_yo_1254,We’ve saved your activities. You can always add more later.,,,,,,,,,,"Line 923: {phase.type === 'confirm' && ""We’ve saved your activities. You can always add mo",onboarding,paragraph
-onboarding.label.space_y_3_mt_2_1255,space-y-3 mt-2,,,,,,,,,,"Line 927: <div className=""space-y-3 mt-2"">",onboarding,label
-onboarding.label.home_location_1256,Home location,,,,,,,,,,"Line 929: title=""Home location""",onboarding,label
-onboarding.paragraph.helps_us_tailor_forecasts_and__1257,Helps us tailor forecasts and nearby suggestions.,,,,,,,,,,"Line 930: subtitle=""Helps us tailor forecasts and nearby suggestions.""",onboarding,paragraph
-onboarding.label.form_control_w_full_1258,form-control w-full,,,,,,,,,,"Line 933: <div className=""form-control w-full"">",onboarding,label
-onboarding.label.search_for_your_home_location_1259,Search for your home location,,,,,,,,,,"Line 935: <span className=""label-text"">Search for your home location</span>",onboarding,label
-onboarding.label.label_text_1260,label-text,,,,,,,,,,"Line 935: <span className=""label-text"">Search for your home location</span>",onboarding,label
-onboarding.label.type_a_place_postcode_or_addre_1261,"Type a place, postcode, or address",,,,,,,,,,"Line 944: placeholder=""Type a place, postcode, or address""",onboarding,label
-onboarding.label.label_text_alt_1264,label-text-alt,,,,,,,,,,"Line 950: <span className=""label-text-alt"">Autocomplete + map inline (same logic as header",onboarding,label
-onboarding.label.flex_gap_2_items_center_flex_w_1265,flex gap-2 items-center flex-wrap,,,,,,,,,,"Line 953: <div className=""flex gap-2 items-center flex-wrap"">",onboarding,label
-onboarding.label.text_error_text_sm_1270,text-error text-sm,,,,,,,,,,"Line 958: {homeLocateError && <span className=""text-error text-sm"">{homeLocateError}</span",onboarding,label
-onboarding.label.text_xs_text_base_content_60_1272,text-xs text-base-content/60,,,,,,,,,,"Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,label
-onboarding.paragraph.grid_grid_cols_2_sm_grid_cols__1273,grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 mt-2,,,,,,,,,,"Line 979: <div className=""grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl",onboarding,paragraph
-onboarding.paragraph.deselect_anything_that_s_not_y_1276,Deselect anything that’s not your vibe.,,,,,,,,,,"Line 997: subtitle=""Deselect anything that’s not your vibe.""",onboarding,paragraph
-onboarding.label.divider_my_1_1277,divider my-1,,,,,,,,,,"Line 1000: <div className=""divider my-1""></div>",onboarding,label
-onboarding.paragraph.grid_grid_cols_2_sm_grid_cols__1278,grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2,,,,,,,,,,"Line 1001: <div className=""grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl",onboarding,paragraph
-onboarding.label.flex_flex_wrap_gap_2_mt_1_mb_2_1282,flex flex-wrap gap-2 mt-1 mb-2,,,,,,,,,,"Line 1024: <div className=""flex flex-wrap gap-2 mt-1 mb-2"">",onboarding,label
-onboarding.button.btn_btn_sm_rounded_xl_normal_c_1283,btn btn-sm rounded-xl normal-case,,,,,,,,,,"Line 1034: ""btn btn-sm rounded-xl normal-case"",",onboarding,button
-onboarding.label.search_for_a_coastal_spot_1296,Search for a coastal spot,,,,,,,,,,"Line 1099: <span className=""label-text"">Search for a coastal spot</span>",onboarding,label
-onboarding.label.type_a_beach_harbour_or_coastl_1298,"Type a beach, harbour, or coastline",,,,,,,,,,"Line 1107: placeholder=""Type a beach, harbour, or coastline""",onboarding,label
-onboarding.label.grid_grid_cols_3_gap_2_items_c_1301,grid grid-cols-3 gap-2 items-center,,,,,,,,,,"Line 1113: <div className=""grid grid-cols-3 gap-2 items-center"">",onboarding,label
-onboarding.button.skip_for_now_1309,Skip for now,,,,,,,,,,"Line 1126: <button className=""btn btn-ghost btn-sm"" onClick={() => setStep(s => s + 1)}>Ski",onboarding,button
-onboarding.button.btn_btn_ghost_btn_sm_1310,btn btn-ghost btn-sm,,,,,,,,,,"Line 1126: <button className=""btn btn-ghost btn-sm"" onClick={() => setStep(s => s + 1)}>Ski",onboarding,button
-onboarding.label.grid_md_grid_cols_2_gap_3_1312,grid md:grid-cols-2 gap-3,,,,,,,,,,"Line 1132: <div className=""grid md:grid-cols-2 gap-3"">",onboarding,label
-onboarding.heading.card_title_text_sm_1316,card-title text-sm,,,,,,,,,,"Line 1135: <h3 className=""card-title text-sm"">Home location</h3>",onboarding,heading
-onboarding.heading.coastal_spot_1320,Coastal spot,,,,,,,,,,"Line 1142: <h3 className=""card-title text-sm"">Coastal spot</h3>",onboarding,heading
-onboarding.label.not_set_1323,Not set,,,,,,,,,,"Line 1143: <p className=""text-sm"">{coastalSpot?.name || marineLocation || 'Not set'}</p>",onboarding,label
-onboarding.link._account_1325,/account,,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
-onboarding.paragraph.alert_bg_base_200_border_borde_1326,alert bg-base-200 border border-base-300 flex items-center gap-3 mt-2,,,,,,,,,,"Line 1151: <div className=""alert bg-base-200 border border-base-300 flex items-center gap-3",onboarding,paragraph
-onboarding.button.save_these_to_your_account__1327,Save these to your account?,,,,,,,,,,"Line 1153: <div className=""font-medium"">Save these to your account?</div>",onboarding,button
-onboarding.paragraph.register_to_sync_your_interest_1329,Register to sync your interests and locations across devices.,,,,,,,,,,"Line 1154: <div className=""text-sm opacity-70"">Register to sync your interests and location",onboarding,paragraph
-onboarding.button._login_1331,/login,,,,,,,,,,"Line 1156: <Link href=""/login"" className=""btn btn-primary btn-sm ml-auto"">Register</Link>",onboarding,button
-onboarding.button.btn_btn_primary_btn_sm_ml_auto_1332,btn btn-primary btn-sm ml-auto,,,,,,,,,,"Line 1156: <Link href=""/login"" className=""btn btn-primary btn-sm ml-auto"">Register</Link>",onboarding,button
-onboarding.button.maybe_later_1333,Maybe later,,,,,,,,,,"Line 1157: <button className=""btn btn-ghost btn-sm"" onClick={() => setShowRegisterNudge(fal",onboarding,button
-onboarding.label.text_xs_text_base_content_60_m_1335,text-xs text-base-content/60 mt-2,,,,,,,,,,"Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,label
-onboarding.label.preferences_1341,preferences,,,,,,,,,,"Line 1226: try { localStorage.setItem('preferences', JSON.stringify(newPrefs)); } catch { /",onboarding,label
+index.nav.marine_conditions_are_temporar_4,Marine conditions are temporarily unavailable. We’ll show land‑based suggestions for now.,,,,,,,,,,"Line 229: setMarineError(""Marine conditions are temporarily unavailable. We’ll show land‑b",index,nav
+index.paragraph.please_set_your_home_location__5,Please set your home location to see suggestions.,,,,,,,,,,Line 646: return <div>Please set your home location to see suggestions.</div>;,index,paragraph
+index.heading.no_activities_selected_7,No Activities Selected,,,,,,,,,,"Line 660: <h2 style={{ color: '#d97706', marginBottom: '0.5rem' }}>No Activities Selected<",index,heading
+index.paragraph.loading_your_smart_recommendat_8,Loading your smart recommendations...,,,,,,,,,,Line 685: return <div>Loading your smart recommendations...</div>;,index,paragraph
+index.label.pick_your_home_location_9,Pick your home location,,,,,,,,,,"Line 700: title=""Pick your home location""",index,label
+index.heading._also_perfect_today_11,💯 Also Perfect Today,,,,,,,,,,"Line 918: <h4 className=""also-good-title"">💯 Also Perfect Today</h4>",index,heading
+index.heading._good_options_today_12,👍 Good Options Today,,,,,,,,,,"Line 970: <h4 className=""also-good-title"">👍 Good Options Today</h4>",index,heading
+index.heading._staying_indoors__13,👺 Staying Indoors?,,,,,,,,,,"Line 1026: <h4 className=""also-good-title"">👺 Staying Indoors?</h4>",index,heading
+support.label.support_go_daisy_14,Support Go Daisy,,,,,,,,,,Line 28: <title>Support Go Daisy</title>,support,label
+support.paragraph.join_the_go_daisy_community_on_15,"Join the Go Daisy community on Patreon or tip via Apple. Help cover weather data, hosting, and keep Damian — and Bruno — in biscuits.",,,,,,,,,,"Line 31: content=""Join the Go Daisy community on Patreon or tip via Apple. Help cover wea",support,paragraph
+support.label.card_body_space_y_4_20,card-body space-y-4,,,,,,,,,,"Line 56: <div className=""card-body space-y-4"">",support,label
+support.heading.keep_go_daisy_blooming_21,Keep Go Daisy Blooming,,,,,,,,,,"Line 57: <h2 className=""card-title text-3xl text-base-content"">Keep Go Daisy Blooming</h2",support,heading
+support.label.leading_relaxed_text_base_cont_22,leading-relaxed text-base-content,,,,,,,,,,"Line 58: <p className=""leading-relaxed text-base-content"">",support,label
+support.label.badge_badge_outline_23,badge badge-outline,,,,,,,,,,"Line 65: <span className=""badge badge-outline"">Community-first</span>",support,label
+support.label.no_paywalls_24,No paywalls,,,,,,,,,,"Line 66: <span className=""badge badge-outline"">No paywalls</span>",support,label
+support.label.indie_friendly_26,Indie & friendly,,,,,,,,,,"Line 67: <span className=""badge badge-outline"">Indie & friendly</span>",support,label
+support.label.card_bg_base_200_28,card bg-base-200,,,,,,,,,,"Line 75: <div className=""card bg-base-200"">",support,label
+support.label.card_body_space_y_3_29,card-body space-y-3,,,,,,,,,,"Line 76: <div className=""card-body space-y-3"">",support,label
+support.heading.join_us_on_patreon_30,Join us on Patreon,,,,,,,,,,"Line 77: <h2 className=""card-title text-lg text-base-content"">Join us on Patreon</h2>",support,heading
+support.button.btn_btn_primary_31,btn btn-primary,,,,,,,,,,"Line 83: className=""btn btn-primary""",support,button
+support.label.noopener_noreferrer_32,noopener noreferrer,,,,,,,,,,"Line 86: rel=""noopener noreferrer""",support,label
+support.heading.apple_tip_jar_35,Apple Tip Jar,,,,,,,,,,"Line 96: <h2 className=""card-title text-lg text-base-content"">Apple Tip Jar</h2>",support,heading
+support.button.btn_btn_outline_36,btn btn-outline,,,,,,,,,,"Line 104: className=""btn btn-outline""",support,button
+support.paragraph.no_features_are_gated_behind_s_38,No features are gated behind support. Everyone gets the same forecast.,,,,,,,,,,Line 121: <li>No features are gated behind support. Everyone gets the same forecast.</li>,support,paragraph
+support.paragraph.patreon_updates_and_progress_n_39,Patreon updates and progress notes are shared with supporters; feature launches land for all users.,,,,,,,,,,Line 122: <li>Patreon updates and progress notes are shared with supporters; feature launc,support,paragraph
+support.heading.frequently_asked_questions_40,Frequently asked questions,,,,,,,,,,"Line 129: <h2 className=""text-lg font-semibold text-base-content"">Frequently asked questio",support,heading
+support.paragraph.does_support_unlock_features__41,Does support unlock features?,,,,,,,,,,"Line 133: <div className=""collapse-title text-base font-medium text-base-content"">Does sup",support,paragraph
+support.paragraph.afraid_not_support_keeps_the_l_42,"Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.",,,,,,,,,,"Line 135: <p className=""text-base-content"">Afraid not. Support keeps the lights on and the",support,paragraph
+support.paragraph.can_i_cancel_any_time__43,Can I cancel any time?,,,,,,,,,,"Line 141: <div className=""collapse-title text-base font-medium text-base-content"">Can I ca",support,paragraph
+support.paragraph.yes_patreon_manages_billing_yo_44,Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.,,,,,,,,,,"Line 143: <p className=""text-base-content"">Yes — Patreon manages billing. You can switch t",support,paragraph
+support.paragraph.other_ways_to_help__45,Other ways to help?,,,,,,,,,,"Line 149: <div className=""collapse-title text-base font-medium text-base-content"">Other wa",support,paragraph
+support.paragraph.tell_a_friend_start_a_plan_or__46,"Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.",,,,,,,,,,"Line 151: <p className=""text-base-content"">Tell a friend, start a plan, or share your favo",support,paragraph
+whether-weather.label.min_h_screen_bg_base_200_47,min-h-screen bg-base-200,,,,,,,,,,"Line 25: <main className=""min-h-screen bg-base-200"">",whether-weather,label
+whether-weather.label.hero_bg_base_100_70_48,hero bg-base-100/70,,,,,,,,,,"Line 27: <section className=""hero bg-base-100/70"">",whether-weather,label
+whether-weather.heading.text_3xl_sm_text_5xl_font_extr_49,text-3xl sm:text-5xl font-extrabold leading-tight text-base-content,,,,,,,,,,"Line 36: <h1 className=""text-3xl sm:text-5xl font-extrabold leading-tight text-base-conte",whether-weather,heading
+whether-weather.label.lg_col_span_3_order_last_lg_or_50,lg:col-span-3 order-last lg:order-first,,,,,,,,,,"Line 50: <aside className=""lg:col-span-3 order-last lg:order-first"">",whether-weather,label
+whether-weather.heading.on_this_page_51,On this page,,,,,,,,,,"Line 53: <h2 className=""card-title text-base text-base-content"">On this page</h2>",whether-weather,heading
+whether-weather.link.a_familiar_frustration_52,A familiar frustration,,,,,,,,,,"Line 55: <li><a href=""#opening"" className=""text-base-content"">A familiar frustration</a><",whether-weather,link
+whether-weather.link.sparse_sensors_microclimates_53,Sparse sensors & microclimates,,,,,,,,,,"Line 56: <li><a href=""#coverage"" className=""text-base-content"">Sparse sensors & microclim",whether-weather,link
+whether-weather.link.instrument_quirks_data_sharing_54,Instrument quirks & data sharing,,,,,,,,,,"Line 57: <li><a href=""#instruments"" className=""text-base-content"">Instrument quirks & dat",whether-weather,link
+whether-weather.link.models_resolution_limits_55,Models & resolution limits,,,,,,,,,,"Line 58: <li><a href=""#models"" className=""text-base-content"">Models & resolution limits</",whether-weather,link
+whether-weather.link.politics_in_the_weather_56,Politics in the weather,,,,,,,,,,"Line 59: <li><a href=""#politics"" className=""text-base-content"">Politics in the weather</a",whether-weather,link
+whether-weather.link.coping_smartly_57,Coping smartly,,,,,,,,,,"Line 60: <li><a href=""#cope"" className=""text-base-content"">Coping smartly</a></li>",whether-weather,link
+whether-weather.link.in_short__58,In short…,,,,,,,,,,"Line 61: <li><a href=""#wrap"" className=""text-base-content"">In short…</a></li>",whether-weather,link
+whether-weather.label.divider_my_2_59,divider my-2,,,,,,,,,,"Line 64: <div className=""divider my-2""></div>",whether-weather,label
+whether-weather.label.text_sm_text_base_content_70_60,text-sm text-base-content/70,,,,,,,,,,"Line 65: <div className=""text-sm text-base-content/70"">",whether-weather,label
+whether-weather.paragraph.always_keep_a_compact_brolly_i_61,Always keep a compact brolly in your bag.,,,,,,,,,,"Line 67: <p className=""flex items-start gap-2""><Umbrella className=""w-4 h-4 mt-0.5""/> Alw",whether-weather,paragraph
+whether-weather.paragraph.check_two_sources_when_it_look_62,Check two sources when it looks marginal.,,,,,,,,,,"Line 68: <p className=""flex items-start gap-2 mt-1""><Wind className=""w-4 h-4 mt-0.5""/> Ch",whether-weather,paragraph
+whether-weather.heading.sensors_aren_t_everywhere_and__63,Sensors aren’t everywhere (and microclimates are sneaky),,,,,,,,,,"Line 89: <h2 className=""mt-8"">Sensors aren’t everywhere (and microclimates are sneaky)</h",whether-weather,heading
+whether-weather.heading.instrument_quirks_patchy_data__64,Instrument quirks & patchy data sharing,,,,,,,,,,"Line 103: <h2 className=""mt-8"">Instrument quirks & patchy data sharing</h2>",whether-weather,heading
+whether-weather.heading.models_smooth_the_world_and_mi_65,Models smooth the world (and miss the cheeky bits),,,,,,,,,,"Line 113: <h2 className=""mt-8"">Models smooth the world (and miss the cheeky bits)</h2>",whether-weather,heading
+whether-weather.heading.a_dash_of_politics_66,A dash of politics,,,,,,,,,,"Line 124: <h2 className=""mt-8"">A dash of politics</h2>",whether-weather,heading
+whether-weather.heading.how_to_keep_calm_and_weather_o_67,How to keep calm and weather on,,,,,,,,,,"Line 140: <h2 className=""mt-8"">How to keep calm and weather on</h2>",whether-weather,heading
+whether-weather.label.grid_sm_grid_cols_2_gap_4_mt_4_68,grid sm:grid-cols-2 gap-4 mt-4,,,,,,,,,,"Line 156: <div className=""grid sm:grid-cols-2 gap-4 mt-4"">",whether-weather,label
+whether-weather.heading.quick_practice_70,Quick practice,,,,,,,,,,"Line 159: <h3 className=""card-title text-base text-base-content""><Zap className=""w-4 h-4""/",whether-weather,heading
+whether-weather.paragraph.pick_two_forecast_apps_and_com_71,Pick two forecast apps and compare their next‑24‑hour outlook; note which one handles showers best in your area.,,,,,,,,,,"Line 160: <p className=""text-sm text-base-content/70"">Pick two forecast apps and compare t",whether-weather,paragraph
+whether-weather.heading.local_cues_74,Local cues,,,,,,,,,,"Line 165: <h3 className=""card-title text-base text-base-content""><Wind className=""w-4 h-4""",whether-weather,heading
+whether-weather.paragraph.watch_flags_tree_tops_hills_an_75,"Watch flags, tree‑tops, hills and sea‑breeze patterns—your microclimate has tells the grid might miss.",,,,,,,,,,"Line 166: <p className=""text-sm text-base-content/70"">Watch flags, tree‑tops, hills and se",whether-weather,paragraph
+aboutus.heading.about_us_78,About Us,,,,,,,,,,"Line 16: <h1 className=""text-4xl font-bold mb-6"">About Us</h1>",AboutUs,heading
+aboutus.label.bruno_enjoying_the_river_79,Bruno enjoying the river,,,,,,,,,,"Line 21: alt=""Bruno enjoying the river""",AboutUs,label
+aboutus.label.bruno_chief_happiness_officer_80,"Bruno, Chief Happiness Officer",,,,,,,,,,"Line 26: <span className=""text-secondary mt-4 text-lg font-semibold"">Bruno, Chief Happine",AboutUs,label
+aboutus.label.go_daisy_81,Go Daisy,,,,,,,,,,Line 30: Welcome to <strong>Go Daisy</strong> — where it’s pretty much just one man and h,AboutUs,label
+aboutus.label.get_people_off_their_phones_82,get people off their phones,,,,,,,,,,"Line 42: not just to predict or inform, but to <em>get people off their phones</em> and b",AboutUs,label
+activities.label.use_client_83,use client,,,,,,,,,,Line 18: 'use client';,activities,label
+activities.label.activity_card_activity_card_bg_84,activity-card activity-card__bg-image,,,,,,,,,,"Line 283: className=""activity-card activity-card__bg-image""",activities,label
+activities.label._indoor_85,🛋️ indoor,,,,,,,,,,Line 311: <>🛋️ indoor</>,activities,label
+activities.label._offseason_86,🍂 offseason,,,,,,,,,,Line 313: <>🍂 offseason</>,activities,label
+activities.label._but_still_an_option_if_you_87,")}, but still an option if you",,,,,,,,,,Line 334: `Not ideal weather for ${activity?.name || (activityId ? activityId.replace(/_/g,activities,label
+activities.label.bg_red_600_text_white_88,bg-red-600 text-white,,,,,,,,,,Line 343: (/^(snowfall_)?(unsafe|dangerous|impossible|unplayable|too_deep)/.test(String(sn,activities,label
+activities.label.bg_emerald_500_text_white_89,bg-emerald-500 text-white,,,,,,,,,,Line 344: : 'bg-emerald-500 text-white'),activities,label
+activities.label.snow_advisory_90,Snow advisory,,,,,,,,,,Line 346: <Image src={String(snow.level).startsWith('snowfall_') ? '/weather-icons/design/,activities,label
+activities.paragraph.activity_card_data_item_activi_93,activity-card__data-item activity-card__data-item--wrap,,,,,,,,,,"Line 394: <li className=""activity-card__data-item activity-card__data-item--wrap"">",activities,paragraph
+activities.label._reasonsstrings_join__96,? reasonsStrings.join(,,,,,,,,,,"Line 543: activityDescription={assessment.status !== 'offseason' ? reasonsStrings.join(', ",activities,label
+activities.label.forecast_days_97,Forecast days,,,,,,,,,,"Line 570: aria-label=""Forecast days""",activities,label
+activities.label.0_75rem_1rem_98,0.75rem 1rem,,,,,,,,,,"Line 587: padding: '0.75rem 1rem',",activities,label
+activities.label.all_0_3s_ease_99,all 0.3s ease,,,,,,,,,,"Line 590: transition: 'all 0.3s ease',",activities,label
+activities.label._math_max_0_math_round_noonent_103,"] ? Math.max(0, Math.round(((noonEntry.snow[",,,,,,,,,,"Line 827: const snowfallRateMmH = noonEntry?.snow?.['3h'] ? Math.max(0, Math.round(((noonE",activities,label
+activities.label.available_option_104,Available option,,,,,,,,,,"Line 929: evaluation: 'Available option',",activities,label
+activities.paragraph.conditions_vary_but_available__105,"Conditions vary, but available based on your interests",,,,,,,,,,"Line 930: reasoning: 'Conditions vary, but available based on your interests',",activities,paragraph
+activities.label.flex_items_center_106,flex items-center,,,,,,,,,,"Line 978: <div className=""flex items-center"">",activities,label
+activities.label.loading_your_activities_107,Loading your activities,,,,,,,,,,"Line 980: <span className=""ml-3 text-base-content/80"">Loading your activities</span>",activities,label
+activities.paragraph.browse_all_your_selected_activ_108,"Browse all your selected activities with detailed weather conditions, scores, and recommendations for the next 8 days.",,,,,,,,,,"Line 993: description=""Browse all your selected activities with detailed weather condition",activities,paragraph
+activities.heading.location_required_110,Location Required,,,,,,,,,,"Line 1016: <h2 style={{ color: '#dc2626', marginBottom: '0.5rem' }}>Location Required</h2>",activities,heading
+weather.paragraph.card_bg_slate_800_35_backdrop__114,card bg-slate-800/35 backdrop-blur-sm border border-white/10 shadow-sm animate-pulse,,,,,,,,,,"Line 39: <div className=""card bg-slate-800/35 backdrop-blur-sm border border-white/10 sha",weather,paragraph
+weather.paragraph.card_bg_slate_800_35_backdrop__115,card bg-slate-800/35 backdrop-blur-sm text-white border border-white/10 shadow-sm,,,,,,,,,,"Line 106: <div className=""card bg-slate-800/35 backdrop-blur-sm text-white border border-w",weather,paragraph
+weather.label.card_body_p_4_116,card-body p-4,,,,,,,,,,"Line 107: <div className=""card-body p-4"">",weather,label
+weather.heading.precip_next_24_hours_117,Precip next 24 hours,,,,,,,,,,"Line 108: <h3 className=""card__header-title text-sm font-semibold mb-2"">Precip next 24 hou",weather,heading
+weather.label._span_span_classname__118,></span><span className=,,,,,,,,,,"Line 109: <div className=""flex items-center py-2""><span className=""loading loading-ring lo",weather,label
+weather.label.m_soilcard_as_react_componentt_119,m.SoilCard as React.ComponentType,,,,,,,,,,"Line 149: () => import(""../components/weather-cards/SoilCard"").then(m => m.SoilCard as Rea",weather,label
+weather.label.m_default_as_react_componentty_120,m.default as React.ComponentType,,,,,,,,,,Line 155: () => import('../components/weather-cards/SurfDayGrade').then(m => m.default as ,weather,label
+weather.label._return_121,)) return,,,,,,,,,,Line 162: if (description.includes('thunder')) return 'storm';,weather,label
+weather.label.very_rough_129,Very rough,,,,,,,,,,Line 206: if (h < 4.00) return 'Very rough';,weather,label
+weather.label.stormy_seas_130,Stormy seas,,,,,,,,,,Line 208: return 'Stormy seas';,weather,label
+weather.paragraph._nexttimeiso_null_as_string_nu_131,", nextTimeISO: null as string | null, nextType: null as",,,,,,,,,,"Line 219: if (!tides?.length) return { trend: '—', until: '—', nextTimeISO: null as string",weather,paragraph
+weather.label._trend__132,) trend =,,,,,,,,,,Line 235: if (prevType === 'HIGH' && nextType === 'LOW') trend = 'Falling';,weather,label
+weather.label._nexttype_as_134,) ? (nextType as,,,,,,,,,,"Line 239: return { trend, until, nextTimeISO: next?.timeISO ?? null, nextType: (nextType =",weather,label
+weather.label._hp_windkts_typeof_mp_windkts__135,? hp.windKts : (typeof mp.windKts ===,,,,,,,,,,Line 319: const windKts = typeof hp.windKts === 'number' ? hp.windKts : (typeof mp.windKts,weather,label
+weather.label._hp_windgustkts_typeof_mp_wind_136,? hp.windGustKts : (typeof mp.windGustKts ===,,,,,,,,,,Line 320: const windGustKts = typeof hp.windGustKts === 'number' ? hp.windGustKts : (typeo,weather,label
+weather.label._prefers_reduced_motion_reduce_137,(prefers-reduced-motion: reduce),,,,,,,,,,"Line 351: const reduced = window.matchMedia?.(""(prefers-reduced-motion: reduce)"")?.matches",weather,label
+weather.paragraph._airqfull_components_pm2_5_typ_138,? airQFull.components.pm2_5 : (typeof airQFull.pm2_5 ===,,,,,,,,,,Line 383: pm2_5: typeof airQFull.components?.pm2_5 === 'number' ? airQFull.components.pm2_,weather,paragraph
+weather.paragraph._airqfull_components_pm10_type_139,? airQFull.components.pm10 : (typeof airQFull.pm10 ===,,,,,,,,,,Line 384: pm10: typeof airQFull.components?.pm10 === 'number' ? airQFull.components.pm10 :,weather,paragraph
+weather.paragraph._airqfull_components_no2_typeo_140,? airQFull.components.no2 : (typeof airQFull.no2 ===,,,,,,,,,,Line 385: no2: typeof airQFull.components?.no2 === 'number' ? airQFull.components.no2 : (t,weather,paragraph
+weather.other._airqfull_components_o3_typeof_141,? airQFull.components.o3 : (typeof airQFull.o3 ===,,,,,,,,,,Line 386: o3: typeof airQFull.components?.o3 === 'number' ? airQFull.components.o3 : (type,weather,other
+weather.paragraph._airqfull_components_so2_typeo_142,? airQFull.components.so2 : (typeof airQFull.so2 ===,,,,,,,,,,Line 387: so2: typeof airQFull.components?.so2 === 'number' ? airQFull.components.so2 : (t,weather,paragraph
+weather.other._airqfull_components_co_typeof_143,? airQFull.components.co : (typeof airQFull.co ===,,,,,,,,,,Line 388: co: typeof airQFull.components?.co === 'number' ? airQFull.components.co : (type,weather,other
+weather.label.typeof_s_as_record_144,typeof (s as Record,,,,,,,,,,"Line 409: ].some(k => typeof (s as Record<string, unknown>)[k] === 'number');",weather,label
+weather.label.relative_min_h_screen_145,relative min-h-screen,,,,,,,,,,"Line 477: className=""relative min-h-screen""",weather,label
+weather.label.relative_z_20_146,relative z-20,,,,,,,,,,"Line 480: <div className=""relative z-20"">",weather,label
+weather.label.set_your_home_location_147,Set your home location,,,,,,,,,,"Line 493: title=""Set your home location""",weather,label
+weather.label.set_your_beach_location_148,Set your beach location,,,,,,,,,,"Line 507: title=""Set your beach location""",weather,label
+weather.label.weather_data_error_149,Weather data error,,,,,,,,,,"Line 554: <span className=""font-semibold"">Weather data error</span>",weather,label
+weather.label.surf_marine_conditions_150,Surf & Marine Conditions,,,,,,,,,,"Line 567: <SectionHeader icon=""🌊"" title=""Surf & Marine Conditions"" />",weather,label
+weather.label._div_classname__151,><div className=,,,,,,,,,,"Line 593: <Safe fallback={<Card title=""Waves""><div className=""flex items-center py-2""><spa",weather,label
+weather.label._span_classname__152,><span className=,,,,,,,,,,"Line 593: <Safe fallback={<Card title=""Waves""><div className=""flex items-center py-2""><spa",weather,label
+weather.label.next_few_days_160,Next Few Days,,,,,,,,,,"Line 630: <Safe fallback={<Card title=""Next Few Days""><div className=""flex items-center py",weather,label
+weather.label.weather_card_bg_text_base_cont_162,weather-card-bg text-base-content,,,,,,,,,,"Line 642: className=""weather-card-bg text-base-content""",weather,label
+weather.label.atmospheric_conditions_163,Atmospheric Conditions,,,,,,,,,,"Line 648: <SectionHeader icon=""🌡️"" title=""Atmospheric Conditions"" />",weather,label
+weather.paragraph.minhpa_960_maxhpa_1040_showtic_167,minHpa={960} maxHpa={1040} showTicks={true} showReferenceHand={true} referenceWindowHours={6} className=,,,,,,,,,,"Line 651: <div data-testid=""card-pressure""><SimplePressureCardDial weather={data} lat={act",weather,paragraph
+weather.label.feels_like_168,Feels Like,,,,,,,,,,"Line 653: <Safe fallback={<Card title=""Feels Like""><div className=""flex items-center py-2""",weather,label
+weather.label.precip_next_24h_170,Precip next 24h,,,,,,,,,,"Line 668: title=""Precip next 24h""",weather,label
+weather.label.visibility_comfort_171,Visibility & Comfort,,,,,,,,,,"Line 683: <SectionHeader icon=""👁️"" title=""Visibility & Comfort"" />",weather,label
+weather.label.environment_astronomy_172,Environment & Astronomy,,,,,,,,,,"Line 697: <SectionHeader icon=""🌙"" title=""Environment & Astronomy"" />",weather,label
+weather.label.current_forecast_173,Current & Forecast,,,,,,,,,,"Line 726: <SectionHeader icon=""⛅"" title=""Current & Forecast"" />",weather,label
+weather.label._hour_uvi_typeof_data_uvi__174,? hour.uvi : (typeof data.uvi ===,,,,,,,,,,Line 754: uvi: typeof hour.uvi === 'number' ? hour.uvi : (typeof data.uvi === 'number' ? d,weather,label
+weather.label.multi_day_forecast_176,Multi-Day Forecast,,,,,,,,,,"Line 792: <SectionHeader icon=""📅"" title=""Multi-Day Forecast"" />",weather,label
+weather.label.sunrise_sunset_179,Sunrise & Sunset,,,,,,,,,,"Line 799: <Safe fallback={<Card title=""Sunrise & Sunset""><div className=""flex items-center",weather,label
+weather.label.atmospheric_environment_181,Atmospheric & Environment,,,,,,,,,,"Line 807: <SectionHeader icon=""🌡️"" title=""Atmospheric & Environment"" />",weather,label
+weather.label.relative_z_10_194,relative z-10,,,,,,,,,,"Line 852: <div className=""relative z-10"">",weather,label
+weather.paragraph.weather_gods_what_have_you_got_196,"Weather gods, what have you got for us mortals?",,,,,,,,,,"Line 915: <span className=""opacity-80"">Weather gods, what have you got for us mortals?</sp",weather,paragraph
+weather.other.hidden_sm_block_w_24_h_24_md_w_197,hidden sm:block w-24 h-24 md:w-28 md:h-28 relative,,,,,,,,,,"Line 950: <div className=""hidden sm:block w-24 h-24 md:w-28 md:h-28 relative"">",weather,other
+weather.paragraph.text_6xl_md_text_7xl_font_extr_199,text-6xl md:text-7xl font-extrabold leading-none flex items-center gap-3,,,,,,,,,,"Line 954: <div className=""text-6xl md:text-7xl font-extrabold leading-none flex items-cent",weather,paragraph
+weather.label.text_xl_md_text_2xl_capitalize_200,text-xl md:text-2xl capitalize,,,,,,,,,,"Line 955: <div className=""text-xl md:text-2xl capitalize"">{condition}</div>",weather,label
+weather.label.text_sm_opacity_70_201,text-sm opacity-70,,,,,,,,,,"Line 956: <div className=""text-sm opacity-70"">Feels like {Math.round(feelsLikeC)}° {highC ",weather,label
+weather.paragraph.text_xl_md_text_2xl_font_mediu_202,text-xl md:text-2xl font-medium capitalize text-right mb-2,,,,,,,,,,"Line 961: <div className=""text-xl md:text-2xl font-medium capitalize text-right mb-2"">",weather,paragraph
+weather.paragraph.grid_grid_cols_40px_1fr_grid_r_203,"grid grid-cols-[40px,1fr] grid-rows-2 gap-x-2 items-center",,,,,,,,,,"Line 971: <div className=""grid grid-cols-[40px,1fr] grid-rows-2 gap-x-2 items-center"">",weather,paragraph
+weather.paragraph.col_start_2_text_11px_opacity__204,col-start-2 text-[11px] opacity-80 leading-none truncate,,,,,,,,,,"Line 978: <span className=""col-start-2 text-[11px] opacity-80 leading-none truncate"">{m.su",weather,paragraph
+weather.paragraph.communing_with_the_weather_god_205,Communing with the weather gods...,,,,,,,,,,"Line 988: <span className=""ml-2 opacity-70"">Communing with the weather gods...</span>",weather,paragraph
+weather.label._return_206,; return,,,,,,,,,,Line 1003: render() { if (this.state.hasError) return <>{this.props.fallback}</>; return <>,weather,label
+weather.label.wind_beaufort__207,Wind (Beaufort),,,,,,,,,,"Line 1097: <Image src={beaufortIconPath(w.windSpeedMS)} alt=""Wind (Beaufort)"" width={60} he",weather,label
+weather.label.width_30_height_30_classname__208,width={30} height={30} className=,,,,,,,,,,"Line 1106: <Image src={waveIconPath()} alt=""Waves"" width={30} height={30} className=""opacit",weather,label
+weather.label.width_60_height_60_classname__209,width={60} height={60} className=,,,,,,,,,,"Line 1122: <Image src={tideIconPath()} alt=""Tide"" width={60} height={60} className=""opacity",weather,label
+weather.label._if_aqi_50_return_212,; if (aqi <= 50) return,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
+weather.label._if_aqi_100_return_213,; if (aqi <= 100) return,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
+weather.label._if_aqi_150_return_214,; if (aqi <= 150) return,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
+weather.label._if_aqi_200_return_215,; if (aqi <= 200) return,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
+weather.label._if_aqi_300_return_216,; if (aqi <= 300) return,,,,,,,,,,"Line 1267: function _getAQIDescription(aqi?: number): string { if (!aqi) return ""Unknown""; ",weather,label
+weather.label.unable_to_determine_air_qualit_217,Unable to determine air quality,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
+weather.label.enjoy_outdoor_activities_218,Enjoy outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
+weather.label.consider_reducing_prolonged_ou_219,Consider reducing prolonged outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
+weather.paragraph.limit_outdoor_activities_espec_220,"Limit outdoor activities, especially for sensitive groups",,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,paragraph
+weather.label.avoid_outdoor_activities_221,Avoid outdoor activities,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
+weather.label.stay_indoors_222,Stay indoors,,,,,,,,,,"Line 1268: function _getAQIAdvice(aqi?: number): string { if (!aqi) return ""Unable to deter",weather,label
+weather.label.no_pollen_data_available_223,No pollen data available,,,,,,,,,,"Line 1270: if (!pollen) return ""No pollen data available"";",weather,label
+weather.label._value_pollen_tree_name__224,", value: pollen.tree }, { name:",,,,,,,,,,"Line 1271: const levels = [ { name: 'tree', value: pollen.tree }, { name: 'grass', value: p",weather,label
+weather.label._value_pollen_grass_name__225,", value: pollen.grass }, { name:",,,,,,,,,,"Line 1271: const levels = [ { name: 'tree', value: pollen.tree }, { name: 'grass', value: p",weather,label
+weather.label.no_pollen_data_226,No pollen data,,,,,,,,,,"Line 1272: if (levels.length === 0) return ""No pollen data"";",weather,label
+weather.label.monitor_local_pollen_reports_227,Monitor local pollen reports,,,,,,,,,,"Line 1281: if (!pollen) return ""Monitor local pollen reports"";",weather,label
+weather.paragraph.perfect_conditions_for_outdoor_228,Perfect conditions for outdoor activities. Minimal allergy symptoms expected.,,,,,,,,,,"Line 1283: if (maxLevel <= 1) return ""Perfect conditions for outdoor activities. Minimal al",weather,paragraph
+weather.paragraph.generally_safe_outdoors_sensit_229,Generally safe outdoors. Sensitive individuals may experience mild symptoms.,,,,,,,,,,"Line 1284: if (maxLevel === 2) return ""Generally safe outdoors. Sensitive individuals may e",weather,paragraph
+weather.label._return_1_if_lower_includes__230,)) return 1; if (lower.includes(,,,,,,,,,,Line 1292: const lower = String(level).toLowerCase(); if (lower.includes('low')) return 1; ,weather,label
+weather.label._return_2_if_lower_includes__231,)) return 2; if (lower.includes(,,,,,,,,,,Line 1292: const lower = String(level).toLowerCase(); if (lower.includes('low')) return 1; ,weather,label
+weather.label._return_4_if_lower_includes__232,)) return 4; if (lower.includes(,,,,,,,,,,Line 1292: const lower = String(level).toLowerCase(); if (lower.includes('low')) return 1; ,weather,label
+weather.label.local_spot_233,Local Spot,,,,,,,,,,Line 1324: name: 'Local Spot',weather,label
+weather.label._stage__234,) stage =,,,,,,,,,,Line 1363: if (prev.type === 'LOW' && next.type === 'HIGH') stage = 'flood';,weather,label
+faqs.label.max_w_4xl_mx_auto_236,max-w-4xl mx-auto,,,,,,,,,,"Line 26: <div className=""max-w-4xl mx-auto"">",FAQs,label
+faqs.heading.go_daisy_frequently_asked_ques_237,Go Daisy — Frequently Asked Questions,,,,,,,,,,"Line 29: <h2 className=""card-title"">Go Daisy — Frequently Asked Questions</h2>",FAQs,heading
+faqs.label.wave_size_238,wave size,,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
+faqs.label.swell_direction_239,swell direction,,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
+faqs.label._and_240,", and",,,,,,,,,,"Line 35: We blend the main ingredients of good surf — <b>wave size</b>, <b>period</b>, <b",FAQs,label
+faqs.paragraph._fun_clean_and_safe_for_interm_241,"— fun, clean and safe for intermediates.",,,,,,,,,,"Line 38: <li><b>Green</b> — fun, clean and safe for intermediates.</li>",FAQs,paragraph
+faqs.paragraph._surfable_but_mixed_wind_tide__242,— surfable but mixed (wind/tide/consistency may be off).,,,,,,,,,,Line 39: <li><b>Amber</b> — surfable but mixed (wind/tide/consistency may be off).</li>,FAQs,paragraph
+faqs.paragraph._poor_or_unsafe_for_non_expert_243,— poor or unsafe for non-experts.,,,,,,,,,,Line 40: <li><b>Red</b> — poor or unsafe for non-experts.</li>,FAQs,paragraph
+faqs.label.safety_gates_244,safety gates,,,,,,,,,,Line 43: We apply strict <b>safety gates</b> so conditions that are too large or powerful,FAQs,label
+faqs.label.stormglass_tides_api_245,Stormglass Tides API,,,,,,,,,,Line 43: We apply strict <b>safety gates</b> so conditions that are too large or powerful,FAQs,label
+faqs.heading.where_does_the_data_come_from__246,Where does the data come from?,,,,,,,,,,"Line 48: <Item title=""Where does the data come from?"">",FAQs,heading
+faqs.paragraph.stormglass_tides_api_queried_s_247,Stormglass Tides API (queried separately for accuracy).,,,,,,,,,,Line 51: <li><b>Tides:</b> Stormglass Tides API (queried separately for accuracy).</li>,FAQs,paragraph
+faqs.paragraph.beach_orientation_tide_windows_248,"beach orientation, tide windows and local notes stored in Go Daisy.",,,,,,,,,,"Line 52: <li><b>Spot metadata:</b> beach orientation, tide windows and local notes stored",FAQs,paragraph
+faqs.heading.how_often_is_the_forecast_upda_249,How often is the forecast updated?,,,,,,,,,,"Line 60: <Item title=""How often is the forecast updated?"">",FAQs,heading
+faqs.heading.what_if_the_beach_orientation__250,What if the beach orientation isn’t known?,,,,,,,,,,"Line 67: <Item title=""What if the beach orientation isn’t known?"">",FAQs,heading
+faqs.heading.why_do_tides_matter_so_much__251,Why do tides matter so much?,,,,,,,,,,"Line 74: <Item title=""Why do tides matter so much?"">",FAQs,heading
+faqs.label.tide_safety_flags_252,tide safety flags,,,,,,,,,,Line 76: Many breaks only work within a certain tide height band. Big spring ranges ampli,FAQs,label
+faqs.heading.how_do_you_keep_it_safe_for_in_253,How do you keep it safe for intermediates?,,,,,,,,,,"Line 81: <Item title=""How do you keep it safe for intermediates?"">",FAQs,heading
+faqs.heading.how_do_you_choose_the_best_hou_254,How do you choose the best hour of the day?,,,,,,,,,,"Line 88: <Item title=""How do you choose the best hour of the day?"">",FAQs,heading
+faqs.label.green_amber_red_255,Green > Amber > Red,,,,,,,,,,"Line 90: We score each hour separately and highlight the top pick, preferring <b>Green &g",FAQs,label
+faqs.heading.what_do_the_colours_mean_exact_256,What do the colours mean exactly?,,,,,,,,,,"Line 95: <Item title=""What do the colours mean exactly?"">",FAQs,heading
+faqs.label._mit_and_257,(MIT) and,,,,,,,,,,"Line 109: We stick to royalty-free libraries like <b>Lucide</b> (MIT), <b>Heroicons</b> (M",FAQs,label
+faqs.label.svg_repo_258,SVG Repo,,,,,,,,,,"Line 109: We stick to royalty-free libraries like <b>Lucide</b> (MIT), <b>Heroicons</b> (M",FAQs,label
+faqs.paragraph._same_wave_glyph_tinted_by_sco_259,: same wave glyph tinted by score.,,,,,,,,,,Line 112: <li><b>Green/Amber/Red</b>: same wave glyph tinted by score.</li>,FAQs,paragraph
+faqs.paragraph._animated_phase_speed_e_g_wave_260,": animated phase speed (e.g., “waves every 10 s”).",,,,,,,,,,"Line 113: <li><b>Period</b>: animated phase speed (e.g., “waves every 10 s”).</li>",FAQs,paragraph
+faqs.paragraph._relative_size_element_e_g_buo_261,": relative size element (e.g., buoy mast or stacked crests) to avoid confusion with period.",,,,,,,,,,"Line 114: <li><b>Height</b>: relative size element (e.g., buoy mast or stacked crests) to ",FAQs,paragraph
+faqs.paragraph.is_the_design_accessible__262,Is the design accessible?,,,,,,,,,,"Line 119: <Item title=""Is the design accessible?"">",FAQs,paragraph
+faqs.paragraph.which_regions_are_supported__263,Which regions are supported?,,,,,,,,,,"Line 126: <Item title=""Which regions are supported?"">",FAQs,paragraph
+faqs.heading.what_data_do_you_store_about_m_264,What data do you store about me?,,,,,,,,,,"Line 133: <Item title=""What data do you store about me?"">",FAQs,heading
+faqs.label.known_limitations_265,Known limitations,,,,,,,,,,"Line 140: <Item title=""Known limitations"">",FAQs,label
+faqs.paragraph.sandbar_shifts_can_make_otherw_266,Sandbar shifts can make otherwise “green” ingredients underperform.,,,,,,,,,,Line 142: <li>Sandbar shifts can make otherwise “green” ingredients underperform.</li>,FAQs,paragraph
+faqs.paragraph.extreme_events_storms_rogue_se_267,"Extreme events (storms, rogue sets) aren’t perfectly captured by any model; always use judgement on the day.",,,,,,,,,,"Line 144: <li>Extreme events (storms, rogue sets) aren’t perfectly captured by any model; ",FAQs,paragraph
+faqs.heading.how_can_i_give_feedback_or_rep_268,How can I give feedback or report an issue?,,,,,,,,,,"Line 149: <Item title=""How can I give feedback or report an issue?"">",FAQs,heading
+faqs.heading.what_improvements_are_coming_n_269,What improvements are coming next?,,,,,,,,,,"Line 156: <Item title=""What improvements are coming next?"">",FAQs,heading
+faqs.paragraph.rolling_out_editable_beach_ori_270,rolling out editable beach orientations plus curated tide profiles so grades respect each break’s quirks.,,,,,,,,,,Line 161: <li><b>Spot metadata:</b> rolling out editable beach orientations plus curated t,FAQs,paragraph
+faqs.paragraph.finer_control_over_units_skill_271,"finer control over units, skill presets, and favourite gear so recommendations feel bespoke.",,,,,,,,,,"Line 162: <li><b>Personal settings:</b> finer control over units, skill presets, and favou",FAQs,paragraph
+faqs.paragraph.vetted_notes_from_trusted_cont_272,"vetted notes from trusted contributors highlighting wind shelter, rip hotspots and parking tips.",,,,,,,,,,Line 165: <li><b>Local knowledge:</b> vetted notes from trusted contributors highlighting ,FAQs,paragraph
+howwedoit.heading.how_do_we_do_what_we_do__273,How do we do what we do?,,,,,,,,,,"Line 17: <h1 className=""text-4xl font-bold mb-6 text-primary"">How do we do what we do?</h",HowWeDoIt,heading
+howwedoit.paragraph.illustration_of_a_person_with__274,Illustration of a person with many measuring devices watched by Bruno,,,,,,,,,,"Line 23: alt=""Illustration of a person with many measuring devices watched by Bruno""",HowWeDoIt,paragraph
+howwedoit.label.object_contain_h_full_275,object-contain h-full,,,,,,,,,,"Line 26: className=""object-contain h-full""",HowWeDoIt,label
+howwedoit.label.rank_the_best_activities_for_a_277,rank the best activities for any given day,,,,,,,,,,Line 43: This nuanced understanding allows us to <strong>rank the best activities for any,HowWeDoIt,label
+howwedoit.heading.how_the_waves_will_feel_at_any_278,how the waves will feel at any given beach,,,,,,,,,,Line 47: Take the ocean as an example. Anyone can find out if the wind is blowing. But Go,HowWeDoIt,heading
+howwedoit.label.text_base_content_italic_279,text-base-content italic,,,,,,,,,,"Line 54: <p className=""text-base-content italic"">",HowWeDoIt,label
+cookiepolicy.label._localstorage_getitem__280,? localStorage.getItem(,,,,,,,,,,"Line 12: const consent = typeof window !== 'undefined' ? localStorage.getItem(""cookieCons",CookiePolicy,label
+cookiepolicy.label.max_w_lg_text_sm_281,max-w-lg text-sm,,,,,,,,,,"Line 35: <p className=""max-w-lg text-sm"">",CookiePolicy,label
+cookiepolicy.link.underline_text_primary_282,underline text-primary,,,,,,,,,,"Line 37: <Link href=""/privacy-policy"" className=""underline text-primary"">",CookiePolicy,link
+cookiepolicy.label.flex_gap_2_283,flex gap-2,,,,,,,,,,"Line 42: <div className=""flex gap-2"">",CookiePolicy,label
+cookiepolicy.heading.cookie_policy_284,Cookie Policy,,,,,,,,,,"Line 64: <h1 className=""text-4xl font-bold mb-2 text-primary"">Cookie Policy</h1>",CookiePolicy,heading
+privacypolicy.heading.privacy_policy_285,Privacy Policy,,,,,,,,,,"Line 15: <h1 className=""text-4xl font-bold mb-6 text-primary"">Privacy Policy</h1>",PrivacyPolicy,heading
+privacypolicy.heading.1_user_set_locations_only_286,1. User-Set Locations Only,,,,,,,,,,"Line 18: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">1. User-Set Locations",PrivacyPolicy,heading
+privacypolicy.label.not_track_your_actual_location_287,not track your actual location automatically,,,,,,,,,,Line 20: We do <strong>not track your actual location automatically</strong>. You can set,PrivacyPolicy,label
+privacypolicy.heading.2_use_of_data_288,2. Use of Data,,,,,,,,,,"Line 25: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">2. Use of Data</h2>",PrivacyPolicy,heading
+privacypolicy.heading.3_data_sharing_and_advertising_289,3. Data Sharing and Advertising,,,,,,,,,,"Line 32: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">3. Data Sharing and A",PrivacyPolicy,heading
+privacypolicy.heading.4_future_advertising_290,4. Future Advertising,,,,,,,,,,"Line 39: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">4. Future Advertising",PrivacyPolicy,heading
+privacypolicy.label.personalised_advertising_in_th_291,personalised advertising in the future,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,label
+privacypolicy.paragraph.to_enhance_your_experience_in__292,to enhance your experience in the app. Such advertising will only be implemented,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,paragraph
+privacypolicy.label.with_your_explicit_consent_293,with your explicit consent,,,,,,,,,,Line 41: We reserve the right to offer <strong>personalised advertising in the future</st,PrivacyPolicy,label
+privacypolicy.heading.5_gdpr_and_legal_compliance_294,5. GDPR and Legal Compliance,,,,,,,,,,"Line 46: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">5. GDPR and Legal Com",PrivacyPolicy,heading
+privacypolicy.label.general_data_protection_regula_295,General Data Protection Regulation (GDPR),,,,,,,,,,Line 48: Go Daisy is based in Spain and fully complies with the <strong>General Data Prot,PrivacyPolicy,label
+privacypolicy.heading.plain_english_summary_296,Plain English Summary,,,,,,,,,,"Line 56: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">Plain English Summary",PrivacyPolicy,heading
+privacypolicy.paragraph.we_don_t_automatically_track_y_297,We don’t automatically track you. You choose locations to get weather info.,,,,,,,,,,Line 58: <li>We don’t automatically track you. You choose locations to get weather info.<,PrivacyPolicy,paragraph
+privacypolicy.paragraph.your_data_is_used_only_to_make_298,Your data is used only to make your experience better.,,,,,,,,,,Line 59: <li>Your data is used only to make your experience better.</li>,PrivacyPolicy,paragraph
+privacypolicy.paragraph.we_never_share_or_sell_your_da_299,We never share or sell your data.,,,,,,,,,,Line 60: <li>We never share or sell your data.</li>,PrivacyPolicy,paragraph
+privacypolicy.paragraph.if_we_add_ads_later_you_ll_hav_300,"If we add ads later, you’ll have the choice to accept them.",,,,,,,,,,"Line 61: <li>If we add ads later, you’ll have the choice to accept them.</li>",PrivacyPolicy,paragraph
+privacypolicy.paragraph.we_follow_europe_s_strict_gdpr_301,"We follow Europe’s strict GDPR privacy laws, no matter where you use the app.",,,,,,,,,,"Line 62: <li>We follow Europe’s strict GDPR privacy laws, no matter where you use the app",PrivacyPolicy,paragraph
+termsandconditions.label.terms_conditions_go_daisy_302,Terms & Conditions - Go Daisy,,,,,,,,,,Line 10: <title>Terms & Conditions - Go Daisy</title>,TermsAndConditions,label
+termsandconditions.label.always_double_check_local_weat_303,always double check local weather sources,,,,,,,,,,Line 25: The weather information and forecasts provided by this app are based on data mod,TermsAndConditions,label
+termsandconditions.label.no_guarantees_or_warranties_304,no guarantees or warranties,,,,,,,,,,"Line 34: While we strive to provide accurate and up-to-date weather information, we make ",TermsAndConditions,label
+termsandconditions.label.at_your_own_risk_305,at your own risk,,,,,,,,,,"Line 43: By using this app and relying on the weather forecasts or recommendations, you a",TermsAndConditions,label
+termsandconditions.paragraph.cannot_be_held_responsible_for_306,"cannot be held responsible for any harm, injury, loss, or damage",,,,,,,,,,"Line 52: We <strong>cannot be held responsible for any harm, injury, loss, or damage</str",TermsAndConditions,paragraph
+termsandconditions.label.text_base_content_mb_2_307,text-base-content mb-2,,,,,,,,,,"Line 60: <p className=""text-base-content mb-2"">",TermsAndConditions,label
+termsandconditions.heading.legal_terms_explanation_plain__309,Legal Terms Explanation (Plain English):,,,,,,,,,,"Line 72: <h2 className=""text-2xl font-semibold mb-2 text-secondary"">Legal Terms Explanati",TermsAndConditions,heading
+termsandconditions.paragraph.we_try_our_best_but_don_t_prom_310,We try our best but don’t promise everything will be right.,,,,,,,,,,Line 74: <li><strong>No guarantees or warranties:</strong> We try our best but don’t prom,TermsAndConditions,paragraph
+termsandconditions.paragraph.if_you_get_hurt_or_something_g_311,"If you get hurt or something goes wrong, it’s on you, not us.",,,,,,,,,,Line 75: <li><strong>Use at your own risk:</strong> If you get hurt or something goes wro,TermsAndConditions,paragraph
+termsandconditions.paragraph.it_means_legal_responsibility__312,"It means legal responsibility; here, we say we are not legally responsible for any problems.",,,,,,,,,,"Line 76: <li><strong>Liability:</strong> It means legal responsibility; here, we say we a",TermsAndConditions,paragraph
+termsandconditions.paragraph.the_app_and_weather_info_come__313,The app and weather info come with no promises about quality or accuracy.,,,,,,,,,,Line 77: <li><strong>“As is” basis:</strong> The app and weather info come with no promis,TermsAndConditions,paragraph
+interests.label.active_sports_314,Active Sports,,,,,,,,,,"Line 14: key: ""Active Sports"",",interests,label
+interests.label.team_sports_315,Team Sports,,,,,,,,,,"Line 18: key: ""Team Sports"",",interests,label
+interests.label.individual_sports_316,Individual Sports,,,,,,,,,,"Line 36: key: ""Individual Sports"",",interests,label
+interests.label.water_sports_317,Water Sports,,,,,,,,,,"Line 52: key: ""Water Sports"",",interests,label
+interests.label.action_sports_318,Action Sports,,,,,,,,,,"Line 76: key: ""Action Sports"",",interests,label
+interests.label.fitness_wellness_319,Fitness & Wellness,,,,,,,,,,"Line 93: key: ""Fitness & Wellness"",",interests,label
+interests.label.cardio_running_320,Cardio & Running,,,,,,,,,,"Line 110: key: ""Cardio & Running"",",interests,label
+interests.label.strength_gym_321,Strength & Gym,,,,,,,,,,"Line 115: key: ""Strength & Gym"",",interests,label
+interests.label.outdoor_activities_322,Outdoor Activities,,,,,,,,,,"Line 122: key: ""Outdoor Activities"",",interests,label
+interests.label.nature_activities_323,Nature Activities,,,,,,,,,,"Line 126: key: ""Nature Activities"",",interests,label
+interests.label.kicking_back_and_relaxing_324,Kicking Back and Relaxing,,,,,,,,,,"Line 151: key: ""Kicking Back and Relaxing"",",interests,label
+interests.label.winter_sports_325,Winter Sports,,,,,,,,,,"Line 173: key: ""Winter Sports"",",interests,label
+interests.label.snow_sports_326,Snow Sports,,,,,,,,,,"Line 177: key: ""Snow Sports"",",interests,label
+interests.label.ice_sports_327,Ice Sports,,,,,,,,,,"Line 182: key: ""Ice Sports"",",interests,label
+interests.label.creative_arts_328,Creative & Arts,,,,,,,,,,"Line 195: key: ""Creative & Arts"",",interests,label
+interests.label.visual_arts_329,Visual Arts,,,,,,,,,,"Line 199: key: ""Visual Arts"",",interests,label
+interests.label.music_performance_330,Music & Performance,,,,,,,,,,"Line 211: key: ""Music & Performance"",",interests,label
+interests.label.literature_learning_331,Literature & Learning,,,,,,,,,,"Line 221: key: ""Literature & Learning"",",interests,label
+interests.label.indoor_recreation_332,Indoor Recreation,,,,,,,,,,"Line 228: key: ""Indoor Recreation"",",interests,label
+interests.label.home_activities_333,Home Activities,,,,,,,,,,"Line 232: key: ""Home Activities"",",interests,label
+interests.label.social_activities_334,Social Activities,,,,,,,,,,"Line 248: key: ""Social Activities"",",interests,label
+interests.label.indoor_sports_335,Indoor Sports,,,,,,,,,,"Line 265: key: ""Indoor Sports"",",interests,label
+interests.label.alert_alert_info_336,alert alert-info,,,,,,,,,,"Line 348: <div className=""alert alert-info"">",interests,label
+interests.paragraph._start_by_selecting_activities_337,👋 Start by selecting activities from the suggestions below or browse categories,,,,,,,,,,Line 349: <span>👋 Start by selecting activities from the suggestions below or browse cate,interests,paragraph
+interests.label.card_bg_base_200_50_border_bor_338,card bg-base-200/50 border border-base-300,,,,,,,,,,"Line 358: <div className=""card bg-base-200/50 border border-base-300"">",interests,label
+interests.label.card_body_py_3_339,card-body py-3,,,,,,,,,,"Line 359: <div className=""card-body py-3"">",interests,label
+interests.label.card_body_py_4_340,card-body py-4,,,,,,,,,,"Line 423: <div className=""card-body py-4"">",interests,label
+interests.heading.font_semibold_text_lg_341,font-semibold text-lg,,,,,,,,,,"Line 427: <h3 className=""font-semibold text-lg"">",interests,heading
+interests.label.popular_activities_you_might_e_342,Popular activities you might enjoy,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
+interests.label.you_might_also_like_343,You might also like,,,,,,,,,,Line 428: {hasFallbacks ? 'Popular activities you might enjoy' : 'You might also like'},interests,label
+interests.paragraph.these_popular_activities_are_e_345,These popular activities are enjoyed by people with diverse interests,,,,,,,,,,Line 432: ? 'These popular activities are enjoyed by people with diverse interests',interests,paragraph
+interests.label.based_on_your_interests_we_thi_346,"Based on your interests, we think you",,,,,,,,,,"Line 433: : ""Based on your interests, we think you'd enjoy these activities""}",interests,label
+interests.button.add_to_your_interests_347,Add to your interests,,,,,,,,,,"Line 449: title=""Add to your interests""",interests,button
+interests.label.text_accent_font_bold_348,text-accent font-bold,,,,,,,,,,"Line 451: <span className=""text-accent font-bold"">+</span>",interests,label
+interests.label.dismiss_suggestion_349,Dismiss suggestion,,,,,,,,,,"Line 458: aria-label=""Dismiss suggestion""",interests,label
+interests.label.not_interested_350,Not interested,,,,,,,,,,"Line 461: title=""Not interested""",interests,label
+interests.label.card_body_p_0_351,card-body p-0,,,,,,,,,,"Line 490: <div className=""card-body p-0"">",interests,label
+interests.paragraph._expanded__353,>{expanded ?,,,,,,,,,,"Line 508: <span className=""text-xl"">{expanded ? '▼' : '▶'}</span>",interests,paragraph
+interests.button.saved_locally_supabase_sync_fa_354,Saved locally! (Supabase sync failed),,,,,,,,,,Line 726: showSuccessToast('Saved locally! (Supabase sync failed)');,interests,button
+interests.paragraph.your_interests_have_been_saved_355,Your interests have been saved!,,,,,,,,,,Line 728: showSuccessToast('Your interests have been saved!');,interests,paragraph
+interests.paragraph.your_interests_have_been_saved_356,Your interests have been saved locally!,,,,,,,,,,Line 732: showSuccessToast('Your interests have been saved locally!');,interests,paragraph
+interests.label.text_3xl_mb_2_358,text-3xl mb-2,,,,,,,,,,"Line 757: <div className=""text-3xl mb-2"">⏳</div>",interests,label
+interests.label.loading_your_interests__359,Loading your interests…,,,,,,,,,,Line 758: <p>Loading your interests…</p>,interests,label
+interests.heading.your_interests_360,Your Interests,,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
+interests.heading.text_3xl_font_bold_361,text-3xl font-bold,,,,,,,,,,"Line 782: <h1 className=""text-3xl font-bold"">Your Interests</h1>",interests,heading
+interests.label.alert_alert_success_362,alert alert-success,,,,,,,,,,"Line 851: <div className=""alert alert-success"">",interests,label
+onboarding.heading.text_lg_font_semibold_363,text-lg font-semibold,,,,,,,,,,"Line 58: <h2 className=""text-lg font-semibold"">{title}</h2>",onboarding,heading
+onboarding.label.text_sm_text_base_content_60_364,text-sm text-base-content/60,,,,,,,,,,"Line 60: <p className=""text-sm text-base-content/60"">{subtitle}</p>",onboarding,label
+onboarding.label.text_sm_font_semibold_365,text-sm font-semibold,,,,,,,,,,"Line 119: <span className=""text-sm font-semibold"">",onboarding,label
+onboarding.label.void_promise_366,void | Promise,,,,,,,,,,Line 129: onNext: () => void | Promise<void>;,onboarding,label
+onboarding.link.settings_interests_368,Settings → Interests,,,,,,,,,,"Line 138: You can edit your interests any time in <Link className=""link"" href=""/interests""",onboarding,link
+onboarding.label.complete_setup_369,Complete Setup,,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
+onboarding.label.nearly_there_keep_going_370,"Nearly there, keep going",,,,,,,,,,"Line 143: {isLast ? ""Complete Setup"" : ""Nearly there, keep going""}",onboarding,label
+onboarding.label.text_sm_font_medium_371,text-sm font-medium,,,,,,,,,,"Line 332: <span className=""text-sm font-medium"">Selected ({items.length})</span>",onboarding,label
+onboarding.button.clear_all_372,Clear all,,,,,,,,,,"Line 333: <button type=""button"" className=""btn btn-ghost btn-xs text-base-content"" onClick",onboarding,button
+onboarding.label.search_a_place__373,Search a place…,,,,,,,,,,"Line 371: placeholder = ""Search a place…"",",onboarding,label
+onboarding.nav.geolocation_is_not_available_i_374,Geolocation is not available in this browser.,,,,,,,,,,Line 495: if (!('geolocation' in navigator)) { setLocationError('Geolocation is not availa,onboarding,nav
+onboarding.paragraph.in_e_string_e_as_message_strin_375,in e) ? String((e as { message?: string }).message) :,,,,,,,,,,Line 517: const msg = (typeof e === 'object' && e !== null && 'message' in e) ? String((e ,onboarding,paragraph
+onboarding.button.selected_place_376,Selected place,,,,,,,,,,Line 534: const label = s?.structured_formatting?.main_text || s?.description || 'Selected,onboarding,button
+onboarding.label.form_control_relative_377,form-control relative,,,,,,,,,,"Line 584: <div className=""form-control relative"">",onboarding,label
+onboarding.button.confirm_selection_378,Confirm selection,,,,,,,,,,"Line 618: aria-label=""Confirm selection""",onboarding,button
+onboarding.label.font_medium_leading_tight_379,font-medium leading-tight,,,,,,,,,,"Line 633: <span className=""font-medium leading-tight"">{main}</span>",onboarding,label
+onboarding.label.use_current_location_380,Use current location,,,,,,,,,,Line 646: {isLocating ? 'Locating…' : 'Use current location'},onboarding,label
+onboarding.label.pick_from_map_381,Pick from map,,,,,,,,,,Line 650: {showMap ? 'Hide map' : 'Pick from map'},onboarding,label
+onboarding.label.truncate_max_w_14rem__382,truncate max-w-[14rem],,,,,,,,,,"Line 678: <span className=""truncate max-w-[14rem]"">{r.name}</span>",onboarding,label
+onboarding.nav.geolocation_not_available__383,Geolocation not available.,,,,,,,,,,Line 780: if (!('geolocation' in navigator)) { setHomeLocateError('Geolocation not availab,onboarding,nav
+onboarding.paragraph.in_e_string_e_as_message_strin_384,in e ? String((e as { message?: string }).message) :,,,,,,,,,,Line 794: const msg = typeof e === 'object' && e && 'message' in e ? String((e as { messag,onboarding,paragraph
+onboarding.button.choose_areas_387,Choose areas,,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,button
+onboarding.label._ismarinechosen__388,", ...(isMarineChosen ? [",,,,,,,,,,"Line 898: const items = [""Choose areas"", ""Activities"", ""Home"", ...(isMarineChosen ? [""Mari",onboarding,label
+onboarding.label.steps_w_full_389,steps w-full,,,,,,,,,,"Line 910: <ul className=""steps w-full"">",onboarding,label
+onboarding.paragraph._welcome_to_godaisy__390,👋 Welcome to GoDaisy!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
+onboarding.label.set_your_home_location__391,Set your home location 📍,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.label.set_a_coastal_spot__392,Set a coastal spot 🌊,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.paragraph._all_set__393,🎉 All set!,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,paragraph
+onboarding.label.fine_tune__394,Fine-tune 🎯,,,,,,,,,,Line 915: {phase.type === 'clusters' ? '👋 Welcome to GoDaisy!' : phase.type === 'home' ? ,onboarding,label
+onboarding.label.text_base_content_70_text_sm_395,text-base-content/70 text-sm,,,,,,,,,,"Line 917: <p className=""text-base-content/70 text-sm"">",onboarding,label
+onboarding.paragraph.deselect_any_areas_you_re_not__396,Deselect any areas you’re not into. You can change this any time.,,,,,,,,,,"Line 918: {phase.type === 'clusters' && ""Deselect any areas you’re not into. You can chang",onboarding,paragraph
+onboarding.paragraph.great_deselect_anything_that_s_397,Great! Deselect anything that’s not your vibe. We’ve pre‑selected a few to get you started.,,,,,,,,,,"Line 919: {phase.type === 'activities-combined' && ""Great! Deselect anything that’s not yo",onboarding,paragraph
+onboarding.paragraph.short_lists_better_choices_you_398,"Short lists, better choices. You can add more later.",,,,,,,,,,"Line 920: {phase.type === 'activities-chunk' && ""Short lists, better choices. You can add ",onboarding,paragraph
+onboarding.paragraph.set_your_home_location_so_we_c_399,Set your home location so we can personalise local recommendations and forecasts.,,,,,,,,,,"Line 921: {phase.type === 'home' && ""Set your home location so we can personalise local re",onboarding,paragraph
+onboarding.paragraph.because_you_chose_sea_activiti_400,"Because you chose sea activities, adding a coastal spot helps us give you seaside advice.",,,,,,,,,,"Line 922: {phase.type === 'marine' && ""Because you chose sea activities, adding a coastal ",onboarding,paragraph
+onboarding.paragraph.we_ve_saved_your_activities_yo_401,We’ve saved your activities. You can always add more later.,,,,,,,,,,"Line 923: {phase.type === 'confirm' && ""We’ve saved your activities. You can always add mo",onboarding,paragraph
+onboarding.label.home_location_402,Home location,,,,,,,,,,"Line 929: title=""Home location""",onboarding,label
+onboarding.paragraph.helps_us_tailor_forecasts_and__403,Helps us tailor forecasts and nearby suggestions.,,,,,,,,,,"Line 930: subtitle=""Helps us tailor forecasts and nearby suggestions.""",onboarding,paragraph
+onboarding.label.form_control_w_full_404,form-control w-full,,,,,,,,,,"Line 933: <div className=""form-control w-full"">",onboarding,label
+onboarding.label.search_for_your_home_location_405,Search for your home location,,,,,,,,,,"Line 935: <span className=""label-text"">Search for your home location</span>",onboarding,label
+onboarding.label.type_a_place_postcode_or_addre_406,"Type a place, postcode, or address",,,,,,,,,,"Line 944: placeholder=""Type a place, postcode, or address""",onboarding,label
+onboarding.label.autocomplete_map_inline_same_l_407,Autocomplete + map inline (same logic as header).,,,,,,,,,,"Line 950: <span className=""label-text-alt"">Autocomplete + map inline (same logic as header",onboarding,label
+onboarding.button.btn_btn_ghost_410,btn btn-ghost,,,,,,,,,,"Line 957: <button className=""btn btn-ghost"" onClick={() => { setHomeSpot(null); setHomeLoc",onboarding,button
+onboarding.label.text_error_text_sm_411,text-error text-sm,,,,,,,,,,"Line 958: {homeLocateError && <span className=""text-error text-sm"">{homeLocateError}</span",onboarding,label
+onboarding.paragraph.you_can_change_this_any_time_i_413,You can change this any time in Settings → Location.,,,,,,,,,,"Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,paragraph
+onboarding.label.text_xs_text_base_content_60_414,text-xs text-base-content/60,,,,,,,,,,"Line 965: <p className=""text-xs text-base-content/60"">You can change this any time in Sett",onboarding,label
+onboarding.paragraph.deselect_anything_that_s_not_y_415,Deselect anything that’s not your vibe.,,,,,,,,,,"Line 997: subtitle=""Deselect anything that’s not your vibe.""",onboarding,paragraph
+onboarding.label.divider_my_1_416,divider my-1,,,,,,,,,,"Line 1000: <div className=""divider my-1""></div>",onboarding,label
+onboarding.paragraph.because_you_chose_sea_activiti_419,"Because you chose sea activities, setting a coastal spot lets us give tide, swell and wind‑aware advice.",,,,,,,,,,"Line 1096: <p className=""text-sm text-base-content/70"">Because you chose sea activities, se",onboarding,paragraph
+onboarding.label.search_for_a_coastal_spot_422,Search for a coastal spot,,,,,,,,,,"Line 1099: <span className=""label-text"">Search for a coastal spot</span>",onboarding,label
+onboarding.label.type_a_beach_harbour_or_coastl_423,"Type a beach, harbour, or coastline",,,,,,,,,,"Line 1107: placeholder=""Type a beach, harbour, or coastline""",onboarding,label
+onboarding.button.save_continue_427,Save & Continue,,,,,,,,,,"Line 1118: <button className=""btn btn-primary"" onClick={() => setStep(s => s + 1)} disabled",onboarding,button
+onboarding.button.skip_for_now_430,Skip for now,,,,,,,,,,"Line 1126: <button className=""btn btn-ghost btn-sm"" onClick={() => setStep(s => s + 1)}>Ski",onboarding,button
+onboarding.heading.card_title_text_sm_434,card-title text-sm,,,,,,,,,,"Line 1135: <h3 className=""card-title text-sm"">Home location</h3>",onboarding,heading
+onboarding.heading.coastal_spot_437,Coastal spot,,,,,,,,,,"Line 1142: <h3 className=""card-title text-sm"">Coastal spot</h3>",onboarding,heading
+onboarding.link.tip_you_can_edit_locations_any_439,Tip: you can edit locations any time in,,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
+onboarding.link.account_locations_440,Account → Locations,,,,,,,,,,"Line 1148: <p className=""text-xs text-base-content/60"">Tip: you can edit locations any time",onboarding,link
+onboarding.button.save_these_to_your_account__442,Save these to your account?,,,,,,,,,,"Line 1153: <div className=""font-medium"">Save these to your account?</div>",onboarding,button
+onboarding.paragraph.register_to_sync_your_interest_443,Register to sync your interests and locations across devices.,,,,,,,,,,"Line 1154: <div className=""text-sm opacity-70"">Register to sync your interests and location",onboarding,paragraph
+onboarding.button.maybe_later_445,Maybe later,,,,,,,,,,"Line 1157: <button className=""btn btn-ghost btn-sm"" onClick={() => setShowRegisterNudge(fal",onboarding,button
+onboarding.paragraph.we_ll_use_your_locally_saved_p_446,We’ll use your locally saved preferences on this device for now.,,,,,,,,,,"Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,paragraph
+onboarding.label.text_xs_text_base_content_60_m_447,text-xs text-base-content/60 mt-2,,,,,,,,,,"Line 1160: <p className=""text-xs text-base-content/60 mt-2"">We’ll use your locally saved pr",onboarding,label

@@ -1,19 +1,5 @@
 [
   {
-    "text_key": "index.paragraph.drop_shadow_0px_0px_3px_rgba_2_1",
-    "text_en": "drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgba(255, 255, 255, 1)) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.5))",
-    "context": "Line 120: ? 'drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.9)) drop-shadow(0px 0px 1px rgb",
-    "page": "index",
-    "category": "paragraph"
-  },
-  {
-    "text_key": "index.label.failed_to_fetch_weather_data_2",
-    "text_en": "Failed to fetch weather data",
-    "context": "Line 193: throw new Error('Failed to fetch weather data');",
-    "page": "index",
-    "category": "label"
-  },
-  {
     "text_key": "index.nav.marine_conditions_are_temporar_4",
     "text_en": "Marine conditions are temporarily unavailable. We’ll show land‑based suggestions for now.",
     "context": "Line 229: setMarineError(\"Marine conditions are temporarily unavailable. We’ll show land‑b",
@@ -26,13 +12,6 @@
     "context": "Line 646: return <div>Please set your home location to see suggestions.</div>;",
     "page": "index",
     "category": "paragraph"
-  },
-  {
-    "text_key": "index.label.1px_solid_fed7aa_6",
-    "text_en": "1px solid #fed7aa",
-    "context": "Line 656: border: '1px solid #fed7aa',",
-    "page": "index",
-    "category": "label"
   },
   {
     "text_key": "index.heading.no_activities_selected_7",
@@ -52,13 +31,6 @@
     "text_key": "index.label.pick_your_home_location_9",
     "text_en": "Pick your home location",
     "context": "Line 700: title=\"Pick your home location\"",
-    "page": "index",
-    "category": "label"
-  },
-  {
-    "text_key": "index.label.weather_icon_10",
-    "text_en": "weather icon",
-    "context": "Line 809: alt={day.description || 'weather icon'}",
     "page": "index",
     "category": "label"
   },
@@ -525,39 +497,11 @@
     "category": "label"
   },
   {
-    "text_key": "activities.label.air_temperature_91",
-    "text_en": "Air temperature",
-    "context": "Line 359: <Image src=\"/weather-icons/design/fill/final/thermometer-celsius.svg\" alt=\"Air t",
-    "page": "activities",
-    "category": "label"
-  },
-  {
-    "text_key": "activities.label.water_temperature_92",
-    "text_en": "Water temperature",
-    "context": "Line 366: <Image src=\"/weather-icons/design/fill/final/thermometer-water.svg\" alt=\"Water t",
-    "page": "activities",
-    "category": "label"
-  },
-  {
     "text_key": "activities.paragraph.activity_card_data_item_activi_93",
     "text_en": "activity-card__data-item activity-card__data-item--wrap",
     "context": "Line 394: <li className=\"activity-card__data-item activity-card__data-item--wrap\">",
     "page": "activities",
     "category": "paragraph"
-  },
-  {
-    "text_key": "activities.label.high_temperature_94",
-    "text_en": "High Temperature",
-    "context": "Line 438: <Image src=\"/weather-icons/design/fill/final/thermometer-celsius.svg\" alt=\"High ",
-    "page": "activities",
-    "category": "label"
-  },
-  {
-    "text_key": "activities.label.low_temperature_95",
-    "text_en": "Low Temperature",
-    "context": "Line 445: <Image src=\"/weather-icons/design/fill/final/thermometer-colder.svg\" alt=\"Low Te",
-    "page": "activities",
-    "category": "label"
   },
   {
     "text_key": "activities.label._reasonsstrings_join__96",
@@ -584,13 +528,6 @@
     "text_key": "activities.label.all_0_3s_ease_99",
     "text_en": "all 0.3s ease",
     "context": "Line 590: transition: 'all 0.3s ease',",
-    "page": "activities",
-    "category": "label"
-  },
-  {
-    "text_key": "activities.label.0_4px_12px_rgba_59_130_246_0_3_100",
-    "text_en": "0 4px 12px rgba(59, 130, 246, 0.3)",
-    "context": "Line 595: boxShadow: isActive ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none',",
     "page": "activities",
     "category": "label"
   },
@@ -635,13 +572,6 @@
     "context": "Line 993: description=\"Browse all your selected activities with detailed weather condition",
     "page": "activities",
     "category": "paragraph"
-  },
-  {
-    "text_key": "activities.label.1px_solid_fecaca_109",
-    "text_en": "1px solid #fecaca",
-    "context": "Line 1013: border: '1px solid #fecaca'",
-    "page": "activities",
-    "category": "label"
   },
   {
     "text_key": "activities.heading.location_required_110",
@@ -978,13 +908,6 @@
     "context": "Line 950: <div className=\"hidden sm:block w-24 h-24 md:w-28 md:h-28 relative\">",
     "page": "weather",
     "category": "other"
-  },
-  {
-    "text_key": "weather.label.object_contain_drop_shadow_198",
-    "text_en": "object-contain drop-shadow",
-    "context": "Line 951: <Image src={iconPath} alt={condition} fill className=\"object-contain drop-shadow",
-    "page": "weather",
-    "category": "label"
   },
   {
     "text_key": "weather.paragraph.text_6xl_md_text_7xl_font_extr_199",
