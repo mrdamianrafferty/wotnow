@@ -5,6 +5,8 @@ import dynamic from 'next/dynamic';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UserPreferencesProvider } from '../context/UserPreferencesContext';
 import { LanguageProvider } from '../context/LanguageContext';
+import { AuthProvider } from '../context/AuthContext';
+import { UnifiedLocationProvider } from '../context/UnifiedLocationContext';
 // Load Tailwind + DaisyUI globals so utilities and tokens are available in App Router pages
 import '../styles/index.css';
 
@@ -24,16 +26,20 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body className="min-h-screen bg-base-100 text-base-content">
-        <LanguageProvider>
-          <UserPreferencesProvider>
-            <QueryClientProvider client={queryClient}>
-              {children}
-              {process.env.NODE_ENV === 'development' && (
-                <ReactQueryDevtools initialIsOpen={false} />
-              )}
-            </QueryClientProvider>
-          </UserPreferencesProvider>
-        </LanguageProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <LanguageProvider>
+              <UnifiedLocationProvider>
+                <UserPreferencesProvider>
+                  {children}
+                  {process.env.NODE_ENV === 'development' && (
+                    <ReactQueryDevtools initialIsOpen={false} />
+                  )}
+                </UserPreferencesProvider>
+              </UnifiedLocationProvider>
+            </LanguageProvider>
+          </AuthProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );
