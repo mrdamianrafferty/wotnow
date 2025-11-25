@@ -13,7 +13,7 @@ export async function getServerSideProps() {
 export default function SupportPage() {
   const openAppTip = useCallback((amount: number) => {
     const scheme = `godaisy://support/tip?amount=${amount}`;
-    const fallback = "https://apps.apple.com/app/idYOUR_APP_ID";
+    const fallback = "https://apps.apple.com/app/id6755695873";
     const start = Date.now();
     window.location.href = scheme;
     const t = setTimeout(() => {
