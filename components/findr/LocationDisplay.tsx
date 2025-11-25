@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import type { BasicLocation } from '../CoastalLocationDialog';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { toLegacyFormat as convertToLegacy } from '@/types/multiLocation';
 import { toast } from '@/lib/ui/toast';
 
 // Dynamically import CoastalLocationDialog with no SSR
@@ -14,20 +15,22 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { location, updateLocation, syncing } = useUnifiedLocation();
+  const { location, findrLocation, updateLocation, syncing } = useUnifiedLocation();
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [locationName, setLocationName] = useState('Set location');
 
+  const effectiveLocation = findrLocation ? convertToLegacy(findrLocation) : location;
+
   useEffect(() => {
-    if (location?.rectangleLabel) {
-      const cleaned = location.rectangleLabel.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      setLocationName(cleaned || location.rectangleLabel);
-    } else if (location?.rectangleCode) {
-      setLocationName(location.rectangleCode);
+    if (effectiveLocation?.rectangleLabel) {
+      const cleaned = effectiveLocation.rectangleLabel.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      setLocationName(cleaned || effectiveLocation.rectangleLabel);
+    } else if (effectiveLocation?.rectangleCode) {
+      setLocationName(effectiveLocation.rectangleCode);
     }
-  }, [location?.rectangleCode, location?.rectangleLabel]);
+  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel]);
 
   const loadingState = useMemo(() => isLookingUp || syncing, [isLookingUp, syncing]);
 
@@ -80,6 +83,7 @@ export function LocationDisplay() {
         rectangleLabel: displayName,
         source: 'manual',
         accuracy: typeof distance === 'number' ? distance : null,
+        slot: 'findr_primary',
       });
 
       setLocationName(displayName);

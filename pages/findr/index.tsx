@@ -715,7 +715,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 
 const FindrPage: React.FC = () => {
   const router = useRouter();
-  const { location } = useUnifiedLocation();
+  const { location, findrLocation } = useUnifiedLocation();
   const {
     options: rectangleOptions,
     loading: _rectangleOptionsLoading,
@@ -766,7 +766,8 @@ const FindrPage: React.FC = () => {
   // 1. Rectangle from UnifiedLocationContext (from header picker)
   // 2. Rectangle from URL query parameter
   // 3. selectedCode from persisted settings (fallback)
-  const rectangleFromContext = location?.rectangleCode;
+  const contextRectangleSource = findrLocation ?? location;
+  const rectangleFromContext = contextRectangleSource?.rectangleCode ?? null;
   const rectangleFromQuery = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
   const effectiveSelectedCode = rectangleFromContext ?? rectangleFromQuery ?? selectedCode;
   
@@ -840,8 +841,8 @@ const FindrPage: React.FC = () => {
     predictionDate,
     language,
     enabled: Boolean(activeRectangle),
-    latitude: location?.lat ?? null,
-    longitude: location?.lon ?? null,
+    latitude: contextRectangleSource?.lat ?? null,
+    longitude: contextRectangleSource?.lon ?? null,
   });
 
   // Debug: Log when predictions change
@@ -878,8 +879,8 @@ const FindrPage: React.FC = () => {
   const cards = useMemo(() => {
     if (!predictions) return [];
 
-    const defaultRegionCode = location?.rectangleRegion ?? null;
-    const locationLabelFromContext = location?.rectangleLabel ?? null;
+    const defaultRegionCode = findrLocation?.rectangleRegion ?? location?.rectangleRegion ?? null;
+    const locationLabelFromContext = location?.rectangleLabel ?? findrLocation?.name ?? null;
     const fallbackLocationLabel = activeOption?.region ?? activeOption?.label ?? (activeRectangle ? `ICES ${activeRectangle}` : 'Selected waters');
     const effectiveLocationLabel = locationLabelFromContext ?? fallbackLocationLabel;
 
@@ -919,7 +920,7 @@ const FindrPage: React.FC = () => {
     });
 
     return mapped;
-  }, [predictions, activeRectangle, location, activeOption]);
+  }, [predictions, activeRectangle, location, findrLocation, activeOption]);
 
   useEffect(() => {
     console.log('[Findr] Updating cardQueue:', {

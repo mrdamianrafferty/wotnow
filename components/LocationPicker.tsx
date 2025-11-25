@@ -39,7 +39,7 @@ export function LocationPicker() {
   const autodetectAttempted = useRef(false);
 
   const { options: rectangleOptions } = useFindrRectangleOptions([]);
-  const { location, updateLocation, syncing } = useUnifiedLocation();
+  const { location, updateLocation, syncing, loading } = useUnifiedLocation();
 
   const currentRectangle = location?.rectangleCode ?? null;
   const currentSource = location?.source ?? null;
@@ -57,6 +57,7 @@ export function LocationPicker() {
   // Auto-detect IP location if no location has been stored yet
   useEffect(() => {
     if (autodetectAttempted.current) return;
+    if (loading) return; // Wait until unified context finishes hydrating (prevents overriding saved locations)
     if (location?.lat && location?.lon) return; // Skip if we already have coordinates
     if (rectangleOptions.length === 0) return;
 
@@ -102,7 +103,7 @@ export function LocationPicker() {
     };
 
     void autoDetect();
-  }, [currentRectangle, rectangleOptions, updateLocation, location?.lat, location?.lon]);
+  }, [currentRectangle, rectangleOptions, updateLocation, location?.lat, location?.lon, loading]);
 
   const requestGPSLocation = useCallback(async () => {
     try {

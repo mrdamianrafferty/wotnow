@@ -238,7 +238,8 @@ export function QuickLogModal({
             },
             source: 'gps',
             accuracy: position.coords.accuracy ?? null,
-            resolveRectangle: true
+            resolveRectangle: true,
+            slot: 'findr_primary',
           }).catch((err: Error) => {
             console.warn('[QuickLogModal] Failed to update location:', err);
           });
@@ -257,7 +258,8 @@ export function QuickLogModal({
               lon: -5.2706
             },
             source: 'manual',
-            resolveRectangle: true
+            resolveRectangle: true,
+            slot: 'findr_primary',
           }).catch((fallbackErr: Error) => {
             console.error('[QuickLogModal] Fallback location also failed:', fallbackErr);
           });
@@ -474,7 +476,8 @@ export function QuickLogModal({
           },
           source: 'gps',
           accuracy: position.coords.accuracy ?? null,
-          resolveRectangle: true
+          resolveRectangle: true,
+          slot: 'findr_primary',
         }).catch((err: Error) => {
           console.warn('[QuickLogModal] Failed to update location:', err);
         }).finally(() => {

@@ -46,9 +46,10 @@ const FindrConditionsRoute: React.FC = () => {
     setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
-  const { location, updateLocation, loading: locationLoading } = useUnifiedLocation();
-  const locationRectangle = location?.rectangleCode ?? null;
-  const hasLocation = Boolean(location?.lat && location?.lon);
+  const { location, findrLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
+  const contextLocation = findrLocation ?? location;
+  const locationRectangle = contextLocation?.rectangleCode ?? null;
+  const hasLocation = Boolean(contextLocation?.lat && contextLocation?.lon);
 
   const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
 
@@ -132,11 +133,14 @@ const FindrConditionsRoute: React.FC = () => {
       rectangleRegion: rectangle.region,
       rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
       source: 'manual',
+      slot: 'findr_primary',
     });
   }, [rectangleFromUrl, locationLoading, hasLocation, rectangleOptions, router.isReady, updateLocation]);
 
   // Pass user's precise coordinates for accurate weather data (4dp precision)
-  const userCoords = location?.lat && location?.lon ? { lat: location.lat, lon: location.lon } : null;
+  const userCoords = contextLocation?.lat && contextLocation?.lon
+    ? { lat: contextLocation.lat, lon: contextLocation.lon }
+    : null;
   const conditions = useFindrConditions(activeRectangle, userCoords);
 
   // Debug: Log when activeRectangle changes
@@ -145,9 +149,9 @@ const FindrConditionsRoute: React.FC = () => {
       activeRectangle,
       locationRectangle,
       selectedCode,
-      source: location?.source,
+      source: contextLocation?.source,
     });
-  }, [activeRectangle, locationRectangle, selectedCode, location?.source]);
+  }, [activeRectangle, locationRectangle, selectedCode, contextLocation]);
 
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;
