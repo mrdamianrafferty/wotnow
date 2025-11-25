@@ -54,14 +54,14 @@ export default function SupportPage() {
           {/* Hero */}
           <div className="card bg-base-200 shadow-sm">
             <div className="card-body space-y-4">
-              <h2 className="card-title text-3xl">Keep Go Daisy Blooming</h2>
-              <p className="leading-relaxed">
-                Go Daisy isn’t just an app — it’s a small, friendly community of people who
+              <h2 className="card-title text-3xl text-base-content">Keep Go Daisy Blooming</h2>
+              <p className="leading-relaxed text-base-content">
+                Go Daisy isn't just an app — it's a small, friendly community of people who
                 prefer doing to doom-scrolling. If our forecasts and nudges helped you rally mates,
                 discover a cracking day out, or dodge a downpour, you can support the project and
                 keep it blooming.
               </p>
-              <div className="flex flex-wrap gap-2 text-xs opacity-80">
+              <div className="flex flex-wrap gap-2 text-xs opacity-80 text-base-content">
                 <span className="badge badge-outline">Community-first</span>
                 <span className="badge badge-outline">No paywalls</span>
                 <span className="badge badge-outline">Indie & friendly</span>
@@ -74,8 +74,8 @@ export default function SupportPage() {
             {/* Patreon card */}
             <div className="card bg-base-200">
               <div className="card-body space-y-3">
-                <h2 className="card-title text-lg">Join us on Patreon</h2>
-                <p>
+                <h2 className="card-title text-lg text-base-content">Join us on Patreon</h2>
+                <p className="text-base-content">
                   Be part of the gang who keep Go Daisy buzzing — with early peeks at features,
                   gentle nudges to get outside, and the odd behind-the-scenes chuckle.
                 </p>
@@ -93,8 +93,8 @@ export default function SupportPage() {
             {/* Apple Tip Jar card */}
             <div className="card bg-base-200">
               <div className="card-body space-y-3">
-                <h2 className="card-title text-lg">Apple Tip Jar</h2>
-                <p>
+                <h2 className="card-title text-lg text-base-content">Apple Tip Jar</h2>
+                <p className="text-base-content">
                   Quick, simple, one-off thanks inside the Apple ecosystem. No perks, just a
                   pat on the back (and a biscuit for Bruno).
                 </p>
@@ -115,8 +115,8 @@ export default function SupportPage() {
           {/* Transparency */}
           <div className="card bg-base-200">
             <div className="card-body">
-              <h2 className="card-title text-lg">Transparency</h2>
-              <ul className="list-disc pl-5 space-y-2 text-sm">
+              <h2 className="card-title text-lg text-base-content">Transparency</h2>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-base-content">
                 <li>Memberships and tips are optional and non-refundable — a thank-you, not a transaction.</li>
                 <li>No features are gated behind support. Everyone gets the same forecast.</li>
                 <li>Patreon updates and progress notes are shared with supporters; feature launches land for all users.</li>
@@ -126,29 +126,29 @@ export default function SupportPage() {
 
           {/* FAQ */}
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">Frequently asked questions</h2>
+            <h2 className="text-lg font-semibold text-base-content">Frequently asked questions</h2>
 
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" defaultChecked />
-              <div className="collapse-title text-base font-medium">Does support unlock features?</div>
+              <div className="collapse-title text-base font-medium text-base-content">Does support unlock features?</div>
               <div className="collapse-content">
-                <p>Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.</p>
+                <p className="text-base-content">Afraid not. Support keeps the lights on and the data flowing, but features roll out to everyone.</p>
               </div>
             </div>
 
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-base font-medium">Can I cancel any time?</div>
+              <div className="collapse-title text-base font-medium text-base-content">Can I cancel any time?</div>
               <div className="collapse-content">
-                <p>Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.</p>
+                <p className="text-base-content">Yes — Patreon manages billing. You can switch tiers or cancel whenever you like. Apple tips are one-off.</p>
               </div>
             </div>
 
             <div className="collapse collapse-arrow bg-base-200">
               <input type="checkbox" />
-              <div className="collapse-title text-base font-medium">Other ways to help?</div>
+              <div className="collapse-title text-base font-medium text-base-content">Other ways to help?</div>
               <div className="collapse-content">
-                <p>Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.</p>
+                <p className="text-base-content">Tell a friend, start a plan, or share your favourite Go Daisy moment. Word of mouth is golden.</p>
               </div>
             </div>
           </div>
