@@ -18,10 +18,23 @@ export default function GoDaisyLogin() {
   const [message, setMessage] = useState<string | null>(null);
   const [isNativePlatform, setIsNativePlatform] = useState(false);
   const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
+  const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? `${window.location.origin}/auth/callback`;
+    }
+    return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? 'https://godaisy.io/auth/callback';
+  });
 
   // Get returnTo parameter for redirect after login
   const returnTo = router.query.returnTo as string | undefined;
   const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const resolved = process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL ?? `${window.location.origin}/auth/callback`;
+      setAuthCallbackUrl(resolved);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +53,14 @@ export default function GoDaisyLogin() {
       const { App } = await import('@capacitor/app');
 
       nativeListenerRef.current = await App.addListener('appUrlOpen', async ({ url }) => {
-        if (!url || !url.startsWith('godaisy://auth/callback')) {
+        if (!url) {
+          return;
+        }
+
+        const matchesGodaisyScheme = url.startsWith('godaisy://auth/callback');
+        const matchesCanonicalRedirect = Boolean(authCallbackUrl && url.startsWith(authCallbackUrl));
+
+        if (!matchesGodaisyScheme && !matchesCanonicalRedirect) {
           return;
         }
 
@@ -66,9 +86,12 @@ export default function GoDaisyLogin() {
             throw new Error('Could not resume Google Sign In. Please try again.');
           }
 
-          const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+          const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
           if (!clientId) {
             throw new Error('Google Sign In is temporarily unavailable (client missing).');
+          }
+          if (!authCallbackUrl) {
+            throw new Error('Unable to resume Google Sign In. Please try again.');
           }
 
           const tokenResponse = await fetch('/api/auth/google-token-exchange', {
@@ -78,7 +101,7 @@ export default function GoDaisyLogin() {
               code,
               codeVerifier,
               clientId,
-              redirectUri: 'https://godaisy.io/auth/callback',
+              redirectUri: authCallbackUrl,
             }),
           });
 
@@ -122,7 +145,7 @@ export default function GoDaisyLogin() {
       nativeListenerRef.current?.remove?.();
       nativeListenerRef.current = null;
     };
-  }, [destination]);
+  }, [authCallbackUrl, destination]);
 
   const handleNativeGoogleSignIn = async () => {
     try {
@@ -151,12 +174,16 @@ export default function GoDaisyLogin() {
 
       await Preferences.set({ key: 'google_oauth_code_verifier', value: codeVerifier });
 
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
       if (!clientId) {
         throw new Error('GOOGLE_NOT_CONFIGURED');
       }
 
-      const redirectUri = 'https://godaisy.io/auth/callback';
+      if (!authCallbackUrl) {
+        throw new Error('Unable to determine Google callback URL');
+      }
+
+      const redirectUri = authCallbackUrl;
       const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       authUrl.searchParams.set('client_id', clientId);
       authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -219,6 +246,10 @@ export default function GoDaisyLogin() {
       setLoading(true);
       setError(null);
 
+      if (!authCallbackUrl) {
+        throw new Error('Authentication callback URL is not configured. Please try again later.');
+      }
+
       sessionStorage.setItem('oauth_origin', destination);
       sessionStorage.setItem('oauth_app', 'godaisy');
 
@@ -226,7 +257,7 @@ export default function GoDaisyLogin() {
         console.log('[Go Daisy Auth] Native platform detected for', provider);
 
         if (provider === 'apple') {
-          await signInWithApple(supabase, `${window.location.origin}/auth/callback`);
+          await signInWithApple(supabase, authCallbackUrl);
           window.location.href = destination;
           return;
         }
@@ -245,12 +276,12 @@ export default function GoDaisyLogin() {
         }
       }
 
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const redirectUrl = authCallbackUrl;
       console.log('[Go Daisy Auth] Starting OAuth:', {
         provider,
-        origin: window.location.origin,
+        origin: typeof window !== 'undefined' ? window.location.origin : 'server',
         redirectTo: redirectUrl,
-        hostname: window.location.hostname
+        hostname: typeof window !== 'undefined' ? window.location.hostname : 'server'
       });
 
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
