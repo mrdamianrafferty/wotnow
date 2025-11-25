@@ -13,12 +13,12 @@ export default function TermsAndConditions() {
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">
         <div className="max-w-3xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold mb-6 text-primary-content">
+          <h1 className="text-4xl font-bold mb-6 text-primary">
             Terms and Conditions
           </h1>
 
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">
               1. Weather Forecasts Are Predictions Only
             </h2>
             <p className="text-base-content">
@@ -27,7 +27,7 @@ export default function TermsAndConditions() {
           </section>
 
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">
               2. No Guarantee of Accuracy
             </h2>
             <p className="text-base-content">
@@ -36,7 +36,7 @@ export default function TermsAndConditions() {
           </section>
 
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">
               3. Use at Your Own Risk
             </h2>
             <p className="text-base-content">
@@ -45,7 +45,7 @@ export default function TermsAndConditions() {
           </section>
           
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">
               4. No Liability
             </h2>
             <p className="text-base-content">
@@ -54,7 +54,7 @@ export default function TermsAndConditions() {
           </section>
 
           <section className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">
               5. General Terms
             </h2>
             <p className="text-base-content mb-2">
@@ -69,7 +69,7 @@ export default function TermsAndConditions() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-2 text-secondary-content">Legal Terms Explanation (Plain English):</h2>
+            <h2 className="text-2xl font-semibold mb-2 text-secondary">Legal Terms Explanation (Plain English):</h2>
             <ul className="list-disc list-inside space-y-1 text-base-content">
               <li><strong>No guarantees or warranties:</strong> We try our best but don’t promise everything will be right.</li>
               <li><strong>Use at your own risk:</strong> If you get hurt or something goes wrong, it’s on you, not us.</li>

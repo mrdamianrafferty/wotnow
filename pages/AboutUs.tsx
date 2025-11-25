@@ -61,7 +61,7 @@ export default function AboutUs() {
             Thanks for stopping by — now get outside and enjoy life!
           </p>
 
-          <p className="mt-8 text-sm text-secondary-content">
+          <p className="mt-8 text-sm text-secondary">
             — The man, Bruno, and the Go Daisy team
           </p>
         </div>

@@ -61,7 +61,7 @@ export default function CookiePolicy() {
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">
         <div className="max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg space-y-4">
-          <h1 className="text-4xl font-bold mb-2 text-primary-content">Cookie Policy</h1>
+          <h1 className="text-4xl font-bold mb-2 text-primary">Cookie Policy</h1>
           <p>
             This page explains how Go Daisy uses cookies and similar technologies. You can manage your consent using the banner below.
           </p>

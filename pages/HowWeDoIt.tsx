@@ -14,7 +14,7 @@ export default function HowWeDoIt() {
 
       <main className="min-h-screen bg-base-100 text-base-content p-6 md:p-12" data-theme="corporate">
         <div className="max-w-4xl mx-auto bg-base-200 p-8 rounded-lg shadow-lg">
-          <h1 className="text-4xl font-bold mb-6 text-primary-content">How do we do what we do?</h1>
+          <h1 className="text-4xl font-bold mb-6 text-primary">How do we do what we do?</h1>
 
           {/* Placeholder for custom illustration */}
           <div className="w-full h-64 bg-base-300 rounded-lg mb-8 flex items-center justify-center">
