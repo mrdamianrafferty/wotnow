@@ -110,11 +110,33 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   // Initial auth check + subscribe to auth state changes
   React.useEffect(() => {
     let unsub: (() => void) | null = null;
+    let cancelled = false;
+
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUserId(user?.id ?? null);
-      await resolveName(user?.id ?? null);
-      setAuthReady(true);
+      try {
+        const { data, error } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (error) {
+          console.warn('[AppHeader] Failed to load session', error);
+          setUserId(null);
+          setDisplayName(null);
+        } else {
+          const uid = data?.user?.id ?? null;
+          setUserId(uid);
+          await resolveName(uid);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('[AppHeader] getUser threw', err);
+          setUserId(null);
+          setDisplayName(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setAuthReady(true);
+        }
+      }
+
       const { data: authSub } = supabase.auth.onAuthStateChange(async (_event, session) => {
         const uid = session?.user?.id ?? null;
         setUserId(uid);
@@ -122,7 +144,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       });
       unsub = () => authSub.subscription.unsubscribe();
     })();
-    return () => { if (unsub) unsub(); };
+
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+    };
   }, [resolveName]);
 
   const inferredHome = React.useMemo(() => preferences.locations.find(l => l.type === 'home'), [preferences.locations]);

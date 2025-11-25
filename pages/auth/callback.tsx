@@ -230,24 +230,7 @@ export default function AuthCallback() {
           });
 
           // Manually exchange the code for a session
-          // Add a race with timeout to catch hanging exchanges
-          const exchangePromise = supabase.auth.exchangeCodeForSession(code);
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Code exchange timed out after 10s')), 10000)
-          );
-
-          let exchangeResult;
-          try {
-            exchangeResult = await Promise.race([exchangePromise, timeoutPromise]) as Awaited<typeof exchangePromise>;
-          } catch (timeoutError) {
-            logAuthStep('Code exchange timeout', {
-              error: getErrorMessage(timeoutError),
-              note: 'PKCE verifier may be missing from storage'
-            });
-            throw timeoutError;
-          }
-
-          const { data, error: exchangeError } = exchangeResult;
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
           if (exchangeError) {
             logAuthStep('Code exchange failed', {
