@@ -1123,7 +1123,7 @@ export function QuickLogModal({
                           location: {
                             coords: exifData?.location || (location?.lat && location?.lon ? [location.lat, location.lon] : undefined),
                             rectangleCode: lookupRectangleCode,
-                            rectangleLabel: location?.rectangleLabel,
+                            rectangleLabel: location && 'rectangleLabel' in location ? location.rectangleLabel : undefined,
                           }
                         };
                         void identify(photoFile, regionalSpecies, context);

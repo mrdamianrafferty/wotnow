@@ -100,7 +100,7 @@ async function fillCache(): Promise<void> {
       }
 
       // Populate cache
-      data.forEach((row: { text_key: string; [key: string]: unknown }) => {
+      data.forEach((row: Record<string, string>) => {
         translationCache.set(row.text_key, row);
       });
 
