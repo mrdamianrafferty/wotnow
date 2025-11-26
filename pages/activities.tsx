@@ -709,12 +709,6 @@ export default function ActivitiesPage() {
   // Translation hooks
   const todayLabel = useUIText('activities.label.today', 'Today');
   const tomorrowLabel = useUIText('activities.label.tomorrow', 'Tomorrow');
-  const indoorLabel = useUIText('activities.label._indoor_85', '🛋️ indoor');
-  const offseasonLabel = useUIText('activities.label._offseason_86', '🍂 offseason');
-  const shareButton = useUIText('activities.button.share', '📤 Share');
-  const scoreLabel = useUIText('activities.label.score', 'Score');
-  const snowAdvisoryLabel = useUIText('activities.label.snow_advisory_90', 'Snow advisory');
-  const forecastDaysLabel = useUIText('activities.label.forecast_days_97', 'Forecast days');
   const loadingActivities = useUIText('activities.label.loading_your_activities_107', 'Loading your activities');
   const activitiesTitle = useUIText('activities.label.activities', 'Activities');
   const activitiesDescription = useUIText('activities.paragraph.browse_all_your_selected_activ_108',
@@ -732,13 +726,6 @@ export default function ActivitiesPage() {
     'Conditions vary, but available based on your interests');
   const noDataText = useUIText('activities.paragraph.no_activity_data',
     'No activity data available for');
-  const airTempLabel = useUIText('activities.label.air_temperature', 'Air temperature');
-  const waterTempLabel = useUIText('activities.label.water_temperature', 'Water temperature');
-  const precipitationLabel = useUIText('activities.label.precipitation', 'Precipitation');
-  const windLabel = useUIText('activities.label.wind', 'Wind');
-  const humidityLabel = useUIText('activities.label.humidity', 'Humidity');
-  const highTempLabel = useUIText('activities.label.high_temperature', 'High');
-  const lowTempLabel = useUIText('activities.label.low_temperature', 'Low');
 
   // =============================================================================
   // DATA FETCHING (Same pipeline as homepage)

@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { isAuthenticated } from './helpers/auth';
 
 test.describe('Findr - Authentication', () => {
   test.describe('Sign In Flow', () => {
