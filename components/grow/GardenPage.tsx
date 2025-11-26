@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -20,7 +20,8 @@ import {
   Loader2,
   CheckCircle2,
   Trees,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
 import type { GuildCompanion } from '../../lib/grow/guild';
@@ -28,6 +29,7 @@ import { api } from '../../lib/grow/api';
 import { AddPlantDialog } from './AddPlantDialog';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
+import { useImageCompression } from '../../hooks/useImageCompression';
 
 interface Plant {
   id: string;
@@ -91,6 +93,19 @@ export function GardenPage() {
   const [isLoadingPlants, setIsLoadingPlants] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddPlantDialogOpen, setIsAddPlantDialogOpen] = useState(false);
+  
+  // Photo upload state for identification
+  const [identifyPhoto, setIdentifyPhoto] = useState<File | null>(null);
+  const [identifyPhotoPreview, setIdentifyPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Image compression hook
+  const {
+    compress: compressImage,
+    statusMessage: compressionMessage,
+    savingsText,
+    isProcessing: isCompressing,
+  } = useImageCompression();
   
   // Plant inventory state
   const [plants, setPlants] = useState<Plant[]>([]);
@@ -219,11 +234,60 @@ export function GardenPage() {
   };
 
   const handleIdentifyPhoto = () => {
+    if (!identifyPhoto) {
+      toast.error('Please select a photo first');
+      return;
+    }
+    
     setIsIdentifying(true);
-    // Simulate API call
+    // TODO: Call actual API when available
+    // const endpoint = identifyMode === 'plant' ? '/api/daisy/identify-plant' : '/api/daisy/identify-pest';
     setTimeout(() => {
       setIsIdentifying(false);
+      toast.info('Identification coming soon!', {
+        description: 'This feature is currently under development.',
+      });
     }, 2000);
+  };
+
+  // Handle photo selection from file input
+  const handlePhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Create preview from original
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setIdentifyPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Compress for upload
+    try {
+      const compressionResult = await compressImage(file, {
+        maxSizeMB: 4,
+        maxDimension: 1920,
+        preserveExif: true,
+      });
+      setIdentifyPhoto(compressionResult.file);
+    } catch (err) {
+      console.error('[GardenPage] Compression failed, using original:', err);
+      setIdentifyPhoto(file);
+    }
+  };
+
+  // Clear selected photo
+  const handleClearPhoto = () => {
+    setIdentifyPhoto(null);
+    setIdentifyPhotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Trigger file input
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
   };
 
   const handleDeletePlant = async (plantId: string, plantName: string) => {
@@ -620,28 +684,71 @@ export function GardenPage() {
                   : 'Take a photo of pests, diseases, or plant problems to get diagnosis and treatment options.'}
               </div>
 
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoSelect}
+                className="hidden"
+              />
+
               {/* Upload area */}
-              <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  Drag and drop an image, or click to browse
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline">
-                    <ImageIcon className="h-4 w-4 mr-2" />
-                    Choose File
-                  </Button>
-                  <Button variant="outline">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Take Photo
-                  </Button>
+              {!identifyPhotoPreview ? (
+                <div 
+                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={handleChooseFile}
+                >
+                  <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Drag and drop an image, or click to browse
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supports images up to 20MB (will be optimized automatically)
+                  </p>
+                  <div className="flex gap-2 justify-center mt-4">
+                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleChooseFile(); }}>
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Choose File
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="relative">
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-base-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={identifyPhotoPreview}
+                      alt="Photo to identify"
+                      className="w-full h-full object-contain"
+                    />
+                    <button
+                      onClick={handleClearPhoto}
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {/* Compression status */}
+                  {isCompressing && (
+                    <div className="mt-2 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {compressionMessage || 'Optimizing image...'}
+                    </div>
+                  )}
+                  {!isCompressing && savingsText && (
+                    <div className="mt-2 text-center text-xs text-green-600 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Image optimized: {savingsText}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Button 
                 onClick={handleIdentifyPhoto} 
                 className="w-full bg-green-600 hover:bg-green-700"
-                disabled={isIdentifying}
+                disabled={isIdentifying || isCompressing || !identifyPhoto}
               >
                 {isIdentifying ? (
                   <>
@@ -651,7 +758,7 @@ export function GardenPage() {
                 ) : (
                   <>
                     <Search className="h-4 w-4 mr-2" />
-                    Identify
+                    Identify {identifyMode === 'plant' ? 'Plant' : 'Pest'}
                   </>
                 )}
               </Button>

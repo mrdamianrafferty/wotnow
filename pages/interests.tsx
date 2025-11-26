@@ -8,6 +8,7 @@ import { rankRecommendations } from '../app/settings/recommendations';
 import { supabase } from '../lib/supabase/client';
 import { getActivityEmoji } from '../data/emojiMap';
 import { useUIText } from '../hooks/useUIText';
+import { useTranslationMap } from '../lib/translation/useTranslationMap';
 
 // The full set of activity IDs for each grouping
 const mainCategories = [
@@ -424,9 +425,10 @@ interface RecommendationsSectionProps {
   onAdd: (id: string) => void;
   onDismiss: (id: string) => void;
   hasFallbacks?: boolean;
+  getTranslatedName: (id: string) => string;
 }
 
-function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = false }: RecommendationsSectionProps) {
+function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = false, getTranslatedName }: RecommendationsSectionProps) {
   // Translation hooks
   const youMightAlsoLike = useUIText('interests.label.you_might_also_like_343', 'You might also like');
   const popularActivities = useUIText('interests.label.popular_activities_you_might_enj_344', 'Popular activities you might enjoy');
@@ -460,7 +462,7 @@ function RecommendationsSection({ suggestions, onAdd, onDismiss, hasFallbacks = 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {suggestions.map((id) => {
             const icon = getActivityEmoji(id);
-            const name = getActivityName(id);
+            const name = getTranslatedName(id);
 
             return (
               <div key={id} className="flex items-center gap-1">
@@ -559,9 +561,10 @@ interface SubcategorySectionProps {
   subcategory: { key: string; icon: string; acts: string[] };
   selectedIds: string[];
   onToggle: (id: string) => void;
+  getTranslatedName: (id: string) => string;
 }
 
-function SubcategorySection({ subcategory, selectedIds, onToggle }: SubcategorySectionProps) {
+function SubcategorySection({ subcategory, selectedIds, onToggle, getTranslatedName }: SubcategorySectionProps) {
   const selectedSet = new Set(selectedIds);
 
   // Subcategory translations
@@ -598,7 +601,7 @@ function SubcategorySection({ subcategory, selectedIds, onToggle }: SubcategoryS
         {subcategory.acts.map((actId) => {
           const selected = selectedSet.has(actId);
           const icon = getActivityEmoji(actId);
-          const name = getActivityName(actId);
+          const name = getTranslatedName(actId);
 
           return (
             <button
@@ -642,6 +645,16 @@ const InterestsTest: React.FC = () => {
   const interestsSavedLocally = useUIText('interests.paragraph.your_interests_have_been_saved_356', 'Your interests have been saved locally!');
 
   const interests = useMemo(() => preferences.interests || [], [preferences.interests]);
+
+  // Translate all activity names
+  const allActivityNames = useMemo(() => Object.values(ACTIVITY_NAME_MAP), []);
+  const { t: translateActivity } = useTranslationMap(allActivityNames);
+
+  // Helper to get translated activity name
+  const getTranslatedActivityName = (id: string) => {
+    const englishName = getActivityName(id);
+    return translateActivity(englishName);
+  };
 
   // Load dismissed recommendations from localStorage (map of activityId -> timestamp)
   useEffect(() => {
@@ -772,7 +785,7 @@ const InterestsTest: React.FC = () => {
   const addActivity = (id: string) => {
     toggleInterest(id);
     dismissSuggestion(id); // Move to back of queue after adding
-    showSuccessToast(`${addedActivity} ${getActivityName(id)}!`);
+    showSuccessToast(`${addedActivity} ${getTranslatedActivityName(id)}!`);
   };
 
   const showSuccessToast = (message: string) => {
@@ -862,7 +875,7 @@ const InterestsTest: React.FC = () => {
             <SelectedActivitiesBar
               activities={interests.map(id => ({
                 id,
-                name: getActivityName(id),
+                name: getTranslatedActivityName(id),
                 icon: getActivityEmoji(id),
               }))}
               onRemove={toggleInterest}
@@ -877,6 +890,7 @@ const InterestsTest: React.FC = () => {
               onAdd={addActivity}
               onDismiss={dismissSuggestion}
               hasFallbacks={hasFallbacks}
+              getTranslatedName={getTranslatedActivityName}
             />
           </div>
 
@@ -902,6 +916,7 @@ const InterestsTest: React.FC = () => {
                       subcategory={sub}
                       selectedIds={interests}
                       onToggle={toggleInterest}
+                      getTranslatedName={getTranslatedActivityName}
                     />
                   ))}
                 </CategoryCard>

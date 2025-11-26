@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { Fish } from 'lucide-react';
 import { signInWithApple } from '../../lib/auth/appleSignIn';
+import { signInWithGoogleNative, GOOGLE_NATIVE_ERRORS } from '../../lib/auth/googleNative';
 
 export default function FindrAuth() {
   const [loading, setLoading] = useState(false);
@@ -39,179 +40,6 @@ export default function FindrAuth() {
     checkPWA();
   }, []);
 
-  // Listen for deep link callbacks from Google OAuth
-  useEffect(() => {
-    if (!isNativePlatform) return;
-
-    const setupDeepLinkListener = async () => {
-      try {
-        const { App } = await import('@capacitor/app');
-        const { Preferences } = await import('@capacitor/preferences');
-        const { Browser } = await import('@capacitor/browser');
-
-        console.log('[Findr Auth] Setting up deep link listener');
-
-        const listener = await App.addListener('appUrlOpen', async (data: { url: string }) => {
-          console.log('[Findr Auth] Deep link received:', data.url);
-
-          // Check if this is a Google OAuth callback (universal link)
-          if (data.url.includes('/auth/callback')) {
-            try {
-              // Close the browser
-              await Browser.close();
-
-              setLoading(true);
-              setError(null);
-
-              // Parse the URL to get the authorization code
-              const url = new URL(data.url);
-              const code = url.searchParams.get('code');
-
-              if (!code) {
-                throw new Error('No authorization code in callback URL');
-              }
-
-              console.log('[Findr Auth] Got authorization code from deep link');
-
-              // Retrieve the code verifier from Preferences
-              const { value: codeVerifier } = await Preferences.get({ key: 'google_oauth_code_verifier' });
-
-              if (!codeVerifier) {
-                throw new Error('Code verifier not found - PKCE flow failed');
-              }
-
-              console.log('[Findr Auth] Retrieved code verifier from Preferences');
-
-              // Exchange code for tokens via our API endpoint
-              // Use Findr Mobile Client ID (matches what we used to initiate OAuth)
-              const clientId = process.env.NEXT_PUBLIC_GOOGLE_FINDR_MOBILE_CLIENT_ID;
-              const response = await fetch('/api/auth/google-token-exchange', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  code,
-                  codeVerifier,
-                  clientId,
-                  redirectUri: 'https://fishfindr.eu/auth/callback',
-                }),
-              });
-
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Token exchange failed');
-              }
-
-              const { idToken } = await response.json();
-
-              console.log('[Findr Auth] Got ID token, creating Supabase session');
-
-              // Exchange Google ID token for Supabase session
-              const { error: supabaseError } = await supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: idToken,
-              });
-
-              if (supabaseError) {
-                throw supabaseError;
-              }
-
-              // Clean up the stored code verifier
-              await Preferences.remove({ key: 'google_oauth_code_verifier' });
-
-              console.log('[Findr Auth] Google Sign In successful, redirecting to /findr');
-              window.location.href = '/findr';
-            } catch (err) {
-              console.error('[Findr Auth] Deep link callback error:', err);
-              setError(err instanceof Error ? err.message : 'Google Sign In failed');
-              setLoading(false);
-            }
-          }
-        });
-
-        // Clean up listener on unmount
-        return () => {
-          listener.remove();
-        };
-      } catch (err) {
-        console.error('[Findr Auth] Failed to set up deep link listener:', err);
-      }
-    };
-
-    setupDeepLinkListener();
-  }, [isNativePlatform]);
-
-  const handleNativeGoogleSignIn = async () => {
-    try {
-      console.log('[Findr Auth] Starting native Google Sign In with custom URL scheme');
-
-      // Use Capacitor Browser to open Google OAuth with deep link redirect
-      const { Browser } = await import('@capacitor/browser');
-      const { Preferences } = await import('@capacitor/preferences');
-
-      // Generate PKCE code verifier and challenge
-      const generateCodeVerifier = () => {
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-      };
-
-      const generateCodeChallenge = async (verifier: string) => {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(verifier);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return btoa(String.fromCharCode(...hashArray))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, '');
-      };
-
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-      // Store code verifier in Capacitor Preferences (persists across browser contexts)
-      await Preferences.set({
-        key: 'google_oauth_code_verifier',
-        value: codeVerifier,
-      });
-
-      console.log('[Findr Auth] PKCE code verifier stored in Preferences');
-
-      // Build Google OAuth URL with universal link redirect
-      const redirectUri = 'https://fishfindr.eu/auth/callback';
-      // Use Findr Mobile Client ID for OAuth flow (dedicated client with Universal Links redirect)
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_FINDR_MOBILE_CLIENT_ID;
-
-      if (!clientId) {
-        throw new Error('Google Client ID not configured');
-      }
-
-      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-      authUrl.searchParams.set('client_id', clientId);
-      authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'openid email profile');
-      authUrl.searchParams.set('code_challenge', codeChallenge);
-      authUrl.searchParams.set('code_challenge_method', 'S256');
-
-      console.log('[Findr Auth] Opening Google OAuth in browser with redirect:', redirectUri);
-
-      // Open in browser - will redirect back to app via deep link
-      await Browser.open({
-        url: authUrl.toString(),
-        presentationStyle: 'popover',
-      });
-
-      console.log('[Findr Auth] Browser opened, waiting for deep link callback...');
-
-      // Note: The actual token exchange will happen in a deep link handler
-      // We need to set up an App URL listener to catch the callback
-    } catch (error) {
-      console.error('[Findr Auth] Native Google Sign In failed:', error);
-      throw error;
-    }
-  };
-
   const handleSocialLogin = async (provider: 'google' | 'apple') => {
     try {
       setLoading(true);
@@ -228,12 +56,18 @@ export default function FindrAuth() {
           return;
         } else if (provider === 'google') {
           try {
-            await handleNativeGoogleSignIn();
+            await signInWithGoogleNative(supabase);
+            console.log('[Findr Auth] Google native sign-in complete, redirecting to /findr');
+            window.location.href = '/findr';
             return;
           } catch (googleError: unknown) {
-            // If Google native sign-in fails (e.g., not configured), fall through to web OAuth
-            const errorMessage = (googleError as Error)?.message;
-            if (errorMessage === 'GOOGLE_NOT_CONFIGURED') {
+            const message = (googleError as Error)?.message;
+            if (message === GOOGLE_NATIVE_ERRORS.CANCELLED) {
+              console.log('[Findr Auth] Google sign-in cancelled');
+              setLoading(false);
+              return;
+            }
+            if (message === GOOGLE_NATIVE_ERRORS.NOT_AVAILABLE || message === GOOGLE_NATIVE_ERRORS.NOT_CONFIGURED) {
               console.log('[Findr Auth] Falling back to web OAuth for Google');
               // Continue to web flow below
             } else {

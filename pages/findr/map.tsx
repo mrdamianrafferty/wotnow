@@ -18,9 +18,9 @@ const DynamicMap = dynamic(() => import('../../components/findr/FullScreenMap'),
 
 export default function FullScreenMapPage() {
   const router = useRouter();
-  const { activeLocation, findrLocation } = useUnifiedLocation();
+  const { activeLocation, coastalLocation } = useUnifiedLocation();
 
-  const userLocation = findrLocation || activeLocation;
+  const userLocation = coastalLocation || activeLocation;
   const initialLat = router.query.lat ? parseFloat(router.query.lat as string) : userLocation?.lat || 43.5;
   const initialLon = router.query.lon ? parseFloat(router.query.lon as string) : userLocation?.lon || -5.5;
   const initialZoom = router.query.zoom ? parseInt(router.query.zoom as string) : 8;

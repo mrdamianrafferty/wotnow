@@ -27,7 +27,7 @@ import type { QuickLogParams } from '@/hooks/useCatchLogger';
 import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 import { getCurrentPosition, GeolocationException } from '@/lib/capacitor/geolocation';
 import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor/camera';
-import imageCompression from 'browser-image-compression';
+import { useImageCompression } from '@/hooks/useImageCompression';
 
 // Types
 interface QuickLogModalProps {
@@ -121,32 +121,6 @@ async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
   return new File([blob], filename, { type: blob.type });
 }
 
-/**
- * Compress image client-side while preserving EXIF data
- * Server will extract GPS/timestamp from EXIF before stripping it
- */
-async function compressImage(file: File): Promise<File> {
-  try {
-    const options = {
-      maxSizeMB: 1,
-      maxWidthOrHeight: 800,
-      useWebWorker: true,
-      preserveExif: true,  // Keep EXIF so server can extract GPS/time
-    };
-
-    const compressedFile = await imageCompression(file, options);
-    console.log('[QuickLogModal] Image compressed:', {
-      original: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-      compressed: `${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`,
-      reduction: `${(((file.size - compressedFile.size) / file.size) * 100).toFixed(1)}%`
-    });
-    return compressedFile;
-  } catch (error) {
-    console.warn('[QuickLogModal] Image compression failed, using original:', error);
-    return file; // Fallback to original if compression fails
-  }
-}
-
 // Main component
 export function QuickLogModal({
   isOpen,
@@ -157,7 +131,8 @@ export function QuickLogModal({
 }: QuickLogModalProps) {
   // Context
   const { user, loading: authLoading } = useAuth();
-  const { location, updateLocation } = useUnifiedLocation();
+  const { location: legacyLocation, coastalLocation, updateLocation } = useUnifiedLocation();
+  const location = coastalLocation ?? legacyLocation;
 
   // Get rectangle code from coordinates if not in location context
   const [lookupRectangleCode, setLookupRectangleCode] = useState<string | undefined>(
@@ -239,7 +214,7 @@ export function QuickLogModal({
             source: 'gps',
             accuracy: position.coords.accuracy ?? null,
             resolveRectangle: true,
-            slot: 'findr_primary',
+            slot: 'coastal',
           }).catch((err: Error) => {
             console.warn('[QuickLogModal] Failed to update location:', err);
           });
@@ -259,7 +234,7 @@ export function QuickLogModal({
             },
             source: 'manual',
             resolveRectangle: true,
-            slot: 'findr_primary',
+            slot: 'coastal',
           }).catch((fallbackErr: Error) => {
             console.error('[QuickLogModal] Fallback location also failed:', fallbackErr);
           });
@@ -320,6 +295,18 @@ export function QuickLogModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Image compression hook for better UX
+  const {
+    compress: compressImage,
+    status: _compressionStatus,
+    statusMessage: compressionMessage,
+    savingsText,
+    isProcessing: isCompressing,
+    setUploading: _setUploading,
+    setSuccess: _setCompressionSuccess,
+    reset: _resetCompression,
+  } = useImageCompression();
+
   // AI tracking state - store original AI suggestion for feedback tracking
   const [originalAiSuggestion, setOriginalAiSuggestion] = useState<{
     species: QuickLogSpecies;
@@ -339,13 +326,17 @@ export function QuickLogModal({
       // Convert data URL to File object
       const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
 
-      // Compress image client-side (preserves EXIF for server extraction)
-      const compressedFile = await compressImage(file);
+      // Compress image client-side with UI feedback (preserves EXIF for server extraction)
+      const compressionResult = await compressImage(file, {
+        maxSizeMB: 4,
+        maxDimension: 1920,
+        preserveExif: true,
+      });
 
-      setPhotoFile(compressedFile);
+      setPhotoFile(compressionResult.file);
       setPhotoPreview(photo.dataUrl); // Use data URL directly for preview
 
-      // Extract EXIF data
+      // Extract EXIF data from original (before compression)
       const exif = await extractExif(file);
       setExifData(exif);
 
@@ -389,7 +380,7 @@ export function QuickLogModal({
         console.error('[QuickLogModal] Unexpected camera error:', err);
       }
     }
-  }, [regionalSpecies]);
+  }, [regionalSpecies, compressImage]);
 
   // Handle photo from gallery
   const handleGallerySelect = useCallback(async () => {
@@ -399,13 +390,17 @@ export function QuickLogModal({
       // Convert data URL to File object
       const file = await dataUrlToFile(photo.dataUrl, `catch-photo-${Date.now()}.${photo.format}`);
 
-      // Compress image client-side (preserves EXIF for server extraction)
-      const compressedFile = await compressImage(file);
+      // Compress image client-side with UI feedback (preserves EXIF for server extraction)
+      const compressionResult = await compressImage(file, {
+        maxSizeMB: 4,
+        maxDimension: 1920,
+        preserveExif: true,
+      });
 
-      setPhotoFile(compressedFile);
+      setPhotoFile(compressionResult.file);
       setPhotoPreview(photo.dataUrl);
 
-      // Extract EXIF data
+      // Extract EXIF data from original (before compression)
       const exif = await extractExif(file);
       setExifData(exif);
 
@@ -449,7 +444,7 @@ export function QuickLogModal({
         console.error('[QuickLogModal] Unexpected gallery error:', err);
       }
     }
-  }, [regionalSpecies]);
+  }, [regionalSpecies, compressImage]);
 
   // Skip photo and go directly to species selection
   const handleSkipPhoto = useCallback(() => {
@@ -477,7 +472,7 @@ export function QuickLogModal({
           source: 'gps',
           accuracy: position.coords.accuracy ?? null,
           resolveRectangle: true,
-          slot: 'findr_primary',
+          slot: 'coastal',
         }).catch((err: Error) => {
           console.warn('[QuickLogModal] Failed to update location:', err);
         }).finally(() => {
@@ -838,11 +833,26 @@ export function QuickLogModal({
                     </p>
                   </div>
 
+                  {/* Compression Status Overlay */}
+                  {isCompressing && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                      <div className="bg-base-100 rounded-xl p-6 text-center shadow-xl max-w-xs mx-4">
+                        <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+                        <h4 className="font-semibold text-lg mb-2">
+                          <TranslatedText text={compressionMessage || 'Processing image...'} />
+                        </h4>
+                        <p className="text-sm opacity-70">
+                          <TranslatedText text="Optimizing for upload" />
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Take Photo - Uses Capacitor camera wrapper */}
                   <button
                     onClick={handleCameraCapture}
                     className="btn btn-lg btn-primary w-full gap-2 h-auto p-4 flex-col"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isCompressing}
                   >
                     <Camera className="w-6 h-6" />
                     <div className="text-center">
@@ -857,7 +867,7 @@ export function QuickLogModal({
                   <button
                     onClick={handleGallerySelect}
                     className="btn btn-lg btn-secondary w-full gap-2 h-auto p-4 flex-col"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isCompressing}
                   >
                     <ImageIcon className="w-6 h-6" />
                     <div className="text-center">
@@ -872,7 +882,7 @@ export function QuickLogModal({
                   <button
                     onClick={handleSkipPhoto}
                     className="btn btn-outline w-full h-12 md:h-12 rounded-xl"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isCompressing}
                     aria-label="Skip Photo and log manually"
                   >
                     <span className="font-semibold">
@@ -904,6 +914,13 @@ export function QuickLogModal({
                     className="w-full h-full object-cover"
                   />
                 </div>
+                {/* Compression Savings Display */}
+                {savingsText && (
+                  <div className="px-3 py-2 bg-success/10 text-success text-xs flex items-center justify-center gap-1">
+                    <Check className="w-3 h-3" />
+                    <span>Image optimized: {savingsText}</span>
+                  </div>
+                )}
               </div>
             )}
 

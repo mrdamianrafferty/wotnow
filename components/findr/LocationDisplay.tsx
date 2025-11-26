@@ -15,13 +15,13 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { location, findrLocation, updateLocation, syncing } = useUnifiedLocation();
+  const { location: legacyLocation, coastalLocation, updateLocation, syncing } = useUnifiedLocation();
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [locationName, setLocationName] = useState('Set location');
 
-  const effectiveLocation = findrLocation ? convertToLegacy(findrLocation) : location;
+  const effectiveLocation = coastalLocation ? convertToLegacy(coastalLocation) : legacyLocation;
 
   useEffect(() => {
     if (effectiveLocation?.rectangleLabel) {
@@ -83,7 +83,7 @@ export function LocationDisplay() {
         rectangleLabel: displayName,
         source: 'manual',
         accuracy: typeof distance === 'number' ? distance : null,
-        slot: 'findr_primary',
+        slot: 'coastal',
       });
 
       setLocationName(displayName);

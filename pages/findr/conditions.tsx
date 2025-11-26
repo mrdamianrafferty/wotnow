@@ -46,8 +46,8 @@ const FindrConditionsRoute: React.FC = () => {
     setLanguage: _setLanguage,
   } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
 
-  const { location, findrLocation, homeLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
-  const contextLocation = findrLocation ?? homeLocation ?? location;
+  const { location: legacyLocation, coastalLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
+  const contextLocation = coastalLocation ?? legacyLocation;
   const locationRectangle = contextLocation?.rectangleCode ?? null;
   const hasLocation = Boolean(contextLocation?.lat && contextLocation?.lon);
 
@@ -133,7 +133,7 @@ const FindrConditionsRoute: React.FC = () => {
       rectangleRegion: rectangle.region,
       rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
       source: 'manual',
-      slot: 'findr_primary',
+      slot: 'coastal',
     });
   }, [rectangleFromUrl, locationLoading, hasLocation, rectangleOptions, router.isReady, updateLocation]);
 

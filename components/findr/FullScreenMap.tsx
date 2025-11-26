@@ -253,13 +253,13 @@ const LocationMarker: React.FC<{ position: [number, number]; name: string }> = (
 
 export default function FullScreenMap({ initialLat, initialLon, initialZoom, initialLayer }: FullScreenMapProps) {
   const router = useRouter();
-  const { activeLocation, findrLocation } = useUnifiedLocation();
+  const { activeLocation, coastalLocation } = useUnifiedLocation();
   const [mapReady, setMapReady] = useState(false);
   const [activeLayer, setActiveLayer] = useState<'clear' | 'depth' | 'seabed'>(initialLayer);
   const mapRef = useRef<LeafletMap | null>(null);
 
-  // Use findrLocation first, then activeLocation as fallback
-  const userLocation = findrLocation || activeLocation;
+  // Use coastal location first, then activeLocation as fallback
+  const userLocation = coastalLocation || activeLocation;
 
   useEffect(() => {
     setMapReady(true);

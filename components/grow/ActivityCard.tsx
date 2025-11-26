@@ -7,6 +7,7 @@ import { Share2, Users, Clock, MapPin, Star } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { api } from '../../lib/grow/api';
 import { auth } from '../../lib/grow/auth';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 export interface Activity {
   id: string;
@@ -30,6 +31,13 @@ interface ActivityCardProps {
 export function ActivityCard({ activity, showWeatherReason = false, onJoin }: ActivityCardProps) {
   const [isSharing, setIsSharing] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>('');
+
+  // Translate activity name
+  const translationInputs = useMemo(
+    () => [activity.name ?? 'Garden activity'],
+    [activity.name]
+  );
+  const { t } = useTranslationMap(translationInputs);
 
   // Helper function to safely get participant count as a number
   const getParticipantCount = (participants: Activity['participants']): number => {
@@ -90,8 +98,8 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
 
     // Mock sharing functionality
     const shareData = {
-      title: activity.name ?? 'Grow Daisy activity',
-      text: `Join me for ${activity.name ?? 'this activity'}! Weather conditions are ${getSuitabilityText(
+      title: t(activity.name ?? 'Grow Daisy activity'),
+      text: `Join me for ${t(activity.name ?? 'this activity')}! Weather conditions are ${getSuitabilityText(
         Number(activity.suitabilityScore ?? 0)
       ).toLowerCase()}.`,
       url: `${window.location.origin}/activity/${activity.id}`,
@@ -121,7 +129,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
       }
 
       await api.joinActivity(activity.id);
-      alert(`Successfully joined "${activity.name ?? 'this activity'}"!`);
+      alert(`Successfully joined "${t(activity.name ?? 'this activity')}"!`);
 
       // Refresh data if callback provided
       if (onJoin) {
@@ -140,7 +148,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
         {imageUrl && (
           <ImageWithFallback
             src={imageUrl}
-            alt={activity.name ?? 'Garden activity'}
+            alt={t(activity.name ?? 'Garden activity')}
             className="w-full h-full object-cover"
           />
         )}
@@ -152,7 +160,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
       </div>
 
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">{activity.name ?? 'Garden activity'}</CardTitle>
+        <CardTitle className="text-lg">{t(activity.name ?? 'Garden activity')}</CardTitle>
         {showWeatherReason && activity.weatherReason && (
           <p className="text-sm text-muted-foreground">{activity.weatherReason}</p>
         )}

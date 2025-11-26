@@ -715,7 +715,7 @@ export function Homepage() {
 
       {/* Swipeable Card Deck */}
       {activeCards.length > 0 ? (
-        <div className="relative h-[580px] sm:h-[620px]">
+        <div className="relative h-[580px] sm:h-[620px] overflow-hidden">
           {activeCards.map((task, index) => (
             <SwipeCard
               key={task.id}

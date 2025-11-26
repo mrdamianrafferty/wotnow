@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase/client';
 import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import { Cloud, Sun, Waves } from 'lucide-react';
 import { signInWithApple } from '../lib/auth/appleSignIn';
-import type { PluginListenerHandle } from '@capacitor/core';
+import { signInWithGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
 
 export default function GoDaisyLogin() {
   const router = useRouter();
@@ -17,7 +17,6 @@ export default function GoDaisyLogin() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isNativePlatform, setIsNativePlatform] = useState(false);
-  const nativeListenerRef = useRef<PluginListenerHandle | null>(null);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
     if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
       return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
@@ -55,163 +54,15 @@ export default function GoDaisyLogin() {
 
     (async () => {
       if (typeof window === 'undefined') return;
-
       const { Capacitor } = await import('@capacitor/core');
-      if (!Capacitor.isNativePlatform()) {
-        return;
-      }
-
       if (cancelled) return;
-      setIsNativePlatform(true);
-
-      const { App } = await import('@capacitor/app');
-
-      nativeListenerRef.current = await App.addListener('appUrlOpen', async ({ url }) => {
-        if (!url) {
-          return;
-        }
-
-        const matchesGodaisyScheme = url.startsWith('godaisy://auth/callback');
-        const matchesCanonicalRedirect = Boolean(authCallbackUrl && url.startsWith(authCallbackUrl));
-
-        if (!matchesGodaisyScheme && !matchesCanonicalRedirect) {
-          return;
-        }
-
-        try {
-          const { Browser } = await import('@capacitor/browser');
-          await Browser.close();
-        } catch (err) {
-          console.warn('[Go Daisy Auth] Could not close browser:', err);
-        }
-
-        try {
-          setLoading(true);
-
-          const parsed = new URL(url);
-          const code = parsed.searchParams.get('code');
-          if (!code) {
-            throw new Error('No authorization code returned');
-          }
-
-          const { Preferences } = await import('@capacitor/preferences');
-          const { value: codeVerifier } = await Preferences.get({ key: 'google_oauth_code_verifier' });
-          if (!codeVerifier) {
-            throw new Error('Could not resume Google Sign In. Please try again.');
-          }
-
-          const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-          if (!clientId) {
-            throw new Error('Google Sign In is temporarily unavailable (client missing).');
-          }
-          if (!authCallbackUrl) {
-            throw new Error('Unable to resume Google Sign In. Please try again.');
-          }
-
-          const tokenResponse = await fetch('/api/auth/google-token-exchange', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              code,
-              codeVerifier,
-              clientId,
-              redirectUri: authCallbackUrl,
-            }),
-          });
-
-          if (!tokenResponse.ok) {
-            const payload = await tokenResponse.json().catch(() => ({}));
-            throw new Error(payload.error || 'Could not complete Google Sign In');
-          }
-
-          const { idToken } = (await tokenResponse.json()) as { idToken: string };
-          if (!idToken) {
-            throw new Error('Missing ID token from Google');
-          }
-
-          const { error: supabaseError } = await supabase.auth.signInWithIdToken({
-            provider: 'google',
-            token: idToken,
-          });
-
-          if (supabaseError) {
-            throw supabaseError;
-          }
-
-          await Preferences.remove({ key: 'google_oauth_code_verifier' });
-
-          const storedDestination = sessionStorage.getItem('oauth_origin');
-          const redirectTarget = storedDestination && storedDestination.startsWith('/')
-            ? storedDestination
-            : destination;
-
-          window.location.href = redirectTarget;
-        } catch (err) {
-          console.error('[Go Daisy Auth] Deep link handling failed:', err);
-          setError(mapAuthError(err));
-          setLoading(false);
-        }
-      });
+      setIsNativePlatform(Capacitor.isNativePlatform());
     })();
 
     return () => {
       cancelled = true;
-      nativeListenerRef.current?.remove?.();
-      nativeListenerRef.current = null;
     };
-  }, [authCallbackUrl, destination]);
-
-  const handleNativeGoogleSignIn = async () => {
-    try {
-      const { Browser } = await import('@capacitor/browser');
-      const { Preferences } = await import('@capacitor/preferences');
-
-      const generateCodeVerifier = () => {
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
-      };
-
-      const generateCodeChallenge = async (verifier: string) => {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(verifier);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return btoa(String.fromCharCode(...hashArray))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+/g, '');
-      };
-
-      const codeVerifier = generateCodeVerifier();
-      const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-      await Preferences.set({ key: 'google_oauth_code_verifier', value: codeVerifier });
-
-      const clientId = process.env.NEXT_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-      if (!clientId) {
-        throw new Error('GOOGLE_NOT_CONFIGURED');
-      }
-
-      if (!authCallbackUrl) {
-        throw new Error('Unable to determine Google callback URL');
-      }
-
-      const redirectUri = authCallbackUrl;
-      const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-      authUrl.searchParams.set('client_id', clientId);
-      authUrl.searchParams.set('redirect_uri', redirectUri);
-      authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'openid email profile');
-      authUrl.searchParams.set('code_challenge', codeChallenge);
-      authUrl.searchParams.set('code_challenge_method', 'S256');
-      authUrl.searchParams.set('prompt', 'select_account');
-
-      await Browser.open({ url: authUrl.toString(), presentationStyle: 'popover' });
-    } catch (err) {
-      throw err;
-    }
-  };
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,11 +129,18 @@ export default function GoDaisyLogin() {
 
         if (provider === 'google') {
           try {
-            await handleNativeGoogleSignIn();
+            await signInWithGoogleNative(supabase);
+            window.location.href = destination;
             return;
           } catch (nativeError) {
-            if ((nativeError as Error)?.message === 'GOOGLE_NOT_CONFIGURED') {
-              console.warn('[Go Daisy Auth] Google native flow not configured, falling back to web OAuth');
+            const message = (nativeError as Error)?.message;
+            if (message === GOOGLE_NATIVE_ERRORS.CANCELLED) {
+              console.info('[Go Daisy Auth] Google sign-in cancelled by user');
+              setLoading(false);
+              return;
+            }
+            if (message === GOOGLE_NATIVE_ERRORS.NOT_AVAILABLE || message === GOOGLE_NATIVE_ERRORS.NOT_CONFIGURED) {
+              console.warn('[Go Daisy Auth] Google native flow unavailable, falling back to web OAuth');
             } else {
               throw nativeError;
             }

@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { savePendingCatch } from '../../../utils/pendingCatchLogs';
 import { useRouter } from 'next/router';
-import { ArrowLeft, Camera, Flame, Circle, X, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Camera, Flame, Circle, X, Sparkles, AlertCircle, Check } from 'lucide-react';
 import { useUnifiedLocation } from '../../../context/UnifiedLocationContext';
 import { useQuickLogSpecies } from '../../../hooks/useQuickLogSpecies';
 import { useCatchLogger } from '../../../hooks/useCatchLogger';
 import { useFishIdentification } from '../../../hooks/useFishIdentification';
+import { useImageCompression } from '../../../hooks/useImageCompression';
 import SEO from '../../../components/SEO';
 import Image from 'next/image';
 
@@ -31,6 +32,14 @@ export default function TakePhotoCatchLogPage() {
   const [selectedSpeciesId, setSelectedSpeciesId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState<number>(1);
   const [showManualGrid, setShowManualGrid] = useState(false);
+
+  // Image compression for consistent upload size
+  const {
+    compress: compressImage,
+    statusMessage: compressionMessage,
+    savingsText,
+    isProcessing: isCompressing,
+  } = useImageCompression();
 
   // Fetch regional species based on current location
   const { species, isLoading: loadingSpecies, error: speciesError } = useQuickLogSpecies(
@@ -70,17 +79,28 @@ export default function TakePhotoCatchLogPage() {
     }
   }, [photoFile, species, aiResult, isIdentifying, identify, location]);
 
-  const handleCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setPhotoFile(file);
-
-      // Create preview URL
+      // Create preview URL from original
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+
+      // Compress the image for upload
+      try {
+        const compressionResult = await compressImage(file, {
+          maxSizeMB: 4,
+          maxDimension: 1920,
+          preserveExif: true,
+        });
+        setPhotoFile(compressionResult.file);
+      } catch (err) {
+        console.error('[TakePhoto] Compression failed, using original:', err);
+        setPhotoFile(file);
+      }
 
       // Reset states for new identification
       setSelectedSpeciesId(null);
@@ -251,6 +271,19 @@ export default function TakePhotoCatchLogPage() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
+              {/* Compression Status/Savings */}
+              {isCompressing && (
+                <div className="mt-2 text-center text-sm text-base-content/70 flex items-center justify-center gap-2">
+                  <span className="loading loading-spinner loading-xs"></span>
+                  {compressionMessage || 'Optimizing image...'}
+                </div>
+              )}
+              {!isCompressing && savingsText && (
+                <div className="mt-2 text-center text-xs text-success flex items-center justify-center gap-1">
+                  <Check className="w-3 h-3" />
+                  Image optimized: {savingsText}
+                </div>
+              )}
             </div>
           )}
 

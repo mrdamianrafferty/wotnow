@@ -543,8 +543,10 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
   );
 
   const homeLocation = useMemo(() => getLocationBySlot('home'), [getLocationBySlot]);
-  const coastalLocation = useMemo(() => getLocationBySlot('coastal'), [getLocationBySlot]);
-  const findrLocation = useMemo(() => getLocationBySlot('findr_primary'), [getLocationBySlot]);
+  const rawCoastalLocation = useMemo(() => getLocationBySlot('coastal'), [getLocationBySlot]);
+  const legacyFindrSlot = useMemo(() => getLocationBySlot('findr_primary'), [getLocationBySlot]);
+  const coastalLocation = useMemo(() => rawCoastalLocation ?? legacyFindrSlot, [rawCoastalLocation, legacyFindrSlot]);
+  const findrLocation = coastalLocation;
 
   // Legacy location property for backward compatibility
   const location = useMemo(

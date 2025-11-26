@@ -27,6 +27,7 @@ import { takePicture, selectFromGallery, CameraException } from '@/lib/capacitor
 import { getStorage } from '@/lib/offline/storage';
 import { isOnline } from '@/lib/offline/network';
 import { toast } from '@/lib/ui/toast';
+import { useImageCompression } from '@/hooks/useImageCompression';
 
 // Types
 interface SessionLogModalProps {
@@ -116,6 +117,14 @@ export function SessionLogModal({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Image compression hook for better UX
+  const {
+    compress: compressImage,
+    statusMessage: compressionMessage,
+    savingsText,
+    isProcessing: isCompressing,
+  } = useImageCompression();
   
   // Helper to get species info
   const getSpeciesInfo = useCallback((speciesCode: string): SpeciesImageInfo | null => {
@@ -196,13 +205,21 @@ export function SessionLogModal({
     try {
       const photo = await takePicture({ quality: 90 });
       const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
-      setPhotos(prev => [...prev, file].slice(0, 5));
+      
+      // Compress image for consistent upload size
+      const compressionResult = await compressImage(file, {
+        maxSizeMB: 4,
+        maxDimension: 1920,
+        preserveExif: true,
+      });
+      
+      setPhotos(prev => [...prev, compressionResult.file].slice(0, 5));
     } catch (err) {
       if (err instanceof CameraException && err.type !== 'CANCELLED') {
         console.error('[SessionLog] Camera error:', err.type, err.message);
       }
     }
-  }, [photos.length]);
+  }, [photos.length, compressImage]);
 
   // Photo management - Gallery selection
   const handleGallerySelect = useCallback(async () => {
@@ -211,13 +228,21 @@ export function SessionLogModal({
     try {
       const photo = await selectFromGallery({ quality: 90 });
       const file = await dataUrlToFile(photo.dataUrl, `session-photo-${Date.now()}.${photo.format}`);
-      setPhotos(prev => [...prev, file].slice(0, 5));
+      
+      // Compress image for consistent upload size
+      const compressionResult = await compressImage(file, {
+        maxSizeMB: 4,
+        maxDimension: 1920,
+        preserveExif: true,
+      });
+      
+      setPhotos(prev => [...prev, compressionResult.file].slice(0, 5));
     } catch (err) {
       if (err instanceof CameraException && err.type !== 'CANCELLED') {
         console.error('[SessionLog] Gallery error:', err.type, err.message);
       }
     }
-  }, [photos.length]);
+  }, [photos.length, compressImage]);
 
   const removePhoto = useCallback((index: number) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
@@ -783,11 +808,26 @@ export function SessionLogModal({
               </div>
 
               <div className="flex gap-2">
+                {/* Compression Status Overlay */}
+                {isCompressing && (
+                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+                    <div className="bg-base-100 rounded-xl p-6 text-center shadow-xl max-w-xs mx-4">
+                      <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+                      <h4 className="font-semibold text-lg mb-2">
+                        <TranslatedText text={compressionMessage || 'Processing image...'} />
+                      </h4>
+                      <p className="text-sm opacity-70">
+                        <TranslatedText text="Optimizing for upload" />
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Camera Button */}
                 <button
                   onClick={handleCameraCapture}
                   className="btn btn-primary flex-1"
-                  disabled={isSubmitting || photos.length >= 5}
+                  disabled={isSubmitting || isCompressing || photos.length >= 5}
                 >
                   <Camera className="w-5 h-5" />
                   <TranslatedText text="Take Photo" />
@@ -797,12 +837,20 @@ export function SessionLogModal({
                 <button
                   onClick={handleGallerySelect}
                   className="btn btn-secondary flex-1"
-                  disabled={isSubmitting || photos.length >= 5}
+                  disabled={isSubmitting || isCompressing || photos.length >= 5}
                 >
                   <Plus className="w-5 h-5" />
                   <TranslatedText text="From Gallery" />
                 </button>
               </div>
+              
+              {/* Show compression savings for last photo */}
+              {savingsText && photos.length > 0 && (
+                <div className="text-xs text-success flex items-center justify-center gap-1 mt-1">
+                  <Check className="w-3 h-3" />
+                  <span>Last image optimized: {savingsText}</span>
+                </div>
+              )}
             </div>
             
             {/* Photo Previews */}
