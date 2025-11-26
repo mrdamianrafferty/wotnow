@@ -10,15 +10,15 @@
  * Location slot types (predefined + extensible)
  * - home: Primary home location (Go Daisy general activities)
  * - coastal: Coastal location (Go Daisy water activities)
- * - findr_primary: Primary fishing spot (Findr)
+ * - findr: Primary fishing spot (Findr)
  * - custom: User-created slots (future: "work", "vacation", etc.)
  */
-export type LocationSlot = 'home' | 'coastal' | 'findr_primary' | 'custom';
+export type LocationSlot = 'home' | 'coastal' | 'findr' | 'custom';
 
 /**
  * Location source indicates how the location was obtained
  */
-export type LocationSource = 'manual' | 'gps' | 'ip' | 'unknown';
+export type LocationSource = 'manual' | 'gps' | 'ip' | 'auto' | 'unknown';
 
 /**
  * A saved location with all metadata
@@ -137,7 +137,7 @@ export interface MultiLocationContextValue {
   /** Coastal location (slot="coastal") */
   coastalLocation: SavedLocation | null;
 
-  /** Findr primary location (slot="findr_primary") */
+  /** Findr fishing location (slot="findr") */
   findrLocation: SavedLocation | null;
 
   // Actions

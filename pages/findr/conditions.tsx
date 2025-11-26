@@ -11,10 +11,9 @@ import {
   useFindrRectangleOptions,
   type RectangleOption,
 } from '../../hooks/useFindrRectangleOptions';
-import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
-import { getTodayIso } from '../../lib/date/today';
 import { useFindrConditions } from '../../hooks/useFindrConditions';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { useMigrateFindrSettings } from '../../hooks/useMigrateFindrSettings';
 
 // Code-split ConditionsDashboard - likely contains charts/visualizations
 const ConditionsDashboard = dynamic(
@@ -31,7 +30,10 @@ const ConditionsDashboard = dynamic(
 
 const FindrConditionsRoute: React.FC = () => {
   const router = useRouter();
-  
+
+  // Migrate old findrSettings localStorage to UnifiedLocationContext
+  useMigrateFindrSettings();
+
   const {
     options: rectangleOptions,
     loading: _rectangleOptionsLoading,
@@ -39,27 +41,21 @@ const FindrConditionsRoute: React.FC = () => {
     isFallback: rectangleOptionsUsingFallback,
   } = useFindrRectangleOptions(FALLBACK_RECTANGLE_OPTIONS);
 
-  const {
-    selectedCode,
-    setSelectedCode,
-    language: _language,
-    setLanguage: _setLanguage,
-  } = usePersistentFindrSettings({ predictionDate: getTodayIso(), language: 'en' });
+  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, loading: locationLoading } = useUnifiedLocation();
 
-  const { location: legacyLocation, coastalLocation, updateLocation, loading: locationLoading } = useUnifiedLocation();
-  const contextLocation = coastalLocation ?? legacyLocation;
+  // Use findrLocation first, then fall back to coastal/legacy
+  const contextLocation = findrLocation ?? coastalLocation ?? legacyLocation;
   const locationRectangle = contextLocation?.rectangleCode ?? null;
   const hasLocation = Boolean(contextLocation?.lat && contextLocation?.lon);
 
   const rectangleFromUrl = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
 
   // Single source of truth priority:
-  // 1. Location from UnifiedLocationContext (from header picker)
+  // 1. Location from UnifiedLocationContext (findrLocation → coastalLocation → legacyLocation)
   //    - For European: use rectangleCode
   //    - For Worldwide: rectangleCode will be null (use lat/lon)
-  // 2. selectedCode (persisted fallback, ICES rectangle only)
-  const activeRectangle = hasLocation ? locationRectangle : (selectedCode || null);
-  
+  const activeRectangle = locationRectangle;
+
   const activeOption = useMemo<RectangleOption | null>(
     () => {
       const code = activeRectangle;
@@ -68,17 +64,6 @@ const FindrConditionsRoute: React.FC = () => {
     },
     [activeRectangle, rectangleOptions]
   );
-
-  // Sync selectedCode when location context changes (for persistence)
-  // Only sync if rectangleCode exists (European waters with ICES rectangles)
-  // For worldwide locations (null rectangleCode), don't overwrite selectedCode
-  useEffect(() => {
-    if (locationLoading) return;
-    if (!locationRectangle) return; // Don't sync null rectangleCode (worldwide locations)
-    if (selectedCode === locationRectangle) return;
-    console.log('[Conditions] Syncing selectedCode to context:', locationRectangle);
-    setSelectedCode(locationRectangle);
-  }, [locationRectangle, locationLoading, selectedCode, setSelectedCode]);
 
   // Sync URL to match active rectangle (for sharing/bookmarking)
   // Add rectangle param for ICES locations, remove it for worldwide locations
@@ -125,17 +110,18 @@ const FindrConditionsRoute: React.FC = () => {
     
     const rectangle = rectangleOptions.find(option => option.code === rectangleFromUrl);
     if (!rectangle) return;
-    
+
     console.log('[Conditions] Initializing context from URL:', rectangleFromUrl);
-    void updateLocation({
+    void updateLocationBySlot({
+      slot: 'findr',
       coordinates: { lat: rectangle.centerLat, lon: rectangle.centerLon },
       rectangleCode: rectangle.code,
       rectangleRegion: rectangle.region,
-      rectangleLabel: `${rectangle.code} - ${rectangle.region}`,
+      name: `${rectangle.code} - ${rectangle.region}`,
       source: 'manual',
-      slot: 'coastal',
+      makeActive: true,
     });
-  }, [rectangleFromUrl, locationLoading, hasLocation, rectangleOptions, router.isReady, updateLocation]);
+  }, [rectangleFromUrl, locationLoading, hasLocation, rectangleOptions, router.isReady, updateLocationBySlot]);
 
   // Pass user's precise coordinates for accurate weather data (4dp precision)
   const userCoords = contextLocation?.lat && contextLocation?.lon
@@ -148,10 +134,11 @@ const FindrConditionsRoute: React.FC = () => {
     console.log('[Conditions] Active rectangle changed:', {
       activeRectangle,
       locationRectangle,
-      selectedCode,
+      findrLocationCode: findrLocation?.rectangleCode,
+      coastalLocationCode: coastalLocation?.rectangleCode,
       source: contextLocation?.source,
     });
-  }, [activeRectangle, locationRectangle, selectedCode, contextLocation]);
+  }, [activeRectangle, locationRectangle, findrLocation, coastalLocation, contextLocation]);
 
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;

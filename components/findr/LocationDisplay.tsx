@@ -15,13 +15,18 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { location: legacyLocation, coastalLocation, updateLocation, syncing } = useUnifiedLocation();
+  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, syncing } = useUnifiedLocation();
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [locationName, setLocationName] = useState('Set location');
 
-  const effectiveLocation = coastalLocation ? convertToLegacy(coastalLocation) : legacyLocation;
+  // Prefer findrLocation, then fall back to coastalLocation, then legacyLocation
+  const effectiveLocation = findrLocation
+    ? convertToLegacy(findrLocation)
+    : coastalLocation
+      ? convertToLegacy(coastalLocation)
+      : legacyLocation;
 
   useEffect(() => {
     if (effectiveLocation?.rectangleLabel) {
@@ -73,17 +78,19 @@ export function LocationDisplay() {
           ? `${location.name} (~${Math.round(distance)}km away)`
           : location.name;
 
-      const _unified = await updateLocation({
+      // Save to 'findr' slot (Findr-specific location)
+      const _unified = await updateLocationBySlot({
+        slot: 'findr',
         coordinates: {
           lat: location.lat, // Keep user's chosen coordinates
           lon: location.lon
         },
         rectangleCode,
         rectangleRegion: region,
-        rectangleLabel: displayName,
+        name: displayName,
         source: 'manual',
         accuracy: typeof distance === 'number' ? distance : null,
-        slot: 'coastal',
+        makeActive: true,
       });
 
       setLocationName(displayName);

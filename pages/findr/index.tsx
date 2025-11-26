@@ -47,8 +47,8 @@ import {
   useFindrRectangleOptions,
   type RectangleOption,
 } from '../../hooks/useFindrRectangleOptions';
-import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { useMigrateFindrSettings } from '../../hooks/useMigrateFindrSettings';
 import { getTodayIso } from '../../lib/date/today';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
 import '../../lib/buildInfo'; // Log build metadata on mount
@@ -715,7 +715,11 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 
 const FindrPage: React.FC = () => {
   const router = useRouter();
-  const { location: legacyLocation, coastalLocation } = useUnifiedLocation();
+  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot } = useUnifiedLocation();
+
+  // Migrate old findrSettings localStorage to UnifiedLocationContext
+  useMigrateFindrSettings();
+
   const {
     options: rectangleOptions,
     loading: _rectangleOptionsLoading,
@@ -723,15 +727,9 @@ const FindrPage: React.FC = () => {
     isFallback: rectangleOptionsUsingFallback,
   } = useFindrRectangleOptions(FALLBACK_RECTANGLE_OPTIONS);
 
-  const {
-    selectedCode,
-    setSelectedCode,
-    predictionDate,
-    setPredictionDate,
-    language,
-    setLanguage: _setLanguage,
-    saveLocationToCookie,
-  } = usePersistentFindrSettings({ predictionDate: TODAY_ISO, language: 'en' });
+  // State for prediction settings (no longer using usePersistentFindrSettings)
+  const [predictionDate, setPredictionDate] = useState(TODAY_ISO);
+  const [language] = useState('en'); // Language handled by LanguageContext
   
   // Use favourites hook for hybrid localStorage + Supabase sync
   const {
@@ -763,13 +761,15 @@ const FindrPage: React.FC = () => {
   }, [router]);
 
   // Rectangle selection priority:
-  // 1. Rectangle from UnifiedLocationContext (from header picker)
-  // 2. Rectangle from URL query parameter
-  // 3. selectedCode from persisted settings (fallback)
-  const contextRectangleSource = coastalLocation ?? legacyLocation;
-  const rectangleFromContext = contextRectangleSource?.rectangleCode ?? null;
+  // 1. Rectangle from URL query parameter (explicit user navigation)
+  // 2. Rectangle from findrLocation (Findr-specific saved location)
+  // 3. Rectangle from coastalLocation (fallback to Go Daisy coastal location)
+  // 4. Rectangle from legacyLocation (legacy location system)
   const rectangleFromQuery = typeof router.query.rectangle === 'string' ? router.query.rectangle : null;
-  const effectiveSelectedCode = rectangleFromContext ?? rectangleFromQuery ?? selectedCode;
+  const rectangleFromFindr = findrLocation?.rectangleCode ?? null;
+  const rectangleFromCoastal = coastalLocation?.rectangleCode ?? null;
+  const rectangleFromLegacy = legacyLocation?.rectangleCode ?? null;
+  const effectiveSelectedCode = rectangleFromQuery ?? rectangleFromFindr ?? rectangleFromCoastal ?? rectangleFromLegacy;
   
   const activeRectangle = effectiveSelectedCode ?? null;
   const activeOption = useMemo<RectangleOption | null>(
@@ -777,32 +777,21 @@ const FindrPage: React.FC = () => {
     [rectangleOptions, activeRectangle]
   );
 
-  // Sync selectedCode when location context changes
-  useEffect(() => {
-    if (rectangleFromContext && rectangleFromContext !== selectedCode) {
-      setSelectedCode(rectangleFromContext);
-    }
-  }, [rectangleFromContext, selectedCode, setSelectedCode]);
-
   // Auto-select first rectangle if none selected (fallback only)
   useEffect(() => {
     console.log('[Findr] Auto-select check:', {
-      rectangleFromContext,
       rectangleFromQuery,
-      selectedCode,
+      rectangleFromFindr,
+      rectangleFromCoastal,
+      rectangleFromLegacy,
       rectangleOptionsCount: rectangleOptions.length,
       firstOption: rectangleOptions[0]?.code,
-      hasValidSelection: selectedCode && rectangleOptions.some(opt => opt.code === selectedCode),
+      hasAnySelection: Boolean(rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy),
     });
 
-    // Don't auto-select if we have a rectangle from context or query
-    if (rectangleFromContext || rectangleFromQuery) {
-      console.log('[Findr] Skipping auto-select: rectangle from context/query');
-      return;
-    }
-    // Don't auto-select if valid rectangle already selected
-    if (selectedCode && rectangleOptions.some(opt => opt.code === selectedCode)) {
-      console.log('[Findr] Skipping auto-select: valid rectangle already selected');
+    // Don't auto-select if we have any rectangle from any source
+    if (rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy) {
+      console.log('[Findr] Skipping auto-select: rectangle already available from context/query');
       return;
     }
     // Don't auto-select if rectangles not loaded yet
@@ -810,22 +799,21 @@ const FindrPage: React.FC = () => {
       console.log('[Findr] Skipping auto-select: no rectangles loaded yet');
       return;
     }
-    // Auto-select first rectangle
-    console.log('[Findr] AUTO-SELECTING first rectangle:', rectangleOptions[0].code);
-    setSelectedCode(rectangleOptions[0].code);
-  }, [rectangleFromContext, rectangleFromQuery, rectangleOptions, selectedCode, setSelectedCode]);
 
-  // Save location to cookie when activeOption changes (for incognito persistence)
-  useEffect(() => {
-    if (activeOption && activeOption.centerLat && activeOption.centerLon) {
-      saveLocationToCookie({
-        rectangleCode: activeOption.code,
-        rectangleRegion: activeOption.region,
-        lat: activeOption.centerLat,
-        lon: activeOption.centerLon,
-      });
-    }
-  }, [activeOption, saveLocationToCookie]);
+    // Auto-select first rectangle and save to findr slot
+    const firstOption = rectangleOptions[0];
+    console.log('[Findr] AUTO-SELECTING first rectangle:', firstOption.code);
+
+    void updateLocationBySlot({
+      slot: 'findr',
+      coordinates: { lat: firstOption.centerLat, lon: firstOption.centerLon },
+      rectangleCode: firstOption.code,
+      rectangleRegion: firstOption.region,
+      name: firstOption.label,
+      source: 'auto',
+      makeActive: true,
+    });
+  }, [rectangleFromQuery, rectangleFromFindr, rectangleFromCoastal, rectangleFromLegacy, rectangleOptions, updateLocationBySlot]);
 
   const {
     predictions,
@@ -841,8 +829,8 @@ const FindrPage: React.FC = () => {
     predictionDate,
     language,
     enabled: Boolean(activeRectangle),
-    latitude: contextRectangleSource?.lat ?? null,
-    longitude: contextRectangleSource?.lon ?? null,
+    latitude: findrLocation?.lat ?? coastalLocation?.lat ?? legacyLocation?.lat ?? null,
+    longitude: findrLocation?.lon ?? coastalLocation?.lon ?? legacyLocation?.lon ?? null,
   });
 
   // Debug: Log when predictions change
