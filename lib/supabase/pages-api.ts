@@ -13,16 +13,22 @@ export function createServerSupabaseClient(context: { req: NextApiRequest; res: 
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name: string) => context.req.cookies[name],
-        set: (name: string, value: string, options: CookieOptions) => {
-          context.res.setHeader('Set-Cookie', [
-            `${name}=${value}; Path=${options.path || '/'}; HttpOnly=${options.httpOnly !== false}; SameSite=${options.sameSite || 'lax'}; Secure=${options.secure !== false}${options.maxAge ? `; Max-Age=${options.maxAge}` : ''}${options.domain ? `; Domain=${options.domain}` : ''}`
-          ])
+        getAll: () => {
+          // Convert req.cookies object to array format expected by @supabase/ssr
+          return Object.keys(context.req.cookies).map(name => ({
+            name,
+            value: context.req.cookies[name] || ''
+          }));
         },
-        remove: (name: string, options: CookieOptions) => {
-          context.res.setHeader('Set-Cookie', [
-            `${name}=; Path=${options.path || '/'}; HttpOnly=${options.httpOnly !== false}; SameSite=${options.sameSite || 'lax'}; Secure=${options.secure !== false}; Max-Age=0${options.domain ? `; Domain=${options.domain}` : ''}`
-          ])
+        setAll: (cookiesToSet) => {
+          // Set multiple cookies at once
+          const cookieStrings = cookiesToSet.map(({ name, value, options }) => {
+            const opts = options || {};
+            return `${name}=${value}; Path=${opts.path || '/'}; HttpOnly=${opts.httpOnly !== false}; SameSite=${opts.sameSite || 'lax'}; Secure=${opts.secure !== false}${opts.maxAge ? `; Max-Age=${opts.maxAge}` : ''}${opts.domain ? `; Domain=${opts.domain}` : ''}`;
+          });
+          const existing = context.res.getHeader('Set-Cookie') || [];
+          const existingArray = Array.isArray(existing) ? existing : [existing.toString()];
+          context.res.setHeader('Set-Cookie', [...existingArray, ...cookieStrings]);
         },
       },
     }
