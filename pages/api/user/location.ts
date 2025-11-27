@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { createServerSupabaseClient } from '../../../lib/supabase/pages-api';
 import type { UnifiedLocationRecord } from '../../../context/UnifiedLocationContext';
 import type { SavedLocation, LocationSlot } from '../../../types/multiLocation';
 import { fromLegacyFormat } from '../../../types/multiLocation';
