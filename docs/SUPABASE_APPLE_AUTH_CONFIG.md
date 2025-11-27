@@ -49,14 +49,27 @@ Unacceptable audience in id_token
 
 ## Supabase Configuration
 
-### Should Already Be Configured
+### Authorized Client IDs (CRITICAL)
 
-Since you're using `io.godaisy.login` for web OAuth, Supabase should already accept this Services ID. No additional configuration needed in Supabase Dashboard.
+Supabase must be configured to accept tokens from ALL valid audiences:
+
+1. Go to Supabase Dashboard → Authentication → Providers → Apple
+2. Find the **"Authorized Client IDs"** field
+3. Add ALL of these (comma-separated):
+   ```
+   io.godaisy.login,eu.fishfindr.app,io.godaisy.app
+   ```
+4. Click **Save**
+
+**Why three IDs?**
+- `io.godaisy.login` - Services ID for web OAuth (both apps)
+- `eu.fishfindr.app` - Bundle ID for native Findr iOS app
+- `io.godaisy.app` - Bundle ID for native Go Daisy iOS app
 
 **To Verify:**
 1. Go to Supabase Dashboard → Authentication → Providers → Apple
-2. Check that **Client ID (Services ID)** is set to: `io.godaisy.login`
-3. That's it! No need to add app bundle IDs to Supabase.
+2. Check that **Authorized Client IDs** contains all three IDs above
+3. If any is missing, native sign-in for that app will fail with "Unacceptable audience" error
 
 ### 4. Test Native Sign In
 
