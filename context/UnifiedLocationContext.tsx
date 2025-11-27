@@ -166,9 +166,15 @@ type RemoteUpsertResult =
   | { ok: false; reason: 'unauthorized' };
 
 async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Promise<RemoteUpsertResult> {
+  // Ensure session is fresh before making request (fixes SameSite=Lax cookie issues after OAuth)
+  const { createClient } = await import('../lib/supabase/client');
+  const supabase = createClient();
+  await supabase.auth.getSession();
+
   const res = await fetch('/api/user/location', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin', // Explicitly include cookies
     body: JSON.stringify({
       slot: input.slot,
       name: input.name,
@@ -182,6 +188,7 @@ async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Pro
   });
 
   if (res.status === 401) {
+    console.warn('[UnifiedLocation] POST failed with 401 despite session refresh');
     return { ok: false, reason: 'unauthorized' };
   }
 
@@ -197,7 +204,10 @@ async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Pro
 async function loadRemoteLocations(): Promise<StoredState | null> {
   try {
     console.log('[UnifiedLocation] Loading remote locations...');
-    const res = await fetch('/api/user/location?multiLocation=true', { method: 'GET' });
+    const res = await fetch('/api/user/location?multiLocation=true', {
+      method: 'GET',
+      credentials: 'same-origin' // Explicitly include cookies
+    });
 
     if (res.status === 401) {
       console.log('[UnifiedLocation] Not authenticated (401)');
