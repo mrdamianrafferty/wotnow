@@ -88,6 +88,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     error: sessionError,
   } = await supabase.auth.getSession();
 
+  // Debug logging for session issues
+  const cookieNames = Object.keys(req.cookies);
+  const hasSbCookies = cookieNames.some(name => name.startsWith('sb-'));
+  console.log('[user/location] Auth debug:', {
+    method: req.method,
+    hasCookies: cookieNames.length > 0,
+    hasSupabaseCookies: hasSbCookies,
+    cookieCount: cookieNames.length,
+    hasSession: !!session,
+    sessionError: sessionError?.message,
+  });
+
   if (sessionError) {
     console.error('[user/location] Failed to read auth session', sessionError);
     res.status(500).json({ error: 'Unable to verify authentication status' });
@@ -99,10 +111,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!userId) {
     // Treat unauthenticated callers as empty location.
     if (req.method === 'GET') {
+      console.log('[user/location] GET request without auth - returning null');
       res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({ location: null });
       return;
     }
+    console.log('[user/location] POST request without auth - returning 401');
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
