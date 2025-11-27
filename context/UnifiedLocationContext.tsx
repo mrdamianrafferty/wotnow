@@ -351,6 +351,13 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
       setSyncing(true);
       setLastError(null);
 
+      // Clear bootstrap flag when user manually updates any location
+      // This allows the location to be synced to database on next authentication
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('godaisy.bootstrap-applied');
+        localStorage.removeItem('godaisy.bootstrap-source');
+      }
+
       try {
         let nextLat = input.coordinates.lat;
         let nextLon = input.coordinates.lon;

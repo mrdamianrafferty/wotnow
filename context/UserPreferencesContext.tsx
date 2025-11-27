@@ -470,12 +470,24 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (!user) return;
     if (unifiedLoading) return;
 
+    // Check if current locations are from IP bootstrap (not user-chosen)
+    const isBootstrapped = typeof window !== 'undefined' &&
+      localStorage.getItem('godaisy.bootstrap-applied') === '1';
+
+    // If locations are IP-bootstrapped, don't sync them to database
+    // User hasn't manually chosen these locations yet
+    if (isBootstrapped) {
+      console.log('[UserPreferences] Skipping sync of IP-bootstrapped locations to database');
+      return;
+    }
+
     const home = getTypedLocation(preferences.locations, 'home');
     const coastal = getTypedLocation(preferences.locations, 'coastal');
 
     const syncPromises: Promise<unknown>[] = [];
 
     if (shouldSyncLocation(home, unifiedHome)) {
+      console.log('[UserPreferences] Syncing user-chosen home location to database');
       syncPromises.push(
         updateLocationBySlot({
           slot: 'home',
@@ -488,6 +500,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     }
 
     if (shouldSyncLocation(coastal, unifiedCoastal)) {
+      console.log('[UserPreferences] Syncing user-chosen coastal location to database');
       syncPromises.push(
         updateLocationBySlot({
           slot: 'coastal',
@@ -558,13 +571,40 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences.interests]);
 
+  // --- Track location changes to clear bootstrap flag ---
+  const prevLocationsRef = useRef<Location[]>(preferences.locations);
+  useEffect(() => {
+    const prev = prevLocationsRef.current;
+    const curr = preferences.locations;
+
+    // Check if locations have actually changed
+    const locationsChanged = prev.length !== curr.length ||
+      prev.some((loc, idx) => {
+        const other = curr[idx];
+        return !other ||
+          loc.name !== other.name ||
+          Math.abs(loc.lat - other.lat) > 0.0001 ||
+          Math.abs(loc.lon - other.lon) > 0.0001;
+      });
+
+    if (locationsChanged && typeof window !== 'undefined') {
+      const isBootstrapped = localStorage.getItem('godaisy.bootstrap-applied') === '1';
+      if (isBootstrapped) {
+        console.log('[UserPreferences] Locations changed by user, clearing bootstrap flag');
+        localStorage.removeItem('godaisy.bootstrap-applied');
+        localStorage.removeItem('godaisy.bootstrap-source');
+      }
+      prevLocationsRef.current = curr;
+    }
+  }, [preferences.locations]);
+
   // --- Persist preferences to localStorage with debounce ---
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const timeoutId = setTimeout(() => {
         localStorage.setItem('preferences', JSON.stringify(preferences));
       }, 500); // 500ms debounce
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [preferences]);
