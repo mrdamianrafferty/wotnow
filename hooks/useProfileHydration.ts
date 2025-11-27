@@ -9,7 +9,7 @@
  * if (isHydrating) return <SkeletonLoader />;
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase/client';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 
@@ -53,25 +53,44 @@ export function useProfileHydration() {
   const { setPreferences } = useUserPreferences();
   const [isHydrating, setIsHydrating] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const authDetermined = useRef(false);
 
-  // Check authentication status
+  // Check authentication status with timeout to prevent indefinite loading
   useEffect(() => {
     let active = true;
+    
+    // Timeout to ensure we don't hang forever if auth check fails
+    const timeout = setTimeout(() => {
+      if (active && !authDetermined.current) {
+        console.warn('[useProfileHydration] Auth check timed out, proceeding as unauthenticated');
+        setIsAuthenticated(false);
+        authDetermined.current = true;
+      }
+    }, 3000); // 3 second timeout
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (active) {
         setIsAuthenticated(!!session);
+        authDetermined.current = true;
+      }
+    }).catch((err) => {
+      console.warn('[useProfileHydration] Auth check failed:', err);
+      if (active) {
+        setIsAuthenticated(false);
+        authDetermined.current = true;
       }
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (active) {
         setIsAuthenticated(!!session);
+        authDetermined.current = true;
       }
     });
 
     return () => {
       active = false;
+      clearTimeout(timeout);
       listener?.subscription.unsubscribe();
     };
   }, []);
