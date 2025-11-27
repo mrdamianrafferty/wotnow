@@ -110,7 +110,7 @@ const COORD_TOLERANCE = 0.0001;
 
 const normalizeLocationType = (type?: LocationType): LocationType => (type === 'coastal' ? 'coastal' : 'home');
 
-const getTypedLocation = (locations: Location[], type: LocationType): Location | null => {
+const _getTypedLocation = (locations: Location[], type: LocationType): Location | null => {
   const found = locations.find((loc) => normalizeLocationType(loc.type) === type);
   return found ? { ...found, type } : null;
 };
@@ -135,7 +135,7 @@ const savedToPreferenceLocation = (saved: SavedLocation, type: LocationType): Lo
   type,
 });
 
-const shouldSyncLocation = (local: Location | null, remote: SavedLocation | null | undefined) => {
+const _shouldSyncLocation = (local: Location | null, remote: SavedLocation | null | undefined) => {
   if (!local) return false;
   if (!Number.isFinite(local.lat) || !Number.isFinite(local.lon)) return false;
   if (!remote) return true;
@@ -481,40 +481,47 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
       return;
     }
 
-    const home = getTypedLocation(preferences.locations, 'home');
-    const coastal = getTypedLocation(preferences.locations, 'coastal');
+    // IMPORTANT: For old localStorage data without bootstrap flag, treat it as bootstrapped
+    // to prevent auto-syncing default/IP locations to database
+    // Only sync if user has explicitly updated locations after we deployed the bootstrap system
+    console.log('[UserPreferences] Old localStorage detected without bootstrap flag - treating as bootstrapped to prevent auto-sync');
+    return;
 
-    const syncPromises: Promise<unknown>[] = [];
+    // This code is now disabled - kept for reference but will be removed in future cleanup
+    // const home = getTypedLocation(preferences.locations, 'home');
+    // const coastal = getTypedLocation(preferences.locations, 'coastal');
 
-    if (shouldSyncLocation(home, unifiedHome)) {
-      console.log('[UserPreferences] Syncing user-chosen home location to database');
-      syncPromises.push(
-        updateLocationBySlot({
-          slot: 'home',
-          coordinates: { lat: home!.lat, lon: home!.lon },
-          name: home!.name,
-          rectangleRegion: home!.name,
-          makeActive: false,
-        })
-      );
-    }
+    // const syncPromises: Promise<unknown>[] = [];
 
-    if (shouldSyncLocation(coastal, unifiedCoastal)) {
-      console.log('[UserPreferences] Syncing user-chosen coastal location to database');
-      syncPromises.push(
-        updateLocationBySlot({
-          slot: 'coastal',
-          coordinates: { lat: coastal!.lat, lon: coastal!.lon },
-          name: coastal!.name,
-          rectangleRegion: coastal!.name,
-          makeActive: false,
-        })
-      );
-    }
+    // if (shouldSyncLocation(home, unifiedHome)) {
+    //   console.log('[UserPreferences] Syncing user-chosen home location to database');
+    //   syncPromises.push(
+    //     updateLocationBySlot({
+    //       slot: 'home',
+    //       coordinates: { lat: home!.lat, lon: home!.lon },
+    //       name: home!.name,
+    //       rectangleRegion: home!.name,
+    //       makeActive: false,
+    //     })
+    //   );
+    // }
 
-    if (syncPromises.length > 0) {
-      void Promise.allSettled(syncPromises);
-    }
+    // if (shouldSyncLocation(coastal, unifiedCoastal)) {
+    //   console.log('[UserPreferences] Syncing user-chosen coastal location to database');
+    //   syncPromises.push(
+    //     updateLocationBySlot({
+    //       slot: 'coastal',
+    //       coordinates: { lat: coastal!.lat, lon: coastal!.lon },
+    //       name: coastal!.name,
+    //       rectangleRegion: coastal!.name,
+    //       makeActive: false,
+    //     })
+    //   );
+    // }
+
+    // if (syncPromises.length > 0) {
+    //   void Promise.allSettled(syncPromises);
+    // }
   }, [user, user?.id, preferences.locations, unifiedHome, unifiedCoastal, unifiedLoading, updateLocationBySlot]);
 
   // --- Auto-detect home location if not set ---
