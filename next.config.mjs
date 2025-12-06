@@ -183,10 +183,15 @@ const pwaConfig = withPWA({
     '!**/login**',
     '!**/auth/callback**',
   ],
+  // Exclude non-existent Next.js 14+ build artifacts from precaching
+  buildExcludes: [
+    /dynamic-css-manifest\.json$/,
+    /app-build-manifest\.json$/,
+  ],
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   // Force cache refresh by changing cacheId
-  cacheId: '20251109-email-notifs',
+  cacheId: '20251209-pwa-cleanup',
   runtimeCaching: [
     // Cache all HTML pages (SSR/SSG)
     {
