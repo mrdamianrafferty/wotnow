@@ -28,6 +28,12 @@ export function LocationDisplay() {
       ? convertToLegacy(coastalLocation)
       : legacyLocation;
 
+  // Debug: Log what we're getting from context
+  useEffect(() => {
+    console.log('[LocationDisplay] findrLocation:', findrLocation);
+    console.log('[LocationDisplay] effectiveLocation:', effectiveLocation);
+  }, [findrLocation, effectiveLocation]);
+
   // Look up region name from rectangle code if we only have code but no region/label
   useEffect(() => {
     const label = effectiveLocation?.rectangleLabel;
