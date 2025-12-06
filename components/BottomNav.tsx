@@ -53,7 +53,11 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-inset-bottom">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 h-16 flex items-center justify-around px-2 safe-area-inset-bottom"
+      role="navigation"
+      aria-label="Main navigation"
+    >
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = item.match(pathname);
@@ -66,12 +70,14 @@ export default function BottomNav() {
               color: isActive ? '#0891b2' : '#6b7280',
             }}
             className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors hover:opacity-80"
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
           >
-            <Icon size={24} strokeWidth={2} />
+            <Icon size={24} strokeWidth={2} aria-hidden="true" />
             <span className="text-[10px] font-medium">{item.label}</span>
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }
