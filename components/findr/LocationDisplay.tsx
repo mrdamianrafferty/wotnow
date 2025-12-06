@@ -28,11 +28,13 @@ export function LocationDisplay() {
       ? convertToLegacy(coastalLocation)
       : legacyLocation;
 
+  // Look up region name from rectangle code if we only have code but no region/label
   useEffect(() => {
-    // Priority: rectangleLabel (user-chosen name) > rectangleRegion > rectangleCode > default
     const label = effectiveLocation?.rectangleLabel;
     const region = effectiveLocation?.rectangleRegion;
     const code = effectiveLocation?.rectangleCode;
+    const lat = effectiveLocation?.lat;
+    const lon = effectiveLocation?.lon;
     
     // Skip generic fallback values
     const isGenericLabel = !label || label === 'Saved Location' || label === 'Unknown';
@@ -44,12 +46,26 @@ export function LocationDisplay() {
     } else if (region) {
       // Fall back to region name (e.g., "Bay of Biscay")
       setLocationName(region);
+    } else if (code && lat && lon) {
+      // Have code but no region - look it up from coordinates
+      setLocationName(code); // Show code immediately while loading
+      
+      fetch(`/api/findr/rectangle-lookup?lat=${lat}&lon=${lon}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.region) {
+            setLocationName(data.region);
+          }
+        })
+        .catch(() => {
+          // Keep showing the code on error
+        });
     } else if (code) {
       // Fall back to rectangle code (e.g., "25E0")
       setLocationName(code);
     }
     // Otherwise keep the current value (either "Set location" or a previous valid name)
-  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel, effectiveLocation?.rectangleRegion]);
+  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel, effectiveLocation?.rectangleRegion, effectiveLocation?.lat, effectiveLocation?.lon]);
 
   const loadingState = useMemo(() => isLookingUp || syncing, [isLookingUp, syncing]);
 
