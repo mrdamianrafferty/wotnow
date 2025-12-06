@@ -777,7 +777,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   onOpenHomeDialog={() => setShowHomeDialog(true)}
   onOpenCoastDialog={() => setShowCoastDialog(true)}
 />
-<main role="main">
+<main id="main-content" role="main">
 {marineError ? (
   <div className="alert alert-warning mx-4 my-2">
     <span>{marineErrorText}</span>
