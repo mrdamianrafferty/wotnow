@@ -29,13 +29,27 @@ export function LocationDisplay() {
       : legacyLocation;
 
   useEffect(() => {
-    if (effectiveLocation?.rectangleLabel) {
-      const cleaned = effectiveLocation.rectangleLabel.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      setLocationName(cleaned || effectiveLocation.rectangleLabel);
-    } else if (effectiveLocation?.rectangleCode) {
-      setLocationName(effectiveLocation.rectangleCode);
+    // Priority: rectangleLabel (user-chosen name) > rectangleRegion > rectangleCode > default
+    const label = effectiveLocation?.rectangleLabel;
+    const region = effectiveLocation?.rectangleRegion;
+    const code = effectiveLocation?.rectangleCode;
+    
+    // Skip generic fallback values
+    const isGenericLabel = !label || label === 'Saved Location' || label === 'Unknown';
+    
+    if (!isGenericLabel && label) {
+      // Use the user's chosen name (clean up any trailing parenthetical like "(~5km away)")
+      const cleaned = label.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      setLocationName(cleaned || label);
+    } else if (region) {
+      // Fall back to region name (e.g., "Bay of Biscay")
+      setLocationName(region);
+    } else if (code) {
+      // Fall back to rectangle code (e.g., "25E0")
+      setLocationName(code);
     }
-  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel]);
+    // Otherwise keep the current value (either "Set location" or a previous valid name)
+  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel, effectiveLocation?.rectangleRegion]);
 
   const loadingState = useMemo(() => isLookingUp || syncing, [isLookingUp, syncing]);
 
