@@ -1,8 +1,34 @@
 # Findr Location Cycling Bug - Root Cause Analysis
 
 **Date:** 2025-01-26
-**Status:** 🔴 CRITICAL BUG
+**Status:** ✅ FIXED (2025-12-06)
 **Severity:** High - Causes poor UX with flickering location and duplicate API calls
+
+---
+
+## ✅ Fix Summary (2025-12-06)
+
+**All Findr pages now use `UnifiedLocationContext` as single source of truth.**
+
+### What Changed:
+1. **`pages/findr/index.tsx`** - Already fixed, uses `useMigrateFindrSettings()` + `useUnifiedLocation()`
+2. **`pages/findr/conditions.tsx`** - Already fixed, uses `useMigrateFindrSettings()` + `useUnifiedLocation()`
+3. **`pages/findr/favourites.tsx`** - ✅ Fixed 2025-12-06, removed `usePersistentFindrSettings`
+4. **`pages/findr/favourites-auth.tsx`** - ✅ Fixed 2025-12-06, removed `usePersistentFindrSettings`
+5. **`pages/findr/map.tsx`** - Already using `useUnifiedLocation()`
+
+### Location Slot Architecture:
+| Slot | App | Purpose |
+|------|-----|---------|
+| `home` | Go Daisy | User's home address |
+| `coastal` | Go Daisy | Nearest coastal location |
+| `findr` | Findr | Primary fishing spot |
+
+### Key Principles:
+- ✅ Users **never** see ICES rectangles - always calculated from lat/lon in background
+- ✅ Signed-in users use **Supabase database** as single source of truth
+- ✅ Cookies only for anonymous users + first-time registration migration
+- ✅ `findr` slot is Findr's dedicated location (doesn't overwrite Go Daisy's `coastal`)
 
 ---
 

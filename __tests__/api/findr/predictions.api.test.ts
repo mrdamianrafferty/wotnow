@@ -9,8 +9,8 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/findr/predictions';
 import { mockSupabaseClient, mockSupabaseQuery } from '../../../__mocks__/@supabase/supabase-js';
-import { mockPredictions, mockRectangle } from '../../fixtures/mockData';
-import { resetAllMocks } from '../../helpers/testHelpers';
+import { mockPredictions, mockRectangle } from '../../fixtures/mockData.fixtures';
+import { resetAllMocks } from '../../helpers/testHelpers.utils';
 
 // Mock the Supabase module
 jest.mock('@supabase/supabase-js');

@@ -70,6 +70,9 @@ describe('ActiveSpeciesCard', () => {
     season: 'Summer-Autumn',
     bestBait: 'Mackerel strips',
     isPriority: true,
+    // Phase 1: Structured fishing content
+    recommendedBaits: ['Mackerel strips', 'Sand eels', 'Ragworm'],
+    preferredHabitats: ['Rocky shores', 'Estuaries'],
   };
 
   const defaultLocation = { lat: 48.8566, lon: 2.3522 };
@@ -136,7 +139,7 @@ describe('ActiveSpeciesCard', () => {
       expect(screen.getByTestId('gradient-fish')).toBeInTheDocument();
     });
 
-    it('should display best bait information when expanded', () => {
+    it('should display recommended baits information when expanded', () => {
       render(
         <ActiveSpeciesCard
           species={defaultSpecies}
@@ -150,14 +153,29 @@ describe('ActiveSpeciesCard', () => {
       const expandButton = screen.getByText('Show how to catch');
       fireEvent.click(expandButton);
 
-      // Now the bait info should be visible
+      // Now the bait info should be visible (Phase 1 structured content)
       expect(screen.getByText(/Mackerel strips/)).toBeInTheDocument();
     });
 
-    it('should display season information when expanded', () => {
+    it('should display season information when expanded (fallback for species without Phase 1 data)', () => {
+      // Use species without Phase 1 data to trigger fallback display
+      const legacySpecies = {
+        id: 'sea-bass-1',
+        name: 'Sea Bass',
+        scientificName: 'Dicentrarchus labrax',
+        emoji: '🐟',
+        image: { src: '/images/sea-bass.webp', alt: 'Sea Bass' },
+        confidence: 92,
+        forecast: [85, 90, 88, 82, 78],
+        season: 'Summer-Autumn',
+        bestBait: 'Mackerel strips',
+        isPriority: true,
+        // No recommendedBaits or preferredHabitats - triggers fallback
+      };
+
       render(
         <ActiveSpeciesCard
-          species={defaultSpecies}
+          species={legacySpecies}
           location={defaultLocation}
           onRemove={mockOnRemove}
           onTogglePriority={mockOnTogglePriority}
@@ -168,7 +186,7 @@ describe('ActiveSpeciesCard', () => {
       const expandButton = screen.getByText('Show how to catch');
       fireEvent.click(expandButton);
 
-      // Now the season info should be visible
+      // Now the season info should be visible (from fallback)
       expect(screen.getByText(/Summer-Autumn/)).toBeInTheDocument();
     });
   });
@@ -298,23 +316,22 @@ describe('ActiveSpeciesCard', () => {
         />
       );
 
-      // Initially not expanded - details should not be visible
-      expect(screen.queryByText(/Best bait:/)).not.toBeInTheDocument();
+      // Initially not expanded - Phase 1 details should not be visible
+      expect(screen.queryByText(/Recommended Baits:/)).not.toBeInTheDocument();
 
       // Find and click the expand button
       const expandButton = screen.getByText('Show how to catch');
       fireEvent.click(expandButton);
 
-      // After expansion, details should be visible
-      expect(screen.getByText(/Best bait:/)).toBeInTheDocument();
-      expect(screen.getByText(/Season:/)).toBeInTheDocument();
+      // After expansion, Phase 1 details should be visible
+      expect(screen.getByText(/Recommended Baits:/)).toBeInTheDocument();
 
       // Click again to collapse
       const collapseButton = screen.getByText('Hide details');
       fireEvent.click(collapseButton);
 
       // Details should be hidden again
-      expect(screen.queryByText(/Best bait:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Recommended Baits:/)).not.toBeInTheDocument();
     });
   });
 

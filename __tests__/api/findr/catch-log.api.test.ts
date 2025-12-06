@@ -7,7 +7,7 @@
  */
 
 import { createMocks } from 'node-mocks-http';
-import { mockUser } from '../../fixtures/mockData';
+import { mockUser } from '../../fixtures/mockData.fixtures';
 
 // Mock the Supabase module - must be before any imports that use it
 jest.mock('@supabase/supabase-js');

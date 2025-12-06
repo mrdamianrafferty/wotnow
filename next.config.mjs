@@ -28,12 +28,8 @@ const nextConfig = {
     ],
   },
   
-  // Disable ESLint during production builds; lint enforced via `prebuild` script
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  
-  // Webpack configuration
+  // Webpack configuration (Next.js 16 uses Turbopack by default, but we use --webpack flag
+  // in package.json build script due to babel.config.cjs incompatibility with Turbopack)
   webpack: (config, { isServer, webpack }) => {
     // Exclude WIP files with syntax errors
     config.module.rules.push({

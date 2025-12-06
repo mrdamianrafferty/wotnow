@@ -27,8 +27,9 @@ import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { use7DayFishingPredictions } from '../../hooks/use7DayFishingPredictions';
-import { usePersistentFindrSettings } from '../../hooks/usePersistentFindrSettings';
 import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
+import { useMigrateFindrSettings } from '../../hooks/useMigrateFindrSettings';
+import { useLanguage } from '../../context/LanguageContext';
 import { mapPrediction, type CardData, type CardImage, type SpeciesAdvice } from '../../lib/findr/mapPrediction';
 import { getTodayIso } from '../../lib/date/today';
 import { useFavouriteInsights } from '../../hooks/useFavouriteInsights';
@@ -564,21 +565,27 @@ const FindrFavouritesPage: React.FC = () => {
     maxPerDay?: number;
   }>>(new Map());
 
-  const { selectedCode, predictionDate, language } = usePersistentFindrSettings({
-    predictionDate: TODAY_ISO,
-    language: 'en',
-  });
+  // Migrate old findrSettings localStorage to UnifiedLocationContext (runs once)
+  useMigrateFindrSettings();
 
-  const { location } = useUnifiedLocation();
-  const locationRectangle = location?.rectangleCode ?? null;
+  // Get language from context
+  const { language } = useLanguage();
+
+  // Use UnifiedLocationContext as single source of truth for signed-in users
+  const { location, findrLocation, coastalLocation } = useUnifiedLocation();
+  
+  // Priority: findrLocation (Findr-specific) → coastalLocation (Go Daisy fallback) → location (legacy)
+  const effectiveLocation = findrLocation ?? coastalLocation ?? location;
+  const activeRectangle = effectiveLocation?.rectangleCode ?? null;
+  
+  // Prediction date is always today (no longer persisted separately)
+  const predictionDate = TODAY_ISO;
   
   // Create clean location object for fishing time calculations
-  const cleanLocation = (location && location.lat !== null && location.lon !== null) 
-    ? { lat: location.lat, lon: location.lon }
+  const cleanLocation = (effectiveLocation && effectiveLocation.lat !== null && effectiveLocation.lon !== null) 
+    ? { lat: effectiveLocation.lat, lon: effectiveLocation.lon }
     : null;
   
-  // Active rectangle priority: locationRectangle (from context) → selectedCode (persisted)
-  const activeRectangle = locationRectangle ?? (selectedCode || null);
   const userId = user?.id ?? null;
 
   // Check authentication on mount

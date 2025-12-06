@@ -8,7 +8,7 @@
     ],
     "module": "ESNext",
     "moduleResolution": "node",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "strict": true,
     "esModuleInterop": true,
@@ -26,13 +26,16 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
   "include": [
     "src",
     ".next/types/**/*.ts",
-    "types"
+    "types",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -9,8 +9,8 @@
 import { createMocks } from 'node-mocks-http';
 import handler from '../../../pages/api/findr/species-details';
 import { mockSupabaseClient, mockSupabaseQuery } from '../../../__mocks__/@supabase/supabase-js';
-import { mockSpecies, mockTechniques, mockBait, mockSubstrates } from '../../fixtures/mockData';
-import { resetAllMocks } from '../../helpers/testHelpers';
+import { mockSpecies, mockTechniques, mockBait, mockSubstrates } from '../../fixtures/mockData.fixtures';
+import { resetAllMocks } from '../../helpers/testHelpers.utils';
 
 // Mock the Supabase module
 jest.mock('@supabase/supabase-js');
