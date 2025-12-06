@@ -605,6 +605,13 @@ export function PhotoGalleryGrid({
     wide: 'aspect-video', 
     tall: 'aspect-[3/4]'
   };
+
+  // Track which images have failed to load
+  const [failedImages, setFailedImages] = React.useState<Set<string>>(new Set());
+
+  const handleImageError = (photoId: string) => {
+    setFailedImages(prev => new Set(prev).add(photoId));
+  };
   
   return (
     <div className={
@@ -612,6 +619,7 @@ export function PhotoGalleryGrid({
     }>
       {photos.map((photo, index) => {
         const isStockPhoto = photo.metadata?.photographer === 'Stock photo';
+        const hasError = failedImages.has(photo.id);
 
         return (
           <div key={photo.id} className={`relative ${aspectClasses[aspectRatio]} rounded-lg overflow-hidden bg-base-200 hover:shadow-lg transition-all duration-200 group`}>
@@ -621,14 +629,22 @@ export function PhotoGalleryGrid({
               tabIndex={-1}
               aria-label={photo.caption || `Photo ${index + 1}`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo.thumbnail || photo.url}
-                alt={photo.caption || `Photo ${index + 1}`}
-                width={200}
-                height={200}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-              />
+              {hasError ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-base-300 text-base-content/60">
+                  <Fish className="w-12 h-12 mb-2 opacity-50" />
+                  <span className="text-xs">{photo.metadata?.speciesName || 'Photo'}</span>
+                </div>
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={photo.thumbnail || photo.url}
+                  alt={photo.caption || `Photo ${index + 1}`}
+                  width={200}
+                  height={200}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  onError={() => handleImageError(photo.id)}
+                />
+              )}
             </button>
 
             {/* Pin (Trophy) icon button */}
