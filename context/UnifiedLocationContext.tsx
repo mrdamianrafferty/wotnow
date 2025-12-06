@@ -299,7 +299,8 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
       console.log('[UnifiedLocation] No stored locations found in localStorage');
     }
 
-    // Fetch remote locations (async)
+    // Fetch remote locations (async) - set flag to prevent duplicate calls from refreshRemote
+    remoteLoadedRef.current = true;
     void (async () => {
       try {
         const remote = await loadRemoteLocations();
@@ -332,6 +333,8 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
         // If we have stored data, keep it even if remote fails
       } finally {
         setLoading(false);
+        // Reset flag after delay to allow future refreshes
+        setTimeout(() => { remoteLoadedRef.current = false; }, 2000);
       }
     })();
   }, []);

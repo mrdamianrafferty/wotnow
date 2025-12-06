@@ -6,10 +6,13 @@
 DROP VIEW IF EXISTS findr_favourite_stats;
 
 -- Create view aggregating catch statistics by species
+-- Note: findr_catch_entries.species_id stores species_code (TEXT)
+-- while user_favourites.species_id stores species UUID
+-- We need to join through the species table to match them
 CREATE VIEW findr_favourite_stats AS
-WITH catch_stats AS (
+WITH catch_stats_by_code AS (
   SELECT
-    species_id,
+    species_id AS species_code,  -- This is actually species_code (TEXT)
     COUNT(*) AS catches_total,
     MAX(caught_at) AS last_catch_at,
     -- Most frequently used bait
@@ -29,13 +32,13 @@ WITH catch_stats AS (
 ),
 favourite_dates AS (
   SELECT
-    species_id,
+    species_id,  -- This is UUID
     MIN(added_at) AS swiped_at
   FROM user_favourites
   GROUP BY species_id
 )
 SELECT
-  cs.species_id,
+  sp.id AS species_id,  -- Return UUID for API compatibility
   cs.catches_total,
   -- Format swiped date as relative label
   CASE
@@ -68,13 +71,14 @@ SELECT
     ELSE 'Off season'
   END AS season_label,
   cs.recency_score
-FROM catch_stats cs
-LEFT JOIN favourite_dates fd ON cs.species_id = fd.species_id;
+FROM species sp
+LEFT JOIN catch_stats_by_code cs ON sp.species_code = cs.species_code
+LEFT JOIN favourite_dates fd ON sp.id = fd.species_id
+WHERE fd.species_id IS NOT NULL OR cs.species_code IS NOT NULL;  -- Only include species with data
 
 -- Add comment explaining the view
 COMMENT ON VIEW findr_favourite_stats IS
-  'Aggregates catch statistics by species for favourites insights. ' ||
-  'Automatically updates based on findr_catch_entries and user_favourites tables.';
+  'Aggregates catch statistics by species for favourites insights. Automatically updates based on findr_catch_entries and user_favourites tables.';
 
 -- Grant access to authenticated users
 GRANT SELECT ON findr_favourite_stats TO authenticated;
