@@ -19,12 +19,8 @@ export default function FindrAuth() {
       try {
         const { Capacitor } = await import('@capacitor/core');
         setIsNativePlatform(Capacitor.isNativePlatform());
-        console.log('[Findr Auth] Platform detection:', {
-          isNative: Capacitor.isNativePlatform(),
-          platform: Capacitor.getPlatform()
-        });
       } catch (_e) {
-        console.log('[Findr Auth] Not on native platform');
+        // Not on native platform
       }
     })();
   }, []);
@@ -35,7 +31,6 @@ export default function FindrAuth() {
       const isPWAMode = window.matchMedia('(display-mode: standalone)').matches ||
                         (window.navigator as typeof window.navigator & { standalone?: boolean }).standalone === true;
       setIsPWA(isPWAMode);
-      console.log('[Findr Auth] PWA detection:', isPWAMode);
     };
     checkPWA();
   }, []);
@@ -47,28 +42,22 @@ export default function FindrAuth() {
 
       // On native platforms, use native sign in
       if (isNativePlatform) {
-        console.log('[Findr Auth] Using native sign in for', provider);
-
         if (provider === 'apple') {
           await signInWithApple(supabase);
-          console.log('[Findr Auth] Apple Sign In complete, redirecting to /findr');
           window.location.href = '/findr';
           return;
         } else if (provider === 'google') {
           try {
             await signInWithGoogleNative(supabase);
-            console.log('[Findr Auth] Google native sign-in complete, redirecting to /findr');
             window.location.href = '/findr';
             return;
           } catch (googleError: unknown) {
             const message = (googleError as Error)?.message;
             if (message === GOOGLE_NATIVE_ERRORS.CANCELLED) {
-              console.log('[Findr Auth] Google sign-in cancelled');
               setLoading(false);
               return;
             }
             if (message === GOOGLE_NATIVE_ERRORS.NOT_AVAILABLE || message === GOOGLE_NATIVE_ERRORS.NOT_CONFIGURED) {
-              console.log('[Findr Auth] Falling back to web OAuth for Google');
               // Continue to web flow below
             } else {
               throw googleError;
@@ -78,7 +67,6 @@ export default function FindrAuth() {
       }
 
       // Web platform: use standard OAuth flow
-      console.log('[Findr Auth] Using web OAuth for', provider);
 
       // Store destination for callback page
       sessionStorage.setItem('oauth_origin', '/findr');
@@ -86,11 +74,6 @@ export default function FindrAuth() {
 
       // Start OAuth directly from current domain (no cross-domain redirect)
       const redirectUrl = `${window.location.origin}/auth/callback`;
-      console.log('[Findr Auth] Starting OAuth:', {
-        provider,
-        origin: window.location.origin,
-        redirectTo: redirectUrl
-      });
 
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider,
@@ -105,8 +88,6 @@ export default function FindrAuth() {
       if (authError) {
         throw authError;
       }
-
-      console.log('[Findr Auth] OAuth response:', { url: data.url, provider: data.provider });
 
       // Redirect to OAuth provider (SSR client doesn't auto-redirect)
       if (data.url) {

@@ -104,7 +104,6 @@ function normalizeSpeciesId(id: string, speciesCode?: string | null): string {
   // If code was mapped, return mapped code as new ID
   if (mappedCode) {
     const normalizedId = mappedCode.toLowerCase();
-    console.log(`[normalizeSpeciesId] Normalized ${id} (code: ${upperCode}) -> ${normalizedId} (mapped to: ${mappedCode})`);
     return normalizedId;
   }
   
@@ -370,26 +369,18 @@ function buildFallbackCardImage(
     const mappedCode = SPECIES_CODE_ALIASES[upperCode] ?? upperCode;
     const info = SPECIES_IMAGE_MAP[mappedCode];
     if (info) {
-      if (mappedCode !== upperCode) {
-        console.log(`[buildFallbackCardImage] Mapped code ${upperCode} -> ${mappedCode} -> ${info.image}`);
-      } else {
-        console.log(`[buildFallbackCardImage] Using SPECIES_IMAGE_MAP for code ${upperCode} -> ${info.image}`);
-      }
       return {
         src: info.image,
         alt: info.name,
         mobile: info.mobile ?? null,
         thumb: info.thumb ?? null,
       };
-    } else {
-      console.warn(`[buildFallbackCardImage] Species code ${upperCode} (mapped: ${mappedCode}) not found in SPECIES_IMAGE_MAP`);
     }
   }
 
   // Only use explicit URL if it's a valid webp path or external URL
   // Reject invalid paths like /images/fish/xxx.jpg
   if (explicitUrl && (explicitUrl.startsWith('/webp/') || explicitUrl.startsWith('http'))) {
-    console.log(`[buildFallbackCardImage] Using explicit URL: ${explicitUrl}`);
     return {
       src: explicitUrl,
       alt: fallbackName ?? 'Fish illustration',
@@ -399,9 +390,6 @@ function buildFallbackCardImage(
   }
 
   // No valid image found - will trigger GradientFish fallback
-  if (explicitUrl) {
-    console.warn(`[buildFallbackCardImage] Rejected invalid URL: ${explicitUrl}`);
-  }
   return null;
 }
 
@@ -429,24 +417,16 @@ function validateAndFixImage(
     const mappedCode = SPECIES_CODE_ALIASES[upperCode] ?? upperCode;
     const info = SPECIES_IMAGE_MAP[mappedCode];
     if (info) {
-      if (mappedCode !== upperCode) {
-        console.log(`[validateAndFixImage] Fixed invalid image ${image.src} using mapped code ${upperCode} -> ${mappedCode} -> ${info.image}`);
-      } else {
-        console.log(`[validateAndFixImage] Fixed invalid image ${image.src} using code ${upperCode} -> ${info.image}`);
-      }
       return {
         src: info.image,
         alt: info.name,
         mobile: info.mobile ?? null,
         thumb: info.thumb ?? null,
       };
-    } else {
-      console.warn(`[validateAndFixImage] Species code ${upperCode} (mapped: ${mappedCode}) not found in SPECIES_IMAGE_MAP`);
     }
   }
   
   // Can't fix - return undefined so GradientFish shows
-  console.log(`[validateAndFixImage] Could not fix image ${image.src}, will show GradientFish`);
   return undefined;
 }
 
@@ -857,15 +837,6 @@ const FindrFavouritesPage: React.FC = () => {
         return scoreB - scoreA;
       });
     
-    // Debug: Log what IDs the prediction cards actually have
-    console.log('[Findr Favourites] Prediction card IDs:', mapped.map(c => ({
-      id: c.id,
-      code: c.speciesCode,
-      name: c.commonName,
-      biteScore: c.biteScore,
-      confidence: c.confidence,
-    })));
-    
     return mapped;
   }, [predictions]);
 
@@ -880,7 +851,6 @@ const FindrFavouritesPage: React.FC = () => {
 
       // Robust matching: try all possible keys
       let card: CardData | null = null;
-      let matchReason = '';
       const tryCodes: string[] = [];
       if (metadata?.speciesCode) {
         const upperCode = metadata.speciesCode.toUpperCase();
@@ -901,16 +871,8 @@ const FindrFavouritesPage: React.FC = () => {
           (item.id && item.id === code)
         ) ?? null;
         if (card) {
-          matchReason = code;
           break;
         }
-      }
-
-      if (card) {
-        console.log(`[Findr Favourites] ✅ Matched ${id} using key: ${matchReason} -> ${card.commonName} (confidence: ${card.confidence}%)`);
-      } else {
-        const codeInfo = metadata?.speciesCode ? ` (code: ${metadata.speciesCode})` : '';
-        console.warn(`[Findr Favourites] ❌ No match for ${id}${codeInfo}. Tried: [${tryCodes.join(', ')}]. Available:`, cards.map(c => `${c.speciesCode} (${c.commonName})`).join(', '));
       }
 
       const bestBaitFromPrediction = card?.baitSuggestions.find((item) => item.trim().length > 0);

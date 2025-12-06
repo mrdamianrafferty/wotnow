@@ -58,18 +58,6 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
       setLoading(true);
       setError(null);
 
-      // TODO: Disable API calls until findr auth is implemented
-      // This prevents 502 errors when backend services aren't running
-      console.info('[useFavouriteInsights] Skipping API call - findr authentication not yet implemented');
-      setInsights((prev) => prev.length === 0 ? prev : []);
-      setSource((prev) => prev === 'fallback' ? prev : 'fallback');
-      setError((prev) => prev === 'Failed to load favourite insights' ? prev : 'Failed to load favourite insights');
-      setLoading(false);
-      return;
-
-      // Original API call code (disabled until auth is ready)
-      /*
-
       try {
         const response = await fetch('/api/findr/favourites-insights', {
           method: 'POST',
@@ -80,7 +68,7 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
           signal: controller.signal,
         });
 
-        if (!active) return;
+        if (!_active) return;
 
         if (response.status === 204) {
           setInsights([]);
@@ -89,7 +77,7 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
           return;
         }
 
-        const payload = (await response.json()) as ApiResponse & { error?: string };
+        const payload = (await response.json()) as _ApiResponse & { error?: string };
 
         if (!response.ok) {
           throw new Error(payload?.error || 'Failed to load favourite insights');
@@ -99,18 +87,17 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
         setSource(payload.source ?? 'none');
         setError(null);
       } catch (fetchError) {
-        if (!active || (fetchError as Error).name === 'AbortError') {
+        if (!_active || (fetchError as Error).name === 'AbortError') {
           return;
         }
         setInsights([]);
         setSource('fallback');
         setError((fetchError as Error).message || 'Unable to load favourite insights');
       } finally {
-        if (active) {
+        if (_active) {
           setLoading(false);
         }
       }
-      */
     }
 
     void fetchInsights();

@@ -51,8 +51,6 @@ export default function WithPhotoCatchLogPage() {
   // AI fish identification hook
   const { identify, isIdentifying, result: aiResult, stats } = useFishIdentification({
     onSuccess: (result) => {
-      console.log('[WithPhoto] AI identification complete:', result.method, result.confidence);
-
       // If AI identified with high confidence, auto-select
       if (result.method === 'ai' && !Array.isArray(result.species) && result.confidence >= 0.7) {
         setSelectedSpeciesId(result.species.id);
@@ -67,7 +65,6 @@ export default function WithPhotoCatchLogPage() {
   // Auto-trigger AI identification when photo is uploaded
   useEffect(() => {
     if (photoFile && species.length > 0 && !aiResult && !isIdentifying) {
-      console.log('[WithPhoto] Auto-triggering AI identification');
   // ...existing code...
       identify(photoFile, species, {
         location: {
