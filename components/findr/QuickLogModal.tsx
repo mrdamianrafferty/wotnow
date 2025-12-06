@@ -485,7 +485,7 @@ export function QuickLogModal({
 
       // Auto-close after 2 seconds
       setTimeout(() => {
-        handleClose();
+        onClose();
       }, 2000);
     } catch (err) {
       console.error('[QuickLog] Failed to log blank trip:', err);
@@ -494,7 +494,7 @@ export function QuickLogModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [location, lookupRectangleCode, onQuickLog, onSuccess, handleClose]);
+  }, [location, lookupRectangleCode, onQuickLog, onSuccess, onClose]);
 
   // Request GPS location
   const handleRequestLocation = useCallback(() => {
