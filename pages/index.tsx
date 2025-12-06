@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
 import { resolveSpeciesImage, type CardData } from '../lib/findr/mapPrediction';
-import FishSpeciesModal from '../components/findr/FishSpeciesModal';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
-import CoastalLocationDialog from '../components/CoastalLocationDialog';
 import { activityMessages } from '../data/activityMessages';
 import { buildPopupActivityPayload } from '../utils/buildPopupActivityPayload';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
@@ -29,14 +28,29 @@ import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import {
   getWindMessage as _getWindMessage,
 } from '../utils/weatherLabels';
-import Popup from '../components/Popup';
 import { buildReasons } from '../utils/activityHelpers'; // Adjust the path based on your project structure
 import { getActivityMessage } from '../data/activityMessages';
 import { WeatherData } from '../types/weatherData';
-import AstronomyCard from '../components/AstronomyCard';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import BottomNav from '../components/BottomNav';
 import { SkeletonHomePage } from '../components/SkeletonLoader';
+
+// Code splitting: Lazy load heavy modal/dialog components
+const FishSpeciesModal = dynamic(() => import('../components/findr/FishSpeciesModal'), {
+  ssr: false,
+});
+
+const CoastalLocationDialog = dynamic(() => import('../components/CoastalLocationDialog'), {
+  ssr: false,
+});
+
+const Popup = dynamic(() => import('../components/Popup'), {
+  ssr: false,
+});
+
+const AstronomyCard = dynamic(() => import('../components/AstronomyCard'), {
+  ssr: false,
+});
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const { query } = ctx;
