@@ -21,44 +21,39 @@ export function LocationDisplay() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [locationName, setLocationName] = useState('Set location');
 
+  // Memoize effectiveLocation to prevent unnecessary recalculations
   // Prefer findrLocation, then coastalLocation, then homeLocation, then legacyLocation
-  const effectiveLocation = findrLocation
-    ? convertToLegacy(findrLocation)
-    : coastalLocation
-      ? convertToLegacy(coastalLocation)
-      : homeLocation
-        ? convertToLegacy(homeLocation)
-        : legacyLocation;
+  const effectiveLocation = useMemo(() => {
+    if (findrLocation) return convertToLegacy(findrLocation);
+    if (coastalLocation) return convertToLegacy(coastalLocation);
+    if (homeLocation) return convertToLegacy(homeLocation);
+    return legacyLocation;
+  }, [findrLocation, coastalLocation, homeLocation, legacyLocation]);
 
-  // Debug: Log what we're getting from context
-  useEffect(() => {
-    console.log('[LocationDisplay] Locations:', { findrLocation, homeLocation, coastalLocation, legacyLocation });
-    console.log('[LocationDisplay] effectiveLocation:', effectiveLocation);
-  }, [findrLocation, homeLocation, coastalLocation, legacyLocation, effectiveLocation]);
+  // Extract stable primitive values for dependency tracking
+  const locLabel = effectiveLocation?.rectangleLabel;
+  const locRegion = effectiveLocation?.rectangleRegion;
+  const locCode = effectiveLocation?.rectangleCode;
+  const locLat = effectiveLocation?.lat;
+  const locLon = effectiveLocation?.lon;
 
   // Look up region name from rectangle code if we only have code but no region/label
   useEffect(() => {
-    const label = effectiveLocation?.rectangleLabel;
-    const region = effectiveLocation?.rectangleRegion;
-    const code = effectiveLocation?.rectangleCode;
-    const lat = effectiveLocation?.lat;
-    const lon = effectiveLocation?.lon;
-    
     // Skip generic fallback values
-    const isGenericLabel = !label || label === 'Saved Location' || label === 'Unknown';
+    const isGenericLabel = !locLabel || locLabel === 'Saved Location' || locLabel === 'Unknown';
     
-    if (!isGenericLabel && label) {
+    if (!isGenericLabel && locLabel) {
       // Use the user's chosen name (clean up any trailing parenthetical like "(~5km away)")
-      const cleaned = label.replace(/\s*\([^)]*\)\s*$/, '').trim();
-      setLocationName(cleaned || label);
-    } else if (region) {
+      const cleaned = locLabel.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      setLocationName(cleaned || locLabel);
+    } else if (locRegion) {
       // Fall back to region name (e.g., "Bay of Biscay")
-      setLocationName(region);
-    } else if (code && lat && lon) {
+      setLocationName(locRegion);
+    } else if (locCode && locLat && locLon) {
       // Have code but no region - look it up from coordinates
-      setLocationName(code); // Show code immediately while loading
+      setLocationName(locCode); // Show code immediately while loading
       
-      fetch(`/api/findr/rectangle-lookup?lat=${lat}&lon=${lon}`)
+      fetch(`/api/findr/rectangle-lookup?lat=${locLat}&lon=${locLon}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data?.region) {
@@ -68,12 +63,12 @@ export function LocationDisplay() {
         .catch(() => {
           // Keep showing the code on error
         });
-    } else if (code) {
+    } else if (locCode) {
       // Fall back to rectangle code (e.g., "25E0")
-      setLocationName(code);
+      setLocationName(locCode);
     }
     // Otherwise keep the current value (either "Set location" or a previous valid name)
-  }, [effectiveLocation?.rectangleCode, effectiveLocation?.rectangleLabel, effectiveLocation?.rectangleRegion, effectiveLocation?.lat, effectiveLocation?.lon]);
+  }, [locCode, locLabel, locRegion, locLat, locLon]);
 
   const loadingState = useMemo(() => isLookingUp || syncing, [isLookingUp, syncing]);
 
