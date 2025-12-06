@@ -44,6 +44,7 @@ export type QuickLogParams = {
   baitUsed?: string | null;
   habitatType?: string | null;
   notes?: string | null;
+  isBlankTrip?: boolean; // Flag for days with no catches
   // AI identification tracking fields
   aiSuggestedSpeciesId?: string | null;
   aiSuggestedSpeciesName?: string | null;
@@ -241,6 +242,7 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
       baitUsed,
       habitatType,
       notes,
+      isBlankTrip,
     }: QuickLogParams) => {
       const now = new Date();
       const catchDate = providedDate ?? now.toISOString().split('T')[0];
@@ -262,6 +264,7 @@ export function useQuickCatchLog(options: UseCatchLoggerOptions = {}): UseQuickC
         method: 'shore',
         photo: photo ?? null,
         userLocation: userLocation ?? null,
+        isBlankTrip: isBlankTrip ?? false,
       });
     },
     [base]
@@ -294,6 +297,7 @@ function buildFormData(input: CatchLogInput): FormData {
     depth_range: input.depthRange ?? null,
     notes: input.notes ?? null,
     entry_type: input.entryType ?? 'detailed',
+    is_blank_trip: input.isBlankTrip ?? false,
     session_id: input.sessionId ?? null,
     environmental_conditions: input.environmentalConditions ?? undefined,
     user_location: input.userLocation ?? null,

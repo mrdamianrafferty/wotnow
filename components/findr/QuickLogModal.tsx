@@ -451,6 +451,51 @@ export function QuickLogModal({
     setCurrentStep('species-selection');
   }, []);
 
+  // Log blank trip (no catches today)
+  const handleBlankTrip = useCallback(async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Use location from context or EXIF
+      const userLocation = location?.lat && location?.lon
+        ? { lat: location.lat, lon: location.lon }
+        : undefined;
+
+      console.log('[QuickLog] Logging blank trip', {
+        rectangleCode: lookupRectangleCode,
+        userLocation,
+      });
+
+      await onQuickLog({
+        speciesId: 'BLANK_TRIP',
+        speciesCommonName: 'No catches',
+        rectangleCode: lookupRectangleCode ?? null,
+        quantity: 0,
+        userLocation,
+        isBlankTrip: true,
+        baitUsed: null,
+        habitatType: null,
+        notes: 'Blank trip - no catches',
+      });
+
+      // Show success
+      setCurrentStep('success');
+      onSuccess?.();
+
+      // Auto-close after 2 seconds
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    } catch (err) {
+      console.error('[QuickLog] Failed to log blank trip:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to log blank trip';
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [location, lookupRectangleCode, onQuickLog, onSuccess, handleClose]);
+
   // Request GPS location
   const handleRequestLocation = useCallback(() => {
     if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
@@ -890,6 +935,21 @@ export function QuickLogModal({
                     </span>
                   </button>
                 </div>
+
+                <div className="divider text-xs opacity-50 my-2">
+                  <TranslatedText text="or" />
+                </div>
+
+                {/* No Catches Today - Blank Trip */}
+                <button
+                  onClick={handleBlankTrip}
+                  className="btn btn-ghost w-full gap-2"
+                  disabled={isSubmitting || isCompressing}
+                >
+                  <span className="text-base-content/70">
+                    <TranslatedText text="No catches today? Log blank trip" />
+                  </span>
+                </button>
 
                 <div className="alert alert-info mt-4">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -1525,9 +1585,13 @@ export function QuickLogModal({
               <Check className="w-10 h-10 text-success-content" />
             </div>
             <h4 className="text-2xl font-bold mb-2 text-success">
-              <TranslatedText text="Catch Logged!" />
+              {selectedSpecies.length === 0 ? (
+                <TranslatedText text="Blank Trip Logged!" />
+              ) : (
+                <TranslatedText text="Catch Logged!" />
+              )}
             </h4>
-            {selectedSpecies.length > 0 && (
+            {selectedSpecies.length > 0 ? (
               <div className="text-lg mb-4">
                 {selectedSpecies.length === 1 ? (
                   <div>{quantity} × {selectedSpecies[0].name}</div>
@@ -1536,6 +1600,10 @@ export function QuickLogModal({
                     {quantity} × <TranslatedText text="each of" /> {selectedSpecies.length} <TranslatedText text="species" />
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="text-base mb-4 opacity-70">
+                <TranslatedText text="No catches today - valuable data for improving predictions" />
               </div>
             )}
             <div className="space-y-1 text-sm opacity-70">

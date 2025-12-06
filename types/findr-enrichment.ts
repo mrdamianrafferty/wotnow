@@ -180,6 +180,7 @@ export interface CatchLogInput {
   depthRange?: 'shallow_water' | 'deep_water' | 'unknown';
   notes?: string | null;
   entryType?: 'quick' | 'detailed' | 'historical';
+  isBlankTrip?: boolean; // Flag for days with no catches
   sessionId?: string | null;
   photo?: File | Blob | null;
   userLocation?: Coordinates | null;
