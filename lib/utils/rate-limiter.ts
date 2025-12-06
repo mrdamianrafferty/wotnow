@@ -75,7 +75,8 @@ const rateLimitStore = new Map<string, RateLimitInfo>();
  */
 setInterval(() => {
   const now = Date.now();
-  for (const [key, info] of rateLimitStore.entries()) {
+  const entries = Array.from(rateLimitStore.entries());
+  for (const [key, info] of entries) {
     // Remove if reset time has passed
     if (info.resetTime < now) {
       rateLimitStore.delete(key);

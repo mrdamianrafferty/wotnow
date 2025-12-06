@@ -2,6 +2,8 @@
 import { withSentryConfig } from '@sentry/nextjs';
 import withPWA from 'next-pwa';
 import withBundleAnalyzer from '@next/bundle-analyzer';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 const enablePWA = process.env.NEXT_PUBLIC_ENABLE_PWA === 'true' || process.env.ENABLE_PWA === 'true';
 
