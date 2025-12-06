@@ -86,7 +86,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   const [favourites, setFavourites] = useState<string[]>([]);
   const favouritesRef = useRef<string[]>([]); // Keep track of current favourites for immediate reads
   const pendingTogglesRef = useRef<Set<string>>(new Set()); // Track pending toggle operations
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading, null = not authenticated
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [favouriteDetails, setFavouriteDetails] = useState<FavouriteDetail[]>([]);
@@ -118,6 +118,9 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
 
   // Load favourites from localStorage or Supabase
   useEffect(() => {
+    // Wait until auth state is determined (not undefined)
+    if (user === undefined) return;
+    
     const loadFavourites = async () => {
       console.log('[useFavourites] Loading favourites, authenticated:', Boolean(user));
       setLoading(true);

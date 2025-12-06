@@ -283,6 +283,7 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
   const [syncing, setSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const hasLoaded = useRef(false);
+  const remoteLoadedRef = useRef(false);
 
   useEffect(() => {
     if (hasLoaded.current) return;
@@ -336,11 +337,18 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
   }, []);
 
   const refreshRemote = useCallback(async () => {
+    // Skip if already loaded recently (within same render cycle)
+    if (remoteLoadedRef.current) {
+      return;
+    }
     const remote = await loadRemoteLocations();
     if (remote) {
+      remoteLoadedRef.current = true;
       setLocations(remote.locations);
       setActiveLocationId(remote.activeLocationId);
       persistState(remote);
+      // Reset flag after a short delay to allow future refreshes
+      setTimeout(() => { remoteLoadedRef.current = false; }, 1000);
     }
   }, []);
 
