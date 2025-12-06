@@ -30,12 +30,30 @@ const nextConfig = {
   
   // Webpack configuration (Next.js 16 uses Turbopack by default, but we use --webpack flag
   // in package.json build script due to babel.config.cjs incompatibility with Turbopack)
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer, webpack, dev }) => {
     // Exclude WIP files with syntax errors
     config.module.rules.push({
       test: /\/(generateInsights|get-insights)\.ts$/,
       use: 'null-loader',
     });
+
+    // Remove console.logs in production builds
+    if (!dev && !isServer) {
+      config.optimization = config.optimization || {};
+      config.optimization.minimizer = config.optimization.minimizer || [];
+
+      // Find TerserPlugin and configure it to drop console logs
+      const TerserPlugin = require('terser-webpack-plugin');
+      config.optimization.minimizer.push(
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true,
+            },
+          },
+        })
+      );
+    }
 
     // Help Vercel handle native modules in @tailwindcss/postcss
     // This doesn't change CSS/Tailwind processing, just module resolution

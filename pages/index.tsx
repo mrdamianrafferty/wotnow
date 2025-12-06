@@ -21,6 +21,7 @@ import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
 import { useUIText } from '../hooks/useUIText';
+import SEO from '../components/SEO';
 type LocationLite = { name: string; lat: number; lon: number; type?: 'home'|'coastal' };
 
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
@@ -722,6 +723,11 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   // MAIN RETURN - Enhanced version preserving all your functionality
   return (
     <>
+      <SEO
+        title="Weather-Based Activity Recommendations"
+        description="Get personalized outdoor activity suggestions based on real-time weather conditions. Perfect for planning your day in the UK and Europe."
+        url="https://godaisy.io"
+      />
       {/* Home Location Modal */}
       {showHomeDialog && (
         <CoastalLocationDialog

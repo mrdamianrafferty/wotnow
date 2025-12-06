@@ -1,7 +1,7 @@
 // pages/new-weather.tsx
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import Head from "next/head";
+import SEO from "../components/SEO";
 // Keep critical above-the-fold components static for fast LCP
 import { HourlyMarineCard } from "../components/weather-cards/HourlyMarineCard";
 import { HourlyCard } from "../components/weather-cards/HourlyCard";
@@ -470,9 +470,11 @@ export default function WeatherPage() {
 
   return (
     <>
-      <Head>
-        <title>Weather - Go Daisy</title>
-      </Head>
+      <SEO
+        title="Weather Dashboard"
+        description="Detailed weather forecasts with marine conditions, tides, air quality, and astronomy data. Plan your outdoor activities with confidence."
+        url="https://godaisy.io/weather"
+      />
       <div
         className="relative min-h-screen"
         data-testid="page-new-weather"
