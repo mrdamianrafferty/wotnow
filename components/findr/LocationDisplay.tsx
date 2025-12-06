@@ -15,24 +15,26 @@ const CoastalLocationDialog = dynamic(
 
 export function LocationDisplay() {
   const router = useRouter();
-  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, syncing } = useUnifiedLocation();
+  const { location: legacyLocation, homeLocation, coastalLocation, findrLocation, updateLocationBySlot, syncing } = useUnifiedLocation();
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [locationName, setLocationName] = useState('Set location');
 
-  // Prefer findrLocation, then fall back to coastalLocation, then legacyLocation
+  // Prefer findrLocation, then coastalLocation, then homeLocation, then legacyLocation
   const effectiveLocation = findrLocation
     ? convertToLegacy(findrLocation)
     : coastalLocation
       ? convertToLegacy(coastalLocation)
-      : legacyLocation;
+      : homeLocation
+        ? convertToLegacy(homeLocation)
+        : legacyLocation;
 
   // Debug: Log what we're getting from context
   useEffect(() => {
-    console.log('[LocationDisplay] findrLocation:', findrLocation);
+    console.log('[LocationDisplay] Locations:', { findrLocation, homeLocation, coastalLocation, legacyLocation });
     console.log('[LocationDisplay] effectiveLocation:', effectiveLocation);
-  }, [findrLocation, effectiveLocation]);
+  }, [findrLocation, homeLocation, coastalLocation, legacyLocation, effectiveLocation]);
 
   // Look up region name from rectangle code if we only have code but no region/label
   useEffect(() => {
