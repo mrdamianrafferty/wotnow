@@ -32,6 +32,10 @@
   ],
   "crons": [
     {
+      "path": "/api/cron/cleanup-cache",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron-update-weather",
       "schedule": "0 2 * * *"
     },
