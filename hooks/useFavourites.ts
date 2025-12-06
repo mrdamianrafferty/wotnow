@@ -80,13 +80,15 @@ const mapApiFavouriteToDetail = (fav: Record<string, unknown>): FavouriteDetail 
   };
 };
 
+// Module-level flag to prevent duplicate fetches across hook instances
+let globalFavouritesLoading = false;
+
 export function useFavourites(options: UseFavouritesOptions = {}) {
   const { autoSync = true } = options;
   
   const [favourites, setFavourites] = useState<string[]>([]);
   const favouritesRef = useRef<string[]>([]); // Keep track of current favourites for immediate reads
   const pendingTogglesRef = useRef<Set<string>>(new Set()); // Track pending toggle operations
-  const loadingRef = useRef(false); // Prevent concurrent loads
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading, null = not authenticated
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -121,11 +123,11 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   useEffect(() => {
     // Wait until auth state is determined (not undefined)
     if (user === undefined) return;
-    // Prevent concurrent loads
-    if (loadingRef.current) return;
+    // Prevent concurrent loads across all hook instances
+    if (globalFavouritesLoading) return;
     
     const loadFavourites = async () => {
-      loadingRef.current = true;
+      globalFavouritesLoading = true;
       console.log('[useFavourites] Loading favourites, authenticated:', Boolean(user));
       setLoading(true);
       
@@ -174,7 +176,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
       } finally {
         setLoading(false);
         // Reset after delay to allow re-fetch if user changes
-        setTimeout(() => { loadingRef.current = false; }, 2000);
+        setTimeout(() => { globalFavouritesLoading = false; }, 2000);
       }
     };
 

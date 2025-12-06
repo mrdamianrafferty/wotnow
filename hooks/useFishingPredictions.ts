@@ -114,15 +114,7 @@ async function fetchPredictions(params: {
     const json = await response.json();
     const typed = json as PredictionResponse;
 
-    console.log('[useFishingPredictions] Response:', {
-      rectangleCode: typed.rectangleCode,
-      predictionDate: typed.predictionDate,
-      predictionsCount: Array.isArray(typed.predictions) ? typed.predictions.length : 0,
-      firstPrediction: Array.isArray(typed.predictions) && typed.predictions.length > 0 ? typed.predictions[0] : null,
-      region: typed.metadata?.region,
-    });
-
-    // Cache successful response
+    // Cache successful response (silently)
     try {
       const { getStorage } = await import('@/lib/offline/storage');
       const storage = getStorage();
@@ -131,10 +123,8 @@ async function fetchPredictions(params: {
         date,
         data: typed,
       });
-      console.log('[useFishingPredictions] Cached prediction for', params.rectangleCode, date);
-    } catch (cacheError) {
-      console.warn('[useFishingPredictions] Failed to cache prediction:', cacheError);
-      // Don't fail the request if caching fails
+    } catch (_cacheError) {
+      // Silently ignore cache errors
     }
 
     return typed;
