@@ -48,6 +48,7 @@ interface CreateCatchRequest {
   notes?: string;
   photo_urls?: string[];
   followed_findr_advice: boolean;
+  is_blank_trip?: boolean; // Flag for days with no catches
   environmental_conditions?: EnvironmentalConditions;
   // Optional precise GPS coordinates
   gps_latitude?: number;
@@ -477,7 +478,7 @@ async function handleCreateCatch(req: NextApiRequest, res: NextApiResponse, user
       followed_findr_advice: catchData.followed_findr_advice,
       used_recommended_bait: usedRecommendedBait,
       used_recommended_habitat: usedRecommendedHabitat,
-      is_blank_trip: false,
+      is_blank_trip: catchData.is_blank_trip ?? false,
       environmental_conditions: catchData.environmental_conditions || null,
       // GPS location data
       gps_latitude: catchData.gps_latitude || null,

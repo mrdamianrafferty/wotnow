@@ -214,6 +214,7 @@ export interface CatchLogRequest {
   depth_range?: string | null;
   notes?: string | null;
   entry_type?: 'quick' | 'detailed' | 'historical';
+  is_blank_trip?: boolean | null; // Flag for days with no catches
   session_id?: string | null;
   environmental_conditions?: Record<string, string | number | null>;
   user_location?: Coordinates | null;

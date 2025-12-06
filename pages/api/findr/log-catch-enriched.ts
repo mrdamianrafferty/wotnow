@@ -181,6 +181,7 @@ export default async function handler(
     const habitatType = getFieldValue(fields.habitat_type);
     const method = getFieldValue(fields.method);
     const depthRange = getFieldValue(fields.depth_range);
+    const isBlankTrip = getFieldValue(fields.is_blank_trip) === 'true';
 
     // Use the authenticated Supabase client for database operations
     const supabase = supabaseAuth;
@@ -423,6 +424,7 @@ export default async function handler(
       habitat_type: habitatType,
       method: method,
       depth_range: depthRange,
+      is_blank_trip: isBlankTrip,
       // GPS-derived bathymetry data (separate from user-reported data)
       gps_depth_meters: enrichedData.bathymetry?.depth_meters ?? null,
       gps_substrate: enrichedData.substrate?.substrate ?? null,
