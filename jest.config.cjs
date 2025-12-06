@@ -15,8 +15,8 @@ const customJestConfig = {
   transform: {},
   // Use Next.js built-in SWC transforms
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
-  // Exclude E2E tests (should only run with Playwright)
-  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/.next/'],
+  // Exclude E2E tests, fixtures, and helpers (should only run with Playwright)
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/', '/.next/', '/__tests__/fixtures/', '/__tests__/helpers/'],
 }
 
 module.exports = createJestConfig(customJestConfig)
