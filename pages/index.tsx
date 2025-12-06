@@ -36,6 +36,7 @@ import { WeatherData } from '../types/weatherData';
 import AstronomyCard from '../components/AstronomyCard';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
 import BottomNav from '../components/BottomNav';
+import { SkeletonHomePage } from '../components/SkeletonLoader';
 
 export const getServerSideProps: GetServerSideProps = async (ctx: GetServerSidePropsContext) => {
   const { query } = ctx;
@@ -502,8 +503,6 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
     'Choose your outdoor interests to see personalised activity recommendations based on the weather.');
   const chooseActivitiesButton = useUIText('index.button.choose_activities',
     'Choose Activities');
-  const loadingRecommendations = useUIText('index.paragraph.loading_your_smart_recommendat_8',
-    'Loading your smart recommendations...');
   const errorPrefix = useUIText('index.label.error', 'Error');
   const pickHomeLocation = useUIText('index.label.pick_your_home_location_9',
     'Pick your home location');
@@ -713,7 +712,18 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   }
 
   if (loading) {
-    return <div>{loadingRecommendations}</div>;
+    return (
+      <>
+        <SEO
+          title="Weather-Based Activity Recommendations"
+          description="Get personalized outdoor activity suggestions based on real-time weather conditions. Perfect for planning your day in the UK and Europe."
+          url="https://godaisy.io"
+        />
+        <AppHeader />
+        <SkeletonHomePage />
+        <BottomNav />
+      </>
+    );
   }
 
   if (error) {
