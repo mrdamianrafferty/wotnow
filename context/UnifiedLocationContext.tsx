@@ -337,18 +337,23 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
   }, []);
 
   const refreshRemote = useCallback(async () => {
-    // Skip if already loaded recently (within same render cycle)
+    // Skip if already loading or loaded recently
     if (remoteLoadedRef.current) {
       return;
     }
-    const remote = await loadRemoteLocations();
-    if (remote) {
-      remoteLoadedRef.current = true;
-      setLocations(remote.locations);
-      setActiveLocationId(remote.activeLocationId);
-      persistState(remote);
+    // Set flag immediately to prevent concurrent calls
+    remoteLoadedRef.current = true;
+    
+    try {
+      const remote = await loadRemoteLocations();
+      if (remote) {
+        setLocations(remote.locations);
+        setActiveLocationId(remote.activeLocationId);
+        persistState(remote);
+      }
+    } finally {
       // Reset flag after a short delay to allow future refreshes
-      setTimeout(() => { remoteLoadedRef.current = false; }, 1000);
+      setTimeout(() => { remoteLoadedRef.current = false; }, 2000);
     }
   }, []);
 

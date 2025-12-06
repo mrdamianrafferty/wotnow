@@ -86,6 +86,7 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   const [favourites, setFavourites] = useState<string[]>([]);
   const favouritesRef = useRef<string[]>([]); // Keep track of current favourites for immediate reads
   const pendingTogglesRef = useRef<Set<string>>(new Set()); // Track pending toggle operations
+  const loadingRef = useRef(false); // Prevent concurrent loads
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading, null = not authenticated
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -120,54 +121,61 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
   useEffect(() => {
     // Wait until auth state is determined (not undefined)
     if (user === undefined) return;
+    // Prevent concurrent loads
+    if (loadingRef.current) return;
     
     const loadFavourites = async () => {
+      loadingRef.current = true;
       console.log('[useFavourites] Loading favourites, authenticated:', Boolean(user));
       setLoading(true);
       
-      if (user && autoSync) {
-        // Authenticated: Load from Supabase
-        try {
-          console.log('[useFavourites] Fetching from Supabase...');
-          const response = await fetch('/api/findr/favourites', {
-            credentials: 'include', // Send cookies for authentication
-          });
-          const data = await response.json();
-          
-          if (data.success && Array.isArray(data.favourites)) {
-            const speciesIds: string[] = Array.from(
-              new Set(
-                data.favourites
-                  .map((fav: { speciesId?: string }) =>
-                    typeof fav.speciesId === 'string' ? normalizeFavouriteId(fav.speciesId) : null
-                  )
-                  .filter((id: string | null): id is string => Boolean(id))
-              )
-            );
-            console.log('[useFavourites] Loaded from Supabase:', speciesIds.length, 'favourites');
-            setFavourites(speciesIds);
+      try {
+        if (user && autoSync) {
+          // Authenticated: Load from Supabase
+          try {
+            console.log('[useFavourites] Fetching from Supabase...');
+            const response = await fetch('/api/findr/favourites', {
+              credentials: 'include', // Send cookies for authentication
+            });
+            const data = await response.json();
+            
+            if (data.success && Array.isArray(data.favourites)) {
+              const speciesIds: string[] = Array.from(
+                new Set(
+                  data.favourites
+                    .map((fav: { speciesId?: string }) =>
+                      typeof fav.speciesId === 'string' ? normalizeFavouriteId(fav.speciesId) : null
+                    )
+                    .filter((id: string | null): id is string => Boolean(id))
+                )
+              );
+              console.log('[useFavourites] Loaded from Supabase:', speciesIds.length, 'favourites');
+              setFavourites(speciesIds);
 
-            const details = data.favourites
-              .map((fav: Record<string, unknown>) => mapApiFavouriteToDetail(fav))
-              .filter((detail: FavouriteDetail | null): detail is FavouriteDetail => Boolean(detail));
-            setFavouriteDetails(details);
+              const details = data.favourites
+                .map((fav: Record<string, unknown>) => mapApiFavouriteToDetail(fav))
+                .filter((detail: FavouriteDetail | null): detail is FavouriteDetail => Boolean(detail));
+              setFavouriteDetails(details);
 
-            // Update localStorage to match Supabase
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(speciesIds));
-          } else {
-            setFavouriteDetails([]);
+              // Update localStorage to match Supabase
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(speciesIds));
+            } else {
+              setFavouriteDetails([]);
+            }
+          } catch (error) {
+            console.error('Failed to load favourites from Supabase:', error);
+            // Fall back to localStorage
+            loadFromLocalStorage();
           }
-        } catch (error) {
-          console.error('Failed to load favourites from Supabase:', error);
-          // Fall back to localStorage
+        } else {
+          // Not authenticated: Load from localStorage
           loadFromLocalStorage();
         }
-      } else {
-        // Not authenticated: Load from localStorage
-        loadFromLocalStorage();
+      } finally {
+        setLoading(false);
+        // Reset after delay to allow re-fetch if user changes
+        setTimeout(() => { loadingRef.current = false; }, 2000);
       }
-      
-      setLoading(false);
     };
 
     loadFavourites();
