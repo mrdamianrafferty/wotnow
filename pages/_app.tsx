@@ -22,6 +22,7 @@ import { OfflineInit } from '../components/OfflineInit'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ErrorBoundary } from '../components/ErrorBoundary';
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
 // const roboto = Roboto({
@@ -85,69 +86,71 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
   const theme = (pageProps?.theme as ThemeName | undefined) ?? defaultTheme;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LanguageProvider>
-          <UnifiedLocationProvider>
-            <UserPreferencesProvider>
-              <Head>
-              {/* Ensure proper scaling and colour on iPad/phones */}
-              <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-              <meta name="theme-color" content="#111827" />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <LanguageProvider>
+            <UnifiedLocationProvider>
+              <UserPreferencesProvider>
+                <Head>
+                {/* Ensure proper scaling and colour on iPad/phones */}
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+                <meta name="theme-color" content="#111827" />
 
-              {/* PWA Manifest - Domain-based */}
-              <link rel="manifest" href={isFindr ? "/manifest.json" : "/manifest-godaisy.json"} />
+                {/* PWA Manifest - Domain-based */}
+                <link rel="manifest" href={isFindr ? "/manifest.json" : "/manifest-godaisy.json"} />
 
-              {/* Apple Touch Icons - Domain-based */}
-              <link rel="apple-touch-icon" href={isFindr ? "/findr-favicon-v2/apple-touch-icon.png" : "/godaisy-favicon/apple-touch-icon.png"} />
-              <meta name="mobile-web-app-capable" content="yes" />
-              <meta name="apple-mobile-web-app-capable" content="yes" />
-              <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-              <meta name="apple-mobile-web-app-title" content={isFindr ? "Findr" : "Go Daisy"} />
+                {/* Apple Touch Icons - Domain-based */}
+                <link rel="apple-touch-icon" href={isFindr ? "/findr-favicon-v2/apple-touch-icon.png" : "/godaisy-favicon/apple-touch-icon.png"} />
+                <meta name="mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-capable" content="yes" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+                <meta name="apple-mobile-web-app-title" content={isFindr ? "Findr" : "Go Daisy"} />
 
-              {/* Favicons - Domain-based */}
-              <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
-              <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
-              <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
-              </Head>
-              {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
-              <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
-                {/* Initialize offline storage and sync service */}
-                <OfflineInit />
-                {/* Offline Indicator - shows at top when offline */}
-                <OfflineIndicator />
-                {/* Toast notifications */}
-                <Toaster
-                  position="top-center"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: 'hsl(var(--b1))',
-                      color: 'hsl(var(--bc))',
-                      border: '1px solid hsl(var(--b3))',
-                    },
-                    success: {
-                      iconTheme: {
-                        primary: 'hsl(var(--su))',
-                        secondary: 'hsl(var(--suc))',
+                {/* Favicons - Domain-based */}
+                <link rel="icon" type="image/svg+xml" href={isFindr ? "/findr-favicon-v2/favicon.svg" : "/godaisy-favicon/favicon.svg"} />
+                <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
+                <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
+                </Head>
+                {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
+                <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
+                  {/* Initialize offline storage and sync service */}
+                  <OfflineInit />
+                  {/* Offline Indicator - shows at top when offline */}
+                  <OfflineIndicator />
+                  {/* Toast notifications */}
+                  <Toaster
+                    position="top-center"
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: 'hsl(var(--b1))',
+                        color: 'hsl(var(--bc))',
+                        border: '1px solid hsl(var(--b3))',
                       },
-                    },
-                    error: {
-                      iconTheme: {
-                        primary: 'hsl(var(--er))',
-                        secondary: 'hsl(var(--erc))',
+                      success: {
+                        iconTheme: {
+                          primary: 'hsl(var(--su))',
+                          secondary: 'hsl(var(--suc))',
+                        },
                       },
-                    },
-                  }}
-                />
-                <Component {...pageProps} />
-                <Analytics />
-                <SpeedInsights />
-              </div>
-            </UserPreferencesProvider>
-          </UnifiedLocationProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                      error: {
+                        iconTheme: {
+                          primary: 'hsl(var(--er))',
+                          secondary: 'hsl(var(--erc))',
+                        },
+                      },
+                    }}
+                  />
+                  <Component {...pageProps} />
+                  <Analytics />
+                  <SpeedInsights />
+                </div>
+              </UserPreferencesProvider>
+            </UnifiedLocationProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
