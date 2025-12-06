@@ -779,30 +779,18 @@ const FindrPage: React.FC = () => {
 
   // Auto-select first rectangle if none selected (fallback only)
   useEffect(() => {
-    console.log('[Findr] Auto-select check:', {
-      rectangleFromQuery,
-      rectangleFromFindr,
-      rectangleFromCoastal,
-      rectangleFromLegacy,
-      rectangleOptionsCount: rectangleOptions.length,
-      firstOption: rectangleOptions[0]?.code,
-      hasAnySelection: Boolean(rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy),
-    });
-
     // Don't auto-select if we have any rectangle from any source
     if (rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy) {
-      console.log('[Findr] Skipping auto-select: rectangle already available from context/query');
       return;
     }
     // Don't auto-select if rectangles not loaded yet
     if (rectangleOptions.length === 0) {
-      console.log('[Findr] Skipping auto-select: no rectangles loaded yet');
       return;
     }
 
     // Auto-select first rectangle and save to findr slot
     const firstOption = rectangleOptions[0];
-    console.log('[Findr] AUTO-SELECTING first rectangle:', firstOption.code);
+    console.log('[Findr] Auto-selecting first rectangle:', firstOption.code);
 
     void updateLocationBySlot({
       slot: 'findr',
@@ -833,16 +821,19 @@ const FindrPage: React.FC = () => {
     longitude: findrLocation?.lon ?? coastalLocation?.lon ?? legacyLocation?.lon ?? null,
   });
 
-  // Debug: Log when predictions change
+  // Debug: Log when predictions finish loading (not during loading state)
+  const prevPredictionsRef = useRef<typeof predictions>(null);
   useEffect(() => {
-    console.log('[Findr] Predictions updated:', {
-      activeRectangle,
-      predictionCount: predictions?.length ?? 0,
-      loading,
-      error: Boolean(error),
-      firstSpecies: predictions?.[0]?.species_common_name || predictions?.[0]?.common_name,
-    });
-  }, [predictions, activeRectangle, loading, error]);
+    // Only log when loading completes with new data
+    if (!loading && predictions && predictions !== prevPredictionsRef.current) {
+      console.log('[Findr] Predictions loaded:', {
+        rectangleCode: activeRectangle,
+        count: predictions.length,
+        topSpecies: predictions[0]?.species_common_name || predictions[0]?.common_name,
+      });
+      prevPredictionsRef.current = predictions;
+    }
+  }, [predictions, activeRectangle, loading]);
 
   useEffect(() => {
     if (!rectangleOptionsUsingFallback) return;
@@ -903,27 +894,12 @@ const FindrPage: React.FC = () => {
         return scoreB - scoreA;
       });
 
-    console.log('[Findr] Cards computed:', {
-      rectangleCode: activeRectangle,
-      predictionCount: predictions.length,
-      cardCount: mapped.length,
-      firstCardSpecies: mapped[0]?.commonName,
-      firstCardConfidence: mapped[0]?.confidence,
-      firstCardBiteScore: mapped[0]?.biteScore,
-      regionCode: mapped[0]?.regionCode,
-    });
-
     return mapped;
   }, [predictions, activeRectangle, legacyLocation, coastalLocation, activeOption]);
 
   useEffect(() => {
-    console.log('[Findr] Updating cardQueue:', {
-      rectangleCode: activeRectangle,
-      newCardCount: cards.length,
-      firstCard: cards[0]?.commonName,
-    });
     setCardQueue(cards);
-  }, [cards, activeRectangle]);
+  }, [cards]);
 
   // Favorites are now managed by useFavourites hook
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
