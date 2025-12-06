@@ -193,6 +193,7 @@ interface FavouriteEntry {
   nextBestDay: string;
   isPriority: boolean;
   isMockOnly: boolean;
+  missingDataReason?: 'no_data' | 'out_of_season' | 'not_in_area' | null;
   playfulBio?: string;
   image?: CardImage;
   imageSource: 'prediction' | 'fallback';
@@ -747,22 +748,14 @@ const FindrFavouritesPage: React.FC = () => {
   const hasFavourites = favoritesList.length > 0;
   const prioritySet = useMemo(() => new Set(priorityIds), [priorityIds]);
 
-  const { insights, loading: _insightsLoading, error: insightsError, source: insightsSource } = useFavouriteInsights(favoritesList);
+  const { insights, loading: _insightsLoading, error: _insightsError, source: _insightsSource } = useFavouriteInsights(favoritesList);
   const insightMap = useMemo(() => new Map(insights.map((insight) => [insight.id, insight])), [insights]);
 
   // DISABLED: Catch statistics not needed for current UI (WeeklyPlannerCard only)
   // Can re-enable if Active/Good/Waiting cards are restored
   // const { data: catchStats, isLoading: catchStatsLoading } = useCatchStatistics();
 
-  useEffect(() => {
-    if (favoritesList.length === 0) return;
-
-    if (insightsSource === 'supabase') {
-      console.info('[Findr Favourites] Supabase insights loaded', { count: insights.length });
-    } else if (insightsSource === 'fallback' && insightsError) {
-      console.info('[Findr Favourites] Using fallback favourite insights', { error: insightsError });
-    }
-  }, [favoritesList.length, insightsSource, insights.length, insightsError]);
+  // Insights logging removed - data flows through silently
 
   const { predictions, loading, error, tideInfo, reload } = useFishingPredictions({
     rectangleCode: activeRectangle,
@@ -932,7 +925,28 @@ const FindrFavouritesPage: React.FC = () => {
         recentActivity,
         nextBestDay: insight?.nextBestDay ?? mock.nextBestDay,
         isPriority: prioritySet.has(id),
-        isMockOnly: card === null && typeof metadata?.confidence !== 'number' && !metadata?.forecast,
+        isMockOnly: (() => {
+          // Determine if species has live data
+          const hasLiveData = card !== null || typeof metadata?.confidence === 'number' || metadata?.forecast;
+          return !hasLiveData;
+        })(),
+        missingDataReason: (() => {
+          // Determine reason for missing data (for UX messaging)
+          const hasLiveData = card !== null || typeof metadata?.confidence === 'number' || metadata?.forecast;
+          if (!hasLiveData) {
+            // Check if species exists in our system but isn't in this area's predictions
+            const speciesKnown = metadata?.speciesCode || metadata?.name;
+            if (speciesKnown && activeRectangle) {
+              // Species is in favorites but not in predictions - likely not in this area or out of season
+              return 'not_in_area' as const;
+            }
+            return 'no_data' as const;
+          } else if (card?.seasonal_multiplier !== undefined && card.seasonal_multiplier < 0.3) {
+            // Very low seasonal multiplier indicates off-season
+            return 'out_of_season' as const;
+          }
+          return null;
+        })(),
         playfulBio: card?.playfulBio,
         image,
         imageSource,
@@ -941,7 +955,7 @@ const FindrFavouritesPage: React.FC = () => {
         forecast,
       } satisfies FavouriteEntry;
     });
-  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, forecastsBySpecies]);
+  }, [favorites, cards, favouriteMetadata, prioritySet, insightMap, forecastsBySpecies, activeRectangle]);
 
   const sortedFavourites = useMemo(() => {
     const entries = [...favouriteEntries];
@@ -1037,9 +1051,9 @@ const FindrFavouritesPage: React.FC = () => {
     setSelectedFish(null);
   }, []);
 
-  const showSwipeAction = useCallback((message: string, type: 'success' | 'remove' | 'info') => {
+  const showSwipeAction = useCallback((_message: string, _type: 'success' | 'remove' | 'info') => {
     // Placeholder feedback: swap for toast once shared notification system lands.
-    console.info(`[findr favourites:${type}] ${message}`);
+    // Logging removed - will be replaced with toast notifications
   }, []);
 
   const removeFavourite = useCallback(async (speciesId: string) => {
@@ -1150,7 +1164,7 @@ const FindrFavouritesPage: React.FC = () => {
         // Reload favourites to get updated notification settings
         await loadFavourites();
 
-        console.log('[Favourites] Notification preferences saved successfully');
+        // Success - notification preferences saved
       } else {
         console.error('[Favourites] Failed to save notification preferences:', data.error);
       }
@@ -1235,7 +1249,14 @@ const FindrFavouritesPage: React.FC = () => {
 
   const getPullMessage = useCallback((entry: FavouriteEntry): string => {
     if (entry.isMockOnly) {
-      return 'We need a fresh prediction in this area to forecast their vibe.';
+      switch (entry.missingDataReason) {
+        case 'not_in_area':
+          return 'This species may not be common in your current fishing area. Try a different location.';
+        case 'out_of_season':
+          return 'Currently out of season in this area. Check back in a few months!';
+        default:
+          return 'We need a fresh prediction in this area to forecast their vibe.';
+      }
     }
     if (entry.confidence !== null && entry.confidence < 70) {
       return "No hard feelings but they are just not into you right now";
@@ -1473,15 +1494,6 @@ const FindrFavouritesPage: React.FC = () => {
                     // Use species code for lookup (matches tactical advice API keys)
                     const lookupKey = (entry.card?.speciesCode || entry.id).toLowerCase();
                     const advice = tacticalAdviceMap.get(lookupKey);
-
-                    // Debug logging - check what data we have
-                    console.log(`[Favourites] Processing ${entry.name}:`, {
-                      hasCard: !!entry.card,
-                      cardBestTimes: entry.card?.bestTimes,
-                      hasAdvice: !!advice,
-                      adviceAlternativeTechniques: advice?.alternativeTechniques,
-                      adviceAlternativeHabitats: advice?.alternativeHabitats
-                    });
 
                     // Use tactical advice baits if available (more specific), otherwise use entry baits
                     const baits = advice?.baits && advice.baits.length > 0
@@ -1832,8 +1844,13 @@ const FindrFavouritesPage: React.FC = () => {
                 {selectedFish.isMockOnly && (
                   <div className="alert alert-warning">
                     <span className="text-xs">
-                      This favourite doesn&apos;t have live predictions for the current fishing area yet. Refresh or change
-                      area to check back soon.
+                      {selectedFish.missingDataReason === 'not_in_area' ? (
+                        <>This species may not be common in your current fishing area. They could be seasonal migrants or found in different waters. Try checking a nearby coastal area or wait for seasonal changes.</>
+                      ) : selectedFish.missingDataReason === 'out_of_season' ? (
+                        <>This species is currently out of season in your area. Fishing conditions will improve when they return – usually with seasonal temperature changes.</>
+                      ) : (
+                        <>This favourite doesn&apos;t have live predictions for the current fishing area yet. Refresh or change area to check back soon.</>
+                      )}
                     </span>
                   </div>
                 )}

@@ -477,14 +477,12 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     // If locations are IP-bootstrapped, don't sync them to database
     // User hasn't manually chosen these locations yet
     if (isBootstrapped) {
-      console.log('[UserPreferences] Skipping sync of IP-bootstrapped locations to database');
       return;
     }
 
     // IMPORTANT: For old localStorage data without bootstrap flag, treat it as bootstrapped
     // to prevent auto-syncing default/IP locations to database
     // Only sync if user has explicitly updated locations after we deployed the bootstrap system
-    console.log('[UserPreferences] Old localStorage detected without bootstrap flag - treating as bootstrapped to prevent auto-sync');
     return;
 
     // This code is now disabled - kept for reference but will be removed in future cleanup
@@ -597,7 +595,6 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (locationsChanged && typeof window !== 'undefined') {
       const isBootstrapped = localStorage.getItem('godaisy.bootstrap-applied') === '1';
       if (isBootstrapped) {
-        console.log('[UserPreferences] Locations changed by user, clearing bootstrap flag');
         localStorage.removeItem('godaisy.bootstrap-applied');
         localStorage.removeItem('godaisy.bootstrap-source');
       }

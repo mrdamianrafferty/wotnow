@@ -128,14 +128,12 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     
     const loadFavourites = async () => {
       globalFavouritesLoading = true;
-      console.log('[useFavourites] Loading favourites, authenticated:', Boolean(user));
       setLoading(true);
       
       try {
         if (user && autoSync) {
           // Authenticated: Load from Supabase
           try {
-            console.log('[useFavourites] Fetching from Supabase...');
             const response = await fetch('/api/findr/favourites', {
               credentials: 'include', // Send cookies for authentication
             });
@@ -151,7 +149,6 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
                     .filter((id: string | null): id is string => Boolean(id))
                 )
               );
-              console.log('[useFavourites] Loaded from Supabase:', speciesIds.length, 'favourites');
               setFavourites(speciesIds);
 
               const details = data.favourites
@@ -257,8 +254,6 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           console.error(`Failed to sync favourite ${speciesId}:`, error);
         }
       }
-
-      console.log(`Synced ${localFavourites.length} favourites to Supabase`);
     } finally {
       setSyncing(false);
     }
@@ -269,8 +264,6 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     const normalizedId = normalizeFavouriteId(speciesId);
     const previousIds = favouritesRef.current.slice();
     const previousDetails = favouriteDetailsRef.current.slice();
-
-    console.log('[useFavourites] Adding favourite:', { speciesId, normalizedId, isAuthenticated: Boolean(user) });
 
     const fallbackCode = options?.speciesCode?.trim().toUpperCase() ?? (UUID_PATTERN.test(normalizedId) ? null : normalizedId);
     const fallbackInfo = speciesInfoForCode(fallbackCode ?? normalizedId);
@@ -285,10 +278,8 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     // Optimistically update UI
     setFavourites((prev) => {
       if (prev.includes(normalizedId)) {
-        console.log('[useFavourites] Already favourited, skipping');
         return prev;
       }
-      console.log('[useFavourites] Optimistic update: adding to local state');
       return [...prev, normalizedId];
     });
     setFavouriteDetails((prev) => {
@@ -317,8 +308,6 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
           bodyPayload.speciesName = options.speciesName;
         }
 
-        console.log('[useFavourites] Sending to API:', bodyPayload);
-
         const response = await fetch('/api/findr/favourites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -328,14 +317,11 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
 
         const data = await response.json();
 
-        console.log('[useFavourites] API response:', { success: data.success, error: data.error, status: response.status });
-
         // Treat 409 (already favorited) as success - species is in database
         if (!data.success && response.status !== 409) {
           console.error('Failed to add favourite to Supabase:', data.error);
           revertOptimisticUpdate();
         } else {
-          console.log('[useFavourites] Successfully added to Supabase (or already exists)');
           if (data.favourite) {
             const detail = mapApiFavouriteToDetail(data.favourite);
             if (detail) {
@@ -381,11 +367,8 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     const previousIds = favouritesRef.current.slice();
     const previousDetails = favouriteDetailsRef.current.slice();
     
-    console.log('[useFavourites] Removing favourite:', { speciesId, normalizedId, favouriteId, isAuthenticated: Boolean(user) });
-    
     // Optimistically update UI
     setFavourites((prev) => {
-      console.log('[useFavourites] Optimistic update: removing from local state');
       return prev.filter((id) => id !== normalizedId);
     });
     setFavouriteDetails((prev) => prev.filter((detail) => {
@@ -442,7 +425,6 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     
     // Prevent concurrent toggles of the same species
     if (pendingTogglesRef.current.has(normalizedId)) {
-      console.log('[useFavourites] Toggle already in progress for', normalizedId);
       return;
     }
     

@@ -203,14 +203,12 @@ async function upsertRemoteLocationBySlot(input: UpdateLocationBySlotInput): Pro
 
 async function loadRemoteLocations(): Promise<StoredState | null> {
   try {
-    console.log('[UnifiedLocation] Loading remote locations...');
     const res = await fetch('/api/user/location?multiLocation=true', {
       method: 'GET',
       credentials: 'same-origin' // Explicitly include cookies
     });
 
     if (res.status === 401) {
-      console.log('[UnifiedLocation] Not authenticated (401)');
       return null;
     }
 
@@ -223,11 +221,6 @@ async function loadRemoteLocations(): Promise<StoredState | null> {
       locations: SavedLocation[];
       activeLocationId: string | null;
     };
-
-    console.log('[UnifiedLocation] Remote locations loaded:', {
-      locationCount: payload.locations?.length ?? 0,
-      activeLocationId: payload.activeLocationId,
-    });
 
     return {
       locations: payload.locations ?? [],
@@ -292,11 +285,8 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
     // Read localStorage first (synchronous, fast)
     const stored = readStoredState();
     if (stored) {
-      console.log('[UnifiedLocation] Loaded from localStorage:', stored.locations.length, 'locations');
       setLocations(stored.locations);
       setActiveLocationId(stored.activeLocationId);
-    } else {
-      console.log('[UnifiedLocation] No stored locations found in localStorage');
     }
 
     // Fetch remote locations (async) - set flag to prevent duplicate calls from refreshRemote
@@ -306,23 +296,17 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
         const remote = await loadRemoteLocations();
         if (remote && remote.locations.length > 0) {
           // Remote has data - use it and sync to localStorage
-          console.log('[UnifiedLocation] Loaded from remote:', remote.locations.length, 'locations');
           setLocations(remote.locations);
           setActiveLocationId(remote.activeLocationId);
           persistState(remote);
         } else if (remote && !stored) {
           // Remote explicitly returned empty AND we have no local data
-          console.log('[UnifiedLocation] Remote empty, no localStorage - clearing state');
           setLocations([]);
           setActiveLocationId(null);
         } else if (!remote && !stored) {
           // Remote failed/unauthorized AND we have no local data
-          console.log('[UnifiedLocation] Remote failed, no localStorage - clearing state');
           setLocations([]);
           setActiveLocationId(null);
-        } else if (!remote || (remote && remote.locations.length === 0)) {
-          // Remote returned empty/null but we have localStorage - keep localStorage!
-          console.log('[UnifiedLocation] Remote empty but keeping localStorage data:', stored?.locations.length ?? 0, 'locations');
         }
       } catch (error) {
         console.warn('[UnifiedLocation] Failed to load remote locations on mount', error);
