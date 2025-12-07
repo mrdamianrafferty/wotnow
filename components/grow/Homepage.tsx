@@ -567,8 +567,8 @@ export function Homepage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Location Settings */}
-          <LocationSettings 
-            currentLocation={userLocation || weatherContext.location}
+          <LocationSettings
+            currentLocation={userLocation || weatherContext?.location || undefined}
             onLocationUpdate={handleLocationUpdate}
           />
           
@@ -626,47 +626,49 @@ export function Homepage() {
       )}
 
       {/* Context Strip */}
-      <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-blue-600" />
-              <div className="text-sm">
-                <p className="font-medium">{userLocation || weatherContext.location}</p>
-                <p className="text-xs text-muted-foreground">
-                  {t('Zone')} {weatherContext.zone}
-                </p>
+      {weatherContext && (
+        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                <div className="text-sm">
+                  <p className="font-medium">{userLocation || weatherContext.location}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t('Zone')} {weatherContext.zone}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{weatherContext.icon}</span>
+                <div className="text-sm">
+                  <p className="font-medium">{weatherContext.temperature}°F</p>
+                  <p className="text-xs text-muted-foreground capitalize">{weatherContext.conditions}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Droplets className="h-4 w-4 text-blue-600" />
+                <div className="text-sm">
+                  <p className="font-medium">
+                    {t('Soil')}: {weatherContext.soilMoisture}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Thermometer className="h-4 w-4 text-purple-600" />
+                <div className="text-sm">
+                  <p className="font-medium">
+                    {t('Last Frost')}: {weatherContext.lastFrostDate}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ({weatherContext.daysSinceFrost} {t('days ago')})
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{weatherContext.icon}</span>
-              <div className="text-sm">
-                <p className="font-medium">{weatherContext.temperature}°F</p>
-                <p className="text-xs text-muted-foreground capitalize">{weatherContext.conditions}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Droplets className="h-4 w-4 text-blue-600" />
-              <div className="text-sm">
-                <p className="font-medium">
-                  {t('Soil')}: {weatherContext.soilMoisture}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Thermometer className="h-4 w-4 text-purple-600" />
-              <div className="text-sm">
-                <p className="font-medium">
-                  {t('Last Frost')}: {weatherContext.lastFrostDate}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  ({weatherContext.daysSinceFrost} {t('days ago')})
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Task List */}
       <div id="task-list" className="space-y-4">
