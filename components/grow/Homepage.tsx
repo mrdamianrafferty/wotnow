@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Skeleton } from '../ui/skeleton';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import {
   Home,
@@ -342,16 +341,18 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
               size="lg"
               onClick={() => onSwipeLeft(task.id)}
               className="border-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+              aria-label={`${t('Dismiss')} ${task.title}`}
             >
-              <X className="h-5 w-5 mr-2" />
+              <X className="h-5 w-5 mr-2" aria-hidden="true" />
               {t('Dismiss')}
             </Button>
             <Button
               size="lg"
               onClick={() => onSwipeRight(task.id)}
               className="bg-green-600 hover:bg-green-700"
+              aria-label={`${t('Add to List')}: ${task.title}`}
             >
-              <CheckCircle2 className="h-5 w-5 mr-2" />
+              <CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" />
               {t('Add to List')}
             </Button>
           </div>
@@ -410,7 +411,9 @@ export function Homepage() {
       'Zone',
       'Soil',
       'Last Frost',
-      'days ago'
+      'days ago',
+      'Refresh tasks',
+      'Added'
     ],
     [],
   );
@@ -698,8 +701,8 @@ export function Homepage() {
               🔗 {t('Connected')}
             </Badge>
           )}
-          <Button variant="ghost" size="icon" onClick={() => loadTasks()}>
-            <RefreshCw className="h-5 w-5" />
+          <Button variant="ghost" size="icon" onClick={() => loadTasks()} aria-label={t('Refresh tasks')}>
+            <RefreshCw className="h-5 w-5" aria-hidden="true" />
           </Button>
         </div>
       </div>
@@ -923,19 +926,21 @@ export function Homepage() {
                         size="sm"
                         onClick={() => handleAddTask(task.id)}
                         className={isInMyTasks ? "bg-green-600 hover:bg-green-700" : ""}
+                        aria-label={isInMyTasks ? `${t('Added')}: ${task.title}` : `${t('Add to List')}: ${task.title}`}
                       >
                         {isInMyTasks ? (
-                          <CheckCircle2 className="h-4 w-4" />
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                         ) : (
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-4 w-4" aria-hidden="true" />
                         )}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDismissTask(task.id)}
+                        aria-label={`${t('Dismiss')} ${task.title}`}
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
