@@ -218,7 +218,7 @@ export function GrowExperience() {
         onSignOut={handleSignOut}
       />
       <SessionRefreshNotice />
-      <main className="container mx-auto px-4 py-8">
+      <main id="main-content" className="container mx-auto px-4 py-8">
         {currentView}
       </main>
     </div>

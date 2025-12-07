@@ -30,46 +30,60 @@ const pageButton = (
   onPageChange: NavigationProps['onPageChange'],
   icon: React.ReactNode,
   label: string,
-) => (
-  <Button
-    variant={currentPage === page ? 'default' : 'ghost'}
-    size="sm"
-    onClick={() => onPageChange(page)}
-    className="flex items-center space-x-1"
-  >
-    {icon}
-    <span className="hidden sm:inline">{label}</span>
-  </Button>
-);
+) => {
+  const isActive = currentPage === page;
+  return (
+    <Button
+      variant={isActive ? 'default' : 'ghost'}
+      size="sm"
+      onClick={() => onPageChange(page)}
+      className="flex items-center space-x-1"
+      aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
+      role="tab"
+      aria-selected={isActive}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </Button>
+  );
+};
 
 export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }: NavigationProps) {
   const translationInputs = React.useMemo(
-    () => ['My Home', 'Plan', 'Garden', 'Conditions', 'Info', 'Sign out', 'Sign in'],
+    () => ['My Home', 'Plan', 'Garden', 'Conditions', 'Info', 'Sign out', 'Sign in', 'Skip to main content', 'User account'],
     [],
   );
   const { t } = useTranslationMap(translationInputs);
 
   return (
-    <nav className="bg-card border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-2">
-            <Sprout className="h-8 w-8 text-green-600" />
-            <span className="font-semibold text-lg">Grow Daisy</span>
-          </div>
+    <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-green-600 focus:text-white focus:rounded-md focus:shadow-lg"
+      >
+        {t('Skip to main content')}
+      </a>
+      <nav className="bg-card border-b border-border" role="navigation" aria-label="Main navigation">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-2">
+              <Sprout className="h-8 w-8 text-green-600" aria-hidden="true" />
+              <span className="font-semibold text-lg">Grow Daisy</span>
+            </div>
 
           <div className="flex items-center space-x-1">
-            {pageButton('home', currentPage, onPageChange, <Home className="h-4 w-4" />, t('My Home'))}
-            {pageButton('plan', currentPage, onPageChange, <Calendar className="h-4 w-4" />, t('Plan'))}
-            {pageButton('garden', currentPage, onPageChange, <Sprout className="h-4 w-4" />, t('Garden'))}
-            {pageButton('conditions', currentPage, onPageChange, <CloudSun className="h-4 w-4" />, t('Conditions'))}
-            {pageButton('info', currentPage, onPageChange, <Info className="h-4 w-4" />, t('Info'))}
+            {pageButton('home', currentPage, onPageChange, <Home className="h-4 w-4" aria-hidden="true" />, t('My Home'))}
+            {pageButton('plan', currentPage, onPageChange, <Calendar className="h-4 w-4" aria-hidden="true" />, t('Plan'))}
+            {pageButton('garden', currentPage, onPageChange, <Sprout className="h-4 w-4" aria-hidden="true" />, t('Garden'))}
+            {pageButton('conditions', currentPage, onPageChange, <CloudSun className="h-4 w-4" aria-hidden="true" />, t('Conditions'))}
+            {pageButton('info', currentPage, onPageChange, <Info className="h-4 w-4" aria-hidden="true" />, t('Info'))}
             <GrowLanguageSelector className="ml-1 hidden sm:inline-flex" />
 
             {currentUser ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label={t('User account')}>
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>
                         {(currentUser.name?.charAt(0) ?? currentUser.email?.charAt(0) ?? 'U').toUpperCase()}
@@ -86,7 +100,7 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                     <span>{t('Sign out')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -100,5 +114,6 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
         </div>
       </div>
     </nav>
+    </>
   );
 }
