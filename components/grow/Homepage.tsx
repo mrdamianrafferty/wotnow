@@ -368,7 +368,6 @@ export function Homepage() {
                   alertCacheRef.current.set(cacheKey, resolvedAlerts);
                   setGardenAlerts(resolvedAlerts);
                 } catch (error) {
-                  console.warn('Garden alerts unavailable:', error);
                   alertCacheRef.current.set(cacheKey, []);
                   setGardenAlerts([]);
                 } finally {
@@ -382,19 +381,12 @@ export function Homepage() {
             setGardenAlerts([]);
           }
         }
-        
-        if (response.realWeatherAvailable) {
-          console.log(`✅ Real weather data loaded for ${locationToUse}`);
-        } else {
-          console.log(`📊 Tasks loaded for ${locationToUse} (using estimated weather - Go Daisy API unavailable)`);
-        }
       } else {
         // Fallback to mock data
         setTasks([]);
       }
     } catch (_error) {
       // Fallback to mock data (offline mode)
-      console.log('📱 Running in demo mode with mock data');
       setTasks([]);
       setGardenAlerts([]);
       setAlertsLoading(false);
@@ -435,11 +427,10 @@ export function Homepage() {
             if (prefs?.home_place_name) {
               location = prefs.home_place_name;
               setUserLocation(location);
-              console.log(`✅ Loaded home location from database: ${location}`);
             }
           }
         } catch (error) {
-          console.log('📱 Could not load location from database:', error);
+          // Silent failure - will fall back to localStorage or empty
         }
       }
 
@@ -452,7 +443,6 @@ export function Homepage() {
             if (interests.location) {
               location = interests.location;
               setUserLocation(location);
-              console.log(`📱 Loaded location from localStorage: ${location}`);
             }
           } catch (_error) {
             // Invalid JSON
@@ -481,10 +471,9 @@ export function Homepage() {
       const token = localStorage.getItem('access_token');
       if (token) {
         await api.addTaskToList(taskId);
-        console.log('✅ Task synced to backend');
       }
     } catch (_error) {
-      console.log('📱 Offline mode - task saved locally');
+      // Silent failure - task saved locally
     }
   };
 
@@ -497,10 +486,9 @@ export function Homepage() {
       const token = localStorage.getItem('access_token');
       if (token) {
         await api.dismissTask(taskId, 'not_interested');
-        console.log('✅ Dismissal synced to backend');
       }
     } catch (_error) {
-      console.log('📱 Offline mode - dismissal saved locally');
+      // Silent failure - dismissal saved locally
     }
   };
 
@@ -517,7 +505,7 @@ export function Homepage() {
           await api.removeTaskFromList(taskId);
         }
       } catch (_error) {
-        console.log('📱 Offline mode - removal saved locally');
+        // Silent failure - removal saved locally
       }
     } else {
       setMyTasks(prev => [...prev, taskId]);
@@ -529,7 +517,7 @@ export function Homepage() {
           await api.addTaskToList(taskId);
         }
       } catch (_error) {
-        console.log('📱 Offline mode - addition saved locally');
+        // Silent failure - addition saved locally
       }
     }
   };
@@ -544,7 +532,7 @@ export function Homepage() {
         await api.dismissTask(taskId, 'not_interested');
       }
     } catch (_error) {
-      console.log('📱 Offline mode - dismissal saved locally');
+      // Silent failure - dismissal saved locally
     }
   };
 

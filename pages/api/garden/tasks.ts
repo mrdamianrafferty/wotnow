@@ -617,8 +617,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const location = (req.query.location as string) || 'San Francisco, CA'; // Generic default for first-time users
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
-    console.log(`🌱 Generating garden tasks for location: ${location}`);
-
     // Fetch weather data
     const weatherData = await getWeatherData(location);
     const weather = weatherData?.weather || null;
@@ -627,7 +625,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get user's plants if authenticated
     const plants = await getUserPlants(req);
-    console.log(`🌱 Found ${plants.length} plants for user`);
 
     // Calculate zone and frost info
     const zone = coords ? getHardinessZone(coords.lat) : '7b';
@@ -640,8 +637,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Generate tasks
     const allTasks = generateTasks(plants, weather, location, zone, currentMonth);
     const tasks = allTasks.slice(0, limit);
-
-    console.log(`🌱 Generated ${tasks.length} tasks (${allTasks.length} total)`);
 
     // Build response context
     const context = {
