@@ -328,17 +328,47 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
       try {
         const token = localStorage.getItem('access_token');
         if (token) {
-          const response = await api.updateUserLocation(locationName);
-          if (response.climate_zone) {
-            setClimateZone(response.climate_zone);
+          const { createClient } = await import('@supabase/supabase-js');
+          const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase/env');
 
-            // Update localStorage with climate zone from backend
-            interests.climate_zone = response.climate_zone;
-            if (response.coordinates) {
-              interests.latitude = response.coordinates.lat;
-              interests.longitude = response.coordinates.lon;
+          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          });
+
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            // Update home_place_name and coordinates in database
+            const updatePayload: {
+              home_place_name: string;
+              home_coordinates?: { lat: number; lon: number };
+              updated_at: string;
+            } = {
+              home_place_name: locationName,
+              updated_at: new Date().toISOString(),
+            };
+
+            if (lat !== undefined && lon !== undefined) {
+              updatePayload.home_coordinates = { lat, lon };
             }
-            localStorage.setItem('userInterests', JSON.stringify(interests));
+
+            const { error: updateError } = await supabase
+              .from('user_location_preferences')
+              .update(updatePayload)
+              .eq('user_id', user.id);
+
+            if (updateError) {
+              // Try insert if update failed (no row exists)
+              await supabase
+                .from('user_location_preferences')
+                .insert({
+                  user_id: user.id,
+                  ...updatePayload,
+                });
+            }
           }
         }
       } catch (error: unknown) {
@@ -394,7 +424,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
           <span className="sm:hidden">Location</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-gray-900">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-green-600" />
