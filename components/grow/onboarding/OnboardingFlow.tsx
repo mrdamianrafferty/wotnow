@@ -508,7 +508,7 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
   const selectSingle = (key: 'soilType' | 'sunExposure' | 'moisture' | 'skillLevel' | 'contentDepth', value: string) => {
     setFormState((previous) => ({
       ...previous,
-      [key]: previous[key] === value ? '' : value,
+      [key]: value,
     }));
   };
 
