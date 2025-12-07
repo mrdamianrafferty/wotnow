@@ -669,7 +669,7 @@ export function Homepage() {
               <div className="flex items-center gap-2">
                 <span className="text-lg">{weatherContext.icon}</span>
                 <div className="text-sm">
-                  <p className="font-medium">{weatherContext.temperature}°F</p>
+                  <p className="font-medium">{weatherContext.temperature}°C</p>
                   <p className="text-xs text-muted-foreground capitalize">{weatherContext.conditions}</p>
                 </div>
               </div>

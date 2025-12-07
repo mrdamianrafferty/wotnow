@@ -89,7 +89,7 @@ async function getWeatherData(location: string): Promise<{ weather: WeatherData;
     }
 
     // Fetch current weather
-    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${geoData.lat}&lon=${geoData.lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`;
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${geoData.lat}&lon=${geoData.lon}&units=metric&appid=${OPENWEATHER_API_KEY}`;
     const weatherResponse = await fetch(weatherUrl);
 
     if (!weatherResponse.ok) {
@@ -229,14 +229,14 @@ function generateTasks(
       : 7;
 
     // Watering tasks based on weather
-    if (temp > 80 && daysSinceWatered > 1) {
+    if (temp > 27 && daysSinceWatered > 1) {
       tasks.push({
         id: `water-${plant.id}`,
         taskCode: 'water',
         title: `Water ${plant.name}`,
         emoji: '💧',
         shortDescription: `High temperatures require frequent watering`,
-        fullDescription: `Your ${plant.name} needs watering. Temperature is ${temp}°F and plants dry out quickly in hot weather.`,
+        fullDescription: `Your ${plant.name} needs watering. Temperature is ${temp}°C and plants dry out quickly in hot weather.`,
         score: 90,
         urgency: 'critical',
         urgencyBadge: '🔥 Urgent',
@@ -244,11 +244,11 @@ function generateTasks(
         timeRequired: 10,
         category: 'watering',
         reasoning: [
-          `Temperature is ${temp}°F - hot conditions increase water needs`,
+          `Temperature is ${temp}°C - hot conditions increase water needs`,
           `Last watered ${daysSinceWatered} days ago`,
           `${plant.name} may show stress in this heat`,
         ],
-        weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+        weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
         weatherIcon: '☀️',
         plant: plant.name,
       });
@@ -352,8 +352,8 @@ function generateTasks(
         `Last frost date has likely passed in zone ${zone}`,
         `Cool temperatures prevent bolting in greens`,
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
-      soilTemp: `Soil: 45-55°F (ideal)`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
+      soilTemp: `Soil: 7-13°C (ideal)`,
       weatherIcon: weather?.icon || '🌤️',
     });
   }
@@ -374,12 +374,12 @@ function generateTasks(
       timeRequired: 60,
       category: 'planting',
       reasoning: [
-        `Soil temperature above 60°F - perfect for warm-season crops`,
-        `Air temperature ${temp}°F supports growth`,
+        `Soil temperature above 16°C - perfect for warm-season crops`,
+        `Air temperature ${temp}°C supports growth`,
         `Full growing season ahead for maximum yields`,
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
-      soilTemp: `Soil: 60-70°F (ideal)`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
+      soilTemp: `Soil: 16-21°C (ideal)`,
       weatherIcon: weather?.icon || '☀️',
     });
   }
@@ -400,11 +400,11 @@ function generateTasks(
       timeRequired: 30,
       category: 'maintenance',
       reasoning: [
-        `Temperature ${temp}°F - mulch helps cool soil`,
+        `Temperature ${temp}°C - mulch helps cool soil`,
         `Reduces watering needs by 25-50%`,
         `Suppresses weeds that compete for water`,
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: weather?.icon || '☀️',
     });
   }
