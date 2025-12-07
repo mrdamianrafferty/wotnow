@@ -65,132 +65,6 @@ interface WeatherContext {
   growingWeek: number;
 }
 
-const MOCK_WEATHER_CONTEXT: WeatherContext = {
-  location: 'Portland, OR',
-  temperature: 72,
-  conditions: 'Sunny',
-  icon: '☀️',
-  soilMoisture: 'Moist',
-  lastFrostDate: 'May 10',
-  daysSinceFrost: 2,
-  zone: '8b',
-  growingWeek: 4
-};
-
-const MOCK_TASKS: GardenTask[] = [
-  {
-    id: '1',
-    taskCode: 'WATER_SEEDLINGS',
-    title: 'Water Seedlings',
-    emoji: '💧',
-    shortDescription: 'Urgent: Soil dry, 82°F today',
-    fullDescription: 'Your seedlings need water! It\'s hot today (82°F) and the soil is dry. Water them soon to prevent wilting.',
-    score: 95,
-    urgency: 'critical',
-    urgencyBadge: '🔥',
-    bestWindow: 'Today before 2pm',
-    timeRequired: 10,
-    category: 'watering',
-    weatherContext: 'Hot',
-    weatherIcon: '🌡️',
-    soilTemp: 'Dry',
-    reasoning: [
-      'Soil moisture low (checked yesterday)',
-      'Hot weather forecast today',
-      'Seedlings in sensitive growth stage'
-    ]
-  },
-  {
-    id: '2',
-    taskCode: 'PLANT_TOMATOES',
-    title: 'Plant Tomatoes',
-    emoji: '🍅',
-    shortDescription: 'Perfect timing! Soil 65°F',
-    fullDescription: 'Last frost passed, soil is 65°F - ideal for transplanting tomatoes. Do it this week for best results!',
-    score: 92,
-    urgency: 'optimal',
-    urgencyBadge: '✅',
-    bestWindow: 'Next 7 days',
-    timeRequired: 45,
-    category: 'planting',
-    weatherContext: 'Perfect',
-    weatherIcon: '☀️',
-    soilTemp: '65°F (optimal: 60-70°F)',
-    plant: 'Tomatoes',
-    reasoning: [
-      'Frost-free date passed (May 10)',
-      'Perfect soil temperature',
-      'Sunny weather for establishment',
-      'Your seedlings are 6-8" tall'
-    ]
-  },
-  {
-    id: '3',
-    taskCode: 'FERTILIZE_ROSES',
-    title: 'Fertilize Roses',
-    emoji: '🌹',
-    shortDescription: 'Before rain tomorrow',
-    fullDescription: 'Rain is forecast tomorrow - perfect time to fertilize! The rain will help wash nutrients into the soil.',
-    score: 82,
-    urgency: 'good',
-    urgencyBadge: '🌱',
-    bestWindow: 'Tomorrow morning',
-    timeRequired: 20,
-    category: 'fertilizing',
-    weatherContext: 'Good',
-    weatherIcon: '🌧️',
-    plant: 'Roses',
-    reasoning: [
-      'Rain forecast helps nutrient uptake',
-      'Roses in active growth phase',
-      'Haven\'t fertilized in 4 weeks'
-    ]
-  },
-  {
-    id: '4',
-    taskCode: 'PRUNE_FRUIT_TREES',
-    title: 'Prune Fruit Trees',
-    emoji: '✂️',
-    shortDescription: 'Coming up: Late dormant season',
-    fullDescription: 'Good time to prune fruit trees before they leaf out fully. Remove dead wood and shape the canopy.',
-    score: 65,
-    urgency: 'upcoming',
-    urgencyBadge: '⏰',
-    bestWindow: 'Next 2 weeks',
-    timeRequired: 60,
-    category: 'maintenance',
-    weatherContext: 'Upcoming',
-    weatherIcon: '🌤️',
-    plant: 'Fruit Trees',
-    reasoning: [
-      'Trees still mostly dormant',
-      'Before full leaf-out',
-      'Dry weather for clean cuts'
-    ]
-  },
-  {
-    id: '5',
-    taskCode: 'SOW_LETTUCE',
-    title: 'Direct Sow Lettuce',
-    emoji: '🥬',
-    shortDescription: 'Cool season crop, perfect timing',
-    fullDescription: 'Lettuce loves cool weather. Sow seeds directly in the garden now for spring harvest.',
-    score: 88,
-    urgency: 'optimal',
-    urgencyBadge: '✅',
-    bestWindow: 'This week',
-    timeRequired: 30,
-    category: 'planting',
-    weatherContext: 'Perfect',
-    weatherIcon: '☁️',
-    reasoning: [
-      'Cool temperatures ideal',
-      'Soil workable',
-      'Before hot weather arrives'
-    ]
-  }
-];
-
 // Swipeable Card Component
 interface SwipeCardProps {
   task: GardenTask;
@@ -369,7 +243,7 @@ export function Homepage() {
   const [dismissedTasks, setDismissedTasks] = useState<string[]>([]);
   const [cardDeckIndex, setCardDeckIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [weatherContext, setWeatherContext] = useState<WeatherContext>(MOCK_WEATHER_CONTEXT);
+  const [weatherContext, setWeatherContext] = useState<WeatherContext | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'urgency' | 'date' | 'plant' | 'time'>('urgency');
   const [filterBy, setFilterBy] = useState<string>('all');
@@ -516,12 +390,12 @@ export function Homepage() {
         }
       } else {
         // Fallback to mock data
-        setTasks(MOCK_TASKS);
+        setTasks([]);
       }
     } catch (_error) {
       // Fallback to mock data (offline mode)
       console.log('📱 Running in demo mode with mock data');
-      setTasks(MOCK_TASKS);
+      setTasks([]);
       setGardenAlerts([]);
       setAlertsLoading(false);
     } finally {
