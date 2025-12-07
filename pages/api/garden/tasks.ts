@@ -612,7 +612,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const location = (req.query.location as string) || 'Portland, OR';
+    // Use query location if provided, otherwise use a generic default
+    // Frontend should load user's saved location from database
+    const location = (req.query.location as string) || 'San Francisco, CA'; // Generic default for first-time users
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
     console.log(`🌱 Generating garden tasks for location: ${location}`);

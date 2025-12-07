@@ -404,26 +404,65 @@ export function Homepage() {
   }, [userLocation]);
 
   useEffect(() => {
-    // Load user location from localStorage and then load tasks
+    // Load user location from database (if authenticated) or localStorage
     // Wrap in startTransition to avoid Suspense hydration errors
-    startTransition(() => {
-      const interestsStr = localStorage.getItem('userInterests');
-      let location = 'Portland, OR'; // Default
-      
-      if (interestsStr) {
+    startTransition(async () => {
+      let location = ''; // Will be determined below
+
+      // First, try to get location from authenticated user's database
+      const token = localStorage.getItem('access_token');
+      if (token) {
         try {
-          const interests = JSON.parse(interestsStr);
-          if (interests.location) {
-            location = interests.location;
-            setUserLocation(location);
+          const { createClient } = await import('@supabase/supabase-js');
+          const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase/env');
+
+          const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            global: {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          });
+
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: prefs } = await supabase
+              .from('user_location_preferences')
+              .select('home_place_name')
+              .eq('user_id', user.id)
+              .maybeSingle();
+
+            if (prefs?.home_place_name) {
+              location = prefs.home_place_name;
+              setUserLocation(location);
+              console.log(`✅ Loaded home location from database: ${location}`);
+            }
           }
-        } catch (_error) {
-          // Invalid JSON
+        } catch (error) {
+          console.log('📱 Could not load location from database:', error);
         }
       }
-      
-      // Load tasks with the correct location
-      loadTasks(location);
+
+      // Fall back to localStorage if no database location
+      if (!location) {
+        const interestsStr = localStorage.getItem('userInterests');
+        if (interestsStr) {
+          try {
+            const interests = JSON.parse(interestsStr);
+            if (interests.location) {
+              location = interests.location;
+              setUserLocation(location);
+              console.log(`📱 Loaded location from localStorage: ${location}`);
+            }
+          } catch (_error) {
+            // Invalid JSON
+          }
+        }
+      }
+
+      // If still no location, leave empty (will trigger location picker)
+      // Load tasks with the determined location (or empty to prompt user)
+      loadTasks(location || undefined);
     });
   }, [loadTasks]);
 
