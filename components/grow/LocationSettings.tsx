@@ -81,6 +81,52 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
     setLocation(currentLocation);
   }, [currentLocation]);
 
+  // Load saved home location from database when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadSavedLocation = async () => {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const { SUPABASE_URL, SUPABASE_ANON_KEY } = await import('../../lib/supabase/env');
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          global: {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        });
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: prefs } = await supabase
+            .from('user_location_preferences')
+            .select('home_place_name, home_coordinates')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          if (prefs?.home_place_name) {
+            setLocation(prefs.home_place_name);
+            if (prefs.home_coordinates && typeof prefs.home_coordinates === 'object') {
+              const coords = prefs.home_coordinates as { lat?: number; lon?: number };
+              if (coords.lat && coords.lon) {
+                setSelectedCoords({ lat: coords.lat, lon: coords.lon });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        // Silent failure - will use prop value
+      }
+    };
+
+    loadSavedLocation();
+  }, [isOpen]);
+
   // Load recent locations
   useEffect(() => {
     if (!isOpen) return;
@@ -91,7 +137,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
         setRecentLocations(parsed.slice(0, 5));
       }
     } catch (_error) {
-      console.warn('Failed to load recent locations');
+      // Silent failure - will show empty recent list
     }
   }, [isOpen]);
 
@@ -103,7 +149,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
       try {
         localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
       } catch (_error) {
-        console.warn('Failed to save recent location');
+        // Silent failure
       }
       return updated;
     });
@@ -285,7 +331,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
           const response = await api.updateUserLocation(locationName);
           if (response.climate_zone) {
             setClimateZone(response.climate_zone);
-            
+
             // Update localStorage with climate zone from backend
             interests.climate_zone = response.climate_zone;
             if (response.coordinates) {
@@ -293,17 +339,10 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
               interests.longitude = response.coordinates.lon;
             }
             localStorage.setItem('userInterests', JSON.stringify(interests));
-            
-            console.log('✅ Location synced to backend - Climate zone:', response.climate_zone);
-          } else {
-            console.log('✅ Location synced to backend');
           }
-        } else {
-          console.log('📱 Location saved locally (not authenticated)');
         }
       } catch (error: unknown) {
-        console.error('❌ Backend sync failed:', error);
-        console.log('📱 Location saved locally (backend sync failed)');
+        // Backend sync failed - location still saved locally
       }
       
       setSaveStatus('success');
@@ -314,8 +353,6 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
         onLocationUpdate(locationName);
       }
 
-      console.log('✅ Location updated:', locationName);
-      
       // Clear suggestions and close dialog after 1 second
       clearSuggestions();
       setSearchValue('');
@@ -368,6 +405,16 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* Current Saved Location - Show at top */}
+          {currentLocation && !isSaving && saveStatus === 'idle' && (
+            <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+              <p className="text-xs text-green-900 mb-1 font-medium">Current location:</p>
+              <Badge variant="secondary" className="text-sm bg-white">
+                <MapPin className="h-3 w-3 mr-1" />
+                {currentLocation}
+              </Badge>
+            </div>
+          )}
           {/* Google Places Search - Only show if available */}
           {ready && (
             <div className="space-y-2">
@@ -543,17 +590,6 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
             </div>
           )}
 
-          {/* Current Location Badge */}
-          {currentLocation && !isSaving && saveStatus === 'idle' && (
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <p className="text-xs text-blue-900 mb-1 font-medium">Current saved location:</p>
-              <Badge variant="secondary" className="text-sm">
-                <MapPin className="h-3 w-3 mr-1" />
-                {currentLocation}
-              </Badge>
-            </div>
-          )}
-
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button
@@ -588,10 +624,9 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
             </Button>
           </div>
 
-          {/* Info Box */}
-          <div className="p-3 rounded-lg bg-muted/50 border text-xs text-muted-foreground">
-            <strong>Why location matters:</strong> Your location determines your climate zone, 
-            frost dates, and seasonal timing for personalized task recommendations.
+          {/* Info Box - More concise */}
+          <div className="text-xs text-muted-foreground text-center">
+            <strong>Why location matters:</strong> Determines your climate zone and frost dates for personalized recommendations
           </div>
         </div>
       </DialogContent>
