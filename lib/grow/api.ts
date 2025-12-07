@@ -294,18 +294,21 @@ export class ApiClient {
   // ========================================
 
   async getRecommendedActivities(location?: string, limit?: number) {
-    const url = new URL(`${API_BASE}/garden/tasks`);
+    // Build URL with query parameters
+    const params = new URLSearchParams();
     if (location) {
-      url.searchParams.set('location', location);
+      params.set('location', location);
     }
     if (limit) {
-      url.searchParams.set('limit', limit.toString());
+      params.set('limit', limit.toString());
     }
 
+    const url = `/api/garden/tasks${params.toString() ? '?' + params.toString() : ''}`;
+
     try {
-      const response = await this.fetchWithTimeout(url.toString(), {
+      const response = await this.fetchWithTimeout(url, {
         headers: this.getHeaders(false), // Don't require auth
-      }, 5000);
+      }, 10000); // Increased timeout for weather API calls
 
       if (!response.ok) {
         throw new Error('Service unavailable');
