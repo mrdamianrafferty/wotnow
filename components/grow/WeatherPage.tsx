@@ -105,7 +105,7 @@ interface AirQualityData {
   index: number;
   category: string;
   dominantPollutant: string;
-  pollutants: Array<{ name: string; value: number; unit: string }>;
+  pollutants?: Array<{ name: string; value: number; unit: string }>;
 }
 
 interface PollenData {
@@ -952,7 +952,7 @@ function AirQualityCard({ data, t }: { data: AirQualityData; t: Translator }) {
           <Badge variant="secondary">{t('Dominant')}: {data.dominantPollutant}</Badge>
         </div>
         <div className="space-y-2">
-          {data.pollutants.map((pollutant) => (
+          {(data.pollutants || []).map((pollutant) => (
             <div key={pollutant.name} className="flex items-center justify-between rounded bg-muted/30 p-2">
               <span className="text-xs text-muted-foreground">{pollutant.name}</span>
               <span className="text-sm font-medium">
