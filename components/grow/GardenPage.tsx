@@ -30,6 +30,7 @@ import { AddPlantDialog } from './AddPlantDialog';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
+import { SkeletonGardenPage } from './GrowSkeletons';
 
 interface Plant {
   id: string;
@@ -454,6 +455,10 @@ export function GardenPage() {
     }
   };
 
+  if (isLoadingPlants) {
+    return <SkeletonGardenPage />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -515,12 +520,7 @@ export function GardenPage() {
             </div>
           </div>
 
-          {isLoadingPlants ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Loader2 className="h-8 w-8 animate-spin mb-2" />
-              <p>Loading your plants...</p>
-            </div>
-          ) : plants.length === 0 ? (
+          {plants.length === 0 ? (
             <Card className="p-12 text-center">
               <Sprout className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No plants yet</h3>

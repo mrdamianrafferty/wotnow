@@ -47,6 +47,7 @@ import {
 } from '../../lib/grow/units';
 import { getClimateZoneInfo, type ClimateZoneCode } from '../../lib/grow/climate';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+import { SkeletonWeatherPage } from './GrowSkeletons';
 
 interface ProgressProps {
   value: number;
@@ -448,7 +449,7 @@ export function WeatherPage() {
   const WeatherIcon = getConditionIcon(currentWeather.condition);
 
   if (isLoading) {
-    return <LoadingState />;
+    return <SkeletonWeatherPage />;
   }
 
   return (
@@ -604,18 +605,6 @@ export function WeatherPage() {
         {currentWeatherData.pollen ? <PollenCard data={currentWeatherData.pollen} t={t} /> : null}
         {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} t={t} /> : null}
       </div>
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="space-y-4">
-      {[0, 1, 2].map((group) => (
-        <Card key={group} className="border-dashed">
-          <CardContent className="h-32 animate-pulse rounded-lg bg-muted/40" />
-        </Card>
-      ))}
     </div>
   );
 }

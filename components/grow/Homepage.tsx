@@ -29,6 +29,7 @@ import { GardenAlertBox } from '../gardening/GardenAlertBox';
 import type { GardenAlertResult } from '../../lib/gardening/gardenAlerts';
 import { LocationSettings } from './LocationSettings';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+import { SkeletonGrowHomepage } from './GrowSkeletons';
 
 type Translator = (value: string) => string;
 
@@ -668,13 +669,7 @@ export function Homepage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="space-y-6 pb-20">
-        <Skeleton className="h-[500px] w-full rounded-3xl" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
+    return <SkeletonGrowHomepage />;
   }
 
   return (

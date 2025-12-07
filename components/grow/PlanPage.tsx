@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
 import { WeeklyTaskView } from './WeeklyTaskView';
+import { SkeletonPlanPage } from './GrowSkeletons';
 
 interface TimelineEvent {
   id: string;
@@ -186,6 +187,7 @@ export function PlanPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<TimelineEvent[]>([]);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Mock data - in production, this would come from backend
   const mockEvents = useMemo<TimelineEvent[]>(() => [
@@ -316,6 +318,7 @@ export function PlanPage() {
   ], []);
 
   const loadTimelineEvents = useCallback(async () => {
+    setIsLoading(true);
     const baseYear = new Date().getFullYear();
     const aggregated: TimelineEvent[] = [];
 
@@ -355,10 +358,10 @@ export function PlanPage() {
 
     if (aggregated.length === 0) {
       setEvents(mockEvents);
-      return;
+    } else {
+      setEvents([...aggregated, ...mockEvents]);
     }
-
-    setEvents([...aggregated, ...mockEvents]);
+    setIsLoading(false);
   }, [mockEvents]);
 
   useEffect(() => {
@@ -570,6 +573,10 @@ export function PlanPage() {
     
     return days;
   };
+
+  if (isLoading) {
+    return <SkeletonPlanPage />;
+  }
 
   return (
     <div className="space-y-6">
