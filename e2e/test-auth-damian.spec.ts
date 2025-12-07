@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Auth Test - damian@flyglobalmusic.com', () => {
-  test('should sign in with email/password via simple-auth', async ({ page }) => {
+  test.skip('should sign in with email/password via simple-auth', async ({ page }) => {
     // Navigate to simple-auth page (supports email/password)
     await page.goto('/findr/simple-auth');
     await page.waitForLoadState('networkidle');

@@ -34,7 +34,13 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     /* Video on failure */
     video: 'retain-on-failure',
+    /* Increase timeout for slower browsers (Firefox, Webkit, Mobile) */
+    actionTimeout: 60 * 1000,
+    navigationTimeout: 60 * 1000,
   },
+
+  /* Test timeout */
+  timeout: 90 * 1000,
 
   /* Configure projects for major browsers */
   projects: [
