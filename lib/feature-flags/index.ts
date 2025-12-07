@@ -197,8 +197,8 @@ async function fetchRemoteFlags(): Promise<Record<string, FeatureFlagConfig>> {
     remoteFlags = { ...DEFAULT_FLAGS, ...data.flags };
     lastFetchTime = now;
 
-    console.log('[FeatureFlags] Remote flags fetched:', Object.keys(remoteFlags).length);
-    return remoteFlags;
+    console.log('[FeatureFlags] Remote flags fetched:', Object.keys(remoteFlags!).length);
+    return remoteFlags!;
   } catch (error) {
     console.warn('[FeatureFlags] Failed to fetch remote flags, using defaults:', error);
     return DEFAULT_FLAGS;

@@ -45,7 +45,7 @@ export default function SceneLayers({
   const ctx = {
     waves: (weather.isCoastal || weather.applyBeaufort) && weather.condition.startsWith('marine_'),
     rain:  ['rain','drizzle','storm','snow'].includes(weather.condition),
-    clouds:['cloudy','overcast','fog','storm','snow','drizzle','rain'].includes(weather.condition) || weather.cloudPct > 30
+    clouds:['cloudy','overcast','fog','storm','snow','drizzle','rain'].includes(weather.condition) || (weather.cloudPct ?? 0) > 30
   };
 
   const cloudsOpacity = opacityOverrides.clouds ?? 0.45;

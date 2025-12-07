@@ -151,7 +151,7 @@ export default function AuthCallbackClient() {
 
         // Email OTP / magic link style flows (legacy token_hash)
         if (tokenHash) {
-          const otpType = asEmailOtpType(typeParam);
+          const otpType = asEmailOtpType(typeParam ?? null);
           const { error } = await supabase.auth.verifyOtp({ type: otpType, token_hash: tokenHash });
           if (error) throw error;
 

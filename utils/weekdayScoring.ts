@@ -1,4 +1,6 @@
 // src/utils/weekdayScoring.ts
+import type { ActivityType } from '@/data/activities/types';
+
 export function applyWeekdayBoost(
   activity: ActivityType,
   today: string

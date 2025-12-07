@@ -43,10 +43,12 @@ export async function fetchCopernicusBundleMock(
       ...bundle.physics,
       source: 'mock',
     },
-    biogeochemical: {
-      ...bundle.biogeochemical,
-      source: 'mock',
-    },
+    biogeochemical: bundle.biogeochemical
+      ? {
+          ...bundle.biogeochemical,
+          source: 'mock',
+        }
+      : undefined,
     waves: bundle.waves
       ? {
           ...bundle.waves,

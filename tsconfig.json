@@ -41,7 +41,6 @@
     "types",
     "data",
     "contexts",
-    "__tests__",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "*.ts",
@@ -51,6 +50,11 @@
     "node_modules",
     "supabase/functions",
     "lib/findr/generateInsights.ts",
-    "pages/api/findr/get-insights.ts"
+    "pages/api/findr/get-insights.ts",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/_archive/**",
+    "INTEGRATION_EXAMPLE.tsx"
   ]
 }

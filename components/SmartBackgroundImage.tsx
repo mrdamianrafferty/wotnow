@@ -45,7 +45,7 @@ export default function SmartBackgroundImage({
         const variants = getImageVariants(activityId);
         if (variants) {
           // Try WebP first (mobile or desktop)
-          const webpSrc = isMobile ? variants.webpMobile : variants.webp;
+          const webpSrc = isMobile ? variants.webpSmall : variants.webpLarge;
           
           try {
             // Test if WebP loads successfully

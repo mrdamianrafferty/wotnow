@@ -51,7 +51,7 @@ export interface CopernicusTimeseries {
 
 export interface CopernicusMarineBundle {
   physics: CopernicusTimeseries;
-  biogeochemical: CopernicusTimeseries;
+  biogeochemical?: CopernicusTimeseries;
   waves?: CopernicusTimeseries;
   generatedAt: string;
 }

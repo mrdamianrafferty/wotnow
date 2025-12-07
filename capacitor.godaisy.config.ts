@@ -18,12 +18,9 @@ const config: CapacitorConfig = {
   },
 
   // Deep-link schemes for OAuth callbacks and SSO handoff
-  ios: {
-    scheme: 'godaisy',
-  },
-  android: {
-    scheme: 'godaisy',
-  },
+  // URL schemes are configured in native projects:
+  // - iOS: Info.plist (CFBundleURLSchemes = godaisy)
+  // - Android: AndroidManifest.xml (android:scheme = godaisy)
 
   plugins: {
     SplashScreen: {

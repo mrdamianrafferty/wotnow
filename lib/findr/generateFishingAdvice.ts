@@ -202,8 +202,8 @@ export function generateTacticalAdvice(
       tideStage: conditions.tide_stage || 'unknown',
       timeOfDay: conditions.time_of_day || 'day',
       nextTideChange,
-      windSpeed: conditions.wind_speed_kts,
-      waveHeight: conditions.wave_height_m,
+      windSpeed: conditions.wind_speed_kts ?? undefined,
+      waveHeight: conditions.wave_height_m ?? undefined,
     },
     actionableSteps,
   };

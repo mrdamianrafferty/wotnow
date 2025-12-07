@@ -60,7 +60,7 @@ export default function BottomNav() {
     >
       {navItems.map((item) => {
         const Icon = item.icon;
-        const isActive = item.match(pathname);
+        const isActive = pathname ? item.match(pathname) : false;
 
         return (
           <button

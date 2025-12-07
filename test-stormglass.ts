@@ -1,5 +1,5 @@
 import { config } from 'dotenv';
-import { fetchStormglassMarine } from './lib/services/weatherService.ts';
+import { fetchStormglassMarine } from './lib/services/weatherService';
 
 config({ path: '.env.local' });
 config({ path: '.env' });

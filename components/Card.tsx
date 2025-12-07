@@ -20,7 +20,7 @@ interface CardProps {
 const Card: React.FC<CardProps> = ({ activityId, title, score, category, description, marineData, onClick }) => {
   // Use optimized image if available, otherwise fallback to original
   const bgUrl = isImageOptimized(activityId) 
-    ? getOptimizedImageSrc(activityId, 'webpMobile') // Cards are smaller, use mobile version
+    ? getOptimizedImageSrc(activityId, 'webpSmall') // Cards are smaller, use mobile/small version
     : getActivityBg(activityId);
 
   return (

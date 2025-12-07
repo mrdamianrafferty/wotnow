@@ -1,14 +1,13 @@
-import { WeatherData } from './weatherTypes';
-import { parseConditionString } from './activitySuitability';
+import { WeatherData, parseConditionString } from './activitySuitability';
 
 export function evaluateConditionScore(condition: string, weather: WeatherData): number {
   const parsed = parseConditionString(condition);
   if (!parsed) return 0;
 
-  const weatherValue = weather[parsed.key];
+  const weatherValue = weather[parsed.key as keyof WeatherData] as number | undefined;
   if (weatherValue === undefined || weatherValue === null) return 0.5; // Neutral for missing data
 
-  if (parsed.operator === 'range') {
+  if (parsed.operator === 'range' && 'min' in parsed && 'max' in parsed) {
     const { min, max } = parsed;
     const center = (min + max) / 2;
     const range = max - min;
@@ -25,17 +24,21 @@ export function evaluateConditionScore(condition: string, weather: WeatherData):
   }
 
   // Handle comparison operators with graduated scoring
-  switch (parsed.operator) {
-    case '>': return weatherValue > parsed.value ? 1 : weatherValue / parsed.value;
-    case '>=': return weatherValue >= parsed.value ? 1 : weatherValue / parsed.value;
-    case '<': return weatherValue < parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
-    case '<=': return weatherValue <= parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
-    case '=':
-    case '==': {
-      const tolerance = Math.max(parsed.value * 0.1, 1);
-      return Math.max(0, 1 - Math.abs(weatherValue - parsed.value) / tolerance);
+  if ('value' in parsed) {
+    switch (parsed.operator) {
+      case '>': return weatherValue > parsed.value ? 1 : weatherValue / parsed.value;
+      case '>=': return weatherValue >= parsed.value ? 1 : weatherValue / parsed.value;
+      case '<': return weatherValue < parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
+      case '<=': return weatherValue <= parsed.value ? 1 : parsed.value / Math.max(weatherValue, 1);
+      case '=':
+      case '==': {
+        const tolerance = Math.max(parsed.value * 0.1, 1);
+        return Math.max(0, 1 - Math.abs(weatherValue - parsed.value) / tolerance);
+      }
+      default: 
+        return parsed.value === weatherValue ? 1 : 0;
     }
-    default: 
-      return parsed.value === weatherValue ? 1 : 0;
   }
+  
+  return 0;
 }

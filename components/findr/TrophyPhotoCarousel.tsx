@@ -590,13 +590,13 @@ export function TrophyPhotoCarousel({
 export function PhotoGalleryGrid({ 
   photos, 
   onPhotoClickAction,
-  onPinToggle,
+  onPinToggleAction,
   // columns prop removed; responsive grid classes now control columns
   aspectRatio = 'square' 
 }: {
   photos: PhotoData[];
   onPhotoClickAction: (index: number) => void;
-  onPinToggle?: (photo: PhotoData, index: number) => void;
+  onPinToggleAction?: (photo: PhotoData, index: number) => void;
   columns?: number;
   aspectRatio?: 'square' | 'wide' | 'tall';
 }) {
@@ -648,12 +648,12 @@ export function PhotoGalleryGrid({
             </button>
 
             {/* Pin (Trophy) icon button */}
-            {onPinToggle && (
+            {onPinToggleAction && (
               <button
                 type="button"
                 className={`absolute top-2 left-2 z-10 p-1 rounded-full bg-white/80 hover:bg-yellow-200 border border-yellow-400 shadow ${photo.pinned ? 'text-yellow-500' : 'text-gray-400'}`}
                 title={photo.pinned ? 'Unpin this catch' : 'Pin this catch'}
-                onClick={e => { e.stopPropagation(); onPinToggle(photo, index); }}
+                onClick={e => { e.stopPropagation(); onPinToggleAction(photo, index); }}
               >
                 <Trophy className="w-5 h-5" fill={photo.pinned ? '#facc15' : 'none'} />
               </button>

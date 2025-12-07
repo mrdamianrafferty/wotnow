@@ -227,7 +227,7 @@ export default function MyCatchesPage() {
                  <PhotoGalleryGrid
                    photos={photos}
                    onPhotoClickAction={openPhoto}
-                   onPinToggle={handlePinToggle}
+                   onPinToggleAction={handlePinToggle}
                    columns={3}
                    aspectRatio="wide"
                  />

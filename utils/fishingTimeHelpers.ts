@@ -135,8 +135,7 @@ export function formatFishingTimeDisplay(result: BestFishingTimeResult | null) {
     time: timeDisplay,
     reason: shortReason,
     emoji: emoji,
-    score: window.score,
-    confidence: result.confidence
+    score: window.score
   };
 }
 

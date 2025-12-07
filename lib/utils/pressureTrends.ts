@@ -130,7 +130,7 @@ export function calculatePressureTrend(
     category,
     pressureNow,
     pressure3hAgo,
-    pressure6hAgo,
+    pressure6hAgo: pressure6hAgo ?? null,
     delta3h,
     delta6h,
     explanation

@@ -1,8 +1,19 @@
 // src/utils/biodynamicAdvisor.ts
 // British English messaging. No external ephemeris; simple, robust heuristics.
 
-import type { MoonPhase } from '@/data/biodynamicPhaseRules';
-import { biodynamicByPhase } from '@/data/biodynamicPhaseRules';
+import type { MoonPhase } from '@/data/moonLore';
+
+// Default biodynamic rules by moon phase
+const biodynamicByPhase: Record<MoonPhase, { title: string; tasks: string[] }> = {
+  new: { title: 'New Moon', tasks: ['Start leafy salads', 'Gentle transplants', 'Plan and prepare'] },
+  waxing_crescent: { title: 'Waxing Crescent', tasks: ['Sow fruiting annuals', 'Train climbers', 'Build growth'] },
+  first_quarter: { title: 'First Quarter', tasks: ['Successive sowings', 'Light grafting', 'Build momentum'] },
+  waxing_gibbous: { title: 'Waxing Gibbous', tasks: ['Stake plants', 'Support growth', 'Pre-full prep'] },
+  full: { title: 'Full Moon', tasks: ['Harvest leafy crops', 'Cut flowers', 'Peak sap work'] },
+  waning_gibbous: { title: 'Waning Gibbous', tasks: ['Root crops', 'Compost turning', 'Soil amendments'] },
+  last_quarter: { title: 'Last Quarter', tasks: ['Weeding', 'Pruning', 'Pest control'] },
+  waning_crescent: { title: 'Waning Crescent', tasks: ['Bed prep', 'Tool care', 'Storage and planning'] },
+};
 
 // ---- Types ------------------------------------------------------------------
 
