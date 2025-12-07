@@ -5,7 +5,6 @@ import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { MapPin, Save, Loader2, CheckCircle, AlertCircle, Navigation, Map } from 'lucide-react';
-import { api } from '../../lib/grow/api';
 import {
   usePlacesAutocompleteNew as usePlacesAutocomplete,
   getGeocode,
@@ -50,7 +49,6 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-  const [climateZone, setClimateZone] = useState<string | null>(null);
   
   // New state for enhanced features
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -119,7 +117,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
             }
           }
         }
-      } catch (error) {
+      } catch (_error) {
         // Silent failure - will use prop value
       }
     };
@@ -371,7 +369,7 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
             }
           }
         }
-      } catch (error: unknown) {
+      } catch (_error: unknown) {
         // Backend sync failed - location still saved locally
       }
       
@@ -604,11 +602,6 @@ export function LocationSettings({ currentLocation = '', onLocationUpdate }: Loc
               <CheckCircle className="h-4 w-4" />
               <div className="flex-1">
                 <span className="text-sm font-medium">Location saved successfully!</span>
-                {climateZone && (
-                  <div className="text-xs mt-1 text-green-700">
-                    Climate zone: <strong>{climateZone.replace(/_/g, ' ')}</strong>
-                  </div>
-                )}
               </div>
             </div>
           )}

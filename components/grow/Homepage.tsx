@@ -367,7 +367,7 @@ export function Homepage() {
                   const resolvedAlerts = Array.isArray(alertPayload?.alerts) ? alertPayload.alerts : [];
                   alertCacheRef.current.set(cacheKey, resolvedAlerts);
                   setGardenAlerts(resolvedAlerts);
-                } catch (error) {
+                } catch (_error) {
                   alertCacheRef.current.set(cacheKey, []);
                   setGardenAlerts([]);
                 } finally {
@@ -429,7 +429,7 @@ export function Homepage() {
               setUserLocation(location);
             }
           }
-        } catch (error) {
+        } catch (_error) {
           // Silent failure - will fall back to localStorage or empty
         }
       }

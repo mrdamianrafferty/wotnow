@@ -218,7 +218,7 @@ function generateTasks(
   const now = new Date();
   const temp = weather?.temperature || 70;
   const conditions = weather?.conditions || 'Clear';
-  const humidity = weather?.humidity || 50;
+  const _humidity = weather?.humidity || 50;
 
   // Plant-specific tasks
   plants.forEach((plant) => {
