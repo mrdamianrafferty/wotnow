@@ -32,13 +32,24 @@
     }
   },
   "include": [
-    "src",
-    ".next/types/**/*.ts",
+    "app",
+    "components",
+    "pages",
+    "lib",
+    "hooks",
+    "utils",
     "types",
-    ".next/dev/types/**/*.ts"
+    "data",
+    "contexts",
+    "__tests__",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "*.ts",
+    "*.tsx"
   ],
   "exclude": [
     "node_modules",
+    "supabase/functions",
     "lib/findr/generateInsights.ts",
     "pages/api/findr/get-insights.ts"
   ]

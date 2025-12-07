@@ -56,6 +56,12 @@ interface CatchFormEntry {
 // Common baits for quick selection
 import { COMMON_BAITS, HABITAT_OPTIONS } from './baitHabitatOptions';
 
+// Most commonly caught species for sorting in dropdown
+const COMMON_SPECIES = [
+  'MAC', 'BSS', 'POL', 'COD', 'WHG', 'DAB', 'FLE', 'PLE', 'SOL',
+  'GAR', 'WRA', 'SMD', 'SPR', 'HER', 'BIB', 'GUG', 'LBG',
+] as const;
+
 // Time period options
 const TIME_PERIODS: { value: TimePeriod; label: string; hours: string }[] = [
   { value: 'morning', label: 'Morning', hours: '5AM - 12PM' },
@@ -214,9 +220,11 @@ export function SessionLogModal({
       });
       
       setPhotos(prev => [...prev, compressionResult.file].slice(0, 5));
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof CameraException && err.type !== 'CANCELLED') {
         console.error('[SessionLog] Camera error:', err.type, err.message);
+      } else if (err instanceof Error) {
+        console.error('[SessionLog] Camera error:', err.message);
       }
     }
   }, [photos.length, compressImage]);
@@ -237,9 +245,11 @@ export function SessionLogModal({
       });
       
       setPhotos(prev => [...prev, compressionResult.file].slice(0, 5));
-    } catch (err) {
+    } catch (err: unknown) {
       if (err instanceof CameraException && err.type !== 'CANCELLED') {
         console.error('[SessionLog] Gallery error:', err.type, err.message);
+      } else if (err instanceof Error) {
+        console.error('[SessionLog] Gallery error:', err.message);
       }
     }
   }, [photos.length, compressImage]);
