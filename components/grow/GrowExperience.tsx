@@ -2,16 +2,35 @@
 
 import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { Navigation } from './Navigation';
 import { Homepage } from './Homepage';
-import { PlanPage } from './PlanPage';
-import { GardenPage } from './GardenPage';
-import { WeatherPage } from './WeatherPage';
 import { InfoPage } from './InfoPage';
 import { SessionRefreshNotice } from './SessionRefreshNotice';
+import {
+  SkeletonGardenPage,
+  SkeletonPlanPage,
+  SkeletonWeatherPage
+} from './GrowSkeletons';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ONBOARDING_PATH, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { api } from '../../lib/grow/api';
+
+// Code-split heavy page components with skeleton loaders
+const PlanPage = dynamic(() => import('./PlanPage').then(mod => ({ default: mod.PlanPage })), {
+  loading: () => <SkeletonPlanPage />,
+  ssr: true
+});
+
+const GardenPage = dynamic(() => import('./GardenPage').then(mod => ({ default: mod.GardenPage })), {
+  loading: () => <SkeletonGardenPage />,
+  ssr: true
+});
+
+const WeatherPage = dynamic(() => import('./WeatherPage').then(mod => ({ default: mod.WeatherPage })), {
+  loading: () => <SkeletonWeatherPage />,
+  ssr: true
+});
 
 export type GrowPageKey = 'home' | 'plan' | 'garden' | 'conditions' | 'info';
 
