@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 import { useRouter } from 'next/router';
 import { Navigation } from './Navigation';
 import { Homepage } from './Homepage';
@@ -40,10 +40,12 @@ export function GrowExperience() {
   }, [router]);
 
   useEffect(() => {
-    const storedPage = window.localStorage.getItem(STORAGE_KEY) as GrowPageKey | null;
-    if (storedPage) {
-      setCurrentPage(storedPage);
-    }
+    startTransition(() => {
+      const storedPage = window.localStorage.getItem(STORAGE_KEY) as GrowPageKey | null;
+      if (storedPage) {
+        setCurrentPage(storedPage);
+      }
+    });
   }, []);
 
   useEffect(() => {

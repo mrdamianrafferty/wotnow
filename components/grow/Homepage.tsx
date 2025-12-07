@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -531,23 +531,26 @@ export function Homepage() {
 
   useEffect(() => {
     // Load user location from localStorage and then load tasks
-    const interestsStr = localStorage.getItem('userInterests');
-    let location = 'Portland, OR'; // Default
-    
-    if (interestsStr) {
-      try {
-        const interests = JSON.parse(interestsStr);
-        if (interests.location) {
-          location = interests.location;
-          setUserLocation(location);
+    // Wrap in startTransition to avoid Suspense hydration errors
+    startTransition(() => {
+      const interestsStr = localStorage.getItem('userInterests');
+      let location = 'Portland, OR'; // Default
+      
+      if (interestsStr) {
+        try {
+          const interests = JSON.parse(interestsStr);
+          if (interests.location) {
+            location = interests.location;
+            setUserLocation(location);
+          }
+        } catch (_error) {
+          // Invalid JSON
         }
-      } catch (_error) {
-        // Invalid JSON
       }
-    }
-    
-    // Load tasks with the correct location
-    loadTasks(location);
+      
+      // Load tasks with the correct location
+      loadTasks(location);
+    });
   }, [loadTasks]);
 
   const handleLocationUpdate = (newLocation: string) => {

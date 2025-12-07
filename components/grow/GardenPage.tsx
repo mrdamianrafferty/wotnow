@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -179,7 +179,9 @@ export function GardenPage() {
 
   // Load plants from backend on mount
   useEffect(() => {
-    void loadPlants();
+    startTransition(() => {
+      void loadPlants();
+    });
   }, [loadPlants]);
 
   const handlePlantAdded = (plant: SerializedPlant) => {
