@@ -5,7 +5,7 @@ test.describe('Findr - Predictions Page', () => {
     await page.goto('/findr');
     
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that we're on the Findr page
     await expect(page).toHaveURL(/\/findr/);
@@ -17,7 +17,7 @@ test.describe('Findr - Predictions Page', () => {
 
   test('should show location selector', async ({ page }) => {
     await page.goto('/findr');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for location-related UI elements
     // This could be a button, input, or other interactive element
@@ -32,7 +32,7 @@ test.describe('Findr - Predictions Page', () => {
 test.describe('Findr - Location Selection', () => {
   test('should allow location interaction', async ({ page }) => {
     await page.goto('/findr');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Try to find and click location-related buttons
     const buttons = page.locator('button');
@@ -101,7 +101,7 @@ test.describe('Findr - Species Display', () => {
 test.describe('Findr - Authentication Flow', () => {
   test('should have auth-related navigation', async ({ page }) => {
     await page.goto('/findr');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for auth-related elements (login/signup buttons, user menu, etc.)
     // This is a basic check - actual auth flow would need more detailed tests
@@ -118,7 +118,7 @@ test.describe('Findr - Responsive Design', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     await page.goto('/findr');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that page is visible and interactive
     const main = page.locator('main, [role="main"]');
@@ -130,7 +130,7 @@ test.describe('Findr - Responsive Design', () => {
     await page.setViewportSize({ width: 768, height: 1024 });
     
     await page.goto('/findr');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that page is visible and interactive
     const main = page.locator('main, [role="main"]');

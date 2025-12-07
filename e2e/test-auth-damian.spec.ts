@@ -4,7 +4,7 @@ test.describe('Auth Test - damian@flyglobalmusic.com', () => {
   test.skip('should sign in with email/password via simple-auth', async ({ page }) => {
     // Navigate to simple-auth page (supports email/password)
     await page.goto('/findr/simple-auth');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Take screenshot of auth page
     await page.screenshot({ path: 'test-results/auth-simple-auth-page.png', fullPage: true });
@@ -28,7 +28,7 @@ test.describe('Auth Test - damian@flyglobalmusic.com', () => {
     
     // Wait for network to settle and give time for auth response
     await page.waitForTimeout(5000);
-    await page.waitForLoadState('networkidle').catch(() => {});
+    await page.waitForLoadState('domcontentloaded').catch(() => {});
     
     // Check for any visible error message on the page
     const alertError = page.locator('.alert-error');

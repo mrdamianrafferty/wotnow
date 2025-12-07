@@ -69,7 +69,7 @@ export async function setLocation(page: Page, location: TestLocation) {
     }
   }
   
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**

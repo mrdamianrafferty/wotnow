@@ -17,7 +17,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should load homepage successfully', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that page loaded with main content
     const main = page.locator('main, [role="main"]');
@@ -30,7 +30,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should display weather forecast', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait for weather data to load (looking for temperature or weather info)
     // Give it time to fetch data
@@ -43,7 +43,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should display activity suggestions', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait for content to load
     await page.waitForTimeout(3000);
@@ -55,7 +55,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should have working header navigation', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for header
     const header = page.locator('header').first();
@@ -64,7 +64,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should display location information', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // With our test data, Dublin should appear somewhere
     await page.waitForTimeout(2000);
@@ -75,7 +75,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
 
   test('should show hero activity card', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait for activities to load
     await page.waitForTimeout(3000);
@@ -89,7 +89,7 @@ test.describe('Go Daisy - Homepage (index)', () => {
     await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE size
     
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should still load properly on mobile
     const main = page.locator('main');
@@ -113,7 +113,7 @@ test.describe('Go Daisy - Homepage Interactions', () => {
 
   test('should allow clicking on activity cards', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Try to find clickable activity elements
@@ -126,7 +126,7 @@ test.describe('Go Daisy - Homepage Interactions', () => {
 
   test('should display day-by-day forecast', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Page should have loaded with content
@@ -139,7 +139,7 @@ test.describe('Go Daisy - Homepage Error States', () => {
   test('should handle missing location gracefully', async ({ page }) => {
     // Don't set location in localStorage
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still load (might show onboarding prompt)
     const body = page.locator('body');
@@ -159,7 +159,7 @@ test.describe('Go Daisy - Homepage Error States', () => {
     });
     
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still load (might show prompt to select interests)
     const body = page.locator('body');

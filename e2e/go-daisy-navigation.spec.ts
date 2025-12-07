@@ -26,7 +26,7 @@ test.describe('Go Daisy - Site Navigation', () => {
 
   test('should navigate from homepage to activities', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     await dismissCookieBanner(page);
     
@@ -37,7 +37,7 @@ test.describe('Go Daisy - Site Navigation', () => {
       page.waitForURL(/\/activities/, { timeout: 15000 }),
       activitiesLink.click()
     ]);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should be on activities page
     await expect(page).toHaveURL(/\/activities/);
@@ -45,7 +45,7 @@ test.describe('Go Daisy - Site Navigation', () => {
 
   test('should navigate from homepage to weather', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     await dismissCookieBanner(page);
     
@@ -56,14 +56,14 @@ test.describe('Go Daisy - Site Navigation', () => {
       page.waitForURL(/\/weather/, { timeout: 15000 }),
       weatherLink.click()
     ]);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/weather/);
   });
 
   test('should navigate to interests page', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     await dismissCookieBanner(page);
     
@@ -74,7 +74,7 @@ test.describe('Go Daisy - Site Navigation', () => {
       page.waitForURL(/\/interests/, { timeout: 15000 }),
       interestsLink.click()
     ]);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should navigate to interests page
     await expect(page).toHaveURL(/\/interests/);
@@ -87,7 +87,7 @@ test.describe('Go Daisy - Site Navigation', () => {
     
     for (const pagePath of pages) {
       await page.goto(pagePath, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await dismissCookieBanner(page);
       
@@ -103,7 +103,7 @@ test.describe('Go Daisy - Site Navigation', () => {
     
     for (const pagePath of pages) {
       await page.goto(pagePath, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await dismissCookieBanner(page);
       
@@ -130,7 +130,7 @@ test.describe('Go Daisy - Mobile Navigation', () => {
 
   test('should show mobile menu', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissCookieBanner(page);
     
     // Look for hamburger menu or mobile navigation
@@ -143,7 +143,7 @@ test.describe('Go Daisy - Mobile Navigation', () => {
 
   test('should allow mobile navigation', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissCookieBanner(page);
     
     // Header should be visible even on mobile
@@ -155,7 +155,7 @@ test.describe('Go Daisy - Mobile Navigation', () => {
 test.describe('Go Daisy - Footer Links', () => {
   test('should navigate to support from footer', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     await dismissCookieBanner(page);
     
@@ -166,7 +166,7 @@ test.describe('Go Daisy - Footer Links', () => {
       await supportLink.waitFor({ state: 'visible', timeout: 5000 });
       await supportLink.scrollIntoViewIfNeeded();
       await supportLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       await expect(page).toHaveURL(/\/support/);
     } catch {
@@ -177,7 +177,7 @@ test.describe('Go Daisy - Footer Links', () => {
 
   test('should navigate to About Us from footer', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     await dismissCookieBanner(page);
     
@@ -188,7 +188,7 @@ test.describe('Go Daisy - Footer Links', () => {
       await aboutLink.waitFor({ state: 'visible', timeout: 5000 });
       await aboutLink.scrollIntoViewIfNeeded();
       await aboutLink.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       await expect(page).toHaveURL(/\/AboutUs/);
     } catch {

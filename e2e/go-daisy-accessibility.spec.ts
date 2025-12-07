@@ -18,7 +18,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('homepage should have main landmark', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     const main = page.locator('main, [role="main"]');
     await expect(main).toBeVisible();
@@ -26,7 +26,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('activities page should have main landmark', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     const main = page.locator('main, [role="main"]');
     await expect(main).toBeVisible();
@@ -34,7 +34,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('weather page should have main landmark', async ({ page }) => {
     await page.goto('/weather');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     const main = page.locator('main, [role="main"]');
@@ -43,7 +43,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('should have accessible header', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     const header = page.locator('header').first();
     await expect(header).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('should have accessible footer', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     const footer = page.locator('footer').first();
     await expect(footer).toBeVisible();
@@ -59,7 +59,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('buttons should be keyboard accessible', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     // Tab through interactive elements
     await page.keyboard.press('Tab');
@@ -72,7 +72,7 @@ test.describe('Go Daisy - Accessibility', () => {
 
   test('links should be keyboard accessible', async ({ page }) => {
     await page.goto('/AboutUs');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     // Tab to first link
     await page.keyboard.press('Tab');
@@ -99,7 +99,7 @@ test.describe('Go Daisy - Keyboard Navigation', () => {
 
   test('should allow keyboard navigation through header', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     // Press Tab multiple times
     for (let i = 0; i < 5; i++) {
@@ -114,7 +114,7 @@ test.describe('Go Daisy - Keyboard Navigation', () => {
 
   test('should allow keyboard navigation on activities page', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     // Tab through elements
@@ -136,7 +136,7 @@ test.describe('Go Daisy - Screen Reader Support', () => {
 
   test('activities page should have meaningful title', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     try {
       await page.waitForFunction(
@@ -153,7 +153,7 @@ test.describe('Go Daisy - Screen Reader Support', () => {
 
   test('weather page should have meaningful title', async ({ page }) => {
     await page.goto('/weather');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     try {
       await page.waitForFunction(
@@ -170,7 +170,7 @@ test.describe('Go Daisy - Screen Reader Support', () => {
 
   test('about us page should have meaningful title', async ({ page }) => {
     await page.goto('/AboutUs');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     try {
       await page.waitForFunction(
@@ -187,7 +187,7 @@ test.describe('Go Daisy - Screen Reader Support', () => {
 
   test('images should have alt attributes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that images have alt attributes
     const images = page.locator('img');

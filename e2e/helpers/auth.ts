@@ -26,7 +26,7 @@ export const TEST_USER: TestUser = {
 export async function signIn(page: Page, user: TestUser = TEST_USER) {
   // Navigate to auth page
   await page.goto('/findr/auth');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   // Fill in email
   const emailInput = page.locator('input[type="email"]').first();
@@ -45,7 +45,7 @@ export async function signIn(page: Page, user: TestUser = TEST_USER) {
 
   // Wait for successful navigation to /findr
   await page.waitForURL(/\/findr(?:$|\?)/, { timeout: 10000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 }
 
 /**
@@ -69,7 +69,7 @@ export async function signOut(page: Page) {
   
   // Wait for redirect to /findr
   await page.waitForURL(/\/findr(?:$|\?)/, { timeout: 5000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   
   // Wait for auth state to clear (avatar disappears, sign in button appears)
   await page.waitForSelector('a:has-text("Sign In")', { state: 'visible', timeout: 5000 });

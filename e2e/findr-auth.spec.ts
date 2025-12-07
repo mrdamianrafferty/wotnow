@@ -4,7 +4,7 @@ test.describe('Findr - Authentication', () => {
   test.describe('Sign In Flow', () => {
     test('should display OAuth sign in page', async ({ page }) => {
       await page.goto('/findr/auth');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify page loaded with findr branding
       const heading = page.locator('h1:has-text("findr")');
@@ -22,7 +22,7 @@ test.describe('Findr - Authentication', () => {
 
     test('should show passwordless info text', async ({ page }) => {
       await page.goto('/findr/auth');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify passwordless messaging
       const infoText = page.locator('text=Passwordless');
@@ -31,7 +31,7 @@ test.describe('Findr - Authentication', () => {
 
     test('should have back to findr link', async ({ page }) => {
       await page.goto('/findr/auth');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify back link exists
       const backLink = page.locator('a:has-text("Back to findr")');
@@ -54,7 +54,7 @@ test.describe('Findr - Authentication', () => {
   test.describe('Protected Routes', () => {
     test('should show sign in prompt on favourites page when not authenticated', async ({ page }) => {
       await page.goto('/findr/favourites');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Should show sign in prompt or redirect to auth
       const signInLink = page.locator('a:has-text("Sign In")');
@@ -77,7 +77,7 @@ test.describe('Findr - Authentication', () => {
       
       for (const url of publicPages) {
         await page.goto(url);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         
         // Page should load successfully
         const main = page.locator('main, [role="main"]');
@@ -104,7 +104,7 @@ test.describe('Findr - Authentication', () => {
   test.describe('Auth UI/UX', () => {
     test('should have accessible OAuth buttons', async ({ page }) => {
       await page.goto('/findr/auth');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify OAuth buttons are accessible
       const googleButton = page.locator('button:has-text("Continue with Google")');
@@ -118,7 +118,7 @@ test.describe('Findr - Authentication', () => {
 
     test('should display findr branding', async ({ page }) => {
       await page.goto('/findr/auth');
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       
       // Verify findr logo/icon is present
       const fishIcon = page.locator('.lucide-fish, svg');

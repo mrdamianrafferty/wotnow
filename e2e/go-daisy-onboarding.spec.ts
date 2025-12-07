@@ -10,7 +10,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should load onboarding page', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check URL
     await expect(page).toHaveURL(/\/onboarding/);
@@ -18,7 +18,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should display cluster selection', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     // Should have main content div with cluster options
@@ -28,7 +28,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should show activity categories', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for interactive elements (activity pills/buttons)
     const buttons = page.locator('button');
@@ -39,7 +39,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should allow activity selection', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Try to find and click an activity option
     const clickableElements = page.locator('button, [role="button"]');
@@ -58,7 +58,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should show continue/next buttons', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for navigation buttons
     const buttons = page.locator('button');
@@ -71,7 +71,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     const body = page.locator('body');
@@ -80,7 +80,7 @@ test.describe('Go Daisy - Onboarding Flow', () => {
 
   test('should show location search', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Onboarding should have some form of location input
     // (might be on a later step, so just check page loads)
@@ -98,7 +98,7 @@ test.describe('Go Daisy - Onboarding Navigation', () => {
 
   test('should allow progressing through steps', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Try to find and click continue/next button
     const buttons = page.locator('button');

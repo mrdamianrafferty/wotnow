@@ -22,7 +22,7 @@ test('GoDaisy homepage should load without errors', async ({ page }) => {
 
   console.log('\n=== Loading https://www.godaisy.io/ ===\n');
   
-  await page.goto('https://www.godaisy.io/', { waitUntil: 'networkidle' });
+  await page.goto('https://www.godaisy.io/', { waitUntil: 'domcontentloaded' });
 
   // Wait a bit for any async errors
   await page.waitForTimeout(3000);

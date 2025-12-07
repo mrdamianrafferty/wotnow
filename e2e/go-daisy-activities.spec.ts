@@ -28,7 +28,7 @@ test.describe('Go Daisy - Activities Page', () => {
 
   test('should load activities page', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check URL
     await expect(page).toHaveURL(/\/activities/);
@@ -40,7 +40,7 @@ test.describe('Go Daisy - Activities Page', () => {
 
   test('should display activity cards', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Wait for data to load
     await page.waitForTimeout(3000);
@@ -52,7 +52,7 @@ test.describe('Go Daisy - Activities Page', () => {
 
   test('should show day navigation tabs', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Look for navigation elements (could be tabs, buttons, etc.)
@@ -64,7 +64,7 @@ test.describe('Go Daisy - Activities Page', () => {
 
   test('should display weather data for activities', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Page should show content
@@ -76,7 +76,7 @@ test.describe('Go Daisy - Activities Page', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -110,7 +110,7 @@ test.describe('Go Daisy - Activities Page Interactions', () => {
 
   test('should allow day switching', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Use role-based selector for tabs within the tablist
@@ -139,7 +139,7 @@ test.describe('Go Daisy - Activities Page Interactions', () => {
 
   test('should show activity assessment badges', async ({ page }) => {
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     // Should have content displaying activity assessments
@@ -152,7 +152,7 @@ test.describe('Go Daisy - Activities Page Error States', () => {
   test('should prompt for location if missing', async ({ page }) => {
     // No location set
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show some UI (either activities or prompt)
     const body = page.locator('body');
@@ -172,7 +172,7 @@ test.describe('Go Daisy - Activities Page Error States', () => {
     });
     
     await page.goto('/activities');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should show prompt or empty state
     const body = page.locator('body');

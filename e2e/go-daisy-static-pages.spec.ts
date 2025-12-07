@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Go Daisy - Static/Info Pages', () => {
   test('should load About Us page', async ({ page }) => {
     await page.goto('/AboutUs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/AboutUs/);
     
@@ -13,7 +13,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load FAQs page', async ({ page }) => {
     await page.goto('/FAQs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/FAQs/);
     
@@ -23,7 +23,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load How We Do It page', async ({ page }) => {
     await page.goto('/HowWeDoIt');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/HowWeDoIt/);
     
@@ -33,7 +33,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load Support page', async ({ page }) => {
     await page.goto('/support');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/support/);
     
@@ -43,7 +43,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load Whether Weather page', async ({ page }) => {
     await page.goto('/whether-weather');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/whether-weather/);
     
@@ -53,7 +53,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load Privacy Policy', async ({ page }) => {
     await page.goto('/PrivacyPolicy');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/PrivacyPolicy/);
     
@@ -63,7 +63,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load Terms and Conditions', async ({ page }) => {
     await page.goto('/TermsAndConditions');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/TermsAndConditions/);
     
@@ -73,7 +73,7 @@ test.describe('Go Daisy - Static/Info Pages', () => {
 
   test('should load Cookie Policy', async ({ page }) => {
     await page.goto('/CookiePolicy');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/CookiePolicy/);
     
@@ -89,7 +89,7 @@ test.describe('Go Daisy - Static Pages Mobile', () => {
 
   test('should load About Us on mobile', async ({ page }) => {
     await page.goto('/AboutUs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const main = page.locator('main');
     await expect(main).toBeVisible();
@@ -97,7 +97,7 @@ test.describe('Go Daisy - Static Pages Mobile', () => {
 
   test('should load FAQs on mobile', async ({ page }) => {
     await page.goto('/FAQs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -105,7 +105,7 @@ test.describe('Go Daisy - Static Pages Mobile', () => {
 
   test('should load Support page on mobile', async ({ page }) => {
     await page.goto('/support');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -115,7 +115,7 @@ test.describe('Go Daisy - Static Pages Mobile', () => {
 test.describe('Go Daisy - FAQ Interactions', () => {
   test('should allow expanding FAQ items', async ({ page }) => {
     await page.goto('/FAQs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for accordion/collapsible items (DaisyUI uses collapse class)
     const collapseItems = page.locator('.collapse, [role="button"]');

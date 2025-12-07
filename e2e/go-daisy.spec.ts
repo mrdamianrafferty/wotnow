@@ -19,7 +19,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Go Daisy - Smoke Tests', () => {
   test('should load homepage successfully', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that page loaded with main content
     const main = page.locator('main, [role="main"]');
@@ -34,7 +34,7 @@ test.describe('Go Daisy - Smoke Tests', () => {
     await page.goto('/');
     
     // Wait for page to be fully loaded
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check for navigation elements (use .first() since there may be multiple)
     const header = page.locator('header').first();
@@ -45,7 +45,7 @@ test.describe('Go Daisy - Smoke Tests', () => {
     await page.goto('/weather');
     
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that weather page loads
     await expect(page).toHaveURL(/\/weather/);
@@ -55,7 +55,7 @@ test.describe('Go Daisy - Smoke Tests', () => {
     await page.goto('/activities');
     
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check that activities page loads
     await expect(page).toHaveURL(/\/activities/);
@@ -65,7 +65,7 @@ test.describe('Go Daisy - Smoke Tests', () => {
     await page.goto('/');
     
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Basic accessibility check - page should have main landmark
     const main = page.locator('main, [role="main"]');
@@ -74,14 +74,14 @@ test.describe('Go Daisy - Smoke Tests', () => {
 
   test('should load onboarding page', async ({ page }) => {
     await page.goto('/onboarding');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/onboarding/);
   });
 
   test('should load account page', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/account/);
   });
@@ -90,7 +90,7 @@ test.describe('Go Daisy - Smoke Tests', () => {
 
   test('should load About Us page', async ({ page }) => {
     await page.goto('/AboutUs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/AboutUs/);
     
@@ -100,14 +100,14 @@ test.describe('Go Daisy - Smoke Tests', () => {
 
   test('should load FAQs page', async ({ page }) => {
     await page.goto('/FAQs');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/FAQs/);
   });
 
   test('should load Support page', async ({ page }) => {
     await page.goto('/support');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     await expect(page).toHaveURL(/\/support/);
   });

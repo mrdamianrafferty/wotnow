@@ -19,7 +19,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should load weather page', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Check URL
     await expect(page).toHaveURL(/\/weather/);
@@ -29,7 +29,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should display weather forecast', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Should have main content
     const body = page.locator('body');
@@ -38,7 +38,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should show temperature data', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should be loaded
     const body = page.locator('body');
@@ -47,7 +47,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should show wind information', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -55,7 +55,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should show marine data when coastal location set', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // With coastal location, should show marine data
     const body = page.locator('body');
@@ -64,7 +64,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should display tide information', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Should have content
     const body = page.locator('body');
@@ -73,7 +73,7 @@ test.describe('Go Daisy - Weather Page', () => {
 
   test('should show sunrise/sunset times', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible({ timeout: 5000 });
@@ -83,7 +83,7 @@ test.describe('Go Daisy - Weather Page', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -108,7 +108,7 @@ test.describe('Go Daisy - Weather Page without Marine Location', () => {
 
   test('should load weather page without marine data', async ({ page }) => {
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still show weather content
     const body = page.locator('body');
@@ -122,7 +122,7 @@ test.describe('Go Daisy - Weather Page Error States', () => {
   test('should handle missing location', async ({ page }) => {
     // No localStorage profile set
     await page.goto('/weather', { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded');
     
     // Should still show some UI
     const body = page.locator('body');

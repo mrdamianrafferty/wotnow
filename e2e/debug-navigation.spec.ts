@@ -16,7 +16,7 @@ test.describe('Debug Navigation Elements', () => {
 
   test('should inspect all navigation elements on homepage', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(3000);
     
     console.log('\n=== INSPECTING HOMEPAGE NAVIGATION ===\n');
@@ -92,7 +92,7 @@ test.describe('Debug Navigation Elements', () => {
   
   test('should inspect header and footer', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     console.log('\n=== INSPECTING HEADER & FOOTER ===\n');

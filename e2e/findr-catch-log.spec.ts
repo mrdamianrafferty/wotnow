@@ -5,7 +5,7 @@ test.describe('Findr - Catch Log (Unauthenticated)', () => {
     // Note: The catch-log page (/findr/log) allows unauthenticated access
     // It shows fallback predictions but won't save catches without auth
     await page.goto('/findr/log');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Page should load successfully
     const main = page.locator('main, [role="main"]');
@@ -30,7 +30,7 @@ test.describe('Findr - Catch Log (Authenticated)', () => {
     // await signIn(page);
     
     await page.goto('/findr/log');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Verify page loaded
     const main = page.locator('main, [role="main"]');

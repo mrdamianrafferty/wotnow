@@ -16,7 +16,7 @@ test.describe('Go Daisy - Account Page', () => {
 
   test('should load account page', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check URL
     await expect(page).toHaveURL(/\/account/);
@@ -24,7 +24,7 @@ test.describe('Go Daisy - Account Page', () => {
 
   test('should display account settings', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
     
     // Should have account heading
@@ -34,7 +34,7 @@ test.describe('Go Daisy - Account Page', () => {
 
   test('should show location settings', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Should have location-related content
     const body = page.locator('body');
@@ -43,7 +43,7 @@ test.describe('Go Daisy - Account Page', () => {
 
   test('should show activity preferences', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -51,7 +51,7 @@ test.describe('Go Daisy - Account Page', () => {
 
   test('should allow editing home location', async ({ page }) => {
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for buttons or inputs for location
     const buttons = page.locator('button');
@@ -64,7 +64,7 @@ test.describe('Go Daisy - Account Page', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     
     await page.goto('/account');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -87,7 +87,7 @@ test.describe('Go Daisy - Interests/Preferences Page', () => {
 
   test('should load interests page', async ({ page }) => {
     await page.goto('/interests');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Check URL
     await expect(page).toHaveURL(/\/interests/);
@@ -95,7 +95,7 @@ test.describe('Go Daisy - Interests/Preferences Page', () => {
 
   test('should display activity selection', async ({ page }) => {
     await page.goto('/interests');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     const body = page.locator('body');
     await expect(body).toBeVisible();
@@ -103,7 +103,7 @@ test.describe('Go Daisy - Interests/Preferences Page', () => {
 
   test('should allow toggling activities', async ({ page }) => {
     await page.goto('/interests');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     
     // Look for interactive elements
     const clickableElements = page.locator('button, [role="button"]');
