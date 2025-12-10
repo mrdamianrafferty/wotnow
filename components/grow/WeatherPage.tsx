@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import {
   Cloud,
   Sun,
@@ -12,16 +11,12 @@ import {
   Thermometer,
   Eye,
   Waves,
-  Anchor,
-  Compass,
   Gauge,
   Droplets,
   Sunrise,
   Sunset,
   Moon,
   Activity,
-  ArrowUp,
-  ArrowDown,
   TrendingUp,
   TrendingDown,
   Umbrella,
@@ -167,18 +162,7 @@ interface WeatherApiResponse {
 
 type Translator = (value: string) => string;
 
-const locationOptions = [
-  { value: 'home', label: 'Home Garden' },
-  { value: 'greenhouse', label: 'Greenhouse Beds' },
-  { value: 'community', label: 'Community Plot' }
-];
 
-const marineLocationOptions = [
-  { value: 'none', label: 'No marine overlay' },
-  { value: 'harbor', label: 'Oyster Point Harbor' },
-  { value: 'bay', label: 'Central Bay Buoy' },
-  { value: 'coast', label: 'Ocean Beach Pier' }
-];
 
 const MOCK_WEATHER_DATA: WeatherApiResponse = {
   current: {
@@ -278,8 +262,7 @@ function isWeatherApiResponse(candidate: unknown): candidate is WeatherApiRespon
 }
 
 export function WeatherPage() {
-  const [selectedLocation, setSelectedLocation] = useState('home');
-  const [marineLocation, setMarineLocation] = useState('none');
+
   const [weatherData, setWeatherData] = useState<WeatherApiResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -291,15 +274,6 @@ export function WeatherPage() {
     () => [
       'Garden Location',
       'Location not set',
-      'Select bed',
-      'Marine overlay',
-      'Home Garden',
-      'Greenhouse Beds',
-      'Community Plot',
-      'No marine overlay',
-      'Oyster Point Harbor',
-      'Central Bay Buoy',
-      'Ocean Beach Pier',
       'Showing demo weather data (live service unavailable)',
       'Wind',
       'Humidity',
@@ -310,7 +284,6 @@ export function WeatherPage() {
       'Wave',
       'Precip',
       'UV',
-      'Marine Overlay',
       'Wave Height',
       'Swell',
       'Water Temp',
@@ -407,7 +380,7 @@ export function WeatherPage() {
     try {
       setIsLoading(true);
       setError('');
-      const data = await api.getWeather(userLocation, marineLocation !== 'none');
+      const data = await api.getWeather(userLocation, false);
       if (isWeatherApiResponse(data)) {
         setWeatherData(data);
       } else {
@@ -420,13 +393,13 @@ export function WeatherPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [marineLocation, t, userLocation]);
+  }, [t, userLocation]);
 
   useEffect(() => {
     if (userLocation) {
       fetchWeatherData();
     }
-  }, [fetchWeatherData, selectedLocation, userLocation]);
+  }, [fetchWeatherData, userLocation]);
 
   const handleUnitToggle = async () => {
     const newUnit: UnitSystem = unitSystem === 'imperial' ? 'metric' : 'imperial';
@@ -443,8 +416,6 @@ export function WeatherPage() {
 
   const currentWeatherData = weatherData || MOCK_WEATHER_DATA;
   const currentWeather = currentWeatherData.current;
-  const isMarineMode = marineLocation !== 'none';
-  const marineData = isMarineMode ? currentWeatherData.marine ?? null : null;
   const alerts = currentWeatherData.alerts ?? [];
   const WeatherIcon = getConditionIcon(currentWeather.condition);
 
@@ -472,33 +443,7 @@ export function WeatherPage() {
                     </span>
                   ) : null}
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                    <SelectTrigger className="w-[170px]">
-                      <SelectValue placeholder={t('Select bed')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locationOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {t(option.label)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
 
-                  <Select value={marineLocation} onValueChange={setMarineLocation}>
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder={t('Marine overlay')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {marineLocationOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {t(option.label)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </div>
 
@@ -533,7 +478,7 @@ export function WeatherPage() {
         </CardContent>
       </Card>
 
-      <HeroWeatherCard data={currentWeather} marine={marineData} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
+      <HeroWeatherCard data={currentWeather} marine={null} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -585,8 +530,6 @@ export function WeatherPage() {
           </CardContent>
         </Card>
       </div>
-
-      {marineData ? <MarineConditionsCard data={marineData} unitSystem={unitSystem} t={t} /> : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <HourlyForecastCard data={currentWeatherData.hourly} unitSystem={unitSystem} t={t} />
@@ -706,29 +649,6 @@ function HeroWeatherCard({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MarineConditionsCard({ data, unitSystem, t }: { data: MarineConditions; unitSystem: UnitSystem; t: Translator }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Anchor className="h-5 w-5" />
-          {t('Marine Overlay')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatBlock label={t('Wave Height')} icon={<Waves className="h-4 w-4" />} value={formatWaveHeight(data.waveHeight, unitSystem)} />
-        <StatBlock label={t('Swell')} icon={<Compass className="h-4 w-4" />} value={`${data.swellDirection} • ${data.swellPeriod}s`} />
-        <StatBlock label={t('Water Temp')} icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.waterTemp, unitSystem, false)} />
-        <StatBlock label={t('Wind Waves')} icon={<Wind className="h-4 w-4" />} value={formatWaveHeight(data.windWaves, unitSystem)} />
-        <StatBlock label={t('High Tide')} icon={<ArrowUp className="h-4 w-4" />} value={`${data.tideHigh} • ${formatWaveHeight(data.tideHighHeight, unitSystem)}`} />
-        <StatBlock label={t('Low Tide')} icon={<ArrowDown className="h-4 w-4" />} value={`${data.tideLow} • ${formatWaveHeight(data.tideLowHeight, unitSystem)}`} />
-        <StatBlock label={t('Surf')} icon={<Waves className="h-4 w-4" />} value={`${data.surfConditions} (${data.surfRating}/5)`} />
-        <StatBlock label={t('Gusts')} icon={<Zap className="h-4 w-4" />} value={formatWindSpeed(data.gusts, unitSystem, false)} />
       </CardContent>
     </Card>
   );
