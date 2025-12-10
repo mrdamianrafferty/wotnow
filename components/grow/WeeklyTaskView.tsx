@@ -454,7 +454,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 mb-1">
                   <Calendar className="h-5 w-5 text-green-600" />
-                  {weekDateRange.title}
+                  This Week&apos;s Tasks
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">{weekDateRange.full}</p>
               </div>
