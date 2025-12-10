@@ -37,16 +37,21 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<GetResponse | PostResponse | { error: string }>
 ) {
+  console.log('[grow/user-tasks] Request:', req.method, req.url);
+  
   const auth = await getAuthenticatedClient(req, res);
   if (!auth) {
+    console.log('[grow/user-tasks] Auth failed - no authenticated client');
     return;
   }
 
   const { supabase, userId } = auth;
+  console.log('[grow/user-tasks] Authenticated user:', userId);
 
   if (req.method === 'GET') {
     // Get all user tasks
     try {
+      console.log('[grow/user-tasks] Fetching tasks for user:', userId);
       const { data, error } = await supabase
         .from('grow_user_tasks')
         .select('*')
@@ -59,6 +64,7 @@ export default async function handler(
         return res.status(500).json({ error: error.message });
       }
 
+      console.log('[grow/user-tasks] Returning', data?.length || 0, 'tasks');
       return res.status(200).json({ tasks: data || [] });
     } catch (error) {
       console.error('[grow/user-tasks] GET exception:', error);
@@ -70,8 +76,10 @@ export default async function handler(
     // Add a new task
     try {
       const body = req.body as PostBody;
+      console.log('[grow/user-tasks] POST body:', JSON.stringify(body));
 
       if (!body.taskId) {
+        console.log('[grow/user-tasks] Missing taskId');
         return res.status(400).json({ error: 'taskId is required' });
       }
 
@@ -105,6 +113,7 @@ export default async function handler(
       }
 
       // Insert new task
+      console.log('[grow/user-tasks] Inserting new task for user:', userId, 'taskId:', body.taskId);
       const { data: newTask, error: insertError } = await supabase
         .from('grow_user_tasks')
         .insert({
@@ -126,6 +135,7 @@ export default async function handler(
         return res.status(500).json({ error: insertError.message });
       }
 
+      console.log('[grow/user-tasks] Task inserted successfully:', newTask?.id);
       return res.status(201).json({ success: true, task: newTask });
     } catch (error) {
       console.error('[grow/user-tasks] POST exception:', error);

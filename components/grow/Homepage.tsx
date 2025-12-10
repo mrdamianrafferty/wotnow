@@ -472,16 +472,18 @@ export function Homepage() {
     // Try to sync with backend if authenticated
     try {
       const token = localStorage.getItem('access_token');
+      console.log('🔑 Swipe right - Token available:', !!token, 'Task found:', !!task);
       if (token && task) {
-        await api.addTaskToList(taskId, {
+        const result = await api.addTaskToList(taskId, {
           title: task.title,
           description: task.fullDescription || task.shortDescription,
           taskType: task.category === 'harvest' ? 'harvest' : task.category === 'planting' ? 'planting' : 'maintenance',
           plantSlug: task.plant || undefined
         });
+        console.log('✅ Swipe - Task added to backend:', result);
       }
-    } catch (_error) {
-      // Silent failure - task saved locally
+    } catch (error) {
+      console.error('❌ Swipe - Failed to add task to backend:', error);
     }
   };
 
@@ -514,9 +516,10 @@ export function Homepage() {
         const token = localStorage.getItem('access_token');
         if (token) {
           await api.removeTaskFromList(taskId);
+          console.log('✅ Task removed from backend');
         }
-      } catch (_error) {
-        // Silent failure - removal saved locally
+      } catch (error) {
+        console.error('❌ Failed to remove task from backend:', error);
       }
     } else {
       setMyTasks(prev => [...prev, taskId]);
@@ -524,16 +527,20 @@ export function Homepage() {
       // Try to add to backend
       try {
         const token = localStorage.getItem('access_token');
+        console.log('🔑 Token available:', !!token, 'Task found:', !!task);
         if (token && task) {
-          await api.addTaskToList(taskId, {
+          const result = await api.addTaskToList(taskId, {
             title: task.title,
             description: task.fullDescription || task.shortDescription,
             taskType: task.category === 'harvest' ? 'harvest' : task.category === 'planting' ? 'planting' : 'maintenance',
             plantSlug: task.plant || undefined
           });
+          console.log('✅ Task added to backend:', result);
+        } else if (!token) {
+          console.log('⚠️ No auth token - task only saved locally');
         }
-      } catch (_error) {
-        // Silent failure - addition saved locally
+      } catch (error) {
+        console.error('❌ Failed to add task to backend:', error);
       }
     }
   };
