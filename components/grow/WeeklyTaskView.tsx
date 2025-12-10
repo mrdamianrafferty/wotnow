@@ -126,6 +126,16 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   const [showCompleted, setShowCompleted] = useState(true);
   const [userId, setUserId] = useState<string | null>(propUserId ?? null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [userAddedTasks, setUserAddedTasks] = useState<Array<{
+    id: string;
+    task_id: string;
+    title: string | null;
+    description: string | null;
+    task_type: string;
+    plant_slug: string | null;
+    scheduled_for: string | null;
+    status: string;
+  }>>([]);
 
   useEffect(() => {
     if (propUserId) {
@@ -260,6 +270,24 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     }
   }, [userId]);
 
+  const loadUserTasks = useCallback(async () => {
+    if (!userId) {
+      setUserAddedTasks([]);
+      return;
+    }
+
+    try {
+      const response = await api.getMyTasks();
+      if (response?.tasks && Array.isArray(response.tasks)) {
+        setUserAddedTasks(response.tasks);
+        console.log('📋 WeeklyTaskView: Loaded', response.tasks.length, 'user tasks');
+      }
+    } catch (err) {
+      console.log('WeeklyTaskView: Unable to load user tasks:', err);
+      setUserAddedTasks([]);
+    }
+  }, [userId]);
+
   useEffect(() => {
     if (!userId || isAuthChecking) {
       return;
@@ -267,7 +295,8 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
 
     void loadPlantingCalendar();
     void loadCompletions();
-  }, [userId, isAuthChecking, loadPlantingCalendar, loadCompletions]);
+    void loadUserTasks();
+  }, [userId, isAuthChecking, loadPlantingCalendar, loadCompletions, loadUserTasks]);
 
   const isTaskCompleted = useCallback(
     (plantSlug: string, taskCode: string) =>
@@ -667,6 +696,59 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* User-Added Tasks Section */}
+      {!isLoading && !isAuthChecking && userId && userAddedTasks.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Sprout className="h-4 w-4" />
+            Your Added Tasks ({userAddedTasks.length})
+          </h3>
+          {userAddedTasks.map((task) => (
+            <Card
+              key={task.id}
+              className="border-l-4 border-l-violet-500 transition-all hover:shadow-md"
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="mb-2 flex items-start gap-2">
+                      <div className="rounded-lg p-2 bg-violet-50 border border-violet-200 text-violet-700">
+                        <Sprout className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <h3 className="font-medium">
+                            {task.title || 'Added Task'}
+                          </h3>
+                          <Badge className="text-xs bg-violet-100 text-violet-800 border-violet-200">
+                            Added by you
+                          </Badge>
+                        </div>
+                        {task.plant_slug && (
+                          <p className="text-sm text-muted-foreground">
+                            {task.plant_slug.replace(/-/g, ' ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {task.description && (
+                      <div className="ml-12 mb-3 border-l-2 border-violet-300 bg-violet-50 p-2 text-sm">
+                        {task.description}
+                      </div>
+                    )}
+                    <div className="ml-12 flex flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {task.task_type?.replace(/_/g, ' ') || 'maintenance'}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
       {!error && (
