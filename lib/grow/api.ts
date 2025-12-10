@@ -737,18 +737,20 @@ export class ApiClient {
 
   async getPlantingCalendar(lat?: number, lon?: number) {
     try {
-      const url = new URL(`${API_BASE}/garden/planting-calendar`);
+      // Use local Next.js API route (not edge function)
+      const url = new URL('/api/grow/planting-calendar', window.location.origin);
       if (lat !== undefined && lon !== undefined) {
         url.searchParams.set('lat', lat.toString());
         url.searchParams.set('lon', lon.toString());
       }
 
       const response = await this.fetchWithTimeout(url.toString(), {
-        headers: this.getHeaders(false),
+        headers: this.getHeaders(true), // Requires auth
       }, 5000);
 
       if (!response.ok) {
-        throw new Error('Service unavailable');
+        const errorData = await response.json().catch(() => ({ error: 'Service unavailable' }));
+        throw new Error(errorData.error || 'Service unavailable');
       }
 
       return response.json();

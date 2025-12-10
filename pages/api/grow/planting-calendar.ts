@@ -209,6 +209,7 @@ export default async function handler(
   const { supabase, userId } = auth;
 
   try {
+    // First try to get data from profiles table
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('gardening_climate_zone_code, home_elevation_m, home_lat, home_lon')
@@ -217,6 +218,27 @@ export default async function handler(
 
     if (profileError) {
       throw new Error(profileError.message || 'Failed to load profile');
+    }
+
+    // Also check user_location_preferences for lat/lon (used by Go Daisy location system)
+    let locationLat: number | null = profile?.home_lat != null ? Number(profile.home_lat) : null;
+    let locationLon: number | null = profile?.home_lon != null ? Number(profile.home_lon) : null;
+    
+    // If no lat/lon from profile, try user_location_preferences
+    if (locationLat === null || locationLon === null) {
+      const { data: locationPrefs } = await supabase
+        .from('user_location_preferences')
+        .select('home_coordinates')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (locationPrefs?.home_coordinates) {
+        const coords = locationPrefs.home_coordinates as { lat?: number; lon?: number } | null;
+        if (coords?.lat != null && coords?.lon != null) {
+          locationLat = coords.lat;
+          locationLon = coords.lon;
+        }
+      }
     }
 
     const zoneFromProfile = typeof profile?.gardening_climate_zone_code === 'string'
@@ -229,12 +251,9 @@ export default async function handler(
         ? Number(profile.home_elevation_m)
         : null;
 
-    const lat = profile?.home_lat != null ? Number(profile.home_lat) : null;
-    const lon = profile?.home_lon != null ? Number(profile.home_lon) : null;
-
     const inferredZone = zoneFromProfile || (
-      lat != null && lon != null
-        ? inferGardeningClimateZone(lat, lon, elevationFromProfile ?? undefined)
+      locationLat != null && locationLon != null
+        ? inferGardeningClimateZone(locationLat, locationLon, elevationFromProfile ?? undefined)
         : null
     );
 
