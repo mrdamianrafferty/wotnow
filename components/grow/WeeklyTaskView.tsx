@@ -189,8 +189,14 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     const monthName = new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('en-US', {
       month: 'long',
     });
+    const monthShort = new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('en-US', {
+      month: 'short',
+    });
 
-    return `${monthName} ${startDay}-${endDay}, ${currentYear}`;
+    return {
+      full: `${monthName} ${startDay}-${endDay}, ${currentYear}`,
+      title: `${monthShort} ${startDay}-${endDay}`,
+    };
   }, [currentMonth, currentWeek, currentYear]);
 
   const loadPlantingCalendar = useCallback(async () => {
@@ -293,7 +299,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
             userId,
             task.plantSlug,
             task.taskCode,
-            `Completed in ${getWeekDateRange()}`,
+            `Completed in ${getWeekDateRange().full}`,
           );
 
           const completion = (response as { completion?: TaskCompletion | unknown }).completion;
@@ -448,9 +454,9 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 mb-1">
                   <Calendar className="h-5 w-5 text-green-600" />
-                  Week {currentWeek} Tasks
+                  {weekDateRange.title}
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">{weekDateRange}</p>
+                <p className="text-sm text-muted-foreground">{weekDateRange.full}</p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
