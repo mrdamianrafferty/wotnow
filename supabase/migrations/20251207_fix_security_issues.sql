@@ -32,7 +32,7 @@ ALTER TABLE IF EXISTS public.habitat_alias2 ENABLE ROW LEVEL SECURITY;
 -- Geographic/spatial reference data
 ALTER TABLE IF EXISTS public.grid_025deg ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.region_map ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
+-- Note: spatial_ref_sys is a PostGIS system table, cannot enable RLS
 ALTER TABLE IF EXISTS public.grid_025deg_ices_xref ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.world_eez ENABLE ROW LEVEL SECURITY;
 
@@ -88,7 +88,7 @@ CREATE POLICY "Public read access" ON public.habitat_alias2 FOR SELECT USING (tr
 -- Geographic/spatial reference data
 CREATE POLICY "Public read access" ON public.grid_025deg FOR SELECT USING (true);
 CREATE POLICY "Public read access" ON public.region_map FOR SELECT USING (true);
-CREATE POLICY "Public read access" ON public.spatial_ref_sys FOR SELECT USING (true);
+-- Note: spatial_ref_sys is a PostGIS system table, no policy needed
 CREATE POLICY "Public read access" ON public.grid_025deg_ices_xref FOR SELECT USING (true);
 CREATE POLICY "Public read access" ON public.world_eez FOR SELECT USING (true);
 
