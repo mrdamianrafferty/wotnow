@@ -8,6 +8,64 @@ const GROW_PLANTS_API_BASE = '/api/grow/plants';
 const GROW_SPECIES_API_BASE = '/api/grow/species';
 const GROW_ONBOARDING_COMPLETE_API = '/api/grow/onboarding/complete';
 
+// ========================================
+// TEMPERATURE NORMALIZATION HELPERS
+// ========================================
+
+// Convert Fahrenheit to Celsius
+const fahrenheitToCelsius = (f: number): number => Math.round(((f - 32) * 5) / 9);
+
+// Detect if temperature values appear to be Fahrenheit
+// Temps > 50 are almost certainly Fahrenheit (no place on Earth is 50°C regularly)
+const looksLikeFahrenheit = (temp: number | undefined | null): boolean => {
+  return typeof temp === 'number' && temp > 50;
+};
+
+// Convert weather response from Fahrenheit to Celsius if needed
+// The edge function returns Fahrenheit, but our formatTemperature expects Celsius
+const normalizeWeatherToMetric = (data: any): any => {
+  if (!data) return data;
+  
+  const current = data.current;
+  if (!current) return data;
+  
+  // Check if temperature looks like Fahrenheit
+  if (looksLikeFahrenheit(current.temperature)) {
+    console.log('🌡️ Converting weather from Fahrenheit to Celsius (detected F values)');
+    
+    // Convert current weather temps
+    if (typeof current.temperature === 'number') current.temperature = fahrenheitToCelsius(current.temperature);
+    if (typeof current.feelsLike === 'number') current.feelsLike = fahrenheitToCelsius(current.feelsLike);
+    if (typeof current.high === 'number') current.high = fahrenheitToCelsius(current.high);
+    if (typeof current.low === 'number') current.low = fahrenheitToCelsius(current.low);
+    if (typeof current.dewPoint === 'number') current.dewPoint = fahrenheitToCelsius(current.dewPoint);
+    
+    // Convert hourly forecast
+    if (Array.isArray(data.hourly)) {
+      data.hourly = data.hourly.map((h: any) => ({
+        ...h,
+        temperature: typeof h.temperature === 'number' ? fahrenheitToCelsius(h.temperature) : h.temperature,
+      }));
+    }
+    
+    // Convert daily forecast
+    if (Array.isArray(data.daily)) {
+      data.daily = data.daily.map((d: any) => ({
+        ...d,
+        high: typeof d.high === 'number' ? fahrenheitToCelsius(d.high) : d.high,
+        low: typeof d.low === 'number' ? fahrenheitToCelsius(d.low) : d.low,
+      }));
+    }
+    
+    // Convert marine water temp if present and looks like F
+    if (data.marine && typeof data.marine.waterTemp === 'number' && data.marine.waterTemp > 50) {
+      data.marine.waterTemp = fahrenheitToCelsius(data.marine.waterTemp);
+    }
+  }
+  
+  return data;
+};
+
 type GrowPlantsResponse = {
   plants: any[];
   onboardingCompleted?: boolean;
@@ -276,6 +334,8 @@ export class ApiClient {
     if (includeMarine) {
       url.searchParams.set('marine', 'true');
     }
+    // Request metric units from API (some APIs support this)
+    url.searchParams.set('units', 'metric');
 
     const response = await this.fetchWithTimeout(url.toString(), {
       headers: this.getHeaders(),
@@ -286,7 +346,10 @@ export class ApiClient {
       throw new Error(error.error || 'Failed to fetch weather');
     }
 
-    return response.json();
+    const data = await response.json();
+    // Normalize to Celsius - if API returned Fahrenheit, convert it
+    // This ensures formatTemperature() gets Celsius input
+    return normalizeWeatherToMetric(data);
   }
 
   // ========================================
