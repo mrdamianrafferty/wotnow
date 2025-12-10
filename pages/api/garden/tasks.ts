@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../../lib/supabase/env';
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
 
 interface GardenTask {
   id: string;
@@ -216,7 +216,7 @@ function generateTasks(
 ): GardenTask[] {
   const tasks: GardenTask[] = [];
   const now = new Date();
-  const temp = weather?.temperature || 70;
+  const temp = weather?.temperature || 20; // Celsius fallback (68°F)
   const conditions = weather?.conditions || 'Clear';
   const _humidity = weather?.humidity || 50;
 
@@ -271,7 +271,7 @@ function generateTasks(
           `No rain expected today`,
           `Consistent moisture supports healthy growth`,
         ],
-        weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+        weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
         weatherIcon: weather?.icon || '🌤️',
         plant: plant.name,
       });
@@ -298,7 +298,7 @@ function generateTasks(
           'Regular feeding improves yields',
           'Apply every 2-3 weeks during active growth',
         ],
-        weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+        weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
         weatherIcon: weather?.icon || '🌤️',
         plant: plant.name,
       });
@@ -324,7 +324,7 @@ function generateTasks(
           'Directs energy to fruit production',
           'Weekly maintenance keeps plants manageable',
         ],
-        weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+        weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
         weatherIcon: weather?.icon || '🌤️',
         plant: plant.name,
       });
@@ -358,7 +358,7 @@ function generateTasks(
     });
   }
 
-  if ([5, 6].includes(currentMonth) && temp > 65) {
+  if ([5, 6].includes(currentMonth) && temp > 18) { // 18°C ≈ 65°F
     // Warm season planting
     tasks.push({
       id: 'summer-planting',
@@ -385,7 +385,7 @@ function generateTasks(
   }
 
   // Mulching task for summer heat
-  if ([6, 7, 8].includes(currentMonth) && temp > 75) {
+  if ([6, 7, 8].includes(currentMonth) && temp > 24) { // 24°C ≈ 75°F
     tasks.push({
       id: 'summer-mulch',
       taskCode: 'mulch',
@@ -410,7 +410,7 @@ function generateTasks(
   }
 
   // Fall planting
-  if ([8, 9].includes(currentMonth) && temp < 85) {
+  if ([8, 9].includes(currentMonth) && temp < 29) { // 29°C ≈ 85°F
     tasks.push({
       id: 'fall-planting',
       taskCode: 'plant-fall',
@@ -429,7 +429,7 @@ function generateTasks(
         `60-75 days until first frost in zone ${zone}`,
         `Fall crops often sweeter than spring plantings`,
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: weather?.icon || '🍂',
     });
   }
@@ -454,7 +454,7 @@ function generateTasks(
         'Remove before they set seed',
         'Easier to pull when soil is moist',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: weather?.icon || '🌤️',
     });
   }
@@ -479,7 +479,7 @@ function generateTasks(
         'Best selection before varieties sell out',
         'Time to reflect and plan improvements',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: '📅',
     });
 
@@ -501,7 +501,7 @@ function generateTasks(
         'Prevents rust and extends tool life',
         'Quiet season is perfect for maintenance',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: '🛠️',
     });
 
@@ -524,8 +524,8 @@ function generateTasks(
           'Indoor start gives plants a strong head start',
           'Ensures transplants are ready when weather permits',
         ],
-        weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
-        soilTemp: 'Indoor: 65-75°F (ideal)',
+        weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
+        soilTemp: 'Indoor: 18-24°C (ideal)',
         weatherIcon: '🪴',
       });
     }
@@ -551,7 +551,7 @@ function generateTasks(
         'Track what works in your specific climate',
         'Helps identify patterns and solve problems',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: '📚',
     });
 
@@ -573,7 +573,7 @@ function generateTasks(
         'Identifies deficiencies before planting',
         'Prevents wasted effort on wrong amendments',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: '🧪',
     });
 
@@ -595,7 +595,7 @@ function generateTasks(
         'Creates rich soil amendment for free',
         'Reduces kitchen and yard waste',
       ],
-      weatherContext: `${temp}°F, ${conditions.toLowerCase()}`,
+      weatherContext: `${temp}°C, ${conditions.toLowerCase()}`,
       weatherIcon: '🌱',
     });
   }
@@ -646,7 +646,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         conditions: weather.conditions,
         soilMoisture: weather.humidity > 70 ? 'Wet' : weather.humidity > 40 ? 'Moderate' : 'Dry',
       } : {
-        temperature: 70,
+        temperature: 20, // Celsius fallback (68°F)
         conditions: 'Clear',
         soilMoisture: 'Moderate',
       },

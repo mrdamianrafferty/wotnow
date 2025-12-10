@@ -1,9 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getFullWeather } from '../../../lib/services/weatherService';
+import { getFullWeather, fetchOpenMeteoWeather } from '../../../lib/services/weatherService';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || process.env.NEXT_PUBLIC_OPENWEATHER_KEY;
+
+// Soil data interface
+interface SoilData {
+  temperature: {
+    surface: number | null;    // 0cm
+    shallow: number | null;    // 6cm
+    mid: number | null;        // 18cm
+    deep: number | null;       // 54cm
+  };
+  moisture: {
+    surface: number | null;    // 0-1cm (m³/m³)
+    shallow: number | null;    // 1-3cm
+    mid: number | null;        // 3-9cm
+    deep: number | null;       // 9-27cm
+  };
+  timestamp: string | null;
+}
 
 interface GeoLocation {
   lat: number;
@@ -124,6 +141,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Failed to fetch weather data' });
     }
 
+    // Fetch soil data from Open-Meteo (FREE, no API key needed)
+    let soilData: SoilData | null = null;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const omData = await fetchOpenMeteoWeather(latitude, longitude, today, today) as any;
+      
+      if (omData?.hourly) {
+        // Find the current hour index (or closest to noon for representative soil temps)
+        const currentHour = new Date().getHours();
+        const hourIndex = Math.min(currentHour, (omData.hourly.time?.length ?? 1) - 1);
+        
+        soilData = {
+          temperature: {
+            surface: omData.hourly.soil_temperature_0cm?.[hourIndex] ?? null,
+            shallow: omData.hourly.soil_temperature_6cm?.[hourIndex] ?? null,
+            mid: omData.hourly.soil_temperature_18cm?.[hourIndex] ?? null,
+            deep: omData.hourly.soil_temperature_54cm?.[hourIndex] ?? null,
+          },
+          moisture: {
+            surface: omData.hourly.soil_moisture_0_to_1cm?.[hourIndex] ?? null,
+            shallow: omData.hourly.soil_moisture_1_to_3cm?.[hourIndex] ?? null,
+            mid: omData.hourly.soil_moisture_3_to_9cm?.[hourIndex] ?? null,
+            deep: omData.hourly.soil_moisture_9_to_27cm?.[hourIndex] ?? null,
+          },
+          timestamp: omData.hourly.time?.[hourIndex] ?? null,
+        };
+      }
+    } catch (soilError) {
+      console.warn('Failed to fetch soil data from Open-Meteo:', soilError);
+      // Continue without soil data - it's optional
+    }
+
     // Transform to WeatherApiResponse format expected by WeatherPage
     const current = weatherData.current || {} as any;
     const daily = (weatherData.daily || []) as any[];
@@ -178,6 +227,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         description: a.description || '',
         severity: a.tags?.includes('Extreme') ? 'warning' : 'watch',
       })),
+      // Real soil data from Open-Meteo (FREE) - format for SoilConditionsCard
+      soil: soilData ? {
+        // Use surface temperature (0cm) as the primary soil temp
+        temperature: Math.round((soilData.temperature.surface ?? soilData.temperature.shallow ?? 10) * 10) / 10,
+        // Convert moisture from m³/m³ to percentage (0-100) for display
+        // Typical soil moisture: 0.1-0.4 m³/m³ = 10-40%
+        moisture: Math.round((soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.25) * 100),
+        // Derive compaction/structure from moisture level
+        compaction: getSoilCompaction(soilData.moisture.surface ?? soilData.moisture.shallow ?? 0.25),
+        // Recommendation based on soil conditions
+        recommendation: getSoilRecommendation(
+          soilData.temperature.surface ?? 10,
+          soilData.moisture.surface ?? 0.25
+        ),
+        // Also include detailed multi-depth data for advanced users
+        detailed: soilData,
+      } : null,
     };
 
     // Cache for 5 minutes
@@ -225,4 +291,44 @@ function getPlantingAdvice(temp: number, _rainChance: number): string {
   if (temp > 20 && temp <= 25) return 'Perfect for warm-season crops. Ensure adequate watering.';
   if (temp > 25) return 'Hot conditions - water early morning or evening. Provide shade for leafy greens.';
   return 'Check local conditions for specific planting advice.';
+}
+
+// Derive soil compaction/structure from moisture level (m³/m³)
+function getSoilCompaction(moisture: number): string {
+  if (moisture > 0.45) return 'Waterlogged - avoid working';
+  if (moisture > 0.35) return 'Moist - good for planting';
+  if (moisture > 0.25) return 'Ideal - well-drained';
+  if (moisture > 0.15) return 'Dry - water before planting';
+  return 'Very dry - deep watering needed';
+}
+
+// Generate soil recommendation based on temperature and moisture
+function getSoilRecommendation(temp: number, moisture: number): string {
+  // Too cold
+  if (temp < 5) {
+    return 'Soil too cold for most seeds. Wait for warmer conditions or use cloches/cold frames.';
+  }
+  
+  // Cold soil
+  if (temp < 10) {
+    if (moisture > 0.4) return 'Cold and wet soil. Allow to drain before working. Good for hardy crops under protection.';
+    if (moisture < 0.2) return 'Cold and dry soil. Ideal for early preparation. Add compost to improve structure.';
+    return 'Cool soil suitable for peas, broad beans, and hardy greens. Protect tender seedlings.';
+  }
+  
+  // Ideal temp range
+  if (temp >= 10 && temp <= 18) {
+    if (moisture > 0.4) return 'Good temperature but soil is wet. Wait 1-2 days before planting to avoid compaction.';
+    if (moisture < 0.2) return 'Ideal temperature but soil needs water. Irrigate before planting for best germination.';
+    return 'Perfect soil conditions for transplanting and direct sowing most crops.';
+  }
+  
+  // Warm soil
+  if (temp > 18) {
+    if (moisture > 0.4) return 'Warm and moist - watch for fungal issues. Good drainage essential.';
+    if (moisture < 0.2) return 'Warm and dry - mulch to retain moisture. Water deeply before planting.';
+    return 'Excellent conditions for warm-season crops like tomatoes, peppers, and squash.';
+  }
+  
+  return 'Check local conditions for specific soil recommendations.';
 }
