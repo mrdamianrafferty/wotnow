@@ -45,4 +45,4 @@ create policy "Users can delete own tasks"
 drop trigger if exists grow_user_tasks_set_updated_at on public.grow_user_tasks;
 create trigger grow_user_tasks_set_updated_at
 before update on public.grow_user_tasks
-for each row execute function public.set_updated_at();
+for each row execute function public.handle_updated_at();
