@@ -5,7 +5,6 @@ import { Input } from '../ui/input';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Bug, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { EDGE_FUNCTION_BASE, SUPABASE_ANON_KEY } from '../../lib/supabase/env';
 
 interface WeatherDebugCoords {
   lat?: number;
@@ -49,13 +48,9 @@ export function WeatherDebug() {
 
     setIsLoading(true);
     try {
-      const apiBase = EDGE_FUNCTION_BASE;
-      const requestUrl = `${apiBase}/debug/weather?location=${encodeURIComponent(location)}`;
-      const response = await fetch(requestUrl, {
-        headers: {
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      });
+      // Use Next.js API route instead of Edge Function
+      const requestUrl = `/api/debug/weather?location=${encodeURIComponent(location)}`;
+      const response = await fetch(requestUrl);
 
       const data = (await response.json()) as WeatherDebugResult;
       setResult({ ...data, url: data.url ?? requestUrl });
