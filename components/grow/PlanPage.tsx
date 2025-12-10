@@ -344,6 +344,44 @@ export function PlanPage() {
       console.log('⚠️ Timeline API unavailable, continuing with local data', error);
     }
 
+    // Fetch user-added tasks from homepage
+    try {
+      const myTasksResponse = await api.getMyTasks();
+      if (myTasksResponse?.tasks && Array.isArray(myTasksResponse.tasks)) {
+        const userTasks = myTasksResponse.tasks.map((task: { 
+          id: string;
+          task_id?: string;
+          title?: string;
+          description?: string;
+          scheduled_for?: string;
+          notes?: string;
+          plant_slug?: string;
+          task_type?: string;
+        }) => {
+          const scheduledDate = task.scheduled_for 
+            ? new Date(task.scheduled_for) 
+            : new Date();
+          
+          return {
+            id: `user-${task.id || task.task_id}`,
+            type: (task.task_type || 'maintenance') as TimelineEvent['type'],
+            title: task.title || 'Added Task',
+            description: task.description || task.notes || '',
+            dateLabel: scheduledDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            startDate: scheduledDate,
+            plant: task.plant_slug,
+            priority: 'normal' as const,
+            status: deriveStatus(scheduledDate),
+            tags: ['user-added']
+          } as TimelineEvent;
+        });
+        aggregated.push(...userTasks);
+        console.log(`✅ Added ${userTasks.length} user tasks`);
+      }
+    } catch (error) {
+      console.log('⚠️ User tasks unavailable, continuing without user tasks', error);
+    }
+
     try {
       const calendarResponse = (await api.getPlantingCalendar()) as PlantingCalendarResponse;
       const windows = Array.isArray(calendarResponse?.windows) ? calendarResponse.windows : [];
