@@ -1483,6 +1483,9 @@ abbr[title] {
   flex: 1;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .activity-card__data-bar {
@@ -1490,6 +1493,7 @@ abbr[title] {
   border-radius: 6px;
   padding: 8px;
   margin-bottom: 8px;
+  overflow: hidden;
 }
 
 .activity-card__data-list {
@@ -1508,7 +1512,8 @@ abbr[title] {
   align-items: center;
   gap: 3px;
   color: #fff;
-  min-width: fit-content;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .activity-card__data-item--wrap {
@@ -1583,36 +1588,35 @@ abbr[title] {
 /* ------ ACTIVITIES GRID (landscape cards) ------ */
 .activities-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); /* Wider columns for landscape */
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+  grid-template-columns: 1fr; /* Single column on mobile */
+  gap: 1rem;
+  margin-top: 1rem;
   align-items: start;
-  grid-auto-rows: auto; /* Let landscape aspect ratio control height */
-  padding: 16px;
+  grid-auto-rows: auto;
+  padding: 8px;
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
 
-@media (max-width: 500px) {
+@media (min-width: 640px) {
   .activities-grid {
-    grid-template-columns: 1fr;
-    padding: 8px;
-  }
-  .activity-card, .activity-card__bg-image {
-    min-width: 0;
-    width: 100%;
-    box-sizing: border-box;
-    aspect-ratio: unset;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+    padding: 16px;
   }
 }
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  align-items: start;
-  grid-auto-rows: auto; /* Let landscape aspect ratio control height */
-  padding: 16px;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+
+/* Ensure activity cards don't overflow container */
+.activity-card, .activity-card__bg-image {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* ------ UTILITY CLASSES ------ */

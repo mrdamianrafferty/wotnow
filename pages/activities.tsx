@@ -1036,7 +1036,7 @@ export default function ActivitiesPage() {
       />
 
       {/* EXISTING ACTIVITIES CONTENT */}
-      <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto' }}>
+      <section style={{ padding: '1rem', maxWidth: '1200px', margin: '0 auto', overflowX: 'hidden' }}>
         {/* Error States */}
         {needsLocation && (
           <div style={{ 
