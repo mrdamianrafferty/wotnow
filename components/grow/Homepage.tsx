@@ -324,7 +324,7 @@ export function Homepage() {
           
           setWeatherContext({
             location: response.context.location || locationToUse,
-            temperature: response.context.weather?.temperature || response.context.temperature || 72,
+            temperature: response.context.weather?.temperature || response.context.temperature || 15,
             conditions: condition,
             icon: icon,
             soilMoisture: response.context.weather?.soilMoisture || response.context.soilMoisture || 'Moderate',

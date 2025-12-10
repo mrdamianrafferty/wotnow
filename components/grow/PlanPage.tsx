@@ -209,7 +209,7 @@ export function PlanPage() {
       id: '2',
       type: 'alert',
       title: '⚠️ Frost Warning',
-      description: 'Temperatures expected to drop below 32°F. Protect tender plants.',
+      description: 'Temperatures expected to drop below 0°C. Protect tender plants.',
       dateLabel: 'March 5',
       startDate: new Date(2025, 2, 5),
       priority: 'critical',

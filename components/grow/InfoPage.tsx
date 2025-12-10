@@ -248,7 +248,7 @@ export function InfoPage() {
                       Full sun • Regular watering • Support required
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Start indoors 6-8 weeks before last frost. Transplant when soil is warm (60°F+). Stake or cage plants. Water consistently to prevent blossom end rot.
+                      Start indoors 6-8 weeks before last frost. Transplant when soil is warm (15°C+). Stake or cage plants. Water consistently to prevent blossom end rot.
                     </p>
                   </div>
                   
