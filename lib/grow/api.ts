@@ -726,7 +726,8 @@ export class ApiClient {
 
   async getGardenAlerts(lat?: number, lon?: number) {
     try {
-      const url = new URL(`${API_BASE}/garden/alerts`);
+      // Use local Next.js API route (not edge function)
+      const url = new URL('/api/garden/alerts', window.location.origin);
       if (lat !== undefined && lon !== undefined) {
         url.searchParams.set('lat', lat.toString());
         url.searchParams.set('lon', lon.toString());
