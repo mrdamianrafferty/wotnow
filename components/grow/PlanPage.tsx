@@ -646,6 +646,7 @@ export function PlanPage() {
                   variant={filterType === 'all' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('all')}
+                  className={filterType === 'all' ? 'text-white' : ''}
                 >
                   All Events
                 </Button>
@@ -653,7 +654,7 @@ export function PlanPage() {
                   variant={filterType === 'planting' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('planting')}
-                  className={filterType === 'planting' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+                  className={filterType === 'planting' ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}
                 >
                   <Sprout className="h-3 w-3 mr-1" />
                   Planting
@@ -662,7 +663,7 @@ export function PlanPage() {
                   variant={filterType === 'maintenance' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('maintenance')}
-                  className={filterType === 'maintenance' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+                  className={filterType === 'maintenance' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
                 >
                   <Scissors className="h-3 w-3 mr-1" />
                   Maintenance
@@ -671,7 +672,7 @@ export function PlanPage() {
                   variant={filterType === 'harvest' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('harvest')}
-                  className={filterType === 'harvest' ? 'bg-green-600 hover:bg-green-700' : ''}
+                  className={filterType === 'harvest' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
                 >
                   <ShoppingBasket className="h-3 w-3 mr-1" />
                   Harvest
@@ -680,7 +681,7 @@ export function PlanPage() {
                   variant={filterType === 'alert' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setFilterType('alert')}
-                  className={filterType === 'alert' ? 'bg-red-600 hover:bg-red-700' : ''}
+                  className={filterType === 'alert' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
                 >
                   <AlertTriangle className="h-3 w-3 mr-1" />
                   Alerts
@@ -709,6 +710,7 @@ export function PlanPage() {
                 size="sm"
                 onClick={() => setViewMode('weekly')}
                 title="Weekly Tasks"
+                className={viewMode === 'weekly' ? 'text-white' : ''}
               >
                 <Calendar className="h-4 w-4 mr-1" />
                 <span className="hidden sm:inline">Week</span>
@@ -718,6 +720,7 @@ export function PlanPage() {
                 size="sm"
                 onClick={() => setViewMode('timeline')}
                 title="Timeline View"
+                className={viewMode === 'timeline' ? 'text-white' : ''}
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
@@ -726,6 +729,7 @@ export function PlanPage() {
                 size="sm"
                 onClick={() => setViewMode('calendar')}
                 title="Calendar View"
+                className={viewMode === 'calendar' ? 'text-white' : ''}
               >
                 <CalendarDays className="h-4 w-4" />
               </Button>
