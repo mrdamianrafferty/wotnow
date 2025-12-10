@@ -49,7 +49,7 @@ export function WeatherDebug() {
     setIsLoading(true);
     try {
       // Use Next.js API route instead of Edge Function
-      const requestUrl = `/api/debug/weather?location=${encodeURIComponent(location)}`;
+      const requestUrl = `/api/weather-debug?location=${encodeURIComponent(location)}`;
       const response = await fetch(requestUrl);
 
       const data = (await response.json()) as WeatherDebugResult;
