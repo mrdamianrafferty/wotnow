@@ -15,9 +15,11 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  SkipForward
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
+import { auth } from '../../lib/grow/auth';
 import { WeeklyTaskView } from './WeeklyTaskView';
 import { SkeletonPlanPage } from './GrowSkeletons';
 
@@ -180,7 +182,7 @@ function convertWindowToEvent(window: PlantingCalendarWindow, year: number): Tim
 }
 
 export function PlanPage() {
-  const [viewMode, setViewMode] = useState<'timeline' | 'calendar' | 'weekly'>('weekly');
+  const [viewMode, setViewMode] = useState<'timeline' | 'calendar' | 'weekly'>('timeline');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedCrop, setSelectedCrop] = useState<string>('all');
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -188,6 +190,29 @@ export function PlanPage() {
   const [selectedDayEvents, setSelectedDayEvents] = useState<TimelineEvent[]>([]);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dismissedTasks, setDismissedTasks] = useState<Map<string, { type: 'done' | 'skipped'; year: number }>>(new Map());
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Load user and dismissed tasks
+  useEffect(() => {
+    const loadUserAndDismissals = async () => {
+      try {
+        const session = await auth.getSession();
+        if (session?.user?.id) {
+          setUserId(session.user.id);
+          // Load dismissed tasks from localStorage (could be moved to backend later)
+          const stored = localStorage.getItem(`dismissedTasks_${session.user.id}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            setDismissedTasks(new Map(Object.entries(parsed)));
+          }
+        }
+      } catch (err) {
+        console.log('PlanPage: Auth check failed', err);
+      }
+    };
+    void loadUserAndDismissals();
+  }, []);
 
   // Mock data - in production, this would come from backend
   const mockEvents = useMemo<TimelineEvent[]>(() => [
@@ -472,9 +497,44 @@ export function PlanPage() {
     return classes[color as keyof typeof classes] || classes.neutral;
   };
 
+  // Check if a task is dismissed for the current year
+  const isTaskDismissed = useCallback((eventId: string, eventYear: number) => {
+    const dismissal = dismissedTasks.get(eventId);
+    if (!dismissal) return false;
+    // Only consider dismissed if it was dismissed for this year
+    return dismissal.year === eventYear;
+  }, [dismissedTasks]);
+
+  // Handle marking a task as done or skipped
+  const handleDismissTask = useCallback((eventId: string, type: 'done' | 'skipped') => {
+    const currentYear = new Date().getFullYear();
+    const newDismissals = new Map(dismissedTasks);
+    newDismissals.set(eventId, { type, year: currentYear });
+    setDismissedTasks(newDismissals);
+    
+    // Persist to localStorage
+    if (userId) {
+      const obj = Object.fromEntries(newDismissals);
+      localStorage.setItem(`dismissedTasks_${userId}`, JSON.stringify(obj));
+    }
+  }, [dismissedTasks, userId]);
+
+  // Get the start of current month for filtering
+  const currentMonthStart = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }, []);
+
   const filteredEvents = events
     .filter(event => filterType === 'all' || event.type === filterType)
     .filter(event => selectedCrop === 'all' || event.plant === selectedCrop)
+    // Filter out events before current month (for timeline view)
+    .filter(event => {
+      const eventEnd = event.endDate || event.startDate;
+      return eventEnd >= currentMonthStart;
+    })
+    // Filter out dismissed tasks for this year
+    .filter(event => !isTaskDismissed(event.id, event.startDate.getFullYear()))
     .sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
   const uniquePlants = ['all', ...new Set(events.filter(e => e.plant).map(e => e.plant!))];
@@ -797,7 +857,7 @@ export function PlanPage() {
                             </p>
                             
                             {/* Tags and badges */}
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 mb-3">
                               {event.plant && (
                                 <Badge variant="secondary" className="text-xs">
                                   {event.emoji} {event.plant}
@@ -819,6 +879,28 @@ export function PlanPage() {
                                   Critical
                                 </Badge>
                               )}
+                            </div>
+                            
+                            {/* Done / Skip buttons */}
+                            <div className={`flex gap-2 pt-2 border-t ${index % 2 === 0 ? 'md:justify-end' : 'md:justify-start'}`}>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs text-green-700 border-green-300 hover:bg-green-50"
+                                onClick={() => handleDismissTask(event.id, 'done')}
+                              >
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                Done
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                                onClick={() => handleDismissTask(event.id, 'skipped')}
+                              >
+                                <SkipForward className="h-3 w-3 mr-1" />
+                                Skip this year
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
