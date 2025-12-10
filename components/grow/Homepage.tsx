@@ -466,11 +466,19 @@ export function Homepage() {
     setMyTasks(prev => [...prev, taskId]);
     setCardDeckIndex(prev => prev + 1);
     
+    // Find the task to get its details
+    const task = tasks.find(t => t.id === taskId);
+    
     // Try to sync with backend if authenticated
     try {
       const token = localStorage.getItem('access_token');
-      if (token) {
-        await api.addTaskToList(taskId);
+      if (token && task) {
+        await api.addTaskToList(taskId, {
+          title: task.title,
+          description: task.fullDescription || task.shortDescription,
+          taskType: task.category === 'harvest' ? 'harvest' : task.category === 'planting' ? 'planting' : 'maintenance',
+          plantSlug: task.plant || undefined
+        });
       }
     } catch (_error) {
       // Silent failure - task saved locally
@@ -495,6 +503,9 @@ export function Homepage() {
   const handleAddTask = async (taskId: string) => {
     const isCurrentlyAdded = myTasks.includes(taskId);
     
+    // Find the task to get its details
+    const task = tasks.find(t => t.id === taskId);
+    
     if (isCurrentlyAdded) {
       setMyTasks(prev => prev.filter(id => id !== taskId));
       
@@ -513,8 +524,13 @@ export function Homepage() {
       // Try to add to backend
       try {
         const token = localStorage.getItem('access_token');
-        if (token) {
-          await api.addTaskToList(taskId);
+        if (token && task) {
+          await api.addTaskToList(taskId, {
+            title: task.title,
+            description: task.fullDescription || task.shortDescription,
+            taskType: task.category === 'harvest' ? 'harvest' : task.category === 'planting' ? 'planting' : 'maintenance',
+            plantSlug: task.plant || undefined
+          });
         }
       } catch (_error) {
         // Silent failure - addition saved locally

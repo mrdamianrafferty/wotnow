@@ -326,11 +326,20 @@ export class ApiClient {
     }
   }
 
-  async addTaskToList(taskId: string, options?: { scheduledFor?: string; notes?: string }) {
-    const response = await this.fetchWithTimeout(`${API_BASE}/garden/tasks/${taskId}/add`, {
+  async addTaskToList(taskId: string, options?: { scheduledFor?: string; notes?: string; title?: string; description?: string; taskType?: string; plantSlug?: string }) {
+    // Use local API route for task storage
+    const response = await this.fetchWithTimeout('/api/grow/user-tasks', {
       method: 'POST',
       headers: this.getHeaders(true), // Requires auth
-      body: JSON.stringify(options || {}),
+      body: JSON.stringify({
+        taskId,
+        scheduledFor: options?.scheduledFor,
+        notes: options?.notes,
+        title: options?.title,
+        description: options?.description,
+        taskType: options?.taskType,
+        plantSlug: options?.plantSlug
+      }),
     });
 
     if (!response.ok) {
@@ -342,7 +351,8 @@ export class ApiClient {
   }
 
   async removeTaskFromList(taskId: string) {
-    const response = await this.fetchWithTimeout(`${API_BASE}/garden/tasks/${taskId}/remove`, {
+    // Use local API route for task removal
+    const response = await this.fetchWithTimeout(`/api/grow/user-tasks/${encodeURIComponent(taskId)}`, {
       method: 'DELETE',
       headers: this.getHeaders(true), // Requires auth
     });
@@ -371,7 +381,8 @@ export class ApiClient {
   }
 
   async getMyTasks() {
-    const response = await this.fetchWithTimeout(`${API_BASE}/garden/my-tasks`, {
+    // Use local API route for fetching user tasks
+    const response = await this.fetchWithTimeout('/api/grow/user-tasks', {
       headers: this.getHeaders(true), // Requires auth
     });
 
