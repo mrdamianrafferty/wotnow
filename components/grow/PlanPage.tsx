@@ -346,8 +346,11 @@ export function PlanPage() {
 
     // Fetch user-added tasks from homepage
     try {
+      console.log('📋 PlanPage: Fetching user tasks...');
       const myTasksResponse = await api.getMyTasks();
+      console.log('📋 PlanPage: Raw response:', myTasksResponse);
       if (myTasksResponse?.tasks && Array.isArray(myTasksResponse.tasks)) {
+        console.log('📋 PlanPage: Found', myTasksResponse.tasks.length, 'tasks in response');
         const userTasks = myTasksResponse.tasks.map((task: { 
           id: string;
           task_id?: string;
@@ -362,7 +365,7 @@ export function PlanPage() {
             ? new Date(task.scheduled_for) 
             : new Date();
           
-          return {
+          const mappedTask = {
             id: `user-${task.id || task.task_id}`,
             type: (task.task_type || 'maintenance') as TimelineEvent['type'],
             title: task.title || 'Added Task',
@@ -374,9 +377,13 @@ export function PlanPage() {
             status: deriveStatus(scheduledDate),
             tags: ['user-added']
           } as TimelineEvent;
+          console.log('📋 PlanPage: Mapped task:', mappedTask);
+          return mappedTask;
         });
         aggregated.push(...userTasks);
         console.log(`✅ Added ${userTasks.length} user tasks`);
+      } else {
+        console.log('📋 PlanPage: No tasks array in response or empty');
       }
     } catch (error) {
       console.log('⚠️ User tasks unavailable, continuing without user tasks', error);

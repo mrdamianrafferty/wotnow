@@ -382,16 +382,22 @@ export class ApiClient {
 
   async getMyTasks() {
     // Use local API route for fetching user tasks
+    console.log('📋 API: Fetching user tasks from /api/grow/user-tasks');
     const response = await this.fetchWithTimeout('/api/grow/user-tasks', {
       headers: this.getHeaders(true), // Requires auth
     });
 
+    console.log('📋 API: getMyTasks response status:', response.status);
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Network error' }));
+      console.error('📋 API: getMyTasks error:', error);
       throw new Error(error.error || 'Failed to fetch my tasks');
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('📋 API: getMyTasks returned:', data);
+    return data;
   }
 
   async getWeeklyTasks(month: number, week: number) {
