@@ -400,6 +400,44 @@ export class ApiClient {
     return data;
   }
 
+  // Task dismissals (done/skipped for year) - for Plan page timeline
+  async getTaskDismissals(year?: number) {
+    const url = new URL('/api/grow/task-dismissals', window.location.origin);
+    if (year) {
+      url.searchParams.set('year', year.toString());
+    }
+
+    const response = await this.fetchWithTimeout(url.toString(), {
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to fetch dismissals');
+    }
+
+    return response.json();
+  }
+
+  async dismissPlanTask(taskKey: string, dismissalType: 'done' | 'skipped', year?: number) {
+    const response = await this.fetchWithTimeout('/api/grow/task-dismissals', {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({
+        taskKey,
+        dismissalType,
+        year: year || new Date().getFullYear()
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to dismiss task');
+    }
+
+    return response.json();
+  }
+
   async getWeeklyTasks(month: number, week: number) {
     const url = new URL(`${API_BASE}/user/tasks/weekly`);
     url.searchParams.set('month', month.toString());

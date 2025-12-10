@@ -193,18 +193,30 @@ export function PlanPage() {
   const [dismissedTasks, setDismissedTasks] = useState<Map<string, { type: 'done' | 'skipped'; year: number }>>(new Map());
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Load user and dismissed tasks
+  // Load user and dismissed tasks from database
   useEffect(() => {
     const loadUserAndDismissals = async () => {
       try {
         const session = await auth.getSession();
         if (session?.user?.id) {
           setUserId(session.user.id);
-          // Load dismissed tasks from localStorage (could be moved to backend later)
-          const stored = localStorage.getItem(`dismissedTasks_${session.user.id}`);
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            setDismissedTasks(new Map(Object.entries(parsed)));
+          
+          // Load dismissed tasks from database
+          try {
+            const response = await api.getTaskDismissals();
+            if (response?.dismissals && Array.isArray(response.dismissals)) {
+              const dismissalMap = new Map<string, { type: 'done' | 'skipped'; year: number }>();
+              for (const d of response.dismissals) {
+                dismissalMap.set(d.task_key, { 
+                  type: d.dismissal_type as 'done' | 'skipped', 
+                  year: d.dismissed_for_year 
+                });
+              }
+              setDismissedTasks(dismissalMap);
+              console.log('📋 Loaded', dismissalMap.size, 'task dismissals from database');
+            }
+          } catch (dismissErr) {
+            console.log('PlanPage: Could not load dismissals from database, using empty', dismissErr);
           }
         }
       } catch (err) {
@@ -506,16 +518,26 @@ export function PlanPage() {
   }, [dismissedTasks]);
 
   // Handle marking a task as done or skipped
-  const handleDismissTask = useCallback((eventId: string, type: 'done' | 'skipped') => {
+  const handleDismissTask = useCallback(async (eventId: string, type: 'done' | 'skipped') => {
     const currentYear = new Date().getFullYear();
+    
+    // Optimistically update UI
     const newDismissals = new Map(dismissedTasks);
     newDismissals.set(eventId, { type, year: currentYear });
     setDismissedTasks(newDismissals);
     
-    // Persist to localStorage
+    // Persist to database
     if (userId) {
-      const obj = Object.fromEntries(newDismissals);
-      localStorage.setItem(`dismissedTasks_${userId}`, JSON.stringify(obj));
+      try {
+        await api.dismissPlanTask(eventId, type, currentYear);
+        console.log(`✅ Task ${eventId} marked as ${type} for ${currentYear}`);
+      } catch (err) {
+        console.error('Failed to save dismissal to database:', err);
+        // Revert on error
+        const revertedDismissals = new Map(dismissedTasks);
+        revertedDismissals.delete(eventId);
+        setDismissedTasks(revertedDismissals);
+      }
     }
   }, [dismissedTasks, userId]);
 
