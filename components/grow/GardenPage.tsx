@@ -204,11 +204,18 @@ export function GardenPage() {
       const uncachedNames = [...new Set(plants.map(p => p.name.toLowerCase()))]
         .filter(name => !speciesCache.has(name));
 
-      if (uncachedNames.length === 0) return;
+      console.log('🌱 [Species] Fetching species for:', uncachedNames.slice(0, 5), '... total:', uncachedNames.length);
+
+      if (uncachedNames.length === 0) {
+        console.log('🌱 [Species] All species already cached');
+        return;
+      }
 
       setIsLoadingSpecies(true);
       try {
         const newSpecies = await api.getPlantSpeciesBatch(uncachedNames);
+        console.log('🌱 [Species] Fetched species count:', newSpecies.size);
+        console.log('🌱 [Species] Species names found:', [...newSpecies.keys()].slice(0, 5));
         setSpeciesCache(prev => {
           const updated = new Map(prev);
           newSpecies.forEach((species, key) => {

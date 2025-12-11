@@ -97,7 +97,16 @@ export function PlantSpeciesInfo({ species, isLoading, compact = false }: PlantS
     );
   }
 
+  // Show nothing if no species data - the API may not have info for this plant
   if (!species) {
+    return null;
+  }
+
+  // Check if we have any meaningful care data to show
+  const hasData = species.sunRequirements || species.soilType || species.plantSize || 
+    species.usdaZoneMin !== null || species.usdaZoneMax !== null;
+  
+  if (!hasData) {
     return null;
   }
 
