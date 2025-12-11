@@ -22,7 +22,7 @@ import { api } from '../../lib/grow/api';
 import { auth } from '../../lib/grow/auth';
 import { WeeklyTaskView } from './WeeklyTaskView';
 import { SkeletonPlanPage } from './GrowSkeletons';
-
+import { TaskIcon } from './TaskIcon';
 interface TimelineEvent {
   id: string;
   type: 'planting' | 'maintenance' | 'harvest' | 'alert' | 'reminder';
@@ -33,6 +33,7 @@ interface TimelineEvent {
   endDate?: Date;
   plant?: string;
   emoji?: string;
+  taskCode?: string;
   priority: 'critical' | 'high' | 'normal' | 'low';
   status: 'upcoming' | 'current' | 'completed' | 'missed';
   tags?: string[];
@@ -175,6 +176,7 @@ function convertWindowToEvent(window: PlantingCalendarWindow, year: number): Tim
     endDate: end,
     plant: plantLabel,
     emoji,
+    taskCode: window.taskCode,
     priority,
     status: deriveStatus(start, end),
     tags: ['planting-calendar', window.source === 'adjusted' ? 'adjusted' : 'default'],
@@ -655,10 +657,10 @@ export function PlanPage() {
                     return (
                       <div
                         key={`${event.id}-${idx}`}
-                        className={`text-xs px-1 py-0.5 rounded truncate ${colors.badge}`}
+                        className={`text-xs px-1 py-0.5 rounded truncate ${colors.badge} flex items-center gap-1`}
                         title={event.title}
                       >
-                        {event.emoji && <span className="mr-0.5">{event.emoji}</span>}
+                        {event.taskCode && <TaskIcon taskCode={event.taskCode} size="sm" />}
                         <span>{event.title}</span>
                       </div>
                     );
@@ -868,8 +870,8 @@ export function PlanPage() {
                             </time>
                             
                             {/* Title */}
-                            <h3 className={`text-lg font-bold mb-1 ${event.priority === 'critical' ? 'text-red-700' : ''}`}>
-                              {event.emoji && <span className="mr-2">{event.emoji}</span>}
+                            <h3 className={`text-lg font-bold mb-1 flex items-center gap-2 ${event.priority === 'critical' ? 'text-red-700' : ''}`}>
+                              {event.taskCode && <TaskIcon taskCode={event.taskCode} size="md" />}
                               {event.title}
                             </h3>
                             
@@ -881,8 +883,9 @@ export function PlanPage() {
                             {/* Tags and badges */}
                             <div className="flex flex-wrap gap-2 mb-3">
                               {event.plant && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {event.emoji} {event.plant}
+                                <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                  {event.taskCode && <TaskIcon taskCode={event.taskCode} size="sm" />}
+                                  {event.plant}
                                 </Badge>
                               )}
                               <Badge 
@@ -1067,7 +1070,7 @@ export function PlanPage() {
                 <Card key={event.id} className={colors.bg}>
                   <CardContent className="p-4">
                     <h4 className="font-semibold mb-1 flex items-center gap-2">
-                      {event.emoji && <span>{event.emoji}</span>}
+                      {event.taskCode && <TaskIcon taskCode={event.taskCode} size="md" />}
                       {event.title}
                     </h4>
                     <p className="text-sm text-muted-foreground mb-2">{event.description}</p>

@@ -8,19 +8,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar,
-  Sprout,
-  Droplets,
-  Sun,
   AlertCircle,
   CheckCircle2,
-  Leaf,
-  Scissors,
-  ShoppingBasket,
-  Thermometer,
+  Sprout,
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
 import { auth } from '../../lib/grow/auth';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
+import { TaskIcon } from './TaskIcon';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
 type PlantingCalendarWindow = {
@@ -414,40 +409,6 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
   const completionCount = completions.length;
   const weekDateRange = getWeekDateRange();
 
-  const getTaskIcon = useCallback((taskCode: string) => {
-    const code = taskCode.toLowerCase();
-
-    if (code.includes('sow') || code.includes('seed')) {
-      return <Sprout className="h-4 w-4" />;
-    }
-
-    if (code.includes('harvest') || code.includes('pick')) {
-      return <ShoppingBasket className="h-4 w-4" />;
-    }
-
-    if (code.includes('plant') || code.includes('transplant')) {
-      return <Leaf className="h-4 w-4" />;
-    }
-
-    if (code.includes('water') || code.includes('irrigate')) {
-      return <Droplets className="h-4 w-4" />;
-    }
-
-    if (code.includes('prune') || code.includes('trim')) {
-      return <Scissors className="h-4 w-4" />;
-    }
-
-    if (code.includes('fertilize') || code.includes('feed')) {
-      return <Sun className="h-4 w-4" />;
-    }
-
-    if (code.includes('monitor') || code.includes('inspect')) {
-      return <Thermometer className="h-4 w-4" />;
-    }
-
-    return <Leaf className="h-4 w-4" />;
-  }, []);
-
   const getTaskColor = useCallback((taskCode: string) => {
     const code = taskCode.toLowerCase();
 
@@ -599,7 +560,9 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="mb-2 flex items-start gap-2">
-                        <div className={`rounded-lg p-2 ${getTaskColor(task.taskCode)}`}>{getTaskIcon(task.taskCode)}</div>
+                        <div className={`rounded-lg p-2 ${getTaskColor(task.taskCode)}`}>
+                          <TaskIcon taskCode={task.taskCode} size="sm" />
+                        </div>
                         <div className="flex-1">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
                             <h3 className={`font-medium ${completed ? 'line-through text-muted-foreground' : ''}`}>

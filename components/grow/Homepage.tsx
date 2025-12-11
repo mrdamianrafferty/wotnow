@@ -28,6 +28,7 @@ import { GardenAlertBox } from '../gardening/GardenAlertBox';
 import type { GardenAlertResult } from '../../lib/gardening/gardenAlerts';
 import { LocationSettings } from './LocationSettings';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+import { TaskIcon } from './TaskIcon';
 import { SkeletonGrowHomepage } from './GrowSkeletons';
 
 type Translator = (value: string) => string;
@@ -150,7 +151,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
       <Card className={`bg-gradient-to-br ${getUrgencyColor()} border-2 shadow-xl overflow-hidden`}>
         {/* Card Image/Visual Area */}
         <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
-          <span className="text-8xl">{task.emoji}</span>
+          <TaskIcon taskCode={task.taskCode} size="hero" />
         </div>
 
         <CardContent className="p-6 space-y-4">
@@ -158,7 +159,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <h2 className="text-2xl font-bold flex items-center gap-2">
-                {task.emoji} {task.title}
+                <TaskIcon taskCode={task.taskCode} size="md" /> {task.title}
               </h2>
             </div>
             {getUrgencyBadge()}
@@ -798,7 +799,8 @@ export function Homepage() {
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold flex items-center gap-2">
                           <span className="text-muted-foreground">{index + 1}.</span>
-                          {task.title} {task.emoji}
+                          <TaskIcon taskCode={task.taskCode} size="sm" />
+                          {task.title}
                         </h3>
                         {isExpanded ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
                       </div>
