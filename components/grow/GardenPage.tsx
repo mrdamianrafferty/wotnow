@@ -199,15 +199,16 @@ export function GardenPage() {
     if (plants.length === 0) return;
 
     const fetchSpeciesInfo = async () => {
-      // Get unique plant types that we don't already have cached
-      const uncachedTypes = [...new Set(plants.map(p => p.type.toLowerCase()))]
-        .filter(type => !speciesCache.has(type));
+      // Get unique plant names that we don't already have cached
+      // Use plant.name (e.g., "Tomato", "Basil") not plant.type (category like "vegetable", "herb")
+      const uncachedNames = [...new Set(plants.map(p => p.name.toLowerCase()))]
+        .filter(name => !speciesCache.has(name));
 
-      if (uncachedTypes.length === 0) return;
+      if (uncachedNames.length === 0) return;
 
       setIsLoadingSpecies(true);
       try {
-        const newSpecies = await api.getPlantSpeciesBatch(uncachedTypes);
+        const newSpecies = await api.getPlantSpeciesBatch(uncachedNames);
         setSpeciesCache(prev => {
           const updated = new Map(prev);
           newSpecies.forEach((species, key) => {

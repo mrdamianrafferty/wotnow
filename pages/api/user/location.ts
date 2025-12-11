@@ -83,12 +83,14 @@ function buildHomeCoordinatesPayload(record: UnifiedLocationRecord | null) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   const supabase = createServerSupabaseClient({ req, res });
+  // Use getUser() instead of getSession() for secure server-side auth validation
+  // getSession() reads from cookies which could be spoofed; getUser() validates with Supabase Auth server
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  // Debug logging for session issues
+  // Debug logging for auth issues
   const cookieNames = Object.keys(req.cookies);
   const hasSbCookies = cookieNames.some(name => name.startsWith('sb-'));
   console.log('[user/location] Auth debug:', {
@@ -96,17 +98,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     hasCookies: cookieNames.length > 0,
     hasSupabaseCookies: hasSbCookies,
     cookieCount: cookieNames.length,
-    hasSession: !!session,
-    sessionError: sessionError?.message,
+    hasUser: !!user,
+    userError: userError?.message,
   });
 
-  if (sessionError) {
-    console.error('[user/location] Failed to read auth session', sessionError);
+  if (userError && userError.message !== 'Auth session missing!') {
+    console.error('[user/location] Failed to verify user', userError);
     res.status(500).json({ error: 'Unable to verify authentication status' });
     return;
   }
 
-  const userId = session?.user?.id ?? null;
+  const userId = user?.id ?? null;
 
   if (!userId) {
     // Treat unauthenticated callers as empty location.

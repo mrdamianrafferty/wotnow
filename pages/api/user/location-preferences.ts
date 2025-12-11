@@ -7,14 +7,15 @@ import { LocationPreferences } from '../../../hooks/useLocationConsent';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = getSupabaseServerClient();
 
-  // Check authentication
-  const { data: { session }, error: authError } = await supabase.auth.getSession();
+  // Check authentication using getUser() for secure server-side validation
+  // getSession() reads from cookies which could be spoofed; getUser() validates with Supabase Auth server
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   
-  if (authError || !session?.user) {
+  if (authError || !user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   try {
     switch (req.method) {
