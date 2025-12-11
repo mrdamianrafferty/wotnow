@@ -29,6 +29,8 @@ import type { GuildCompanion } from '../../lib/grow/guild';
 import { api } from '../../lib/grow/api';
 import { AddPlantDialog } from './AddPlantDialog';
 import { EditPlantDialog } from './EditPlantDialog';
+import { PlantSpeciesInfo } from './PlantSpeciesInfo';
+import type { PlantSpecies } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
@@ -115,6 +117,10 @@ export function GardenPage() {
   // Plant inventory state
   const [plants, setPlants] = useState<Plant[]>([]);
   
+  // Species info cache - maps plant type (species name) to species data
+  const [speciesCache, setSpeciesCache] = useState<Map<string, PlantSpecies>>(new Map());
+  const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  
   // Mock climate zone - in real app, get from user profile
   const userClimateZone = 'atlantic_mild';
 
@@ -187,6 +193,37 @@ export function GardenPage() {
       void loadPlants();
     });
   }, [loadPlants]);
+
+  // Fetch species info for all plants when plants change
+  useEffect(() => {
+    if (plants.length === 0) return;
+
+    const fetchSpeciesInfo = async () => {
+      // Get unique plant types that we don't already have cached
+      const uncachedTypes = [...new Set(plants.map(p => p.type.toLowerCase()))]
+        .filter(type => !speciesCache.has(type));
+
+      if (uncachedTypes.length === 0) return;
+
+      setIsLoadingSpecies(true);
+      try {
+        const newSpecies = await api.getPlantSpeciesBatch(uncachedTypes);
+        setSpeciesCache(prev => {
+          const updated = new Map(prev);
+          newSpecies.forEach((species, key) => {
+            updated.set(key, species);
+          });
+          return updated;
+        });
+      } catch (error) {
+        console.error('Failed to fetch species info:', error);
+      } finally {
+        setIsLoadingSpecies(false);
+      }
+    };
+
+    void fetchSpeciesInfo();
+  }, [plants, speciesCache]);
 
   const handlePlantAdded = (plant: SerializedPlant) => {
     const rawPlant: RawPlant = {
@@ -604,6 +641,13 @@ export function GardenPage() {
                         {plant.notes}
                       </p>
                     )}
+                    
+                    {/* Species Information */}
+                    <PlantSpeciesInfo 
+                      species={speciesCache.get(plant.type.toLowerCase()) ?? null}
+                      isLoading={isLoadingSpecies && !speciesCache.has(plant.type.toLowerCase())}
+                    />
+                    
                     <div className="flex gap-2 pt-2">
                       <Button variant="outline" size="sm" className="flex-1">
                         <Droplets className="h-3 w-3 mr-1" />

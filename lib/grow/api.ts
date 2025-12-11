@@ -1,6 +1,6 @@
 import { EDGE_FUNCTION_BASE, SUPABASE_ANON_KEY } from '../supabase/env';
 import { auth } from './auth';
-import type { PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from './species';
+import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from './species';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_BASE = EDGE_FUNCTION_BASE;
@@ -702,6 +702,46 @@ export class ApiClient {
     }
 
     return response.json() as Promise<PlantSpeciesCategoriesResponse>;
+  }
+
+  async getPlantSpeciesByName(name: string): Promise<PlantSpecies | null> {
+    try {
+      const encodedName = encodeURIComponent(name.trim());
+      const response = await this.fetchWithTimeout(`${GROW_SPECIES_API_BASE}/${encodedName}`, {
+        headers: this.getHeaders(),
+      });
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(error.error || 'Failed to load plant species');
+      }
+
+      const data = await response.json();
+      return data.species as PlantSpecies;
+    } catch (error) {
+      console.error('Failed to fetch plant species by name:', error);
+      return null;
+    }
+  }
+
+  async getPlantSpeciesBatch(names: string[]): Promise<Map<string, PlantSpecies>> {
+    const results = new Map<string, PlantSpecies>();
+    
+    // Fetch in parallel with a concurrency limit
+    const uniqueNames = [...new Set(names.map(n => n.trim().toLowerCase()))];
+    const fetchPromises = uniqueNames.map(async (name) => {
+      const species = await this.getPlantSpeciesByName(name);
+      if (species) {
+        results.set(name, species);
+      }
+    });
+
+    await Promise.all(fetchPromises);
+    return results;
   }
 
   async deletePlant(plantId: string) {
