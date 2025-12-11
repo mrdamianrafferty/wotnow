@@ -217,7 +217,7 @@ export function GardenPage() {
   const mockPhotos: GardenPhoto[] = [
     {
       id: '1',
-      url: 'https://images.unsplash.com/photo-1592150621744-aca4f9dbd4c4?w=400',
+      url: '/gardening.jpg',
       date: new Date(2025, 10, 10),
       tags: ['tomatoes', 'harvest'],
       location: 'Raised Bed 1',
@@ -226,7 +226,7 @@ export function GardenPage() {
     },
     {
       id: '2',
-      url: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400',
+      url: '/gardening.jpg',
       date: new Date(2025, 9, 15),
       tags: ['flowers', 'roses'],
       location: 'Front Garden',
@@ -234,7 +234,7 @@ export function GardenPage() {
     },
     {
       id: '3',
-      url: 'https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400',
+      url: '/gardening.jpg',
       date: new Date(2025, 8, 1),
       tags: ['garden', 'overview'],
       description: 'Late summer garden looking lush'

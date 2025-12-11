@@ -65,7 +65,7 @@ export function ActivityCard({ activity, showWeatherReason = false, onJoin }: Ac
     if (activity.image && typeof activity.image === 'string') {
       setImageUrl(activity.image);
     } else {
-      setImageUrl('https://images.unsplash.com/photo-1634133568072-9044251999f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400&h=300');
+      setImageUrl('/gardening.jpg');
     }
   }, [activity.image]);
 
