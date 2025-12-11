@@ -72,7 +72,7 @@ export function InfoPage() {
         {showTaskDebug ? (
           <TaskDebugPage />
         ) : (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="bg-white border-l-4 border-l-red-500 border-red-200">
             <CardContent className="p-4">
               <button 
                 onClick={() => setShowTaskDebug(true)}
@@ -89,7 +89,7 @@ export function InfoPage() {
         {showLocationDiag && <LocationDiagnostic />}
         
         {!showLocationDiag && (
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="bg-white border-l-4 border-l-orange-500 border-orange-200">
             <CardContent className="p-4">
               <button 
                 onClick={() => setShowLocationDiag(true)}
@@ -106,7 +106,7 @@ export function InfoPage() {
         {showDebug && <WeatherDebug />}
         
         {!showDebug && (
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="bg-white border-l-4 border-l-blue-500 border-blue-200">
             <CardContent className="p-4">
               <button 
                 onClick={() => setShowDebug(true)}
@@ -123,7 +123,7 @@ export function InfoPage() {
         {showElevation && <ElevationExample />}
         
         {!showElevation && (
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="bg-white border-l-4 border-l-purple-500 border-purple-200">
             <CardContent className="p-4">
               <button 
                 onClick={() => setShowElevation(true)}
@@ -138,7 +138,7 @@ export function InfoPage() {
       </div>
 
       {/* Soil Identification Guide - Featured */}
-      <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+      <Card className="bg-white border-l-4 border-l-green-500 border-green-200">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function InfoPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-white border border-l-4 border-l-green-500 border-green-200 rounded-lg">
             <Sprout className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
               <h4 className="font-medium mb-1">Start Seeds Indoors</h4>
@@ -200,7 +200,7 @@ export function InfoPage() {
             </div>
           </div>
           
-          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-white border border-l-4 border-l-blue-500 border-blue-200 rounded-lg">
             <Droplets className="h-5 w-5 text-blue-600 mt-0.5" />
             <div>
               <h4 className="font-medium mb-1">Water Wisely</h4>
@@ -210,7 +210,7 @@ export function InfoPage() {
             </div>
           </div>
           
-          <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+          <div className="flex items-start gap-3 p-3 bg-white border border-l-4 border-l-purple-500 border-purple-200 rounded-lg">
             <Moon className="h-5 w-5 text-purple-600 mt-0.5" />
             <div>
               <h4 className="font-medium mb-1">Moon Phase Gardening</h4>

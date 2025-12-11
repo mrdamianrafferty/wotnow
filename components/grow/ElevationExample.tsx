@@ -240,7 +240,7 @@ export function ElevationExample() {
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-blue-50 border border-green-200">
+            <div className="p-4 rounded-lg bg-white border border-l-4 border-l-green-500 border-green-200">
               <div className="flex items-center gap-2 mb-2">
                 <CloudSun className="h-4 w-4 text-green-600" />
                 <div className="text-sm font-medium text-green-900">Climate Zone</div>
@@ -257,7 +257,7 @@ export function ElevationExample() {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <div className="p-3 rounded-lg bg-white border border-l-4 border-l-blue-500 border-blue-200">
               <div className="text-xs text-blue-900 mb-2 font-medium">What this means:</div>
               <ul className="text-xs text-blue-800 space-y-1 ml-4 list-disc">
                 <li>Elevation data is cached and reused for nearby locations (~1km radius)</li>

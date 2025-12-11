@@ -754,14 +754,14 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
               })}
             </div>
 
-            <Card className="border border-green-200 bg-green-50">
+            <Card className="bg-white border border-l-4 border-l-green-500 border-green-200">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                   Summary
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-green-900">
+              <CardContent className="space-y-2 text-sm">
                 <p><strong>Location:</strong> {formState.location || 'Not set'}{locationMeta.climateZone ? ` • Climate zone ${locationMeta.climateZone}` : ''}</p>
                 <p><strong>Focus areas:</strong> {formState.interests.length ? formState.interests.join(', ') : 'None selected'}</p>
                 <p><strong>Experience:</strong> {formState.skillLevel || 'Not set'} • <strong>Guidance:</strong> {formState.contentDepth || 'Not set'}</p>

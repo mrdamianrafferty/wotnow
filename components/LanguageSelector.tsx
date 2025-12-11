@@ -52,12 +52,12 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           <span className="text-xs font-medium uppercase">{language}</span>
           <ChevronDown className="w-3 h-3 opacity-60" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-base-100 rounded-box w-48 border border-base-200">
+        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-48 border border-base-200">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
                 onClick={() => handleLanguageSelect(lang.code)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors !bg-transparent hover:!bg-base-200 focus:!bg-base-200 active:!bg-base-200 text-base-content ${language === lang.code ? '!bg-base-200' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors !bg-transparent hover:!bg-gray-100 dark:hover:!bg-zinc-800 focus:!bg-gray-100 dark:focus:!bg-zinc-800 active:!bg-gray-100 dark:active:!bg-zinc-800 text-base-content ${language === lang.code ? '!bg-gray-100 dark:!bg-zinc-800' : ''}`}
               >
                 {lang.code === 'en' ? (
                   <Globe className="w-5 h-5" />
@@ -98,12 +98,12 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           </div>
           <ChevronDown className="w-4 h-4" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-base-100 rounded-box w-full border border-base-200">
+        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-full border border-base-200">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
                 onClick={() => handleLanguageSelect(lang.code)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors !bg-transparent hover:!bg-base-200 focus:!bg-base-200 active:!bg-base-200 text-base-content ${language === lang.code ? '!bg-base-200' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors !bg-transparent hover:!bg-gray-100 dark:hover:!bg-zinc-800 focus:!bg-gray-100 dark:focus:!bg-zinc-800 active:!bg-gray-100 dark:active:!bg-zinc-800 text-base-content ${language === lang.code ? '!bg-gray-100 dark:!bg-zinc-800' : ''}`}
               >
                 {lang.code === 'en' ? (
                   <Globe className="w-5 h-5" />

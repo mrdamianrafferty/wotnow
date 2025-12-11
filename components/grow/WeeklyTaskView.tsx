@@ -413,26 +413,26 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     const code = taskCode.toLowerCase();
 
     if (code.includes('sow') || code.includes('plant')) {
-      return 'bg-green-50 border-green-200 text-green-700';
+      return 'bg-white border border-l-4 border-l-green-500 border-green-200 text-green-700';
     }
 
     if (code.includes('harvest')) {
-      return 'bg-orange-50 border-orange-200 text-orange-700';
+      return 'bg-white border border-l-4 border-l-orange-500 border-orange-200 text-orange-700';
     }
 
     if (code.includes('prune') || code.includes('trim')) {
-      return 'bg-purple-50 border-purple-200 text-purple-700';
+      return 'bg-white border border-l-4 border-l-purple-500 border-purple-200 text-purple-700';
     }
 
     if (code.includes('water')) {
-      return 'bg-blue-50 border-blue-200 text-blue-700';
+      return 'bg-white border border-l-4 border-l-blue-500 border-blue-200 text-blue-700';
     }
 
     if (code.includes('monitor') || code.includes('inspect')) {
-      return 'bg-yellow-50 border-yellow-200 text-yellow-700';
+      return 'bg-white border border-l-4 border-l-yellow-500 border-yellow-200 text-yellow-700';
     }
 
-    return 'bg-gray-50 border-gray-200 text-gray-700';
+    return 'bg-white border border-l-4 border-l-gray-400 border-gray-200 text-gray-700';
   }, []);
 
   return (
@@ -553,7 +553,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
               <Card
                 key={`${task.plantSlug}-${task.taskCode}-${index}`}
                 className={`border-l-4 transition-all hover:shadow-md ${
-                  completed ? 'border-l-green-600 bg-green-50/30 opacity-80' : 'border-l-green-500'
+                  completed ? 'border-l-green-600 bg-white opacity-80' : 'border-l-green-500 bg-white'
                 }`}
               >
                 <CardContent className="p-4">
@@ -587,7 +587,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                       </div>
 
                       {task.notes && !completed && (
-                        <div className="ml-12 mb-3 border-l-2 border-blue-300 bg-blue-50 p-2 text-sm">
+                        <div className="ml-12 mb-3 border-l-2 border-l-blue-500 bg-white border border-blue-200 p-2 text-sm rounded-r-lg">
                           💡 {task.notes}
                         </div>
                       )}
@@ -601,22 +601,22 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                           {task.taskCode.replace(/_/g, ' ')}
                         </Badge>
                         {hasOffset && (
-                          <Badge variant="outline" className="text-xs bg-amber-50 border-amber-200">
+                          <Badge variant="outline" className="text-xs bg-white border-amber-300">
                             Offset {totalOffset > 0 ? `+${totalOffset}` : totalOffset} wk
                           </Badge>
                         )}
                         {zoneOffset && (
-                          <Badge variant="outline" className="text-xs bg-green-50 border-green-200">
+                          <Badge variant="outline" className="text-xs bg-white border-green-300">
                             🌍 {zoneOffset}
                           </Badge>
                         )}
                         {altitudeOffset && (
-                          <Badge variant="outline" className="text-xs bg-slate-50 border-slate-200">
+                          <Badge variant="outline" className="text-xs bg-white border-slate-300">
                             ⛰️ {altitudeOffset}
                           </Badge>
                         )}
                         {calendarMeta?.climateZone && (
-                          <Badge variant="outline" className="text-xs bg-emerald-50 border-emerald-200">
+                          <Badge variant="outline" className="text-xs bg-white border-emerald-300">
                             Zone {calendarMeta.climateZone.replace(/_/g, ' ')}
                           </Badge>
                         )}
@@ -677,7 +677,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
                     <div className="mb-2 flex items-start gap-2">
-                      <div className="rounded-lg p-2 bg-violet-50 border border-violet-200 text-violet-700">
+                      <div className="rounded-lg p-2 bg-white border border-violet-200 text-violet-700">
                         <Sprout className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
@@ -697,7 +697,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                       </div>
                     </div>
                     {task.description && (
-                      <div className="ml-12 mb-3 border-l-2 border-violet-300 bg-violet-50 p-2 text-sm">
+                      <div className="ml-12 mb-3 border-l-2 border-l-violet-500 bg-white border border-violet-200 p-2 text-sm rounded-r-lg">
                         {task.description}
                       </div>
                     )}
@@ -715,7 +715,7 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
       )}
 
       {!error && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-muted-foreground">
+        <div className="rounded-lg border border-l-4 border-l-blue-500 border-blue-200 bg-white p-3 text-xs text-muted-foreground">
           💡 <span className="font-medium">Tip:</span> Tasks lean on your saved home location to adjust for climate
           zone{(calendarMeta?.climateZone || climateZone)
             ? ` (${(calendarMeta?.climateZone || climateZone)?.replace(/_/g, ' ')})`

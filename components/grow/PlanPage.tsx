@@ -469,43 +469,43 @@ export function PlanPage() {
         line: 'bg-blue-500',
         border: 'border-blue-500',
         text: 'text-blue-700',
-        bg: 'bg-blue-50',
-        badge: 'bg-blue-100 text-blue-800 border-blue-200'
+        bg: 'bg-white border-l-4 border-l-blue-500',
+        badge: 'bg-white text-blue-800 border-blue-200'
       },
       secondary: {
         line: 'bg-purple-500',
         border: 'border-purple-500',
         text: 'text-purple-700',
-        bg: 'bg-purple-50',
-        badge: 'bg-purple-100 text-purple-800 border-purple-200'
+        bg: 'bg-white border-l-4 border-l-purple-500',
+        badge: 'bg-white text-purple-800 border-purple-200'
       },
       success: {
         line: 'bg-green-500',
         border: 'border-green-500',
         text: 'text-green-700',
-        bg: 'bg-green-50',
-        badge: 'bg-green-100 text-green-800 border-green-200'
+        bg: 'bg-white border-l-4 border-l-green-500',
+        badge: 'bg-white text-green-800 border-green-200'
       },
       error: {
         line: 'bg-red-500',
         border: 'border-red-500',
         text: 'text-red-700',
-        bg: 'bg-red-50',
-        badge: 'bg-red-100 text-red-800 border-red-200'
+        bg: 'bg-white border-l-4 border-l-red-500',
+        badge: 'bg-white text-red-800 border-red-200'
       },
       info: {
         line: 'bg-cyan-500',
         border: 'border-cyan-500',
         text: 'text-cyan-700',
-        bg: 'bg-cyan-50',
-        badge: 'bg-cyan-100 text-cyan-800 border-cyan-200'
+        bg: 'bg-white border-l-4 border-l-cyan-500',
+        badge: 'bg-white text-cyan-800 border-cyan-200'
       },
       neutral: {
         line: 'bg-gray-400',
         border: 'border-gray-400',
         text: 'text-gray-700',
-        bg: 'bg-gray-50',
-        badge: 'bg-gray-100 text-gray-800 border-gray-200'
+        bg: 'bg-white border-l-4 border-l-gray-400',
+        badge: 'bg-white text-gray-800 border-gray-200'
       }
     };
     return classes[color as keyof typeof classes] || classes.neutral;
@@ -640,7 +640,7 @@ export function PlanPage() {
           className={`
             aspect-square min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 border border-border/50 transition-all relative
             ${hasEvents ? 'cursor-pointer hover:bg-accent hover:shadow-md active:scale-95' : 'bg-muted/30'}
-            ${today ? 'ring-2 ring-green-500 bg-green-50' : ''}
+            ${today ? 'ring-2 ring-green-500 bg-white' : ''}
           `}
         >
           <div className="h-full flex flex-col">
@@ -1022,26 +1022,26 @@ export function PlanPage() {
 
             {/* Instructions and Legend */}
             <div className="mt-4 pt-4 border-t space-y-3">
-              <div className="text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="text-sm text-muted-foreground bg-white border border-l-4 border-l-blue-500 border-blue-200 rounded-lg p-3">
                 💡 <span className="font-medium">Tip:</span> Click on any date with events to view full details and take actions.
               </div>
               
               <div>
                 <p className="text-sm font-medium mb-2">Event Types:</p>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                  <Badge variant="outline" className="bg-white text-blue-800 border-blue-300">
                     <Sprout className="h-3 w-3 mr-1" /> Planting
                   </Badge>
-                  <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                  <Badge variant="outline" className="bg-white text-purple-800 border-purple-300">
                     <Scissors className="h-3 w-3 mr-1" /> Maintenance
                   </Badge>
-                  <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                  <Badge variant="outline" className="bg-white text-green-800 border-green-300">
                     <ShoppingBasket className="h-3 w-3 mr-1" /> Harvest
                   </Badge>
-                  <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+                  <Badge variant="outline" className="bg-white text-red-800 border-red-300">
                     <AlertTriangle className="h-3 w-3 mr-1" /> Alert
                   </Badge>
-                  <Badge variant="outline" className="bg-cyan-100 text-cyan-800 border-cyan-200">
+                  <Badge variant="outline" className="bg-white text-cyan-800 border-cyan-300">
                     <StickyNote className="h-3 w-3 mr-1" /> Reminder
                   </Badge>
                 </div>

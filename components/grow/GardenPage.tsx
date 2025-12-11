@@ -21,12 +21,14 @@ import {
   CheckCircle2,
   Trees,
   Trash2,
-  X
+  X,
+  Pencil
 } from 'lucide-react';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
 import type { GuildCompanion } from '../../lib/grow/guild';
 import { api } from '../../lib/grow/api';
 import { AddPlantDialog } from './AddPlantDialog';
+import { EditPlantDialog } from './EditPlantDialog';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
@@ -94,6 +96,8 @@ export function GardenPage() {
   const [isLoadingPlants, setIsLoadingPlants] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isAddPlantDialogOpen, setIsAddPlantDialogOpen] = useState(false);
+  const [isEditPlantDialogOpen, setIsEditPlantDialogOpen] = useState(false);
+  const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
   
   // Photo upload state for identification
   const [identifyPhoto, setIdentifyPhoto] = useState<File | null>(null);
@@ -199,6 +203,17 @@ export function GardenPage() {
     setPlants((previous) => [...previous, normalizePlant(rawPlant)]);
   };
 
+  const handleEditPlant = (plant: Plant) => {
+    setEditingPlant(plant);
+    setIsEditPlantDialogOpen(true);
+  };
+
+  const handlePlantUpdated = (updatedPlant: Plant) => {
+    setPlants((previous) =>
+      previous.map((p) => (p.id === updatedPlant.id ? updatedPlant : p))
+    );
+  };
+
   const mockPhotos: GardenPhoto[] = [
     {
       id: '1',
@@ -228,11 +243,11 @@ export function GardenPage() {
 
   const getHealthColor = (health: string) => {
     switch (health) {
-      case 'excellent': return 'text-green-600 bg-green-50 border-green-200';
-      case 'good': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'fair': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'poor': return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'excellent': return 'text-green-600 bg-white border border-l-4 border-l-green-500 border-green-200';
+      case 'good': return 'text-blue-600 bg-white border border-l-4 border-l-blue-500 border-blue-200';
+      case 'fair': return 'text-yellow-600 bg-white border border-l-4 border-l-yellow-500 border-yellow-200';
+      case 'poor': return 'text-red-600 bg-white border border-l-4 border-l-red-500 border-red-200';
+      default: return 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200';
     }
   };
 
@@ -594,7 +609,13 @@ export function GardenPage() {
                         <Droplets className="h-3 w-3 mr-1" />
                         Water
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditPlant(plant)}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
                         Edit
                       </Button>
                     </div>
@@ -873,6 +894,12 @@ export function GardenPage() {
         open={isAddPlantDialogOpen}
         onOpenChange={setIsAddPlantDialogOpen}
         onPlantAdded={handlePlantAdded}
+      />
+      <EditPlantDialog
+        open={isEditPlantDialogOpen}
+        onOpenChange={setIsEditPlantDialogOpen}
+        plant={editingPlant}
+        onPlantUpdated={handlePlantUpdated}
       />
     </div>
   );

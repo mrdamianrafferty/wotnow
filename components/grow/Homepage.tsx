@@ -96,10 +96,10 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
 
   const getUrgencyColor = () => {
     switch (task.urgency) {
-      case 'critical': return 'from-red-50 to-orange-50 border-red-200';
-      case 'optimal': return 'from-green-50 to-emerald-50 border-green-200';
-      case 'good': return 'from-blue-50 to-sky-50 border-blue-200';
-      case 'upcoming': return 'from-gray-50 to-slate-50 border-gray-200';
+      case 'critical': return 'bg-white border-l-4 border-l-red-500 border-red-200';
+      case 'optimal': return 'bg-white border-l-4 border-l-green-500 border-green-200';
+      case 'good': return 'bg-white border-l-4 border-l-blue-500 border-blue-200';
+      case 'upcoming': return 'bg-white border-l-4 border-l-gray-400 border-gray-200';
     }
   };
 
@@ -148,9 +148,9 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
       className={`absolute w-full cursor-grab active:cursor-grabbing`}
       animate={isTop ? {} : { scale: 0.95 - (index * 0.05), y: index * 12 }}
     >
-      <Card className={`bg-gradient-to-br ${getUrgencyColor()} border-2 shadow-xl overflow-hidden`}>
+      <Card className={`${getUrgencyColor()} border shadow-xl overflow-hidden`}>
         {/* Card Image/Visual Area */}
-        <div className="h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+        <div className="h-48 bg-slate-50 border-b flex items-center justify-center">
           <TaskIcon taskCode={task.taskCode} size="hero" />
         </div>
 
@@ -655,7 +655,7 @@ export function Homepage() {
           ))}
         </div>
       ) : (
-        <Card className="p-12 text-center bg-gradient-to-br from-green-50 to-emerald-50">
+        <Card className="p-12 text-center bg-white border-2 border-green-200">
           <div className="space-y-4">
             <span className="text-6xl">🎉</span>
             <h2 className="text-2xl font-semibold">{t("You're All Caught Up!")}</h2>
@@ -678,7 +678,7 @@ export function Homepage() {
 
       {/* Context Strip */}
       {weatherContext && (
-        <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200">
+        <Card className="bg-white border border-blue-200">
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">

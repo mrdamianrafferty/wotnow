@@ -37,7 +37,7 @@ export function ClimateZoneInfo({ climateZone, variant = 'compact' }: ClimateZon
 
   if (variant === 'compact') {
     return (
-      <div className="p-3 rounded-lg bg-gradient-to-br from-green-50 to-blue-50 border border-green-200">
+      <div className="p-3 rounded-lg bg-white border border-l-4 border-l-green-500 border-green-200">
         <div className="flex items-start gap-3">
           <div className="text-3xl">{getClimateIcon(climateZone)}</div>
           <div className="flex-1">
