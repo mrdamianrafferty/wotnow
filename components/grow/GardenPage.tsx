@@ -645,8 +645,8 @@ export function GardenPage() {
                     
                     {/* Species Information */}
                     <PlantSpeciesInfo 
-                      species={speciesCache.get(plant.type.toLowerCase()) ?? null}
-                      isLoading={isLoadingSpecies && !speciesCache.has(plant.type.toLowerCase())}
+                      species={speciesCache.get(plant.name.toLowerCase()) ?? null}
+                      isLoading={isLoadingSpecies && !speciesCache.has(plant.name.toLowerCase())}
                     />
                     
                     <div className="flex gap-2 pt-2">
