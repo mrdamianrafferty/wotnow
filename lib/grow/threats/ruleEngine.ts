@@ -76,8 +76,11 @@ export function evaluateThreatRule(ruleJson: unknown, ctx: ThreatSignalContext):
 
   const logic = parsed.logic ?? 'all';
   const results = parsed.conditions.map((cond) => {
-    const signalValue = getSignalValue(ctx, cond.signal as any);
-    return evalCondition(signalValue, cond.op as RuleConditionOp, cond.value as any);
+    const signal = cond.signal as ThreatRuleJsonV1['conditions'][number]['signal'];
+    const op = cond.op as RuleConditionOp;
+    const operand = cond.value as ThreatRuleJsonV1['conditions'][number]['value'];
+    const signalValue = getSignalValue(ctx, signal);
+    return evalCondition(signalValue, op, operand);
   });
 
   const matched = logic === 'any' ? results.some(Boolean) : results.every(Boolean);
