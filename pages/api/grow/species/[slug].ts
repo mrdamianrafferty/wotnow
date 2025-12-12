@@ -56,6 +56,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     error = nameResult.error;
   }
 
+  // If still not found, try partial name match (e.g., "Tomato" matches "Tomato (slicer)")
+  if (!data && !error?.message?.includes('multiple')) {
+    const partialResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('name', `${slug.trim()}%`)
+      .limit(1)
+      .single();
+    
+    data = partialResult.data;
+    error = partialResult.error;
+  }
+
+  // If still not found, try searching in search_terms array
+  if (!data && !error?.message?.includes('multiple')) {
+    const searchTermsResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .contains('search_terms', [slug.trim()])
+      .limit(1)
+      .single();
+    
+    data = searchTermsResult.data;
+    error = searchTermsResult.error;
+  }
+
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to query plant_species by slug:', error);
     return res.status(500).json({ error: 'Failed to load plant species' });
