@@ -55,121 +55,132 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const results: Record<string, PlantSpecies> = {};
   const notFound: string[] = [];
 
-  // Normalize names for lookup
-  const normalizedNames = names.map(n => n.trim().toLowerCase());
-  const uniqueNames = [...new Set(normalizedNames)];
-
-  // Strategy 1: Fetch all by exact slug match (most efficient)
-  const { data: slugMatches } = await supabase
-    .from('plant_species')
-    .select(BASE_SELECT)
-    .in('slug', uniqueNames);
-
-  if (slugMatches) {
-    for (const row of slugMatches) {
-      const typedRow = row as unknown as PlantSpeciesRow;
-      const species = serializePlantSpecies(typedRow);
-      results[typedRow.slug] = species;
+  // Normalize names for lookup - keep original for result mapping
+  const nameMap = new Map<string, string>(); // normalized -> original
+  const uniqueNames: string[] = [];
+  for (const n of names) {
+    const normalized = n.trim().toLowerCase();
+    if (!nameMap.has(normalized)) {
+      nameMap.set(normalized, n);
+      uniqueNames.push(normalized);
     }
   }
 
-  // Find names that weren't matched by slug
-  const unmatchedBySlug = uniqueNames.filter(name => !results[name]);
+  // Extract base names for all lookups
+  const baseNameMap = new Map<string, string>(); // normalized -> baseName
+  for (const name of uniqueNames) {
+    const baseName = name.split(/[\(/]/)[0].trim();
+    baseNameMap.set(name, baseName);
+  }
 
-  if (unmatchedBySlug.length > 0) {
-    // Strategy 2: Try various matching strategies for each unmatched name
-    for (const name of unmatchedBySlug) {
-      // Skip if already found
-      if (results[name]) continue;
+  // Helper to mark a name as found
+  const foundNames = new Set<string>();
+  const markFound = (searchName: string, row: PlantSpeciesRow) => {
+    if (!foundNames.has(searchName)) {
+      foundNames.add(searchName);
+      results[searchName] = serializePlantSpecies(row);
+    }
+  };
 
-      // Extract base name (before parentheses or slashes) for fallback matching
-      // e.g., "bean (bush)" -> "bean", "broad bean / fava bean" -> "broad bean"
-      const baseName = name.split(/[\(/]/)[0].trim();
+  // OPTIMIZATION: Fetch ALL species in one query (table is small ~454 rows)
+  // This is much faster than multiple individual queries
+  const { data: allSpecies, error } = await supabase
+    .from('plant_species')
+    .select(BASE_SELECT);
 
-      // Try base name as slug (e.g., "bean (bush)" -> slug "bean")
-      if (baseName !== name) {
-        const baseSlug = baseName.replace(/\s+/g, '-');
-        const { data: baseSlugMatches } = await supabase
-          .from('plant_species')
-          .select(BASE_SELECT)
-          .eq('slug', baseSlug)
-          .limit(1);
+  if (error) {
+    console.error('Failed to fetch plant species:', error);
+    return res.status(500).json({ error: 'Failed to fetch species data' });
+  }
 
-        if (baseSlugMatches && baseSlugMatches.length > 0) {
-          const species = serializePlantSpecies(baseSlugMatches[0] as unknown as PlantSpeciesRow);
-          results[name] = species;
-          continue;
+  if (!allSpecies || allSpecies.length === 0) {
+    // No species in database
+    return res.status(200).json({ species: {}, notFound: uniqueNames });
+  }
+
+  // Build lookup indices for fast matching
+  const bySlug = new Map<string, PlantSpeciesRow>();
+  const byNameLower = new Map<string, PlantSpeciesRow>();
+  const allRows: PlantSpeciesRow[] = [];
+
+  for (const row of allSpecies) {
+    const typedRow = row as unknown as PlantSpeciesRow;
+    allRows.push(typedRow);
+    bySlug.set(typedRow.slug.toLowerCase(), typedRow);
+    byNameLower.set(typedRow.name.toLowerCase(), typedRow);
+  }
+
+  // Match each requested name using multiple strategies
+  for (const name of uniqueNames) {
+    if (foundNames.has(name)) continue;
+
+    const baseName = baseNameMap.get(name) || name;
+    const baseSlug = baseName.replace(/\s+/g, '-');
+
+    // Strategy 1: Exact slug match
+    const slugMatch = bySlug.get(name);
+    if (slugMatch) {
+      markFound(name, slugMatch);
+      continue;
+    }
+
+    // Strategy 2: Exact name match (case-insensitive)
+    const nameMatch = byNameLower.get(name);
+    if (nameMatch) {
+      markFound(name, nameMatch);
+      continue;
+    }
+
+    // Strategy 3: Base name as slug (e.g., "bean (bush)" -> slug "bean")
+    if (baseName !== name) {
+      const baseSlugMatch = bySlug.get(baseSlug);
+      if (baseSlugMatch) {
+        markFound(name, baseSlugMatch);
+        continue;
+      }
+    }
+
+    // Strategy 4: Search in all rows for partial matches
+    let found = false;
+    for (const row of allRows) {
+      const rowNameLower = row.name.toLowerCase();
+
+      // Partial name match (name starts with search term)
+      if (rowNameLower.startsWith(name) || rowNameLower.startsWith(baseName)) {
+        markFound(name, row);
+        found = true;
+        break;
+      }
+
+      // Name contains search term
+      if (rowNameLower.includes(baseName)) {
+        markFound(name, row);
+        found = true;
+        break;
+      }
+
+      // Check search_terms array
+      if (row.search_terms && Array.isArray(row.search_terms)) {
+        const searchTermsLower = row.search_terms.map((t: string) => t.toLowerCase());
+        if (searchTermsLower.some((t: string) => t.includes(name) || t.includes(baseName))) {
+          markFound(name, row);
+          found = true;
+          break;
         }
       }
 
-      // Try partial name match (e.g., "tomato" matches "Tomato (slicer)")
-      const { data: nameMatches } = await supabase
-        .from('plant_species')
-        .select(BASE_SELECT)
-        .ilike('name', `${name}%`)
-        .limit(1);
-
-      if (nameMatches && nameMatches.length > 0) {
-        const species = serializePlantSpecies(nameMatches[0] as unknown as PlantSpeciesRow);
-        results[name] = species;
-        continue;
-      }
-
-      // Try partial match with base name (e.g., "bean" matches "Bean (Bush)")
-      if (baseName !== name) {
-        const { data: baseNameMatches } = await supabase
-          .from('plant_species')
-          .select(BASE_SELECT)
-          .ilike('name', `${baseName}%`)
-          .limit(1);
-
-        if (baseNameMatches && baseNameMatches.length > 0) {
-          const species = serializePlantSpecies(baseNameMatches[0] as unknown as PlantSpeciesRow);
-          results[name] = species;
-          continue;
+      // Check name_en_aliases array
+      if (row.name_en_aliases && Array.isArray(row.name_en_aliases)) {
+        const aliasesLower = row.name_en_aliases.map((a: string) => a.toLowerCase());
+        if (aliasesLower.some((a: string) => a.includes(name) || a.includes(baseName))) {
+          markFound(name, row);
+          found = true;
+          break;
         }
       }
+    }
 
-      // Try "contains" search in name
-      const { data: containsMatches } = await supabase
-        .from('plant_species')
-        .select(BASE_SELECT)
-        .ilike('name', `%${baseName}%`)
-        .limit(1);
-
-      if (containsMatches && containsMatches.length > 0) {
-        const species = serializePlantSpecies(containsMatches[0] as unknown as PlantSpeciesRow);
-        results[name] = species;
-        continue;
-      }
-
-      // Try search_terms array
-      const { data: searchTermMatches } = await supabase
-        .from('plant_species')
-        .select(BASE_SELECT)
-        .contains('search_terms', [name])
-        .limit(1);
-
-      if (searchTermMatches && searchTermMatches.length > 0) {
-        const species = serializePlantSpecies(searchTermMatches[0] as unknown as PlantSpeciesRow);
-        results[name] = species;
-        continue;
-      }
-
-      // Try name_en_aliases array
-      const { data: aliasMatches } = await supabase
-        .from('plant_species')
-        .select(BASE_SELECT)
-        .contains('name_en_aliases', [name])
-        .limit(1);
-
-      if (aliasMatches && aliasMatches.length > 0) {
-        const species = serializePlantSpecies(aliasMatches[0] as unknown as PlantSpeciesRow);
-        results[name] = species;
-        continue;
-      }
-
-      // Not found by any method
+    if (!found) {
       notFound.push(name);
     }
   }
