@@ -22,6 +22,69 @@ const BASE_SELECT = [
   ...Object.keys(PLANT_SPECIES_LANGUAGE_FIELDS),
 ].join(',');
 
+// ============================================================================
+// Server-side Memory Cache
+// Caches all species data in memory to avoid repeated DB queries.
+// Cache persists for the lifetime of the serverless instance (typically 5-15 min).
+// ============================================================================
+interface SpeciesCache {
+  data: PlantSpeciesRow[];
+  bySlug: Map<string, PlantSpeciesRow>;
+  byNameLower: Map<string, PlantSpeciesRow>;
+  timestamp: number;
+}
+
+let speciesCache: SpeciesCache | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get all species from cache or fetch from DB if cache is stale/empty.
+ */
+async function getAllSpeciesWithCache(): Promise<SpeciesCache | null> {
+  // Return cached data if still fresh
+  if (speciesCache && Date.now() - speciesCache.timestamp < CACHE_TTL_MS) {
+    return speciesCache;
+  }
+
+  // Fetch fresh data from Supabase
+  const supabase = getSupabaseServerClient();
+  const { data: allSpecies, error } = await supabase
+    .from('plant_species')
+    .select(BASE_SELECT);
+
+  if (error) {
+    console.error('Failed to fetch plant species:', error);
+    return null;
+  }
+
+  if (!allSpecies || allSpecies.length === 0) {
+    return null;
+  }
+
+  // Build lookup indices
+  const bySlug = new Map<string, PlantSpeciesRow>();
+  const byNameLower = new Map<string, PlantSpeciesRow>();
+  const rows: PlantSpeciesRow[] = [];
+
+  for (const row of allSpecies) {
+    const typedRow = row as unknown as PlantSpeciesRow;
+    rows.push(typedRow);
+    bySlug.set(typedRow.slug.toLowerCase(), typedRow);
+    byNameLower.set(typedRow.name.toLowerCase(), typedRow);
+  }
+
+  // Update cache
+  speciesCache = {
+    data: rows,
+    bySlug,
+    byNameLower,
+    timestamp: Date.now(),
+  };
+
+  console.log(`[Species Cache] Refreshed with ${rows.length} species`);
+  return speciesCache;
+}
+
 interface BatchResponse {
   species: Record<string, PlantSpecies>;
   notFound: string[];
@@ -51,7 +114,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(400).json({ error: `Maximum batch size is ${MAX_BATCH_SIZE}` });
   }
 
-  const supabase = getSupabaseServerClient();
   const results: Record<string, PlantSpecies> = {};
   const notFound: string[] = [];
 
@@ -82,33 +144,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
   };
 
-  // OPTIMIZATION: Fetch ALL species in one query (table is small ~454 rows)
-  // This is much faster than multiple individual queries
-  const { data: allSpecies, error } = await supabase
-    .from('plant_species')
-    .select(BASE_SELECT);
+  // Get species data from cache (or fetch if cache is stale)
+  const cache = await getAllSpeciesWithCache();
 
-  if (error) {
-    console.error('Failed to fetch plant species:', error);
-    return res.status(500).json({ error: 'Failed to fetch species data' });
-  }
-
-  if (!allSpecies || allSpecies.length === 0) {
-    // No species in database
+  if (!cache) {
+    // No species in database or error
     return res.status(200).json({ species: {}, notFound: uniqueNames });
   }
 
-  // Build lookup indices for fast matching
-  const bySlug = new Map<string, PlantSpeciesRow>();
-  const byNameLower = new Map<string, PlantSpeciesRow>();
-  const allRows: PlantSpeciesRow[] = [];
-
-  for (const row of allSpecies) {
-    const typedRow = row as unknown as PlantSpeciesRow;
-    allRows.push(typedRow);
-    bySlug.set(typedRow.slug.toLowerCase(), typedRow);
-    byNameLower.set(typedRow.name.toLowerCase(), typedRow);
-  }
+  const { data: allRows, bySlug, byNameLower } = cache;
 
   // Match each requested name using multiple strategies
   for (const name of uniqueNames) {
