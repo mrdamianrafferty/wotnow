@@ -36,6 +36,27 @@ import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
 import { SkeletonGardenPage } from './GrowSkeletons';
 
+type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
+
+type ThreatAssessment = {
+  threatId: string;
+  slug: string;
+  commonName: string;
+  scientificName: string | null;
+  threatType: string;
+  severityDefault: number;
+  score: number;
+  band: ThreatRiskBand;
+  matchedHosts: Array<{ kind: string; key: string; strength: number }>;
+  matchedRules: Array<{ ruleId: string; title: string; score: number }>;
+  reasons: string[];
+  cardJson: Record<string, unknown>;
+};
+
+type ThreatsApiResponse = {
+  threats: ThreatAssessment[];
+};
+
 interface Plant {
   id: string;
   name: string;
@@ -116,6 +137,10 @@ export function GardenPage() {
   
   // Plant inventory state
   const [plants, setPlants] = useState<Plant[]>([]);
+
+  // Threats state
+  const [isLoadingThreats, setIsLoadingThreats] = useState(false);
+  const [threats, setThreats] = useState<ThreatAssessment[]>([]);
   
   // Species info cache - maps plant type (species name) to species data
   const [speciesCache, setSpeciesCache] = useState<Map<string, PlantSpecies>>(new Map());
@@ -123,6 +148,39 @@ export function GardenPage() {
   
   // Mock climate zone - in real app, get from user profile
   const userClimateZone = 'atlantic_mild';
+
+  const loadThreats = useCallback(async () => {
+    try {
+      setIsLoadingThreats(true);
+
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setThreats([]);
+        return;
+      }
+
+      const resp = await fetch('/api/grow/threats', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '');
+        console.warn('[GardenPage] Failed to load threats', resp.status, text);
+        setThreats([]);
+        return;
+      }
+
+      const data = (await resp.json()) as ThreatsApiResponse;
+      setThreats(Array.isArray(data?.threats) ? data.threats : []);
+    } catch (error) {
+      console.error('[GardenPage] Error loading threats', error);
+      setThreats([]);
+    } finally {
+      setIsLoadingThreats(false);
+    }
+  }, []);
 
   const redirectToLogin = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -193,6 +251,12 @@ export function GardenPage() {
       void loadPlants();
     });
   }, [loadPlants]);
+
+  useEffect(() => {
+    startTransition(() => {
+      void loadThreats();
+    });
+  }, [loadThreats]);
 
   // Fetch species info for all plants when plants change
   useEffect(() => {
@@ -538,10 +602,14 @@ export function GardenPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="plants" className="flex items-center gap-2">
             <Sprout className="h-4 w-4" />
             My Plants
+          </TabsTrigger>
+          <TabsTrigger value="threats" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            Threats
           </TabsTrigger>
           <TabsTrigger value="identify" className="flex items-center gap-2">
             <Search className="h-4 w-4" />
@@ -552,6 +620,77 @@ export function GardenPage() {
             Gallery
           </TabsTrigger>
         </TabsList>
+
+        {/* Tab: Threats */}
+        <TabsContent value="threats" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-medium">Potential Threats</h2>
+            <Button
+              variant="outline"
+              onClick={() => void loadThreats()}
+              disabled={isLoadingThreats}
+              className="flex items-center gap-2"
+            >
+              {isLoadingThreats ? <Loader2 className="h-4 w-4 animate-spin" /> : <AlertCircle className="h-4 w-4" />}
+              Refresh
+            </Button>
+          </div>
+
+          {isLoadingThreats ? (
+            <Card className="p-6">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading threats…
+              </div>
+            </Card>
+          ) : threats.length === 0 ? (
+            <Card className="p-12 text-center">
+              <Bug className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No threats matched yet</h3>
+              <p className="text-muted-foreground">
+                Add plants and garden features in onboarding to see tailored warnings.
+              </p>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {threats.map((t) => (
+                <Card key={t.threatId} className="border-2 border-amber-200">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">{t.commonName}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{t.threatType}{t.scientificName ? ` • ${t.scientificName}` : ''}</p>
+                      </div>
+                      <Badge variant="outline" className="border-amber-400 text-amber-700">
+                        {t.band}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {Array.isArray(t.reasons) && t.reasons.length > 0 ? (
+                      <ul className="text-sm text-muted-foreground list-disc pl-5">
+                        {t.reasons.slice(0, 3).map((r, idx) => (
+                          <li key={idx}>{r}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Relevant based on your garden plants and features.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {(t.matchedHosts || []).slice(0, 4).map((h) => (
+                        <Badge key={`${h.kind}:${h.key}`} variant="secondary">
+                          {h.key}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         {/* Tab 1: My Plants */}
         <TabsContent value="plants" className="space-y-4">
