@@ -54,9 +54,14 @@ function evalCondition(value: number | undefined, op: RuleConditionOp, operand: 
     case 'eq':
       return typeof operand === 'number' ? value === operand : false;
     case 'between':
-      return Array.isArray(operand) && operand.length === 2 ? value >= operand[0] && value <= operand[1] : false;
+      if (!Array.isArray(operand) || operand.length !== 2) return false;
+      if (typeof operand[0] !== 'number' || typeof operand[1] !== 'number') return false;
+      return value >= operand[0] && value <= operand[1];
     case 'in':
-      return Array.isArray(operand) ? operand.map(Number).some(v => v === value) : false;
+      if (!Array.isArray(operand)) return false;
+      return operand.every((v) => typeof v === 'number')
+        ? (operand as number[]).some((v) => v === value)
+        : operand.map((v) => Number(v)).filter((v) => !Number.isNaN(v)).some((v) => v === value);
     default:
       return false;
   }
