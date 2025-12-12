@@ -35,6 +35,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const supabase = getSupabaseServerClient();
   const normalizedSlug = slug.trim().toLowerCase();
+  
+  // Extract base name (before parentheses or slashes) for fallback matching
+  // e.g., "Bean (Bush)" -> "bean", "Broad bean / fava bean" -> "broad bean"
+  const baseName = slug.trim().split(/[\(/]/)[0].trim().toLowerCase();
 
   // Try exact slug match first
   let { data, error } = await supabase
@@ -42,6 +46,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .select(BASE_SELECT)
     .eq('slug', normalizedSlug)
     .single();
+
+  // If not found by slug, try the base name as slug (e.g., "bean (bush)" -> slug "bean")
+  if (!data && !error?.message?.includes('multiple') && baseName !== normalizedSlug) {
+    const baseSlugResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .eq('slug', baseName.replace(/\s+/g, '-'))
+      .single();
+    
+    data = baseSlugResult.data;
+    error = baseSlugResult.error;
+  }
 
   // If not found by slug, try exact name match (case-insensitive)
   if (!data && !error?.message?.includes('multiple')) {
@@ -67,6 +83,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     data = partialResult.data;
     error = partialResult.error;
+  }
+
+  // If still not found, try partial match with base name (e.g., "bean" matches "Bean (Bush)")
+  if (!data && !error?.message?.includes('multiple') && baseName) {
+    const basePartialResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('name', `${baseName}%`)
+      .limit(1)
+      .single();
+    
+    data = basePartialResult.data;
+    error = basePartialResult.error;
+  }
+
+  // If still not found, try "contains" search in name (e.g., "bush bean" might match)
+  if (!data && !error?.message?.includes('multiple')) {
+    const containsResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('name', `%${baseName}%`)
+      .limit(1)
+      .single();
+    
+    data = containsResult.data;
+    error = containsResult.error;
   }
 
   // If still not found, try searching in search_terms array

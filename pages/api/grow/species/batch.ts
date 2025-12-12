@@ -77,11 +77,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   const unmatchedBySlug = uniqueNames.filter(name => !results[name]);
 
   if (unmatchedBySlug.length > 0) {
-    // Strategy 2: Fetch by partial name match using OR conditions
-    // Build query for names that start with the search term
+    // Strategy 2: Try various matching strategies for each unmatched name
     for (const name of unmatchedBySlug) {
       // Skip if already found
       if (results[name]) continue;
+
+      // Extract base name (before parentheses or slashes) for fallback matching
+      // e.g., "bean (bush)" -> "bean", "broad bean / fava bean" -> "broad bean"
+      const baseName = name.split(/[\(/]/)[0].trim();
+
+      // Try base name as slug (e.g., "bean (bush)" -> slug "bean")
+      if (baseName !== name) {
+        const baseSlug = baseName.replace(/\s+/g, '-');
+        const { data: baseSlugMatches } = await supabase
+          .from('plant_species')
+          .select(BASE_SELECT)
+          .eq('slug', baseSlug)
+          .limit(1);
+
+        if (baseSlugMatches && baseSlugMatches.length > 0) {
+          const species = serializePlantSpecies(baseSlugMatches[0] as unknown as PlantSpeciesRow);
+          results[name] = species;
+          continue;
+        }
+      }
 
       // Try partial name match (e.g., "tomato" matches "Tomato (slicer)")
       const { data: nameMatches } = await supabase
@@ -92,6 +111,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
       if (nameMatches && nameMatches.length > 0) {
         const species = serializePlantSpecies(nameMatches[0] as unknown as PlantSpeciesRow);
+        results[name] = species;
+        continue;
+      }
+
+      // Try partial match with base name (e.g., "bean" matches "Bean (Bush)")
+      if (baseName !== name) {
+        const { data: baseNameMatches } = await supabase
+          .from('plant_species')
+          .select(BASE_SELECT)
+          .ilike('name', `${baseName}%`)
+          .limit(1);
+
+        if (baseNameMatches && baseNameMatches.length > 0) {
+          const species = serializePlantSpecies(baseNameMatches[0] as unknown as PlantSpeciesRow);
+          results[name] = species;
+          continue;
+        }
+      }
+
+      // Try "contains" search in name
+      const { data: containsMatches } = await supabase
+        .from('plant_species')
+        .select(BASE_SELECT)
+        .ilike('name', `%${baseName}%`)
+        .limit(1);
+
+      if (containsMatches && containsMatches.length > 0) {
+        const species = serializePlantSpecies(containsMatches[0] as unknown as PlantSpeciesRow);
         results[name] = species;
         continue;
       }
