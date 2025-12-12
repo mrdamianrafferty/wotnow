@@ -82,6 +82,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     error = searchTermsResult.error;
   }
 
+  // If still not found, try searching in name_en_aliases array
+  if (!data && !error?.message?.includes('multiple')) {
+    const aliasResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .contains('name_en_aliases', [slug.trim()])
+      .limit(1)
+      .single();
+    
+    data = aliasResult.data;
+    error = aliasResult.error;
+  }
+
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to query plant_species by slug:', error);
     return res.status(500).json({ error: 'Failed to load plant species' });

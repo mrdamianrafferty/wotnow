@@ -731,17 +731,57 @@ export class ApiClient {
   async getPlantSpeciesBatch(names: string[]): Promise<Map<string, PlantSpecies>> {
     const results = new Map<string, PlantSpecies>();
     
-    // Fetch in parallel with a concurrency limit
     const uniqueNames = [...new Set(names.map(n => n.trim().toLowerCase()))];
-    const fetchPromises = uniqueNames.map(async (name) => {
-      const species = await this.getPlantSpeciesByName(name);
-      if (species) {
+    
+    if (uniqueNames.length === 0) {
+      return results;
+    }
+
+    try {
+      // Use batch endpoint for efficiency (single request instead of N requests)
+      const response = await this.fetchWithTimeout(`${GROW_SPECIES_API_BASE}/batch`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ names: uniqueNames }),
+      });
+
+      if (!response.ok) {
+        console.error('Batch species fetch failed, falling back to individual requests');
+        // Fallback to individual requests if batch fails
+        const fetchPromises = uniqueNames.map(async (name) => {
+          const species = await this.getPlantSpeciesByName(name);
+          if (species) {
+            results.set(name, species);
+          }
+        });
+        await Promise.all(fetchPromises);
+        return results;
+      }
+
+      const data = await response.json() as { species: Record<string, PlantSpecies>; notFound: string[] };
+      
+      // Populate results map
+      for (const [name, species] of Object.entries(data.species)) {
         results.set(name, species);
       }
-    });
 
-    await Promise.all(fetchPromises);
-    return results;
+      if (data.notFound.length > 0) {
+        console.log('🌱 [Species] Not found:', data.notFound);
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Batch species fetch error:', error);
+      // Fallback to individual requests on error
+      const fetchPromises = uniqueNames.map(async (name) => {
+        const species = await this.getPlantSpeciesByName(name);
+        if (species) {
+          results.set(name, species);
+        }
+      });
+      await Promise.all(fetchPromises);
+      return results;
+    }
   }
 
   async deletePlant(plantId: string) {

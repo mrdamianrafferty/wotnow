@@ -74,6 +74,36 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
+  // Clean up stale service workers and caches on app load
+  // This fixes 404 errors for build manifests when a new deployment uses different build IDs
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    const cleanupServiceWorkers = async () => {
+      try {
+        // Unregister all service workers
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+          console.log('[SW Cleanup] Unregistered service worker:', registration.scope);
+        }
+
+        // Clear all caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (const cacheName of cacheNames) {
+            await caches.delete(cacheName);
+            console.log('[SW Cleanup] Deleted cache:', cacheName);
+          }
+        }
+      } catch (error) {
+        console.error('[SW Cleanup] Error during cleanup:', error);
+      }
+    };
+
+    void cleanupServiceWorkers();
+  }, []);
+
   // Note: Deep link handling removed - @capgo/capacitor-social-login handles OAuth internally
   // using ASWebAuthenticationSession on iOS, which doesn't require deep link callbacks
 
