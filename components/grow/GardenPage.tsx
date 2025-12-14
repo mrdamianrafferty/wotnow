@@ -1447,11 +1447,33 @@ export function GardenPage() {
                       <span>Cost: €{identifyResult.cost.toFixed(3)}</span>
                     </div>
                     
-                    {/* Link to species page if we can match it */}
+                    {/* Multi-language names (Plant.id only) */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.commonNamesByLanguage && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Names in other languages:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(identifyResult.species.commonNamesByLanguage)
+                            .filter(([lang]) => lang !== 'en')
+                            .slice(0, 6)
+                            .map(([lang, names]) => (
+                              <Badge key={lang} variant="outline" className="text-xs">
+                                <span className="font-medium uppercase">{lang}:</span>&nbsp;{(names as string[])[0]}
+                              </Badge>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Link to species page - use scientific name for better matching */}
                     {identifyResult.mode === 'plant' && identifyResult.species?.name && (
                       <div className="pt-2 border-t">
                         <Link
-                          href={`/grow/species/${encodeURIComponent(identifyResult.species.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                          href={`/grow/species/${encodeURIComponent(
+                            // Prefer scientific name for lookup (more reliable), fallback to common name
+                            (identifyResult.species.scientificName || identifyResult.species.name)
+                              .toLowerCase()
+                              .replace(/\s+/g, '-')
+                          )}`}
                           className="inline-flex items-center gap-2 text-sm text-green-600 hover:text-green-700 hover:underline"
                         >
                           <Sprout className="h-4 w-4" />

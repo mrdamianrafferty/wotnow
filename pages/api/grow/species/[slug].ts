@@ -200,6 +200,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     error = aliasResult.error;
   }
 
+  // Try scientific name match (Latin binomial from Plant.id API)
+  if (!data && !error?.message?.includes('multiple')) {
+    const scientificResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('scientific_name', slug.trim())
+      .limit(1)
+      .single();
+    
+    data = scientificResult.data;
+    error = scientificResult.error;
+  }
+
+  // Try partial scientific name match (genus match)
+  if (!data && !error?.message?.includes('multiple')) {
+    // Extract genus (first word) for broader matching
+    const genus = slug.trim().split(' ')[0];
+    if (genus && genus.length > 2) {
+      const genusResult = await supabase
+        .from('plant_species')
+        .select(BASE_SELECT)
+        .ilike('scientific_name', `${genus}%`)
+        .limit(1)
+        .single();
+      
+      data = genusResult.data;
+      error = genusResult.error;
+    }
+  }
+
+  // Try perenual_scientific_name field
+  if (!data && !error?.message?.includes('multiple')) {
+    const perenualSciResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('perenual_scientific_name', slug.trim())
+      .limit(1)
+      .single();
+    
+    data = perenualSciResult.data;
+    error = perenualSciResult.error;
+  }
+
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to query plant_species by slug:', error);
     return res.status(500).json({ error: 'Failed to load plant species' });
