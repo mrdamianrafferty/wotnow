@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef, startTransition } from 'react';
+import React, { useState, useEffect, useCallback, useRef, startTransition, useMemo } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Input } from '../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
 import { 
   Sprout, 
@@ -23,7 +25,9 @@ import {
   Trash2,
   X,
   Pencil,
-  Info
+  Info,
+  ArrowUpDown,
+  Filter
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -190,6 +194,12 @@ export function GardenPage() {
   // Track plants being deleted for exit animation
   const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
+  // Filter and sort state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'recent' | 'health'>('name-asc');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterLocation, setFilterLocation] = useState<string>('all');
+
   // Threats state
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
   const [threats, setThreats] = useState<ThreatAssessment[]>([]);
@@ -200,6 +210,61 @@ export function GardenPage() {
   
   // Mock climate zone - in real app, get from user profile
   const userClimateZone = 'atlantic_mild';
+
+  // Derive unique plant types and locations for filter options
+  const uniqueTypes = useMemo(() => {
+    const types = [...new Set(plants.map(p => p.type))].filter(Boolean).sort();
+    return types;
+  }, [plants]);
+
+  const uniqueLocations = useMemo(() => {
+    const locations = [...new Set(plants.map(p => p.location))].filter(Boolean).sort();
+    return locations;
+  }, [plants]);
+
+  // Filter and sort plants
+  const filteredAndSortedPlants = useMemo(() => {
+    let result = [...plants];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.type.toLowerCase().includes(query) ||
+        p.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply type filter
+    if (filterType !== 'all') {
+      result = result.filter(p => p.type === filterType);
+    }
+
+    // Apply location filter
+    if (filterLocation !== 'all') {
+      result = result.filter(p => p.location === filterLocation);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'name-asc':
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'name-desc':
+        result.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case 'recent':
+        result.sort((a, b) => b.planted.getTime() - a.planted.getTime());
+        break;
+      case 'health':
+        const healthOrder = { poor: 0, fair: 1, good: 2, excellent: 3 };
+        result.sort((a, b) => healthOrder[a.health] - healthOrder[b.health]);
+        break;
+    }
+
+    return result;
+  }, [plants, searchQuery, filterType, filterLocation, sortBy]);
 
   const loadThreats = useCallback(async () => {
     try {
@@ -766,6 +831,122 @@ export function GardenPage() {
             </div>
           </div>
 
+          {/* Search, Sort, and Filter Controls */}
+          {plants.length > 0 && (
+            <div className="space-y-3">
+              {/* Search and Sort Row */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search plants..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+                  <SelectTrigger className="w-full sm:w-[160px]">
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name-asc">A → Z</SelectItem>
+                    <SelectItem value="name-desc">Z → A</SelectItem>
+                    <SelectItem value="recent">Recently Added</SelectItem>
+                    <SelectItem value="health">Health (needs attention)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filter Pills Row */}
+              {(uniqueTypes.length > 1 || uniqueLocations.length > 1) && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  
+                  {/* Type filter pills */}
+                  {uniqueTypes.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setFilterType('all')}
+                        className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
+                          filterType === 'all' 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                        }`}
+                      >
+                        All Types
+                      </button>
+                      {uniqueTypes.map(type => (
+                        <button
+                          key={type}
+                          onClick={() => setFilterType(filterType === type ? 'all' : type)}
+                          className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
+                            filterType === type 
+                              ? 'bg-green-600 text-white' 
+                              : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  
+                  {/* Location filter pills */}
+                  {uniqueLocations.length > 1 && (
+                    <>
+                      <span className="text-muted-foreground mx-1">|</span>
+                      <button
+                        onClick={() => setFilterLocation('all')}
+                        className={`px-3 py-1 text-sm rounded-full transition-all duration-200 flex items-center gap-1 ${
+                          filterLocation === 'all' 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                        }`}
+                      >
+                        <MapPin className="h-3 w-3" />
+                        All
+                      </button>
+                      {uniqueLocations.map(loc => (
+                        <button
+                          key={loc}
+                          onClick={() => setFilterLocation(filterLocation === loc ? 'all' : loc)}
+                          className={`px-3 py-1 text-sm rounded-full transition-all duration-200 flex items-center gap-1 ${
+                            filterLocation === loc 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                          }`}
+                        >
+                          <MapPin className="h-3 w-3" />
+                          {loc}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Results count */}
+              {(searchQuery || filterType !== 'all' || filterLocation !== 'all') && (
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredAndSortedPlants.length} of {plants.length} plants
+                  {searchQuery && <span> matching &quot;{searchQuery}&quot;</span>}
+                </p>
+              )}
+            </div>
+          )}
+
           {plants.length === 0 ? (
             <Card className="p-12 text-center">
               <Sprout className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -787,9 +968,27 @@ export function GardenPage() {
                 </Button>
               </div>
             </Card>
+          ) : filteredAndSortedPlants.length === 0 ? (
+            <Card className="p-12 text-center">
+              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No plants match your filters</h3>
+              <p className="text-muted-foreground mb-4">
+                Try adjusting your search or filters to see more plants.
+              </p>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilterType('all');
+                  setFilterLocation('all');
+                }}
+              >
+                Clear Filters
+              </Button>
+            </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {plants.map((plant) => {
+              {filteredAndSortedPlants.map((plant) => {
                 const speciesSlug = speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name.toLowerCase().replace(/\s+/g, '-');
                 const speciesUrl = `/grow/species/${encodeURIComponent(speciesSlug)}`;
                 const isNewlyAdded = newlyAddedPlantIds.has(plant.id);
