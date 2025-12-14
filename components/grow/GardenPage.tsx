@@ -39,7 +39,6 @@ import { PlantSpeciesInfo } from './PlantSpeciesInfo';
 import type { PlantSpecies } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
-import { useImageCompression } from '../../hooks/useImageCompression';
 import { SkeletonGardenPage } from './GrowSkeletons';
 import { getPlantImage } from '../../lib/grow/plantImages';
 import { ThreatCard } from './ThreatCard';
@@ -179,14 +178,6 @@ export function GardenPage() {
   const [identifyResult, setIdentifyResult] = useState<PlantIdentificationResult | null>(null);
   const [identifyProvider, setIdentifyProvider] = useState<'openai' | 'plantid'>('openai');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Image compression hook
-  const {
-    compress: compressImage,
-    statusMessage: compressionMessage,
-    savingsText,
-    isProcessing: isCompressing,
-  } = useImageCompression();
   
   // Plant inventory state
   const [plants, setPlants] = useState<Plant[]>([]);
@@ -550,6 +541,47 @@ export function GardenPage() {
     }
   };
 
+  // Simple canvas-based resize for plant ID (much faster than browser-image-compression)
+  const quickResize = async (file: File, maxDim: number = 1024): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context failed'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+            } else {
+              reject(new Error('Canvas toBlob failed'));
+            }
+          },
+          'image/jpeg',
+          0.8 // 80% quality
+        );
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   // Handle photo selection from file input
   const handlePhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -562,23 +594,21 @@ export function GardenPage() {
     };
     reader.readAsDataURL(file);
 
-    // Skip compression for small files (under 500KB) - faster UX
+    // Skip resize for small files (under 500KB) - instant
     if (file.size < 500 * 1024) {
-      console.log('[GardenPage] File already small, skipping compression:', file.size);
+      console.log('[GardenPage] File already small, skipping resize:', file.size);
       setIdentifyPhoto(file);
       return;
     }
 
-    // Compress for upload - optimized for AI identification (fast, don't need high resolution)
+    // Use simple canvas resize instead of browser-image-compression (much faster)
     try {
-      const compressionResult = await compressImage(file, {
-        maxSizeMB: 1,         // 1MB is plenty for AI vision
-        maxDimension: 1024,   // 1024px is sufficient for plant/pest ID
-        preserveExif: false,  // Don't need EXIF for identification
-      });
-      setIdentifyPhoto(compressionResult.file);
+      console.log('[GardenPage] Quick resizing image from', file.size);
+      const resized = await quickResize(file, 1024);
+      console.log('[GardenPage] Resized to', resized.size);
+      setIdentifyPhoto(resized);
     } catch (err) {
-      console.error('[GardenPage] Compression failed, using original:', err);
+      console.error('[GardenPage] Resize failed, using original:', err);
       setIdentifyPhoto(file);
     }
   };
@@ -1286,26 +1316,13 @@ export function GardenPage() {
                       <X className="h-4 w-4" />
                     </button>
                   </div>
-                  {/* Compression status */}
-                  {isCompressing && (
-                    <div className="mt-2 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {compressionMessage || 'Optimizing image...'}
-                    </div>
-                  )}
-                  {!isCompressing && savingsText && (
-                    <div className="mt-2 text-center text-xs text-green-600 flex items-center justify-center gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Image optimized: {savingsText}
-                    </div>
-                  )}
                 </div>
               )}
 
               <Button 
                 onClick={handleIdentifyPhoto} 
                 className="w-full bg-green-600 hover:bg-green-700"
-                disabled={isIdentifying || isCompressing || !identifyPhoto}
+                disabled={isIdentifying || !identifyPhoto}
               >
                 {isIdentifying ? (
                   <>
