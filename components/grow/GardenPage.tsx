@@ -492,7 +492,17 @@ export function GardenPage() {
     setIsIdentifying(true);
     setIdentifyResult(null);
     
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    
     try {
+      console.log('[GardenPage] Starting identification...', {
+        provider: identifyProvider,
+        mode: identifyMode,
+        imageSize: identifyPhoto.size,
+      });
+      
       // Build form data for multipart upload
       const formData = new FormData();
       formData.append('image', identifyPhoto);
@@ -509,7 +519,11 @@ export function GardenPage() {
       const response = await fetch('/api/grow/identify-plant', {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+      console.log('[GardenPage] Response received:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -517,6 +531,7 @@ export function GardenPage() {
       }
 
       const result: PlantIdentificationResult = await response.json();
+      console.log('[GardenPage] Identification result:', result);
       setIdentifyResult(result);
 
       if (result.success) {
