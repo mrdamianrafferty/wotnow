@@ -53,3 +53,13 @@ See `docs/FINDR_VALIDATION_SYSTEM.md` for complete implementation details, datab
 
 ## Database Schema
 See `docs/Supabase Snippet Public Schema Column Inventory-2.csv` for the complete Supabase database schema reference.
+
+## Powered By
+
+This project uses the following APIs and services:
+
+- 🌱 **[Plant.id API](https://plant.id)** - AI-powered plant identification for the Grow Daisy gardening feature
+- 🌿 **[Perenual API](https://perenual.com)** - Comprehensive plant care database
+- 🌤️ **[OpenWeather](https://openweathermap.org)** - Weather data and forecasts
+- 🗺️ **[Google Maps](https://developers.google.com/maps)** - Location services
+- 🔐 **[Supabase](https://supabase.com)** - Database and authentication
