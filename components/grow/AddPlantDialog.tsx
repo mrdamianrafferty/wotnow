@@ -448,7 +448,8 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
             key={plant.slug}
             type="button"
             onClick={() => handleSelectSpecies(plant)}
-            className="w-full border border-border rounded-xl p-4 text-left hover:border-green-600 hover:bg-green-50 transition-colors"
+            className="w-full border border-border rounded-xl p-4 text-left hover:border-green-600 hover:bg-green-50 transition-colors focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 outline-none"
+            aria-label={`Select ${plant.name}${plant.scientificName ? `, ${plant.scientificName}` : ''}`}
           >
             <div className="flex items-start gap-3">
               {/* Thumbnail */}
@@ -485,7 +486,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                   </p>
                 )}
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" aria-hidden="true" />
             </div>
           </button>
           );
@@ -676,13 +677,16 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
 
               <TabsContent value="search" className="space-y-4 flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" aria-hidden="true" />
                   <Input
+                    id="plant-search"
                     value={searchQuery}
                     onChange={(event: ChangeEvent<HTMLInputElement>) => setSearchQuery(event.target.value)}
                     placeholder="Search by common or scientific name"
                     className="pl-10"
                     autoFocus
+                    aria-label="Search plants"
+                    role="searchbox"
                   />
                 </div>
 
@@ -698,7 +702,8 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                       key={category}
                       type="button"
                       onClick={() => setSelectedCategory((current) => (current === category ? null : category))}
-                      className={`px-4 py-2 rounded-full border text-sm transition-colors ${selectedCategory === category ? 'border-green-600 bg-green-50 text-foreground' : 'border-border hover:border-green-200'}`}
+                      className={`px-4 py-2 rounded-full border text-sm transition-colors focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 outline-none ${selectedCategory === category ? 'border-green-600 bg-green-50 text-foreground' : 'border-border hover:border-green-200'}`}
+                      aria-pressed={selectedCategory === category}
                     >
                       {buildCategoryIcon(category)} {formatCategoryLabel(category)}
                     </button>

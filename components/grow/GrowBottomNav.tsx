@@ -40,8 +40,12 @@ export function GrowBottomNav() {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom">
-      <nav className="flex justify-around items-center h-16">
+    <nav 
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-bottom"
+      role="navigation" 
+      aria-label="Mobile navigation"
+    >
+      <div className="flex justify-around items-center h-16">
         {LINKS.map((link) => {
           const isActive = isLinkActive(link.href);
           const { Icon } = link;
@@ -51,22 +55,25 @@ export function GrowBottomNav() {
               href={link.href}
               prefetch={true}
               className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] min-h-[48px] transition-colors"
+              aria-label={link.label}
+              aria-current={isActive ? 'page' : undefined}
             >
               <Icon
                 size={24}
                 className={`shrink-0 ${isActive ? 'stroke-[2.5] text-green-600' : 'stroke-2 text-gray-500'}`}
-                aria-hidden
+                aria-hidden="true"
               />
               <span 
                 className={`text-xs font-medium leading-tight text-center ${isActive ? 'text-green-600' : 'text-gray-500'}`}
+                aria-hidden="true"
               >
                 {link.label}
               </span>
             </Link>
           );
         })}
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
 

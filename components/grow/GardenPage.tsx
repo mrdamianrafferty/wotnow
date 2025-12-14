@@ -637,7 +637,7 @@ export function GardenPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-semibold flex items-center gap-2">
-            <Sprout className="h-8 w-8 text-green-600" />
+            <Sprout className="h-8 w-8 text-green-600" aria-hidden="true" />
             My Garden
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -650,19 +650,20 @@ export function GardenPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="plants" className="flex items-center gap-2">
-            <Sprout className="h-4 w-4" />
-            My Plants
+            <Sprout className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">My Plants</span>
+            <span className="sm:hidden">Plants</span>
           </TabsTrigger>
           <TabsTrigger value="threats" className="flex items-center gap-2">
-            <Bug className="h-4 w-4" />
+            <Bug className="h-4 w-4" aria-hidden="true" />
             Threats
           </TabsTrigger>
           <TabsTrigger value="identify" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
+            <Search className="h-4 w-4" aria-hidden="true" />
             Identify
           </TabsTrigger>
           <TabsTrigger value="gallery" className="flex items-center gap-2">
-            <Camera className="h-4 w-4" />
+            <Camera className="h-4 w-4" aria-hidden="true" />
             Gallery
           </TabsTrigger>
         </TabsList>
@@ -728,8 +729,9 @@ export function GardenPage() {
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                 disabled={isSaving}
                 onClick={() => setIsAddPlantDialogOpen(true)}
+                aria-label="Add a new plant to your garden"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-4 w-4" aria-hidden="true" />
                 Add Plant
               </Button>
             </div>
@@ -782,9 +784,9 @@ export function GardenPage() {
                             size="icon"
                             className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => handleDeletePlant(plant.id, plant.name)}
-                            title="Remove plant"
+                            aria-label={`Remove ${plant.name} from garden`}
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-3 w-3" aria-hidden="true" />
                           </Button>
                         </div>
 
