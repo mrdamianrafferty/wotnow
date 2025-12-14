@@ -480,16 +480,24 @@ Special cases:
       },
       body: JSON.stringify({
         images: [`data:image/jpeg;base64,${base64Image}`],
-        // Include similar images and classification details
-        similar_images: true,
-        classification_level: 'species',
-        // Request plant details
-        details: ['common_names', 'taxonomy', 'url', 'description', 'edible_parts', 'watering'],
+        // Request classification including cultivars (e.g., "Tomato 'Roma'")
+        classification_level: 'all',
+        // Language for common names and descriptions
+        language: 'en',
+        // Only request details we actually use (saves bandwidth, same credit cost)
+        // Note: similar_images costs extra and we don't display them
+        details: ['common_names', 'taxonomy', 'url', 'watering', 'edible_parts', 'propagation_methods'],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      // Handle specific error cases
+      if (response.status === 401) {
+        throw new Error('Plant.id API key is invalid or expired');
+      } else if (response.status === 402 || errorText.includes('credits')) {
+        throw new Error('Plant.id account has no credits remaining. Purchase credits at admin.kindwise.com');
+      }
       throw new Error(`Plant.id API error: ${response.status} - ${errorText}`);
     }
 
@@ -543,14 +551,22 @@ Special cases:
       },
       body: JSON.stringify({
         images: [`data:image/jpeg;base64,${base64Image}`],
-        // Include disease details
-        similar_images: true,
-        details: ['local_name', 'description', 'treatment', 'cause'],
+        // Language for disease names and treatment info
+        language: 'en',
+        // Request treatment details (biological, chemical, prevention)
+        // Note: similar_images costs extra and we don't display them
+        details: ['local_name', 'cause', 'treatment', 'classification'],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      // Handle specific error cases
+      if (response.status === 401) {
+        throw new Error('Plant.id API key is invalid or expired');
+      } else if (response.status === 402 || errorText.includes('credits')) {
+        throw new Error('Plant.id account has no credits remaining. Purchase credits at admin.kindwise.com');
+      }
       throw new Error(`Plant.health API error: ${response.status} - ${errorText}`);
     }
 
