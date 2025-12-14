@@ -3,9 +3,20 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ImageAttribution, PerenualAttribution, type PerenualImageLicense } from './PerenualAttribution';
-import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm } from 'lucide-react';
+import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink } from 'lucide-react';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
+
+// Wikimedia Commons image with proper attribution per their requirements
+interface WikimediaImage {
+  local_path: string;           // Path to local image file
+  wikimedia_file: string;       // Original filename on Wikimedia Commons
+  wikimedia_url: string;        // URL to Wikimedia Commons file page
+  license: string;              // License type (CC BY-SA 3.0, Public Domain, etc.)
+  license_url: string;          // URL to license
+  author: string;               // Author/photographer name
+  source: 'Wikimedia Commons';  // Always Wikimedia Commons
+}
 
 interface ThreatCardJson {
   where_on_plant?: string[];
@@ -14,7 +25,9 @@ interface ThreatCardJson {
   recognition_bullets?: string[];
   treatment_pesticide_free?: string[];
   when_to_escalate_bullets?: string[];
-  // Perenual enrichment
+  // Wikimedia Commons image (preferred)
+  wikimedia_image?: WikimediaImage;
+  // Perenual enrichment (legacy)
   perenual_id?: number;
   perenual_synced_at?: string;
   perenual_match_confidence?: string;
@@ -75,18 +88,41 @@ const CARD_BORDER_COLORS: Record<ThreatRiskBand, string> = {
 
 export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
   const cardJson = threat.cardJson as ThreatCardJson;
-  const images = cardJson?.images;
-  const primaryImage = images?.[0];
+  
+  // Prefer Wikimedia image over Perenual images
+  const wikimediaImage = cardJson?.wikimedia_image;
+  const perenualImages = cardJson?.images;
+  const primaryPerenualImage = perenualImages?.[0];
+  
+  const hasImage = !!wikimediaImage || !!primaryPerenualImage;
   const hasPerenualData = !!cardJson?.perenual_id;
   
   return (
     <Card className={`border-2 ${CARD_BORDER_COLORS[threat.band]} overflow-hidden`}>
       {/* Image section with attribution */}
-      {primaryImage && (
+      {wikimediaImage ? (
+        // Wikimedia Commons image with proper attribution
         <div className="relative">
           <div className="relative h-32 w-full bg-muted">
             <Image
-              src={primaryImage.medium_url || primaryImage.small_url || primaryImage.thumbnail}
+              src={wikimediaImage.local_path}
+              alt={threat.commonName}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+          </div>
+          {/* Wikimedia attribution overlay - per their requirements */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1">
+            <WikimediaAttribution image={wikimediaImage} />
+          </div>
+        </div>
+      ) : primaryPerenualImage && (
+        // Fallback to Perenual image (legacy)
+        <div className="relative">
+          <div className="relative h-32 w-full bg-muted">
+            <Image
+              src={primaryPerenualImage.medium_url || primaryPerenualImage.small_url || primaryPerenualImage.thumbnail}
               alt={threat.commonName}
               fill
               className="object-cover"
@@ -95,12 +131,12 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
           </div>
           {/* Image attribution overlay */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1">
-            <ImageAttribution image={primaryImage} size="sm" className="text-white/80 hover:text-white" />
+            <ImageAttribution image={primaryPerenualImage} size="sm" className="text-white/80 hover:text-white" />
           </div>
         </div>
       )}
 
-      <CardHeader className={primaryImage ? 'pt-3' : ''}>
+      <CardHeader className={hasImage ? 'pt-3' : ''}>
         <div className="flex justify-between items-start gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -192,4 +228,56 @@ function formatThreatType(type: string): string {
     other: 'Other',
   };
   return typeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/**
+ * Wikimedia Commons attribution component
+ * Per their requirements: Author, License with link, Link to source
+ * https://commons.wikimedia.org/wiki/Commons:Credit_line
+ */
+interface WikimediaAttributionProps {
+  image: WikimediaImage;
+}
+
+function WikimediaAttribution({ image }: WikimediaAttributionProps) {
+  // Check if attribution is required (not Public Domain or CC0)
+  const requiresAttribution = !['Public Domain', 'CC0'].includes(image.license);
+  
+  // Format license display
+  const licenseShort = image.license
+    .replace('CC BY-SA ', 'CC BY-SA ')
+    .replace('CC BY ', 'CC BY ');
+
+  return (
+    <div className="flex items-center justify-between text-[10px] text-white/90">
+      <div className="flex items-center gap-1 min-w-0">
+        {requiresAttribution ? (
+          <>
+            <span className="truncate">© {image.author}</span>
+            <span className="text-white/60">•</span>
+            <a 
+              href={image.license_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white underline"
+            >
+              {licenseShort}
+            </a>
+          </>
+        ) : (
+          <span className="text-white/70">{image.license}</span>
+        )}
+      </div>
+      <a
+        href={image.wikimedia_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-0.5 text-white/70 hover:text-white ml-2 shrink-0"
+        title="View on Wikimedia Commons"
+      >
+        <span className="hidden sm:inline">Wikimedia</span>
+        <ExternalLink className="h-2.5 w-2.5" />
+      </a>
+    </div>
+  );
 }
