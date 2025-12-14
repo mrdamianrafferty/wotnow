@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sprout, Shovel, Scissors, Wheat } from 'lucide-react';
+import { Sprout, Shovel, Scissors, Wheat, MapPin } from 'lucide-react';
+import { ThreatCard } from '@/components/grow/ThreatCard';
 
 import { getPlantImage, PLANT_IMAGE_MAP } from '@/lib/grow/plantImages';
 import type { PlantSpecies } from '@/lib/grow/species';
@@ -52,13 +53,21 @@ function TimingIcon({ kind }: { kind: TimingKind }) {
   return null;
 }
 
-type Threat = {
+type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
+
+type ThreatAssessment = {
   threatId: string;
+  slug: string;
   commonName: string;
   scientificName: string | null;
   threatType: string;
-  band: string;
-  reasons?: string[];
+  severityDefault: number;
+  score: number;
+  band: ThreatRiskBand;
+  matchedHosts: Array<{ kind: string; key: string; strength: number }>;
+  matchedRules: Array<{ ruleId: string; title: string; score: number }>;
+  reasons: string[];
+  cardJson: Record<string, unknown>;
 };
 
 type GardenTask = {
@@ -240,7 +249,7 @@ export default function GrowSpeciesPage() {
   const [windows, setWindows] = useState<PlantingWindow[] | null>(null);
   const [isLoadingWindows, setIsLoadingWindows] = useState(false);
 
-  const [threats, setThreats] = useState<Threat[] | null>(null);
+  const [threats, setThreats] = useState<ThreatAssessment[] | null>(null);
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
 
   const [tasks, setTasks] = useState<GardenTask[] | null>(null);
@@ -346,7 +355,7 @@ export default function GrowSpeciesPage() {
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        setThreats((data?.threats ?? []) as Threat[]);
+        setThreats((data?.threats ?? []) as ThreatAssessment[]);
       })
       .catch(() => {
         if (cancelled) return;
@@ -645,6 +654,14 @@ export default function GrowSpeciesPage() {
           </TabsContent>
 
           <TabsContent value="timing" className="space-y-4">
+            {/* Location-based timing notice */}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm text-blue-800">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span>
+                <strong>Personalized for your location</strong> — These timings are calculated based on your saved garden location and local climate conditions.
+              </span>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle>Your timing</CardTitle>
@@ -817,45 +834,39 @@ export default function GrowSpeciesPage() {
           </TabsContent>
 
           <TabsContent value="threats" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Threats right now</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingThreats ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-5 w-72" />
-                    <Skeleton className="h-5 w-60" />
-                    <Skeleton className="h-5 w-80" />
-                  </div>
-                ) : filteredThreats && filteredThreats.length > 0 ? (
-                  <div className="space-y-3">
-                    {filteredThreats.slice(0, 6).map((t) => (
-                      <div key={t.threatId} className="p-3 rounded-lg border bg-white">
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="font-medium">{t.commonName}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {t.threatType}{t.scientificName ? ` • ${t.scientificName}` : ''}
-                            </div>
-                          </div>
-                          <Badge variant="outline">{t.band}</Badge>
-                        </div>
-                        {Array.isArray(t.reasons) && t.reasons.length > 0 ? (
-                          <ul className="mt-2 text-xs text-muted-foreground list-disc pl-5">
-                            {t.reasons.slice(0, 3).map((r, idx) => (
-                              <li key={`${t.threatId}:${idx}`}>{r}</li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No threats to show yet.</p>
-                )}
-              </CardContent>
-            </Card>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Threats right now</h2>
+            </div>
+            {isLoadingThreats ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                  </CardContent>
+                </Card>
+              </div>
+            ) : filteredThreats && filteredThreats.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredThreats.slice(0, 6).map((t) => (
+                  <ThreatCard key={t.threatId} threat={t} compact />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">No threats to show for this species yet.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
