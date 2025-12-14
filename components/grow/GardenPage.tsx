@@ -22,8 +22,10 @@ import {
   Trees,
   Trash2,
   X,
-  Pencil
+  Pencil,
+  Info
 } from 'lucide-react';
+import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
 import type { GuildCompanion } from '../../lib/grow/guild';
 import { api } from '../../lib/grow/api';
@@ -35,6 +37,8 @@ import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
 import { SkeletonGardenPage } from './GrowSkeletons';
+import { getPlantImage } from '../../lib/grow/plantImages';
+import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -89,6 +93,47 @@ type RawPlant = {
   lastWatered?: string | Date | null;
   notes?: string | null;
 };
+
+function slugifyForImageKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function stripParentheticals(value: string): string {
+  return value.replace(/\s*\([^)]*\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function findBestPlantImageKey(plantName: string): string | null {
+  const raw = plantName?.trim();
+  if (!raw) return null;
+
+  const candidates = [raw, stripParentheticals(raw)]
+    .map(slugifyForImageKey)
+    .filter(Boolean);
+
+  for (const key of candidates) {
+    if (PLANT_IMAGE_MAP[key]) return key;
+  }
+
+  // Most map keys are "common-name-scientific-name". Try matching by common-name prefix.
+  const prefixes = new Set<string>();
+  for (const c of candidates) {
+    prefixes.add(c);
+    prefixes.add(`${c}-`);
+  }
+
+  const keys = Object.keys(PLANT_IMAGE_MAP);
+  for (const prefix of prefixes) {
+    const hit = keys.find((k) => k.startsWith(prefix));
+    if (hit) return hit;
+  }
+
+  return null;
+}
 
 const normalizePlant = (raw: RawPlant): Plant => {
   const plantedValue = raw.planted ? new Date(raw.planted) : new Date();
@@ -748,23 +793,42 @@ export function GardenPage() {
                 <Card key={plant.id} className={`border-2 ${getHealthColor(plant.health)}`}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="pr-2">
                         <CardTitle className="text-lg">{plant.name}</CardTitle>
                         <p className="text-sm text-muted-foreground">{plant.type}</p>
                       </div>
-                      <div className="flex gap-2">
-                        <Badge variant="outline" className={getHealthColor(plant.health)}>
-                          {plant.health}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeletePlant(plant.id, plant.name)}
-                          title="Remove plant"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-start gap-2">
+                          <Badge variant="outline" className={getHealthColor(plant.health)}>
+                            {plant.health}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeletePlant(plant.id, plant.name)}
+                            title="Remove plant"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+
+                        {(() => {
+                          const key = findBestPlantImageKey(plant.name);
+                          const src = key ? (getPlantImage(key, 'xl') ?? getPlantImage(key, 'lg') ?? getPlantImage(key, 'medium')) : null;
+                          if (!src) return null;
+                          return (
+                            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white">
+                              <Image
+                                src={src}
+                                alt={plant.name}
+                                fill
+                                className="object-contain p-1"
+                                sizes="(max-width: 768px) 96px, 192px"
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </CardHeader>
@@ -796,9 +860,15 @@ export function GardenPage() {
                     />
                     
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Droplets className="h-3 w-3 mr-1" />
-                        Water
+                      <Button asChild variant="outline" size="sm" className="flex-1">
+                        <Link
+                          href={`/grow/species/${encodeURIComponent(
+                            speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name
+                          )}`}
+                        >
+                          <Info className="h-3 w-3 mr-1" />
+                          Find out more
+                        </Link>
                       </Button>
                       <Button 
                         variant="outline" 

@@ -1,0 +1,3110 @@
+{
+  "acacia-dealbata-acacia-dealbata": {
+    "emoji": "/grow/plants/emoji/acacia-dealbata-acacia-dealbata.webp",
+    "lg": "/grow/plants/lg/acacia-dealbata-acacia-dealbata.webp",
+    "medium": "/grow/plants/medium/acacia-dealbata-acacia-dealbata.webp",
+    "source": "335_Acacia_dealbata_Acacia_dealbata.png",
+    "xl": "/grow/plants/xl/acacia-dealbata-acacia-dealbata.webp"
+  },
+  "albizia-julibrissin-albizia-julibrissin": {
+    "emoji": "/grow/plants/emoji/albizia-julibrissin-albizia-julibrissin.webp",
+    "lg": "/grow/plants/lg/albizia-julibrissin-albizia-julibrissin.webp",
+    "medium": "/grow/plants/medium/albizia-julibrissin-albizia-julibrissin.webp",
+    "source": "337_Albizia_julibrissin_Albizia_julibrissin.png",
+    "xl": "/grow/plants/xl/albizia-julibrissin-albizia-julibrissin.webp"
+  },
+  "alder-common-alnus-glutinosa": {
+    "emoji": "/grow/plants/emoji/alder-common-alnus-glutinosa.webp",
+    "lg": "/grow/plants/lg/alder-common-alnus-glutinosa.webp",
+    "medium": "/grow/plants/medium/alder-common-alnus-glutinosa.webp",
+    "source": "339_Alder_common_Alnus_glutinosa.png",
+    "xl": "/grow/plants/xl/alder-common-alnus-glutinosa.webp"
+  },
+  "amaranth-leaves-amaranthus-tricolor": {
+    "emoji": "/grow/plants/emoji/amaranth-leaves-amaranthus-tricolor.webp",
+    "lg": "/grow/plants/lg/amaranth-leaves-amaranthus-tricolor.webp",
+    "medium": "/grow/plants/medium/amaranth-leaves-amaranthus-tricolor.webp",
+    "source": "005_Amaranth_leaves_Amaranthus_tricolor.png",
+    "xl": "/grow/plants/xl/amaranth-leaves-amaranthus-tricolor.webp"
+  },
+  "amber-maple-acer-ginnala-acer-ginnala": {
+    "emoji": "/grow/plants/emoji/amber-maple-acer-ginnala-acer-ginnala.webp",
+    "lg": "/grow/plants/lg/amber-maple-acer-ginnala-acer-ginnala.webp",
+    "medium": "/grow/plants/medium/amber-maple-acer-ginnala-acer-ginnala.webp",
+    "source": "344_Amber_maple_Acer_ginnala_Acer_ginnala.png",
+    "xl": "/grow/plants/xl/amber-maple-acer-ginnala-acer-ginnala.webp"
+  },
+  "american-alder-leaf-birch-betula-alleghaniensis": {
+    "emoji": "/grow/plants/emoji/american-alder-leaf-birch-betula-alleghaniensis.webp",
+    "lg": "/grow/plants/lg/american-alder-leaf-birch-betula-alleghaniensis.webp",
+    "medium": "/grow/plants/medium/american-alder-leaf-birch-betula-alleghaniensis.webp",
+    "source": "343_American_alder_leaf_birch_Betula_alleghaniensis.png",
+    "xl": "/grow/plants/xl/american-alder-leaf-birch-betula-alleghaniensis.webp"
+  },
+  "angelica-angelica-archangelica": {
+    "emoji": "/grow/plants/emoji/angelica-angelica-archangelica.webp",
+    "lg": "/grow/plants/lg/angelica-angelica-archangelica.webp",
+    "medium": "/grow/plants/medium/angelica-angelica-archangelica.webp",
+    "source": "148_Angelica_Angelica_archangelica.png",
+    "xl": "/grow/plants/xl/angelica-angelica-archangelica.webp"
+  },
+  "anise-hyssop-agastache-foeniculum": {
+    "emoji": "/grow/plants/emoji/anise-hyssop-agastache-foeniculum.webp",
+    "lg": "/grow/plants/lg/anise-hyssop-agastache-foeniculum.webp",
+    "medium": "/grow/plants/medium/anise-hyssop-agastache-foeniculum.webp",
+    "source": "006_Anise_hyssop_Agastache_foeniculum.png",
+    "xl": "/grow/plants/xl/anise-hyssop-agastache-foeniculum.webp"
+  },
+  "apple-malus-domestica": {
+    "emoji": "/grow/plants/emoji/apple-malus-domestica.webp",
+    "lg": "/grow/plants/lg/apple-malus-domestica.webp",
+    "medium": "/grow/plants/medium/apple-malus-domestica.webp",
+    "source": "082_Apple_Malus_domestica.png",
+    "xl": "/grow/plants/xl/apple-malus-domestica.webp"
+  },
+  "apricot-prunus-armeniaca": {
+    "emoji": "/grow/plants/emoji/apricot-prunus-armeniaca.webp",
+    "lg": "/grow/plants/lg/apricot-prunus-armeniaca.webp",
+    "medium": "/grow/plants/medium/apricot-prunus-armeniaca.webp",
+    "source": "083_Apricot_Prunus_armeniaca.png",
+    "xl": "/grow/plants/xl/apricot-prunus-armeniaca.webp"
+  },
+  "aronia-chokeberry-aronia-melanocarpa": {
+    "emoji": "/grow/plants/emoji/aronia-chokeberry-aronia-melanocarpa.webp",
+    "lg": "/grow/plants/lg/aronia-chokeberry-aronia-melanocarpa.webp",
+    "medium": "/grow/plants/medium/aronia-chokeberry-aronia-melanocarpa.webp",
+    "source": "084_Aronia_chokeberry_Aronia_melanocarpa.png",
+    "xl": "/grow/plants/xl/aronia-chokeberry-aronia-melanocarpa.webp"
+  },
+  "asparagus-asparagus-officinalis": {
+    "emoji": "/grow/plants/emoji/asparagus-asparagus-officinalis.webp",
+    "lg": "/grow/plants/lg/asparagus-asparagus-officinalis.webp",
+    "medium": "/grow/plants/medium/asparagus-asparagus-officinalis.webp",
+    "source": "010_Asparagus_Asparagus_officinalis.png",
+    "xl": "/grow/plants/xl/asparagus-asparagus-officinalis.webp"
+  },
+  "astilbe-astilbe-arendsii": {
+    "emoji": "/grow/plants/emoji/astilbe-astilbe-arendsii.webp",
+    "lg": "/grow/plants/lg/astilbe-astilbe-arendsii.webp",
+    "medium": "/grow/plants/medium/astilbe-astilbe-arendsii.webp",
+    "source": "011_Astilbe_Astilbe_arendsii.png",
+    "xl": "/grow/plants/xl/astilbe-astilbe-arendsii.webp"
+  },
+  "atlas-cedar-cedrus-atlantica": {
+    "emoji": "/grow/plants/emoji/atlas-cedar-cedrus-atlantica.webp",
+    "lg": "/grow/plants/lg/atlas-cedar-cedrus-atlantica.webp",
+    "medium": "/grow/plants/medium/atlas-cedar-cedrus-atlantica.webp",
+    "source": "355_Atlas_cedar_Cedrus_atlantica.png",
+    "xl": "/grow/plants/xl/atlas-cedar-cedrus-atlantica.webp"
+  },
+  "aubergine-eggplant-solanum-melongena": {
+    "emoji": "/grow/plants/emoji/aubergine-eggplant-solanum-melongena.webp",
+    "lg": "/grow/plants/lg/aubergine-eggplant-solanum-melongena.webp",
+    "medium": "/grow/plants/medium/aubergine-eggplant-solanum-melongena.webp",
+    "source": "012_Aubergine_eggplant_Solanum_melongena.png",
+    "xl": "/grow/plants/xl/aubergine-eggplant-solanum-melongena.webp"
+  },
+  "autumn-olive-elaeagnus-umbellata-elaeagnus-umbellata": {
+    "emoji": "/grow/plants/emoji/autumn-olive-elaeagnus-umbellata-elaeagnus-umbellata.webp",
+    "lg": "/grow/plants/lg/autumn-olive-elaeagnus-umbellata-elaeagnus-umbellata.webp",
+    "medium": "/grow/plants/medium/autumn-olive-elaeagnus-umbellata-elaeagnus-umbellata.webp",
+    "source": "085_Autumn_olive_Elaeagnus_umbellata_Elaeagnus_umbellata.png",
+    "xl": "/grow/plants/xl/autumn-olive-elaeagnus-umbellata-elaeagnus-umbellata.webp"
+  },
+  "bailey-acacia-acacia-baileyana": {
+    "emoji": "/grow/plants/emoji/bailey-acacia-acacia-baileyana.webp",
+    "lg": "/grow/plants/lg/bailey-acacia-acacia-baileyana.webp",
+    "medium": "/grow/plants/medium/bailey-acacia-acacia-baileyana.webp",
+    "source": "334_Bailey_acacia_Acacia_baileyana.png",
+    "xl": "/grow/plants/xl/bailey-acacia-acacia-baileyana.webp"
+  },
+  "bay-laurel-laurus-nobilis": {
+    "emoji": "/grow/plants/emoji/bay-laurel-laurus-nobilis.webp",
+    "lg": "/grow/plants/lg/bay-laurel-laurus-nobilis.webp",
+    "medium": "/grow/plants/medium/bay-laurel-laurus-nobilis.webp",
+    "source": "153_Bay_laurel_Laurus_nobilis.png",
+    "xl": "/grow/plants/xl/bay-laurel-laurus-nobilis.webp"
+  },
+  "bean-bush-phaseolus-vulgaris": {
+    "emoji": "/grow/plants/emoji/bean-bush-phaseolus-vulgaris.webp",
+    "lg": "/grow/plants/lg/bean-bush-phaseolus-vulgaris.webp",
+    "medium": "/grow/plants/medium/bean-bush-phaseolus-vulgaris.webp",
+    "source": "013_Bean_Bush_Phaseolus_vulgaris.png",
+    "xl": "/grow/plants/xl/bean-bush-phaseolus-vulgaris.webp"
+  },
+  "bee-balm-monarda-didyma-monarda-didyma": {
+    "emoji": "/grow/plants/emoji/bee-balm-monarda-didyma-monarda-didyma.webp",
+    "lg": "/grow/plants/lg/bee-balm-monarda-didyma-monarda-didyma.webp",
+    "medium": "/grow/plants/medium/bee-balm-monarda-didyma-monarda-didyma.webp",
+    "source": "239_Bee_balm_Monarda_didyma_Monarda_didyma.png",
+    "xl": "/grow/plants/xl/bee-balm-monarda-didyma-monarda-didyma.webp"
+  },
+  "beetroot-beta-vulgaris": {
+    "emoji": "/grow/plants/emoji/beetroot-beta-vulgaris.webp",
+    "lg": "/grow/plants/lg/beetroot-beta-vulgaris.webp",
+    "medium": "/grow/plants/medium/beetroot-beta-vulgaris.webp",
+    "source": "016_Beetroot_Beta_vulgaris.png",
+    "xl": "/grow/plants/xl/beetroot-beta-vulgaris.webp"
+  },
+  "black-acacia-acacia-melanoxylon-acacia-melanoxylon": {
+    "emoji": "/grow/plants/emoji/black-acacia-acacia-melanoxylon-acacia-melanoxylon.webp",
+    "lg": "/grow/plants/lg/black-acacia-acacia-melanoxylon-acacia-melanoxylon.webp",
+    "medium": "/grow/plants/medium/black-acacia-acacia-melanoxylon-acacia-melanoxylon.webp",
+    "source": "349_Black_acacia_Acacia_melanoxylon_Acacia_melanoxylon.png",
+    "xl": "/grow/plants/xl/black-acacia-acacia-melanoxylon-acacia-melanoxylon.webp"
+  },
+  "black-alder-alnus-glutinosa": {
+    "emoji": "/grow/plants/emoji/black-alder-alnus-glutinosa.webp",
+    "lg": "/grow/plants/lg/black-alder-alnus-glutinosa.webp",
+    "medium": "/grow/plants/medium/black-alder-alnus-glutinosa.webp",
+    "source": "338_Black_alder_Alnus_glutinosa.png",
+    "xl": "/grow/plants/xl/black-alder-alnus-glutinosa.webp"
+  },
+  "black-eyed-peas-cowpeas-vigna-unguiculata-subsp-unguiculata": {
+    "emoji": "/grow/plants/emoji/black-eyed-peas-cowpeas-vigna-unguiculata-subsp-unguiculata.webp",
+    "lg": "/grow/plants/lg/black-eyed-peas-cowpeas-vigna-unguiculata-subsp-unguiculata.webp",
+    "medium": "/grow/plants/medium/black-eyed-peas-cowpeas-vigna-unguiculata-subsp-unguiculata.webp",
+    "source": "056_Black_eyed_peas_cowpeas_Vigna_unguiculata_subsp_unguiculata.png",
+    "xl": "/grow/plants/xl/black-eyed-peas-cowpeas-vigna-unguiculata-subsp-unguiculata.webp"
+  },
+  "black-eyed-susan-perennial-type-rudbeckia-fulgida": {
+    "emoji": "/grow/plants/emoji/black-eyed-susan-perennial-type-rudbeckia-fulgida.webp",
+    "lg": "/grow/plants/lg/black-eyed-susan-perennial-type-rudbeckia-fulgida.webp",
+    "medium": "/grow/plants/medium/black-eyed-susan-perennial-type-rudbeckia-fulgida.webp",
+    "source": "017_Black_eyed_Susan_perennial_type_Rudbeckia_fulgida.png",
+    "xl": "/grow/plants/xl/black-eyed-susan-perennial-type-rudbeckia-fulgida.webp"
+  },
+  "black-lace-elder-edible-sambucus-nigra": {
+    "emoji": "/grow/plants/emoji/black-lace-elder-edible-sambucus-nigra.webp",
+    "lg": "/grow/plants/lg/black-lace-elder-edible-sambucus-nigra.webp",
+    "medium": "/grow/plants/medium/black-lace-elder-edible-sambucus-nigra.webp",
+    "source": "094_Black_Lace_elder_edible_Sambucus_nigra.png",
+    "xl": "/grow/plants/xl/black-lace-elder-edible-sambucus-nigra.webp"
+  },
+  "black-locust-robinia-robinia-pseudoacacia": {
+    "emoji": "/grow/plants/emoji/black-locust-robinia-robinia-pseudoacacia.webp",
+    "lg": "/grow/plants/lg/black-locust-robinia-robinia-pseudoacacia.webp",
+    "medium": "/grow/plants/medium/black-locust-robinia-robinia-pseudoacacia.webp",
+    "source": "350_Black_locust_Robinia_Robinia_pseudoacacia.png",
+    "xl": "/grow/plants/xl/black-locust-robinia-robinia-pseudoacacia.webp"
+  },
+  "black-salsify-scorzonera-hispanica": {
+    "emoji": "/grow/plants/emoji/black-salsify-scorzonera-hispanica.webp",
+    "lg": "/grow/plants/lg/black-salsify-scorzonera-hispanica.webp",
+    "medium": "/grow/plants/medium/black-salsify-scorzonera-hispanica.webp",
+    "source": "018_Black_salsify_Scorzonera_hispanica.png",
+    "xl": "/grow/plants/xl/black-salsify-scorzonera-hispanica.webp"
+  },
+  "black-spruce-picea-mariana": {
+    "emoji": "/grow/plants/emoji/black-spruce-picea-mariana.webp",
+    "lg": "/grow/plants/lg/black-spruce-picea-mariana.webp",
+    "medium": "/grow/plants/medium/black-spruce-picea-mariana.webp",
+    "source": "351_Black_spruce_Picea_mariana.png",
+    "xl": "/grow/plants/xl/black-spruce-picea-mariana.webp"
+  },
+  "black-walnut-juglans-nigra": {
+    "emoji": "/grow/plants/emoji/black-walnut-juglans-nigra.webp",
+    "lg": "/grow/plants/lg/black-walnut-juglans-nigra.webp",
+    "medium": "/grow/plants/medium/black-walnut-juglans-nigra.webp",
+    "source": "086_Black_walnut_Juglans_nigra.png",
+    "xl": "/grow/plants/xl/black-walnut-juglans-nigra.webp"
+  },
+  "black-willow-salix-nigra": {
+    "emoji": "/grow/plants/emoji/black-willow-salix-nigra.webp",
+    "lg": "/grow/plants/lg/black-willow-salix-nigra.webp",
+    "medium": "/grow/plants/medium/black-willow-salix-nigra.webp",
+    "source": "352_Black_willow_Salix_nigra.png",
+    "xl": "/grow/plants/xl/black-willow-salix-nigra.webp"
+  },
+  "blackthorn-prunus-spinosa-prunus-spinosa": {
+    "emoji": "/grow/plants/emoji/blackthorn-prunus-spinosa-prunus-spinosa.webp",
+    "lg": "/grow/plants/lg/blackthorn-prunus-spinosa-prunus-spinosa.webp",
+    "medium": "/grow/plants/medium/blackthorn-prunus-spinosa-prunus-spinosa.webp",
+    "source": "019_Blackthorn_Prunus_spinosa_Prunus_spinosa.png",
+    "xl": "/grow/plants/xl/blackthorn-prunus-spinosa-prunus-spinosa.webp"
+  },
+  "bleeding-heart-lamprocapnos-spectabilis": {
+    "emoji": "/grow/plants/emoji/bleeding-heart-lamprocapnos-spectabilis.webp",
+    "lg": "/grow/plants/lg/bleeding-heart-lamprocapnos-spectabilis.webp",
+    "medium": "/grow/plants/medium/bleeding-heart-lamprocapnos-spectabilis.webp",
+    "source": "020_Bleeding_heart_Lamprocapnos_spectabilis.png",
+    "xl": "/grow/plants/xl/bleeding-heart-lamprocapnos-spectabilis.webp"
+  },
+  "blood-red-dogwood-cornus-sanguinea-cornus-sanguinea": {
+    "emoji": "/grow/plants/emoji/blood-red-dogwood-cornus-sanguinea-cornus-sanguinea.webp",
+    "lg": "/grow/plants/lg/blood-red-dogwood-cornus-sanguinea-cornus-sanguinea.webp",
+    "medium": "/grow/plants/medium/blood-red-dogwood-cornus-sanguinea-cornus-sanguinea.webp",
+    "source": "066_Blood_red_dogwood_Cornus_sanguinea_Cornus_sanguinea.png",
+    "xl": "/grow/plants/xl/blood-red-dogwood-cornus-sanguinea-cornus-sanguinea.webp"
+  },
+  "blue-spruce-picea-pungens": {
+    "emoji": "/grow/plants/emoji/blue-spruce-picea-pungens.webp",
+    "lg": "/grow/plants/lg/blue-spruce-picea-pungens.webp",
+    "medium": "/grow/plants/medium/blue-spruce-picea-pungens.webp",
+    "source": "353_Blue_spruce_Picea_pungens.png",
+    "xl": "/grow/plants/xl/blue-spruce-picea-pungens.webp"
+  },
+  "blue-vervain-verbena-hastata-verbena-hastata": {
+    "emoji": "/grow/plants/emoji/blue-vervain-verbena-hastata-verbena-hastata.webp",
+    "lg": "/grow/plants/lg/blue-vervain-verbena-hastata-verbena-hastata.webp",
+    "medium": "/grow/plants/medium/blue-vervain-verbena-hastata-verbena-hastata.webp",
+    "source": "438_Blue_vervain_Verbena_hastata_Verbena_hastata.png",
+    "xl": "/grow/plants/xl/blue-vervain-verbena-hastata-verbena-hastata.webp"
+  },
+  "borage-borago-officinalis": {
+    "emoji": "/grow/plants/emoji/borage-borago-officinalis.webp",
+    "lg": "/grow/plants/lg/borage-borago-officinalis.webp",
+    "medium": "/grow/plants/medium/borage-borago-officinalis.webp",
+    "source": "154_Borage_Borago_officinalis.png",
+    "xl": "/grow/plants/xl/borage-borago-officinalis.webp"
+  },
+  "broad-bean-fava-bean-vicia-faba": {
+    "emoji": "/grow/plants/emoji/broad-bean-fava-bean-vicia-faba.webp",
+    "lg": "/grow/plants/lg/broad-bean-fava-bean-vicia-faba.webp",
+    "medium": "/grow/plants/medium/broad-bean-fava-bean-vicia-faba.webp",
+    "source": "021_Broad_bean_fava_bean_Vicia_faba.png",
+    "xl": "/grow/plants/xl/broad-bean-fava-bean-vicia-faba.webp"
+  },
+  "broccoli-brassica-oleracea-var-italica": {
+    "emoji": "/grow/plants/emoji/broccoli-brassica-oleracea-var-italica.webp",
+    "lg": "/grow/plants/lg/broccoli-brassica-oleracea-var-italica.webp",
+    "medium": "/grow/plants/medium/broccoli-brassica-oleracea-var-italica.webp",
+    "source": "022_Broccoli_Brassica_oleracea_var_italica.png",
+    "xl": "/grow/plants/xl/broccoli-brassica-oleracea-var-italica.webp"
+  },
+  "brunnera-brunnera-macrophylla": {
+    "emoji": "/grow/plants/emoji/brunnera-brunnera-macrophylla.webp",
+    "lg": "/grow/plants/lg/brunnera-brunnera-macrophylla.webp",
+    "medium": "/grow/plants/medium/brunnera-brunnera-macrophylla.webp",
+    "source": "023_Brunnera_Brunnera_macrophylla.png",
+    "xl": "/grow/plants/xl/brunnera-brunnera-macrophylla.webp"
+  },
+  "brussels-sprouts-brassica-oleracea-var-gemmifera": {
+    "emoji": "/grow/plants/emoji/brussels-sprouts-brassica-oleracea-var-gemmifera.webp",
+    "lg": "/grow/plants/lg/brussels-sprouts-brassica-oleracea-var-gemmifera.webp",
+    "medium": "/grow/plants/medium/brussels-sprouts-brassica-oleracea-var-gemmifera.webp",
+    "source": "024_Brussels_sprouts_Brassica_oleracea_var_gemmifera.png",
+    "xl": "/grow/plants/xl/brussels-sprouts-brassica-oleracea-var-gemmifera.webp"
+  },
+  "buckwheat-fagopyrum-esculentum": {
+    "emoji": "/grow/plants/emoji/buckwheat-fagopyrum-esculentum.webp",
+    "lg": "/grow/plants/lg/buckwheat-fagopyrum-esculentum.webp",
+    "medium": "/grow/plants/medium/buckwheat-fagopyrum-esculentum.webp",
+    "source": "025_Buckwheat_Fagopyrum_esculentum.png",
+    "xl": "/grow/plants/xl/buckwheat-fagopyrum-esculentum.webp"
+  },
+  "bugleweed-ajuga-reptans-ajuga-reptans": {
+    "emoji": "/grow/plants/emoji/bugleweed-ajuga-reptans-ajuga-reptans.webp",
+    "lg": "/grow/plants/lg/bugleweed-ajuga-reptans-ajuga-reptans.webp",
+    "medium": "/grow/plants/medium/bugleweed-ajuga-reptans-ajuga-reptans.webp",
+    "source": "001_Bugleweed_Ajuga_reptans_Ajuga_reptans.png",
+    "xl": "/grow/plants/xl/bugleweed-ajuga-reptans-ajuga-reptans.webp"
+  },
+  "bulb-onion-allium-cepa": {
+    "emoji": "/grow/plants/emoji/bulb-onion-allium-cepa.webp",
+    "lg": "/grow/plants/lg/bulb-onion-allium-cepa.webp",
+    "medium": "/grow/plants/medium/bulb-onion-allium-cepa.webp",
+    "source": "249_Bulb_onion_Allium_cepa.png",
+    "xl": "/grow/plants/xl/bulb-onion-allium-cepa.webp"
+  },
+  "burdock-arctium-lappa": {
+    "emoji": "/grow/plants/emoji/burdock-arctium-lappa.webp",
+    "lg": "/grow/plants/lg/burdock-arctium-lappa.webp",
+    "medium": "/grow/plants/medium/burdock-arctium-lappa.webp",
+    "source": "026_Burdock_Arctium_lappa.png",
+    "xl": "/grow/plants/xl/burdock-arctium-lappa.webp"
+  },
+  "burdock-root-gobo-arctium-lappa": {
+    "emoji": "/grow/plants/emoji/burdock-root-gobo-arctium-lappa.webp",
+    "lg": "/grow/plants/lg/burdock-root-gobo-arctium-lappa.webp",
+    "medium": "/grow/plants/medium/burdock-root-gobo-arctium-lappa.webp",
+    "source": "027_Burdock_root_gobo_Arctium_lappa.png",
+    "xl": "/grow/plants/xl/burdock-root-gobo-arctium-lappa.webp"
+  },
+  "butterhead-lettuce-lactuca-sativa-var-capitata": {
+    "emoji": "/grow/plants/emoji/butterhead-lettuce-lactuca-sativa-var-capitata.webp",
+    "lg": "/grow/plants/lg/butterhead-lettuce-lactuca-sativa-var-capitata.webp",
+    "medium": "/grow/plants/medium/butterhead-lettuce-lactuca-sativa-var-capitata.webp",
+    "source": "222_Butterhead_lettuce_Lactuca_sativa_var_capitata.png",
+    "xl": "/grow/plants/xl/butterhead-lettuce-lactuca-sativa-var-capitata.webp"
+  },
+  "cabbage-brassica-oleracea-var-capitata": {
+    "emoji": "/grow/plants/emoji/cabbage-brassica-oleracea-var-capitata.webp",
+    "lg": "/grow/plants/lg/cabbage-brassica-oleracea-var-capitata.webp",
+    "medium": "/grow/plants/medium/cabbage-brassica-oleracea-var-capitata.webp",
+    "source": "028_Cabbage_Brassica_oleracea_var_capitata.png",
+    "xl": "/grow/plants/xl/cabbage-brassica-oleracea-var-capitata.webp"
+  },
+  "calendula-pot-marigold-calendula-officinalis": {
+    "emoji": "/grow/plants/emoji/calendula-pot-marigold-calendula-officinalis.webp",
+    "lg": "/grow/plants/lg/calendula-pot-marigold-calendula-officinalis.webp",
+    "medium": "/grow/plants/medium/calendula-pot-marigold-calendula-officinalis.webp",
+    "source": "155_Calendula_pot_marigold_Calendula_officinalis.png",
+    "xl": "/grow/plants/xl/calendula-pot-marigold-calendula-officinalis.webp"
+  },
+  "californian-poppy-eschscholzia-californica": {
+    "emoji": "/grow/plants/emoji/californian-poppy-eschscholzia-californica.webp",
+    "lg": "/grow/plants/lg/californian-poppy-eschscholzia-californica.webp",
+    "medium": "/grow/plants/medium/californian-poppy-eschscholzia-californica.webp",
+    "source": "032_Californian_poppy_Eschscholzia_californica.png",
+    "xl": "/grow/plants/xl/californian-poppy-eschscholzia-californica.webp"
+  },
+  "campanula-bellflower-campanula-persicifolia": {
+    "emoji": "/grow/plants/emoji/campanula-bellflower-campanula-persicifolia.webp",
+    "lg": "/grow/plants/lg/campanula-bellflower-campanula-persicifolia.webp",
+    "medium": "/grow/plants/medium/campanula-bellflower-campanula-persicifolia.webp",
+    "source": "033_Campanula_bellflower_Campanula_persicifolia.png",
+    "xl": "/grow/plants/xl/campanula-bellflower-campanula-persicifolia.webp"
+  },
+  "cardoon-cynara-cardunculus": {
+    "emoji": "/grow/plants/emoji/cardoon-cynara-cardunculus.webp",
+    "lg": "/grow/plants/lg/cardoon-cynara-cardunculus.webp",
+    "medium": "/grow/plants/medium/cardoon-cynara-cardunculus.webp",
+    "source": "034_Cardoon_Cynara_cardunculus.png",
+    "xl": "/grow/plants/xl/cardoon-cynara-cardunculus.webp"
+  },
+  "carrot-daucus-carota-subsp-sativus": {
+    "emoji": "/grow/plants/emoji/carrot-daucus-carota-subsp-sativus.webp",
+    "lg": "/grow/plants/lg/carrot-daucus-carota-subsp-sativus.webp",
+    "medium": "/grow/plants/medium/carrot-daucus-carota-subsp-sativus.webp",
+    "source": "035_Carrot_Daucus_carota_subsp_sativus.png",
+    "xl": "/grow/plants/xl/carrot-daucus-carota-subsp-sativus.webp"
+  },
+  "cassava-manihot-esculenta": {
+    "emoji": "/grow/plants/emoji/cassava-manihot-esculenta.webp",
+    "lg": "/grow/plants/lg/cassava-manihot-esculenta.webp",
+    "medium": "/grow/plants/medium/cassava-manihot-esculenta.webp",
+    "source": "036_Cassava_Manihot_esculenta.png",
+    "xl": "/grow/plants/xl/cassava-manihot-esculenta.webp"
+  },
+  "catmint-nepeta-faassenii": {
+    "emoji": "/grow/plants/emoji/catmint-nepeta-faassenii.webp",
+    "lg": "/grow/plants/lg/catmint-nepeta-faassenii.webp",
+    "medium": "/grow/plants/medium/catmint-nepeta-faassenii.webp",
+    "source": "156_Catmint_Nepeta_faassenii.png",
+    "xl": "/grow/plants/xl/catmint-nepeta-faassenii.webp"
+  },
+  "catmint-nepeta-nepeta-faassenii": {
+    "emoji": "/grow/plants/emoji/catmint-nepeta-nepeta-faassenii.webp",
+    "lg": "/grow/plants/lg/catmint-nepeta-nepeta-faassenii.webp",
+    "medium": "/grow/plants/medium/catmint-nepeta-nepeta-faassenii.webp",
+    "source": "037_Catmint_Nepeta_Nepeta_faassenii.png",
+    "xl": "/grow/plants/xl/catmint-nepeta-nepeta-faassenii.webp"
+  },
+  "catnip-nepeta-cataria": {
+    "emoji": "/grow/plants/emoji/catnip-nepeta-cataria.webp",
+    "lg": "/grow/plants/lg/catnip-nepeta-cataria.webp",
+    "medium": "/grow/plants/medium/catnip-nepeta-cataria.webp",
+    "source": "157_Catnip_Nepeta_cataria.png",
+    "xl": "/grow/plants/xl/catnip-nepeta-cataria.webp"
+  },
+  "cauliflower-brassica-oleracea-var-botrytis": {
+    "emoji": "/grow/plants/emoji/cauliflower-brassica-oleracea-var-botrytis.webp",
+    "lg": "/grow/plants/lg/cauliflower-brassica-oleracea-var-botrytis.webp",
+    "medium": "/grow/plants/medium/cauliflower-brassica-oleracea-var-botrytis.webp",
+    "source": "038_Cauliflower_Brassica_oleracea_var_botrytis.png",
+    "xl": "/grow/plants/xl/cauliflower-brassica-oleracea-var-botrytis.webp"
+  },
+  "cedar-of-lebanon-cedrus-libani": {
+    "emoji": "/grow/plants/emoji/cedar-of-lebanon-cedrus-libani.webp",
+    "lg": "/grow/plants/lg/cedar-of-lebanon-cedrus-libani.webp",
+    "medium": "/grow/plants/medium/cedar-of-lebanon-cedrus-libani.webp",
+    "source": "356_Cedar_of_Lebanon_Cedrus_libani.png",
+    "xl": "/grow/plants/xl/cedar-of-lebanon-cedrus-libani.webp"
+  },
+  "celeriac-apium-graveolens-var-rapaceum": {
+    "emoji": "/grow/plants/emoji/celeriac-apium-graveolens-var-rapaceum.webp",
+    "lg": "/grow/plants/lg/celeriac-apium-graveolens-var-rapaceum.webp",
+    "medium": "/grow/plants/medium/celeriac-apium-graveolens-var-rapaceum.webp",
+    "source": "039_Celeriac_Apium_graveolens_var_rapaceum.png",
+    "xl": "/grow/plants/xl/celeriac-apium-graveolens-var-rapaceum.webp"
+  },
+  "celery-apium-graveolens-var-dulce": {
+    "emoji": "/grow/plants/emoji/celery-apium-graveolens-var-dulce.webp",
+    "lg": "/grow/plants/lg/celery-apium-graveolens-var-dulce.webp",
+    "medium": "/grow/plants/medium/celery-apium-graveolens-var-dulce.webp",
+    "source": "040_Celery_Apium_graveolens_var_dulce.png",
+    "xl": "/grow/plants/xl/celery-apium-graveolens-var-dulce.webp"
+  },
+  "cereal-rye-secale-cereale": {
+    "emoji": "/grow/plants/emoji/cereal-rye-secale-cereale.webp",
+    "lg": "/grow/plants/lg/cereal-rye-secale-cereale.webp",
+    "medium": "/grow/plants/medium/cereal-rye-secale-cereale.webp",
+    "source": "293_Cereal_rye_Secale_cereale.png",
+    "xl": "/grow/plants/xl/cereal-rye-secale-cereale.webp"
+  },
+  "chayote-sechium-edule": {
+    "emoji": "/grow/plants/emoji/chayote-sechium-edule.webp",
+    "lg": "/grow/plants/lg/chayote-sechium-edule.webp",
+    "medium": "/grow/plants/medium/chayote-sechium-edule.webp",
+    "source": "041_Chayote_Sechium_edule.png",
+    "xl": "/grow/plants/xl/chayote-sechium-edule.webp"
+  },
+  "cherimoya-annona-cherimola": {
+    "emoji": "/grow/plants/emoji/cherimoya-annona-cherimola.webp",
+    "lg": "/grow/plants/lg/cherimoya-annona-cherimola.webp",
+    "medium": "/grow/plants/medium/cherimoya-annona-cherimola.webp",
+    "source": "087_Cherimoya_Annona_cherimola.png",
+    "xl": "/grow/plants/xl/cherimoya-annona-cherimola.webp"
+  },
+  "cherry-sour-prunus-cerasus": {
+    "emoji": "/grow/plants/emoji/cherry-sour-prunus-cerasus.webp",
+    "lg": "/grow/plants/lg/cherry-sour-prunus-cerasus.webp",
+    "medium": "/grow/plants/medium/cherry-sour-prunus-cerasus.webp",
+    "source": "088_Cherry_sour_Prunus_cerasus.png",
+    "xl": "/grow/plants/xl/cherry-sour-prunus-cerasus.webp"
+  },
+  "cherry-sweet-prunus-avium": {
+    "emoji": "/grow/plants/emoji/cherry-sweet-prunus-avium.webp",
+    "lg": "/grow/plants/lg/cherry-sweet-prunus-avium.webp",
+    "medium": "/grow/plants/medium/cherry-sweet-prunus-avium.webp",
+    "source": "089_Cherry_sweet_Prunus_avium.png",
+    "xl": "/grow/plants/xl/cherry-sweet-prunus-avium.webp"
+  },
+  "cherry-tomato-solanum-lycopersicum-var-cerasiforme": {
+    "emoji": "/grow/plants/emoji/cherry-tomato-solanum-lycopersicum-var-cerasiforme.webp",
+    "lg": "/grow/plants/lg/cherry-tomato-solanum-lycopersicum-var-cerasiforme.webp",
+    "medium": "/grow/plants/medium/cherry-tomato-solanum-lycopersicum-var-cerasiforme.webp",
+    "source": "332_Cherry_tomato_Solanum_lycopersicum_var_cerasiforme.png",
+    "xl": "/grow/plants/xl/cherry-tomato-solanum-lycopersicum-var-cerasiforme.webp"
+  },
+  "chervil-anthriscus-cerefolium": {
+    "emoji": "/grow/plants/emoji/chervil-anthriscus-cerefolium.webp",
+    "lg": "/grow/plants/lg/chervil-anthriscus-cerefolium.webp",
+    "medium": "/grow/plants/medium/chervil-anthriscus-cerefolium.webp",
+    "source": "042_Chervil_Anthriscus_cerefolium.png",
+    "xl": "/grow/plants/xl/chervil-anthriscus-cerefolium.webp"
+  },
+  "chickpea-cicer-arietinum": {
+    "emoji": "/grow/plants/emoji/chickpea-cicer-arietinum.webp",
+    "lg": "/grow/plants/lg/chickpea-cicer-arietinum.webp",
+    "medium": "/grow/plants/medium/chickpea-cicer-arietinum.webp",
+    "source": "043_Chickpea_Cicer_arietinum.png",
+    "xl": "/grow/plants/xl/chickpea-cicer-arietinum.webp"
+  },
+  "chilli-pepper-capsicum-annuum": {
+    "emoji": "/grow/plants/emoji/chilli-pepper-capsicum-annuum.webp",
+    "lg": "/grow/plants/lg/chilli-pepper-capsicum-annuum.webp",
+    "medium": "/grow/plants/medium/chilli-pepper-capsicum-annuum.webp",
+    "source": "263_Chilli_pepper_Capsicum_annuum.png",
+    "xl": "/grow/plants/xl/chilli-pepper-capsicum-annuum.webp"
+  },
+  "chinese-cabbage-napa-brassica-rapa-subsp-pekinensis": {
+    "emoji": "/grow/plants/emoji/chinese-cabbage-napa-brassica-rapa-subsp-pekinensis.webp",
+    "lg": "/grow/plants/lg/chinese-cabbage-napa-brassica-rapa-subsp-pekinensis.webp",
+    "medium": "/grow/plants/medium/chinese-cabbage-napa-brassica-rapa-subsp-pekinensis.webp",
+    "source": "044_Chinese_cabbage_Napa_Brassica_rapa_subsp_pekinensis.png",
+    "xl": "/grow/plants/xl/chinese-cabbage-napa-brassica-rapa-subsp-pekinensis.webp"
+  },
+  "chinese-hawthorn-crataegus-pinnatifida": {
+    "emoji": "/grow/plants/emoji/chinese-hawthorn-crataegus-pinnatifida.webp",
+    "lg": "/grow/plants/lg/chinese-hawthorn-crataegus-pinnatifida.webp",
+    "medium": "/grow/plants/medium/chinese-hawthorn-crataegus-pinnatifida.webp",
+    "source": "090_Chinese_hawthorn_Crataegus_pinnatifida.png",
+    "xl": "/grow/plants/xl/chinese-hawthorn-crataegus-pinnatifida.webp"
+  },
+  "chinese-silver-grass-miscanthus-sinensis": {
+    "emoji": "/grow/plants/emoji/chinese-silver-grass-miscanthus-sinensis.webp",
+    "lg": "/grow/plants/lg/chinese-silver-grass-miscanthus-sinensis.webp",
+    "medium": "/grow/plants/medium/chinese-silver-grass-miscanthus-sinensis.webp",
+    "source": "045_Chinese_silver_grass_Miscanthus_sinensis.png",
+    "xl": "/grow/plants/xl/chinese-silver-grass-miscanthus-sinensis.webp"
+  },
+  "chive-allium-schoenoprasum": {
+    "emoji": "/grow/plants/emoji/chive-allium-schoenoprasum.webp",
+    "lg": "/grow/plants/lg/chive-allium-schoenoprasum.webp",
+    "medium": "/grow/plants/medium/chive-allium-schoenoprasum.webp",
+    "source": "046_Chive_Allium_schoenoprasum.png",
+    "xl": "/grow/plants/xl/chive-allium-schoenoprasum.webp"
+  },
+  "chives-allium-schoenoprasum": {
+    "emoji": "/grow/plants/emoji/chives-allium-schoenoprasum.webp",
+    "lg": "/grow/plants/lg/chives-allium-schoenoprasum.webp",
+    "medium": "/grow/plants/medium/chives-allium-schoenoprasum.webp",
+    "source": "161_Chives_Allium_schoenoprasum.png",
+    "xl": "/grow/plants/xl/chives-allium-schoenoprasum.webp"
+  },
+  "chocolate-vine-akebia-quinata-akebia-quinata": {
+    "emoji": "/grow/plants/emoji/chocolate-vine-akebia-quinata-akebia-quinata.webp",
+    "lg": "/grow/plants/lg/chocolate-vine-akebia-quinata-akebia-quinata.webp",
+    "medium": "/grow/plants/medium/chocolate-vine-akebia-quinata-akebia-quinata.webp",
+    "source": "002_Chocolate_vine_Akebia_quinata_Akebia_quinata.png",
+    "xl": "/grow/plants/xl/chocolate-vine-akebia-quinata-akebia-quinata.webp"
+  },
+  "climbing-honeysuckle-lonicera-periclymenum": {
+    "emoji": "/grow/plants/emoji/climbing-honeysuckle-lonicera-periclymenum.webp",
+    "lg": "/grow/plants/lg/climbing-honeysuckle-lonicera-periclymenum.webp",
+    "medium": "/grow/plants/medium/climbing-honeysuckle-lonicera-periclymenum.webp",
+    "source": "047_Climbing_honeysuckle_Lonicera_periclymenum.png",
+    "xl": "/grow/plants/xl/climbing-honeysuckle-lonicera-periclymenum.webp"
+  },
+  "coltsfoot-tussilago-farfara": {
+    "emoji": "/grow/plants/emoji/coltsfoot-tussilago-farfara.webp",
+    "lg": "/grow/plants/lg/coltsfoot-tussilago-farfara.webp",
+    "medium": "/grow/plants/medium/coltsfoot-tussilago-farfara.webp",
+    "source": "049_Coltsfoot_Tussilago_farfara.png",
+    "xl": "/grow/plants/xl/coltsfoot-tussilago-farfara.webp"
+  },
+  "columbine-aquilegia-aquilegia-vulgaris": {
+    "emoji": "/grow/plants/emoji/columbine-aquilegia-aquilegia-vulgaris.webp",
+    "lg": "/grow/plants/lg/columbine-aquilegia-aquilegia-vulgaris.webp",
+    "medium": "/grow/plants/medium/columbine-aquilegia-aquilegia-vulgaris.webp",
+    "source": "050_Columbine_aquilegia_Aquilegia_vulgaris.png",
+    "xl": "/grow/plants/xl/columbine-aquilegia-aquilegia-vulgaris.webp"
+  },
+  "comfrey-garden-symphytum-officinale": {
+    "emoji": "/grow/plants/emoji/comfrey-garden-symphytum-officinale.webp",
+    "lg": "/grow/plants/lg/comfrey-garden-symphytum-officinale.webp",
+    "medium": "/grow/plants/medium/comfrey-garden-symphytum-officinale.webp",
+    "source": "162_Comfrey_garden_Symphytum_officinale.png",
+    "xl": "/grow/plants/xl/comfrey-garden-symphytum-officinale.webp"
+  },
+  "common-hackberry-celtis-occidentalis": {
+    "emoji": "/grow/plants/emoji/common-hackberry-celtis-occidentalis.webp",
+    "lg": "/grow/plants/lg/common-hackberry-celtis-occidentalis.webp",
+    "medium": "/grow/plants/medium/common-hackberry-celtis-occidentalis.webp",
+    "source": "372_Common_hackberry_Celtis_occidentalis.png",
+    "xl": "/grow/plants/xl/common-hackberry-celtis-occidentalis.webp"
+  },
+  "common-holly-ilex-aquifolium": {
+    "emoji": "/grow/plants/emoji/common-holly-ilex-aquifolium.webp",
+    "lg": "/grow/plants/lg/common-holly-ilex-aquifolium.webp",
+    "medium": "/grow/plants/medium/common-holly-ilex-aquifolium.webp",
+    "source": "378_Common_holly_Ilex_aquifolium.png",
+    "xl": "/grow/plants/xl/common-holly-ilex-aquifolium.webp"
+  },
+  "common-hop-humulus-lupulus": {
+    "emoji": "/grow/plants/emoji/common-hop-humulus-lupulus.webp",
+    "lg": "/grow/plants/lg/common-hop-humulus-lupulus.webp",
+    "medium": "/grow/plants/medium/common-hop-humulus-lupulus.webp",
+    "source": "201_Common_hop_Humulus_lupulus.png",
+    "xl": "/grow/plants/xl/common-hop-humulus-lupulus.webp"
+  },
+  "common-juniper-juniperus-communis": {
+    "emoji": "/grow/plants/emoji/common-juniper-juniperus-communis.webp",
+    "lg": "/grow/plants/lg/common-juniper-juniperus-communis.webp",
+    "medium": "/grow/plants/medium/common-juniper-juniperus-communis.webp",
+    "source": "385_Common_juniper_Juniperus_communis.png",
+    "xl": "/grow/plants/xl/common-juniper-juniperus-communis.webp"
+  },
+  "common-privet-ligustrum-vulgare": {
+    "emoji": "/grow/plants/emoji/common-privet-ligustrum-vulgare.webp",
+    "lg": "/grow/plants/lg/common-privet-ligustrum-vulgare.webp",
+    "medium": "/grow/plants/medium/common-privet-ligustrum-vulgare.webp",
+    "source": "275_Common_privet_Ligustrum_vulgare.png",
+    "xl": "/grow/plants/xl/common-privet-ligustrum-vulgare.webp"
+  },
+  "common-sage-salvia-officinalis": {
+    "emoji": "/grow/plants/emoji/common-sage-salvia-officinalis.webp",
+    "lg": "/grow/plants/lg/common-sage-salvia-officinalis.webp",
+    "medium": "/grow/plants/medium/common-sage-salvia-officinalis.webp",
+    "source": "182_Common_sage_Salvia_officinalis.png",
+    "xl": "/grow/plants/xl/common-sage-salvia-officinalis.webp"
+  },
+  "common-thyme-thymus-vulgaris": {
+    "emoji": "/grow/plants/emoji/common-thyme-thymus-vulgaris.webp",
+    "lg": "/grow/plants/lg/common-thyme-thymus-vulgaris.webp",
+    "medium": "/grow/plants/medium/common-thyme-thymus-vulgaris.webp",
+    "source": "194_Common_thyme_Thymus_vulgaris.png",
+    "xl": "/grow/plants/xl/common-thyme-thymus-vulgaris.webp"
+  },
+  "common-vetch-vicia-sativa": {
+    "emoji": "/grow/plants/emoji/common-vetch-vicia-sativa.webp",
+    "lg": "/grow/plants/lg/common-vetch-vicia-sativa.webp",
+    "medium": "/grow/plants/medium/common-vetch-vicia-sativa.webp",
+    "source": "441_Common_vetch_Vicia_sativa.png",
+    "xl": "/grow/plants/xl/common-vetch-vicia-sativa.webp"
+  },
+  "contorted-hazel-corylus-avellana": {
+    "emoji": "/grow/plants/emoji/contorted-hazel-corylus-avellana.webp",
+    "lg": "/grow/plants/lg/contorted-hazel-corylus-avellana.webp",
+    "medium": "/grow/plants/medium/contorted-hazel-corylus-avellana.webp",
+    "source": "376_Contorted_hazel_Corylus_avellana.png",
+    "xl": "/grow/plants/xl/contorted-hazel-corylus-avellana.webp"
+  },
+  "copper-beech-fagus-sylvatica-f-purpurea": {
+    "emoji": "/grow/plants/emoji/copper-beech-fagus-sylvatica-f-purpurea.webp",
+    "lg": "/grow/plants/lg/copper-beech-fagus-sylvatica-f-purpurea.webp",
+    "medium": "/grow/plants/medium/copper-beech-fagus-sylvatica-f-purpurea.webp",
+    "source": "357_Copper_beech_Fagus_sylvatica_f_purpurea.png",
+    "xl": "/grow/plants/xl/copper-beech-fagus-sylvatica-f-purpurea.webp"
+  },
+  "copper-beech-hedge-fagus-sylvatica-f-purpurea": {
+    "emoji": "/grow/plants/emoji/copper-beech-hedge-fagus-sylvatica-f-purpurea.webp",
+    "lg": "/grow/plants/lg/copper-beech-hedge-fagus-sylvatica-f-purpurea.webp",
+    "medium": "/grow/plants/medium/copper-beech-hedge-fagus-sylvatica-f-purpurea.webp",
+    "source": "014_Copper_beech_hedge_Fagus_sylvatica_f_purpurea.png",
+    "xl": "/grow/plants/xl/copper-beech-hedge-fagus-sylvatica-f-purpurea.webp"
+  },
+  "coppice-willow-salix-viminalis": {
+    "emoji": "/grow/plants/emoji/coppice-willow-salix-viminalis.webp",
+    "lg": "/grow/plants/lg/coppice-willow-salix-viminalis.webp",
+    "medium": "/grow/plants/medium/coppice-willow-salix-viminalis.webp",
+    "source": "448_Coppice_willow_Salix_viminalis.png",
+    "xl": "/grow/plants/xl/coppice-willow-salix-viminalis.webp"
+  },
+  "coreopsis-coreopsis-grandiflora": {
+    "emoji": "/grow/plants/emoji/coreopsis-coreopsis-grandiflora.webp",
+    "lg": "/grow/plants/lg/coreopsis-coreopsis-grandiflora.webp",
+    "medium": "/grow/plants/medium/coreopsis-coreopsis-grandiflora.webp",
+    "source": "051_Coreopsis_Coreopsis_grandiflora.png",
+    "xl": "/grow/plants/xl/coreopsis-coreopsis-grandiflora.webp"
+  },
+  "coriander-cilantro-coriandrum-sativum": {
+    "emoji": "/grow/plants/emoji/coriander-cilantro-coriandrum-sativum.webp",
+    "lg": "/grow/plants/lg/coriander-cilantro-coriandrum-sativum.webp",
+    "medium": "/grow/plants/medium/coriander-cilantro-coriandrum-sativum.webp",
+    "source": "052_Coriander_cilantro_Coriandrum_sativum.png",
+    "xl": "/grow/plants/xl/coriander-cilantro-coriandrum-sativum.webp"
+  },
+  "coriander-cilantro-leaf-coriandrum-sativum": {
+    "emoji": "/grow/plants/emoji/coriander-cilantro-leaf-coriandrum-sativum.webp",
+    "lg": "/grow/plants/lg/coriander-cilantro-leaf-coriandrum-sativum.webp",
+    "medium": "/grow/plants/medium/coriander-cilantro-leaf-coriandrum-sativum.webp",
+    "source": "163_Coriander_cilantro_leaf_Coriandrum_sativum.png",
+    "xl": "/grow/plants/xl/coriander-cilantro-leaf-coriandrum-sativum.webp"
+  },
+  "cornelian-cherry-cornus-mas-cornus-mas": {
+    "emoji": "/grow/plants/emoji/cornelian-cherry-cornus-mas-cornus-mas.webp",
+    "lg": "/grow/plants/lg/cornelian-cherry-cornus-mas-cornus-mas.webp",
+    "medium": "/grow/plants/medium/cornelian-cherry-cornus-mas-cornus-mas.webp",
+    "source": "091_Cornelian_cherry_Cornus_mas_Cornus_mas.png",
+    "xl": "/grow/plants/xl/cornelian-cherry-cornus-mas-cornus-mas.webp"
+  },
+  "corsican-mint-mentha-requienii": {
+    "emoji": "/grow/plants/emoji/corsican-mint-mentha-requienii.webp",
+    "lg": "/grow/plants/lg/corsican-mint-mentha-requienii.webp",
+    "medium": "/grow/plants/medium/corsican-mint-mentha-requienii.webp",
+    "source": "053_Corsican_mint_Mentha_requienii.png",
+    "xl": "/grow/plants/xl/corsican-mint-mentha-requienii.webp"
+  },
+  "corsican-pine-pinus-nigra-subsp-laricio": {
+    "emoji": "/grow/plants/emoji/corsican-pine-pinus-nigra-subsp-laricio.webp",
+    "lg": "/grow/plants/lg/corsican-pine-pinus-nigra-subsp-laricio.webp",
+    "medium": "/grow/plants/medium/corsican-pine-pinus-nigra-subsp-laricio.webp",
+    "source": "358_Corsican_pine_Pinus_nigra_subsp_laricio.png",
+    "xl": "/grow/plants/xl/corsican-pine-pinus-nigra-subsp-laricio.webp"
+  },
+  "cosmos-cosmos-bipinnatus": {
+    "emoji": "/grow/plants/emoji/cosmos-cosmos-bipinnatus.webp",
+    "lg": "/grow/plants/lg/cosmos-cosmos-bipinnatus.webp",
+    "medium": "/grow/plants/medium/cosmos-cosmos-bipinnatus.webp",
+    "source": "054_Cosmos_Cosmos_bipinnatus.png",
+    "xl": "/grow/plants/xl/cosmos-cosmos-bipinnatus.webp"
+  },
+  "courgette-zucchini-cucurbita-pepo": {
+    "emoji": "/grow/plants/emoji/courgette-zucchini-cucurbita-pepo.webp",
+    "lg": "/grow/plants/lg/courgette-zucchini-cucurbita-pepo.webp",
+    "medium": "/grow/plants/medium/courgette-zucchini-cucurbita-pepo.webp",
+    "source": "055_Courgette_zucchini_Cucurbita_pepo.png",
+    "xl": "/grow/plants/xl/courgette-zucchini-cucurbita-pepo.webp"
+  },
+  "crab-apple-ornamental-malus-floribunda": {
+    "emoji": "/grow/plants/emoji/crab-apple-ornamental-malus-floribunda.webp",
+    "lg": "/grow/plants/lg/crab-apple-ornamental-malus-floribunda.webp",
+    "medium": "/grow/plants/medium/crab-apple-ornamental-malus-floribunda.webp",
+    "source": "359_Crab_apple_ornamental_Malus_floribunda.png",
+    "xl": "/grow/plants/xl/crab-apple-ornamental-malus-floribunda.webp"
+  },
+  "creeping-jenny-lysimachia-nummularia-lysimachia-nummularia": {
+    "emoji": "/grow/plants/emoji/creeping-jenny-lysimachia-nummularia-lysimachia-nummularia.webp",
+    "lg": "/grow/plants/lg/creeping-jenny-lysimachia-nummularia-lysimachia-nummularia.webp",
+    "medium": "/grow/plants/medium/creeping-jenny-lysimachia-nummularia-lysimachia-nummularia.webp",
+    "source": "057_Creeping_Jenny_Lysimachia_nummularia_Lysimachia_nummularia.png",
+    "xl": "/grow/plants/xl/creeping-jenny-lysimachia-nummularia-lysimachia-nummularia.webp"
+  },
+  "creeping-thyme-thymus-serpyllum": {
+    "emoji": "/grow/plants/emoji/creeping-thyme-thymus-serpyllum.webp",
+    "lg": "/grow/plants/lg/creeping-thyme-thymus-serpyllum.webp",
+    "medium": "/grow/plants/medium/creeping-thyme-thymus-serpyllum.webp",
+    "source": "329_Creeping_thyme_Thymus_serpyllum.png",
+    "xl": "/grow/plants/xl/creeping-thyme-thymus-serpyllum.webp"
+  },
+  "crimson-clover-trifolium-incarnatum": {
+    "emoji": "/grow/plants/emoji/crimson-clover-trifolium-incarnatum.webp",
+    "lg": "/grow/plants/lg/crimson-clover-trifolium-incarnatum.webp",
+    "medium": "/grow/plants/medium/crimson-clover-trifolium-incarnatum.webp",
+    "source": "058_Crimson_clover_Trifolium_incarnatum.png",
+    "xl": "/grow/plants/xl/crimson-clover-trifolium-incarnatum.webp"
+  },
+  "crimson-hawthorn-crataegus-laevigata": {
+    "emoji": "/grow/plants/emoji/crimson-hawthorn-crataegus-laevigata.webp",
+    "lg": "/grow/plants/lg/crimson-hawthorn-crataegus-laevigata.webp",
+    "medium": "/grow/plants/medium/crimson-hawthorn-crataegus-laevigata.webp",
+    "source": "374_Crimson_hawthorn_Crataegus_laevigata.png",
+    "xl": "/grow/plants/xl/crimson-hawthorn-crataegus-laevigata.webp"
+  },
+  "cucumber-pickling-cucumis-sativus": {
+    "emoji": "/grow/plants/emoji/cucumber-pickling-cucumis-sativus.webp",
+    "lg": "/grow/plants/lg/cucumber-pickling-cucumis-sativus.webp",
+    "medium": "/grow/plants/medium/cucumber-pickling-cucumis-sativus.webp",
+    "source": "060_Cucumber_pickling_Cucumis_sativus.png",
+    "xl": "/grow/plants/xl/cucumber-pickling-cucumis-sativus.webp"
+  },
+  "cucumber-salad-cucumis-sativus": {
+    "emoji": "/grow/plants/emoji/cucumber-salad-cucumis-sativus.webp",
+    "lg": "/grow/plants/lg/cucumber-salad-cucumis-sativus.webp",
+    "medium": "/grow/plants/medium/cucumber-salad-cucumis-sativus.webp",
+    "source": "059_Cucumber_salad_Cucumis_sativus.png",
+    "xl": "/grow/plants/xl/cucumber-salad-cucumis-sativus.webp"
+  },
+  "curly-kale-brassica-oleracea-var-sabellica": {
+    "emoji": "/grow/plants/emoji/curly-kale-brassica-oleracea-var-sabellica.webp",
+    "lg": "/grow/plants/lg/curly-kale-brassica-oleracea-var-sabellica.webp",
+    "medium": "/grow/plants/medium/curly-kale-brassica-oleracea-var-sabellica.webp",
+    "source": "212_Curly_kale_Brassica_oleracea_var_sabellica.png",
+    "xl": "/grow/plants/xl/curly-kale-brassica-oleracea-var-sabellica.webp"
+  },
+  "curly-parsley-petroselinum-crispum-var-crispum": {
+    "emoji": "/grow/plants/emoji/curly-parsley-petroselinum-crispum-var-crispum.webp",
+    "lg": "/grow/plants/lg/curly-parsley-petroselinum-crispum-var-crispum.webp",
+    "medium": "/grow/plants/medium/curly-parsley-petroselinum-crispum-var-crispum.webp",
+    "source": "179_Curly_parsley_Petroselinum_crispum_var_crispum.png",
+    "xl": "/grow/plants/xl/curly-parsley-petroselinum-crispum-var-crispum.webp"
+  },
+  "dahlia-dahlia-pinnata": {
+    "emoji": "/grow/plants/emoji/dahlia-dahlia-pinnata.webp",
+    "lg": "/grow/plants/lg/dahlia-dahlia-pinnata.webp",
+    "medium": "/grow/plants/medium/dahlia-dahlia-pinnata.webp",
+    "source": "061_Dahlia_Dahlia_pinnata.png",
+    "xl": "/grow/plants/xl/dahlia-dahlia-pinnata.webp"
+  },
+  "daikon-radish-raphanus-sativus-var-longipinnatus": {
+    "emoji": "/grow/plants/emoji/daikon-radish-raphanus-sativus-var-longipinnatus.webp",
+    "lg": "/grow/plants/lg/daikon-radish-raphanus-sativus-var-longipinnatus.webp",
+    "medium": "/grow/plants/medium/daikon-radish-raphanus-sativus-var-longipinnatus.webp",
+    "source": "062_Daikon_radish_Raphanus_sativus_var_longipinnatus.png",
+    "xl": "/grow/plants/xl/daikon-radish-raphanus-sativus-var-longipinnatus.webp"
+  },
+  "damson-prunus-domestica-subsp-insititia": {
+    "emoji": "/grow/plants/emoji/damson-prunus-domestica-subsp-insititia.webp",
+    "lg": "/grow/plants/lg/damson-prunus-domestica-subsp-insititia.webp",
+    "medium": "/grow/plants/medium/damson-prunus-domestica-subsp-insititia.webp",
+    "source": "092_Damson_Prunus_domestica_subsp_insititia.png",
+    "xl": "/grow/plants/xl/damson-prunus-domestica-subsp-insititia.webp"
+  },
+  "dawn-redwood-metasequoia-glyptostroboides": {
+    "emoji": "/grow/plants/emoji/dawn-redwood-metasequoia-glyptostroboides.webp",
+    "lg": "/grow/plants/lg/dawn-redwood-metasequoia-glyptostroboides.webp",
+    "medium": "/grow/plants/medium/dawn-redwood-metasequoia-glyptostroboides.webp",
+    "source": "415_Dawn_redwood_Metasequoia_glyptostroboides.png",
+    "xl": "/grow/plants/xl/dawn-redwood-metasequoia-glyptostroboides.webp"
+  },
+  "daylily-hemerocallis-fulva": {
+    "emoji": "/grow/plants/emoji/daylily-hemerocallis-fulva.webp",
+    "lg": "/grow/plants/lg/daylily-hemerocallis-fulva.webp",
+    "medium": "/grow/plants/medium/daylily-hemerocallis-fulva.webp",
+    "source": "063_Daylily_Hemerocallis_fulva.png",
+    "xl": "/grow/plants/xl/daylily-hemerocallis-fulva.webp"
+  },
+  "delphinium-delphinium-cultorum": {
+    "emoji": "/grow/plants/emoji/delphinium-delphinium-cultorum.webp",
+    "lg": "/grow/plants/lg/delphinium-delphinium-cultorum.webp",
+    "medium": "/grow/plants/medium/delphinium-delphinium-cultorum.webp",
+    "source": "064_Delphinium_Delphinium_cultorum.png",
+    "xl": "/grow/plants/xl/delphinium-delphinium-cultorum.webp"
+  },
+  "dill-anethum-graveolens": {
+    "emoji": "/grow/plants/emoji/dill-anethum-graveolens.webp",
+    "lg": "/grow/plants/lg/dill-anethum-graveolens.webp",
+    "medium": "/grow/plants/medium/dill-anethum-graveolens.webp",
+    "source": "065_Dill_Anethum_graveolens.png",
+    "xl": "/grow/plants/xl/dill-anethum-graveolens.webp"
+  },
+  "dill-leaf-anethum-graveolens": {
+    "emoji": "/grow/plants/emoji/dill-leaf-anethum-graveolens.webp",
+    "lg": "/grow/plants/lg/dill-leaf-anethum-graveolens.webp",
+    "medium": "/grow/plants/medium/dill-leaf-anethum-graveolens.webp",
+    "source": "164_Dill_leaf_Anethum_graveolens.png",
+    "xl": "/grow/plants/xl/dill-leaf-anethum-graveolens.webp"
+  },
+  "douglas-fir-pseudotsuga-menziesii": {
+    "emoji": "/grow/plants/emoji/douglas-fir-pseudotsuga-menziesii.webp",
+    "lg": "/grow/plants/lg/douglas-fir-pseudotsuga-menziesii.webp",
+    "medium": "/grow/plants/medium/douglas-fir-pseudotsuga-menziesii.webp",
+    "source": "360_Douglas_fir_Pseudotsuga_menziesii.png",
+    "xl": "/grow/plants/xl/douglas-fir-pseudotsuga-menziesii.webp"
+  },
+  "downy-birch-betula-pubescens": {
+    "emoji": "/grow/plants/emoji/downy-birch-betula-pubescens.webp",
+    "lg": "/grow/plants/lg/downy-birch-betula-pubescens.webp",
+    "medium": "/grow/plants/medium/downy-birch-betula-pubescens.webp",
+    "source": "361_Downy_birch_Betula_pubescens.png",
+    "xl": "/grow/plants/xl/downy-birch-betula-pubescens.webp"
+  },
+  "dwarf-rowan-sorbus-aucuparia": {
+    "emoji": "/grow/plants/emoji/dwarf-rowan-sorbus-aucuparia.webp",
+    "lg": "/grow/plants/lg/dwarf-rowan-sorbus-aucuparia.webp",
+    "medium": "/grow/plants/medium/dwarf-rowan-sorbus-aucuparia.webp",
+    "source": "399_Dwarf_rowan_Sorbus_aucuparia.png",
+    "xl": "/grow/plants/xl/dwarf-rowan-sorbus-aucuparia.webp"
+  },
+  "eastern-redbud-cercis-canadensis": {
+    "emoji": "/grow/plants/emoji/eastern-redbud-cercis-canadensis.webp",
+    "lg": "/grow/plants/lg/eastern-redbud-cercis-canadensis.webp",
+    "medium": "/grow/plants/medium/eastern-redbud-cercis-canadensis.webp",
+    "source": "411_Eastern_redbud_Cercis_canadensis.png",
+    "xl": "/grow/plants/xl/eastern-redbud-cercis-canadensis.webp"
+  },
+  "echinacea-coneflower-echinacea-purpurea": {
+    "emoji": "/grow/plants/emoji/echinacea-coneflower-echinacea-purpurea.webp",
+    "lg": "/grow/plants/lg/echinacea-coneflower-echinacea-purpurea.webp",
+    "medium": "/grow/plants/medium/echinacea-coneflower-echinacea-purpurea.webp",
+    "source": "068_Echinacea_coneflower_Echinacea_purpurea.png",
+    "xl": "/grow/plants/xl/echinacea-coneflower-echinacea-purpurea.webp"
+  },
+  "edamame-soybean-glycine-max": {
+    "emoji": "/grow/plants/emoji/edamame-soybean-glycine-max.webp",
+    "lg": "/grow/plants/lg/edamame-soybean-glycine-max.webp",
+    "medium": "/grow/plants/medium/edamame-soybean-glycine-max.webp",
+    "source": "309_Edamame_soybean_Glycine_max.png",
+    "xl": "/grow/plants/xl/edamame-soybean-glycine-max.webp"
+  },
+  "elaeagnus-ebbingei-elaeagnus-ebbingei": {
+    "emoji": "/grow/plants/emoji/elaeagnus-ebbingei-elaeagnus-ebbingei.webp",
+    "lg": "/grow/plants/lg/elaeagnus-ebbingei-elaeagnus-ebbingei.webp",
+    "medium": "/grow/plants/medium/elaeagnus-ebbingei-elaeagnus-ebbingei.webp",
+    "source": "362_Elaeagnus_ebbingei_Elaeagnus_ebbingei.png",
+    "xl": "/grow/plants/xl/elaeagnus-ebbingei-elaeagnus-ebbingei.webp"
+  },
+  "elder-sambucus-nigra": {
+    "emoji": "/grow/plants/emoji/elder-sambucus-nigra.webp",
+    "lg": "/grow/plants/lg/elder-sambucus-nigra.webp",
+    "medium": "/grow/plants/medium/elder-sambucus-nigra.webp",
+    "source": "093_Elder_Sambucus_nigra.png",
+    "xl": "/grow/plants/xl/elder-sambucus-nigra.webp"
+  },
+  "elephant-garlic-allium-ampeloprasum": {
+    "emoji": "/grow/plants/emoji/elephant-garlic-allium-ampeloprasum.webp",
+    "lg": "/grow/plants/lg/elephant-garlic-allium-ampeloprasum.webp",
+    "medium": "/grow/plants/medium/elephant-garlic-allium-ampeloprasum.webp",
+    "source": "069_Elephant_garlic_Allium_ampeloprasum.png",
+    "xl": "/grow/plants/xl/elephant-garlic-allium-ampeloprasum.webp"
+  },
+  "endive-cichorium-endivia": {
+    "emoji": "/grow/plants/emoji/endive-cichorium-endivia.webp",
+    "lg": "/grow/plants/lg/endive-cichorium-endivia.webp",
+    "medium": "/grow/plants/medium/endive-cichorium-endivia.webp",
+    "source": "071_Endive_Cichorium_endivia.png",
+    "xl": "/grow/plants/xl/endive-cichorium-endivia.webp"
+  },
+  "english-elm-ulmus-procera": {
+    "emoji": "/grow/plants/emoji/english-elm-ulmus-procera.webp",
+    "lg": "/grow/plants/lg/english-elm-ulmus-procera.webp",
+    "medium": "/grow/plants/medium/english-elm-ulmus-procera.webp",
+    "source": "070_English_elm_Ulmus_procera.png",
+    "xl": "/grow/plants/xl/english-elm-ulmus-procera.webp"
+  },
+  "english-oak-quercus-robur": {
+    "emoji": "/grow/plants/emoji/english-oak-quercus-robur.webp",
+    "lg": "/grow/plants/lg/english-oak-quercus-robur.webp",
+    "medium": "/grow/plants/medium/english-oak-quercus-robur.webp",
+    "source": "403_English_oak_Quercus_robur.png",
+    "xl": "/grow/plants/xl/english-oak-quercus-robur.webp"
+  },
+  "english-walnut-juglans-regia": {
+    "emoji": "/grow/plants/emoji/english-walnut-juglans-regia.webp",
+    "lg": "/grow/plants/lg/english-walnut-juglans-regia.webp",
+    "medium": "/grow/plants/medium/english-walnut-juglans-regia.webp",
+    "source": "443_English_walnut_Juglans_regia.png",
+    "xl": "/grow/plants/xl/english-walnut-juglans-regia.webp"
+  },
+  "english-yew-taxus-baccata": {
+    "emoji": "/grow/plants/emoji/english-yew-taxus-baccata.webp",
+    "lg": "/grow/plants/lg/english-yew-taxus-baccata.webp",
+    "medium": "/grow/plants/medium/english-yew-taxus-baccata.webp",
+    "source": "433_English_yew_Taxus_baccata.png",
+    "xl": "/grow/plants/xl/english-yew-taxus-baccata.webp"
+  },
+  "epazote-dysphania-ambrosioides-dysphania-ambrosioides": {
+    "emoji": "/grow/plants/emoji/epazote-dysphania-ambrosioides-dysphania-ambrosioides.webp",
+    "lg": "/grow/plants/lg/epazote-dysphania-ambrosioides-dysphania-ambrosioides.webp",
+    "medium": "/grow/plants/medium/epazote-dysphania-ambrosioides-dysphania-ambrosioides.webp",
+    "source": "072_Epazote_Dysphania_ambrosioides_Dysphania_ambrosioides.png",
+    "xl": "/grow/plants/xl/epazote-dysphania-ambrosioides-dysphania-ambrosioides.webp"
+  },
+  "escallonia-hedge-escallonia-exoniensis": {
+    "emoji": "/grow/plants/emoji/escallonia-hedge-escallonia-exoniensis.webp",
+    "lg": "/grow/plants/lg/escallonia-hedge-escallonia-exoniensis.webp",
+    "medium": "/grow/plants/medium/escallonia-hedge-escallonia-exoniensis.webp",
+    "source": "073_Escallonia_hedge_Escallonia_exoniensis.png",
+    "xl": "/grow/plants/xl/escallonia-hedge-escallonia-exoniensis.webp"
+  },
+  "escarole-cichorium-endivia-var-latifolium": {
+    "emoji": "/grow/plants/emoji/escarole-cichorium-endivia-var-latifolium.webp",
+    "lg": "/grow/plants/lg/escarole-cichorium-endivia-var-latifolium.webp",
+    "medium": "/grow/plants/medium/escarole-cichorium-endivia-var-latifolium.webp",
+    "source": "074_Escarole_Cichorium_endivia_var_latifolium.png",
+    "xl": "/grow/plants/xl/escarole-cichorium-endivia-var-latifolium.webp"
+  },
+  "eucalyptus-gunnii-eucalyptus-gunnii": {
+    "emoji": "/grow/plants/emoji/eucalyptus-gunnii-eucalyptus-gunnii.webp",
+    "lg": "/grow/plants/lg/eucalyptus-gunnii-eucalyptus-gunnii.webp",
+    "medium": "/grow/plants/medium/eucalyptus-gunnii-eucalyptus-gunnii.webp",
+    "source": "366_Eucalyptus_gunnii_Eucalyptus_gunnii.png",
+    "xl": "/grow/plants/xl/eucalyptus-gunnii-eucalyptus-gunnii.webp"
+  },
+  "eucalyptus-niphophila-eucalyptus-niphophila": {
+    "emoji": "/grow/plants/emoji/eucalyptus-niphophila-eucalyptus-niphophila.webp",
+    "lg": "/grow/plants/lg/eucalyptus-niphophila-eucalyptus-niphophila.webp",
+    "medium": "/grow/plants/medium/eucalyptus-niphophila-eucalyptus-niphophila.webp",
+    "source": "367_Eucalyptus_niphophila_Eucalyptus_niphophila.png",
+    "xl": "/grow/plants/xl/eucalyptus-niphophila-eucalyptus-niphophila.webp"
+  },
+  "european-ash-fraxinus-excelsior": {
+    "emoji": "/grow/plants/emoji/european-ash-fraxinus-excelsior.webp",
+    "lg": "/grow/plants/lg/european-ash-fraxinus-excelsior.webp",
+    "medium": "/grow/plants/medium/european-ash-fraxinus-excelsior.webp",
+    "source": "346_European_ash_Fraxinus_excelsior.png",
+    "xl": "/grow/plants/xl/european-ash-fraxinus-excelsior.webp"
+  },
+  "european-aspen-populus-tremula": {
+    "emoji": "/grow/plants/emoji/european-aspen-populus-tremula.webp",
+    "lg": "/grow/plants/lg/european-aspen-populus-tremula.webp",
+    "medium": "/grow/plants/medium/european-aspen-populus-tremula.webp",
+    "source": "347_European_aspen_Populus_tremula.png",
+    "xl": "/grow/plants/xl/european-aspen-populus-tremula.webp"
+  },
+  "european-beech-fagus-sylvatica": {
+    "emoji": "/grow/plants/emoji/european-beech-fagus-sylvatica.webp",
+    "lg": "/grow/plants/lg/european-beech-fagus-sylvatica.webp",
+    "medium": "/grow/plants/medium/european-beech-fagus-sylvatica.webp",
+    "source": "348_European_beech_Fagus_sylvatica.png",
+    "xl": "/grow/plants/xl/european-beech-fagus-sylvatica.webp"
+  },
+  "european-larch-larix-decidua": {
+    "emoji": "/grow/plants/emoji/european-larch-larix-decidua.webp",
+    "lg": "/grow/plants/lg/european-larch-larix-decidua.webp",
+    "medium": "/grow/plants/medium/european-larch-larix-decidua.webp",
+    "source": "387_European_larch_Larix_decidua.png",
+    "xl": "/grow/plants/xl/european-larch-larix-decidua.webp"
+  },
+  "european-silver-fir-abies-alba": {
+    "emoji": "/grow/plants/emoji/european-silver-fir-abies-alba.webp",
+    "lg": "/grow/plants/lg/european-silver-fir-abies-alba.webp",
+    "medium": "/grow/plants/medium/european-silver-fir-abies-alba.webp",
+    "source": "368_European_silver_fir_Abies_alba.png",
+    "xl": "/grow/plants/xl/european-silver-fir-abies-alba.webp"
+  },
+  "fava-bean-broad-bean-vicia-faba": {
+    "emoji": "/grow/plants/emoji/fava-bean-broad-bean-vicia-faba.webp",
+    "lg": "/grow/plants/lg/fava-bean-broad-bean-vicia-faba.webp",
+    "medium": "/grow/plants/medium/fava-bean-broad-bean-vicia-faba.webp",
+    "source": "075_Fava_bean_broad_bean_Vicia_faba.png",
+    "xl": "/grow/plants/xl/fava-bean-broad-bean-vicia-faba.webp"
+  },
+  "feijoa-pineapple-guava-acca-sellowiana": {
+    "emoji": "/grow/plants/emoji/feijoa-pineapple-guava-acca-sellowiana.webp",
+    "lg": "/grow/plants/lg/feijoa-pineapple-guava-acca-sellowiana.webp",
+    "medium": "/grow/plants/medium/feijoa-pineapple-guava-acca-sellowiana.webp",
+    "source": "095_Feijoa_Pineapple_guava_Acca_sellowiana.png",
+    "xl": "/grow/plants/xl/feijoa-pineapple-guava-acca-sellowiana.webp"
+  },
+  "fennel-bulb-foeniculum-vulgare-var-azoricum": {
+    "emoji": "/grow/plants/emoji/fennel-bulb-foeniculum-vulgare-var-azoricum.webp",
+    "lg": "/grow/plants/lg/fennel-bulb-foeniculum-vulgare-var-azoricum.webp",
+    "medium": "/grow/plants/medium/fennel-bulb-foeniculum-vulgare-var-azoricum.webp",
+    "source": "076_Fennel_bulb_Foeniculum_vulgare_var_azoricum.png",
+    "xl": "/grow/plants/xl/fennel-bulb-foeniculum-vulgare-var-azoricum.webp"
+  },
+  "fenugreek-greens-methi-trigonella-foenum-graecum": {
+    "emoji": "/grow/plants/emoji/fenugreek-greens-methi-trigonella-foenum-graecum.webp",
+    "lg": "/grow/plants/lg/fenugreek-greens-methi-trigonella-foenum-graecum.webp",
+    "medium": "/grow/plants/medium/fenugreek-greens-methi-trigonella-foenum-graecum.webp",
+    "source": "078_Fenugreek_greens_methi_Trigonella_foenum_graecum.png",
+    "xl": "/grow/plants/xl/fenugreek-greens-methi-trigonella-foenum-graecum.webp"
+  },
+  "feverfew-tanacetum-parthenium": {
+    "emoji": "/grow/plants/emoji/feverfew-tanacetum-parthenium.webp",
+    "lg": "/grow/plants/lg/feverfew-tanacetum-parthenium.webp",
+    "medium": "/grow/plants/medium/feverfew-tanacetum-parthenium.webp",
+    "source": "079_Feverfew_Tanacetum_parthenium.png",
+    "xl": "/grow/plants/xl/feverfew-tanacetum-parthenium.webp"
+  },
+  "field-maple-acer-campestre": {
+    "emoji": "/grow/plants/emoji/field-maple-acer-campestre.webp",
+    "lg": "/grow/plants/lg/field-maple-acer-campestre.webp",
+    "medium": "/grow/plants/medium/field-maple-acer-campestre.webp",
+    "source": "369_Field_maple_Acer_campestre.png",
+    "xl": "/grow/plants/xl/field-maple-acer-campestre.webp"
+  },
+  "fig-ficus-carica": {
+    "emoji": "/grow/plants/emoji/fig-ficus-carica.webp",
+    "lg": "/grow/plants/lg/fig-ficus-carica.webp",
+    "medium": "/grow/plants/medium/fig-ficus-carica.webp",
+    "source": "096_Fig_Ficus_carica.png",
+    "xl": "/grow/plants/xl/fig-ficus-carica.webp"
+  },
+  "flat-leaf-parsley-petroselinum-crispum-var-neapolitanum": {
+    "emoji": "/grow/plants/emoji/flat-leaf-parsley-petroselinum-crispum-var-neapolitanum.webp",
+    "lg": "/grow/plants/lg/flat-leaf-parsley-petroselinum-crispum-var-neapolitanum.webp",
+    "medium": "/grow/plants/medium/flat-leaf-parsley-petroselinum-crispum-var-neapolitanum.webp",
+    "source": "180_Flat_leaf_parsley_Petroselinum_crispum_var_neapolitanum.png",
+    "xl": "/grow/plants/xl/flat-leaf-parsley-petroselinum-crispum-var-neapolitanum.webp"
+  },
+  "foxglove-digitalis-purpurea": {
+    "emoji": "/grow/plants/emoji/foxglove-digitalis-purpurea.webp",
+    "lg": "/grow/plants/lg/foxglove-digitalis-purpurea.webp",
+    "medium": "/grow/plants/medium/foxglove-digitalis-purpurea.webp",
+    "source": "080_Foxglove_Digitalis_purpurea.png",
+    "xl": "/grow/plants/xl/foxglove-digitalis-purpurea.webp"
+  },
+  "freeman-maple-acer-freemanii": {
+    "emoji": "/grow/plants/emoji/freeman-maple-acer-freemanii.webp",
+    "lg": "/grow/plants/lg/freeman-maple-acer-freemanii.webp",
+    "medium": "/grow/plants/medium/freeman-maple-acer-freemanii.webp",
+    "source": "232_Freeman_maple_Acer_freemanii.png",
+    "xl": "/grow/plants/xl/freeman-maple-acer-freemanii.webp"
+  },
+  "french-bean-phaseolus-vulgaris": {
+    "emoji": "/grow/plants/emoji/french-bean-phaseolus-vulgaris.webp",
+    "lg": "/grow/plants/lg/french-bean-phaseolus-vulgaris.webp",
+    "medium": "/grow/plants/medium/french-bean-phaseolus-vulgaris.webp",
+    "source": "081_French_bean_Phaseolus_vulgaris.png",
+    "xl": "/grow/plants/xl/french-bean-phaseolus-vulgaris.webp"
+  },
+  "french-tarragon-artemisia-dracunculus": {
+    "emoji": "/grow/plants/emoji/french-tarragon-artemisia-dracunculus.webp",
+    "lg": "/grow/plants/lg/french-tarragon-artemisia-dracunculus.webp",
+    "medium": "/grow/plants/medium/french-tarragon-artemisia-dracunculus.webp",
+    "source": "193_French_tarragon_Artemisia_dracunculus.png",
+    "xl": "/grow/plants/xl/french-tarragon-artemisia-dracunculus.webp"
+  },
+  "gaillardia-blanket-flower-gaillardia-grandiflora": {
+    "emoji": "/grow/plants/emoji/gaillardia-blanket-flower-gaillardia-grandiflora.webp",
+    "lg": "/grow/plants/lg/gaillardia-blanket-flower-gaillardia-grandiflora.webp",
+    "medium": "/grow/plants/medium/gaillardia-blanket-flower-gaillardia-grandiflora.webp",
+    "source": "132_Gaillardia_blanket_flower_Gaillardia_grandiflora.png",
+    "xl": "/grow/plants/xl/gaillardia-blanket-flower-gaillardia-grandiflora.webp"
+  },
+  "garden-peas-pisum-sativum": {
+    "emoji": "/grow/plants/emoji/garden-peas-pisum-sativum.webp",
+    "lg": "/grow/plants/lg/garden-peas-pisum-sativum.webp",
+    "medium": "/grow/plants/medium/garden-peas-pisum-sativum.webp",
+    "source": "255_Garden_peas_Pisum_sativum.png",
+    "xl": "/grow/plants/xl/garden-peas-pisum-sativum.webp"
+  },
+  "garden-phlox-phlox-paniculata": {
+    "emoji": "/grow/plants/emoji/garden-phlox-phlox-paniculata.webp",
+    "lg": "/grow/plants/lg/garden-phlox-phlox-paniculata.webp",
+    "medium": "/grow/plants/medium/garden-phlox-phlox-paniculata.webp",
+    "source": "269_Garden_phlox_Phlox_paniculata.png",
+    "xl": "/grow/plants/xl/garden-phlox-phlox-paniculata.webp"
+  },
+  "garden-sorrel-rumex-acetosa": {
+    "emoji": "/grow/plants/emoji/garden-sorrel-rumex-acetosa.webp",
+    "lg": "/grow/plants/lg/garden-sorrel-rumex-acetosa.webp",
+    "medium": "/grow/plants/medium/garden-sorrel-rumex-acetosa.webp",
+    "source": "133_Garden_sorrel_Rumex_acetosa.png",
+    "xl": "/grow/plants/xl/garden-sorrel-rumex-acetosa.webp"
+  },
+  "garlic-allium-sativum": {
+    "emoji": "/grow/plants/emoji/garlic-allium-sativum.webp",
+    "lg": "/grow/plants/lg/garlic-allium-sativum.webp",
+    "medium": "/grow/plants/medium/garlic-allium-sativum.webp",
+    "source": "134_Garlic_Allium_sativum.png",
+    "xl": "/grow/plants/xl/garlic-allium-sativum.webp"
+  },
+  "garlic-chive-allium-tuberosum": {
+    "emoji": "/grow/plants/emoji/garlic-chive-allium-tuberosum.webp",
+    "lg": "/grow/plants/lg/garlic-chive-allium-tuberosum.webp",
+    "medium": "/grow/plants/medium/garlic-chive-allium-tuberosum.webp",
+    "source": "135_Garlic_chive_Allium_tuberosum.png",
+    "xl": "/grow/plants/xl/garlic-chive-allium-tuberosum.webp"
+  },
+  "gaura-bee-blossom-oenothera-lindheimeri": {
+    "emoji": "/grow/plants/emoji/gaura-bee-blossom-oenothera-lindheimeri.webp",
+    "lg": "/grow/plants/lg/gaura-bee-blossom-oenothera-lindheimeri.webp",
+    "medium": "/grow/plants/medium/gaura-bee-blossom-oenothera-lindheimeri.webp",
+    "source": "136_Gaura_bee_blossom_Oenothera_lindheimeri.png",
+    "xl": "/grow/plants/xl/gaura-bee-blossom-oenothera-lindheimeri.webp"
+  },
+  "german-chamomile-matricaria-chamomilla": {
+    "emoji": "/grow/plants/emoji/german-chamomile-matricaria-chamomilla.webp",
+    "lg": "/grow/plants/lg/german-chamomile-matricaria-chamomilla.webp",
+    "medium": "/grow/plants/medium/german-chamomile-matricaria-chamomilla.webp",
+    "source": "158_German_chamomile_Matricaria_chamomilla.png",
+    "xl": "/grow/plants/xl/german-chamomile-matricaria-chamomilla.webp"
+  },
+  "giant-miscanthus-miscanthus-giganteus": {
+    "emoji": "/grow/plants/emoji/giant-miscanthus-miscanthus-giganteus.webp",
+    "lg": "/grow/plants/lg/giant-miscanthus-miscanthus-giganteus.webp",
+    "medium": "/grow/plants/medium/giant-miscanthus-miscanthus-giganteus.webp",
+    "source": "237_Giant_miscanthus_Miscanthus_giganteus.png",
+    "xl": "/grow/plants/xl/giant-miscanthus-miscanthus-giganteus.webp"
+  },
+  "giant-redwood-sequoiadendron-giganteum": {
+    "emoji": "/grow/plants/emoji/giant-redwood-sequoiadendron-giganteum.webp",
+    "lg": "/grow/plants/lg/giant-redwood-sequoiadendron-giganteum.webp",
+    "medium": "/grow/plants/medium/giant-redwood-sequoiadendron-giganteum.webp",
+    "source": "412_Giant_redwood_Sequoiadendron_giganteum.png",
+    "xl": "/grow/plants/xl/giant-redwood-sequoiadendron-giganteum.webp"
+  },
+  "ginger-culinary-zingiber-officinale": {
+    "emoji": "/grow/plants/emoji/ginger-culinary-zingiber-officinale.webp",
+    "lg": "/grow/plants/lg/ginger-culinary-zingiber-officinale.webp",
+    "medium": "/grow/plants/medium/ginger-culinary-zingiber-officinale.webp",
+    "source": "138_Ginger_culinary_Zingiber_officinale.png",
+    "xl": "/grow/plants/xl/ginger-culinary-zingiber-officinale.webp"
+  },
+  "ginkgo-ginkgo-biloba-ginkgo-biloba": {
+    "emoji": "/grow/plants/emoji/ginkgo-ginkgo-biloba-ginkgo-biloba.webp",
+    "lg": "/grow/plants/lg/ginkgo-ginkgo-biloba-ginkgo-biloba.webp",
+    "medium": "/grow/plants/medium/ginkgo-ginkgo-biloba-ginkgo-biloba.webp",
+    "source": "139_Ginkgo_Ginkgo_biloba_Ginkgo_biloba.png",
+    "xl": "/grow/plants/xl/ginkgo-ginkgo-biloba-ginkgo-biloba.webp"
+  },
+  "globe-artichoke-cynara-scolymus": {
+    "emoji": "/grow/plants/emoji/globe-artichoke-cynara-scolymus.webp",
+    "lg": "/grow/plants/lg/globe-artichoke-cynara-scolymus.webp",
+    "medium": "/grow/plants/medium/globe-artichoke-cynara-scolymus.webp",
+    "source": "007_Globe_artichoke_Cynara_scolymus.png",
+    "xl": "/grow/plants/xl/globe-artichoke-cynara-scolymus.webp"
+  },
+  "globe-thistle-echinops-ritro": {
+    "emoji": "/grow/plants/emoji/globe-thistle-echinops-ritro.webp",
+    "lg": "/grow/plants/lg/globe-thistle-echinops-ritro.webp",
+    "medium": "/grow/plants/medium/globe-thistle-echinops-ritro.webp",
+    "source": "140_Globe_thistle_Echinops_ritro.png",
+    "xl": "/grow/plants/xl/globe-thistle-echinops-ritro.webp"
+  },
+  "golden-rain-tree-koelreuteria-paniculata": {
+    "emoji": "/grow/plants/emoji/golden-rain-tree-koelreuteria-paniculata.webp",
+    "lg": "/grow/plants/lg/golden-rain-tree-koelreuteria-paniculata.webp",
+    "medium": "/grow/plants/medium/golden-rain-tree-koelreuteria-paniculata.webp",
+    "source": "371_Golden_rain_tree_Koelreuteria_paniculata.png",
+    "xl": "/grow/plants/xl/golden-rain-tree-koelreuteria-paniculata.webp"
+  },
+  "gorse-hedge-ulex-europaeus-ulex-europaeus": {
+    "emoji": "/grow/plants/emoji/gorse-hedge-ulex-europaeus-ulex-europaeus.webp",
+    "lg": "/grow/plants/lg/gorse-hedge-ulex-europaeus-ulex-europaeus.webp",
+    "medium": "/grow/plants/medium/gorse-hedge-ulex-europaeus-ulex-europaeus.webp",
+    "source": "141_Gorse_hedge_Ulex_europaeus_Ulex_europaeus.png",
+    "xl": "/grow/plants/xl/gorse-hedge-ulex-europaeus-ulex-europaeus.webp"
+  },
+  "gotu-kola-centella-asiatica": {
+    "emoji": "/grow/plants/emoji/gotu-kola-centella-asiatica.webp",
+    "lg": "/grow/plants/lg/gotu-kola-centella-asiatica.webp",
+    "medium": "/grow/plants/medium/gotu-kola-centella-asiatica.webp",
+    "source": "166_Gotu_kola_Centella_asiatica.png",
+    "xl": "/grow/plants/xl/gotu-kola-centella-asiatica.webp"
+  },
+  "grape-vine-vitis-vinifera": {
+    "emoji": "/grow/plants/emoji/grape-vine-vitis-vinifera.webp",
+    "lg": "/grow/plants/lg/grape-vine-vitis-vinifera.webp",
+    "medium": "/grow/plants/medium/grape-vine-vitis-vinifera.webp",
+    "source": "142_Grape_vine_Vitis_vinifera.png",
+    "xl": "/grow/plants/xl/grape-vine-vitis-vinifera.webp"
+  },
+  "greek-bush-basil-ocimum-basilicum-var-minimum": {
+    "emoji": "/grow/plants/emoji/greek-bush-basil-ocimum-basilicum-var-minimum.webp",
+    "lg": "/grow/plants/lg/greek-bush-basil-ocimum-basilicum-var-minimum.webp",
+    "medium": "/grow/plants/medium/greek-bush-basil-ocimum-basilicum-var-minimum.webp",
+    "source": "150_Greek_bush_basil_Ocimum_basilicum_var_minimum.png",
+    "xl": "/grow/plants/xl/greek-bush-basil-ocimum-basilicum-var-minimum.webp"
+  },
+  "greek-oregano-origanum-vulgare-subsp-hirtum": {
+    "emoji": "/grow/plants/emoji/greek-oregano-origanum-vulgare-subsp-hirtum.webp",
+    "lg": "/grow/plants/lg/greek-oregano-origanum-vulgare-subsp-hirtum.webp",
+    "medium": "/grow/plants/medium/greek-oregano-origanum-vulgare-subsp-hirtum.webp",
+    "source": "178_Greek_oregano_Origanum_vulgare_subsp_hirtum.png",
+    "xl": "/grow/plants/xl/greek-oregano-origanum-vulgare-subsp-hirtum.webp"
+  },
+  "green-alder-alnus-viridis": {
+    "emoji": "/grow/plants/emoji/green-alder-alnus-viridis.webp",
+    "lg": "/grow/plants/lg/green-alder-alnus-viridis.webp",
+    "medium": "/grow/plants/medium/green-alder-alnus-viridis.webp",
+    "source": "340_Green_alder_Alnus_viridis.png",
+    "xl": "/grow/plants/xl/green-alder-alnus-viridis.webp"
+  },
+  "green-beech-hedge-fagus-sylvatica": {
+    "emoji": "/grow/plants/emoji/green-beech-hedge-fagus-sylvatica.webp",
+    "lg": "/grow/plants/lg/green-beech-hedge-fagus-sylvatica.webp",
+    "medium": "/grow/plants/medium/green-beech-hedge-fagus-sylvatica.webp",
+    "source": "015_Green_beech_hedge_Fagus_sylvatica.png",
+    "xl": "/grow/plants/xl/green-beech-hedge-fagus-sylvatica.webp"
+  },
+  "green-cabbage-brassica-oleracea-var-capitata": {
+    "emoji": "/grow/plants/emoji/green-cabbage-brassica-oleracea-var-capitata.webp",
+    "lg": "/grow/plants/lg/green-cabbage-brassica-oleracea-var-capitata.webp",
+    "medium": "/grow/plants/medium/green-cabbage-brassica-oleracea-var-capitata.webp",
+    "source": "029_Green_cabbage_Brassica_oleracea_var_capitata.png",
+    "xl": "/grow/plants/xl/green-cabbage-brassica-oleracea-var-capitata.webp"
+  },
+  "greengage-prunus-domestica-subsp-italica": {
+    "emoji": "/grow/plants/emoji/greengage-prunus-domestica-subsp-italica.webp",
+    "lg": "/grow/plants/lg/greengage-prunus-domestica-subsp-italica.webp",
+    "medium": "/grow/plants/medium/greengage-prunus-domestica-subsp-italica.webp",
+    "source": "097_Greengage_Prunus_domestica_subsp_italica.png",
+    "xl": "/grow/plants/xl/greengage-prunus-domestica-subsp-italica.webp"
+  },
+  "grey-alder-alnus-incana": {
+    "emoji": "/grow/plants/emoji/grey-alder-alnus-incana.webp",
+    "lg": "/grow/plants/lg/grey-alder-alnus-incana.webp",
+    "medium": "/grow/plants/medium/grey-alder-alnus-incana.webp",
+    "source": "341_Grey_alder_Alnus_incana.png",
+    "xl": "/grow/plants/xl/grey-alder-alnus-incana.webp"
+  },
+  "griselinia-hedge-griselinia-littoralis": {
+    "emoji": "/grow/plants/emoji/griselinia-hedge-griselinia-littoralis.webp",
+    "lg": "/grow/plants/lg/griselinia-hedge-griselinia-littoralis.webp",
+    "medium": "/grow/plants/medium/griselinia-hedge-griselinia-littoralis.webp",
+    "source": "143_Griselinia_hedge_Griselinia_littoralis.png",
+    "xl": "/grow/plants/xl/griselinia-hedge-griselinia-littoralis.webp"
+  },
+  "ground-cherry-physalis-pruinosa": {
+    "emoji": "/grow/plants/emoji/ground-cherry-physalis-pruinosa.webp",
+    "lg": "/grow/plants/lg/ground-cherry-physalis-pruinosa.webp",
+    "medium": "/grow/plants/medium/ground-cherry-physalis-pruinosa.webp",
+    "source": "144_Ground_cherry_Physalis_pruinosa.png",
+    "xl": "/grow/plants/xl/ground-cherry-physalis-pruinosa.webp"
+  },
+  "hackberry-celtis-occidentalis": {
+    "emoji": "/grow/plants/emoji/hackberry-celtis-occidentalis.webp",
+    "lg": "/grow/plants/lg/hackberry-celtis-occidentalis.webp",
+    "medium": "/grow/plants/medium/hackberry-celtis-occidentalis.webp",
+    "source": "099_Hackberry_Celtis_occidentalis.png",
+    "xl": "/grow/plants/xl/hackberry-celtis-occidentalis.webp"
+  },
+  "hardy-geranium-cranesbill-geranium-sanguineum": {
+    "emoji": "/grow/plants/emoji/hardy-geranium-cranesbill-geranium-sanguineum.webp",
+    "lg": "/grow/plants/lg/hardy-geranium-cranesbill-geranium-sanguineum.webp",
+    "medium": "/grow/plants/medium/hardy-geranium-cranesbill-geranium-sanguineum.webp",
+    "source": "137_Hardy_geranium_cranesbill_Geranium_sanguineum.png",
+    "xl": "/grow/plants/xl/hardy-geranium-cranesbill-geranium-sanguineum.webp"
+  },
+  "hardy-kiwi-actinidia-arguta-actinidia-arguta": {
+    "emoji": "/grow/plants/emoji/hardy-kiwi-actinidia-arguta-actinidia-arguta.webp",
+    "lg": "/grow/plants/lg/hardy-kiwi-actinidia-arguta-actinidia-arguta.webp",
+    "medium": "/grow/plants/medium/hardy-kiwi-actinidia-arguta-actinidia-arguta.webp",
+    "source": "216_Hardy_kiwi_Actinidia_arguta_Actinidia_arguta.png",
+    "xl": "/grow/plants/xl/hardy-kiwi-actinidia-arguta-actinidia-arguta.webp"
+  },
+  "hardy-kiwi-kiwi-berry-actinidia-arguta": {
+    "emoji": "/grow/plants/emoji/hardy-kiwi-kiwi-berry-actinidia-arguta.webp",
+    "lg": "/grow/plants/lg/hardy-kiwi-kiwi-berry-actinidia-arguta.webp",
+    "medium": "/grow/plants/medium/hardy-kiwi-kiwi-berry-actinidia-arguta.webp",
+    "source": "100_Hardy_kiwi_Kiwi_berry_Actinidia_arguta.png",
+    "xl": "/grow/plants/xl/hardy-kiwi-kiwi-berry-actinidia-arguta.webp"
+  },
+  "hawthorn-common-crataegus-monogyna": {
+    "emoji": "/grow/plants/emoji/hawthorn-common-crataegus-monogyna.webp",
+    "lg": "/grow/plants/lg/hawthorn-common-crataegus-monogyna.webp",
+    "medium": "/grow/plants/medium/hawthorn-common-crataegus-monogyna.webp",
+    "source": "373_Hawthorn_common_Crataegus_monogyna.png",
+    "xl": "/grow/plants/xl/hawthorn-common-crataegus-monogyna.webp"
+  },
+  "hazel-hedge-corylus-avellana": {
+    "emoji": "/grow/plants/emoji/hazel-hedge-corylus-avellana.webp",
+    "lg": "/grow/plants/lg/hazel-hedge-corylus-avellana.webp",
+    "medium": "/grow/plants/medium/hazel-hedge-corylus-avellana.webp",
+    "source": "145_Hazel_hedge_Corylus_avellana.png",
+    "xl": "/grow/plants/xl/hazel-hedge-corylus-avellana.webp"
+  },
+  "hazel-tree-form-corylus-avellana": {
+    "emoji": "/grow/plants/emoji/hazel-tree-form-corylus-avellana.webp",
+    "lg": "/grow/plants/lg/hazel-tree-form-corylus-avellana.webp",
+    "medium": "/grow/plants/medium/hazel-tree-form-corylus-avellana.webp",
+    "source": "377_Hazel_tree_form_Corylus_avellana.png",
+    "xl": "/grow/plants/xl/hazel-tree-form-corylus-avellana.webp"
+  },
+  "hazelnut-filbert-corylus-avellana": {
+    "emoji": "/grow/plants/emoji/hazelnut-filbert-corylus-avellana.webp",
+    "lg": "/grow/plants/lg/hazelnut-filbert-corylus-avellana.webp",
+    "medium": "/grow/plants/medium/hazelnut-filbert-corylus-avellana.webp",
+    "source": "101_Hazelnut_Filbert_Corylus_avellana.png",
+    "xl": "/grow/plants/xl/hazelnut-filbert-corylus-avellana.webp"
+  },
+  "heliopsis-ox-eye-heliopsis-helianthoides": {
+    "emoji": "/grow/plants/emoji/heliopsis-ox-eye-heliopsis-helianthoides.webp",
+    "lg": "/grow/plants/lg/heliopsis-ox-eye-heliopsis-helianthoides.webp",
+    "medium": "/grow/plants/medium/heliopsis-ox-eye-heliopsis-helianthoides.webp",
+    "source": "146_Heliopsis_ox_eye_Heliopsis_helianthoides.png",
+    "xl": "/grow/plants/xl/heliopsis-ox-eye-heliopsis-helianthoides.webp"
+  },
+  "hellebore-helleborus-orientalis": {
+    "emoji": "/grow/plants/emoji/hellebore-helleborus-orientalis.webp",
+    "lg": "/grow/plants/lg/hellebore-helleborus-orientalis.webp",
+    "medium": "/grow/plants/medium/hellebore-helleborus-orientalis.webp",
+    "source": "147_Hellebore_Helleborus_orientalis.png",
+    "xl": "/grow/plants/xl/hellebore-helleborus-orientalis.webp"
+  },
+  "herb-fennel-foeniculum-vulgare": {
+    "emoji": "/grow/plants/emoji/herb-fennel-foeniculum-vulgare.webp",
+    "lg": "/grow/plants/lg/herb-fennel-foeniculum-vulgare.webp",
+    "medium": "/grow/plants/medium/herb-fennel-foeniculum-vulgare.webp",
+    "source": "165_Herb_fennel_Foeniculum_vulgare.png",
+    "xl": "/grow/plants/xl/herb-fennel-foeniculum-vulgare.webp"
+  },
+  "heuchera-coral-bells-heuchera-hybrida": {
+    "emoji": "/grow/plants/emoji/heuchera-coral-bells-heuchera-hybrida.webp",
+    "lg": "/grow/plants/lg/heuchera-coral-bells-heuchera-hybrida.webp",
+    "medium": "/grow/plants/medium/heuchera-coral-bells-heuchera-hybrida.webp",
+    "source": "198_Heuchera_coral_bells_Heuchera_hybrida.png",
+    "xl": "/grow/plants/xl/heuchera-coral-bells-heuchera-hybrida.webp"
+  },
+  "hollyhock-alcea-rosea": {
+    "emoji": "/grow/plants/emoji/hollyhock-alcea-rosea.webp",
+    "lg": "/grow/plants/lg/hollyhock-alcea-rosea.webp",
+    "medium": "/grow/plants/medium/hollyhock-alcea-rosea.webp",
+    "source": "199_Hollyhock_Alcea_rosea.png",
+    "xl": "/grow/plants/xl/hollyhock-alcea-rosea.webp"
+  },
+  "holy-basil-tulsi-ocimum-tenuiflorum": {
+    "emoji": "/grow/plants/emoji/holy-basil-tulsi-ocimum-tenuiflorum.webp",
+    "lg": "/grow/plants/lg/holy-basil-tulsi-ocimum-tenuiflorum.webp",
+    "medium": "/grow/plants/medium/holy-basil-tulsi-ocimum-tenuiflorum.webp",
+    "source": "167_Holy_basil_tulsi_Ocimum_tenuiflorum.png",
+    "xl": "/grow/plants/xl/holy-basil-tulsi-ocimum-tenuiflorum.webp"
+  },
+  "honey-locust-gleditsia-triacanthos": {
+    "emoji": "/grow/plants/emoji/honey-locust-gleditsia-triacanthos.webp",
+    "lg": "/grow/plants/lg/honey-locust-gleditsia-triacanthos.webp",
+    "medium": "/grow/plants/medium/honey-locust-gleditsia-triacanthos.webp",
+    "source": "200_Honey_locust_Gleditsia_triacanthos.png",
+    "xl": "/grow/plants/xl/honey-locust-gleditsia-triacanthos.webp"
+  },
+  "honeyberry-tree-form-lonicera-caerulea": {
+    "emoji": "/grow/plants/emoji/honeyberry-tree-form-lonicera-caerulea.webp",
+    "lg": "/grow/plants/lg/honeyberry-tree-form-lonicera-caerulea.webp",
+    "medium": "/grow/plants/medium/honeyberry-tree-form-lonicera-caerulea.webp",
+    "source": "102_Honeyberry_tree_form_Lonicera_caerulea.png",
+    "xl": "/grow/plants/xl/honeyberry-tree-form-lonicera-caerulea.webp"
+  },
+  "hornbeam-carpinus-betulus": {
+    "emoji": "/grow/plants/emoji/hornbeam-carpinus-betulus.webp",
+    "lg": "/grow/plants/lg/hornbeam-carpinus-betulus.webp",
+    "medium": "/grow/plants/medium/hornbeam-carpinus-betulus.webp",
+    "source": "381_Hornbeam_Carpinus_betulus.png",
+    "xl": "/grow/plants/xl/hornbeam-carpinus-betulus.webp"
+  },
+  "hornbeam-hedge-carpinus-betulus": {
+    "emoji": "/grow/plants/emoji/hornbeam-hedge-carpinus-betulus.webp",
+    "lg": "/grow/plants/lg/hornbeam-hedge-carpinus-betulus.webp",
+    "medium": "/grow/plants/medium/hornbeam-hedge-carpinus-betulus.webp",
+    "source": "202_Hornbeam_hedge_Carpinus_betulus.png",
+    "xl": "/grow/plants/xl/hornbeam-hedge-carpinus-betulus.webp"
+  },
+  "horseradish-armoracia-rusticana": {
+    "emoji": "/grow/plants/emoji/horseradish-armoracia-rusticana.webp",
+    "lg": "/grow/plants/lg/horseradish-armoracia-rusticana.webp",
+    "medium": "/grow/plants/medium/horseradish-armoracia-rusticana.webp",
+    "source": "203_Horseradish_Armoracia_rusticana.png",
+    "xl": "/grow/plants/xl/horseradish-armoracia-rusticana.webp"
+  },
+  "hosta-hosta-spp": {
+    "emoji": "/grow/plants/emoji/hosta-hosta-spp.webp",
+    "lg": "/grow/plants/lg/hosta-hosta-spp.webp",
+    "medium": "/grow/plants/medium/hosta-hosta-spp.webp",
+    "source": "204_Hosta_Hosta_spp.png",
+    "xl": "/grow/plants/xl/hosta-hosta-spp.webp"
+  },
+  "hot-pepper-very-hot-types-capsicum-chinense": {
+    "emoji": "/grow/plants/emoji/hot-pepper-very-hot-types-capsicum-chinense.webp",
+    "lg": "/grow/plants/lg/hot-pepper-very-hot-types-capsicum-chinense.webp",
+    "medium": "/grow/plants/medium/hot-pepper-very-hot-types-capsicum-chinense.webp",
+    "source": "264_Hot_pepper_very_hot_types_Capsicum_chinense.png",
+    "xl": "/grow/plants/xl/hot-pepper-very-hot-types-capsicum-chinense.webp"
+  },
+  "hybrid-poplar-populus-canadensis": {
+    "emoji": "/grow/plants/emoji/hybrid-poplar-populus-canadensis.webp",
+    "lg": "/grow/plants/lg/hybrid-poplar-populus-canadensis.webp",
+    "medium": "/grow/plants/medium/hybrid-poplar-populus-canadensis.webp",
+    "source": "271_Hybrid_poplar_Populus_canadensis.png",
+    "xl": "/grow/plants/xl/hybrid-poplar-populus-canadensis.webp"
+  },
+  "hyssop-hyssopus-officinalis": {
+    "emoji": "/grow/plants/emoji/hyssop-hyssopus-officinalis.webp",
+    "lg": "/grow/plants/lg/hyssop-hyssopus-officinalis.webp",
+    "medium": "/grow/plants/medium/hyssop-hyssopus-officinalis.webp",
+    "source": "168_Hyssop_Hyssopus_officinalis.png",
+    "xl": "/grow/plants/xl/hyssop-hyssopus-officinalis.webp"
+  },
+  "hyssop-hyssopus-officinalis-hyssopus-officinalis": {
+    "emoji": "/grow/plants/emoji/hyssop-hyssopus-officinalis-hyssopus-officinalis.webp",
+    "lg": "/grow/plants/lg/hyssop-hyssopus-officinalis-hyssopus-officinalis.webp",
+    "medium": "/grow/plants/medium/hyssop-hyssopus-officinalis-hyssopus-officinalis.webp",
+    "source": "205_Hyssop_Hyssopus_officinalis_Hyssopus_officinalis.png",
+    "xl": "/grow/plants/xl/hyssop-hyssopus-officinalis-hyssopus-officinalis.webp"
+  },
+  "iceberg-lettuce-lactuca-sativa-var-capitata": {
+    "emoji": "/grow/plants/emoji/iceberg-lettuce-lactuca-sativa-var-capitata.webp",
+    "lg": "/grow/plants/lg/iceberg-lettuce-lactuca-sativa-var-capitata.webp",
+    "medium": "/grow/plants/medium/iceberg-lettuce-lactuca-sativa-var-capitata.webp",
+    "source": "223_Iceberg_lettuce_Lactuca_sativa_var_capitata.png",
+    "xl": "/grow/plants/xl/iceberg-lettuce-lactuca-sativa-var-capitata.webp"
+  },
+  "indigo-bush-amorpha-fruticosa-amorpha-fruticosa": {
+    "emoji": "/grow/plants/emoji/indigo-bush-amorpha-fruticosa-amorpha-fruticosa.webp",
+    "lg": "/grow/plants/lg/indigo-bush-amorpha-fruticosa-amorpha-fruticosa.webp",
+    "medium": "/grow/plants/medium/indigo-bush-amorpha-fruticosa-amorpha-fruticosa.webp",
+    "source": "206_Indigo_bush_Amorpha_fruticosa_Amorpha_fruticosa.png",
+    "xl": "/grow/plants/xl/indigo-bush-amorpha-fruticosa-amorpha-fruticosa.webp"
+  },
+  "iris-bearded-common-iris-germanica": {
+    "emoji": "/grow/plants/emoji/iris-bearded-common-iris-germanica.webp",
+    "lg": "/grow/plants/lg/iris-bearded-common-iris-germanica.webp",
+    "medium": "/grow/plants/medium/iris-bearded-common-iris-germanica.webp",
+    "source": "207_Iris_bearded_common_Iris_germanica.png",
+    "xl": "/grow/plants/xl/iris-bearded-common-iris-germanica.webp"
+  },
+  "italian-ryegrass-lolium-multiflorum": {
+    "emoji": "/grow/plants/emoji/italian-ryegrass-lolium-multiflorum.webp",
+    "lg": "/grow/plants/lg/italian-ryegrass-lolium-multiflorum.webp",
+    "medium": "/grow/plants/medium/italian-ryegrass-lolium-multiflorum.webp",
+    "source": "208_Italian_ryegrass_Lolium_multiflorum.png",
+    "xl": "/grow/plants/xl/italian-ryegrass-lolium-multiflorum.webp"
+  },
+  "japanese-maple-acer-palmatum": {
+    "emoji": "/grow/plants/emoji/japanese-maple-acer-palmatum.webp",
+    "lg": "/grow/plants/lg/japanese-maple-acer-palmatum.webp",
+    "medium": "/grow/plants/medium/japanese-maple-acer-palmatum.webp",
+    "source": "382_Japanese_maple_Acer_palmatum.png",
+    "xl": "/grow/plants/xl/japanese-maple-acer-palmatum.webp"
+  },
+  "japanese-sycamore-acer-pictum-acer-pictum": {
+    "emoji": "/grow/plants/emoji/japanese-sycamore-acer-pictum-acer-pictum.webp",
+    "lg": "/grow/plants/lg/japanese-sycamore-acer-pictum-acer-pictum.webp",
+    "medium": "/grow/plants/medium/japanese-sycamore-acer-pictum-acer-pictum.webp",
+    "source": "427_Japanese_sycamore_Acer_pictum_Acer_pictum.png",
+    "xl": "/grow/plants/xl/japanese-sycamore-acer-pictum-acer-pictum.webp"
+  },
+  "japanese-zelkova-zelkova-serrata": {
+    "emoji": "/grow/plants/emoji/japanese-zelkova-zelkova-serrata.webp",
+    "lg": "/grow/plants/lg/japanese-zelkova-zelkova-serrata.webp",
+    "medium": "/grow/plants/medium/japanese-zelkova-zelkova-serrata.webp",
+    "source": "383_Japanese_zelkova_Zelkova_serrata.png",
+    "xl": "/grow/plants/xl/japanese-zelkova-zelkova-serrata.webp"
+  },
+  "jerusalem-artichoke-helianthus-tuberosus": {
+    "emoji": "/grow/plants/emoji/jerusalem-artichoke-helianthus-tuberosus.webp",
+    "lg": "/grow/plants/lg/jerusalem-artichoke-helianthus-tuberosus.webp",
+    "medium": "/grow/plants/medium/jerusalem-artichoke-helianthus-tuberosus.webp",
+    "source": "209_Jerusalem_artichoke_Helianthus_tuberosus.png",
+    "xl": "/grow/plants/xl/jerusalem-artichoke-helianthus-tuberosus.webp"
+  },
+  "jicama-pachyrhizus-erosus": {
+    "emoji": "/grow/plants/emoji/jicama-pachyrhizus-erosus.webp",
+    "lg": "/grow/plants/lg/jicama-pachyrhizus-erosus.webp",
+    "medium": "/grow/plants/medium/jicama-pachyrhizus-erosus.webp",
+    "source": "210_Jicama_Pachyrhizus_erosus.png",
+    "xl": "/grow/plants/xl/jicama-pachyrhizus-erosus.webp"
+  },
+  "joe-pye-weed-eutrochium-purpureum": {
+    "emoji": "/grow/plants/emoji/joe-pye-weed-eutrochium-purpureum.webp",
+    "lg": "/grow/plants/lg/joe-pye-weed-eutrochium-purpureum.webp",
+    "medium": "/grow/plants/medium/joe-pye-weed-eutrochium-purpureum.webp",
+    "source": "211_Joe_Pye_weed_Eutrochium_purpureum.png",
+    "xl": "/grow/plants/xl/joe-pye-weed-eutrochium-purpureum.webp"
+  },
+  "jostaberry-tree-form-ribes-nidigrolaria": {
+    "emoji": "/grow/plants/emoji/jostaberry-tree-form-ribes-nidigrolaria.webp",
+    "lg": "/grow/plants/lg/jostaberry-tree-form-ribes-nidigrolaria.webp",
+    "medium": "/grow/plants/medium/jostaberry-tree-form-ribes-nidigrolaria.webp",
+    "source": "104_Jostaberry_tree_form_Ribes_nidigrolaria.png",
+    "xl": "/grow/plants/xl/jostaberry-tree-form-ribes-nidigrolaria.webp"
+  },
+  "juneberry-amelanchier-lamarckii": {
+    "emoji": "/grow/plants/emoji/juneberry-amelanchier-lamarckii.webp",
+    "lg": "/grow/plants/lg/juneberry-amelanchier-lamarckii.webp",
+    "medium": "/grow/plants/medium/juneberry-amelanchier-lamarckii.webp",
+    "source": "384_Juneberry_Amelanchier_lamarckii.png",
+    "xl": "/grow/plants/xl/juneberry-amelanchier-lamarckii.webp"
+  },
+  "juniper-berrying-types-juniperus-communis": {
+    "emoji": "/grow/plants/emoji/juniper-berrying-types-juniperus-communis.webp",
+    "lg": "/grow/plants/lg/juniper-berrying-types-juniperus-communis.webp",
+    "medium": "/grow/plants/medium/juniper-berrying-types-juniperus-communis.webp",
+    "source": "105_Juniper_berrying_types_Juniperus_communis.png",
+    "xl": "/grow/plants/xl/juniper-berrying-types-juniperus-communis.webp"
+  },
+  "katsura-tree-cercidiphyllum-japonicum": {
+    "emoji": "/grow/plants/emoji/katsura-tree-cercidiphyllum-japonicum.webp",
+    "lg": "/grow/plants/lg/katsura-tree-cercidiphyllum-japonicum.webp",
+    "medium": "/grow/plants/medium/katsura-tree-cercidiphyllum-japonicum.webp",
+    "source": "386_Katsura_tree_Cercidiphyllum_japonicum.png",
+    "xl": "/grow/plants/xl/katsura-tree-cercidiphyllum-japonicum.webp"
+  },
+  "kidney-vetch-anthyllis-vulneraria": {
+    "emoji": "/grow/plants/emoji/kidney-vetch-anthyllis-vulneraria.webp",
+    "lg": "/grow/plants/lg/kidney-vetch-anthyllis-vulneraria.webp",
+    "medium": "/grow/plants/medium/kidney-vetch-anthyllis-vulneraria.webp",
+    "source": "214_Kidney_vetch_Anthyllis_vulneraria.png",
+    "xl": "/grow/plants/xl/kidney-vetch-anthyllis-vulneraria.webp"
+  },
+  "kiwi-actinidia-deliciosa-actinidia-deliciosa": {
+    "emoji": "/grow/plants/emoji/kiwi-actinidia-deliciosa-actinidia-deliciosa.webp",
+    "lg": "/grow/plants/lg/kiwi-actinidia-deliciosa-actinidia-deliciosa.webp",
+    "medium": "/grow/plants/medium/kiwi-actinidia-deliciosa-actinidia-deliciosa.webp",
+    "source": "215_Kiwi_Actinidia_deliciosa_Actinidia_deliciosa.png",
+    "xl": "/grow/plants/xl/kiwi-actinidia-deliciosa-actinidia-deliciosa.webp"
+  },
+  "kohlrabi-brassica-oleracea-gongylodes-group": {
+    "emoji": "/grow/plants/emoji/kohlrabi-brassica-oleracea-gongylodes-group.webp",
+    "lg": "/grow/plants/lg/kohlrabi-brassica-oleracea-gongylodes-group.webp",
+    "medium": "/grow/plants/medium/kohlrabi-brassica-oleracea-gongylodes-group.webp",
+    "source": "217_Kohlrabi_Brassica_oleracea_Gongylodes_Group.png",
+    "xl": "/grow/plants/xl/kohlrabi-brassica-oleracea-gongylodes-group.webp"
+  },
+  "laburnum-laburnum-watereri": {
+    "emoji": "/grow/plants/emoji/laburnum-laburnum-watereri.webp",
+    "lg": "/grow/plants/lg/laburnum-laburnum-watereri.webp",
+    "medium": "/grow/plants/medium/laburnum-laburnum-watereri.webp",
+    "source": "370_Laburnum_Laburnum_watereri.png",
+    "xl": "/grow/plants/xl/laburnum-laburnum-watereri.webp"
+  },
+  "lacinato-kale-brassica-oleracea-var-palmifolia": {
+    "emoji": "/grow/plants/emoji/lacinato-kale-brassica-oleracea-var-palmifolia.webp",
+    "lg": "/grow/plants/lg/lacinato-kale-brassica-oleracea-var-palmifolia.webp",
+    "medium": "/grow/plants/medium/lacinato-kale-brassica-oleracea-var-palmifolia.webp",
+    "source": "213_Lacinato_kale_Brassica_oleracea_var_palmifolia.png",
+    "xl": "/grow/plants/xl/lacinato-kale-brassica-oleracea-var-palmifolia.webp"
+  },
+  "large-leaved-lime-tilia-platyphyllos-tilia-platyphyllos": {
+    "emoji": "/grow/plants/emoji/large-leaved-lime-tilia-platyphyllos-tilia-platyphyllos.webp",
+    "lg": "/grow/plants/lg/large-leaved-lime-tilia-platyphyllos-tilia-platyphyllos.webp",
+    "medium": "/grow/plants/medium/large-leaved-lime-tilia-platyphyllos-tilia-platyphyllos.webp",
+    "source": "227_Large_leaved_lime_Tilia_platyphyllos_Tilia_platyphyllos.png",
+    "xl": "/grow/plants/xl/large-leaved-lime-tilia-platyphyllos-tilia-platyphyllos.webp"
+  },
+  "lavender-lavandula-angustifolia": {
+    "emoji": "/grow/plants/emoji/lavender-lavandula-angustifolia.webp",
+    "lg": "/grow/plants/lg/lavender-lavandula-angustifolia.webp",
+    "medium": "/grow/plants/medium/lavender-lavandula-angustifolia.webp",
+    "source": "218_Lavender_Lavandula_angustifolia.png",
+    "xl": "/grow/plants/xl/lavender-lavandula-angustifolia.webp"
+  },
+  "lawson-cypress-chamaecyparis-lawsoniana": {
+    "emoji": "/grow/plants/emoji/lawson-cypress-chamaecyparis-lawsoniana.webp",
+    "lg": "/grow/plants/lg/lawson-cypress-chamaecyparis-lawsoniana.webp",
+    "medium": "/grow/plants/medium/lawson-cypress-chamaecyparis-lawsoniana.webp",
+    "source": "388_Lawson_cypress_Chamaecyparis_lawsoniana.png",
+    "xl": "/grow/plants/xl/lawson-cypress-chamaecyparis-lawsoniana.webp"
+  },
+  "leek-allium-ampeloprasum-var-porrum": {
+    "emoji": "/grow/plants/emoji/leek-allium-ampeloprasum-var-porrum.webp",
+    "lg": "/grow/plants/lg/leek-allium-ampeloprasum-var-porrum.webp",
+    "medium": "/grow/plants/medium/leek-allium-ampeloprasum-var-porrum.webp",
+    "source": "219_Leek_Allium_ampeloprasum_var_porrum.png",
+    "xl": "/grow/plants/xl/leek-allium-ampeloprasum-var-porrum.webp"
+  },
+  "lemon-balm-melissa-officinalis": {
+    "emoji": "/grow/plants/emoji/lemon-balm-melissa-officinalis.webp",
+    "lg": "/grow/plants/lg/lemon-balm-melissa-officinalis.webp",
+    "medium": "/grow/plants/medium/lemon-balm-melissa-officinalis.webp",
+    "source": "169_Lemon_balm_Melissa_officinalis.png",
+    "xl": "/grow/plants/xl/lemon-balm-melissa-officinalis.webp"
+  },
+  "lemon-citrus-limon": {
+    "emoji": "/grow/plants/emoji/lemon-citrus-limon.webp",
+    "lg": "/grow/plants/lg/lemon-citrus-limon.webp",
+    "medium": "/grow/plants/medium/lemon-citrus-limon.webp",
+    "source": "106_Lemon_Citrus_limon.png",
+    "xl": "/grow/plants/xl/lemon-citrus-limon.webp"
+  },
+  "lemon-thyme-thymus-citriodorus": {
+    "emoji": "/grow/plants/emoji/lemon-thyme-thymus-citriodorus.webp",
+    "lg": "/grow/plants/lg/lemon-thyme-thymus-citriodorus.webp",
+    "medium": "/grow/plants/medium/lemon-thyme-thymus-citriodorus.webp",
+    "source": "195_Lemon_thyme_Thymus_citriodorus.png",
+    "xl": "/grow/plants/xl/lemon-thyme-thymus-citriodorus.webp"
+  },
+  "lemon-verbena-aloysia-citrodora": {
+    "emoji": "/grow/plants/emoji/lemon-verbena-aloysia-citrodora.webp",
+    "lg": "/grow/plants/lg/lemon-verbena-aloysia-citrodora.webp",
+    "medium": "/grow/plants/medium/lemon-verbena-aloysia-citrodora.webp",
+    "source": "170_Lemon_verbena_Aloysia_citrodora.png",
+    "xl": "/grow/plants/xl/lemon-verbena-aloysia-citrodora.webp"
+  },
+  "lettuce-lactuca-sativa": {
+    "emoji": "/grow/plants/emoji/lettuce-lactuca-sativa.webp",
+    "lg": "/grow/plants/lg/lettuce-lactuca-sativa.webp",
+    "medium": "/grow/plants/medium/lettuce-lactuca-sativa.webp",
+    "source": "221_Lettuce_Lactuca_sativa.png",
+    "xl": "/grow/plants/xl/lettuce-lactuca-sativa.webp"
+  },
+  "lilac-tree-form-syringa-vulgaris": {
+    "emoji": "/grow/plants/emoji/lilac-tree-form-syringa-vulgaris.webp",
+    "lg": "/grow/plants/lg/lilac-tree-form-syringa-vulgaris.webp",
+    "medium": "/grow/plants/medium/lilac-tree-form-syringa-vulgaris.webp",
+    "source": "389_Lilac_tree_form_Syringa_vulgaris.png",
+    "xl": "/grow/plants/xl/lilac-tree-form-syringa-vulgaris.webp"
+  },
+  "lima-bean-phaseolus-lunatus": {
+    "emoji": "/grow/plants/emoji/lima-bean-phaseolus-lunatus.webp",
+    "lg": "/grow/plants/lg/lima-bean-phaseolus-lunatus.webp",
+    "medium": "/grow/plants/medium/lima-bean-phaseolus-lunatus.webp",
+    "source": "226_Lima_bean_Phaseolus_lunatus.png",
+    "xl": "/grow/plants/xl/lima-bean-phaseolus-lunatus.webp"
+  },
+  "lime-citrus-aurantiifolia": {
+    "emoji": "/grow/plants/emoji/lime-citrus-aurantiifolia.webp",
+    "lg": "/grow/plants/lg/lime-citrus-aurantiifolia.webp",
+    "medium": "/grow/plants/medium/lime-citrus-aurantiifolia.webp",
+    "source": "107_Lime_Citrus_aurantiifolia.png",
+    "xl": "/grow/plants/xl/lime-citrus-aurantiifolia.webp"
+  },
+  "lodgepole-pine-pinus-contorta": {
+    "emoji": "/grow/plants/emoji/lodgepole-pine-pinus-contorta.webp",
+    "lg": "/grow/plants/lg/lodgepole-pine-pinus-contorta.webp",
+    "medium": "/grow/plants/medium/lodgepole-pine-pinus-contorta.webp",
+    "source": "391_Lodgepole_pine_Pinus_contorta.png",
+    "xl": "/grow/plants/xl/lodgepole-pine-pinus-contorta.webp"
+  },
+  "lombardy-poplar-populus-nigra": {
+    "emoji": "/grow/plants/emoji/lombardy-poplar-populus-nigra.webp",
+    "lg": "/grow/plants/lg/lombardy-poplar-populus-nigra.webp",
+    "medium": "/grow/plants/medium/lombardy-poplar-populus-nigra.webp",
+    "source": "408_Lombardy_poplar_Populus_nigra.png",
+    "xl": "/grow/plants/xl/lombardy-poplar-populus-nigra.webp"
+  },
+  "london-plane-platanus-hispanica": {
+    "emoji": "/grow/plants/emoji/london-plane-platanus-hispanica.webp",
+    "lg": "/grow/plants/lg/london-plane-platanus-hispanica.webp",
+    "medium": "/grow/plants/medium/london-plane-platanus-hispanica.webp",
+    "source": "270_London_plane_Platanus_hispanica.png",
+    "xl": "/grow/plants/xl/london-plane-platanus-hispanica.webp"
+  },
+  "longleaf-acacia-acacia-longifolia": {
+    "emoji": "/grow/plants/emoji/longleaf-acacia-acacia-longifolia.webp",
+    "lg": "/grow/plants/lg/longleaf-acacia-acacia-longifolia.webp",
+    "medium": "/grow/plants/medium/longleaf-acacia-acacia-longifolia.webp",
+    "source": "336_Longleaf_acacia_Acacia_longifolia.png",
+    "xl": "/grow/plants/xl/longleaf-acacia-acacia-longifolia.webp"
+  },
+  "looseleaf-lettuce-lactuca-sativa-var-crispa": {
+    "emoji": "/grow/plants/emoji/looseleaf-lettuce-lactuca-sativa-var-crispa.webp",
+    "lg": "/grow/plants/lg/looseleaf-lettuce-lactuca-sativa-var-crispa.webp",
+    "medium": "/grow/plants/medium/looseleaf-lettuce-lactuca-sativa-var-crispa.webp",
+    "source": "224_Looseleaf_lettuce_Lactuca_sativa_var_crispa.png",
+    "xl": "/grow/plants/xl/looseleaf-lettuce-lactuca-sativa-var-crispa.webp"
+  },
+  "loquat-eriobotrya-japonica": {
+    "emoji": "/grow/plants/emoji/loquat-eriobotrya-japonica.webp",
+    "lg": "/grow/plants/lg/loquat-eriobotrya-japonica.webp",
+    "medium": "/grow/plants/medium/loquat-eriobotrya-japonica.webp",
+    "source": "108_Loquat_Eriobotrya_japonica.png",
+    "xl": "/grow/plants/xl/loquat-eriobotrya-japonica.webp"
+  },
+  "lovage-levisticum-officinale": {
+    "emoji": "/grow/plants/emoji/lovage-levisticum-officinale.webp",
+    "lg": "/grow/plants/lg/lovage-levisticum-officinale.webp",
+    "medium": "/grow/plants/medium/lovage-levisticum-officinale.webp",
+    "source": "171_Lovage_Levisticum_officinale.png",
+    "xl": "/grow/plants/xl/lovage-levisticum-officinale.webp"
+  },
+  "lupin-lupinus-polyphyllus": {
+    "emoji": "/grow/plants/emoji/lupin-lupinus-polyphyllus.webp",
+    "lg": "/grow/plants/lg/lupin-lupinus-polyphyllus.webp",
+    "medium": "/grow/plants/medium/lupin-lupinus-polyphyllus.webp",
+    "source": "229_Lupin_Lupinus_polyphyllus.png",
+    "xl": "/grow/plants/xl/lupin-lupinus-polyphyllus.webp"
+  },
+  "magnolia-grandiflora-magnolia-grandiflora": {
+    "emoji": "/grow/plants/emoji/magnolia-grandiflora-magnolia-grandiflora.webp",
+    "lg": "/grow/plants/lg/magnolia-grandiflora-magnolia-grandiflora.webp",
+    "medium": "/grow/plants/medium/magnolia-grandiflora-magnolia-grandiflora.webp",
+    "source": "393_Magnolia_grandiflora_Magnolia_grandiflora.png",
+    "xl": "/grow/plants/xl/magnolia-grandiflora-magnolia-grandiflora.webp"
+  },
+  "magnolia-soulangeana-magnolia-soulangeana": {
+    "emoji": "/grow/plants/emoji/magnolia-soulangeana-magnolia-soulangeana.webp",
+    "lg": "/grow/plants/lg/magnolia-soulangeana-magnolia-soulangeana.webp",
+    "medium": "/grow/plants/medium/magnolia-soulangeana-magnolia-soulangeana.webp",
+    "source": "394_Magnolia_soulangeana_Magnolia_soulangeana.png",
+    "xl": "/grow/plants/xl/magnolia-soulangeana-magnolia-soulangeana.webp"
+  },
+  "magnolia-stellata-magnolia-stellata": {
+    "emoji": "/grow/plants/emoji/magnolia-stellata-magnolia-stellata.webp",
+    "lg": "/grow/plants/lg/magnolia-stellata-magnolia-stellata.webp",
+    "medium": "/grow/plants/medium/magnolia-stellata-magnolia-stellata.webp",
+    "source": "395_Magnolia_stellata_Magnolia_stellata.png",
+    "xl": "/grow/plants/xl/magnolia-stellata-magnolia-stellata.webp"
+  },
+  "malabar-spinach-basella-alba": {
+    "emoji": "/grow/plants/emoji/malabar-spinach-basella-alba.webp",
+    "lg": "/grow/plants/lg/malabar-spinach-basella-alba.webp",
+    "medium": "/grow/plants/medium/malabar-spinach-basella-alba.webp",
+    "source": "231_Malabar_spinach_Basella_alba.png",
+    "xl": "/grow/plants/xl/malabar-spinach-basella-alba.webp"
+  },
+  "mandarin-tangerine-citrus-reticulata": {
+    "emoji": "/grow/plants/emoji/mandarin-tangerine-citrus-reticulata.webp",
+    "lg": "/grow/plants/lg/mandarin-tangerine-citrus-reticulata.webp",
+    "medium": "/grow/plants/medium/mandarin-tangerine-citrus-reticulata.webp",
+    "source": "109_Mandarin_tangerine_Citrus_reticulata.png",
+    "xl": "/grow/plants/xl/mandarin-tangerine-citrus-reticulata.webp"
+  },
+  "manna-ash-fraxinus-ornus-fraxinus-ornus": {
+    "emoji": "/grow/plants/emoji/manna-ash-fraxinus-ornus-fraxinus-ornus.webp",
+    "lg": "/grow/plants/lg/manna-ash-fraxinus-ornus-fraxinus-ornus.webp",
+    "medium": "/grow/plants/medium/manna-ash-fraxinus-ornus-fraxinus-ornus.webp",
+    "source": "009_Manna_ash_Fraxinus_ornus_Fraxinus_ornus.png",
+    "xl": "/grow/plants/xl/manna-ash-fraxinus-ornus-fraxinus-ornus.webp"
+  },
+  "marigold-tagetes-tagetes-patula": {
+    "emoji": "/grow/plants/emoji/marigold-tagetes-tagetes-patula.webp",
+    "lg": "/grow/plants/lg/marigold-tagetes-tagetes-patula.webp",
+    "medium": "/grow/plants/medium/marigold-tagetes-tagetes-patula.webp",
+    "source": "234_Marigold_Tagetes_Tagetes_patula.png",
+    "xl": "/grow/plants/xl/marigold-tagetes-tagetes-patula.webp"
+  },
+  "marshmallow-althaea-officinalis": {
+    "emoji": "/grow/plants/emoji/marshmallow-althaea-officinalis.webp",
+    "lg": "/grow/plants/lg/marshmallow-althaea-officinalis.webp",
+    "medium": "/grow/plants/medium/marshmallow-althaea-officinalis.webp",
+    "source": "173_Marshmallow_Althaea_officinalis.png",
+    "xl": "/grow/plants/xl/marshmallow-althaea-officinalis.webp"
+  },
+  "mayhaw-crataegus-aestivalis": {
+    "emoji": "/grow/plants/emoji/mayhaw-crataegus-aestivalis.webp",
+    "lg": "/grow/plants/lg/mayhaw-crataegus-aestivalis.webp",
+    "medium": "/grow/plants/medium/mayhaw-crataegus-aestivalis.webp",
+    "source": "110_Mayhaw_Crataegus_aestivalis.png",
+    "xl": "/grow/plants/xl/mayhaw-crataegus-aestivalis.webp"
+  },
+  "mazus-reptans-mazus-reptans": {
+    "emoji": "/grow/plants/emoji/mazus-reptans-mazus-reptans.webp",
+    "lg": "/grow/plants/lg/mazus-reptans-mazus-reptans.webp",
+    "medium": "/grow/plants/medium/mazus-reptans-mazus-reptans.webp",
+    "source": "235_Mazus_reptans_Mazus_reptans.png",
+    "xl": "/grow/plants/xl/mazus-reptans-mazus-reptans.webp"
+  },
+  "medlar-mespilus-germanica": {
+    "emoji": "/grow/plants/emoji/medlar-mespilus-germanica.webp",
+    "lg": "/grow/plants/lg/medlar-mespilus-germanica.webp",
+    "medium": "/grow/plants/medium/medlar-mespilus-germanica.webp",
+    "source": "111_Medlar_Mespilus_germanica.png",
+    "xl": "/grow/plants/xl/medlar-mespilus-germanica.webp"
+  },
+  "melon-cantaloupe-type-cucumis-melo": {
+    "emoji": "/grow/plants/emoji/melon-cantaloupe-type-cucumis-melo.webp",
+    "lg": "/grow/plants/lg/melon-cantaloupe-type-cucumis-melo.webp",
+    "medium": "/grow/plants/medium/melon-cantaloupe-type-cucumis-melo.webp",
+    "source": "236_Melon_cantaloupe_type_Cucumis_melo.png",
+    "xl": "/grow/plants/xl/melon-cantaloupe-type-cucumis-melo.webp"
+  },
+  "mesquite-prosopis-glandulosa": {
+    "emoji": "/grow/plants/emoji/mesquite-prosopis-glandulosa.webp",
+    "lg": "/grow/plants/lg/mesquite-prosopis-glandulosa.webp",
+    "medium": "/grow/plants/medium/mesquite-prosopis-glandulosa.webp",
+    "source": "396_Mesquite_Prosopis_glandulosa.png",
+    "xl": "/grow/plants/xl/mesquite-prosopis-glandulosa.webp"
+  },
+  "midland-hawthorn-crataegus-laevigata": {
+    "emoji": "/grow/plants/emoji/midland-hawthorn-crataegus-laevigata.webp",
+    "lg": "/grow/plants/lg/midland-hawthorn-crataegus-laevigata.webp",
+    "medium": "/grow/plants/medium/midland-hawthorn-crataegus-laevigata.webp",
+    "source": "375_Midland_hawthorn_Crataegus_laevigata.png",
+    "xl": "/grow/plants/xl/midland-hawthorn-crataegus-laevigata.webp"
+  },
+  "milk-thistle-silybum-marianum": {
+    "emoji": "/grow/plants/emoji/milk-thistle-silybum-marianum.webp",
+    "lg": "/grow/plants/lg/milk-thistle-silybum-marianum.webp",
+    "medium": "/grow/plants/medium/milk-thistle-silybum-marianum.webp",
+    "source": "174_Milk_thistle_Silybum_marianum.png",
+    "xl": "/grow/plants/xl/milk-thistle-silybum-marianum.webp"
+  },
+  "milkweed-asclepias-asclepias-tuberosa": {
+    "emoji": "/grow/plants/emoji/milkweed-asclepias-asclepias-tuberosa.webp",
+    "lg": "/grow/plants/lg/milkweed-asclepias-asclepias-tuberosa.webp",
+    "medium": "/grow/plants/medium/milkweed-asclepias-asclepias-tuberosa.webp",
+    "source": "008_Milkweed_Asclepias_Asclepias_tuberosa.png",
+    "xl": "/grow/plants/xl/milkweed-asclepias-asclepias-tuberosa.webp"
+  },
+  "mimosa-acacia-dealbata-acacia-dealbata": {
+    "emoji": "/grow/plants/emoji/mimosa-acacia-dealbata-acacia-dealbata.webp",
+    "lg": "/grow/plants/lg/mimosa-acacia-dealbata-acacia-dealbata.webp",
+    "medium": "/grow/plants/medium/mimosa-acacia-dealbata-acacia-dealbata.webp",
+    "source": "397_Mimosa_Acacia_dealbata_Acacia_dealbata.png",
+    "xl": "/grow/plants/xl/mimosa-acacia-dealbata-acacia-dealbata.webp"
+  },
+  "mirabelle-plum-prunus-domestica-subsp-syriaca": {
+    "emoji": "/grow/plants/emoji/mirabelle-plum-prunus-domestica-subsp-syriaca.webp",
+    "lg": "/grow/plants/lg/mirabelle-plum-prunus-domestica-subsp-syriaca.webp",
+    "medium": "/grow/plants/medium/mirabelle-plum-prunus-domestica-subsp-syriaca.webp",
+    "source": "112_Mirabelle_plum_Prunus_domestica_subsp_syriaca.png",
+    "xl": "/grow/plants/xl/mirabelle-plum-prunus-domestica-subsp-syriaca.webp"
+  },
+  "mizuna-brassica-rapa-var-nipposinica": {
+    "emoji": "/grow/plants/emoji/mizuna-brassica-rapa-var-nipposinica.webp",
+    "lg": "/grow/plants/lg/mizuna-brassica-rapa-var-nipposinica.webp",
+    "medium": "/grow/plants/medium/mizuna-brassica-rapa-var-nipposinica.webp",
+    "source": "238_Mizuna_Brassica_rapa_var_nipposinica.png",
+    "xl": "/grow/plants/xl/mizuna-brassica-rapa-var-nipposinica.webp"
+  },
+  "monterey-pine-pinus-radiata": {
+    "emoji": "/grow/plants/emoji/monterey-pine-pinus-radiata.webp",
+    "lg": "/grow/plants/lg/monterey-pine-pinus-radiata.webp",
+    "medium": "/grow/plants/medium/monterey-pine-pinus-radiata.webp",
+    "source": "398_Monterey_pine_Pinus_radiata.png",
+    "xl": "/grow/plants/xl/monterey-pine-pinus-radiata.webp"
+  },
+  "mugwort-artemisia-vulgaris-artemisia-vulgaris": {
+    "emoji": "/grow/plants/emoji/mugwort-artemisia-vulgaris-artemisia-vulgaris.webp",
+    "lg": "/grow/plants/lg/mugwort-artemisia-vulgaris-artemisia-vulgaris.webp",
+    "medium": "/grow/plants/medium/mugwort-artemisia-vulgaris-artemisia-vulgaris.webp",
+    "source": "241_Mugwort_Artemisia_vulgaris_Artemisia_vulgaris.png",
+    "xl": "/grow/plants/xl/mugwort-artemisia-vulgaris-artemisia-vulgaris.webp"
+  },
+  "mulberry-black-morus-nigra": {
+    "emoji": "/grow/plants/emoji/mulberry-black-morus-nigra.webp",
+    "lg": "/grow/plants/lg/mulberry-black-morus-nigra.webp",
+    "medium": "/grow/plants/medium/mulberry-black-morus-nigra.webp",
+    "source": "114_Mulberry_black_Morus_nigra.png",
+    "xl": "/grow/plants/xl/mulberry-black-morus-nigra.webp"
+  },
+  "mulberry-white-morus-alba": {
+    "emoji": "/grow/plants/emoji/mulberry-white-morus-alba.webp",
+    "lg": "/grow/plants/lg/mulberry-white-morus-alba.webp",
+    "medium": "/grow/plants/medium/mulberry-white-morus-alba.webp",
+    "source": "115_Mulberry_white_Morus_alba.png",
+    "xl": "/grow/plants/xl/mulberry-white-morus-alba.webp"
+  },
+  "mullein-verbascum-thapsus": {
+    "emoji": "/grow/plants/emoji/mullein-verbascum-thapsus.webp",
+    "lg": "/grow/plants/lg/mullein-verbascum-thapsus.webp",
+    "medium": "/grow/plants/medium/mullein-verbascum-thapsus.webp",
+    "source": "242_Mullein_Verbascum_thapsus.png",
+    "xl": "/grow/plants/xl/mullein-verbascum-thapsus.webp"
+  },
+  "multiplier-onion-allium-cepa-aggregatum-group": {
+    "emoji": "/grow/plants/emoji/multiplier-onion-allium-cepa-aggregatum-group.webp",
+    "lg": "/grow/plants/lg/multiplier-onion-allium-cepa-aggregatum-group.webp",
+    "medium": "/grow/plants/medium/multiplier-onion-allium-cepa-aggregatum-group.webp",
+    "source": "243_Multiplier_onion_Allium_cepa_Aggregatum_Group.png",
+    "xl": "/grow/plants/xl/multiplier-onion-allium-cepa-aggregatum-group.webp"
+  },
+  "mustard-greens-brassica-juncea": {
+    "emoji": "/grow/plants/emoji/mustard-greens-brassica-juncea.webp",
+    "lg": "/grow/plants/lg/mustard-greens-brassica-juncea.webp",
+    "medium": "/grow/plants/medium/mustard-greens-brassica-juncea.webp",
+    "source": "244_Mustard_greens_Brassica_juncea.png",
+    "xl": "/grow/plants/xl/mustard-greens-brassica-juncea.webp"
+  },
+  "nasturtium-tropaeolum-majus": {
+    "emoji": "/grow/plants/emoji/nasturtium-tropaeolum-majus.webp",
+    "lg": "/grow/plants/lg/nasturtium-tropaeolum-majus.webp",
+    "medium": "/grow/plants/medium/nasturtium-tropaeolum-majus.webp",
+    "source": "245_Nasturtium_Tropaeolum_majus.png",
+    "xl": "/grow/plants/xl/nasturtium-tropaeolum-majus.webp"
+  },
+  "nectarine-prunus-persica-var-nucipersica": {
+    "emoji": "/grow/plants/emoji/nectarine-prunus-persica-var-nucipersica.webp",
+    "lg": "/grow/plants/lg/nectarine-prunus-persica-var-nucipersica.webp",
+    "medium": "/grow/plants/medium/nectarine-prunus-persica-var-nucipersica.webp",
+    "source": "116_Nectarine_Prunus_persica_var_nucipersica.png",
+    "xl": "/grow/plants/xl/nectarine-prunus-persica-var-nucipersica.webp"
+  },
+  "norway-maple-acer-platanoides": {
+    "emoji": "/grow/plants/emoji/norway-maple-acer-platanoides.webp",
+    "lg": "/grow/plants/lg/norway-maple-acer-platanoides.webp",
+    "medium": "/grow/plants/medium/norway-maple-acer-platanoides.webp",
+    "source": "400_Norway_maple_Acer_platanoides.png",
+    "xl": "/grow/plants/xl/norway-maple-acer-platanoides.webp"
+  },
+  "norway-spruce-picea-abies": {
+    "emoji": "/grow/plants/emoji/norway-spruce-picea-abies.webp",
+    "lg": "/grow/plants/lg/norway-spruce-picea-abies.webp",
+    "medium": "/grow/plants/medium/norway-spruce-picea-abies.webp",
+    "source": "401_Norway_spruce_Picea_abies.png",
+    "xl": "/grow/plants/xl/norway-spruce-picea-abies.webp"
+  },
+  "oats-green-manure-avena-sativa": {
+    "emoji": "/grow/plants/emoji/oats-green-manure-avena-sativa.webp",
+    "lg": "/grow/plants/lg/oats-green-manure-avena-sativa.webp",
+    "medium": "/grow/plants/medium/oats-green-manure-avena-sativa.webp",
+    "source": "246_Oats_green_manure_Avena_sativa.png",
+    "xl": "/grow/plants/xl/oats-green-manure-avena-sativa.webp"
+  },
+  "okra-abelmoschus-esculentus": {
+    "emoji": "/grow/plants/emoji/okra-abelmoschus-esculentus.webp",
+    "lg": "/grow/plants/lg/okra-abelmoschus-esculentus.webp",
+    "medium": "/grow/plants/medium/okra-abelmoschus-esculentus.webp",
+    "source": "247_Okra_Abelmoschus_esculentus.png",
+    "xl": "/grow/plants/xl/okra-abelmoschus-esculentus.webp"
+  },
+  "olive-olea-europaea": {
+    "emoji": "/grow/plants/emoji/olive-olea-europaea.webp",
+    "lg": "/grow/plants/lg/olive-olea-europaea.webp",
+    "medium": "/grow/plants/medium/olive-olea-europaea.webp",
+    "source": "117_Olive_Olea_europaea.png",
+    "xl": "/grow/plants/xl/olive-olea-europaea.webp"
+  },
+  "onion-allium-cepa": {
+    "emoji": "/grow/plants/emoji/onion-allium-cepa.webp",
+    "lg": "/grow/plants/lg/onion-allium-cepa.webp",
+    "medium": "/grow/plants/medium/onion-allium-cepa.webp",
+    "source": "248_Onion_Allium_cepa.png",
+    "xl": "/grow/plants/xl/onion-allium-cepa.webp"
+  },
+  "orange-citrus-sinensis": {
+    "emoji": "/grow/plants/emoji/orange-citrus-sinensis.webp",
+    "lg": "/grow/plants/lg/orange-citrus-sinensis.webp",
+    "medium": "/grow/plants/medium/orange-citrus-sinensis.webp",
+    "source": "118_Orange_Citrus_sinensis.png",
+    "xl": "/grow/plants/xl/orange-citrus-sinensis.webp"
+  },
+  "oregano-origanum-vulgare": {
+    "emoji": "/grow/plants/emoji/oregano-origanum-vulgare.webp",
+    "lg": "/grow/plants/lg/oregano-origanum-vulgare.webp",
+    "medium": "/grow/plants/medium/oregano-origanum-vulgare.webp",
+    "source": "177_Oregano_Origanum_vulgare.png",
+    "xl": "/grow/plants/xl/oregano-origanum-vulgare.webp"
+  },
+  "oval-leaf-privet-ligustrum-ovalifolium": {
+    "emoji": "/grow/plants/emoji/oval-leaf-privet-ligustrum-ovalifolium.webp",
+    "lg": "/grow/plants/lg/oval-leaf-privet-ligustrum-ovalifolium.webp",
+    "medium": "/grow/plants/medium/oval-leaf-privet-ligustrum-ovalifolium.webp",
+    "source": "276_Oval_leaf_privet_Ligustrum_ovalifolium.png",
+    "xl": "/grow/plants/xl/oval-leaf-privet-ligustrum-ovalifolium.webp"
+  },
+  "pagoda-tree-styphnolobium-japonicum": {
+    "emoji": "/grow/plants/emoji/pagoda-tree-styphnolobium-japonicum.webp",
+    "lg": "/grow/plants/lg/pagoda-tree-styphnolobium-japonicum.webp",
+    "medium": "/grow/plants/medium/pagoda-tree-styphnolobium-japonicum.webp",
+    "source": "405_Pagoda_tree_Styphnolobium_japonicum.png",
+    "xl": "/grow/plants/xl/pagoda-tree-styphnolobium-japonicum.webp"
+  },
+  "pak-choi-bok-choy-brassica-rapa-subsp-chinensis": {
+    "emoji": "/grow/plants/emoji/pak-choi-bok-choy-brassica-rapa-subsp-chinensis.webp",
+    "lg": "/grow/plants/lg/pak-choi-bok-choy-brassica-rapa-subsp-chinensis.webp",
+    "medium": "/grow/plants/medium/pak-choi-bok-choy-brassica-rapa-subsp-chinensis.webp",
+    "source": "250_Pak_choi_bok_choy_Brassica_rapa_subsp_chinensis.png",
+    "xl": "/grow/plants/xl/pak-choi-bok-choy-brassica-rapa-subsp-chinensis.webp"
+  },
+  "paperbark-maple-acer-griseum": {
+    "emoji": "/grow/plants/emoji/paperbark-maple-acer-griseum.webp",
+    "lg": "/grow/plants/lg/paperbark-maple-acer-griseum.webp",
+    "medium": "/grow/plants/medium/paperbark-maple-acer-griseum.webp",
+    "source": "406_Paperbark_maple_Acer_griseum.png",
+    "xl": "/grow/plants/xl/paperbark-maple-acer-griseum.webp"
+  },
+  "parsley-petroselinum-crispum": {
+    "emoji": "/grow/plants/emoji/parsley-petroselinum-crispum.webp",
+    "lg": "/grow/plants/lg/parsley-petroselinum-crispum.webp",
+    "medium": "/grow/plants/medium/parsley-petroselinum-crispum.webp",
+    "source": "251_Parsley_Petroselinum_crispum.png",
+    "xl": "/grow/plants/xl/parsley-petroselinum-crispum.webp"
+  },
+  "parsnip-pastinaca-sativa": {
+    "emoji": "/grow/plants/emoji/parsnip-pastinaca-sativa.webp",
+    "lg": "/grow/plants/lg/parsnip-pastinaca-sativa.webp",
+    "medium": "/grow/plants/medium/parsnip-pastinaca-sativa.webp",
+    "source": "252_Parsnip_Pastinaca_sativa.png",
+    "xl": "/grow/plants/xl/parsnip-pastinaca-sativa.webp"
+  },
+  "passionflower-passiflora-caerulea-passiflora-caerulea": {
+    "emoji": "/grow/plants/emoji/passionflower-passiflora-caerulea-passiflora-caerulea.webp",
+    "lg": "/grow/plants/lg/passionflower-passiflora-caerulea-passiflora-caerulea.webp",
+    "medium": "/grow/plants/medium/passionflower-passiflora-caerulea-passiflora-caerulea.webp",
+    "source": "253_Passionflower_Passiflora_caerulea_Passiflora_caerulea.png",
+    "xl": "/grow/plants/xl/passionflower-passiflora-caerulea-passiflora-caerulea.webp"
+  },
+  "pattypan-squash-cucurbita-pepo": {
+    "emoji": "/grow/plants/emoji/pattypan-squash-cucurbita-pepo.webp",
+    "lg": "/grow/plants/lg/pattypan-squash-cucurbita-pepo.webp",
+    "medium": "/grow/plants/medium/pattypan-squash-cucurbita-pepo.webp",
+    "source": "313_Pattypan_squash_Cucurbita_pepo.png",
+    "xl": "/grow/plants/xl/pattypan-squash-cucurbita-pepo.webp"
+  },
+  "pawpaw-asimina-triloba-asimina-triloba": {
+    "emoji": "/grow/plants/emoji/pawpaw-asimina-triloba-asimina-triloba.webp",
+    "lg": "/grow/plants/lg/pawpaw-asimina-triloba-asimina-triloba.webp",
+    "medium": "/grow/plants/medium/pawpaw-asimina-triloba-asimina-triloba.webp",
+    "source": "119_Pawpaw_Asimina_triloba_Asimina_triloba.png",
+    "xl": "/grow/plants/xl/pawpaw-asimina-triloba-asimina-triloba.webp"
+  },
+  "pea-pisum-sativum": {
+    "emoji": "/grow/plants/emoji/pea-pisum-sativum.webp",
+    "lg": "/grow/plants/lg/pea-pisum-sativum.webp",
+    "medium": "/grow/plants/medium/pea-pisum-sativum.webp",
+    "source": "254_Pea_Pisum_sativum.png",
+    "xl": "/grow/plants/xl/pea-pisum-sativum.webp"
+  },
+  "peach-prunus-persica": {
+    "emoji": "/grow/plants/emoji/peach-prunus-persica.webp",
+    "lg": "/grow/plants/lg/peach-prunus-persica.webp",
+    "medium": "/grow/plants/medium/peach-prunus-persica.webp",
+    "source": "120_Peach_Prunus_persica.png",
+    "xl": "/grow/plants/xl/peach-prunus-persica.webp"
+  },
+  "pear-pyrus-communis": {
+    "emoji": "/grow/plants/emoji/pear-pyrus-communis.webp",
+    "lg": "/grow/plants/lg/pear-pyrus-communis.webp",
+    "medium": "/grow/plants/medium/pear-pyrus-communis.webp",
+    "source": "121_Pear_Pyrus_communis.png",
+    "xl": "/grow/plants/xl/pear-pyrus-communis.webp"
+  },
+  "pecan-carya-illinoinensis": {
+    "emoji": "/grow/plants/emoji/pecan-carya-illinoinensis.webp",
+    "lg": "/grow/plants/lg/pecan-carya-illinoinensis.webp",
+    "medium": "/grow/plants/medium/pecan-carya-illinoinensis.webp",
+    "source": "258_Pecan_Carya_illinoinensis.png",
+    "xl": "/grow/plants/xl/pecan-carya-illinoinensis.webp"
+  },
+  "pennyroyal-mentha-pulegium-mentha-pulegium": {
+    "emoji": "/grow/plants/emoji/pennyroyal-mentha-pulegium-mentha-pulegium.webp",
+    "lg": "/grow/plants/lg/pennyroyal-mentha-pulegium-mentha-pulegium.webp",
+    "medium": "/grow/plants/medium/pennyroyal-mentha-pulegium-mentha-pulegium.webp",
+    "source": "259_Pennyroyal_Mentha_pulegium_Mentha_pulegium.png",
+    "xl": "/grow/plants/xl/pennyroyal-mentha-pulegium-mentha-pulegium.webp"
+  },
+  "penstemon-penstemon-hybrida": {
+    "emoji": "/grow/plants/emoji/penstemon-penstemon-hybrida.webp",
+    "lg": "/grow/plants/lg/penstemon-penstemon-hybrida.webp",
+    "medium": "/grow/plants/medium/penstemon-penstemon-hybrida.webp",
+    "source": "260_Penstemon_Penstemon_hybrida.png",
+    "xl": "/grow/plants/xl/penstemon-penstemon-hybrida.webp"
+  },
+  "peony-paeonia-lactiflora": {
+    "emoji": "/grow/plants/emoji/peony-paeonia-lactiflora.webp",
+    "lg": "/grow/plants/lg/peony-paeonia-lactiflora.webp",
+    "medium": "/grow/plants/medium/peony-paeonia-lactiflora.webp",
+    "source": "261_Peony_Paeonia_lactiflora.png",
+    "xl": "/grow/plants/xl/peony-paeonia-lactiflora.webp"
+  },
+  "pepper-capsicum-annuum": {
+    "emoji": "/grow/plants/emoji/pepper-capsicum-annuum.webp",
+    "lg": "/grow/plants/lg/pepper-capsicum-annuum.webp",
+    "medium": "/grow/plants/medium/pepper-capsicum-annuum.webp",
+    "source": "262_Pepper_Capsicum_annuum.png",
+    "xl": "/grow/plants/xl/pepper-capsicum-annuum.webp"
+  },
+  "peppermint-mentha-piperita": {
+    "emoji": "/grow/plants/emoji/peppermint-mentha-piperita.webp",
+    "lg": "/grow/plants/lg/peppermint-mentha-piperita.webp",
+    "medium": "/grow/plants/medium/peppermint-mentha-piperita.webp",
+    "source": "175_Peppermint_Mentha_piperita.png",
+    "xl": "/grow/plants/xl/peppermint-mentha-piperita.webp"
+  },
+  "perennial-alyssum-aurinia-saxatilis-aurinia-saxatilis": {
+    "emoji": "/grow/plants/emoji/perennial-alyssum-aurinia-saxatilis-aurinia-saxatilis.webp",
+    "lg": "/grow/plants/lg/perennial-alyssum-aurinia-saxatilis-aurinia-saxatilis.webp",
+    "medium": "/grow/plants/medium/perennial-alyssum-aurinia-saxatilis-aurinia-saxatilis.webp",
+    "source": "004_Perennial_alyssum_Aurinia_saxatilis_Aurinia_saxatilis.png",
+    "xl": "/grow/plants/xl/perennial-alyssum-aurinia-saxatilis-aurinia-saxatilis.webp"
+  },
+  "perennial-fennel-foeniculum-vulgare": {
+    "emoji": "/grow/plants/emoji/perennial-fennel-foeniculum-vulgare.webp",
+    "lg": "/grow/plants/lg/perennial-fennel-foeniculum-vulgare.webp",
+    "medium": "/grow/plants/medium/perennial-fennel-foeniculum-vulgare.webp",
+    "source": "077_Perennial_fennel_Foeniculum_vulgare.png",
+    "xl": "/grow/plants/xl/perennial-fennel-foeniculum-vulgare.webp"
+  },
+  "perennial-sweet-pea-lathyrus-latifolius": {
+    "emoji": "/grow/plants/emoji/perennial-sweet-pea-lathyrus-latifolius.webp",
+    "lg": "/grow/plants/lg/perennial-sweet-pea-lathyrus-latifolius.webp",
+    "medium": "/grow/plants/medium/perennial-sweet-pea-lathyrus-latifolius.webp",
+    "source": "266_Perennial_sweet_pea_Lathyrus_latifolius.png",
+    "xl": "/grow/plants/xl/perennial-sweet-pea-lathyrus-latifolius.webp"
+  },
+  "persimmon-kaki-diospyros-kaki": {
+    "emoji": "/grow/plants/emoji/persimmon-kaki-diospyros-kaki.webp",
+    "lg": "/grow/plants/lg/persimmon-kaki-diospyros-kaki.webp",
+    "medium": "/grow/plants/medium/persimmon-kaki-diospyros-kaki.webp",
+    "source": "122_Persimmon_kaki_Diospyros_kaki.png",
+    "xl": "/grow/plants/xl/persimmon-kaki-diospyros-kaki.webp"
+  },
+  "petunia-petunia-hybrida": {
+    "emoji": "/grow/plants/emoji/petunia-petunia-hybrida.webp",
+    "lg": "/grow/plants/lg/petunia-petunia-hybrida.webp",
+    "medium": "/grow/plants/medium/petunia-petunia-hybrida.webp",
+    "source": "267_Petunia_Petunia_hybrida.png",
+    "xl": "/grow/plants/xl/petunia-petunia-hybrida.webp"
+  },
+  "phacelia-cover-crop-phacelia-tanacetifolia": {
+    "emoji": "/grow/plants/emoji/phacelia-cover-crop-phacelia-tanacetifolia.webp",
+    "lg": "/grow/plants/lg/phacelia-cover-crop-phacelia-tanacetifolia.webp",
+    "medium": "/grow/plants/medium/phacelia-cover-crop-phacelia-tanacetifolia.webp",
+    "source": "268_Phacelia_cover_crop_Phacelia_tanacetifolia.png",
+    "xl": "/grow/plants/xl/phacelia-cover-crop-phacelia-tanacetifolia.webp"
+  },
+  "pineapple-sage-salvia-elegans": {
+    "emoji": "/grow/plants/emoji/pineapple-sage-salvia-elegans.webp",
+    "lg": "/grow/plants/lg/pineapple-sage-salvia-elegans.webp",
+    "medium": "/grow/plants/medium/pineapple-sage-salvia-elegans.webp",
+    "source": "183_Pineapple_sage_Salvia_elegans.png",
+    "xl": "/grow/plants/xl/pineapple-sage-salvia-elegans.webp"
+  },
+  "plum-prunus-domestica": {
+    "emoji": "/grow/plants/emoji/plum-prunus-domestica.webp",
+    "lg": "/grow/plants/lg/plum-prunus-domestica.webp",
+    "medium": "/grow/plants/medium/plum-prunus-domestica.webp",
+    "source": "123_Plum_Prunus_domestica.png",
+    "xl": "/grow/plants/xl/plum-prunus-domestica.webp"
+  },
+  "plum-roma-tomato-solanum-lycopersicum": {
+    "emoji": "/grow/plants/emoji/plum-roma-tomato-solanum-lycopersicum.webp",
+    "lg": "/grow/plants/lg/plum-roma-tomato-solanum-lycopersicum.webp",
+    "medium": "/grow/plants/medium/plum-roma-tomato-solanum-lycopersicum.webp",
+    "source": "333_Plum_Roma_tomato_Solanum_lycopersicum.png",
+    "xl": "/grow/plants/xl/plum-roma-tomato-solanum-lycopersicum.webp"
+  },
+  "pomegranate-punica-granatum": {
+    "emoji": "/grow/plants/emoji/pomegranate-punica-granatum.webp",
+    "lg": "/grow/plants/lg/pomegranate-punica-granatum.webp",
+    "medium": "/grow/plants/medium/pomegranate-punica-granatum.webp",
+    "source": "124_Pomegranate_Punica_granatum.png",
+    "xl": "/grow/plants/xl/pomegranate-punica-granatum.webp"
+  },
+  "ponderosa-pine-pinus-ponderosa": {
+    "emoji": "/grow/plants/emoji/ponderosa-pine-pinus-ponderosa.webp",
+    "lg": "/grow/plants/lg/ponderosa-pine-pinus-ponderosa.webp",
+    "medium": "/grow/plants/medium/ponderosa-pine-pinus-ponderosa.webp",
+    "source": "407_Ponderosa_pine_Pinus_ponderosa.png",
+    "xl": "/grow/plants/xl/ponderosa-pine-pinus-ponderosa.webp"
+  },
+  "poppy-annual-types-papaver-rhoeas": {
+    "emoji": "/grow/plants/emoji/poppy-annual-types-papaver-rhoeas.webp",
+    "lg": "/grow/plants/lg/poppy-annual-types-papaver-rhoeas.webp",
+    "medium": "/grow/plants/medium/poppy-annual-types-papaver-rhoeas.webp",
+    "source": "272_Poppy_annual_types_Papaver_rhoeas.png",
+    "xl": "/grow/plants/xl/poppy-annual-types-papaver-rhoeas.webp"
+  },
+  "potato-solanum-tuberosum": {
+    "emoji": "/grow/plants/emoji/potato-solanum-tuberosum.webp",
+    "lg": "/grow/plants/lg/potato-solanum-tuberosum.webp",
+    "medium": "/grow/plants/medium/potato-solanum-tuberosum.webp",
+    "source": "273_Potato_Solanum_tuberosum.png",
+    "xl": "/grow/plants/xl/potato-solanum-tuberosum.webp"
+  },
+  "primrose-primula-vulgaris": {
+    "emoji": "/grow/plants/emoji/primrose-primula-vulgaris.webp",
+    "lg": "/grow/plants/lg/primrose-primula-vulgaris.webp",
+    "medium": "/grow/plants/medium/primrose-primula-vulgaris.webp",
+    "source": "274_Primrose_Primula_vulgaris.png",
+    "xl": "/grow/plants/xl/primrose-primula-vulgaris.webp"
+  },
+  "pulmonaria-lungwort-pulmonaria-officinalis": {
+    "emoji": "/grow/plants/emoji/pulmonaria-lungwort-pulmonaria-officinalis.webp",
+    "lg": "/grow/plants/lg/pulmonaria-lungwort-pulmonaria-officinalis.webp",
+    "medium": "/grow/plants/medium/pulmonaria-lungwort-pulmonaria-officinalis.webp",
+    "source": "277_Pulmonaria_lungwort_Pulmonaria_officinalis.png",
+    "xl": "/grow/plants/xl/pulmonaria-lungwort-pulmonaria-officinalis.webp"
+  },
+  "pumpkin-cucurbita-maxima": {
+    "emoji": "/grow/plants/emoji/pumpkin-cucurbita-maxima.webp",
+    "lg": "/grow/plants/lg/pumpkin-cucurbita-maxima.webp",
+    "medium": "/grow/plants/medium/pumpkin-cucurbita-maxima.webp",
+    "source": "278_Pumpkin_Cucurbita_maxima.png",
+    "xl": "/grow/plants/xl/pumpkin-cucurbita-maxima.webp"
+  },
+  "purple-sage-salvia-officinalis": {
+    "emoji": "/grow/plants/emoji/purple-sage-salvia-officinalis.webp",
+    "lg": "/grow/plants/lg/purple-sage-salvia-officinalis.webp",
+    "medium": "/grow/plants/medium/purple-sage-salvia-officinalis.webp",
+    "source": "184_Purple_sage_Salvia_officinalis.png",
+    "xl": "/grow/plants/xl/purple-sage-salvia-officinalis.webp"
+  },
+  "purslane-garden-portulaca-oleracea": {
+    "emoji": "/grow/plants/emoji/purslane-garden-portulaca-oleracea.webp",
+    "lg": "/grow/plants/lg/purslane-garden-portulaca-oleracea.webp",
+    "medium": "/grow/plants/medium/purslane-garden-portulaca-oleracea.webp",
+    "source": "279_Purslane_garden_Portulaca_oleracea.png",
+    "xl": "/grow/plants/xl/purslane-garden-portulaca-oleracea.webp"
+  },
+  "quandong-native-peach-santalum-acuminatum": {
+    "emoji": "/grow/plants/emoji/quandong-native-peach-santalum-acuminatum.webp",
+    "lg": "/grow/plants/lg/quandong-native-peach-santalum-acuminatum.webp",
+    "medium": "/grow/plants/medium/quandong-native-peach-santalum-acuminatum.webp",
+    "source": "125_Quandong_native_peach_Santalum_acuminatum.png",
+    "xl": "/grow/plants/xl/quandong-native-peach-santalum-acuminatum.webp"
+  },
+  "quince-cydonia-oblonga": {
+    "emoji": "/grow/plants/emoji/quince-cydonia-oblonga.webp",
+    "lg": "/grow/plants/lg/quince-cydonia-oblonga.webp",
+    "medium": "/grow/plants/medium/quince-cydonia-oblonga.webp",
+    "source": "126_Quince_Cydonia_oblonga.png",
+    "xl": "/grow/plants/xl/quince-cydonia-oblonga.webp"
+  },
+  "radicchio-cichorium-intybus-var-foliosum": {
+    "emoji": "/grow/plants/emoji/radicchio-cichorium-intybus-var-foliosum.webp",
+    "lg": "/grow/plants/lg/radicchio-cichorium-intybus-var-foliosum.webp",
+    "medium": "/grow/plants/medium/radicchio-cichorium-intybus-var-foliosum.webp",
+    "source": "280_Radicchio_Cichorium_intybus_var_foliosum.png",
+    "xl": "/grow/plants/xl/radicchio-cichorium-intybus-var-foliosum.webp"
+  },
+  "radish-raphanus-sativus": {
+    "emoji": "/grow/plants/emoji/radish-raphanus-sativus.webp",
+    "lg": "/grow/plants/lg/radish-raphanus-sativus.webp",
+    "medium": "/grow/plants/medium/radish-raphanus-sativus.webp",
+    "source": "281_Radish_Raphanus_sativus.png",
+    "xl": "/grow/plants/xl/radish-raphanus-sativus.webp"
+  },
+  "rakkyo-pickling-onion-allium-chinense": {
+    "emoji": "/grow/plants/emoji/rakkyo-pickling-onion-allium-chinense.webp",
+    "lg": "/grow/plants/lg/rakkyo-pickling-onion-allium-chinense.webp",
+    "medium": "/grow/plants/medium/rakkyo-pickling-onion-allium-chinense.webp",
+    "source": "282_Rakkyo_pickling_onion_Allium_chinense.png",
+    "xl": "/grow/plants/xl/rakkyo-pickling-onion-allium-chinense.webp"
+  },
+  "rambling-rose-rosa-multiflora": {
+    "emoji": "/grow/plants/emoji/rambling-rose-rosa-multiflora.webp",
+    "lg": "/grow/plants/lg/rambling-rose-rosa-multiflora.webp",
+    "medium": "/grow/plants/medium/rambling-rose-rosa-multiflora.webp",
+    "source": "048_Rambling_rose_Rosa_multiflora.png",
+    "xl": "/grow/plants/xl/rambling-rose-rosa-multiflora.webp"
+  },
+  "red-alder-alnus-rubra": {
+    "emoji": "/grow/plants/emoji/red-alder-alnus-rubra.webp",
+    "lg": "/grow/plants/lg/red-alder-alnus-rubra.webp",
+    "medium": "/grow/plants/medium/red-alder-alnus-rubra.webp",
+    "source": "342_Red_alder_Alnus_rubra.png",
+    "xl": "/grow/plants/xl/red-alder-alnus-rubra.webp"
+  },
+  "red-cabbage-brassica-oleracea-var-capitata-f-rubra": {
+    "emoji": "/grow/plants/emoji/red-cabbage-brassica-oleracea-var-capitata-f-rubra.webp",
+    "lg": "/grow/plants/lg/red-cabbage-brassica-oleracea-var-capitata-f-rubra.webp",
+    "medium": "/grow/plants/medium/red-cabbage-brassica-oleracea-var-capitata-f-rubra.webp",
+    "source": "030_Red_cabbage_Brassica_oleracea_var_capitata_f_rubra.png",
+    "xl": "/grow/plants/xl/red-cabbage-brassica-oleracea-var-capitata-f-rubra.webp"
+  },
+  "red-clover-trifolium-pratense": {
+    "emoji": "/grow/plants/emoji/red-clover-trifolium-pratense.webp",
+    "lg": "/grow/plants/lg/red-clover-trifolium-pratense.webp",
+    "medium": "/grow/plants/medium/red-clover-trifolium-pratense.webp",
+    "source": "283_Red_clover_Trifolium_pratense.png",
+    "xl": "/grow/plants/xl/red-clover-trifolium-pratense.webp"
+  },
+  "red-maple-acer-rubrum": {
+    "emoji": "/grow/plants/emoji/red-maple-acer-rubrum.webp",
+    "lg": "/grow/plants/lg/red-maple-acer-rubrum.webp",
+    "medium": "/grow/plants/medium/red-maple-acer-rubrum.webp",
+    "source": "410_Red_maple_Acer_rubrum.png",
+    "xl": "/grow/plants/xl/red-maple-acer-rubrum.webp"
+  },
+  "red-oak-quercus-rubra": {
+    "emoji": "/grow/plants/emoji/red-oak-quercus-rubra.webp",
+    "lg": "/grow/plants/lg/red-oak-quercus-rubra.webp",
+    "medium": "/grow/plants/medium/red-oak-quercus-rubra.webp",
+    "source": "404_Red_oak_Quercus_rubra.png",
+    "xl": "/grow/plants/xl/red-oak-quercus-rubra.webp"
+  },
+  "red-stem-dogwood-cornus-alba-cornus-alba": {
+    "emoji": "/grow/plants/emoji/red-stem-dogwood-cornus-alba-cornus-alba.webp",
+    "lg": "/grow/plants/lg/red-stem-dogwood-cornus-alba-cornus-alba.webp",
+    "medium": "/grow/plants/medium/red-stem-dogwood-cornus-alba-cornus-alba.webp",
+    "source": "067_Red_stem_dogwood_Cornus_alba_Cornus_alba.png",
+    "xl": "/grow/plants/xl/red-stem-dogwood-cornus-alba-cornus-alba.webp"
+  },
+  "rhubarb-rheum-hybridum": {
+    "emoji": "/grow/plants/emoji/rhubarb-rheum-hybridum.webp",
+    "lg": "/grow/plants/lg/rhubarb-rheum-hybridum.webp",
+    "medium": "/grow/plants/medium/rhubarb-rheum-hybridum.webp",
+    "source": "284_Rhubarb_Rheum_hybridum.png",
+    "xl": "/grow/plants/xl/rhubarb-rheum-hybridum.webp"
+  },
+  "rocket-arugula-eruca-vesicaria-subsp-sativa": {
+    "emoji": "/grow/plants/emoji/rocket-arugula-eruca-vesicaria-subsp-sativa.webp",
+    "lg": "/grow/plants/lg/rocket-arugula-eruca-vesicaria-subsp-sativa.webp",
+    "medium": "/grow/plants/medium/rocket-arugula-eruca-vesicaria-subsp-sativa.webp",
+    "source": "285_Rocket_arugula_Eruca_vesicaria_subsp_sativa.png",
+    "xl": "/grow/plants/xl/rocket-arugula-eruca-vesicaria-subsp-sativa.webp"
+  },
+  "romaine-lettuce-lactuca-sativa-var-longifolia": {
+    "emoji": "/grow/plants/emoji/romaine-lettuce-lactuca-sativa-var-longifolia.webp",
+    "lg": "/grow/plants/lg/romaine-lettuce-lactuca-sativa-var-longifolia.webp",
+    "medium": "/grow/plants/medium/romaine-lettuce-lactuca-sativa-var-longifolia.webp",
+    "source": "225_Romaine_lettuce_Lactuca_sativa_var_longifolia.png",
+    "xl": "/grow/plants/xl/romaine-lettuce-lactuca-sativa-var-longifolia.webp"
+  },
+  "roman-chamomile-chamaemelum-nobile": {
+    "emoji": "/grow/plants/emoji/roman-chamomile-chamaemelum-nobile.webp",
+    "lg": "/grow/plants/lg/roman-chamomile-chamaemelum-nobile.webp",
+    "medium": "/grow/plants/medium/roman-chamomile-chamaemelum-nobile.webp",
+    "source": "159_Roman_chamomile_Chamaemelum_nobile.png",
+    "xl": "/grow/plants/xl/roman-chamomile-chamaemelum-nobile.webp"
+  },
+  "romanesco-broccoli-brassica-oleracea-var-botrytis": {
+    "emoji": "/grow/plants/emoji/romanesco-broccoli-brassica-oleracea-var-botrytis.webp",
+    "lg": "/grow/plants/lg/romanesco-broccoli-brassica-oleracea-var-botrytis.webp",
+    "medium": "/grow/plants/medium/romanesco-broccoli-brassica-oleracea-var-botrytis.webp",
+    "source": "286_Romanesco_broccoli_Brassica_oleracea_var_botrytis.png",
+    "xl": "/grow/plants/xl/romanesco-broccoli-brassica-oleracea-var-botrytis.webp"
+  },
+  "rosa-rugosa-hedge-rosa-rugosa": {
+    "emoji": "/grow/plants/emoji/rosa-rugosa-hedge-rosa-rugosa.webp",
+    "lg": "/grow/plants/lg/rosa-rugosa-hedge-rosa-rugosa.webp",
+    "medium": "/grow/plants/medium/rosa-rugosa-hedge-rosa-rugosa.webp",
+    "source": "287_Rosa_rugosa_hedge_Rosa_rugosa.png",
+    "xl": "/grow/plants/xl/rosa-rugosa-hedge-rosa-rugosa.webp"
+  },
+  "rose-garden-types-rosa-hybrida": {
+    "emoji": "/grow/plants/emoji/rose-garden-types-rosa-hybrida.webp",
+    "lg": "/grow/plants/lg/rose-garden-types-rosa-hybrida.webp",
+    "medium": "/grow/plants/medium/rose-garden-types-rosa-hybrida.webp",
+    "source": "288_Rose_garden_types_Rosa_hybrida.png",
+    "xl": "/grow/plants/xl/rose-garden-types-rosa-hybrida.webp"
+  },
+  "rosemary-salvia-rosmarinus": {
+    "emoji": "/grow/plants/emoji/rosemary-salvia-rosmarinus.webp",
+    "lg": "/grow/plants/lg/rosemary-salvia-rosmarinus.webp",
+    "medium": "/grow/plants/medium/rosemary-salvia-rosmarinus.webp",
+    "source": "181_Rosemary_Salvia_rosmarinus.png",
+    "xl": "/grow/plants/xl/rosemary-salvia-rosmarinus.webp"
+  },
+  "rowan-mountain-ash-sorbus-aucuparia": {
+    "emoji": "/grow/plants/emoji/rowan-mountain-ash-sorbus-aucuparia.webp",
+    "lg": "/grow/plants/lg/rowan-mountain-ash-sorbus-aucuparia.webp",
+    "medium": "/grow/plants/medium/rowan-mountain-ash-sorbus-aucuparia.webp",
+    "source": "113_Rowan_Mountain_ash_Sorbus_aucuparia.png",
+    "xl": "/grow/plants/xl/rowan-mountain-ash-sorbus-aucuparia.webp"
+  },
+  "rowan-sorbus-aucuparia": {
+    "emoji": "/grow/plants/emoji/rowan-sorbus-aucuparia.webp",
+    "lg": "/grow/plants/lg/rowan-sorbus-aucuparia.webp",
+    "medium": "/grow/plants/medium/rowan-sorbus-aucuparia.webp",
+    "source": "413_Rowan_Sorbus_aucuparia.png",
+    "xl": "/grow/plants/xl/rowan-sorbus-aucuparia.webp"
+  },
+  "rudbeckia-black-eyed-susan-rudbeckia-hirta": {
+    "emoji": "/grow/plants/emoji/rudbeckia-black-eyed-susan-rudbeckia-hirta.webp",
+    "lg": "/grow/plants/lg/rudbeckia-black-eyed-susan-rudbeckia-hirta.webp",
+    "medium": "/grow/plants/medium/rudbeckia-black-eyed-susan-rudbeckia-hirta.webp",
+    "source": "289_Rudbeckia_black_eyed_Susan_Rudbeckia_hirta.png",
+    "xl": "/grow/plants/xl/rudbeckia-black-eyed-susan-rudbeckia-hirta.webp"
+  },
+  "rue-ruta-graveolens-ruta-graveolens": {
+    "emoji": "/grow/plants/emoji/rue-ruta-graveolens-ruta-graveolens.webp",
+    "lg": "/grow/plants/lg/rue-ruta-graveolens-ruta-graveolens.webp",
+    "medium": "/grow/plants/medium/rue-ruta-graveolens-ruta-graveolens.webp",
+    "source": "290_Rue_Ruta_graveolens_Ruta_graveolens.png",
+    "xl": "/grow/plants/xl/rue-ruta-graveolens-ruta-graveolens.webp"
+  },
+  "runner-bean-phaseolus-coccineus": {
+    "emoji": "/grow/plants/emoji/runner-bean-phaseolus-coccineus.webp",
+    "lg": "/grow/plants/lg/runner-bean-phaseolus-coccineus.webp",
+    "medium": "/grow/plants/medium/runner-bean-phaseolus-coccineus.webp",
+    "source": "291_Runner_bean_Phaseolus_coccineus.png",
+    "xl": "/grow/plants/xl/runner-bean-phaseolus-coccineus.webp"
+  },
+  "russian-comfrey-symphytum-uplandicum": {
+    "emoji": "/grow/plants/emoji/russian-comfrey-symphytum-uplandicum.webp",
+    "lg": "/grow/plants/lg/russian-comfrey-symphytum-uplandicum.webp",
+    "medium": "/grow/plants/medium/russian-comfrey-symphytum-uplandicum.webp",
+    "source": "292_Russian_comfrey_Symphytum_uplandicum.png",
+    "xl": "/grow/plants/xl/russian-comfrey-symphytum-uplandicum.webp"
+  },
+  "salsify-tragopogon-porrifolius": {
+    "emoji": "/grow/plants/emoji/salsify-tragopogon-porrifolius.webp",
+    "lg": "/grow/plants/lg/salsify-tragopogon-porrifolius.webp",
+    "medium": "/grow/plants/medium/salsify-tragopogon-porrifolius.webp",
+    "source": "294_Salsify_Tragopogon_porrifolius.png",
+    "xl": "/grow/plants/xl/salsify-tragopogon-porrifolius.webp"
+  },
+  "salvia-ornamental-salvia-nemorosa": {
+    "emoji": "/grow/plants/emoji/salvia-ornamental-salvia-nemorosa.webp",
+    "lg": "/grow/plants/lg/salvia-ornamental-salvia-nemorosa.webp",
+    "medium": "/grow/plants/medium/salvia-ornamental-salvia-nemorosa.webp",
+    "source": "295_Salvia_ornamental_Salvia_nemorosa.png",
+    "xl": "/grow/plants/xl/salvia-ornamental-salvia-nemorosa.webp"
+  },
+  "saskatoon-berry-amelanchier-alnifolia": {
+    "emoji": "/grow/plants/emoji/saskatoon-berry-amelanchier-alnifolia.webp",
+    "lg": "/grow/plants/lg/saskatoon-berry-amelanchier-alnifolia.webp",
+    "medium": "/grow/plants/medium/saskatoon-berry-amelanchier-alnifolia.webp",
+    "source": "127_Saskatoon_berry_Amelanchier_alnifolia.png",
+    "xl": "/grow/plants/xl/saskatoon-berry-amelanchier-alnifolia.webp"
+  },
+  "savoy-cabbage-brassica-oleracea-var-sabauda": {
+    "emoji": "/grow/plants/emoji/savoy-cabbage-brassica-oleracea-var-sabauda.webp",
+    "lg": "/grow/plants/lg/savoy-cabbage-brassica-oleracea-var-sabauda.webp",
+    "medium": "/grow/plants/medium/savoy-cabbage-brassica-oleracea-var-sabauda.webp",
+    "source": "031_Savoy_cabbage_Brassica_oleracea_var_sabauda.png",
+    "xl": "/grow/plants/xl/savoy-cabbage-brassica-oleracea-var-sabauda.webp"
+  },
+  "scabiosa-pincushion-flower-scabiosa-atropurpurea": {
+    "emoji": "/grow/plants/emoji/scabiosa-pincushion-flower-scabiosa-atropurpurea.webp",
+    "lg": "/grow/plants/lg/scabiosa-pincushion-flower-scabiosa-atropurpurea.webp",
+    "medium": "/grow/plants/medium/scabiosa-pincushion-flower-scabiosa-atropurpurea.webp",
+    "source": "296_Scabiosa_pincushion_flower_Scabiosa_atropurpurea.png",
+    "xl": "/grow/plants/xl/scabiosa-pincushion-flower-scabiosa-atropurpurea.webp"
+  },
+  "scarlet-runner-bean-phaseolus-coccineus": {
+    "emoji": "/grow/plants/emoji/scarlet-runner-bean-phaseolus-coccineus.webp",
+    "lg": "/grow/plants/lg/scarlet-runner-bean-phaseolus-coccineus.webp",
+    "medium": "/grow/plants/medium/scarlet-runner-bean-phaseolus-coccineus.webp",
+    "source": "297_Scarlet_runner_bean_Phaseolus_coccineus.png",
+    "xl": "/grow/plants/xl/scarlet-runner-bean-phaseolus-coccineus.webp"
+  },
+  "schisandra-berry-schisandra-chinensis-schisandra-chinensis": {
+    "emoji": "/grow/plants/emoji/schisandra-berry-schisandra-chinensis-schisandra-chinensis.webp",
+    "lg": "/grow/plants/lg/schisandra-berry-schisandra-chinensis-schisandra-chinensis.webp",
+    "medium": "/grow/plants/medium/schisandra-berry-schisandra-chinensis-schisandra-chinensis.webp",
+    "source": "298_Schisandra_berry_Schisandra_chinensis_Schisandra_chinensis.png",
+    "xl": "/grow/plants/xl/schisandra-berry-schisandra-chinensis-schisandra-chinensis.webp"
+  },
+  "scots-pine-pinus-sylvestris": {
+    "emoji": "/grow/plants/emoji/scots-pine-pinus-sylvestris.webp",
+    "lg": "/grow/plants/lg/scots-pine-pinus-sylvestris.webp",
+    "medium": "/grow/plants/medium/scots-pine-pinus-sylvestris.webp",
+    "source": "414_Scots_pine_Pinus_sylvestris.png",
+    "xl": "/grow/plants/xl/scots-pine-pinus-sylvestris.webp"
+  },
+  "sea-buckthorn-hippophae-rhamnoides": {
+    "emoji": "/grow/plants/emoji/sea-buckthorn-hippophae-rhamnoides.webp",
+    "lg": "/grow/plants/lg/sea-buckthorn-hippophae-rhamnoides.webp",
+    "medium": "/grow/plants/medium/sea-buckthorn-hippophae-rhamnoides.webp",
+    "source": "128_Sea_buckthorn_Hippophae_rhamnoides.png",
+    "xl": "/grow/plants/xl/sea-buckthorn-hippophae-rhamnoides.webp"
+  },
+  "sedum-stonecrop-sedum-spectabile": {
+    "emoji": "/grow/plants/emoji/sedum-stonecrop-sedum-spectabile.webp",
+    "lg": "/grow/plants/lg/sedum-stonecrop-sedum-spectabile.webp",
+    "medium": "/grow/plants/medium/sedum-stonecrop-sedum-spectabile.webp",
+    "source": "299_Sedum_stonecrop_Sedum_spectabile.png",
+    "xl": "/grow/plants/xl/sedum-stonecrop-sedum-spectabile.webp"
+  },
+  "self-heal-prunella-vulgaris-prunella-vulgaris": {
+    "emoji": "/grow/plants/emoji/self-heal-prunella-vulgaris-prunella-vulgaris.webp",
+    "lg": "/grow/plants/lg/self-heal-prunella-vulgaris-prunella-vulgaris.webp",
+    "medium": "/grow/plants/medium/self-heal-prunella-vulgaris-prunella-vulgaris.webp",
+    "source": "300_Self_heal_Prunella_vulgaris_Prunella_vulgaris.png",
+    "xl": "/grow/plants/xl/self-heal-prunella-vulgaris-prunella-vulgaris.webp"
+  },
+  "service-tree-sorbus-domestica": {
+    "emoji": "/grow/plants/emoji/service-tree-sorbus-domestica.webp",
+    "lg": "/grow/plants/lg/service-tree-sorbus-domestica.webp",
+    "medium": "/grow/plants/medium/service-tree-sorbus-domestica.webp",
+    "source": "416_Service_tree_Sorbus_domestica.png",
+    "xl": "/grow/plants/xl/service-tree-sorbus-domestica.webp"
+  },
+  "serviceberry-amelanchier-amelanchier-canadensis": {
+    "emoji": "/grow/plants/emoji/serviceberry-amelanchier-amelanchier-canadensis.webp",
+    "lg": "/grow/plants/lg/serviceberry-amelanchier-amelanchier-canadensis.webp",
+    "medium": "/grow/plants/medium/serviceberry-amelanchier-amelanchier-canadensis.webp",
+    "source": "129_Serviceberry_Amelanchier_Amelanchier_canadensis.png",
+    "xl": "/grow/plants/xl/serviceberry-amelanchier-amelanchier-canadensis.webp"
+  },
+  "serviceberry-tree-form-amelanchier-canadensis": {
+    "emoji": "/grow/plants/emoji/serviceberry-tree-form-amelanchier-canadensis.webp",
+    "lg": "/grow/plants/lg/serviceberry-tree-form-amelanchier-canadensis.webp",
+    "medium": "/grow/plants/medium/serviceberry-tree-form-amelanchier-canadensis.webp",
+    "source": "417_Serviceberry_tree_form_Amelanchier_canadensis.png",
+    "xl": "/grow/plants/xl/serviceberry-tree-form-amelanchier-canadensis.webp"
+  },
+  "sessile-oak-quercus-petraea": {
+    "emoji": "/grow/plants/emoji/sessile-oak-quercus-petraea.webp",
+    "lg": "/grow/plants/lg/sessile-oak-quercus-petraea.webp",
+    "medium": "/grow/plants/medium/sessile-oak-quercus-petraea.webp",
+    "source": "402_Sessile_oak_Quercus_petraea.png",
+    "xl": "/grow/plants/xl/sessile-oak-quercus-petraea.webp"
+  },
+  "shallot-allium-cepa-aggregatum-group": {
+    "emoji": "/grow/plants/emoji/shallot-allium-cepa-aggregatum-group.webp",
+    "lg": "/grow/plants/lg/shallot-allium-cepa-aggregatum-group.webp",
+    "medium": "/grow/plants/medium/shallot-allium-cepa-aggregatum-group.webp",
+    "source": "301_Shallot_Allium_cepa_Aggregatum_Group.png",
+    "xl": "/grow/plants/xl/shallot-allium-cepa-aggregatum-group.webp"
+  },
+  "shasta-daisy-leucanthemum-superbum": {
+    "emoji": "/grow/plants/emoji/shasta-daisy-leucanthemum-superbum.webp",
+    "lg": "/grow/plants/lg/shasta-daisy-leucanthemum-superbum.webp",
+    "medium": "/grow/plants/medium/shasta-daisy-leucanthemum-superbum.webp",
+    "source": "302_Shasta_daisy_Leucanthemum_superbum.png",
+    "xl": "/grow/plants/xl/shasta-daisy-leucanthemum-superbum.webp"
+  },
+  "she-oak-casuarina-casuarina-equisetifolia": {
+    "emoji": "/grow/plants/emoji/she-oak-casuarina-casuarina-equisetifolia.webp",
+    "lg": "/grow/plants/lg/she-oak-casuarina-casuarina-equisetifolia.webp",
+    "medium": "/grow/plants/medium/she-oak-casuarina-casuarina-equisetifolia.webp",
+    "source": "418_She_oak_Casuarina_Casuarina_equisetifolia.png",
+    "xl": "/grow/plants/xl/she-oak-casuarina-casuarina-equisetifolia.webp"
+  },
+  "sheep-sorrel-alt-strain-rumex-acetosella": {
+    "emoji": "/grow/plants/emoji/sheep-sorrel-alt-strain-rumex-acetosella.webp",
+    "lg": "/grow/plants/lg/sheep-sorrel-alt-strain-rumex-acetosella.webp",
+    "medium": "/grow/plants/medium/sheep-sorrel-alt-strain-rumex-acetosella.webp",
+    "source": "304_Sheep_sorrel_alt_strain_Rumex_acetosella.png",
+    "xl": "/grow/plants/xl/sheep-sorrel-alt-strain-rumex-acetosella.webp"
+  },
+  "sheep-sorrel-rumex-acetosella": {
+    "emoji": "/grow/plants/emoji/sheep-sorrel-rumex-acetosella.webp",
+    "lg": "/grow/plants/lg/sheep-sorrel-rumex-acetosella.webp",
+    "medium": "/grow/plants/medium/sheep-sorrel-rumex-acetosella.webp",
+    "source": "303_Sheep_sorrel_Rumex_acetosella.png",
+    "xl": "/grow/plants/xl/sheep-sorrel-rumex-acetosella.webp"
+  },
+  "shipova-pear-rowan-sorbopyrus-auricularis": {
+    "emoji": "/grow/plants/emoji/shipova-pear-rowan-sorbopyrus-auricularis.webp",
+    "lg": "/grow/plants/lg/shipova-pear-rowan-sorbopyrus-auricularis.webp",
+    "medium": "/grow/plants/medium/shipova-pear-rowan-sorbopyrus-auricularis.webp",
+    "source": "103_Shipova_pear_rowan_Sorbopyrus_auricularis.png",
+    "xl": "/grow/plants/xl/shipova-pear-rowan-sorbopyrus-auricularis.webp"
+  },
+  "siberian-elm-ulmus-pumila": {
+    "emoji": "/grow/plants/emoji/siberian-elm-ulmus-pumila.webp",
+    "lg": "/grow/plants/lg/siberian-elm-ulmus-pumila.webp",
+    "medium": "/grow/plants/medium/siberian-elm-ulmus-pumila.webp",
+    "source": "364_Siberian_elm_Ulmus_pumila.png",
+    "xl": "/grow/plants/xl/siberian-elm-ulmus-pumila.webp"
+  },
+  "siberian-pea-tree-caragana-arborescens": {
+    "emoji": "/grow/plants/emoji/siberian-pea-tree-caragana-arborescens.webp",
+    "lg": "/grow/plants/lg/siberian-pea-tree-caragana-arborescens.webp",
+    "medium": "/grow/plants/medium/siberian-pea-tree-caragana-arborescens.webp",
+    "source": "354_Siberian_pea_tree_Caragana_arborescens.png",
+    "xl": "/grow/plants/xl/siberian-pea-tree-caragana-arborescens.webp"
+  },
+  "silk-tree-albizia-julibrissin": {
+    "emoji": "/grow/plants/emoji/silk-tree-albizia-julibrissin.webp",
+    "lg": "/grow/plants/lg/silk-tree-albizia-julibrissin.webp",
+    "medium": "/grow/plants/medium/silk-tree-albizia-julibrissin.webp",
+    "source": "419_Silk_tree_Albizia_julibrissin.png",
+    "xl": "/grow/plants/xl/silk-tree-albizia-julibrissin.webp"
+  },
+  "silver-birch-betula-pendula": {
+    "emoji": "/grow/plants/emoji/silver-birch-betula-pendula.webp",
+    "lg": "/grow/plants/lg/silver-birch-betula-pendula.webp",
+    "medium": "/grow/plants/medium/silver-birch-betula-pendula.webp",
+    "source": "420_Silver_birch_Betula_pendula.png",
+    "xl": "/grow/plants/xl/silver-birch-betula-pendula.webp"
+  },
+  "silver-linden-tilia-tomentosa": {
+    "emoji": "/grow/plants/emoji/silver-linden-tilia-tomentosa.webp",
+    "lg": "/grow/plants/lg/silver-linden-tilia-tomentosa.webp",
+    "medium": "/grow/plants/medium/silver-linden-tilia-tomentosa.webp",
+    "source": "421_Silver_linden_Tilia_tomentosa.png",
+    "xl": "/grow/plants/xl/silver-linden-tilia-tomentosa.webp"
+  },
+  "silver-maple-acer-saccharinum": {
+    "emoji": "/grow/plants/emoji/silver-maple-acer-saccharinum.webp",
+    "lg": "/grow/plants/lg/silver-maple-acer-saccharinum.webp",
+    "medium": "/grow/plants/medium/silver-maple-acer-saccharinum.webp",
+    "source": "422_Silver_maple_Acer_saccharinum.png",
+    "xl": "/grow/plants/xl/silver-maple-acer-saccharinum.webp"
+  },
+  "silverberry-elaeagnus-elaeagnus-commutata": {
+    "emoji": "/grow/plants/emoji/silverberry-elaeagnus-elaeagnus-commutata.webp",
+    "lg": "/grow/plants/lg/silverberry-elaeagnus-elaeagnus-commutata.webp",
+    "medium": "/grow/plants/medium/silverberry-elaeagnus-elaeagnus-commutata.webp",
+    "source": "363_Silverberry_Elaeagnus_Elaeagnus_commutata.png",
+    "xl": "/grow/plants/xl/silverberry-elaeagnus-elaeagnus-commutata.webp"
+  },
+  "skullcap-scutellaria-lateriflora": {
+    "emoji": "/grow/plants/emoji/skullcap-scutellaria-lateriflora.webp",
+    "lg": "/grow/plants/lg/skullcap-scutellaria-lateriflora.webp",
+    "medium": "/grow/plants/medium/skullcap-scutellaria-lateriflora.webp",
+    "source": "187_Skullcap_Scutellaria_lateriflora.png",
+    "xl": "/grow/plants/xl/skullcap-scutellaria-lateriflora.webp"
+  },
+  "small-leaved-lime-tilia-cordata": {
+    "emoji": "/grow/plants/emoji/small-leaved-lime-tilia-cordata.webp",
+    "lg": "/grow/plants/lg/small-leaved-lime-tilia-cordata.webp",
+    "medium": "/grow/plants/medium/small-leaved-lime-tilia-cordata.webp",
+    "source": "390_Small_leaved_lime_Tilia_cordata.png",
+    "xl": "/grow/plants/xl/small-leaved-lime-tilia-cordata.webp"
+  },
+  "small-leaved-lime-tilia-cordata-tilia-cordata": {
+    "emoji": "/grow/plants/emoji/small-leaved-lime-tilia-cordata-tilia-cordata.webp",
+    "lg": "/grow/plants/lg/small-leaved-lime-tilia-cordata-tilia-cordata.webp",
+    "medium": "/grow/plants/medium/small-leaved-lime-tilia-cordata-tilia-cordata.webp",
+    "source": "228_Small_leaved_lime_Tilia_cordata_Tilia_cordata.png",
+    "xl": "/grow/plants/xl/small-leaved-lime-tilia-cordata-tilia-cordata.webp"
+  },
+  "smoke-tree-cotinus-coggygria": {
+    "emoji": "/grow/plants/emoji/smoke-tree-cotinus-coggygria.webp",
+    "lg": "/grow/plants/lg/smoke-tree-cotinus-coggygria.webp",
+    "medium": "/grow/plants/medium/smoke-tree-cotinus-coggygria.webp",
+    "source": "423_Smoke_tree_Cotinus_coggygria.png",
+    "xl": "/grow/plants/xl/smoke-tree-cotinus-coggygria.webp"
+  },
+  "snapdragon-antirrhinum-majus": {
+    "emoji": "/grow/plants/emoji/snapdragon-antirrhinum-majus.webp",
+    "lg": "/grow/plants/lg/snapdragon-antirrhinum-majus.webp",
+    "medium": "/grow/plants/medium/snapdragon-antirrhinum-majus.webp",
+    "source": "305_Snapdragon_Antirrhinum_majus.png",
+    "xl": "/grow/plants/xl/snapdragon-antirrhinum-majus.webp"
+  },
+  "snow-in-summer-cerastium-tomentosum-cerastium-tomentosum": {
+    "emoji": "/grow/plants/emoji/snow-in-summer-cerastium-tomentosum-cerastium-tomentosum.webp",
+    "lg": "/grow/plants/lg/snow-in-summer-cerastium-tomentosum-cerastium-tomentosum.webp",
+    "medium": "/grow/plants/medium/snow-in-summer-cerastium-tomentosum-cerastium-tomentosum.webp",
+    "source": "306_Snow_in_summer_Cerastium_tomentosum_Cerastium_tomentosum.png",
+    "xl": "/grow/plants/xl/snow-in-summer-cerastium-tomentosum-cerastium-tomentosum.webp"
+  },
+  "snow-peas-pisum-sativum-var-macrocarpon": {
+    "emoji": "/grow/plants/emoji/snow-peas-pisum-sativum-var-macrocarpon.webp",
+    "lg": "/grow/plants/lg/snow-peas-pisum-sativum-var-macrocarpon.webp",
+    "medium": "/grow/plants/medium/snow-peas-pisum-sativum-var-macrocarpon.webp",
+    "source": "257_Snow_peas_Pisum_sativum_var_macrocarpon.png",
+    "xl": "/grow/plants/xl/snow-peas-pisum-sativum-var-macrocarpon.webp"
+  },
+  "snowy-mespilus-amelanchier-grandiflora": {
+    "emoji": "/grow/plants/emoji/snowy-mespilus-amelanchier-grandiflora.webp",
+    "lg": "/grow/plants/lg/snowy-mespilus-amelanchier-grandiflora.webp",
+    "medium": "/grow/plants/medium/snowy-mespilus-amelanchier-grandiflora.webp",
+    "source": "424_Snowy_mespilus_Amelanchier_grandiflora.png",
+    "xl": "/grow/plants/xl/snowy-mespilus-amelanchier-grandiflora.webp"
+  },
+  "sorrel-rumex-acetosa": {
+    "emoji": "/grow/plants/emoji/sorrel-rumex-acetosa.webp",
+    "lg": "/grow/plants/lg/sorrel-rumex-acetosa.webp",
+    "medium": "/grow/plants/medium/sorrel-rumex-acetosa.webp",
+    "source": "307_Sorrel_Rumex_acetosa.png",
+    "xl": "/grow/plants/xl/sorrel-rumex-acetosa.webp"
+  },
+  "southernwood-artemisia-abrotanum-artemisia-abrotanum": {
+    "emoji": "/grow/plants/emoji/southernwood-artemisia-abrotanum-artemisia-abrotanum.webp",
+    "lg": "/grow/plants/lg/southernwood-artemisia-abrotanum-artemisia-abrotanum.webp",
+    "medium": "/grow/plants/medium/southernwood-artemisia-abrotanum-artemisia-abrotanum.webp",
+    "source": "308_Southernwood_Artemisia_abrotanum_Artemisia_abrotanum.png",
+    "xl": "/grow/plants/xl/southernwood-artemisia-abrotanum-artemisia-abrotanum.webp"
+  },
+  "spaghetti-squash-cucurbita-pepo": {
+    "emoji": "/grow/plants/emoji/spaghetti-squash-cucurbita-pepo.webp",
+    "lg": "/grow/plants/lg/spaghetti-squash-cucurbita-pepo.webp",
+    "medium": "/grow/plants/medium/spaghetti-squash-cucurbita-pepo.webp",
+    "source": "314_Spaghetti_squash_Cucurbita_pepo.png",
+    "xl": "/grow/plants/xl/spaghetti-squash-cucurbita-pepo.webp"
+  },
+  "spearmint-mentha-spicata": {
+    "emoji": "/grow/plants/emoji/spearmint-mentha-spicata.webp",
+    "lg": "/grow/plants/lg/spearmint-mentha-spicata.webp",
+    "medium": "/grow/plants/medium/spearmint-mentha-spicata.webp",
+    "source": "176_Spearmint_Mentha_spicata.png",
+    "xl": "/grow/plants/xl/spearmint-mentha-spicata.webp"
+  },
+  "spinach-spinacia-oleracea": {
+    "emoji": "/grow/plants/emoji/spinach-spinacia-oleracea.webp",
+    "lg": "/grow/plants/lg/spinach-spinacia-oleracea.webp",
+    "medium": "/grow/plants/medium/spinach-spinacia-oleracea.webp",
+    "source": "310_Spinach_Spinacia_oleracea.png",
+    "xl": "/grow/plants/xl/spinach-spinacia-oleracea.webp"
+  },
+  "spring-onion-scallion-allium-fistulosum": {
+    "emoji": "/grow/plants/emoji/spring-onion-scallion-allium-fistulosum.webp",
+    "lg": "/grow/plants/lg/spring-onion-scallion-allium-fistulosum.webp",
+    "medium": "/grow/plants/medium/spring-onion-scallion-allium-fistulosum.webp",
+    "source": "311_Spring_onion_scallion_Allium_fistulosum.png",
+    "xl": "/grow/plants/xl/spring-onion-scallion-allium-fistulosum.webp"
+  },
+  "sprouting-broccoli-brassica-oleracea-var-italica": {
+    "emoji": "/grow/plants/emoji/sprouting-broccoli-brassica-oleracea-var-italica.webp",
+    "lg": "/grow/plants/lg/sprouting-broccoli-brassica-oleracea-var-italica.webp",
+    "medium": "/grow/plants/medium/sprouting-broccoli-brassica-oleracea-var-italica.webp",
+    "source": "312_Sprouting_broccoli_Brassica_oleracea_var_italica.png",
+    "xl": "/grow/plants/xl/sprouting-broccoli-brassica-oleracea-var-italica.webp"
+  },
+  "st-john-s-wort-hypericum-perforatum": {
+    "emoji": "/grow/plants/emoji/st-john-s-wort-hypericum-perforatum.webp",
+    "lg": "/grow/plants/lg/st-john-s-wort-hypericum-perforatum.webp",
+    "medium": "/grow/plants/medium/st-john-s-wort-hypericum-perforatum.webp",
+    "source": "189_St_John_s_wort_Hypericum_perforatum.png",
+    "xl": "/grow/plants/xl/st-john-s-wort-hypericum-perforatum.webp"
+  },
+  "stevia-stevia-rebaudiana": {
+    "emoji": "/grow/plants/emoji/stevia-stevia-rebaudiana.webp",
+    "lg": "/grow/plants/lg/stevia-stevia-rebaudiana.webp",
+    "medium": "/grow/plants/medium/stevia-stevia-rebaudiana.webp",
+    "source": "190_Stevia_Stevia_rebaudiana.png",
+    "xl": "/grow/plants/xl/stevia-stevia-rebaudiana.webp"
+  },
+  "strawberry-guava-psidium-cattleianum": {
+    "emoji": "/grow/plants/emoji/strawberry-guava-psidium-cattleianum.webp",
+    "lg": "/grow/plants/lg/strawberry-guava-psidium-cattleianum.webp",
+    "medium": "/grow/plants/medium/strawberry-guava-psidium-cattleianum.webp",
+    "source": "098_Strawberry_guava_Psidium_cattleianum.png",
+    "xl": "/grow/plants/xl/strawberry-guava-psidium-cattleianum.webp"
+  },
+  "sugar-maple-acer-saccharum": {
+    "emoji": "/grow/plants/emoji/sugar-maple-acer-saccharum.webp",
+    "lg": "/grow/plants/lg/sugar-maple-acer-saccharum.webp",
+    "medium": "/grow/plants/medium/sugar-maple-acer-saccharum.webp",
+    "source": "233_Sugar_maple_Acer_saccharum.png",
+    "xl": "/grow/plants/xl/sugar-maple-acer-saccharum.webp"
+  },
+  "sugar-snap-peas-pisum-sativum-var-macrocarpon": {
+    "emoji": "/grow/plants/emoji/sugar-snap-peas-pisum-sativum-var-macrocarpon.webp",
+    "lg": "/grow/plants/lg/sugar-snap-peas-pisum-sativum-var-macrocarpon.webp",
+    "medium": "/grow/plants/medium/sugar-snap-peas-pisum-sativum-var-macrocarpon.webp",
+    "source": "256_Sugar_snap_peas_Pisum_sativum_var_macrocarpon.png",
+    "xl": "/grow/plants/xl/sugar-snap-peas-pisum-sativum-var-macrocarpon.webp"
+  },
+  "summer-savoury-satureja-hortensis": {
+    "emoji": "/grow/plants/emoji/summer-savoury-satureja-hortensis.webp",
+    "lg": "/grow/plants/lg/summer-savoury-satureja-hortensis.webp",
+    "medium": "/grow/plants/medium/summer-savoury-satureja-hortensis.webp",
+    "source": "185_Summer_savoury_Satureja_hortensis.png",
+    "xl": "/grow/plants/xl/summer-savoury-satureja-hortensis.webp"
+  },
+  "sunflower-biomass-type-helianthus-annuus": {
+    "emoji": "/grow/plants/emoji/sunflower-biomass-type-helianthus-annuus.webp",
+    "lg": "/grow/plants/lg/sunflower-biomass-type-helianthus-annuus.webp",
+    "medium": "/grow/plants/medium/sunflower-biomass-type-helianthus-annuus.webp",
+    "source": "318_Sunflower_biomass_type_Helianthus_annuus.png",
+    "xl": "/grow/plants/xl/sunflower-biomass-type-helianthus-annuus.webp"
+  },
+  "sunflower-helianthus-annuus": {
+    "emoji": "/grow/plants/emoji/sunflower-helianthus-annuus.webp",
+    "lg": "/grow/plants/lg/sunflower-helianthus-annuus.webp",
+    "medium": "/grow/plants/medium/sunflower-helianthus-annuus.webp",
+    "source": "317_Sunflower_Helianthus_annuus.png",
+    "xl": "/grow/plants/xl/sunflower-helianthus-annuus.webp"
+  },
+  "swede-rutabaga-brassica-napus-subsp-rapifera": {
+    "emoji": "/grow/plants/emoji/swede-rutabaga-brassica-napus-subsp-rapifera.webp",
+    "lg": "/grow/plants/lg/swede-rutabaga-brassica-napus-subsp-rapifera.webp",
+    "medium": "/grow/plants/medium/swede-rutabaga-brassica-napus-subsp-rapifera.webp",
+    "source": "319_Swede_rutabaga_Brassica_napus_subsp_rapifera.png",
+    "xl": "/grow/plants/xl/swede-rutabaga-brassica-napus-subsp-rapifera.webp"
+  },
+  "sweet-alyssum-lobularia-maritima": {
+    "emoji": "/grow/plants/emoji/sweet-alyssum-lobularia-maritima.webp",
+    "lg": "/grow/plants/lg/sweet-alyssum-lobularia-maritima.webp",
+    "medium": "/grow/plants/medium/sweet-alyssum-lobularia-maritima.webp",
+    "source": "003_Sweet_alyssum_Lobularia_maritima.png",
+    "xl": "/grow/plants/xl/sweet-alyssum-lobularia-maritima.webp"
+  },
+  "sweet-basil-ocimum-basilicum": {
+    "emoji": "/grow/plants/emoji/sweet-basil-ocimum-basilicum.webp",
+    "lg": "/grow/plants/lg/sweet-basil-ocimum-basilicum.webp",
+    "medium": "/grow/plants/medium/sweet-basil-ocimum-basilicum.webp",
+    "source": "151_Sweet_basil_Ocimum_basilicum.png",
+    "xl": "/grow/plants/xl/sweet-basil-ocimum-basilicum.webp"
+  },
+  "sweet-bell-pepper-capsicum-annuum": {
+    "emoji": "/grow/plants/emoji/sweet-bell-pepper-capsicum-annuum.webp",
+    "lg": "/grow/plants/lg/sweet-bell-pepper-capsicum-annuum.webp",
+    "medium": "/grow/plants/medium/sweet-bell-pepper-capsicum-annuum.webp",
+    "source": "265_Sweet_bell_pepper_Capsicum_annuum.png",
+    "xl": "/grow/plants/xl/sweet-bell-pepper-capsicum-annuum.webp"
+  },
+  "sweet-chestnut-castanea-sativa": {
+    "emoji": "/grow/plants/emoji/sweet-chestnut-castanea-sativa.webp",
+    "lg": "/grow/plants/lg/sweet-chestnut-castanea-sativa.webp",
+    "medium": "/grow/plants/medium/sweet-chestnut-castanea-sativa.webp",
+    "source": "130_Sweet_chestnut_Castanea_sativa.png",
+    "xl": "/grow/plants/xl/sweet-chestnut-castanea-sativa.webp"
+  },
+  "sweet-clover-melilotus-officinalis": {
+    "emoji": "/grow/plants/emoji/sweet-clover-melilotus-officinalis.webp",
+    "lg": "/grow/plants/lg/sweet-clover-melilotus-officinalis.webp",
+    "medium": "/grow/plants/medium/sweet-clover-melilotus-officinalis.webp",
+    "source": "321_Sweet_clover_Melilotus_officinalis.png",
+    "xl": "/grow/plants/xl/sweet-clover-melilotus-officinalis.webp"
+  },
+  "sweet-marjoram-origanum-majorana": {
+    "emoji": "/grow/plants/emoji/sweet-marjoram-origanum-majorana.webp",
+    "lg": "/grow/plants/lg/sweet-marjoram-origanum-majorana.webp",
+    "medium": "/grow/plants/medium/sweet-marjoram-origanum-majorana.webp",
+    "source": "172_Sweet_marjoram_Origanum_majorana.png",
+    "xl": "/grow/plants/xl/sweet-marjoram-origanum-majorana.webp"
+  },
+  "sweet-pea-lathyrus-odoratus": {
+    "emoji": "/grow/plants/emoji/sweet-pea-lathyrus-odoratus.webp",
+    "lg": "/grow/plants/lg/sweet-pea-lathyrus-odoratus.webp",
+    "medium": "/grow/plants/medium/sweet-pea-lathyrus-odoratus.webp",
+    "source": "322_Sweet_pea_Lathyrus_odoratus.png",
+    "xl": "/grow/plants/xl/sweet-pea-lathyrus-odoratus.webp"
+  },
+  "sweet-potato-ipomoea-batatas": {
+    "emoji": "/grow/plants/emoji/sweet-potato-ipomoea-batatas.webp",
+    "lg": "/grow/plants/lg/sweet-potato-ipomoea-batatas.webp",
+    "medium": "/grow/plants/medium/sweet-potato-ipomoea-batatas.webp",
+    "source": "323_Sweet_potato_Ipomoea_batatas.png",
+    "xl": "/grow/plants/xl/sweet-potato-ipomoea-batatas.webp"
+  },
+  "sweet-woodruff-galium-odoratum": {
+    "emoji": "/grow/plants/emoji/sweet-woodruff-galium-odoratum.webp",
+    "lg": "/grow/plants/lg/sweet-woodruff-galium-odoratum.webp",
+    "medium": "/grow/plants/medium/sweet-woodruff-galium-odoratum.webp",
+    "source": "191_Sweet_woodruff_Galium_odoratum.png",
+    "xl": "/grow/plants/xl/sweet-woodruff-galium-odoratum.webp"
+  },
+  "sweetcorn-maize-zea-mays-convar-saccharata": {
+    "emoji": "/grow/plants/emoji/sweetcorn-maize-zea-mays-convar-saccharata.webp",
+    "lg": "/grow/plants/lg/sweetcorn-maize-zea-mays-convar-saccharata.webp",
+    "medium": "/grow/plants/medium/sweetcorn-maize-zea-mays-convar-saccharata.webp",
+    "source": "324_Sweetcorn_maize_Zea_mays_convar_saccharata.png",
+    "xl": "/grow/plants/xl/sweetcorn-maize-zea-mays-convar-saccharata.webp"
+  },
+  "sweetgum-liquidambar-styraciflua": {
+    "emoji": "/grow/plants/emoji/sweetgum-liquidambar-styraciflua.webp",
+    "lg": "/grow/plants/lg/sweetgum-liquidambar-styraciflua.webp",
+    "medium": "/grow/plants/medium/sweetgum-liquidambar-styraciflua.webp",
+    "source": "425_Sweetgum_Liquidambar_styraciflua.png",
+    "xl": "/grow/plants/xl/sweetgum-liquidambar-styraciflua.webp"
+  },
+  "swiss-chard-beta-vulgaris-cicla-group": {
+    "emoji": "/grow/plants/emoji/swiss-chard-beta-vulgaris-cicla-group.webp",
+    "lg": "/grow/plants/lg/swiss-chard-beta-vulgaris-cicla-group.webp",
+    "medium": "/grow/plants/medium/swiss-chard-beta-vulgaris-cicla-group.webp",
+    "source": "325_Swiss_chard_Beta_vulgaris_Cicla_Group.png",
+    "xl": "/grow/plants/xl/swiss-chard-beta-vulgaris-cicla-group.webp"
+  },
+  "sycamore-acer-pseudoplatanus": {
+    "emoji": "/grow/plants/emoji/sycamore-acer-pseudoplatanus.webp",
+    "lg": "/grow/plants/lg/sycamore-acer-pseudoplatanus.webp",
+    "medium": "/grow/plants/medium/sycamore-acer-pseudoplatanus.webp",
+    "source": "426_Sycamore_Acer_pseudoplatanus.png",
+    "xl": "/grow/plants/xl/sycamore-acer-pseudoplatanus.webp"
+  },
+  "tamarisk-tamarix-ramosissima": {
+    "emoji": "/grow/plants/emoji/tamarisk-tamarix-ramosissima.webp",
+    "lg": "/grow/plants/lg/tamarisk-tamarix-ramosissima.webp",
+    "medium": "/grow/plants/medium/tamarisk-tamarix-ramosissima.webp",
+    "source": "428_Tamarisk_Tamarix_ramosissima.png",
+    "xl": "/grow/plants/xl/tamarisk-tamarix-ramosissima.webp"
+  },
+  "tansy-tanacetum-vulgare": {
+    "emoji": "/grow/plants/emoji/tansy-tanacetum-vulgare.webp",
+    "lg": "/grow/plants/lg/tansy-tanacetum-vulgare.webp",
+    "medium": "/grow/plants/medium/tansy-tanacetum-vulgare.webp",
+    "source": "192_Tansy_Tanacetum_vulgare.png",
+    "xl": "/grow/plants/xl/tansy-tanacetum-vulgare.webp"
+  },
+  "tansy-tanacetum-vulgare-tanacetum-vulgare": {
+    "emoji": "/grow/plants/emoji/tansy-tanacetum-vulgare-tanacetum-vulgare.webp",
+    "lg": "/grow/plants/lg/tansy-tanacetum-vulgare-tanacetum-vulgare.webp",
+    "medium": "/grow/plants/medium/tansy-tanacetum-vulgare-tanacetum-vulgare.webp",
+    "source": "326_Tansy_Tanacetum_vulgare_Tanacetum_vulgare.png",
+    "xl": "/grow/plants/xl/tansy-tanacetum-vulgare-tanacetum-vulgare.webp"
+  },
+  "taro-colocasia-esculenta": {
+    "emoji": "/grow/plants/emoji/taro-colocasia-esculenta.webp",
+    "lg": "/grow/plants/lg/taro-colocasia-esculenta.webp",
+    "medium": "/grow/plants/medium/taro-colocasia-esculenta.webp",
+    "source": "327_Taro_Colocasia_esculenta.png",
+    "xl": "/grow/plants/xl/taro-colocasia-esculenta.webp"
+  },
+  "tatsoi-brassica-rapa-subsp-narinosa": {
+    "emoji": "/grow/plants/emoji/tatsoi-brassica-rapa-subsp-narinosa.webp",
+    "lg": "/grow/plants/lg/tatsoi-brassica-rapa-subsp-narinosa.webp",
+    "medium": "/grow/plants/medium/tatsoi-brassica-rapa-subsp-narinosa.webp",
+    "source": "328_Tatsoi_Brassica_rapa_subsp_narinosa.png",
+    "xl": "/grow/plants/xl/tatsoi-brassica-rapa-subsp-narinosa.webp"
+  },
+  "texas-mountain-laurel-dermatophyllum-secundiflorum": {
+    "emoji": "/grow/plants/emoji/texas-mountain-laurel-dermatophyllum-secundiflorum.webp",
+    "lg": "/grow/plants/lg/texas-mountain-laurel-dermatophyllum-secundiflorum.webp",
+    "medium": "/grow/plants/medium/texas-mountain-laurel-dermatophyllum-secundiflorum.webp",
+    "source": "429_Texas_mountain_laurel_Dermatophyllum_secundiflorum.png",
+    "xl": "/grow/plants/xl/texas-mountain-laurel-dermatophyllum-secundiflorum.webp"
+  },
+  "thai-basil-ocimum-basilicum-var-thyrsiflorum": {
+    "emoji": "/grow/plants/emoji/thai-basil-ocimum-basilicum-var-thyrsiflorum.webp",
+    "lg": "/grow/plants/lg/thai-basil-ocimum-basilicum-var-thyrsiflorum.webp",
+    "medium": "/grow/plants/medium/thai-basil-ocimum-basilicum-var-thyrsiflorum.webp",
+    "source": "152_Thai_basil_Ocimum_basilicum_var_thyrsiflorum.png",
+    "xl": "/grow/plants/xl/thai-basil-ocimum-basilicum-var-thyrsiflorum.webp"
+  },
+  "thuja-arborvitae-thuja-occidentalis": {
+    "emoji": "/grow/plants/emoji/thuja-arborvitae-thuja-occidentalis.webp",
+    "lg": "/grow/plants/lg/thuja-arborvitae-thuja-occidentalis.webp",
+    "medium": "/grow/plants/medium/thuja-arborvitae-thuja-occidentalis.webp",
+    "source": "345_Thuja_arborvitae_Thuja_occidentalis.png",
+    "xl": "/grow/plants/xl/thuja-arborvitae-thuja-occidentalis.webp"
+  },
+  "tomatillo-physalis-philadelphica": {
+    "emoji": "/grow/plants/emoji/tomatillo-physalis-philadelphica.webp",
+    "lg": "/grow/plants/lg/tomatillo-physalis-philadelphica.webp",
+    "medium": "/grow/plants/medium/tomatillo-physalis-philadelphica.webp",
+    "source": "330_Tomatillo_Physalis_philadelphica.png",
+    "xl": "/grow/plants/xl/tomatillo-physalis-philadelphica.webp"
+  },
+  "tomato-slicer-solanum-lycopersicum": {
+    "emoji": "/grow/plants/emoji/tomato-slicer-solanum-lycopersicum.webp",
+    "lg": "/grow/plants/lg/tomato-slicer-solanum-lycopersicum.webp",
+    "medium": "/grow/plants/medium/tomato-slicer-solanum-lycopersicum.webp",
+    "source": "331_Tomato_slicer_Solanum_lycopersicum.png",
+    "xl": "/grow/plants/xl/tomato-slicer-solanum-lycopersicum.webp"
+  },
+  "trillium-trillium-grandiflorum": {
+    "emoji": "/grow/plants/emoji/trillium-trillium-grandiflorum.webp",
+    "lg": "/grow/plants/lg/trillium-trillium-grandiflorum.webp",
+    "medium": "/grow/plants/medium/trillium-trillium-grandiflorum.webp",
+    "source": "434_Trillium_Trillium_grandiflorum.png",
+    "xl": "/grow/plants/xl/trillium-trillium-grandiflorum.webp"
+  },
+  "tulip-poplar-liriodendron-tulipifera": {
+    "emoji": "/grow/plants/emoji/tulip-poplar-liriodendron-tulipifera.webp",
+    "lg": "/grow/plants/lg/tulip-poplar-liriodendron-tulipifera.webp",
+    "medium": "/grow/plants/medium/tulip-poplar-liriodendron-tulipifera.webp",
+    "source": "430_Tulip_poplar_Liriodendron_tulipifera.png",
+    "xl": "/grow/plants/xl/tulip-poplar-liriodendron-tulipifera.webp"
+  },
+  "tulip-tree-liriodendron-tulipifera-liriodendron-tulipifera": {
+    "emoji": "/grow/plants/emoji/tulip-tree-liriodendron-tulipifera-liriodendron-tulipifera.webp",
+    "lg": "/grow/plants/lg/tulip-tree-liriodendron-tulipifera-liriodendron-tulipifera.webp",
+    "medium": "/grow/plants/medium/tulip-tree-liriodendron-tulipifera-liriodendron-tulipifera.webp",
+    "source": "435_Tulip_tree_Liriodendron_tulipifera_Liriodendron_tulipifera.png",
+    "xl": "/grow/plants/xl/tulip-tree-liriodendron-tulipifera-liriodendron-tulipifera.webp"
+  },
+  "turnip-brassica-rapa-subsp-rapa": {
+    "emoji": "/grow/plants/emoji/turnip-brassica-rapa-subsp-rapa.webp",
+    "lg": "/grow/plants/lg/turnip-brassica-rapa-subsp-rapa.webp",
+    "medium": "/grow/plants/medium/turnip-brassica-rapa-subsp-rapa.webp",
+    "source": "436_Turnip_Brassica_rapa_subsp_rapa.png",
+    "xl": "/grow/plants/xl/turnip-brassica-rapa-subsp-rapa.webp"
+  },
+  "valerian-valeriana-officinalis": {
+    "emoji": "/grow/plants/emoji/valerian-valeriana-officinalis.webp",
+    "lg": "/grow/plants/lg/valerian-valeriana-officinalis.webp",
+    "medium": "/grow/plants/medium/valerian-valeriana-officinalis.webp",
+    "source": "196_Valerian_Valeriana_officinalis.png",
+    "xl": "/grow/plants/xl/valerian-valeriana-officinalis.webp"
+  },
+  "verbena-bonariensis-verbena-bonariensis": {
+    "emoji": "/grow/plants/emoji/verbena-bonariensis-verbena-bonariensis.webp",
+    "lg": "/grow/plants/lg/verbena-bonariensis-verbena-bonariensis.webp",
+    "medium": "/grow/plants/medium/verbena-bonariensis-verbena-bonariensis.webp",
+    "source": "439_Verbena_bonariensis_Verbena_bonariensis.png",
+    "xl": "/grow/plants/xl/verbena-bonariensis-verbena-bonariensis.webp"
+  },
+  "veronica-speedwell-veronica-spicata": {
+    "emoji": "/grow/plants/emoji/veronica-speedwell-veronica-spicata.webp",
+    "lg": "/grow/plants/lg/veronica-speedwell-veronica-spicata.webp",
+    "medium": "/grow/plants/medium/veronica-speedwell-veronica-spicata.webp",
+    "source": "440_Veronica_speedwell_Veronica_spicata.png",
+    "xl": "/grow/plants/xl/veronica-speedwell-veronica-spicata.webp"
+  },
+  "walnut-juglans-regia": {
+    "emoji": "/grow/plants/emoji/walnut-juglans-regia.webp",
+    "lg": "/grow/plants/lg/walnut-juglans-regia.webp",
+    "medium": "/grow/plants/medium/walnut-juglans-regia.webp",
+    "source": "131_Walnut_Juglans_regia.png",
+    "xl": "/grow/plants/xl/walnut-juglans-regia.webp"
+  },
+  "watercress-nasturtium-officinale": {
+    "emoji": "/grow/plants/emoji/watercress-nasturtium-officinale.webp",
+    "lg": "/grow/plants/lg/watercress-nasturtium-officinale.webp",
+    "medium": "/grow/plants/medium/watercress-nasturtium-officinale.webp",
+    "source": "444_Watercress_Nasturtium_officinale.png",
+    "xl": "/grow/plants/xl/watercress-nasturtium-officinale.webp"
+  },
+  "watermelon-small-varieties-citrullus-lanatus": {
+    "emoji": "/grow/plants/emoji/watermelon-small-varieties-citrullus-lanatus.webp",
+    "lg": "/grow/plants/lg/watermelon-small-varieties-citrullus-lanatus.webp",
+    "medium": "/grow/plants/medium/watermelon-small-varieties-citrullus-lanatus.webp",
+    "source": "445_Watermelon_small_varieties_Citrullus_lanatus.png",
+    "xl": "/grow/plants/xl/watermelon-small-varieties-citrullus-lanatus.webp"
+  },
+  "weeping-willow-salix-sepulcralis": {
+    "emoji": "/grow/plants/emoji/weeping-willow-salix-sepulcralis.webp",
+    "lg": "/grow/plants/lg/weeping-willow-salix-sepulcralis.webp",
+    "medium": "/grow/plants/medium/weeping-willow-salix-sepulcralis.webp",
+    "source": "431_Weeping_willow_Salix_sepulcralis.png",
+    "xl": "/grow/plants/xl/weeping-willow-salix-sepulcralis.webp"
+  },
+  "western-redcedar-thuja-plicata": {
+    "emoji": "/grow/plants/emoji/western-redcedar-thuja-plicata.webp",
+    "lg": "/grow/plants/lg/western-redcedar-thuja-plicata.webp",
+    "medium": "/grow/plants/medium/western-redcedar-thuja-plicata.webp",
+    "source": "432_Western_redcedar_Thuja_plicata.png",
+    "xl": "/grow/plants/xl/western-redcedar-thuja-plicata.webp"
+  },
+  "white-clover-trifolium-repens": {
+    "emoji": "/grow/plants/emoji/white-clover-trifolium-repens.webp",
+    "lg": "/grow/plants/lg/white-clover-trifolium-repens.webp",
+    "medium": "/grow/plants/medium/white-clover-trifolium-repens.webp",
+    "source": "446_White_clover_Trifolium_repens.png",
+    "xl": "/grow/plants/xl/white-clover-trifolium-repens.webp"
+  },
+  "white-poplar-populus-alba": {
+    "emoji": "/grow/plants/emoji/white-poplar-populus-alba.webp",
+    "lg": "/grow/plants/lg/white-poplar-populus-alba.webp",
+    "medium": "/grow/plants/medium/white-poplar-populus-alba.webp",
+    "source": "409_White_poplar_Populus_alba.png",
+    "xl": "/grow/plants/xl/white-poplar-populus-alba.webp"
+  },
+  "wild-bergamot-monarda-fistulosa-monarda-fistulosa": {
+    "emoji": "/grow/plants/emoji/wild-bergamot-monarda-fistulosa-monarda-fistulosa.webp",
+    "lg": "/grow/plants/lg/wild-bergamot-monarda-fistulosa-monarda-fistulosa.webp",
+    "medium": "/grow/plants/medium/wild-bergamot-monarda-fistulosa-monarda-fistulosa.webp",
+    "source": "240_Wild_bergamot_Monarda_fistulosa_Monarda_fistulosa.png",
+    "xl": "/grow/plants/xl/wild-bergamot-monarda-fistulosa-monarda-fistulosa.webp"
+  },
+  "wild-strawberry-fragaria-vesca-fragaria-vesca": {
+    "emoji": "/grow/plants/emoji/wild-strawberry-fragaria-vesca-fragaria-vesca.webp",
+    "lg": "/grow/plants/lg/wild-strawberry-fragaria-vesca-fragaria-vesca.webp",
+    "medium": "/grow/plants/medium/wild-strawberry-fragaria-vesca-fragaria-vesca.webp",
+    "source": "447_Wild_strawberry_Fragaria_vesca_Fragaria_vesca.png",
+    "xl": "/grow/plants/xl/wild-strawberry-fragaria-vesca-fragaria-vesca.webp"
+  },
+  "winter-savoury-satureja-montana": {
+    "emoji": "/grow/plants/emoji/winter-savoury-satureja-montana.webp",
+    "lg": "/grow/plants/lg/winter-savoury-satureja-montana.webp",
+    "medium": "/grow/plants/medium/winter-savoury-satureja-montana.webp",
+    "source": "186_Winter_savoury_Satureja_montana.png",
+    "xl": "/grow/plants/xl/winter-savoury-satureja-montana.webp"
+  },
+  "winter-squash-butternut-etc-cucurbita-moschata": {
+    "emoji": "/grow/plants/emoji/winter-squash-butternut-etc-cucurbita-moschata.webp",
+    "lg": "/grow/plants/lg/winter-squash-butternut-etc-cucurbita-moschata.webp",
+    "medium": "/grow/plants/medium/winter-squash-butternut-etc-cucurbita-moschata.webp",
+    "source": "315_Winter_squash_butternut_etc_Cucurbita_moschata.png",
+    "xl": "/grow/plants/xl/winter-squash-butternut-etc-cucurbita-moschata.webp"
+  },
+  "woolly-thyme-thymus-pseudolanuginosus": {
+    "emoji": "/grow/plants/emoji/woolly-thyme-thymus-pseudolanuginosus.webp",
+    "lg": "/grow/plants/lg/woolly-thyme-thymus-pseudolanuginosus.webp",
+    "medium": "/grow/plants/medium/woolly-thyme-thymus-pseudolanuginosus.webp",
+    "source": "449_Woolly_thyme_Thymus_pseudolanuginosus.png",
+    "xl": "/grow/plants/xl/woolly-thyme-thymus-pseudolanuginosus.webp"
+  },
+  "wormwood-artemisia-absinthium": {
+    "emoji": "/grow/plants/emoji/wormwood-artemisia-absinthium.webp",
+    "lg": "/grow/plants/lg/wormwood-artemisia-absinthium.webp",
+    "medium": "/grow/plants/medium/wormwood-artemisia-absinthium.webp",
+    "source": "197_Wormwood_Artemisia_absinthium.png",
+    "xl": "/grow/plants/xl/wormwood-artemisia-absinthium.webp"
+  },
+  "wormwood-artemisia-absinthium-artemisia-absinthium": {
+    "emoji": "/grow/plants/emoji/wormwood-artemisia-absinthium-artemisia-absinthium.webp",
+    "lg": "/grow/plants/lg/wormwood-artemisia-absinthium-artemisia-absinthium.webp",
+    "medium": "/grow/plants/medium/wormwood-artemisia-absinthium-artemisia-absinthium.webp",
+    "source": "450_Wormwood_Artemisia_absinthium_Artemisia_absinthium.png",
+    "xl": "/grow/plants/xl/wormwood-artemisia-absinthium-artemisia-absinthium.webp"
+  },
+  "wych-elm-ulmus-glabra": {
+    "emoji": "/grow/plants/emoji/wych-elm-ulmus-glabra.webp",
+    "lg": "/grow/plants/lg/wych-elm-ulmus-glabra.webp",
+    "medium": "/grow/plants/medium/wych-elm-ulmus-glabra.webp",
+    "source": "365_Wych_elm_Ulmus_glabra.png",
+    "xl": "/grow/plants/xl/wych-elm-ulmus-glabra.webp"
+  },
+  "yacon-smallanthus-sonchifolius": {
+    "emoji": "/grow/plants/emoji/yacon-smallanthus-sonchifolius.webp",
+    "lg": "/grow/plants/lg/yacon-smallanthus-sonchifolius.webp",
+    "medium": "/grow/plants/medium/yacon-smallanthus-sonchifolius.webp",
+    "source": "451_Yacon_Smallanthus_sonchifolius.png",
+    "xl": "/grow/plants/xl/yacon-smallanthus-sonchifolius.webp"
+  },
+  "yarrow-achillea-millefolium": {
+    "emoji": "/grow/plants/emoji/yarrow-achillea-millefolium.webp",
+    "lg": "/grow/plants/lg/yarrow-achillea-millefolium.webp",
+    "medium": "/grow/plants/medium/yarrow-achillea-millefolium.webp",
+    "source": "452_Yarrow_Achillea_millefolium.png",
+    "xl": "/grow/plants/xl/yarrow-achillea-millefolium.webp"
+  },
+  "yellow-dock-rumex-crispus": {
+    "emoji": "/grow/plants/emoji/yellow-dock-rumex-crispus.webp",
+    "lg": "/grow/plants/lg/yellow-dock-rumex-crispus.webp",
+    "medium": "/grow/plants/medium/yellow-dock-rumex-crispus.webp",
+    "source": "453_Yellow_dock_Rumex_crispus.png",
+    "xl": "/grow/plants/xl/yellow-dock-rumex-crispus.webp"
+  },
+  "yellow-lupin-lupinus-luteus": {
+    "emoji": "/grow/plants/emoji/yellow-lupin-lupinus-luteus.webp",
+    "lg": "/grow/plants/lg/yellow-lupin-lupinus-luteus.webp",
+    "medium": "/grow/plants/medium/yellow-lupin-lupinus-luteus.webp",
+    "source": "230_Yellow_lupin_Lupinus_luteus.png",
+    "xl": "/grow/plants/xl/yellow-lupin-lupinus-luteus.webp"
+  },
+  "yellow-summer-squash-cucurbita-pepo": {
+    "emoji": "/grow/plants/emoji/yellow-summer-squash-cucurbita-pepo.webp",
+    "lg": "/grow/plants/lg/yellow-summer-squash-cucurbita-pepo.webp",
+    "medium": "/grow/plants/medium/yellow-summer-squash-cucurbita-pepo.webp",
+    "source": "316_Yellow_summer_squash_Cucurbita_pepo.png",
+    "xl": "/grow/plants/xl/yellow-summer-squash-cucurbita-pepo.webp"
+  },
+  "zinnia-zinnia-elegans": {
+    "emoji": "/grow/plants/emoji/zinnia-zinnia-elegans.webp",
+    "lg": "/grow/plants/lg/zinnia-zinnia-elegans.webp",
+    "medium": "/grow/plants/medium/zinnia-zinnia-elegans.webp",
+    "source": "454_Zinnia_Zinnia_elegans.png",
+    "xl": "/grow/plants/xl/zinnia-zinnia-elegans.webp"
+  }
+}
