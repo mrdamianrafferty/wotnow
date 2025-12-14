@@ -498,7 +498,9 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   const renderCareInfoSection = () => {
     if (!selectedSpecies) return null;
 
-    const hasWatering = selectedSpecies.watering || selectedSpecies.wateringBenchmark;
+    // Only show watering if we have actual text OR a valid benchmark with both value and unit
+    const hasWatering = selectedSpecies.watering || 
+      (selectedSpecies.wateringBenchmark?.value && selectedSpecies.wateringBenchmark?.unit);
     const hasSunlight = selectedSpecies.sunlight?.length > 0;
     const hasSoil = selectedSpecies.soil?.length > 0;
     const hasSize = selectedSpecies.maximumHeightCm || selectedSpecies.maximumSpreadCm;
@@ -534,10 +536,10 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                 <div>
                   <div className="text-xs font-medium text-blue-900">Watering</div>
                   <div className="text-sm text-blue-800">
-                    {selectedSpecies.watering}
-                    {selectedSpecies.wateringBenchmark && (
+                    {selectedSpecies.watering || 'Regular'}
+                    {selectedSpecies.wateringBenchmark?.value && selectedSpecies.wateringBenchmark?.unit && (
                       <span className="text-xs block mt-0.5">
-                        ({selectedSpecies.wateringBenchmark.value} {selectedSpecies.wateringBenchmark.unit})
+                        (every {selectedSpecies.wateringBenchmark.value} {selectedSpecies.wateringBenchmark.unit})
                       </span>
                     )}
                   </div>
@@ -644,7 +646,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {step === 'details' && (
