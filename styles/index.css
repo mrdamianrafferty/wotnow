@@ -30,6 +30,45 @@
   }
 }
 
+/* ------ GARDENING ANIMATION KEYFRAMES ------ */
+/* Defined here to guarantee availability regardless of Tailwind JIT */
+@keyframes sprout {
+  0% { transform: scaleY(0) translateY(20%); opacity: 0; transform-origin: bottom; }
+  60% { transform: scaleY(1.05) translateY(-2%); opacity: 1; }
+  100% { transform: scaleY(1) translateY(0); opacity: 1; }
+}
+
+@keyframes leafFall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(30px) rotate(45deg) scale(0.8); opacity: 0; }
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
 /* Utility classes for motion-safe animations */
 /* Use: class="motion-safe:animate-sprout motion-reduce:opacity-100" */
 @media (prefers-reduced-motion: no-preference) {
@@ -37,6 +76,7 @@
   .motion-safe\:animate-scale-in { animation: scaleIn 200ms ease-out; }
   .motion-safe\:animate-slide-up { animation: slideUp 250ms ease-out; }
   .motion-safe\:animate-fade-in { animation: fadeIn 200ms ease-out; }
+  .motion-safe\:animate-fade-out { animation: fadeOut 200ms ease-in forwards; }
   .motion-safe\:animate-check-pop { animation: checkPop 300ms ease-out; }
   .motion-safe\:animate-leaf-fall { animation: leafFall 500ms ease-in forwards; }
 }
@@ -45,6 +85,8 @@
 @media (prefers-reduced-motion: reduce) {
   .motion-reduce\:opacity-100 { opacity: 1 !important; }
   .motion-reduce\:opacity-0 { opacity: 0 !important; }
+  .motion-reduce\:animate-fade-in { opacity: 1; }
+  .motion-reduce\:animate-fade-out { opacity: 0; }
 }
 
 

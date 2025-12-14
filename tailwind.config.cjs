@@ -9,6 +9,22 @@ const config = {
     "./app/**/*.{js,ts,jsx,tsx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // Ensure animation classes are always generated even when used dynamically
+  safelist: [
+    'animate-sprout',
+    'animate-leaf-fall',
+    'animate-fade-in',
+    'animate-fade-out',
+    'animate-scale-in',
+    'animate-slide-up',
+    'animate-check-pop',
+    'motion-safe:animate-sprout',
+    'motion-safe:animate-leaf-fall',
+    'motion-safe:animate-scale-in',
+    'motion-safe:scale-110',
+    'motion-reduce:animate-fade-in',
+    'motion-reduce:animate-fade-out',
+  ],
   theme: {
     extend: {
       // Gardening-themed animations for Grow Daisy

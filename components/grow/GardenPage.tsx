@@ -806,7 +806,7 @@ export function GardenPage() {
                 return (
                 <Card 
                   key={plant.id} 
-                  className={`border-2 ${getHealthColor(plant.health)} ${animationClass}`}
+                  className={`border-2 ${getHealthColor(plant.health)} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
                 >
                   <CardHeader>
                     <div className="flex justify-between items-start">
