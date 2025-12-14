@@ -38,6 +38,7 @@ import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { useImageCompression } from '../../hooks/useImageCompression';
 import { SkeletonGardenPage } from './GrowSkeletons';
 import { getPlantImage } from '../../lib/grow/plantImages';
+import { ThreatCard } from './ThreatCard';
 import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
@@ -699,39 +700,7 @@ export function GardenPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {threats.map((t) => (
-                <Card key={t.threatId} className="border-2 border-amber-200">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{t.commonName}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{t.threatType}{t.scientificName ? ` • ${t.scientificName}` : ''}</p>
-                      </div>
-                      <Badge variant="outline" className="border-amber-400 text-amber-700">
-                        {t.band}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {Array.isArray(t.reasons) && t.reasons.length > 0 ? (
-                      <ul className="text-sm text-muted-foreground list-disc pl-5">
-                        {t.reasons.slice(0, 3).map((r, idx) => (
-                          <li key={idx}>{r}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        Relevant based on your garden plants and features.
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2">
-                      {(t.matchedHosts || []).slice(0, 4).map((h) => (
-                        <Badge key={`${h.kind}:${h.key}`} variant="secondary">
-                          {h.key}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                <ThreatCard key={t.threatId} threat={t} />
               ))}
             </div>
           )}

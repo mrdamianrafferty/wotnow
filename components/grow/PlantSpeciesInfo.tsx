@@ -22,6 +22,7 @@ import { WateringScale } from './WateringScale';
 import { HardinessZoneBar } from './HardinessZoneBar';
 import { SeasonalTimeline } from './SeasonalTimeline';
 import { CareGuideCard } from './CareGuideCard';
+import { PerenualAttribution } from './PerenualAttribution';
 import { Badge } from '../ui/badge';
 
 interface PlantSpeciesInfoProps {
@@ -246,6 +247,9 @@ export function PlantSpeciesInfo({ species, isLoading, compact = false }: PlantS
               {(species.harvestSeason || species.floweringSeason) && <SeasonalTimeline species={species} />}
               <WildlifeAttractors species={species} />
               <CareGuideCard species={species} maxSections={3} />
+              
+              {/* Data source attribution */}
+              <PerenualAttribution className="pt-2" />
             </div>
           )}
 

@@ -76,6 +76,17 @@ const verbose = args.includes('--verbose') || args.includes('-v');
 
 // ============ Main Sync Logic ============
 
+async function isPerenualIdAlreadyUsed(perenualId: number, excludeSlug: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('plant_species')
+    .select('slug')
+    .eq('perenual_id', perenualId)
+    .neq('slug', excludeSlug)
+    .limit(1);
+  
+  return (data?.length ?? 0) > 0;
+}
+
 async function fetchOurSpecies(): Promise<OurSpecies[]> {
   let query = supabase
     .from('plant_species')
@@ -363,6 +374,19 @@ async function syncSpecies(species: OurSpecies, stats: SyncStats): Promise<void>
   const { match, confidence, query } = bestMatch;
   console.log(`  ✓ Matched: "${match.common_name}" (ID: ${match.id}, confidence: ${confidence}, via: "${query}")`);
   
+  // Check if this Perenual ID is already used by another species
+  const isDuplicate = await isPerenualIdAlreadyUsed(match.id, species.slug);
+  if (isDuplicate) {
+    console.log(`  ⚠️  Perenual ID ${match.id} already assigned to another species - skipping`);
+    await logSyncAttempt(
+      species.slug, species.name, query,
+      totalResultsFound, match.id, match.common_name, confidence as 'exact' | 'high' | 'medium' | 'low' | 'none', 'skipped',
+      `Perenual ID ${match.id} already used by another species`
+    );
+    stats.skipped++;
+    return;
+  }
+  
   // Get full details
   const detail = await getSpeciesDetails(match.id);
   
@@ -440,11 +464,12 @@ async function main(): Promise<void> {
   console.log(`Total processed: ${stats.total}`);
   console.log(`✅ Matched:      ${stats.matched}`);
   console.log(`⚠️  Unmatched:    ${stats.unmatched}`);
+  console.log(`⏭️  Skipped:      ${stats.skipped}`);
   console.log(`❌ Errors:       ${stats.errors}`);
   console.log(`📖 Care guides:  ${stats.careGuidesFetched}`);
   
-  if (stats.unmatched > 0) {
-    console.log('\n💡 Tip: Check perenual_sync_logs table for unmatched species');
+  if (stats.unmatched > 0 || stats.skipped > 0) {
+    console.log('\n💡 Tip: Check perenual_sync_logs table for unmatched/skipped species');
   }
 }
 

@@ -165,6 +165,46 @@ export interface PerenualCareGuidesResponse {
   total: number;
 }
 
+// ============ Pest/Disease Types ============
+
+export interface PerenualPestDiseaseImage {
+  license: number;
+  license_name: string;
+  license_url: string;
+  original_url: string;
+  regular_url: string;
+  medium_url: string;
+  small_url: string;
+  thumbnail: string;
+}
+
+export interface PerenualPestDiseaseSection {
+  subtitle: string;
+  description: string;
+}
+
+export interface PerenualPestDisease {
+  id: number;
+  common_name: string;
+  scientific_name: string | null;
+  other_name: string[] | null;
+  family: string | null;
+  description: PerenualPestDiseaseSection[] | null;
+  solution: PerenualPestDiseaseSection[] | null;
+  host: string[] | null;
+  images: PerenualPestDiseaseImage[] | null;
+}
+
+export interface PerenualPestDiseaseResponse {
+  data: PerenualPestDisease[];
+  to: number;
+  per_page: number;
+  current_page: number;
+  from: number;
+  last_page: number;
+  total: number;
+}
+
 // ============ Helper Functions ============
 
 function sleep(ms: number): Promise<void> {
@@ -449,4 +489,151 @@ export function dimensionToCm(dim: PerenualDimension | undefined): { min: number
     min: dim.min_value ? Math.round(dim.min_value * multiplier * 100) / 100 : null,
     max: dim.max_value ? Math.round(dim.max_value * multiplier * 100) / 100 : null,
   };
+}
+
+// ============ Pest/Disease API Functions ============
+
+/**
+ * List pests and diseases from Perenual API
+ * @param page - Page number (30 results per page)
+ */
+export async function listPestDiseases(page: number = 1): Promise<PerenualPestDiseaseResponse> {
+  const apiKey = getApiKey();
+  const url = `${BASE_URL}/pest-disease-list?key=${apiKey}&page=${page}`;
+  
+  const response = await fetchWithRetry(url);
+  if (!response.ok) {
+    throw new Error(`Perenual pest-disease list API error: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Get a specific pest/disease by ID
+ */
+export async function getPestDiseaseById(id: number): Promise<PerenualPestDisease | null> {
+  const apiKey = getApiKey();
+  const url = `${BASE_URL}/pest-disease-list?key=${apiKey}&id=${id}`;
+  
+  const response = await fetchWithRetry(url);
+  if (!response.ok) {
+    throw new Error(`Perenual pest-disease API error: ${response.status}`);
+  }
+  
+  const data: PerenualPestDiseaseResponse = await response.json();
+  return data.data[0] || null;
+}
+
+/**
+ * Search pests and diseases by name
+ */
+export async function searchPestDiseases(query: string, page: number = 1): Promise<PerenualPestDiseaseResponse> {
+  const apiKey = getApiKey();
+  const url = `${BASE_URL}/pest-disease-list?key=${apiKey}&q=${encodeURIComponent(query)}&page=${page}`;
+  
+  const response = await fetchWithRetry(url);
+  if (!response.ok) {
+    throw new Error(`Perenual pest-disease search API error: ${response.status}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Fetch all pests and diseases (paginated)
+ */
+export async function getAllPestDiseases(): Promise<PerenualPestDisease[]> {
+  const all: PerenualPestDisease[] = [];
+  let page = 1;
+  let lastPage = 1;
+  
+  do {
+    console.log(`Fetching pest-disease page ${page}...`);
+    const response = await listPestDiseases(page);
+    all.push(...response.data);
+    lastPage = response.last_page;
+    page++;
+    
+    // Rate limiting - wait 200ms between requests
+    await new Promise(resolve => setTimeout(resolve, 200));
+  } while (page <= lastPage);
+  
+  return all;
+}
+
+/**
+ * Find best matching pest/disease for a given threat name
+ * Returns the match with confidence level
+ */
+export async function findMatchingPestDisease(
+  threatName: string,
+  scientificName?: string
+): Promise<{ match: PerenualPestDisease | null; confidence: 'exact' | 'high' | 'medium' | 'low' | 'none' }> {
+  // First, search by common name
+  const searchResults = await searchPestDiseases(threatName);
+  const results = searchResults.data;
+  
+  if (results.length === 0) {
+    // Try scientific name if provided
+    if (scientificName) {
+      const sciResults = await searchPestDiseases(scientificName);
+      if (sciResults.data.length === 0) {
+        return { match: null, confidence: 'none' };
+      }
+      return findBestPestDiseaseMatch(threatName, scientificName, sciResults.data);
+    }
+    return { match: null, confidence: 'none' };
+  }
+  
+  return findBestPestDiseaseMatch(threatName, scientificName, results);
+}
+
+function findBestPestDiseaseMatch(
+  threatName: string,
+  scientificName: string | undefined,
+  results: PerenualPestDisease[]
+): { match: PerenualPestDisease | null; confidence: 'exact' | 'high' | 'medium' | 'low' | 'none' } {
+  const threatNameNorm = threatName.toLowerCase().trim();
+  const sciNameNorm = scientificName?.toLowerCase().trim();
+  
+  // Check for exact matches first
+  for (const r of results) {
+    if (r.common_name.toLowerCase().trim() === threatNameNorm) {
+      return { match: r, confidence: 'exact' };
+    }
+    if (sciNameNorm && r.scientific_name?.toLowerCase().trim() === sciNameNorm) {
+      return { match: r, confidence: 'exact' };
+    }
+    if (r.other_name?.some(n => n.toLowerCase().trim() === threatNameNorm)) {
+      return { match: r, confidence: 'exact' };
+    }
+  }
+  
+  // Score all results by similarity
+  const scored = results.map(r => {
+    const commonSim = stringSimilarity(threatName, r.common_name);
+    const sciSim = sciNameNorm && r.scientific_name 
+      ? stringSimilarity(sciNameNorm, r.scientific_name)
+      : 0;
+    const otherNameSims = r.other_name?.map(n => stringSimilarity(threatName, n)) ?? [0];
+    const maxOtherSim = Math.max(...otherNameSims);
+    
+    const bestScore = Math.max(commonSim, sciSim, maxOtherSim);
+    
+    return { result: r, score: bestScore };
+  });
+  
+  scored.sort((a, b) => b.score - a.score);
+  const best = scored[0];
+  
+  if (best.score >= 0.9) {
+    return { match: best.result, confidence: 'high' };
+  } else if (best.score >= 0.7) {
+    return { match: best.result, confidence: 'medium' };
+  } else if (best.score >= 0.5) {
+    return { match: best.result, confidence: 'low' };
+  }
+  
+  return { match: null, confidence: 'none' };
 }
