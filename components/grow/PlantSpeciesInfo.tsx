@@ -98,10 +98,6 @@ function hasEnrichedData(species: PlantSpecies): boolean {
     species.poisonousToPets > 0 ||
     species.thorny ||
     species.invasive ||
-    species.watering ||
-    species.hardinessMin !== null ||
-    species.harvestSeason ||
-    species.floweringSeason ||
     (species.careGuides && species.careGuides.length > 0)
   );
 }
@@ -244,9 +240,10 @@ export function PlantSpeciesInfo({ species, isLoading, compact = false }: PlantS
           {/* Enriched Perenual data sections */}
           {hasEnrichedData(species) && (
             <div className="space-y-4 pt-2 border-t border-gray-100">
-              <WateringScale species={species} />
-              <HardinessZoneBar species={species} />
-              <SeasonalTimeline species={species} />
+              {/* Only show components that have data */}
+              {species.watering && <WateringScale species={species} />}
+              {species.hardinessMin !== null && <HardinessZoneBar species={species} />}
+              {(species.harvestSeason || species.floweringSeason) && <SeasonalTimeline species={species} />}
               <WildlifeAttractors species={species} />
               <CareGuideCard species={species} maxSections={3} />
             </div>
