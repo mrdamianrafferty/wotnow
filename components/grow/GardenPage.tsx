@@ -758,12 +758,18 @@ export function GardenPage() {
             </Card>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {plants.map((plant) => (
+              {plants.map((plant) => {
+                const speciesSlug = speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name.toLowerCase().replace(/\s+/g, '-');
+                const speciesUrl = `/grow/species/${encodeURIComponent(speciesSlug)}`;
+                
+                return (
                 <Card key={plant.id} className={`border-2 ${getHealthColor(plant.health)}`}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="pr-2">
-                        <CardTitle className="text-lg">{plant.name}</CardTitle>
+                        <Link href={speciesUrl} className="hover:underline">
+                          <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{plant.name}</CardTitle>
+                        </Link>
                         <p className="text-sm text-muted-foreground">{plant.type}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -787,15 +793,17 @@ export function GardenPage() {
                           const src = key ? (getPlantImage(key, 'xl') ?? getPlantImage(key, 'lg') ?? getPlantImage(key, 'medium')) : null;
                           if (!src) return null;
                           return (
-                            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white">
-                              <Image
-                                src={src}
-                                alt={plant.name}
-                                fill
-                                className="object-contain p-1"
-                                sizes="(max-width: 768px) 96px, 192px"
-                              />
-                            </div>
+                            <Link href={speciesUrl} className="block">
+                              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
+                                <Image
+                                  src={src}
+                                  alt={plant.name}
+                                  fill
+                                  className="object-contain p-1"
+                                  sizes="(max-width: 768px) 96px, 192px"
+                                />
+                              </div>
+                            </Link>
                           );
                         })()}
                       </div>
@@ -851,7 +859,8 @@ export function GardenPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              );
+              })}
             </div>
           )}
 
