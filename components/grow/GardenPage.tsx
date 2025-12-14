@@ -183,6 +183,12 @@ export function GardenPage() {
   
   // Plant inventory state
   const [plants, setPlants] = useState<Plant[]>([]);
+  
+  // Track recently added plants for animation
+  const [newlyAddedPlantIds, setNewlyAddedPlantIds] = useState<Set<string>>(new Set());
+  
+  // Track plants being deleted for exit animation
+  const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
   // Threats state
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
@@ -355,6 +361,18 @@ export function GardenPage() {
       notes: plant.notes ?? null,
     };
 
+    // Track the new plant ID for animation
+    setNewlyAddedPlantIds((prev) => new Set([...prev, plant.id]));
+    
+    // Clear animation flag after animation completes (400ms sprout + buffer)
+    setTimeout(() => {
+      setNewlyAddedPlantIds((prev) => {
+        const next = new Set(prev);
+        next.delete(plant.id);
+        return next;
+      });
+    }, 600);
+
     setPlants((previous) => [...previous, normalizePlant(rawPlant)]);
   };
 
@@ -477,9 +495,20 @@ export function GardenPage() {
         return;
       }
       
-      // Optimistically update UI
+      // Start exit animation
+      setDeletingPlantIds((prev) => new Set([...prev, plantId]));
+      
+      // Wait for animation to complete (500ms leaf-fall animation)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      // Remove from UI
       setPlants(prevPlants => prevPlants.filter(p => p.id !== plantId));
-      console.log(`🗑️ [GardenPage] Optimistically removed plant from UI`);
+      setDeletingPlantIds((prev) => {
+        const next = new Set(prev);
+        next.delete(plantId);
+        return next;
+      });
+      console.log(`🗑️ [GardenPage] Removed plant from UI after animation`);
       
       // Delete from backend
       console.log(`🗑️ [GardenPage] Calling api.deletePlant(${plantId})...`);
@@ -763,9 +792,22 @@ export function GardenPage() {
               {plants.map((plant) => {
                 const speciesSlug = speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name.toLowerCase().replace(/\s+/g, '-');
                 const speciesUrl = `/grow/species/${encodeURIComponent(speciesSlug)}`;
+                const isNewlyAdded = newlyAddedPlantIds.has(plant.id);
+                const isDeleting = deletingPlantIds.has(plant.id);
+                
+                // Build animation classes
+                let animationClass = '';
+                if (isDeleting) {
+                  animationClass = 'motion-safe:animate-leaf-fall motion-reduce:animate-fade-out';
+                } else if (isNewlyAdded) {
+                  animationClass = 'motion-safe:animate-sprout motion-reduce:animate-fade-in';
+                }
                 
                 return (
-                <Card key={plant.id} className={`border-2 ${getHealthColor(plant.health)}`}>
+                <Card 
+                  key={plant.id} 
+                  className={`border-2 ${getHealthColor(plant.health)} ${animationClass}`}
+                >
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="pr-2">

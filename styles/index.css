@@ -17,6 +17,37 @@
 /* Tailwind v4 + DaisyUI v5 loaded above. Custom site CSS continues below. */
 
 
+/* ------ REDUCED MOTION SUPPORT ------ */
+/* Disable all custom animations when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Utility classes for motion-safe animations */
+/* Use: class="motion-safe:animate-sprout motion-reduce:opacity-100" */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-safe\:animate-sprout { animation: sprout 400ms ease-out; }
+  .motion-safe\:animate-scale-in { animation: scaleIn 200ms ease-out; }
+  .motion-safe\:animate-slide-up { animation: slideUp 250ms ease-out; }
+  .motion-safe\:animate-fade-in { animation: fadeIn 200ms ease-out; }
+  .motion-safe\:animate-check-pop { animation: checkPop 300ms ease-out; }
+  .motion-safe\:animate-leaf-fall { animation: leafFall 500ms ease-in forwards; }
+}
+
+/* Fallback for reduced motion - instant state changes */
+@media (prefers-reduced-motion: reduce) {
+  .motion-reduce\:opacity-100 { opacity: 1 !important; }
+  .motion-reduce\:opacity-0 { opacity: 0 !important; }
+}
+
+
 /* ------ GLOBAL STYLES ------ */
 
 

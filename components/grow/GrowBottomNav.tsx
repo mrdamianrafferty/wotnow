@@ -54,17 +54,21 @@ export function GrowBottomNav() {
               key={link.href}
               href={link.href}
               prefetch={true}
-              className="flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] min-h-[48px] transition-colors"
+              className={`
+                flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] min-h-[48px] 
+                transition-all duration-150
+                ${isActive ? 'motion-safe:scale-110' : 'scale-100'}
+              `}
               aria-label={link.label}
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon
                 size={24}
-                className={`shrink-0 ${isActive ? 'stroke-[2.5] text-green-600' : 'stroke-2 text-gray-500'}`}
+                className={`shrink-0 transition-colors duration-150 ${isActive ? 'stroke-[2.5] text-green-600' : 'stroke-2 text-gray-500'}`}
                 aria-hidden="true"
               />
               <span 
-                className={`text-xs font-medium leading-tight text-center ${isActive ? 'text-green-600' : 'text-gray-500'}`}
+                className={`text-xs font-medium leading-tight text-center transition-colors duration-150 ${isActive ? 'text-green-600' : 'text-gray-500'}`}
                 aria-hidden="true"
               >
                 {link.label}
