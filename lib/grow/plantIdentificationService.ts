@@ -58,6 +58,17 @@ export interface PlantIdentificationResult {
     commonNames?: string[];
     // Multi-language common names (no extra credit cost)
     commonNamesByLanguage?: Record<string, string[]>;
+    // Additional Plant.id data (all included in 1 credit)
+    wikiDescription?: string; // Wikipedia description text
+    wikiUrl?: string; // Wikipedia link
+    watering?: { min: number; max: number }; // 1=dry, 2=medium, 3=wet
+    edibleParts?: string[]; // fruit, leaves, seeds, etc.
+    propagationMethods?: string[]; // cuttings, division, seeds, etc.
+    synonyms?: string[]; // Alternative scientific names
+    rank?: string; // species, genus, cultivar, etc.
+    gbifId?: number; // GBIF database ID
+    inaturalistId?: number; // iNaturalist ID
+    imageUrl?: string; // Representative image URL
   };
   
   // For pest/disease identification
@@ -102,12 +113,17 @@ export interface PlantIdApiResponse {
           // When using 'languages' param, common_names is a Record<string, string[]>
           // When using 'language' param, common_names is string[]
           common_names?: string[] | Record<string, string[]>;
-          taxonomy?: { genus?: string; family?: string; kingdom?: string; order?: string };
-          description?: { value: string };
-          url?: string;
-          watering?: { min: number; max: number };
+          taxonomy?: { genus?: string; family?: string; kingdom?: string; order?: string; phylum?: string; class?: string };
+          description?: { value: string }; // wiki_description
+          url?: string; // Wikipedia URL
+          watering?: { min: number; max: number }; // 1=dry, 2=medium, 3=wet
           edible_parts?: string[];
           propagation_methods?: string[];
+          synonyms?: string[];
+          rank?: string; // species, genus, cultivar, etc.
+          gbif_id?: number;
+          inaturalist_id?: number;
+          image?: { value: string; citation?: string; license_name?: string; license_url?: string };
         };
       }>;
     };
@@ -483,8 +499,10 @@ Special cases:
     const url = new URL(`${config.baseUrl}/identification`);
     // Request common names in multiple languages (no extra credit cost)
     url.searchParams.set('language', 'en,es,fr,de,it,pt,nl');
-    // Request plant details (query param, not body)
-    url.searchParams.set('details', 'common_names,taxonomy,url,watering,edible_parts,propagation_methods');
+    // Request plant details (query param, not body) - all included in 1 credit
+    // wiki_description: Wikipedia text, synonyms: alternative names, image: representative photo
+    // gbif_id/inaturalist_id: links to external databases, rank: taxonomic level
+    url.searchParams.set('details', 'common_names,taxonomy,url,watering,edible_parts,propagation_methods,wiki_description,synonyms,image,gbif_id,inaturalist_id,rank');
     
     const response = await fetch(url.toString(), {
       method: 'POST',
@@ -543,6 +561,9 @@ Special cases:
 
     // Get the best display name (prefer English, fallback to scientific name)
     const displayName = englishNames[0] || top.name;
+    
+    // Extract additional details from Plant.id response
+    const details = top.details;
 
     return {
       success: true,
@@ -553,9 +574,20 @@ Special cases:
         scientificName: top.name,
         commonNames: englishNames,
         commonNamesByLanguage: namesByLanguage,
+        // Additional rich data from Plant.id (all included in 1 credit)
+        wikiDescription: details?.description?.value,
+        wikiUrl: details?.url,
+        watering: details?.watering,
+        edibleParts: details?.edible_parts,
+        propagationMethods: details?.propagation_methods,
+        synonyms: details?.synonyms,
+        rank: details?.rank,
+        gbifId: details?.gbif_id,
+        inaturalistId: details?.inaturalist_id,
+        imageUrl: details?.image?.value,
       },
       confidence: top.probability,
-      reasoning: top.details?.description?.value?.slice(0, 200),
+      reasoning: details?.description?.value?.slice(0, 200),
       alternatives: alternatives.map(a => {
         const altNames = a.details?.common_names;
         let altName: string;

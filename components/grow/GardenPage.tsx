@@ -1409,7 +1409,27 @@ export function GardenPage() {
                       </div>
                     </div>
 
-                    {identifyResult.reasoning && (
+                    {/* Wikipedia Description (expandable) */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.wikiDescription && (
+                      <div className="text-sm text-muted-foreground">
+                        <p className="line-clamp-3">
+                          {identifyResult.species.wikiDescription}
+                        </p>
+                        {identifyResult.species.wikiDescription.length > 200 && (
+                          <details className="mt-1">
+                            <summary className="text-xs text-blue-600 cursor-pointer hover:underline">
+                              Show full description...
+                            </summary>
+                            <p className="mt-2 text-sm">
+                              {identifyResult.species.wikiDescription}
+                            </p>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Fallback to reasoning if no wiki description */}
+                    {identifyResult.reasoning && !identifyResult.species?.wikiDescription && (
                       <p className="text-sm text-muted-foreground">
                         {identifyResult.reasoning}
                       </p>
@@ -1447,6 +1467,64 @@ export function GardenPage() {
                       <span>Cost: €{identifyResult.cost.toFixed(3)}</span>
                     </div>
                     
+                    {/* Watering Requirements */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.watering && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">💧 Watering needs:</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {(() => {
+                              const w = identifyResult.species.watering;
+                              const avg = (w.min + w.max) / 2;
+                              if (avg <= 1.5) return '🌵 Low (drought tolerant)';
+                              if (avg <= 2.5) return '💧 Moderate';
+                              return '💦 High (keep moist)';
+                            })()}
+                          </span>
+                          <div className="flex gap-0.5">
+                            {[1, 2, 3].map((level) => (
+                              <div
+                                key={level}
+                                className={`w-3 h-3 rounded-full ${
+                                  level <= identifyResult.species!.watering!.max
+                                    ? 'bg-blue-500'
+                                    : 'bg-gray-200'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Edible Parts */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.edibleParts && identifyResult.species.edibleParts.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">🍽️ Edible parts:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {identifyResult.species.edibleParts.map((part, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs capitalize">
+                              {part}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Propagation Methods */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.propagationMethods && identifyResult.species.propagationMethods.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">🌱 Propagation:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {identifyResult.species.propagationMethods.map((method, i) => (
+                            <Badge key={i} variant="outline" className="text-xs capitalize">
+                              {method}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
                     {/* Multi-language names (Plant.id only) */}
                     {identifyResult.mode === 'plant' && identifyResult.species?.commonNamesByLanguage && (
                       <div className="pt-2 border-t">
@@ -1460,6 +1538,49 @@ export function GardenPage() {
                                 <span className="font-medium uppercase">{lang}:</span>&nbsp;{(names as string[])[0]}
                               </Badge>
                             ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* External Links (Wikipedia, GBIF, iNaturalist) */}
+                    {identifyResult.mode === 'plant' && (
+                      identifyResult.species?.wikiUrl || 
+                      identifyResult.species?.gbifId || 
+                      identifyResult.species?.inaturalistId
+                    ) && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">🔗 Learn more:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {identifyResult.species?.wikiUrl && (
+                            <a
+                              href={identifyResult.species.wikiUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                            >
+                              📖 Wikipedia
+                            </a>
+                          )}
+                          {identifyResult.species?.gbifId && (
+                            <a
+                              href={`https://www.gbif.org/species/${identifyResult.species.gbifId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                            >
+                              🌍 GBIF
+                            </a>
+                          )}
+                          {identifyResult.species?.inaturalistId && (
+                            <a
+                              href={`https://www.inaturalist.org/taxa/${identifyResult.species.inaturalistId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                            >
+                              🦎 iNaturalist
+                            </a>
+                          )}
                         </div>
                       </div>
                     )}
