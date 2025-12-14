@@ -175,24 +175,26 @@ class PlantIdentificationService {
    * Initialize clients - ONLY call server-side
    */
   async initializeServerSide(): Promise<void> {
-    if (this.initialized) return;
-
     if (typeof window !== 'undefined') {
       logger.warn('Cannot initialize client-side');
       return;
     }
 
+    // Always re-check API keys (in case env vars were added after initial load)
     // Initialize OpenAI
     const openaiKey = process.env.OPENAI_API_KEY;
-    if (openaiKey) {
+    if (openaiKey && !this.openai) {
       this.openai = new OpenAI({ apiKey: openaiKey });
       logger.info('OpenAI initialized');
     }
 
-    // Initialize Plant.id
-    this.plantIdApiKey = process.env.PLANT_ID_API_KEY || null;
-    if (this.plantIdApiKey) {
+    // Initialize Plant.id - always re-check in case key was added
+    const plantIdKey = process.env.PLANT_ID_API_KEY;
+    if (plantIdKey) {
+      this.plantIdApiKey = plantIdKey;
       logger.info('Plant.id API key found');
+    } else {
+      logger.warn('Plant.id API key not found in environment');
     }
 
     this.initialized = true;

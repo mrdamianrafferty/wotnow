@@ -1446,6 +1446,19 @@ export function GardenPage() {
                       <span>Provider: {identifyResult.provider === 'openai' ? 'OpenAI Vision' : 'Plant.id'}</span>
                       <span>Cost: €{identifyResult.cost.toFixed(3)}</span>
                     </div>
+                    
+                    {/* Link to species page if we can match it */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.name && (
+                      <div className="pt-2 border-t">
+                        <Link
+                          href={`/grow/species/${encodeURIComponent(identifyResult.species.name.toLowerCase().replace(/\s+/g, '-'))}`}
+                          className="inline-flex items-center gap-2 text-sm text-green-600 hover:text-green-700 hover:underline"
+                        >
+                          <Sprout className="h-4 w-4" />
+                          View {identifyResult.species.name} care guide →
+                        </Link>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
