@@ -59,7 +59,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const { name, type, location, health, planted, lastWatered, notes } = req.body ?? {};
+  const { 
+    name, 
+    type, 
+    location, 
+    health, 
+    planted, 
+    lastWatered, 
+    notes,
+    // Enhanced fields
+    speciesSlug,
+    variety,
+    quantity,
+    source,
+    expectedHarvest,
+    costCents,
+    photoUrl,
+  } = req.body ?? {};
 
   if (!name || !type) {
     return res.status(400).json({ error: 'name and type are required' });
@@ -78,6 +94,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     planted_at: toIsoString(planted),
     last_watered_at: toIsoString(lastWatered),
     notes: notes ? String(notes) : null,
+    // Enhanced fields
+    species_slug: speciesSlug ? String(speciesSlug).trim() : null,
+    variety: variety ? String(variety).trim() : null,
+    quantity: typeof quantity === 'number' && quantity > 0 ? quantity : null,
+    source: source ? String(source).trim() : null,
+    expected_harvest_at: toIsoString(expectedHarvest),
+    cost_cents: typeof costCents === 'number' && costCents >= 0 ? costCents : null,
+    photo_url: photoUrl ? String(photoUrl).trim() : null,
   };
 
   const { data, error } = await supabase

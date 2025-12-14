@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Input } from '../ui/input';
@@ -17,18 +19,33 @@ import {
   Badge,
 } from '../ui/badge';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '../ui/collapsible';
+import {
   Loader2,
   Search,
   Sprout,
   Filter,
   ChevronRight,
+  ChevronDown,
   ArrowLeft,
   Info,
+  Sun,
+  Droplets,
+  Ruler,
+  ExternalLink,
+  AlertTriangle,
+  Bug,
+  Heart,
+  Leaf,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/grow/api';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
+import { getPlantImage, PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 
 const HEALTH_OPTIONS: Array<{ value: 'excellent' | 'good' | 'fair' | 'poor'; label: string }> = [
   { value: 'excellent', label: 'Excellent' },
@@ -44,6 +61,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   herbs: '🌿',
   fruit: '🍓',
   fruits: '🍓',
+  'fruit-tree': '🍎',
   vine: '🌿',
   vines: '🌿',
   flower: '🌸',
@@ -53,6 +71,16 @@ const CATEGORY_ICONS: Record<string, string> = {
   shrub: '🌱',
   shrubs: '🌱',
 };
+
+const SOURCE_OPTIONS = [
+  { value: 'nursery', label: 'Garden centre / Nursery' },
+  { value: 'online', label: 'Online retailer' },
+  { value: 'seeds', label: 'Grown from seed' },
+  { value: 'cutting', label: 'Cutting / Division' },
+  { value: 'gift', label: 'Gift from friend / neighbor' },
+  { value: 'existing', label: 'Already in garden' },
+  { value: 'other', label: 'Other' },
+];
 
 function formatDateInput(date: Date): string {
   const year = date.getFullYear();
@@ -65,7 +93,7 @@ function formatCategoryLabel(category: string | null): string {
   if (!category) {
     return 'Uncategorised';
   }
-  return category.charAt(0).toUpperCase() + category.slice(1);
+  return category.charAt(0).toUpperCase() + category.slice(1).replace(/-/g, ' ');
 }
 
 function buildCategoryIcon(category: string | null): string {
@@ -73,6 +101,50 @@ function buildCategoryIcon(category: string | null): string {
     return '🪴';
   }
   return CATEGORY_ICONS[category.toLowerCase()] ?? '🪴';
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function getSpeciesImageSrc(species: PlantSpecies | null): string | null {
+  if (!species) return null;
+  
+  // Try imageKey first
+  if (species.imageKey && PLANT_IMAGE_MAP[species.imageKey]) {
+    return getPlantImage(species.imageKey, 'medium');
+  }
+  
+  // Try slug
+  const slugKey = species.slug;
+  if (slugKey && PLANT_IMAGE_MAP[slugKey]) {
+    return getPlantImage(slugKey, 'medium');
+  }
+  
+  // Try name-based key
+  const nameKey = slugify(species.name);
+  if (nameKey && PLANT_IMAGE_MAP[nameKey]) {
+    return getPlantImage(nameKey, 'medium');
+  }
+  
+  // Try Perenual image
+  if (species.perenualImage?.medium_url) {
+    return species.perenualImage.medium_url;
+  }
+  
+  return null;
+}
+
+function formatUsdaRange(min: number | null, max: number | null): string | null {
+  if (min == null && max == null) return null;
+  if (min != null && max != null) return `USDA ${min}–${max}`;
+  if (min != null) return `USDA ≥ ${min}`;
+  return `USDA ≤ ${max}`;
 }
 
 interface AddPlantDialogProps {
@@ -94,14 +166,24 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryResults, setCategoryResults] = useState<PlantSpecies[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<PlantSpecies | null>(null);
+  
+  // Basic fields
   const [health, setHealth] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [nickname, setNickname] = useState('');
   const [location, setLocation] = useState('');
   const [plantedDate, setPlantedDate] = useState(formatDateInput(new Date()));
   const [notes, setNotes] = useState('');
+  
+  // Enhanced fields
+  const [variety, setVariety] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [source, setSource] = useState('');
+  
+  // UI state
   const [isSaving, setIsSaving] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [listVariant, setListVariant] = useState<PlantListVariant>('search');
+  const [showCareInfo, setShowCareInfo] = useState(false);
   const requestIdRef = useRef(0);
 
   const resetState = () => {
@@ -118,9 +200,13 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     setLocation('');
     setPlantedDate(formatDateInput(new Date()));
     setNotes('');
+    setVariety('');
+    setQuantity(1);
+    setSource('');
     setIsSaving(false);
     setIsFetching(false);
     setListVariant('search');
+    setShowCareInfo(false);
   };
 
   useEffect(() => {
@@ -162,6 +248,9 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     setLocation('Garden');
     setPlantedDate(formatDateInput(new Date()));
     setNotes('');
+    setVariety('');
+    setQuantity(1);
+    setSource('');
   }, [selectedSpecies]);
 
   useEffect(() => {
@@ -262,6 +351,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   const handleBackToSearch = () => {
     setStep('select');
     setSelectedSpecies(null);
+    setShowCareInfo(false);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -278,6 +368,11 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
       health,
       planted: plantedDate ? new Date(`${plantedDate}T00:00:00`).toISOString() : null,
       notes: notes.trim().length > 0 ? notes.trim() : null,
+      // Enhanced fields
+      speciesSlug: selectedSpecies.slug,
+      variety: variety.trim().length > 0 ? variety.trim() : null,
+      quantity: quantity > 0 ? quantity : 1,
+      source: source.length > 0 ? source : null,
     };
 
     setIsSaving(true);
@@ -307,6 +402,10 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     }
     onOpenChange(nextOpen);
   };
+
+  // Get species image for preview
+  const speciesImageSrc = useMemo(() => getSpeciesImageSrc(selectedSpecies), [selectedSpecies]);
+  const usda = selectedSpecies ? formatUsdaRange(selectedSpecies.usdaZoneMin, selectedSpecies.usdaZoneMax) : null;
 
   const renderPlantList = () => {
     if (activeTab === 'browse' && !selectedCategory) {
@@ -342,6 +441,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
       <div className="space-y-2">
         {plantList.map((plant) => {
           const translationList = Object.values(plant.translations).filter((value): value is string => Boolean(value));
+          const imageSrc = getSpeciesImageSrc(plant);
 
           return (
           <button
@@ -350,23 +450,42 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
             onClick={() => handleSelectSpecies(plant)}
             className="w-full border border-border rounded-xl p-4 text-left hover:border-green-600 hover:bg-green-50 transition-colors"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
+            <div className="flex items-start gap-3">
+              {/* Thumbnail */}
+              {imageSrc ? (
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white">
+                  <Image 
+                    src={imageSrc} 
+                    alt={plant.name} 
+                    fill 
+                    className="object-contain p-1" 
+                    sizes="48px"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-muted text-2xl">
+                  {buildCategoryIcon(plant.category)}
+                </div>
+              )}
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium text-foreground">{plant.name}</p>
-                  <Badge variant="secondary">{buildCategoryIcon(plant.category)} {formatCategoryLabel(plant.category)}</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {buildCategoryIcon(plant.category)} {formatCategoryLabel(plant.category)}
+                  </Badge>
                 </div>
                 {plant.scientificName && (
-                  <p className="text-sm text-muted-foreground italic mt-1">{plant.scientificName}</p>
+                  <p className="text-sm text-muted-foreground italic mt-0.5 truncate">{plant.scientificName}</p>
                 )}
-                  {translationList.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Also known as: {translationList.slice(0, 3).join(', ')}
-                      {translationList.length > 3 ? '…' : ''}
-                    </p>
-                  )}
+                {translationList.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Also: {translationList.slice(0, 3).join(', ')}
+                    {translationList.length > 3 ? '…' : ''}
+                  </p>
+                )}
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
             </div>
           </button>
           );
@@ -375,9 +494,156 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     );
   };
 
+  const renderCareInfoSection = () => {
+    if (!selectedSpecies) return null;
+
+    const hasWatering = selectedSpecies.watering || selectedSpecies.wateringBenchmark;
+    const hasSunlight = selectedSpecies.sunlight?.length > 0;
+    const hasSoil = selectedSpecies.soil?.length > 0;
+    const hasSize = selectedSpecies.maximumHeightCm || selectedSpecies.maximumSpreadCm;
+    const hasToxicity = selectedSpecies.poisonousToHumans > 0 || selectedSpecies.poisonousToPets > 0;
+    const hasPests = selectedSpecies.pestSusceptibility?.length > 0;
+    const hasAttracts = selectedSpecies.attracts?.length > 0;
+
+    const hasAnyInfo = hasWatering || hasSunlight || hasSoil || hasSize || hasToxicity || hasPests || hasAttracts;
+
+    if (!hasAnyInfo) return null;
+
+    return (
+      <Collapsible open={showCareInfo} onOpenChange={setShowCareInfo}>
+        <CollapsibleTrigger asChild>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            className="w-full justify-between h-auto py-3 px-4 text-left"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <Info className="h-4 w-4" />
+              View species care info
+            </span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${showCareInfo ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-4 pb-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Watering */}
+            {hasWatering && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                <Droplets className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-blue-900">Watering</div>
+                  <div className="text-sm text-blue-800">
+                    {selectedSpecies.watering}
+                    {selectedSpecies.wateringBenchmark && (
+                      <span className="text-xs block mt-0.5">
+                        ({selectedSpecies.wateringBenchmark.value} {selectedSpecies.wateringBenchmark.unit})
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sunlight */}
+            {hasSunlight && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+                <Sun className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-yellow-900">Light</div>
+                  <div className="text-sm text-yellow-800">
+                    {selectedSpecies.sunlight.slice(0, 2).join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Size */}
+            {hasSize && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-100">
+                <Ruler className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-green-900">Size</div>
+                  <div className="text-sm text-green-800">
+                    {selectedSpecies.maximumHeightCm && `H: ${selectedSpecies.maximumHeightCm}cm`}
+                    {selectedSpecies.maximumHeightCm && selectedSpecies.maximumSpreadCm && ' • '}
+                    {selectedSpecies.maximumSpreadCm && `W: ${selectedSpecies.maximumSpreadCm}cm`}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Soil */}
+            {hasSoil && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <Leaf className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-amber-900">Soil</div>
+                  <div className="text-sm text-amber-800 truncate">
+                    {selectedSpecies.soil.slice(0, 2).join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Warnings */}
+          {hasToxicity && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
+              <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-red-900">Toxicity Warning</div>
+                <div className="text-sm text-red-800">
+                  {selectedSpecies.poisonousToHumans > 0 && 'Toxic to humans'}
+                  {selectedSpecies.poisonousToHumans > 0 && selectedSpecies.poisonousToPets > 0 && ' • '}
+                  {selectedSpecies.poisonousToPets > 0 && 'Toxic to pets'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pests */}
+          {hasPests && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-50 border border-orange-100">
+              <Bug className="h-4 w-4 text-orange-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-orange-900">Common Pests</div>
+                <div className="text-sm text-orange-800">
+                  {selectedSpecies.pestSusceptibility.slice(0, 3).join(', ')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attracts wildlife */}
+          {hasAttracts && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
+              <Heart className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-purple-900">Attracts Wildlife</div>
+                <div className="text-sm text-purple-800">
+                  {selectedSpecies.attracts.slice(0, 3).join(', ')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Link to full species page */}
+          <Link 
+            href={`/grow/species/${selectedSpecies.slug}`}
+            target="_blank"
+            className="flex items-center justify-center gap-2 text-sm text-green-700 hover:text-green-800 hover:underline py-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            View full species page
+          </Link>
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {step === 'details' && (
@@ -395,7 +661,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
         </DialogHeader>
 
         {step === 'select' ? (
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'search' | 'browse')}>
               <TabsList className="grid grid-cols-2">
                 <TabsTrigger value="search" className="flex items-center gap-2">
@@ -408,7 +674,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="search" className="space-y-4">
+              <TabsContent value="search" className="space-y-4 flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-5 w-5" />
                   <Input
@@ -453,100 +719,189 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
             </Tabs>
           </div>
         ) : (
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold flex items-center gap-2">
-                    {buildCategoryIcon(selectedSpecies?.category ?? null)} {selectedSpecies?.name}
-                  </p>
-                  {selectedSpecies?.scientificName && (
-                    <p className="text-sm text-muted-foreground italic mt-1">{selectedSpecies.scientificName}</p>
+          <ScrollArea className="flex-1 pr-4">
+            <form className="space-y-6 pb-4" onSubmit={handleSubmit}>
+              {/* Species Header with Image */}
+              <div className="rounded-xl border bg-gradient-to-br from-green-50 to-emerald-50 p-4">
+                <div className="flex gap-4">
+                  {/* Species Image */}
+                  {speciesImageSrc ? (
+                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm">
+                      <Image 
+                        src={speciesImageSrc} 
+                        alt={selectedSpecies?.name ?? 'Plant'} 
+                        fill 
+                        className="object-contain p-2" 
+                        sizes="96px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border bg-white text-4xl shadow-sm">
+                      {buildCategoryIcon(selectedSpecies?.category ?? null)}
+                    </div>
                   )}
+                  
+                  {/* Species Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xl font-semibold text-foreground">
+                      {selectedSpecies?.name}
+                    </p>
+                    {selectedSpecies?.scientificName && (
+                      <p className="text-sm text-muted-foreground italic">{selectedSpecies.scientificName}</p>
+                    )}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Badge variant="secondary">
+                        {buildCategoryIcon(selectedSpecies?.category ?? null)} {formatCategoryLabel(selectedSpecies?.category ?? null)}
+                      </Badge>
+                      {usda && <Badge variant="outline">{usda}</Badge>}
+                      {selectedSpecies?.careLevel && (
+                        <Badge variant="outline">Care: {selectedSpecies.careLevel}</Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <Badge variant="secondary">{formatCategoryLabel(selectedSpecies?.category ?? null)}</Badge>
-              </div>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="plant-nickname">Plant name</Label>
-                <Input
-                  id="plant-nickname"
-                  value={nickname}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setNickname(event.target.value)}
-                  placeholder="e.g. Cherry Tomato"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="plant-location">Location</Label>
-                <Input
-                  id="plant-location"
-                  value={location}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setLocation(event.target.value)}
-                  placeholder="e.g. Raised Bed 1"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="plant-date">Planted</Label>
-                <Input
-                  id="plant-date"
-                  type="date"
-                  value={plantedDate}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setPlantedDate(event.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Health</Label>
-                <Select value={health} onValueChange={(value) => setHealth(value as typeof health)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select health" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {HEALTH_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="plant-notes">Notes</Label>
-              <Textarea
-                id="plant-notes"
-                value={notes}
-                onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNotes(event.target.value)}
-                rows={4}
-                placeholder="Watering schedule, variety details, reminders…"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={handleBackToSearch} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSaving} className="bg-green-600 hover:bg-green-700">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <Sprout className="h-4 w-4 mr-2" />
-                    Add plant
-                  </>
+                {/* Description */}
+                {selectedSpecies?.description && (
+                  <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+                    {selectedSpecies.description}
+                  </p>
                 )}
-              </Button>
-            </div>
-          </form>
+              </div>
+
+              {/* Care Info Collapsible */}
+              <div className="rounded-lg border">
+                {renderCareInfoSection()}
+              </div>
+
+              {/* Your Plant Details */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  Your Plant Details
+                </h3>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="plant-nickname">Plant name</Label>
+                    <Input
+                      id="plant-nickname"
+                      value={nickname}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setNickname(event.target.value)}
+                      placeholder="e.g. Kitchen Window Basil"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">Give it a memorable name</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="plant-variety">Variety / Cultivar</Label>
+                    <Input
+                      id="plant-variety"
+                      value={variety}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setVariety(event.target.value)}
+                      placeholder="e.g. Genovese, Bramley, Roma"
+                    />
+                    <p className="text-xs text-muted-foreground">Specific variety if known</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="plant-location">Location</Label>
+                    <Input
+                      id="plant-location"
+                      value={location}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setLocation(event.target.value)}
+                      placeholder="e.g. Back garden, Raised bed 1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="plant-quantity">Quantity</Label>
+                    <Input
+                      id="plant-quantity"
+                      type="number"
+                      min={1}
+                      max={999}
+                      value={quantity}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setQuantity(Math.max(1, parseInt(event.target.value) || 1))}
+                    />
+                    <p className="text-xs text-muted-foreground">How many plants/seeds</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="plant-date">Planted date</Label>
+                    <Input
+                      id="plant-date"
+                      type="date"
+                      value={plantedDate}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setPlantedDate(event.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Current health</Label>
+                    <Select value={health} onValueChange={(value) => setHealth(value as typeof health)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select health" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HEALTH_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Where did you get it?</Label>
+                  <Select value={source} onValueChange={setSource}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select source (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOURCE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="plant-notes">Notes</Label>
+                  <Textarea
+                    id="plant-notes"
+                    value={notes}
+                    onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNotes(event.target.value)}
+                    rows={3}
+                    placeholder="Watering schedule, special care needs, reminders…"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button type="button" variant="outline" onClick={handleBackToSearch} disabled={isSaving}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving} className="bg-green-600 hover:bg-green-700">
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Sprout className="h-4 w-4 mr-2" />
+                      Add plant
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </ScrollArea>
         )}
       </DialogContent>
     </Dialog>

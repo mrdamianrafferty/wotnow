@@ -10,6 +10,14 @@ export type PlantRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  // Enhanced fields
+  species_slug: string | null;
+  variety: string | null;
+  quantity: number | null;
+  source: string | null;
+  expected_harvest_at: string | null;
+  cost_cents: number | null;
+  photo_url: string | null;
 };
 
 export type SerializedPlant = {
@@ -23,6 +31,14 @@ export type SerializedPlant = {
   notes?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  // Enhanced fields
+  speciesSlug?: string | null;
+  variety?: string | null;
+  quantity?: number | null;
+  source?: string | null;
+  expectedHarvest?: string | null;
+  costCents?: number | null;
+  photoUrl?: string | null;
 };
 
 export type InsertPlantRow = {
@@ -34,6 +50,14 @@ export type InsertPlantRow = {
   planted_at: string | null;
   last_watered_at: string | null;
   notes: string | null;
+  // Enhanced fields (all optional)
+  species_slug?: string | null;
+  variety?: string | null;
+  quantity?: number | null;
+  source?: string | null;
+  expected_harvest_at?: string | null;
+  cost_cents?: number | null;
+  photo_url?: string | null;
 };
 
 export function serializePlant(row: PlantRow): SerializedPlant {
@@ -48,5 +72,13 @@ export function serializePlant(row: PlantRow): SerializedPlant {
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // Enhanced fields
+    speciesSlug: row.species_slug,
+    variety: row.variety,
+    quantity: row.quantity,
+    source: row.source,
+    expectedHarvest: row.expected_harvest_at,
+    costCents: row.cost_cents,
+    photoUrl: row.photo_url,
   };
 }
