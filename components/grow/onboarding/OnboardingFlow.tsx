@@ -544,8 +544,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                     <label
                       key={feature.id}
                       className={cn(
-                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition hover:border-primary',
-                        checked ? 'border-primary bg-primary/5' : 'border-border'
+                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                        checked ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                       )}
                     >
                       <Checkbox
@@ -589,8 +589,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('soilType', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition hover:border-primary',
-                        active ? 'border-primary bg-primary/5' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                       )}
                     >
                       <span className="flex items-center gap-2 font-medium">
@@ -615,8 +615,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('sunExposure', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition hover:border-primary',
-                        active ? 'border-primary bg-primary/5' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                       )}
                     >
                       <span className="flex items-center gap-2 font-medium">
@@ -641,8 +641,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('moisture', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition hover:border-primary',
-                        active ? 'border-primary bg-primary/5' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                       )}
                     >
                       <span className="flex items-center gap-2 font-medium">
@@ -671,8 +671,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => toggleInterest(option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition hover:border-primary',
-                        active ? 'border-primary bg-primary/5' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                       )}
                     >
                       <span className="flex items-center gap-2 font-medium">
@@ -696,7 +696,7 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                   <ul className="flex flex-wrap gap-2">
                     {activities.map((activity) => (
                       <li key={activity}>
-                        <Badge variant="secondary" className="font-normal">{activity.replace(/-/g, ' ')}</Badge>
+                        <Badge variant="secondary" className="font-normal motion-safe:animate-scale-in">{activity.replace(/-/g, ' ')}</Badge>
                       </li>
                     ))}
                   </ul>
@@ -717,8 +717,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                     type="button"
                     onClick={() => selectSingle('skillLevel', option.id)}
                     className={cn(
-                      'rounded-lg border p-4 text-left transition hover:border-primary',
-                      active ? 'border-primary bg-primary/5' : 'border-border'
+                      'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                      active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                     )}
                   >
                     <span className="flex items-center gap-2 font-medium">
@@ -740,8 +740,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                     type="button"
                     onClick={() => selectSingle('contentDepth', option.id)}
                     className={cn(
-                      'rounded-lg border p-4 text-left transition hover:border-primary',
-                      active ? 'border-primary bg-primary/5' : 'border-border'
+                      'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
+                      active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
                     )}
                   >
                     <span className="flex items-center gap-2 font-medium">
@@ -754,10 +754,10 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
               })}
             </div>
 
-            <Card className="bg-white border border-l-4 border-l-green-500 border-green-200">
+            <Card className="bg-white border border-l-4 border-l-green-500 border-green-200 motion-safe:animate-scale-in">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <CheckCircle2 className="h-5 w-5 text-green-600 motion-safe:animate-check-pop" />
                   Summary
                 </CardTitle>
               </CardHeader>
@@ -832,8 +832,8 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
         </div>
       </div>
 
-      <div className="h-2 rounded-full bg-muted">
-        <div className="h-2 rounded-full bg-green-600 transition-all" style={{ width: `${progressPercent}%` }} />
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-2 rounded-full bg-green-600 transition-all duration-500 ease-out" style={{ width: `${progressPercent}%` }} />
       </div>
 
       <Card>
@@ -841,7 +841,9 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
           <CardTitle className="text-lg font-semibold">{stepTitles[currentStep]}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
-          {renderStepContent()}
+          <div key={currentStep} className="motion-safe:animate-slide-up">
+            {renderStepContent()}
+          </div>
 
           {stepError && (
             <Alert variant="destructive">
