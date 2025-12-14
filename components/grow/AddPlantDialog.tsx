@@ -498,7 +498,14 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   const renderCareInfoSection = () => {
     if (!selectedSpecies) return null;
 
-    // Only show watering if we have actual text OR a valid benchmark with both value and unit
+    // Check for original fields (which have data) AND Perenual fields (for future)
+    const hasSunRequirements = !!selectedSpecies.sunRequirements;
+    const hasSoilType = !!selectedSpecies.soilType;
+    const hasPlantSize = !!selectedSpecies.plantSize;
+    const hasDescription = !!selectedSpecies.description;
+    const hasAdvice = !!selectedSpecies.advice;
+    
+    // Perenual fields (may be empty until sync completes)
     const hasWatering = selectedSpecies.watering || 
       (selectedSpecies.wateringBenchmark?.value && selectedSpecies.wateringBenchmark?.unit);
     const hasSunlight = selectedSpecies.sunlight?.length > 0;
@@ -508,7 +515,8 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     const hasPests = selectedSpecies.pestSusceptibility?.length > 0;
     const hasAttracts = selectedSpecies.attracts?.length > 0;
 
-    const hasAnyInfo = hasWatering || hasSunlight || hasSoil || hasSize || hasToxicity || hasPests || hasAttracts;
+    const hasAnyInfo = hasSunRequirements || hasSoilType || hasPlantSize || hasDescription || hasAdvice ||
+                       hasWatering || hasSunlight || hasSoil || hasSize || hasToxicity || hasPests || hasAttracts;
 
     if (!hasAnyInfo) return null;
 
@@ -529,7 +537,87 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
         </CollapsibleTrigger>
         <CollapsibleContent className="px-4 pb-4 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            {/* Watering */}
+            {/* Sun Requirements (original field) */}
+            {hasSunRequirements && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+                <Sun className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-yellow-900">Light</div>
+                  <div className="text-sm text-yellow-800">
+                    {selectedSpecies.sunRequirements}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sunlight array (Perenual) - fallback if no sunRequirements */}
+            {!hasSunRequirements && hasSunlight && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
+                <Sun className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-yellow-900">Light</div>
+                  <div className="text-sm text-yellow-800">
+                    {selectedSpecies.sunlight.slice(0, 2).join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Soil Type (original field) */}
+            {hasSoilType && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <Leaf className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-amber-900">Soil</div>
+                  <div className="text-sm text-amber-800">
+                    {selectedSpecies.soilType}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Soil array (Perenual) - fallback */}
+            {!hasSoilType && hasSoil && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
+                <Leaf className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-amber-900">Soil</div>
+                  <div className="text-sm text-amber-800 truncate">
+                    {selectedSpecies.soil.slice(0, 2).join(', ')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Plant Size (original field) */}
+            {hasPlantSize && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-100">
+                <Ruler className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-green-900">Size</div>
+                  <div className="text-sm text-green-800">
+                    {selectedSpecies.plantSize}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Size in cm (Perenual) - fallback */}
+            {!hasPlantSize && hasSize && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-100">
+                <Ruler className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                <div>
+                  <div className="text-xs font-medium text-green-900">Size</div>
+                  <div className="text-sm text-green-800">
+                    {selectedSpecies.maximumHeightCm && `H: ${selectedSpecies.maximumHeightCm}cm`}
+                    {selectedSpecies.maximumHeightCm && selectedSpecies.maximumSpreadCm && ' • '}
+                    {selectedSpecies.maximumSpreadCm && `W: ${selectedSpecies.maximumSpreadCm}cm`}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Watering (Perenual only) */}
             {hasWatering && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
                 <Droplets className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
@@ -546,48 +634,20 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                 </div>
               </div>
             )}
-
-            {/* Sunlight */}
-            {hasSunlight && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-100">
-                <Sun className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-xs font-medium text-yellow-900">Light</div>
-                  <div className="text-sm text-yellow-800">
-                    {selectedSpecies.sunlight.slice(0, 2).join(', ')}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Size */}
-            {hasSize && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-100">
-                <Ruler className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-xs font-medium text-green-900">Size</div>
-                  <div className="text-sm text-green-800">
-                    {selectedSpecies.maximumHeightCm && `H: ${selectedSpecies.maximumHeightCm}cm`}
-                    {selectedSpecies.maximumHeightCm && selectedSpecies.maximumSpreadCm && ' • '}
-                    {selectedSpecies.maximumSpreadCm && `W: ${selectedSpecies.maximumSpreadCm}cm`}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Soil */}
-            {hasSoil && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                <Leaf className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-xs font-medium text-amber-900">Soil</div>
-                  <div className="text-sm text-amber-800 truncate">
-                    {selectedSpecies.soil.slice(0, 2).join(', ')}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Advice (original field) */}
+          {hasAdvice && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
+              <Info className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+              <div>
+                <div className="text-xs font-medium text-blue-900">Growing Tips</div>
+                <div className="text-sm text-blue-800 line-clamp-3">
+                  {selectedSpecies.advice}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Warnings */}
           {hasToxicity && (
