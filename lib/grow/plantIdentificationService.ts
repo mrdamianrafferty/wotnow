@@ -56,6 +56,8 @@ export interface PlantIdentificationResult {
     scientificName?: string;
     slug?: string;
     commonNames?: string[];
+    // Multi-language common names (no extra credit cost)
+    commonNamesByLanguage?: Record<string, string[]>;
   };
   
   // For pest/disease identification
@@ -97,10 +99,15 @@ export interface PlantIdApiResponse {
         name: string;
         probability: number;
         details?: {
-          common_names?: string[];
-          taxonomy?: { genus?: string; family?: string };
+          // When using 'languages' param, common_names is a Record<string, string[]>
+          // When using 'language' param, common_names is string[]
+          common_names?: string[] | Record<string, string[]>;
+          taxonomy?: { genus?: string; family?: string; kingdom?: string; order?: string };
           description?: { value: string };
           url?: string;
+          watering?: { min: number; max: number };
+          edible_parts?: string[];
+          propagation_methods?: string[];
         };
       }>;
     };
@@ -482,8 +489,9 @@ Special cases:
         images: [`data:image/jpeg;base64,${base64Image}`],
         // Request classification including cultivars (e.g., "Tomato 'Roma'")
         classification_level: 'all',
-        // Language for common names and descriptions
-        language: 'en',
+        // Request common names in multiple languages (no extra credit cost!)
+        // Returns common_names as { en: [...], es: [...], fr: [...], ... }
+        languages: ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl'],
         // Only request details we actually use (saves bandwidth, same credit cost)
         // Note: similar_images costs extra and we don't display them
         details: ['common_names', 'taxonomy', 'url', 'watering', 'edible_parts', 'propagation_methods'],
@@ -518,21 +526,48 @@ Special cases:
     const top = data.result.classification.suggestions[0];
     const alternatives = data.result.classification.suggestions.slice(1, 4);
 
+    // Handle common_names which can be string[] (single language) or Record<string, string[]> (multi-language)
+    const commonNames = top.details?.common_names;
+    let englishNames: string[] = [];
+    let namesByLanguage: Record<string, string[]> | undefined;
+    
+    if (Array.isArray(commonNames)) {
+      // Single language response
+      englishNames = commonNames;
+    } else if (commonNames && typeof commonNames === 'object') {
+      // Multi-language response: { en: [...], es: [...], ... }
+      namesByLanguage = commonNames as Record<string, string[]>;
+      englishNames = namesByLanguage['en'] || [];
+    }
+
+    // Get the best display name (prefer English, fallback to scientific name)
+    const displayName = englishNames[0] || top.name;
+
     return {
       success: true,
       provider: 'plantid',
       mode: 'plant',
       species: {
-        name: top.details?.common_names?.[0] || top.name,
+        name: displayName,
         scientificName: top.name,
-        commonNames: top.details?.common_names,
+        commonNames: englishNames,
+        commonNamesByLanguage: namesByLanguage,
       },
       confidence: top.probability,
       reasoning: top.details?.description?.value?.slice(0, 200),
-      alternatives: alternatives.map(a => ({
-        name: a.details?.common_names?.[0] || a.name,
-        confidence: a.probability,
-      })),
+      alternatives: alternatives.map(a => {
+        const altNames = a.details?.common_names;
+        let altName: string;
+        if (Array.isArray(altNames)) {
+          altName = altNames[0] || a.name;
+        } else if (altNames && typeof altNames === 'object') {
+          const altLangNames = altNames as Record<string, string[]>;
+          altName = altLangNames['en']?.[0] || a.name;
+        } else {
+          altName = a.name;
+        }
+        return { name: altName, confidence: a.probability };
+      }),
       cost: config.pricePerCall,
       method: 'ai',
     };
