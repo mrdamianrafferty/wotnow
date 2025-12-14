@@ -527,7 +527,7 @@ export default function GrowSpeciesPage() {
           <div className="flex flex-col items-end gap-2 shrink-0">
             {thumbSrc ? (
               <div className="relative h-24 w-24 overflow-hidden rounded-xl border bg-white">
-                <Image src={thumbSrc} alt={species?.name ?? 'Plant'} fill className="object-contain p-1" sizes="96px" />
+                <Image src={thumbSrc} alt={`${species?.name ?? 'Plant'}${species?.scientificName ? ` (${species.scientificName})` : ''}`} fill className="object-contain p-1" sizes="96px" />
               </div>
             ) : null}
 
@@ -553,7 +553,7 @@ export default function GrowSpeciesPage() {
             >
               <Image
                 src={heroSrc}
-                alt={species?.name ?? 'Plant'}
+                alt={`Photo of ${species?.name ?? 'plant'}${species?.scientificName ? `, ${species.scientificName}` : ''}`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 960px, 1024px"
@@ -582,7 +582,7 @@ export default function GrowSpeciesPage() {
               <div className="relative h-full w-full">
                 <Image
                   src={heroFullSrc}
-                  alt={species?.name ?? 'Plant'}
+                  alt={`Full-size photo of ${species?.name ?? 'plant'}${species?.scientificName ? `, ${species.scientificName}` : ''}`}
                   fill
                   className="object-contain"
                   sizes="100vw"

@@ -457,7 +457,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-white">
                   <Image 
                     src={imageSrc} 
-                    alt={plant.name} 
+                    alt={`${plant.name}${plant.scientificName ? ` (${plant.scientificName})` : ''}`} 
                     fill 
                     className="object-contain p-1" 
                     sizes="48px"
@@ -734,7 +734,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                     <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm">
                       <Image 
                         src={speciesImageSrc} 
-                        alt={selectedSpecies?.name ?? 'Plant'} 
+                        alt={`${selectedSpecies?.name ?? 'Plant'}${selectedSpecies?.scientificName ? ` (${selectedSpecies.scientificName})` : ''}`} 
                         fill 
                         className="object-contain p-2" 
                         sizes="96px"

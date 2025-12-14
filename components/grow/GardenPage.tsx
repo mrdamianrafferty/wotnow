@@ -799,7 +799,7 @@ export function GardenPage() {
                               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
                                 <Image
                                   src={src}
-                                  alt={plant.name}
+                                  alt={`${plant.name} in ${plant.location}`}
                                   fill
                                   className="object-contain p-1"
                                   sizes="(max-width: 768px) 96px, 192px"

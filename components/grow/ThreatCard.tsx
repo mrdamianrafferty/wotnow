@@ -118,7 +118,7 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
           >
             <Image
               src={wikimediaImage.local_path}
-              alt={threat.commonName}
+              alt={`${threat.commonName}${threat.scientificName ? ` (${threat.scientificName})` : ''} - ${formatThreatType(threat.threatType)}`}
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 33vw"
@@ -145,7 +145,7 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
           >
             <Image
               src={primaryPerenualImage.medium_url || primaryPerenualImage.small_url || primaryPerenualImage.thumbnail}
-              alt={threat.commonName}
+              alt={`${threat.commonName}${threat.scientificName ? ` (${threat.scientificName})` : ''} - ${formatThreatType(threat.threatType)}`}
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 33vw"
@@ -244,7 +244,7 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
     {lightboxOpen && lightboxImageSrc && (
       <ImageLightbox
         src={lightboxImageSrc}
-        alt={threat.commonName}
+        alt={`${threat.commonName}${threat.scientificName ? ` (${threat.scientificName})` : ''}`}
         onClose={() => setLightboxOpen(false)}
         wikimediaImage={wikimediaImage}
         perenualImage={primaryPerenualImage}
