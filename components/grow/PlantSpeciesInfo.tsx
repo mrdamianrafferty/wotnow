@@ -13,8 +13,16 @@ import {
   Shrub,
   ChevronDown,
   ChevronUp,
+  Bird,
+  Bug,
 } from 'lucide-react';
 import type { PlantSpecies } from '../../lib/grow/species';
+import { SafetyAlerts } from './SafetyAlerts';
+import { WateringScale } from './WateringScale';
+import { HardinessZoneBar } from './HardinessZoneBar';
+import { SeasonalTimeline } from './SeasonalTimeline';
+import { CareGuideCard } from './CareGuideCard';
+import { Badge } from '../ui/badge';
 
 interface PlantSpeciesInfoProps {
   species: PlantSpecies | null;
@@ -82,6 +90,48 @@ function formatZoneRange(min: number | null, max: number | null): string {
   if (max === null) return `Zone ${min}+`;
   if (min === max) return `Zone ${min}`;
   return `Zones ${min}-${max}`;
+}
+
+function hasEnrichedData(species: PlantSpecies): boolean {
+  return !!(
+    species.poisonousToHumans > 0 ||
+    species.poisonousToPets > 0 ||
+    species.thorny ||
+    species.invasive ||
+    species.watering ||
+    species.hardinessMin !== null ||
+    species.harvestSeason ||
+    species.floweringSeason ||
+    (species.careGuides && species.careGuides.length > 0)
+  );
+}
+
+function WildlifeAttractors({ species }: { species: PlantSpecies }) {
+  const attractors: { icon: React.ReactNode; label: string }[] = [];
+  const attracts = species.attracts || [];
+  
+  // Check the attracts array for wildlife types
+  if (attracts.some(a => a.toLowerCase().includes('bird'))) {
+    attractors.push({ icon: <Bird className="h-3 w-3" />, label: 'Birds' });
+  }
+  if (attracts.some(a => a.toLowerCase().includes('butterfl'))) {
+    attractors.push({ icon: '🦋', label: 'Butterflies' });
+  }
+  if (attracts.some(a => a.toLowerCase().includes('bee') || a.toLowerCase().includes('pollinator'))) {
+    attractors.push({ icon: <Bug className="h-3 w-3" />, label: 'Pollinators' });
+  }
+  
+  if (attractors.length === 0) return null;
+  
+  return (
+    <div className="flex flex-wrap gap-1">
+      {attractors.map(({ icon, label }) => (
+        <Badge key={label} variant="outline" className="gap-1 text-xs text-green-700 border-green-200 bg-green-50">
+          {typeof icon === 'string' ? icon : icon} {label}
+        </Badge>
+      ))}
+    </div>
+  );
 }
 
 export function PlantSpeciesInfo({ species, isLoading, compact = false }: PlantSpeciesInfoProps) {
@@ -152,41 +202,58 @@ export function PlantSpeciesInfo({ species, isLoading, compact = false }: PlantS
       </button>
 
       {expanded && (
-        <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
-          <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
-            {getSunIcon(species.sunRequirements)}
-            <div>
-              <p className="text-xs text-muted-foreground">Light</p>
-              <p className="font-medium text-amber-800">{formatSunRequirements(species.sunRequirements)}</p>
+        <div className="mt-3 space-y-4">
+          {/* Safety alerts at the top if there are any */}
+          <SafetyAlerts species={species} />
+          
+          {/* Basic care grid - existing info */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
+              {getSunIcon(species.sunRequirements)}
+              <div>
+                <p className="text-xs text-muted-foreground">Light</p>
+                <p className="font-medium text-amber-800">{formatSunRequirements(species.sunRequirements)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
+              <Shovel className="h-4 w-4 text-amber-700" />
+              <div>
+                <p className="text-xs text-muted-foreground">Soil</p>
+                <p className="font-medium text-amber-800">{formatSoilType(species.soilType)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+              <Ruler className="h-4 w-4 text-blue-500" />
+              <div>
+                <p className="text-xs text-muted-foreground">Size</p>
+                <p className="font-medium text-blue-800">{formatPlantSize(species.plantSize)}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
+              <Thermometer className="h-4 w-4 text-red-400" />
+              <div>
+                <p className="text-xs text-muted-foreground">Hardiness</p>
+                <p className="font-medium text-red-800">{formatZoneRange(species.usdaZoneMin, species.usdaZoneMax)}</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-lg">
-            <Shovel className="h-4 w-4 text-amber-700" />
-            <div>
-              <p className="text-xs text-muted-foreground">Soil</p>
-              <p className="font-medium text-amber-800">{formatSoilType(species.soilType)}</p>
+          {/* Enriched Perenual data sections */}
+          {hasEnrichedData(species) && (
+            <div className="space-y-4 pt-2 border-t border-gray-100">
+              <WateringScale species={species} />
+              <HardinessZoneBar species={species} />
+              <SeasonalTimeline species={species} />
+              <WildlifeAttractors species={species} />
+              <CareGuideCard species={species} maxSections={3} />
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-            <Ruler className="h-4 w-4 text-blue-500" />
-            <div>
-              <p className="text-xs text-muted-foreground">Size</p>
-              <p className="font-medium text-blue-800">{formatPlantSize(species.plantSize)}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
-            <Thermometer className="h-4 w-4 text-red-400" />
-            <div>
-              <p className="text-xs text-muted-foreground">Hardiness</p>
-              <p className="font-medium text-red-800">{formatZoneRange(species.usdaZoneMin, species.usdaZoneMax)}</p>
-            </div>
-          </div>
+          )}
 
           {species.scientificName && (
-            <div className="col-span-2 text-xs text-muted-foreground italic text-center">
+            <div className="text-xs text-muted-foreground italic text-center pt-2">
               {species.scientificName}
             </div>
           )}
