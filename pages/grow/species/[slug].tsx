@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sprout, Shovel, Scissors, Wheat, MapPin } from 'lucide-react';
 import { ThreatCard } from '@/components/grow/ThreatCard';
+import { GrowLayout } from '@/components/grow/GrowLayout';
 
 import { getPlantImage, PLANT_IMAGE_MAP } from '@/lib/grow/plantImages';
 import type { PlantSpecies } from '@/lib/grow/species';
@@ -475,8 +476,19 @@ export default function GrowSpeciesPage() {
     return list.some((t) => t.taskId === taskId && (!t.plantSlug || t.plantSlug === slug) && t.status !== 'removed');
   };
 
+  // Dynamic breadcrumbs with species name
+  const breadcrumbs = useMemo(() => [
+    { label: 'Grow', href: '/grow' },
+    { label: 'Garden', href: '/grow/garden' },
+    { label: species?.name ?? 'Species' },
+  ], [species?.name]);
+
   return (
-    <>
+    <GrowLayout 
+      title={species?.name ?? 'Species'} 
+      breadcrumbs={breadcrumbs}
+      showBack
+    >
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -870,6 +882,6 @@ export default function GrowSpeciesPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </GrowLayout>
   );
 }

@@ -1,10 +1,11 @@
 import React from 'react';
 import Head from 'next/head';
 import { WeatherPage } from '@/components/grow/WeatherPage';
+import { GrowLayout } from '@/components/grow/GrowLayout';
 
 export default function GrowWeatherPage() {
   return (
-    <>
+    <GrowLayout>
       <Head>
         <title>Garden Weather Conditions - Grow Daisy</title>
         <meta
@@ -26,7 +27,9 @@ export default function GrowWeatherPage() {
 
         <link rel="canonical" href="https://godaisy.io/grow/weather" />
       </Head>
-      <WeatherPage />
-    </>
+      <main className="container mx-auto px-4 py-8">
+        <WeatherPage />
+      </main>
+    </GrowLayout>
   );
 }

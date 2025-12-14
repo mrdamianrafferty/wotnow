@@ -1,10 +1,11 @@
 import React from 'react';
 import Head from 'next/head';
 import { PlanPage } from '@/components/grow/PlanPage';
+import { GrowLayout } from '@/components/grow/GrowLayout';
 
 export default function GrowPlanPage() {
   return (
-    <>
+    <GrowLayout>
       <Head>
         <title>Garden Planning Calendar - Grow Daisy</title>
         <meta
@@ -26,7 +27,9 @@ export default function GrowPlanPage() {
 
         <link rel="canonical" href="https://godaisy.io/grow/plan" />
       </Head>
-      <PlanPage />
-    </>
+      <main className="container mx-auto px-4 py-8">
+        <PlanPage />
+      </main>
+    </GrowLayout>
   );
 }
