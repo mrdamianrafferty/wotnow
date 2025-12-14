@@ -562,12 +562,19 @@ export function GardenPage() {
     };
     reader.readAsDataURL(file);
 
-    // Compress for upload
+    // Skip compression for small files (under 500KB) - faster UX
+    if (file.size < 500 * 1024) {
+      console.log('[GardenPage] File already small, skipping compression:', file.size);
+      setIdentifyPhoto(file);
+      return;
+    }
+
+    // Compress for upload - optimized for AI identification (fast, don't need high resolution)
     try {
       const compressionResult = await compressImage(file, {
-        maxSizeMB: 4,
-        maxDimension: 1920,
-        preserveExif: true,
+        maxSizeMB: 1,         // 1MB is plenty for AI vision
+        maxDimension: 1024,   // 1024px is sufficient for plant/pest ID
+        preserveExif: false,  // Don't need EXIF for identification
       });
       setIdentifyPhoto(compressionResult.file);
     } catch (err) {
