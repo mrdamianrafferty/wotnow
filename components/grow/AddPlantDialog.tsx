@@ -731,28 +731,41 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
               {/* Species Header with Image */}
               <div className="rounded-xl border bg-gradient-to-br from-green-50 to-emerald-50 p-4">
                 <div className="flex gap-4">
-                  {/* Species Image */}
-                  {speciesImageSrc ? (
-                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm">
-                      <Image 
-                        src={speciesImageSrc} 
-                        alt={`${selectedSpecies?.name ?? 'Plant'}${selectedSpecies?.scientificName ? ` (${selectedSpecies.scientificName})` : ''}`} 
-                        fill 
-                        className="object-contain p-2" 
-                        sizes="96px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border bg-white text-4xl shadow-sm">
-                      {buildCategoryIcon(selectedSpecies?.category ?? null)}
-                    </div>
-                  )}
+                  {/* Species Image - clickable to species page */}
+                  <Link 
+                    href={`/grow/species/${selectedSpecies?.slug}`}
+                    target="_blank"
+                    className="block shrink-0 group"
+                    aria-label={`View full ${selectedSpecies?.name ?? 'species'} page`}
+                  >
+                    {speciesImageSrc ? (
+                      <div className="relative h-24 w-24 overflow-hidden rounded-xl border bg-white shadow-sm transition-all group-hover:ring-2 group-hover:ring-green-500 group-hover:shadow-md">
+                        <Image 
+                          src={speciesImageSrc} 
+                          alt={`${selectedSpecies?.name ?? 'Plant'}${selectedSpecies?.scientificName ? ` (${selectedSpecies.scientificName})` : ''}`} 
+                          fill 
+                          className="object-contain p-2" 
+                          sizes="96px"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-xl border bg-white text-4xl shadow-sm transition-all group-hover:ring-2 group-hover:ring-green-500 group-hover:shadow-md">
+                        {buildCategoryIcon(selectedSpecies?.category ?? null)}
+                      </div>
+                    )}
+                  </Link>
                   
                   {/* Species Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xl font-semibold text-foreground">
-                      {selectedSpecies?.name}
-                    </p>
+                    <Link 
+                      href={`/grow/species/${selectedSpecies?.slug}`}
+                      target="_blank"
+                      className="hover:underline hover:text-green-700 transition-colors"
+                    >
+                      <p className="text-xl font-semibold text-foreground">
+                        {selectedSpecies?.name}
+                      </p>
+                    </Link>
                     {selectedSpecies?.scientificName && (
                       <p className="text-sm text-muted-foreground italic">{selectedSpecies.scientificName}</p>
                     )}
