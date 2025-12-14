@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ImageAttribution, PerenualAttribution, type PerenualImageLicense } from './PerenualAttribution';
-import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink, X, ZoomIn } from 'lucide-react';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -87,6 +87,7 @@ const CARD_BORDER_COLORS: Record<ThreatRiskBand, string> = {
 };
 
 export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const cardJson = threat.cardJson as ThreatCardJson;
   
   // Prefer Wikimedia image over Perenual images
@@ -96,42 +97,69 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
   
   const hasImage = !!wikimediaImage || !!primaryPerenualImage;
   const hasPerenualData = !!cardJson?.perenual_id;
+
+  // Get image source for lightbox
+  const lightboxImageSrc = wikimediaImage?.local_path || 
+    primaryPerenualImage?.original_url || 
+    primaryPerenualImage?.medium_url || 
+    primaryPerenualImage?.small_url;
   
   return (
+    <>
     <Card className={`border-2 ${CARD_BORDER_COLORS[threat.band]} overflow-hidden`}>
       {/* Image section with attribution */}
       {wikimediaImage ? (
         // Wikimedia Commons image with proper attribution
-        <div className="relative">
-          <div className="relative h-32 w-full bg-muted">
+        <div className="relative group">
+          <button
+            onClick={() => setLightboxOpen(true)}
+            className="relative h-32 w-full bg-muted block cursor-zoom-in"
+            aria-label={`View full size image of ${threat.commonName}`}
+          >
             <Image
               src={wikimediaImage.local_path}
               alt={threat.commonName}
               fill
-              className="object-cover"
+              className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 33vw"
             />
-          </div>
+            {/* Zoom hint on hover */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
+            </div>
+          </button>
           {/* Wikimedia attribution overlay - per their requirements */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1">
-            <WikimediaAttribution image={wikimediaImage} />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1 pointer-events-none">
+            <div className="pointer-events-auto">
+              <WikimediaAttribution image={wikimediaImage} />
+            </div>
           </div>
         </div>
       ) : primaryPerenualImage && (
         // Fallback to Perenual image (legacy)
-        <div className="relative">
-          <div className="relative h-32 w-full bg-muted">
+        <div className="relative group">
+          <button
+            onClick={() => setLightboxOpen(true)}
+            className="relative h-32 w-full bg-muted block cursor-zoom-in"
+            aria-label={`View full size image of ${threat.commonName}`}
+          >
             <Image
               src={primaryPerenualImage.medium_url || primaryPerenualImage.small_url || primaryPerenualImage.thumbnail}
               alt={threat.commonName}
               fill
-              className="object-cover"
+              className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, 33vw"
             />
-          </div>
+            {/* Zoom hint on hover */}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-80 transition-opacity" />
+            </div>
+          </button>
           {/* Image attribution overlay */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1">
-            <ImageAttribution image={primaryPerenualImage} size="sm" className="text-white/80 hover:text-white" />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1 pointer-events-none">
+            <div className="pointer-events-auto">
+              <ImageAttribution image={primaryPerenualImage} size="sm" className="text-white/80 hover:text-white" />
+            </div>
           </div>
         </div>
       )}
@@ -211,6 +239,18 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
         )}
       </CardContent>
     </Card>
+
+    {/* Fullscreen Lightbox Modal */}
+    {lightboxOpen && lightboxImageSrc && (
+      <ImageLightbox
+        src={lightboxImageSrc}
+        alt={threat.commonName}
+        onClose={() => setLightboxOpen(false)}
+        wikimediaImage={wikimediaImage}
+        perenualImage={primaryPerenualImage}
+      />
+    )}
+    </>
   );
 }
 
@@ -278,6 +318,114 @@ function WikimediaAttribution({ image }: WikimediaAttributionProps) {
         <span className="hidden sm:inline">Wikimedia</span>
         <ExternalLink className="h-2.5 w-2.5" />
       </a>
+    </div>
+  );
+}
+
+/**
+ * Fullscreen image lightbox modal
+ */
+interface ImageLightboxProps {
+  src: string;
+  alt: string;
+  onClose: () => void;
+  wikimediaImage?: WikimediaImage;
+  perenualImage?: PerenualImageLicense;
+}
+
+function ImageLightbox({ src, alt, onClose, wikimediaImage, perenualImage }: ImageLightboxProps) {
+  // Close on escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    // Prevent body scroll when lightbox is open
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Full size image of ${alt}`}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+        aria-label="Close lightbox"
+      >
+        <X className="h-6 w-6" />
+      </button>
+
+      {/* Image container - takes up most of the screen */}
+      <div 
+        className="flex-1 flex items-center justify-center p-4 sm:p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative w-full h-full max-w-7xl max-h-[85vh]">
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            className="object-contain"
+            sizes="100vw"
+            priority
+          />
+        </div>
+      </div>
+
+      {/* Attribution bar at bottom */}
+      <div 
+        className="bg-black/80 px-4 py-3 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {wikimediaImage ? (
+          <div className="text-sm text-white/90 flex items-center justify-center gap-2 flex-wrap">
+            <span className="font-medium">{alt}</span>
+            <span className="text-white/50">•</span>
+            {!['Public Domain', 'CC0'].includes(wikimediaImage.license) && (
+              <>
+                <span>© {wikimediaImage.author}</span>
+                <span className="text-white/50">•</span>
+              </>
+            )}
+            <a 
+              href={wikimediaImage.license_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-300 hover:text-blue-200 underline"
+            >
+              {wikimediaImage.license}
+            </a>
+            <span className="text-white/50">•</span>
+            <a
+              href={wikimediaImage.wikimedia_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-300 hover:text-blue-200 underline flex items-center gap-1"
+            >
+              View on Wikimedia Commons
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        ) : perenualImage ? (
+          <div className="text-sm text-white/90">
+            <span className="font-medium">{alt}</span>
+            <span className="text-white/50 mx-2">•</span>
+            <span className="text-white/70">Image via Perenual</span>
+          </div>
+        ) : (
+          <div className="text-sm text-white/90 font-medium">{alt}</div>
+        )}
+      </div>
     </div>
   );
 }
