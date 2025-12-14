@@ -859,7 +859,7 @@ export function GardenPage() {
                     </div>
                   </CardContent>
                 </Card>
-              );
+                );
               })}
             </div>
           )}
