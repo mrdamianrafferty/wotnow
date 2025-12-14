@@ -44,6 +44,7 @@ import { SkeletonGardenPage } from './GrowSkeletons';
 import { getPlantImage } from '../../lib/grow/plantImages';
 import { ThreatCard } from './ThreatCard';
 import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
+import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -175,6 +176,8 @@ export function GardenPage() {
   // Photo upload state for identification
   const [identifyPhoto, setIdentifyPhoto] = useState<File | null>(null);
   const [identifyPhotoPreview, setIdentifyPhotoPreview] = useState<string | null>(null);
+  const [identifyResult, setIdentifyResult] = useState<PlantIdentificationResult | null>(null);
+  const [identifyProvider, setIdentifyProvider] = useState<'openai' | 'plantid'>('openai');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Image compression hook
@@ -489,21 +492,62 @@ export function GardenPage() {
     }
   };
 
-  const handleIdentifyPhoto = () => {
+  const handleIdentifyPhoto = async () => {
     if (!identifyPhoto) {
       toast.error('Please select a photo first');
       return;
     }
     
     setIsIdentifying(true);
-    // TODO: Call actual API when available
-    // const endpoint = identifyMode === 'plant' ? '/api/daisy/identify-plant' : '/api/daisy/identify-pest';
-    setTimeout(() => {
-      setIsIdentifying(false);
-      toast.info('Identification coming soon!', {
-        description: 'This feature is currently under development.',
+    setIdentifyResult(null);
+    
+    try {
+      // Build form data for multipart upload
+      const formData = new FormData();
+      formData.append('image', identifyPhoto);
+      formData.append('data', JSON.stringify({
+        mode: identifyMode,
+        context: {
+          climateZone: userClimateZone,
+          month: new Date().getMonth() + 1,
+          userPlants: plants.map(p => p.name),
+        },
+        provider: identifyProvider,
+      }));
+
+      const response = await fetch('/api/grow/identify-plant', {
+        method: 'POST',
+        body: formData,
       });
-    }, 2000);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Identification failed');
+      }
+
+      const result: PlantIdentificationResult = await response.json();
+      setIdentifyResult(result);
+
+      if (result.success) {
+        const name = result.mode === 'plant' 
+          ? result.species?.name 
+          : result.diagnosis?.name;
+        toast.success(`Identified: ${name || 'Unknown'}`, {
+          description: `Confidence: ${Math.round((result.confidence || 0) * 100)}% • Cost: €${result.cost.toFixed(3)}`,
+        });
+      } else {
+        toast.error('Could not identify', {
+          description: result.error || result.reasoning || 'Please try with a clearer photo',
+        });
+      }
+    } catch (error) {
+      console.error('[GardenPage] Identification error:', error);
+      toast.error('Identification failed', {
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
+    } finally {
+      setIsIdentifying(false);
+    }
   };
 
   // Handle photo selection from file input
@@ -536,6 +580,7 @@ export function GardenPage() {
   const handleClearPhoto = () => {
     setIdentifyPhoto(null);
     setIdentifyPhotoPreview(null);
+    setIdentifyResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -1267,6 +1312,120 @@ export function GardenPage() {
                   </>
                 )}
               </Button>
+
+              {/* Provider Toggle (for testing) */}
+              <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                <span className="text-xs text-muted-foreground">AI Provider:</span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setIdentifyProvider('openai')}
+                    className={`px-2 py-1 text-xs rounded ${
+                      identifyProvider === 'openai' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    OpenAI
+                  </button>
+                  <button
+                    onClick={() => setIdentifyProvider('plantid')}
+                    className={`px-2 py-1 text-xs rounded ${
+                      identifyProvider === 'plantid' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    Plant.id
+                  </button>
+                </div>
+              </div>
+
+              {/* Identification Result */}
+              {identifyResult && identifyResult.success && (
+                <Card className={`${identifyResult.mode === 'plant' ? 'bg-blue-50 border-blue-200' : 'bg-purple-50 border-purple-200'}`}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-lg">
+                          {identifyResult.mode === 'plant' 
+                            ? identifyResult.species?.name 
+                            : identifyResult.diagnosis?.name}
+                        </h4>
+                        {identifyResult.mode === 'plant' && identifyResult.species?.scientificName && (
+                          <p className="text-sm italic text-muted-foreground">
+                            {identifyResult.species.scientificName}
+                          </p>
+                        )}
+                        {identifyResult.mode === 'pest' && identifyResult.diagnosis?.type && (
+                          <Badge variant="outline" className="mt-1">
+                            {identifyResult.diagnosis.type}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">
+                          {Math.round((identifyResult.confidence || 0) * 100)}%
+                        </div>
+                        <p className="text-xs text-muted-foreground">confidence</p>
+                      </div>
+                    </div>
+
+                    {identifyResult.reasoning && (
+                      <p className="text-sm text-muted-foreground">
+                        {identifyResult.reasoning}
+                      </p>
+                    )}
+
+                    {identifyResult.alternatives && identifyResult.alternatives.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Other possibilities:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {identifyResult.alternatives.slice(0, 3).map((alt, i) => (
+                            <Badge key={i} variant="secondary" className="text-xs">
+                              {alt.name} ({Math.round(alt.confidence * 100)}%)
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {identifyResult.mode === 'pest' && identifyResult.treatment && identifyResult.treatment.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Treatment:</p>
+                        <ul className="text-sm space-y-1">
+                          {identifyResult.treatment.slice(0, 3).map((step, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-green-600">•</span>
+                              {step}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                      <span>Provider: {identifyResult.provider === 'openai' ? 'OpenAI Vision' : 'Plant.id'}</span>
+                      <span>Cost: €{identifyResult.cost.toFixed(3)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {identifyResult && !identifyResult.success && (
+                <Card className="bg-red-50 border-red-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">Identification Failed</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {identifyResult.error || 'Could not identify. Please try with a clearer photo.'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Info Cards */}
               {identifyMode === 'plant' && (
