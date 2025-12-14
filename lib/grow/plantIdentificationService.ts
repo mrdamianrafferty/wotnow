@@ -479,10 +479,12 @@ Special cases:
     context: IdentificationContext,
     config: typeof PROVIDER_CONFIG.plantid
   ): Promise<PlantIdentificationResult> {
-    // Languages are passed as query parameters, not in body
+    // Build URL with query parameters
     const url = new URL(`${config.baseUrl}/identification`);
     // Request common names in multiple languages (no extra credit cost)
     url.searchParams.set('language', 'en,es,fr,de,it,pt,nl');
+    // Request plant details (query param, not body)
+    url.searchParams.set('details', 'common_names,taxonomy,url,watering,edible_parts,propagation_methods');
     
     const response = await fetch(url.toString(), {
       method: 'POST',
@@ -492,11 +494,8 @@ Special cases:
       },
       body: JSON.stringify({
         images: [`data:image/jpeg;base64,${base64Image}`],
-        // Request classification including cultivars (e.g., "Tomato 'Roma'")
+        // Modifiers go in body - classification_level for cultivar detection
         classification_level: 'all',
-        // Only request details we actually use (saves bandwidth, same credit cost)
-        // Note: similar_images costs extra and we don't display them
-        details: ['common_names', 'taxonomy', 'url', 'watering', 'edible_parts', 'propagation_methods'],
       }),
     });
 
@@ -580,7 +579,14 @@ Special cases:
     context: IdentificationContext,
     config: typeof PROVIDER_CONFIG.plantid
   ): Promise<PlantIdentificationResult> {
-    const response = await fetch(`${config.baseUrl}/health_assessment`, {
+    // Build URL with query parameters
+    const url = new URL(`${config.baseUrl}/health_assessment`);
+    // Language for disease names and treatment info
+    url.searchParams.set('language', 'en');
+    // Request treatment details (query param)
+    url.searchParams.set('details', 'local_name,cause,treatment,classification');
+    
+    const response = await fetch(url.toString(), {
       method: 'POST',
       headers: {
         'Api-Key': this.plantIdApiKey!,
@@ -588,11 +594,7 @@ Special cases:
       },
       body: JSON.stringify({
         images: [`data:image/jpeg;base64,${base64Image}`],
-        // Language for disease names and treatment info
-        language: 'en',
-        // Request treatment details (biological, chemical, prevention)
-        // Note: similar_images costs extra and we don't display them
-        details: ['local_name', 'cause', 'treatment', 'classification'],
+        // Modifiers go in body - no special modifiers needed for health
       }),
     });
 
