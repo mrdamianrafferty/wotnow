@@ -7,6 +7,143 @@ import {
   PLANT_SPECIES_LANGUAGE_FIELDS,
 } from '../../../../lib/grow/species';
 
+// Type for custom_species_suggestions table rows
+type CustomSpeciesRow = {
+  id: string;
+  common_name: string;
+  scientific_name: string | null;
+  common_names: string[] | null;
+  wiki_data: {
+    wikiUrl?: Record<string, string> | string;
+    wikiDescription?: string;
+    watering?: unknown;
+    edibleParts?: string[];
+    propagationMethods?: string[];
+  } | null;
+  wiki_image_url: string | null;
+  wiki_image_license: string | null;
+  suggestion_count: number;
+};
+
+/**
+ * Serialize a custom species suggestion into a PlantSpecies-like object
+ * Note: Returns a partial PlantSpecies with only the fields we have data for
+ */
+function serializeCustomSpecies(row: CustomSpeciesRow): PlantSpecies {
+  // Extract best available wiki URL (prefer en, then global, then any available)
+  const wikiUrlData = row.wiki_data?.wikiUrl;
+  let bestWikiUrl: string | null = null;
+  if (wikiUrlData && typeof wikiUrlData === 'object') {
+    bestWikiUrl = wikiUrlData.en || wikiUrlData.global || 
+      Object.values(wikiUrlData).find((v): v is string => typeof v === 'string' && v !== null) || null;
+  } else if (typeof wikiUrlData === 'string') {
+    bestWikiUrl = wikiUrlData;
+  }
+
+  // Build slug from scientific name or common name
+  const slug = row.scientific_name 
+    ? row.scientific_name.toLowerCase().replace(/\s+/g, '-')
+    : row.common_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+
+  // Return a partial PlantSpecies object with defaults for missing fields
+  // This is safe because the frontend handles null/undefined gracefully
+  return {
+    slug,
+    name: row.common_name,
+    scientificName: row.scientific_name,
+    description: row.wiki_data?.wikiDescription || null,
+    advice: null,
+    category: null,
+    sunRequirements: null,
+    soilType: null,
+    plantSize: null,
+    usdaZoneMin: null,
+    usdaZoneMax: null,
+    imageKey: null,
+    aliases: row.common_names || [],
+    translations: {},
+    searchTerms: [],
+    // Perenual fields - not available for custom species
+    perenualId: null,
+    perenualFamily: null,
+    otherNames: [],
+    // Growth & Care
+    growthRate: null,
+    maintenance: null,
+    watering: (row.wiki_data?.watering as string) || null,
+    wateringBenchmark: null,
+    wateringPeriod: null,
+    droughtTolerant: false,
+    saltTolerant: false,
+    thorny: false,
+    invasive: false,
+    tropical: false,
+    indoor: false,
+    careLevel: null,
+    // Dimensions
+    dimension: null,
+    dimensions: null,
+    averageHeightCm: null,
+    maximumHeightCm: null,
+    averageSpreadCm: null,
+    maximumSpreadCm: null,
+    // Environmental
+    sunlight: [],
+    soil: [],
+    hardinessMin: null,
+    hardinessMax: null,
+    // Flowering & Visual
+    flowers: false,
+    floweringSeason: null,
+    flowerColor: null,
+    cones: false,
+    fruits: false,
+    edibleFruit: false,
+    edibleFruitTasteProfile: null,
+    fruitNutritionalValue: null,
+    fruitColor: [],
+    harvestSeason: null,
+    harvestMethod: null,
+    leaf: false,
+    leafColor: [],
+    edibleLeaf: false,
+    edibleLeafTasteProfile: null,
+    leafNutritionalValue: null,
+    cuisine: false,
+    cuisineList: null,
+    medicinal: false,
+    medicinalUse: null,
+    medicinalMethod: null,
+    // Toxicity
+    poisonousToHumans: 0,
+    poisonousToPets: 0,
+    poisonEffectsToHumans: null,
+    poisonEffectsToPets: null,
+    poisonToHumansCure: null,
+    poisonToPetsCure: null,
+    // Wildlife
+    attracts: [],
+    pestSusceptibility: [],
+    // Propagation
+    propagation: row.wiki_data?.propagationMethods || [],
+    seeds: 0,
+    // Images
+    perenualImage: null,
+    // Care guides
+    careGuides: [],
+    // Sync metadata
+    perenualLastSyncedAt: null,
+    // Custom species fields
+    isCustomSpecies: true,
+    suggestionCount: row.suggestion_count || 1,
+    wikiUrl: bestWikiUrl,
+    wikiImageUrl: row.wiki_image_url,
+    wikiImageLicense: row.wiki_image_license,
+    edibleParts: row.wiki_data?.edibleParts || null,
+    propagationMethods: row.wiki_data?.propagationMethods || null,
+  };
+}
+
 const BASE_SELECT = [
   'slug',
   'name',
@@ -205,6 +342,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
   };
 
+  // Helper to mark custom species as found
+  const markCustomFound = (searchName: string, customData: CustomSpeciesRow) => {
+    if (!foundNames.has(searchName)) {
+      foundNames.add(searchName);
+      results[searchName] = serializeCustomSpecies(customData);
+    }
+  };
+
   // Get species data from cache (or fetch if cache is stale)
   const cache = await getAllSpeciesWithCache();
 
@@ -287,6 +432,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     if (!found) {
       notFound.push(name);
+    }
+  }
+
+  // ========================================================================
+  // FALLBACK: Check custom_species_suggestions for any not found in plant_species
+  // ========================================================================
+  if (notFound.length > 0) {
+    const supabase = getSupabaseServerClient();
+    
+    // Build search terms for custom species lookup
+    const customSearchTerms = notFound.map(name => {
+      const baseName = baseNameMap.get(name) || name;
+      // Convert slug format back to spaces for matching: "small-leaved-gentian" -> "small leaved gentian"
+      const withSpaces = baseName.replace(/-/g, ' ');
+      return { original: name, searchTerm: withSpaces };
+    });
+
+    // Query custom_species_suggestions for all not-found names
+    // Using OR conditions to match any of the search terms
+    for (const { original, searchTerm } of customSearchTerms) {
+      if (foundNames.has(original)) continue;
+
+      // Try exact common name match first
+      let { data: customData } = await supabase
+        .from('custom_species_suggestions')
+        .select('*')
+        .ilike('common_name', searchTerm)
+        .limit(1)
+        .single();
+
+      // If not found, try scientific name
+      if (!customData) {
+        const sciResult = await supabase
+          .from('custom_species_suggestions')
+          .select('*')
+          .ilike('scientific_name', searchTerm)
+          .limit(1)
+          .single();
+        customData = sciResult.data;
+      }
+
+      // If still not found, try partial match on common name
+      if (!customData) {
+        const partialResult = await supabase
+          .from('custom_species_suggestions')
+          .select('*')
+          .ilike('common_name', `%${searchTerm}%`)
+          .limit(1)
+          .single();
+        customData = partialResult.data;
+      }
+
+      if (customData) {
+        markCustomFound(original, customData as CustomSpeciesRow);
+        // Remove from notFound
+        const idx = notFound.indexOf(original);
+        if (idx !== -1) notFound.splice(idx, 1);
+      }
     }
   }
 
