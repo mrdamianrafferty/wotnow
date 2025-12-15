@@ -8,10 +8,63 @@
  * - Request throttling to prevent rate limit errors
  * - Queue system for managing concurrent requests
  * - Exponential backoff for retry logic
+ * - localStorage caching with 1-week TTL for instant load
  */
 
 // In-memory cache for client-side performance
 const clientCache = new Map<string, string>();
+
+// localStorage cache configuration
+const LOCALSTORAGE_KEY_PREFIX = 'tr_';
+const LOCALSTORAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+
+interface LocalStorageCacheEntry {
+  v: string;  // translated value
+  t: number;  // timestamp
+}
+
+/**
+ * Get cached translation from localStorage (persistent across page loads)
+ */
+function getLocalStorageCache(cacheKey: string): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const stored = localStorage.getItem(LOCALSTORAGE_KEY_PREFIX + cacheKey);
+    if (!stored) return null;
+    
+    const entry: LocalStorageCacheEntry = JSON.parse(stored);
+    const now = Date.now();
+    
+    // Check if expired (older than 1 week)
+    if (now - entry.t > LOCALSTORAGE_TTL_MS) {
+      localStorage.removeItem(LOCALSTORAGE_KEY_PREFIX + cacheKey);
+      return null;
+    }
+    
+    return entry.v;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Store translation in localStorage for persistent caching
+ */
+function setLocalStorageCache(cacheKey: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const entry: LocalStorageCacheEntry = {
+      v: value,
+      t: Date.now(),
+    };
+    localStorage.setItem(LOCALSTORAGE_KEY_PREFIX + cacheKey, JSON.stringify(entry));
+  } catch (e) {
+    // localStorage might be full or disabled - ignore
+    console.warn('Failed to cache translation in localStorage:', e);
+  }
+}
 
 // Request queue to prevent overwhelming the API
 interface QueuedRequest {
@@ -35,10 +88,27 @@ let batchTimer: NodeJS.Timeout | null = null;
 const BATCH_DELAY = 100; // Wait 100ms to collect more requests
 const MAX_BATCH_SIZE = 50; // Send up to 50 translations at once
 
+/**
+ * Generate a short hash for long texts (for localStorage key)
+ */
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
 function getCacheKey(text: string, targetLang: string): string {
   const normalizedText = text.trim().replace(/\s+/g, ' ');
   const normalizedLang = targetLang.toLowerCase();
-  return `${normalizedLang}:${normalizedText}`;
+  // For long texts, use hash to keep localStorage keys manageable
+  const textKey = normalizedText.length > 100 
+    ? simpleHash(normalizedText) 
+    : normalizedText;
+  return `${normalizedLang}:${textKey}`;
 }
 
 /**
@@ -84,7 +154,10 @@ async function processBatch() {
       textsToTranslate.forEach((text, index) => {
         const translation = translations[index] || text;
         const key = getCacheKey(text, targetLang);
+        
+        // Store in both memory and localStorage
         clientCache.set(key, translation);
+        setLocalStorageCache(key, translation);
 
         const requests = uniqueTexts.get(key) || [];
         requests.forEach(req => req.resolve(translation));
@@ -198,9 +271,10 @@ async function translateWithRetry(request: QueuedRequest): Promise<void> {
 
     const translation = data.translation || text;
     
-    // Cache the result
+    // Cache the result in both memory and localStorage
     const cacheKey = getCacheKey(text, targetLang);
     clientCache.set(cacheKey, translation);
+    setLocalStorageCache(cacheKey, translation);
     
     // Resolve all pending requests for this text
     const pending = pendingRequests.get(cacheKey);
@@ -226,7 +300,8 @@ async function translateWithRetry(request: QueuedRequest): Promise<void> {
 }
 
 /**
- * Translate text using the server API with queue management
+ * Translate text using the server API with queue management.
+ * Uses multi-level caching: memory → localStorage → API
  */
 export async function clientTranslate(text: string, targetLang: string): Promise<string> {
   // Return immediately if text is empty or target is English
@@ -234,11 +309,20 @@ export async function clientTranslate(text: string, targetLang: string): Promise
     return text;
   }
 
-  // Check client cache first
   const cacheKey = getCacheKey(text, targetLang);
-  const cached = clientCache.get(cacheKey);
-  if (cached) {
-    return cached;
+  
+  // Check memory cache first (fastest)
+  const memoryCached = clientCache.get(cacheKey);
+  if (memoryCached) {
+    return memoryCached;
+  }
+  
+  // Check localStorage cache (persists across page loads)
+  const storageCached = getLocalStorageCache(cacheKey);
+  if (storageCached) {
+    // Populate memory cache for subsequent lookups
+    clientCache.set(cacheKey, storageCached);
+    return storageCached;
   }
 
   // Check if there's already a pending request for this text

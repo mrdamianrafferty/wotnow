@@ -107,32 +107,47 @@ export function useLanguage() {
 }
 
 // Enhanced translation hook that uses the language context
+// Shows English text immediately, then updates with translation when ready
 export function useContextualTranslation(text: string, targetLang?: string) {
   const { language } = useLanguage();
+  // Initialize with original text - shows immediately while translation loads
   const [translated, setTranslated] = useState(text);
   const [loading, setLoading] = useState(false);
 
   const finalLang = targetLang || language || 'en';
 
   useEffect(() => {
+    // For English or empty text, just show original
     if (finalLang === 'en' || !text?.trim()) {
       setTranslated(text);
+      setLoading(false);
       return;
     }
 
     // Import clientTranslate dynamically to avoid SSR issues
     let isMounted = true;
     setLoading(true);
+    
+    // Add timeout to prevent stuck translations
+    const timeoutId = setTimeout(() => {
+      if (isMounted) {
+        console.warn('[Translation] Request timed out, using original text');
+        setLoading(false);
+        // Keep showing original text if translation is too slow
+      }
+    }, 10000); // 10 second timeout
 
     import('../lib/translation/clientTranslate')
       .then(({ clientTranslate }) => clientTranslate(text, finalLang))
       .then((result) => {
+        clearTimeout(timeoutId);
         if (isMounted) {
           setTranslated(result);
           setLoading(false);
         }
       })
       .catch((error) => {
+        clearTimeout(timeoutId);
         console.error('Translation failed:', error);
         if (isMounted) {
           setTranslated(text); // Fall back to original text
@@ -142,6 +157,7 @@ export function useContextualTranslation(text: string, targetLang?: string) {
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, [text, finalLang]);
 
