@@ -58,6 +58,15 @@ export type InsertPlantRow = {
   expected_harvest_at?: string | null;
   cost_cents?: number | null;
   photo_url?: string | null;
+  // Custom species fields (for plants not in our database)
+  scientific_name?: string | null;
+  wiki_description?: string | null;
+  wiki_url?: string | null;
+  wiki_image_url?: string | null;
+  wiki_image_license?: string | null;
+  identification_data?: Record<string, unknown> | null;
+  is_community_photo?: boolean;
+  community_photo_url?: string | null;
 };
 
 export function serializePlant(row: PlantRow): SerializedPlant {

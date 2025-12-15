@@ -75,6 +75,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     expectedHarvest,
     costCents,
     photoUrl,
+    // Custom species fields (for plants not in our database)
+    scientificName,
+    wikiDescription,
+    wikiUrl,
+    wikiImageUrl,
+    wikiImageLicense,
+    identificationData,
+    isCommunityPhoto,
+    communityPhotoUrl,
   } = req.body ?? {};
 
   if (!name || !type) {
@@ -102,6 +111,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     expected_harvest_at: toIsoString(expectedHarvest),
     cost_cents: typeof costCents === 'number' && costCents >= 0 ? costCents : null,
     photo_url: photoUrl ? String(photoUrl).trim() : null,
+    // Custom species fields (for plants not in our database)
+    scientific_name: scientificName ? String(scientificName).trim() : null,
+    wiki_description: wikiDescription ? String(wikiDescription) : null,
+    wiki_url: wikiUrl ? String(wikiUrl).trim() : null,
+    wiki_image_url: wikiImageUrl ? String(wikiImageUrl).trim() : null,
+    wiki_image_license: wikiImageLicense ? String(wikiImageLicense).trim() : null,
+    identification_data: identificationData && typeof identificationData === 'object' ? identificationData : null,
+    is_community_photo: typeof isCommunityPhoto === 'boolean' ? isCommunityPhoto : false,
+    community_photo_url: communityPhotoUrl ? String(communityPhotoUrl).trim() : null,
   };
 
   const { data, error } = await supabase
@@ -116,6 +134,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       error: error.message || 'Failed to add plant',
       details: process.env.NODE_ENV === 'development' ? error : undefined,
     });
+  }
+
+  // If this is a custom plant (no species_slug), track the suggestion
+  if (!speciesSlug && scientificName) {
+    try {
+      // Get the common names from identification data if available
+      const commonNames = identificationData?.species?.commonNames || [];
+      
+      await supabase.rpc('upsert_species_suggestion', {
+        p_scientific_name: String(scientificName).trim(),
+        p_common_name: String(name).trim(),
+        p_common_names: Array.isArray(commonNames) ? commonNames : [],
+        p_user_id: userId,
+        p_wiki_data: identificationData ? {
+          wikiDescription: wikiDescription || null,
+          wikiUrl: wikiUrl || null,
+          watering: identificationData?.species?.watering || null,
+          edibleParts: identificationData?.species?.edibleParts || null,
+          propagationMethods: identificationData?.species?.propagationMethods || null,
+        } : null,
+        p_wiki_image_url: wikiImageUrl || null,
+        p_wiki_image_license: wikiImageLicense || null,
+        p_community_photo_url: communityPhotoUrl || null,
+      });
+      console.log(`[grow] Tracked species suggestion: ${scientificName}`);
+    } catch (suggestionError) {
+      // Don't fail the request if suggestion tracking fails
+      console.warn('[grow] Failed to track species suggestion:', suggestionError);
+    }
   }
 
   return res.status(201).json({ plant: serializePlant(data as PlantRow) });

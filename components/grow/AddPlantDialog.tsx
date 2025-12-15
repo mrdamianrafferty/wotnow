@@ -147,17 +147,34 @@ function formatUsdaRange(min: number | null, max: number | null): string | null 
   return `USDA ≤ ${max}`;
 }
 
+import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
+
+// Prefill data from plant identification (for species not in our database)
+export interface IdentificationPrefill {
+  name: string;
+  scientificName?: string;
+  type?: string;
+  notes?: string;
+  wikiDescription?: string;
+  wikiUrl?: string;
+  wikiImageUrl?: string;
+  wikiImageLicense?: string;
+  wikiImageAllowed?: boolean;
+  identificationData?: PlantIdentificationResult;
+}
+
 interface AddPlantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPlantAdded: (plant: SerializedPlant) => void;
+  prefillFromIdentification?: IdentificationPrefill | null;
 }
 
 type DialogStep = 'select' | 'details';
 
 type PlantListVariant = 'search' | 'category';
 
-export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDialogProps) {
+export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromIdentification }: AddPlantDialogProps) {
   const [activeTab, setActiveTab] = useState<'search' | 'browse'>('search');
   const [step, setStep] = useState<DialogStep>('select');
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,6 +183,12 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryResults, setCategoryResults] = useState<PlantSpecies[]>([]);
   const [selectedSpecies, setSelectedSpecies] = useState<PlantSpecies | null>(null);
+  
+  // Custom plant mode (for species not in database)
+  const [isCustomPlant, setIsCustomPlant] = useState(false);
+  const [customPlantName, setCustomPlantName] = useState('');
+  const [customScientificName, setCustomScientificName] = useState('');
+  const [customPlantType, setCustomPlantType] = useState('flower');
   
   // Basic fields
   const [health, setHealth] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
@@ -207,11 +230,38 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     setIsFetching(false);
     setListVariant('search');
     setShowCareInfo(false);
+    // Reset custom plant state
+    setIsCustomPlant(false);
+    setCustomPlantName('');
+    setCustomScientificName('');
+    setCustomPlantType('flower');
   };
+
+  // Handle prefill from identification
+  useEffect(() => {
+    if (open && prefillFromIdentification) {
+      // Set custom plant mode and skip to details step
+      setIsCustomPlant(true);
+      setStep('details');
+      setCustomPlantName(prefillFromIdentification.name);
+      setCustomScientificName(prefillFromIdentification.scientificName || '');
+      setCustomPlantType(prefillFromIdentification.type || 'flower');
+      setNickname(prefillFromIdentification.name);
+      setNotes(prefillFromIdentification.notes || '');
+      setHealth('good');
+      setLocation('Garden');
+      setPlantedDate(formatDateInput(new Date()));
+    }
+  }, [open, prefillFromIdentification]);
 
   useEffect(() => {
     if (!open) {
       resetState();
+      return;
+    }
+
+    // Don't load categories if we're in custom plant mode
+    if (prefillFromIdentification) {
       return;
     }
 
@@ -236,7 +286,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, prefillFromIdentification]);
 
   useEffect(() => {
     if (!selectedSpecies) {
@@ -349,6 +399,11 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
   };
 
   const handleBackToSearch = () => {
+    // If custom plant mode, close the dialog instead of going back
+    if (isCustomPlant) {
+      onOpenChange(false);
+      return;
+    }
     setStep('select');
     setSelectedSpecies(null);
     setShowCareInfo(false);
@@ -356,6 +411,57 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    // Handle custom plant (from identification, not in database)
+    if (isCustomPlant) {
+      const nameToStore = nickname.trim().length > 0 ? nickname.trim() : customPlantName;
+      const payload = {
+        name: nameToStore,
+        type: customPlantType,
+        location: location.trim().length > 0 ? location.trim() : null,
+        health,
+        planted: plantedDate ? new Date(`${plantedDate}T00:00:00`).toISOString() : null,
+        notes: notes.trim().length > 0 ? notes.trim() : null,
+        // No speciesSlug for custom plants
+        speciesSlug: null,
+        // Custom plant specific fields
+        scientificName: customScientificName || null,
+        wikiDescription: prefillFromIdentification?.wikiDescription || null,
+        wikiUrl: prefillFromIdentification?.wikiUrl || null,
+        wikiImageUrl: prefillFromIdentification?.wikiImageAllowed ? prefillFromIdentification?.wikiImageUrl : null,
+        wikiImageLicense: prefillFromIdentification?.wikiImageLicense || null,
+        identificationData: prefillFromIdentification?.identificationData || null,
+        // Enhanced fields
+        variety: variety.trim().length > 0 ? variety.trim() : null,
+        quantity: quantity > 0 ? quantity : 1,
+        source: source.length > 0 ? source : null,
+      };
+
+      setIsSaving(true);
+
+      try {
+        const response = await api.addPlant(payload);
+        const plant = response?.plant as SerializedPlant | undefined;
+        if (!plant) {
+          throw new Error('Unexpected response from server');
+        }
+
+        onPlantAdded(plant);
+        toast.success(`${nameToStore} added to your garden`, {
+          description: 'This is a custom species not in our database yet.',
+        });
+        onOpenChange(false);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast.error('Could not add plant', {
+          description: message,
+        });
+        setIsSaving(false);
+      }
+      return;
+    }
+    
+    // Handle regular plant (from database)
     if (!selectedSpecies) {
       return;
     }
@@ -716,10 +822,17 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                 className="flex items-center text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Back
+                {isCustomPlant ? 'Cancel' : 'Back'}
               </button>
             )}
-            <span>{step === 'select' ? 'Add a Plant' : `Add ${selectedSpecies?.name ?? 'plant'}`}</span>
+            <span>
+              {step === 'select' 
+                ? 'Add a Plant' 
+                : isCustomPlant 
+                  ? `Add ${customPlantName} (Custom)` 
+                  : `Add ${selectedSpecies?.name ?? 'plant'}`
+              }
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -788,7 +901,89 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
         ) : (
           <ScrollArea className="flex-1 pr-4">
             <form className="space-y-6 pb-4" onSubmit={handleSubmit}>
-              {/* Species Header with Image */}
+              {/* Custom Plant Header (from identification) */}
+              {isCustomPlant && (
+                <div className="rounded-xl border bg-gradient-to-br from-amber-50 to-orange-50 p-4">
+                  <div className="flex gap-4">
+                    {/* Wikipedia Image or Placeholder */}
+                    {prefillFromIdentification?.wikiImageAllowed && prefillFromIdentification?.wikiImageUrl ? (
+                      <div className="relative h-24 w-24 overflow-hidden rounded-xl border bg-white shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img 
+                          src={prefillFromIdentification.wikiImageUrl} 
+                          alt={customPlantName}
+                          className="h-full w-full object-cover"
+                        />
+                        {prefillFromIdentification.wikiImageLicense && (
+                          <div className="absolute bottom-1 right-1">
+                            <Badge variant="secondary" className="text-[10px] bg-black/70 text-white px-1 py-0">
+                              {prefillFromIdentification.wikiImageLicense}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-xl border bg-white text-4xl shadow-sm">
+                        🌱
+                      </div>
+                    )}
+                    
+                    {/* Custom Plant Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xl font-semibold text-foreground">
+                        {customPlantName}
+                      </p>
+                      {customScientificName && (
+                        <p className="text-sm text-muted-foreground italic">{customScientificName}</p>
+                      )}
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                          🆕 Custom Species
+                        </Badge>
+                        <Select value={customPlantType} onValueChange={setCustomPlantType}>
+                          <SelectTrigger className="h-7 w-auto">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="flower">🌸 Flower</SelectItem>
+                            <SelectItem value="vegetable">🥕 Vegetable</SelectItem>
+                            <SelectItem value="herb">🌿 Herb</SelectItem>
+                            <SelectItem value="fruit">🍓 Fruit</SelectItem>
+                            <SelectItem value="tree">🌳 Tree</SelectItem>
+                            <SelectItem value="shrub">🌱 Shrub</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Wikipedia Description */}
+                  {prefillFromIdentification?.wikiDescription && (
+                    <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
+                      {prefillFromIdentification.wikiDescription}
+                    </p>
+                  )}
+                  
+                  {/* Attribution */}
+                  {prefillFromIdentification?.wikiUrl && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Description from{' '}
+                      <a 
+                        href={prefillFromIdentification.wikiUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Wikipedia
+                      </a>
+                      {' '}(CC BY-SA 3.0)
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Regular Species Header with Image */}
+              {!isCustomPlant && (
               <div className="rounded-xl border bg-gradient-to-br from-green-50 to-emerald-50 p-4">
                 <div className="flex gap-4">
                   {/* Species Image - clickable to species page */}
@@ -848,11 +1043,14 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded }: AddPlantDia
                   </p>
                 )}
               </div>
+              )}
 
-              {/* Care Info Collapsible */}
+              {/* Care Info Collapsible (only for regular species) */}
+              {!isCustomPlant && (
               <div className="rounded-lg border">
                 {renderCareInfoSection()}
               </div>
+              )}
 
               {/* Your Plant Details */}
               <div className="space-y-4">

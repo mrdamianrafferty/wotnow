@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { plantIdService, type PlantIdentificationResult, type PlantCandidate, type ThreatCandidate, getPlantIdProvider, getProviderConfig } from '@/lib/grow/plantIdentificationService';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
+import { getWikipediaImageLicense, getWikipediaArticleImageLicense, isWikimediaUrl } from '@/lib/grow/wikipediaLicense';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -133,7 +134,38 @@ export default async function handler(
       );
       if (slug) {
         result.species.slug = slug;
+        result.notInDatabase = false;
         console.log(`[identify-plant] Matched to species slug: ${slug}`);
+      } else {
+        // Species not in our database - mark it and check Wikipedia image license
+        result.notInDatabase = true;
+        console.log(`[identify-plant] Species not in database: ${result.species.scientificName || result.species.name}`);
+        
+        // Try to get Wikipedia image license info
+        if (result.species.imageUrl || result.species.wikiUrl) {
+          try {
+            let licenseInfo;
+            
+            // If we have a direct image URL from Wikimedia, use it
+            if (result.species.imageUrl && isWikimediaUrl(result.species.imageUrl)) {
+              licenseInfo = await getWikipediaImageLicense(result.species.imageUrl);
+            } 
+            // Otherwise try to get the main image from the Wikipedia article
+            else if (result.species.wikiUrl) {
+              licenseInfo = await getWikipediaArticleImageLicense(result.species.wikiUrl);
+            }
+            
+            if (licenseInfo && !licenseInfo.error) {
+              result.species.wikiImageUrl = licenseInfo.thumbnailUrl || licenseInfo.imageUrl || undefined;
+              result.species.wikiImageLicense = licenseInfo.licenseShortName || undefined;
+              result.species.wikiImageAllowed = licenseInfo.isAllowed;
+              result.species.wikiImageAttribution = licenseInfo.attribution || undefined;
+              console.log(`[identify-plant] Wikipedia image license: ${licenseInfo.licenseShortName} (allowed: ${licenseInfo.isAllowed})`);
+            }
+          } catch (licenseError) {
+            console.warn('[identify-plant] Failed to fetch Wikipedia image license:', licenseError);
+          }
+        }
       }
     }
 

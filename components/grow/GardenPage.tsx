@@ -171,6 +171,18 @@ export function GardenPage() {
   const [isAddPlantDialogOpen, setIsAddPlantDialogOpen] = useState(false);
   const [isEditPlantDialogOpen, setIsEditPlantDialogOpen] = useState(false);
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
+  const [addPlantPrefill, setAddPlantPrefill] = useState<{
+    name: string;
+    scientificName?: string;
+    type?: string;
+    notes?: string;
+    wikiDescription?: string;
+    wikiUrl?: string;
+    wikiImageUrl?: string;
+    wikiImageLicense?: string;
+    wikiImageAllowed?: boolean;
+    identificationData?: PlantIdentificationResult;
+  } | null>(null);
   
   // Photo upload state for identification
   const [identifyPhoto, setIdentifyPhoto] = useState<File | null>(null);
@@ -1586,7 +1598,7 @@ export function GardenPage() {
                     )}
 
                     {/* Link to species page - use slug from DB lookup, or fallback to common name */}
-                    {identifyResult.mode === 'plant' && identifyResult.species?.name && (
+                    {identifyResult.mode === 'plant' && identifyResult.species?.name && !identifyResult.notInDatabase && (
                       <div className="pt-2 border-t">
                         <Link
                           href={`/grow/species/${encodeURIComponent(
@@ -1601,6 +1613,87 @@ export function GardenPage() {
                           <Sprout className="h-4 w-4" />
                           View {identifyResult.species.name} care guide →
                         </Link>
+                      </div>
+                    )}
+
+                    {/* Custom species - not in our database */}
+                    {identifyResult.mode === 'plant' && identifyResult.species?.name && identifyResult.notInDatabase && (
+                      <div className="pt-3 border-t space-y-3">
+                        <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm">
+                            <p className="font-medium text-amber-800">
+                              That&apos;s a cool species we don&apos;t have in our database yet!
+                            </p>
+                            <p className="text-amber-700 mt-1">
+                              You can still add it to your garden. We&apos;ll save the identification data so you can track it.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Wikipedia image with license badge (if allowed) */}
+                        {identifyResult.species.wikiImageAllowed && identifyResult.species.wikiImageUrl && (
+                          <div className="relative">
+                            <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={identifyResult.species.wikiImageUrl}
+                                alt={identifyResult.species.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            {identifyResult.species.wikiImageLicense && (
+                              <div className="absolute bottom-2 right-2">
+                                <Badge variant="secondary" className="text-xs bg-black/70 text-white hover:bg-black/70">
+                                  {identifyResult.species.wikiImageLicense}
+                                </Badge>
+                              </div>
+                            )}
+                            {identifyResult.species.wikiImageAttribution && (
+                              <p className="text-xs text-muted-foreground mt-1 px-1">
+                                {identifyResult.species.wikiImageAttribution}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Prompt for user photo if Wikipedia image not allowed */}
+                        {(!identifyResult.species.wikiImageAllowed || !identifyResult.species.wikiImageUrl) && (
+                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm">
+                            <p className="text-blue-800">
+                              📸 <span className="font-medium">Share your photo with the community?</span>
+                            </p>
+                            <p className="text-blue-700 text-xs mt-1">
+                              When you add this plant, you can contribute your photo to help others identify this species.
+                            </p>
+                          </div>
+                        )}
+                        
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            // Prepare prefill data from identification result
+                            const species = identifyResult.species!;
+                            setAddPlantPrefill({
+                              name: species.name,
+                              scientificName: species.scientificName,
+                              type: 'flower', // Default, user can change
+                              notes: species.wikiDescription 
+                                ? `${species.wikiDescription.slice(0, 500)}${species.wikiDescription.length > 500 ? '...' : ''}\n\n— From Wikipedia (${species.wikiUrl || 'CC BY-SA 3.0'})`
+                                : undefined,
+                              wikiDescription: species.wikiDescription,
+                              wikiUrl: species.wikiUrl,
+                              wikiImageUrl: species.wikiImageUrl,
+                              wikiImageLicense: species.wikiImageLicense,
+                              wikiImageAllowed: species.wikiImageAllowed,
+                              identificationData: identifyResult,
+                            });
+                            setIsAddPlantDialogOpen(true);
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add {identifyResult.species.name} to your garden
+                        </Button>
                       </div>
                     )}
                   </CardContent>
@@ -1729,8 +1822,15 @@ export function GardenPage() {
       />
       <AddPlantDialog
         open={isAddPlantDialogOpen}
-        onOpenChange={setIsAddPlantDialogOpen}
+        onOpenChange={(open: boolean) => {
+          setIsAddPlantDialogOpen(open);
+          // Clear prefill data when dialog closes
+          if (!open) {
+            setAddPlantPrefill(null);
+          }
+        }}
         onPlantAdded={handlePlantAdded}
+        prefillFromIdentification={addPlantPrefill}
       />
       <EditPlantDialog
         open={isEditPlantDialogOpen}

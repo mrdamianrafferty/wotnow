@@ -50,6 +50,9 @@ export interface PlantIdentificationResult {
   provider: PlantIdProvider;
   mode: 'plant' | 'pest';
   
+  // Whether the identified species is in our database
+  notInDatabase?: boolean;
+  
   // For plant identification
   species?: {
     name: string;
@@ -69,6 +72,11 @@ export interface PlantIdentificationResult {
     gbifId?: number; // GBIF database ID
     inaturalistId?: number; // iNaturalist ID
     imageUrl?: string; // Representative image URL
+    // Wikipedia image license info (for custom species)
+    wikiImageUrl?: string; // Hotlink-safe Wikipedia image URL
+    wikiImageLicense?: string; // License short name (e.g., "CC BY-SA 4.0")
+    wikiImageAllowed?: boolean; // Whether license allows reuse
+    wikiImageAttribution?: string; // Full attribution string
   };
   
   // For pest/disease identification
