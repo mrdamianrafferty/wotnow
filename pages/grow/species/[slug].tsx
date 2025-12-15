@@ -247,6 +247,15 @@ export default function GrowSpeciesPage() {
 
   const [species, setSpecies] = useState<PlantSpecies | null>(null);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
+  
+  // Wikipedia fallback for species without descriptions
+  const [wikiSummary, setWikiSummary] = useState<{
+    extract: string;
+    pageUrl: string;
+    attribution: string;
+    language: string;
+  } | null>(null);
+  const [isLoadingWiki, setIsLoadingWiki] = useState(false);
 
   const [windows, setWindows] = useState<PlantingWindow[] | null>(null);
   const [isLoadingWindows, setIsLoadingWindows] = useState(false);
@@ -299,6 +308,34 @@ export default function GrowSpeciesPage() {
       cancelled = true;
     };
   }, [slug, router]);
+
+  // Fetch Wikipedia summary if species has no description but has scientific name
+  useEffect(() => {
+    // Only fetch if we have species data, no description, and a scientific name
+    if (!species || species.description || !species.scientificName || isLoadingWiki) return;
+    // Don't refetch if we already have wiki data
+    if (wikiSummary) return;
+    
+    let cancelled = false;
+    setIsLoadingWiki(true);
+    
+    fetch(`/api/grow/species/wiki-summary?scientificName=${encodeURIComponent(species.scientificName)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return;
+        if (data.success && data.summary) {
+          setWikiSummary(data.summary);
+        }
+      })
+      .catch(err => {
+        console.warn('[Species] Failed to fetch Wikipedia summary:', err);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingWiki(false);
+      });
+    
+    return () => { cancelled = true; };
+  }, [species, wikiSummary, isLoadingWiki]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -712,20 +749,32 @@ export default function GrowSpeciesPage() {
                   </div>
                 ) : species ? (
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      {species.description ? (
+                    {/* Description: prefer species.description, fall back to Wikipedia */}
+                    {species.description ? (
+                      <p className="text-sm text-muted-foreground">
                         <TranslatedText text={species.description} />
-                      ) : (
-                        'No description available yet.'
-                      )}
-                    </p>
+                      </p>
+                    ) : wikiSummary ? (
+                      <p className="text-sm text-muted-foreground">
+                        <TranslatedText text={wikiSummary.extract} />
+                      </p>
+                    ) : isLoadingWiki ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic">
+                        No description available yet.
+                      </p>
+                    )}
                     
-                    {/* Wikipedia attribution for custom species */}
-                    {species.isCustomSpecies && species.description && species.wikiUrl && (
+                    {/* Wikipedia attribution - show for custom species with description OR when using wiki fallback */}
+                    {((species.isCustomSpecies && species.description && species.wikiUrl) || wikiSummary) && (
                       <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                         <span>From Wikipedia, CC BY-SA 3.0</span>
                         <a
-                          href={species.wikiUrl}
+                          href={wikiSummary?.pageUrl || species.wikiUrl || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline"
