@@ -444,44 +444,76 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     // Build search terms for custom species lookup
     const customSearchTerms = notFound.map(name => {
       const baseName = baseNameMap.get(name) || name;
-      // Convert slug format back to spaces for matching: "small-leaved-gentian" -> "small leaved gentian"
+      // For slug "small-leaved-gentian", we need to try multiple patterns:
+      // 1. Replace all hyphens with spaces: "small leaved gentian"
+      // 2. Keep hyphens (some names like "Small-leaved" have internal hyphens): "small-leaved-gentian"
+      // 3. Use wildcard pattern for flexible matching
       const withSpaces = baseName.replace(/-/g, ' ');
-      return { original: name, searchTerm: withSpaces };
+      const withHyphens = baseName; // keep original
+      return { original: name, withSpaces, withHyphens };
     });
 
     // Query custom_species_suggestions for all not-found names
-    // Using OR conditions to match any of the search terms
-    for (const { original, searchTerm } of customSearchTerms) {
+    for (const { original, withSpaces, withHyphens } of customSearchTerms) {
       if (foundNames.has(original)) continue;
 
-      // Try exact common name match first
-      let { data: customData } = await supabase
+      let customData = null;
+
+      // Strategy 1: Try exact common name match with spaces
+      const { data: match1 } = await supabase
         .from('custom_species_suggestions')
         .select('*')
-        .ilike('common_name', searchTerm)
+        .ilike('common_name', withSpaces)
         .limit(1)
         .single();
+      customData = match1;
 
-      // If not found, try scientific name
+      // Strategy 2: Try exact common name match with hyphens preserved
       if (!customData) {
-        const sciResult = await supabase
+        const { data: match2 } = await supabase
           .from('custom_species_suggestions')
           .select('*')
-          .ilike('scientific_name', searchTerm)
+          .ilike('common_name', withHyphens)
           .limit(1)
           .single();
-        customData = sciResult.data;
+        customData = match2;
       }
 
-      // If still not found, try partial match on common name
+      // Strategy 3: Try scientific name match (with spaces replacing hyphens)
       if (!customData) {
-        const partialResult = await supabase
+        const { data: match3 } = await supabase
           .from('custom_species_suggestions')
           .select('*')
-          .ilike('common_name', `%${searchTerm}%`)
+          .ilike('scientific_name', withSpaces)
           .limit(1)
           .single();
-        customData = partialResult.data;
+        customData = match3;
+      }
+
+      // Strategy 4: Try wildcard partial match on common name
+      // e.g., "%small%leaved%gentian%" matches "Small-leaved Gentian"
+      if (!customData) {
+        const wildcardPattern = `%${withSpaces.split(' ').join('%')}%`;
+        const { data: match4 } = await supabase
+          .from('custom_species_suggestions')
+          .select('*')
+          .ilike('common_name', wildcardPattern)
+          .limit(1)
+          .single();
+        customData = match4;
+      }
+
+      // Strategy 5: Try slugified scientific name match
+      // e.g., "gentiana-brachyphylla" -> "gentiana brachyphylla"
+      if (!customData) {
+        const scientificSearch = withHyphens.replace(/-/g, ' ');
+        const { data: match5 } = await supabase
+          .from('custom_species_suggestions')
+          .select('*')
+          .ilike('scientific_name', scientificSearch)
+          .limit(1)
+          .single();
+        customData = match5;
       }
 
       if (customData) {
