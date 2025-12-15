@@ -99,6 +99,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const supabase = getSupabaseServerClient();
   const normalizedSlug = slug.trim().toLowerCase();
   
+  // Convert slug back to search term (replace hyphens with spaces)
+  // e.g., "ilex-aquifolium" -> "ilex aquifolium"
+  const searchTerm = normalizedSlug.replace(/-/g, ' ');
+  
   // Extract base name (before parentheses or slashes) for fallback matching
   // e.g., "Bean (Bush)" -> "bean", "Broad bean / fava bean" -> "broad bean"
   const baseName = slug.trim().split(/[\(/]/)[0].trim().toLowerCase();
@@ -120,6 +124,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     data = baseSlugResult.data;
     error = baseSlugResult.error;
+  }
+
+  // Try scientific name match early (for Plant.id API slugified names like "ilex-aquifolium")
+  if (!data && !error?.message?.includes('multiple') && searchTerm.includes(' ')) {
+    const scientificEarlyResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('scientific_name', searchTerm)
+      .limit(1)
+      .single();
+    
+    data = scientificEarlyResult.data;
+    error = scientificEarlyResult.error;
+  }
+
+  // Also try perenual_scientific_name early
+  if (!data && !error?.message?.includes('multiple') && searchTerm.includes(' ')) {
+    const perenualSciEarlyResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('perenual_scientific_name', searchTerm)
+      .limit(1)
+      .single();
+    
+    data = perenualSciEarlyResult.data;
+    error = perenualSciEarlyResult.error;
   }
 
   // If not found by slug, try exact name match (case-insensitive)
