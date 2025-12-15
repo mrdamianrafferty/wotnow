@@ -407,25 +407,46 @@ export default function GrowSpeciesPage() {
 
   const heroImageKey = useMemo(() => pickBestPlantImageKeyFromSpecies(species), [species]);
   const heroSrc = useMemo(() => {
-    if (!heroImageKey) return null;
-    const entry = (PLANT_IMAGE_MAP as Record<string, unknown>)[heroImageKey];
-    if (entry && typeof entry === 'object') {
-      const xl = (entry as { xl?: unknown }).xl;
-      if (typeof xl === 'string' && xl) return xl;
+    // First try local image from PLANT_IMAGE_MAP
+    if (heroImageKey) {
+      const entry = (PLANT_IMAGE_MAP as Record<string, unknown>)[heroImageKey];
+      if (entry && typeof entry === 'object') {
+        const xl = (entry as { xl?: unknown }).xl;
+        if (typeof xl === 'string' && xl) return xl;
+      }
+      const localImg = getPlantImage(heroImageKey, 'lg');
+      if (localImg) return localImg;
     }
-    return getPlantImage(heroImageKey, 'lg');
-  }, [heroImageKey]);
-  const thumbSrc = heroImageKey ? getPlantImage(heroImageKey, 'medium') : null;
+    // Fallback to wiki image for custom species
+    if (species?.wikiImageUrl) return species.wikiImageUrl;
+    return null;
+  }, [heroImageKey, species?.wikiImageUrl]);
+  
+  const thumbSrc = useMemo(() => {
+    if (heroImageKey) {
+      const local = getPlantImage(heroImageKey, 'medium');
+      if (local) return local;
+    }
+    // Fallback to wiki image for custom species
+    if (species?.wikiImageUrl) return species.wikiImageUrl;
+    return null;
+  }, [heroImageKey, species?.wikiImageUrl]);
+  
   // Use the biggest variant if present in the map (backwards compatible)
   const heroFullSrc = useMemo(() => {
-    if (!heroImageKey) return null;
-    const entry = (PLANT_IMAGE_MAP as Record<string, unknown>)[heroImageKey];
-    if (entry && typeof entry === 'object') {
-      const xl = (entry as { xl?: unknown }).xl;
-      if (typeof xl === 'string' && xl) return xl;
+    if (heroImageKey) {
+      const entry = (PLANT_IMAGE_MAP as Record<string, unknown>)[heroImageKey];
+      if (entry && typeof entry === 'object') {
+        const xl = (entry as { xl?: unknown }).xl;
+        if (typeof xl === 'string' && xl) return xl;
+      }
+      const localImg = getPlantImage(heroImageKey, 'lg');
+      if (localImg) return localImg;
     }
-    return getPlantImage(heroImageKey, 'lg');
-  }, [heroImageKey]);
+    // Fallback to wiki image for custom species
+    if (species?.wikiImageUrl) return species.wikiImageUrl;
+    return null;
+  }, [heroImageKey, species?.wikiImageUrl]);
 
   const filteredThreats = useMemo(() => {
     if (!species || !Array.isArray(threats)) return threats;
@@ -524,11 +545,40 @@ export default function GrowSpeciesPage() {
 
             <div className="flex flex-wrap gap-2 mt-3">
               {species?.category ? <Badge variant="secondary">{species.category}</Badge> : null}
+              {species?.isCustomSpecies ? <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-800">🌱 Community Species</Badge> : null}
               {species?.sunRequirements ? <Badge variant="outline">☀️ {species.sunRequirements}</Badge> : null}
               {species?.soilType ? <Badge variant="outline">🪴 {species.soilType}</Badge> : null}
               {species?.plantSize ? <Badge variant="outline">📏 {species.plantSize}</Badge> : null}
               {usda ? <Badge variant="outline">{usda}</Badge> : null}
             </div>
+            
+            {/* Custom species info banner */}
+            {species?.isCustomSpecies && (
+              <div className="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+                <div className="flex items-start gap-2">
+                  <span className="text-lg">🌱</span>
+                  <div>
+                    <div className="font-medium text-amber-900">Community-contributed species</div>
+                    <div className="text-amber-800 mt-1">
+                      This species was identified by our community and isn&apos;t in our main database yet. 
+                      {species.suggestionCount && species.suggestionCount > 1 
+                        ? ` ${species.suggestionCount} gardeners have added this plant.`
+                        : ''}
+                    </div>
+                    {species.wikiUrl && (
+                      <a 
+                        href={species.wikiUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-amber-700 hover:text-amber-900 underline mt-2"
+                      >
+                        Learn more on Wikipedia →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col items-end gap-2 shrink-0">
@@ -570,6 +620,12 @@ export default function GrowSpeciesPage() {
                 Tap to expand
               </div>
             </button>
+            {/* Wiki image attribution */}
+            {species?.wikiImageUrl && species?.wikiImageLicense && (
+              <div className="px-3 py-2 bg-gray-50 border-t text-xs text-muted-foreground">
+                Image via Wikimedia Commons • {species.wikiImageLicense}
+              </div>
+            )}
           </Card>
         ) : null}
 

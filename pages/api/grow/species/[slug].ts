@@ -292,10 +292,90 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (!data) {
+    // Fallback: Check custom_species_suggestions for user-contributed species
+    // The slug could be:
+    // 1. URL-encoded common name: "Small-leaved%20Gentian" -> "Small-leaved Gentian"
+    // 2. Slugified scientific name: "gentiana-brachyphylla" -> "gentiana brachyphylla"
+    const decodedSlug = decodeURIComponent(slug.trim());
+    const scientificSearchTerm = normalizedSlug.replace(/-/g, ' ');
+    
+    // Try common name match first
+    const { data: customByName, error: customError } = await supabase
+      .from('custom_species_suggestions')
+      .select('*')
+      .ilike('common_name', decodedSlug)
+      .limit(1)
+      .single();
+    
+    // If not found, try scientific name
+    let customData = customByName;
+    if (!customData && customError?.code === 'PGRST116') {
+      const sciResult = await supabase
+        .from('custom_species_suggestions')
+        .select('*')
+        .ilike('scientific_name', scientificSearchTerm)
+        .limit(1)
+        .single();
+      customData = sciResult.data;
+    }
+    
+    if (customData) {
+      // Build a synthetic PlantSpecies object from custom suggestion data
+      
+      // Extract best available wiki URL (prefer en, then global, then any available)
+      const wikiUrlData = customData.wiki_data?.wikiUrl;
+      let bestWikiUrl: string | null = null;
+      if (wikiUrlData && typeof wikiUrlData === 'object') {
+        bestWikiUrl = wikiUrlData.en || wikiUrlData.global || 
+          Object.values(wikiUrlData).find((v): v is string => typeof v === 'string' && v !== null) || null;
+      } else if (typeof wikiUrlData === 'string') {
+        bestWikiUrl = wikiUrlData;
+      }
+      
+      const syntheticSpecies = {
+        slug: customData.scientific_name?.toLowerCase().replace(/\s+/g, '-') || slugify(customData.common_name),
+        name: customData.common_name,
+        scientificName: customData.scientific_name,
+        description: customData.wiki_data?.wikiDescription || null,
+        advice: null,
+        category: null,
+        sunRequirements: null,
+        soilType: null,
+        plantSize: null,
+        usdaZoneMin: null,
+        usdaZoneMax: null,
+        imageKey: null,
+        nameEnAliases: customData.common_names || [],
+        searchTerms: [],
+        // Wiki data
+        wikiUrl: bestWikiUrl,
+        wikiImageUrl: customData.wiki_image_url,
+        wikiImageLicense: customData.wiki_image_license,
+        // Mark as custom/community species
+        isCustomSpecies: true,
+        suggestionCount: customData.suggestion_count || 1,
+        // Include any additional wiki data
+        watering: customData.wiki_data?.watering || null,
+        edibleParts: customData.wiki_data?.edibleParts || null,
+        propagationMethods: customData.wiki_data?.propagationMethods || null,
+      };
+      
+      return res.status(200).json({ species: syntheticSpecies, isCustomSpecies: true });
+    }
+    
     return res.status(404).json({ error: 'Plant species not found' });
   }
 
   const species = serializePlantSpecies(data as unknown as PlantSpeciesRow);
 
   return res.status(200).json({ species });
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }

@@ -247,6 +247,15 @@ export interface PlantSpecies {
   
   // Sync metadata
   perenualLastSyncedAt: string | null;
+  
+  // Custom/community species fields (for user-contributed species not in main database)
+  isCustomSpecies?: boolean;
+  suggestionCount?: number;
+  wikiUrl?: string | null;
+  wikiImageUrl?: string | null;
+  wikiImageLicense?: string | null;
+  edibleParts?: string[] | null;
+  propagationMethods?: string[] | null;
 }
 
 export interface PlantSpeciesSearchResponse {

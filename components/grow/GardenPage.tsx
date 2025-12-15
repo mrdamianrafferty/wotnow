@@ -1543,7 +1543,7 @@ export function GardenPage() {
                         <p className="text-xs font-medium text-muted-foreground mb-1">Names in other languages:</p>
                         <div className="flex flex-wrap gap-1">
                           {Object.entries(identifyResult.species.commonNamesByLanguage)
-                            .filter(([lang]) => lang !== 'en')
+                            .filter(([lang, names]) => lang !== 'en' && Array.isArray(names) && names.length > 0)
                             .slice(0, 6)
                             .map(([lang, names]) => (
                               <Badge key={lang} variant="outline" className="text-xs">
