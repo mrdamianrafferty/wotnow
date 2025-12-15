@@ -1585,12 +1585,13 @@ export function GardenPage() {
                       </div>
                     )}
 
-                    {/* Link to species page - use common name for slug (matches our database) */}
+                    {/* Link to species page - use slug from DB lookup, or fallback to common name */}
                     {identifyResult.mode === 'plant' && identifyResult.species?.name && (
                       <div className="pt-2 border-t">
                         <Link
                           href={`/grow/species/${encodeURIComponent(
-                            // Use common name for slug (our DB slugs are based on common names)
+                            // Prefer slug from DB lookup, fallback to common name slug
+                            identifyResult.species.slug ||
                             identifyResult.species.name
                               .toLowerCase()
                               .replace(/\s+/g, '-')

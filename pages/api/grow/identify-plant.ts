@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { plantIdService, type PlantIdentificationResult, type PlantCandidate, type ThreatCandidate, getPlantIdProvider, getProviderConfig } from '@/lib/grow/plantIdentificationService';
+import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -123,6 +124,19 @@ export default async function handler(
       // Ignore cleanup errors
     });
 
+    // Look up the species in our database to get the canonical slug
+    if (result.success && result.mode === 'plant' && result.species) {
+      const slug = await lookupSpeciesSlug(
+        result.species.scientificName,
+        result.species.name,
+        result.species.commonNames
+      );
+      if (slug) {
+        result.species.slug = slug;
+        console.log(`[identify-plant] Matched to species slug: ${slug}`);
+      }
+    }
+
     // TODO: Track usage for budget management (like fish ID)
 
     return res.status(200).json(result);
@@ -137,4 +151,67 @@ export default async function handler(
       ...(process.env.NODE_ENV === 'development' && { details: errorMessage })
     } as { error: string });
   }
+}
+
+/**
+ * Look up a species in our database by scientific name, common name, or aliases
+ * Returns the canonical slug if found, null otherwise
+ */
+async function lookupSpeciesSlug(
+  scientificName?: string,
+  commonName?: string,
+  commonNames?: string[]
+): Promise<string | null> {
+  const supabase = getSupabaseServerClient();
+  
+  // Try scientific name first (most reliable)
+  if (scientificName) {
+    // Exact match
+    let { data } = await supabase
+      .from('plant_species')
+      .select('slug')
+      .ilike('scientific_name', scientificName)
+      .limit(1)
+      .single();
+    
+    if (data?.slug) return data.slug;
+    
+    // Partial match (e.g., "Daucus carota" matches "Daucus carota subsp. sativus")
+    ({ data } = await supabase
+      .from('plant_species')
+      .select('slug')
+      .ilike('scientific_name', `${scientificName}%`)
+      .limit(1)
+      .single());
+    
+    if (data?.slug) return data.slug;
+  }
+  
+  // Try common name
+  if (commonName) {
+    const { data } = await supabase
+      .from('plant_species')
+      .select('slug')
+      .ilike('name', commonName)
+      .limit(1)
+      .single();
+    
+    if (data?.slug) return data.slug;
+  }
+  
+  // Try each common name variant
+  if (commonNames && commonNames.length > 0) {
+    for (const name of commonNames) {
+      const { data } = await supabase
+        .from('plant_species')
+        .select('slug')
+        .ilike('name', name)
+        .limit(1)
+        .single();
+      
+      if (data?.slug) return data.slug;
+    }
+  }
+  
+  return null;
 }
