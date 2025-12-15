@@ -139,12 +139,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     error = scientificEarlyResult.error;
   }
 
-  // Also try perenual_scientific_name early
+  // Try partial scientific name match (e.g., "daucus carota" matches "Daucus carota subsp. sativus")
+  if (!data && !error?.message?.includes('multiple') && searchTerm.includes(' ')) {
+    const scientificPartialResult = await supabase
+      .from('plant_species')
+      .select(BASE_SELECT)
+      .ilike('scientific_name', `${searchTerm}%`)
+      .limit(1)
+      .single();
+    
+    data = scientificPartialResult.data;
+    error = scientificPartialResult.error;
+  }
+
+  // Also try perenual_scientific_name early (it's an array, so use contains)
   if (!data && !error?.message?.includes('multiple') && searchTerm.includes(' ')) {
     const perenualSciEarlyResult = await supabase
       .from('plant_species')
       .select(BASE_SELECT)
-      .ilike('perenual_scientific_name', searchTerm)
+      .contains('perenual_scientific_name', [searchTerm])
       .limit(1)
       .single();
     
@@ -260,12 +273,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // Try perenual_scientific_name field
+  // Try perenual_scientific_name field (it's an array, so use contains)
   if (!data && !error?.message?.includes('multiple')) {
     const perenualSciResult = await supabase
       .from('plant_species')
       .select(BASE_SELECT)
-      .ilike('perenual_scientific_name', slug.trim())
+      .contains('perenual_scientific_name', [slug.trim()])
       .limit(1)
       .single();
     

@@ -276,7 +276,14 @@ export default function GrowSpeciesPage() {
       .getPlantSpeciesByName(slug)
       .then((resp) => {
         if (cancelled) return;
-        setSpecies((resp ?? null) as PlantSpecies | null);
+        const speciesData = (resp ?? null) as PlantSpecies | null;
+        setSpecies(speciesData);
+        
+        // Redirect to canonical slug if different from URL
+        // e.g., /grow/species/daucus-carota -> /grow/species/carrot
+        if (speciesData?.slug && speciesData.slug !== slug) {
+          router.replace(`/grow/species/${speciesData.slug}`, undefined, { shallow: true });
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -290,7 +297,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, accessToken]);
+  }, [slug, accessToken, router]);
 
   useEffect(() => {
     if (!accessToken) return;
