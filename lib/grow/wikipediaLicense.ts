@@ -394,9 +394,10 @@ export async function getWikipediaSummary(wikiUrl: string): Promise<WikiSummaryI
  * @param scientificName - Latin binomial (e.g., "Gentiana brachyphylla")
  * @returns Summary info or null if not found
  */
-export async function getWikipediaSummaryByScientificName(scientificName: string): Promise<WikiSummaryInfo | null> {
+export async function getWikipediaSummaryByScientificName(scientificName: string, preferEnglish: boolean = true): Promise<WikiSummaryInfo | null> {
   // Languages to try in order of preference
-  const languages = ['en', 'de', 'fr', 'es', 'it', 'pt', 'nl'];
+  // English first is strongly preferred for user experience
+  const languages = preferEnglish ? ['en', 'de', 'fr', 'es', 'it', 'pt', 'nl'] : ['de', 'en', 'fr', 'es', 'it', 'pt', 'nl'];
   
   // Format scientific name for Wikipedia URL (replace spaces with underscores)
   const formattedName = scientificName.trim().replace(/\s+/g, '_');

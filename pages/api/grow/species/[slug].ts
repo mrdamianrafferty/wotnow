@@ -299,11 +299,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const decodedSlug = decodeURIComponent(slug.trim());
     const scientificSearchTerm = normalizedSlug.replace(/-/g, ' ');
     
-    // Try common name match first
+    // Try common name match first - convert slug back to spaces for matching
+    // e.g., "small-leaved-gentian" -> "small-leaved gentian"
+    const commonNameSearch = decodedSlug.replace(/-/g, ' ');
     const { data: customByName, error: customError } = await supabase
       .from('custom_species_suggestions')
       .select('*')
-      .ilike('common_name', decodedSlug)
+      .ilike('common_name', commonNameSearch)
       .limit(1)
       .single();
     

@@ -145,9 +145,22 @@ export default async function handler(
         try {
           let wikiSummary = null;
           
-          // Try the wikiUrl first if available
+          // The wikiUrl from Plant.id might be an object with language keys, not a string
+          // e.g., { en: "https://...", fr: "https://...", global: "https://..." }
+          let wikiUrlString: string | null = null;
           if (result.species.wikiUrl) {
-            wikiSummary = await getWikipediaSummary(result.species.wikiUrl);
+            if (typeof result.species.wikiUrl === 'string') {
+              wikiUrlString = result.species.wikiUrl;
+            } else if (typeof result.species.wikiUrl === 'object') {
+              const urlObj = result.species.wikiUrl as Record<string, string | null>;
+              // Prefer English, then other languages, skip 'global' (GBIF) links
+              wikiUrlString = urlObj.en || urlObj.de || urlObj.fr || urlObj.es || urlObj.it || urlObj.pt || urlObj.nl || null;
+            }
+          }
+          
+          // Try the wikiUrl first if available
+          if (wikiUrlString) {
+            wikiSummary = await getWikipediaSummary(wikiUrlString);
           }
           
           // If no wikiUrl or failed, try by scientific name
