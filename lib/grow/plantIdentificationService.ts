@@ -64,6 +64,8 @@ export interface PlantIdentificationResult {
     // Additional Plant.id data (all included in 1 credit)
     wikiDescription?: string; // Wikipedia description text
     wikiUrl?: string; // Wikipedia link
+    wikiAttribution?: string; // Attribution text for Wikipedia content
+    wikiLanguage?: string; // Language code of Wikipedia article (en, fr, de, etc.)
     watering?: { min: number; max: number }; // 1=dry, 2=medium, 3=wet
     edibleParts?: string[]; // fruit, leaves, seeds, etc.
     propagationMethods?: string[]; // cuttings, division, seeds, etc.

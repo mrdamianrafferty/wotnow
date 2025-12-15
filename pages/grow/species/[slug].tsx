@@ -701,7 +701,7 @@ export default function GrowSpeciesPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Advice</CardTitle>
+                <CardTitle>About</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoadingSpecies ? (
@@ -712,8 +712,24 @@ export default function GrowSpeciesPage() {
                 ) : species ? (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      {species.description ?? 'No description yet.'}
+                      {species.description ?? 'No description available yet.'}
                     </p>
+                    
+                    {/* Wikipedia attribution for custom species */}
+                    {species.isCustomSpecies && species.description && species.wikiUrl && (
+                      <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                        <span>From Wikipedia, CC BY-SA 3.0</span>
+                        <a
+                          href={species.wikiUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          Read full article →
+                        </a>
+                      </div>
+                    )}
+                    
                     {species.advice ? (
                       <div className="p-3 rounded-lg bg-green-50 border border-green-200">
                         <div className="text-xs font-medium text-green-800 mb-1">Top tip</div>

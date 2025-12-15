@@ -27,7 +27,8 @@ import {
   Pencil,
   Info,
   ArrowUpDown,
-  Filter
+  Filter,
+  ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -1654,6 +1655,33 @@ export function GardenPage() {
                                 {identifyResult.species.wikiImageAttribution}
                               </p>
                             )}
+                          </div>
+                        )}
+                        
+                        {/* Wikipedia summary with attribution */}
+                        {identifyResult.species.wikiDescription && (
+                          <div className="space-y-2">
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {identifyResult.species.wikiDescription.length > 500
+                                ? `${identifyResult.species.wikiDescription.slice(0, 500)}...`
+                                : identifyResult.species.wikiDescription}
+                            </p>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>
+                                {identifyResult.species.wikiAttribution || 'From Wikipedia, CC BY-SA 3.0'}
+                              </span>
+                              {identifyResult.species.wikiUrl && (
+                                <a
+                                  href={identifyResult.species.wikiUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline flex items-center gap-1"
+                                >
+                                  Read more
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              )}
+                            </div>
                           </div>
                         )}
                         

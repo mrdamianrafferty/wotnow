@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { plantIdService, type PlantIdentificationResult, type PlantCandidate, type ThreatCandidate, getPlantIdProvider, getProviderConfig } from '@/lib/grow/plantIdentificationService';
 import { getSupabaseServerClient } from '@/lib/supabase/serverClient';
-import { getWikipediaImageLicense, getWikipediaArticleImageLicense, isWikimediaUrl } from '@/lib/grow/wikipediaLicense';
+import { getWikipediaImageLicense, getWikipediaArticleImageLicense, isWikimediaUrl, getWikipediaSummary, getWikipediaSummaryByScientificName } from '@/lib/grow/wikipediaLicense';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 
@@ -137,17 +137,55 @@ export default async function handler(
         result.notInDatabase = false;
         console.log(`[identify-plant] Matched to species slug: ${slug}`);
       } else {
-        // Species not in our database - mark it and check Wikipedia image license
+        // Species not in our database - mark it and fetch Wikipedia info
         result.notInDatabase = true;
         console.log(`[identify-plant] Species not in database: ${result.species.scientificName || result.species.name}`);
         
-        // Try to get Wikipedia image license info
-        if (result.species.imageUrl || result.species.wikiUrl) {
+        // Fetch Wikipedia summary for the species
+        try {
+          let wikiSummary = null;
+          
+          // Try the wikiUrl first if available
+          if (result.species.wikiUrl) {
+            wikiSummary = await getWikipediaSummary(result.species.wikiUrl);
+          }
+          
+          // If no wikiUrl or failed, try by scientific name
+          if (!wikiSummary && result.species.scientificName) {
+            wikiSummary = await getWikipediaSummaryByScientificName(result.species.scientificName);
+          }
+          
+          if (wikiSummary) {
+            result.species.wikiDescription = wikiSummary.extract;
+            result.species.wikiUrl = wikiSummary.pageUrl;
+            result.species.wikiAttribution = wikiSummary.attribution;
+            result.species.wikiLanguage = wikiSummary.language;
+            
+            // Use Wikipedia's thumbnail/image if we don't have one already
+            if (!result.species.wikiImageUrl && wikiSummary.thumbnailUrl) {
+              result.species.wikiImageUrl = wikiSummary.thumbnailUrl;
+            }
+            if (!result.species.wikiImageUrl && wikiSummary.originalImageUrl) {
+              result.species.wikiImageUrl = wikiSummary.originalImageUrl;
+            }
+            
+            console.log(`[identify-plant] Wikipedia summary fetched (${wikiSummary.language}): ${wikiSummary.extract?.substring(0, 100)}...`);
+          }
+        } catch (wikiError) {
+          console.warn('[identify-plant] Failed to fetch Wikipedia summary:', wikiError);
+        }
+        
+        // Try to get Wikipedia image license info (for proper attribution)
+        if (result.species.wikiImageUrl || result.species.imageUrl) {
           try {
             let licenseInfo;
             
-            // If we have a direct image URL from Wikimedia, use it
-            if (result.species.imageUrl && isWikimediaUrl(result.species.imageUrl)) {
+            // Check the wiki image we just found
+            if (result.species.wikiImageUrl && isWikimediaUrl(result.species.wikiImageUrl)) {
+              licenseInfo = await getWikipediaImageLicense(result.species.wikiImageUrl);
+            }
+            // Or the original image URL from identification
+            else if (result.species.imageUrl && isWikimediaUrl(result.species.imageUrl)) {
               licenseInfo = await getWikipediaImageLicense(result.species.imageUrl);
             } 
             // Otherwise try to get the main image from the Wikipedia article
@@ -156,7 +194,10 @@ export default async function handler(
             }
             
             if (licenseInfo && !licenseInfo.error) {
-              result.species.wikiImageUrl = licenseInfo.thumbnailUrl || licenseInfo.imageUrl || undefined;
+              // Update image URL if we got a better one
+              if (!result.species.wikiImageUrl) {
+                result.species.wikiImageUrl = licenseInfo.thumbnailUrl || licenseInfo.imageUrl || undefined;
+              }
               result.species.wikiImageLicense = licenseInfo.licenseShortName || undefined;
               result.species.wikiImageAllowed = licenseInfo.isAllowed;
               result.species.wikiImageAttribution = licenseInfo.attribution || undefined;

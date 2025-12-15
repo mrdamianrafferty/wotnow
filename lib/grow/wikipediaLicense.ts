@@ -313,3 +313,107 @@ export function isWikimediaUrl(url: string): boolean {
   ];
   return wikimediaPatterns.some(pattern => pattern.test(url));
 }
+
+/**
+ * Wikipedia article summary info
+ */
+export interface WikiSummaryInfo {
+  title: string;
+  extract: string;
+  extractHtml?: string;
+  pageUrl: string;
+  thumbnailUrl?: string;
+  originalImageUrl?: string;
+  language: string;
+  attribution: string;
+  error?: string;
+}
+
+/**
+ * Fetch Wikipedia article summary using the REST API
+ * Uses the summary endpoint which returns a clean extract
+ * 
+ * @param wikiUrl - Full Wikipedia article URL (e.g., https://en.wikipedia.org/wiki/Rosa)
+ * @returns Summary info with extract, attribution, and URLs
+ */
+export async function getWikipediaSummary(wikiUrl: string): Promise<WikiSummaryInfo | null> {
+  try {
+    // Extract language and article title from URL
+    // Supports: https://en.wikipedia.org/wiki/Article_Name
+    //           https://fr.wikipedia.org/wiki/Nom_Article
+    const urlMatch = wikiUrl.match(/https?:\/\/([a-z]{2,3})\.wikipedia\.org\/wiki\/([^#?]+)/i);
+    if (!urlMatch) {
+      console.warn('[getWikipediaSummary] Could not parse Wikipedia URL:', wikiUrl);
+      return null;
+    }
+
+    const [, language, articleTitle] = urlMatch;
+    const decodedTitle = decodeURIComponent(articleTitle);
+
+    // Use Wikipedia REST API summary endpoint
+    // https://en.wikipedia.org/api/rest_v1/page/summary/Article_Title
+    const apiUrl = `https://${language}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(decodedTitle)}`;
+
+    const response = await fetch(apiUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'GoDaisy/1.0 (https://godaisy.io; hello@godaisy.io)',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn('[getWikipediaSummary] API request failed:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Build attribution text
+    const attribution = `From Wikipedia, the free encyclopedia. Content available under CC BY-SA 3.0.`;
+
+    return {
+      title: data.title || decodedTitle,
+      extract: data.extract || '',
+      extractHtml: data.extract_html,
+      pageUrl: data.content_urls?.desktop?.page || wikiUrl,
+      thumbnailUrl: data.thumbnail?.source,
+      originalImageUrl: data.originalimage?.source,
+      language,
+      attribution,
+    };
+  } catch (error) {
+    console.error('[getWikipediaSummary] Error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch Wikipedia summary by scientific name
+ * Tries multiple Wikipedia languages if the English article doesn't exist
+ * 
+ * @param scientificName - Latin binomial (e.g., "Gentiana brachyphylla")
+ * @returns Summary info or null if not found
+ */
+export async function getWikipediaSummaryByScientificName(scientificName: string): Promise<WikiSummaryInfo | null> {
+  // Languages to try in order of preference
+  const languages = ['en', 'de', 'fr', 'es', 'it', 'pt', 'nl'];
+  
+  // Format scientific name for Wikipedia URL (replace spaces with underscores)
+  const formattedName = scientificName.trim().replace(/\s+/g, '_');
+
+  for (const lang of languages) {
+    const wikiUrl = `https://${lang}.wikipedia.org/wiki/${encodeURIComponent(formattedName)}`;
+    
+    try {
+      const summary = await getWikipediaSummary(wikiUrl);
+      if (summary && summary.extract && summary.extract.length > 50) {
+        return summary;
+      }
+    } catch {
+      // Try next language
+      continue;
+    }
+  }
+
+  return null;
+}
