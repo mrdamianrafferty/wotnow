@@ -56,3 +56,4 @@ public/worker-*.js.map
 # Playwright artifacts
 playwright-report/
 test-results/
+
