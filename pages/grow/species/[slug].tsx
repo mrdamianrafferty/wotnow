@@ -718,8 +718,11 @@ export default function GrowSpeciesPage() {
                   </div>
                 ) : null}
 
-                {species?.imageKey ? (
-                  <div className="text-xs text-muted-foreground">Image key: {species.imageKey}</div>
+                {/* Show Wikipedia image credit for custom species using wiki images */}
+                {species?.isCustomSpecies && species?.wikiImageUrl && species?.wikiImageLicense ? (
+                  <div className="text-xs text-muted-foreground">
+                    Image: Wikimedia Commons • {species.wikiImageLicense}
+                  </div>
                 ) : null}
 
                 {/* If/when climate zone is available from profile we can show it here.
