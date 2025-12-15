@@ -45,6 +45,7 @@ import { getPlantImage } from '../../lib/grow/plantImages';
 import { ThreatCard } from './ThreatCard';
 import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
+import { TranslatedText } from '../translation/TranslatedFishCard';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -1426,7 +1427,7 @@ export function GardenPage() {
                     {identifyResult.mode === 'plant' && identifyResult.species?.wikiDescription && (
                       <div className="text-sm text-muted-foreground">
                         <p className="line-clamp-3">
-                          {identifyResult.species.wikiDescription}
+                          <TranslatedText text={identifyResult.species.wikiDescription} />
                         </p>
                         {identifyResult.species.wikiDescription.length > 200 && (
                           <details className="mt-1">
@@ -1434,7 +1435,7 @@ export function GardenPage() {
                               Show full description...
                             </summary>
                             <p className="mt-2 text-sm">
-                              {identifyResult.species.wikiDescription}
+                              <TranslatedText text={identifyResult.species.wikiDescription} />
                             </p>
                           </details>
                         )}
@@ -1662,9 +1663,11 @@ export function GardenPage() {
                         {identifyResult.species.wikiDescription && (
                           <div className="space-y-2">
                             <p className="text-sm text-foreground leading-relaxed">
-                              {identifyResult.species.wikiDescription.length > 500
-                                ? `${identifyResult.species.wikiDescription.slice(0, 500)}...`
-                                : identifyResult.species.wikiDescription}
+                              <TranslatedText 
+                                text={identifyResult.species.wikiDescription.length > 500
+                                  ? `${identifyResult.species.wikiDescription.slice(0, 500)}...`
+                                  : identifyResult.species.wikiDescription} 
+                              />
                             </p>
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>

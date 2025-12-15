@@ -46,6 +46,7 @@ import { api } from '../../lib/grow/api';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { getPlantImage, PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
+import { TranslatedText } from '../translation/TranslatedFishCard';
 
 const HEALTH_OPTIONS: Array<{ value: 'excellent' | 'good' | 'fair' | 'poor'; label: string }> = [
   { value: 'excellent', label: 'Excellent' },
@@ -960,7 +961,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
                   {/* Wikipedia Description */}
                   {prefillFromIdentification?.wikiDescription && (
                     <p className="text-sm text-muted-foreground mt-3 line-clamp-3">
-                      {prefillFromIdentification.wikiDescription}
+                      <TranslatedText text={prefillFromIdentification.wikiDescription} />
                     </p>
                   )}
                   
@@ -1039,7 +1040,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
                 {/* Description */}
                 {selectedSpecies?.description && (
                   <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
-                    {selectedSpecies.description}
+                    <TranslatedText text={selectedSpecies.description} />
                   </p>
                 )}
               </div>

@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sprout, Shovel, Scissors, Wheat, MapPin } from 'lucide-react';
 import { ThreatCard } from '@/components/grow/ThreatCard';
 import { GrowLayout } from '@/components/grow/GrowLayout';
+import { TranslatedText } from '@/components/translation/TranslatedFishCard';
 
 import { getPlantImage, PLANT_IMAGE_MAP } from '@/lib/grow/plantImages';
 import type { PlantSpecies } from '@/lib/grow/species';
@@ -712,7 +713,11 @@ export default function GrowSpeciesPage() {
                 ) : species ? (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      {species.description ?? 'No description available yet.'}
+                      {species.description ? (
+                        <TranslatedText text={species.description} />
+                      ) : (
+                        'No description available yet.'
+                      )}
                     </p>
                     
                     {/* Wikipedia attribution for custom species */}
@@ -733,7 +738,9 @@ export default function GrowSpeciesPage() {
                     {species.advice ? (
                       <div className="p-3 rounded-lg bg-green-50 border border-green-200">
                         <div className="text-xs font-medium text-green-800 mb-1">Top tip</div>
-                        <div className="text-sm text-green-900">{species.advice}</div>
+                        <div className="text-sm text-green-900">
+                          <TranslatedText text={species.advice} />
+                        </div>
                       </div>
                     ) : null}
                   </div>
