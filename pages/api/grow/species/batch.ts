@@ -148,6 +148,8 @@ const BASE_SELECT = [
   'slug',
   'name',
   'scientific_name',
+  'description',
+  'advice',
   'category',
   'sun_requirements',
   'soil_type',
