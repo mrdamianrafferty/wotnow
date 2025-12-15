@@ -977,7 +977,7 @@ export default function GrowSpeciesPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No tasks found for this species right now.</p>
+                  <p className="text-sm text-muted-foreground">Chill, no work to do — just enjoy the view 🌿</p>
                 )}
               </CardContent>
             </Card>
