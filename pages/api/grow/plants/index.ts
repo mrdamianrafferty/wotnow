@@ -142,23 +142,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Get the common names from identification data if available
       const commonNames = identificationData?.species?.commonNames || [];
       
+      // Extract wikiUrl - could be a string or an object with language keys from Plant.id
+      let effectiveWikiUrl = wikiUrl || null;
+      if (!effectiveWikiUrl && identificationData?.species?.wikiUrl) {
+        const urlData = identificationData.species.wikiUrl;
+        if (typeof urlData === 'string') {
+          effectiveWikiUrl = urlData;
+        } else if (typeof urlData === 'object') {
+          // Prefer English, then other languages
+          effectiveWikiUrl = urlData.en || urlData.de || urlData.fr || urlData.es || urlData.it || urlData.pt || urlData.nl || null;
+        }
+      }
+      
+      // Fall back to identification data for wikiDescription if not in request body
+      const effectiveWikiDescription = wikiDescription || identificationData?.species?.wikiDescription || null;
+      
       await supabase.rpc('upsert_species_suggestion', {
         p_scientific_name: String(scientificName).trim(),
         p_common_name: String(name).trim(),
         p_common_names: Array.isArray(commonNames) ? commonNames : [],
         p_user_id: userId,
         p_wiki_data: identificationData ? {
-          wikiDescription: wikiDescription || null,
-          wikiUrl: wikiUrl || null,
+          wikiDescription: effectiveWikiDescription,
+          wikiUrl: effectiveWikiUrl,
           watering: identificationData?.species?.watering || null,
           edibleParts: identificationData?.species?.edibleParts || null,
           propagationMethods: identificationData?.species?.propagationMethods || null,
         } : null,
-        p_wiki_image_url: wikiImageUrl || null,
-        p_wiki_image_license: wikiImageLicense || null,
+        p_wiki_image_url: wikiImageUrl || identificationData?.species?.wikiImageUrl || null,
+        p_wiki_image_license: wikiImageLicense || identificationData?.species?.wikiImageLicense || null,
         p_community_photo_url: communityPhotoUrl || null,
       });
-      console.log(`[grow] Tracked species suggestion: ${scientificName}`);
+      console.log(`[grow] Tracked species suggestion: ${scientificName} (wikiDescription: ${effectiveWikiDescription ? 'yes' : 'no'})`);
     } catch (suggestionError) {
       // Don't fail the request if suggestion tracking fails
       console.warn('[grow] Failed to track species suggestion:', suggestionError);
