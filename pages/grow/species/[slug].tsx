@@ -268,7 +268,7 @@ export default function GrowSpeciesPage() {
   // - As an MVP, we call existing APIs without requiring extra query params.
 
   useEffect(() => {
-    if (!slug || !accessToken) return;
+    if (!slug) return;
     let cancelled = false;
 
     setIsLoadingSpecies(true);
@@ -297,7 +297,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, accessToken, router]);
+  }, [slug, router]);
 
   useEffect(() => {
     if (!accessToken) return;
