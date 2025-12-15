@@ -706,22 +706,25 @@ export class ApiClient {
 
   async getPlantSpeciesByName(name: string): Promise<PlantSpecies | null> {
     try {
-      const encodedName = encodeURIComponent(name.trim());
-      const response = await this.fetchWithTimeout(`${GROW_SPECIES_API_BASE}/${encodedName}`, {
+      const normalizedName = name.trim().toLowerCase();
+      
+      // Use batch endpoint as workaround since dynamic [slug] route has deployment issues
+      const response = await this.fetchWithTimeout(`${GROW_SPECIES_API_BASE}/batch`, {
+        method: 'POST',
         headers: this.getHeaders(),
+        body: JSON.stringify({ names: [normalizedName] }),
       });
-
-      if (response.status === 404) {
-        return null;
-      }
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Network error' }));
         throw new Error(error.error || 'Failed to load plant species');
       }
 
-      const data = await response.json();
-      return data.species as PlantSpecies;
+      const data = await response.json() as { species: Record<string, PlantSpecies>; notFound: string[] };
+      
+      // Return the first (and only) species from batch result
+      const speciesResult = Object.values(data.species)[0];
+      return speciesResult ?? null;
     } catch (error) {
       console.error('Failed to fetch plant species by name:', error);
       return null;
