@@ -1039,11 +1039,11 @@ export default function GrowSpeciesPage() {
           </CardContent>
         </Card>
 
-        {/* Looking after [Plant] in [Location] Section */}
+        {/* The [Plant] year in [Location] Section */}
         <Card>
           <CardHeader>
             <CardTitle>
-              Looking after {species?.name ?? "this plant"} in{" "}
+              The {species?.name?.toLowerCase() ?? "plant"} year in{" "}
               {locationName
                 ? truncateLocationName(locationName, 25)
                 : "your garden"}

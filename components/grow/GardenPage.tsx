@@ -28,7 +28,9 @@ import {
   Info,
   ArrowUpDown,
   Filter,
-  ExternalLink
+  ExternalLink,
+  Library,
+  User
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -202,6 +204,16 @@ export function GardenPage() {
   // Track plants being deleted for exit animation
   const [deletingPlantIds, setDeletingPlantIds] = useState<Set<string>>(new Set());
 
+  // View mode toggle: 'my' = user's plants, 'all' = all species in system
+  const [viewMode, setViewMode] = useState<'my' | 'all'>('my');
+  
+  // All species state (for 'all' view mode)
+  const [allSpecies, setAllSpecies] = useState<PlantSpecies[]>([]);
+  const [isLoadingAllSpecies, setIsLoadingAllSpecies] = useState(false);
+  const [allSpeciesTotal, setAllSpeciesTotal] = useState(0);
+  const [allSpeciesCategory, setAllSpeciesCategory] = useState<string>('all');
+  const [allSpeciesCategories, setAllSpeciesCategories] = useState<string[]>([]);
+
   // Filter and sort state
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'recent' | 'health'>('name-asc');
@@ -273,6 +285,50 @@ export function GardenPage() {
 
     return result;
   }, [plants, searchQuery, filterType, filterLocation, sortBy]);
+
+  // Load all species for "All Plants" view
+  const loadAllSpecies = useCallback(async (category?: string) => {
+    try {
+      setIsLoadingAllSpecies(true);
+      const params: { category?: string; limit?: number; query?: string } = { limit: 50 };
+      if (category && category !== 'all') {
+        params.category = category;
+      }
+      if (searchQuery.trim()) {
+        params.query = searchQuery.trim();
+      }
+      const response = await api.searchPlantSpecies(params);
+      setAllSpecies(response.species);
+      setAllSpeciesTotal(response.total);
+    } catch (error) {
+      console.error('[GardenPage] Failed to load all species:', error);
+      toast.error('Failed to load species library');
+    } finally {
+      setIsLoadingAllSpecies(false);
+    }
+  }, [searchQuery]);
+
+  // Load categories for filter pills
+  const loadCategories = useCallback(async () => {
+    try {
+      const response = await api.getPlantCategories();
+      setAllSpeciesCategories(response.categories);
+    } catch (error) {
+      console.error('[GardenPage] Failed to load categories:', error);
+    }
+  }, []);
+
+  // Load all species when switching to 'all' view or when filters change
+  useEffect(() => {
+    if (viewMode === 'all') {
+      void loadAllSpecies(allSpeciesCategory);
+    }
+  }, [viewMode, allSpeciesCategory, loadAllSpecies]);
+
+  // Load categories on mount
+  useEffect(() => {
+    void loadCategories();
+  }, [loadCategories]);
 
   const loadThreats = useCallback(async () => {
     try {
@@ -914,36 +970,270 @@ export function GardenPage() {
 
         {/* Tab 1: My Plants */}
         <TabsContent value="plants" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-medium">Plant Inventory</h2>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setGuildModalOpen(true)}
-                disabled={isSaving}
-                className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-50"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trees className="h-4 w-4" />
-                )}
-                Make a Guild
-              </Button>
-              <Button
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                disabled={isSaving}
-                onClick={() => setIsAddPlantDialogOpen(true)}
-                aria-label="Add a new plant to your garden"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add Plant
-              </Button>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-medium">Plant Inventory</h2>
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('my')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
+                    viewMode === 'my'
+                      ? 'bg-white shadow-sm text-green-700 font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <User className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">My Plants</span>
+                  <span className="sm:hidden">Mine</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('all')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-all ${
+                    viewMode === 'all'
+                      ? 'bg-white shadow-sm text-green-700 font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Library className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">All Species</span>
+                  <span className="sm:hidden">All</span>
+                </button>
+              </div>
             </div>
+            {viewMode === 'my' && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setGuildModalOpen(true)}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trees className="h-4 w-4" />
+                  )}
+                  Make a Guild
+                </Button>
+                <Button
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  disabled={isSaving}
+                  onClick={() => setIsAddPlantDialogOpen(true)}
+                  aria-label="Add a new plant to your garden"
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add Plant
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Search, Sort, and Filter Controls */}
-          {plants.length > 0 && (
+          {/* All Species View */}
+          {viewMode === 'all' && (
+            <>
+              {/* Search and Category Filter */}
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Search all species..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          void loadAllSpecies(allSpeciesCategory);
+                        }
+                      }}
+                      className="pl-9"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => {
+                          setSearchQuery('');
+                          void loadAllSpecies(allSpeciesCategory);
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label="Clear search"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => void loadAllSpecies(allSpeciesCategory)}
+                    variant="outline"
+                    disabled={isLoadingAllSpecies}
+                  >
+                    {isLoadingAllSpecies ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
+
+                {/* Category Filter Pills */}
+                {allSpeciesCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <Filter className="h-4 w-4 text-muted-foreground" />
+                    <button
+                      onClick={() => setAllSpeciesCategory('all')}
+                      className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
+                        allSpeciesCategory === 'all' 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {allSpeciesCategories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setAllSpeciesCategory(cat)}
+                        className={`px-3 py-1 text-sm rounded-full transition-all duration-200 ${
+                          allSpeciesCategory === cat 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-sm text-muted-foreground">
+                  Showing {allSpecies.length} of {allSpeciesTotal} species
+                  {allSpeciesCategory !== 'all' && <span> in {allSpeciesCategory}</span>}
+                </p>
+              </div>
+
+              {/* Species Grid */}
+              {isLoadingAllSpecies ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+                </div>
+              ) : allSpecies.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Library className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No species found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or category filter.
+                  </p>
+                </Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {allSpecies.map((species) => {
+                    const speciesUrl = `/grow/species/${encodeURIComponent(species.slug)}`;
+                    const imageKey = species.imageKey || species.slug;
+                    const imageSrc = getPlantImage(imageKey, 'xl') ?? getPlantImage(imageKey, 'lg') ?? getPlantImage(imageKey, 'medium');
+                    
+                    return (
+                      <Card 
+                        key={species.slug}
+                        className="border hover:shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                      >
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div className="pr-2 flex-1">
+                              <Link href={speciesUrl} className="hover:underline">
+                                <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">
+                                  {species.name}
+                                </CardTitle>
+                              </Link>
+                              {species.scientificName && (
+                                <p className="text-sm text-muted-foreground italic">{species.scientificName}</p>
+                              )}
+                              {species.category && (
+                                <Badge variant="secondary" className="mt-1 text-xs">
+                                  {species.category}
+                                </Badge>
+                              )}
+                            </div>
+                            {imageSrc && (
+                              <Link href={speciesUrl} className="block shrink-0">
+                                <div className="relative h-20 w-20 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
+                                  <Image
+                                    src={imageSrc}
+                                    alt={species.name}
+                                    fill
+                                    className="object-contain p-1"
+                                    sizes="80px"
+                                  />
+                                </div>
+                              </Link>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {species.sunRequirements && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>☀️</span>
+                              <span>{species.sunRequirements}</span>
+                            </div>
+                          )}
+                          {species.soilType && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>🌱</span>
+                              <span>{species.soilType}</span>
+                            </div>
+                          )}
+                          <div className="flex gap-2 pt-2">
+                            <Button asChild variant="outline" size="sm" className="flex-1">
+                              <Link href={speciesUrl}>
+                                <Info className="h-3 w-3 mr-1" />
+                                View Details
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                setAddPlantPrefill({
+                                  name: species.name,
+                                  scientificName: species.scientificName ?? undefined,
+                                  type: species.category ?? undefined,
+                                });
+                                setIsAddPlantDialogOpen(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add to Garden
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Species Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-green-600">{allSpeciesTotal}</p>
+                    <p className="text-sm text-muted-foreground">Total Species</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-blue-600">{allSpeciesCategories.length}</p>
+                    <p className="text-sm text-muted-foreground">Categories</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <p className="text-2xl font-semibold text-purple-600">{plants.length}</p>
+                    <p className="text-sm text-muted-foreground">In Your Garden</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+
+          {/* My Plants View - Search, Sort, and Filter Controls */}
+          {viewMode === 'my' && plants.length > 0 && (
             <div className="space-y-3">
               {/* Search and Sort Row */}
               <div className="flex flex-col sm:flex-row gap-2">
@@ -1058,7 +1348,7 @@ export function GardenPage() {
             </div>
           )}
 
-          {plants.length === 0 ? (
+          {viewMode === 'my' && plants.length === 0 ? (
             <Card className="p-12 text-center">
               <Sprout className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No plants yet</h3>
@@ -1079,7 +1369,7 @@ export function GardenPage() {
                 </Button>
               </div>
             </Card>
-          ) : filteredAndSortedPlants.length === 0 ? (
+          ) : viewMode === 'my' && filteredAndSortedPlants.length === 0 ? (
             <Card className="p-12 text-center">
               <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No plants match your filters</h3>
@@ -1097,7 +1387,7 @@ export function GardenPage() {
                 Clear Filters
               </Button>
             </Card>
-          ) : (
+          ) : viewMode === 'my' ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredAndSortedPlants.map((plant) => {
                 const speciesSlug = speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name.toLowerCase().replace(/\s+/g, '-');
@@ -1216,9 +1506,10 @@ export function GardenPage() {
                 );
               })}
             </div>
-          )}
+          ) : null}
 
-          {/* Stats */}
+          {/* Stats - only show for My Plants view */}
+          {viewMode === 'my' && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <Card>
               <CardContent className="p-4 text-center">
@@ -1253,6 +1544,7 @@ export function GardenPage() {
               </CardContent>
             </Card>
           </div>
+          )}
         </TabsContent>
 
         {/* Tab 2: Identify */}
