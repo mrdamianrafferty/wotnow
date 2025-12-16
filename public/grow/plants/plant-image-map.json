@@ -1070,6 +1070,27 @@
     "source": "193_French_tarragon_Artemisia_dracunculus.png",
     "xl": "/grow/plants/xl/french-tarragon-artemisia-dracunculus.webp"
   },
+  "fruit-blackcurrant": {
+    "emoji": "/grow/plants/emoji/fruit-blackcurrant.webp",
+    "medium": "/grow/plants/medium/fruit-blackcurrant.webp",
+    "lg": "/grow/plants/lg/fruit-blackcurrant.webp",
+    "xl": "/grow/plants/xl/fruit-blackcurrant.webp",
+    "source": "blackcurrant.jpg"
+  },
+  "fruit-currant": {
+    "emoji": "/grow/plants/emoji/fruit-currant.webp",
+    "medium": "/grow/plants/medium/fruit-currant.webp",
+    "lg": "/grow/plants/lg/fruit-currant.webp",
+    "xl": "/grow/plants/xl/fruit-currant.webp",
+    "source": "white-currant.jpg"
+  },
+  "fruit-gooseberry": {
+    "emoji": "/grow/plants/emoji/fruit-gooseberry.webp",
+    "medium": "/grow/plants/medium/fruit-gooseberry.webp",
+    "lg": "/grow/plants/lg/fruit-gooseberry.webp",
+    "xl": "/grow/plants/xl/fruit-gooseberry.webp",
+    "source": "gooseberry.jpg"
+  },
   "gaillardia-blanket-flower-gaillardia-grandiflora": {
     "emoji": "/grow/plants/emoji/gaillardia-blanket-flower-gaillardia-grandiflora.webp",
     "lg": "/grow/plants/lg/gaillardia-blanket-flower-gaillardia-grandiflora.webp",
