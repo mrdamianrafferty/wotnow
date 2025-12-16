@@ -316,13 +316,15 @@ export default function GrowSpeciesPage() {
 
   // Hydration-safe: defer auth check to client
   const [hasMounted, setHasMounted] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
   useEffect(() => {
     setHasMounted(true);
+    // Get token on client-side only
+    const token = localStorage.getItem("access_token");
+    console.log("[Species] Mounted, token:", token ? "present" : "missing");
+    setAccessToken(token);
   }, []);
-
-  const accessToken = hasMounted
-    ? localStorage.getItem("access_token")
-    : null;
 
   // Sticky header: detect when hero scrolls out of view
   const { ref: heroRef, isScrolledPast: showStickyHeader } =
@@ -367,19 +369,23 @@ export default function GrowSpeciesPage() {
 
   // Fetch user location on mount (wait for hydration)
   useEffect(() => {
+    console.log("[Species] Location effect - hasMounted:", hasMounted, "accessToken:", accessToken ? "present" : "missing");
     if (!hasMounted) return; // Wait for client-side hydration
     if (!accessToken) {
+      console.log("[Species] No access token, setting hasLocation=false");
       setHasLocation(false);
       return;
     }
     let cancelled = false;
 
+    console.log("[Species] Fetching user location...");
     fetch("/api/user/location", {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
+        console.log("[Species] Location response:", data);
         // API returns rectangleLabel or rectangleRegion for display name
         const name =
           data?.rectangleLabel ||
@@ -389,7 +395,8 @@ export default function GrowSpeciesPage() {
         setLocationName(name);
         setHasLocation(Boolean(name));
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[Species] Location fetch error:", err);
         if (!cancelled) {
           setHasLocation(false);
           setLocationName(null);
@@ -535,9 +542,11 @@ export default function GrowSpeciesPage() {
   }, [accessToken, hasMounted]);
 
   useEffect(() => {
+    console.log("[Species] Calendar effect - slug:", slug, "accessToken:", accessToken ? "present" : "missing", "species:", species?.name);
     if (!slug || !accessToken || !species) return;
     let cancelled = false;
 
+    console.log("[Species] Fetching planting calendar...");
     setIsLoadingWindows(true);
     api
       .getPlantingCalendar()
@@ -545,17 +554,22 @@ export default function GrowSpeciesPage() {
         if (cancelled) return;
         const all = ((data as { windows?: unknown })?.windows ??
           []) as PlantingWindow[];
+        console.log("[Species] Calendar response - total windows:", all.length);
         // Match by species slug, URL slug, or plant name (case-insensitive)
         const speciesSlug = species.slug?.toLowerCase();
         const urlSlug = slug.toLowerCase();
         const speciesName = species.name?.toLowerCase();
-        setWindows(all.filter((w) => {
+        console.log("[Species] Matching - speciesSlug:", speciesSlug, "urlSlug:", urlSlug, "speciesName:", speciesName);
+        const matched = all.filter((w) => {
           const wSlug = w.plantSlug?.toLowerCase();
           const wName = w.plantName?.toLowerCase();
           return wSlug === speciesSlug || wSlug === urlSlug || wName === speciesName;
-        }));
+        });
+        console.log("[Species] Matched windows:", matched.length, matched);
+        setWindows(matched);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[Species] Calendar fetch error:", err);
         if (cancelled) return;
         setWindows([]);
       })
