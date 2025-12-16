@@ -333,7 +333,7 @@ export default function GrowSpeciesPage() {
 
   // Location state for personalized timing
   const [locationName, setLocationName] = useState<string | null>(null);
-  const [hasLocation, setHasLocation] = useState<boolean | null>(null); // null = loading
+  const [hasLocation, setHasLocation] = useState<boolean | null>(null); // null = loading, starts as loading
   const [showLocationDialog, setShowLocationDialog] = useState(false);
 
   const [species, setSpecies] = useState<PlantSpecies | null>(null);
@@ -349,7 +349,7 @@ export default function GrowSpeciesPage() {
   const [isLoadingWiki, setIsLoadingWiki] = useState(false);
 
   const [windows, setWindows] = useState<PlantingWindow[] | null>(null);
-  const [isLoadingWindows, setIsLoadingWindows] = useState(false);
+  const [isLoadingWindows, setIsLoadingWindows] = useState(true); // Start loading until we know if we have data
 
   const [threats, setThreats] = useState<ThreatAssessment[] | null>(null);
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
@@ -370,6 +370,7 @@ export default function GrowSpeciesPage() {
   useEffect(() => {
     if (!hasMounted) return; // Wait for client-side hydration
     if (!accessToken) {
+      // No token means user isn't logged in - they need to set location
       setHasLocation(false);
       return;
     }
@@ -378,7 +379,10 @@ export default function GrowSpeciesPage() {
     fetch("/api/user/location", {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         if (cancelled) return;
         // API returns rectangleLabel or rectangleRegion for display name
@@ -387,10 +391,12 @@ export default function GrowSpeciesPage() {
           data?.rectangleRegion ||
           data?.home?.name ||
           null;
+        console.log("[Species] Location loaded:", name);
         setLocationName(name);
         setHasLocation(Boolean(name));
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[Species] Location fetch failed:", err);
         if (!cancelled) {
           setHasLocation(false);
           setLocationName(null);
@@ -536,8 +542,17 @@ export default function GrowSpeciesPage() {
   }, [accessToken, hasMounted]);
 
   useEffect(() => {
-    console.log("[Species] Calendar effect - slug:", slug, "accessToken:", accessToken ? "present" : "missing", "species:", species?.name);
-    if (!slug || !accessToken || !species) return;
+    if (!slug || !accessToken || !species) {
+      // If we don't have required data yet, keep loading or set empty
+      if (hasMounted && accessToken && !species) {
+        // Still loading species, keep loading state
+      } else if (hasMounted && !accessToken) {
+        // No auth, show empty
+        setIsLoadingWindows(false);
+        setWindows([]);
+      }
+      return;
+    }
     let cancelled = false;
 
     setIsLoadingWindows(true);
@@ -556,9 +571,11 @@ export default function GrowSpeciesPage() {
           const wName = w.plantName?.toLowerCase();
           return wSlug === speciesSlug || wSlug === urlSlug || wName === speciesName;
         });
+        console.log("[Species] Calendar windows found:", matched.length);
         setWindows(matched);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[Species] Calendar fetch failed:", err);
         if (cancelled) return;
         setWindows([]);
       })
@@ -570,7 +587,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, accessToken, species]);
+  }, [slug, accessToken, species, hasMounted]);
 
   useEffect(() => {
     // Threats endpoint is garden-wide today; we still load it for a “right now” panel.
