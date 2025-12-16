@@ -647,16 +647,6 @@ export default function GrowSpeciesPage() {
     return null;
   }, [heroImageKey, species?.wikiImageUrl]);
 
-  const thumbSrc = useMemo(() => {
-    if (heroImageKey) {
-      const local = getPlantImage(heroImageKey, "medium");
-      if (local) return local;
-    }
-    // Fallback to wiki image for custom species
-    if (species?.wikiImageUrl) return species.wikiImageUrl;
-    return null;
-  }, [heroImageKey, species?.wikiImageUrl]);
-
   // Use the biggest variant if present in the map (backwards compatible)
   const heroFullSrc = useMemo(() => {
     if (heroImageKey) {
