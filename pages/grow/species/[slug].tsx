@@ -335,6 +335,7 @@ export default function GrowSpeciesPage() {
   const [locationName, setLocationName] = useState<string | null>(null);
   const [hasLocation, setHasLocation] = useState<boolean | null>(null); // null = loading, starts as loading
   const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [locationVersion, setLocationVersion] = useState(0); // Trigger refetch when location changes
 
   const [species, setSpecies] = useState<PlantSpecies | null>(null);
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
@@ -366,47 +367,54 @@ export default function GrowSpeciesPage() {
 
   const [isHeroOpen, setIsHeroOpen] = useState(false);
 
-  // Fetch user location on mount (wait for hydration)
+  // Fetch user location on mount (wait for hydration AND accessToken to be set)
   useEffect(() => {
     if (!hasMounted) return; // Wait for client-side hydration
-    if (!accessToken) {
-      // No token means user isn't logged in - they need to set location
-      setHasLocation(false);
-      return;
-    }
-    let cancelled = false;
-
-    fetch("/api/user/location", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
+    // Wait for accessToken state to be populated (not just hasMounted)
+    // accessToken will be null initially, then set to token or remain null if not logged in
+    // We need to distinguish between "not yet loaded" and "definitely not logged in"
+    
+    // If accessToken is still undefined/null but we just mounted, wait for it to stabilize
+    // The token is set in the same effect as hasMounted, so give it one more render
+    const timeoutId = setTimeout(() => {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        // No token means user isn't logged in - they need to set location
+        console.log("[Species] No access token - showing location prompt");
+        setHasLocation(false);
+        return;
+      }
+      
+      // Token exists, fetch location
+      fetch("/api/user/location", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then((data) => {
-        if (cancelled) return;
-        // API returns rectangleLabel or rectangleRegion for display name
-        const name =
-          data?.rectangleLabel ||
-          data?.rectangleRegion ||
-          data?.home?.name ||
-          null;
-        console.log("[Species] Location loaded:", name);
-        setLocationName(name);
-        setHasLocation(Boolean(name));
-      })
-      .catch((err) => {
-        console.error("[Species] Location fetch failed:", err);
-        if (!cancelled) {
+        .then((r) => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then((data) => {
+          // API returns rectangleLabel or rectangleRegion for display name
+          const name =
+            data?.rectangleLabel ||
+            data?.rectangleRegion ||
+            data?.home?.name ||
+            null;
+          console.log("[Species] Location loaded:", name);
+          setLocationName(name);
+          setHasLocation(Boolean(name));
+        })
+        .catch((err) => {
+          console.error("[Species] Location fetch failed:", err);
           setHasLocation(false);
           setLocationName(null);
-        }
-      });
+        });
+    }, 0); // Run on next tick to ensure state is settled
 
     return () => {
-      cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [accessToken, hasMounted]);
+  }, [hasMounted, locationVersion]); // Re-run when location is saved
 
   // Handle location save from dialog
   const handleLocationSave = useCallback(
@@ -433,6 +441,8 @@ export default function GrowSpeciesPage() {
         setHasLocation(true);
         // Trigger refetch of planting windows with new location
         setWindows(null);
+        setIsLoadingWindows(true);
+        setLocationVersion((v) => v + 1); // Bump version to trigger calendar refetch
       } catch (err) {
         console.error("[Species] Failed to save location:", err);
       }
@@ -556,6 +566,7 @@ export default function GrowSpeciesPage() {
     let cancelled = false;
 
     setIsLoadingWindows(true);
+    console.log("[Species] Fetching calendar for:", species.name, "locationVersion:", locationVersion);
     api
       .getPlantingCalendar()
       .then((data: unknown) => {
@@ -587,7 +598,7 @@ export default function GrowSpeciesPage() {
     return () => {
       cancelled = true;
     };
-  }, [slug, accessToken, species, hasMounted]);
+  }, [slug, accessToken, species, hasMounted, locationVersion]); // locationVersion triggers refetch after location save
 
   useEffect(() => {
     // Threats endpoint is garden-wide today; we still load it for a “right now” panel.
@@ -1037,7 +1048,12 @@ export default function GrowSpeciesPage() {
                 : "your garden"}
             </CardTitle>
             {/* Location prompt if not set */}
-            {hasLocation === false ? (
+            {hasLocation === null ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground mt-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <span>Dispatching imaginary bots to check your garden out...</span>
+              </div>
+            ) : hasLocation === false ? (
               <button
                 type="button"
                 onClick={() => setShowLocationDialog(true)}

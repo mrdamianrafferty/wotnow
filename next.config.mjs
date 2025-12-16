@@ -195,8 +195,18 @@ const pwaConfig = withPWA({
   disable: !enablePWA || process.env.NODE_ENV === 'development',
   register: enablePWA,
   skipWaiting: true,
-  // Exclude auth pages from precaching to prevent stale cached versions
+  // Exclude images and auth pages from precaching - images are cached on-demand via runtimeCaching
+  // This prevents the PWA from downloading ALL public images on first load
   publicExcludes: [
+    // Exclude ALL images from precaching - they'll be cached when actually requested
+    '!**/*.png',
+    '!**/*.jpg',
+    '!**/*.jpeg',
+    '!**/*.gif',
+    '!**/*.webp',
+    '!**/*.avif',
+    '!**/*.svg',
+    // Exclude auth pages
     '!**/findr/auth**',
     '!**/login**',
     '!**/auth/callback**',
@@ -209,7 +219,7 @@ const pwaConfig = withPWA({
   // Clean up outdated Workbox caches automatically
   cleanupOutdatedCaches: true,
   // Force cache refresh by changing cacheId
-  cacheId: '20251209-pwa-cleanup',
+  cacheId: '20251215-no-image-precache',
   runtimeCaching: [
     // Cache all HTML pages (SSR/SSG)
     {
@@ -250,12 +260,47 @@ const pwaConfig = withPWA({
         },
       },
     },
-    // Cache images
+    // Cache images on-demand (not precached) - only caches when actually requested
+    // Uses path-aware caching for better organization
     {
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
+      urlPattern: /\/grow\/.*\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
       handler: 'CacheFirst',
       options: {
-        cacheName: 'images-cache',
+        cacheName: 'grow-images-cache',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+        },
+      },
+    },
+    {
+      urlPattern: /\/findr\/.*\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'findr-images-cache',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+        },
+      },
+    },
+    {
+      urlPattern: /\/godaisy\/.*\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'godaisy-images-cache',
+        expiration: {
+          maxEntries: 64,
+          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
+        },
+      },
+    },
+    // Cache root-level activity images for Go Daisy (legacy location)
+    {
+      urlPattern: /^https?:\/\/[^\/]+\/[^\/]+\.(?:png|jpg|jpeg|svg|gif|webp|avif)$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'activity-images-cache',
         expiration: {
           maxEntries: 128,
           maxAgeSeconds: 60 * 24 * 60 * 60, // 60 days
