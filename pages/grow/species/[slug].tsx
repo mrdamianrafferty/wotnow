@@ -394,13 +394,13 @@ export default function GrowSpeciesPage() {
           return r.json();
         })
         .then((data) => {
-          // API returns rectangleLabel or rectangleRegion for display name
+          // API returns { location: { rectangleLabel, rectangleRegion, ... } }
+          const loc = data?.location;
           const name =
-            data?.rectangleLabel ||
-            data?.rectangleRegion ||
-            data?.home?.name ||
+            loc?.rectangleLabel ||
+            loc?.rectangleRegion ||
             null;
-          console.log("[Species] Location loaded:", name);
+          console.log("[Species] Location loaded:", name, "from data:", data);
           setLocationName(name);
           setHasLocation(Boolean(name));
         })
@@ -430,10 +430,11 @@ export default function GrowSpeciesPage() {
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            type: "home",
-            name: loc.name,
             lat: loc.lat,
             lon: loc.lon,
+            rectangleLabel: loc.name,
+            rectangleRegion: loc.name,
+            source: "manual",
           }),
         });
 
