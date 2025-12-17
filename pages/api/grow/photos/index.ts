@@ -2,14 +2,33 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
 import fs from 'fs/promises';
-import sharp from 'sharp';
 
-// Disable body parser for file uploads
+// Disable body parser for file uploads and set max duration for Vercel
 export const config = {
   api: {
     bodyParser: false,
+    responseLimit: false,
   },
+  maxDuration: 60, // 60 seconds for file processing
 };
+
+// Dynamic import of sharp to avoid module load crashes
+import type sharp from 'sharp';
+type SharpFunction = typeof sharp;
+let sharpModule: SharpFunction | null = null;
+
+async function getSharp(): Promise<SharpFunction | null> {
+  if (sharpModule) return sharpModule;
+  
+  try {
+    const mod = await import('sharp');
+    sharpModule = mod.default;
+    return sharpModule;
+  } catch (err) {
+    console.error('[grow/photos] Failed to load sharp:', err);
+    return null;
+  }
+}
 
 // Lazy initialization to avoid crashing at module load time
 let supabase: SupabaseClient | null = null;
@@ -107,6 +126,14 @@ async function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fiel
 
 // Process and optimize image
 async function processImage(filePath: string): Promise<Buffer> {
+  const sharp = await getSharp();
+  
+  // If sharp isn't available, just return the original file
+  if (!sharp) {
+    console.warn('[grow/photos] Sharp not available, using original image');
+    return fs.readFile(filePath);
+  }
+  
   const image = sharp(filePath);
   const metadata = await image.metadata();
   
