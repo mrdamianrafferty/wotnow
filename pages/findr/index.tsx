@@ -715,7 +715,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 
 const FindrPage: React.FC = () => {
   const router = useRouter();
-  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot } = useUnifiedLocation();
+  const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, loading: locationLoading } = useUnifiedLocation();
 
   // Migrate old findrSettings localStorage to UnifiedLocationContext
   useMigrateFindrSettings();
@@ -779,6 +779,10 @@ const FindrPage: React.FC = () => {
 
   // Auto-select first rectangle if none selected (fallback only)
   useEffect(() => {
+    // Don't auto-select while location data is still loading from database
+    if (locationLoading) {
+      return;
+    }
     // Don't auto-select if we have any rectangle from any source
     if (rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy) {
       return;
@@ -801,7 +805,7 @@ const FindrPage: React.FC = () => {
       source: 'auto',
       makeActive: true,
     });
-  }, [rectangleFromQuery, rectangleFromFindr, rectangleFromCoastal, rectangleFromLegacy, rectangleOptions, updateLocationBySlot]);
+  }, [locationLoading, rectangleFromQuery, rectangleFromFindr, rectangleFromCoastal, rectangleFromLegacy, rectangleOptions, updateLocationBySlot]);
 
   const {
     predictions,

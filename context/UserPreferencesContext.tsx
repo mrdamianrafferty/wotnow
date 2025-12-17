@@ -378,6 +378,17 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (ipBootstrapAttempted.current) return;
+    
+    // Wait for unified location to finish loading from database
+    if (unifiedLoading) return;
+    
+    // If user has saved locations in database, use those instead of IP bootstrap
+    if (unifiedHome || unifiedCoastal) {
+      ipBootstrapAttempted.current = true;
+      console.log('[GoDaisy] Skipping IP bootstrap - user has saved locations in database');
+      return;
+    }
+    
     const stored = loadPreferencesFromStorage();
     if (stored) return;
     ipBootstrapAttempted.current = true;
@@ -425,7 +436,7 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
         }
       }
     })();
-  }, [setPreferences]);
+  }, [setPreferences, unifiedLoading, unifiedHome, unifiedCoastal]);
 
   useEffect(() => {
     if (!user) return;
@@ -524,6 +535,12 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
 
   // --- Auto-detect home location if not set ---
   useEffect(() => {
+    // Wait for unified location to finish loading
+    if (unifiedLoading) return;
+    
+    // If user has saved location in database, don't auto-detect
+    if (unifiedHome) return;
+    
     const hasHome = preferences.locations.some(l => l.type === 'home');
     if (!hasHome && typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -542,19 +559,21 @@ export const UserPreferencesProvider: React.FC<{ children: ReactNode }> = ({ chi
           }));
         },
         () => {
-          // fallback, set to default home location
-          setPreferences(prev => ({
-            ...prev,
-            locations: [
-              ...prev.locations.filter(l => l.type !== 'home'),
-              DEFAULT_HOME_LOCATION
-            ]
-          }));
+          // Only fallback to London if no saved location exists
+          if (!unifiedHome) {
+            setPreferences(prev => ({
+              ...prev,
+              locations: [
+                ...prev.locations.filter(l => l.type !== 'home'),
+                DEFAULT_HOME_LOCATION
+              ]
+            }));
+          }
         }
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [unifiedLoading, unifiedHome]);
 
   // --- Watch for water activities, auto-add coastal location if needed ---
   useEffect(() => {
