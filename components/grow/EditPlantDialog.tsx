@@ -24,6 +24,25 @@ interface Plant {
   health: 'excellent' | 'good' | 'fair' | 'poor';
   lastWatered?: Date;
   notes?: string;
+  speciesSlug?: string | null;
+  variety?: string | null;
+  cultivarId?: string | null;
+  cultivar_id?: string | null;
+}
+
+type CultivarSearchResult = {
+  cultivar_id?: string;
+  cultivarId?: string;
+  cultivar_name?: string;
+  cultivarName?: string;
+};
+
+function getCultivarId(result: CultivarSearchResult): string {
+  return (result.cultivarId ?? result.cultivar_id ?? '').trim();
+}
+
+function getCultivarName(result: CultivarSearchResult): string {
+  return (result.cultivarName ?? result.cultivar_name ?? '').trim();
 }
 
 const HEALTH_OPTIONS: Array<{ value: 'excellent' | 'good' | 'fair' | 'poor'; label: string }> = [
@@ -54,6 +73,11 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
   const [lastWateredDate, setLastWateredDate] = useState('');
   const [health, setHealth] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [notes, setNotes] = useState('');
+  const [variety, setVariety] = useState('');
+  const [cultivarId, setCultivarId] = useState<string | null>(null);
+  const [cultivarResults, setCultivarResults] = useState<CultivarSearchResult[]>([]);
+  const [isSearchingCultivars, setIsSearchingCultivars] = useState(false);
+  const [showCultivarResults, setShowCultivarResults] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Reset form when plant changes or dialog opens
@@ -65,8 +89,50 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       setLastWateredDate(plant.lastWatered ? formatDateInput(plant.lastWatered) : '');
       setHealth(plant.health);
       setNotes(plant.notes || '');
+      setVariety(plant.variety || '');
+      setCultivarId((plant.cultivarId ?? plant.cultivar_id ?? null) as string | null);
+      setCultivarResults([]);
+      setIsSearchingCultivars(false);
+      setShowCultivarResults(false);
     }
   }, [plant, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (!plant?.speciesSlug) return;
+
+    const q = variety.trim();
+    if (q.length < 2) {
+      setCultivarResults([]);
+      setIsSearchingCultivars(false);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearchingCultivars(true);
+      try {
+        const results = await api.searchCultivars({
+          query: q,
+          speciesSlug: plant.speciesSlug as string,
+          limit: 20,
+        });
+        if (cancelled) return;
+        setCultivarResults(results.cultivars as CultivarSearchResult[]);
+      } catch (error) {
+        if (!cancelled) setCultivarResults([]);
+        // Keep this non-fatal; autocomplete is a convenience feature.
+        console.warn('Cultivar search failed', error);
+      } finally {
+        if (!cancelled) setIsSearchingCultivars(false);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [open, plant?.speciesSlug, variety]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -79,6 +145,8 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       planted: plantedDate ? new Date(`${plantedDate}T00:00:00`).toISOString() : null,
       lastWatered: lastWateredDate ? new Date(`${lastWateredDate}T00:00:00`).toISOString() : null,
       notes: notes.trim() || null,
+      variety: variety.trim() || null,
+      cultivarId: cultivarId || null,
     };
 
     setIsSaving(true);
@@ -95,6 +163,8 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
         planted: updates.planted ? new Date(updates.planted) : plant.planted,
         lastWatered: updates.lastWatered ? new Date(updates.lastWatered) : undefined,
         notes: updates.notes || undefined,
+        variety: updates.variety || undefined,
+        cultivarId: updates.cultivarId || undefined,
       };
 
       onPlantUpdated(updatedPlant);
@@ -190,6 +260,78 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
                 </SelectContent>
               </Select>
             </div>
+
+            {plant?.speciesSlug ? (
+              <div className="space-y-2">
+                <Label htmlFor="edit-plant-variety">Cultivar / variety</Label>
+                <div className="relative">
+                  <Input
+                    id="edit-plant-variety"
+                    value={variety}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      const next = event.target.value;
+                      setVariety(next);
+                      // If the user starts typing, treat it as a new selection.
+                      setCultivarId(null);
+                      setShowCultivarResults(true);
+                    }}
+                    onFocus={() => setShowCultivarResults(true)}
+                    onBlur={() => {
+                      // Slight delay so clicking a suggestion still works.
+                      window.setTimeout(() => setShowCultivarResults(false), 150);
+                    }}
+                    placeholder="Start typing (e.g. Victoria)"
+                    autoComplete="off"
+                  />
+
+                  {showCultivarResults && (isSearchingCultivars || cultivarResults.length > 0) ? (
+                    <div className="absolute z-50 mt-1 w-full rounded-md border bg-background shadow">
+                      {isSearchingCultivars ? (
+                        <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Searching…
+                        </div>
+                      ) : null}
+
+                      {!isSearchingCultivars && cultivarResults.length > 0 ? (
+                        <div className="max-h-56 overflow-auto py-1">
+                          {cultivarResults.map((result, idx) => {
+                            const id = getCultivarId(result);
+                            const label = getCultivarName(result);
+                            const key = id || `${label}-${idx}`;
+
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                  setVariety(label);
+                                  setCultivarId(id || null);
+                                  setShowCultivarResults(false);
+                                }}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="truncate">{label}</span>
+                                  {cultivarId && id && cultivarId === id ? (
+                                    <span className="text-xs text-muted-foreground">Selected</span>
+                                  ) : null}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  This is optional. Pick a recognised cultivar for richer info, or just type your own.
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label htmlFor="edit-plant-notes">Notes</Label>

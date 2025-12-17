@@ -13,16 +13,13 @@ import {
   Upload,
   Search,
   Plus,
-  Droplets,
   Bug,
   AlertCircle,
   Image as ImageIcon,
-  Calendar,
   MapPin,
   Loader2,
   CheckCircle2,
   Trees,
-  Trash2,
   X,
   Pencil,
   Info,
@@ -48,6 +45,7 @@ import { ThreatCard } from './ThreatCard';
 import { PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 import type { PlantIdentificationResult } from '../../lib/grow/plantIdentificationService';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -79,6 +77,13 @@ interface Plant {
   health: 'excellent' | 'good' | 'fair' | 'poor';
   lastWatered?: Date;
   notes?: string;
+
+  // Cultivar + species linkage (optional for most plants)
+  speciesSlug?: string | null;
+  variety?: string | null;
+  cultivarId?: string | null;
+  quantity?: number;
+  createdAt?: Date;
 }
 
 interface GardenPhoto {
@@ -101,6 +106,14 @@ type RawPlant = {
   createdAt?: string | Date | null;
   lastWatered?: string | Date | null;
   notes?: string | null;
+
+  // from grow_user_plants (either snake_case from DB or camelCase from API)
+  species_slug?: string | null;
+  speciesSlug?: string | null;
+  variety?: string | null;
+  cultivar_id?: string | null;
+  cultivarId?: string | null;
+  quantity?: number | null;
 };
 
 function slugifyForImageKey(value: string): string {
@@ -147,11 +160,17 @@ function findBestPlantImageKey(plantName: string): string | null {
 const normalizePlant = (raw: RawPlant): Plant => {
   const plantedValue = raw.planted ? new Date(raw.planted) : new Date();
   const lastWateredValue = raw.lastWatered ? new Date(raw.lastWatered) : undefined;
+  const createdAtValue = raw.createdAt ? new Date(raw.createdAt) : undefined;
+
   const healthValue = raw.health ?? 'good';
   const allowedHealth: Plant['health'][] = ['excellent', 'good', 'fair', 'poor'];
   const safeHealth = allowedHealth.includes(healthValue as Plant['health'])
     ? (healthValue as Plant['health'])
     : 'good';
+
+  const speciesSlug = (raw.speciesSlug ?? raw.species_slug) ?? null;
+  const cultivarId = (raw.cultivarId ?? raw.cultivar_id) ?? null;
+  const quantity = typeof raw.quantity === 'number' && Number.isFinite(raw.quantity) ? raw.quantity : 1;
 
   return {
     id: raw.id,
@@ -162,8 +181,101 @@ const normalizePlant = (raw: RawPlant): Plant => {
     health: safeHealth,
     lastWatered: lastWateredValue,
     notes: raw.notes ?? undefined,
+
+    speciesSlug,
+    variety: raw.variety ?? null,
+    cultivarId,
+    quantity,
+    createdAt: createdAtValue,
   };
 };
+
+function healthScore(health: Plant['health']): number {
+  // higher = healthier
+  switch (health) {
+    case 'excellent':
+      return 3;
+    case 'good':
+      return 2;
+    case 'fair':
+      return 1;
+    case 'poor':
+    default:
+      return 0;
+  }
+}
+
+type PlantGroup = {
+  key: string; // lower-cased common name
+  name: string;
+  type: string;
+  speciesSlug: string | null;
+  instances: Plant[];
+  totalQuantity: number;
+  latestPlanted: Date;
+  worstHealth: Plant['health'];
+  mixedHealth: boolean;
+  locations: string[];
+  varieties: string[];
+};
+
+function groupPlantsByName(plants: Plant[]): PlantGroup[] {
+  const byKey = new Map<string, PlantGroup>();
+
+  for (const p of plants) {
+    const key = (p.name ?? '').trim().toLowerCase() || p.id;
+    const existing = byKey.get(key);
+
+    if (!existing) {
+      byKey.set(key, {
+        key,
+        name: p.name,
+        type: p.type,
+        speciesSlug: p.speciesSlug ?? null,
+        instances: [p],
+        totalQuantity: (p.quantity ?? 1) || 1,
+        latestPlanted: p.planted,
+        worstHealth: p.health,
+        mixedHealth: false,
+        locations: p.location ? [p.location] : [],
+        varieties: p.variety ? [p.variety] : [],
+      });
+      continue;
+    }
+
+    existing.instances.push(p);
+
+    // prefer a real species slug if any instance has it
+    if (!existing.speciesSlug && p.speciesSlug) {
+      existing.speciesSlug = p.speciesSlug;
+    }
+
+    existing.totalQuantity += (p.quantity ?? 1) || 1;
+
+    if (p.planted.getTime() > existing.latestPlanted.getTime()) {
+      existing.latestPlanted = p.planted;
+    }
+
+    // worst health = lowest score
+    if (healthScore(p.health) < healthScore(existing.worstHealth)) {
+      existing.worstHealth = p.health;
+    }
+
+    // track mixed health
+    if (p.health !== existing.instances[0].health) {
+      existing.mixedHealth = true;
+    }
+
+    if (p.location && !existing.locations.includes(p.location)) {
+      existing.locations.push(p.location);
+    }
+    if (p.variety && !existing.varieties.includes(p.variety)) {
+      existing.varieties.push(p.variety);
+    }
+  }
+
+  return Array.from(byKey.values());
+}
 
 export function GardenPage() {
   const [activeTab, setActiveTab] = useState('plants');
@@ -228,7 +340,10 @@ export function GardenPage() {
   const [speciesCache, setSpeciesCache] = useState<Map<string, PlantSpecies>>(new Map());
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
   
-  // Mock climate zone - in real app, get from user profile
+  // Get user's location for regional context in pest identification
+  const { location: userLocation } = useUnifiedLocation();
+  
+  // Climate zone - default to atlantic_mild for Ireland/UK users
   const userClimateZone = 'atlantic_mild';
 
   // Derive unique plant types and locations for filter options
@@ -242,28 +357,30 @@ export function GardenPage() {
     return locations;
   }, [plants]);
 
-  // Filter and sort plants
+  // Filter and sort plants (grouped by name/species)
   const filteredAndSortedPlants = useMemo(() => {
-    let result = [...plants];
+    let result = groupPlantsByName(plants);
 
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        p.type.toLowerCase().includes(query) ||
-        p.location.toLowerCase().includes(query)
-      );
+      result = result.filter((g) => {
+        const nameHit = g.name.toLowerCase().includes(query);
+        const typeHit = g.type.toLowerCase().includes(query);
+        const locationHit = g.locations.some((l) => l.toLowerCase().includes(query));
+        const varietyHit = g.varieties.some((v) => v.toLowerCase().includes(query));
+        return nameHit || typeHit || locationHit || varietyHit;
+      });
     }
 
     // Apply type filter
     if (filterType !== 'all') {
-      result = result.filter(p => p.type === filterType);
+      result = result.filter((g) => g.type === filterType);
     }
 
     // Apply location filter
     if (filterLocation !== 'all') {
-      result = result.filter(p => p.location === filterLocation);
+      result = result.filter((g) => g.instances.some((p) => p.location === filterLocation));
     }
 
     // Apply sorting
@@ -275,11 +392,11 @@ export function GardenPage() {
         result.sort((a, b) => b.name.localeCompare(a.name));
         break;
       case 'recent':
-        result.sort((a, b) => b.planted.getTime() - a.planted.getTime());
+        result.sort((a, b) => b.latestPlanted.getTime() - a.latestPlanted.getTime());
         break;
       case 'health':
-        const healthOrder = { poor: 0, fair: 1, good: 2, excellent: 3 };
-        result.sort((a, b) => healthOrder[a.health] - healthOrder[b.health]);
+        // needs attention first
+        result.sort((a, b) => healthScore(a.worstHealth) - healthScore(b.worstHealth));
         break;
     }
 
@@ -488,6 +605,11 @@ export function GardenPage() {
       planted: plant.planted ?? null,
       lastWatered: plant.lastWatered ?? null,
       notes: plant.notes ?? null,
+      speciesSlug: (plant as Record<string, unknown>).speciesSlug as string ?? (plant as Record<string, unknown>).species_slug as string ?? null,
+      variety: (plant as Record<string, unknown>).variety as string ?? null,
+      cultivarId: (plant as Record<string, unknown>).cultivarId as string ?? (plant as Record<string, unknown>).cultivar_id as string ?? null,
+      quantity: ((plant as Record<string, unknown>).quantity as number) ?? 1,
+      createdAt: (plant as Record<string, unknown>).createdAt as string ?? (plant as Record<string, unknown>).created_at as string ?? null,
     };
 
     // Track the new plant ID for animation
@@ -582,8 +704,15 @@ export function GardenPage() {
           climateZone: userClimateZone,
           month: new Date().getMonth() + 1,
           userPlants: plants.map(p => p.name),
+          // Include lat/lon for regional pest/disease context
+          // AI can infer region from coordinates
+          location: userLocation?.lat && userLocation?.lon ? {
+            lat: userLocation.lat,
+            lon: userLocation.lon,
+          } : undefined,
         },
-        provider: identifyProvider,
+        // Pest identification always uses OpenAI (better accuracy), plant ID can use either
+        provider: identifyMode === 'pest' ? 'openai' : identifyProvider,
       }));
 
       const response = await fetch('/api/grow/identify-plant', {
@@ -713,7 +842,7 @@ export function GardenPage() {
     fileInputRef.current?.click();
   };
 
-  const handleDeletePlant = async (plantId: string, plantName: string) => {
+  const _handleDeletePlant = async (plantId: string, plantName: string) => {
     console.log(`🗑️ [GardenPage] Attempting to delete plant: id=${plantId}, name=${plantName}`);
     
     try {
@@ -1341,7 +1470,7 @@ export function GardenPage() {
               {/* Results count */}
               {(searchQuery || filterType !== 'all' || filterLocation !== 'all') && (
                 <p className="text-sm text-muted-foreground">
-                  Showing {filteredAndSortedPlants.length} of {plants.length} plants
+                  Showing {filteredAndSortedPlants.length} of {groupPlantsByName(plants).length} plant types
                   {searchQuery && <span> matching &quot;{searchQuery}&quot;</span>}
                 </p>
               )}
@@ -1389,12 +1518,17 @@ export function GardenPage() {
             </Card>
           ) : viewMode === 'my' ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredAndSortedPlants.map((plant) => {
-                const speciesSlug = speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name.toLowerCase().replace(/\s+/g, '-');
-                const speciesUrl = `/grow/species/${encodeURIComponent(speciesSlug)}`;
-                const isNewlyAdded = newlyAddedPlantIds.has(plant.id);
-                const isDeleting = deletingPlantIds.has(plant.id);
-                
+              {filteredAndSortedPlants.map((group) => {
+                const nameLower = group.name.toLowerCase();
+                const resolvedSlug =
+                  group.speciesSlug ??
+                  speciesCache.get(nameLower)?.slug ??
+                  group.name.toLowerCase().replace(/\s+/g, '-');
+                const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
+
+                const isNewlyAdded = group.instances.some((p) => newlyAddedPlantIds.has(p.id));
+                const isDeleting = group.instances.some((p) => deletingPlantIds.has(p.id));
+
                 // Build animation classes
                 let animationClass = '';
                 if (isDeleting) {
@@ -1402,107 +1536,159 @@ export function GardenPage() {
                 } else if (isNewlyAdded) {
                   animationClass = 'motion-safe:animate-sprout motion-reduce:animate-fade-in';
                 }
-                
+
+                const cardHealthClass = getHealthColor(group.worstHealth);
+                const headerMeta =
+                  group.instances.length > 1
+                    ? `${group.totalQuantity} in garden • ${group.instances.length} entries`
+                    : `${group.totalQuantity} in garden`;
+
+                const mixedHealthLabel = group.mixedHealth ? 'mixed' : group.worstHealth;
+
+                // Pick the latest planted instance as "primary" for main card actions
+                const primaryInstance = group.instances
+                  .slice()
+                  .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
+
                 return (
-                <Card 
-                  key={plant.id} 
-                  className={`border-2 ${getHealthColor(plant.health)} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="pr-2">
-                        <Link href={speciesUrl} className="hover:underline">
-                          <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{plant.name}</CardTitle>
-                        </Link>
-                        <p className="text-sm text-muted-foreground">{plant.type}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-start gap-2">
-                          <Badge variant="outline" className={getHealthColor(plant.health)}>
-                            {plant.health}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeletePlant(plant.id, plant.name)}
-                            aria-label={`Remove ${plant.name} from garden`}
-                          >
-                            <Trash2 className="h-3 w-3" aria-hidden="true" />
-                          </Button>
+                  <Card
+                    key={group.key}
+                    className={`border-2 ${cardHealthClass} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
+                  >
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div className="pr-2">
+                          <Link href={speciesUrl} className="hover:underline">
+                            <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{group.name}</CardTitle>
+                          </Link>
+                          <p className="text-sm text-muted-foreground">{group.type}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{headerMeta}</p>
+
                         </div>
 
-                        {(() => {
-                          const key = findBestPlantImageKey(plant.name);
-                          const src = key ? (getPlantImage(key, 'xl') ?? getPlantImage(key, 'lg') ?? getPlantImage(key, 'medium')) : null;
-                          if (!src) return null;
-                          return (
-                            <Link href={speciesUrl} className="block">
-                              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                <Image
-                                  src={src}
-                                  alt={`${plant.name} in ${plant.location}`}
-                                  fill
-                                  className="object-contain p-1"
-                                  sizes="(max-width: 768px) 96px, 192px"
-                                />
-                              </div>
-                            </Link>
-                          );
-                        })()}
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="flex items-start gap-2">
+                            <Badge variant="outline" className={group.mixedHealth ? 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200' : getHealthColor(group.worstHealth)}>
+                              {mixedHealthLabel}
+                            </Badge>
+                          </div>
+
+                          {/* Quick actions */}
+                          {primaryInstance && (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  const cachedSpecies = speciesCache.get(nameLower);
+
+                                  setAddPlantPrefill({
+                                    name: cachedSpecies?.name ?? group.name,
+                                    type: cachedSpecies?.category ?? group.type,
+                                    scientificName: cachedSpecies?.scientificName ?? undefined,
+                                  });
+                                  setIsAddPlantDialogOpen(true);
+                                }}
+                                aria-label={`Add another ${group.name} cultivar to your garden`}
+                              >
+                                <Plus className="h-4 w-4" aria-hidden="true" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditPlant(primaryInstance)}
+                                aria-label={`Edit ${group.name}`}
+                              >
+                                <Pencil className="h-4 w-4" aria-hidden="true" />
+                              </Button>
+                            </div>
+                          )}
+
+                          {(() => {
+                            const key = findBestPlantImageKey(group.name);
+                            const src = key ? (getPlantImage(key, 'xl') ?? getPlantImage(key, 'lg') ?? getPlantImage(key, 'medium')) : null;
+                            if (!src) return null;
+                            return (
+                              <Link href={speciesUrl} className="block">
+                                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
+                                  <Image
+                                    src={src}
+                                    alt={`${group.name}`}
+                                    fill
+                                    className="object-contain p-1"
+                                    sizes="(max-width: 768px) 96px, 192px"
+                                  />
+                                </div>
+                              </Link>
+                            );
+                          })()}
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Planted: {plant.planted.toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{plant.location}</span>
-                    </div>
-                    {plant.lastWatered && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Droplets className="h-4 w-4 text-blue-500" />
-                        <span>Last watered: {plant.lastWatered.toLocaleDateString()}</span>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3">
+                      {/* Cultivars (buttons/badges) */}
+                      {(() => {
+                        const counts = new Map<string, { label: string; count: number }>();
+
+                        for (const inst of group.instances) {
+                          const v = inst.variety?.trim();
+                          if (!v) continue;
+                          const key = v.toLowerCase();
+                          const add = (inst.quantity ?? 1) || 1;
+
+                          const existing = counts.get(key);
+                          if (existing) {
+                            existing.count += add;
+                          } else {
+                            counts.set(key, { label: v, count: add });
+                          }
+                        }
+
+                        const items = Array.from(counts.values()).sort((a, b) => a.label.localeCompare(b.label));
+                        if (items.length === 0) return null;
+
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">Cultivars</p>
+                            <div className="flex flex-wrap gap-2">
+                              {items.map((c) => (
+                                <Button
+                                  key={c.label}
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 rounded-full px-2 text-xs"
+                                  aria-label={`Cultivar: ${c.label}`}
+                                >
+                                  {c.label}
+                                  {c.count > 1 ? ` ×${c.count}` : null}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Species Information (still based on species cache by common name) */}
+                      <PlantSpeciesInfo
+                        species={speciesCache.get(nameLower) ?? null}
+                        isLoading={isLoadingSpecies && !speciesCache.has(nameLower)}
+                      />
+
+                      <div className="flex gap-2 pt-2">
+                        <Button asChild variant="outline" size="sm" className="flex-1">
+                          <Link href={`/grow/species/${encodeURIComponent(resolvedSlug)}`}>
+                            <Info className="h-3 w-3 mr-1" />
+                            Find out more
+                          </Link>
+                        </Button>
                       </div>
-                    )}
-                    {plant.notes && (
-                      <p className="text-sm text-muted-foreground italic">
-                        {plant.notes}
-                      </p>
-                    )}
-                    
-                    {/* Species Information */}
-                    <PlantSpeciesInfo 
-                      species={speciesCache.get(plant.name.toLowerCase()) ?? null}
-                      isLoading={isLoadingSpecies && !speciesCache.has(plant.name.toLowerCase())}
-                    />
-                    
-                    <div className="flex gap-2 pt-2">
-                      <Button asChild variant="outline" size="sm" className="flex-1">
-                        <Link
-                          href={`/grow/species/${encodeURIComponent(
-                            speciesCache.get(plant.name.toLowerCase())?.slug ?? plant.name
-                          )}`}
-                        >
-                          <Info className="h-3 w-3 mr-1" />
-                          Find out more
-                        </Link>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={() => handleEditPlant(plant)}
-                      >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </div>
@@ -1514,9 +1700,17 @@ export function GardenPage() {
             <Card>
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-semibold text-green-600">
-                  {plants.length}
+                  {plants.reduce((sum, p) => sum + ((p.quantity ?? 1) || 1), 0)}
                 </p>
-                <p className="text-sm text-muted-foreground">Total Plants</p>
+                <p className="text-sm text-muted-foreground">Total Plants (count)</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-semibold text-green-600">
+                  {groupPlantsByName(plants).length}
+                </p>
+                <p className="text-sm text-muted-foreground">Plant Types</p>
               </CardContent>
             </Card>
             <Card>
@@ -1658,32 +1852,34 @@ export function GardenPage() {
                 )}
               </Button>
 
-              {/* Provider Toggle (for testing) */}
-              <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                <span className="text-xs text-muted-foreground">AI Provider:</span>
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setIdentifyProvider('openai')}
-                    className={`px-2 py-1 text-xs rounded ${
-                      identifyProvider === 'openai' 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    OpenAI
-                  </button>
-                  <button
-                    onClick={() => setIdentifyProvider('plantid')}
-                    className={`px-2 py-1 text-xs rounded ${
-                      identifyProvider === 'plantid' 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    Plant.id
-                  </button>
+              {/* Provider Toggle (for testing) - only show for plant mode, pest uses OpenAI only */}
+              {identifyMode === 'plant' && (
+                <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                  <span className="text-xs text-muted-foreground">AI Provider:</span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setIdentifyProvider('openai')}
+                      className={`px-2 py-1 text-xs rounded ${
+                        identifyProvider === 'openai' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      OpenAI
+                    </button>
+                    <button
+                      onClick={() => setIdentifyProvider('plantid')}
+                      className={`px-2 py-1 text-xs rounded ${
+                        identifyProvider === 'plantid' 
+                          ? 'bg-green-600 text-white' 
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
+                    >
+                      Plant.id
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Identification Result */}
               {identifyResult && identifyResult.success && (
@@ -1756,15 +1952,70 @@ export function GardenPage() {
 
                     {identifyResult.mode === 'pest' && identifyResult.treatment && identifyResult.treatment.length > 0 && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Treatment:</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">
+                          🩹 Treatment{identifyResult.threatInLibrary && ' (from our library)'}:
+                        </p>
                         <ul className="text-sm space-y-1">
-                          {identifyResult.treatment.slice(0, 3).map((step, i) => (
+                          {identifyResult.treatment.slice(0, 5).map((step, i) => (
                             <li key={i} className="flex items-start gap-2">
                               <span className="text-green-600">•</span>
                               {step}
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    )}
+
+                    {identifyResult.mode === 'pest' && identifyResult.prevention && identifyResult.prevention.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">🛡️ Prevention:</p>
+                        <ul className="text-sm space-y-1">
+                          {identifyResult.prevention.slice(0, 3).map((tip, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-blue-600">•</span>
+                              {tip}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Threat library image */}
+                    {identifyResult.mode === 'pest' && identifyResult.threatImageUrl && (
+                      <div className="pt-2 border-t">
+                        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={identifyResult.threatImageUrl}
+                            alt={identifyResult.diagnosis?.name || 'Threat'}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Link to threat detail page if in library */}
+                    {identifyResult.mode === 'pest' && identifyResult.threatInLibrary && identifyResult.diagnosis?.slug && (
+                      <div className="pt-2 border-t">
+                        <Link
+                          href={`/grow/threats/${encodeURIComponent(identifyResult.diagnosis.slug)}`}
+                          className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 hover:underline"
+                        >
+                          <Bug className="h-4 w-4" />
+                          View full {identifyResult.diagnosis.name} guide →
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Note if not in our library */}
+                    {identifyResult.mode === 'pest' && !identifyResult.threatInLibrary && (
+                      <div className="pt-2 border-t">
+                        <div className="flex items-start gap-2 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                          <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-amber-700">
+                            This threat isn&apos;t in our curated library yet. The AI-generated advice above may need verification.
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -2062,14 +2313,14 @@ export function GardenPage() {
                     <div className="flex items-start gap-3">
                       <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5" />
                       <div className="flex-1">
-                        <h4 className="font-medium mb-1">AI-Powered Diagnosis</h4>
+                        <h4 className="font-medium mb-1">AI-Powered Diagnosis - Beta</h4>
                         <p className="text-sm text-muted-foreground mb-3">
                           Get instant identification of common garden pests, diseases, and nutrient deficiencies. 
                           Includes both organic and conventional treatment options, plus Integrated Pest Management (IPM) guides.
                         </p>
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Can identify:</span>
+                            <span className="font-medium">Can identify (beta):</span>
                           </div>
                           <ul className="ml-4 space-y-1 text-muted-foreground">
                             <li>• Common garden pests (aphids, caterpillars, beetles)</li>
