@@ -157,10 +157,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // DELETE - Delete photo
   if (req.method === 'DELETE') {
-    // First get the photo to get storage path
+    // First get the photo to get storage path and thumbnail
     const { data: photo, error: fetchError } = await getSupabase()
       .from('grow_garden_photos')
-      .select('storage_path')
+      .select('storage_path, url, thumbnail_url')
       .eq('id', photoId)
       .eq('user_id', userId)
       .single();
@@ -169,10 +169,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Photo not found' });
     }
     
+    // Build list of files to delete (full image + thumbnail if different)
+    const pathsToDelete = [photo.storage_path];
+    
+    // If thumbnail URL is different from main URL, also delete the thumbnail
+    if (photo.thumbnail_url && photo.thumbnail_url !== photo.url) {
+      // Thumbnail path follows pattern: userId/timestamp_thumb.jpg
+      const thumbnailPath = photo.storage_path.replace('.jpg', '_thumb.jpg');
+      pathsToDelete.push(thumbnailPath);
+    }
+    
     // Delete from storage
     const { error: storageError } = await getSupabase().storage
       .from(BUCKET_NAME)
-      .remove([photo.storage_path]);
+      .remove(pathsToDelete);
     
     if (storageError) {
       console.warn('[grow/photos] Storage delete failed:', storageError);
