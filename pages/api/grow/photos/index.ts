@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import formidable from 'formidable';
 import fs from 'fs/promises';
 import sharp from 'sharp';
@@ -11,19 +11,28 @@ export const config = {
   },
 };
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Lazy initialization to avoid crashing at module load time
+let supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+function getSupabase(): SupabaseClient {
+  if (supabase) return supabase;
+  
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  
+  return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
 
 const BUCKET_NAME = 'grow-garden-photos';
 const MAX_WIDTH = 1920;
@@ -54,7 +63,7 @@ async function getUserIdFromAuth(req: NextApiRequest): Promise<string | null> {
   }
   
   const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  const { data: { user }, error } = await getSupabase().auth.getUser(token);
   
   if (error || !user) {
     return null;
@@ -128,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     const { limit = '50', offset = '0', location, tag, plantId } = req.query;
     
-    let query = supabase
+    let query = getSupabase()
       .from('grow_garden_photos')
       .select('*')
       .eq('user_id', userId)
@@ -204,7 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const storagePath = `${userId}/${timestamp}.jpg`;
       
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await getSupabase().storage
         .from(BUCKET_NAME)
         .upload(storagePath, processedBuffer, {
           contentType: 'image/jpeg',
@@ -217,11 +226,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       
       // Get public URLs
-      const { data: urlData } = supabase.storage
+      const { data: urlData } = getSupabase().storage
         .from(BUCKET_NAME)
         .getPublicUrl(storagePath);
       
-      const { data: thumbnailData } = supabase.storage
+      const { data: thumbnailData } = getSupabase().storage
         .from(BUCKET_NAME)
         .getPublicUrl(storagePath, {
           transform: {
@@ -233,7 +242,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       
       // Insert database record
-      const { data: photoRecord, error: dbError } = await supabase
+      const { data: photoRecord, error: dbError } = await getSupabase()
         .from('grow_garden_photos')
         .insert({
           user_id: userId,
@@ -252,7 +261,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (dbError) {
         console.error('[grow/photos] DB insert failed:', dbError);
         // Try to clean up uploaded file
-        await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
+        await getSupabase().storage.from(BUCKET_NAME).remove([storagePath]);
         return res.status(500).json({ error: `Failed to save photo record: ${dbError.message}` });
       }
       

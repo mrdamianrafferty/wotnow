@@ -1,19 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Lazy initialization to avoid crashing at module load time
+let supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+function getSupabase(): SupabaseClient {
+  if (supabase) return supabase;
+  
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  
+  return supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
 
 const BUCKET_NAME = 'grow-garden-photos';
 
@@ -40,7 +49,7 @@ async function getUserIdFromAuth(req: NextApiRequest): Promise<string | null> {
   }
   
   const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  const { data: { user }, error } = await getSupabase().auth.getUser(token);
   
   if (error || !user) {
     return null;
@@ -82,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // GET - Get single photo
   if (req.method === 'GET') {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('grow_garden_photos')
       .select('*')
       .eq('id', photoId)
@@ -126,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'No valid fields to update' });
     }
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('grow_garden_photos')
       .update(updates)
       .eq('id', photoId)
@@ -149,7 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // DELETE - Delete photo
   if (req.method === 'DELETE') {
     // First get the photo to get storage path
-    const { data: photo, error: fetchError } = await supabase
+    const { data: photo, error: fetchError } = await getSupabase()
       .from('grow_garden_photos')
       .select('storage_path')
       .eq('id', photoId)
@@ -161,7 +170,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     // Delete from storage
-    const { error: storageError } = await supabase.storage
+    const { error: storageError } = await getSupabase().storage
       .from(BUCKET_NAME)
       .remove([photo.storage_path]);
     
@@ -171,7 +180,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     
     // Delete from database
-    const { error: dbError } = await supabase
+    const { error: dbError } = await getSupabase()
       .from('grow_garden_photos')
       .delete()
       .eq('id', photoId)
