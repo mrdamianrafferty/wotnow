@@ -57,6 +57,8 @@ const BUCKET_NAME = 'grow-garden-photos';
 const MAX_WIDTH = 1920;
 const MAX_HEIGHT = 1920;
 const JPEG_QUALITY = 85;
+const THUMBNAIL_SIZE = 400;
+const THUMBNAIL_QUALITY = 80;
 
 interface GardenPhoto {
   id: string;
@@ -123,33 +125,46 @@ async function parseForm(req: NextApiRequest): Promise<{ fields: formidable.Fiel
   });
 }
 
-// Process and optimize image
-async function processImage(filePath: string): Promise<Buffer> {
+// Process and optimize image - returns both full size and thumbnail
+async function processImage(filePath: string): Promise<{ full: Buffer; thumbnail: Buffer }> {
   const sharp = await getSharp();
   
-  // If sharp isn't available, just return the original file
+  // If sharp isn't available, just return the original file for both
   if (!sharp) {
     console.warn('[grow/photos] Sharp not available, using original image');
-    return fs.readFile(filePath);
+    const original = await fs.readFile(filePath);
+    return { full: original, thumbnail: original };
   }
   
-  const image = sharp(filePath);
-  const metadata = await image.metadata();
+  // Create full-size optimized image
+  const fullImage = sharp(filePath);
+  const metadata = await fullImage.metadata();
   
-  // Resize if too large, maintain aspect ratio
-  let pipeline = image;
+  let fullPipeline = fullImage;
   if ((metadata.width && metadata.width > MAX_WIDTH) || (metadata.height && metadata.height > MAX_HEIGHT)) {
-    pipeline = pipeline.resize(MAX_WIDTH, MAX_HEIGHT, {
+    fullPipeline = fullPipeline.resize(MAX_WIDTH, MAX_HEIGHT, {
       fit: 'inside',
       withoutEnlargement: true,
     });
   }
   
-  // Strip EXIF (privacy) but keep orientation, convert to JPEG
-  return pipeline
+  const fullBuffer = await fullPipeline
     .rotate() // Auto-rotate based on EXIF
     .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
     .toBuffer();
+  
+  // Create thumbnail (square crop, centered)
+  const thumbImage = sharp(filePath);
+  const thumbBuffer = await thumbImage
+    .rotate() // Auto-rotate based on EXIF
+    .resize(THUMBNAIL_SIZE, THUMBNAIL_SIZE, {
+      fit: 'cover',
+      position: 'center',
+    })
+    .jpeg({ quality: THUMBNAIL_QUALITY, mozjpeg: true })
+    .toBuffer();
+  
+  return { full: fullBuffer, thumbnail: thumbBuffer };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -226,24 +241,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const tags = tagsRaw ? JSON.parse(tagsRaw) : [];
       const plantIds = plantIdsRaw ? JSON.parse(plantIdsRaw) : [];
       
-      // Process and optimize image
-      let processedBuffer: Buffer;
+      // Process and optimize image (creates both full size and thumbnail)
+      let processedImages: { full: Buffer; thumbnail: Buffer };
       try {
-        processedBuffer = await processImage(file.filepath);
+        processedImages = await processImage(file.filepath);
       } catch (err) {
         console.error('[grow/photos] Image processing failed:', err);
-        // Fallback to original file
-        processedBuffer = await fs.readFile(file.filepath);
+        // Fallback to original file for both
+        const original = await fs.readFile(file.filepath);
+        processedImages = { full: original, thumbnail: original };
       }
       
-      // Generate unique storage path
+      // Generate unique storage paths
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const storagePath = `${userId}/${timestamp}.jpg`;
+      const thumbnailPath = `${userId}/${timestamp}_thumb.jpg`;
       
-      // Upload to Supabase Storage
+      // Upload full-size image to Supabase Storage
       const { error: uploadError } = await getSupabase().storage
         .from(BUCKET_NAME)
-        .upload(storagePath, processedBuffer, {
+        .upload(storagePath, processedImages.full, {
           contentType: 'image/jpeg',
           upsert: false,
         });
@@ -253,14 +270,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: `Failed to upload photo: ${uploadError.message}` });
       }
       
+      // Upload thumbnail
+      const { error: thumbUploadError } = await getSupabase().storage
+        .from(BUCKET_NAME)
+        .upload(thumbnailPath, processedImages.thumbnail, {
+          contentType: 'image/jpeg',
+          upsert: false,
+        });
+      
+      if (thumbUploadError) {
+        console.warn('[grow/photos] Thumbnail upload failed:', thumbUploadError);
+        // Continue without thumbnail - we'll use the full image as fallback
+      }
+      
       // Get public URLs
-      // Note: Using same URL for both since Supabase image transforms require Pro tier
-      // Next.js Image component will handle resizing on the client side
       const { data: urlData } = getSupabase().storage
         .from(BUCKET_NAME)
         .getPublicUrl(storagePath);
       
+      const { data: thumbUrlData } = getSupabase().storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(thumbnailPath);
+      
       const publicUrl = urlData.publicUrl;
+      const thumbnailUrl = thumbUploadError ? publicUrl : thumbUrlData.publicUrl;
       
       // Insert database record
       const { data: photoRecord, error: dbError } = await getSupabase()
@@ -269,7 +302,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           user_id: userId,
           storage_path: storagePath,
           url: publicUrl,
-          thumbnail_url: publicUrl, // Same URL - Next.js Image handles resizing
+          thumbnail_url: thumbnailUrl,
           description: description || null,
           location: location || null,
           taken_at: takenAt || null,
@@ -281,8 +314,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (dbError) {
         console.error('[grow/photos] DB insert failed:', dbError);
-        // Try to clean up uploaded file
-        await getSupabase().storage.from(BUCKET_NAME).remove([storagePath]);
+        // Try to clean up uploaded files
+        await getSupabase().storage.from(BUCKET_NAME).remove([storagePath, thumbnailPath]);
         return res.status(500).json({ error: `Failed to save photo record: ${dbError.message}` });
       }
       
