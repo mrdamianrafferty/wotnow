@@ -32,7 +32,7 @@ import {
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
 import type { GuildCompanion } from '../../lib/grow/guild';
-import { api } from '../../lib/grow/api';
+import { api, type GardenPhoto } from '../../lib/grow/api';
 import { AddPlantDialog } from './AddPlantDialog';
 import { EditPlantDialog } from './EditPlantDialog';
 import { PlantSpeciesInfo } from './PlantSpeciesInfo';
@@ -86,15 +86,7 @@ interface Plant {
   createdAt?: Date;
 }
 
-interface GardenPhoto {
-  id: string;
-  url: string;
-  date: Date;
-  tags: string[];
-  location?: string;
-  plants?: string[];
-  description?: string;
-}
+// GardenPhoto type is now imported from api.ts
 
 type RawPlant = {
   id: string;
@@ -337,6 +329,20 @@ export function GardenPage() {
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
   const [threats, setThreats] = useState<ThreatAssessment[]>([]);
   
+  // Gallery photos state
+  const [galleryPhotos, setGalleryPhotos] = useState<GardenPhoto[]>([]);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+  const [newPhotoDescription, setNewPhotoDescription] = useState('');
+  const [newPhotoLocation, setNewPhotoLocation] = useState('');
+  const [newPhotoTags, setNewPhotoTags] = useState<string[]>([]);
+  const [newPhotoTagInput, setNewPhotoTagInput] = useState('');
+  const [newPhotoPlantIds, setNewPhotoPlantIds] = useState<string[]>([]);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
+  
   // Species info cache - maps plant type (species name) to species data
   const [speciesCache, setSpeciesCache] = useState<Map<string, PlantSpecies>>(new Map());
   const [isLoadingSpecies, setIsLoadingSpecies] = useState(false);
@@ -483,6 +489,27 @@ export function GardenPage() {
       setIsLoadingThreats(false);
     }
   }, []);
+
+  // Load gallery photos
+  const loadGalleryPhotos = useCallback(async () => {
+    try {
+      setIsLoadingPhotos(true);
+      const response = await api.getGardenPhotos({ limit: 50 });
+      setGalleryPhotos(response.photos || []);
+    } catch (error) {
+      console.warn('[GardenPage] Failed to load gallery photos:', error);
+      setGalleryPhotos([]);
+    } finally {
+      setIsLoadingPhotos(false);
+    }
+  }, []);
+
+  // Load gallery photos when switching to gallery tab
+  useEffect(() => {
+    if (activeTab === 'gallery') {
+      void loadGalleryPhotos();
+    }
+  }, [activeTab, loadGalleryPhotos]);
 
   const redirectToLogin = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -642,32 +669,92 @@ export function GardenPage() {
     );
   };
 
-  const mockPhotos: GardenPhoto[] = [
-    {
-      id: '1',
-      url: '/gardening.jpg',
-      date: new Date(2025, 10, 10),
-      tags: ['tomatoes', 'harvest'],
-      location: 'Raised Bed 1',
-      plants: ['Cherry Tomatoes'],
-      description: 'First ripe tomatoes of the season!'
-    },
-    {
-      id: '2',
-      url: '/gardening.jpg',
-      date: new Date(2025, 9, 15),
-      tags: ['flowers', 'roses'],
-      location: 'Front Garden',
-      plants: ['Peace Rose']
-    },
-    {
-      id: '3',
-      url: '/gardening.jpg',
-      date: new Date(2025, 8, 1),
-      tags: ['garden', 'overview'],
-      description: 'Late summer garden looking lush'
+  // Gallery photo handlers
+  const handleGalleryPhotoSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setNewPhotoFile(file);
+    setShowAddPhotoModal(true);
+  };
+
+  const handleAddTag = () => {
+    const tag = newPhotoTagInput.trim().toLowerCase();
+    if (tag && !newPhotoTags.includes(tag)) {
+      setNewPhotoTags([...newPhotoTags, tag]);
+      setNewPhotoTagInput('');
     }
-  ];
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setNewPhotoTags(newPhotoTags.filter(t => t !== tagToRemove));
+  };
+
+  const handleUploadPhoto = async () => {
+    if (!newPhotoFile) {
+      toast.error('Please select a photo');
+      return;
+    }
+    
+    setIsUploadingPhoto(true);
+    
+    try {
+      const response = await api.uploadGardenPhoto(newPhotoFile, {
+        description: newPhotoDescription || undefined,
+        location: newPhotoLocation || undefined,
+        tags: newPhotoTags.length > 0 ? newPhotoTags : undefined,
+        plantIds: newPhotoPlantIds.length > 0 ? newPhotoPlantIds : undefined,
+      });
+      
+      // Add to gallery
+      setGalleryPhotos(prev => [response.photo, ...prev]);
+      
+      // Reset form
+      setShowAddPhotoModal(false);
+      setNewPhotoFile(null);
+      setNewPhotoPreview(null);
+      setNewPhotoDescription('');
+      setNewPhotoLocation('');
+      setNewPhotoTags([]);
+      setNewPhotoPlantIds([]);
+      
+      toast.success('Photo added to gallery!');
+    } catch (error) {
+      console.error('[GardenPage] Photo upload failed:', error);
+      toast.error('Failed to upload photo', {
+        description: error instanceof Error ? error.message : 'Please try again',
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: string) => {
+    try {
+      await api.deleteGardenPhoto(photoId);
+      setGalleryPhotos(prev => prev.filter(p => p.id !== photoId));
+      toast.success('Photo deleted');
+    } catch (error) {
+      console.error('[GardenPage] Photo delete failed:', error);
+      toast.error('Failed to delete photo');
+    }
+  };
+
+  const cancelAddPhoto = () => {
+    setShowAddPhotoModal(false);
+    setNewPhotoFile(null);
+    setNewPhotoPreview(null);
+    setNewPhotoDescription('');
+    setNewPhotoLocation('');
+    setNewPhotoTags([]);
+    setNewPhotoPlantIds([]);
+  };
 
   const getHealthColor = (health: string) => {
     switch (health) {
@@ -2393,50 +2480,246 @@ export function GardenPage() {
         <TabsContent value="gallery" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-medium">Garden Gallery</h2>
-            <Button className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
-              <Camera className="h-4 w-4" />
-              Add Photo
-            </Button>
+            <div>
+              <input
+                ref={galleryFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic"
+                className="hidden"
+                onChange={handleGalleryPhotoSelect}
+              />
+              <Button 
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                onClick={() => galleryFileInputRef.current?.click()}
+              >
+                <Camera className="h-4 w-4" />
+                Add Photo
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockPhotos.map((photo) => (
-              <Card key={photo.id} className="overflow-hidden">
-                <div className="aspect-square relative">
+          {/* Loading state */}
+          {isLoadingPhotos && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!isLoadingPhotos && galleryPhotos.length === 0 && (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No photos yet</h3>
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Document your garden&apos;s progress by adding photos
+                </p>
+                <Button 
+                  variant="outline"
+                  onClick={() => galleryFileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload your first photo
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Photo grid */}
+          {!isLoadingPhotos && galleryPhotos.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {galleryPhotos.map((photo) => (
+                <Card key={photo.id} className="overflow-hidden group relative">
+                  <div className="aspect-square relative">
+                    <Image
+                      src={photo.thumbnailUrl || photo.url}
+                      alt={photo.description || 'Garden photo'}
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    />
+                    {/* Delete button overlay */}
+                    <button
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete photo"
+                    >
+                      <X className="h-4 w-4 text-white" />
+                    </button>
+                  </div>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-muted-foreground mb-2">
+                      {new Date(photo.createdAt).toLocaleDateString()}
+                    </p>
+                    {photo.description && (
+                      <p className="text-sm mb-2">{photo.description}</p>
+                    )}
+                    {photo.location && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                        <MapPin className="h-3 w-3" />
+                        {photo.location}
+                      </div>
+                    )}
+                    {photo.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {photo.tags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Add Photo Modal */}
+      {showAddPhotoModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5" />
+                Add Photo to Gallery
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Preview */}
+              {newPhotoPreview && (
+                <div className="aspect-video relative rounded-lg overflow-hidden">
                   <Image
-                    src={photo.url}
-                    alt={photo.description || 'Garden photo'}
+                    src={newPhotoPreview}
+                    alt="Preview"
                     fill
-                    className="object-cover"
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="object-contain bg-gray-100"
                   />
                 </div>
-                <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {photo.date.toLocaleDateString()}
-                  </p>
-                  {photo.description && (
-                    <p className="text-sm mb-2">{photo.description}</p>
-                  )}
-                  {photo.location && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                      <MapPin className="h-3 w-3" />
-                      {photo.location}
-                    </div>
-                  )}
+              )}
+
+              {/* Description */}
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Description (optional)</label>
+                <Input
+                  placeholder="What's in this photo?"
+                  value={newPhotoDescription}
+                  onChange={(e) => setNewPhotoDescription(e.target.value)}
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Location (optional)</label>
+                <Select value={newPhotoLocation} onValueChange={setNewPhotoLocation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select garden location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No location</SelectItem>
+                    {uniqueLocations.map((loc) => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="text-sm font-medium mb-1.5 block">Tags (optional)</label>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    placeholder="Add a tag..."
+                    value={newPhotoTagInput}
+                    onChange={(e) => setNewPhotoTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTag();
+                      }
+                    }}
+                  />
+                  <Button variant="outline" onClick={handleAddTag} type="button">
+                    Add
+                  </Button>
+                </div>
+                {newPhotoTags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {photo.tags.map((tag) => (
+                    {newPhotoTags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
                         {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 hover:text-red-500"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+                )}
+              </div>
+
+              {/* Link to plants */}
+              {plants.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Link to plants (optional)</label>
+                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1">
+                    {plants.map((plant) => (
+                      <label key={plant.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={newPhotoPlantIds.includes(plant.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewPhotoPlantIds([...newPhotoPlantIds, plant.id]);
+                            } else {
+                              setNewPhotoPlantIds(newPhotoPlantIds.filter(id => id !== plant.id));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        {plant.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={cancelAddPhoto}
+                  className="flex-1"
+                  disabled={isUploadingPhoto}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUploadPhoto}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  disabled={isUploadingPhoto}
+                >
+                  {isUploadingPhoto ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Guild Modal */}
       <GuildModalEnhanced

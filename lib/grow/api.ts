@@ -1135,6 +1135,149 @@ Delete a task completion
       throw error;
     }
   }
+
+  // ============================================
+  // Garden Photos API
+  // ============================================
+
+  /**
+   * Get user's garden photos
+   */
+  async getGardenPhotos(params?: {
+    limit?: number;
+    offset?: number;
+    location?: string;
+    tag?: string;
+    plantId?: string;
+  }): Promise<GardenPhotosResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.offset) searchParams.set('offset', params.offset.toString());
+    if (params?.location) searchParams.set('location', params.location);
+    if (params?.tag) searchParams.set('tag', params.tag);
+    if (params?.plantId) searchParams.set('plantId', params.plantId);
+    
+    const url = searchParams.size > 0
+      ? `/api/grow/photos?${searchParams.toString()}`
+      : '/api/grow/photos';
+    
+    const response = await this.fetchWithTimeout(url, {
+      headers: this.getHeaders(true),
+    }, 30000);
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to load photos');
+    }
+    
+    return response.json();
+  }
+
+  /**
+   * Upload a new garden photo
+   */
+  async uploadGardenPhoto(
+    file: File | Blob,
+    metadata?: {
+      description?: string;
+      location?: string;
+      takenAt?: string;
+      tags?: string[];
+      plantIds?: string[];
+    }
+  ): Promise<{ photo: GardenPhoto }> {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    if (metadata?.description) formData.append('description', metadata.description);
+    if (metadata?.location) formData.append('location', metadata.location);
+    if (metadata?.takenAt) formData.append('takenAt', metadata.takenAt);
+    if (metadata?.tags) formData.append('tags', JSON.stringify(metadata.tags));
+    if (metadata?.plantIds) formData.append('plantIds', JSON.stringify(metadata.plantIds));
+    
+    const token = localStorage.getItem('access_token');
+    const response = await this.fetchWithTimeout('/api/grow/photos', {
+      method: 'POST',
+      headers: {
+        Authorization: token ? `Bearer ${token}` : `Bearer ${SUPABASE_ANON_KEY}`,
+        // Don't set Content-Type - let browser set it with boundary for FormData
+      },
+      body: formData,
+    }, 60000); // 60s timeout for upload
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || 'Failed to upload photo');
+    }
+    
+    return response.json();
+  }
+
+  /**
+   * Update a garden photo's metadata
+   */
+  async updateGardenPhoto(
+    photoId: string,
+    updates: {
+      description?: string;
+      location?: string;
+      takenAt?: string;
+      tags?: string[];
+      plantIds?: string[];
+    }
+  ): Promise<{ photo: GardenPhoto }> {
+    const response = await this.fetchWithTimeout(`/api/grow/photos/${photoId}`, {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(updates),
+    }, 10000);
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Update failed' }));
+      throw new Error(error.error || 'Failed to update photo');
+    }
+    
+    return response.json();
+  }
+
+  /**
+   * Delete a garden photo
+   */
+  async deleteGardenPhoto(photoId: string): Promise<{ success: boolean }> {
+    const response = await this.fetchWithTimeout(`/api/grow/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    }, 10000);
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Delete failed' }));
+      throw new Error(error.error || 'Failed to delete photo');
+    }
+    
+    return response.json();
+  }
+}
+
+// Types for Garden Photos
+export interface GardenPhoto {
+  id: string;
+  userId: string;
+  storagePath: string;
+  url: string;
+  thumbnailUrl: string | null;
+  takenAt: string | null;
+  description: string | null;
+  location: string | null;
+  plantIds: string[];
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GardenPhotosResponse {
+  photos: GardenPhoto[];
+  total: number;
 }
 
 export const api = new ApiClient();
