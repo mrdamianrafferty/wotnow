@@ -2613,12 +2613,15 @@ export function GardenPage() {
               {/* Location */}
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Location (optional)</label>
-                <Select value={newPhotoLocation} onValueChange={setNewPhotoLocation}>
+                <Select 
+                  value={newPhotoLocation || "__none__"} 
+                  onValueChange={(val) => setNewPhotoLocation(val === "__none__" ? "" : val)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select garden location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No location</SelectItem>
+                    <SelectItem value="__none__">No location</SelectItem>
                     {uniqueLocations.map((loc) => (
                       <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                     ))}
