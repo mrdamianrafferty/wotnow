@@ -27,7 +27,9 @@ import {
   Filter,
   ExternalLink,
   Library,
-  User
+  User,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -324,6 +326,9 @@ export function GardenPage() {
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'recent' | 'health'>('name-asc');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterLocation, setFilterLocation] = useState<string>('all');
+  
+  // View style: 'cards' = card grid, 'list' = compact table
+  const [cardView, setCardView] = useState<'cards' | 'list'>('cards');
 
   // Threats state
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
@@ -1504,6 +1509,26 @@ export function GardenPage() {
                     <SelectItem value="health">Health (needs attention)</SelectItem>
                   </SelectContent>
                 </Select>
+                
+                {/* View toggle: Cards vs List */}
+                <div className="flex border rounded-md overflow-hidden">
+                  <button
+                    onClick={() => setCardView('cards')}
+                    className={`p-2 ${cardView === 'cards' ? 'bg-green-600 text-white' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}`}
+                    aria-label="Card view"
+                    title="Card view"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setCardView('list')}
+                    className={`p-2 ${cardView === 'list' ? 'bg-green-600 text-white' : 'bg-muted hover:bg-muted/80 text-muted-foreground'}`}
+                    aria-label="List view"
+                    title="List view"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Filter Pills Row */}
@@ -1623,8 +1648,9 @@ export function GardenPage() {
                 Clear Filters
               </Button>
             </Card>
-          ) : viewMode === 'my' ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          ) : viewMode === 'my' && cardView === 'cards' ? (
+            /* CARD VIEW - Compact grid */
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
               {filteredAndSortedPlants.map((group) => {
                 const nameLower = group.name.toLowerCase();
                 const resolvedSlug =
@@ -1645,11 +1671,6 @@ export function GardenPage() {
                 }
 
                 const cardHealthClass = getHealthColor(group.worstHealth);
-                const headerMeta =
-                  group.instances.length > 1
-                    ? `${group.totalQuantity} in garden • ${group.instances.length} entries`
-                    : `${group.totalQuantity} in garden`;
-
                 const mixedHealthLabel = group.mixedHealth ? 'mixed' : group.worstHealth;
 
                 // Pick the latest planted instance as "primary" for main card actions
@@ -1657,147 +1678,222 @@ export function GardenPage() {
                   .slice()
                   .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
 
+                // Get plant image
+                const imgKey = findBestPlantImageKey(group.name);
+                const imgSrc = imgKey ? (getPlantImage(imgKey, 'medium') ?? getPlantImage(imgKey, 'lg')) : null;
+
                 return (
                   <Card
                     key={group.key}
-                    className={`border-2 ${cardHealthClass} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
+                    className={`border-2 ${cardHealthClass} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg overflow-hidden`}
                   >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div className="pr-2">
-                          <Link href={speciesUrl} className="hover:underline">
-                            <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{group.name}</CardTitle>
-                          </Link>
-                          <p className="text-sm text-muted-foreground">{group.type}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{headerMeta}</p>
-
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-start gap-2">
-                            <Badge variant="outline" className={group.mixedHealth ? 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200' : getHealthColor(group.worstHealth)}>
-                              {mixedHealthLabel}
-                            </Badge>
-                          </div>
-
-                          {/* Quick actions */}
-                          {primaryInstance && (
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  const cachedSpecies = speciesCache.get(nameLower);
-
-                                  setAddPlantPrefill({
-                                    name: cachedSpecies?.name ?? group.name,
-                                    type: cachedSpecies?.category ?? group.type,
-                                    scientificName: cachedSpecies?.scientificName ?? undefined,
-                                  });
-                                  setIsAddPlantDialogOpen(true);
-                                }}
-                                aria-label={`Add another ${group.name} cultivar to your garden`}
-                              >
-                                <Plus className="h-4 w-4" aria-hidden="true" />
-                              </Button>
-
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleEditPlant(primaryInstance)}
-                                aria-label={`Edit ${group.name}`}
-                              >
-                                <Pencil className="h-4 w-4" aria-hidden="true" />
-                              </Button>
+                    {/* Compact header with image */}
+                    <div className="p-2 pb-0">
+                      <div className="flex gap-2">
+                        {/* Small thumbnail */}
+                        {imgSrc && (
+                          <Link href={speciesUrl} className="shrink-0">
+                            <div className="relative h-12 w-12 overflow-hidden rounded border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
+                              <Image
+                                src={imgSrc}
+                                alt={group.name}
+                                fill
+                                className="object-contain p-0.5"
+                                sizes="48px"
+                              />
                             </div>
-                          )}
-
-                          {(() => {
-                            const key = findBestPlantImageKey(group.name);
-                            const src = key ? (getPlantImage(key, 'xl') ?? getPlantImage(key, 'lg') ?? getPlantImage(key, 'medium')) : null;
-                            if (!src) return null;
-                            return (
-                              <Link href={speciesUrl} className="block">
-                                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md border bg-white cursor-pointer hover:ring-2 hover:ring-green-500 transition-all">
-                                  <Image
-                                    src={src}
-                                    alt={`${group.name}`}
-                                    fill
-                                    className="object-contain p-1"
-                                    sizes="(max-width: 768px) 96px, 192px"
-                                  />
-                                </div>
-                              </Link>
-                            );
-                          })()}
+                          </Link>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <Link href={speciesUrl} className="hover:underline">
+                            <h3 className="font-medium text-sm leading-tight truncate hover:text-green-600 transition-colors">{group.name}</h3>
+                          </Link>
+                          <p className="text-xs text-muted-foreground truncate">{group.type}</p>
+                          <p className="text-[10px] text-muted-foreground">×{group.totalQuantity}</p>
                         </div>
                       </div>
-                    </CardHeader>
+                    </div>
 
-                    <CardContent className="space-y-3">
-                      {/* Cultivars (buttons/badges) */}
+                    <CardContent className="p-2 pt-1 space-y-1">
+                      {/* Health badge & actions row */}
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${group.mixedHealth ? 'text-gray-600 bg-white border border-l-4 border-l-gray-400 border-gray-200' : getHealthColor(group.worstHealth)}`}>
+                          {mixedHealthLabel}
+                        </Badge>
+                        {primaryInstance && (
+                          <div className="flex items-center gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const cachedSpecies = speciesCache.get(nameLower);
+                                setAddPlantPrefill({
+                                  name: cachedSpecies?.name ?? group.name,
+                                  type: cachedSpecies?.category ?? group.type,
+                                  scientificName: cachedSpecies?.scientificName ?? undefined,
+                                });
+                                setIsAddPlantDialogOpen(true);
+                              }}
+                              aria-label={`Add another ${group.name}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleEditPlant(primaryInstance)}
+                              aria-label={`Edit ${group.name}`}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Compact cultivar badges */}
                       {(() => {
                         const counts = new Map<string, { label: string; count: number }>();
-
                         for (const inst of group.instances) {
                           const v = inst.variety?.trim();
                           if (!v) continue;
                           const key = v.toLowerCase();
                           const add = (inst.quantity ?? 1) || 1;
-
                           const existing = counts.get(key);
-                          if (existing) {
-                            existing.count += add;
-                          } else {
-                            counts.set(key, { label: v, count: add });
-                          }
+                          if (existing) existing.count += add;
+                          else counts.set(key, { label: v, count: add });
                         }
-
                         const items = Array.from(counts.values()).sort((a, b) => a.label.localeCompare(b.label));
                         if (items.length === 0) return null;
-
                         return (
-                          <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">Cultivars</p>
-                            <div className="flex flex-wrap gap-2">
-                              {items.map((c) => (
-                                <Button
-                                  key={c.label}
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 rounded-full px-2 text-xs"
-                                  aria-label={`Cultivar: ${c.label}`}
-                                >
-                                  {c.label}
-                                  {c.count > 1 ? ` ×${c.count}` : null}
-                                </Button>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-1">
+                            {items.slice(0, 3).map((c) => (
+                              <span key={c.label} className="text-[10px] px-1.5 py-0.5 bg-muted rounded-full truncate max-w-[80px]">
+                                {c.label}{c.count > 1 ? ` ×${c.count}` : ''}
+                              </span>
+                            ))}
+                            {items.length > 3 && (
+                              <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded-full">+{items.length - 3}</span>
+                            )}
                           </div>
                         );
                       })()}
 
-                      {/* Species Information (still based on species cache by common name) */}
+                      {/* Compact species info (icons only) */}
                       <PlantSpeciesInfo
                         species={speciesCache.get(nameLower) ?? null}
                         isLoading={isLoadingSpecies && !speciesCache.has(nameLower)}
+                        compact={true}
                       />
-
-                      <div className="flex gap-2 pt-2">
-                        <Button asChild variant="outline" size="sm" className="flex-1">
-                          <Link href={`/grow/species/${encodeURIComponent(resolvedSlug)}`}>
-                            <Info className="h-3 w-3 mr-1" />
-                            Find out more
-                          </Link>
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 );
               })}
+            </div>
+          ) : viewMode === 'my' && cardView === 'list' ? (
+            /* LIST VIEW - Compact table */
+            <div className="border rounded-lg overflow-hidden">
+              {/* Header */}
+              <div className="hidden sm:grid sm:grid-cols-12 gap-2 px-3 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b">
+                <div className="col-span-4">Plant</div>
+                <div className="col-span-2">Type</div>
+                <div className="col-span-2">Health</div>
+                <div className="col-span-2">Qty</div>
+                <div className="col-span-2 text-right">Actions</div>
+              </div>
+              {/* Rows */}
+              <div className="divide-y">
+                {filteredAndSortedPlants.map((group) => {
+                  const nameLower = group.name.toLowerCase();
+                  const resolvedSlug =
+                    group.speciesSlug ??
+                    speciesCache.get(nameLower)?.slug ??
+                    group.name.toLowerCase().replace(/\s+/g, '-');
+                  const speciesUrl = `/grow/species/${encodeURIComponent(resolvedSlug)}`;
+                  
+                  const isNewlyAdded = group.instances.some((p) => newlyAddedPlantIds.has(p.id));
+                  const isDeleting = group.instances.some((p) => deletingPlantIds.has(p.id));
+                  let animationClass = '';
+                  if (isDeleting) animationClass = 'motion-safe:animate-leaf-fall motion-reduce:animate-fade-out';
+                  else if (isNewlyAdded) animationClass = 'motion-safe:animate-sprout motion-reduce:animate-fade-in';
+
+                  const mixedHealthLabel = group.mixedHealth ? 'mixed' : group.worstHealth;
+                  const primaryInstance = group.instances.slice().sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
+                  
+                  const imgKey = findBestPlantImageKey(group.name);
+                  const imgSrc = imgKey ? getPlantImage(imgKey, 'medium') : null;
+
+                  return (
+                    <div
+                      key={group.key}
+                      className={`grid grid-cols-12 gap-2 px-3 py-2 items-center hover:bg-muted/30 transition-colors ${animationClass}`}
+                    >
+                      {/* Plant name with mini thumbnail */}
+                      <div className="col-span-6 sm:col-span-4 flex items-center gap-2 min-w-0">
+                        {imgSrc && (
+                          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded border bg-white">
+                            <Image src={imgSrc} alt="" fill className="object-contain" sizes="32px" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <Link href={speciesUrl} className="hover:underline">
+                            <span className="text-sm font-medium truncate block hover:text-green-600">{group.name}</span>
+                          </Link>
+                          {/* Cultivars inline on mobile */}
+                          {group.varieties.length > 0 && (
+                            <span className="text-[10px] text-muted-foreground truncate block sm:hidden">
+                              {group.varieties.slice(0, 2).join(', ')}{group.varieties.length > 2 ? '...' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Type */}
+                      <div className="hidden sm:block col-span-2 text-sm text-muted-foreground truncate">{group.type}</div>
+                      {/* Health */}
+                      <div className="col-span-3 sm:col-span-2">
+                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${group.mixedHealth ? 'text-gray-600 bg-white border-l-4 border-l-gray-400' : getHealthColor(group.worstHealth)}`}>
+                          {mixedHealthLabel}
+                        </Badge>
+                      </div>
+                      {/* Quantity */}
+                      <div className="hidden sm:block col-span-2 text-sm">{group.totalQuantity}</div>
+                      {/* Actions */}
+                      <div className="col-span-3 sm:col-span-2 flex justify-end gap-1">
+                        {primaryInstance && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                const cachedSpecies = speciesCache.get(nameLower);
+                                setAddPlantPrefill({
+                                  name: cachedSpecies?.name ?? group.name,
+                                  type: cachedSpecies?.category ?? group.type,
+                                  scientificName: cachedSpecies?.scientificName ?? undefined,
+                                });
+                                setIsAddPlantDialogOpen(true);
+                              }}
+                              aria-label={`Add ${group.name}`}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditPlant(primaryInstance)} aria-label={`Edit ${group.name}`}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                        <Button asChild variant="ghost" size="icon" className="h-7 w-7">
+                          <Link href={speciesUrl} aria-label={`View ${group.name} details`}>
+                            <Info className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : null}
 
