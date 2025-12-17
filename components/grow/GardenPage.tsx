@@ -31,7 +31,9 @@ import {
   LayoutGrid,
   List,
   Expand,
-  Shrink
+  Shrink,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -332,8 +334,36 @@ export function GardenPage() {
   // View style: 'cards' = card grid, 'list' = compact table
   const [cardView, setCardView] = useState<'cards' | 'list'>('cards');
   
-  // Expanded cards toggle (for card view only)
-  const [expandedCards, setExpandedCards] = useState(false);
+  // Expanded cards toggle - global default + per-card overrides
+  const [expandedCardsDefault, setExpandedCardsDefault] = useState(false);
+  const [expandedCardKeys, setExpandedCardKeys] = useState<Set<string>>(new Set());
+  
+  // Toggle individual card expansion
+  const toggleCardExpanded = useCallback((key: string) => {
+    setExpandedCardKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
+  
+  // Check if a card is expanded (respects per-card override, falls back to default)
+  const isCardExpanded = useCallback((key: string) => {
+    if (expandedCardKeys.has(key)) {
+      return !expandedCardsDefault; // Override: opposite of default
+    }
+    return expandedCardsDefault;
+  }, [expandedCardsDefault, expandedCardKeys]);
+  
+  // When toggling global default, clear individual overrides
+  const toggleExpandedDefault = useCallback(() => {
+    setExpandedCardsDefault(prev => !prev);
+    setExpandedCardKeys(new Set());
+  }, []);
 
   // Threats state
   const [isLoadingThreats, setIsLoadingThreats] = useState(false);
@@ -1540,15 +1570,15 @@ export function GardenPage() {
                 {/* Expand/Collapse toggle (cards only) */}
                 {cardView === 'cards' && (
                   <button
-                    onClick={() => setExpandedCards(!expandedCards)}
+                    onClick={toggleExpandedDefault}
                     className="flex items-center gap-1 px-2 py-1.5 text-xs border rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
-                    aria-label={expandedCards ? 'Compact cards' : 'Expand cards'}
-                    title={expandedCards ? 'Compact cards' : 'Expand cards'}
+                    aria-label={expandedCardsDefault ? 'Compact all cards' : 'Expand all cards'}
+                    title={expandedCardsDefault ? 'Compact all cards' : 'Expand all cards'}
                   >
-                    {expandedCards ? (
-                      <><Shrink className="h-3.5 w-3.5" /><span className="hidden sm:inline">Compact</span></>
+                    {expandedCardsDefault ? (
+                      <><Shrink className="h-3.5 w-3.5" /><span className="hidden sm:inline">Compact All</span></>
                     ) : (
-                      <><Expand className="h-3.5 w-3.5" /><span className="hidden sm:inline">Expand</span></>
+                      <><Expand className="h-3.5 w-3.5" /><span className="hidden sm:inline">Expand All</span></>
                     )}
                   </button>
                 )}
@@ -1673,10 +1703,7 @@ export function GardenPage() {
             </Card>
           ) : viewMode === 'my' && cardView === 'cards' ? (
             /* CARD VIEW - Compact or Expanded grid */
-            <div className={expandedCards 
-              ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3" 
-              : "grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4"
-            }>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
               {filteredAndSortedPlants.map((group) => {
                 const nameLower = group.name.toLowerCase();
                 const resolvedSlug =
@@ -1704,10 +1731,13 @@ export function GardenPage() {
                   .slice()
                   .sort((a, b) => b.planted.getTime() - a.planted.getTime())[0];
 
+                // Check if this specific card is expanded
+                const cardExpanded = isCardExpanded(group.key);
+
                 // Get plant image - larger for expanded view
                 const imgKey = findBestPlantImageKey(group.name);
                 const imgSrc = imgKey 
-                  ? (expandedCards 
+                  ? (cardExpanded 
                       ? (getPlantImage(imgKey, 'xl') ?? getPlantImage(imgKey, 'lg') ?? getPlantImage(imgKey, 'medium'))
                       : (getPlantImage(imgKey, 'medium') ?? getPlantImage(imgKey, 'lg'))
                     ) 
@@ -1716,14 +1746,14 @@ export function GardenPage() {
                 return (
                   <Card
                     key={group.key}
-                    className={`border-2 ${cardHealthClass} ${animationClass} transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg overflow-hidden`}
+                    className={`border-2 ${cardHealthClass} ${animationClass} transition-all duration-200 hover:shadow-lg overflow-hidden ${cardExpanded ? 'col-span-2 md:col-span-1' : ''}`}
                   >
-                    {expandedCards ? (
+                    {cardExpanded ? (
                       /* EXPANDED CARD LAYOUT */
                       <>
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
-                            <div className="pr-2">
+                            <div className="pr-2 flex-1">
                               <Link href={speciesUrl} className="hover:underline">
                                 <CardTitle className="text-lg cursor-pointer hover:text-green-600 transition-colors">{group.name}</CardTitle>
                               </Link>
@@ -1818,6 +1848,14 @@ export function GardenPage() {
                               </Link>
                             </Button>
                           </div>
+                          {/* Collapse chevron */}
+                          <button
+                            onClick={() => toggleCardExpanded(group.key)}
+                            className="w-full flex items-center justify-center pt-2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Collapse card"
+                          >
+                            <ChevronUp className="h-5 w-5" />
+                          </button>
                         </CardContent>
                       </>
                     ) : (
@@ -1908,6 +1946,14 @@ export function GardenPage() {
                             isLoading={isLoadingSpecies && !speciesCache.has(nameLower)}
                             compact={true}
                           />
+                          {/* Expand chevron */}
+                          <button
+                            onClick={() => toggleCardExpanded(group.key)}
+                            className="w-full flex items-center justify-center pt-1 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Expand card"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
                         </CardContent>
                       </>
                     )}
