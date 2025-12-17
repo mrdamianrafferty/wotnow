@@ -30,8 +30,8 @@ import {
   User,
   LayoutGrid,
   List,
-  Maximize2,
-  Minimize2
+  Expand,
+  Shrink
 } from 'lucide-react';
 import Link from 'next/link';
 import { GuildModalEnhanced } from './GuildModalEnhanced';
@@ -1541,11 +1541,15 @@ export function GardenPage() {
                 {cardView === 'cards' && (
                   <button
                     onClick={() => setExpandedCards(!expandedCards)}
-                    className="p-2 border rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
+                    className="flex items-center gap-1 px-2 py-1.5 text-xs border rounded-md bg-muted hover:bg-muted/80 text-muted-foreground"
                     aria-label={expandedCards ? 'Compact cards' : 'Expand cards'}
                     title={expandedCards ? 'Compact cards' : 'Expand cards'}
                   >
-                    {expandedCards ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                    {expandedCards ? (
+                      <><Shrink className="h-3.5 w-3.5" /><span className="hidden sm:inline">Compact</span></>
+                    ) : (
+                      <><Expand className="h-3.5 w-3.5" /><span className="hidden sm:inline">Expand</span></>
+                    )}
                   </button>
                 )}
               </div>
