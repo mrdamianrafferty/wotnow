@@ -6,6 +6,7 @@ import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchRe
 const API_BASE = EDGE_FUNCTION_BASE;
 const GROW_PLANTS_API_BASE = '/api/grow/plants';
 const GROW_SPECIES_API_BASE = '/api/grow/species';
+const GROW_CULTIVARS_API_BASE = '/api/grow/cultivars';
 const GROW_ONBOARDING_COMPLETE_API = '/api/grow/onboarding/complete';
 
 // Local weather API endpoint - uses same data source as Go Daisy, always returns metric
@@ -15,6 +16,16 @@ type GrowPlantsResponse = {
   plants: any[];
   onboardingCompleted?: boolean;
   onboardingCompletedAt?: string | null;
+};
+
+type CultivarSearchItem = {
+  cultivarId: string;
+  cultivarName: string;
+  speciesSlug?: string;
+};
+
+export type CultivarSearchResponse = {
+  cultivars: CultivarSearchItem[];
 };
 
 export class ApiClient {
@@ -651,6 +662,40 @@ export class ApiClient {
     }
   }
 
+  async searchCultivars(params: {
+    speciesSlug?: string;
+    query: string;
+    limit?: number;
+  }): Promise<CultivarSearchResponse> {
+    const query = (params.query ?? '').trim();
+
+    if (query.length === 0) {
+      return { cultivars: [] };
+    }
+
+    const url = new URL(`${GROW_CULTIVARS_API_BASE}/search`, window.location.origin);
+    url.searchParams.set('q', query);
+
+    if (params.speciesSlug && params.speciesSlug.trim().length > 0) {
+      url.searchParams.set('species', params.speciesSlug.trim());
+    }
+
+    if (typeof params.limit === 'number' && Number.isFinite(params.limit)) {
+      url.searchParams.set('limit', Math.max(1, Math.min(50, Math.floor(params.limit))).toString());
+    }
+
+    const response = await this.fetchWithTimeout(url.toString(), {
+      headers: this.getHeaders(false),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error((error as any).error || 'Failed to search cultivars');
+    }
+
+    return response.json() as Promise<CultivarSearchResponse>;
+  }
+
   async searchPlantSpecies(params: {
     query?: string;
     category?: string;
@@ -679,9 +724,10 @@ export class ApiClient {
       ? `${GROW_SPECIES_API_BASE}?${searchParams.toString()}`
       : GROW_SPECIES_API_BASE;
 
+    // Longer timeout for species search - can hit cold start on serverless
     const response = await this.fetchWithTimeout(url, {
       headers: this.getHeaders(),
-    });
+    }, 30000);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Network error' }));
@@ -692,9 +738,10 @@ export class ApiClient {
   }
 
   async getPlantCategories(): Promise<PlantSpeciesCategoriesResponse> {
+    // Longer timeout for categories - can hit cold start on serverless
     const response = await this.fetchWithTimeout(`${GROW_SPECIES_API_BASE}/categories`, {
       headers: this.getHeaders(),
-    });
+    }, 30000);
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Network error' }));

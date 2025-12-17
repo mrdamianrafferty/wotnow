@@ -432,7 +432,10 @@ export function GardenPage() {
       const response = await api.getPlantCategories();
       setAllSpeciesCategories(response.categories);
     } catch (error) {
-      console.error('[GardenPage] Failed to load categories:', error);
+      // Silently fail - categories are optional for UI
+      console.warn('[GardenPage] Failed to load categories (non-critical):', error instanceof Error ? error.message : error);
+      // Set empty categories so UI doesn't break
+      setAllSpeciesCategories([]);
     }
   }, []);
 
@@ -1755,7 +1758,7 @@ export function GardenPage() {
               className={`flex-1 ${identifyMode === 'plant' ? 'bg-green-600 hover:bg-green-700' : ''}`}
             >
               <Sprout className="h-4 w-4 mr-2" />
-              🌿 Identify Plant
+              Identify Plant
             </Button>
             <Button
               variant={identifyMode === 'pest' ? 'default' : 'outline'}
@@ -1763,7 +1766,7 @@ export function GardenPage() {
               className={`flex-1 ${identifyMode === 'pest' ? 'bg-orange-600 hover:bg-orange-700' : ''}`}
             >
               <Bug className="h-4 w-4 mr-2" />
-              🐛 Identify Pest/Problem
+              Identify Pest/Problem
             </Button>
           </div>
 
