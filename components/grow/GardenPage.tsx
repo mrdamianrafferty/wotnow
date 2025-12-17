@@ -703,6 +703,15 @@ export function GardenPage() {
     }
     
     setIsUploadingPhoto(true);
+    console.log('[GardenPage] Starting photo upload...', {
+      fileName: newPhotoFile.name,
+      fileSize: newPhotoFile.size,
+      fileType: newPhotoFile.type,
+      description: newPhotoDescription,
+      location: newPhotoLocation,
+      tags: newPhotoTags,
+      plantIds: newPhotoPlantIds,
+    });
     
     try {
       const response = await api.uploadGardenPhoto(newPhotoFile, {
@@ -712,10 +721,12 @@ export function GardenPage() {
         plantIds: newPhotoPlantIds.length > 0 ? newPhotoPlantIds : undefined,
       });
       
+      console.log('[GardenPage] Upload successful:', response);
+      
       // Add to gallery
       setGalleryPhotos(prev => [response.photo, ...prev]);
       
-      // Reset form
+      // Reset form and close modal
       setShowAddPhotoModal(false);
       setNewPhotoFile(null);
       setNewPhotoPreview(null);
@@ -727,8 +738,10 @@ export function GardenPage() {
       toast.success('Photo added to gallery!');
     } catch (error) {
       console.error('[GardenPage] Photo upload failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[GardenPage] Error details:', errorMessage);
       toast.error('Failed to upload photo', {
-        description: error instanceof Error ? error.message : 'Please try again',
+        description: errorMessage,
       });
     } finally {
       setIsUploadingPhoto(false);
@@ -2579,8 +2592,8 @@ export function GardenPage() {
 
       {/* Add Photo Modal */}
       {showAddPhotoModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5" />
