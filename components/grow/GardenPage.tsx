@@ -1902,10 +1902,36 @@ export function GardenPage() {
                             {identifyResult.species.scientificName}
                           </p>
                         )}
-                        {identifyResult.mode === 'pest' && identifyResult.diagnosis?.type && (
-                          <Badge variant="outline" className="mt-1">
-                            {identifyResult.diagnosis.type}
-                          </Badge>
+                        {identifyResult.mode === 'pest' && identifyResult.diagnosis?.scientificName && (
+                          <p className="text-sm italic text-muted-foreground">
+                            {identifyResult.diagnosis.scientificName}
+                          </p>
+                        )}
+                        {identifyResult.mode === 'pest' && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {identifyResult.threatType && (
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {identifyResult.threatType}
+                              </Badge>
+                            )}
+                            {identifyResult.threatSeverity && (
+                              <Badge 
+                                variant="outline" 
+                                className={`text-xs ${
+                                  identifyResult.threatSeverity >= 4 ? 'border-red-300 text-red-700' :
+                                  identifyResult.threatSeverity >= 3 ? 'border-orange-300 text-orange-700' :
+                                  'border-amber-300 text-amber-700'
+                                }`}
+                              >
+                                Severity: {identifyResult.threatSeverity}/5
+                              </Badge>
+                            )}
+                            {identifyResult.threatContagious && (
+                              <Badge variant="outline" className="text-xs border-purple-300 text-purple-700">
+                                ⚠️ Spreads
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="text-right">
@@ -1915,6 +1941,13 @@ export function GardenPage() {
                         <p className="text-xs text-muted-foreground">confidence</p>
                       </div>
                     </div>
+
+                    {/* Threat description from our library */}
+                    {identifyResult.mode === 'pest' && identifyResult.threatDescription && (
+                      <div className="text-sm text-muted-foreground">
+                        <p>{identifyResult.threatDescription}</p>
+                      </div>
+                    )}
 
                     {/* Wikipedia Description (expandable) */}
                     {identifyResult.mode === 'plant' && identifyResult.species?.wikiDescription && (
@@ -1952,6 +1985,14 @@ export function GardenPage() {
                             </Badge>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Recognition tips from our library */}
+                    {identifyResult.mode === 'pest' && identifyResult.threatRecognition && (
+                      <div className="pt-2 border-t">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">🔍 How to confirm:</p>
+                        <p className="text-sm text-muted-foreground">{identifyResult.threatRecognition}</p>
                       </div>
                     )}
 

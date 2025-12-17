@@ -43,6 +43,10 @@ export interface IdentificationContext {
   plantCandidates?: PlantCandidate[];
   threatCandidates?: ThreatCandidate[];
   userPlants?: string[]; // Names of plants user has in garden
+  location?: {
+    lat: number;
+    lon: number;
+  };
 }
 
 export interface PlantIdentificationResult {
@@ -85,10 +89,20 @@ export interface PlantIdentificationResult {
   diagnosis?: {
     name: string;
     slug?: string;
+    scientificName?: string;
     type: 'pest' | 'disease' | 'deficiency' | 'abiotic' | 'unknown';
     affectedPart?: string;
     severity?: 'mild' | 'moderate' | 'severe';
   };
+  
+  // Threat library augmentation
+  threatImageUrl?: string; // Image from our threat library
+  threatInLibrary?: boolean; // Whether the threat is in our curated library
+  threatDescription?: string; // Description from our library
+  threatRecognition?: string; // How to recognize this threat
+  threatType?: string; // Type from our library (pest, fungal, bacterial, etc.)
+  threatSeverity?: number; // 1-5 severity from our library
+  threatContagious?: boolean; // Whether the threat spreads
   
   // Common fields
   confidence: number; // 0-1
@@ -437,6 +451,15 @@ Context:
 - Month: ${monthNames[month - 1]}
 - Climate zone: ${context.climateZone || 'temperate'}
 `;
+
+    // Add location context if available (lat/lon only - AI infers region)
+    if (context.location?.lat && context.location?.lon) {
+      // Round to 2 decimals (~1km precision) - enough for regional tracking while preserving some privacy
+      const latDir = context.location.lat >= 0 ? 'N' : 'S';
+      const lonDir = context.location.lon >= 0 ? 'E' : 'W';
+      prompt += `- Location: approximately ${Math.abs(context.location.lat).toFixed(2)}°${latDir}, ${Math.abs(context.location.lon).toFixed(2)}°${lonDir}
+`;
+    }
 
     if (context.threatCandidates && context.threatCandidates.length > 0) {
       prompt += `

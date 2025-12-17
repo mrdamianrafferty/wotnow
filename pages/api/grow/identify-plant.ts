@@ -223,6 +223,68 @@ export default async function handler(
       }
     }
 
+    // For pest/disease identification, augment with our threat library and log for curation
+    if (result.success && result.mode === 'pest' && result.diagnosis) {
+      const threatAugmentation = await augmentAndLogThreatIdentification(
+        result,
+        provider,
+        requestData.context
+      );
+      
+      // Set whether threat is in our library
+      result.threatInLibrary = threatAugmentation.matched;
+      
+      // Merge library data if we found a match
+      if (threatAugmentation.matched) {
+        result.diagnosis.slug = threatAugmentation.slug;
+        
+        // Add scientific name if we have it
+        if (threatAugmentation.scientificName) {
+          result.diagnosis.scientificName = threatAugmentation.scientificName;
+        }
+        
+        // Add library description and recognition for richer UI
+        if (threatAugmentation.description) {
+          result.threatDescription = threatAugmentation.description;
+        }
+        if (threatAugmentation.recognition) {
+          result.threatRecognition = threatAugmentation.recognition;
+        }
+        
+        // Add threat metadata
+        result.threatType = threatAugmentation.threatType;
+        result.threatSeverity = threatAugmentation.severityDefault;
+        result.threatContagious = threatAugmentation.contagious;
+        
+        // Add rich treatment data from our library
+        if (threatAugmentation.libraryTreatment?.length) {
+          result.treatment = [
+            ...(threatAugmentation.libraryTreatment || []),
+            ...(result.treatment || []).filter(t => 
+              !threatAugmentation.libraryTreatment?.some(lt => 
+                lt.toLowerCase().includes(t.toLowerCase().slice(0, 20))
+              )
+            ),
+          ];
+        }
+        if (threatAugmentation.libraryPrevention?.length) {
+          result.prevention = [
+            ...(threatAugmentation.libraryPrevention || []),
+            ...(result.prevention || []).filter(p => 
+              !threatAugmentation.libraryPrevention?.some(lp => 
+                lp.toLowerCase().includes(p.toLowerCase().slice(0, 20))
+              )
+            ),
+          ];
+        }
+        // Add image from our library if available
+        if (threatAugmentation.imageUrl) {
+          result.threatImageUrl = threatAugmentation.imageUrl;
+        }
+        console.log(`[identify-plant] Augmented with threat library: ${threatAugmentation.slug}`);
+      }
+    }
+
     // TODO: Track usage for budget management (like fish ID)
 
     return res.status(200).json(result);
@@ -300,4 +362,169 @@ async function lookupSpeciesSlug(
   }
   
   return null;
+}
+
+interface ThreatAugmentationResult {
+  matched: boolean;
+  slug?: string;
+  matchConfidence: 'exact' | 'fuzzy' | 'none';
+  libraryTreatment?: string[];
+  libraryPrevention?: string[];
+  imageUrl?: string;
+  // Additional library data
+  description?: string;
+  recognition?: string;
+  threatType?: string;
+  severityDefault?: number;
+  contagious?: boolean;
+  scientificName?: string;
+}
+
+/**
+ * Look up identified threat in our library and log for future curation
+ */
+async function augmentAndLogThreatIdentification(
+  result: PlantIdentificationResult,
+  provider: string,
+  context?: {
+    climateZone?: string;
+    month?: number;
+    userPlants?: string[];
+  }
+): Promise<ThreatAugmentationResult> {
+  const supabase = getSupabaseServerClient();
+  const diagnosis = result.diagnosis!;
+  
+  let matchedThreat: {
+    id: string;
+    slug: string;
+    description: string | null;
+    recognition: string | null;
+    threat_type: string;
+    severity_default: number;
+    contagious: boolean;
+    scientific_name: string | null;
+    card_json: {
+      treatment_pesticide_free?: string[];
+      prevention_bullets?: string[];
+      recognition_bullets?: string[];
+      wikimedia_image?: { local_path?: string };
+    } | null;
+  } | null = null;
+  let matchConfidence: 'exact' | 'fuzzy' | 'none' = 'none';
+  
+  // Try exact match on common_name_en
+  const { data: exactMatch } = await supabase
+    .from('garden_threat')
+    .select('id, slug, description, recognition, threat_type, severity_default, contagious, scientific_name, card_json')
+    .ilike('common_name_en', diagnosis.name)
+    .limit(1)
+    .single();
+  
+  if (exactMatch) {
+    matchedThreat = exactMatch;
+    matchConfidence = 'exact';
+  } else {
+    // Try fuzzy match - search for partial matches
+    const searchTerms = diagnosis.name.toLowerCase().split(/\s+/);
+    for (const term of searchTerms) {
+      if (term.length < 3) continue; // Skip short words
+      
+      const { data: fuzzyMatch } = await supabase
+        .from('garden_threat')
+        .select('id, slug, description, recognition, threat_type, severity_default, contagious, scientific_name, card_json')
+        .or(`common_name_en.ilike.%${term}%,scientific_name.ilike.%${term}%`)
+        .limit(1)
+        .single();
+      
+      if (fuzzyMatch) {
+        matchedThreat = fuzzyMatch;
+        matchConfidence = 'fuzzy';
+        break;
+      }
+    }
+  }
+  
+  // Log the identification for future curation (fire and forget)
+  logThreatIdentification(
+    result,
+    provider,
+    matchedThreat?.id || null,
+    matchConfidence,
+    context
+  ).catch(err => console.warn('[identify-plant] Failed to log threat identification:', err));
+  
+  if (!matchedThreat) {
+    return { matched: false, matchConfidence: 'none' };
+  }
+  
+  // Extract treatment and prevention from card_json
+  const cardJson = matchedThreat.card_json;
+  const libraryTreatment = cardJson?.treatment_pesticide_free || [];
+  const libraryPrevention = cardJson?.prevention_bullets || [];
+  const imageUrl = cardJson?.wikimedia_image?.local_path 
+    ? cardJson.wikimedia_image.local_path 
+    : undefined;
+  
+  return {
+    matched: true,
+    slug: matchedThreat.slug,
+    matchConfidence,
+    libraryTreatment,
+    libraryPrevention,
+    imageUrl,
+    // Additional library data for richer UI
+    description: matchedThreat.description || undefined,
+    recognition: matchedThreat.recognition || undefined,
+    threatType: matchedThreat.threat_type,
+    severityDefault: matchedThreat.severity_default,
+    contagious: matchedThreat.contagious,
+    scientificName: matchedThreat.scientific_name || undefined,
+  };
+}
+
+/**
+ * Log threat identification for future library curation
+ */
+async function logThreatIdentification(
+  result: PlantIdentificationResult,
+  provider: string,
+  matchedThreatId: string | null,
+  matchConfidence: 'exact' | 'fuzzy' | 'none',
+  context?: {
+    climateZone?: string;
+    month?: number;
+    userPlants?: string[];
+  }
+): Promise<void> {
+  const supabase = getSupabaseServerClient();
+  const diagnosis = result.diagnosis!;
+  
+  await supabase
+    .from('threat_identification_log')
+    .insert({
+      identified_name: diagnosis.name,
+      scientific_name: null, // Could extract from AI response if available
+      threat_type: diagnosis.type,
+      confidence: result.confidence,
+      provider,
+      raw_response: {
+        diagnosis,
+        reasoning: result.reasoning,
+        alternatives: result.alternatives,
+        isHealthy: result.isHealthy,
+        healthProbability: result.healthProbability,
+      },
+      matched_threat_id: matchedThreatId,
+      match_confidence: matchConfidence,
+      user_plants: context?.userPlants || [],
+      climate_zone: context?.climateZone,
+      month: context?.month,
+      ai_treatment: result.treatment,
+      ai_prevention: result.prevention,
+      ai_reasoning: result.reasoning,
+      curation_status: matchConfidence === 'none' ? 'pending' : 'matched',
+    });
+  
+  console.log(`[identify-plant] Logged threat identification: ${diagnosis.name} (match: ${matchConfidence})`);
 }
