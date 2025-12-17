@@ -57,7 +57,6 @@ const BUCKET_NAME = 'grow-garden-photos';
 const MAX_WIDTH = 1920;
 const MAX_HEIGHT = 1920;
 const JPEG_QUALITY = 85;
-const THUMBNAIL_SIZE = 320;
 
 interface GardenPhoto {
   id: string;
@@ -255,20 +254,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       
       // Get public URLs
+      // Note: Using same URL for both since Supabase image transforms require Pro tier
+      // Next.js Image component will handle resizing on the client side
       const { data: urlData } = getSupabase().storage
         .from(BUCKET_NAME)
         .getPublicUrl(storagePath);
       
-      const { data: thumbnailData } = getSupabase().storage
-        .from(BUCKET_NAME)
-        .getPublicUrl(storagePath, {
-          transform: {
-            width: THUMBNAIL_SIZE,
-            height: THUMBNAIL_SIZE,
-            resize: 'cover',
-            quality: 80,
-          },
-        });
+      const publicUrl = urlData.publicUrl;
       
       // Insert database record
       const { data: photoRecord, error: dbError } = await getSupabase()
@@ -276,8 +268,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .insert({
           user_id: userId,
           storage_path: storagePath,
-          url: urlData.publicUrl,
-          thumbnail_url: thumbnailData.publicUrl,
+          url: publicUrl,
+          thumbnail_url: publicUrl, // Same URL - Next.js Image handles resizing
           description: description || null,
           location: location || null,
           taken_at: takenAt || null,
