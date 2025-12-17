@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ImageAttribution, PerenualAttribution, type PerenualImageLicense } from './PerenualAttribution';
-import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink, X, ZoomIn } from 'lucide-react';
+import { AlertTriangle, Bug, Leaf, Droplets, Thermometer, Skull, Worm, ExternalLink, X, ZoomIn, ChevronDown, ChevronUp, Shield, Sparkles, Target, Calendar } from 'lucide-react';
 
 type ThreatRiskBand = 'none' | 'low' | 'moderate' | 'high' | 'severe';
 
@@ -59,6 +59,13 @@ interface ThreatCardProps {
   compact?: boolean;
 }
 
+// Helper to format where_on_plant array nicely
+function formatWhereOnPlant(locations: string[]): string {
+  return locations
+    .map(loc => loc.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))
+    .join(', ');
+}
+
 const THREAT_TYPE_ICONS: Record<string, React.ReactNode> = {
   pest: <Bug className="h-4 w-4" />,
   fungal: <Leaf className="h-4 w-4" />,
@@ -88,6 +95,7 @@ const CARD_BORDER_COLORS: Record<ThreatRiskBand, string> = {
 
 export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const cardJson = threat.cardJson as ThreatCardJson;
   
   // Prefer Wikimedia image over Perenual images
@@ -103,6 +111,16 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
     primaryPerenualImage?.original_url || 
     primaryPerenualImage?.medium_url || 
     primaryPerenualImage?.small_url;
+
+  // Check if there's expandable content
+  const hasPrevention = cardJson?.prevention_bullets && cardJson.prevention_bullets.length > 0;
+  const hasTreatment = cardJson?.treatment_pesticide_free && cardJson.treatment_pesticide_free.length > 0;
+  const hasPerenualSolution = cardJson?.perenual_solution && cardJson.perenual_solution.length > 0;
+  const hasConfirmation = cardJson?.confirmation_tips && cardJson.confirmation_tips.length > 0;
+  const hasWhereOnPlant = cardJson?.where_on_plant && cardJson.where_on_plant.length > 0;
+  const hasEscalation = cardJson?.when_to_escalate_bullets && cardJson.when_to_escalate_bullets.length > 0;
+  const hasMatchedRules = threat.matchedRules && threat.matchedRules.length > 0;
+  const hasExpandableContent = hasPrevention || hasTreatment || hasPerenualSolution || hasConfirmation || hasEscalation;
   
   return (
     <>
@@ -187,6 +205,22 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {/* Why this threat is relevant now - seasonal rules */}
+        {hasMatchedRules && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 rounded px-2 py-1">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            <span>{threat.matchedRules[0].title}</span>
+          </div>
+        )}
+
+        {/* Where to look on plant */}
+        {hasWhereOnPlant && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Target className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+            <span><span className="font-medium">Check:</span> {formatWhereOnPlant(cardJson.where_on_plant!)}</span>
+          </div>
+        )}
+
         {/* Recognition bullets or reasons */}
         {cardJson?.recognition_bullets && cardJson.recognition_bullets.length > 0 ? (
           <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
@@ -229,6 +263,110 @@ export function ThreatCard({ threat, compact = false }: ThreatCardProps) {
             {cardJson.perenual_hosts.slice(0, 3).join(', ')}
             {cardJson.perenual_hosts.length > 3 && ` +${cardJson.perenual_hosts.length - 3} more`}
           </div>
+        )}
+
+        {/* Expandable details section */}
+        {hasExpandableContent && !compact && (
+          <>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-medium w-full justify-center py-1"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-3.5 w-3.5" />
+                  Hide details
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                  Prevention &amp; treatment
+                </>
+              )}
+            </button>
+
+            {expanded && (
+              <div className="space-y-3 pt-2 border-t border-gray-100">
+                {/* Confirmation tips */}
+                {hasConfirmation && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1">
+                      <Target className="h-3.5 w-3.5 text-blue-500" />
+                      How to confirm
+                    </div>
+                    <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-0.5">
+                      {cardJson.confirmation_tips!.map((tip, idx) => (
+                        <li key={idx}>{tip}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Prevention */}
+                {hasPrevention && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1">
+                      <Shield className="h-3.5 w-3.5 text-green-600" />
+                      Prevention
+                    </div>
+                    <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-0.5">
+                      {cardJson.prevention_bullets!.map((bullet, idx) => (
+                        <li key={idx}>{bullet}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Organic/pesticide-free treatment */}
+                {hasTreatment && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1">
+                      <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                      Organic treatment
+                    </div>
+                    <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-0.5">
+                      {cardJson.treatment_pesticide_free!.map((bullet, idx) => (
+                        <li key={idx}>{bullet}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Perenual solution (more detailed) */}
+                {hasPerenualSolution && !hasTreatment && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 mb-1">
+                      <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                      Treatment
+                    </div>
+                    {cardJson.perenual_solution!.slice(0, 2).map((section, idx) => (
+                      <div key={idx} className="mb-2">
+                        {section.subtitle && (
+                          <p className="text-xs font-medium text-gray-600">{section.subtitle}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{section.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* When to escalate */}
+                {hasEscalation && (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-orange-700 mb-1">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      When to take action
+                    </div>
+                    <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-0.5">
+                      {cardJson.when_to_escalate_bullets!.map((bullet, idx) => (
+                        <li key={idx}>{bullet}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         {/* Data source attribution */}
