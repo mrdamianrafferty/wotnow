@@ -21,10 +21,10 @@ import {
   LogOut, 
   ArrowLeft,
   ChevronRight,
+  Settings,
 } from 'lucide-react';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
-import { GrowLanguageSelector } from './GrowLanguageSelector';
 import { GrowBottomNav } from './GrowBottomNav';
 
 /**
@@ -234,8 +234,6 @@ export function GrowLayout({
                   </Link>
                 );
               })}
-              
-              <GrowLanguageSelector className="ml-2" />
 
               {/* User Menu */}
               {!isLoading && (
@@ -258,6 +256,12 @@ export function GrowLayout({
                         </div>
                       </div>
                       <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/grow/settings" className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                          <span>Settings</span>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                         <span>Sign out</span>
@@ -319,9 +323,8 @@ export function GrowLayout({
             </div>
           ) : null}
 
-          {/* Right side - Language selector and user menu */}
+          {/* Right side - User menu */}
           <div className="flex items-center gap-2">
-            <GrowLanguageSelector className="hidden sm:flex" />
             {!isLoading && user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -341,6 +344,12 @@ export function GrowLayout({
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/grow/settings" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                     <span>Sign out</span>
