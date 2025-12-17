@@ -304,7 +304,8 @@ export function GardenPage() {
   const [identifyPhoto, setIdentifyPhoto] = useState<File | null>(null);
   const [identifyPhotoPreview, setIdentifyPhotoPreview] = useState<string | null>(null);
   const [identifyResult, setIdentifyResult] = useState<PlantIdentificationResult | null>(null);
-  const [identifyProvider, setIdentifyProvider] = useState<'openai' | 'plantid'>('openai');
+  // Provider toggle hidden - using Plant.id for plants, OpenAI for pests
+  const [_identifyProvider, _setIdentifyProvider] = useState<'openai' | 'plantid'>('plantid');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Plant inventory state
@@ -688,9 +689,12 @@ export function GardenPage() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
     
+    // Determine provider: Plant.id for plants, OpenAI for pests
+    const provider = identifyMode === 'pest' ? 'openai' : 'plantid';
+    
     try {
       console.log('[GardenPage] Starting identification...', {
-        provider: identifyProvider,
+        provider,
         mode: identifyMode,
         imageSize: identifyPhoto.size,
       });
@@ -711,8 +715,8 @@ export function GardenPage() {
             lon: userLocation.lon,
           } : undefined,
         },
-        // Pest identification always uses OpenAI (better accuracy), plant ID can use either
-        provider: identifyMode === 'pest' ? 'openai' : identifyProvider,
+        // Plant identification uses Plant.id, pest/disease identification uses OpenAI
+        provider: identifyMode === 'pest' ? 'openai' : 'plantid',
       }));
 
       const response = await fetch('/api/grow/identify-plant', {
@@ -738,7 +742,7 @@ export function GardenPage() {
           ? result.species?.name 
           : result.diagnosis?.name;
         toast.success(`Identified: ${name || 'Unknown'}`, {
-          description: `Confidence: ${Math.round((result.confidence || 0) * 100)}% • Cost: €${result.cost.toFixed(3)}`,
+          description: `Confidence: ${Math.round((result.confidence || 0) * 100)}%`,
         });
       } else {
         toast.error('Could not identify', {
@@ -1852,15 +1856,15 @@ export function GardenPage() {
                 )}
               </Button>
 
-              {/* Provider Toggle (for testing) - only show for plant mode, pest uses OpenAI only */}
+              {/* Provider Toggle - Hidden for now, using Plant.id for plants and OpenAI for pests
               {identifyMode === 'plant' && (
                 <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
                   <span className="text-xs text-muted-foreground">AI Provider:</span>
                   <div className="flex gap-1">
                     <button
-                      onClick={() => setIdentifyProvider('openai')}
+                      onClick={() => _setIdentifyProvider('openai')}
                       className={`px-2 py-1 text-xs rounded ${
-                        identifyProvider === 'openai' 
+                        _identifyProvider === 'openai' 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                       }`}
@@ -1868,9 +1872,9 @@ export function GardenPage() {
                       OpenAI
                     </button>
                     <button
-                      onClick={() => setIdentifyProvider('plantid')}
+                      onClick={() => _setIdentifyProvider('plantid')}
                       className={`px-2 py-1 text-xs rounded ${
-                        identifyProvider === 'plantid' 
+                        _identifyProvider === 'plantid' 
                           ? 'bg-green-600 text-white' 
                           : 'bg-muted hover:bg-muted/80 text-muted-foreground'
                       }`}
@@ -1880,6 +1884,7 @@ export function GardenPage() {
                   </div>
                 </div>
               )}
+              */}
 
               {/* Identification Result */}
               {identifyResult && identifyResult.success && (
@@ -2019,10 +2024,12 @@ export function GardenPage() {
                       </div>
                     )}
 
+                    {/* Provider/Cost info hidden - internal only
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                       <span>Provider: {identifyResult.provider === 'openai' ? 'OpenAI Vision' : 'Plant.id'}</span>
                       <span>Cost: €{identifyResult.cost.toFixed(3)}</span>
                     </div>
+                    */}
                     
                     {/* Watering Requirements */}
                     {identifyResult.mode === 'plant' && identifyResult.species?.watering && (
