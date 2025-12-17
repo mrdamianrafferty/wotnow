@@ -127,22 +127,24 @@ async function processImage(filePath: string): Promise<Buffer> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = await getUserIdFromAuth(req);
-  
-  if (!userId) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  // GET - List user's photos
-  if (req.method === 'GET') {
-    const { limit = '50', offset = '0', location, tag, plantId } = req.query;
+  // Wrap entire handler in try-catch to prevent 500 errors from crashing
+  try {
+    const userId = await getUserIdFromAuth(req);
     
-    let query = getSupabase()
-      .from('grow_garden_photos')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // GET - List user's photos
+    if (req.method === 'GET') {
+      const { limit = '50', offset = '0', location, tag, plantId } = req.query;
+      
+      let query = getSupabase()
+        .from('grow_garden_photos')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
     
     // Optional filters
     if (location && typeof location === 'string') {
@@ -283,4 +285,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   res.setHeader('Allow', 'GET, POST');
   return res.status(405).json({ error: 'Method not allowed' });
+  
+  } catch (err) {
+    // Top-level catch for any unhandled errors
+    console.error('[grow/photos] Unhandled error:', err);
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return res.status(500).json({ error: `Server error: ${message}` });
+  }
 }
