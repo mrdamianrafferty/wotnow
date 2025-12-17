@@ -386,7 +386,7 @@ export function SettingsPage() {
           <CardTitle className="flex items-center gap-2 text-lg">
             <Globe className="h-5 w-5" />
             Language
-            <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
+            <Badge variant="secondary" className="ml-2 text-xs">🌱 Beta</Badge>
           </CardTitle>
           <CardDescription>
             Choose your preferred language for the app interface
