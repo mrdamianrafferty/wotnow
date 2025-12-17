@@ -2532,7 +2532,7 @@ export function GardenPage() {
                 <Card key={photo.id} className="overflow-hidden group relative">
                   <div className="aspect-square relative">
                     <Image
-                      src={photo.thumbnailUrl || photo.url}
+                      src={photo.thumbnailUrl || photo.url || '/placeholder-plant.png'}
                       alt={photo.description || 'Garden photo'}
                       fill
                       className="object-cover"
@@ -2549,7 +2549,7 @@ export function GardenPage() {
                   </div>
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground mb-2">
-                      {new Date(photo.createdAt).toLocaleDateString()}
+                      {photo.createdAt ? new Date(photo.createdAt).toLocaleDateString() : 'Unknown date'}
                     </p>
                     {photo.description && (
                       <p className="text-sm mb-2">{photo.description}</p>
@@ -2560,7 +2560,7 @@ export function GardenPage() {
                         {photo.location}
                       </div>
                     )}
-                    {photo.tags.length > 0 && (
+                    {Array.isArray(photo.tags) && photo.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {photo.tags.map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">

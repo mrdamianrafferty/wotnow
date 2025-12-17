@@ -213,7 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (uploadError) {
         console.error('[grow/photos] Upload failed:', uploadError);
-        return res.status(500).json({ error: 'Failed to upload photo' });
+        return res.status(500).json({ error: `Failed to upload photo: ${uploadError.message}` });
       }
       
       // Get public URLs
@@ -253,7 +253,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.error('[grow/photos] DB insert failed:', dbError);
         // Try to clean up uploaded file
         await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
-        return res.status(500).json({ error: 'Failed to save photo record' });
+        return res.status(500).json({ error: `Failed to save photo record: ${dbError.message}` });
       }
       
       // Clean up temp file
@@ -267,7 +267,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
     } catch (err) {
       console.error('[grow/photos] Upload error:', err);
-      return res.status(500).json({ error: 'Upload failed' });
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return res.status(500).json({ error: `Upload failed: ${message}` });
     }
   }
 
