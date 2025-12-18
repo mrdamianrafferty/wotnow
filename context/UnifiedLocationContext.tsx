@@ -93,7 +93,7 @@ function readStoredState(): StoredState | null {
       const legacyRaw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
       if (legacyRaw) {
         const legacy = JSON.parse(legacyRaw) as UnifiedLocationRecord;
-        // Convert to new format
+        // Use rectangleLabel as the best available user-friendly name
         const location: SavedLocation = {
           id: crypto.randomUUID(),
           slot: 'home',
