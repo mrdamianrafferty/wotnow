@@ -157,7 +157,7 @@ function dbg(...args: unknown[]) {
 
 export default function SettingsForm({ initial }: SettingsFormProps) {
   // Collect visible user-facing strings for translation (header, language selector, personal details)
-  const translationStrings = [
+  const SETTINGS_TRANSLATION_STRINGS = [
     'Help us personalise your experience and recommendations.',
     'Language',
     'Beta',
@@ -166,7 +166,9 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
     'What should we call you?',
     'Email (account)',
   ];
-  const { t } = useTranslationMap(translationStrings);
+
+  export default function SettingsForm({ initial }: SettingsFormProps) {
+    const { t } = useTranslationMap(SETTINGS_TRANSLATION_STRINGS);
   const [p, setP] = useState<Profile>(
     initial ?? {
       name: '',
