@@ -1,7 +1,10 @@
 'use client';
 import { ACTIVITY_OPTIONS, ACTIVITY_NAME_MAP } from '../../data/activityTypes';
+
 import { rankRecommendations, idToLabel } from './recommendations';
 import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
+import { LanguageSelector } from '../../components/LanguageSelector';
+import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 declare global {
   // Optional runtime-provided activity map (e.g. injected on window in demos)
@@ -153,6 +156,17 @@ function dbg(...args: unknown[]) {
 
 
 export default function SettingsForm({ initial }: SettingsFormProps) {
+  // Collect visible user-facing strings for translation (header, language selector, personal details)
+  const translationStrings = [
+    'Help us personalise your experience and recommendations.',
+    'Language',
+    'Beta',
+    'Choose your preferred language for Go Daisy. This feature is in beta and may not be fully translated.',
+    'Personal Details',
+    'What should we call you?',
+    'Email (account)',
+  ];
+  const { t } = useTranslationMap(translationStrings);
   const [p, setP] = useState<Profile>(
     initial ?? {
       name: '',
@@ -666,7 +680,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">{greeting}</h1>
-          <p className="opacity-70 text-sm">Help us personalise your experience and recommendations.</p>
+          <p className="opacity-70 text-sm">{t('Help us personalise your experience and recommendations.')}</p>
         </div>
         <div className="flex flex-col items-end gap-2 text-right">
           <button className="btn btn-ghost" onClick={signOut}>
@@ -680,7 +694,20 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
           </div>
         </div>
       </header>
-      
+
+      {/* Go Daisy Language Selector (Beta) */}
+      <section className="card bg-base-100 shadow-sm border border-primary/30 mb-6">
+        <div className="card-body space-y-2">
+          <div className="flex items-center gap-3">
+            <h2 className="card-title flex items-center gap-2">
+              <span>{t('Language')}</span>
+              <span className="badge badge-info badge-outline text-xs font-semibold">{t('Beta')}</span>
+            </h2>
+          </div>
+          <p className="text-sm opacity-70 mb-2">{t('Choose your preferred language for Go Daisy. This feature is in beta and may not be fully translated.')}</p>
+          <LanguageSelector showLabel={false} />
+        </div>
+      </section>
 
       {/* Name */}
       <section className="card bg-base-100 shadow-sm">
@@ -688,13 +715,13 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
           <div className="flex items-center gap-2">
             <span className="text-xl">👤</span>
             <div>
-              <h2 className="card-title">Personal Details</h2>
-              <p className="text-sm opacity-70 -mt-1">Help us personalise your experience and recommendations</p>
+              <h2 className="card-title">{t('Personal Details')}</h2>
+              <p className="text-sm opacity-70 -mt-1">{t('Help us personalise your experience and recommendations.')}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="form-control w-full">
-              <span className="label-text">What should we call you?</span>
+              <span className="label-text">{t('What should we call you?')}</span>
               <input
                 className="input input-bordered w-full"
                 placeholder="e.g. Alex"
@@ -709,7 +736,7 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
             </label>
 
             <label className="form-control w-full">
-              <span className="label-text">Email (account)</span>
+              <span className="label-text">{t('Email (account)')}</span>
               <input
                 className="input input-bordered w-full"
                 value={emailDisplay ?? ''}
