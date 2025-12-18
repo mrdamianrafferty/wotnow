@@ -313,7 +313,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="navbar-end gap-2 items-center">
           {/* Desktop: Show all controls (hidden on mobile) */}
           <div className="hidden md:flex gap-2 items-center">
-            <LanguageSelector compact className="hidden md:flex" />
+            {/* LanguageSelector removed for Go Daisy context */}
 
             {/* DaisyUI swap-text toggle (render only when controlled) */}
             {typeof activeLocationType !== 'undefined' && typeof onToggleLocationType === 'function' && (
@@ -375,7 +375,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
           {/* Mobile: Language selector stays visible next to auth */}
           <div className="flex items-center gap-1 md:hidden">
-            <LanguageSelector compact className="md:hidden" />
+            {/* LanguageSelector removed for Go Daisy context */}
             {authReady && (
               userId ? (
                 <Link

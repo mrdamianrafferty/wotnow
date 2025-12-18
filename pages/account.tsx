@@ -145,14 +145,14 @@ export default function AccountPage() {
             </div>
           </header>
 
-          {/* Language preference */}
+          {/* Language preference (Go Daisy Beta) */}
           <section className="card bg-base-100 shadow-xl mb-4">
             <div className="card-body">
-              <h2 className="card-title">Language</h2>
-              <p className="text-sm opacity-70 mb-3">Update your preferred language for Go Daisy, Findr, and Grow Daisy.</p>
+              <h2 className="card-title flex items-center gap-2">Language <span className="badge badge-warning text-xs">Beta</span></h2>
+              <p className="text-sm opacity-70 mb-3">Change your preferred language for <b>Go Daisy</b>. This feature is in <b>Beta</b> and may not be fully translated yet.</p>
               <div className="max-w-xs">
                 <LanguageSelector showLabel className="w-full" />
-                <p className="text-xs opacity-60 mt-2">We save your choice locally and sync it when you are signed in.</p>
+                <p className="text-xs opacity-60 mt-2">Your choice is saved locally and synced when signed in. (Go Daisy only)</p>
               </div>
             </div>
           </section>
