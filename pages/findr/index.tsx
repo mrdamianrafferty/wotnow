@@ -781,20 +781,28 @@ const FindrPage: React.FC = () => {
   useEffect(() => {
     // Don't auto-select while location data is still loading from database
     if (locationLoading) {
+      console.log('[Findr] Auto-select skipped: locationLoading=true');
       return;
     }
     // Don't auto-select if we have any rectangle from any source
     if (rectangleFromQuery || rectangleFromFindr || rectangleFromCoastal || rectangleFromLegacy) {
+      console.log('[Findr] Auto-select skipped: user has saved location', {
+        rectangleFromQuery,
+        rectangleFromFindr,
+        rectangleFromCoastal,
+        rectangleFromLegacy,
+      });
       return;
     }
     // Don't auto-select if rectangles not loaded yet
     if (rectangleOptions.length === 0) {
+      console.log('[Findr] Auto-select skipped: rectangleOptions empty');
       return;
     }
 
     // Auto-select first rectangle and save to findr slot
     const firstOption = rectangleOptions[0];
-    console.log('[Findr] Auto-selecting first rectangle:', firstOption.code);
+    console.log('[Findr] Auto-selecting first rectangle (no saved location found):', firstOption.code);
 
     void updateLocationBySlot({
       slot: 'findr',
