@@ -391,13 +391,29 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
           }
         }
 
+        // Always prefer a user-friendly name if provided, fallback to rectangle region, then rectangle code, then 'Saved Location'
+        const friendlyName = input.name?.trim() && input.name !== nextRectangleCode ? input.name : null;
+        const finalName = friendlyName ?? nextRectangleRegion ?? nextRectangleCode ?? 'Saved Location';
+
         const updateInput: UpdateLocationBySlotInput = {
           ...input,
           coordinates: { lat: nextLat, lon: nextLon },
-          name: nextName ?? nextRectangleRegion ?? 'Saved Location',
+          name: finalName,
           rectangleCode: nextRectangleCode,
           rectangleRegion: nextRectangleRegion,
         };
+
+        // Debug logging
+        console.log('[UnifiedLocation] Saving location:', {
+          name: finalName,
+          lat: nextLat,
+          lon: nextLon,
+          rectangleCode: nextRectangleCode,
+          rectangleRegion: nextRectangleRegion,
+          accuracy: input.accuracy,
+          source: input.source,
+          slot: input.slot,
+        });
 
         // Optimistic local update
         const existingIndex = locations.findIndex(loc => loc.slot === input.slot);
@@ -405,7 +421,7 @@ export function UnifiedLocationProvider({ children }: { children: React.ReactNod
         const optimisticLocation: SavedLocation = {
           id: tempId,
           slot: input.slot,
-          name: updateInput.name!,
+          name: finalName,
           lat: nextLat,
           lon: nextLon,
           rectangleCode: nextRectangleCode,
