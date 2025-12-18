@@ -40,13 +40,20 @@ import {
   Bug,
   Heart,
   Leaf,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../lib/grow/api';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from '../../lib/grow/species';
 import type { SerializedPlant } from '../../lib/grow/server/plants';
+
 import { getPlantImage, PLANT_IMAGE_MAP } from '../../lib/grow/plantImages';
 import { TranslatedText } from '../translation/TranslatedFishCard';
+
+type CultivarSummary = {
+  cultivarId: string;
+  cultivarName: string;
+};
 
 const HEALTH_OPTIONS: Array<{ value: 'excellent' | 'good' | 'fair' | 'poor'; label: string }> = [
   { value: 'excellent', label: 'Excellent' },
@@ -198,10 +205,30 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
   const [plantedDate, setPlantedDate] = useState(formatDateInput(new Date()));
   const [notes, setNotes] = useState('');
   
-  // Enhanced fields
-  const [variety, setVariety] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  const [source, setSource] = useState('');
+// Enhanced fields
+const [quantity, setQuantity] = useState(1);
+const [source, setSource] = useState('');
+
+// Cultivars (optional) — allow multiple entries in one add flow
+type CultivarEntry = { query: string; selected: CultivarSummary | null };
+
+const [cultivarEntries, setCultivarEntries] = useState<CultivarEntry[]>([
+  { query: '', selected: null },
+]);
+
+const [cultivarResults, setCultivarResults] = useState<CultivarSummary[]>([]);
+const [isFetchingCultivars, setIsFetchingCultivars] = useState(false);
+const cultivarRequestIdRef = useRef(0);
+const [cultivarSearchQuery, setCultivarSearchQuery] = useState('');
+
+  // Memoised boolean for whether cultivar search is implemented
+  const hasCultivarSearch = useMemo(() => {
+    type GrowApiWithCultivars = typeof api & {
+      searchCultivars?: (args: { speciesSlug: string; query: string; limit?: number }) => Promise<{ cultivars: CultivarSummary[] }>;
+    };
+    const growApiWithCultivars = api as GrowApiWithCultivars;
+    return Boolean(growApiWithCultivars?.searchCultivars);
+  }, []);
   
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -224,7 +251,11 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
     setLocation('');
     setPlantedDate(formatDateInput(new Date()));
     setNotes('');
-    setVariety('');
+    setCultivarEntries([{ query: '', selected: null }]);
+    setCultivarResults([]);
+    setIsFetchingCultivars(false);
+    cultivarRequestIdRef.current += 1;
+    setCultivarSearchQuery('');
     setQuantity(1);
     setSource('');
     setIsSaving(false);
@@ -290,19 +321,24 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
   }, [open, prefillFromIdentification]);
 
   useEffect(() => {
-    if (!selectedSpecies) {
-      return;
-    }
+  if (!selectedSpecies) return;
 
-    setNickname(selectedSpecies.name);
-    setHealth('good');
-    setLocation('Garden');
-    setPlantedDate(formatDateInput(new Date()));
-    setNotes('');
-    setVariety('');
-    setQuantity(1);
-    setSource('');
-  }, [selectedSpecies]);
+  setNickname(selectedSpecies.name);
+  setHealth('good');
+  setLocation('Garden');
+  setPlantedDate(formatDateInput(new Date()));
+  setNotes('');
+
+  // Reset cultivar UI for the newly selected species
+  setCultivarEntries([{ query: '', selected: null }]);
+  setCultivarResults([]);
+  setIsFetchingCultivars(false);
+  cultivarRequestIdRef.current += 1;
+  setCultivarSearchQuery('');
+
+  setQuantity(1);
+  setSource('');
+}, [selectedSpecies]);
 
   useEffect(() => {
     if (!open || step !== 'select' || activeTab !== 'search') {
@@ -390,6 +426,50 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
     };
   }, [open, step, activeTab, selectedCategory]);
 
+  useEffect(() => {
+    // Only for database species (custom plants stay free-text)
+    if (!open || step !== 'details' || isCustomPlant || !selectedSpecies || !hasCultivarSearch) {
+      cultivarRequestIdRef.current += 1;
+      setCultivarResults([]);
+      setIsFetchingCultivars(false);
+      return;
+    }
+
+    const trimmed = cultivarSearchQuery.trim();
+    if (trimmed.length < 2) {
+      cultivarRequestIdRef.current += 1;
+      setCultivarResults([]);
+      setIsFetchingCultivars(false);
+      return;
+    }
+
+    setIsFetchingCultivars(true);
+    const currentRequestId = ++cultivarRequestIdRef.current;
+
+    const timeoutId = window.setTimeout(() => {
+      api
+        .searchCultivars!({ speciesSlug: selectedSpecies.slug, query: trimmed, limit: 20 })
+        .then((res) => {
+          if (cultivarRequestIdRef.current !== currentRequestId) return;
+          setCultivarResults(Array.isArray(res?.cultivars) ? res.cultivars : []);
+        })
+        .catch((error: unknown) => {
+          if (cultivarRequestIdRef.current !== currentRequestId) return;
+          console.error('Cultivar search failed:', error);
+          setCultivarResults([]);
+        })
+        .finally(() => {
+          if (cultivarRequestIdRef.current !== currentRequestId) return;
+          setIsFetchingCultivars(false);
+        });
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      cultivarRequestIdRef.current += 1;
+    };
+  }, [cultivarSearchQuery, open, step, isCustomPlant, selectedSpecies, hasCultivarSearch]);
+
   const plantList = useMemo(() => {
     return listVariant === 'category' ? categoryResults : searchResults;
   }, [categoryResults, searchResults, listVariant]);
@@ -410,6 +490,83 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
     setShowCareInfo(false);
   };
 
+// Add a cultivar from autocomplete selection
+const handleAddCultivarFromSearch = (cultivar: CultivarSummary) => {
+  // Check for duplicates
+  const isDuplicate = cultivarEntries.some(
+    (e) => e.selected?.cultivarName.toLowerCase() === cultivar.cultivarName.toLowerCase()
+  );
+  if (isDuplicate) {
+    toast.info(`"${cultivar.cultivarName}" is already added`, {
+      description: 'Each cultivar can only be added once.',
+    });
+    return;
+  }
+  
+  setCultivarEntries((prev) => [
+    ...prev.filter((e) => e.selected), // Keep only selected entries
+    { query: cultivar.cultivarName, selected: cultivar },
+    { query: '', selected: null }, // Always have an empty trailing row
+  ]);
+  setCultivarSearchQuery('');
+  setCultivarResults([]);
+};
+
+// Add a manual cultivar (from typing + Enter/Add button)
+const handleAddManualCultivar = () => {
+  const trimmed = cultivarSearchQuery.trim();
+  if (trimmed.length < 3) return;
+  
+  // Check for duplicates
+  const isDuplicate = cultivarEntries.some(
+    (e) => e.selected?.cultivarName.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (isDuplicate) {
+    toast.info(`"${trimmed}" is already added`, {
+      description: 'Each cultivar can only be added once.',
+    });
+    return;
+  }
+  
+  const manualCultivar: CultivarSummary = {
+    cultivarId: `manual-${Date.now()}`,
+    cultivarName: trimmed,
+  };
+  
+  setCultivarEntries((prev) => [
+    ...prev.filter((e) => e.selected),
+    { query: trimmed, selected: manualCultivar },
+    { query: '', selected: null },
+  ]);
+  setCultivarSearchQuery('');
+  setCultivarResults([]);
+};
+
+const handleRemoveCultivar = (cultivarId: string) => {
+  setCultivarEntries((prev) => {
+    const filtered = prev.filter((e) => e.selected?.cultivarId !== cultivarId);
+    // Always ensure at least one empty row
+    if (filtered.length === 0 || filtered.every((e) => e.selected)) {
+      return [...filtered, { query: '', selected: null }];
+    }
+    return filtered;
+  });
+};
+
+// What we store in grow_user_plants.variety (string)
+const cultivarValueForStorage = useMemo(() => {
+  const names = cultivarEntries
+    .map((e) => e.query.trim())
+    .filter((v) => v.length > 0);
+  return names.length > 0 ? names.join(', ') : '';
+}, [cultivarEntries]);
+
+// What we store in grow_user_plants.cultivar_id (single FK, for now)
+const cultivarIdForStorage = useMemo(() => {
+  const firstLinked = cultivarEntries.find((e) => e.selected?.cultivarId)?.selected?.cultivarId;
+  return firstLinked ?? null;
+}, [cultivarEntries]);
+  
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     
@@ -433,7 +590,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
         wikiImageLicense: prefillFromIdentification?.wikiImageLicense || null,
         identificationData: prefillFromIdentification?.identificationData || null,
         // Enhanced fields
-        variety: variety.trim().length > 0 ? variety.trim() : null,
+        variety: cultivarValueForStorage.trim().length > 0 ? cultivarValueForStorage.trim() : null,
         quantity: quantity > 0 ? quantity : 1,
         source: source.length > 0 ? source : null,
       };
@@ -477,7 +634,8 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
       notes: notes.trim().length > 0 ? notes.trim() : null,
       // Enhanced fields
       speciesSlug: selectedSpecies.slug,
-      variety: variety.trim().length > 0 ? variety.trim() : null,
+      variety: cultivarValueForStorage.trim().length > 0 ? cultivarValueForStorage.trim() : null,
+...(cultivarIdForStorage ? { cultivarId: cultivarIdForStorage } : {}),
       quantity: quantity > 0 ? quantity : 1,
       source: source.length > 0 ? source : null,
     };
@@ -547,7 +705,7 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
     return (
       <div className="space-y-2">
         {plantList.map((plant) => {
-          const translationList = Object.values(plant.translations).filter((value): value is string => Boolean(value));
+          const translationList = Object.values(plant.translations ?? {}).filter((value): value is string => Boolean(value));
           const imageSrc = getSpeciesImageSrc(plant);
 
           return (
@@ -1073,15 +1231,106 @@ export function AddPlantDialog({ open, onOpenChange, onPlantAdded, prefillFromId
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="plant-variety">Variety / Cultivar</Label>
-                    <Input
-                      id="plant-variety"
-                      value={variety}
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => setVariety(event.target.value)}
-                      placeholder="e.g. Genovese, Bramley, Roma"
-                    />
-                    <p className="text-xs text-muted-foreground">Specific variety if known</p>
-                  </div>
+  <Label>Cultivars (optional)</Label>
+
+  {/* Selected cultivars as chips */}
+  {cultivarEntries.filter(e => e.selected).length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      {cultivarEntries.map((entry) => {
+        if (!entry.selected) return null;
+        return (
+          <div
+            key={`chip-${entry.selected.cultivarId}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1.5 text-sm font-medium text-green-800 dark:text-green-200"
+          >
+            <span className="truncate max-w-[150px]">{entry.selected.cultivarName}</span>
+            <button
+              type="button"
+              onClick={() => handleRemoveCultivar(entry.selected!.cultivarId)}
+              className="ml-0.5 rounded-full p-0.5 hover:bg-green-200 dark:hover:bg-green-800 focus-visible:ring-2 focus-visible:ring-green-600 outline-none"
+              aria-label={`Remove ${entry.selected.cultivarName}`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  )}
+
+  {/* Search input */}
+  <div className="relative">
+    <div className="flex items-center gap-2">
+      <Input
+        value={cultivarSearchQuery}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          setCultivarSearchQuery(event.target.value);
+        }}
+        onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            handleAddManualCultivar();
+          }
+        }}
+        placeholder={
+          isCustomPlant
+            ? 'Type a cultivar name (e.g. Genovese, Bramley)'
+            : 'Search cultivars…'
+        }
+        autoComplete="off"
+        aria-label="Add cultivar"
+      />
+      {cultivarSearchQuery.trim().length >= 3 && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={handleAddManualCultivar}
+          className="shrink-0"
+        >
+          Add
+        </Button>
+      )}
+    </div>
+
+    {/* Autocomplete dropdown */}
+    {!isCustomPlant &&
+      hasCultivarSearch &&
+      cultivarSearchQuery.trim().length >= 2 && (
+        <div className="absolute z-10 mt-1 w-full rounded-lg border bg-white dark:bg-zinc-900 shadow-lg">
+          <div className="px-3 py-2 text-xs text-muted-foreground flex items-center justify-between border-b">
+            <span>{isFetchingCultivars ? 'Searching…' : 'Suggestions'}</span>
+            <span className="tabular-nums">{cultivarResults.length}</span>
+          </div>
+
+          {cultivarResults.length > 0 ? (
+            <div className="max-h-40 overflow-auto">
+              {cultivarResults.map((cultivar) => (
+                <button
+                  key={cultivar.cultivarId}
+                  type="button"
+                  onClick={() => handleAddCultivarFromSearch(cultivar)}
+                  className="w-full text-left px-3 py-2 text-sm bg-white dark:bg-zinc-900 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 outline-none"
+                >
+                  {cultivar.cultivarName}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              No matches — press Enter or click Add to add manually.
+            </div>
+          )}
+        </div>
+      )}
+  </div>
+
+  <p className="text-xs text-muted-foreground">
+    {isCustomPlant
+      ? 'Type and press Enter to add each cultivar.'
+      : 'Search to find cultivars, or type 3+ characters and press Enter.'}
+  </p>
+</div>
 
                   <div className="space-y-2">
                     <Label htmlFor="plant-location">Location</Label>

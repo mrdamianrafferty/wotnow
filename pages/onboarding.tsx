@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
 
 import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from "../lib/hooks/usePlacesAutocompleteNew";
+import { Sprout } from 'lucide-react';
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 // DaisyUI Light tokens applied inline so they win the cascade inside this page
@@ -90,12 +91,12 @@ function InterestPill({ id, label, selected, icon, onToggle }: InterestPillProps
       className={[
         "btn btn-sm rounded-xl normal-case transition-shadow",
         selected
-          ? "btn-primary ring-2 ring-offset-1 ring-primary/60"
-          : "btn-outline hover:bg-base-200"
+          ? "btn-primary ring-2 ring-offset-1 ring-primary/60 shadow-lg transform scale-[1.02] text-white"
+          : "btn-outline hover:bg-base-200 text-base-content/80"
       ].join(" ")}
       aria-pressed={selected}
     >
-      {selected && <span className="mr-1">✓</span>}
+      {selected && <span className="mr-2 inline-flex items-center"><Sprout className="w-4 h-4 text-emerald-500" /></span>}
       {icon && <span className="mr-2 inline-flex items-center">{icon}</span>}
       <span>{label}</span>
     </button>
@@ -110,14 +111,14 @@ function ClusterPill({ id, label, icon, selected, onToggle }: { id: string; labe
       className={[
         "relative btn btn-lg h-24 w-full rounded-xl normal-case transition-shadow flex flex-col gap-1",
         selected
-          ? "btn-primary ring-2 ring-offset-1 ring-primary/60"
-          : "btn-outline hover:bg-base-200"
+          ? "btn-primary ring-2 ring-offset-1 ring-primary/60 shadow-lg transform scale-[1.01] text-white"
+          : "btn-outline hover:bg-base-200 text-base-content/80"
       ].join(" ")}
       aria-pressed={selected}
     >
       <span className="text-2xl">{icon}</span>
       <span className="text-sm font-semibold">
-        {selected && <span className="mr-1">✓</span>}
+        {selected && <span className="mr-1 inline-flex items-center"><Sprout className="w-4 h-4 text-emerald-500" /></span>}
         {label}
       </span>
     </button>

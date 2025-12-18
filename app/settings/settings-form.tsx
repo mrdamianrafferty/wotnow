@@ -358,38 +358,38 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
   }, [preferences, didSyncContext, hydrated]);
 
   // Subscribe to realtime changes for this user's profile and refresh form if changed elsewhere
-  useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
+  // useEffect(() => {
+  //   let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  //   (async () => {
+  //     const { data: { user } } = await supabase.auth.getUser();
+  //     if (!user) return;
 
-      channel = supabase
-        .channel('profiles-self')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: `id=eq.${user.id}`,
-        }, async () => {
-          const { data: fresh } = await supabase
-            .from('profiles')
-            .select('name,email,home_lat,home_lon,coast_lat,coast_lon,activities,preferences_json,updated_at')
-            .eq('id', user.id)
-            .single();
-          if (fresh) {
-            setP(fresh as Profile);
-            const { home_name, coast_name } = getSpotNames(fresh as Profile);
-            setHomeName(home_name);
-            setCoastName(coast_name);
-          }
-        })
-        .subscribe();
-    })();
+  //     channel = supabase
+  //       .channel('profiles-self')
+  //       .on('postgres_changes', {
+  //         event: '*',
+  //         schema: 'public',
+  //         table: 'profiles',
+  //         filter: `id=eq.${user.id}`,
+  //       }, async () => {
+  //         const { data: fresh } = await supabase
+  //           .from('profiles')
+  //           .select('name,email,home_lat,home_lon,coast_lat,coast_lon,activities,preferences_json,updated_at')
+  //           .eq('id', user.id)
+  //           .single();
+  //         if (fresh) {
+  //           setP(fresh as Profile);
+  //           const { home_name, coast_name } = getSpotNames(fresh as Profile);
+  //           setHomeName(home_name);
+  //           setCoastName(coast_name);
+  //         }
+  //       })
+  //       .subscribe();
+  //   })();
 
-    return () => { if (channel) supabase.removeChannel(channel); };
-  }, []);
+  //   return () => { if (channel) supabase.removeChannel(channel); };
+  // }, []);
 
   // Load current authenticated user's email for display
   useEffect(() => {

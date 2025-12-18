@@ -402,6 +402,9 @@ export async function clientTranslateBatch(texts: string[], targetLang: string):
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
     const response = await fetch('/api/translate', {
       method: 'POST',
       headers: {
@@ -411,7 +414,10 @@ export async function clientTranslateBatch(texts: string[], targetLang: string):
         texts,
         targetLang,
       }),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       console.warn(`Batch translation API error ${response.status}, falling back to original texts`);
@@ -436,7 +442,11 @@ export async function clientTranslateBatch(texts: string[], targetLang: string):
     
     return translations;
   } catch (error) {
-    console.error('Client batch translation failed:', error);
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('Batch translation timed out, falling back to original texts');
+    } else {
+      console.error('Client batch translation failed:', error);
+    }
     return texts; // Fallback to original texts
   }
 }

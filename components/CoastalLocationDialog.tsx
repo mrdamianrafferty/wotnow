@@ -263,12 +263,9 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
         fallbackAbortRef.current.abort();
         fallbackAbortRef.current = null;
       }
-      if (value.trim()) {
-        setValue(value, true);
-      }
       return false;
     });
-  }, [setValue, value]);
+  }, []);
 
   useEffect(() => {
     if (!autocompleteError) return;

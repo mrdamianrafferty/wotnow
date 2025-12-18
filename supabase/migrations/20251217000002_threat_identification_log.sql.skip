@@ -1,0 +1,71 @@
+-- Migration: Create threat_identification_log table
+-- Purpose: Capture AI pest/disease identifications for review and library building
+
+CREATE TABLE IF NOT EXISTS threat_identification_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Identification result
+  identified_name TEXT NOT NULL,           -- Name returned by AI (e.g., "Aphids", "Powdery Mildew")
+  scientific_name TEXT,                    -- Scientific name if provided
+  threat_type TEXT,                        -- pest|disease|deficiency|abiotic|unknown
+  confidence DECIMAL(4,3),                 -- 0.000 to 1.000
+  
+  -- AI provider info
+  provider TEXT NOT NULL,                  -- 'openai' or 'plantid'
+  raw_response JSONB,                      -- Full AI response for reference
+  
+  -- Match to our library
+  matched_threat_id UUID REFERENCES garden_threat(id),  -- If we found a match
+  match_confidence TEXT,                   -- 'exact', 'fuzzy', 'none'
+  
+  -- Context
+  user_id UUID,                            -- Optional: who made the request
+  user_plants TEXT[],                      -- Plants in user's garden
+  climate_zone TEXT,
+  month INTEGER,
+  
+  -- Treatment info from AI (for review)
+  ai_treatment TEXT[],
+  ai_prevention TEXT[],
+  ai_reasoning TEXT,
+  
+  -- Curation status
+  curation_status TEXT DEFAULT 'pending',  -- pending|reviewed|added_to_library|rejected
+  curator_notes TEXT,
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by UUID,
+  
+  -- Metadata
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes for querying
+CREATE INDEX idx_threat_log_name ON threat_identification_log(lower(identified_name));
+CREATE INDEX idx_threat_log_status ON threat_identification_log(curation_status);
+CREATE INDEX idx_threat_log_unmatched ON threat_identification_log(match_confidence) WHERE match_confidence = 'none';
+CREATE INDEX idx_threat_log_created ON threat_identification_log(created_at DESC);
+
+-- View: Threats needing curation (not in library, high confidence, seen multiple times)
+CREATE OR REPLACE VIEW threats_to_review AS
+SELECT 
+  lower(identified_name) as threat_name,
+  MAX(scientific_name) as scientific_name,
+  MAX(threat_type) as threat_type,
+  COUNT(*) as times_seen,
+  AVG(confidence) as avg_confidence,
+  MAX(confidence) as max_confidence,
+  array_agg(DISTINCT provider) as providers,
+  MAX(created_at) as last_seen,
+  -- Sample treatment suggestions
+  (array_agg(ai_treatment ORDER BY confidence DESC NULLS LAST))[1] as sample_treatment,
+  (array_agg(ai_prevention ORDER BY confidence DESC NULLS LAST))[1] as sample_prevention
+FROM threat_identification_log
+WHERE match_confidence = 'none'
+  AND curation_status = 'pending'
+  AND confidence >= 0.7
+GROUP BY lower(identified_name)
+HAVING COUNT(*) >= 2
+ORDER BY times_seen DESC, avg_confidence DESC;
+
+COMMENT ON TABLE threat_identification_log IS 'Logs AI pest/disease identifications for review and library building';
+COMMENT ON VIEW threats_to_review IS 'Threats identified by AI that are not in our library, ranked by frequency and confidence';

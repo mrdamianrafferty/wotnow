@@ -19,6 +19,7 @@ import {
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
+  Sprout,
 } from 'lucide-react';
 
 interface OnboardingFlowProps {
@@ -544,14 +545,17 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                     <label
                       key={feature.id}
                       className={cn(
-                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
-                        checked ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                        'flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
+                        checked
+                          ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
+                          : 'border-border hover:border-primary'
                       )}
                     >
                       <Checkbox
                         checked={checked}
                         onCheckedChange={(value) => toggleFeature(feature.id, Boolean(value))}
                         className="mt-1"
+                        indicator={<Sprout className="w-4 h-4 text-emerald-500" />}
                       />
                       <span>
                         <span className="flex items-center gap-2 font-medium">
@@ -589,14 +593,19 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('soilType', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
-                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
+                        active
+                          ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
+                          : 'border-border hover:border-primary'
                       )}
                     >
-                      <span className="flex items-center gap-2 font-medium">
-                        <span>{option.emoji}</span>
-                        {option.label}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span>{option.emoji}</span>
+                          {option.label}
+                        </span>
+                        {active && <Sprout className="w-5 h-5 text-emerald-500" />}
+                      </div>
                       <span className="block text-sm text-muted-foreground">{option.description}</span>
                     </button>
                   );
@@ -615,14 +624,19 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('sunExposure', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
-                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
+                        active
+                          ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
+                          : 'border-border hover:border-primary'
                       )}
                     >
-                      <span className="flex items-center gap-2 font-medium">
-                        <span>{option.emoji}</span>
-                        {option.label}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span>{option.emoji}</span>
+                          {option.label}
+                        </span>
+                        {active && <Sprout className="w-5 h-5 text-emerald-500" />}
+                      </div>
                       <span className="block text-sm text-muted-foreground">{option.description}</span>
                     </button>
                   );
@@ -641,14 +655,19 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => selectSingle('moisture', option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
-                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
+                        active
+                          ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
+                          : 'border-border hover:border-primary'
                       )}
                     >
-                      <span className="flex items-center gap-2 font-medium">
-                        <span>{option.emoji}</span>
-                        {option.label}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span>{option.emoji}</span>
+                          {option.label}
+                        </span>
+                        {active && <Sprout className="w-5 h-5 text-emerald-500" />}
+                      </div>
                       <span className="block text-sm text-muted-foreground">{option.description}</span>
                     </button>
                   );
@@ -671,14 +690,19 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
                       type="button"
                       onClick={() => toggleInterest(option.id)}
                       className={cn(
-                        'rounded-lg border p-4 text-left transition-all duration-200 hover:border-primary hover:scale-[1.02] hover:shadow-md',
-                        active ? 'border-primary bg-primary/5 scale-[1.02] shadow-md' : 'border-border'
+                        'rounded-lg border p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:shadow-md',
+                        active
+                          ? 'border-emerald-300 bg-emerald-50 scale-[1.02] shadow-lg'
+                          : 'border-border hover:border-primary'
                       )}
                     >
-                      <span className="flex items-center gap-2 font-medium">
-                        <span>{option.emoji}</span>
-                        {option.label}
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2 font-medium">
+                          <span>{option.emoji}</span>
+                          {option.label}
+                        </span>
+                        {active && <Sprout className="w-5 h-5 text-emerald-500" />}
+                      </div>
                     </button>
                   );
                 })}

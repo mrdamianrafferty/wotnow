@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="stylesheets/css.css" rel="stylesheet" type="text/css">
+<link href="stylesheets/nfc.css" rel="stylesheet" type="text/css">
+<link href="stylesheets/search.css" rel="stylesheet" type="text/css">
+<link rel="shortcut icon" href="images/nfc.ico">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<title>SEARCH</title>
+</head>
+<body>
+<div class="header nfc" id="top">
+<div class="container">
+<div class="row right">
+<div class="col left left1">
+&nbsp;</div> <!-- /col -->
+</div> <!-- /row -->
+</div> <!-- /container -->
+</div> <!-- /header -->
+<nav class="navbar sticky-top navbar-expand-md navbar-dark bg-dark">
+<div class="container">
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>&nbsp;Menu
+</button>
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+<ul class="navbar-nav mr-auto">
+<li class="nav-item">
+<a class="nav-link" href="index.php"><i class="material-icons">home</i>&nbsp;Home <span class="sr-only">(current)</span></a>
+</li>
+<li class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="material-icons">info_outline</i>&nbsp;Background&nbsp;<i class="material-icons">arrow_drop_down</i></a>
+<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="about_us.php"><i class="material-icons">nature_people</i>&nbsp;Fruit for the Future</a>
+<a class="dropdown-item" href="curation.php"><i class="material-icons">local_library</i>&nbsp;Maintenance &amp; Curation</a>
+<a class="dropdown-item" href="access.php"><i class="material-icons">visibility</i>&nbsp;Access</a>
+<a class="dropdown-item" href="acc_deacc.php"><i class="material-icons">nature</i>&nbsp;Accessions &amp; Deaccessions</a>
+</div>
+</li>
+<li class="nav-item active">
+<a class="nav-link" href="search.php"><i class="material-icons">search</i>&nbsp;Search</a>
+</li>
+</ul>
+<ul class="navbar-nav navbar-right">
+<li class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="material-icons">help</i>&nbsp;Help&nbsp;<i class="material-icons">arrow_drop_down</i></a>
+<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="contact.php"><i class="material-icons">email</i>&nbsp;Contact Us</a>
+<a class="dropdown-item" href="disclaimer.php"><i class="material-icons">info</i>&nbsp;Ts &amp; Cs</a>
+</div>
+</li>
+<li class="nav-item"><a href="login.php" class="nav-link"><i class="material-icons">person</i>&nbsp;Login</a></li>
+</ul>
+</div>
+</nav>
+<div class="container mainpage2">
+<div class="row">
+<div class="col-sm-12 col-md-9">
+<div class="d-md-none" id="sidebar2">
+<a data-toggle="collapse" href="#collapseSidebar2" aria-expanded="false" aria-controls="collapseSidebar2" class="list-group-item">Navigation&nbsp;<i class="material-icons">arrow_drop_down</i></a>
+<div class="collapse" id="collapseSidebar2">
+<a href="search.php" class="list-group-item active">Name</a>
+<a href="acc_num.php" class="list-group-item">Accession Number</a>
+<a href="acc_az.php" class="list-group-item">Accession A-Z</a>
+<a href="search_descriptors.php?fruit=apple" class="list-group-item">Apple</a>
+<a href="search_descriptors.php?fruit=pear" class="list-group-item">Pear</a>
+<a href="search_descriptors.php?fruit=apricot" class="list-group-item">Apricot</a>
+<a href="search_descriptors.php?fruit=blackcurrant" class="list-group-item">Blackcurrant</a>
+<a href="search_descriptors.php?fruit=currant" class="list-group-item">Currants</a>
+<a href="search_descriptors.php?fruit=cherry" class="list-group-item">Cherry</a>
+<a href="search_descriptors.php?fruit=gooseberry" class="list-group-item">Gooseberry</a>
+<a href="search_descriptors.php?fruit=plum" class="list-group-item">Plum</a>
+</div><!--/colapse-->
+</div><!--/hide-->
+<div class="row">
+<div class="col">
+<h2><small>Search Name</small> 'Giggles Green'</h2>
+<h1>No Matches:</h1><p>Please try again.</p><p><form method="get" action="names.php">
+<div class="btn-group" role="group" aria-label="back and next"><a href="search.php" class="btn btn-go" role="button"><i class="material-icons">search</i>&nbsp;New Search</a></div></form>
+</p>
+</div>
+</div>
+</div><!--/.col-xs-12.col-sm-9-->
+<div class="col-sm-12 col-md-3" id="sidebar">
+<div class="d-none d-md-block">
+<a href="search.php" class="list-group-item active">Name</a>
+<a href="acc_num.php" class="list-group-item">Accession Number</a>
+<a href="acc_az.php" class="list-group-item">Accession A-Z</a>
+<a href="search_descriptors.php?fruit=apple" class="list-group-item">Apple</a>
+<a href="search_descriptors.php?fruit=pear" class="list-group-item">Pear</a>
+<a href="search_descriptors.php?fruit=apricot" class="list-group-item">Apricot</a>
+<a href="search_descriptors.php?fruit=blackcurrant" class="list-group-item">Blackcurrant</a>
+<a href="search_descriptors.php?fruit=currant" class="list-group-item">Currants</a>
+<a href="search_descriptors.php?fruit=cherry" class="list-group-item">Cherry</a>
+<a href="search_descriptors.php?fruit=gooseberry" class="list-group-item">Gooseberry</a>
+<a href="search_descriptors.php?fruit=plum" class="list-group-item">Plum</a>
+</div><!--/hide-->
+</div><!--/col-->
+</div><!--/row-->
+</div> <!-- /container -->
+<!-- Site footer -->
+<footer>
+<div class="container">
+<div class="row">
+<div class="col-lg-3 col-md-4 col-sm-6">
+<p class="text-center"><a href="" data-toggle="modal" data-target="#exampleModal"><i class="material-icons">copyright</i>&nbsp;2025 Crown Copyright</a></p>
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h4 class="modal-title" id="exampleModalLabel">Copyright Information</h4>
+<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>
+<div class="modal-body"><p class="text-left">You may use and re-use the information featured on this website (not including logos) free of charge in any format or medium, under the terms of the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank"><strong>Open Government Licence</strong> <i class="material-icons">open_in_new</i></a>.</p></div>
+<div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+</div>
+</div>
+</div>
+</div>
+</div> <!-- /col -->
+<div class="col-lg-3 col-md-4 col-sm-6">
+<p class="text-center"><a href="contact.php"><i class="material-icons">email</i>&nbsp;Contact Us</a></p>
+</div> <!-- /col -->
+<div class="col-lg-3 col-md-4 offset-lg-3 col-sm-12">
+<p class="text-center"><i class="material-icons">brush</i>&nbsp;Chris Turnbull
+&nbsp;<small>August 2023</small></p>
+</div> <!-- /col -->
+</div> <!-- /row -->
+</div> <!-- /container -->
+</footer>
+<script type="text/javascript" src="js/jquery.js"></script>
+<script type="text/javascript" src="js/popper.min.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript">
+$(function () {
+$('[data-toggle="popover"]').popover()
+})
+</script>
+</body>
+</html>

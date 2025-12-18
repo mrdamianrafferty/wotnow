@@ -421,19 +421,26 @@ export function SettingsPage() {
               Garden Features
             </Label>
             <div className="grid grid-cols-2 gap-2">
-              {gardenFeatureOptions.map(option => (
+              {gardenFeatureOptions.map(option => {
+                const checked = formData.gardenFeatures?.includes(option.id) || false;
+                return (
                 <label
                   key={option.id}
-                  className="flex items-center gap-2 p-2 rounded-md border cursor-pointer hover:bg-muted/50 transition-colors"
+                  className={cn(
+                    'flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors',
+                    checked ? 'border-emerald-300 bg-emerald-50 shadow-sm' : 'hover:bg-muted/50'
+                  )}
                 >
                   <Checkbox
-                    checked={formData.gardenFeatures?.includes(option.id) || false}
+                    checked={checked}
                     onCheckedChange={() => toggleArrayField('gardenFeatures', option.id)}
+                    indicator={<Sprout className="w-4 h-4 text-emerald-500" />}
                   />
                   <span className="text-lg">{option.emoji}</span>
                   <span className="text-sm">{option.label}</span>
                 </label>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -529,19 +536,26 @@ export function SettingsPage() {
               Gardening Interests
             </Label>
             <div className="grid grid-cols-2 gap-2">
-              {interestOptions.map(option => (
+              {interestOptions.map(option => {
+                const checked = formData.interests?.includes(option.id) || false;
+                return (
                 <label
                   key={option.id}
-                  className="flex items-center gap-2 p-2 rounded-md border cursor-pointer hover:bg-muted/50 transition-colors"
+                  className={cn(
+                    'flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors',
+                    checked ? 'border-emerald-300 bg-emerald-50 shadow-sm' : 'hover:bg-muted/50'
+                  )}
                 >
                   <Checkbox
-                    checked={formData.interests?.includes(option.id) || false}
+                    checked={checked}
                     onCheckedChange={() => toggleArrayField('interests', option.id)}
+                    indicator={<Sprout className="w-4 h-4 text-emerald-500" />}
                   />
                   <span className="text-lg">{option.emoji}</span>
                   <span className="text-sm">{option.label}</span>
                 </label>
-              ))}
+                );
+              })}
             </div>
           </div>
 

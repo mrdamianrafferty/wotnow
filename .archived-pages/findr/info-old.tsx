@@ -543,8 +543,8 @@ const FindrInfoPage = () => {
             <div className="relative">
               <Fish className="text-blue-400 mr-2 fish-shimmer" />
             </div>
-            <span className="text-white font-semibold">findr</span>
-            <span className="text-gray-400 ml-2">- Smart Fishing Intelligence</span>
+            
+            <span className="text-gray-400 ml-2">findr - Smart Fishing Intelligence</span>
           </div>
           <p className="text-gray-400 text-sm">
             <TranslatedText text="Where mullets never go out of style" />
