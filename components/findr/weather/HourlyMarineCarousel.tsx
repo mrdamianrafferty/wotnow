@@ -91,7 +91,7 @@ function HourlyCard({ entry, tideState }: HourlyCardProps) {
     <div className="card bg-white border border-base-200/80 shadow-sm h-full text-base-content">
       <div className="card-body gap-3">
         <div>
-          <p className="text-sm font-semibold">{formatDisplayTime(entry.time)}</p>
+          <p className="text-sm font-semibold text-black">{formatDisplayTime(entry.time)}</p>
           <p className="text-xs text-base-content"><TranslatedText text="Hourly outlook" /></p>
         </div>
         {/* Weather icon with air temperature */}
