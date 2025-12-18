@@ -166,10 +166,9 @@ const FindrConditionsRoute: React.FC = () => {
         {/* Navigation component handles responsive display internally */}
         <FindrNavigation />
 
-        {/* Content container */}
-        <div className="sm:mx-auto px-2 pt-2 sm:px-2 sm:pt-6 md:px-4 lg:max-w-6xl">
-          <div className="space-y-10">
-            <ConditionsDashboard
+        {/* Content container - reduced padding/margins, removed unnecessary wrappers */}
+        <div className="px-1 pt-2 sm:px-2 md:px-4 lg:max-w-3xl mx-auto">
+          <ConditionsDashboard
             data={conditions.data}
             loading={conditions.loading}
             error={conditions.error}
@@ -177,13 +176,13 @@ const FindrConditionsRoute: React.FC = () => {
             onRetry={conditions.reload}
             rectangleCode={activeRectangle ?? undefined}
           />
-          
           {/* Fishing Area Information */}
-          <FishingAreaInfo
-            activeOption={activeOption}
-            activeRectangle={activeRectangle}
-            rectangleRegion={conditions.data?.rectangle?.name}
-          />
+          <div className="mt-6">
+            <FishingAreaInfo
+              activeOption={activeOption}
+              activeRectangle={activeRectangle}
+              rectangleRegion={conditions.data?.rectangle?.name}
+            />
           </div>
         </div>
       </main>
