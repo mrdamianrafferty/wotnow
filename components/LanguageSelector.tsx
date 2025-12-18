@@ -52,7 +52,7 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           <span className="text-xs font-medium uppercase">{language}</span>
           <ChevronDown className="w-3 h-3 opacity-60" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-48 border border-base-200">
+        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white/100 dark:bg-zinc-900/100 rounded-box w-48 border border-base-200">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
@@ -98,7 +98,7 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           </div>
           <ChevronDown className="w-4 h-4" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-full border border-base-200">
+        <ul tabIndex={0} className="dropdown-content z-[100] p-2 shadow-lg bg-white/100 dark:bg-zinc-900/100 rounded-box w-full border border-base-200">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
