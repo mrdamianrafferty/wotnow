@@ -595,7 +595,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
   }, []);
 
   return (
-    <section className="space-y-6">
+    <>
       {isOffline && (
         <div className="alert alert-error flex items-center gap-3 mb-4">
           <AlertTriangle className="h-5 w-5" />
@@ -782,7 +782,7 @@ export function ConditionsDashboard({ data, loading, error, source: _source, onR
           )}
         </div>
       </div>
-    </section>
+    </>
   );
 };
 
