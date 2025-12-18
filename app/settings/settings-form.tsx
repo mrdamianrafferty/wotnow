@@ -5,6 +5,11 @@ import { rankRecommendations, idToLabel } from './recommendations';
 import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// import dynamic from 'next/dynamic';
+// import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
+import { supabase } from '../../lib/supabase/client';
+import { useUserPreferences } from '../../context/UserPreferencesContext';
 
 declare global {
   // Optional runtime-provided activity map (e.g. injected on window in demos)
@@ -56,11 +61,6 @@ function writeDeviceProfileCache(current: Profile, patch: Partial<Profile>) {
     localStorage.setItem(LS_KEY, JSON.stringify(merged));
   } catch {/* ignore */}
 }
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// import dynamic from 'next/dynamic';
-// import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
-import { supabase } from '../../lib/supabase/client';
-import { useUserPreferences } from '../../context/UserPreferencesContext';
 
 // const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
@@ -153,22 +153,19 @@ function dbg(...args: unknown[]) {
   }
 }
 
-
+// Collect visible user-facing strings for translation (header, language selector, personal details)
+const SETTINGS_TRANSLATION_STRINGS = [
+  'Help us personalise your experience and recommendations.',
+  'Language',
+  'Beta',
+  'Choose your preferred language for Go Daisy. This feature is in beta and may not be fully translated.',
+  'Personal Details',
+  'What should we call you?',
+  'Email (account)',
+];
 
 export default function SettingsForm({ initial }: SettingsFormProps) {
-  // Collect visible user-facing strings for translation (header, language selector, personal details)
-  const SETTINGS_TRANSLATION_STRINGS = [
-    'Help us personalise your experience and recommendations.',
-    'Language',
-    'Beta',
-    'Choose your preferred language for Go Daisy. This feature is in beta and may not be fully translated.',
-    'Personal Details',
-    'What should we call you?',
-    'Email (account)',
-  ];
-
-  export default function SettingsForm({ initial }: SettingsFormProps) {
-    const { t } = useTranslationMap(SETTINGS_TRANSLATION_STRINGS);
+  const { t } = useTranslationMap(SETTINGS_TRANSLATION_STRINGS);
   const [p, setP] = useState<Profile>(
     initial ?? {
       name: '',
@@ -500,15 +497,17 @@ export default function SettingsForm({ initial }: SettingsFormProps) {
         return;
       }
 
-      // Merge strategy: activities = union; coordinates = prefer newer server if present, otherwise keep local; names keep current UI
-      const mergedActivities = Array.from(new Set([...(fresh.activities ?? []), ...(p.activities ?? [])]));
-
-        const merged: Profile = {
-          ...(fresh as Profile),
-          activities: mergedActivities,
-          // keep spot names in preferences_json from current UI
-          preferences_json: setSpotNames((fresh.preferences_json as PreferencesMap) || {}, homeName, coastName),
-        };
+      // Merge strategy: user's last active change always wins, except never let defaults overwrite real data
+      // If local activities/locations are not default/empty, use them; otherwise, use server
+      const isDefaultActivities = !p.activities || p.activities.length === 0;
+      const merged: Profile = {
+        ...(fresh as Profile),
+        activities: isDefaultActivities ? (fresh.activities ?? []) : p.activities,
+        // For preferences_json (locations, names), use local if not default, else server
+        preferences_json: (p.preferences_json && Object.keys(p.preferences_json).length > 0)
+          ? setSpotNames(p.preferences_json as PreferencesMap, homeName, coastName)
+          : ((fresh.preferences_json as PreferencesMap) || {}),
+      };
 
       setP(merged);
       const spots = getSpotNames(merged);
