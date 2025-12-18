@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // components/findr/NearbyTackleShops.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Star, ExternalLink, Loader } from 'lucide-react';
@@ -7,29 +8,39 @@ import { TranslatedText } from '../translation/TranslatedFishCard';
 
 export function NearbyTackleShops() {
   const { location, loading: locationLoading } = useUnifiedLocation();
+
+  // Debug logging for context state
+  console.log('[NearbyTackleShops] location:', location);
+  console.log('[NearbyTackleShops] locationLoading:', locationLoading);
   const [shops, setShops] = useState<TackleShop[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = useCallback(async () => {
+    console.log('[NearbyTackleShops] handleSearch called. location:', location);
     if (!location?.lat || !location?.lon) {
       setError('Location not available. Please set your fishing location first.');
       return;
     }
 
     setLoading(true);
+    console.log('[NearbyTackleShops] Searching for shops...');
     setError(null);
     setHasSearched(true);
 
     try {
+      console.log('[NearbyTackleShops] findNearbyTackleShops input:', location?.lat, location?.lon);
       const results = await findNearbyTackleShops(location.lat, location.lon);
+      console.log('[NearbyTackleShops] findNearbyTackleShops results:', results);
       setShops(results);
 
       if (results.length === 0) {
+        console.log('[NearbyTackleShops] No shops found.');
         setError('No tackle shops found within 50km. Try searching in a different area.');
       }
     } catch (err) {
+      console.error('[NearbyTackleShops] Error in handleSearch:', err);
       console.error('Error finding tackle shops:', err);
       setError(
         err instanceof Error && err.message.includes('authorized')
@@ -37,6 +48,7 @@ export function NearbyTackleShops() {
           : 'Failed to load tackle shops. Please try again later.'
       );
     } finally {
+      console.log('[NearbyTackleShops] Search finished. loading:', loading, 'error:', error);
       setLoading(false);
     }
   }, [location]);
