@@ -52,7 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({ success: true, plant: serializePlant(data as PlantRow) });
   }
 
-  const { name, type, location, health, planted, lastWatered, notes } = req.body ?? {};
+  const { name, type, location, health, planted, lastWatered, notes, quantity } = req.body ?? {};
 
   const updates: Partial<InsertPlantRow> = {};
 
@@ -76,6 +76,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (notes !== undefined) {
     updates.notes = typeof notes === 'string' ? notes : null;
+  }
+  if (quantity !== undefined) {
+    // Accept numeric or null; coerce strings to numbers when possible
+    if (quantity === null) {
+      updates.quantity = null;
+    } else {
+      const n = Number(quantity);
+      if (!Number.isNaN(n) && Number.isFinite(n)) {
+        updates.quantity = Math.max(0, Math.floor(n));
+      } else {
+        // ignore invalid quantity values (do not treat as fatal)
+      }
+    }
   }
 
   if (Object.keys(updates).length === 0) {

@@ -28,6 +28,7 @@ interface Plant {
   variety?: string | null;
   cultivarId?: string | null;
   cultivar_id?: string | null;
+  quantity?: number | null;
 }
 
 type CultivarSearchResult = {
@@ -75,6 +76,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
   const [notes, setNotes] = useState('');
   const [variety, setVariety] = useState('');
   const [cultivarId, setCultivarId] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState<number | '' | null>('');
   const [cultivarResults, setCultivarResults] = useState<CultivarSearchResult[]>([]);
   const [isSearchingCultivars, setIsSearchingCultivars] = useState(false);
   const [showCultivarResults, setShowCultivarResults] = useState(false);
@@ -91,6 +93,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       setNotes(plant.notes || '');
       setVariety(plant.variety || '');
       setCultivarId((plant.cultivarId ?? plant.cultivar_id ?? null) as string | null);
+      setQuantity(typeof plant.quantity === 'number' ? plant.quantity : null);
       setCultivarResults([]);
       setIsSearchingCultivars(false);
       setShowCultivarResults(false);
@@ -147,6 +150,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       notes: notes.trim() || null,
       variety: variety.trim() || null,
       cultivarId: cultivarId || null,
+      quantity: quantity === '' ? null : (quantity === null ? null : Number(quantity)),
     };
 
     setIsSaving(true);
@@ -165,6 +169,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
         notes: updates.notes || undefined,
         variety: updates.variety || undefined,
         cultivarId: updates.cultivarId || undefined,
+        quantity: updates.quantity ?? plant.quantity ?? undefined,
       };
 
       onPlantUpdated(updatedPlant);
@@ -220,6 +225,31 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
                 value={location}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setLocation(event.target.value)}
                 placeholder="e.g. Raised Bed 1"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-plant-quantity">Quantity</Label>
+              <Input
+                id="edit-plant-quantity"
+                type="number"
+                min={0}
+                step={1}
+                value={quantity === '' ? '' : (quantity === null ? '' : String(quantity))}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const raw = event.target.value;
+                  if (raw === '') {
+                    setQuantity(null);
+                    return;
+                  }
+                  const n = Number(raw);
+                  if (Number.isNaN(n)) {
+                    setQuantity('');
+                  } else {
+                    setQuantity(Math.max(0, Math.floor(n)));
+                  }
+                }}
+                placeholder="Number of plants (e.g. 3)"
               />
             </div>
 
