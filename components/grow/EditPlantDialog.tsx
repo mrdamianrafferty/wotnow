@@ -28,7 +28,7 @@ interface Plant {
   variety?: string | null;
   cultivarId?: string | null;
   cultivar_id?: string | null;
-  quantity?: number | null;
+  quantity?: number;
 }
 
 type CultivarSearchResult = {
@@ -76,7 +76,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
   const [notes, setNotes] = useState('');
   const [variety, setVariety] = useState('');
   const [cultivarId, setCultivarId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState<number | '' | null>('');
+  const [quantity, setQuantity] = useState<number | '' | undefined>('');
   const [cultivarResults, setCultivarResults] = useState<CultivarSearchResult[]>([]);
   const [isSearchingCultivars, setIsSearchingCultivars] = useState(false);
   const [showCultivarResults, setShowCultivarResults] = useState(false);
@@ -93,7 +93,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       setNotes(plant.notes || '');
       setVariety(plant.variety || '');
       setCultivarId((plant.cultivarId ?? plant.cultivar_id ?? null) as string | null);
-      setQuantity(typeof plant.quantity === 'number' ? plant.quantity : null);
+      setQuantity(typeof plant.quantity === 'number' ? plant.quantity : undefined);
       setCultivarResults([]);
       setIsSearchingCultivars(false);
       setShowCultivarResults(false);
@@ -169,7 +169,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
         notes: updates.notes || undefined,
         variety: updates.variety || undefined,
         cultivarId: updates.cultivarId || undefined,
-        quantity: updates.quantity ?? plant.quantity ?? undefined,
+        quantity: (updates.quantity === null ? undefined : (updates.quantity !== undefined ? Number(updates.quantity) : plant.quantity ?? undefined)),
       };
 
       onPlantUpdated(updatedPlant);
@@ -235,11 +235,11 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
                 type="number"
                 min={0}
                 step={1}
-                value={quantity === '' ? '' : (quantity === null ? '' : String(quantity))}
+                value={quantity === '' ? '' : (quantity === undefined ? '' : String(quantity))}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                   const raw = event.target.value;
                   if (raw === '') {
-                    setQuantity(null);
+                    setQuantity(undefined);
                     return;
                   }
                   const n = Number(raw);
