@@ -6,7 +6,7 @@ import { findNearbyTackleShops, type TackleShop } from '@/lib/findNearbyTackleSh
 import { TranslatedText } from '../translation/TranslatedFishCard';
 
 export function NearbyTackleShops() {
-  const { location } = useUnifiedLocation();
+  const { location, loading: locationLoading } = useUnifiedLocation();
   const [shops, setShops] = useState<TackleShop[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +47,17 @@ export function NearbyTackleShops() {
       handleSearch();
     }
   }, [location, hasSearched, handleSearch]);
+
+  if (locationLoading) {
+    return (
+      <div className="flex items-center justify-center gap-3 p-6">
+        <Loader className="animate-spin text-primary" size={24} />
+        <span className="text-sm text-base-content/70">
+          <TranslatedText text="Loading your saved location..." />
+        </span>
+      </div>
+    );
+  }
 
   if (!hasSearched && !loading) {
     return (
