@@ -141,7 +141,7 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
     event.preventDefault();
     if (!plant) return;
 
-    const updates = {
+    const updates: Record<string, unknown> = {
       name: name.trim(),
       location: location.trim() || null,
       health,
@@ -150,8 +150,16 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       notes: notes.trim() || null,
       variety: variety.trim() || null,
       cultivarId: cultivarId || null,
-      quantity: quantity === '' ? null : (quantity === null ? null : Number(quantity)),
     };
+
+    if (quantity !== undefined) {
+      // '' shouldn't happen here normally, but treat as null for safety
+      if (quantity === '') {
+        updates.quantity = null;
+      } else {
+        updates.quantity = Number(quantity);
+      }
+    }
 
     setIsSaving(true);
 
@@ -161,15 +169,17 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
       // Update local plant object
       const updatedPlant: Plant = {
         ...plant,
-        name: updates.name,
-        location: updates.location || 'Garden',
-        health: updates.health,
-        planted: updates.planted ? new Date(updates.planted) : plant.planted,
-        lastWatered: updates.lastWatered ? new Date(updates.lastWatered) : undefined,
-        notes: updates.notes || undefined,
-        variety: updates.variety || undefined,
-        cultivarId: updates.cultivarId || undefined,
-        quantity: (updates.quantity === null ? undefined : (updates.quantity !== undefined ? Number(updates.quantity) : plant.quantity ?? undefined)),
+        name: updates.name as string,
+        location: (updates.location as string) || 'Garden',
+        health: updates.health as typeof health,
+        planted: updates.planted ? new Date(updates.planted as string) : plant.planted,
+        lastWatered: updates.lastWatered ? new Date(updates.lastWatered as string) : undefined,
+        notes: (updates.notes as string) || undefined,
+        variety: (updates.variety as string) || undefined,
+        cultivarId: (updates.cultivarId as string) || undefined,
+        quantity: Object.prototype.hasOwnProperty.call(updates, 'quantity')
+          ? (updates.quantity === null ? undefined : Number(updates.quantity))
+          : plant.quantity,
       };
 
       onPlantUpdated(updatedPlant);
@@ -239,7 +249,8 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                   const raw = event.target.value;
                   if (raw === '') {
-                    setQuantity(undefined);
+                    // User cleared the field (hot delete): treat as explicit 0
+                    setQuantity(0);
                     return;
                   }
                   const n = Number(raw);
