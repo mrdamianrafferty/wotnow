@@ -352,7 +352,7 @@ function getTransformedUrl(bucket: string, path: string): string | null {
 
     // Prefer the transformed URL when it's a normal public URL, otherwise fall back
     return tUrl ?? baseUrl;
-  } catch (err) {
+  } catch (_err) {
     // If the client or server doesn't support transform options, return the base URL
     return baseUrl;
   }

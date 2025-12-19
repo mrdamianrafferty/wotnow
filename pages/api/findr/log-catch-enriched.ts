@@ -287,7 +287,7 @@ export default async function handler(
             } else {
               _photoThumbnailUrl = tUrl ?? basePublic;
             }
-        } catch (err) {
+        } catch (_err) {
           _photoThumbnailUrl = basePublic;
         }
       }

@@ -73,7 +73,7 @@ export async function uploadCatchPhoto(
       } else {
         thumbnailUrl = tUrl ?? basePublicUrl;
       }
-    } catch (err) {
+    } catch (_err) {
       thumbnailUrl = basePublicUrl;
     }
 
