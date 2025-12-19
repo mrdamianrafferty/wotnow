@@ -808,7 +808,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       rectangleCode: typeof q.rectangleCode === 'string' ? q.rectangleCode : undefined,
       predictionDate: typeof q.predictionDate === 'string' ? q.predictionDate : undefined,
       language: typeof q.language === 'string' ? q.language : undefined,
-      bypassCache: q.bypassCache === 'string' ? (q.bypassCache === 'true' || q.bypassCache === '1') : false,
+      bypassCache: typeof q.bypassCache === 'string' ? (q.bypassCache === 'true' || q.bypassCache === '1') : false,
       latitude: q.latitude && typeof q.latitude === 'string' ? parseFloat(q.latitude) : undefined,
       longitude: q.longitude && typeof q.longitude === 'string' ? parseFloat(q.longitude) : undefined,
       regionCode: typeof q.regionCode === 'string' ? q.regionCode : undefined,
