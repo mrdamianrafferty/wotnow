@@ -803,14 +803,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   } else if (req.method === 'GET') {
     // Map query params into the same request shape
-    const q: any = req.query || {};
+    const q = req.query as Record<string, string | string[] | undefined>;
     body = {
       rectangleCode: typeof q.rectangleCode === 'string' ? q.rectangleCode : undefined,
       predictionDate: typeof q.predictionDate === 'string' ? q.predictionDate : undefined,
       language: typeof q.language === 'string' ? q.language : undefined,
-      bypassCache: q.bypassCache === 'true' || q.bypassCache === '1',
-      latitude: q.latitude ? parseFloat(String(q.latitude)) : undefined,
-      longitude: q.longitude ? parseFloat(String(q.longitude)) : undefined,
+      bypassCache: q.bypassCache === 'string' ? (q.bypassCache === 'true' || q.bypassCache === '1') : false,
+      latitude: q.latitude && typeof q.latitude === 'string' ? parseFloat(q.latitude) : undefined,
+      longitude: q.longitude && typeof q.longitude === 'string' ? parseFloat(q.longitude) : undefined,
       regionCode: typeof q.regionCode === 'string' ? q.regionCode : undefined,
     } as PredictionRequestBody;
   }
