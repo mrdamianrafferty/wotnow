@@ -6,7 +6,7 @@ import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
 import { useUserPreferences } from '../context/UserPreferencesContext';
 import { getActivityEmoji } from '../data/emojiMap';
-import { resolveSpeciesImage, type CardData } from '../lib/findr/mapPrediction';
+import { resolveSpeciesImage } from '../lib/findr/mapPrediction';
 import { getActivityBg } from '../data/bgMap';
 import { useHasMounted } from '../utils/useHasMounted';
 import { activityMessages } from '../data/activityMessages';

@@ -285,7 +285,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     })();
 
     return () => { cancelled = true; };
-  }, [effectiveHome, mounted]);
+  }, [effectiveHome, mounted, setPreferences]);
 
   const resolvedHomeLabel = React.useMemo(() => {
     const base = mounted ? (effectiveHome?.name || null) : null;

@@ -122,7 +122,7 @@ function buildMessage({ text, url }: SharePayload) {
   return [text, url].filter(Boolean).join('\n\n');
 }
 
-function buildEmailishSubject(activityTitle: string) {
+function _buildEmailishSubject(activityTitle: string) {
   const t = activityTitle.trim();
   const firstWord = t.split(/\s+/)[0] || '';
   const looksGerund = /ing\b/i.test(firstWord);
