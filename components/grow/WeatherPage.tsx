@@ -258,7 +258,16 @@ function isWeatherApiResponse(candidate: unknown): candidate is WeatherApiRespon
     return false;
   }
   const data = candidate as Partial<WeatherApiResponse>;
-  return Boolean(data.current && data.hourly && data.daily);
+  // Basic structural checks: must have current + non-empty hourly/daily arrays
+  if (!data.current || !data.hourly || !data.daily) return false;
+  if (!Array.isArray(data.hourly) || data.hourly.length === 0) return false;
+  if (!Array.isArray(data.daily) || data.daily.length === 0) return false;
+
+  const cur = data.current as Partial<CurrentWeather>;
+  if (typeof cur.temperature !== 'number') return false;
+  if (typeof cur.condition !== 'string') return false;
+
+  return true;
 }
 
 export function WeatherPage() {
@@ -384,7 +393,15 @@ export function WeatherPage() {
       if (isWeatherApiResponse(data)) {
         setWeatherData(data);
       } else {
-        throw new Error('Invalid weather payload');
+        // Don't throw — treat as non-fatal and fall back to mock data so UI & other services keep working.
+        try {
+          console.warn('Unexpected weather payload from /api/grow/weather — falling back to demo data:', data);
+        } catch (_err) {
+          // ignore
+        }
+        setError(t('Showing demo weather data (live service unavailable)'));
+        setWeatherData(null);
+        return;
       }
     } catch (err) {
       console.error('Failed to fetch weather data, using mock data:', err);
