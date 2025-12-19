@@ -727,17 +727,17 @@ export const FishSpeciesModal: React.FC<FishSpeciesModalProps> = ({ card, open, 
               </div>
             )}
 
-            {card.baitSuggestions.length > 0 && (
+            {Array.isArray(card.baitSuggestions) && card.baitSuggestions.length > 0 && (
               <InfoSection icon={<FishIcon size={20} />} title="Top bait calls">
                 {card.baitSuggestions.join(', ')}
               </InfoSection>
             )}
-            {card.tideTips.length > 0 && (
+            {Array.isArray(card.tideTips) && card.tideTips.length > 0 && (
               <InfoSection icon={<Waves size={20} />} title="Tide timing from the deck">
                 {card.tideTips[0]}
               </InfoSection>
             )}
-            {card.statusNotes.length > 0 && (
+            {Array.isArray(card.statusNotes) && card.statusNotes.length > 0 && (
               <InfoSection icon={<Shield size={20} />} title="Status notes">
                 <ul className="list-disc space-y-1 pl-5">
                   {card.statusNotes.slice(0, 3).map((note, idx) => (

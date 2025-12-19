@@ -750,6 +750,18 @@ function reRankPredictions(predictions: unknown): unknown {
 // The old grid-based seasonality system conflicted with v3's built-in seasonality.
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Basic CORS support to handle preflight (OPTIONS) requests and cross-origin dev setups.
+  // This keeps the API robust when the frontend is served from a different origin in dev/tests.
+  const requestOrigin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', requestOrigin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    // Respond to preflight quickly
+    return res.status(204).end();
+  }
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });

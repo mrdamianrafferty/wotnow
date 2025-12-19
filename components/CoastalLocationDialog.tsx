@@ -549,6 +549,7 @@ const CoastalLocationDialog: React.FC<CoastalLocationDialogProps> = ({
             ref={inputRef}
             type="text"
             className="input input-bordered w-full pr-10"
+            data-testid="location-dialog-input"
             placeholder={ready || useFallbackSearch ? 'Search a place…' : 'Loading Google Maps…'}
             value={value}
             onChange={(e) => setValue(e.target.value, !useFallbackSearch)}

@@ -406,3 +406,6 @@ export function EditPlantDialog({ open, onOpenChange, plant, onPlantUpdated }: E
     </Dialog>
   );
 }
+
+
+// dismiss cookie (try common selectors)

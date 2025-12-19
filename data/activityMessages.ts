@@ -233,7 +233,7 @@ export const globalDefaults: ActivityMessageConfig = {
   templates: {
     perfect: "Perfect conditions—ideal weather for outdoor activities. {reasons}",
     good: "Good conditions—great weather to get outside and enjoy. {reasons}",
-    fair: "Conditions are decent—worth getting out of the house. {reasons}",
+    fair: "Weather's not great but it's still worth getting out of the house. {reasons}",
     poor: "Weather's not cooperating today—maybe try indoor alternatives. {reasons}"
   }
 };

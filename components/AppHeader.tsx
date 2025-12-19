@@ -41,7 +41,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleLocationType,
 }) => {
   // Access user preferences to infer locations when not provided via props
-  const { preferences } = useUserPreferences();
+  const { preferences, setPreferences } = useUserPreferences();
   const translationInputs = React.useMemo(
     () => [
       'Skip to main content',
@@ -161,12 +161,140 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
+  // Friendly reverse-geocoded label for home when the stored name looks like coordinates
+  const [resolvedHomeFriendly, setResolvedHomeFriendly] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    const looksLikeCoords = (s?: string | null) => {
+      if (!s) return true;
+      // e.g. "51.5098, -0.1180" or "51.5098° N, 0.1180° W"
+      return /^-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\.\d+/.test(s.trim()) || /home/i.test(s);
+    };
+
+    async function reverseGeocode(lat?: number, lon?: number) {
+      if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=jsonv2&zoom=14`;
+        const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': 'GoDaisy/1.0' } });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const disp = json?.name || json?.display_name;
+        if (disp) return String(disp);
+        const addr = json?.address || {};
+        const name = addr.village || addr.town || addr.city || addr.county;
+        const region = addr.state || addr.region;
+        if (name && region) return `${name}, ${region}`;
+        if (name) return name;
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    if (!mounted || !effectiveHome) {
+      setResolvedHomeFriendly(null);
+      return;
+    }
+
+    const currentName = effectiveHome.name || null;
+    if (!looksLikeCoords(currentName)) {
+      setResolvedHomeFriendly(null);
+      return;
+    }
+
+    (async () => {
+      const lat = effectiveHome.lat;
+      const lon = effectiveHome.lon;
+
+      const coordKey = (a?: number, b?: number) => (typeof a === 'number' && typeof b === 'number') ? `${a.toFixed(4)},${b.toFixed(4)}` : '';
+      const readCache = (): Record<string, string> => {
+        try {
+          const raw = localStorage.getItem('gd.resolvedLocationNames');
+          if (!raw) return {};
+          return JSON.parse(raw) as Record<string, string>;
+        } catch {
+          return {};
+        }
+      };
+      const writeCache = (k: string, v: string) => {
+        try {
+          const cur = readCache();
+          cur[k] = v;
+          localStorage.setItem('gd.resolvedLocationNames', JSON.stringify(cur));
+        } catch { /* ignore */ }
+      };
+
+      const key = coordKey(lat, lon);
+      if (key) {
+        const cached = readCache()[key];
+        if (cached) {
+          if (!cancelled) setResolvedHomeFriendly(cached);
+          try {
+            setPreferences((prev) => {
+              const nextLocs = prev.locations.map((loc) => {
+                const sameCoords = Math.abs(loc.lat - lat) <= 0.0001 && Math.abs(loc.lon - lon) <= 0.0001 && (loc.type === 'home' || !loc.type);
+                if (sameCoords && loc.name !== cached) return { ...loc, name: cached };
+                return loc;
+              });
+              return { ...prev, locations: nextLocs };
+            });
+          } catch { /* ignore */ }
+          return;
+        }
+      }
+
+      const friendly = await reverseGeocode(lat, lon);
+      if (cancelled) return;
+      if (!friendly) return;
+      setResolvedHomeFriendly(friendly);
+      if (key) writeCache(key, friendly);
+
+      try {
+        setPreferences((prev) => {
+          const nextLocs = prev.locations.map((loc) => {
+            const sameCoords = Math.abs(loc.lat - lat) <= 0.0001 && Math.abs(loc.lon - lon) <= 0.0001 && (loc.type === 'home' || !loc.type);
+            if (sameCoords && loc.name !== friendly) return { ...loc, name: friendly };
+            return loc;
+          });
+          return { ...prev, locations: nextLocs };
+        });
+
+        (async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const uid = user?.id ?? null;
+            if (!uid) return;
+
+            const updatePayload = {
+              home_place_name: friendly,
+              home_coordinates: { lat, lon },
+              updated_at: new Date().toISOString(),
+            } as const;
+
+            const { error: updateError } = await supabase
+              .from('user_location_preferences')
+              .update(updatePayload)
+              .eq('user_id', uid);
+
+            if (updateError) {
+              await supabase.from('user_location_preferences').insert({ user_id: uid, ...updatePayload });
+            }
+          } catch (_err) { /* ignore */ }
+        })();
+      } catch { /* ignore */ }
+    })();
+
+    return () => { cancelled = true; };
+  }, [effectiveHome, mounted]);
+
   const resolvedHomeLabel = React.useMemo(() => {
-    if (mounted && effectiveHome?.name) {
-      return `🏡 ${effectiveHome.name.split(',')[0]} ✓`;
+    const base = mounted ? (effectiveHome?.name || null) : null;
+    const friendly = (mounted && resolvedHomeFriendly) ? resolvedHomeFriendly : base;
+    if (friendly) {
+      return `🏡 ${friendly.split(',')[0]} ✓`;
     }
     return t('Set home location');
-  }, [effectiveHome?.name, mounted, t]);
+  }, [effectiveHome?.name, mounted, t, resolvedHomeFriendly]);
 
   const resolvedCoastLabel = React.useMemo(() => {
     if (mounted && effectiveCoast?.name) {
@@ -236,6 +364,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                     (document.activeElement as HTMLElement)?.blur();
                   }}
                   className="justify-start"
+                  data-testid="header-home-location-btn"
                 >
                   <span suppressHydrationWarning>
                     {effectiveHome?.name ? `🏡 ${effectiveHome.name.split(',')[0]}` : `🏡 ${t('Set home location')}`}
@@ -335,6 +464,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               onClick={() => onOpenHomeDialog?.()}
               aria-label={resolvedHomeLabel}
               title={resolvedHomeLabel}
+              data-testid="header-home-location-btn"
             >
               <span suppressHydrationWarning>{resolvedHomeLabel}</span>
             </button>
@@ -344,6 +474,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               onClick={() => onOpenCoastDialog?.()}
               aria-label={resolvedCoastLabel}
               title={resolvedCoastLabel}
+              data-testid="header-coast-location-btn"
             >
               <span suppressHydrationWarning>{resolvedCoastLabel}</span>
             </button>

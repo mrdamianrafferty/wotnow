@@ -379,13 +379,15 @@ const Popup: React.FC<PopupProps> = ({
       : new URL(backgroundImage, window.location.origin).toString();
     const catchyTitle = buildEmailishSubject(title);
     const payload: SharePayload = {
-      title: catchyTitle,
+      // Do not include a separate title (prevents duplication) and do not attach image URL.
+      title: undefined,
+      // Bold opener line, then message with URL appended on same paragraph. No 'WotNow' mention.
       text: [
-        `WotNow: ${title}`,
-        message ? `Why: ${message}` : undefined,
-      ].filter(Boolean).join('\n'),
-      url: shareUrl,
-      imageUrl: absImageUrl,
+        `Do you fancy joining me for ${title.toLowerCase()}?`,
+        message ? `${message} ${shareUrl}` : shareUrl,
+      ].filter(Boolean).join('\n\n'),
+      url: undefined,
+      imageUrl: undefined,
     };
     const status = await shareToWhatsApp(payload);
     if (status === 'Share cancelled') return;

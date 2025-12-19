@@ -36,7 +36,7 @@ import BottomNav from '../components/BottomNav';
 import { SkeletonHomePage } from '../components/SkeletonLoader';
 
 // Code splitting: Lazy load heavy modal/dialog components
-const FishSpeciesModal = dynamic(() => import('../components/findr/FishSpeciesModal'), {
+const Popup = dynamic(() => import('../components/Popup'), {
   ssr: false,
 });
 
@@ -44,9 +44,7 @@ const CoastalLocationDialog = dynamic(() => import('../components/CoastalLocatio
   ssr: false,
 });
 
-const Popup = dynamic(() => import('../components/Popup'), {
-  ssr: false,
-});
+
 
 const AstronomyCard = dynamic(() => import('../components/AstronomyCard'), {
   ssr: false,
@@ -437,8 +435,7 @@ const _getTargetHourForDay = (dayUnixTimestamp: number): string => {
 
 export default function Home() {
   // Fish species modal state (for hero/favourites)
-  const [fishModalOpen, setFishModalOpen] = useState(false);
-  const [fishModalCard, setFishModalCard] = useState<CardData | null>(null);
+  const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
   // If Supabase sent us to the homepage with an auth code (query) or OAuth tokens (hash),
   // forward everything to /auth/callback so the session can be established or recovery can run.
   useEffect(() => {
@@ -463,7 +460,7 @@ const [showCoastDialog, setShowCoastDialog] = useState(false);
   
   // Your existing state
   const hasMounted = useHasMounted();
-  const [popupActivity, setPopupActivity] = useState<ReturnType<typeof buildPopupActivityPayload> | null>(null);
+  
 
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
@@ -906,21 +903,13 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
             const fishImageInfo = fishCommonName ? resolveSpeciesImage(undefined, fishCommonName) : undefined;
 
             const handleFishClick = () => {
-              if (fishCommonName) {
-                setFishModalCard({
-                  emoji: getActivityEmoji(activityId) || '🐟',
-                  commonName: fishCommonName,
-                  ...(fishImageInfo && {
-                    image: {
-                      src: fishImageInfo.image,
-                      alt: fishImageInfo.name,
-                      mobile: fishImageInfo.mobile ?? null,
-                      thumb: fishImageInfo.thumb ?? null,
-                    }
-                  })
-                } as CardData);
-                setFishModalOpen(true);
-              }
+              const popupPayload = buildPopupActivityPayload({
+                activityId,
+                score: score || 0,
+                day: getPopupDay(activityId, day),
+                reasons: buildReasons(day, activityId),
+              });
+              setPopupActivity(popupPayload);
             };
 
             return (
@@ -965,11 +954,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           })()}
 
       {/* Fish Species Modal (global, not per-card) */}
-      <FishSpeciesModal
-        open={fishModalOpen}
-        card={fishModalCard}
-        onClose={() => setFishModalOpen(false)}
-      />
+      {/* Findr-only `FishSpeciesModal` removed from Go Daisy homepage. */}
 
           {/* Activity Lists */}
           <div className="activity-suggestions">
