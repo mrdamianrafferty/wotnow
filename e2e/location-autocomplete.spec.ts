@@ -74,7 +74,7 @@ test.describe('Location autocomplete / map access', () => {
     }
 
     // Check whether Google Maps script loaded (autocomplete could be available)
-    const googleLoaded = await page.evaluate(() => Boolean((window as any).google?.maps));
+    const googleLoaded = await page.evaluate(() => Boolean((window as unknown as { google?: { maps?: unknown } }).google?.maps));
 
     // Fallback UI: ensure dialog exposes alternate actions when suggestions aren't available
     const hasPickFromMap = (await page.getByRole('button', { name: /Pick from map/i }).count()) > 0;

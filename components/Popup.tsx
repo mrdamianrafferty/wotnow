@@ -374,10 +374,7 @@ const Popup: React.FC<PopupProps> = ({
 
   const handleShare = async () => {
     const shareUrl = `${PUBLIC_SITE_URL}?activity=${encodeURIComponent(activityId)}`;
-    const absImageUrl = backgroundImage?.startsWith('http')
-      ? backgroundImage
-      : new URL(backgroundImage, window.location.origin).toString();
-    const catchyTitle = buildEmailishSubject(title);
+    // Do not include image or separate title in shared payload; keep local vars unused.
     const payload: SharePayload = {
       // Do not include a separate title (prevents duplication) and do not attach image URL.
       title: undefined,
