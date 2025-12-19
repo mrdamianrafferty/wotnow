@@ -755,15 +755,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const requestOrigin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', requestOrigin);
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Allow GET for simple RPC via query string, POST for body-based calls, and
+  // OPTIONS for preflight. Also allow Authorization header for authenticated
+  // requests from the browser.
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     // Respond to preflight quickly
     return res.status(204).end();
   }
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
@@ -790,11 +793,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Supabase anon key missing. Set SUPABASE_ANON_KEY in the environment.' });
   }
 
-  let body: PredictionRequestBody;
-  try {
-    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-  } catch (_error) {
-    return res.status(400).json({ error: 'Invalid JSON body' });
+  // Support both POST (JSON body) and GET (querystring) callers.
+  let body: PredictionRequestBody = {};
+  if (req.method === 'POST') {
+    try {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+    } catch (_error) {
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+  } else if (req.method === 'GET') {
+    // Map query params into the same request shape
+    const q: any = req.query || {};
+    body = {
+      rectangleCode: typeof q.rectangleCode === 'string' ? q.rectangleCode : undefined,
+      predictionDate: typeof q.predictionDate === 'string' ? q.predictionDate : undefined,
+      language: typeof q.language === 'string' ? q.language : undefined,
+      bypassCache: q.bypassCache === 'true' || q.bypassCache === '1',
+      latitude: q.latitude ? parseFloat(String(q.latitude)) : undefined,
+      longitude: q.longitude ? parseFloat(String(q.longitude)) : undefined,
+      regionCode: typeof q.regionCode === 'string' ? q.regionCode : undefined,
+    } as PredictionRequestBody;
   }
 
   const rectangleCode = body.rectangleCode?.trim();

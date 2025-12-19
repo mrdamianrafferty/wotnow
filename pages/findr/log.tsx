@@ -12,7 +12,7 @@ import { CatchSummaryStats } from '../../components/findr/CatchSummaryStats';
 import { useMyCatchPhotos } from '@/hooks/useMyCatchPhotos';
 
 const QuickLogModal = dynamic(() => import('../../components/findr/QuickLogModal').then(mod => ({ default: mod.QuickLogModal })), { ssr: false, loading: () => null });
-const RecentCatchesWidget = dynamic(() => import('../../components/findr/RecentCatchesWidget').then(mod => ({ default: mod.RecentCatchesWidget })), { ssr: false, loading: () => null });
+
 
 // Types
 interface CatchEntry {
@@ -304,10 +304,7 @@ export default function FindrCatchLogPage() {
             <CatchSummaryStats sessions={summarySessions} className="mt-2 mb-6" />
           )}
 
-          {/* Recent Catches Widget */}
-          <div className="mt-6">
-            <RecentCatchesWidget />
-          </div>
+          {/* Recent Catches Widget removed per request */}
 
           {/* Main Content Card */}
           <div className="card bg-base-100 shadow-xl mt-6">

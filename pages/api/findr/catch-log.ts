@@ -327,16 +327,35 @@ function buildPhotoAssets(photoUrls: string[] | null): CatchPhotoAsset[] {
 }
 
 function getTransformedUrl(bucket: string, path: string): string | null {
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path, {
-    transform: {
-      width: 320,
-      height: 320,
-      resize: 'cover',
-      quality: 80,
-    },
-  });
+  // First, request the base public URL so we always have a fallback
+  const { data: baseData } = supabase.storage.from(bucket).getPublicUrl(path);
+  const baseUrl = baseData.publicUrl ?? null;
 
-  return data.publicUrl ?? null;
+  try {
+    const { data: transformed } = supabase.storage.from(bucket).getPublicUrl(path, {
+      transform: {
+        width: 320,
+        height: 320,
+        resize: 'cover',
+        quality: 80,
+      },
+    });
+
+    // If the transformed URL looks like a Supabase render endpoint but the tenant
+    // doesn't support the render/transform feature, those URLs will 403 at fetch
+    // time. Prefer returning the base public URL in that case so clients can
+    // still load the original object directly.
+    const tUrl = transformed.publicUrl ?? null;
+    if (tUrl && tUrl.includes('/render/image/')) {
+      return baseUrl;
+    }
+
+    // Prefer the transformed URL when it's a normal public URL, otherwise fall back
+    return tUrl ?? baseUrl;
+  } catch (err) {
+    // If the client or server doesn't support transform options, return the base URL
+    return baseUrl;
+  }
 }
 
 function resolveBucketAndPath(reference: string): { bucket: string; path: string } | null {

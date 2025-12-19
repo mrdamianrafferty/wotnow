@@ -265,19 +265,31 @@ export default async function handler(
 
         photoUrl = publicUrlData.publicUrl ?? null;
 
-        const { data: thumbnailData } = supabase
-          .storage
-          .from('catch-photos')
-          .getPublicUrl(storagePath, {
-            transform: {
-              width: 320,
-              height: 320,
-              resize: 'cover',
-              quality: 80,
-            },
-          });
+        // Try to obtain a transformed thumbnail URL; if transforms are unsupported
+        // or the transform call doesn't return a URL, fall back to the base public URL
+        const basePublic = publicUrlData.publicUrl ?? null;
+        try {
+          const { data: thumbnailData } = supabase
+              .storage
+              .from('catch-photos')
+              .getPublicUrl(storagePath, {
+                transform: {
+                  width: 320,
+                  height: 320,
+                  resize: 'cover',
+                  quality: 80,
+                },
+              });
 
-        _photoThumbnailUrl = thumbnailData.publicUrl ?? null;
+            const tUrl = thumbnailData.publicUrl ?? null;
+            if (tUrl && tUrl.includes('/render/image/')) {
+              _photoThumbnailUrl = basePublic;
+            } else {
+              _photoThumbnailUrl = tUrl ?? basePublic;
+            }
+        } catch (err) {
+          _photoThumbnailUrl = basePublic;
+        }
       }
     } else {
       warnings.push('No photo provided; some enrichment signals may be unavailable.');

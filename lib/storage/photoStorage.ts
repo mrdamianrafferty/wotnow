@@ -51,19 +51,30 @@ export async function uploadCatchPhoto(
       .getPublicUrl(data.path);
 
     let thumbnailUrl: string | undefined;
-    const { data: thumbnailData } = supabase.storage
-      .from(CATCH_PHOTO_BUCKET)
-      .getPublicUrl(data.path, {
-        transform: {
-          width: 320,
-          height: 320,
-          resize: 'cover',
-          quality: 80,
-        },
-      });
+    // Try to request a transformed (thumbnail) public URL; fall back to base public URL
+    const basePublicUrl = urlData.publicUrl ?? undefined;
+    try {
+      const { data: thumbnailData } = supabase.storage
+        .from(CATCH_PHOTO_BUCKET)
+        .getPublicUrl(data.path, {
+          transform: {
+            width: 320,
+            height: 320,
+            resize: 'cover',
+            quality: 80,
+          },
+        });
 
-    if (thumbnailData.publicUrl) {
-      thumbnailUrl = thumbnailData.publicUrl;
+      const tUrl = thumbnailData.publicUrl ?? null;
+      // If Supabase returns a render/transform endpoint (tenant may not support it),
+      // prefer the base public URL so clients don't attempt to fetch a 403 render URL.
+      if (tUrl && tUrl.includes('/render/image/')) {
+        thumbnailUrl = basePublicUrl;
+      } else {
+        thumbnailUrl = tUrl ?? basePublicUrl;
+      }
+    } catch (err) {
+      thumbnailUrl = basePublicUrl;
     }
 
     return { 
