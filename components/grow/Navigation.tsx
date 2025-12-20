@@ -111,7 +111,8 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
             ) : (
               <Link
                 href={buildGrowLoginUrl(GROW_ROOT_PATH)}
-                className="ml-2 inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm"
+                className="ml-2 inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium transition-colors shadow-sm"
+                style={{ backgroundColor: '#059669', color: '#ffffff' }}
               >
                 {t('Sign in')}
               </Link>
