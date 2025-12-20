@@ -2042,7 +2042,16 @@ abbr[title] {
 }
 
 .safe-top {
+  /* Ensure the top spacer fills the iOS status/notch area.
+     Some WebViews won't honor padding on an empty element, so give
+     the spacer an explicit height and a min-height for legacy support.
+     Use background-color: inherit so the spacer matches the header. */
+  display: block;
+  box-sizing: border-box;
+  height: env(safe-area-inset-top);
+  min-height: constant(safe-area-inset-top); /* legacy iOS */
   padding-top: env(safe-area-inset-top);
+  background-color: inherit;
 }
 
 .safe-left {
