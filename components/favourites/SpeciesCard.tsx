@@ -87,7 +87,7 @@ export function SpeciesCard({
     >
       {/* Species Image - Clickable to view details */}
       <figure
-        className={`relative ${sizeConfig.image} overflow-hidden cursor-pointer hover:opacity-90 transition-opacity`}
+        className={`relative ${sizeConfig.image} w-full overflow-hidden cursor-pointer hover:opacity-90 transition-opacity`}
         onClick={(e) => {
           e.stopPropagation();
           onCardClick?.(species.species.id);
@@ -108,6 +108,7 @@ export function SpeciesCard({
             alt={species.species.commonName}
             fill
             className="object-contain"
+            sizes="(max-width: 640px) 160px, (max-width: 768px) 224px, 256px"
           />
         ) : (
           <div className="w-full h-full bg-base-300 flex items-center justify-center">

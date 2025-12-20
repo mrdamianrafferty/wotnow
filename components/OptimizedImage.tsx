@@ -9,6 +9,7 @@ interface OptimizedImageProps {
   className?: string;
   style?: React.CSSProperties;
   loading?: 'lazy' | 'eager';
+  priority?: boolean;
 }
 
 /**
@@ -23,13 +24,14 @@ export default function OptimizedImage({
   className = '',
   style = {},
   loading = 'lazy',
+  priority = false,
 }: OptimizedImageProps) {
   // Check if the image is external (starts with http)
   const isExternal = src.startsWith('http');
-  
+
   // Handle images from the public directory
   const imageSrc = isExternal ? src : src;
-  
+
   return (
     <Image
       src={imageSrc}
@@ -38,7 +40,8 @@ export default function OptimizedImage({
       height={height}
       className={className}
       style={style}
-      loading={loading}
+      loading={priority ? undefined : loading}
+      priority={priority}
       unoptimized={src.endsWith('.svg')} // SVGs don't need optimization
     />
   );

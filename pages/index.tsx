@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
@@ -453,7 +453,8 @@ export default function Home() {
     }
   }, []);
   const { preferences, setPreferences } = useUserPreferences();
-  const interests = preferences.interests ?? [];
+  // Memoize interests to prevent unnecessary recalculations downstream
+  const interests = useMemo(() => preferences.interests ?? [], [preferences.interests]);
   
   // Add these missing state variables
 const [showHomeDialog, setShowHomeDialog] = useState(false);
@@ -496,7 +497,6 @@ const [showCoastDialog, setShowCoastDialog] = useState(false);
 
   const isFirstTimeUser = interests.length === 0;
   const needsLocation = !homeLocation?.lat || !homeLocation?.lon;
-  const usedHeroActivities = new Set<string>();
 
 const { forecastByDay, loading, error, marineHours, weatherData, marineError } = useFetchForecastData(
   homeLocation,
@@ -568,110 +568,121 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
   const forecastDays = useOneCall ? buildForecastFromOneCall(weatherData) : forecastByDay;
 
   // Normalize and sanitize interests to avoid mismatches (e.g., stray whitespace)
-  const normalizedInterests = Array.isArray(interests)
-    ? interests.map((s) => String(s).trim())
-    : [];
-  const validActivityIds = new Set(activityTypes.map((a) => a.id));
-  const sanitizedInterests = normalizedInterests.filter((id) => validActivityIds.has(id));
-  
-  console.log('🔍 Interest filtering:', {
-    rawInterests: interests,
-    normalizedInterests,
-    sanitizedInterests,
-    validActivityCount: validActivityIds.size
-  });
+  // Memoized to prevent recalculation on every render
+  const { sanitizedInterests, filteredActivitiesBase } = useMemo(() => {
+    const normalizedInterests = Array.isArray(interests)
+      ? interests.map((s) => String(s).trim())
+      : [];
+    const validActivityIds = new Set(activityTypes.map((a) => a.id));
+    const sanitized = normalizedInterests.filter((id) => validActivityIds.has(id));
 
-  // Use a single filtered list for all days
-  let filteredActivitiesBase = activityTypes.filter((a) => sanitizedInterests.includes(a.id));
-  // Safety fallback: if user has interests but none match (e.g., legacy IDs), try soft match by prefix
-  if (sanitizedInterests.length > 0 && filteredActivitiesBase.length === 0) {
-    const interestSet = new Set(sanitizedInterests);
-    filteredActivitiesBase = activityTypes.filter((a) => interestSet.has(a.id) || interestSet.has(a.id.replace(/_/g, '-')));
-  }
-
-  const heroDataByDay = forecastDays.map((day, idx) => {
-    const filteredActivities = filteredActivitiesBase;
-    console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
-      dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
-      filteredActivitiesCount: filteredActivities.length,
-      interests: sanitizedInterests
+    console.log('🔍 Interest filtering:', {
+      rawInterests: interests,
+      normalizedInterests,
+      sanitizedInterests: sanitized,
+      validActivityCount: validActivityIds.size
     });
 
-    // ✅ CORRECT: Use the original getSuggestionsByDay structure
-    const suggestionsData = getSuggestionsByDay({
-      forecast: [{
-        date: day.date,
-        weather: {
-          temperature: day.temperature,
-          precipitation: day.rain,
-          windspeed: (typeof day.wind_speed === 'number' ? day.wind_speed * 3.6 : undefined),
-          clouds: day.clouds,
-          humidity: day.humidity,
-          visibility: day.visibility,
-          waterTemperature: day.waterTemperature,
-          waveHeight: day.waveHeight,
-          swellHeight: day.swellHeight,
-          swellPeriod: day.swellPeriod
-        }
-      }],
-      activities: filteredActivities,
-      interests: sanitizedInterests,
-      now: new Date(day.date * 1000),
-    });
-    // getSuggestionsByDay returns an array of day objects, we want the first (and only) day
-    const dayResults = suggestionsData?.[0];
-    const suggestions: ActivitySuggestion[] = (dayResults?.suggestions ?? []) as ActivitySuggestion[];
-    const currentMonth = new Date(day.date * 1000).getMonth() + 1;
-    const filteredSuggestions = suggestions.filter((suggestion: ActivitySuggestion) => {
-      const activity = activityTypes.find(a => a.id === suggestion.activityId);
-      return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
-    });
-    
-    console.log(`🗓️ Day ${idx} seasonal filtering:`, {
-      currentMonth,
-      totalSuggestions: suggestions.length,
-      filteredCount: filteredSuggestions.length,
-      sampleActivity: suggestions[0] ? {
-        id: suggestions[0].activityId,
-        seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
-      } : 'none'
-    });
-    const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
-    const _goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
-    const indoorList = filteredSuggestions.filter((s) => {
-      const a = activityTypes.find(x => x.id === s.activityId);
-      return a && !a.weatherSensitive;
-    });
-
-    // Select a unique hero activity for the day
-    // Map ActivitySuggestion to SuggestionLike format for hero selector
-    const heroCompatibleSuggestions = filteredSuggestions.map(s => ({
-      activityId: s.activityId,
-      score: s.score,
-      evaluation: s.evaluation === 'poor' ? 'fair' as const : s.evaluation as 'perfect' | 'good' | 'fair' | 'indoor' | 'indoorAlternative'
-    }));
-    const heroActivity = selectHeroActivity(heroCompatibleSuggestions);
-    console.log(`🎯 Day ${idx} hero selection:`, {
-      filteredSuggestionsCount: filteredSuggestions.length,
-      topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
-      selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
-    });
-
-    // ✅ Add the hero to used activities AFTER finding it
-    if (heroActivity) {
-      usedHeroActivities.add(heroActivity.activityId);
+    // Use a single filtered list for all days
+    let filtered = activityTypes.filter((a) => sanitized.includes(a.id));
+    // Safety fallback: if user has interests but none match (e.g., legacy IDs), try soft match by prefix
+    if (sanitized.length > 0 && filtered.length === 0) {
+      const interestSet = new Set(sanitized);
+      filtered = activityTypes.filter((a) => interestSet.has(a.id) || interestSet.has(a.id.replace(/_/g, '-')));
     }
 
-    return {
-      day,
-      suggestions: filteredSuggestions,
-      heroActivity,
-      alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
-      suggestionsData,
-      indoorList,
-      dayLabel: getDayLabel(day.date, idx, todayLabel)
-    };
-  });
+    return { sanitizedInterests: sanitized, filteredActivitiesBase: filtered };
+  }, [interests]);
+
+  // Memoize expensive hero data computation - only recalculate when dependencies change
+  const heroDataByDay = useMemo(() => {
+    // Track used hero activities within this computation
+    const usedHeroActivitiesLocal = new Set<string>();
+
+    return forecastDays.map((day, idx) => {
+      const filteredActivities = filteredActivitiesBase;
+      console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
+        dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
+        filteredActivitiesCount: filteredActivities.length,
+        interests: sanitizedInterests
+      });
+
+      // ✅ CORRECT: Use the original getSuggestionsByDay structure
+      const suggestionsData = getSuggestionsByDay({
+        forecast: [{
+          date: day.date,
+          weather: {
+            temperature: day.temperature,
+            precipitation: day.rain,
+            windspeed: (typeof day.wind_speed === 'number' ? day.wind_speed * 3.6 : undefined),
+            clouds: day.clouds,
+            humidity: day.humidity,
+            visibility: day.visibility,
+            waterTemperature: day.waterTemperature,
+            waveHeight: day.waveHeight,
+            swellHeight: day.swellHeight,
+            swellPeriod: day.swellPeriod
+          }
+        }],
+        activities: filteredActivities,
+        interests: sanitizedInterests,
+        now: new Date(day.date * 1000),
+      });
+      // getSuggestionsByDay returns an array of day objects, we want the first (and only) day
+      const dayResults = suggestionsData?.[0];
+      const suggestions: ActivitySuggestion[] = (dayResults?.suggestions ?? []) as ActivitySuggestion[];
+      const currentMonth = new Date(day.date * 1000).getMonth() + 1;
+      const filteredSuggestions = suggestions.filter((suggestion: ActivitySuggestion) => {
+        const activity = activityTypes.find(a => a.id === suggestion.activityId);
+        return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
+      });
+
+      console.log(`🗓️ Day ${idx} seasonal filtering:`, {
+        currentMonth,
+        totalSuggestions: suggestions.length,
+        filteredCount: filteredSuggestions.length,
+        sampleActivity: suggestions[0] ? {
+          id: suggestions[0].activityId,
+          seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
+        } : 'none'
+      });
+      const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
+      const _goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
+      const indoorList = filteredSuggestions.filter((s) => {
+        const a = activityTypes.find(x => x.id === s.activityId);
+        return a && !a.weatherSensitive;
+      });
+
+      // Select a unique hero activity for the day
+      // Map ActivitySuggestion to SuggestionLike format for hero selector
+      const heroCompatibleSuggestions = filteredSuggestions.map(s => ({
+        activityId: s.activityId,
+        score: s.score,
+        evaluation: s.evaluation === 'poor' ? 'fair' as const : s.evaluation as 'perfect' | 'good' | 'fair' | 'indoor' | 'indoorAlternative'
+      }));
+      const heroActivity = selectHeroActivity(heroCompatibleSuggestions);
+      console.log(`🎯 Day ${idx} hero selection:`, {
+        filteredSuggestionsCount: filteredSuggestions.length,
+        topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
+        selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
+      });
+
+      // ✅ Add the hero to used activities AFTER finding it
+      if (heroActivity) {
+        usedHeroActivitiesLocal.add(heroActivity.activityId);
+      }
+
+      return {
+        day,
+        suggestions: filteredSuggestions,
+        heroActivity,
+        alsoGoodPerfect: perfectList.filter(a => a.activityId !== heroActivity?.activityId),
+        suggestionsData,
+        indoorList,
+        dayLabel: getDayLabel(day.date, idx, todayLabel)
+      };
+    });
+  }, [forecastDays, filteredActivitiesBase, sanitizedInterests, todayLabel]);
 
 
   useEffect(() => {
