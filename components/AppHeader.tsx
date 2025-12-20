@@ -319,7 +319,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="w-full bg-base-100" data-theme="light">
+    <header className="w-full bg-base-100 relative z-10" data-theme="light">
       {/* Safe area spacer - fills iOS notch/status bar area with background color */}
       <div className="safe-top bg-base-100" />
       {/* Skip to main content link for accessibility */}
@@ -330,7 +330,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         {t('Skip to main content')}
       </a>
 
-      <div className="navbar bg-base-100 shadow-sm pt-1 md:pt-0">
+      <div className="navbar bg-base-100 shadow-sm py-2 md:py-0">
         {/* Left: Hamburger + Logo */}
         <div className="navbar-start">
           {/* Hamburger with submenu (desktop only) */}
@@ -433,7 +433,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               width={180}
               height={60}
               priority
-              className="h-8 w-auto md:h-[60px]"
+              className="h-6 w-auto md:h-[60px] max-h-[44px]"
             />
           </Link>
         </div>
