@@ -339,7 +339,7 @@ export default function GoDaisyLogin() {
                 />
                 {mode === 'signin' && (
                   <label className="label">
-                    <Link href="/auth/reset" className="label-text-alt link link-hover">
+                    <Link href="/auth/reset" className="label-text-alt link link-hover py-2 min-h-[48px] flex items-center">
                       Forgot password?
                     </Link>
                   </label>

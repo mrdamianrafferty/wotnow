@@ -970,7 +970,6 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
                     return (
                       <li
                         key={suggestion.activityId}
-                        role="button"
                         tabIndex={0}
                         className="also-good-item"
                         onClick={() => {
@@ -1022,7 +1021,6 @@ const popupPayload = buildPopupActivityPayload({
                       return (
                         <li
                           key={suggestion.activityId}
-                          role="button"
                           tabIndex={0}
                           className="activity-item-good"
                           onClick={() => {
@@ -1078,7 +1076,6 @@ const popupPayload = buildPopupActivityPayload({
             <li
               key={s.activityId}
               className="also-good-item"
-              role="button"
               tabIndex={0}
               style={{
                 cursor: 'default',

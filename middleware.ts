@@ -57,6 +57,9 @@ export async function middleware(req: NextRequest) {
                     url.pathname === '/manifest.json' ||
                     url.pathname.startsWith('/workbox-') ||
                     url.pathname.match(/^\/sw\.js/);
+  const isSEOFile = url.pathname === '/robots.txt' ||
+                    url.pathname === '/sitemap.xml' ||
+                    url.pathname === '/sitemap-0.xml';
   const isStaticAsset = url.pathname.startsWith('/webp/') ||
                         url.pathname.startsWith('/images/') ||
                         url.pathname.startsWith('/weather-icons/') ||
@@ -65,7 +68,7 @@ export async function middleware(req: NextRequest) {
                         url.pathname.startsWith('/findr-favicon/') ||
                         url.pathname.startsWith('/grow/') ||
                         url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
-  const shouldSkipRedirect = isApiRoute || isNextInternal || isAuthPath || isWellKnown || isPWAFile || isStaticAsset;
+  const shouldSkipRedirect = isApiRoute || isNextInternal || isAuthPath || isWellKnown || isPWAFile || isSEOFile || isStaticAsset;
 
   // Redirect grow.godaisy.io to /grow (Grow Daisy app)
   // Allow /login and /auth paths for authentication flow

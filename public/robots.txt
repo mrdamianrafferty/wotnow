@@ -1,5 +1,5 @@
-# robots.txt for Go Daisy (godaisy.io)
-# Updated: 15 October 2025
+# robots.txt for Go Daisy, Findr, and Grow Daisy
+# Updated: December 2024
 
 # Allow all search engines
 User-agent: *
@@ -11,5 +11,7 @@ Disallow: /_next/
 Disallow: /demo/
 Disallow: /test/
 
-# Sitemap location
+# Sitemap locations for all sites
 Sitemap: https://godaisy.io/sitemap.xml
+Sitemap: https://fishfindr.eu/sitemap.xml
+Sitemap: https://grow.godaisy.io/sitemap.xml

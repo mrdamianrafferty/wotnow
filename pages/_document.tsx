@@ -3,7 +3,7 @@ import Document, { Html, Head, Main, NextScript } from 'next/document';
 export default class MyDocument extends Document {
   render() {
     return (
-      <Html>
+      <Html lang="en">
         <Head>
   {/* Critical resource hints - preconnect establishes early connections to reduce API latency */}
   <link rel="preconnect" href="https://api.openweathermap.org" crossOrigin="anonymous" />
