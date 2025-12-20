@@ -1146,14 +1146,9 @@ const FindrPage: React.FC = () => {
             )}
           </section>
 
-          {/* Species lineup section - always render wrapper with min-height to prevent CLS */}
-          <section
-            className="space-y-5 px-4 sm:px-4"
-            aria-labelledby="species-lineup-heading"
-            style={{ minHeight: '600px' }}
-          >
-            {activeRectangle && !error && (totalPredictions > 0 || loading) && (
-              <>
+          {/* Species lineup section */}
+          {activeRectangle && !error && (totalPredictions > 0 || loading) && (
+            <section className="space-y-5 px-4 sm:px-4" aria-labelledby="species-lineup-heading">
               {loading ? (
                 /* Skeleton header and grid during loading */
                 <>
@@ -1348,9 +1343,8 @@ const FindrPage: React.FC = () => {
                   </div>
                 </>
               )}
-              </>
-            )}
-          </section>
+            </section>
+          )}
 
         </div>
       </main>
