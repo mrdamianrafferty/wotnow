@@ -490,14 +490,26 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   <span aria-hidden="true">🤾</span>
                   <span>{displayName ?? t('My Account')}</span>
                 </Link>
-              ) : (
+                ) : (
                 <Link
                   href="/login"
                   className="badge badge-outline badge-info gap-1 whitespace-nowrap"
                   title={t('Log in or register')}
                   aria-label={t('Log in or register')}
                 >
-                  <span aria-hidden="true">🪵</span>
+                  <svg
+                    aria-hidden="true"
+                    className="w-5 h-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="8" r="3" />
+                  </svg>
                   <span>{t('Log in / Register')}</span>
                 </Link>
               )
@@ -524,7 +536,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                   title={t('Log in')}
                   aria-label={t('Log in')}
                 >
-                  <span className="text-xl">🪵</span>
+                  <svg
+                    aria-hidden="true"
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="8" r="3" />
+                  </svg>
                 </Link>
               )
             )}
