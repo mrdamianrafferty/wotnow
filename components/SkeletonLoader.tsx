@@ -82,8 +82,13 @@ export const SkeletonActivityCard: React.FC = () => {
 
 export const SkeletonHeroCard: React.FC = () => {
   return (
-    <div className="card bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-xl">
-      <div className="card-body">
+    <div
+      className="card text-white shadow-xl bg-cover bg-center relative overflow-hidden"
+      style={{ backgroundImage: 'url(/webp/parky-low.webp)' }}
+    >
+      {/* Overlay for better text contrast */}
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="card-body relative z-10">
         <div className="flex items-center justify-between mb-4">
           <Skeleton className="w-16 h-16 rounded-full bg-white/20" />
           <Skeleton className="w-24 h-8 rounded-lg bg-white/20" />

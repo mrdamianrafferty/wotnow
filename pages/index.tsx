@@ -859,10 +859,12 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
       />
     ) : null;
 
-    // Get the hero image URL for this card
+    // Get the hero image URL for this card - use preloaded placeholder as fallback for faster LCP
     const heroImageUrl = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
       ? getOptimizedImageSrc(heroActivity.activityId, 'webpSmall')
-      : getActivityBg(heroActivity?.activityId || 'default');
+      : heroActivity?.activityId
+        ? getActivityBg(heroActivity.activityId)
+        : '/webp/parky-low.webp';
 
     const dayCard = (
       <div

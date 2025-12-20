@@ -18,6 +18,9 @@ export default class MyDocument extends Document {
   {/* Preconnect to Supabase for faster auth and data fetching */}
   <link rel="preconnect" href="https://swmviqpxetwziqxhzldh.supabase.co" crossOrigin="anonymous" />
 
+  {/* Preload hero placeholder image for Go Daisy LCP optimization */}
+  <link rel="preload" as="image" href="/webp/parky-low.webp" fetchPriority="high" />
+
   {/* Core */}
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="shortcut icon" href="/favicon.ico?v=2" />
