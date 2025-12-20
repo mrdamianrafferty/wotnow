@@ -1,7 +1,6 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
@@ -109,13 +108,13 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link
+              <a
                 href={buildGrowLoginUrl(GROW_ROOT_PATH)}
                 className="ml-2 inline-flex items-center justify-center h-8 px-4 rounded-md text-sm font-medium transition-colors shadow-sm"
                 style={{ backgroundColor: '#059669', color: '#ffffff' }}
               >
                 {t('Sign in')}
-              </Link>
+              </a>
             )}
           </div>
         </div>
