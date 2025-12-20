@@ -134,7 +134,7 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <link rel="apple-touch-icon" href={isFindr ? "/findr-favicon-v2/apple-touch-icon.png" : "/godaisy-favicon/apple-touch-icon.png"} />
                 <meta name="mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
-                <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+                <meta name="apple-mobile-web-app-status-bar-style" content="default" />
                 <meta name="apple-mobile-web-app-title" content={isFindr ? "Findr" : "Go Daisy"} />
 
                 {/* Favicons - Domain-based */}

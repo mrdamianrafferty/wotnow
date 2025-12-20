@@ -321,12 +321,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <>
       {/* Safe area spacer - fills iOS notch/status bar area with background color */}
+      {/* Uses both height and min-height for maximum compatibility with iOS WebViews */}
       <div
-        className="w-full bg-base-100"
+        className="w-full"
         style={{
-          paddingTop: 'env(safe-area-inset-top, 0px)',
+          height: 'env(safe-area-inset-top, 0px)',
+          minHeight: 'env(safe-area-inset-top, 0px)',
           backgroundColor: '#ffffff'
         }}
+        aria-hidden="true"
       />
       <header className="w-full bg-base-100 relative z-10" data-theme="light">
       {/* Skip to main content link for accessibility */}
