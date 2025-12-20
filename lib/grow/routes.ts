@@ -17,14 +17,7 @@ export function buildGrowLoginUrl(returnPath: string = GROW_ROOT_PATH): string {
   const safePath = isValidGrowPath(normalized) ? normalized : GROW_ROOT_PATH;
   const encoded = encodeURIComponent(safePath);
 
-  // Check if we're on the grow subdomain (native app or grow.godaisy.io)
-  // If so, use absolute URL to main domain for login
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host === 'grow.godaisy.io' || host.includes('grow.')) {
-      return `https://godaisy.io/login?returnTo=${encoded}`;
-    }
-  }
-
+  // Always use relative URL - let the app handle navigation within its WebView
+  // This keeps login within the Capacitor WebView instead of opening Safari
   return `/login?returnTo=${encoded}`;
 }

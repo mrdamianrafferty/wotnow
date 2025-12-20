@@ -68,10 +68,12 @@ export async function middleware(req: NextRequest) {
   const shouldSkipRedirect = isApiRoute || isNextInternal || isAuthPath || isWellKnown || isPWAFile || isStaticAsset;
 
   // Redirect grow.godaisy.io to /grow (Grow Daisy app)
+  // Allow /login and /auth paths for authentication flow
   if ((hostname === 'grow.godaisy.io' || hostname === 'www.grow.godaisy.io') && !shouldSkipRedirect) {
     const isGrowPath = url.pathname.startsWith('/grow');
-    if (!isGrowPath && url.pathname !== '/') {
-      // Redirect non-grow paths to /grow
+    const isLoginPath = url.pathname === '/login' || url.pathname.startsWith('/auth');
+    if (!isGrowPath && !isLoginPath && url.pathname !== '/') {
+      // Redirect non-grow, non-login paths to /grow
       const growUrl = url.clone();
       growUrl.pathname = '/grow';
       response = NextResponse.redirect(growUrl);
