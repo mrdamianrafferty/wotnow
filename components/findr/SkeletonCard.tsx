@@ -109,4 +109,52 @@ export const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size =
   return <span className={`loading loading-spinner text-primary ${sizeClass}`}></span>;
 };
 
+/**
+ * Skeleton Species List (DaisyUI)
+ *
+ * Loading placeholder for the full species lineup grid.
+ * Reserves space to prevent CLS when species load.
+ */
+
+export const SkeletonSpeciesList: React.FC<{ count?: number }> = ({ count = 6 }) => {
+  return (
+    <section className="space-y-5 px-4 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="skeleton h-7 w-48"></div>
+        <div className="skeleton h-5 w-32"></div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="card bg-base-100 shadow-md border border-base-200/60">
+            <div className="card-body space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="skeleton w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="skeleton h-5 w-24"></div>
+                      <div className="skeleton h-5 w-10 rounded-full"></div>
+                    </div>
+                    <div className="skeleton h-3 w-20"></div>
+                  </div>
+                </div>
+                <div className="skeleton w-8 h-8 rounded-full shrink-0" />
+              </div>
+              <div className="space-y-2">
+                <div className="skeleton h-3 w-full"></div>
+                <div className="skeleton h-3 w-5/6"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="skeleton h-3 w-1/3"></div>
+                <div className="skeleton h-3 w-full"></div>
+                <div className="skeleton h-3 w-4/5"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 export default SkeletonCard;

@@ -52,7 +52,7 @@ const FishSpeciesModal = dynamic(
   () => import('../../components/findr/FishSpeciesModal').then(mod => ({ default: mod.FishSpeciesModal })),
   { ssr: false, loading: () => null }
 );
-import { SkeletonCard } from '../../components/findr/SkeletonCard';
+import { SkeletonCard, SkeletonSpeciesList } from '../../components/findr/SkeletonCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
   useFindrRectangleOptions,
@@ -1075,17 +1075,20 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && loading && (
-              <div className="space-y-4 px-4 sm:px-0">
-                <div className="alert alert-info">
-                  <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
-                  <span>
-                    <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
-                  </span>
+              <>
+                <div className="space-y-4 px-4 sm:px-0">
+                  <div className="alert alert-info">
+                    <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
+                    <span>
+                      <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
+                    </span>
+                  </div>
+                  <div className="relative h-[460px] sm:h-[520px] w-full">
+                    <SkeletonCard />
+                  </div>
                 </div>
-                <div className="relative h-[460px] sm:h-[520px] w-full">
-                  <SkeletonCard />
-                </div>
-              </div>
+                <SkeletonSpeciesList count={6} />
+              </>
             )}
 
             {activeRectangle && !loading && error && (
