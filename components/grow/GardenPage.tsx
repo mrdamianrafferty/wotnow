@@ -571,7 +571,10 @@ export function GardenPage() {
       console.log('🌱 [GardenPage] Auth token present:', !!token);
 
       if (!token) {
-        redirectToLogin();
+        // Don't redirect - just show empty state, let user sign in from nav
+        console.log('🌱 [GardenPage] No auth token, showing empty state');
+        setPlants([]);
+        setIsLoadingPlants(false);
         return;
       }
 
@@ -601,9 +604,9 @@ export function GardenPage() {
       setPlants([]);
       if (err?.message === 'Not authenticated') {
         toast.error('Please sign in to view your garden', {
-          description: 'Redirecting you to the sign-in page.',
+          description: 'Use the Sign In button at the top.',
         });
-        redirectToLogin();
+        // Don't redirect - let user sign in from nav
       } else {
         toast.error('Could not load plants', {
           description: 'Unable to connect to server. Your garden is empty.',
@@ -612,7 +615,7 @@ export function GardenPage() {
     } finally {
       setIsLoadingPlants(false);
     }
-  }, [redirectToLogin]);
+  }, []);
 
   // Load plants from backend on mount
   useEffect(() => {
