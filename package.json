@@ -46,7 +46,12 @@
     "cap:run:ios": "npx cap run ios",
     "cap:run:android": "npx cap run android",
     "mobile:dev:ios": "npx cap run ios --livereload --external --host=0.0.0.0",
-    "mobile:dev:android": "npx cap run android --livereload --external --host=0.0.0.0"
+    "mobile:dev:android": "npx cap run android --livereload --external --host=0.0.0.0",
+    "cap:growdaisy:sync": "CAPACITOR_CONFIG=capacitor.config.growdaisy.ts npx cap sync",
+    "cap:growdaisy:open:ios": "npx cap open ios-growdaisy",
+    "cap:growdaisy:open:android": "npx cap open android-growdaisy",
+    "cap:growdaisy:build:ios": "npx cap copy ios-growdaisy && cd ios-growdaisy/App && pod install",
+    "cap:growdaisy:build:android": "npx cap copy android-growdaisy"
   },
   "resolutions": {
     "next": {

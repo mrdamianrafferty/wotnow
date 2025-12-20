@@ -1,0 +1,50 @@
+{
+	"appId": "io.growdaisy.app",
+	"appName": "Grow Daisy",
+	"webDir": ".capacitor-assets-growdaisy",
+	"server": {
+		"url": "https://grow.godaisy.io",
+		"cleartext": false
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"launchAutoHide": true,
+			"backgroundColor": "#065f46",
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": true,
+			"spinnerColor": "#10b981",
+			"androidSpinnerStyle": "small",
+			"iosSpinnerStyle": "small"
+		},
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_icon",
+			"iconColor": "#10b981"
+		}
+	},
+	"packageClassList": [
+		"SignInWithApple",
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"CAPCameraPlugin",
+		"GeolocationPlugin",
+		"HapticsPlugin",
+		"LocalNotificationsPlugin",
+		"CAPNetworkPlugin",
+		"PreferencesPlugin",
+		"PushNotificationsPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin",
+		"ToastPlugin",
+		"SocialLoginPlugin"
+	]
+}

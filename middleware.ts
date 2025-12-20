@@ -48,35 +48,47 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Helper: check if path should skip domain-based redirects
+  const isApiRoute = url.pathname.startsWith('/api/');
+  const isNextInternal = url.pathname.startsWith('/_next/');
+  const isAuthPath = url.pathname.startsWith('/auth/');
+  const isWellKnown = url.pathname.startsWith('/.well-known/');
+  const isPWAFile = url.pathname === '/sw.js' ||
+                    url.pathname === '/manifest.json' ||
+                    url.pathname.startsWith('/workbox-') ||
+                    url.pathname.match(/^\/sw\.js/);
+  const isStaticAsset = url.pathname.startsWith('/webp/') ||
+                        url.pathname.startsWith('/images/') ||
+                        url.pathname.startsWith('/weather-icons/') ||
+                        url.pathname.startsWith('/waves/') ||
+                        url.pathname.startsWith('/skies/') ||
+                        url.pathname.startsWith('/findr-favicon/') ||
+                        url.pathname.startsWith('/grow/') ||
+                        url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
+  const shouldSkipRedirect = isApiRoute || isNextInternal || isAuthPath || isWellKnown || isPWAFile || isStaticAsset;
+
+  // Redirect grow.godaisy.io to /grow (Grow Daisy app)
+  if ((hostname === 'grow.godaisy.io' || hostname === 'www.grow.godaisy.io') && !shouldSkipRedirect) {
+    const isGrowPath = url.pathname.startsWith('/grow');
+    if (!isGrowPath && url.pathname !== '/') {
+      // Redirect non-grow paths to /grow
+      const growUrl = url.clone();
+      growUrl.pathname = '/grow';
+      response = NextResponse.redirect(growUrl);
+    } else if (url.pathname === '/') {
+      // Redirect root to /grow
+      const growUrl = url.clone();
+      growUrl.pathname = '/grow';
+      response = NextResponse.redirect(growUrl);
+    }
+  }
+
   // Redirect fishfindr.eu root to /findr (but NOT for API routes, static assets, or _next)
   // Do NOT redirect godaisy.io - it's already serving /findr as a subdomain path
   if ((hostname === 'fishfindr.eu' || hostname === 'www.fishfindr.eu') && !hostname.includes('godaisy.io')) {
-    // Skip redirect for:
-    // - API routes (/api/*)
-    // - Next.js internals (/_next/*)
-    // - Static assets (/webp/*, /images/*, /weather-icons/*, etc.)
-    // - PWA files (sw.js, manifest.json, workbox files)
-    // - Auth callbacks (/auth/callback)
-    // - Well-known files (/.well-known/* for Apple App Site Association, etc.)
-    // - Already on findr paths
-    const isApiRoute = url.pathname.startsWith('/api/');
-    const isNextInternal = url.pathname.startsWith('/_next/');
     const isFindrPath = url.pathname.startsWith('/findr');
-    const isAuthPath = url.pathname.startsWith('/auth/');
-    const isWellKnown = url.pathname.startsWith('/.well-known/');
-    const isPWAFile = url.pathname === '/sw.js' ||
-                      url.pathname === '/manifest.json' ||
-                      url.pathname.startsWith('/workbox-') ||
-                      url.pathname.match(/^\/sw\.js/);
-    const isStaticAsset = url.pathname.startsWith('/webp/') ||
-                          url.pathname.startsWith('/images/') ||
-                          url.pathname.startsWith('/weather-icons/') ||
-                          url.pathname.startsWith('/waves/') ||
-                          url.pathname.startsWith('/skies/') ||
-                          url.pathname.startsWith('/findr-favicon/') ||
-                          url.pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|woff|woff2|ttf|eot)$/);
 
-    if (!isApiRoute && !isNextInternal && !isFindrPath && !isAuthPath && !isWellKnown && !isPWAFile && !isStaticAsset) {
+    if (!shouldSkipRedirect && !isFindrPath) {
       const findrUrl = url.clone();
       findrUrl.pathname = '/findr';
       response = NextResponse.redirect(findrUrl);

@@ -1,0 +1,50 @@
+{
+  "name": "Grow Daisy - Smart Garden Planner",
+  "short_name": "Grow Daisy",
+  "description": "Your intelligent gardening companion. Plan your garden, track your plants, and get weather-smart growing recommendations tailored to your local climate.",
+  "start_url": "/grow",
+  "scope": "/grow",
+  "display": "standalone",
+  "background_color": "#065f46",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "education", "utilities"],
+  "icons": [
+    {
+      "src": "/growdaisy-favicon/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/growdaisy-favicon/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/growdaisy-favicon/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Garden",
+      "short_name": "Garden",
+      "description": "View your garden and plants",
+      "url": "/grow/garden",
+      "icons": [{ "src": "/growdaisy-favicon/shortcut-garden.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Planting Calendar",
+      "short_name": "Calendar",
+      "description": "See what to plant today",
+      "url": "/grow/plan",
+      "icons": [{ "src": "/growdaisy-favicon/shortcut-calendar.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

@@ -116,7 +116,13 @@ export default function GoDaisyLogin() {
       }
 
       sessionStorage.setItem('oauth_origin', destination);
-      sessionStorage.setItem('oauth_app', 'godaisy');
+      // Detect app context from destination or hostname
+      const isGrowDaisy = destination.startsWith('/grow') ||
+        (typeof window !== 'undefined' && (
+          window.location.hostname.includes('grow.godaisy.io') ||
+          window.location.hostname.includes('growdaisy.io')
+        ));
+      sessionStorage.setItem('oauth_app', isGrowDaisy ? 'growdaisy' : 'godaisy');
 
       if (isNativePlatform) {
         console.log('[Go Daisy Auth] Native platform detected for', provider);

@@ -67,7 +67,8 @@ function getDestination(params: {
   // If this is a recovery flow, send to appropriate password update page
   if (isRecovery) {
     const isFindrFlow = app === 'findr' || hostname.includes('fishfindr.eu') || origin?.includes('fishfindr.eu');
-    return isFindrFlow ? '/findr/update-password' : '/auth/reset';
+    const isGrowDaisyFlow = app === 'growdaisy' || hostname.includes('grow.godaisy.io') || hostname.includes('growdaisy.io') || origin?.includes('grow.godaisy.io') || origin?.includes('growdaisy.io');
+    return isFindrFlow ? '/findr/update-password' : isGrowDaisyFlow ? '/grow/reset-password' : '/auth/reset';
   }
 
   // If returnTo is specified and safe, use it
@@ -83,8 +84,9 @@ function getDestination(params: {
         return url.pathname + url.search + url.hash;
       }
 
-      // Allow same-base-domain (e.g., auth.godaisy.io → godaisy.io or fishfindr.eu)
+      // Allow same-base-domain (e.g., auth.godaisy.io → godaisy.io or grow.godaisy.io → godaisy.io or fishfindr.eu)
       const baseDomain = currentHostname.includes('godaisy') ? 'godaisy.io' :
+                         currentHostname.includes('growdaisy') ? 'growdaisy.io' :
                          currentHostname.includes('fishfindr') ? 'fishfindr.eu' : null;
       if (baseDomain && targetHostname.endsWith(baseDomain)) {
         // Return full URL for cross-subdomain redirect
@@ -100,15 +102,26 @@ function getDestination(params: {
   const storedOrigin = typeof window !== 'undefined' ? sessionStorage.getItem('oauth_origin') : null;
 
   // Determine app context from multiple sources
-  const isFindrFlow = 
-    app === 'findr' || 
+  const isFindrFlow =
+    app === 'findr' ||
     storedApp === 'findr' ||
-    hostname.includes('fishfindr.eu') || 
+    hostname.includes('fishfindr.eu') ||
     origin?.includes('fishfindr.eu') ||
     storedOrigin?.includes('fishfindr.eu');
 
-  const destination = isFindrFlow ? '/findr' : '/';
-  console.log('[OAuth Debug] getDestination result:', { destination, isFindrFlow, app, hostname, origin });
+  const isGrowDaisyFlow =
+    app === 'growdaisy' ||
+    storedApp === 'growdaisy' ||
+    hostname.includes('grow.godaisy.io') ||
+    hostname.includes('growdaisy.io') ||
+    origin?.includes('grow.godaisy.io') ||
+    origin?.includes('growdaisy.io') ||
+    storedOrigin?.includes('grow.godaisy.io') ||
+    storedOrigin?.includes('growdaisy.io') ||
+    storedOrigin?.startsWith('/grow');
+
+  const destination = isFindrFlow ? '/findr' : isGrowDaisyFlow ? '/grow' : '/';
+  console.log('[OAuth Debug] getDestination result:', { destination, isFindrFlow, isGrowDaisyFlow, app, hostname, origin });
   return destination;
 }
 
