@@ -26,10 +26,21 @@ import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { useFavourites } from '../../hooks/useFavourites';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
-import { FishingAreaInfo } from '../../components/findr/FishingAreaInfo';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
-import { DataFreshnessIndicator } from '../../components/findr/DataFreshnessIndicator';
-import { ConfidenceBreakdownCard } from '../../components/findr/ConfidenceBreakdownCard';
+
+// Dynamically import non-critical components
+const FishingAreaInfo = dynamic(
+  () => import('../../components/findr/FishingAreaInfo').then(mod => ({ default: mod.FishingAreaInfo })),
+  { ssr: false }
+);
+const DataFreshnessIndicator = dynamic(
+  () => import('../../components/findr/DataFreshnessIndicator').then(mod => ({ default: mod.DataFreshnessIndicator })),
+  { ssr: false }
+);
+const ConfidenceBreakdownCard = dynamic(
+  () => import('../../components/findr/ConfidenceBreakdownCard').then(mod => ({ default: mod.ConfidenceBreakdownCard })),
+  { ssr: false }
+);
 
 // Code-split modals - only loaded when opened (saves ~30KB from initial bundle)
 const FindrModal = dynamic(
@@ -58,7 +69,7 @@ import { GuildBadge } from '../../components/findr/GuildBadge';
 import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { GradientFish } from '../../components/GradientFish';
-import FindrFooter from '../../components/FindrFooter';
+const FindrFooter = dynamic(() => import('../../components/FindrFooter'), { ssr: false });
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {

@@ -14,8 +14,9 @@ import { buildPopupActivityPayload } from '../utils/buildPopupActivityPayload';
 import { MARINE_ACTIVITY_IDS } from '../utils/activityHelpers';
 import { knotsToMps } from '../utils/weatherUtils';
 import { selectHeroActivity } from '../utils/heroSelector';
-import AppHeader from '../components/AppHeader';
-import Footer from '../components/footer';
+// Dynamic import header/footer - they're not critical for initial paint
+const AppHeader = dynamic(() => import('../components/AppHeader'), { ssr: true });
+const Footer = dynamic(() => import('../components/footer'), { ssr: false });
 import { getBeaufortNumber } from '../utils/beaufort';
 import Link from 'next/link';
 import type { MarineHour } from '../types/weatherTypes';
@@ -32,7 +33,7 @@ import { buildReasons } from '../utils/activityHelpers'; // Adjust the path base
 import { getActivityMessage } from '../data/activityMessages';
 import { WeatherData } from '../types/weatherData';
 import { getOptimizedImageSrc, isImageOptimized } from '../data/bgMapOptimized';
-import BottomNav from '../components/BottomNav';
+const BottomNav = dynamic(() => import('../components/BottomNav'), { ssr: false });
 import { SkeletonHomePage } from '../components/SkeletonLoader';
 
 // Code splitting: Lazy load heavy modal/dialog components
@@ -847,17 +848,30 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
       />
     ) : null;
 
+    // Get the hero image URL for this card
+    const heroImageUrl = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
+      ? getOptimizedImageSrc(heroActivity.activityId, 'webpSmall')
+      : getActivityBg(heroActivity?.activityId || 'default');
+
     const dayCard = (
       <div
         key={day.date}
         className="activity-card-enhanced"
         style={{
-          backgroundImage: `url(${heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
-            ? getOptimizedImageSrc(heroActivity.activityId, 'webpSmall')
-            : getActivityBg(heroActivity?.activityId || 'default')
-          })`,
+          backgroundImage: `url(${heroImageUrl})`,
         }}
       >
+        {/* Preload LCP image for first card only - this hidden image triggers priority loading */}
+        {idx === 0 && (
+          <Image
+            src={heroImageUrl}
+            alt=""
+            fill
+            priority
+            className="opacity-0 absolute inset-0 -z-10"
+            sizes="(max-width: 768px) 100vw, 400px"
+          />
+        )}
         <div className="activity-card-overlay" />
         <div className="activity-card-content">
             <div className="weather-icon-topright">
