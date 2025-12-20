@@ -108,6 +108,16 @@ export default function GoDaisyLogin() {
 
         if (error) throw error;
 
+        // Check if this is a Grow Daisy native app context (mobile + /grow returnTo)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isGrowContext = returnTo?.startsWith('/grow');
+
+        if (isMobile && isGrowContext) {
+          // Redirect to native app using deep link
+          window.location.href = 'growdaisy://auth/success';
+          return;
+        }
+
         // Redirect to returnTo or default to home
         router.push(returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/');
       }
