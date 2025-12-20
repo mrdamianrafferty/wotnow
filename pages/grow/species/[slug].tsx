@@ -817,9 +817,9 @@ export default function GrowSpeciesPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 py-6 space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
+      <div className="mx-auto max-w-5xl px-4 py-6 space-y-6 overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="min-w-0 w-full sm:w-auto">
             {isLoadingSpecies ? (
               <>
                 <Skeleton className="h-9 w-64" />
@@ -894,9 +894,9 @@ export default function GrowSpeciesPage() {
             )}
           </div>
 
-          <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0 w-full sm:w-auto">
             <Button
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
               onClick={() => {
                 // MVP: navigate back to Garden with Add Plant dialog open
                 // Later: open AddPlantDialog preselected.
@@ -1077,7 +1077,7 @@ export default function GrowSpeciesPage() {
               </div>
             ) : windows && windows.length > 0 ? (
               <div className="space-y-5">
-                <div>
+                <div className="overflow-x-hidden">
                   <div className="text-xs font-medium text-muted-foreground mb-2">
                     Next actionable
                   </div>
@@ -1085,11 +1085,11 @@ export default function GrowSpeciesPage() {
                     {actionable.map((w) => (
                       <div
                         key={`${w.taskCode}:${w.startWeek}:${w.endWeek}`}
-                        className="px-3 py-2 rounded-full border bg-white"
+                        className="px-3 py-2 rounded-full border bg-white max-w-full"
                       >
                         <div className="flex items-center gap-2">
                           <TimingIcon kind={classifyTimingKind(w)} />
-                          <div className="text-sm font-medium">
+                          <div className="text-sm font-medium truncate">
                             {w.taskName}
                           </div>
                         </div>
@@ -1105,7 +1105,7 @@ export default function GrowSpeciesPage() {
                   <div className="text-xs font-medium text-muted-foreground mb-2">
                     Year at a glance
                   </div>
-                  <div className="grid grid-cols-12 gap-1">
+                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-1">
                     {months.map((m) => {
                       const hasWindow = monthIndexHasWindow(windows ?? [], m);
                       const isNow = m === nowMonthIndex0;
