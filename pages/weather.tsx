@@ -542,7 +542,7 @@ export default function WeatherPage() {
 
       {/* Foreground UI */}
       <main className="relative z-10 bg-transparent text-base-content min-h-screen overflow-x-hidden">
-        <section className="mx-auto w-full max-w-6xl px-4 py-6">
+        <section className="mx-auto w-full max-w-6xl px-4 py-6" style={{ minHeight: '220px' }}>
           <HeaderHero
             data={data.header as Omit<HeaderData, 'minis'> & { minis: MiniItem[] }}
             sunriseISO={data.sunriseISO}
@@ -560,8 +560,8 @@ export default function WeatherPage() {
           )}
         </section>
 
-        {/* Cards Layout with Sections - use content-visibility for CLS optimization */}
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 1500px' }}>
+        {/* Cards Layout with Sections */}
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4">
           {effectiveMarine ? (
             /* ============ MARINE MODE LAYOUT ============ */
             <>
