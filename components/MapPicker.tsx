@@ -1,6 +1,8 @@
 // components/MapPicker.tsx
 'use client';
 
+import 'leaflet/dist/leaflet.css';
+
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { useState } from 'react';
 import { LatLngExpression } from 'leaflet';

@@ -7,7 +7,7 @@ import '../styles/Popup.css'
 // Using minified version only (124KB). Unminified version (144KB) removed as duplicate.
 import '../styles/weather-icons-wind.min.css'
 import '../styles/windwave.css'
-import 'leaflet/dist/leaflet.css'
+// Leaflet CSS moved to map components for code splitting
 
 import type { AppProps } from 'next/app'
 import Head from 'next/head'

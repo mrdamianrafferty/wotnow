@@ -10,7 +10,7 @@ export default function FindrFooter() {
     <footer data-theme="corporate" className="w-full bg-base-200 text-base-content">
       <div className="footer max-w-7xl mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
         <aside className="space-y-2">
-          <Image src="/little-daisy.png" alt="findr by Go Daisy" className="w-auto" width={72} height={72} />
+          <Image src="/little-daisy.png" alt="findr by Go Daisy" width={40} height={40} style={{ width: 40, height: 40 }} />
           <div className="text-2xl font-bold">findr</div>
           <p className="text-sm opacity-70">
             <TranslatedText text="by" />{" "}

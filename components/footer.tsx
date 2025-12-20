@@ -9,8 +9,8 @@ export default function Footer() {
     <footer data-theme="corporate" className="w-full bg-base-200 text-base-content">
       <div className="footer max-w-7xl mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-8">
         <aside className="space-y-2">
-          <Image src="/little-daisy.png" alt="Go Daisy" className="w-auto" width={72} height={72} />
-          <Image src="/go-daisy-logo.png" alt="Go Daisy logo" className="w-auto" width={112} height={28} />
+          <Image src="/little-daisy.png" alt="Go Daisy" width={40} height={40} style={{ width: 40, height: 40 }} />
+          <Image src="/go-daisy-logo.png" alt="Go Daisy logo" width={112} height={28} style={{ width: 112, height: 28 }} />
         </aside>
 
         <div className="grid grid-cols-2 gap-6">

@@ -1,6 +1,8 @@
 // components/findr/FullScreenMap.tsx
 'use client';
 
+import 'leaflet/dist/leaflet.css';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { MapContainer, TileLayer, Marker, Popup, useMap, WMSTileLayer } from 'react-leaflet';
