@@ -1066,27 +1066,29 @@ const FindrPage: React.FC = () => {
               )}
             </div>
 
-            {!activeRectangle && (
-              <div className="px-4 sm:px-0">
-                <div className="alert alert-info">
-                  <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
+            {/* Card deck area - fixed height container to prevent CLS */}
+            <div className="min-h-[520px] sm:min-h-[580px]">
+              {!activeRectangle && (
+                <div className="px-4 sm:px-0">
+                  <div className="alert alert-info">
+                    <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeRectangle && loading && (
-              <div className="space-y-4 px-4 sm:px-0">
-                <div className="alert alert-info">
-                  <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
-                  <span>
-                    <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
-                  </span>
+              {activeRectangle && loading && (
+                <div className="space-y-4 px-4 sm:px-0">
+                  <div className="alert alert-info">
+                    <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
+                    <span>
+                      <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
+                    </span>
+                  </div>
+                  <div className="relative h-[460px] sm:h-[520px] w-full">
+                    <SkeletonCard />
+                  </div>
                 </div>
-                <div className="relative h-[460px] sm:h-[520px] w-full">
-                  <SkeletonCard />
-                </div>
-              </div>
-            )}
+              )}
 
             {activeRectangle && !loading && error && (
               <div className="px-4 sm:px-0">
@@ -1136,14 +1138,15 @@ const FindrPage: React.FC = () => {
 
 
             {activeRectangle && !loading && !error && totalPredictions === 0 && (
-              <div className="px-4 sm:px-0">
-                <div className="alert alert-warning">
-                  <span>
-                    The fish are quiet here for {predictionDate}. Try different waters or shift the day.
-                  </span>
+                <div className="px-4 sm:px-0">
+                  <div className="alert alert-warning">
+                    <span>
+                      The fish are quiet here for {predictionDate}. Try different waters or shift the day.
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </section>
 
           {/* Species lineup section */}
