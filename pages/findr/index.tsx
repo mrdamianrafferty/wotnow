@@ -52,7 +52,7 @@ const FishSpeciesModal = dynamic(
   () => import('../../components/findr/FishSpeciesModal').then(mod => ({ default: mod.FishSpeciesModal })),
   { ssr: false, loading: () => null }
 );
-import { SkeletonCard, SkeletonSpeciesList } from '../../components/findr/SkeletonCard';
+import { SkeletonCard } from '../../components/findr/SkeletonCard';
 import {
   FALLBACK_RECTANGLE_OPTIONS,
   useFindrRectangleOptions,
@@ -1075,20 +1075,17 @@ const FindrPage: React.FC = () => {
             )}
 
             {activeRectangle && loading && (
-              <>
-                <div className="space-y-4 px-4 sm:px-0">
-                  <div className="alert alert-info">
-                    <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
-                    <span>
-                      <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
-                    </span>
-                  </div>
-                  <div className="relative h-[460px] sm:h-[520px] w-full">
-                    <SkeletonCard />
-                  </div>
+              <div className="space-y-4 px-4 sm:px-0">
+                <div className="alert alert-info">
+                  <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
+                  <span>
+                    <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
+                  </span>
                 </div>
-                <SkeletonSpeciesList count={6} />
-              </>
+                <div className="relative h-[460px] sm:h-[520px] w-full">
+                  <SkeletonCard />
+                </div>
+              </div>
             )}
 
             {activeRectangle && !loading && error && (
@@ -1149,22 +1146,59 @@ const FindrPage: React.FC = () => {
             )}
           </section>
 
-          {activeRectangle && !loading && !error && totalPredictions > 0 && (
+          {/* Species lineup section - always render wrapper to prevent CLS */}
+          {activeRectangle && !error && (totalPredictions > 0 || loading) && (
             <section className="space-y-5 px-4 sm:px-4" aria-labelledby="species-lineup-heading">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 id="species-lineup-heading" className="text-lg font-semibold flex items-center gap-2">
-                  <ListChecks size={18} aria-hidden="true" /> <TranslatedText text="Full species lineup" />
-                </h3>
-                <span className="text-sm text-base-content/60">
-                  <TranslatedText text="Sorted by confidence for" /> {activeOption?.region ?? (
-                    <>
-                      <TranslatedText text="area" /> {activeRectangle}
-                    </>
-                  )}
-                </span>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {cards.map((card) => (
+              {loading ? (
+                /* Skeleton header and grid during loading */
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="skeleton h-7 w-48"></div>
+                    <div className="skeleton h-5 w-32"></div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="card bg-base-100 shadow-md border border-base-200/60">
+                        <div className="card-body space-y-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className="skeleton w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
+                              <div className="space-y-2 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="skeleton h-5 w-24"></div>
+                                  <div className="skeleton h-5 w-10 rounded-full"></div>
+                                </div>
+                                <div className="skeleton h-3 w-20"></div>
+                              </div>
+                            </div>
+                            <div className="skeleton w-8 h-8 rounded-full shrink-0" />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="skeleton h-3 w-full"></div>
+                            <div className="skeleton h-3 w-5/6"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* Real header and cards */
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 id="species-lineup-heading" className="text-lg font-semibold flex items-center gap-2">
+                      <ListChecks size={18} aria-hidden="true" /> <TranslatedText text="Full species lineup" />
+                    </h3>
+                    <span className="text-sm text-base-content/60">
+                      <TranslatedText text="Sorted by confidence for" /> {activeOption?.region ?? (
+                        <>
+                          <TranslatedText text="area" /> {activeRectangle}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {cards.map((card) => (
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -1305,8 +1339,10 @@ const FindrPage: React.FC = () => {
                       })()}
                     </div>
                   </article>
-                ))}
-              </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </section>
           )}
 
