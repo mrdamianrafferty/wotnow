@@ -33,6 +33,7 @@ export default function GoDaisyLogin() {
   // Get returnTo parameter for redirect after login
   const returnTo = router.query.returnTo as string | undefined;
   const destination = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/findr') ? returnTo : '/';
+  const isGrowContext = returnTo?.startsWith('/grow');
 
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
@@ -41,13 +42,24 @@ export default function GoDaisyLogin() {
     if (typeof window === 'undefined') {
       return;
     }
+
+    // Check if this login was initiated from the Grow Daisy native app
+    // We detect this by checking sessionStorage flag set before navigating here
+    const isFromGrowApp = sessionStorage.getItem('grow_native_auth') === 'true';
+
+    if (isFromGrowApp && isGrowContext) {
+      // Use deep link for native app callback
+      setAuthCallbackUrl('growdaisy://auth/callback');
+      return;
+    }
+
     const origin = window.location.origin;
     if (!origin.startsWith('http')) {
       return;
     }
     const resolved = `${origin}/auth/callback`;
     setAuthCallbackUrl(resolved);
-  }, []);
+  }, [isGrowContext]);
 
   useEffect(() => {
     let cancelled = false;

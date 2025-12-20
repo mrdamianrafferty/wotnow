@@ -118,7 +118,18 @@ function getDestination(params: {
     origin?.includes('growdaisy.io') ||
     storedOrigin?.includes('grow.godaisy.io') ||
     storedOrigin?.includes('growdaisy.io') ||
-    storedOrigin?.startsWith('/grow');
+    storedOrigin?.startsWith('/grow') ||
+    returnTo?.startsWith('/grow');
+
+  // For Grow Daisy native app, redirect using deep link
+  // Check if user came from grow subdomain or has /grow returnTo AND is on mobile
+  const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isGrowNativeApp = isGrowDaisyFlow && isMobile && !isStandaloneDisplayMode();
+
+  if (isGrowNativeApp) {
+    // Use deep link to return to native app
+    return 'growdaisy://auth/callback';
+  }
 
   const destination = isFindrFlow ? '/findr' : isGrowDaisyFlow ? '/grow' : '/';
   console.log('[OAuth Debug] getDestination result:', { destination, isFindrFlow, isGrowDaisyFlow, app, hostname, origin });
