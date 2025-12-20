@@ -37,7 +37,7 @@ const CoastalLocationDialog = dynamic(() => import("../components/CoastalLocatio
 // Code-split Row 2 cards - load together as a group
 const CardLoadingSkeleton = () => (
   <div className="card bg-slate-800/35 backdrop-blur-sm border border-white/10 shadow-sm animate-pulse">
-    <div className="card-body p-4 h-32"></div>
+    <div className="card-body p-4 min-h-[200px]"></div>
   </div>
 );
 
@@ -560,8 +560,8 @@ export default function WeatherPage() {
           )}
         </section>
 
-        {/* Cards Layout with Sections */}
-        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4">
+        {/* Cards Layout with Sections - use content-visibility for CLS optimization */}
+        <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '0 1500px' }}>
           {effectiveMarine ? (
             /* ============ MARINE MODE LAYOUT ============ */
             <>
