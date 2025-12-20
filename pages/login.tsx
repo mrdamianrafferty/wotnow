@@ -215,7 +215,7 @@ export default function GoDaisyLogin() {
       <Head>
         <title>Sign In - Go Daisy</title>
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))]">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
           <div className="card-body">
             {/* Header */}
