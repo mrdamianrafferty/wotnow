@@ -497,6 +497,9 @@ export function WeatherPage() {
 
       <HeroWeatherCard data={currentWeather} marine={null} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
 
+      {/* Soil Status - important for gardening, placed prominently */}
+      {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} t={t} /> : null}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
@@ -563,7 +566,6 @@ export function WeatherPage() {
         <TemperatureTrendCard data={currentWeatherData.daily} unitSystem={unitSystem} t={t} />
         {currentWeatherData.airQuality ? <AirQualityCard data={currentWeatherData.airQuality} t={t} /> : null}
         {currentWeatherData.pollen ? <PollenCard data={currentWeatherData.pollen} t={t} /> : null}
-        {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} t={t} /> : null}
       </div>
     </div>
   );
