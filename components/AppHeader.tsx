@@ -321,7 +321,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <>
       {/* Safe area spacer - fills iOS notch/status bar area with background color */}
-      <div className="safe-top bg-base-100 w-full" style={{ backgroundColor: '#ffffff' }} />
+      <div
+        className="w-full bg-base-100"
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          backgroundColor: '#ffffff'
+        }}
+      />
       <header className="w-full bg-base-100 relative z-10" data-theme="light">
       {/* Skip to main content link for accessibility */}
       <a
