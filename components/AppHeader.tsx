@@ -318,16 +318,63 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     onToggleLocationType?.(next);
   };
 
+  // Detect iOS for safe area fallback (env() returns 0px in regular Safari)
+  const [iosSafeAreaHeight, setIosSafeAreaHeight] = React.useState(0);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Detect iOS devices (iPhone, iPad)
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (!isIOS) return;
+
+    // Check if env(safe-area-inset-top) is working
+    const testEl = document.createElement('div');
+    testEl.style.paddingTop = 'env(safe-area-inset-top, 0px)';
+    document.body.appendChild(testEl);
+    const computedPadding = parseInt(window.getComputedStyle(testEl).paddingTop) || 0;
+    document.body.removeChild(testEl);
+
+    // If env() returns 0 on iOS, we need a fallback
+    // iPhone X+ notch/Dynamic Island needs ~47-59px depending on model
+    // Safe minimum fallback: 47px for older notch, works for all models
+    if (computedPadding === 0) {
+      // Detect iPhone models with notch/Dynamic Island by screen dimensions
+      const screenHeight = window.screen.height;
+      const screenWidth = window.screen.width;
+      const aspectRatio = screenHeight / screenWidth;
+
+      // iPhone X and later have aspect ratio > 2.0 (compared to ~1.78 for older iPhones)
+      // Also check for iPad Pro which has safe area but lower aspect ratio
+      const hasNotch = aspectRatio > 2.0 ||
+        (screenHeight >= 1024 && navigator.maxTouchPoints > 1); // iPad Pro
+
+      if (hasNotch) {
+        // Use 47px as minimum safe fallback for all notched iPhones
+        setIosSafeAreaHeight(47);
+      } else {
+        // Older iPhones (8 and below) - just need status bar height (20px)
+        setIosSafeAreaHeight(20);
+      }
+    }
+  }, []);
+
   return (
     <>
       {/* Safe area spacer - fills iOS notch/status bar area with background color */}
-      {/* Uses both height and min-height for maximum compatibility with iOS WebViews */}
+      {/* Uses CSS env() with JS fallback for when env() returns 0px in Safari */}
       <div
-        className="w-full"
+        className="w-full bg-white"
         style={{
-          height: 'env(safe-area-inset-top, 0px)',
-          minHeight: 'env(safe-area-inset-top, 0px)',
-          backgroundColor: '#ffffff'
+          // Prefer CSS env() if it works, otherwise use JS-calculated fallback
+          height: iosSafeAreaHeight > 0
+            ? `${iosSafeAreaHeight}px`
+            : 'env(safe-area-inset-top, 0px)',
+          minHeight: iosSafeAreaHeight > 0
+            ? `${iosSafeAreaHeight}px`
+            : 'env(safe-area-inset-top, 0px)',
         }}
         aria-hidden="true"
       />

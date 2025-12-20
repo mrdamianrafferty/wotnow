@@ -17,6 +17,7 @@ export default function GoDaisyLogin() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isNativePlatform, setIsNativePlatform] = useState(false);
+  const [iosSafeAreaHeight, setIosSafeAreaHeight] = useState(0);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
     if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
       return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
@@ -74,6 +75,41 @@ export default function GoDaisyLogin() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Detect iOS for safe area fallback (env() returns 0px in regular Safari)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Detect iOS devices (iPhone, iPad)
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (!isIOS) return;
+
+    // Check if env(safe-area-inset-top) is working
+    const testEl = document.createElement('div');
+    testEl.style.paddingTop = 'env(safe-area-inset-top, 0px)';
+    document.body.appendChild(testEl);
+    const computedPadding = parseInt(window.getComputedStyle(testEl).paddingTop) || 0;
+    document.body.removeChild(testEl);
+
+    // If env() returns 0 on iOS, we need a fallback
+    if (computedPadding === 0) {
+      const screenHeight = window.screen.height;
+      const screenWidth = window.screen.width;
+      const aspectRatio = screenHeight / screenWidth;
+
+      // iPhone X and later have aspect ratio > 2.0
+      const hasNotch = aspectRatio > 2.0 ||
+        (screenHeight >= 1024 && navigator.maxTouchPoints > 1); // iPad Pro
+
+      if (hasNotch) {
+        setIosSafeAreaHeight(47);
+      } else {
+        setIosSafeAreaHeight(20);
+      }
+    }
   }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -206,7 +242,14 @@ export default function GoDaisyLogin() {
       <Head>
         <title>Sign In - Go Daisy</title>
       </Head>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <div
+        className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4"
+        style={{
+          paddingTop: iosSafeAreaHeight > 0
+            ? `calc(1rem + ${iosSafeAreaHeight}px)`
+            : 'calc(1rem + env(safe-area-inset-top))'
+        }}
+      >
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
           <div className="card-body">
             {/* Header */}
