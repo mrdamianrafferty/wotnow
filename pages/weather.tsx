@@ -562,7 +562,15 @@ export default function WeatherPage() {
 
         {/* Cards Layout with Sections */}
         <div className="mx-auto w-full max-w-6xl px-4 pb-10 space-y-4">
-          {effectiveMarine ? (
+          {/* Show skeleton until data loaded to prevent marine/inland layout switch CLS */}
+          {!Array.isArray(data.hourly) || data.hourly.length === 0 ? (
+            <div className="space-y-4" style={{ minHeight: '800px' }}>
+              <div className="h-8 w-48 skeleton rounded"></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1,2,3,4,5,6].map(i => <CardLoadingSkeleton key={i} />)}
+              </div>
+            </div>
+          ) : effectiveMarine ? (
             /* ============ MARINE MODE LAYOUT ============ */
             <>
               {/* SURF & MARINE CONDITIONS SECTION */}
