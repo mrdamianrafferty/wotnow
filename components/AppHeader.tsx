@@ -319,9 +319,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="w-full bg-base-100 relative z-10" data-theme="light">
+    <>
       {/* Safe area spacer - fills iOS notch/status bar area with background color */}
-      <div className="safe-top bg-base-100" />
+      <div className="safe-top bg-base-100 w-full" style={{ backgroundColor: '#ffffff' }} />
+      <header className="w-full bg-base-100 relative z-10" data-theme="light">
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
@@ -557,6 +558,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
     </header>
+    </>
   );
 };
 
