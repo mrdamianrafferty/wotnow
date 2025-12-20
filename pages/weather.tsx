@@ -908,7 +908,7 @@ function HeaderHero({
   // If loading, show prominent DaisyUI loader
   if (isLoading) {
     return (
-      <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm">
+      <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px' }}>
         <div className="hero-content w-full flex-col items-stretch py-10 md:py-14">
           <div className="flex items-center gap-3 text-lg">
             <span className="loading loading-spinner text-primary"></span>
@@ -945,7 +945,7 @@ function HeaderHero({
   const iconCode = inferIconFromCondition();
   const iconPath = `/weather-icons/design/fill/final/${iconCode}.svg`;
   return (
-    <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm">
+    <div className="hero rounded-2xl bg-slate-800/25 backdrop-blur-sm text-white border border-white/10 shadow-sm" style={{ minHeight: '180px' }}>
       <div className="hero-content w-full flex-col items-stretch py-6 md:py-8">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div className="flex items-start gap-4">
