@@ -1066,9 +1066,7 @@ const FindrPage: React.FC = () => {
               )}
             </div>
 
-            {/* Card deck area - fixed height container to prevent CLS */}
-            <div className="min-h-[520px] sm:min-h-[580px]">
-              {!activeRectangle && (
+            {!activeRectangle && (
                 <div className="px-4 sm:px-0">
                   <div className="alert alert-info">
                     <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
@@ -1146,12 +1144,15 @@ const FindrPage: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
           </section>
 
-          {/* Species lineup section */}
+          {/* Species lineup section - use content-visibility to reduce CLS impact */}
           {activeRectangle && !error && (totalPredictions > 0 || loading) && (
-            <section className="space-y-5 px-4 sm:px-4" aria-labelledby="species-lineup-heading">
+            <section
+              className="space-y-5 px-4 sm:px-4"
+              aria-labelledby="species-lineup-heading"
+              style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
+            >
               {loading ? (
                 /* Skeleton header and grid during loading */
                 <>
