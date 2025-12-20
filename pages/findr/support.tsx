@@ -78,7 +78,7 @@ export default function FindrSupportPage() {
                   <TranslatedText text="Get exclusive early access to new features, monthly development updates, and have a say in what gets built next." />
                 </p>
                 <a
-                  href="https://www.patreon.com/godaisy"
+                  href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary btn-wide"

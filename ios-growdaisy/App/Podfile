@@ -55,7 +55,7 @@ def fix_gtm_session_fetcher_includes!(base_dir)
   end
 end
 
-target 'App' do
+target 'App copy' do
   capacitor_pods
   # Add your Pods here
 end

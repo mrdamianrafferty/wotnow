@@ -113,7 +113,7 @@ export default function SupportPage() {
                 <p className="text-base-content">{patreonText}</p>
                 <a
                   className="btn btn-primary"
-                  href="https://patreon.com/GoDaisy"
+                  href="https://patreon.com/GoDaisy?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
