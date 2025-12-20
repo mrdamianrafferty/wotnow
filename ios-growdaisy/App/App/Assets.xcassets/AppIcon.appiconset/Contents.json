@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "icon-1024.png",
+      "filename" : "sprout.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -87,8 +87,64 @@
       "size" : "83.5x83.5"
     },
     {
+      "filename" : "sprout 1.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
+      "size" : "1024x1024"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "1x",
+      "size" : "16x16"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "2x",
+      "size" : "16x16"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "1x",
+      "size" : "32x32"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "2x",
+      "size" : "32x32"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "1x",
+      "size" : "128x128"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "2x",
+      "size" : "128x128"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "1x",
+      "size" : "256x256"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "2x",
+      "size" : "256x256"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "1x",
+      "size" : "512x512"
+    },
+    {
+      "idiom" : "mac",
+      "scale" : "2x",
+      "size" : "512x512"
+    },
+    {
+      "idiom" : "universal",
+      "platform" : "watchos",
       "size" : "1024x1024"
     },
     {

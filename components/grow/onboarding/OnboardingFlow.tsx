@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Sprout,
 } from 'lucide-react';
+import InlineLocationSearch from './InlineLocationSearch';
 
 interface OnboardingFlowProps {
   className?: string;
@@ -522,14 +523,19 @@ export function OnboardingFlow({ className, onComplete }: OnboardingFlowProps) {
               <label className="text-sm font-medium">Where is your garden based?</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={formState.location}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormState((previous) => ({ ...previous, location: event.target.value }))
-                  }
-                  placeholder="e.g. Portland, OR or 97205"
-                  className="pl-10"
-                />
+                <div className="pl-10">
+                  <InlineLocationSearch
+                    initialQuery={formState.location}
+                    placeholder="e.g. Portland, OR or 97205"
+                    onSelect={(loc) => {
+                      setFormState((previous) => ({ ...previous, location: loc.name }));
+                      setLocationMeta((prev) => ({ ...prev, latitude: loc.lat, longitude: loc.lon }));
+                    }}
+                    storageKey="coastal_recent_locations_v1"
+                    legacyKey="recentCoastalLocations"
+                    showMapToggle={true}
+                  />
+                </div>
               </div>
               <p className="text-sm text-muted-foreground">
                 We use your location to calculate frost dates, daylight hours, and local weather patterns.
