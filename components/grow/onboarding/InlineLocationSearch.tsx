@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng } from '../../../lib/hooks/usePlacesAutocompleteNew';
+import { usePlacesAutocompleteNew as usePlacesAutocomplete, getGeocode, getLatLng, PlacePrediction } from '../../../lib/hooks/usePlacesAutocompleteNew';
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false });
 
@@ -136,7 +136,7 @@ export default function InlineLocationSearch({
     inputRef.current?.blur();
   };
 
-  const handleSuggestionClick = async (s: any) => {
+  const handleSuggestionClick = async (s: PlacePrediction) => {
     try {
       const placeId = s?.place_id;
       const label = s?.structured_formatting?.main_text || s?.description || 'Selected place';
@@ -221,7 +221,7 @@ export default function InlineLocationSearch({
 
         {showList && status === 'OK' && data?.length > 0 && query.length >= 2 && !/^current location/i.test(query) && (
           <ul className="absolute left-0 right-0 z-50 mt-1 bg-base-100 rounded-box ring-1 ring-base-300/60 max-h-64 overflow-auto shadow-lg" role="listbox">
-            {data.map((s: any, idx: number) => {
+            {data.map((s: PlacePrediction, idx: number) => {
               const key = s.place_id || idx.toString();
               const main = s?.structured_formatting?.main_text || s?.description;
               const secondary = s?.structured_formatting?.secondary_text;

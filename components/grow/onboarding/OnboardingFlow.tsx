@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Checkbox } from '../../ui/checkbox';
-import { Input } from '../../ui/input';
+// Input removed — using InlineLocationSearch instead
 import { Badge } from '../../ui/badge';
 import { Alert, AlertDescription } from '../../ui/alert';
 import { Separator } from '../../ui/separator';
