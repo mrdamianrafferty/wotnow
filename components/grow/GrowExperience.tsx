@@ -15,6 +15,7 @@ import {
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ONBOARDING_PATH, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { api } from '../../lib/grow/api';
+import { Home, Calendar, Sprout, CloudSun, Info } from 'lucide-react';
 
 // Code-split heavy page components with skeleton loaders
 const PlanPage = dynamic(() => import('./PlanPage').then(mod => ({ default: mod.PlanPage })), {
@@ -232,16 +233,63 @@ export function GrowExperience() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <Navigation
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-        currentUser={currentUser}
-        onSignOut={handleSignOut}
-      />
+      {/* Safe area padding for iOS notch/dynamic island */}
+      <div className="pt-[env(safe-area-inset-top)]">
+        <Navigation
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          currentUser={currentUser}
+          onSignOut={handleSignOut}
+        />
+      </div>
       <SessionRefreshNotice />
-      <main id="main-content" className="container mx-auto px-4 py-8">
+      {/* Add bottom padding for mobile bottom nav */}
+      <main id="main-content" className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         {currentView}
       </main>
+      {/* Mobile bottom navigation */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border z-50"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        role="navigation"
+        aria-label="Mobile navigation"
+      >
+        <div className="flex justify-around items-center h-16">
+          {(['home', 'plan', 'garden', 'conditions', 'info'] as const).map((page) => {
+            const isActive = currentPage === page;
+            const icons = {
+              home: <Home size={24} />,
+              plan: <Calendar size={24} />,
+              garden: <Sprout size={24} />,
+              conditions: <CloudSun size={24} />,
+              info: <Info size={24} />,
+            };
+            const labels = {
+              home: 'Home',
+              plan: 'Plan',
+              garden: 'Garden',
+              conditions: 'Weather',
+              info: 'Info',
+            };
+            return (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 min-w-[60px] min-h-[48px] transition-all duration-150 ${isActive ? 'scale-110' : 'scale-100'}`}
+                aria-label={labels[page]}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className={`transition-colors duration-150 ${isActive ? 'text-green-600' : 'text-gray-500'}`}>
+                  {icons[page]}
+                </span>
+                <span className={`text-xs font-medium ${isActive ? 'text-green-600' : 'text-gray-500'}`}>
+                  {labels[page]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }
