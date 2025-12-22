@@ -739,6 +739,96 @@ export function InfoPage() {
                       Direct sow 3 weeks before last frost. Thin seedlings to 2-3&quot; apart. Keep soil moist for germination. Harvest when tops are 1/2&quot; diameter.
                     </p>
                   </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Runner Beans</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Climbing • Heavy cropper
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors late April, 5cm deep. Plant out May after last frost, 15cm apart at base of 2m+ supports. Water consistently for pods to set. Harvest regularly to encourage more beans.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Courgettes</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Spreading • Prolific
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors April-May, 2.5cm deep on edge. Plant out after frost, 90cm apart. Need rich soil with plenty of compost. Harvest at 10-15cm for best flavour.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Potatoes</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Earth up regularly • Store well
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant seed potatoes March-April, 10-15cm deep, 30cm apart. Earth up as shoots emerge. First earlies ready in 10-12 weeks, maincrops 20 weeks. Avoid waterlogged soil.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Beetroot</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun to part shade • Quick growing • Multi-sow
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow March-July, 2.5cm deep, 10cm apart. Each &apos;seed&apos; produces 2-3 plants - thin to strongest. Ready in 7-13 weeks. Baby beets at 5cm, full size at 7cm. Leaves also edible.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Peas</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Climbing support • Cool season
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Direct sow March-June, 5cm deep, 5-8cm apart in double rows. Provide twiggy sticks or netting for climbing. Pick regularly when pods are plump. Best eaten fresh.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Cucumbers</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Warm • High water needs
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors April, 2cm deep on edge. Plant out June after frost risk, 45cm apart. Water copiously in hot weather. Pick regularly for continuous production. Ridge types hardier outdoors.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Peppers &amp; Chillies</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Warm • Long season
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors February-March under heat (18-21°C), 0.5cm deep. Plant out June in sheltered spot or grow in greenhouse/containers. Stake larger varieties. Feed weekly once flowering.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Onions</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Long season • Store well
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant sets (mini bulbs) March-April, just showing above soil, 10cm apart. Keep weed-free. Harvest when foliage yellows and flops. Dry in sun before storing.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Spinach</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade OK • Cool season • Quick harvest
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow February-May and August-September, 2.5cm deep, thin to 15cm apart. Bolts in heat, so part shade helps in summer. Ready in 6-8 weeks. Pick outer leaves for cut-and-come-again harvest.
+                    </p>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -770,6 +860,66 @@ export function InfoPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Prefers well-drained soil. Water sparingly once established. Prune after flowering to maintain shape.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Thyme</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Drought tolerant • Perennial
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors spring, 0.5cm deep (seeds tiny). Or buy plants. Plant 23cm apart in well-drained, even poor soil. Trim after flowering. Hardy to -15°C. Replace every 3-4 years when woody.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Mint</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade OK • Spreads vigorously • Perennial
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Grow in containers to control spread - roots are invasive. Plant in moisture-retentive soil. Cut back in autumn. Very hardy. Many varieties: spearmint, peppermint, apple mint.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Parsley</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade OK • Biennial • Slow to germinate
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow March-June, 1cm deep. Seeds slow to germinate (3-6 weeks) - soak overnight in warm water first. Thin to 23cm apart. Pick outer leaves regularly. Curly and flat-leaf types.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Coriander</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade • Bolts easily • Succession sow
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Direct sow every 2-3 weeks March-September, 1cm deep, 5cm apart. Bolts quickly in heat or if transplanted (has tap root). Part shade and regular watering delay bolting. Use leaves and seeds.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Chives</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun to part shade • Perennial • Divide regularly
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors February-March, 1cm deep. Or divide existing clumps in spring/autumn. Plant 15cm apart. Cut back after flowering for fresh growth. Edible purple flowers attract pollinators.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Sage</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Drought tolerant • Perennial
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors spring, 0.5cm deep. Or take cuttings in summer. Plant 60cm apart in well-drained soil. Prune after flowering to prevent woodiness. Hardy to -10°C. Purple and variegated forms available.
                     </p>
                   </div>
                 </div>
@@ -805,6 +955,86 @@ export function InfoPage() {
                       Direct sow after frost. Deadhead for continuous blooms. Plant near vegetables to deter pests.
                     </p>
                   </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Sunflowers</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Easy • Fun for children
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors March-April, 2.5cm deep, or direct sow May. Plant 45-60cm apart for large heads. Stake tall varieties. Range from 30cm dwarfs to 3m giants. Leave seed heads for birds.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Lavender</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Drought tolerant • Perennial
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant in spring or autumn in well-drained, even poor soil. Space 30-45cm apart. Trim after flowering, never into old wood. Attracts bees and butterflies. English lavender hardiest (-15°C).
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Sweet Peas</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Climbing • Fragrant
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow autumn (mild areas) or early spring, 2.5cm deep. Chip hard seed coat first. Provide wigwam or trellis support. Pinch tips for bushier plants. Cut flowers regularly - more you pick, more they bloom.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Dahlias</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Tubers • Tender
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant tubers April-May, 10cm deep, stake at planting. Not frost hardy - lift tubers after first frost and store frost-free. Huge range of colours and forms. Pinch tips for bushier plants.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Nasturtiums</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun to part shade • Edible • Easy
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Direct sow April-May, 2.5cm deep, 30cm apart. Poor soil = more flowers, rich soil = more leaves. Trailing or climbing types available. Edible peppery flowers and leaves. Self-seeds freely.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Zinnias</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Tender annual • Cut flower
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors April, 0.5cm deep. Don&apos;t transplant until frost risk passed - hate cold. Space 20-30cm apart. Deadhead for continuous blooms. Excellent cut flowers in many colours.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Cosmos</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Tall • Long flowering
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow indoors March-April or direct May, 0.5cm deep. Plant 30-45cm apart. Pinch tips for bushier plants. Deadhead spent blooms. Self-seeds in mild areas. Attracts pollinators.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Pansies &amp; Violas</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade OK • Cool season • Edible
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Sow late summer for winter/spring flowering, or early spring for summer. Plant 15-23cm apart. Tolerate frost (down to -10°C). Deadhead for continuous bloom. Edible flowers for salads.
+                    </p>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -836,6 +1066,46 @@ export function InfoPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Plant in early spring. Remove first year flowers for stronger plants. Renovate beds after harvest by mowing and fertilizing.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Raspberries</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun to part shade • Easy • Self-fertile
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant canes November-March, 45cm apart. Need post and wire support. Summer-fruiting: prune old canes after harvest. Autumn-fruiting: cut all canes to ground in late winter. Prefer slightly acidic soil.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Blueberries</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Acid soil essential • Container-friendly
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant in ericaceous (acid) compost - won&apos;t grow in alkaline soil. Use rainwater, not tap water. Plant two varieties for best pollination. Net against birds. Hardy to -20°C.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Plum Trees</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Full sun • Sheltered spot • Spring blossom
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant bare-root November-March. Many are self-fertile (e.g., &apos;Victoria&apos;, &apos;Opal&apos;). Need minimal pruning - in summer only to avoid silver leaf disease. Fan-train against warm wall in cooler areas.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Blackcurrants</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Part shade OK • Hardy • High vitamin C
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plant November-March, 5cm deeper than nursery level. Space 1.5m apart. Fruit on one-year-old wood. Prune: remove 1/3 oldest stems at ground level each winter. Very hardy. Heavy feeders - mulch well.
                     </p>
                   </div>
                 </div>
