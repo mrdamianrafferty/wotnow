@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { useFavourites } from '../../hooks/useFavourites';
+import { useFindrOfflineInit } from '../../hooks/useFindrOfflineInit';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
@@ -727,6 +728,19 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
 const FindrPage: React.FC = () => {
   const router = useRouter();
   const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, loading: locationLoading } = useUnifiedLocation();
+
+  // Initialize offline storage and preload species for native apps
+  const { isReady: offlineReady, speciesCount: offlineSpeciesCount, error: offlineError } = useFindrOfflineInit();
+
+  // Log offline init status (dev only)
+  useEffect(() => {
+    if (offlineReady) {
+      console.log('[Findr] Offline init complete, cached species:', offlineSpeciesCount);
+      if (offlineError) {
+        console.warn('[Findr] Offline init error:', offlineError);
+      }
+    }
+  }, [offlineReady, offlineSpeciesCount, offlineError]);
 
   // Migrate old findrSettings localStorage to UnifiedLocationContext
   useMigrateFindrSettings();

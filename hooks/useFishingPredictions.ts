@@ -3,8 +3,12 @@
 import { useQuery } from '@tanstack/react-query';
 import type { TideInfo } from '../components/findr/TideConditions';
 import type { FreshnessLevel } from '@/lib/offline/storage';
+import { Capacitor } from '@capacitor/core';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+// Check if running on native platform
+const isNativePlatform = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
 export interface FishingPrediction {
   [key: string]: JsonValue | undefined;
@@ -81,6 +85,67 @@ async function fetchPredictions(params: {
 }): Promise<PredictionResponse & { isFromCache?: boolean; cacheTimestamp?: number; freshness?: FreshnessLevel }> {
   const date = params.predictionDate || new Date().toISOString().split('T')[0];
 
+  // On native platform, try SQLite cache first (faster than network)
+  if (isNativePlatform) {
+    try {
+      const { findrSync } = await import('@/lib/offline/findrSync');
+      const { predictions, fromCache } = await findrSync.getPredictions(
+        params.rectangleCode,
+        date,
+        params.language
+      );
+
+      if (predictions.length > 0) {
+        console.log('[useFishingPredictions] Loaded ' + predictions.length + ' predictions from SQLite cache');
+
+        // Map offline predictions to API format
+        const mappedPredictions: FishingPrediction[] = predictions.map(p => ({
+          species_id: p.speciesCode,
+          species_code: p.speciesCode,
+          confidence: p.confidence,
+          bite_score: p.biteScore,
+          temp_score: p.tempScore,
+          tide_score: p.tideScore,
+          light_score: p.lightScore,
+          lunar_score: p.lunarScore,
+          habitat_bonus: p.habitatBonus,
+          rationale: p.rationale,
+          best_times: p.bestTimes,
+        }));
+
+        // If from cache, also trigger background refresh
+        if (fromCache) {
+          fetchAndCacheFromNetwork(params, date).catch(() => {
+            // Silently ignore background refresh errors
+          });
+        }
+
+        return {
+          rectangleCode: params.rectangleCode,
+          predictionDate: date,
+          language: params.language,
+          predictions: mappedPredictions,
+          isFromCache: fromCache,
+          cacheTimestamp: fromCache ? Date.now() : undefined,
+          freshness: fromCache ? 'stale' : 'fresh',
+        };
+      }
+    } catch (sqliteError) {
+      console.warn('[useFishingPredictions] SQLite cache check failed:', sqliteError);
+    }
+  }
+
+  // Fetch from network (standard path)
+  return fetchAndCacheFromNetwork(params, date);
+}
+
+async function fetchAndCacheFromNetwork(params: {
+  rectangleCode: string;
+  predictionDate?: string;
+  language: string;
+  latitude?: number;
+  longitude?: number;
+}, date: string): Promise<PredictionResponse & { isFromCache?: boolean; cacheTimestamp?: number; freshness?: FreshnessLevel }> {
   // Try network fetch first
   try {
     // Use absolute URL for fishfindr.eu and godaisy.io to avoid redirect issues
@@ -114,15 +179,38 @@ async function fetchPredictions(params: {
     const json = await response.json();
     const typed = json as PredictionResponse;
 
-    // Cache successful response (silently)
+    // Cache successful response to SQLite (native) or IndexedDB (web)
     try {
-      const { getStorage } = await import('@/lib/offline/storage');
-      const storage = getStorage();
-      await storage.cachePrediction({
-        rectangleCode: params.rectangleCode,
-        date,
-        data: typed,
-      });
+      if (isNativePlatform) {
+        // Cache to SQLite on native
+        const { findrDb } = await import('@/lib/offline/findrDatabase');
+        const offlinePredictions = typed.predictions.map(p => ({
+          id: `${params.rectangleCode}-${date}-${p.species_id || p.species_code}`,
+          rectangleCode: params.rectangleCode,
+          predictionDate: date,
+          language: params.language,
+          speciesCode: (p.species_code || p.species_id || '') as string,
+          confidence: (p.confidence || 0) as number,
+          biteScore: p.bite_score as number | undefined,
+          tempScore: p.temp_score as number | undefined,
+          tideScore: p.tide_score as number | undefined,
+          lightScore: p.light_score as number | undefined,
+          lunarScore: p.lunar_score as number | undefined,
+          habitatBonus: p.habitat_bonus as number | undefined,
+          rationale: p.rationale as string | undefined,
+          bestTimes: p.best_times as string[] | undefined,
+        }));
+        await findrDb.predictions.cache(params.rectangleCode, date, params.language, offlinePredictions);
+      } else {
+        // Cache to IndexedDB on web
+        const { getStorage } = await import('@/lib/offline/storage');
+        const storage = getStorage();
+        await storage.cachePrediction({
+          rectangleCode: params.rectangleCode,
+          date,
+          data: typed,
+        });
+      }
     } catch (_cacheError) {
       // Silently ignore cache errors
     }
