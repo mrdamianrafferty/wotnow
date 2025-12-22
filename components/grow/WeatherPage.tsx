@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
 import { LocationSettings } from './LocationSettings';
-import { GrowLanguageSelector } from './GrowLanguageSelector';
 import {
   type UnitSystem,
   formatTemperature,
@@ -465,7 +464,6 @@ export function WeatherPage() {
             </div>
 
             <div className="flex gap-2">
-              <GrowLanguageSelector buttonVariant="outline" />
               <Button variant="outline" size="sm" onClick={handleUnitToggle} className="gap-1">
                 <Thermometer className="h-4 w-4" />
                 {unitSystem === 'imperial' ? '°F' : '°C'}
