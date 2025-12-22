@@ -17,6 +17,7 @@ import { auth } from '../../lib/grow/auth';
 import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { TaskIcon } from './TaskIcon';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
+import { useScreenTracking } from '../../lib/performance';
 
 type FrostTolerance = 'hardy' | 'half_hardy' | 'tender' | null;
 
@@ -128,6 +129,9 @@ function isTaskCompletionArray(value: unknown): value is TaskCompletion[] {
 }
 
 export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
+  // Performance tracking
+  const { markFirstData, markInteractive } = useScreenTracking('WeeklyTaskView');
+
   const now = useMemo(() => new Date(), []);
   const [currentMonth, setCurrentMonth] = useState(() => now.getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(() => now.getFullYear());
@@ -246,6 +250,9 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
       const windows = Array.isArray(response?.windows) ? response.windows : [];
       setCalendarWindows(windows);
 
+      // Performance: mark first data loaded
+      markFirstData();
+
       const zoneCode = response?.climateZone && isClimateZoneCode(response.climateZone)
         ? response.climateZone
         : null;
@@ -277,8 +284,10 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
       setCalendarWindows([]);
     } finally {
       setIsLoading(false);
+      // Performance: mark screen interactive
+      markInteractive();
     }
-  }, [userId]);
+  }, [userId, markFirstData, markInteractive]);
 
   const loadCompletions = useCallback(async () => {
     if (!userId) {

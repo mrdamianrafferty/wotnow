@@ -23,6 +23,7 @@ import { Toaster } from 'react-hot-toast'
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { PerformanceInit } from '../components/PerformanceInit';
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
 // const roboto = Roboto({
@@ -146,6 +147,8 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
                   {/* Initialize offline storage and sync service */}
                   <OfflineInit />
+                  {/* Initialize performance tracking for iOS profiling */}
+                  <PerformanceInit />
                   {/* Offline Indicator - shows at top when offline */}
                   <OfflineIndicator />
                   {/* Toast notifications */}
