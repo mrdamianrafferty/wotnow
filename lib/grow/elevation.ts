@@ -41,9 +41,10 @@ export async function getElevationFromGoogle(
   lat: number,
   lon: number
 ): Promise<number | null> {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  // Try server-only key first, fall back to public key
+  const key = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!key) {
-    console.error('❌ GOOGLE_MAPS_API_KEY not set - cannot fetch elevation');
+    console.error('❌ GOOGLE_MAPS_API_KEY or NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not set - cannot fetch elevation');
     return null;
   }
 
