@@ -1209,12 +1209,62 @@ export function InfoPage() {
                   </div>
 
                   <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium mb-1">Slugs & Snails</h4>
+                    <h4 className="font-medium mb-1">Slugs &amp; Snails</h4>
                     <p className="text-sm text-muted-foreground mb-2">
                       <strong>Symptoms:</strong> Holes in leaves, slime trails
                     </p>
                     <p className="text-xs text-muted-foreground">
                       <strong>Organic Solution:</strong> Beer traps, copper barriers, handpick at night, diatomaceous earth
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Caterpillars</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Large irregular holes in leaves, visible droppings, stripped plants
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Organic Solution:</strong> Handpick and relocate, use netting, encourage birds, apply Bacillus thuringiensis (Bt) spray
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Whitefly</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Tiny white flies on leaf undersides, sticky honeydew, sooty mould
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Organic Solution:</strong> Yellow sticky traps, introduce parasitic wasps (Encarsia), spray with insecticidal soap
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Vine Weevil</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Notched leaf edges (adults), wilting plants with eaten roots (larvae)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Organic Solution:</strong> Nematode drench in spring/autumn, remove adults at night, use barrier glue on pots
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Red Spider Mite</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Fine webbing, mottled/bronzed leaves, tiny red-brown mites (use magnifier)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Organic Solution:</strong> Increase humidity (mist regularly), introduce predatory mites (Phytoseiulus), remove badly affected leaves
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Carrot Root Fly</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Rusty tunnels in carrots/parsnips, wilting foliage, secondary rot
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Organic Solution:</strong> Cover with fleece or fine mesh (60cm high barrier), sow thinly to avoid thinning scent, companion plant with onions
                     </p>
                   </div>
                 </div>
@@ -1244,6 +1294,56 @@ export function InfoPage() {
                       <strong>Prevention:</strong> Consistent watering, calcium supplementation, mulch to retain moisture
                     </p>
                   </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Tomato Blight</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Brown patches on leaves/stems, fruit turns brown and rots, spreads rapidly in wet weather
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Prevention:</strong> Grow under cover, space plants well, water at base only, remove affected material immediately. Choose blight-resistant varieties.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Rust</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Orange/brown powdery pustules on leaf undersides, yellowing leaves
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Prevention:</strong> Improve air circulation, avoid wetting foliage, remove affected leaves. Common on beans, leeks, and roses.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Damping Off</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Seedlings collapse at soil level, stems pinched and brown, fuzzy mould on soil
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Prevention:</strong> Use fresh sterile compost, don&apos;t overwater, ensure good ventilation, sow thinly, water with tap not butt water
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Clubroot</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Swollen distorted roots, stunted growth, wilting in sun (brassicas)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Prevention:</strong> Lime acidic soil, improve drainage, rotate crops (spores persist 20 years). Start plants in pots with fresh compost.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Grey Mould (Botrytis)</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Fuzzy grey mould on flowers, fruit, stems; brown patches, plant collapse
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Prevention:</strong> Remove dead/damaged material promptly, improve air flow, avoid overhead watering, don&apos;t crowd plants
+                    </p>
+                  </div>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -1269,6 +1369,56 @@ export function InfoPage() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       <strong>Solution:</strong> Lower soil pH, add iron chelate, improve drainage
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Potassium Deficiency</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Brown leaf edges (scorch), poor flowering/fruiting, weak stems
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Solution:</strong> Apply potash or tomato feed, add wood ash, use comfrey tea. Essential for fruit and flower production.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Phosphorus Deficiency</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Purple/red tints on leaves, poor root development, delayed maturity
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Solution:</strong> Add bone meal or rock phosphite, ensure soil isn&apos;t too cold (reduces uptake). Important for root crops.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Magnesium Deficiency</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Yellowing between veins on older leaves first, leaves may curl
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Solution:</strong> Epsom salt foliar spray (20g per litre), add dolomite lime. Common in tomatoes and potatoes.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Calcium Deficiency</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Distorted new growth, tip burn on lettuce, blossom end rot in tomatoes
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Solution:</strong> Add garden lime (not on acid-lovers), ensure consistent watering. Often caused by irregular water supply, not soil deficiency.
+                    </p>
+                  </div>
+
+                  <div className="p-3 border rounded-lg">
+                    <h4 className="font-medium mb-1">Manganese Deficiency</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Symptoms:</strong> Yellowing between veins (similar to iron), brown spots, poor growth
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <strong>Solution:</strong> Apply manganese sulphate, lower soil pH if too alkaline. Common in peas, beans, and raspberries on chalky soils.
                     </p>
                   </div>
                 </div>
