@@ -1,6 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+// Match config with index.ts to ensure consistent routing
+export const config = {
+  api: {
+    bodyParser: true, // This route uses JSON, not file uploads
+  },
+};
+
 // Lazy initialization to avoid crashing at module load time
 let supabase: SupabaseClient | null = null;
 
