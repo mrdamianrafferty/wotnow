@@ -78,7 +78,9 @@ function serializePhoto(row: Record<string, unknown>): GardenPhoto {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { photoId } = req.query;
-  
+
+  console.log(`[grow/photos/${photoId}] ${req.method} request received`);
+
   if (typeof photoId !== 'string' || photoId.length === 0) {
     return res.status(400).json({ error: 'photoId is required' });
   }
