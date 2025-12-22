@@ -35,17 +35,17 @@ Requires GOOGLE_MAPS_API_KEY environment variable.
 
 @param lat - Latitude
 @param lon - Longitude
-@returns Elevation in meters (rounded to nearest 10m), or null if error
+@returns Elevation in meters (rounded to nearest 10m)
+@throws Error if API call fails
  */
 export async function getElevationFromGoogle(
   lat: number,
   lon: number
-): Promise<number | null> {
+): Promise<number> {
   // Try server-only key first, fall back to public key
   const key = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!key) {
-    console.error('❌ GOOGLE_MAPS_API_KEY or NEXT_PUBLIC_GOOGLE_MAPS_API_KEY not set - cannot fetch elevation');
-    return null;
+    throw new Error('GOOGLE_MAPS_API_KEY not configured');
   }
 
   const url = new URL('https://maps.googleapis.com/maps/api/elevation/json');
@@ -55,8 +55,9 @@ export async function getElevationFromGoogle(
   try {
     const res = await fetch(url.toString());
     if (!res.ok) {
-      console.error('❌ Elevation API error:', res.status, await res.text());
-      return null;
+      const text = await res.text();
+      console.error('❌ Elevation API error:', res.status, text);
+      throw new Error(`HTTP ${res.status}: ${text}`);
     }
 
     const data = await res.json() as {

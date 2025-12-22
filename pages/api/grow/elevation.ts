@@ -38,14 +38,6 @@ export default async function handler(
     return res.status(400).json({ error: 'Coordinates out of valid range' });
   }
 
-  // Check if API key is configured
-  const hasKey = !!(process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
-  console.log(`[grow/elevation] API key configured: ${hasKey}`);
-
-  if (!hasKey) {
-    return res.status(500).json({ error: 'Google Maps API key not configured on server' });
-  }
-
   try {
     const elevation = await getElevationFromGoogle(latitude, longitude);
     return res.status(200).json({ elevation });
