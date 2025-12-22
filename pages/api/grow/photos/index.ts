@@ -337,14 +337,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // DELETE - Handle delete requests that should go to [photoId].ts but are routed here
+  // DELETE - Handle delete requests
   if (req.method === 'DELETE') {
-    // Extract photoId from URL path: /api/grow/photos/[photoId]
-    const urlPath = req.url || '';
-    const pathMatch = urlPath.match(/\/api\/grow\/photos\/([a-f0-9-]+)/i);
-    const photoId = pathMatch?.[1];
+    // Try query param first, then URL path
+    let photoId = typeof req.query.id === 'string' ? req.query.id : null;
 
-    console.log(`[grow/photos/index] DELETE request - extracted photoId: ${photoId}`);
+    if (!photoId) {
+      // Extract photoId from URL path: /api/grow/photos/[photoId]
+      const urlPath = req.url || '';
+      const pathMatch = urlPath.match(/\/api\/grow\/photos\/([a-f0-9-]+)/i);
+      photoId = pathMatch?.[1] || null;
+    }
+
+    console.log(`[grow/photos/index] DELETE request - photoId: ${photoId}, url: ${req.url}, query:`, req.query);
 
     if (!photoId) {
       return res.status(400).json({ error: 'Photo ID is required' });

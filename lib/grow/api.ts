@@ -1245,16 +1245,17 @@ Delete a task completion
    * Delete a garden photo
    */
   async deleteGardenPhoto(photoId: string): Promise<{ success: boolean }> {
-    const response = await this.fetchWithTimeout(`/api/grow/photos/${photoId}`, {
+    // Use query param instead of path param due to Next.js routing issues with bodyParser: false
+    const response = await this.fetchWithTimeout(`/api/grow/photos?id=${encodeURIComponent(photoId)}`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     }, 10000);
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Delete failed' }));
       throw new Error(error.error || 'Failed to delete photo');
     }
-    
+
     return response.json();
   }
 }
