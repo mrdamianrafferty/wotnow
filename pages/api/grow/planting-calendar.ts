@@ -25,6 +25,8 @@ interface CalendarResponseBody {
   altitudeWeeks: number;
   windows: CalendarWindow[];
   fallbackToDefault: boolean;
+  userPlantCount: number;
+  filteredByUserPlants: boolean;
 }
 
 const WEEKS_PER_MONTH = 4;
@@ -191,6 +193,31 @@ async function fetchZoneOffsets(supabase: SupabaseClient, zoneCode: string | nul
   return map;
 }
 
+type UserPlantRow = {
+  species_slug: string | null;
+};
+
+async function fetchUserPlantSlugs(supabase: SupabaseClient, userId: string): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('grow_user_plants')
+    .select('species_slug')
+    .eq('user_id', userId);
+
+  if (error) {
+    // Don't throw - just log and return empty set (graceful degradation)
+    console.warn('[grow/planting-calendar] Failed to fetch user plants:', error.message);
+    return new Set();
+  }
+
+  const slugs = new Set<string>();
+  for (const row of (data ?? []) as UserPlantRow[]) {
+    if (row.species_slug) {
+      slugs.add(row.species_slug);
+    }
+  }
+  return slugs;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CalendarResponseBody | { error: string }>
@@ -260,11 +287,21 @@ export default async function handler(
     const altitudeWeeks = calculateAltitudeWeekOffset(elevationFromProfile);
     const zoneOffsets = await fetchZoneOffsets(supabase, inferredZone);
 
-    const defaults = await fetchDefaultCalendar(supabase);
-    const speciesMap = await fetchSpeciesMetadata(supabase, defaults.map((row) => row.plant_slug));
-    const taskMap = await fetchTaskMetadata(supabase, defaults.map((row) => row.task_code));
+    // Fetch user's plants to filter calendar
+    const userPlantSlugs = await fetchUserPlantSlugs(supabase, userId);
+    const hasUserPlants = userPlantSlugs.size > 0;
 
-    const windows: CalendarWindow[] = defaults.map((row) => {
+    const defaults = await fetchDefaultCalendar(supabase);
+
+    // Filter to only include plants the user actually grows
+    const filteredDefaults = hasUserPlants
+      ? defaults.filter((row) => userPlantSlugs.has(row.plant_slug))
+      : defaults; // If no plants, show all (for discovery/onboarding)
+
+    const speciesMap = await fetchSpeciesMetadata(supabase, filteredDefaults.map((row) => row.plant_slug));
+    const taskMap = await fetchTaskMetadata(supabase, filteredDefaults.map((row) => row.task_code));
+
+    const windows: CalendarWindow[] = filteredDefaults.map((row) => {
       const zoneWeeks = zoneOffsets.get(row.task_code) ?? 0;
       const totalOffset = zoneWeeks + altitudeWeeks;
       const { start, end } = adjustWindow(row, totalOffset);
@@ -295,6 +332,8 @@ export default async function handler(
       altitudeWeeks,
       fallbackToDefault: zoneOffsets.size === 0,
       windows,
+      userPlantCount: userPlantSlugs.size,
+      filteredByUserPlants: hasUserPlants,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error';
