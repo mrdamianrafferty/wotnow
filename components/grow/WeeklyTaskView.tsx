@@ -18,6 +18,8 @@ import { ClimateZoneInfo } from './ClimateZoneInfo';
 import { TaskIcon } from './TaskIcon';
 import { type ClimateZoneCode } from '../../lib/grow/climate';
 
+type FrostTolerance = 'hardy' | 'half_hardy' | 'tender' | null;
+
 type PlantingCalendarWindow = {
   plantSlug: string;
   plantName: string | null;
@@ -32,6 +34,25 @@ type PlantingCalendarWindow = {
   altitudeWeeks: number;
   zoneWeeks: number;
   source: 'adjusted' | 'default';
+  frostTolerance?: FrostTolerance;
+  frostProtectionNeeded?: boolean;
+};
+
+type FrostContext = {
+  riskLevel: 'none' | 'low' | 'moderate' | 'high' | 'severe';
+  inFrostPeriod: boolean;
+  hasTenderPlants: boolean;
+  tenderPlantSlugs: string[];
+};
+
+type GardenContext = {
+  soilType: string | null;
+  sunExposure: string | null;
+  moisture: string | null;
+  gardenFeatures: string[];
+  hasGreenhouse: boolean;
+  hasRaisedBeds: boolean;
+  hasColdFrame: boolean;
 };
 
 type PlantingCalendarResponse = {
@@ -40,6 +61,10 @@ type PlantingCalendarResponse = {
   altitudeWeeks: number;
   fallbackToDefault: boolean;
   windows: PlantingCalendarWindow[];
+  userPlantCount: number;
+  filteredByUserPlants: boolean;
+  frostContext: FrostContext | null;
+  gardenContext: GardenContext | null;
 };
 
 type TaskCompletion = {
@@ -117,6 +142,10 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
     altitudeMeters: number | null;
     fallbackToDefault: boolean;
     altitudeWeeks: number;
+    userPlantCount: number;
+    filteredByUserPlants: boolean;
+    frostContext: FrostContext | null;
+    gardenContext: GardenContext | null;
   } | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
   const [userId, setUserId] = useState<string | null>(propUserId ?? null);
@@ -230,6 +259,10 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
         altitudeMeters: typeof response?.altitudeMeters === 'number' ? response.altitudeMeters : null,
         fallbackToDefault: Boolean(response?.fallbackToDefault),
         altitudeWeeks: typeof response?.altitudeWeeks === 'number' ? response.altitudeWeeks : 0,
+        userPlantCount: typeof response?.userPlantCount === 'number' ? response.userPlantCount : 0,
+        filteredByUserPlants: Boolean(response?.filteredByUserPlants),
+        frostContext: response?.frostContext ?? null,
+        gardenContext: response?.gardenContext ?? null,
       });
     } catch (err) {
       const errorLike = err as { message?: string };
@@ -482,6 +515,28 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
 
       {climateZone && userId && <ClimateZoneInfo climateZone={climateZone} variant="compact" />}
 
+      {/* Personalization info banner */}
+      {calendarMeta?.filteredByUserPlants && calendarMeta.userPlantCount > 0 && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <span className="font-medium">🌱 Personalized for your garden</span>
+          <span className="ml-1">— showing tasks for your {calendarMeta.userPlantCount} plant{calendarMeta.userPlantCount !== 1 ? 's' : ''}</span>
+        </div>
+      )}
+
+      {/* Frost warning when in frost period with tender plants */}
+      {calendarMeta?.frostContext?.inFrostPeriod && calendarMeta.frostContext.hasTenderPlants && !calendarMeta.gardenContext?.hasGreenhouse && (
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription>
+            <p className="font-medium text-amber-800">❄️ Frost risk period</p>
+            <p className="mt-1 text-sm text-amber-700">
+              {calendarMeta.frostContext.tenderPlantSlugs.length} frost-sensitive plant{calendarMeta.frostContext.tenderPlantSlugs.length !== 1 ? 's' : ''} may need protection.
+              Consider fleece, cloches, or moving containers to shelter.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {calendarMeta?.fallbackToDefault && userId && !error && (
         <Alert variant="default">
           <AlertCircle className="h-4 w-4" />
@@ -620,6 +675,11 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
                             Zone {calendarMeta.climateZone.replace(/_/g, ' ')}
                           </Badge>
                         )}
+                        {task.frostTolerance === 'tender' && (
+                          <Badge variant="outline" className="text-xs bg-white border-red-300 text-red-700">
+                            ❄️ Frost sensitive
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -648,14 +708,28 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
         <Card>
           <CardContent className="p-8 text-center">
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
-              <Calendar className="h-12 w-12 opacity-50" />
-              <div>
-                <p className="font-medium">No tasks scheduled for this week</p>
-                <p className="mt-1 text-sm">Try navigating to a different week or check back later</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={resetToThisWeek}>
-                Go to This Week
-              </Button>
+              {calendarMeta?.userPlantCount === 0 ? (
+                <>
+                  <Sprout className="h-12 w-12 opacity-50" />
+                  <div>
+                    <p className="font-medium">Add plants to see personalized tasks</p>
+                    <p className="mt-1 text-sm">
+                      Visit your Garden to add plants. Once you have plants, we&apos;ll show you what to do each week.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-12 w-12 opacity-50" />
+                  <div>
+                    <p className="font-medium">No tasks scheduled for this week</p>
+                    <p className="mt-1 text-sm">Try navigating to a different week or check back later</p>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={resetToThisWeek}>
+                    Go to This Week
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
