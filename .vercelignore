@@ -74,6 +74,9 @@ examples/
 archive/
 /services/
 ios/
+ios-godaisy/
+ios-growdaisy/
+ios-findr/
 android/
 test-*.js
 test-*.ts
@@ -97,7 +100,7 @@ public/css/
 # --- Weather icons build/dev files (keep only essential SVGs) ---
 public/weather-icons/.github/
 public/weather-icons/scripts/
-public/weather-icons/design/line/
+public/weather-icons/design/
 public/weather-icons/.gitignore
 public/weather-icons/.editorconfig
 public/weather-icons/package.json
@@ -123,3 +126,7 @@ __pycache__/
 
 # --- Exclude large PNGs ---
 public/PNGS
+
+# --- Duplicate/unused assets in pages folder ---
+pages/assets/
+pages/*.png
