@@ -4,20 +4,25 @@ import React, { useCallback, useEffect, useMemo, useState, startTransition } fro
 import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 import { Navigation } from './Navigation';
-import { Homepage } from './Homepage';
-import { InfoPage } from './InfoPage';
 import { SessionRefreshNotice } from './SessionRefreshNotice';
 import {
   SkeletonGardenPage,
   SkeletonPlanPage,
-  SkeletonWeatherPage
+  SkeletonWeatherPage,
+  SkeletonGrowHomepage,
+  SkeletonInfoPage
 } from './GrowSkeletons';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ONBOARDING_PATH, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { api } from '../../lib/grow/api';
 import { Home, Calendar, Sprout, CloudSun, Info } from 'lucide-react';
 
-// Code-split heavy page components with skeleton loaders
+// Code-split ALL page components with skeleton loaders for iOS performance
+const Homepage = dynamic(() => import('./Homepage').then(mod => ({ default: mod.Homepage })), {
+  loading: () => <SkeletonGrowHomepage />,
+  ssr: true
+});
+
 const PlanPage = dynamic(() => import('./PlanPage').then(mod => ({ default: mod.PlanPage })), {
   loading: () => <SkeletonPlanPage />,
   ssr: true
@@ -30,6 +35,11 @@ const GardenPage = dynamic(() => import('./GardenPage').then(mod => ({ default: 
 
 const WeatherPage = dynamic(() => import('./WeatherPage').then(mod => ({ default: mod.WeatherPage })), {
   loading: () => <SkeletonWeatherPage />,
+  ssr: true
+});
+
+const InfoPage = dynamic(() => import('./InfoPage').then(mod => ({ default: mod.InfoPage })), {
+  loading: () => <SkeletonInfoPage />,
   ssr: true
 });
 

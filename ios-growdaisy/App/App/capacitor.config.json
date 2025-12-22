@@ -4,19 +4,31 @@
 	"webDir": ".capacitor-assets-growdaisy",
 	"server": {
 		"url": "https://grow.godaisy.io",
-		"cleartext": false
+		"cleartext": false,
+		"allowNavigation": ["grow.godaisy.io", "*.supabase.co"]
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"allowsLinkPreview": false,
+		"scrollEnabled": true,
+		"backgroundColor": "#065f46",
+		"preferredContentMode": "mobile"
 	},
 	"plugins": {
 		"SplashScreen": {
-			"launchShowDuration": 2000,
-			"launchAutoHide": true,
+			"launchShowDuration": 0,
+			"launchAutoHide": false,
+			"launchFadeOutDuration": 300,
 			"backgroundColor": "#065f46",
 			"androidSplashResourceName": "splash",
 			"androidScaleType": "CENTER_CROP",
-			"showSpinner": true,
-			"spinnerColor": "#10b981",
-			"androidSpinnerStyle": "small",
-			"iosSpinnerStyle": "small"
+			"showSpinner": false,
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"Keyboard": {
+			"resize": "body",
+			"resizeOnFullScreen": true
 		},
 		"PushNotifications": {
 			"presentationOptions": [
@@ -28,6 +40,11 @@
 		"LocalNotifications": {
 			"smallIcon": "ic_stat_icon",
 			"iconColor": "#10b981"
+		},
+		"CapacitorSQLite": {
+			"iosDatabaseLocation": "Library/CapacitorDatabase",
+			"iosIsEncryption": false,
+			"androidIsEncryption": false
 		}
 	},
 	"packageClassList": [

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import SEO from "../components/SEO";
+// Weather icons CSS - loaded only on weather page for code splitting
+import "../styles/weather-icons-wind.min.css";
 // Keep critical above-the-fold components static for fast LCP
 import { HourlyMarineCard } from "../components/weather-cards/HourlyMarineCard";
 import { HourlyCard } from "../components/weather-cards/HourlyCard";

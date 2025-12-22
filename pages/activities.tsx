@@ -18,6 +18,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+// Weather icons CSS - loaded on pages that display weather info
+import '../styles/weather-icons-wind.min.css';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';

@@ -24,6 +24,7 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
+import { useScreenTracking } from '../../lib/performance';
 import { GardenAlertBox } from '../gardening/GardenAlertBox';
 import type { GardenAlertResult } from '../../lib/gardening/gardenAlerts';
 import { LocationSettings } from './LocationSettings';
@@ -239,6 +240,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ task, onSwipeRight, onSwipeLeft, 
 
 // Main Homepage Component
 export function Homepage() {
+  const { markFirstData, markInteractive } = useScreenTracking('Homepage');
   const [tasks, setTasks] = useState<GardenTask[]>([]);
   const [myTasks, setMyTasks] = useState<string[]>([]);
   const [dismissedTasks, setDismissedTasks] = useState<string[]>([]);
@@ -305,6 +307,7 @@ export function Homepage() {
       
       if (response && response.tasks) {
         setTasks(response.tasks);
+        markFirstData();
         if (response.context) {
           // Map weather condition to icon
           const conditionIconMap: Record<string, string> = {
@@ -393,8 +396,9 @@ export function Homepage() {
       setAlertsLoading(false);
     } finally {
       setIsLoading(false);
+      markInteractive();
     }
-  }, [userLocation]);
+  }, [userLocation, markFirstData, markInteractive]);
 
   useEffect(() => {
     // Load user location from database (if authenticated) or localStorage

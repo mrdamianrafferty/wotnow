@@ -208,3 +208,38 @@ export const SkeletonWeatherPage: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * Skeleton loader for Info Page with accordion sections
+ */
+export const SkeletonInfoPage: React.FC = () => {
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {/* Header */}
+      <div>
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-5 w-80 mt-2" />
+      </div>
+
+      {/* Accordion sections */}
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="card bg-base-100 shadow-md">
+          <div className="card-body">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="w-6 h-6 rounded" />
+              <Skeleton className="h-6 w-48" />
+            </div>
+            {[1, 2, 3].map((j) => (
+              <div key={j} className="py-3 border-b border-base-200 last:border-0">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-5 w-64" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};

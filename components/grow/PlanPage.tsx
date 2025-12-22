@@ -19,6 +19,7 @@ import {
   SkipForward
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
+import { useScreenTracking } from '../../lib/performance';
 import { auth } from '../../lib/grow/auth';
 import { WeeklyTaskView } from './WeeklyTaskView';
 import { SkeletonPlanPage } from './GrowSkeletons';
@@ -184,6 +185,7 @@ function convertWindowToEvent(window: PlantingCalendarWindow, year: number): Tim
 }
 
 export function PlanPage() {
+  const { markFirstData, markInteractive } = useScreenTracking('PlanPage');
   const [viewMode, setViewMode] = useState<'timeline' | 'calendar' | 'weekly'>('timeline');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedCrop, setSelectedCrop] = useState<string>('all');
@@ -445,8 +447,10 @@ export function PlanPage() {
     } else {
       setEvents([...aggregated, ...mockEvents]);
     }
+    markFirstData();
     setIsLoading(false);
-  }, [mockEvents]);
+    markInteractive();
+  }, [mockEvents, markFirstData, markInteractive]);
 
   useEffect(() => {
     loadTimelineEvents();

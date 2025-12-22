@@ -4,8 +4,7 @@
 import '../styles/index.css'
 import '../styles/Card.css'
 import '../styles/Popup.css'
-// Using minified version only (124KB). Unminified version (144KB) removed as duplicate.
-import '../styles/weather-icons-wind.min.css'
+// weather-icons-wind.min.css (124KB) moved to weather pages for code splitting
 import '../styles/windwave.css'
 // Leaflet CSS moved to map components for code splitting
 
@@ -19,11 +18,23 @@ import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import { OfflineInit } from '../components/OfflineInit'
-import { Toaster } from 'react-hot-toast'
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PerformanceInit } from '../components/PerformanceInit';
+
+// Lazy-load non-critical components
+const Toaster = dynamic(
+  () => import('react-hot-toast').then(mod => mod.Toaster),
+  { ssr: false }
+);
+const Analytics = dynamic(
+  () => import('@vercel/analytics/react').then(mod => mod.Analytics),
+  { ssr: false }
+);
+const SpeedInsights = dynamic(
+  () => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights),
+  { ssr: false }
+);
 // Optimize font loading with next/font
 // Temporarily disabled to fix Vercel build
 // const roboto = Roboto({

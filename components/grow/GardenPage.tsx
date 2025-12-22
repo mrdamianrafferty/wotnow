@@ -36,13 +36,32 @@ import {
   ChevronUp
 } from 'lucide-react';
 import Link from 'next/link';
-import { GuildModalEnhanced } from './GuildModalEnhanced';
+import dynamic from 'next/dynamic';
 import type { GuildCompanion } from '../../lib/grow/guild';
 import { api, type GardenPhoto } from '../../lib/grow/api';
-import { AddPlantDialog } from './AddPlantDialog';
-import { EditPlantDialog } from './EditPlantDialog';
-import { PlantSpeciesInfo } from './PlantSpeciesInfo';
+import { useScreenTracking } from '../../lib/performance';
 import type { PlantSpecies } from '../../lib/grow/species';
+
+// Code-split heavy dialogs - only loaded when user interacts
+const GuildModalEnhanced = dynamic(() => import('./GuildModalEnhanced').then(mod => ({ default: mod.GuildModalEnhanced })), {
+  ssr: false,
+  loading: () => null
+});
+
+const AddPlantDialog = dynamic(() => import('./AddPlantDialog').then(mod => ({ default: mod.AddPlantDialog })), {
+  ssr: false,
+  loading: () => null
+});
+
+const EditPlantDialog = dynamic(() => import('./EditPlantDialog').then(mod => ({ default: mod.EditPlantDialog })), {
+  ssr: false,
+  loading: () => null
+});
+
+const PlantSpeciesInfo = dynamic(() => import('./PlantSpeciesInfo').then(mod => ({ default: mod.PlantSpeciesInfo })), {
+  ssr: false,
+  loading: () => null
+});
 import type { SerializedPlant } from '../../lib/grow/server/plants';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { SkeletonGardenPage } from './GrowSkeletons';
@@ -276,6 +295,7 @@ function groupPlantsByName(plants: Plant[]): PlantGroup[] {
 }
 
 export function GardenPage() {
+  const { markFirstData, markInteractive } = useScreenTracking('GardenPage');
   const [activeTab, setActiveTab] = useState('plants');
   const [isIdentifying, setIsIdentifying] = useState(false);
   const [identifyMode, setIdentifyMode] = useState<'plant' | 'pest'>('plant');
@@ -585,6 +605,7 @@ export function GardenPage() {
         const plantsWithDates = (response.plants as RawPlant[])
           .map(normalizePlant);
         setPlants(plantsWithDates);
+        markFirstData();
         console.log(`✅ [GardenPage] Loaded ${plantsWithDates.length} plants from backend`);
         
         // Log first few plants for debugging
@@ -614,8 +635,9 @@ export function GardenPage() {
       }
     } finally {
       setIsLoadingPlants(false);
+      markInteractive();
     }
-  }, []);
+  }, [markFirstData, markInteractive]);
 
   // Load plants from backend on mount
   useEffect(() => {

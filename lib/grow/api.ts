@@ -1,5 +1,8 @@
 import { EDGE_FUNCTION_BASE, SUPABASE_ANON_KEY } from '../supabase/env';
 import { auth } from './auth';
+import { trackedFetch } from '../performance/api-tracker';
+import { swrCache, CACHE_TTLS } from './cache';
+import { coalesceRequest } from './requestCoalescing';
 import type { PlantSpecies, PlantSpeciesCategoriesResponse, PlantSpeciesSearchResponse } from './species';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -82,7 +85,8 @@ export class ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      // Use trackedFetch to automatically record API call metrics for iOS profiling
+      const response = await trackedFetch(url, {
         ...options,
         signal: controller.signal,
       });
@@ -1304,6 +1308,138 @@ Delete a task completion
     }
 
     return response.json();
+  }
+
+  // ============================================
+  // SWR-CACHED METHODS
+  // These use stale-while-revalidate for instant UI
+  // ============================================
+
+  /**
+   * Get planting calendar with SWR caching
+   * Returns cached data immediately, refreshes in background
+   */
+  async getPlantingCalendarCached(
+    lat?: number,
+    lon?: number,
+    options?: { bypassCache?: boolean; onRevalidate?: (data: unknown) => void }
+  ) {
+    const cacheKey = `planting-calendar:${lat ?? 'default'}:${lon ?? 'default'}`;
+
+    return swrCache.get(
+      cacheKey,
+      () => this.getPlantingCalendar(lat, lon),
+      {
+        ttl: CACHE_TTLS.plantingCalendar,
+        bypassCache: options?.bypassCache,
+        onRevalidate: options?.onRevalidate,
+      }
+    );
+  }
+
+  /**
+   * Get user plants with SWR caching
+   * Returns cached data immediately, refreshes in background
+   */
+  async getUserPlantsCached(
+    options?: { bypassCache?: boolean; onRevalidate?: (data: unknown) => void }
+  ) {
+    return swrCache.get(
+      'user-plants',
+      () => this.getUserPlants(),
+      {
+        ttl: CACHE_TTLS.userPlants,
+        bypassCache: options?.bypassCache,
+        onRevalidate: options?.onRevalidate,
+      }
+    );
+  }
+
+  /**
+   * Get recommended activities/tasks with SWR caching
+   * Returns cached data immediately, refreshes in background
+   */
+  async getRecommendedActivitiesCached(
+    location?: string,
+    limit?: number,
+    options?: { bypassCache?: boolean; onRevalidate?: (data: unknown) => void }
+  ) {
+    const cacheKey = `tasks:${location ?? 'default'}:${limit ?? 'default'}`;
+
+    return swrCache.get(
+      cacheKey,
+      () => this.getRecommendedActivities(location, limit),
+      {
+        ttl: CACHE_TTLS.tasks,
+        bypassCache: options?.bypassCache,
+        onRevalidate: options?.onRevalidate,
+      }
+    );
+  }
+
+  /**
+   * Invalidate all cached data (useful after mutations)
+   */
+  invalidateCache(prefix?: string) {
+    if (prefix) {
+      swrCache.invalidatePrefix(prefix);
+    } else {
+      swrCache.clear();
+    }
+  }
+
+  /**
+   * Invalidate user plants cache (call after add/edit/delete)
+   */
+  invalidateUserPlantsCache() {
+    swrCache.invalidate('user-plants');
+  }
+
+  /**
+   * Invalidate tasks cache (call after task mutations)
+   */
+  invalidateTasksCache() {
+    swrCache.invalidatePrefix('tasks:');
+  }
+
+  // ============================================
+  // COALESCED METHODS
+  // These deduplicate parallel requests to the same endpoint
+  // ============================================
+
+  /**
+   * Get planting calendar with request coalescing
+   * Multiple parallel calls will share one network request
+   */
+  async getPlantingCalendarCoalesced(lat?: number, lon?: number) {
+    const key = `calendar:${lat ?? 'default'}:${lon ?? 'default'}`;
+    return coalesceRequest(key, () => this.getPlantingCalendar(lat, lon));
+  }
+
+  /**
+   * Get user plants with request coalescing
+   * Multiple parallel calls will share one network request
+   */
+  async getUserPlantsCoalesced() {
+    return coalesceRequest('user-plants', () => this.getUserPlants());
+  }
+
+  /**
+   * Get recommended activities with request coalescing
+   * Multiple parallel calls will share one network request
+   */
+  async getRecommendedActivitiesCoalesced(location?: string, limit?: number) {
+    const key = `tasks:${location ?? 'default'}:${limit ?? 'default'}`;
+    return coalesceRequest(key, () => this.getRecommendedActivities(location, limit));
+  }
+
+  /**
+   * Get weather with request coalescing
+   * Multiple parallel calls will share one network request
+   */
+  async getWeatherCoalesced(location?: string, includeMarine: boolean = false) {
+    const key = `weather:${location ?? 'default'}:${includeMarine}`;
+    return coalesceRequest(key, () => this.getWeather(location, includeMarine));
   }
 }
 

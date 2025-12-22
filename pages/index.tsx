@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+// Weather icons CSS - loaded on pages that display weather info
+import '../styles/weather-icons-wind.min.css';
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
