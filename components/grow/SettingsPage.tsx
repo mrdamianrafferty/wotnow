@@ -224,8 +224,8 @@ export function SettingsPage() {
     setHasChanges(true);
   };
 
-  // Handle location update
-  const handleLocationSave = (location: { name: string; lat: number; lon: number }) => {
+  // Handle location update - also auto-fetch elevation
+  const handleLocationSave = async (location: { name: string; lat: number; lon: number }) => {
     setFormData(prev => ({
       ...prev,
       location: location.name,
@@ -235,6 +235,25 @@ export function SettingsPage() {
     setHasChanges(true);
     setShowLocationDialog(false);
     toast.success('Location updated');
+
+    // Auto-fetch elevation for the new location
+    setIsLookingUpElevation(true);
+    try {
+      const response = await fetch(
+        `/api/grow/elevation?lat=${location.lat}&lon=${location.lon}`
+      );
+      const data = await response.json();
+
+      if (response.ok && !data.error && data.elevation != null) {
+        setFormData(prev => ({ ...prev, elevation: data.elevation }));
+        toast.success(`Elevation: ${data.elevation}m`);
+      }
+    } catch (error) {
+      console.warn('Auto elevation lookup failed:', error);
+      // Silently fail - user can manually look up later
+    } finally {
+      setIsLookingUpElevation(false);
+    }
   };
 
   // Handle elevation lookup
