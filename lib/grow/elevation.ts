@@ -69,7 +69,8 @@ export async function getElevationFromGoogle(
 
     if (data.status !== 'OK' || !data.results?.length) {
       console.warn('⚠️ Elevation API non-OK response:', data.status, data.error_message);
-      return null;
+      // Throw with detailed error so it propagates to the API response
+      throw new Error(`Google API: ${data.status} - ${data.error_message || 'No results'}`);
     }
 
     const rawElevation = data.results[0].elevation;
