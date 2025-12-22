@@ -14,7 +14,6 @@ import {
 import { Home, Calendar, Sprout, CloudSun, Info, LogOut, Settings } from 'lucide-react';
 import { type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
-import { GrowLanguageSelector } from './GrowLanguageSelector';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 
 interface NavigationProps {
@@ -81,7 +80,6 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
               {pageButton('conditions', currentPage, onPageChange, <CloudSun className="h-4 w-4" aria-hidden="true" />, t('Conditions'))}
               {pageButton('info', currentPage, onPageChange, <Info className="h-4 w-4" aria-hidden="true" />, t('Info'))}
             </div>
-            <GrowLanguageSelector className="ml-1 hidden sm:inline-flex" />
 
             {currentUser ? (
               <DropdownMenu>
