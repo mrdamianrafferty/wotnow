@@ -160,28 +160,60 @@ export function SettingsPage() {
 
         setUser(userData);
 
-        // Load preferences from localStorage
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored) as OnboardingData;
+        // Try to load preferences from Supabase first
+        let loadedFromSupabase = false;
+        try {
+          const { preferences } = await api.getGrowPreferences();
+          if (preferences && isMounted) {
             setFormData(prev => ({
               ...prev,
-              location: parsed.location || '',
-              gardenFeatures: parsed.gardenFeatures || [],
-              soilType: parsed.soilType || '',
-              sunExposure: parsed.sunExposure || '',
-              moisture: parsed.moisture || '',
-              interests: parsed.interests || [],
-              skillLevel: parsed.skillLevel || '',
-              contentDepth: parsed.contentDepth || '',
-              climateZone: parsed.climateZone,
-              latitude: parsed.latitude,
-              longitude: parsed.longitude,
-              elevation: parsed.elevation,
+              location: preferences.location || '',
+              gardenFeatures: preferences.gardenFeatures || [],
+              soilType: preferences.soilType || '',
+              sunExposure: preferences.sunExposure || '',
+              moisture: preferences.moisture || '',
+              interests: preferences.interests || [],
+              skillLevel: preferences.skillLevel || '',
+              contentDepth: preferences.contentDepth || '',
+              climateZone: preferences.climateZone || undefined,
+              latitude: preferences.latitude || undefined,
+              longitude: preferences.longitude || undefined,
+              elevation: preferences.elevation || undefined,
             }));
-          } catch (e) {
-            console.warn('Failed to parse stored preferences:', e);
+            loadedFromSupabase = true;
+            console.log('[Settings] Loaded preferences from Supabase');
+          }
+        } catch (e) {
+          console.warn('[Settings] Could not load from Supabase, falling back to localStorage:', e);
+        }
+
+        // Fall back to localStorage if Supabase didn't have preferences
+        if (!loadedFromSupabase) {
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored) as OnboardingData;
+              if (isMounted) {
+                setFormData(prev => ({
+                  ...prev,
+                  location: parsed.location || '',
+                  gardenFeatures: parsed.gardenFeatures || [],
+                  soilType: parsed.soilType || '',
+                  sunExposure: parsed.sunExposure || '',
+                  moisture: parsed.moisture || '',
+                  interests: parsed.interests || [],
+                  skillLevel: parsed.skillLevel || '',
+                  contentDepth: parsed.contentDepth || '',
+                  climateZone: parsed.climateZone,
+                  latitude: parsed.latitude,
+                  longitude: parsed.longitude,
+                  elevation: parsed.elevation,
+                }));
+                console.log('[Settings] Loaded preferences from localStorage');
+              }
+            } catch (e) {
+              console.warn('Failed to parse stored preferences:', e);
+            }
           }
         }
       } catch (error) {
@@ -288,18 +320,19 @@ export function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Save to localStorage
+      // Save to localStorage (as backup/cache)
       const existingData = localStorage.getItem(STORAGE_KEY);
       const existing = existingData ? JSON.parse(existingData) : {};
       const merged = { ...existing, ...formData };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
 
-      // Try to sync to backend
+      // Save to Supabase (primary storage)
       try {
-        await api.completeOnboarding(formData as Record<string, unknown>);
+        await api.saveGrowPreferences(formData as Record<string, unknown>);
+        console.log('[Settings] Saved preferences to Supabase');
       } catch (e) {
-        console.warn('Could not sync preferences to server:', e);
-        // Continue anyway - local storage is primary
+        console.warn('Could not sync preferences to Supabase:', e);
+        // Continue anyway - localStorage has the data
       }
 
       setHasChanges(false);

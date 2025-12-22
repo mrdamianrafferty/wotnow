@@ -619,6 +619,53 @@ export class ApiClient {
     return response.json();
   }
 
+  async getGrowPreferences(): Promise<{
+    preferences: {
+      location: string | null;
+      latitude: number | null;
+      longitude: number | null;
+      elevation: number | null;
+      climateZone: string | null;
+      gardenFeatures: string[];
+      soilType: string | null;
+      sunExposure: string | null;
+      moisture: string | null;
+      interests: string[];
+      skillLevel: string | null;
+      contentDepth: string | null;
+      updatedAt: string | null;
+    } | null;
+  }> {
+    const response = await this.fetchWithAuth('/api/grow/preferences', {
+      method: 'GET',
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to load preferences');
+    }
+
+    return response.json();
+  }
+
+  async saveGrowPreferences(preferences: Record<string, unknown>): Promise<{
+    preferences: Record<string, unknown>;
+  }> {
+    const response = await this.fetchWithAuth('/api/grow/preferences', {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(preferences),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Network error' }));
+      throw new Error(error.error || 'Failed to save preferences');
+    }
+
+    return response.json();
+  }
+
   async addPlant(plantData: any) {
     const response = await this.fetchWithAuth(GROW_PLANTS_API_BASE, {
       method: 'POST',
