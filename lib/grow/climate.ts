@@ -280,6 +280,64 @@ export function getClimateZonePlantingAdvice(code: ClimateZoneCode): {
 }
 
 /**
+Frost risk severity levels for a climate zone
+ */
+export type FrostRiskLevel = 'none' | 'low' | 'moderate' | 'high' | 'severe';
+
+/**
+Get frost risk severity for a climate zone
+Used to determine if frost protection tasks should be shown
+ */
+export function getClimateZoneFrostRisk(code: ClimateZoneCode): FrostRiskLevel {
+  const riskMap: Record<ClimateZoneCode, FrostRiskLevel> = {
+    atlantic_mild: 'low',        // Mild Atlantic - occasional light frost
+    cool_maritime: 'moderate',   // Cool maritime - regular frosts
+    continental_cool: 'high',    // Continental - hard winters
+    med_marine: 'low',           // Med coastal - rare frost
+    southern_hot_dry: 'moderate', // Inland Med - occasional frost
+    mountain_cool: 'severe'      // Mountain - frequent hard frost
+  };
+  return riskMap[code];
+}
+
+/**
+Check if frost protection is relevant for a climate zone
+Returns true if the zone has moderate or higher frost risk
+ */
+export function zonHasFrostRisk(code: ClimateZoneCode): boolean {
+  const risk = getClimateZoneFrostRisk(code);
+  return risk === 'moderate' || risk === 'high' || risk === 'severe';
+}
+
+/**
+Check if current date is within frost risk period for a zone
+ */
+export function isInFrostRiskPeriod(code: ClimateZoneCode, date: Date = new Date()): boolean {
+  const year = date.getFullYear();
+  const frostDates = getClimateZoneFrostDates(code, year);
+
+  // Frost risk period is from first fall frost to last spring frost
+  // This spans across year boundary (e.g., Oct 15 -> April 15)
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  const springMonth = frostDates.lastSpringFrost.getMonth() + 1;
+  const springDay = frostDates.lastSpringFrost.getDate();
+  const fallMonth = frostDates.firstFallFrost.getMonth() + 1;
+  const fallDay = frostDates.firstFallFrost.getDate();
+
+  // In frost risk if: after fall frost OR before spring frost
+  if (month > fallMonth || (month === fallMonth && day >= fallDay)) {
+    return true; // After fall frost
+  }
+  if (month < springMonth || (month === springMonth && day <= springDay)) {
+    return true; // Before spring frost
+  }
+
+  return false;
+}
+
+/**
 Get frost date estimates based on climate zone
  */
 export function getClimateZoneFrostDates(code: ClimateZoneCode, year: number = new Date().getFullYear()): {

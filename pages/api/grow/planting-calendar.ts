@@ -1,7 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getAuthenticatedClient } from '../../../lib/grow/server/auth';
-import { inferGardeningClimateZone } from '../../../lib/grow/climate';
+import {
+  inferGardeningClimateZone,
+  getClimateZoneFrostRisk,
+  isInFrostRiskPeriod,
+  type ClimateZoneCode,
+  type FrostRiskLevel,
+} from '../../../lib/grow/climate';
+
+type FrostTolerance = 'hardy' | 'half_hardy' | 'tender' | null;
 
 interface CalendarWindow {
   plantSlug: string;
@@ -17,6 +25,15 @@ interface CalendarWindow {
   altitudeWeeks: number;
   zoneWeeks: number;
   source: 'adjusted' | 'default';
+  frostTolerance: FrostTolerance;
+  frostProtectionNeeded: boolean;
+}
+
+interface FrostContext {
+  riskLevel: FrostRiskLevel;
+  inFrostPeriod: boolean;
+  hasTenderPlants: boolean;
+  tenderPlantSlugs: string[];
 }
 
 interface CalendarResponseBody {
@@ -27,6 +44,7 @@ interface CalendarResponseBody {
   fallbackToDefault: boolean;
   userPlantCount: number;
   filteredByUserPlants: boolean;
+  frostContext: FrostContext | null;
 }
 
 const WEEKS_PER_MONTH = 4;
@@ -46,6 +64,8 @@ type DefaultCalendarRow = {
 type SpeciesRow = {
   slug: string;
   name: string | null;
+  frost_tolerance: FrostTolerance;
+  frost_protection_needed: boolean | null;
 };
 
 type TaskTypeRow = {
@@ -134,7 +154,7 @@ async function fetchSpeciesMetadata(supabase: SupabaseClient, slugs: string[]): 
 
   const { data, error } = await supabase
     .from('plant_species')
-    .select('slug, name')
+    .select('slug, name, frost_tolerance, frost_protection_needed')
     .in('slug', Array.from(new Set(slugs)));
 
   if (error) {
@@ -323,8 +343,26 @@ export default async function handler(
         altitudeWeeks,
         zoneWeeks,
         source: zoneWeeks === 0 && altitudeWeeks === 0 ? 'default' : 'adjusted',
+        frostTolerance: species?.frost_tolerance ?? null,
+        frostProtectionNeeded: species?.frost_protection_needed ?? false,
       };
     });
+
+    // Build frost context if we have a climate zone
+    let frostContext: FrostContext | null = null;
+    if (inferredZone) {
+      const zoneCode = inferredZone as ClimateZoneCode;
+      const tenderPlants = Array.from(speciesMap.values())
+        .filter((s) => s.frost_tolerance === 'tender')
+        .map((s) => s.slug);
+
+      frostContext = {
+        riskLevel: getClimateZoneFrostRisk(zoneCode),
+        inFrostPeriod: isInFrostRiskPeriod(zoneCode),
+        hasTenderPlants: tenderPlants.length > 0,
+        tenderPlantSlugs: tenderPlants,
+      };
+    }
 
     res.status(200).json({
       climateZone: inferredZone ?? null,
@@ -334,6 +372,7 @@ export default async function handler(
       windows,
       userPlantCount: userPlantSlugs.size,
       filteredByUserPlants: hasUserPlants,
+      frostContext,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error';
