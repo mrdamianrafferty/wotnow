@@ -36,6 +36,16 @@ interface FrostContext {
   tenderPlantSlugs: string[];
 }
 
+interface GardenContext {
+  soilType: string | null;
+  sunExposure: string | null;
+  moisture: string | null;
+  gardenFeatures: string[];
+  hasGreenhouse: boolean;
+  hasRaisedBeds: boolean;
+  hasColdFrame: boolean;
+}
+
 interface CalendarResponseBody {
   climateZone: string | null;
   altitudeMeters: number | null;
@@ -45,6 +55,7 @@ interface CalendarResponseBody {
   userPlantCount: number;
   filteredByUserPlants: boolean;
   frostContext: FrostContext | null;
+  gardenContext: GardenContext | null;
 }
 
 const WEEKS_PER_MONTH = 4;
@@ -217,6 +228,44 @@ type UserPlantRow = {
   species_slug: string | null;
 };
 
+type UserPreferencesRow = {
+  soil_type: string | null;
+  sun_exposure: string | null;
+  moisture: string | null;
+  garden_features: string[] | null;
+};
+
+async function fetchUserPreferences(supabase: SupabaseClient, userId: string): Promise<GardenContext | null> {
+  const { data, error } = await supabase
+    .from('grow_user_preferences')
+    .select('soil_type, sun_exposure, moisture, garden_features')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('[grow/planting-calendar] Failed to fetch preferences:', error.message);
+    return null;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const prefs = data as UserPreferencesRow;
+  const features = prefs.garden_features ?? [];
+  const featuresLower = features.map((f) => f.toLowerCase());
+
+  return {
+    soilType: prefs.soil_type,
+    sunExposure: prefs.sun_exposure,
+    moisture: prefs.moisture,
+    gardenFeatures: features,
+    hasGreenhouse: featuresLower.some((f) => f.includes('greenhouse')),
+    hasRaisedBeds: featuresLower.some((f) => f.includes('raised') || f.includes('bed')),
+    hasColdFrame: featuresLower.some((f) => f.includes('cold') || f.includes('frame') || f.includes('cloche')),
+  };
+}
+
 async function fetchUserPlantSlugs(supabase: SupabaseClient, userId: string): Promise<Set<string>> {
   const { data, error } = await supabase
     .from('grow_user_plants')
@@ -311,6 +360,9 @@ export default async function handler(
     const userPlantSlugs = await fetchUserPlantSlugs(supabase, userId);
     const hasUserPlants = userPlantSlugs.size > 0;
 
+    // Fetch user's garden preferences
+    const gardenContext = await fetchUserPreferences(supabase, userId);
+
     const defaults = await fetchDefaultCalendar(supabase);
 
     // Filter to only include plants the user actually grows
@@ -373,6 +425,7 @@ export default async function handler(
       userPlantCount: userPlantSlugs.size,
       filteredByUserPlants: hasUserPlants,
       frostContext,
+      gardenContext,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error';
