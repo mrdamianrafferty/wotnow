@@ -10,7 +10,7 @@ import { Network } from '@capacitor/network';
 import { offlineDb, type Plant, type CalendarEntry } from './database';
 import { api } from '../grow/api';
 import { recordCacheHit } from '../performance/api-tracker';
-import { mutationQueue, type Mutation, type MutationType } from './mutationQueue';
+import { mutationQueue, type Mutation } from './mutationQueue';
 
 export interface GrowSyncState {
   isOnline: boolean;

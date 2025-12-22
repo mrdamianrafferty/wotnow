@@ -83,6 +83,7 @@ export function useCapacitorInit(options: UseCapacitorInitOptions = {}): UseCapa
     };
 
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skip, initGrowSync, preloadImages, imageUrls.length, minSplashTime]);
 
   return {
