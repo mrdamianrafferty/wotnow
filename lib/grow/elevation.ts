@@ -79,10 +79,10 @@ export async function getElevationFromGoogle(
     console.log(`✅ Elevation fetched: ${rawElevation.toFixed(1)}m → ${rounded}m (rounded)`);
     return rounded;
   } catch (error: unknown) {
-    // ⚠️ FIX NEEDED: Replace 'any' with 'unknown'
     const message = error instanceof Error ? error.message : String(error);
     console.error('❌ Elevation API fetch error:', message);
-    return null;
+    // Re-throw to propagate detailed error message
+    throw error;
   }
 }
 

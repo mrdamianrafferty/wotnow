@@ -48,15 +48,10 @@ export default async function handler(
 
   try {
     const elevation = await getElevationFromGoogle(latitude, longitude);
-
-    if (elevation === null) {
-      return res.status(500).json({ error: 'Elevation API returned no data - check Google Cloud Console for Elevation API enablement' });
-    }
-
     return res.status(200).json({ elevation });
   } catch (error) {
     console.error('[grow/elevation] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: `Elevation lookup failed: ${message}` });
+    return res.status(500).json({ error: message });
   }
 }
