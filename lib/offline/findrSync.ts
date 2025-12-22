@@ -387,17 +387,12 @@ class FindrSyncManager {
       guild: s.guild,
       minDepth: s.min_depth || s.minDepth,
       maxDepth: s.max_depth || s.maxDepth,
-      minTemp: s.min_temp || s.minTemp,
-      maxTemp: s.max_temp || s.maxTemp,
-      preferredSubstrate: s.preferred_substrate || s.preferredSubstrate,
-      windSensitivity: s.wind_sensitivity || s.windSensitivity,
-      temperatureSensitivity: s.temperature_sensitivity || s.temperatureSensitivity,
-      pressureSensitivity: s.pressure_sensitivity || s.pressureSensitivity,
-      tideSensitivity: s.tide_sensitivity || s.tideSensitivity,
+      tempOptC: s.temp_opt_c || s.tempOptC,
       aliases: s.aliases,
       advice: s.advice,
-      imageUrl: s.image_url || s.imageUrl,
-      thumbnailUrl: s.thumbnail_url || s.thumbnailUrl,
+      bestTimes: s.best_times || s.bestTimes,
+      recommendedBaits: s.recommended_baits || s.recommendedBaits,
+      speciesBadges: s.species_badges || s.speciesBadges,
     }));
   }
 

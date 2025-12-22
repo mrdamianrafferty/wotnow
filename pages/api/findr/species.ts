@@ -56,6 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // All species for offline cache
+    // Only select columns that exist in the species table
     const { data, error } = await supabase
       .from('species')
       .select(`
@@ -76,15 +77,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         guild,
         min_depth,
         max_depth,
-        min_temp,
-        max_temp,
-        preferred_substrate,
-        wind_sensitivity,
-        temperature_sensitivity,
-        pressure_sensitivity,
-        tide_sensitivity,
+        temp_opt_c,
         aliases,
-        advice
+        advice,
+        best_times,
+        recommended_baits,
+        species_badges
       `)
       .order('name_en');
 

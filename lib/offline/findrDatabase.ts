@@ -41,17 +41,12 @@ const SCHEMA = `
     guild TEXT,
     min_depth INTEGER,
     max_depth INTEGER,
-    min_temp REAL,
-    max_temp REAL,
-    preferred_substrate TEXT,
-    wind_sensitivity TEXT,
-    temperature_sensitivity TEXT,
-    pressure_sensitivity TEXT,
-    tide_sensitivity TEXT,
+    temp_opt_c TEXT,
     aliases TEXT,
     advice TEXT,
-    image_url TEXT,
-    thumbnail_url TEXT,
+    best_times TEXT,
+    recommended_baits TEXT,
+    species_badges TEXT,
     cached_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -134,17 +129,12 @@ export interface OfflineSpecies {
   guild?: string;
   minDepth?: number;
   maxDepth?: number;
-  minTemp?: number;
-  maxTemp?: number;
-  preferredSubstrate?: string;
-  windSensitivity?: string;
-  temperatureSensitivity?: string;
-  pressureSensitivity?: string;
-  tideSensitivity?: string;
+  tempOptC?: number[];
   aliases?: string[];
   advice?: Record<string, unknown>;
-  imageUrl?: string;
-  thumbnailUrl?: string;
+  bestTimes?: string[];
+  recommendedBaits?: string[];
+  speciesBadges?: string[];
 }
 
 export interface OfflinePrediction {
@@ -296,17 +286,17 @@ class FindrOfflineDatabase {
           INSERT OR REPLACE INTO species (
             id, species_code, slug, scientific_name, name_en, name_fr, name_es, name_de, name_it, name_pt,
             playful_bio_en, fun_fact, eating_quality, conservation_status, guild,
-            min_depth, max_depth, min_temp, max_temp, preferred_substrate,
-            wind_sensitivity, temperature_sensitivity, pressure_sensitivity, tide_sensitivity,
-            aliases, advice, image_url, thumbnail_url, cached_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            min_depth, max_depth, temp_opt_c, aliases, advice,
+            best_times, recommended_baits, species_badges, cached_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         values: [
           s.id, s.speciesCode, s.slug, s.scientificName, s.nameEn, s.nameFr, s.nameEs, s.nameDe, s.nameIt, s.namePt,
           s.playfulBio, s.funFact, s.eatingQuality, s.conservationStatus, s.guild,
-          s.minDepth, s.maxDepth, s.minTemp, s.maxTemp, s.preferredSubstrate,
-          s.windSensitivity, s.temperatureSensitivity, s.pressureSensitivity, s.tideSensitivity,
-          JSON.stringify(s.aliases || []), JSON.stringify(s.advice || {}), s.imageUrl, s.thumbnailUrl, now, now
+          s.minDepth, s.maxDepth, JSON.stringify(s.tempOptC || []),
+          JSON.stringify(s.aliases || []), JSON.stringify(s.advice || {}),
+          JSON.stringify(s.bestTimes || []), JSON.stringify(s.recommendedBaits || []), JSON.stringify(s.speciesBadges || []),
+          now, now
         ]
       }));
 
@@ -601,17 +591,12 @@ class FindrOfflineDatabase {
     guild: row.guild,
     minDepth: row.min_depth,
     maxDepth: row.max_depth,
-    minTemp: row.min_temp,
-    maxTemp: row.max_temp,
-    preferredSubstrate: row.preferred_substrate,
-    windSensitivity: row.wind_sensitivity,
-    temperatureSensitivity: row.temperature_sensitivity,
-    pressureSensitivity: row.pressure_sensitivity,
-    tideSensitivity: row.tide_sensitivity,
+    tempOptC: row.temp_opt_c ? JSON.parse(row.temp_opt_c) : [],
     aliases: row.aliases ? JSON.parse(row.aliases) : [],
     advice: row.advice ? JSON.parse(row.advice) : {},
-    imageUrl: row.image_url,
-    thumbnailUrl: row.thumbnail_url,
+    bestTimes: row.best_times ? JSON.parse(row.best_times) : [],
+    recommendedBaits: row.recommended_baits ? JSON.parse(row.recommended_baits) : [],
+    speciesBadges: row.species_badges ? JSON.parse(row.species_badges) : [],
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
