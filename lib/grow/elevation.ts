@@ -65,6 +65,8 @@ export async function getElevationFromGoogle(
       error_message?: string;
     };
 
+    console.log('📍 Google Elevation API response:', JSON.stringify(data));
+
     if (data.status !== 'OK' || !data.results?.length) {
       console.warn('⚠️ Elevation API non-OK response:', data.status, data.error_message);
       return null;
