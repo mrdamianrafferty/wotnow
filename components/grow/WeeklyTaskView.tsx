@@ -546,6 +546,36 @@ export function WeeklyTaskView({ userId: propUserId }: WeeklyTaskViewProps) {
         </Alert>
       )}
 
+      {/* Garden condition tips based on soil type */}
+      {calendarMeta?.gardenContext?.soilType && taskList.some(t => t.taskCode.toLowerCase().includes('water')) && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          <span className="font-medium">💧 Watering tip for {calendarMeta.gardenContext.soilType} soil:</span>
+          <span className="ml-1">
+            {calendarMeta.gardenContext.soilType === 'clay' && 'Water less frequently but deeply — clay retains moisture longer.'}
+            {calendarMeta.gardenContext.soilType === 'sandy' && 'Water more often — sandy soil drains quickly and dries out fast.'}
+            {calendarMeta.gardenContext.soilType === 'loam' && 'Ideal drainage — water when top inch feels dry.'}
+            {calendarMeta.gardenContext.soilType === 'chalky' && 'May need more frequent watering — chalk drains fast and can be alkaline.'}
+            {calendarMeta.gardenContext.soilType === 'peat' && 'Holds moisture well but watch for waterlogging in wet periods.'}
+          </span>
+        </div>
+      )}
+
+      {/* Greenhouse advantage tip */}
+      {calendarMeta?.gardenContext?.hasGreenhouse && calendarMeta?.frostContext?.inFrostPeriod && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+          <span className="font-medium">🏡 Greenhouse advantage:</span>
+          <span className="ml-1">Your tender plants are protected. Consider starting seeds early for a head start on spring.</span>
+        </div>
+      )}
+
+      {/* Cold frame tip */}
+      {calendarMeta?.gardenContext?.hasColdFrame && !calendarMeta?.gardenContext?.hasGreenhouse && calendarMeta?.frostContext?.inFrostPeriod && (
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-sm text-cyan-800">
+          <span className="font-medium">🪟 Cold frame tip:</span>
+          <span className="ml-1">Use your cold frame to harden off seedlings or protect overwintering vegetables.</span>
+        </div>
+      )}
+
       {calendarMeta?.fallbackToDefault && userId && !error && (
         <Alert variant="default">
           <AlertCircle className="h-4 w-4" />
