@@ -120,7 +120,8 @@ export function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
-  
+  const [isLookingUpElevation, setIsLookingUpElevation] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState<OnboardingData>({
     location: '',
@@ -234,6 +235,34 @@ export function SettingsPage() {
     setHasChanges(true);
     setShowLocationDialog(false);
     toast.success('Location updated');
+  };
+
+  // Handle elevation lookup
+  const handleElevationLookup = async () => {
+    if (!formData.latitude || !formData.longitude) {
+      toast.error('Set a location first to look up elevation');
+      return;
+    }
+
+    setIsLookingUpElevation(true);
+    try {
+      const response = await fetch(
+        `/api/grow/elevation?lat=${formData.latitude}&lon=${formData.longitude}`
+      );
+      const data = await response.json();
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Failed to fetch elevation');
+      }
+
+      updateField('elevation', data.elevation);
+      toast.success(`Elevation: ${data.elevation}m`);
+    } catch (error) {
+      console.error('Elevation lookup failed:', error);
+      toast.error('Could not look up elevation');
+    } finally {
+      setIsLookingUpElevation(false);
+    }
   };
 
   // Save preferences
@@ -360,23 +389,44 @@ export function SettingsPage() {
               {formData.location ? (
                 <>
                   <p className="font-medium">{formData.location}</p>
-                  {formData.climateZone && (
-                    <p className="text-sm text-muted-foreground">
-                      Climate zone: {formData.climateZone.replace(/_/g, ' ')}
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+                    {formData.climateZone && (
+                      <span>Climate: {formData.climateZone.replace(/_/g, ' ')}</span>
+                    )}
+                    <span>
+                      Elevation: {formData.elevation != null ? `${formData.elevation}m` : 'Not set'}
+                    </span>
+                  </div>
                 </>
               ) : (
                 <p className="text-muted-foreground">No location set</p>
               )}
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setShowLocationDialog(true)}
-            >
-              <MapPin className="h-4 w-4 mr-2" />
-              {formData.location ? 'Change' : 'Set Location'}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowLocationDialog(true)}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                {formData.location ? 'Change' : 'Set Location'}
+              </Button>
+              {formData.latitude && formData.longitude && (
+                <Button
+                  variant="outline"
+                  onClick={handleElevationLookup}
+                  disabled={isLookingUpElevation}
+                >
+                  {isLookingUpElevation ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Mountain className="h-4 w-4 mr-2" />
+                      Elevation
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

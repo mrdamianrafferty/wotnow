@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import {
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { Home, Calendar, Sprout, CloudSun, Info, LogOut } from 'lucide-react';
+import { Home, Calendar, Sprout, CloudSun, Info, LogOut, Settings } from 'lucide-react';
 import { type AuthUser } from '../../lib/grow/auth';
 import { buildGrowLoginUrl, GROW_ROOT_PATH } from '../../lib/grow/routes';
 import { GrowLanguageSelector } from './GrowLanguageSelector';
@@ -50,7 +51,7 @@ const pageButton = (
 
 export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }: NavigationProps) {
   const translationInputs = React.useMemo(
-    () => ['My Home', 'Plan', 'Garden', 'Conditions', 'Info', 'Sign out', 'Sign in', 'Skip to main content', 'User account'],
+    () => ['My Home', 'Plan', 'Garden', 'Conditions', 'Info', 'Settings', 'Sign out', 'Sign in', 'Skip to main content', 'User account'],
     [],
   );
   const { t } = useTranslationMap(translationInputs);
@@ -93,14 +94,20 @@ export function Navigation({ currentPage, onPageChange, currentUser, onSignOut }
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56 bg-white" align="end" forceMount style={{ backgroundColor: 'white', opacity: 1 }}>
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{currentUser.name ?? 'User'}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">{currentUser.email ?? ''}</p>
+                      <p className="font-medium text-gray-900">{currentUser.name ?? 'User'}</p>
+                      <p className="w-[200px] truncate text-sm text-gray-500">{currentUser.email ?? ''}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/grow/settings" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
+                      <span>{t('Settings')}</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={onSignOut}>
                     <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
                     <span>{t('Sign out')}</span>
