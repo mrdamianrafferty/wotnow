@@ -168,6 +168,8 @@ async function processImage(filePath: string): Promise<{ full: Buffer; thumbnail
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log(`[grow/photos/index] ${req.method} request to ${req.url}`);
+
   // Wrap entire handler in try-catch to prevent 500 errors from crashing
   try {
     const userId = await getUserIdFromAuth(req);
