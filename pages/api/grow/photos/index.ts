@@ -337,9 +337,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.setHeader('Allow', 'GET, POST');
+  // DELETE - Handle delete requests that should go to [photoId].ts but are routed here
+  if (req.method === 'DELETE') {
+    // Extract photoId from URL path: /api/grow/photos/[photoId]
+    const urlPath = req.url || '';
+    const pathMatch = urlPath.match(/\/api\/grow\/photos\/([a-f0-9-]+)/i);
+    const photoId = pathMatch?.[1];
+
+    console.log(`[grow/photos/index] DELETE request - extracted photoId: ${photoId}`);
+
+    if (!photoId) {
+      return res.status(400).json({ error: 'Photo ID is required' });
+    }
+
+    // First get the photo to get storage path
+    const { data: photo, error: fetchError } = await getSupabase()
+      .from('grow_garden_photos')
+      .select('storage_path, url, thumbnail_url')
+      .eq('id', photoId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !photo) {
+      console.error('[grow/photos] Photo not found:', fetchError);
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+
+    // Build list of files to delete
+    const pathsToDelete = [photo.storage_path];
+    if (photo.thumbnail_url && photo.thumbnail_url !== photo.url) {
+      const thumbnailPath = photo.storage_path.replace('.jpg', '_thumb.jpg');
+      pathsToDelete.push(thumbnailPath);
+    }
+
+    // Delete from storage
+    const { error: storageError } = await getSupabase().storage
+      .from(BUCKET_NAME)
+      .remove(pathsToDelete);
+
+    if (storageError) {
+      console.warn('[grow/photos] Storage delete failed:', storageError);
+    }
+
+    // Delete from database
+    const { error: dbError } = await getSupabase()
+      .from('grow_garden_photos')
+      .delete()
+      .eq('id', photoId)
+      .eq('user_id', userId);
+
+    if (dbError) {
+      console.error('[grow/photos] DB delete failed:', dbError);
+      return res.status(500).json({ error: 'Failed to delete photo' });
+    }
+
+    return res.status(200).json({ success: true });
+  }
+
+  res.setHeader('Allow', 'GET, POST, DELETE');
   return res.status(405).json({ error: 'Method not allowed' });
-  
+
   } catch (err) {
     // Top-level catch for any unhandled errors
     console.error('[grow/photos] Unhandled error:', err);
