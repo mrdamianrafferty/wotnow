@@ -133,7 +133,6 @@ export function InfoPage() {
                 <div className="flex items-center gap-2">
                   <Camera className="h-4 w-4 text-purple-600" />
                   <span>AI Plant & Threat Identification</span>
-                  <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
@@ -500,7 +499,6 @@ export function InfoPage() {
                 <div className="flex items-center gap-2">
                   <Sprout className="h-4 w-4 text-green-600" />
                   <span>Adding Plants to Your Garden</span>
-                  <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
