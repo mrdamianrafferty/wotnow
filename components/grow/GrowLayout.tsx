@@ -323,39 +323,18 @@ export function GrowLayout({
             </div>
           ) : null}
 
-          {/* Right side - User menu */}
-          <div className="flex items-center gap-2">
+          {/* Right side - User avatar (direct link to settings on mobile) */}
+          <div className="flex items-center">
             {!isLoading && user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0" aria-label="User account">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
-                        {(user.name?.charAt(0) ?? user.email?.charAt(0) ?? 'U').toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.name ?? 'User'}</p>
-                      <p className="w-[200px] truncate text-sm text-muted-foreground">{user.email ?? ''}</p>
-                    </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/grow/settings" className="flex items-center">
-                      <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
-                      <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" aria-hidden="true" />
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Link
+                href="/grow/settings"
+                className="flex items-center justify-center h-11 w-11 rounded-full bg-green-100 hover:bg-green-200 transition-colors"
+                aria-label="Settings"
+              >
+                <span className="text-green-700 font-semibold text-lg">
+                  {(user.name?.charAt(0) ?? user.email?.charAt(0) ?? 'U').toUpperCase()}
+                </span>
+              </Link>
             )}
           </div>
         </div>
