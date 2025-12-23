@@ -58,7 +58,8 @@ export default function AccountPage() {
 
   const [openHome, setOpenHome] = useState(false);
   const [openMarine, setOpenMarine] = useState(false);
-  const [mapsReady, setMapsReady] = useState(false); // <-- add
+  const [mapsReady, setMapsReady] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   // Load once
   useEffect(() => {
@@ -72,18 +73,22 @@ export default function AccountPage() {
     }
   }, []);
 
-  // Fallback: hydrate interests from Supabase if empty
+  // Check auth state and hydrate interests from Supabase
   useEffect(() => {
     (async () => {
-      if (selectedActivities.length) return;
       const { data } = await supabase.auth.getUser();
-      const meta = (data?.user?.user_metadata ?? {}) as UserMetadata;
-      const interests = meta.selectedActivities || meta.interests || meta.activities;
-      if (Array.isArray(interests) && interests.length) {
-        setSelectedActivities(interests);
+      if (data?.user) {
+        setIsSignedIn(true);
+        if (!selectedActivities.length) {
+          const meta = (data.user.user_metadata ?? {}) as UserMetadata;
+          const interests = meta.selectedActivities || meta.interests || meta.activities;
+          if (Array.isArray(interests) && interests.length) {
+            setSelectedActivities(interests);
+          }
+        }
       }
     })().catch((err) => {
-      console.warn('Failed to hydrate interests from Supabase metadata', err);
+      console.warn('Failed to check auth state', err);
     });
   }, [selectedActivities.length]);
 
@@ -240,11 +245,18 @@ export default function AccountPage() {
             </div>
           </section>
 
-          {/* Save banner */}
-          <div className="alert bg-base-200 border border-base-300">
-            <span>Your changes are saved on this device. Log in to sync across devices.</span>
-            <Link href="/login" className="btn btn-primary btn-sm ml-auto">Log in</Link>
-          </div>
+          {/* Save banner - only show when not signed in */}
+          {!isSignedIn && (
+            <div className="alert bg-base-200 border border-base-300">
+              <span>Your changes are saved on this device. Log in to sync across devices.</span>
+              <Link href="/login" className="btn btn-primary btn-sm ml-auto">Log in</Link>
+            </div>
+          )}
+          {isSignedIn && (
+            <div className="alert bg-success/10 border border-success/30">
+              <span>✓ Signed in - your preferences sync across devices.</span>
+            </div>
+          )}
         </div>
 
         {/* Home map picker (only render once Maps is ready) */}

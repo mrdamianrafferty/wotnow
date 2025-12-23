@@ -17,6 +17,7 @@ export default function GoDaisyLogin() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isNativePlatform, setIsNativePlatform] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [iosSafeAreaHeight, setIosSafeAreaHeight] = useState(0);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
     if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
@@ -70,6 +71,7 @@ export default function GoDaisyLogin() {
       const { Capacitor } = await import('@capacitor/core');
       if (cancelled) return;
       setIsNativePlatform(Capacitor.isNativePlatform());
+      setIsAndroid(Capacitor.getPlatform() === 'android');
     })();
 
     return () => {
@@ -293,16 +295,19 @@ export default function GoDaisyLogin() {
                 Continue with Google
               </button>
 
-              <button
-                onClick={() => handleSocialLogin('apple')}
-                disabled={loading}
-                className="btn btn-outline btn-block gap-2 text-gray-900 border-gray-300 hover:bg-gray-100 hover:border-gray-400 bg-white disabled:bg-base-200 disabled:text-base-content disabled:border-base-300 disabled:opacity-60"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                </svg>
-                Continue with Apple
-              </button>
+              {/* Hide Apple Sign-In on Android - requires complex web OAuth setup */}
+              {!isAndroid && (
+                <button
+                  onClick={() => handleSocialLogin('apple')}
+                  disabled={loading}
+                  className="btn btn-outline btn-block gap-2 text-gray-900 border-gray-300 hover:bg-gray-100 hover:border-gray-400 bg-white disabled:bg-base-200 disabled:text-base-content disabled:border-base-300 disabled:opacity-60"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                  </svg>
+                  Continue with Apple
+                </button>
+              )}
             </div>
 
             <div className="divider">OR</div>
@@ -316,7 +321,7 @@ export default function GoDaisyLogin() {
                 <input
                   type="email"
                   placeholder="your@email.com"
-                  className="input input-bordered"
+                  className="input input-bordered bg-white text-gray-900 placeholder-gray-400"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -331,7 +336,7 @@ export default function GoDaisyLogin() {
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="input input-bordered"
+                  className="input input-bordered bg-white text-gray-900 placeholder-gray-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
