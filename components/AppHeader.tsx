@@ -475,7 +475,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               <li><Link href="/interests">{t('Set activities')}</Link></li>
               <li className="mt-1 border-t border-base-200" />
               {authReady && userId ? (
-                <li><Link href="/settings">🤾 {t('My Account')}</Link></li>
+                <li><Link href="/account">🤾 {t('My Account')}</Link></li>
               ) : (
                 <li><Link href="/login">🪵 {t('Log in / Register')}</Link></li>
               )}
@@ -539,7 +539,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             {authReady && (
               userId ? (
                 <Link
-                  href="/settings"
+                  href="/account"
                   className="badge badge-outline badge-success gap-1 whitespace-nowrap"
                   title={t('Go to settings')}
                   aria-label={t('Go to settings')}
@@ -579,7 +579,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             {authReady && (
               userId ? (
                 <Link
-                  href="/settings"
+                  href="/account"
                   className="btn btn-ghost btn-sm btn-circle"
                   title={t('My Account')}
                   aria-label={t('My Account')}
