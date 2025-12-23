@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Grow Daisy theme colors (gardening app - emerald/green theme) -->
+    <color name="colorPrimary">#10b981</color>      <!-- emerald-500 -->
+    <color name="colorPrimaryDark">#059669</color>  <!-- emerald-600 -->
+    <color name="colorAccent">#34d399</color>       <!-- emerald-400 -->
+    <color name="splashBackground">#065f46</color>  <!-- emerald-800 (dark green) -->
+    <color name="ic_launcher_background">#10b981</color>
+</resources>

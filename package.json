@@ -56,7 +56,13 @@
     "cap:godaisy:open:ios": "npx cap open ios-godaisy",
     "cap:godaisy:open:android": "npx cap open android-godaisy",
     "cap:godaisy:build:ios": "npx cap copy ios-godaisy && cd ios-godaisy/App && pod install",
-    "cap:godaisy:build:android": "npx cap copy android-godaisy"
+    "cap:godaisy:build:android": "npx cap copy android-godaisy",
+    "android:build:findr": "./scripts/build-android.sh findr debug",
+    "android:build:godaisy": "./scripts/build-android.sh godaisy debug",
+    "android:build:growdaisy": "./scripts/build-android.sh growdaisy debug",
+    "android:release:findr": "./scripts/build-android.sh findr release",
+    "android:release:godaisy": "./scripts/build-android.sh godaisy release",
+    "android:release:growdaisy": "./scripts/build-android.sh growdaisy release"
   },
   "resolutions": {
     "next": {

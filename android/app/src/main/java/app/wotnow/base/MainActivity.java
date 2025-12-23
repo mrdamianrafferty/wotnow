@@ -1,4 +1,4 @@
-package eu.fishfindr.app;
+package app.wotnow.base;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -6,12 +6,18 @@ import android.os.Build;
 import android.os.Bundle;
 
 import com.getcapacitor.BridgeActivity;
+import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannels();
+    }
+
+    @Override
+    public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {
+        // Required marker method for Capgo Social Login plugin
     }
 
     /**
@@ -32,13 +38,13 @@ public class MainActivity extends BridgeActivity {
             defaultChannel.setDescription("General app notifications");
             manager.createNotificationChannel(defaultChannel);
 
-            // Fishing alerts channel (high priority)
+            // Activity alerts channel (high priority)
             NotificationChannel alertsChannel = new NotificationChannel(
-                "fishing_alerts",
-                "Fishing Alerts",
+                "activity_alerts",
+                "Activity Alerts",
                 NotificationManager.IMPORTANCE_HIGH
             );
-            alertsChannel.setDescription("Important fishing condition alerts");
+            alertsChannel.setDescription("Important activity condition alerts");
             manager.createNotificationChannel(alertsChannel);
         }
     }

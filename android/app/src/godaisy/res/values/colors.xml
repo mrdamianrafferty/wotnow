@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Go Daisy theme colors (outdoor activities - sky blue theme) -->
+    <color name="colorPrimary">#0284c7</color>      <!-- sky-600 -->
+    <color name="colorPrimaryDark">#0369a1</color>  <!-- sky-700 -->
+    <color name="colorAccent">#0ea5e9</color>       <!-- sky-500 -->
+    <color name="splashBackground">#0f172a</color>  <!-- slate-900 (dark blue) -->
+    <color name="ic_launcher_background">#0284c7</color>
+</resources>

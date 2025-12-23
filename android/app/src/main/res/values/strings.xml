@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Findr</string>
-    <string name="title_activity_main">Findr</string>
-    <string name="package_name">eu.fishfindr.app</string>
-    <string name="custom_url_scheme">eu.fishfindr.app</string>
+    <!-- app_name is provided by build.gradle productFlavors via resValue -->
+    <string name="title_activity_main">@string/app_name</string>
+    <!-- package_name and custom_url_scheme will use deep_link_scheme from build.gradle -->
 </resources>

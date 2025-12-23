@@ -29,7 +29,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="fishfindr" />
+                <data android:scheme="${deepLinkScheme}" />
             </intent-filter>
 
             <!-- HTTPS App Links -->
@@ -37,7 +37,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="fishfindr.eu" />
+                <data android:scheme="https" android:host="${deepLinkHost}" />
             </intent-filter>
 
         </activity>

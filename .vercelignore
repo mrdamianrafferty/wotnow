@@ -97,16 +97,19 @@ public/nasa-moon/
 public/debug-*.js
 public/css/
 
-# --- Weather icons build/dev files (keep only essential SVGs) ---
+# --- Weather icons build/dev files (keep design/fill/final SVGs) ---
 public/weather-icons/.github/
 public/weather-icons/scripts/
-public/weather-icons/design/
+public/weather-icons/design/brand*/
+public/weather-icons/design/fill/*.html
+public/weather-icons/design/line/
 public/weather-icons/.gitignore
 public/weather-icons/.editorconfig
 public/weather-icons/package.json
 public/weather-icons/pnpm-lock.yaml
 public/weather-icons/README.md
 public/weather-icons/LICENSE
+public/weather-icons/*.html
 
 # --- Duplicate font files (keep modern formats + fallbacks) ---
 public/font/*.eot

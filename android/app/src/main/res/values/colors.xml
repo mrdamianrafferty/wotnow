@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default colors (Findr theme - will be overridden by flavor-specific colors) -->
+    <color name="colorPrimary">#0ea5e9</color>      <!-- sky-500 -->
+    <color name="colorPrimaryDark">#0284c7</color>  <!-- sky-600 -->
+    <color name="colorAccent">#38bdf8</color>       <!-- sky-400 -->
+    <color name="splashBackground">#111827</color>  <!-- gray-900 -->
+</resources>
