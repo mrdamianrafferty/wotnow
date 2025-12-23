@@ -6,23 +6,39 @@ import Link from 'next/link';
 import AppHeader from '../components/AppHeader';
 import Footer from '../components/footer';
 import { supabase } from '@/lib/supabase/client';
-import { LanguageSelector } from '@/components/LanguageSelector';
 import { useUserPreferences } from '@/context/UserPreferencesContext';
+import { Globe, ChevronDown } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { getSupportedLanguages } from '@/lib/user/language';
+
+// Flag emojis for each language
+const LANGUAGE_FLAGS: Record<string, string> = {
+  en: '',
+  es: '🇪🇸',
+  fr: '🇫🇷',
+  pt: '🇵🇹',
+  de: '🇩🇪',
+  it: '🇮🇹',
+  nl: '🇳🇱',
+  pl: '🇵🇱',
+  tr: '🇹🇷',
+  sv: '🇸🇪',
+};
 
 export default function AccountPage() {
-  // Use the shared preferences context
   const { preferences, setPreferences } = useUserPreferences();
+  const { language, setLanguage } = useLanguage();
+  const supportedLanguages = getSupportedLanguages();
+  const currentLang = supportedLanguages.find(lang => lang.code === language) || supportedLanguages[0];
 
-  // Force light theme (like onboarding)
+  // Force light theme
   useEffect(() => {
     const html = document.documentElement;
     const prev = html.getAttribute('data-theme');
     html.setAttribute('data-theme', 'light');
-    html.classList.add('force-light-scope');
     return () => {
       if (prev) html.setAttribute('data-theme', prev);
       else html.removeAttribute('data-theme');
-      html.classList.remove('force-light-scope');
     };
   }, []);
 
@@ -37,8 +53,8 @@ export default function AccountPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-  // Derive locations from preferences
   const homeSpot = useMemo(() => {
     const home = preferences.locations.find(l => l.type === 'home');
     return home ? { name: home.name, lat: home.lat, lon: home.lon } : null;
@@ -51,28 +67,22 @@ export default function AccountPage() {
 
   const selectedActivities = useMemo(() => preferences.interests || [], [preferences.interests]);
 
-  // Check auth state and load profile
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         setIsSignedIn(true);
         setUserEmail(data.user.email || null);
-
-        // Load display name from profile
         const { data: profile } = await supabase
           .from('profiles')
           .select('name')
           .eq('id', data.user.id)
           .maybeSingle();
-
         if (profile?.name) {
           setDisplayName(profile.name);
         }
       }
-    })().catch((err) => {
-      console.warn('Failed to check auth state', err);
-    });
+    })().catch(console.warn);
   }, []);
 
   const isMarineUser = useMemo(() => {
@@ -90,7 +100,6 @@ export default function AccountPage() {
   };
 
   const clearLocal = () => {
-    // Clear interests only, keep locations
     setPreferences(prev => ({ ...prev, interests: [] }));
   };
 
@@ -104,32 +113,23 @@ export default function AccountPage() {
   const updateHomeLocation = (loc: { name: string; lat: number; lon: number }) => {
     setPreferences(prev => {
       const otherLocations = prev.locations.filter(l => l.type !== 'home');
-      return {
-        ...prev,
-        locations: [...otherLocations, { ...loc, type: 'home' as const }]
-      };
+      return { ...prev, locations: [...otherLocations, { ...loc, type: 'home' as const }] };
     });
   };
 
   const updateCoastalLocation = (loc: { name: string; lat: number; lon: number }) => {
     setPreferences(prev => {
       const otherLocations = prev.locations.filter(l => l.type !== 'coastal');
-      return {
-        ...prev,
-        locations: [...otherLocations, { ...loc, type: 'coastal' as const }]
-      };
+      return { ...prev, locations: [...otherLocations, { ...loc, type: 'coastal' as const }] };
     });
   };
 
   const saveDisplayName = async () => {
     if (!displayName.trim()) return;
-
     setNameSaving(true);
     try {
       const { data } = await supabase.auth.getUser();
       if (!data?.user) return;
-
-      // Upsert profile with new name
       const { error } = await supabase
         .from('profiles')
         .upsert({
@@ -138,9 +138,7 @@ export default function AccountPage() {
           email: data.user.email,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
-
       if (error) {
-        console.error('Failed to save name:', error);
         alert('Failed to save your name. Please try again.');
       } else {
         setNameSaved(true);
@@ -155,26 +153,17 @@ export default function AccountPage() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== 'DELETE') return;
-
     setDeleting(true);
     try {
       const { data } = await supabase.auth.getUser();
       if (!data?.user) return;
-
-      // Delete user data from various tables
       await Promise.all([
         supabase.from('profiles').delete().eq('id', data.user.id),
         supabase.from('user_location_preferences').delete().eq('user_id', data.user.id),
         supabase.from('user_favourites').delete().eq('user_id', data.user.id),
       ]);
-
-      // Sign out the user
       await supabase.auth.signOut();
-
-      // Clear local storage
       localStorage.clear();
-
-      // Redirect to home
       window.location.href = '/';
     } catch (err) {
       console.error('Error deleting account:', err);
@@ -184,12 +173,17 @@ export default function AccountPage() {
     }
   };
 
+  const handleLanguageSelect = (langCode: string) => {
+    setLanguage(langCode);
+    setLangDropdownOpen(false);
+  };
+
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-white" data-theme="light">
       <Head>
         <title>Account - Go Daisy</title>
       </Head>
-      {/* Load Google Maps Places JS once on this page */}
+
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''}&libraries=places`}
         strategy="afterInteractive"
@@ -204,199 +198,234 @@ export default function AccountPage() {
         onOpenCoastDialog={() => setOpenMarine(true)}
       />
 
-      <div data-theme="light" className="force-light min-h-screen bg-base-100 text-base-content safe-top pt-4">
-        <div className="max-w-4xl mx-auto px-4 pb-12">
-          <header className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-semibold">Your account</h1>
+      {/* Main content - flex-1 pushes footer to bottom */}
+      <main className="flex-1 bg-gray-50 pt-4 pb-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <header className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Your account</h1>
             <div className="flex items-center gap-2">
-              <Link href="/" className="btn btn-ghost btn-sm">Home</Link>
-              <button className="btn btn-error btn-outline btn-sm hover:btn-error" onClick={signOut}>Sign out</button>
+              <Link href="/" className="btn btn-ghost btn-sm text-gray-700">Home</Link>
+              <button className="btn btn-error btn-outline btn-sm" onClick={signOut}>Sign out</button>
             </div>
           </header>
 
-          {/* Profile / Display Name */}
+          {/* Profile */}
           {isSignedIn && (
-            <section className="card bg-base-100 shadow-xl mb-4">
-              <div className="card-body">
-                <h2 className="card-title">Profile</h2>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">How should we call you?</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Your name"
-                      className="input input-bordered flex-1 bg-white text-gray-900"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && saveDisplayName()}
-                    />
-                    <button
-                      className="btn btn-primary"
-                      onClick={saveDisplayName}
-                      disabled={nameSaving || !displayName.trim()}
-                    >
-                      {nameSaving ? <span className="loading loading-spinner loading-sm" /> : nameSaved ? '✓ Saved' : 'Save'}
-                    </button>
-                  </div>
-                  {userEmail && (
-                    <p className="text-xs opacity-60 mt-2">Signed in as {userEmail}</p>
-                  )}
-                </div>
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">Profile</h2>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                How should we call you?
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveDisplayName()}
+                />
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+                  onClick={saveDisplayName}
+                  disabled={nameSaving || !displayName.trim()}
+                >
+                  {nameSaving ? '...' : nameSaved ? '✓' : 'Save'}
+                </button>
               </div>
+              {userEmail && (
+                <p className="text-xs text-gray-500 mt-2">Signed in as {userEmail}</p>
+              )}
             </section>
           )}
 
-          {/* Language preference (Go Daisy Beta) */}
-          <section className="card bg-base-100 shadow-xl mb-4">
-            <div className="card-body">
-              <h2 className="card-title flex items-center gap-2">Language <span className="badge badge-warning text-xs">Beta</span></h2>
-              <p className="text-sm opacity-70 mb-3">Change your preferred language for <b>Go Daisy</b>. This feature is in <b>Beta</b> and may not be fully translated yet.</p>
-              <div className="max-w-xs">
-                <LanguageSelector showLabel className="w-full" />
-                <p className="text-xs opacity-60 mt-2">Your choice is saved locally and synced when signed in. (Go Daisy only)</p>
-              </div>
+          {/* Language */}
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Language <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">Beta</span>
+            </h2>
+            <p className="text-sm text-gray-600 mb-3">Choose your preferred language for Go Daisy.</p>
+
+            <div className="relative">
+              <button
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                className="w-full max-w-xs flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 hover:border-gray-400 focus:ring-2 focus:ring-blue-500"
+              >
+                <div className="flex items-center gap-2">
+                  {language === 'en' ? (
+                    <Globe className="w-5 h-5 text-gray-600" />
+                  ) : (
+                    <span className="text-lg">{LANGUAGE_FLAGS[language] || '🌐'}</span>
+                  )}
+                  <span className="font-medium">{currentLang.nativeName}</span>
+                </div>
+                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {langDropdownOpen && (
+                <>
+                  {/* Backdrop to close dropdown */}
+                  <div className="fixed inset-0 z-40" onClick={() => setLangDropdownOpen(false)} />
+
+                  {/* Dropdown menu */}
+                  <div className="absolute top-full left-0 mt-1 w-full max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {supportedLanguages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => handleLanguageSelect(lang.code)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 ${language === lang.code ? 'bg-blue-50' : ''}`}
+                      >
+                        {lang.code === 'en' ? (
+                          <Globe className="w-5 h-5 text-gray-600" />
+                        ) : (
+                          <span className="text-lg">{LANGUAGE_FLAGS[lang.code] || '🌐'}</span>
+                        )}
+                        <div>
+                          <div className="font-medium text-gray-900">{lang.nativeName}</div>
+                          <div className="text-xs text-gray-500">{lang.name}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
           {/* Locations */}
-          <section className="card bg-base-100 shadow-xl mb-4">
-            <div className="card-body">
-              <h2 className="card-title">Locations</h2>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="rounded-box border border-base-300 p-3">
-                  <div className="font-medium mb-2">Home</div>
-                  {homeSpot ? (
-                    <div className="alert alert-info mb-2"><span>📍 {homeSpot.name}</span></div>
-                  ) : (
-                    <p className="text-sm opacity-70 mb-2">No home location set</p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => mapsReady ? setOpenHome(true) : alert('Loading map… please try again in a moment')}
-                    >
-                      {homeSpot ? 'Change location' : 'Set location'}
-                    </button>
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Locations</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-medium text-gray-900 mb-2">Home</div>
+                {homeSpot ? (
+                  <div className="bg-blue-50 text-blue-800 px-3 py-2 rounded-lg text-sm mb-2">
+                    📍 {homeSpot.name}
                   </div>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-2">No home location set</p>
+                )}
+                <button
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  onClick={() => mapsReady ? setOpenHome(true) : alert('Loading map…')}
+                >
+                  {homeSpot ? 'Change' : 'Set location'}
+                </button>
+              </div>
 
-                <div className="rounded-box border border-base-300 p-3">
-                  <div className="font-medium mb-2">Coastal spot</div>
-                  {coastalSpot ? (
-                    <div className="alert alert-info mb-2"><span>🌊 {coastalSpot.name}</span></div>
-                  ) : (
-                    <p className="text-sm opacity-70 mb-2">No coastal location set</p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map… please try again in a moment')}
-                    >
-                      {coastalSpot ? 'Change location' : 'Set location'}
-                    </button>
+              <div className="border border-gray-200 rounded-lg p-3">
+                <div className="font-medium text-gray-900 mb-2">Coastal spot</div>
+                {coastalSpot ? (
+                  <div className="bg-cyan-50 text-cyan-800 px-3 py-2 rounded-lg text-sm mb-2">
+                    🌊 {coastalSpot.name}
                   </div>
-                  {!isMarineUser && (
-                    <p className="text-xs opacity-70 mt-2">Tip: add sea activities to get tide, swell and wind-aware suggestions.</p>
-                  )}
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-500 mb-2">No coastal location set</p>
+                )}
+                <button
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map…')}
+                >
+                  {coastalSpot ? 'Change' : 'Set location'}
+                </button>
+                {!isMarineUser && (
+                  <p className="text-xs text-gray-500 mt-2">Tip: add sea activities for tide/swell suggestions.</p>
+                )}
               </div>
             </div>
           </section>
 
           {/* Activities */}
-          <section className="card bg-base-100 shadow-xl mb-4">
-            <div className="card-body">
-              <h2 className="card-title">Activities</h2>
-              {selectedActivities.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedActivities.map(a => (
-                    <span key={a} className="badge badge-primary gap-1">
-                      {a.replaceAll('_',' ')}
-                      <button
-                        className="btn btn-ghost btn-xs"
-                        onClick={() => removeActivity(a)}
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm opacity-70">No activities saved yet.</p>
-              )}
-              <div className="flex gap-2 mt-3">
-                <Link href="/interests" className="btn">Edit interests</Link>
-                <button className="btn btn-ghost" onClick={clearLocal}>Clear activities</button>
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Activities</h2>
+            {selectedActivities.length ? (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {selectedActivities.map(a => (
+                  <span key={a} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                    {a.replaceAll('_',' ')}
+                    <button
+                      className="ml-1 hover:text-blue-600"
+                      onClick={() => removeActivity(a)}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
               </div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-3">No activities saved yet.</p>
+            )}
+            <div className="flex gap-2">
+              <Link href="/interests" className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+                Edit interests
+              </Link>
+              <button className="px-4 py-2 text-gray-600 hover:text-gray-800" onClick={clearLocal}>
+                Clear all
+              </button>
             </div>
           </section>
 
-          {/* Save banner - only show when not signed in */}
-          {!isSignedIn && (
-            <div className="alert bg-base-200 border border-base-300 mb-4">
-              <span>Your changes are saved on this device. Log in to sync across devices.</span>
-              <Link href="/login" className="btn btn-primary btn-sm ml-auto">Log in</Link>
+          {/* Sync status */}
+          {!isSignedIn ? (
+            <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+              <span className="text-gray-700">Your changes are saved on this device only.</span>
+              <Link href="/login" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Log in</Link>
             </div>
-          )}
-          {isSignedIn && (
-            <div className="alert bg-success/10 border border-success/30 mb-4">
-              <span>✓ Signed in - your preferences sync across devices.</span>
+          ) : (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <span className="text-green-800">✓ Signed in - preferences sync across devices.</span>
             </div>
           )}
 
-          {/* Delete Account - only show when signed in */}
+          {/* Delete Account */}
           {isSignedIn && (
-            <section className="card bg-base-100 shadow-xl border border-error/30">
-              <div className="card-body">
-                <h2 className="card-title text-error">Danger Zone</h2>
-                <p className="text-sm opacity-70 mb-3">
-                  Deleting your account will permanently remove all your data including saved locations, preferences, and activity history. This action cannot be undone.
-                </p>
+            <section className="bg-white rounded-xl shadow-sm border border-red-200 p-4">
+              <h2 className="text-lg font-semibold text-red-600 mb-2">Danger Zone</h2>
+              <p className="text-sm text-gray-600 mb-3">
+                Deleting your account permanently removes all your data. This cannot be undone.
+              </p>
 
-                {!showDeleteConfirm ? (
-                  <button
-                    className="btn btn-error btn-outline w-fit"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    Delete my account
-                  </button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="alert alert-warning">
-                      <span>To confirm, type <b>DELETE</b> below:</span>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Type DELETE to confirm"
-                      className="input input-bordered w-full max-w-xs bg-white text-gray-900"
-                      value={deleteConfirmText}
-                      onChange={(e) => setDeleteConfirmText(e.target.value)}
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        className="btn btn-error"
-                        disabled={deleteConfirmText !== 'DELETE' || deleting}
-                        onClick={handleDeleteAccount}
-                      >
-                        {deleting ? <span className="loading loading-spinner loading-sm" /> : 'Permanently delete account'}
-                      </button>
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
+              {!showDeleteConfirm ? (
+                <button
+                  className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete my account
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm">
+                    Type <b>DELETE</b> to confirm:
                   </div>
-                )}
-              </div>
+                  <input
+                    type="text"
+                    placeholder="Type DELETE"
+                    className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:opacity-50"
+                      disabled={deleteConfirmText !== 'DELETE' || deleting}
+                      onClick={handleDeleteAccount}
+                    >
+                      {deleting ? 'Deleting...' : 'Permanently delete'}
+                    </button>
+                    <button
+                      className="px-4 py-2 text-gray-600"
+                      onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </div>
 
-        {/* Home map picker (only render once Maps is ready) */}
+        {/* Map dialogs */}
         {openHome && mapsReady && (
           <CoastalLocationDialog
             open={openHome}
@@ -406,7 +435,6 @@ export default function AccountPage() {
           />
         )}
 
-        {/* Marine map picker (only render once Maps is ready) */}
         {openMarine && mapsReady && (
           <CoastalLocationDialog
             open={openMarine}
@@ -415,14 +443,13 @@ export default function AccountPage() {
             onSave={(loc) => { updateCoastalLocation(loc); setOpenMarine(false); }}
           />
         )}
-      </div>
+      </main>
 
       <Footer />
-    </>
+    </div>
   );
 }
 
-// Disable static generation for account page (requires authentication)
 export async function getServerSideProps() {
   return { props: {} };
 }
