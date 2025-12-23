@@ -51,7 +51,12 @@
     "cap:growdaisy:open:ios": "npx cap open ios-growdaisy",
     "cap:growdaisy:open:android": "npx cap open android-growdaisy",
     "cap:growdaisy:build:ios": "npx cap copy ios-growdaisy && cd ios-growdaisy/App && pod install",
-    "cap:growdaisy:build:android": "npx cap copy android-growdaisy"
+    "cap:growdaisy:build:android": "npx cap copy android-growdaisy",
+    "cap:godaisy:sync": "CAPACITOR_CONFIG=capacitor.config.godaisy.ts npx cap sync",
+    "cap:godaisy:open:ios": "npx cap open ios-godaisy",
+    "cap:godaisy:open:android": "npx cap open android-godaisy",
+    "cap:godaisy:build:ios": "npx cap copy ios-godaisy && cd ios-godaisy/App && pod install",
+    "cap:godaisy:build:android": "npx cap copy android-godaisy"
   },
   "resolutions": {
     "next": {

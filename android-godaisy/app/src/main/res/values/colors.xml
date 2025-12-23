@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Go Daisy branding colors -->
+    <color name="colorPrimary">#0284c7</color>     <!-- sky-600 -->
+    <color name="colorPrimaryDark">#0f172a</color> <!-- slate-900 -->
+    <color name="colorAccent">#0ea5e9</color>      <!-- sky-500 -->
+    <color name="splash_background">#0f172a</color> <!-- slate-900 -->
+</resources>
