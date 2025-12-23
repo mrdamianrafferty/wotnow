@@ -5,16 +5,49 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ============================================
+# Capacitor Core
+# ============================================
+-keep class com.getcapacitor.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+-dontwarn com.getcapacitor.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Capacitor's BridgeActivity
+-keep class * extends com.getcapacitor.BridgeActivity { *; }
+
+# ============================================
+# JavaScript Interface (WebView)
+# ============================================
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# ============================================
+# OkHttp / Okio (used by networking plugins)
+# ============================================
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+
+# ============================================
+# Firebase / Google Services
+# ============================================
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**
+
+# ============================================
+# SQLite Plugin (Capacitor Community)
+# ============================================
+-keep class com.getcapacitor.community.database.sqlite.** { *; }
+
+# ============================================
+# Preserve line numbers for crash reporting
+# ============================================
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.

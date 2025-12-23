@@ -7,6 +7,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { SplashScreen } from '@capacitor/splash-screen';
+import { initDeepLinkHandler } from './deepLinkHandler';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -39,6 +40,11 @@ export async function initializeApp(options: InitOptions = {}): Promise<void> {
 
   try {
     console.log('[AppInit] Starting initialization...');
+
+    // Initialize deep link handler first (synchronous, doesn't delay splash)
+    if (isNative) {
+      initDeepLinkHandler();
+    }
 
     // Run initialization tasks in parallel
     const tasks: Promise<void>[] = [];
