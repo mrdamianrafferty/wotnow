@@ -580,32 +580,33 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               userId ? (
                 <Link
                   href="/account"
-                  className="btn btn-ghost btn-sm btn-circle"
+                  className="btn btn-ghost btn-circle"
                   title={t('My Account')}
                   aria-label={t('My Account')}
                 >
-                  <span className="text-xl">🤾</span>
+                  <span className="text-2xl">🤾</span>
                 </Link>
               ) : (
                 <Link
                   href="/login"
-                  className="btn btn-ghost btn-sm btn-circle"
+                  className="btn btn-primary btn-sm gap-1"
                   title={t('Log in')}
                   aria-label={t('Log in')}
                 >
                   <svg
                     aria-hidden="true"
-                    className="w-6 h-6"
+                    className="w-5 h-5"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                     <circle cx="12" cy="8" r="3" />
                   </svg>
+                  <span className="text-sm font-medium">Log in</span>
                 </Link>
               )
             )}
