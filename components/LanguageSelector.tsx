@@ -52,21 +52,21 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           <span className="text-xs font-medium uppercase">{language}</span>
           <ChevronDown className="w-3 h-3 opacity-60" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[99999] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-48 border border-base-200 overflow-hidden backdrop-blur-none">
+        <ul tabIndex={0} className="dropdown-content z-[99999] p-2 shadow-lg bg-white rounded-box w-48 border border-gray-200 overflow-hidden">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
                 onClick={() => handleLanguageSelect(lang.code)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-none transition-colors bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 focus:bg-gray-100 dark:focus:bg-zinc-800 active:bg-gray-100 dark:active:bg-zinc-800 text-base-content ${language === lang.code ? 'bg-gray-100 dark:bg-zinc-800' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors bg-white hover:bg-gray-100 text-gray-900 ${language === lang.code ? 'bg-blue-50' : ''}`}
               >
                 {lang.code === 'en' ? (
-                  <Globe className="w-5 h-5" />
+                  <Globe className="w-5 h-5 text-gray-600" />
                 ) : (
                   <span className="text-lg leading-none">{LANGUAGE_FLAGS[lang.code] || '🌐'}</span>
                 )}
                 <div className="flex flex-col items-start">
-                  <span className="font-medium text-base-content">{lang.nativeName}</span>
-                  <span className="text-xs opacity-60 text-base-content">{lang.name}</span>
+                  <span className="font-medium text-gray-900">{lang.nativeName}</span>
+                  <span className="text-xs text-gray-500">{lang.name}</span>
                 </div>
               </button>
             </li>
@@ -98,21 +98,21 @@ export function LanguageSelector({ className = '', compact = false, showLabel = 
           </div>
           <ChevronDown className="w-4 h-4" />
         </div>
-        <ul tabIndex={0} className="dropdown-content z-[99999] p-2 shadow-lg bg-white dark:bg-zinc-900 rounded-box w-full border border-base-200 overflow-hidden backdrop-blur-none">
+        <ul tabIndex={0} className="dropdown-content z-[99999] p-2 shadow-lg bg-white rounded-box w-full border border-gray-200 overflow-hidden">
           {supportedLanguages.map((lang) => (
             <li key={lang.code} className="list-none">
               <button
                 onClick={() => handleLanguageSelect(lang.code)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-none transition-colors bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 focus:bg-gray-100 dark:focus:bg-zinc-800 active:bg-gray-100 dark:active:bg-zinc-800 text-base-content ${language === lang.code ? 'bg-gray-100 dark:bg-zinc-800' : ''}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors bg-white hover:bg-gray-100 text-gray-900 ${language === lang.code ? 'bg-blue-50' : ''}`}
               >
                 {lang.code === 'en' ? (
-                  <Globe className="w-5 h-5" />
+                  <Globe className="w-5 h-5 text-gray-600" />
                 ) : (
                   <span className="text-lg leading-none">{LANGUAGE_FLAGS[lang.code] || '🌐'}</span>
                 )}
                 <div className="flex flex-col items-start">
-                  <span className="font-medium text-base-content">{lang.nativeName}</span>
-                  <span className="text-xs opacity-60 text-base-content">{lang.name}</span>
+                  <span className="font-medium text-gray-900">{lang.nativeName}</span>
+                  <span className="text-xs text-gray-500">{lang.name}</span>
                 </div>
               </button>
             </li>
