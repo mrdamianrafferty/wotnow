@@ -7,36 +7,12 @@ import AppHeader from '../components/AppHeader';
 import Footer from '../components/footer';
 import { supabase } from '@/lib/supabase/client';
 import { LanguageSelector } from '@/components/LanguageSelector';
-
-type UserMetadata = { selectedActivities?: string[]; interests?: string[]; activities?: string[] };
-
-// Local profile persistence
-const PROFILE_KEY = 'profile.v1';
-
-type Spot = { name: string; lat: number; lon: number };
-
-type ProfileState = {
-  homeLocation: string;
-  homeSpot: Spot | null;
-  marineLocation: string;
-  coastalSpot: Spot | null;
-  selectedActivities: string[]; // e.g. "hiking", "sea_swimming"
-};
-
-function loadProfile(): ProfileState | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(PROFILE_KEY);
-    return raw ? (JSON.parse(raw) as ProfileState) : null;
-  } catch { return null; }
-}
-
-function saveProfile(p: ProfileState) {
-  if (typeof window === 'undefined') return;
-  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch (err) { void err; }
-}
+import { useUserPreferences } from '@/context/UserPreferencesContext';
 
 export default function AccountPage() {
+  // Use the shared preferences context
+  const { preferences, setPreferences } = useUserPreferences();
+
   // Force light theme (like onboarding)
   useEffect(() => {
     const html = document.documentElement;
@@ -50,52 +26,54 @@ export default function AccountPage() {
     };
   }, []);
 
-  const [homeLocation, setHomeLocation] = useState('');
-  const [homeSpot, setHomeSpot] = useState<Spot | null>(null);
-  const [marineLocation, setMarineLocation] = useState('');
-  const [coastalSpot, setCoastalSpot] = useState<Spot | null>(null);
-  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
-
   const [openHome, setOpenHome] = useState(false);
   const [openMarine, setOpenMarine] = useState(false);
   const [mapsReady, setMapsReady] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [nameSaving, setNameSaving] = useState(false);
+  const [nameSaved, setNameSaved] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
-  // Load once
-  useEffect(() => {
-    const p = loadProfile();
-    if (p) {
-      setHomeLocation(p.homeLocation || '');
-      setHomeSpot(p.homeSpot || null);
-      setMarineLocation(p.marineLocation || '');
-      setCoastalSpot(p.coastalSpot || null);
-      setSelectedActivities(Array.isArray(p.selectedActivities) ? p.selectedActivities : []);
-    }
-  }, []);
+  // Derive locations from preferences
+  const homeSpot = useMemo(() => {
+    const home = preferences.locations.find(l => l.type === 'home');
+    return home ? { name: home.name, lat: home.lat, lon: home.lon } : null;
+  }, [preferences.locations]);
 
-  // Check auth state and hydrate interests from Supabase
+  const coastalSpot = useMemo(() => {
+    const coastal = preferences.locations.find(l => l.type === 'coastal');
+    return coastal ? { name: coastal.name, lat: coastal.lat, lon: coastal.lon } : null;
+  }, [preferences.locations]);
+
+  const selectedActivities = preferences.interests || [];
+
+  // Check auth state and load profile
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
         setIsSignedIn(true);
-        if (!selectedActivities.length) {
-          const meta = (data.user.user_metadata ?? {}) as UserMetadata;
-          const interests = meta.selectedActivities || meta.interests || meta.activities;
-          if (Array.isArray(interests) && interests.length) {
-            setSelectedActivities(interests);
-          }
+        setUserEmail(data.user.email || null);
+
+        // Load display name from profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profile?.name) {
+          setDisplayName(profile.name);
         }
       }
     })().catch((err) => {
       console.warn('Failed to check auth state', err);
     });
-  }, [selectedActivities.length]);
-
-  // Autosave
-  useEffect(() => {
-    saveProfile({ homeLocation, homeSpot, marineLocation, coastalSpot, selectedActivities });
-  }, [homeLocation, homeSpot, marineLocation, coastalSpot, selectedActivities]);
+  }, []);
 
   const isMarineUser = useMemo(() => {
     const MARINE_KEYS = ['surf','sea_','windsurf','kitesurf','paddle','kayak','canoe','sailing','scuba','snorkel','wild_swimming','beach'];
@@ -104,7 +82,7 @@ export default function AccountPage() {
 
   const signOut = async () => {
     try {
-      await fetch('/auth/signout', { method: 'POST', credentials: 'include' }); // <-- use your route
+      await fetch('/auth/signout', { method: 'POST', credentials: 'include' });
     } catch (err) {
       console.warn('Sign out failed', err);
     }
@@ -112,12 +90,98 @@ export default function AccountPage() {
   };
 
   const clearLocal = () => {
-    localStorage.removeItem(PROFILE_KEY);
-    setSelectedActivities([]);
-    setHomeLocation('');
-    setHomeSpot(null);
-    setMarineLocation('');
-    setCoastalSpot(null);
+    // Clear interests only, keep locations
+    setPreferences(prev => ({ ...prev, interests: [] }));
+  };
+
+  const removeActivity = (activity: string) => {
+    setPreferences(prev => ({
+      ...prev,
+      interests: prev.interests.filter(a => a !== activity)
+    }));
+  };
+
+  const updateHomeLocation = (loc: { name: string; lat: number; lon: number }) => {
+    setPreferences(prev => {
+      const otherLocations = prev.locations.filter(l => l.type !== 'home');
+      return {
+        ...prev,
+        locations: [...otherLocations, { ...loc, type: 'home' as const }]
+      };
+    });
+  };
+
+  const updateCoastalLocation = (loc: { name: string; lat: number; lon: number }) => {
+    setPreferences(prev => {
+      const otherLocations = prev.locations.filter(l => l.type !== 'coastal');
+      return {
+        ...prev,
+        locations: [...otherLocations, { ...loc, type: 'coastal' as const }]
+      };
+    });
+  };
+
+  const saveDisplayName = async () => {
+    if (!displayName.trim()) return;
+
+    setNameSaving(true);
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) return;
+
+      // Upsert profile with new name
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          name: displayName.trim(),
+          email: data.user.email,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+
+      if (error) {
+        console.error('Failed to save name:', error);
+        alert('Failed to save your name. Please try again.');
+      } else {
+        setNameSaved(true);
+        setTimeout(() => setNameSaved(false), 2000);
+      }
+    } catch (err) {
+      console.error('Error saving name:', err);
+    } finally {
+      setNameSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+
+    setDeleting(true);
+    try {
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) return;
+
+      // Delete user data from various tables
+      await Promise.all([
+        supabase.from('profiles').delete().eq('id', data.user.id),
+        supabase.from('user_location_preferences').delete().eq('user_id', data.user.id),
+        supabase.from('user_favourites').delete().eq('user_id', data.user.id),
+      ]);
+
+      // Sign out the user
+      await supabase.auth.signOut();
+
+      // Clear local storage
+      localStorage.clear();
+
+      // Redirect to home
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      alert('Failed to delete account. Please contact support.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -150,6 +214,40 @@ export default function AccountPage() {
             </div>
           </header>
 
+          {/* Profile / Display Name */}
+          {isSignedIn && (
+            <section className="card bg-base-100 shadow-xl mb-4">
+              <div className="card-body">
+                <h2 className="card-title">Profile</h2>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">How should we call you?</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Your name"
+                      className="input input-bordered flex-1 bg-white text-gray-900"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && saveDisplayName()}
+                    />
+                    <button
+                      className="btn btn-primary"
+                      onClick={saveDisplayName}
+                      disabled={nameSaving || !displayName.trim()}
+                    >
+                      {nameSaving ? <span className="loading loading-spinner loading-sm" /> : nameSaved ? '✓ Saved' : 'Save'}
+                    </button>
+                  </div>
+                  {userEmail && (
+                    <p className="text-xs opacity-60 mt-2">Signed in as {userEmail}</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Language preference (Go Daisy Beta) */}
           <section className="card bg-base-100 shadow-xl mb-4">
             <div className="card-body">
@@ -169,49 +267,39 @@ export default function AccountPage() {
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="rounded-box border border-base-300 p-3">
                   <div className="font-medium mb-2">Home</div>
-                  <input
-                    className="input input-bordered w-full mb-2"
-                    placeholder="Enter a town or postcode"
-                    value={homeLocation}
-                    onChange={(e) => setHomeLocation(e.target.value)}
-                  />
                   {homeSpot ? (
                     <div className="alert alert-info mb-2"><span>📍 {homeSpot.name}</span></div>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm opacity-70 mb-2">No home location set</p>
+                  )}
                   <div className="flex gap-2">
                     <button
                       className="btn btn-outline"
                       onClick={() => mapsReady ? setOpenHome(true) : alert('Loading map… please try again in a moment')}
                     >
-                      Use map
+                      {homeSpot ? 'Change location' : 'Set location'}
                     </button>
-                    <button className="btn btn-outline" onClick={() => setHomeLocation('Use current location')}>Use current location</button>
                   </div>
                 </div>
 
                 <div className="rounded-box border border-base-300 p-3">
                   <div className="font-medium mb-2">Coastal spot</div>
-                  <input
-                    className="input input-bordered w-full mb-2"
-                    placeholder="Search or enter a coastal location"
-                    value={marineLocation}
-                    onChange={(e) => setMarineLocation(e.target.value)}
-                  />
                   {coastalSpot ? (
                     <div className="alert alert-info mb-2"><span>🌊 {coastalSpot.name}</span></div>
-                  ) : null}
+                  ) : (
+                    <p className="text-sm opacity-70 mb-2">No coastal location set</p>
+                  )}
                   <div className="flex gap-2">
                     <button
                       className="btn btn-outline"
                       onClick={() => mapsReady ? setOpenMarine(true) : alert('Loading map… please try again in a moment')}
                     >
-                      Use map
+                      {coastalSpot ? 'Change location' : 'Set location'}
                     </button>
-                    <button className="btn btn-outline" onClick={() => setMarineLocation('Use current location')}>Use current location</button>
                   </div>
-                  {!isMarineUser ? (
+                  {!isMarineUser && (
                     <p className="text-xs opacity-70 mt-2">Tip: add sea activities to get tide, swell and wind-aware suggestions.</p>
-                  ) : null}
+                  )}
                 </div>
               </div>
             </div>
@@ -228,7 +316,7 @@ export default function AccountPage() {
                       {a.replaceAll('_',' ')}
                       <button
                         className="btn btn-ghost btn-xs"
-                        onClick={() => setSelectedActivities(prev => prev.filter(x => x !== a))}
+                        onClick={() => removeActivity(a)}
                       >
                         ✕
                       </button>
@@ -239,45 +327,94 @@ export default function AccountPage() {
                 <p className="text-sm opacity-70">No activities saved yet.</p>
               )}
               <div className="flex gap-2 mt-3">
-                <Link href="/onboarding" className="btn">Edit interests</Link>
-                <button className="btn btn-ghost" onClick={clearLocal}>Clear local data</button>
+                <Link href="/interests" className="btn">Edit interests</Link>
+                <button className="btn btn-ghost" onClick={clearLocal}>Clear activities</button>
               </div>
             </div>
           </section>
 
           {/* Save banner - only show when not signed in */}
           {!isSignedIn && (
-            <div className="alert bg-base-200 border border-base-300">
+            <div className="alert bg-base-200 border border-base-300 mb-4">
               <span>Your changes are saved on this device. Log in to sync across devices.</span>
               <Link href="/login" className="btn btn-primary btn-sm ml-auto">Log in</Link>
             </div>
           )}
           {isSignedIn && (
-            <div className="alert bg-success/10 border border-success/30">
+            <div className="alert bg-success/10 border border-success/30 mb-4">
               <span>✓ Signed in - your preferences sync across devices.</span>
             </div>
+          )}
+
+          {/* Delete Account - only show when signed in */}
+          {isSignedIn && (
+            <section className="card bg-base-100 shadow-xl border border-error/30">
+              <div className="card-body">
+                <h2 className="card-title text-error">Danger Zone</h2>
+                <p className="text-sm opacity-70 mb-3">
+                  Deleting your account will permanently remove all your data including saved locations, preferences, and activity history. This action cannot be undone.
+                </p>
+
+                {!showDeleteConfirm ? (
+                  <button
+                    className="btn btn-error btn-outline w-fit"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    Delete my account
+                  </button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="alert alert-warning">
+                      <span>To confirm, type <b>DELETE</b> below:</span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Type DELETE to confirm"
+                      className="input input-bordered w-full max-w-xs bg-white text-gray-900"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        className="btn btn-error"
+                        disabled={deleteConfirmText !== 'DELETE' || deleting}
+                        onClick={handleDeleteAccount}
+                      >
+                        {deleting ? <span className="loading loading-spinner loading-sm" /> : 'Permanently delete account'}
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
           )}
         </div>
 
         {/* Home map picker (only render once Maps is ready) */}
-        {openHome && mapsReady ? (
+        {openHome && mapsReady && (
           <CoastalLocationDialog
             open={openHome}
             onClose={() => setOpenHome(false)}
             title="Set your home location 📍"
-            onSave={(loc) => { setHomeSpot(loc); setHomeLocation(loc.name); setOpenHome(false); }}
+            onSave={(loc) => { updateHomeLocation(loc); setOpenHome(false); }}
           />
-        ) : null}
+        )}
 
         {/* Marine map picker (only render once Maps is ready) */}
-        {openMarine && mapsReady ? (
+        {openMarine && mapsReady && (
           <CoastalLocationDialog
             open={openMarine}
             onClose={() => setOpenMarine(false)}
             title="Set a coastal spot 🌊"
-            onSave={(loc) => { setCoastalSpot(loc); setMarineLocation(loc.name); setOpenMarine(false); }}
+            onSave={(loc) => { updateCoastalLocation(loc); setOpenMarine(false); }}
           />
-        ) : null}
+        )}
       </div>
 
       <Footer />
