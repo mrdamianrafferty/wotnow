@@ -580,22 +580,22 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               userId ? (
                 <Link
                   href="/settings"
-                  className="btn btn-ghost btn-circle"
+                  className="btn btn-ghost btn-sm btn-circle"
                   title={t('My Account')}
                   aria-label={t('My Account')}
                 >
-                  <span className="text-2xl">🤾</span>
+                  <span className="text-xl">🤾</span>
                 </Link>
               ) : (
                 <Link
                   href="/login"
-                  className="btn btn-ghost btn-circle"
+                  className="btn btn-ghost btn-sm btn-circle"
                   title={t('Log in')}
                   aria-label={t('Log in')}
                 >
                   <svg
                     aria-hidden="true"
-                    className="w-7 h-7"
+                    className="w-6 h-6"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"

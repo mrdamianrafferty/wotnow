@@ -98,20 +98,33 @@ async function fetchPredictions(params: {
       if (predictions.length > 0) {
         console.log('[useFishingPredictions] Loaded ' + predictions.length + ' predictions from SQLite cache');
 
-        // Map offline predictions to API format
-        const mappedPredictions: FishingPrediction[] = predictions.map(p => ({
-          species_id: p.speciesCode,
-          species_code: p.speciesCode,
-          confidence: p.confidence,
-          bite_score: p.biteScore,
-          temp_score: p.tempScore,
-          tide_score: p.tideScore,
-          light_score: p.lightScore,
-          lunar_score: p.lunarScore,
-          habitat_bonus: p.habitatBonus,
-          rationale: p.rationale,
-          best_times: p.bestTimes,
-        }));
+        // Enrich predictions with species data from SQLite
+        const { species: allSpecies } = await findrSync.getSpecies();
+        const speciesMap = new Map(allSpecies.map(s => [s.speciesCode, s]));
+
+        // Map offline predictions to API format with species data
+        const mappedPredictions: FishingPrediction[] = predictions.map(p => {
+          const species = speciesMap.get(p.speciesCode);
+          return {
+            species_id: p.speciesCode,
+            species_code: p.speciesCode,
+            species_name: species?.nameEn || undefined,
+            name_en: species?.nameEn || undefined,
+            scientific_name: species?.scientificName || undefined,
+            species_scientific_name: species?.scientificName || undefined,
+            playful_bio: species?.playfulBio || undefined,
+            slug: species?.slug || undefined,
+            confidence: p.confidence,
+            bite_score: p.biteScore,
+            temp_score: p.tempScore,
+            tide_score: p.tideScore,
+            light_score: p.lightScore,
+            lunar_score: p.lunarScore,
+            habitat_bonus: p.habitatBonus,
+            rationale: p.rationale,
+            best_times: p.bestTimes,
+          };
+        });
 
         // If from cache, also trigger background refresh
         if (fromCache) {
