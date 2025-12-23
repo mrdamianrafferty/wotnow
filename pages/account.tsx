@@ -49,7 +49,7 @@ export default function AccountPage() {
     return coastal ? { name: coastal.name, lat: coastal.lat, lon: coastal.lon } : null;
   }, [preferences.locations]);
 
-  const selectedActivities = preferences.interests || [];
+  const selectedActivities = useMemo(() => preferences.interests || [], [preferences.interests]);
 
   // Check auth state and load profile
   useEffect(() => {
