@@ -718,6 +718,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 
   if (!hasMounted) {
     // Show skeleton with preloaded LCP image during SSR for faster LCP
+    // Include AppHeader to prevent CLS when it appears on mount
     return (
       <>
         <SEO
@@ -726,7 +727,9 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           url="https://godaisy.io"
           lcpImage={lcpFallbackImage}
         />
+        <AppHeader />
         <SkeletonHomePage />
+        <BottomNav />
       </>
     );
   }
