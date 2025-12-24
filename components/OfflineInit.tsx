@@ -17,13 +17,17 @@ export function OfflineInit() {
         // Initialize IndexedDB
         const { initDB } = await import('@/lib/offline/db');
         await initDB();
-        console.log('[OfflineInit] IndexedDB initialized');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[OfflineInit] IndexedDB initialized');
+        }
 
         // Start sync service
         const { getSyncService } = await import('@/lib/offline/sync');
         const sync = getSyncService();
         sync.start();
-        console.log('[OfflineInit] Sync service started');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[OfflineInit] Sync service started');
+        }
 
         // Cleanup on unmount
         return () => {

@@ -32,7 +32,9 @@ export function PerformanceInit() {
         (window as any).__perfMetrics = perfMetrics;
       });
 
-      console.log('[Perf] Performance tracking initialized. Use window.__perfSnapshot() to view metrics.');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Perf] Performance tracking initialized. Use window.__perfSnapshot() to view metrics.');
+      }
     }
   }, [logSnapshot]);
 

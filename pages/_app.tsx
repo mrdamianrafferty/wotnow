@@ -17,10 +17,18 @@ import { useEffect, useState } from 'react'
 import { UnifiedLocationProvider } from '../context/UnifiedLocationContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
-import { OfflineInit } from '../components/OfflineInit'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { PerformanceInit } from '../components/PerformanceInit';
+
+// Lazy-load non-critical initialization components
+const OfflineInit = dynamic(
+  () => import('../components/OfflineInit').then(mod => ({ default: mod.OfflineInit })),
+  { ssr: false }
+);
+const PerformanceInit = dynamic(
+  () => import('../components/PerformanceInit').then(mod => ({ default: mod.PerformanceInit })),
+  { ssr: false }
+);
 
 // Lazy-load non-critical components
 const Toaster = dynamic(
@@ -97,7 +105,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (const registration of registrations) {
           await registration.unregister();
-          console.log('[SW Cleanup] Unregistered service worker:', registration.scope);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SW Cleanup] Unregistered service worker:', registration.scope);
+          }
         }
 
         // Clear all caches
@@ -105,7 +115,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
           const cacheNames = await caches.keys();
           for (const cacheName of cacheNames) {
             await caches.delete(cacheName);
-            console.log('[SW Cleanup] Deleted cache:', cacheName);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[SW Cleanup] Deleted cache:', cacheName);
+            }
           }
         }
       } catch (error) {
