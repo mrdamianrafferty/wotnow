@@ -64,6 +64,7 @@ export function useFavouriteInsights(ids: string[]): FavouriteInsightsState {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include', // Send cookies for auth.uid() in the view
           body: JSON.stringify({ ids: uniqueIds }),
           signal: controller.signal,
         });

@@ -1,6 +1,6 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { createPagesServerClient } from '../../../lib/supabase/pages-api';
 import type { FavouriteInsight } from '../../../hooks/useFavouriteInsights';
 
 interface FavouriteInsightsRequestBody {
@@ -69,7 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   let supabase;
   try {
-    supabase = getSupabaseServerClient();
+    // Use user's session so auth.uid() works in the view
+    supabase = createPagesServerClient({ req, res });
   } catch (error) {
     console.warn('[findr] Supabase unavailable for favourite insights', (error as Error).message);
     res.status(200).json({ insights: [], source: 'fallback' });
