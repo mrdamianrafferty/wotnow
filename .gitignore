@@ -46,7 +46,9 @@ test-scripts/
 coverage/
 .vercel
 
-# PWA files
+# PWA files (generated at build time by next-pwa)
+public/sw.js
+public/sw.js.map
 public/workbox-*.js
 public/worker-*.js
 public/workbox-*.js.map
