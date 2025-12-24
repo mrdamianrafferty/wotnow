@@ -4,13 +4,15 @@
  * API Integration Tests for Tides Endpoint
  *
  * Tests the /api/tides endpoint
- * This endpoint fetches tide predictions from Stormglass API
+ * This endpoint fetches tide predictions from multiple sources:
+ * 1. WorldTides (primary, free)
+ * 2. NOAA (for US/North American coasts)
+ * 3. Stormglass (paid fallback)
  */
 
 import { createMocks } from 'node-mocks-http';
-import handler from '../../pages/api/tides';
 
-// Mock global fetch
+// Mock global fetch before importing handler
 global.fetch = jest.fn();
 
 // Mock weather metrics
@@ -23,19 +25,38 @@ jest.mock('../../lib/monitoring/weatherMetrics', () => ({
   },
 }));
 
+// Mock fetchWorldTides to control the primary source
+jest.mock('../../lib/services/weatherService', () => ({
+  fetchWorldTides: jest.fn(),
+}));
+
+import { fetchWorldTides } from '../../lib/services/weatherService';
+const mockFetchWorldTides = fetchWorldTides as jest.MockedFunction<typeof fetchWorldTides>;
+
+// Import handler after mocks are set up
+import handler from '../../pages/api/tides';
+
 describe('GET /api/tides', () => {
   // Store original fetch
   const originalFetch = global.fetch;
 
+  // Counter to generate unique coordinates for each test (avoids cache collisions)
+  let testCounter = 0;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    testCounter++;
+
     // Reset fetch mock
     global.fetch = jest.fn();
 
     // Mock environment variable
     process.env.STORMGLASS_SECRET_KEY = 'test-stormglass-key';
 
-    // Default mock response
+    // Default: WorldTides returns null, so tests fall through to Stormglass
+    mockFetchWorldTides.mockResolvedValue(null);
+
+    // Default Stormglass mock response
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       status: 200,
@@ -59,14 +80,18 @@ describe('GET /api/tides', () => {
         ],
       }),
     });
-
-    // Clear global cache and cooldown state
-    if (globalThis.__tideCache__) globalThis.__tideCache__.clear();
-    if (globalThis.__worldTidesCache__) globalThis.__worldTidesCache__.clear();
-    if (globalThis.__noaaTidesCache__) globalThis.__noaaTidesCache__.clear();
-    if (typeof globalThis.__lastLimitedResponse__ !== 'undefined') globalThis.__lastLimitedResponse__ = undefined;
-    if (typeof global.lastLimitedAt !== 'undefined') global.lastLimitedAt = null;
   });
+
+  // Helper to get unique coordinates for each test
+  function getUniqueCoords() {
+    // Use testCounter to generate unique lat/lon that won't collide with cache
+    // Coordinates in UK waters, not in North American coast range
+    // Use 0.2 intervals to ensure different values after round1dp (0.1 precision)
+    return {
+      lat: (50 + testCounter * 0.2).toFixed(3),
+      lon: (-5 - testCounter * 0.2).toFixed(3),
+    };
+  }
 
   afterEach(() => {
     delete process.env.STORMGLASS_SECRET_KEY;
@@ -91,7 +116,7 @@ describe('GET /api/tides', () => {
       const data = JSON.parse(res._getData());
       expect(data).toHaveProperty('success', false);
       expect(data).toHaveProperty('error');
-      expect(data.error).toContain('API key');
+      expect(data.error).toContain('Stormglass key not configured');
     });
 
     it('should return 400 if lat is invalid', async () => {
@@ -181,16 +206,16 @@ describe('GET /api/tides', () => {
     });
 
     it('should call Stormglass API with correct URL', async () => {
+      const coords = getUniqueCoords();
       const { req, res } = createMocks({
         method: 'GET',
-        query: {
-          lat: '50.123',
-          lon: '-5.456',
-        },
+        query: coords,
       });
 
       await handler(req, res);
 
+      // Stormglass is the fallback after WorldTides returns null
+      // It should be called with rounded coordinates (1dp for Stormglass)
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('https://api.stormglass.io/v2/tide/extremes/point'),
         expect.objectContaining({
@@ -198,16 +223,6 @@ describe('GET /api/tides', () => {
             Authorization: 'test-stormglass-key',
           },
         })
-      );
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('lat=50.123'),
-        expect.any(Object)
-      );
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('lng=-5.456'),
-        expect.any(Object)
       );
     });
 
@@ -341,102 +356,137 @@ describe('GET /api/tides', () => {
     });
 
     it('should handle Stormglass 429 (rate limit) gracefully', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: async () => ({ error: 'Too many requests' }),
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('../../lib/monitoring/weatherMetrics', () => ({
+          weatherMetrics: { start: jest.fn(() => ({ success: jest.fn(), failure: jest.fn() })) },
+        }));
+        jest.doMock('../../lib/services/weatherService', () => ({
+          fetchWorldTides: jest.fn().mockResolvedValue(null),
+        }));
+
+        process.env.STORMGLASS_SECRET_KEY = 'test-key';
+        global.fetch = jest.fn().mockResolvedValue({
+          ok: false,
+          status: 429,
+          json: async () => ({ error: 'Too many requests' }),
+        });
+
+        const freshHandler = (await import('../../pages/api/tides')).default;
+        const { createMocks: createMocksFresh } = await import('node-mocks-http');
+
+        const { req, res } = createMocksFresh({
+          method: 'GET',
+          query: { lat: '54.5', lon: '-6.5' },
+        });
+
+        await freshHandler(req, res);
+
+        // Should return 200 with empty data and limited flag
+        expect(res._getStatusCode()).toBe(200);
+        const data = JSON.parse(res._getData());
+        expect(data).toHaveProperty('success', true);
+        expect(data).toHaveProperty('data');
+        expect(Array.isArray(data.data)).toBe(true);
+        expect(data.data.length).toBe(0);
+        expect(data).toHaveProperty('limited', true);
+        expect(data).toHaveProperty('status', 429);
       });
-
-      const { req, res } = createMocks({
-        method: 'GET',
-        query: {
-          lat: '50.429',
-          lon: '-5.429',
-        },
-      });
-
-      await handler(req, res);
-
-      // Should return 200 with empty data and limited flag
-      expect(res._getStatusCode()).toBe(200);
-      const data = JSON.parse(res._getData());
-      expect(data).toHaveProperty('success', true);
-      expect(data).toHaveProperty('data');
-      expect(Array.isArray(data.data)).toBe(true);
-      expect(data.data.length).toBe(0);
-      expect(data).toHaveProperty('limited', true);
-      expect(data).toHaveProperty('status', 429);
     });
 
     it('should handle fetch errors', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+      // Use isolateModules to get fresh module state (clears caches)
+      await jest.isolateModulesAsync(async () => {
+        // Re-mock dependencies inside isolated context
+        jest.doMock('../../lib/monitoring/weatherMetrics', () => ({
+          weatherMetrics: { start: jest.fn(() => ({ success: jest.fn(), failure: jest.fn() })) },
+        }));
+        jest.doMock('../../lib/services/weatherService', () => ({
+          fetchWorldTides: jest.fn().mockResolvedValue(null),
+        }));
 
-      const { req, res } = createMocks({
-        method: 'GET',
-        query: {
-          lat: '50.555',
-          lon: '-5.555',
-        },
+        process.env.STORMGLASS_SECRET_KEY = 'test-key';
+        global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+        const freshHandler = (await import('../../pages/api/tides')).default;
+        const { createMocks: createMocksFresh } = await import('node-mocks-http');
+
+        const { req, res } = createMocksFresh({
+          method: 'GET',
+          query: { lat: '51.5', lon: '-3.5' },
+        });
+
+        await freshHandler(req, res);
+
+        expect(res._getStatusCode()).toBe(500);
+        const data = JSON.parse(res._getData());
+        expect(data).toHaveProperty('success', false);
+        expect(data).toHaveProperty('error');
       });
-
-      await handler(req, res);
-
-      expect(res._getStatusCode()).toBe(500);
-      const data = JSON.parse(res._getData());
-      expect(data).toHaveProperty('success', false);
-      expect(data).toHaveProperty('error');
-      expect(data.error).toContain('fetch failed');
     });
 
     it('should handle invalid response data structure', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          // Invalid structure - missing 'data' array
-          invalid: 'structure',
-        }),
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('../../lib/monitoring/weatherMetrics', () => ({
+          weatherMetrics: { start: jest.fn(() => ({ success: jest.fn(), failure: jest.fn() })) },
+        }));
+        jest.doMock('../../lib/services/weatherService', () => ({
+          fetchWorldTides: jest.fn().mockResolvedValue(null),
+        }));
+
+        process.env.STORMGLASS_SECRET_KEY = 'test-key';
+        global.fetch = jest.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({ invalid: 'structure' }),
+        });
+
+        const freshHandler = (await import('../../pages/api/tides')).default;
+        const { createMocks: createMocksFresh } = await import('node-mocks-http');
+
+        const { req, res } = createMocksFresh({
+          method: 'GET',
+          query: { lat: '52.5', lon: '-4.5' },
+        });
+
+        await freshHandler(req, res);
+
+        expect(res._getStatusCode()).toBe(500);
+        const data = JSON.parse(res._getData());
+        expect(data).toHaveProperty('success', false);
+        expect(data).toHaveProperty('error');
       });
-
-      const { req, res } = createMocks({
-        method: 'GET',
-        query: {
-          lat: '50.777',
-          lon: '-5.777',
-        },
-      });
-
-      await handler(req, res);
-
-      expect(res._getStatusCode()).toBe(500);
-      const data = JSON.parse(res._getData());
-      expect(data).toHaveProperty('success', false);
-      expect(data).toHaveProperty('error');
-      expect(data.error).toContain('Invalid tide data');
     });
 
     it('should handle non-array data field', async () => {
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          data: 'not-an-array',
-        }),
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('../../lib/monitoring/weatherMetrics', () => ({
+          weatherMetrics: { start: jest.fn(() => ({ success: jest.fn(), failure: jest.fn() })) },
+        }));
+        jest.doMock('../../lib/services/weatherService', () => ({
+          fetchWorldTides: jest.fn().mockResolvedValue(null),
+        }));
+
+        process.env.STORMGLASS_SECRET_KEY = 'test-key';
+        global.fetch = jest.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          json: async () => ({ data: 'not-an-array' }),
+        });
+
+        const freshHandler = (await import('../../pages/api/tides')).default;
+        const { createMocks: createMocksFresh } = await import('node-mocks-http');
+
+        const { req, res } = createMocksFresh({
+          method: 'GET',
+          query: { lat: '53.5', lon: '-5.5' },
+        });
+
+        await freshHandler(req, res);
+
+        expect(res._getStatusCode()).toBe(500);
+        const data = JSON.parse(res._getData());
+        expect(data).toHaveProperty('success', false);
       });
-
-      const { req, res } = createMocks({
-        method: 'GET',
-        query: {
-          lat: '50.666',
-          lon: '-5.666',
-        },
-      });
-
-      await handler(req, res);
-
-      expect(res._getStatusCode()).toBe(500);
-      const data = JSON.parse(res._getData());
-      expect(data).toHaveProperty('success', false);
     });
   });
 

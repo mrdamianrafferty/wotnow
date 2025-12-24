@@ -119,8 +119,9 @@ describe('useCatchLogger telemetry', () => {
 
     expect(response).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const formData = fetchMock.mock.calls[0][1]?.body as FormData;
-    expect(formData.get('user_id')).toBe('user-123');
+    // user_id is extracted from Authorization header by API, not sent in form data
+    const fetchOptions = fetchMock.mock.calls[0][1];
+    expect(fetchOptions.headers.Authorization).toBe('Bearer token-123');
     expect(errorSpy).toHaveBeenCalledWith(expect.any(Error));
 
     expect(telemetry).toEqual(
@@ -199,8 +200,9 @@ describe('useCatchLogger telemetry', () => {
       })
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const formData = fetchMock.mock.calls[0][1]?.body as FormData;
-    expect(formData.get('user_id')).toBe('user-456');
+    // user_id is extracted from Authorization header by API, not sent in form data
+    const fetchOptions = fetchMock.mock.calls[0][1];
+    expect(fetchOptions.headers.Authorization).toBe('Bearer token-456');
     expect(successSpy).toHaveBeenCalled();
     expect(telemetry).toHaveLength(0);
   });

@@ -20,6 +20,16 @@ jest.mock('../../../lib/supabase/serverClient', () => ({
   getSupabaseServerClient: jest.fn(() => mockSupabaseClient),
 }));
 
+// Mock the rate limiter to prevent 429 errors in tests
+jest.mock('../../../lib/utils/rate-limiter', () => ({
+  rateLimiter: {
+    check: jest.fn().mockResolvedValue(undefined),
+    getStatus: jest.fn().mockReturnValue({ remaining: 10, limit: 10, reset: Date.now() + 60000 }),
+  },
+  RateLimitError: class RateLimitError extends Error {},
+  addRateLimitHeaders: jest.fn(),
+}));
+
 beforeEach(() => {
   resetAllMocks();
 });
@@ -40,9 +50,10 @@ function mockPredictionsRpc() {
 }
 
 describe('POST /api/findr/predictions', () => {
-  it('should return 405 for non-POST requests', async () => {
+  it('should return 405 for unsupported HTTP methods', async () => {
+    // The API supports both POST and GET, so test with PUT instead
     const { req, res } = createMocks({
-      method: 'GET',
+      method: 'PUT',
     });
 
     await handler(req, res);

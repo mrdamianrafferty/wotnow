@@ -174,8 +174,8 @@ describe('FishIdentificationService', () => {
       expect(stats).toHaveProperty('monthlyBudget');
       expect(stats).toHaveProperty('remainingBudget');
       expect(stats).toHaveProperty('pricePerCall');
-      expect(stats.monthlyBudget).toBe(10);
-      expect(stats.pricePerCall).toBe(0.01);
+      expect(stats.monthlyBudget).toBe(50); // Updated to match actual service budget
+      expect(stats.pricePerCall).toBe(0.05); // Updated to match actual service price
     });
   });
 

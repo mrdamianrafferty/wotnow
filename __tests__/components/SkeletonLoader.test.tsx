@@ -154,13 +154,13 @@ describe('SkeletonLoader Components', () => {
   });
 
   describe('SkeletonHeroCard', () => {
-    it('should render gradient background', () => {
+    it('should render with background image', () => {
       const { container } = render(<SkeletonHeroCard />);
       const card = container.querySelector('.card');
 
-      expect(card).toHaveClass('bg-gradient-to-br');
-      expect(card).toHaveClass('from-blue-500');
-      expect(card).toHaveClass('to-purple-600');
+      expect(card).toHaveClass('bg-cover');
+      expect(card).toHaveClass('bg-center');
+      expect(card).toHaveAttribute('style', expect.stringContaining('background-image'));
     });
 
     it('should render with white text', () => {
@@ -272,7 +272,8 @@ describe('SkeletonLoader Components', () => {
 
     it('should include hero card', () => {
       const { container } = render(<SkeletonHomePage />);
-      const heroCard = container.querySelector('.bg-gradient-to-br');
+      // Hero card now uses background image instead of gradient
+      const heroCard = container.querySelector('.bg-cover.bg-center');
 
       expect(heroCard).toBeInTheDocument();
     });
