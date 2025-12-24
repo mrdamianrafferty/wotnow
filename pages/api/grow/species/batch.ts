@@ -439,10 +439,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   // ========================================================================
   // FALLBACK: Check custom_species_suggestions for any not found in plant_species
+  // Uses batched queries instead of sequential per-name queries for performance.
   // ========================================================================
   if (notFound.length > 0) {
     const supabase = getSupabaseServerClient();
-    
+
     // Helper function to generate slug (matches the database function)
     const generateSlug = (name: string): string => {
       return name
@@ -451,101 +452,78 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         .replace(/[^a-z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
         .replace(/\s+/g, '-'); // Replace spaces with hyphens
     };
-    
+
     // Build search terms for custom species lookup
     const customSearchTerms = notFound.map(name => {
       const baseName = baseNameMap.get(name) || name;
-      // Generate the expected slug format for direct lookup
       const slug = generateSlug(baseName);
-      // For slug "small-leaved-gentian", we need to try multiple patterns:
-      // 1. Direct slug match (fastest, most reliable)
-      // 2. Replace all hyphens with spaces: "small leaved gentian"
-      // 3. Keep hyphens (some names like "Small-leaved" have internal hyphens): "small-leaved-gentian"
-      // 4. Use wildcard pattern for flexible matching
       const withSpaces = baseName.replace(/-/g, ' ');
-      const withHyphens = baseName; // keep original
-      return { original: name, slug, withSpaces, withHyphens };
+      return { original: name, slug, withSpaces };
     });
 
-    // Query custom_species_suggestions for all not-found names
-    for (const { original, slug, withSpaces, withHyphens } of customSearchTerms) {
-      if (foundNames.has(original)) continue;
+    // Build lookup maps for matching results back to original names
+    const slugToOriginal = new Map<string, string>();
+    const allSlugs: string[] = [];
 
-      let customData = null;
+    for (const { original, slug } of customSearchTerms) {
+      slugToOriginal.set(slug, original);
+      allSlugs.push(slug);
+    }
 
-      // Strategy 1: Try exact slug match (most reliable, uses indexed column)
-      const { data: matchSlug } = await supabase
+    // Strategy 1: Batch slug lookup (single query for all slugs)
+    const { data: slugMatches } = await supabase
+      .from('custom_species_suggestions')
+      .select('*')
+      .in('slug', allSlugs);
+
+    if (slugMatches) {
+      for (const match of slugMatches) {
+        const original = slugToOriginal.get(match.slug);
+        if (original && !foundNames.has(original)) {
+          markCustomFound(original, match as CustomSpeciesRow);
+          const idx = notFound.indexOf(original);
+          if (idx !== -1) notFound.splice(idx, 1);
+        }
+      }
+    }
+
+    // Strategy 2: For remaining not-found, try common_name matches in a single query
+    // Build OR filter for remaining names
+    const remainingNames = notFound.filter(n => !foundNames.has(n));
+    if (remainingNames.length > 0) {
+      // Use a single query to fetch all custom species, then match client-side
+      // Supabase doesn't support batch ilike, so we fetch all and filter client-side
+      // This is still faster than N sequential queries
+      const { data: allCustom } = await supabase
         .from('custom_species_suggestions')
         .select('*')
-        .eq('slug', slug)
-        .limit(1)
-        .single();
-      customData = matchSlug;
+        .limit(500); // Reasonable limit for custom species table
 
-      // Strategy 2: Try exact common name match with spaces
-      if (!customData) {
-        const { data: match1 } = await supabase
-          .from('custom_species_suggestions')
-          .select('*')
-          .ilike('common_name', withSpaces)
-          .limit(1)
-          .single();
-        customData = match1;
-      }
+      if (allCustom) {
+        for (const customRow of allCustom) {
+          const commonNameLower = (customRow.common_name || '').toLowerCase();
+          const scientificNameLower = (customRow.scientific_name || '').toLowerCase();
 
-      // Strategy 3: Try exact common name match with hyphens preserved
-      if (!customData) {
-        const { data: match2 } = await supabase
-          .from('custom_species_suggestions')
-          .select('*')
-          .ilike('common_name', withHyphens)
-          .limit(1)
-          .single();
-        customData = match2;
-      }
+          for (const name of remainingNames) {
+            if (foundNames.has(name)) continue;
 
-      // Strategy 4: Try scientific name match (with spaces replacing hyphens)
-      if (!customData) {
-        const { data: match3 } = await supabase
-          .from('custom_species_suggestions')
-          .select('*')
-          .ilike('scientific_name', withSpaces)
-          .limit(1)
-          .single();
-        customData = match3;
-      }
+            const baseName = baseNameMap.get(name) || name;
+            const searchTerm = baseName.replace(/-/g, ' ').toLowerCase();
 
-      // Strategy 5: Try wildcard partial match on common name
-      // e.g., "%small%leaved%gentian%" matches "Small-leaved Gentian"
-      if (!customData) {
-        const wildcardPattern = `%${withSpaces.split(' ').join('%')}%`;
-        const { data: match4 } = await supabase
-          .from('custom_species_suggestions')
-          .select('*')
-          .ilike('common_name', wildcardPattern)
-          .limit(1)
-          .single();
-        customData = match4;
-      }
-
-      // Strategy 6: Try slugified scientific name match
-      // e.g., "gentiana-brachyphylla" -> "gentiana brachyphylla"
-      if (!customData) {
-        const scientificSearch = withHyphens.replace(/-/g, ' ');
-        const { data: match5 } = await supabase
-          .from('custom_species_suggestions')
-          .select('*')
-          .ilike('scientific_name', scientificSearch)
-          .limit(1)
-          .single();
-        customData = match5;
-      }
-
-      if (customData) {
-        markCustomFound(original, customData as CustomSpeciesRow);
-        // Remove from notFound
-        const idx = notFound.indexOf(original);
-        if (idx !== -1) notFound.splice(idx, 1);
+            // Check if this custom species matches
+            if (
+              commonNameLower === searchTerm ||
+              scientificNameLower === searchTerm ||
+              commonNameLower.includes(searchTerm) ||
+              scientificNameLower.includes(searchTerm)
+            ) {
+              markCustomFound(name, customRow as CustomSpeciesRow);
+              const idx = notFound.indexOf(name);
+              if (idx !== -1) notFound.splice(idx, 1);
+              break; // Found a match for this name, move to next
+            }
+          }
+        }
       }
     }
   }
