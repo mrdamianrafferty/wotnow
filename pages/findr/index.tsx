@@ -726,7 +726,11 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ cards, onToggleFavorite, 
   );
 };
 
-const FindrPage: React.FC = () => {
+interface FindrPageProps {
+  initialRectangle: string | null;
+}
+
+const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectangle }) => {
   const router = useRouter();
   const { location: legacyLocation, coastalLocation, findrLocation, updateLocationBySlot, loading: locationLoading } = useUnifiedLocation();
 
@@ -1238,7 +1242,8 @@ const FindrPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {cards.map((card) => (
+                    {/* Limit to 6 cards initially to match skeleton and prevent CLS */}
+                    {cards.slice(0, 6).map((card) => (
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px]" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -1499,7 +1504,14 @@ const FindrPage: React.FC = () => {
 
 export default FindrPage;
 
-// Disable static generation for this page
-export async function getServerSideProps() {
-  return { props: {} };
+// Server-side props to provide initial rectangle for CLS prevention
+export async function getServerSideProps({ query }: { query: { rectangle?: string } }) {
+  // If rectangle is in URL, pass it to avoid CLS
+  const initialRectangle = typeof query.rectangle === 'string' ? query.rectangle : null;
+
+  return {
+    props: {
+      initialRectangle
+    }
+  };
 }
