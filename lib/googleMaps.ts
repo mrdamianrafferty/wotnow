@@ -1,16 +1,36 @@
 // src/lib/googleMaps.ts
-import { Loader } from '@googlemaps/js-api-loader';
+// Google Maps loader using the new v2.0 functional API
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 
-const loader = new Loader({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  version: 'weekly',
-  libraries: ['places'],
-});
-
-let googlePromise: Promise<typeof google> | null = null;
+// Track initialization state
+let optionsSet = false;
+let loadPromise: Promise<typeof google> | null = null;
 let isLoaded = false;
 let loadError: Error | null = null;
 
+/**
+ * Initialize Google Maps API options (call once at app startup)
+ * This must be called before any importLibrary calls
+ */
+function ensureOptionsSet(): void {
+  if (optionsSet) return;
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  if (!apiKey) {
+    console.warn('Google Maps API key not configured');
+  }
+
+  setOptions({
+    key: apiKey,
+    v: 'weekly',
+  });
+  optionsSet = true;
+}
+
+/**
+ * Load Google Maps with Places library
+ * Uses the new v2.0 importLibrary API for on-demand loading
+ */
 export function loadGoogleMaps(): Promise<typeof google> {
   if (isLoaded && window.google?.maps?.places) {
     return Promise.resolve(window.google);
@@ -20,16 +40,19 @@ export function loadGoogleMaps(): Promise<typeof google> {
     return Promise.reject(loadError);
   }
 
-  if (!googlePromise) {
-    googlePromise = loader.load()
-      .then((google) => {
+  if (!loadPromise) {
+    ensureOptionsSet();
+
+    // Import the places library (this triggers the API script load)
+    loadPromise = importLibrary('places')
+      .then(() => {
         isLoaded = true;
         loadError = null;
-        return google;
+        return window.google;
       })
       .catch((error) => {
         loadError = error;
-        googlePromise = null; // Allow retry
+        loadPromise = null; // Allow retry
 
         // Provide helpful error messages for common issues
         if (error.message?.includes('RefererNotAllowedMapError')) {
@@ -54,7 +77,7 @@ export function loadGoogleMaps(): Promise<typeof google> {
         throw error;
       });
   }
-  return googlePromise;
+  return loadPromise;
 }
 
 export function isGoogleMapsLoaded(): boolean {

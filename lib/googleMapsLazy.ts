@@ -1,17 +1,31 @@
 /**
- * Lazy-load Google Maps API on demand using official Google loader
+ * Lazy-load Google Maps API on demand using the v2.0 functional API
  *
  * This avoids blocking initial page render with Google Maps script.
  * The API is only loaded when CoastalLocationDialog opens for the first time.
  */
 
-import { Loader } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 
 // Get API key at module level so Next.js can inline it at build time
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
+let optionsSet = false;
 let loadPromise: Promise<void> | null = null;
 let isLoaded = false;
+
+/**
+ * Ensure API options are set (call once before any library import)
+ */
+function ensureOptionsSet(): void {
+  if (optionsSet) return;
+
+  setOptions({
+    key: GOOGLE_MAPS_API_KEY,
+    v: 'weekly',
+  });
+  optionsSet = true;
+}
 
 export function loadGoogleMapsAPI(): Promise<void> {
   // Check if we're in browser environment
@@ -40,15 +54,13 @@ export function loadGoogleMapsAPI(): Promise<void> {
     return Promise.reject(new Error('Google Maps API key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local'));
   }
 
-  console.log('🔄 Lazy loading Google Maps API with official loader...');
+  console.log('🔄 Lazy loading Google Maps API with v2.0 loader...');
 
-  const loader = new Loader({
-    apiKey: GOOGLE_MAPS_API_KEY,
-    version: 'weekly',
-    libraries: ['places'],
-  });
+  // Set options before importing any library
+  ensureOptionsSet();
 
-  loadPromise = loader.load()
+  // Import places library (this triggers the API script load)
+  loadPromise = importLibrary('places')
     .then(() => {
       isLoaded = true;
       console.log('✅ Google Maps API loaded successfully');
