@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion';
+import { isNative } from '../../lib/capacitor/platform';
 import {
   Home,
   Droplets,
@@ -67,7 +68,143 @@ interface WeatherContext {
   growingWeek: number;
 }
 
-// Swipeable Card Component
+// Static Card Component for Web (no Framer Motion animations)
+interface StaticTaskCardProps {
+  task: GardenTask;
+  onAddTask: (taskId: string) => void;
+  onDismiss: (taskId: string) => void;
+  t: Translator;
+}
+
+const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDismiss, t }) => {
+  const getUrgencyColor = () => {
+    switch (task.urgency) {
+      case 'critical': return 'bg-white border-l-4 border-l-red-500 border-red-200';
+      case 'optimal': return 'bg-white border-l-4 border-l-green-500 border-green-200';
+      case 'good': return 'bg-white border-l-4 border-l-blue-500 border-blue-200';
+      case 'upcoming': return 'bg-white border-l-4 border-l-gray-400 border-gray-200';
+    }
+  };
+
+  const getUrgencyBadge = () => {
+    switch (task.urgency) {
+      case 'critical':
+        return (
+          <Badge variant="destructive" className="flex items-center gap-1 uppercase">
+            <Flame className="h-3 w-3" /> {t('Urgent')}
+          </Badge>
+        );
+      case 'optimal':
+        return (
+          <Badge className="bg-green-600 hover:bg-green-700 flex items-center gap-1 uppercase">
+            <CheckCircle className="h-3 w-3" /> {t('Perfect timing')}
+          </Badge>
+        );
+      case 'good':
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1 uppercase">
+            <Sprout className="h-3 w-3" /> {t('Good timing')}
+          </Badge>
+        );
+      case 'upcoming':
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 uppercase">
+            <Clock className="h-3 w-3" /> {t('Upcoming')}
+          </Badge>
+        );
+    }
+  };
+
+  return (
+    <Card className={`${getUrgencyColor()} border shadow-xl overflow-hidden transition-transform hover:scale-[1.01]`}>
+      {/* Card Image/Visual Area */}
+      <div className="h-48 bg-slate-50 border-b flex items-center justify-center">
+        <TaskIcon taskCode={task.taskCode} size="hero" />
+      </div>
+
+      <CardContent className="p-6 space-y-4">
+        {/* Title and Badge */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <TaskIcon taskCode={task.taskCode} size="md" /> {task.title}
+            </h2>
+          </div>
+          {getUrgencyBadge()}
+        </div>
+
+        {/* Description */}
+        <p className="text-base text-muted-foreground leading-relaxed">
+          {task.fullDescription}
+        </p>
+
+        {/* Metadata */}
+        <div className="grid grid-cols-2 gap-3 py-3 border-y">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span>{task.bestWindow}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>
+              {task.timeRequired} {t('minutes')}
+            </span>
+          </div>
+          {task.soilTemp && (
+            <div className="flex items-center gap-2 text-sm col-span-2">
+              <Thermometer className="h-4 w-4 text-muted-foreground" />
+              <span>{task.soilTemp}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-sm col-span-2">
+            <span className="text-lg">{task.weatherIcon}</span>
+            <span>
+              {t('Weather')}: {task.weatherContext}
+            </span>
+          </div>
+        </div>
+
+        {/* Reasoning */}
+        <div>
+          <h3 className="font-semibold mb-2">{t('Why now?')}</h3>
+          <ul className="space-y-1">
+            {task.reasoning.map((reason, idx) => (
+              <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                <span className="text-green-600 mt-0.5">•</span>
+                <span>{reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-3 pt-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onDismiss(task.id)}
+            className="border-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
+            aria-label={`${t('Dismiss')} ${task.title}`}
+          >
+            <X className="h-5 w-5 mr-2" aria-hidden="true" />
+            {t('Dismiss')}
+          </Button>
+          <Button
+            size="lg"
+            onClick={() => onAddTask(task.id)}
+            className="bg-green-600 hover:bg-green-700 transition-colors"
+            aria-label={`${t('Add to List')}: ${task.title}`}
+          >
+            <CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" />
+            {t('Add to List')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Swipeable Card Component (native apps only)
 interface SwipeCardProps {
   task: GardenTask;
   onSwipeRight: (taskId: string) => void;
@@ -254,6 +391,12 @@ export function Homepage() {
   const [gardenAlerts, setGardenAlerts] = useState<GardenAlertResult[]>([]);
   const [alertsLoading, setAlertsLoading] = useState(false);
   const alertCacheRef = useRef<Map<string, GardenAlertResult[]>>(new Map()); // cache alerts per ~0.1 degree to limit refetching
+
+  // Platform detection: use animated deck on native, static on web for better performance
+  const [useAnimatedDeck, setUseAnimatedDeck] = useState(false);
+  useEffect(() => {
+    setUseAnimatedDeck(isNative());
+  }, []);
 
   const staticCopy = React.useMemo(
     () => [
@@ -643,21 +786,39 @@ export function Homepage() {
         <GardenAlertBox alerts={gardenAlerts} isLoading={alertsLoading} />
       )}
 
-      {/* Swipeable Card Deck */}
+      {/* Card Deck - animated for native, static for web */}
       {activeCards.length > 0 ? (
-        <div className="relative h-[580px] sm:h-[620px] overflow-hidden">
-          {activeCards.map((task, index) => (
-            <SwipeCard
-              key={task.id}
-              task={task}
-              onSwipeRight={handleSwipeRight}
-              onSwipeLeft={handleSwipeLeft}
-              isTop={index === 0}
-              index={index}
+        useAnimatedDeck ? (
+          /* Animated swipe deck (native apps only) */
+          <div className="relative h-[580px] sm:h-[620px] overflow-hidden">
+            {activeCards.map((task, index) => (
+              <SwipeCard
+                key={task.id}
+                task={task}
+                onSwipeRight={handleSwipeRight}
+                onSwipeLeft={handleSwipeLeft}
+                isTop={index === 0}
+                index={index}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : (
+          /* Static card view (web browsers) - shows one card at a time */
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-sm text-muted-foreground">
+                {cardDeckIndex + 1} / {tasks.filter(t => !dismissedTasks.includes(t.id)).length}
+              </span>
+            </div>
+            <StaticTaskCard
+              task={activeCards[0]}
+              onAddTask={handleSwipeRight}
+              onDismiss={handleSwipeLeft}
               t={t}
             />
-          ))}
-        </div>
+          </div>
+        )
       ) : (
         <Card className="p-12 text-center bg-white border-2 border-green-200">
           <div className="space-y-4">

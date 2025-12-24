@@ -12,7 +12,10 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import SEO from '../../components/SEO';
 import { useRouter } from 'next/router';
+// Framer Motion - only imported when needed (native apps)
+// Web browsers use StaticCardDeck instead for better performance
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'framer-motion';
+import { isNative } from '../../lib/capacitor/platform';
 import {
   Anchor,
   Fish as FishIcon,
@@ -71,6 +74,12 @@ import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { GradientFish } from '../../components/GradientFish';
 const FindrFooter = dynamic(() => import('../../components/FindrFooter'), { ssr: false });
+
+// Static card deck for web - CSS-only, no Framer Motion (better CLS/TBT)
+const StaticCardDeck = dynamic(
+  () => import('../../components/findr/StaticCardDeck').then(mod => ({ default: mod.StaticCardDeck })),
+  { ssr: false }
+);
 
 const WeatherGuildMessage: React.FC<{ speciesCode: string; scientificName: string; weatherScore: number; windSpeedMS: number; pressureHPA: number; isLoading?: boolean }> = ({ speciesCode, scientificName, weatherScore, windSpeedMS, pressureHPA, isLoading }) => {
   if (isLoading) {
@@ -778,6 +787,14 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
   const swipingRef = useRef(false); // Shared swiping state for all cards
 
+  // Platform detection: use static card deck on web for better performance
+  // Native apps get the full animated experience with swipe gestures
+  const [useAnimatedDeck, setUseAnimatedDeck] = useState(false);
+  useEffect(() => {
+    // Check platform after mount (SSR-safe)
+    setUseAnimatedDeck(isNative());
+  }, []);
+
   // Check for password_updated query param
   useEffect(() => {
     if (router.query.password_updated === 'true') {
@@ -1133,34 +1150,48 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
             {activeRectangle && !loading && !error && currentCard && (
               <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
-                  {/* Fixed height container to prevent CLS during card transitions */}
-                  <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {visibleCards.map((card, index) => (
-                        <SwipeableCard
-                          key={card.id}
-                          card={card}
-                          index={index}
-                          isTop={index === 0}
-                          total={visibleCards.length}
-                          rectangleCode={activeRectangle}
-                          regionName={activeOption?.region}
-                          onSwipedLeft={handleSkip}
-                          onSwipedRight={handleLike}
-                          isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
-                          onShowSpeciesInfo={handleShowSpeciesInfo}
-                          onToggleFavorite={handleToggleFavorite}
-                          swipingRef={swipingRef}
-                          ref={index === 0 ? swipeCardRef : undefined}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                  <DeckActions
-                    onSkip={handleProgrammaticSkip}
-                    onLike={handleProgrammaticLike}
-                    disabled={!currentCard}
-                  />
+                  {/* Conditional deck: animated for native apps, static for web */}
+                  {useAnimatedDeck ? (
+                    <>
+                      {/* Animated deck with swipe gestures (native apps only) */}
+                      <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {visibleCards.map((card, index) => (
+                            <SwipeableCard
+                              key={card.id}
+                              card={card}
+                              index={index}
+                              isTop={index === 0}
+                              total={visibleCards.length}
+                              rectangleCode={activeRectangle}
+                              regionName={activeOption?.region}
+                              onSwipedLeft={handleSkip}
+                              onSwipedRight={handleLike}
+                              isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
+                              onShowSpeciesInfo={handleShowSpeciesInfo}
+                              onToggleFavorite={handleToggleFavorite}
+                              swipingRef={swipingRef}
+                              ref={index === 0 ? swipeCardRef : undefined}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </div>
+                      <DeckActions
+                        onSkip={handleProgrammaticSkip}
+                        onLike={handleProgrammaticLike}
+                        disabled={!currentCard}
+                      />
+                    </>
+                  ) : (
+                    /* Static deck for web browsers - better CLS, no Framer Motion animations */
+                    <StaticCardDeck
+                      cards={cards}
+                      favoritesSet={favoritesSet}
+                      getFavouriteKey={getFavouriteKeyFromCard}
+                      onToggleFavorite={handleToggleFavorite}
+                      onShowSpeciesInfo={handleShowSpeciesInfo}
+                    />
+                  )}
               </div>
             )}
 
