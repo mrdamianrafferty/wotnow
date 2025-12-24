@@ -790,9 +790,16 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   // Platform detection: use static card deck on web for better performance
   // Native apps get the full animated experience with swipe gestures
   const [useAnimatedDeck, setUseAnimatedDeck] = useState(false);
+
+  // Track if initial client-side hydration is complete
+  // This prevents CLS from SSR→client layout differences
+  const [isHydrated, setIsHydrated] = useState(false);
+
   useEffect(() => {
     // Check platform after mount (SSR-safe)
     setUseAnimatedDeck(isNative());
+    // Mark hydration complete
+    setIsHydrated(true);
   }, []);
 
   // Check for password_updated query param
@@ -1111,19 +1118,21 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
             {/* Action prompt container - always reserve space to prevent CLS */}
             <div className="h-[52px]">
-              {!activeRectangle ? (
+              {/* Only show "pick area" prompt after hydration and when no rectangle selected */}
+              {isHydrated && !activeRectangle ? (
                 <div className="px-4 sm:px-0">
                   <div className="alert alert-info">
                     <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
                   </div>
                 </div>
               ) : (
-                /* Empty placeholder to maintain height */
-                <div aria-hidden="true" />
+                /* Skeleton or empty placeholder to maintain height */
+                <div aria-hidden="true" className={!isHydrated ? 'skeleton h-[52px] rounded-lg mx-4 sm:mx-0' : ''} />
               )}
             </div>
 
-              {activeRectangle && loading && (
+              {/* Show skeleton during initial hydration OR when loading with a rectangle */}
+              {(!isHydrated || (activeRectangle && loading)) && (
                 <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
                   {/* Card counter placeholder - matches StaticCardDeck layout (h-[32px]) */}
                   <div className="flex items-center justify-between px-2 h-[32px]">
@@ -1159,7 +1168,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
               </div>
             )}
 
-            {activeRectangle && !loading && !error && currentCard && (
+            {isHydrated && activeRectangle && !loading && !error && currentCard && (
               <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
                   {/* Conditional deck: animated for native apps, static for web */}
                   {useAnimatedDeck ? (
@@ -1207,7 +1216,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
             )}
 
 
-            {activeRectangle && !loading && !error && totalPredictions === 0 && (
+            {isHydrated && activeRectangle && !loading && !error && totalPredictions === 0 && (
                 <div className="px-4 sm:px-0">
                   <div className="alert alert-warning">
                     <span>
@@ -1218,13 +1227,13 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
               )}
           </section>
 
-          {/* Species lineup section - conditionally rendered */}
-          {activeRectangle && !error && (totalPredictions > 0 || loading) && (
+          {/* Species lineup section - always show during hydration to prevent CLS */}
+          {(!isHydrated || (activeRectangle && !error && (totalPredictions > 0 || loading))) && (
             <section
               className="space-y-5 px-4 sm:px-4 mt-6"
               aria-labelledby="species-lineup-heading"
             >
-              {loading ? (
+              {(!isHydrated || loading) ? (
                 /* Skeleton header and grid during loading */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3">
