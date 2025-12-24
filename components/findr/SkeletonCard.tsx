@@ -11,12 +11,11 @@ import React from 'react';
 
 export const SkeletonCard: React.FC = () => {
   return (
-    <div className="card h-full bg-base-100 shadow-xl" style={{ minHeight: '460px' }}>
+    <div className="card bg-base-100 shadow-xl h-[460px] sm:h-[520px] overflow-hidden" style={{ contain: 'layout size' }}>
       <div className="card-body flex h-full flex-col gap-4 sm:gap-5">
-        {/* Image Skeleton */}
+        {/* Image Skeleton - fixed height, no aspect ratio to prevent overflow */}
         <div
-          className="skeleton relative mx-auto w-full h-48 sm:h-64 rounded-2xl aspect-[3/2] sm:aspect-[4/3]"
-          style={{ minHeight: '192px' }}
+          className="skeleton relative mx-auto w-full h-48 sm:h-64 rounded-2xl"
         />
 
         {/* Title and Badge Skeleton */}
