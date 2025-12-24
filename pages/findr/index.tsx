@@ -1054,39 +1054,45 @@ const FindrPage: React.FC = () => {
 
                 </div>
               </div>
-              {rectangleOptionsError && (
-                <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
-                  <span>
-                    <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
-                  </span>
-                </div>
-              )}
-              {isFromCache && cacheTimestamp && freshness && (
-                <div className="flex items-center gap-2 px-4 sm:px-0">
-                  <DataFreshnessIndicator
-                    timestamp={cacheTimestamp}
-                    freshness={freshness}
-                  />
-                  {freshness === 'stale' || freshness === 'very-stale' ? (
-                    <span className="text-xs text-base-content/70">
-                      <TranslatedText text="Connect to refresh predictions" />
+              {/* Status alerts container - fixed min-height to prevent CLS */}
+              <div className="min-h-[28px]">
+                {rectangleOptionsError && (
+                  <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
+                    <span>
+                      <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
                     </span>
-                  ) : (
-                    <span className="text-xs text-base-content/70">
-                      <TranslatedText text="Offline mode" />
-                    </span>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+                {isFromCache && cacheTimestamp && freshness && (
+                  <div className="flex items-center gap-2 px-4 sm:px-0">
+                    <DataFreshnessIndicator
+                      timestamp={cacheTimestamp}
+                      freshness={freshness}
+                    />
+                    {freshness === 'stale' || freshness === 'very-stale' ? (
+                      <span className="text-xs text-base-content/70">
+                        <TranslatedText text="Connect to refresh predictions" />
+                      </span>
+                    ) : (
+                      <span className="text-xs text-base-content/70">
+                        <TranslatedText text="Offline mode" />
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {!activeRectangle && (
+            {/* Action prompt container - reserve space to prevent CLS */}
+            <div className="min-h-[52px]">
+              {!activeRectangle && (
                 <div className="px-4 sm:px-0">
                   <div className="alert alert-info">
                     <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
                   </div>
                 </div>
               )}
+            </div>
 
               {activeRectangle && loading && (
                 <div className="space-y-4 px-4 sm:px-0">

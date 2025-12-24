@@ -175,14 +175,14 @@ export function LocationDisplay() {
         data-testid="location-button"
         onClick={() => setShowLocationPicker(true)}
         disabled={loadingState}
-        className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex items-center gap-2 px-3 py-2 bg-base-100 hover:bg-base-200 rounded-lg border border-base-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px] max-w-[200px]"
       >
         {loadingState ? (
-          <Loader2 size={16} className="text-cyan-500 animate-spin" />
+          <Loader2 size={16} className="text-cyan-500 animate-spin flex-shrink-0" />
         ) : (
-          <MapPin size={16} className="text-cyan-500" />
+          <MapPin size={16} className="text-cyan-500 flex-shrink-0" />
         )}
-        <span className="text-sm font-medium text-base-content">
+        <span className="text-sm font-medium text-base-content truncate">
           {loadingState ? 'Finding area...' : locationName}
         </span>
       </button>
