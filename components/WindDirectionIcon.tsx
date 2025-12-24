@@ -1,5 +1,6 @@
-// CSS already imported globally in _app.tsx (minified version)
-// import '/styles/weather-icons-wind.min.css';
+// Import weather icons CSS with the component for code-splitting
+// This 127KB file is now lazy-loaded only when WindDirectionIcon is used
+import '../styles/weather-icons-wind.min.css';
 
 export default function WindDirectionIcon({ deg, size = 24, className = '' }: { deg: number; size?: number; className?: string }) {
   const roundedDeg = Math.round(deg);

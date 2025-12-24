@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-// Weather icons CSS - loaded on pages that display weather info
-import '../styles/weather-icons-wind.min.css';
+// weather-icons-wind.min.css (127KB) removed from homepage for TBT optimization
+// It's now imported by WindDirectionIcon.tsx which is only loaded in Popup
 import { getSuggestionsByDay } from '../utils/getSuggestionsByDay';
 import { activityTypes } from '../data/activityTypes';
 import { WeatherForecastDay } from '../types/weatherTypes';
