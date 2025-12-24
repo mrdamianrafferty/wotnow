@@ -1080,8 +1080,8 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
                 </div>
               </div>
-              {/* Status alerts container - fixed min-height to prevent CLS */}
-              <div className="min-h-[28px]">
+              {/* Status alerts container - fixed height to prevent CLS */}
+              <div className="h-[28px] overflow-hidden">
                 {rectangleOptionsError && (
                   <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
                     <span>
@@ -1109,19 +1109,30 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
               </div>
             </div>
 
-            {/* Action prompt container - reserve space to prevent CLS */}
-            <div className="min-h-[52px]">
-              {!activeRectangle && (
+            {/* Action prompt container - always reserve space to prevent CLS */}
+            <div className="h-[52px]">
+              {!activeRectangle ? (
                 <div className="px-4 sm:px-0">
                   <div className="alert alert-info">
                     <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
                   </div>
                 </div>
+              ) : (
+                /* Empty placeholder to maintain height */
+                <div aria-hidden="true" />
               )}
             </div>
 
               {activeRectangle && loading && (
                 <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
+                  {/* Card counter placeholder - matches StaticCardDeck layout (h-[32px]) */}
+                  <div className="flex items-center justify-between px-2 h-[32px]">
+                    <div className="skeleton h-4 w-16"></div>
+                    <div className="flex gap-2">
+                      <div className="skeleton h-8 w-8 rounded-full"></div>
+                      <div className="skeleton h-8 w-8 rounded-full"></div>
+                    </div>
+                  </div>
                   {/* Fixed height container with layout containment to prevent CLS */}
                   <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
                     <SkeletonCard />

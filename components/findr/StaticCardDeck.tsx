@@ -455,8 +455,8 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Card counter */}
-      <div className="flex items-center justify-between px-2">
+      {/* Card counter - fixed height to match skeleton */}
+      <div className="flex items-center justify-between px-2 h-[32px]">
         <span className="text-sm text-base-content/60">
           {currentIndex + 1} / {cards.length}
         </span>
@@ -482,8 +482,8 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
 
       {/* Card display - fixed height container to prevent CLS */}
       <div
-        className="relative h-[460px] sm:h-[520px] w-full transition-opacity duration-200"
-        style={{ contain: 'layout' }}
+        className="relative h-[460px] sm:h-[520px] w-full overflow-hidden"
+        style={{ contain: 'layout size' }}
       >
         <div className="absolute inset-0 flex h-full w-full items-stretch justify-center p-0 sm:p-2">
           <StaticCardContent
