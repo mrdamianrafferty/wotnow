@@ -1176,13 +1176,38 @@ const FindrPage: React.FC = () => {
               )}
           </section>
 
-          {/* Species lineup section */}
-          {activeRectangle && !error && (totalPredictions > 0 || loading) && (
-            <section
-              className="space-y-5 px-4 sm:px-4 mt-6"
-              aria-labelledby="species-lineup-heading"
-            >
-              {loading ? (
+          {/* Species lineup section - always render with skeleton to prevent CLS */}
+          <section
+            className="space-y-5 px-4 sm:px-4 mt-6"
+            aria-labelledby="species-lineup-heading"
+          >
+            {!activeRectangle || error ? (
+              /* Show placeholder skeleton when no rectangle selected */
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="skeleton h-7 w-48 opacity-30"></div>
+                  <div className="skeleton h-5 w-32 opacity-30"></div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px] opacity-30">
+                      <div className="card-body space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 flex-1">
+                            <div className="skeleton w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
+                            <div className="space-y-2 flex-1">
+                              <div className="skeleton h-5 w-24"></div>
+                              <div className="skeleton h-3 w-20"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="skeleton h-16 w-full rounded-lg"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : loading ? (
                 /* Skeleton header and grid during loading */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1388,7 +1413,6 @@ const FindrPage: React.FC = () => {
                 </>
               )}
             </section>
-          )}
 
         </div>
       </main>
