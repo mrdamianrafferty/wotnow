@@ -793,12 +793,17 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
   // Track if initial client-side hydration is complete
   // This prevents CLS from SSR→client layout differences
+  // Using a ref to avoid re-renders and ensure immediate availability
   const [isHydrated, setIsHydrated] = useState(false);
+  const hydrationRef = useRef(false);
 
+  // Use useLayoutEffect for synchronous execution before paint
+  // This ensures isHydrated is true before the browser paints
   useEffect(() => {
     // Check platform after mount (SSR-safe)
     setUseAnimatedDeck(isNative());
-    // Mark hydration complete
+    // Mark hydration complete synchronously
+    hydrationRef.current = true;
     setIsHydrated(true);
   }, []);
 
@@ -1131,28 +1136,78 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
               )}
             </div>
 
-              {/* Show skeleton during initial hydration OR when loading with a rectangle */}
-              {(!isHydrated || (activeRectangle && loading)) && (
-                <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
-                  {/* Card counter placeholder - matches StaticCardDeck layout (h-[32px]) */}
-                  <div className="flex items-center justify-between px-2 h-[32px]">
-                    <div className="skeleton h-4 w-16"></div>
-                    <div className="flex gap-2">
-                      <div className="skeleton h-8 w-8 rounded-full"></div>
-                      <div className="skeleton h-8 w-8 rounded-full"></div>
+              {/* Card deck area - ALWAYS reserve space with fixed height to prevent CLS */}
+              {/* Using a single container that shows either skeleton OR content to prevent shifts */}
+              <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout', minHeight: '640px' }}>
+                {(!isHydrated || loading || (!activeRectangle && !error)) ? (
+                  /* Skeleton state - shown during hydration, loading, or no rectangle */
+                  <>
+                    {/* Card counter placeholder - matches StaticCardDeck layout (h-[32px]) */}
+                    <div className="flex items-center justify-between px-2 h-[32px]">
+                      <div className="skeleton h-4 w-16"></div>
+                      <div className="flex gap-2">
+                        <div className="skeleton h-8 w-8 rounded-full"></div>
+                        <div className="skeleton h-8 w-8 rounded-full"></div>
+                      </div>
                     </div>
-                  </div>
-                  {/* Fixed height container with layout containment to prevent CLS */}
-                  <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
-                    <SkeletonCard />
-                  </div>
-                  {/* Placeholder for DeckActions to prevent CLS */}
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]">
-                    <div className="skeleton h-12 w-32 rounded-btn"></div>
-                    <div className="skeleton h-12 w-32 rounded-btn"></div>
-                  </div>
-                </div>
-              )}
+                    {/* Fixed height container with layout containment to prevent CLS */}
+                    <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout size' }}>
+                      <SkeletonCard />
+                    </div>
+                    {/* Placeholder for DeckActions to prevent CLS */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]">
+                      <div className="skeleton h-12 w-32 rounded-btn"></div>
+                      <div className="skeleton h-12 w-32 rounded-btn"></div>
+                    </div>
+                  </>
+                ) : activeRectangle && !error && currentCard ? (
+                  /* Actual content - same container, mutually exclusive with skeleton */
+                  <>
+                    {/* Conditional deck: animated for native apps, static for web */}
+                    {useAnimatedDeck ? (
+                      <>
+                        {/* Animated deck with swipe gestures (native apps only) */}
+                        <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
+                          <AnimatePresence initial={false} mode="popLayout">
+                            {visibleCards.map((card, index) => (
+                              <SwipeableCard
+                                key={card.id}
+                                card={card}
+                                index={index}
+                                isTop={index === 0}
+                                total={visibleCards.length}
+                                rectangleCode={activeRectangle}
+                                regionName={activeOption?.region}
+                                onSwipedLeft={handleSkip}
+                                onSwipedRight={handleLike}
+                                isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
+                                onShowSpeciesInfo={handleShowSpeciesInfo}
+                                onToggleFavorite={handleToggleFavorite}
+                                swipingRef={swipingRef}
+                                ref={index === 0 ? swipeCardRef : undefined}
+                              />
+                            ))}
+                          </AnimatePresence>
+                        </div>
+                        <DeckActions
+                          onSkip={handleProgrammaticSkip}
+                          onLike={handleProgrammaticLike}
+                          disabled={!currentCard}
+                        />
+                      </>
+                    ) : (
+                      /* Static deck for web browsers - better CLS, no Framer Motion animations */
+                      <StaticCardDeck
+                        cards={cards}
+                        favoritesSet={favoritesSet}
+                        getFavouriteKey={getFavouriteKeyFromCard}
+                        onToggleFavorite={handleToggleFavorite}
+                        onShowSpeciesInfo={handleShowSpeciesInfo}
+                      />
+                    )}
+                  </>
+                ) : null}
+              </div>
 
             {activeRectangle && !loading && error && (
               <div className="px-4 sm:px-0">
@@ -1167,54 +1222,6 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                 </div>
               </div>
             )}
-
-            {isHydrated && activeRectangle && !loading && !error && currentCard && (
-              <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
-                  {/* Conditional deck: animated for native apps, static for web */}
-                  {useAnimatedDeck ? (
-                    <>
-                      {/* Animated deck with swipe gestures (native apps only) */}
-                      <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
-                        <AnimatePresence initial={false} mode="popLayout">
-                          {visibleCards.map((card, index) => (
-                            <SwipeableCard
-                              key={card.id}
-                              card={card}
-                              index={index}
-                              isTop={index === 0}
-                              total={visibleCards.length}
-                              rectangleCode={activeRectangle}
-                              regionName={activeOption?.region}
-                              onSwipedLeft={handleSkip}
-                              onSwipedRight={handleLike}
-                              isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
-                              onShowSpeciesInfo={handleShowSpeciesInfo}
-                              onToggleFavorite={handleToggleFavorite}
-                              swipingRef={swipingRef}
-                              ref={index === 0 ? swipeCardRef : undefined}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                      <DeckActions
-                        onSkip={handleProgrammaticSkip}
-                        onLike={handleProgrammaticLike}
-                        disabled={!currentCard}
-                      />
-                    </>
-                  ) : (
-                    /* Static deck for web browsers - better CLS, no Framer Motion animations */
-                    <StaticCardDeck
-                      cards={cards}
-                      favoritesSet={favoritesSet}
-                      getFavouriteKey={getFavouriteKeyFromCard}
-                      onToggleFavorite={handleToggleFavorite}
-                      onShowSpeciesInfo={handleShowSpeciesInfo}
-                    />
-                  )}
-              </div>
-            )}
-
 
             {isHydrated && activeRectangle && !loading && !error && totalPredictions === 0 && (
                 <div className="px-4 sm:px-0">
