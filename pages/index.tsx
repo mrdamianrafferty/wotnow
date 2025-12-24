@@ -529,7 +529,7 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
   const pickHomeLocation = useUIText('index.label.pick_your_home_location_9',
     'Pick your home location');
   const todayLabel = useUIText('index.label.today', 'Today');
-  const initialLoadingText = useUIText('index.paragraph.loading', 'Loading...');
+  // Note: initialLoadingText removed - now showing SkeletonHomePage during SSR for better LCP
   const alsoPerfectToday = useUIText('index.heading._also_perfect_today_11',
     '💯 Also Perfect Today');
   const goodOptionsToday = useUIText('index.heading._good_options_today_12',
