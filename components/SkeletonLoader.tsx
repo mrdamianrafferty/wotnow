@@ -84,7 +84,7 @@ export const SkeletonHeroCard: React.FC = () => {
   return (
     <div
       className="card text-white shadow-xl bg-cover bg-center relative overflow-hidden"
-      style={{ backgroundImage: 'url(/webp/parky-low.webp)' }}
+      style={{ backgroundImage: 'url(/webp/parky-low.webp)', minHeight: '640px' }}
     >
       {/* Overlay for better text contrast */}
       <div className="absolute inset-0 bg-black/30" />
