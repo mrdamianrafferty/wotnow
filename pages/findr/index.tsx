@@ -640,7 +640,7 @@ interface DeckActionsProps {
 }
 
 const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) => (
-  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6" role="group" aria-label="Card actions">
+  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]" role="group" aria-label="Card actions">
     <button
       type="button"
       className="btn btn-outline btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
@@ -1101,18 +1101,14 @@ const FindrPage: React.FC = () => {
 
               {activeRectangle && loading && (
                 <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
-                  {/* Fixed height alert container to match other alerts */}
-                  <div className="min-h-[52px] px-4 sm:px-0">
-                    <div className="alert alert-info">
-                      <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
-                      <span>
-                        <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
-                      </span>
-                    </div>
-                  </div>
                   {/* Fixed height container with layout containment to prevent CLS */}
                   <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
                     <SkeletonCard />
+                  </div>
+                  {/* Placeholder for DeckActions to prevent CLS */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]">
+                    <div className="skeleton h-12 w-32 rounded-btn"></div>
+                    <div className="skeleton h-12 w-32 rounded-btn"></div>
                   </div>
                 </div>
               )}
@@ -1176,38 +1172,13 @@ const FindrPage: React.FC = () => {
               )}
           </section>
 
-          {/* Species lineup section - always render with skeleton to prevent CLS */}
-          <section
-            className="space-y-5 px-4 sm:px-4 mt-6"
-            aria-labelledby="species-lineup-heading"
-          >
-            {!activeRectangle || error ? (
-              /* Show placeholder skeleton when no rectangle selected */
-              <>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="skeleton h-7 w-48 opacity-30"></div>
-                  <div className="skeleton h-5 w-32 opacity-30"></div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px] opacity-30">
-                      <div className="card-body space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 flex-1">
-                            <div className="skeleton w-12 h-12 sm:w-14 sm:h-14 rounded-lg shrink-0" />
-                            <div className="space-y-2 flex-1">
-                              <div className="skeleton h-5 w-24"></div>
-                              <div className="skeleton h-3 w-20"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="skeleton h-16 w-full rounded-lg"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : loading ? (
+          {/* Species lineup section - conditionally rendered */}
+          {activeRectangle && !error && (totalPredictions > 0 || loading) && (
+            <section
+              className="space-y-5 px-4 sm:px-4 mt-6"
+              aria-labelledby="species-lineup-heading"
+            >
+              {loading ? (
                 /* Skeleton header and grid during loading */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1413,6 +1384,7 @@ const FindrPage: React.FC = () => {
                 </>
               )}
             </section>
+          )}
 
         </div>
       </main>
