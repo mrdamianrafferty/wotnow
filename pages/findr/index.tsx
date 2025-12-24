@@ -571,7 +571,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
 
     return (
       <motion.div
-        layout
+        layout="position"
         className="absolute inset-0 flex h-full w-full select-none items-stretch justify-center p-0 sm:p-2"
         style={{
           zIndex: total - index,
@@ -579,13 +579,14 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           x: isTop ? x : undefined,
           rotate: isTop ? rotate : undefined,
         }}
-        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        // Use initial={false} to prevent initial animation that causes CLS
+        initial={false}
         animate={{
           opacity: isTop ? 1 : Math.max(0.75, 1 - index * 0.1),
           y: isTop ? 0 : index * 14,
           scale: isTop ? 1 : 1 - index * 0.04,
         }}
-        exit={{ opacity: 0, y: -80, scale: 0.92 }}
+        exit={{ opacity: 0, scale: 0.92 }}
         transition={{ type: 'spring', stiffness: 260, damping: 26 }}
         drag={isTop ? 'x' : false}
         dragConstraints={{ left: 0, right: 0 }}
@@ -1102,7 +1103,8 @@ const FindrPage: React.FC = () => {
                       <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
                     </span>
                   </div>
-                  <div className="relative h-[460px] sm:h-[520px] w-full">
+                  {/* Fixed height container with layout containment to prevent CLS */}
+                  <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
                     <SkeletonCard />
                   </div>
                 </div>
@@ -1124,8 +1126,9 @@ const FindrPage: React.FC = () => {
 
             {activeRectangle && !loading && !error && currentCard && (
               <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
-                  <div className="relative h-[460px] sm:h-[520px] w-full">
-                    <AnimatePresence initial={false}>
+                  {/* Fixed height container to prevent CLS during card transitions */}
+                  <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
+                    <AnimatePresence initial={false} mode="popLayout">
                       {visibleCards.map((card, index) => (
                         <SwipeableCard
                           key={card.id}
