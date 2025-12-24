@@ -897,29 +897,33 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
       />
     ) : null;
 
-    // Get the hero image URL for this card - use preloaded placeholder as fallback for faster LCP
-    const heroImageUrl = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
+    // Get the hero image URL for this card
+    const actualHeroImageUrl = heroActivity?.activityId && isImageOptimized(heroActivity.activityId)
       ? getOptimizedImageSrc(heroActivity.activityId, 'webpSmall')
       : heroActivity?.activityId
         ? getActivityBg(heroActivity.activityId)
-        : '/webp/parky-low.webp';
+        : lcpFallbackImage;
+
+    // For the first card, prioritize the preloaded fallback image for faster LCP
+    // The actual hero image loads in the visible Image component below
+    const cardBackgroundUrl = idx === 0 ? lcpFallbackImage : actualHeroImageUrl;
 
     const dayCard = (
       <div
         key={day.date}
         className="activity-card-enhanced"
         style={{
-          backgroundImage: `url(${heroImageUrl})`,
+          backgroundImage: `url(${cardBackgroundUrl})`,
         }}
       >
-        {/* Preload LCP image for first card only - this hidden image triggers priority loading */}
-        {idx === 0 && (
+        {/* For first card: show actual hero image on top of fallback background for faster LCP */}
+        {idx === 0 && actualHeroImageUrl !== lcpFallbackImage && (
           <Image
-            src={heroImageUrl}
+            src={actualHeroImageUrl}
             alt=""
             fill
             priority
-            className="opacity-0 absolute inset-0 -z-10"
+            className="absolute inset-0 object-cover z-0"
             sizes="(max-width: 768px) 100vw, 400px"
           />
         )}
