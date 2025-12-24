@@ -287,8 +287,10 @@ const useFetchForecastData = (homeLocation: LocationLite | undefined, coastalLoc
 
           // Use the closest time entry
           currentEntry = sortedByCloseness[0];
-          console.log('Today: Using current conditions instead of noon:',
-            { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Today: Using current conditions instead of noon:',
+              { time: currentEntry.dt_txt, temp: currentEntry.main.temp });
+          }
         } else {
           // For future days, use noon as before
           currentEntry = dayEntries.find((e) => e.dt_txt.includes('12:00:00')) ?? dayEntries[0];
@@ -387,22 +389,28 @@ function getPopupDay(activityId: string, day: WeatherForecastDay) {
     // Format: YYYY-MM-DDThh
     const targetHourIso = `${dayDate.toISOString().slice(0, 10)}T${hour.toString().padStart(2, '0')}`;
     
-    console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
-    console.log("Marine hours available:", (day.marine as MarineHour[]).map((h: MarineHour) => h.time));
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Looking for marine hour with time starting with: ${targetHourIso} (${isToday ? 'today' : 'future day'})`);
+      console.log("Marine hours available:", (day.marine as MarineHour[]).map((h: MarineHour) => h.time));
+    }
     
     const marineHour = (day.marine as MarineHour[]).find(
       (h) => typeof h.time === 'string' && h.time.startsWith(targetHourIso)
     );
     
     if (marineHour) {
-      console.log("Found matching marine hour:", marineHour);
-      console.log("Raw Stormglass wind speed (knots):", marineHour.windSpeed?.noaa);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Found matching marine hour:", marineHour);
+        console.log("Raw Stormglass wind speed (knots):", marineHour.windSpeed?.noaa);
+      }
       
       // Convert Stormglass wind speed from knots to m/s for internal consistency
       const windSpeedKnots = marineHour.windSpeed?.noaa;
       const windSpeedMps = windSpeedKnots ? knotsToMps(windSpeedKnots) : undefined;
       
-      console.log("Converted wind speed (m/s):", windSpeedMps);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Converted wind speed (m/s):", windSpeedMps);
+      }
       
       // Use CONSISTENT property names and units (all wind speeds in m/s)
       return {
@@ -418,7 +426,7 @@ function getPopupDay(activityId: string, day: WeatherForecastDay) {
         current: marineHour.currentSpeed?.noaa,
         windDir: marineHour.windDirection?.noaa,
       };
-    } else {
+    } else if (process.env.NODE_ENV === 'development') {
       console.log("No matching marine hour found");
     }
   }
@@ -578,12 +586,14 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
     const validActivityIds = new Set(activityTypes.map((a) => a.id));
     const sanitized = normalizedInterests.filter((id) => validActivityIds.has(id));
 
-    console.log('🔍 Interest filtering:', {
-      rawInterests: interests,
-      normalizedInterests,
-      sanitizedInterests: sanitized,
-      validActivityCount: validActivityIds.size
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Interest filtering:', {
+        rawInterests: interests,
+        normalizedInterests,
+        sanitizedInterests: sanitized,
+        validActivityCount: validActivityIds.size
+      });
+    }
 
     // Use a single filtered list for all days
     let filtered = activityTypes.filter((a) => sanitized.includes(a.id));
@@ -603,11 +613,13 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 
     return forecastDays.map((day, idx) => {
       const filteredActivities = filteredActivitiesBase;
-      console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
-        dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
-        filteredActivitiesCount: filteredActivities.length,
-        interests: sanitizedInterests
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🌤️ Processing day ${idx} (${new Date(day.date * 1000).toDateString()}):`, {
+          dayData: { temp: day.temperature, rain: day.rain, wind: day.wind_speed, clouds: day.clouds },
+          filteredActivitiesCount: filteredActivities.length,
+          interests: sanitizedInterests
+        });
+      }
 
       // ✅ CORRECT: Use the original getSuggestionsByDay structure
       const suggestionsData = getSuggestionsByDay({
@@ -639,15 +651,17 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         return !activity?.seasonalMonths || activity.seasonalMonths.includes(currentMonth);
       });
 
-      console.log(`🗓️ Day ${idx} seasonal filtering:`, {
-        currentMonth,
-        totalSuggestions: suggestions.length,
-        filteredCount: filteredSuggestions.length,
-        sampleActivity: suggestions[0] ? {
-          id: suggestions[0].activityId,
-          seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
-        } : 'none'
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🗓️ Day ${idx} seasonal filtering:`, {
+          currentMonth,
+          totalSuggestions: suggestions.length,
+          filteredCount: filteredSuggestions.length,
+          sampleActivity: suggestions[0] ? {
+            id: suggestions[0].activityId,
+            seasonalMonths: activityTypes.find(a => a.id === suggestions[0].activityId)?.seasonalMonths
+          } : 'none'
+        });
+      }
       const perfectList = filteredSuggestions.filter(s => s.score >= 80).sort((a, b) => b.score - a.score);
       const _goodList = filteredSuggestions.filter(s => s.score >= 60 && s.score < 80).sort((a, b) => b.score - a.score);
       const indoorList = filteredSuggestions.filter((s) => {
@@ -663,11 +677,13 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         evaluation: s.evaluation === 'poor' ? 'fair' as const : s.evaluation as 'perfect' | 'good' | 'fair' | 'indoor' | 'indoorAlternative'
       }));
       const heroActivity = selectHeroActivity(heroCompatibleSuggestions);
-      console.log(`🎯 Day ${idx} hero selection:`, {
-        filteredSuggestionsCount: filteredSuggestions.length,
-        topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
-        selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🎯 Day ${idx} hero selection:`, {
+          filteredSuggestionsCount: filteredSuggestions.length,
+          topSuggestions: filteredSuggestions.slice(0, 3).map(s => ({ id: s.activityId, score: s.score })),
+          selectedHero: heroActivity ? { id: heroActivity.activityId, score: heroActivity.score } : null
+        });
+      }
 
       // ✅ Add the hero to used activities AFTER finding it
       if (heroActivity) {
@@ -688,10 +704,14 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
 
 
   useEffect(() => {
-    console.log('Forecast by day:', forecastByDay);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Forecast by day:', forecastByDay);
+    }
   }, [forecastByDay]);
 
-  console.log('marineHours before building forecast:', marineHours);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('marineHours before building forecast:', marineHours);
+  }
 
   if (!hasMounted) {
     return <div>{initialLoadingText}</div>;
