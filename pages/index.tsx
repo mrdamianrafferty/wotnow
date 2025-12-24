@@ -713,8 +713,22 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
     console.log('marineHours before building forecast:', marineHours);
   }
 
+  // LCP fallback image - preloaded for faster initial paint
+  const lcpFallbackImage = '/webp/parky-low.webp';
+
   if (!hasMounted) {
-    return <div>{initialLoadingText}</div>;
+    // Show skeleton with preloaded LCP image during SSR for faster LCP
+    return (
+      <>
+        <SEO
+          title="Weather-Based Activity Recommendations"
+          description="Get personalized outdoor activity suggestions based on real-time weather conditions. Perfect for planning your day in the UK and Europe."
+          url="https://godaisy.io"
+          lcpImage={lcpFallbackImage}
+        />
+        <SkeletonHomePage />
+      </>
+    );
   }
 
   if (needsLocation) {
@@ -763,6 +777,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
           title="Weather-Based Activity Recommendations"
           description="Get personalized outdoor activity suggestions based on real-time weather conditions. Perfect for planning your day in the UK and Europe."
           url="https://godaisy.io"
+          lcpImage={lcpFallbackImage}
         />
         <AppHeader />
         <SkeletonHomePage />
@@ -782,6 +797,7 @@ function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForeca
         title="Weather-Based Activity Recommendations"
         description="Get personalized outdoor activity suggestions based on real-time weather conditions. Perfect for planning your day in the UK and Europe."
         url="https://godaisy.io"
+        lcpImage={lcpFallbackImage}
       />
       {/* Home Location Modal */}
       {showHomeDialog && (

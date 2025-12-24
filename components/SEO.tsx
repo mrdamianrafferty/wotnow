@@ -6,6 +6,7 @@ interface SEOProps {
   image?: string;
   url?: string;
   type?: 'website' | 'article';
+  lcpImage?: string; // Preload hint for LCP image
 }
 
 export default function SEO({
@@ -13,7 +14,8 @@ export default function SEO({
   description,
   image,
   url,
-  type = 'website'
+  type = 'website',
+  lcpImage
 }: SEOProps) {
   const siteUrl = 'https://godaisy.io';
   const fullUrl = url || siteUrl;
@@ -47,6 +49,16 @@ export default function SEO({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <meta name="theme-color" content="#111827" />
       <meta name="author" content="Go Daisy" />
+
+      {/* LCP Image Preload - improves Largest Contentful Paint */}
+      {lcpImage && (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpImage}
+          type="image/webp"
+        />
+      )}
     </Head>
   );
 }
