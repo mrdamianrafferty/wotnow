@@ -70,8 +70,8 @@ export function FindrNavigation() {
         </div>
       )}
       
-      {/* Desktop Navigation - Horizontal Menu */}
-      <div className="hidden md:flex items-center justify-between w-full max-w-none">
+      {/* Desktop Navigation - Horizontal Menu - Fixed height to prevent CLS */}
+      <div className="hidden md:flex items-center justify-between w-full max-w-none h-[52px] min-h-[52px]">
         <nav className="overflow-x-auto flex-1">
           <ul className="menu menu-horizontal rounded-box bg-base-100/80 border border-base-200 px-3 py-1 text-sm">
             {LINKS.map((link) => {
