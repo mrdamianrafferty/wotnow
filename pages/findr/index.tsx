@@ -1026,6 +1026,8 @@ const FindrPage: React.FC = () => {
         url="https://fishfindr.eu"
       />
       <main className="min-h-screen bg-base-200 pb-16">
+        {/* Reserved space for network status indicator to prevent CLS */}
+        <div className="h-0" aria-hidden="true" />
         {/* Network status indicator */}
         <NetworkStatusIndicator position="top" />
 
@@ -1034,16 +1036,18 @@ const FindrPage: React.FC = () => {
 
         {/* Content container */}
         <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0">
-          {/* Success message */}
-          {showSuccessMessage && (
-            <div className="alert alert-success mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span>Password updated successfully!</span>
-              <button className="btn btn-sm btn-ghost" onClick={() => setShowSuccessMessage(false)}>
-                <X size={16} />
-              </button>
-            </div>
-          )}
+          {/* Success message - fixed height container to prevent CLS */}
+          <div className="min-h-0">
+            {showSuccessMessage && (
+              <div className="alert alert-success mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Password updated successfully!</span>
+                <button className="btn btn-sm btn-ghost" onClick={() => setShowSuccessMessage(false)}>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+          </div>
 
           <section className="space-y-1 sm:space-y-6 px-0 sm:px-4" aria-labelledby="main-heading">
             <div className="space-y-1 sm:space-y-4 px-4 sm:px-0">
@@ -1096,12 +1100,15 @@ const FindrPage: React.FC = () => {
             </div>
 
               {activeRectangle && loading && (
-                <div className="space-y-4 px-4 sm:px-0">
-                  <div className="alert alert-info">
-                    <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
-                    <span>
-                      <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
-                    </span>
+                <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
+                  {/* Fixed height alert container to match other alerts */}
+                  <div className="min-h-[52px] px-4 sm:px-0">
+                    <div className="alert alert-info">
+                      <span className="loading loading-ring loading-sm text-blue-500" aria-hidden />
+                      <span>
+                        <TranslatedText text="Looking for fish activity near" /> {activeOption?.region ?? `area ${activeRectangle}`}…
+                      </span>
+                    </div>
                   </div>
                   {/* Fixed height container with layout containment to prevent CLS */}
                   <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
@@ -1169,12 +1176,11 @@ const FindrPage: React.FC = () => {
               )}
           </section>
 
-          {/* Species lineup section - use content-visibility to reduce CLS impact */}
+          {/* Species lineup section */}
           {activeRectangle && !error && (totalPredictions > 0 || loading) && (
             <section
-              className="space-y-5 px-4 sm:px-4"
+              className="space-y-5 px-4 sm:px-4 mt-6"
               aria-labelledby="species-lineup-heading"
-              style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
             >
               {loading ? (
                 /* Skeleton header and grid during loading */
