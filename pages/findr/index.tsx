@@ -1191,7 +1191,7 @@ const FindrPage: React.FC = () => {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
-                      <div key={i} className="card bg-base-100 shadow-md border border-base-200/60">
+                      <div key={i} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px]">
                         <div className="card-body space-y-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3 flex-1">
@@ -1206,10 +1206,21 @@ const FindrPage: React.FC = () => {
                             </div>
                             <div className="skeleton w-8 h-8 rounded-full shrink-0" />
                           </div>
+                          {/* Summary placeholder */}
                           <div className="space-y-2">
                             <div className="skeleton h-3 w-full"></div>
                             <div className="skeleton h-3 w-5/6"></div>
                           </div>
+                          {/* Bio placeholder */}
+                          <div className="skeleton h-16 w-full rounded-lg"></div>
+                          {/* Rationale placeholder */}
+                          <div className="space-y-2">
+                            <div className="skeleton h-4 w-1/3"></div>
+                            <div className="skeleton h-3 w-full"></div>
+                            <div className="skeleton h-3 w-4/5"></div>
+                          </div>
+                          {/* Bite score placeholder */}
+                          <div className="skeleton h-12 w-full rounded-lg"></div>
                         </div>
                       </div>
                     ))}
@@ -1232,7 +1243,7 @@ const FindrPage: React.FC = () => {
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {cards.map((card) => (
-                  <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60" data-testid="species-card">
+                  <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px]" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 flex-1">
