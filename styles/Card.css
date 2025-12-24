@@ -265,6 +265,7 @@
   gap: 0.5rem;
   padding: 0.3rem 0;
   color: #fff !important;
+  min-height: 28px; /* Reserve space to prevent CLS */
 }
 .also-good-score {
   font-size: 0.7rem;
@@ -504,6 +505,7 @@
   gap: 1rem;
   padding-top: 1.5rem;
   flex-shrink: 0; /* Prevent buttons from being compressed */
+  min-height: 48px; /* Reserve space to prevent CLS */
 }
 
 .activity-card-btn {
