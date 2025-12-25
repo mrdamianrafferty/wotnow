@@ -3,6 +3,8 @@ import Capacitor
 import GoogleSignIn
 import UserNotifications
 import BackgroundTasks
+import FirebaseCore
+import FirebaseMessaging
 
 /// AppDelegate - iOS 17+ optimized with modern Swift patterns
 /// Uses @main instead of deprecated @UIApplicationMain
@@ -15,8 +17,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        // Initialize Firebase
+        FirebaseApp.configure()
+
         // Configure push notifications delegate
         UNUserNotificationCenter.current().delegate = self
+
+        // Configure Firebase Messaging delegate
+        Messaging.messaging().delegate = self
 
         // Register background tasks (iOS 17+ enhanced)
         registerBackgroundTasks()
@@ -76,6 +84,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
+        // Forward APNs token to Firebase Messaging
+        Messaging.messaging().apnsToken = deviceToken
+
         // Forward token to Capacitor's push notification plugin
         NotificationCenter.default.post(
             name: .capacitorDidRegisterForRemoteNotifications,
@@ -187,5 +198,26 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             name: NSNotification.Name("capacitorDidReceiveRemoteNotification"),
             object: response.notification.request.content.userInfo
         )
+    }
+}
+
+// MARK: - MessagingDelegate (Firebase Cloud Messaging)
+
+extension AppDelegate: MessagingDelegate {
+
+    /// Called when FCM registration token is available
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+
+        print("🔥 FCM Token: \(fcmToken.prefix(30))...")
+
+        // Subscribe to app-specific topic for broadcast notifications
+        Messaging.messaging().subscribe(toTopic: "godaisy-all") { error in
+            if let error = error {
+                print("❌ Failed to subscribe to godaisy-all topic: \(error.localizedDescription)")
+            } else {
+                print("✅ Subscribed to godaisy-all topic")
+            }
+        }
     }
 }
