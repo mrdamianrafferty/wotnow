@@ -100,6 +100,18 @@ async function sendNotification() {
           app: app.name.toLowerCase().replace(' ', ''),
           timestamp: new Date().toISOString(),
         },
+        apns: {
+          headers: {
+            'apns-priority': '10',
+          },
+          payload: {
+            aps: {
+              badge: 1,
+              sound: 'default',
+              'content-available': 1,
+            },
+          },
+        },
       };
 
       try {
