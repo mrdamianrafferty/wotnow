@@ -32,7 +32,12 @@ const isNative = detectNativePlatform();
 
 // Log native detection result for debugging
 if (typeof window !== 'undefined') {
-  console.log('[Supabase] Native platform detected:', isNative);
+  const win = window as unknown as { Capacitor?: { getPlatform?: () => string } };
+  console.log('[Supabase] Native platform detected:', isNative, {
+    hasCapacitor: 'Capacitor' in window,
+    platform: win.Capacitor?.getPlatform?.() ?? 'unknown',
+    userAgent: navigator.userAgent.substring(0, 100),
+  });
 }
 
 // Lazy-load secure storage adapter to avoid circular dependencies

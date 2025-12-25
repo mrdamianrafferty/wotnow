@@ -90,11 +90,17 @@ async function fetchPredictions(params: {
   if (isNativePlatform) {
     try {
       const { findrSync } = await import('@/lib/offline/findrSync');
-      const { predictions, fromCache } = await findrSync.getPredictions(
+      const { predictions: rawPredictions, fromCache } = await findrSync.getPredictions(
         params.rectangleCode,
         date,
         params.language
       );
+
+      // Filter out predictions with 0% confidence (stale cache from before confidence_percent fix)
+      const predictions = rawPredictions.filter(p => p.confidence > 0);
+      if (rawPredictions.length > predictions.length) {
+        console.log('[useFishingPredictions] Filtered out', rawPredictions.length - predictions.length, 'stale predictions with 0% confidence');
+      }
 
       if (predictions.length > 0) {
         console.log('[useFishingPredictions] Loaded ' + predictions.length + ' predictions from SQLite cache');
