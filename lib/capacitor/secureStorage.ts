@@ -11,7 +11,21 @@
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 
-const isNative = Capacitor.isNativePlatform();
+// Robust native detection for remote URL loading
+function detectNativePlatform(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Primary: Direct Capacitor check
+  if (Capacitor.isNativePlatform()) return true;
+
+  // Fallback: Check platform
+  const platform = Capacitor.getPlatform();
+  if (platform === 'ios' || platform === 'android') return true;
+
+  return false;
+}
+
+const isNative = detectNativePlatform();
 
 /**
  * Secure storage interface compatible with Supabase storage requirements
