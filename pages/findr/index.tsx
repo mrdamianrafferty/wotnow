@@ -1206,7 +1206,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       <NetworkStatusIndicator position="top" />
       {/* Navigation component outside main to avoid CSS containment affecting fixed positioning */}
       <FindrNavigation />
-      <main className="min-h-screen bg-base-200 pb-16 safe-area-top" style={{ contain: 'layout style' }}>
+      <main className="min-h-screen bg-base-200 pb-16 safe-area-top">
 
         {/* Content container */}
         <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0">
