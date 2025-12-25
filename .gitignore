@@ -59,3 +59,7 @@ public/worker-*.js.map
 playwright-report/
 test-results/
 
+
+# Firebase service account key (contains secrets)
+wotnow-daisy-apps-firebase-adminsdk*.json
+firebase-service-account*.json
