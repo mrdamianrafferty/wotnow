@@ -1202,13 +1202,11 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
       />
+      {/* Network status indicator - outside main to avoid CSS containment issues */}
+      <NetworkStatusIndicator position="top" />
       {/* Navigation component outside main to avoid CSS containment affecting fixed positioning */}
       <FindrNavigation />
-      <main className="min-h-screen bg-base-200 pb-16" style={{ contain: 'layout style' }}>
-        {/* Reserved space for network status indicator to prevent CLS */}
-        <div className="h-0" aria-hidden="true" />
-        {/* Network status indicator */}
-        <NetworkStatusIndicator position="top" />
+      <main className="min-h-screen bg-base-200 pb-16 safe-area-top" style={{ contain: 'layout style' }}>
 
         {/* Content container */}
         <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0">
