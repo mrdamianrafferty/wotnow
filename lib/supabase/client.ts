@@ -1,10 +1,39 @@
 import { createBrowserClient } from '@supabase/ssr'
 
 // Check if we're in a native Capacitor environment
-// Note: This check works at module load time
-const isNative = typeof window !== 'undefined' &&
-  window.hasOwnProperty('Capacitor') &&
-  (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+// Multiple detection methods for robustness when loading from remote URL
+function detectNativePlatform(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  // Method 1: Direct Capacitor check (most reliable)
+  const win = window as unknown as {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+      getPlatform?: () => string;
+    }
+  };
+  if (win.Capacitor?.isNativePlatform?.()) return true;
+
+  // Method 2: Check platform (works even if isNativePlatform not available yet)
+  const platform = win.Capacitor?.getPlatform?.();
+  if (platform === 'ios' || platform === 'android') return true;
+
+  // Method 3: Check user agent for native WebView indicators
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes('capacitor') || ua.includes('ionic')) return true;
+
+  // Method 4: Check for native bridge markers in iOS/Android WebViews
+  if ('webkit' in window && 'messageHandlers' in (window as { webkit?: { messageHandlers?: unknown } }).webkit!) return true;
+
+  return false;
+}
+
+const isNative = detectNativePlatform();
+
+// Log native detection result for debugging
+if (typeof window !== 'undefined') {
+  console.log('[Supabase] Native platform detected:', isNative);
+}
 
 // Lazy-load secure storage adapter to avoid circular dependencies
 let storageAdapter: Storage | null = null;
