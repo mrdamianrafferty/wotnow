@@ -53,6 +53,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
 
+    private func showDebugAlert(title: String, message: String) {
+        DispatchQueue.main.async {
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let rootViewController = windowScene.windows.first?.rootViewController else {
+                return
+            }
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            rootViewController.present(alert, animated: true)
+        }
+    }
+
     // MARK: - Background Tasks (iOS 17+)
 
     private func registerBackgroundTasks() {
@@ -115,9 +127,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             } else if let token = token {
                 print("🔥 FCM Token fetched: \(token.prefix(30))...")
                 // Subscribe to topic immediately after getting token
-                Messaging.messaging().subscribe(toTopic: "findr-all") { error in
-                    if let error = error {
-                        print("❌ Topic subscription error: \(error.localizedDescription)")
+                Messaging.messaging().subscribe(toTopic: "findr-all") { subError in
+                    if let subError = subError {
+                        print("❌ Topic subscription error: \(subError.localizedDescription)")
                     } else {
                         print("✅ Subscribed to findr-all topic!")
                     }
