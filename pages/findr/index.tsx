@@ -24,6 +24,7 @@ import {
   Fish as FishIcon,
   Heart,
   ListChecks,
+  Share2,
   Sparkles,
   X,
   Info,
@@ -79,6 +80,7 @@ import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { GradientFish } from '../../components/GradientFish';
 import { PlanSessionSheet } from '../../components/findr/PlanSessionSheet';
 import type { PlannedActivity } from '../../components/PlanItSheet';
+import { generateShareToken, getShareUrl, type FindrShareData } from '../../lib/share/shareToken';
 const FindrFooter = dynamic(() => import('../../components/FindrFooter'), { ssr: false });
 
 // Static card deck for web - CSS-only, no Framer Motion (better CLS/TBT)
@@ -701,10 +703,11 @@ interface DeckActionsProps {
   onSkip: () => void;
   onLike: () => void;
   onPlan: () => void;
+  onShare: () => void;
   disabled?: boolean;
 }
 
-const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, onPlan, disabled }) => (
+const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, onPlan, onShare, disabled }) => (
   <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]" role="group" aria-label="Card actions">
     <button
       type="button"
@@ -735,6 +738,16 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, onPlan, disab
     >
       <Heart size={20} aria-hidden="true" />
       <TranslatedText text="Fave" />
+    </button>
+    <button
+      type="button"
+      className="btn btn-ghost btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      onClick={onShare}
+      disabled={disabled}
+      aria-label="Share this prediction"
+    >
+      <Share2 size={20} aria-hidden="true" />
+      <TranslatedText text="Share" />
     </button>
   </div>
 );
@@ -851,6 +864,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
   const swipingRef = useRef(false); // Shared swiping state for all cards
@@ -1108,6 +1122,49 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     setTimeout(() => setShowSuccessMessage(false), 2000);
   }, []);
 
+  const handleShare = useCallback(async () => {
+    if (!currentCard || !activeRectangle) return;
+
+    const shareData: Omit<FindrShareData, 'createdAt' | 'expiresAt'> = {
+      app: 'findr',
+      speciesCode: currentCard.speciesCode || currentCard.id,
+      speciesName: currentCard.commonName,
+      confidence: currentCard.confidence ?? 0,
+      rectangleCode: activeRectangle,
+      regionName: activeOption?.region || 'Unknown location',
+      date: predictionDate,
+    };
+
+    const token = generateShareToken(shareData);
+    const shareUrl = getShareUrl(token);
+
+    // Try native share API first
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${currentCard.commonName} fishing - ${currentCard.confidence}% confidence`,
+          text: `Check out this fishing prediction for ${currentCard.commonName} at ${activeOption?.region}`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        // User cancelled or share failed, fall back to clipboard
+        if ((err as Error).name !== 'AbortError') {
+          console.error('[Findr] Share failed:', err);
+        }
+      }
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareLinkCopied(true);
+      setTimeout(() => setShareLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('[Findr] Copy failed:', err);
+    }
+  }, [currentCard, activeRectangle, activeOption?.region, predictionDate]);
+
   const handleCloseSpeciesModal = useCallback(() => {
     setSpeciesModalCard(null);
   }, [setSpeciesModalCard]);
@@ -1284,6 +1341,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                           onSkip={handleProgrammaticSkip}
                           onLike={handleProgrammaticLike}
                           onPlan={handleOpenPlanSheet}
+                          onShare={handleShare}
                           disabled={!currentCard}
                         />
                       </>
@@ -1684,6 +1742,16 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           speciesCode={currentCard.speciesCode || currentCard.id}
           confidence={currentCard.confidence ?? undefined}
         />
+      )}
+
+      {/* Share link copied toast */}
+      {shareLinkCopied && (
+        <div className="toast toast-bottom toast-center z-50">
+          <div className="alert alert-success shadow-lg">
+            <Share2 className="h-5 w-5" aria-hidden="true" />
+            <span>Link copied to clipboard!</span>
+          </div>
+        </div>
       )}
 
       <FindrFooter />
