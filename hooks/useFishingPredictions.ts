@@ -102,7 +102,11 @@ async function fetchPredictions(params: {
         console.log('[useFishingPredictions] Filtered out', rawPredictions.length - predictions.length, 'stale predictions with 0% confidence');
       }
 
-      if (predictions.length > 0) {
+      // If ALL predictions were stale (0%), skip cache and fetch from network
+      if (rawPredictions.length > 0 && predictions.length === 0) {
+        console.log('[useFishingPredictions] All cached predictions were stale, fetching from network');
+        // Fall through to network fetch below
+      } else if (predictions.length > 0) {
         console.log('[useFishingPredictions] Loaded ' + predictions.length + ' predictions from SQLite cache');
 
         // Enrich predictions with species data from SQLite
