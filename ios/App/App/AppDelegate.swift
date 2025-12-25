@@ -108,6 +108,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Forward APNs token to Firebase Messaging
         Messaging.messaging().apnsToken = deviceToken
 
+        // Explicitly fetch FCM token to ensure registration completes
+        Messaging.messaging().token { token, error in
+            if let error = error {
+                print("❌ FCM Token fetch error: \(error.localizedDescription)")
+            } else if let token = token {
+                print("🔥 FCM Token fetched: \(token.prefix(30))...")
+                // Subscribe to topic immediately after getting token
+                Messaging.messaging().subscribe(toTopic: "findr-all") { error in
+                    if let error = error {
+                        print("❌ Topic subscription error: \(error.localizedDescription)")
+                    } else {
+                        print("✅ Subscribed to findr-all topic!")
+                    }
+                }
+            }
+        }
+
         // Forward token to Capacitor's push notification plugin
         NotificationCenter.default.post(
             name: .capacitorDidRegisterForRemoteNotifications,
