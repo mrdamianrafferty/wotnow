@@ -19,6 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         // Initialize Firebase
         FirebaseApp.configure()
+        print("🔥 Firebase configured successfully")
 
         // Configure push notifications delegate
         UNUserNotificationCenter.current().delegate = self
@@ -31,6 +32,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         // Register background tasks (iOS 17+ enhanced)
         registerBackgroundTasks()
+
+        // Show immediate test alert after a short delay to verify alerting works
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.showDebugAlert(title: "Firebase Init", message: "Firebase configured. Waiting for APNs token...")
+        }
 
         return true
     }
@@ -124,14 +130,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Messaging.messaging().token { token, error in
             if let error = error {
                 print("❌ FCM Token fetch error: \(error.localizedDescription)")
+                self.showDebugAlert(title: "FCM Error", message: error.localizedDescription)
             } else if let token = token {
-                print("🔥 FCM Token fetched: \(token.prefix(30))...")
+                print("🔥 FCM Token: \(token)")
                 // Subscribe to topic immediately after getting token
                 Messaging.messaging().subscribe(toTopic: "findr-all") { subError in
                     if let subError = subError {
                         print("❌ Topic subscription error: \(subError.localizedDescription)")
+                        self.showDebugAlert(title: "Topic Error", message: subError.localizedDescription)
                     } else {
                         print("✅ Subscribed to findr-all topic!")
+                        // Copy token to clipboard and show alert
+                        UIPasteboard.general.string = token
+                        self.showDebugAlert(title: "FCM Ready!", message: "Token copied to clipboard!\n\nFirst 40 chars:\n\(token.prefix(40))...\n\nTopic: findr-all")
                     }
                 }
             }
@@ -158,6 +169,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             object: error
         )
         print("❌ Failed to register for remote notifications: \(error.localizedDescription)")
+        showDebugAlert(title: "APNs Failed!", message: "Error: \(error.localizedDescription)")
     }
 
     // MARK: - Background Notification Handling
@@ -167,6 +179,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
+        print("📩 Background notification received: \(userInfo)")
+        showDebugAlert(title: "Background Push!", message: "Data: \(userInfo)")
         // Forward to Capacitor for JavaScript handling
         NotificationCenter.default.post(
             name: NSNotification.Name("capacitorDidReceiveRemoteNotification"),
@@ -233,6 +247,9 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
         // iOS 17+: Use async version of delegate method
+        let userInfo = notification.request.content.userInfo
+        print("📬 Foreground notification received: \(userInfo)")
+        showDebugAlert(title: "Notification Received!", message: "Title: \(notification.request.content.title)\nBody: \(notification.request.content.body)")
         // Show notification even when app is in foreground
         return [.banner, .sound, .badge]
     }

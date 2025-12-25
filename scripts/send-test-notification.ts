@@ -55,10 +55,19 @@ async function sendNotification() {
         timestamp: new Date().toISOString(),
       },
       apns: {
+        headers: {
+          'apns-priority': '10',
+          'apns-push-type': 'alert',
+        },
         payload: {
           aps: {
+            alert: {
+              title: '🎉 Push Notifications Working!',
+              body: `Test notification sent at ${timestamp}`,
+            },
             badge: 1,
             sound: 'default',
+            'mutable-content': 1,
           },
         },
       },
@@ -103,12 +112,17 @@ async function sendNotification() {
         apns: {
           headers: {
             'apns-priority': '10',
+            'apns-push-type': 'alert',
           },
           payload: {
             aps: {
+              alert: {
+                title: `${app.name}: Push Test`,
+                body: `Test notification at ${timestamp}`,
+              },
               badge: 1,
               sound: 'default',
-              'content-available': 1,
+              'mutable-content': 1,
             },
           },
         },

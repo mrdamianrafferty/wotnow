@@ -63,3 +63,8 @@ test-results/
 # Firebase service account key (contains secrets)
 wotnow-daisy-apps-firebase-adminsdk*.json
 firebase-service-account*.json
+
+# iOS Build directories
+ios/App/Build/
+ios-godaisy/App/Build/
+ios-growdaisy/App/Build/
