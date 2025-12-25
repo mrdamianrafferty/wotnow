@@ -346,11 +346,14 @@ export function WeatherPage() {
   useEffect(() => {
     const loadUserSettings = async () => {
       const interestsStr = localStorage.getItem('userInterests');
+      let hasLocation = false;
+
       if (interestsStr) {
         try {
           const interests = JSON.parse(interestsStr);
           if (interests.location) {
             setUserLocation(interests.location);
+            hasLocation = true;
           }
           if (interests.climate_zone) {
             setClimateZone(interests.climate_zone);
@@ -373,6 +376,11 @@ export function WeatherPage() {
         }
       } catch (_error) {
         console.debug('Could not sync unit preference from server');
+      }
+
+      // If no location was found, stop loading to show the "Location not set" UI
+      if (!hasLocation) {
+        setIsLoading(false);
       }
     };
 
