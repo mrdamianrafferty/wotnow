@@ -40,47 +40,14 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Lazy-load secure storage adapter to avoid circular dependencies
-let storageAdapter: Storage | null = null;
-
-function getStorageAdapter(): Storage {
-  if (storageAdapter) return storageAdapter;
-
-  if (isNative) {
-    // Use secure storage for native platforms
-    // This is loaded dynamically to avoid bundling Capacitor in web builds
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { supabaseStorageAdapter } = require('@/lib/capacitor/secureStorage');
-      storageAdapter = supabaseStorageAdapter as Storage;
-    } catch {
-      // Fallback to localStorage if secure storage not available
-      console.warn('[Supabase] Secure storage not available, using localStorage');
-      storageAdapter = localStorage;
-    }
-  } else {
-    storageAdapter = localStorage;
-  }
-
-  return storageAdapter;
-}
-
 // Official Supabase pattern for Next.js browser client
 // Source: https://supabase.com/docs/guides/auth/server-side/nextjs
 export function createClient() {
+  // Use localStorage for all platforms - WebView localStorage persists fine
+  // and avoids storage key mismatches between secure storage and localStorage
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      // Use secure storage on native platforms for better token security
-      ...(isNative && {
-        auth: {
-          storage: getStorageAdapter(),
-          storageKey: 'sb-auth-token',
-          flowType: 'pkce',
-        },
-      }),
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }
 
