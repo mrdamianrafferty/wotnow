@@ -18,6 +18,8 @@ import { AnimatePresence, animate, motion, useMotionValue, useTransform } from '
 import { isNative } from '../../lib/capacitor/platform';
 import {
   Anchor,
+  ChevronDown,
+  ChevronUp,
   Fish as FishIcon,
   Heart,
   ListChecks,
@@ -783,6 +785,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [speciesModalCard, setSpeciesModalCard] = useState<CardData | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showAllSpecies, setShowAllSpecies] = useState(false);
   const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
   const swipingRef = useRef(false); // Shared swiping state for all cards
@@ -970,6 +973,8 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
   useEffect(() => {
     setCardQueue(cards);
+    // Reset to collapsed view when switching areas
+    setShowAllSpecies(false);
   }, [cards]);
 
   // Favorites are now managed by useFavourites hook
@@ -1300,8 +1305,8 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                     </span>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {/* Limit to 6 cards initially to match skeleton and prevent CLS */}
-                    {cards.slice(0, 6).map((card) => (
+                    {/* Show 6 cards by default, all cards when expanded */}
+                    {(showAllSpecies ? cards : cards.slice(0, 6)).map((card) => (
                   <article key={card.id} className="card bg-base-100 shadow-md border border-base-200/60 min-h-[320px]" data-testid="species-card">
                     <div className="card-body space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -1444,6 +1449,31 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                   </article>
                     ))}
                   </div>
+
+                  {/* More fish... / Show less button */}
+                  {cards.length > 6 && (
+                    <div className="flex justify-center pt-4">
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-primary gap-2"
+                        onClick={() => setShowAllSpecies((prev) => !prev)}
+                        aria-expanded={showAllSpecies}
+                        aria-controls="species-lineup"
+                      >
+                        {showAllSpecies ? (
+                          <>
+                            <ChevronUp size={18} aria-hidden="true" />
+                            <TranslatedText text="Show less" />
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={18} aria-hidden="true" />
+                            <TranslatedText text="More fish..." /> ({cards.length - 6})
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </section>
