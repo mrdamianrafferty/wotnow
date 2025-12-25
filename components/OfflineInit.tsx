@@ -14,6 +14,16 @@ export function OfflineInit() {
     // Initialize offline services on mount
     const initOffline = async () => {
       try {
+        // Initialize secure storage for native apps (must happen before Supabase auth)
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { initSecureStorage } = await import('@/lib/capacitor/secureStorage');
+          await initSecureStorage();
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[OfflineInit] Secure storage initialized');
+          }
+        }
+
         // Initialize IndexedDB
         const { initDB } = await import('@/lib/offline/db');
         await initDB();

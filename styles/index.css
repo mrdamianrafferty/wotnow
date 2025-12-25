@@ -2037,7 +2037,8 @@ abbr[title] {
 }
 
 /* --- PWA Safe Area Insets (for devices with notches/home indicators) --- */
-.safe-bottom {
+.safe-bottom,
+.safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
