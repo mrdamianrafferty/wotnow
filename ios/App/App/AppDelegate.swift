@@ -26,10 +26,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Configure Firebase Messaging delegate
         Messaging.messaging().delegate = self
 
+        // Request notification permissions and register for remote notifications
+        requestNotificationPermissions(application)
+
         // Register background tasks (iOS 17+ enhanced)
         registerBackgroundTasks()
 
         return true
+    }
+
+    // MARK: - Push Notification Setup
+
+    private func requestNotificationPermissions(_ application: UIApplication) {
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
+            print("🔔 Notification permission granted: \(granted)")
+            if let error = error {
+                print("❌ Notification permission error: \(error.localizedDescription)")
+            }
+
+            DispatchQueue.main.async {
+                // Register for remote notifications
+                application.registerForRemoteNotifications()
+                print("📲 Registered for remote notifications")
+            }
+        }
     }
 
     // MARK: - Background Tasks (iOS 17+)
