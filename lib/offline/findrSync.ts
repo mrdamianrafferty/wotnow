@@ -404,7 +404,7 @@ class FindrSyncManager {
       predictionDate: date,
       language,
       speciesCode: p.species_code || p.speciesCode || p.species_id,
-      confidence: p.confidence,
+      confidence: p.confidence_percent ?? p.confidence ?? 0,
       biteScore: p.bite_score || p.biteScore,
       tempScore: p.temp_score || p.tempScore,
       tideScore: p.tide_score || p.tideScore,

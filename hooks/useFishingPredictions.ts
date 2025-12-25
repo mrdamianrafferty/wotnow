@@ -14,7 +14,8 @@ export interface FishingPrediction {
   [key: string]: JsonValue | undefined;
   species_id?: string;
   species_common_name?: string;
-  confidence?: number;
+  confidence_percent?: number; // Primary confidence field from API
+  confidence?: number;         // Legacy/fallback confidence field
   bite_score?: number;
   bio_band_score?: number;
   temp_score?: number;
@@ -114,7 +115,8 @@ async function fetchPredictions(params: {
             species_scientific_name: species?.scientificName || undefined,
             playful_bio: species?.playfulBio || undefined,
             slug: species?.slug || undefined,
-            confidence: p.confidence,
+            confidence_percent: p.confidence, // Primary field expected by parseConfidence
+            confidence: p.confidence,         // Fallback field
             bite_score: p.biteScore,
             temp_score: p.tempScore,
             tide_score: p.tideScore,
@@ -203,7 +205,7 @@ async function fetchAndCacheFromNetwork(params: {
           predictionDate: date,
           language: params.language,
           speciesCode: (p.species_code || p.species_id || '') as string,
-          confidence: (p.confidence || 0) as number,
+          confidence: (p.confidence_percent ?? p.confidence ?? 0) as number,
           biteScore: p.bite_score as number | undefined,
           tempScore: p.temp_score as number | undefined,
           tideScore: p.tide_score as number | undefined,
