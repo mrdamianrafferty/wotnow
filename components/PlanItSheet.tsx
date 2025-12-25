@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useId, useRef, useState, useCallback } from 'react';
-import { X, Calendar, Clock, Bell, BellOff, Check } from 'lucide-react';
+import Link from 'next/link';
+import { X, Calendar, Clock, Bell, BellOff, Check, Cloud, Smartphone } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Plan data structure stored in localStorage
@@ -89,6 +91,7 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
 }) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const [selectedWhen, setSelectedWhen] = useState<WhenOption>('today');
   const [customDate, setCustomDate] = useState<string>('');
@@ -97,6 +100,19 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  // Get auth link based on app
+  const getAuthLink = () => {
+    switch (app) {
+      case 'findr':
+        return '/findr/auth';
+      case 'growdaisy':
+        return '/login?redirect=/grow';
+      default:
+        return '/login';
+    }
+  };
 
   // Reset state when opening
   useEffect(() => {
@@ -107,6 +123,7 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
       setReminderEnabled(true);
       setShowTimePicker(false);
       setSaved(false);
+      setShowAuthPrompt(false);
     }
   }, [open]);
 
@@ -180,16 +197,27 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
       onSave(plan);
       setSaved(true);
 
-      // Close after brief success feedback
-      setTimeout(() => {
-        onClose();
-      }, 800);
+      // Check if we should show auth prompt (anonymous user with 2+ plans)
+      const shouldShowAuthPrompt = !user && plans.length >= 2;
+
+      if (shouldShowAuthPrompt) {
+        // Show auth prompt instead of closing immediately
+        setTimeout(() => {
+          setSaved(false);
+          setShowAuthPrompt(true);
+        }, 800);
+      } else {
+        // Close after brief success feedback
+        setTimeout(() => {
+          onClose();
+        }, 800);
+      }
     } catch (error) {
       console.error('[PlanItSheet] Failed to save plan:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [app, activityType, activityName, activityData, getPlannedDate, selectedTime, reminderEnabled, onSave, onClose]);
+  }, [app, activityType, activityName, activityData, getPlannedDate, selectedTime, reminderEnabled, onSave, onClose, user]);
 
   const formatDateDisplay = (option: WhenChip): string => {
     const date = option.getDate();
@@ -225,123 +253,160 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
           </button>
         </div>
 
-        {/* Activity being planned */}
-        <div className="bg-base-200 rounded-lg p-3">
-          <p className="text-sm text-base-content/70">Planning:</p>
-          <p className="font-medium">{activityName}</p>
-        </div>
+        {showAuthPrompt ? (
+          /* Auth prompt view */
+          <>
+            <div className="text-center space-y-4 py-4">
+              <div className="flex justify-center gap-3">
+                <Cloud className="h-8 w-8 text-primary" aria-hidden="true" />
+                <Smartphone className="h-8 w-8 text-primary" aria-hidden="true" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-lg">Save across devices</h4>
+                <p className="text-sm text-base-content/70 mt-2">
+                  Create a free account to keep your plans synced across all your devices and never lose them.
+                </p>
+              </div>
+            </div>
 
-        {/* When? chips */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-base-content/70">When?</label>
-          <div className="flex flex-wrap gap-2">
-            {WHEN_OPTIONS.map(option => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setSelectedWhen(option.id)}
-                className={`btn btn-sm ${
-                  selectedWhen === option.id
-                    ? 'btn-primary'
-                    : 'btn-outline'
-                }`}
+            <div className="space-y-2">
+              <Link
+                href={getAuthLink()}
+                className="btn btn-primary w-full"
               >
-                {option.label}
-                {selectedWhen === option.id && (
-                  <span className="text-xs opacity-70 ml-1">
-                    ({formatDateDisplay(option)})
-                  </span>
-                )}
+                Sign up free
+              </Link>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-ghost w-full"
+              >
+                Maybe later
               </button>
-            ))}
+            </div>
+          </>
+        ) : (
+          /* Planning form view */
+          <>
+            {/* Activity being planned */}
+            <div className="bg-base-200 rounded-lg p-3">
+              <p className="text-sm text-base-content/70">Planning:</p>
+              <p className="font-medium">{activityName}</p>
+            </div>
+
+            {/* When? chips */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-base-content/70">When?</label>
+              <div className="flex flex-wrap gap-2">
+                {WHEN_OPTIONS.map(option => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setSelectedWhen(option.id)}
+                    className={`btn btn-sm ${
+                      selectedWhen === option.id
+                        ? 'btn-primary'
+                        : 'btn-outline'
+                    }`}
+                  >
+                    {option.label}
+                    {selectedWhen === option.id && (
+                      <span className="text-xs opacity-70 ml-1">
+                        ({formatDateDisplay(option)})
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setSelectedWhen('custom')}
+                  className={`btn btn-sm ${
+                    selectedWhen === 'custom'
+                      ? 'btn-primary'
+                      : 'btn-outline'
+                  }`}
+                >
+                  Pick date
+                </button>
+              </div>
+
+              {/* Custom date picker */}
+              {selectedWhen === 'custom' && (
+                <input
+                  type="date"
+                  value={customDate}
+                  onChange={(e) => setCustomDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="input input-bordered w-full mt-2"
+                />
+              )}
+            </div>
+
+            {/* Time picker toggle */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowTimePicker(!showTimePicker)}
+                className="btn btn-ghost btn-sm gap-2"
+              >
+                <Clock className="h-4 w-4" aria-hidden="true" />
+                {showTimePicker ? 'Hide time' : 'Add specific time'}
+              </button>
+
+              {showTimePicker && (
+                <input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              )}
+            </div>
+
+            {/* Reminder toggle */}
+            <div className="flex items-center justify-between py-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                {reminderEnabled ? (
+                  <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
+                ) : (
+                  <BellOff className="h-5 w-5 text-base-content/50" aria-hidden="true" />
+                )}
+                <span className="text-sm">Remind me</span>
+              </label>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={reminderEnabled}
+                onChange={(e) => setReminderEnabled(e.target.checked)}
+              />
+            </div>
+
+            {/* Custom children (e.g., safety checklist for Findr) */}
+            {children}
+
+            {/* Save button */}
             <button
               type="button"
-              onClick={() => setSelectedWhen('custom')}
-              className={`btn btn-sm ${
-                selectedWhen === 'custom'
-                  ? 'btn-primary'
-                  : 'btn-outline'
-              }`}
+              onClick={handleSave}
+              disabled={isSaving || saved || (selectedWhen === 'custom' && !customDate)}
+              className={`btn btn-primary w-full ${saved ? 'btn-success' : ''}`}
             >
-              Pick date
+              {saved ? (
+                <>
+                  <Check className="h-5 w-5" aria-hidden="true" />
+                  Planned!
+                </>
+              ) : isSaving ? (
+                <>
+                  <span className="loading loading-spinner loading-sm" aria-hidden="true" />
+                  Saving...
+                </>
+              ) : (
+                'Save plan'
+              )}
             </button>
-          </div>
-
-          {/* Custom date picker */}
-          {selectedWhen === 'custom' && (
-            <input
-              type="date"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="input input-bordered w-full mt-2"
-            />
-          )}
-        </div>
-
-        {/* Time picker toggle */}
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setShowTimePicker(!showTimePicker)}
-            className="btn btn-ghost btn-sm gap-2"
-          >
-            <Clock className="h-4 w-4" aria-hidden="true" />
-            {showTimePicker ? 'Hide time' : 'Add specific time'}
-          </button>
-
-          {showTimePicker && (
-            <input
-              type="time"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              className="input input-bordered w-full"
-            />
-          )}
-        </div>
-
-        {/* Reminder toggle */}
-        <div className="flex items-center justify-between py-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            {reminderEnabled ? (
-              <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
-            ) : (
-              <BellOff className="h-5 w-5 text-base-content/50" aria-hidden="true" />
-            )}
-            <span className="text-sm">Remind me</span>
-          </label>
-          <input
-            type="checkbox"
-            className="toggle toggle-primary"
-            checked={reminderEnabled}
-            onChange={(e) => setReminderEnabled(e.target.checked)}
-          />
-        </div>
-
-        {/* Custom children (e.g., safety checklist for Findr) */}
-        {children}
-
-        {/* Save button */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving || saved || (selectedWhen === 'custom' && !customDate)}
-          className={`btn btn-primary w-full ${saved ? 'btn-success' : ''}`}
-        >
-          {saved ? (
-            <>
-              <Check className="h-5 w-5" aria-hidden="true" />
-              Planned!
-            </>
-          ) : isSaving ? (
-            <>
-              <span className="loading loading-spinner loading-sm" aria-hidden="true" />
-              Saving...
-            </>
-          ) : (
-            'Save plan'
-          )}
-        </button>
+          </>
+        )}
       </div>
       <button type="button" className="modal-backdrop" onClick={onClose} aria-label="Close" />
     </div>
