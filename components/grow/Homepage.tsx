@@ -32,6 +32,7 @@ import { LocationSettings } from './LocationSettings';
 import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 import { TaskIcon } from './TaskIcon';
 import { SkeletonGrowHomepage } from './GrowSkeletons';
+import { PlanItSheet, type PlannedActivity } from '../PlanItSheet';
 
 type Translator = (value: string) => string;
 
@@ -451,6 +452,8 @@ export function Homepage() {
   const [userLocation, setUserLocation] = useState<string>('');
   const [gardenAlerts, setGardenAlerts] = useState<GardenAlertResult[]>([]);
   const [alertsLoading, setAlertsLoading] = useState(false);
+  const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [taskToPlan, setTaskToPlan] = useState<GardenTask | null>(null);
   const alertCacheRef = useRef<Map<string, GardenAlertResult[]>>(new Map()); // cache alerts per ~0.1 degree to limit refetching
 
   // Platform detection: use animated deck on native, static on web for better performance
@@ -756,7 +759,7 @@ export function Homepage() {
 
   const handleDismissTask = async (taskId: string) => {
     setDismissedTasks(prev => [...prev, taskId]);
-    
+
     // Try to sync with backend if authenticated
     try {
       const token = localStorage.getItem('access_token');
@@ -765,6 +768,29 @@ export function Homepage() {
       }
     } catch (_error) {
       // Silent failure - dismissal saved locally
+    }
+  };
+
+  const handleOpenPlanSheet = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setTaskToPlan(task);
+      setPlanSheetOpen(true);
+    }
+  };
+
+  const handleClosePlanSheet = () => {
+    setPlanSheetOpen(false);
+    setTaskToPlan(null);
+  };
+
+  const handleSavePlan = (plan: PlannedActivity) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Grow Daisy] Plan saved:', plan);
+    }
+    // Add the task to my tasks when planning
+    if (taskToPlan) {
+      handleAddTask(taskToPlan.id);
     }
   };
 
@@ -847,7 +873,7 @@ export function Homepage() {
       {activeCards.length > 0 && activeCards[0] && (
         <DoThisNextCard
           task={activeCards[0]}
-          onPlanIt={handleSwipeRight}
+          onPlanIt={handleOpenPlanSheet}
           t={t}
         />
       )}
@@ -1116,6 +1142,25 @@ export function Homepage() {
           })}
         </div>
       </div>
+
+      {/* Plan It Sheet */}
+      {taskToPlan && (
+        <PlanItSheet
+          open={planSheetOpen}
+          onClose={handleClosePlanSheet}
+          onSave={handleSavePlan}
+          app="growdaisy"
+          activityType={taskToPlan.category}
+          activityName={taskToPlan.title}
+          activityData={{
+            taskId: taskToPlan.id,
+            taskCode: taskToPlan.taskCode,
+            urgency: taskToPlan.urgency,
+            timeRequired: taskToPlan.timeRequired,
+            plant: taskToPlan.plant,
+          }}
+        />
+      )}
     </div>
   );
 }

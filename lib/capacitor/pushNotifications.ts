@@ -1,0 +1,273 @@
+/**
+ * Push Notification Service for Capacitor Native Apps
+ *
+ * Handles:
+ * - Push notification registration
+ * - Local notification scheduling for reminders
+ * - Notification tap handling with deep linking
+ */
+
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications, type PushNotificationSchema, type ActionPerformed } from '@capacitor/push-notifications';
+import { LocalNotifications, type LocalNotificationSchema } from '@capacitor/local-notifications';
+import type { PlannedActivity } from '../../components/PlanItSheet';
+
+// Storage key for push token
+const PUSH_TOKEN_KEY = 'push_notification_token';
+
+/**
+ * Initialize push notification service
+ * Call this early in app lifecycle (e.g., in OfflineInit)
+ */
+export async function initPushNotifications(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Skipping - not a native platform');
+    }
+    return;
+  }
+
+  try {
+    // Request permission
+    const permResult = await PushNotifications.requestPermissions();
+
+    if (permResult.receive === 'granted') {
+      // Register for push notifications
+      await PushNotifications.register();
+
+      // Set up listeners
+      setupPushListeners();
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Push] Initialized successfully');
+      }
+    } else {
+      console.log('[Push] Permission denied');
+    }
+
+    // Also request local notification permissions
+    const localPermResult = await LocalNotifications.requestPermissions();
+    if (localPermResult.display === 'granted') {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Push] Local notifications permitted');
+      }
+    }
+  } catch (error) {
+    console.error('[Push] Failed to initialize:', error);
+  }
+}
+
+/**
+ * Set up push notification event listeners
+ */
+function setupPushListeners(): void {
+  // Called when registration is successful
+  PushNotifications.addListener('registration', (token) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Registration token:', token.value);
+    }
+    // Store the token
+    localStorage.setItem(PUSH_TOKEN_KEY, token.value);
+  });
+
+  // Called when registration fails
+  PushNotifications.addListener('registrationError', (error) => {
+    console.error('[Push] Registration error:', error);
+  });
+
+  // Called when a push notification is received while app is in foreground
+  PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Received:', notification);
+    }
+  });
+
+  // Called when user taps on a push notification
+  PushNotifications.addListener('pushNotificationActionPerformed', (action: ActionPerformed) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Action performed:', action);
+    }
+    handleNotificationTap(action.notification.data);
+  });
+
+  // Local notification tap handler
+  LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Local] Action performed:', action);
+    }
+    handleNotificationTap(action.notification.extra);
+  });
+}
+
+/**
+ * Handle notification tap - navigate to appropriate screen
+ */
+function handleNotificationTap(data: Record<string, unknown>): void {
+  const app = data.app as string | undefined;
+  const planId = data.planId as string | undefined;
+
+  if (!app) return;
+
+  // Navigate based on app
+  switch (app) {
+    case 'godaisy':
+      window.location.href = '/';
+      break;
+    case 'findr':
+      window.location.href = '/findr';
+      break;
+    case 'growdaisy':
+      window.location.href = '/grow';
+      break;
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Push] Navigating to:', app, 'plan:', planId);
+  }
+}
+
+/**
+ * Get the stored push token
+ */
+export function getPushToken(): string | null {
+  return localStorage.getItem(PUSH_TOKEN_KEY);
+}
+
+/**
+ * Schedule a local notification for a planned activity reminder
+ */
+export async function scheduleReminder(plan: PlannedActivity): Promise<number | null> {
+  if (!Capacitor.isNativePlatform()) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Skipping reminder - not native platform');
+    }
+    return null;
+  }
+
+  if (!plan.reminderEnabled) {
+    return null;
+  }
+
+  try {
+    // Calculate reminder time (1 hour before planned time, or 9am on the day)
+    const plannedDate = new Date(plan.plannedFor);
+    let reminderDate: Date;
+
+    if (plan.plannedTime) {
+      const [hours, minutes] = plan.plannedTime.split(':').map(Number);
+      reminderDate = new Date(plannedDate);
+      reminderDate.setHours(hours - 1, minutes, 0, 0); // 1 hour before
+
+      // If reminder would be in the past, skip
+      if (reminderDate <= new Date()) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[Push] Reminder time already passed, skipping');
+        }
+        return null;
+      }
+    } else {
+      // No specific time - remind at 9am on the day
+      reminderDate = new Date(plannedDate);
+      reminderDate.setHours(9, 0, 0, 0);
+
+      // If that's in the past, try 2 hours from now
+      if (reminderDate <= new Date()) {
+        reminderDate = new Date(Date.now() + 2 * 60 * 60 * 1000);
+      }
+    }
+
+    // Generate a unique notification ID
+    const notificationId = Math.floor(Math.random() * 2147483647);
+
+    const notification: LocalNotificationSchema = {
+      id: notificationId,
+      title: getAppTitle(plan.app),
+      body: `Reminder: ${plan.activityName}`,
+      schedule: { at: reminderDate },
+      extra: {
+        app: plan.app,
+        planId: plan.id,
+        activityType: plan.activityType,
+      },
+    };
+
+    await LocalNotifications.schedule({ notifications: [notification] });
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] Scheduled reminder:', {
+        id: notificationId,
+        at: reminderDate.toISOString(),
+        activity: plan.activityName,
+      });
+    }
+
+    // Store the notification ID with the plan for later cancellation
+    const reminderIds = JSON.parse(localStorage.getItem('reminder_notification_ids') || '{}');
+    reminderIds[plan.id] = notificationId;
+    localStorage.setItem('reminder_notification_ids', JSON.stringify(reminderIds));
+
+    return notificationId;
+  } catch (error) {
+    console.error('[Push] Failed to schedule reminder:', error);
+    return null;
+  }
+}
+
+/**
+ * Cancel a scheduled reminder
+ */
+export async function cancelReminder(planId: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+
+  try {
+    const reminderIds = JSON.parse(localStorage.getItem('reminder_notification_ids') || '{}');
+    const notificationId = reminderIds[planId];
+
+    if (notificationId) {
+      await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
+      delete reminderIds[planId];
+      localStorage.setItem('reminder_notification_ids', JSON.stringify(reminderIds));
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Push] Cancelled reminder:', notificationId);
+      }
+    }
+  } catch (error) {
+    console.error('[Push] Failed to cancel reminder:', error);
+  }
+}
+
+/**
+ * Get app-specific title for notifications
+ */
+function getAppTitle(app: PlannedActivity['app']): string {
+  switch (app) {
+    case 'godaisy':
+      return 'Go Daisy';
+    case 'findr':
+      return 'Fish Findr';
+    case 'growdaisy':
+      return 'Grow Daisy';
+    default:
+      return 'Reminder';
+  }
+}
+
+/**
+ * Get all pending local notifications
+ */
+export async function getPendingReminders(): Promise<LocalNotificationSchema[]> {
+  if (!Capacitor.isNativePlatform()) {
+    return [];
+  }
+
+  try {
+    const result = await LocalNotifications.getPending();
+    return result.notifications;
+  } catch (error) {
+    console.error('[Push] Failed to get pending reminders:', error);
+    return [];
+  }
+}

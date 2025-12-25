@@ -22,6 +22,13 @@ export function OfflineInit() {
           if (process.env.NODE_ENV === 'development') {
             console.log('[OfflineInit] Secure storage initialized');
           }
+
+          // Initialize push notifications for native apps
+          const { initPushNotifications } = await import('@/lib/capacitor/pushNotifications');
+          await initPushNotifications();
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[OfflineInit] Push notifications initialized');
+          }
         }
 
         // Initialize IndexedDB

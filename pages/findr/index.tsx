@@ -18,6 +18,7 @@ import { AnimatePresence, animate, motion, useMotionValue, useTransform } from '
 import { isNative } from '../../lib/capacitor/platform';
 import {
   Anchor,
+  Calendar,
   ChevronDown,
   ChevronUp,
   Fish as FishIcon,
@@ -76,6 +77,8 @@ import { GuildBadge } from '../../components/findr/GuildBadge';
 import { EnvironmentalInfo } from '../../components/findr/EnvironmentalInfo';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import { GradientFish } from '../../components/GradientFish';
+import { PlanSessionSheet } from '../../components/findr/PlanSessionSheet';
+import type { PlannedActivity } from '../../components/PlanItSheet';
 const FindrFooter = dynamic(() => import('../../components/FindrFooter'), { ssr: false });
 
 // Static card deck for web - CSS-only, no Framer Motion (better CLS/TBT)
@@ -697,10 +700,11 @@ SwipeableCard.displayName = 'SwipeableCard';
 interface DeckActionsProps {
   onSkip: () => void;
   onLike: () => void;
+  onPlan: () => void;
   disabled?: boolean;
 }
 
-const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) => (
+const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, onPlan, disabled }) => (
   <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]" role="group" aria-label="Card actions">
     <button
       type="button"
@@ -711,6 +715,16 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
     >
       <X size={20} aria-hidden="true" />
       <TranslatedText text="Later" />
+    </button>
+    <button
+      type="button"
+      className="btn btn-success btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      onClick={onPlan}
+      disabled={disabled}
+      aria-label="Plan a fishing session for this species"
+    >
+      <Calendar size={20} aria-hidden="true" />
+      <TranslatedText text="Plan it" />
     </button>
     <button
       type="button"
@@ -836,6 +850,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const [speciesModalCard, setSpeciesModalCard] = useState<CardData | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
+  const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
   const swipingRef = useRef(false); // Shared swiping state for all cards
@@ -1076,6 +1091,23 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     [setFavoritesOpen, setSpeciesModalCard]
   );
 
+  const handleOpenPlanSheet = useCallback(() => {
+    setPlanSheetOpen(true);
+  }, []);
+
+  const handleClosePlanSheet = useCallback(() => {
+    setPlanSheetOpen(false);
+  }, []);
+
+  const handleSavePlan = useCallback((plan: PlannedActivity) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Findr] Plan saved:', plan);
+    }
+    // Show success message
+    setShowSuccessMessage(true);
+    setTimeout(() => setShowSuccessMessage(false), 2000);
+  }, []);
+
   const handleCloseSpeciesModal = useCallback(() => {
     setSpeciesModalCard(null);
   }, [setSpeciesModalCard]);
@@ -1251,6 +1283,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                         <DeckActions
                           onSkip={handleProgrammaticSkip}
                           onLike={handleProgrammaticLike}
+                          onPlan={handleOpenPlanSheet}
                           disabled={!currentCard}
                         />
                       </>
@@ -1638,6 +1671,20 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
         card={speciesModalCard}
         onClose={handleCloseSpeciesModal}
       />
+
+      {/* Plan Session Sheet */}
+      {currentCard && (
+        <PlanSessionSheet
+          open={planSheetOpen}
+          onClose={handleClosePlanSheet}
+          onSave={handleSavePlan}
+          spotName={activeOption?.region || 'Unknown location'}
+          rectangleCode={activeRectangle || ''}
+          speciesName={currentCard.commonName}
+          speciesCode={currentCard.speciesCode || currentCard.id}
+          confidence={currentCard.confidence ?? undefined}
+        />
+      )}
 
       <FindrFooter />
     </>
