@@ -1,54 +1,110 @@
 import UIKit
 import Capacitor
 
+/// SceneDelegate - iOS 17+ optimized with modern Swift patterns
+@MainActor
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
 
+    // MARK: - Scene Lifecycle
+
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        // Use this method to optionally configure and attach the UIWindow `window` to the provided UIWindowScene `scene`.
-        // If using a storyboard, the `window` property will automatically be initialized and attached to the scene.
-        // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
-        guard let _ = (scene as? UIWindowScene) else { return }
-    }
+        guard let windowScene = scene as? UIWindowScene else { return }
 
-    func sceneDidDisconnect(_ scene: UIScene) {
-        // Called as the scene is being released by the system.
-        // This occurs shortly after the scene enters the background, or when its session is discarded.
-        // Release any resources associated with this scene that can be re-created the next time the scene connects.
-        // The scene may re-connect later, as its session was not necessarily discarded (see `application:didDiscardSceneSessions` instead).
-    }
+        // iOS 17+: Configure window scene traits
+        configureWindowScene(windowScene)
 
-    func sceneDidBecomeActive(_ scene: UIScene) {
-        // Called when the scene has moved from an inactive state to an active state.
-        // Use this method to restart any tasks that were paused (or not yet started) when the scene was inactive.
-    }
+        // Handle any URLs passed at launch
+        if let urlContext = connectionOptions.urlContexts.first {
+            handleIncomingURL(urlContext.url)
+        }
 
-    func sceneWillResignActive(_ scene: UIScene) {
-        // Called when the scene will move from an active state to an inactive state.
-        // This may occur due to temporary interruptions (ex. an incoming phone call).
-    }
-
-    func sceneWillEnterForeground(_ scene: UIScene) {
-        // Called as the scene transitions from the background to the foreground.
-        // Use this method to undo the changes made on entering the background.
-    }
-
-    func sceneDidEnterBackground(_ scene: UIScene) {
-        // Called as the scene transitions from the foreground to the background.
-        // Use this method to save data, release shared resources, and store enough scene-specific state information
-        // to restore the scene back to its current state.
-    }
-
-    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        // Handle URL contexts
-        if let url = URLContexts.first?.url {
-            ApplicationDelegateProxy.shared.application(UIApplication.shared, open: url, options: [:])
+        // Handle any user activities (Universal Links) passed at launch
+        if let userActivity = connectionOptions.userActivities.first {
+            handleUserActivity(userActivity)
         }
     }
 
+    func sceneDidDisconnect(_ scene: UIScene) {
+        // Release resources that can be recreated when scene reconnects
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Clear badge count when app becomes active (iOS 17+ optimized)
+        Task { @MainActor in
+            await clearBadgeCount()
+        }
+    }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        // Prepare for temporary interruption
+    }
+
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        // Undo background changes
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        // Save state for restoration
+    }
+
+    // MARK: - URL Handling (iOS 17+ enhanced)
+
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let urlContext = URLContexts.first else { return }
+        handleIncomingURL(urlContext.url)
+    }
+
+    // MARK: - User Activity (Universal Links)
+
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
-        // Handle Universal Links and other activities
-        ApplicationDelegateProxy.shared.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
+        handleUserActivity(userActivity)
+    }
+
+    // MARK: - Private Helpers
+
+    private func configureWindowScene(_ windowScene: UIWindowScene) {
+        // iOS 17+: Configure scene-level preferences
+        #if compiler(>=5.9)
+        if #available(iOS 17.0, *) {
+            // Enable iOS 17+ window behaviors
+            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
+        }
+        #endif
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        // Forward to Capacitor for JavaScript handling
+        ApplicationDelegateProxy.shared.application(
+            UIApplication.shared,
+            open: url,
+            options: [:]
+        )
+    }
+
+    private func handleUserActivity(_ userActivity: NSUserActivity) {
+        // Forward Universal Links to Capacitor
+        ApplicationDelegateProxy.shared.application(
+            UIApplication.shared,
+            continue: userActivity,
+            restorationHandler: { _ in }
+        )
+    }
+
+    /// Clear notification badge count (iOS 17+ async pattern)
+    private func clearBadgeCount() async {
+        if #available(iOS 16.0, *) {
+            do {
+                try await UNUserNotificationCenter.current().setBadgeCount(0)
+            } catch {
+                // Fallback for badge clearing failure
+                await MainActor.run {
+                    UIApplication.shared.applicationIconBadgeNumber = 0
+                }
+            }
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 }

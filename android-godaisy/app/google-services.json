@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "682453475012",
+    "project_id": "wotnow-daisy-apps",
+    "storage_bucket": "wotnow-daisy-apps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:682453475012:android:7ae73f53bef068b65cf391",
+        "android_client_info": {
+          "package_name": "eu.fishfindr.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAafN3KyOr1AITEJQV-GGU-zQSXe-HFXII"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:682453475012:android:24a09c7366cafd1e5cf391",
+        "android_client_info": {
+          "package_name": "io.godaisy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAafN3KyOr1AITEJQV-GGU-zQSXe-HFXII"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:682453475012:android:f3d6e9a41de89c625cf391",
+        "android_client_info": {
+          "package_name": "io.growdaisy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAafN3KyOr1AITEJQV-GGU-zQSXe-HFXII"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

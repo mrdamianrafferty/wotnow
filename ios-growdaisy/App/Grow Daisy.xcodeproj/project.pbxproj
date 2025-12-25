@@ -267,12 +267,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -457,7 +453,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Go Daisy";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -486,7 +482,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Go Daisy";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -515,7 +511,7 @@
 				INFOPLIST_FILE = "App copy-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Grow Daisy";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -545,7 +541,7 @@
 				INFOPLIST_FILE = "App copy-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Grow Daisy";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

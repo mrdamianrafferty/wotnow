@@ -119,5 +119,17 @@
 			</array>
 		</dict>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+
+	<!-- Background Task Identifiers (iOS 17+) -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>io.growdaisy.app.refresh</string>
+	</array>
 </dict>
 </plist>
