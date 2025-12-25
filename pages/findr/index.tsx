@@ -1235,33 +1235,14 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
 
                 </div>
               </div>
-              {/* Status alerts container - fixed height to prevent CLS */}
-              <div className="h-[28px] overflow-hidden">
-                {rectangleOptionsError && (
-                  <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
-                    <span>
-                      <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
-                    </span>
-                  </div>
-                )}
-                {isFromCache && cacheTimestamp && freshness && (
-                  <div className="flex items-center gap-2 px-4 sm:px-0">
-                    <DataFreshnessIndicator
-                      timestamp={cacheTimestamp}
-                      freshness={freshness}
-                    />
-                    {freshness === 'stale' || freshness === 'very-stale' ? (
-                      <span className="text-xs text-base-content/70">
-                        <TranslatedText text="Connect to refresh predictions" />
-                      </span>
-                    ) : (
-                      <span className="text-xs text-base-content/70">
-                        <TranslatedText text="Offline mode" />
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Status alerts container - only shown when there's an error */}
+              {rectangleOptionsError && (
+                <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
+                  <span>
+                    <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Action prompt container - always reserve space to prevent CLS */}
@@ -1750,6 +1731,25 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
             <Share2 className="h-5 w-5" aria-hidden="true" />
             <span>Link copied to clipboard!</span>
           </div>
+        </div>
+      )}
+
+      {/* Cache/refresh status - moved to bottom to not obstruct main content */}
+      {isFromCache && cacheTimestamp && freshness && (
+        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-base-200/50">
+          <DataFreshnessIndicator
+            timestamp={cacheTimestamp}
+            freshness={freshness}
+          />
+          {freshness === 'stale' || freshness === 'very-stale' ? (
+            <span className="text-xs text-base-content/70">
+              <TranslatedText text="Connect to refresh predictions" />
+            </span>
+          ) : (
+            <span className="text-xs text-base-content/70">
+              <TranslatedText text="Offline mode" />
+            </span>
+          )}
         </div>
       )}
 
