@@ -520,9 +520,22 @@
   transition: background 0.2s;
   display: inline-block;
 }
+.activity-card-btn-primary {
+  background: #0284c7; /* sky-600 - more vibrant */
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(2,132,199,0.25);
+}
+.activity-card-btn-primary:hover {
+  background: #0369a1; /* sky-700 */
+}
 .activity-card-btn + .activity-card-btn {
-  background: #10b981;
-  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.9);
+  box-shadow: none;
+  font-weight: 400;
+}
+.activity-card-btn + .activity-card-btn:hover {
+  background: rgba(255,255,255,0.25);
 }
 
 /* Data Bars Styling for Astronomy Card */

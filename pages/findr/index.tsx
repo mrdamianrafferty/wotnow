@@ -68,6 +68,7 @@ import { useUnifiedLocation } from '../../context/UnifiedLocationContext';
 import { useMigrateFindrSettings } from '../../hooks/useMigrateFindrSettings';
 import { getTodayIso } from '../../lib/date/today';
 import { mapPrediction, type CardData } from '../../lib/findr/mapPrediction';
+import { getConfidenceBand } from '../../types/favourites';
 import '../../lib/buildInfo'; // Log build metadata on mount
 import { CatchEntry as _CatchEntry } from '../../types/aiRecommendations';
 import { EnhancedFishDeck as _EnhancedFishDeck } from '@/components/EnhancedFishDeck';
@@ -138,6 +139,55 @@ function confidenceBadgeClasses(confidence: number | null, size: 'lg' | 'sm' = '
   }
   return `${base} badge-info text-info-content`;
 }
+
+/**
+ * Session Verdict Bar - Shows go/no-go decision based on top card's confidence
+ * Uses existing confidence bands to give users clear session advice
+ */
+interface SessionVerdictBarProps {
+  confidence: number;
+}
+
+const SessionVerdictBar: React.FC<SessionVerdictBarProps> = ({ confidence }) => {
+  const band = getConfidenceBand(confidence);
+
+  const verdictConfig = {
+    active: {
+      alert: 'alert-success',
+      emoji: '🎣',
+      title: 'Worth a session',
+      description: 'Conditions are looking good for this one',
+    },
+    good: {
+      alert: 'alert-warning',
+      emoji: '🤔',
+      title: 'Maybe today',
+      description: 'Conditions are mixed - could be worth a try',
+    },
+    waiting: {
+      alert: 'alert-error',
+      emoji: '⏳',
+      title: 'Not today',
+      description: 'Conditions are against you for this species',
+    },
+  };
+
+  const config = verdictConfig[band];
+
+  return (
+    <div className={`alert ${config.alert} py-2 px-3 sm:px-4`}>
+      <span className="text-lg" aria-hidden="true">{config.emoji}</span>
+      <div className="flex flex-col gap-0.5">
+        <span className="font-semibold text-sm sm:text-base">
+          <TranslatedText text={config.title} />
+        </span>
+        <span className="text-xs sm:text-sm opacity-80">
+          <TranslatedText text={config.description} />
+        </span>
+      </div>
+    </div>
+  );
+};
 
 interface BiteScoreBreakdown {
   biteScore: number;
@@ -660,7 +710,7 @@ const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, disabled }) =
       aria-label="Skip this fish and see the next prediction"
     >
       <X size={20} aria-hidden="true" />
-      <TranslatedText text="Next!" />
+      <TranslatedText text="Later" />
     </button>
     <button
       type="button"
@@ -1168,6 +1218,10 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                 ) : activeRectangle && !error && currentCard ? (
                   /* Actual content - same container, mutually exclusive with skeleton */
                   <>
+                    {/* Session Verdict Bar - go/no-go decision based on top card */}
+                    <div className="px-2 sm:px-0 mb-3">
+                      <SessionVerdictBar confidence={currentCard.confidence ?? 0} />
+                    </div>
                     {/* Conditional deck: animated for native apps, static for web */}
                     {useAnimatedDeck ? (
                       <>

@@ -1,17 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'eu.fishfindr.app',
-  appName: 'Findr',
-  webDir: '.capacitor-assets',
-
-  // Version info (synced with package.json, iOS project, Android gradle)
-  // Version: 1.0.0 (Build: 1)
+  appId: 'io.godaisy.app',
+  appName: 'Go Daisy',
+  webDir: '.capacitor-assets-godaisy',
 
   server: {
     // PRODUCTION: Load content from Vercel
-    // This hybrid architecture keeps all API routes on the server (secure)
-    url: 'https://fishfindr.eu',
+    url: 'https://godaisy.io',
     cleartext: false,  // Force HTTPS
 
     // DEVELOPMENT: Uncomment to test locally
@@ -19,20 +15,15 @@ const config: CapacitorConfig = {
     // cleartext: true,
   },
 
-  // Deep linking configuration for OAuth callbacks
-  // URL schemes are configured in native projects:
-  // - iOS: ios/App/App/Info.plist (CFBundleURLSchemes = fishfindr)
-  // - Android: android/app/src/main/AndroidManifest.xml (android:scheme = fishfindr)
-
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: '#111827',  // Findr dark theme
+      backgroundColor: '#0f172a',  // Go Daisy dark blue (slate-900)
       androidSplashResourceName: 'splash',
       androidScaleType: 'CENTER_CROP',
       showSpinner: true,
-      spinnerColor: '#0ea5e9',  // Findr primary blue
+      spinnerColor: '#0284c7',  // Sky blue (sky-600)
       androidSpinnerStyle: 'small',
       iosSpinnerStyle: 'small',
     },

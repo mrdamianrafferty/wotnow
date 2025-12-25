@@ -204,6 +204,67 @@ const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDism
   );
 };
 
+// "Do This Next" Priority Card - Shows the top priority task prominently
+interface DoThisNextCardProps {
+  task: GardenTask;
+  onPlanIt: (taskId: string) => void;
+  t: Translator;
+}
+
+const DoThisNextCard: React.FC<DoThisNextCardProps> = ({ task, onPlanIt, t }) => {
+  const getUrgencyColor = () => {
+    switch (task.urgency) {
+      case 'critical': return 'border-red-400 bg-red-50';
+      case 'optimal': return 'border-orange-400 bg-orange-50';
+      case 'good': return 'border-green-400 bg-green-50';
+      default: return 'border-blue-400 bg-blue-50';
+    }
+  };
+
+  const getTimeDisplay = () => {
+    if (task.timeRequired <= 15) return `~${task.timeRequired} min`;
+    if (task.timeRequired <= 60) return `~${Math.round(task.timeRequired / 15) * 15} min`;
+    return `~${Math.round(task.timeRequired / 60)}h`;
+  };
+
+  return (
+    <Card className={`border-2 ${getUrgencyColor()} shadow-md`}>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-2xl shrink-0" aria-hidden="true">
+            {task.emoji}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                {t('Do this next')}
+              </span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" aria-hidden="true" />
+                {getTimeDisplay()}
+              </span>
+            </div>
+            <h3 className="font-semibold text-base leading-snug">
+              {task.title}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {task.shortDescription}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => onPlanIt(task.id)}
+            className="bg-green-600 hover:bg-green-700 shrink-0"
+            aria-label={`${t('Plan')}: ${task.title}`}
+          >
+            {t('Plan it')}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // Swipeable Card Component (native apps only)
 interface SwipeCardProps {
   task: GardenTask;
@@ -781,6 +842,15 @@ export function Homepage() {
           </Button>
         </div>
       </div>
+
+      {/* "Do This Next" Priority Card - Shows top priority task prominently */}
+      {activeCards.length > 0 && activeCards[0] && (
+        <DoThisNextCard
+          task={activeCards[0]}
+          onPlanIt={handleSwipeRight}
+          t={t}
+        />
+      )}
 
       {(alertsLoading || gardenAlerts.length > 0) && (
         <GardenAlertBox alerts={gardenAlerts} isLoading={alertsLoading} />

@@ -356,6 +356,23 @@ const getScoreCategory = (score: number) => {
   return { emoji: '👺', label: 'Indoor', color: '#8b5cf6' };
 };
 
+/**
+ * Get a qualitative badge for secondary lists instead of identical percentages
+ * More granular than getScoreCategory to differentiate similar scores
+ */
+const getQualitativeBadge = (score: number): { label: string; className: string } => {
+  if (score >= 95) return { label: 'Perfect', className: 'badge-success' };
+  if (score >= 90) return { label: 'Excellent', className: 'badge-success' };
+  if (score >= 85) return { label: 'Great', className: 'badge-success' };
+  if (score >= 80) return { label: 'Very Good', className: 'badge-info' };
+  if (score >= 75) return { label: 'Good', className: 'badge-info' };
+  if (score >= 70) return { label: 'Decent', className: 'badge-info' };
+  if (score >= 65) return { label: 'Fair', className: 'badge-warning' };
+  if (score >= 60) return { label: 'OK', className: 'badge-warning' };
+  if (score >= 50) return { label: 'Tricky', className: 'badge-warning' };
+  return { label: 'Unlikely', className: 'badge-neutral' };
+};
+
 const isOutdoor = (activityId: string) => {
   return !!activityMessages[activityId];
 };
@@ -536,10 +553,10 @@ const { forecastByDay, loading, error, marineHours, weatherData, marineError } =
     '👍 Good Options Today');
   const stayingIndoors = useUIText('index.heading._staying_indoors__13',
     '👺 Staying Indoors?');
-  const moreActivitiesButton = useUIText('index.button.more_activities',
-    '+ More activities');
-  const allMyActivitiesButton = useUIText('index.button.all_my_activities',
-    '👀 All my activities');
+  const planItButton = useUIText('index.button.plan_it',
+    'Plan it');
+  const allActivitiesButton = useUIText('index.button.all_activities',
+    'All activities');
 
 // Helper: Build forecastByDay from One Call 3.0 if available
 function buildForecastFromOneCall(weatherData: WeatherWithPollen): WeatherForecastDay[] {
@@ -1063,8 +1080,8 @@ const popupPayload = buildPopupActivityPayload({
                         <span>
                           {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
                         </span>
-                        <span className="also-good-score">
-                          {Math.round(suggestion.score)}%
+                        <span className={`badge badge-sm ${getQualitativeBadge(suggestion.score).className}`}>
+                          {getQualitativeBadge(suggestion.score).label}
                         </span>
                       </li>
                     );
@@ -1114,8 +1131,8 @@ const popupPayload = buildPopupActivityPayload({
                           <span>
                             {getActivityEmoji(suggestion.activityId)} {activity?.name || suggestion.activityId.replace(/_/g, ' ')}
                           </span>
-                          <span className="also-good-score">
-                            {Math.round(suggestion.score)}%
+                          <span className={`badge badge-sm ${getQualitativeBadge(suggestion.score).className}`}>
+                            {getQualitativeBadge(suggestion.score).label}
                           </span>
                         </li>
                       );
@@ -1156,8 +1173,8 @@ const popupPayload = buildPopupActivityPayload({
               <span>
                 {getActivityEmoji(s.activityId)} {activity?.name || s.activityId.replace(/_/g, ' ')}
               </span>
-              <span className="also-good-score">
-                {Math.round(s.score ?? 0)}%
+              <span className={`badge badge-sm ${getQualitativeBadge(s.score ?? 0).className}`}>
+                {getQualitativeBadge(s.score ?? 0).label}
               </span>
             </li>
           );
@@ -1168,19 +1185,19 @@ const popupPayload = buildPopupActivityPayload({
 })()}
           </div> {/* This is the closing tag for activity-suggestions */}
           
-          {/* Add back the bottom-aligned action buttons */}
+          {/* Action buttons - Plan it (primary) and All activities (secondary) */}
           <div className="activity-card-actions">
             <Link
               href="/interests"
-              className="activity-card-btn"
+              className="activity-card-btn activity-card-btn-primary"
             >
-              {moreActivitiesButton}
+              {planItButton}
             </Link>
             <Link
               href="/activities"
               className="activity-card-btn"
             >
-              {allMyActivitiesButton}
+              {allActivitiesButton}
             </Link>
           </div>
           
