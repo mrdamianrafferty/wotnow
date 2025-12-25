@@ -1202,15 +1202,9 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
       />
-      {/* Safe area background for iOS status bar */}
-      <div
-        className="fixed top-0 left-0 right-0 bg-base-200 z-40"
-        style={{ height: 'env(safe-area-inset-top, 0px)' }}
-        aria-hidden="true"
-      />
       {/* Navigation component outside main to avoid CSS containment affecting fixed positioning */}
       <FindrNavigation />
-      <main className="min-h-screen bg-base-200 pb-16" style={{ contain: 'layout style', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <main className="min-h-screen bg-base-200 pb-16" style={{ contain: 'layout style' }}>
         {/* Reserved space for network status indicator to prevent CLS */}
         <div className="h-0" aria-hidden="true" />
         {/* Network status indicator */}

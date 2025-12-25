@@ -107,13 +107,7 @@ export default function FindrAuth() {
       <Head>
         <title>Sign In - findr</title>
       </Head>
-      {/* Safe area background for iOS status bar */}
-      <div
-        className="fixed top-0 left-0 right-0 bg-blue-50 z-40"
-        style={{ height: 'env(safe-area-inset-top, 0px)' }}
-        aria-hidden="true"
-      />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-100 flex items-center justify-center p-4">
         <div className="card w-full max-w-md bg-base-100 shadow-2xl">
           <div className="card-body">
             {/* Header */}
