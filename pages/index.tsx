@@ -47,6 +47,10 @@ const CoastalLocationDialog = dynamic(() => import('../components/CoastalLocatio
   ssr: false,
 });
 
+const QuickSetupModal = dynamic(() => import('../components/QuickSetupModal').then(mod => ({ default: mod.QuickSetupModal })), {
+  ssr: false,
+});
+
 
 
 const AstronomyCard = dynamic(() => import('../components/AstronomyCard'), {
@@ -486,13 +490,33 @@ export default function Home() {
   // Add these missing state variables
 const [showHomeDialog, setShowHomeDialog] = useState(false);
 const [showCoastDialog, setShowCoastDialog] = useState(false);
+const [showQuickSetup, setShowQuickSetup] = useState(false);
   
   // Your existing state
   const hasMounted = useHasMounted();
-  
+
 
 
   const homeLocation = preferences.locations?.find((loc) => loc.type === 'home');
+
+  // Show Quick Setup for first-time users
+  useEffect(() => {
+    if (!hasMounted) return;
+    // Check if user has dismissed setup or has already customized preferences
+    const setupDismissed = localStorage.getItem('quickSetupDismissed') === 'true';
+    const hasCustomPrefs = localStorage.getItem('preferences') !== null;
+    const isDefaultLocation = !homeLocation ||
+      (homeLocation.name === 'London, UK' &&
+       Math.abs(homeLocation.lat - 51.5074) < 0.01 &&
+       Math.abs(homeLocation.lon - (-0.1278)) < 0.01);
+
+    // Show setup if: not dismissed, still at default location, and no custom prefs saved
+    if (!setupDismissed && isDefaultLocation && !hasCustomPrefs) {
+      // Delay slightly to let page render first
+      const timer = setTimeout(() => setShowQuickSetup(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasMounted, homeLocation]);
   const coastalLocation = preferences.locations?.find((loc) => loc.type === 'coastal');
   
 // Helper functions to update locations
@@ -1237,6 +1261,18 @@ const popupPayload = buildPopupActivityPayload({
     onClose={() => setPopupActivity(null)}
   />
 )}
+
+{/* Quick Setup Modal for first-time users */}
+<QuickSetupModal
+  open={showQuickSetup}
+  onClose={() => {
+    setShowQuickSetup(false);
+    // Mark as dismissed so it doesn't show again
+    localStorage.setItem('quickSetupDismissed', 'true');
+  }}
+  app="godaisy"
+/>
+
       <Footer />
       <BottomNav />
     </> /* End of fragment */
