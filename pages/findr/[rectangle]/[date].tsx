@@ -1,4 +1,5 @@
 import React from 'react';
+import AppCTA from '../../../components/AppCTA';
 import { GetServerSideProps } from 'next';
 import SEO from '../../../components/SEO';
 
@@ -45,6 +46,11 @@ const RectangleDatePage: React.FC<Props> = ({ rectangle, date, topPrediction, la
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       )}
       <main className="min-h-screen bg-base-200 p-6">
+        {/* App CTA */}
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-ignore */}
+        <AppCTA deepLinkPath={`rectangle/${rectangle}/${date}`} />
+
         <h1 className="text-2xl font-bold">{`Predictions for ${rectangle} — ${date}`}</h1>
 
         {topPrediction ? (

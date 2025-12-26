@@ -1,4 +1,5 @@
 import React from 'react';
+import AppCTA from '../../../components/AppCTA';
 import { GetServerSideProps } from 'next';
 import SEO from '../../../components/SEO';
 
@@ -40,8 +41,12 @@ const LocalLanding: React.FC<Props> = ({ region, headline, summary }) => {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }} />
 
-      <main className="min-h-screen p-6 bg-base-200">
-        <div className="max-w-4xl mx-auto">
+          <main className="min-h-screen p-6 bg-base-200">
+            <div className="max-w-4xl mx-auto">
+              {/* App CTA */}
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore */}
+              <AppCTA deepLinkPath={`local/${encodeURIComponent(region)}`} />
           <h1 className="text-3xl font-bold">{headline || `Fishing around ${region}`}</h1>
           <p className="mt-3 text-base-content/80">{summary || `Quick local guidance for anglers fishing in ${region}. This page prioritises the answer-first content users and search engines prefer.`}</p>
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import AppCTA from '../../../components/AppCTA';
 import Image from 'next/image';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../../components/SEO';
@@ -125,46 +126,11 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
 
       <main className="min-h-screen p-6 bg-base-200">
         <div className="max-w-3xl mx-auto">
-          {/* In-page App CTA: deep-link with App Store / Play fallback */}
-          <div className="mb-4">
-            <div className="card bg-base-100 p-3 shadow-sm">
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                <div>
-                  <div className="font-semibold">Open in the Findr app</div>
-                  <div className="text-sm text-base-content/70">Get a better, native experience — open this species directly in the app.</div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const scheme = `godaisy://species/${slug}`;
-                      const start = Date.now();
-                      if (typeof window !== 'undefined') window.location.href = scheme;
-                      const fallbackIOS = 'https://apps.apple.com/search?term=findr';
-                      const fallbackAndroid = 'https://play.google.com/store/search?q=findr&c=apps';
-                      const t = setTimeout(() => {
-                        // If still here, fallback to App Store search for iOS, Play Store for Android
-                        const isAndroid = /android/i.test(navigator.userAgent || '');
-                        if (Date.now() - start < 1500) {
-                          window.location.href = isAndroid ? fallbackAndroid : fallbackIOS;
-                        }
-                      }, 1200);
-                      setTimeout(() => clearTimeout(t), 3000);
-                    }}
-                    className="btn btn-primary"
-                  >
-                    Open in app
-                  </button>
-
-                  <a href="https://apps.apple.com/search?term=findr" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-                    App Store
-                  </a>
-
-                  <a href="https://play.google.com/store/search?q=findr&c=apps" target="_blank" rel="noopener noreferrer" className="btn btn-outline">
-                    Google Play
-                  </a>
-                </div>
-              </div>
-            </div>
+          {/* App CTA (client) */}
+          <div>
+            {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+            {/* @ts-ignore */}
+            <AppCTA deepLinkPath={`species/${slug}`} />
           </div>
           <div className="w-full h-56 md:h-72 lg:h-96 mb-6 rounded-lg overflow-hidden bg-gradient-to-r from-primary to-secondary">
             {heroImage ? (
