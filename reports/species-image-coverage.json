@@ -1,0 +1,1105 @@
+{
+  "generated_at": "2025-12-26T18:07:18.965Z",
+  "total": 183,
+  "missingSlugCount": 0,
+  "entries": [
+    {
+      "code": "0162F6",
+      "slug": "california-sheephead",
+      "name": "California Sheephead",
+      "image": "/webp/california-sheephead.webp"
+    },
+    {
+      "code": "04BC28",
+      "slug": "gag-grouper",
+      "name": "Gag Grouper",
+      "image": "/webp/gag-grouper.webp"
+    },
+    {
+      "code": "0A52D4",
+      "slug": "sheepshead",
+      "name": "Sheepshead",
+      "image": "/webp/sheepshead.webp"
+    },
+    {
+      "code": "0F173D",
+      "slug": "market-squid",
+      "name": "Market Squid",
+      "image": "/webp/market-squid.webp"
+    },
+    {
+      "code": "17799E",
+      "slug": "mangrove-snapper",
+      "name": "Mangrove Snapper",
+      "image": "/webp/mangrove-snapper.webp"
+    },
+    {
+      "code": "18E76C",
+      "slug": "cubera-snapper",
+      "name": "Cubera Snapper",
+      "image": "/webp/cubera-snapper.webp"
+    },
+    {
+      "code": "2071B4",
+      "slug": "longfin-inshore-squid",
+      "name": "Longfin Inshore Squid",
+      "image": "/webp/longfin-inshore-squid.webp"
+    },
+    {
+      "code": "28A108",
+      "slug": "pacific-sierra-mackerel",
+      "name": "Pacific Sierra Mackerel",
+      "image": "/webp/pacific-sierra-mackerel.webp"
+    },
+    {
+      "code": "2A5836",
+      "slug": "red-drum",
+      "name": "Red Drum (Redfish)",
+      "image": "/webp/red-drum.webp"
+    },
+    {
+      "code": "2BD-BREAM",
+      "slug": "two-banded-seabream",
+      "name": "Two-banded Seabream",
+      "image": "/webp/two-banded-seabream.webp"
+    },
+    {
+      "code": "34CD60",
+      "slug": "almaco-jack",
+      "name": "Almaco Jack (Kahala)",
+      "image": "/webp/almaco-jack.webp"
+    },
+    {
+      "code": "36DCAA",
+      "slug": "vermilion-snapper",
+      "name": "Vermilion Snapper",
+      "image": "/webp/vermilion-snapper.webp"
+    },
+    {
+      "code": "3C8DD6",
+      "slug": "blue-crab",
+      "name": "Blue Crab",
+      "image": "/webp/blue-crab.webp"
+    },
+    {
+      "code": "3DD951",
+      "slug": "scalloped-hammerhead",
+      "name": "Scalloped Hammerhead",
+      "image": "/webp/scalloped-hammerhead.webp"
+    },
+    {
+      "code": "3F8F97",
+      "slug": "permit",
+      "name": "Permit",
+      "image": "/webp/permit.webp"
+    },
+    {
+      "code": "42FD05",
+      "slug": "american-lobster",
+      "name": "American Lobster",
+      "image": "/webp/american-lobster.webp"
+    },
+    {
+      "code": "445F50",
+      "slug": "barred-surfperch",
+      "name": "Barred Surfperch",
+      "image": "/webp/barred-surfperch.webp"
+    },
+    {
+      "code": "469E2C",
+      "slug": "spanish-mackerel",
+      "name": "Spanish Mackerel",
+      "image": "/webp/spanish-mackerel.webp"
+    },
+    {
+      "code": "4B29C0",
+      "slug": "black-grouper",
+      "name": "Black Grouper",
+      "image": "/webp/black-grouper.webp"
+    },
+    {
+      "code": "4F1DB2",
+      "slug": "california-yellowtail",
+      "name": "California Yellowtail",
+      "image": "/webp/california-yellowtail.webp"
+    },
+    {
+      "code": "5726F7",
+      "slug": "pacific-bonito",
+      "name": "Pacific Bonito",
+      "image": "/webp/pacific-bonito.webp"
+    },
+    {
+      "code": "5BEC07",
+      "slug": "redtail-surfperch",
+      "name": "Redtail Surfperch",
+      "image": "/webp/redtail-surfperch.webp"
+    },
+    {
+      "code": "6093F7",
+      "slug": "manybar-goatfish",
+      "name": "Manybar Goatfish",
+      "image": "/webp/manybar-goatfish.webp"
+    },
+    {
+      "code": "61158A",
+      "slug": "common-thresher",
+      "name": "Common Thresher",
+      "image": "/webp/common-thresher.webp"
+    },
+    {
+      "code": "639928",
+      "slug": "california-corbina",
+      "name": "California Corbina",
+      "image": "/webp/california-corbina.webp"
+    },
+    {
+      "code": "654C4E",
+      "slug": "atlantic-tarpon",
+      "name": "Atlantic Tarpon",
+      "image": "/webp/atlantic-tarpon.webp"
+    },
+    {
+      "code": "720F4B",
+      "slug": "pacific-dog-snapper",
+      "name": "Pacific Dog Snapper",
+      "image": "/webp/pacific-dog-snapper.webp"
+    },
+    {
+      "code": "779F9B",
+      "slug": "nassau-grouper",
+      "name": "Nassau Grouper",
+      "image": "/webp/nassau-grouper.webp"
+    },
+    {
+      "code": "7DC45C",
+      "slug": "barred-pargo",
+      "name": "Barred Pargo",
+      "image": "/webp/barred-pargo.webp"
+    },
+    {
+      "code": "7F6482",
+      "slug": "pacific-white-seabass",
+      "name": "Pacific White Seabass (Corvina)",
+      "image": "/webp/pacific-white-seabass.webp"
+    },
+    {
+      "code": "820D6C",
+      "slug": "black-durgon",
+      "name": "Black Durgon (Triggerfish)",
+      "image": "/webp/black-durgon.webp"
+    },
+    {
+      "code": "8CE959",
+      "slug": "bluefin-trevally",
+      "name": "Bluefin Trevally (Omilu)",
+      "image": "/webp/bluefin-trevally.webp"
+    },
+    {
+      "code": "8F5EC6",
+      "slug": "kelp-greenling",
+      "name": "Kelp Greenling",
+      "image": "/webp/kelp-greenling.webp"
+    },
+    {
+      "code": "904D43",
+      "slug": "steelhead",
+      "name": "Steelhead (Sea-run Rainbow Trout)",
+      "image": "/webp/steelhead.webp"
+    },
+    {
+      "code": "91F278",
+      "slug": "yellowtail-snapper",
+      "name": "Yellowtail Snapper",
+      "image": "/webp/yellowtail-snapper.webp"
+    },
+    {
+      "code": "92F10A",
+      "slug": "king-mackerel",
+      "name": "King Mackerel",
+      "image": "/webp/king-mackerel.webp"
+    },
+    {
+      "code": "99D717",
+      "slug": "leopard-grouper",
+      "name": "Leopard Grouper (Cabrilla)",
+      "image": "/webp/leopard-grouper.webp"
+    },
+    {
+      "code": "9A2958",
+      "slug": "blacktip-shark",
+      "name": "Blacktip Shark",
+      "image": "/webp/blacktip-shark.webp"
+    },
+    {
+      "code": "9C1C48",
+      "slug": "blue-shark",
+      "name": "Blue Shark",
+      "image": "/webp/blue-shark.webp"
+    },
+    {
+      "code": "9D744D",
+      "slug": "black-drum",
+      "name": "Black Drum",
+      "image": "/webp/black-drum.webp"
+    },
+    {
+      "code": "9EF164",
+      "slug": "bonefish",
+      "name": "Bonefish",
+      "image": "/webp/bonefish.webp"
+    },
+    {
+      "code": "A3C183",
+      "slug": "tiger-shark",
+      "name": "Tiger Shark",
+      "image": "/webp/tiger-shark.webp"
+    },
+    {
+      "code": "A980BD",
+      "slug": "gulf-grouper",
+      "name": "Gulf Grouper",
+      "image": "/webp/gulf-grouper.webp"
+    },
+    {
+      "code": "AD05CC",
+      "slug": "bull-shark",
+      "name": "Bull Shark",
+      "image": "/webp/bull-shark.webp"
+    },
+    {
+      "code": "ALB",
+      "slug": "albacore-tuna",
+      "name": "Albacore Tuna",
+      "image": "/webp/albacore-tuna.webp"
+    },
+    {
+      "code": "ATS",
+      "slug": "salmon",
+      "name": "Atlantic Salmon",
+      "image": "/webp/atlantic-salmon.webp"
+    },
+    {
+      "code": "B1D960",
+      "slug": "cabezon",
+      "name": "Cabezon",
+      "image": "/webp/cabezon.webp"
+    },
+    {
+      "code": "B39B90",
+      "slug": "scamp-grouper",
+      "name": "Scamp Grouper",
+      "image": "/webp/scamp-grouper.webp"
+    },
+    {
+      "code": "B4F26D",
+      "slug": "pacific-sanddab",
+      "name": "Pacific Sanddab",
+      "image": "/webp/pacific-sanddab.webp"
+    },
+    {
+      "code": "B5A9C2",
+      "slug": "uku",
+      "name": "Uku (Green Jobfish)",
+      "image": "/webp/uku.webp"
+    },
+    {
+      "code": "BA1EE0",
+      "slug": "cero-mackerel",
+      "name": "Cero Mackerel",
+      "image": "/webp/cero-mackerel.webp"
+    },
+    {
+      "code": "BARF",
+      "slug": "barrelfish",
+      "name": "Barrelfish",
+      "image": "/webp/barrelfish.webp"
+    },
+    {
+      "code": "BBR",
+      "slug": "black-bream",
+      "name": "Blackbelly Rosefish",
+      "image": "/webp/black-bream.webp"
+    },
+    {
+      "code": "BDF304",
+      "slug": "spotted-seatrout",
+      "name": "Spotted Seatrout (Speckled Trout)",
+      "image": "/webp/spotted-seatrout.webp"
+    },
+    {
+      "code": "BET",
+      "slug": "bigeye-tuna",
+      "name": "Bigeye Tuna",
+      "image": "/webp/bigeye-tuna.webp"
+    },
+    {
+      "code": "BLL",
+      "slug": "brill",
+      "name": "Brill",
+      "image": "/webp/brill.webp"
+    },
+    {
+      "code": "BLT",
+      "slug": "blueline-tilefish",
+      "name": "Blueline Tilefish",
+      "image": "/webp/blueline-tilefish.webp"
+    },
+    {
+      "code": "BLUEFISH",
+      "slug": "bluefish",
+      "name": "Bluefish",
+      "image": "/webp/bluefish.webp"
+    },
+    {
+      "code": "BOGUE",
+      "slug": "bogue",
+      "name": "Bogue",
+      "image": "/webp/bogue.webp"
+    },
+    {
+      "code": "BONITO",
+      "slug": "bonito",
+      "name": "Atlantic Bonito",
+      "image": "/webp/bonito.webp"
+    },
+    {
+      "code": "BRS",
+      "slug": "black-seabream",
+      "name": "Black Seabream",
+      "image": "/webp/black-seabream.webp"
+    },
+    {
+      "code": "BSP",
+      "slug": "spotted-bass",
+      "name": "Spotted Bass",
+      "image": "/webp/spotted-bass.webp"
+    },
+    {
+      "code": "BSS",
+      "slug": "sea-bass",
+      "name": "Sea Bass",
+      "image": "/webp/sea-bass.webp"
+    },
+    {
+      "code": "BUH",
+      "slug": "bull-huss",
+      "name": "Bull Huss",
+      "image": "/webp/bull-huss.webp"
+    },
+    {
+      "code": "BUM",
+      "slug": "blue-marlin",
+      "name": "Blue Marlin",
+      "image": "/webp/blue-marlin.webp"
+    },
+    {
+      "code": "C1AEC4",
+      "slug": "dungeness-crab",
+      "name": "Dungeness Crab",
+      "image": "/webp/dungeness-crab.webp"
+    },
+    {
+      "code": "C413E5",
+      "slug": "red-grouper",
+      "name": "Red Grouper",
+      "image": "/webp/red-grouper.webp"
+    },
+    {
+      "code": "C4557A",
+      "slug": "tripletail",
+      "name": "Tripletail",
+      "image": "/webp/tripletail.webp"
+    },
+    {
+      "code": "C99402",
+      "slug": "stone-crab",
+      "name": "Stone Crab",
+      "image": "/webp/stone-crab.webp"
+    },
+    {
+      "code": "CDA012",
+      "slug": "common-snook",
+      "name": "Common Snook",
+      "image": "/webp/common-snook.webp"
+    },
+    {
+      "code": "CHI",
+      "slug": "chinook-salmon",
+      "name": "Chinook Salmon",
+      "image": "/webp/chinook-salmon.webp"
+    },
+    {
+      "code": "CHM",
+      "slug": "chum-salmon",
+      "name": "Chum Salmon",
+      "image": "/webp/chum-salmon.webp"
+    },
+    {
+      "code": "CHO",
+      "slug": "coho-salmon",
+      "name": "Coho Salmon",
+      "image": "/webp/coho-salmon.webp"
+    },
+    {
+      "code": "CHUB-MACK",
+      "slug": "chub-mackerel",
+      "name": "Atlantic Chub Mackerel",
+      "image": "/webp/chub-mackerel.webp"
+    },
+    {
+      "code": "CMB",
+      "slug": "painted-comber",
+      "name": "Comber",
+      "image": "/webp/painted-comber.webp"
+    },
+    {
+      "code": "CMP",
+      "slug": "painted-comber",
+      "name": "Painted Comber",
+      "image": "/webp/painted-comber.webp"
+    },
+    {
+      "code": "COB",
+      "slug": "cobia",
+      "name": "Cobia",
+      "image": "/webp/cobia.webp"
+    },
+    {
+      "code": "COD",
+      "slug": "cod",
+      "name": "Atlantic Cod",
+      "image": "/webp/cod.webp"
+    },
+    {
+      "code": "CON",
+      "slug": "conger-eel",
+      "name": "Conger Eel",
+      "image": "/webp/conger-eel.webp"
+    },
+    {
+      "code": "CSH",
+      "slug": "common-smoothhound",
+      "name": "Common Smoothhound",
+      "image": "/webp/common-smoothhound.webp"
+    },
+    {
+      "code": "CUT",
+      "slug": "cuttlefish",
+      "name": "Common Cuttlefish",
+      "image": "/webp/cuttlefish.webp"
+    },
+    {
+      "code": "D1A073",
+      "slug": "goliath-grouper",
+      "name": "Goliath Grouper",
+      "image": "/webp/goliath-grouper.webp"
+    },
+    {
+      "code": "D2BA30",
+      "slug": "giant-trevally",
+      "name": "Giant Trevally (Ulua)",
+      "image": "/webp/giant-trevally.webp"
+    },
+    {
+      "code": "D31D58",
+      "slug": "hogfish",
+      "name": "Hogfish",
+      "image": "/webp/hogfish.webp"
+    },
+    {
+      "code": "D3BE4A",
+      "slug": "lingcod",
+      "name": "Lingcod",
+      "image": "/webp/lingcod.webp"
+    },
+    {
+      "code": "DAB",
+      "slug": "dab",
+      "name": "Dab",
+      "image": "/webp/dab.webp"
+    },
+    {
+      "code": "DAFB44",
+      "slug": "jack-crevalle",
+      "name": "Jack Crevalle",
+      "image": "/webp/jack-crevalle.webp"
+    },
+    {
+      "code": "DD85DD",
+      "slug": "florida-pompano",
+      "name": "Florida Pompano",
+      "image": "/webp/florida-pompano.webp"
+    },
+    {
+      "code": "DEX",
+      "slug": "dentex",
+      "name": "Dentex",
+      "image": "/webp/dentex.webp"
+    },
+    {
+      "code": "DOL",
+      "slug": "mahi-mahi",
+      "name": "Mahi-mahi (Dolphinfish)",
+      "image": "/webp/mahi-mahi.webp"
+    },
+    {
+      "code": "DOV",
+      "slug": "pacific-dover-sole",
+      "name": "Pacific Dover Sole",
+      "image": "/webp/pacific-dover-sole.webp"
+    },
+    {
+      "code": "DUSK-GROUP",
+      "slug": "dusky-grouper",
+      "name": "Dusky Grouper",
+      "image": "/webp/dusky-grouper.webp"
+    },
+    {
+      "code": "E0E710",
+      "slug": "mutton-snapper",
+      "name": "Mutton Snapper",
+      "image": "/webp/mutton-snapper.webp"
+    },
+    {
+      "code": "E306B9",
+      "slug": "silver-hake",
+      "name": "Silver Hake (Atlantic Whiting)",
+      "image": "/webp/silver-hake.webp"
+    },
+    {
+      "code": "E4725F",
+      "slug": "winter-flounder",
+      "name": "Winter Flounder",
+      "image": "/webp/winter-flounder.webp"
+    },
+    {
+      "code": "EURO-CUDA",
+      "slug": "barracuda",
+      "name": "European Barracuda",
+      "image": "/webp/barracuda.webp"
+    },
+    {
+      "code": "F5FC63",
+      "slug": "white-marlin",
+      "name": "White Marlin",
+      "image": "/webp/white-marlin.webp"
+    },
+    {
+      "code": "FD782D",
+      "slug": "blackfin-tuna",
+      "name": "Blackfin Tuna",
+      "image": "/webp/blackfin-tuna.webp"
+    },
+    {
+      "code": "FGM",
+      "slug": "grey-mullet",
+      "name": "Grey Mullet",
+      "image": "/webp/grey-mullet.webp"
+    },
+    {
+      "code": "FLE",
+      "slug": "flounder",
+      "name": "Flounder",
+      "image": "/webp/flounder.webp"
+    },
+    {
+      "code": "FLK",
+      "slug": "summer-flounder",
+      "name": "Summer Flounder (Fluke)",
+      "image": "/webp/summer-flounder.webp"
+    },
+    {
+      "code": "GAJ",
+      "slug": "greater-amberjack",
+      "name": "Greater Amberjack",
+      "image": "/webp/greater-amberjack.webp"
+    },
+    {
+      "code": "GAR",
+      "slug": "garfish",
+      "name": "Garfish (Needlefish)",
+      "image": "/webp/garfish.webp"
+    },
+    {
+      "code": "GGR",
+      "slug": "grey-gurnard",
+      "name": "Grey Gurnard",
+      "image": "/webp/grey-gurnard.webp"
+    },
+    {
+      "code": "GTF",
+      "slug": "golden-tilefish",
+      "name": "Golden Tilefish",
+      "image": "/webp/golden-tilefish.webp"
+    },
+    {
+      "code": "GUG",
+      "slug": "tub-gurnard",
+      "name": "Tub Gurnard",
+      "image": "/webp/tub-gurnard.webp"
+    },
+    {
+      "code": "GUR",
+      "slug": "red-gurnard",
+      "name": "Red Gurnard",
+      "image": "/webp/red-gurnard.webp"
+    },
+    {
+      "code": "HAD",
+      "slug": "haddock",
+      "name": "Haddock",
+      "image": "/webp/haddock.webp"
+    },
+    {
+      "code": "HAL",
+      "slug": "atlantic-halibut",
+      "name": "Atlantic Halibut",
+      "image": "/webp/atlantic-halibut.webp"
+    },
+    {
+      "code": "HEP",
+      "slug": "pacific-herring",
+      "name": "Pacific Herring",
+      "image": "/webp/pacific-herring.webp"
+    },
+    {
+      "code": "HER",
+      "slug": "herring",
+      "name": "Atlantic Herring",
+      "image": "/webp/herring.webp"
+    },
+    {
+      "code": "HOM",
+      "slug": "horse-mackerel",
+      "name": "Horse Mackerel",
+      "image": "/webp/horse-mackerel.webp"
+    },
+    {
+      "code": "JOD",
+      "slug": "john-dory",
+      "name": "John Dory",
+      "image": "/webp/john-dory.webp"
+    },
+    {
+      "code": "LDB",
+      "slug": "megrim",
+      "name": "Megrim",
+      "image": "/webp/megrim.webp"
+    },
+    {
+      "code": "LEERFISH",
+      "slug": "leerfish",
+      "name": "Leerfish",
+      "image": "/webp/leerfish.webp"
+    },
+    {
+      "code": "LIN",
+      "slug": "ling",
+      "name": "Common Ling",
+      "image": "/webp/ling.webp"
+    },
+    {
+      "code": "LTA",
+      "slug": "little-tunny",
+      "name": "Little Tunny",
+      "image": "/webp/little-tunny.webp"
+    },
+    {
+      "code": "MAC",
+      "slug": "mackerel",
+      "name": "Mackerel",
+      "image": "/webp/mackerel.webp"
+    },
+    {
+      "code": "MEAGRE",
+      "slug": "meagre",
+      "name": "Meagre",
+      "image": "/webp/meagre.webp"
+    },
+    {
+      "code": "MED-SCAD",
+      "slug": "mediterranean-scad",
+      "name": "Mediterranean Scad",
+      "image": "/webp/horse-mackerel.webp"
+    },
+    {
+      "code": "MEN",
+      "slug": "atlantic-menhaden",
+      "name": "Atlantic Menhaden",
+      "image": "/webp/atlantic-menhaden.webp"
+    },
+    {
+      "code": "MLS",
+      "slug": "striped-marlin",
+      "name": "Striped Marlin",
+      "image": "/webp/striped-marlin.webp"
+    },
+    {
+      "code": "MUG",
+      "slug": "chelon-labrosus",
+      "name": "Thicklip Grey Mullet",
+      "image": "/webp/thicklip-grey-mullet-chelon-labrosus.webp"
+    },
+    {
+      "code": "MUL",
+      "slug": "red-mullet",
+      "name": "Red Mullet",
+      "image": "/webp/red-mullet.webp"
+    },
+    {
+      "code": "MULA",
+      "slug": "chelon-auratus",
+      "name": "Golden grey mullet",
+      "image": "/webp/chelon-auratus.webp"
+    },
+    {
+      "code": "MULR",
+      "slug": "chelon-ramada",
+      "name": "Thin-lipped grey mullet",
+      "image": "/webp/chelon-ramada.webp"
+    },
+    {
+      "code": "OCT",
+      "slug": "common-octopus",
+      "name": "Common Octopus",
+      "image": "/webp/common-octopus.webp"
+    },
+    {
+      "code": "PANDORA",
+      "slug": "common-pandora",
+      "name": "Common Pandora",
+      "image": "/webp/common-pandora.webp"
+    },
+    {
+      "code": "PAR",
+      "slug": "parrotfish",
+      "name": "Parrotfish",
+      "image": "/webp/parrotfish.webp"
+    },
+    {
+      "code": "WEEV",
+      "slug": "lesser-weever",
+      "name": "Lesser Weever",
+      "image": "/webp/lesser-weever.webp"
+    },
+    {
+      "code": "PHS",
+      "slug": "pacific-halibut",
+      "name": "Pacific Halibut",
+      "image": "/webp/pacific-halibut.webp"
+    },
+    {
+      "code": "PIC",
+      "slug": "picarel",
+      "name": "Picarel",
+      "image": "/webp/picarel.webp"
+    },
+    {
+      "code": "PIL",
+      "slug": "sardine",
+      "name": "Sardine",
+      "image": "/webp/sardine.webp"
+    },
+    {
+      "code": "PLE",
+      "slug": "plaice",
+      "name": "Plaice",
+      "image": "/webp/plaice.webp"
+    },
+    {
+      "code": "PNK",
+      "slug": "pink-salmon",
+      "name": "Pink Salmon",
+      "image": "/webp/pink-salmon.webp"
+    },
+    {
+      "code": "POK",
+      "slug": "pollock",
+      "name": "Atlantic Pollock (Saithe)",
+      "image": "/webp/pollock.webp"
+    },
+    {
+      "code": "POL",
+      "slug": "pollack",
+      "name": "Pollack",
+      "image": "/webp/pollack.webp"
+    },
+    {
+      "code": "PTR",
+      "slug": "petrale-sole",
+      "name": "Petrale Sole",
+      "image": "/webp/petrale-sole.webp"
+    },
+    {
+      "code": "QSN",
+      "slug": "queen-snapper",
+      "name": "Queen Snapper",
+      "image": "/webp/queen-snapper.webp"
+    },
+    {
+      "code": "RED-PORGY",
+      "slug": "red-porgy",
+      "name": "Red Porgy",
+      "image": "/webp/red-porgy.webp"
+    },
+    {
+      "code": "RED-SCORP",
+      "slug": "red-scorpionfish",
+      "name": "Red Scorpionfish",
+      "image": "/webp/red-scorpionfish.webp"
+    },
+    {
+      "code": "RJC",
+      "slug": "thornback-ray",
+      "name": "Thornback Ray",
+      "image": "/webp/thornback-ray.webp"
+    },
+    {
+      "code": "RJM",
+      "slug": "spotted-ray",
+      "name": "Spotted Ray",
+      "image": "/webp/spotted-ray.webp"
+    },
+    {
+      "code": "RME",
+      "slug": "small-eyed-ray",
+      "name": "Small-eyed Ray",
+      "image": "/webp/small-eyed-ray.webp"
+    },
+    {
+      "code": "ROO",
+      "slug": "roosterfish",
+      "name": "Roosterfish",
+      "image": "/webp/roosterfish.webp"
+    },
+    {
+      "code": "RUN",
+      "slug": "undulate-ray",
+      "name": "Undulate Ray",
+      "image": "/webp/undulate-ray.webp"
+    },
+    {
+      "code": "SADD-BREAM",
+      "slug": "saddled-seabream",
+      "name": "Saddled Seabream",
+      "image": "/webp/saddled-seabream.webp"
+    },
+    {
+      "code": "SAI",
+      "slug": "saithe",
+      "name": "Saithe",
+      "image": "/webp/saithe.webp"
+    },
+    {
+      "code": "SAL",
+      "slug": "salema",
+      "name": "Salema (Saupe)",
+      "image": "/webp/salema.webp"
+    },
+    {
+      "code": "SAN",
+      "slug": "sand-eel",
+      "name": "Sand Eel",
+      "image": "/webp/sand-eel.webp"
+    },
+    {
+      "code": "SBA",
+      "slug": "gilthead-bream",
+      "name": "Sea Bream (Dorada)",
+      "image": "/webp/gilthead-bream.webp"
+    },
+    {
+      "code": "SBR",
+      "slug": "red-seabream",
+      "name": "Red Seabream",
+      "image": "/webp/red-seabream.webp"
+    },
+    {
+      "code": "SCY",
+      "slug": "small-spotted-catshark",
+      "name": "Small-spotted Catshark",
+      "image": "/webp/small-spotted-catshark.webp"
+    },
+    {
+      "code": "SKJ",
+      "slug": "skipjack-tuna",
+      "name": "Skipjack Tuna",
+      "image": "/webp/skipjack-tuna.webp"
+    },
+    {
+      "code": "SMA",
+      "slug": "shortfin-mako",
+      "name": "Shortfin Mako",
+      "image": "/webp/shortfin-mako.webp"
+    },
+    {
+      "code": "SNG",
+      "slug": "snowy-grouper",
+      "name": "Snowy Grouper",
+      "image": "/webp/snowy-grouper.webp"
+    },
+    {
+      "code": "SNR",
+      "slug": "red-snapper",
+      "name": "Red Snapper",
+      "image": "/webp/red-snapper.webp"
+    },
+    {
+      "code": "SOK",
+      "slug": "sockeye-salmon",
+      "name": "Sockeye Salmon",
+      "image": "/webp/sockeye-salmon.webp"
+    },
+    {
+      "code": "SOL",
+      "slug": "dover-sole",
+      "name": "Dover Sole",
+      "image": "/webp/dover-sole.webp"
+    },
+    {
+      "code": "SPR",
+      "slug": "sprat",
+      "name": "Sprat",
+      "image": "/webp/sprat.webp"
+    },
+    {
+      "code": "SQC",
+      "slug": "squid",
+      "name": "Common Squid",
+      "image": "/webp/squid.webp"
+    },
+    {
+      "code": "SSH",
+      "slug": "starry-smoothhound",
+      "name": "Starry Smoothhound",
+      "image": "/webp/starry-smoothhound.webp"
+    },
+    {
+      "code": "STB",
+      "slug": "striped-bass",
+      "name": "Striped Bass",
+      "image": "/webp/striped-bass.webp"
+    },
+    {
+      "code": "SWO",
+      "slug": "swordfish",
+      "name": "Swordfish",
+      "image": "/webp/swordfish.webp"
+    },
+    {
+      "code": "TRS",
+      "slug": "sea-trout",
+      "name": "Sea Trout",
+      "image": "/webp/sea-trout.webp"
+    },
+    {
+      "code": "TUR",
+      "slug": "turbot",
+      "name": "Turbot (Small)",
+      "image": "/webp/turbot.webp"
+    },
+    {
+      "code": "WAH",
+      "slug": "wahoo",
+      "name": "Wahoo",
+      "image": "/webp/wahoo.webp"
+    },
+    {
+      "code": "WEE",
+      "slug": "greater-weever",
+      "name": "Greater Weever",
+      "image": "/webp/greater-weever.webp"
+    },
+    {
+      "code": "WEN",
+      "slug": "wenchman",
+      "name": "Wenchman",
+      "image": "/webp/wenchman.webp"
+    },
+    {
+      "code": "WHG",
+      "slug": "whiting",
+      "name": "Whiting",
+      "image": "/webp/whiting.webp"
+    },
+    {
+      "code": "WHIT-GROUP",
+      "slug": "white-grouper",
+      "name": "White Grouper",
+      "image": "/webp/white-grouper.webp"
+    },
+    {
+      "code": "WHT-BREAM",
+      "slug": "white-seabream",
+      "name": "White Seabream",
+      "image": "/webp/white-seabream.webp"
+    },
+    {
+      "code": "WRA",
+      "slug": "wrasse",
+      "name": "Wrasse (various)",
+      "image": "/webp/wrasse.webp"
+    },
+    {
+      "code": "WRB",
+      "slug": "ballan-wrasse",
+      "name": "Ballan Wrasse",
+      "image": "/webp/ballan-wrasse.webp"
+    },
+    {
+      "code": "WRC",
+      "slug": "cuckoo-wrasse",
+      "name": "Cuckoo Wrasse",
+      "image": "/webp/cuckoo-wrasse.webp"
+    },
+    {
+      "code": "WRG",
+      "slug": "goldsinny-wrasse",
+      "name": "Goldsinny Wrasse",
+      "image": "/webp/goldsinny-wrasse.webp"
+    },
+    {
+      "code": "WRK",
+      "slug": "corkwing-wrasse",
+      "name": "Corkwing Wrasse",
+      "image": "/webp/corkwing-wrasse.webp"
+    },
+    {
+      "code": "WRK2",
+      "slug": "wreckfish",
+      "name": "Wreckfish",
+      "image": "/webp/wreckfish.webp"
+    },
+    {
+      "code": "WRO",
+      "slug": "rock-cook",
+      "name": "Rock Cook",
+      "image": "/webp/rock-cook.webp"
+    },
+    {
+      "code": "WSG",
+      "slug": "warsaw-grouper",
+      "name": "Warsaw Grouper",
+      "image": "/webp/warsaw-grouper.webp"
+    },
+    {
+      "code": "YEG",
+      "slug": "yellowedge-grouper",
+      "name": "Yellowedge Grouper",
+      "image": "/webp/yellowedge-grouper.webp"
+    },
+    {
+      "code": "YEL-CUDA",
+      "slug": "yellowmouth-barracuda",
+      "name": "Yellowmouth Barracuda",
+      "image": "/webp/yellowmouth-barracuda.webp"
+    },
+    {
+      "code": "YFT",
+      "slug": "yellowfin-tuna",
+      "name": "Yellowfin Tuna",
+      "image": "/webp/yellowfin-tuna.webp"
+    }
+  ]
+}
