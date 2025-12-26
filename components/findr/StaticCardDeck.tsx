@@ -23,7 +23,6 @@ import {
   ListChecks,
   Sparkles,
   X,
-  Info,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -179,17 +178,6 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
                   <Heart size={20} className="text-gray-700 stroke-2" />
                 )}
               </button>
-              {onShowSpeciesInfo && (
-                <button
-                  type="button"
-                  className="absolute bottom-2 right-2 btn btn-circle btn-ghost btn-lg"
-                  onClick={() => onShowSpeciesInfo(card)}
-                  aria-label="Show info"
-                  style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)', zIndex: 3 }}
-                >
-                  <Info size={32} />
-                </button>
-              )}
             </div>
           ) : (
             <>
@@ -211,19 +199,6 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
                   )}
                 </button>
               </div>
-              {onShowSpeciesInfo && (
-                <div className="flex justify-end mt-2" style={{ position: 'relative', zIndex: 2 }}>
-                  <button
-                    type="button"
-                    className="btn btn-circle btn-ghost btn-sm"
-                    onClick={() => onShowSpeciesInfo(card)}
-                    aria-label="Show info"
-                    style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.04)', zIndex: 2, position: 'relative' }}
-                  >
-                    <Info size={24} />
-                  </button>
-                </div>
-              )}
             </>
           )}
 
