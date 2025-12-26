@@ -672,6 +672,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showAllSpecies, setShowAllSpecies] = useState(false);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [planCard, setPlanCard] = useState<CardData | null>(null);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const speciesModalOpen = Boolean(speciesModalCard);
   const swipeCardRef = useRef<SwipeCardHandle | null>(null);
@@ -921,11 +922,20 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   );
 
   const handleOpenPlanSheet = useCallback(() => {
+    // For animated deck - use the current card from queue
+    setPlanCard(currentCard);
+    setPlanSheetOpen(true);
+  }, [currentCard]);
+
+  const handlePlanSession = useCallback((card: CardData) => {
+    // For static deck - card is passed from the component
+    setPlanCard(card);
     setPlanSheetOpen(true);
   }, []);
 
   const handleClosePlanSheet = useCallback(() => {
     setPlanSheetOpen(false);
+    setPlanCard(null);
   }, []);
 
   const handleSavePlan = useCallback((plan: PlannedActivity) => {
@@ -1257,6 +1267,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                         tideExtremes={tideExtremes}
                         onToggleFavorite={handleToggleFavorite}
                         onShowSpeciesInfo={handleShowSpeciesInfo}
+                        onPlanSession={handlePlanSession}
                       />
                     )}
                   </>
@@ -1635,22 +1646,22 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       />
 
       {/* Plan Session Sheet */}
-      {currentCard && (
+      {planCard && (
         <PlanSessionSheet
           open={planSheetOpen}
           onClose={handleClosePlanSheet}
           onSave={handleSavePlan}
           spotName={activeOption?.region || 'Unknown location'}
           rectangleCode={activeRectangle || ''}
-          speciesName={currentCard.commonName}
-          speciesCode={currentCard.speciesCode || currentCard.id}
-          confidence={currentCard.confidence ?? undefined}
+          speciesName={planCard.commonName}
+          speciesCode={planCard.speciesCode || planCard.id}
+          confidence={planCard.confidence ?? undefined}
           tideExtremes={tideExtremes}
-          bestTimes={currentCard.bestTimes}
-          recommendedBaits={currentCard.recommendedBaits}
-          baitSuggestions={currentCard.baitSuggestions}
-          moonPhase={currentCard.moonPhase}
-          moonIllumination={currentCard.moonIllumination}
+          bestTimes={planCard.bestTimes}
+          recommendedBaits={planCard.recommendedBaits}
+          baitSuggestions={planCard.baitSuggestions}
+          moonPhase={planCard.moonPhase}
+          moonIllumination={planCard.moonIllumination}
         />
       )}
 

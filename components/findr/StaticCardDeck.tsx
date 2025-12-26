@@ -28,6 +28,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  CalendarPlus,
 } from 'lucide-react';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../translation/TranslatedFishCard';
 import { GuildBadge } from './GuildBadge';
@@ -213,6 +214,7 @@ interface StaticCardDeckProps {
   tideExtremes?: TideExtreme[] | null;
   onToggleFavorite: (card: CardData) => void;
   onShowSpeciesInfo: (card: CardData) => void;
+  onPlanSession?: (card: CardData) => void;
 }
 
 /**
@@ -228,6 +230,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
   tideExtremes,
   onToggleFavorite,
   onShowSpeciesInfo,
+  onPlanSession,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -256,6 +259,12 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
   const handleLike = () => {
     if (currentCard) {
       onToggleFavorite(currentCard);
+    }
+  };
+
+  const handlePlan = () => {
+    if (currentCard && onPlanSession) {
+      onPlanSession(currentCard);
     }
   };
 
@@ -334,6 +343,17 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
           <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
           <TranslatedText text={isFavorite ? 'Unfave' : 'Fave'} />
         </button>
+        {onPlanSession && (
+          <button
+            type="button"
+            className="btn btn-secondary gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base transition-transform hover:scale-105"
+            onClick={handlePlan}
+            aria-label="Plan a fishing session"
+          >
+            <CalendarPlus size={18} aria-hidden="true" />
+            <TranslatedText text="Plan" />
+          </button>
+        )}
       </div>
     </div>
   );
