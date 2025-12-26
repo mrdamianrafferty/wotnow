@@ -1146,12 +1146,57 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       })
     : null;
 
+  // JSON-LD FAQ structured data to help AI and search engines surface concise answers
+  const findrFaq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What's biting today in my area?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Findr shows the top species predicted to be active for your selected fishing area and date. Open the Findr deck to see bite scores, confidence, and quick bait & timing tips."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the bite score calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Bite scores combine environmental signals (tides, light, temperature, lunar phase, weather) with species-specific models and historical catch data to indicate likely activity."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I share a prediction with others?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — use the Share action on a card to generate a shareable link or use your device's native share dialog to send predictions to friends."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How fresh are the predictions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Predictions include a data freshness indicator; when live data is available we surface cache timestamps and live updates to prioritise the freshest results."
+        }
+      }
+    ]
+  };
+
   return (
     <>
       <SEO
         title="Findr — Catch of the Day | Fishing Predictions UK & Europe"
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
+      />
+      {/* JSON-LD FAQ for better AI/search answers */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(findrFaq) }}
       />
       {/* Network status indicator - outside main to avoid CSS containment issues */}
       <NetworkStatusIndicator position="top" />
