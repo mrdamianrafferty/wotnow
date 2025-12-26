@@ -35,10 +35,10 @@ echo "Building $FLAVOR ($BUILD_TYPE)"
 echo "=========================================="
 
 # Select the correct capacitor config
-CONFIG_FILE="capacitor.config.ts"
+# IMPORTANT: Each app has its own config file to prevent cross-contamination
 case $FLAVOR in
     findr)
-        CONFIG_FILE="capacitor.config.ts"  # Default is Findr
+        CONFIG_FILE="capacitor.config.findr.ts"
         ;;
     godaisy)
         CONFIG_FILE="capacitor.config.godaisy.ts"
@@ -50,18 +50,24 @@ esac
 
 echo "Using Capacitor config: $CONFIG_FILE"
 
-# Sync Capacitor with the correct config (using temp symlink approach)
+# Sync Capacitor with the correct config
+# Capacitor CLI always reads capacitor.config.ts, so we swap it temporarily
 echo "Syncing Capacitor..."
 
 # Backup current config and use the flavor-specific one
-if [ "$CONFIG_FILE" != "capacitor.config.ts" ]; then
-    cp capacitor.config.ts capacitor.config.ts.backup
-    cp "$CONFIG_FILE" capacitor.config.ts
-    npx cap sync android
-    mv capacitor.config.ts.backup capacitor.config.ts
-else
-    npx cap sync android
-fi
+cp capacitor.config.ts capacitor.config.ts.backup
+cp "$CONFIG_FILE" capacitor.config.ts
+echo "Swapped capacitor.config.ts with $CONFIG_FILE"
+
+# Verify the swap worked
+echo "Config now points to:"
+grep -E "(appId|appName|url)" capacitor.config.ts | head -3
+
+npx cap sync android
+
+# Restore original config
+mv capacitor.config.ts.backup capacitor.config.ts
+echo "Restored original capacitor.config.ts"
 
 # Build the specific flavor
 cd android
