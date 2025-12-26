@@ -446,9 +446,9 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
   const isFavorite = favoritesSet.has(getFavouriteKey(currentCard));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1 sm:space-y-2">
       {/* Card counter - fixed height to match skeleton */}
-      <div className="flex items-center justify-between px-2 h-[32px]">
+      <div className="flex items-center justify-between px-2 h-[24px]">
         <span className="text-sm text-base-content/60">
           {currentIndex + 1} / {cards.length}
         </span>
@@ -490,7 +490,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
 
       {/* Action buttons - compact on mobile */}
       <div
-        className="flex items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-4"
+        className="flex items-center justify-center gap-2 sm:gap-3 pt-1 sm:pt-2"
         role="group"
         aria-label="Card actions"
       >

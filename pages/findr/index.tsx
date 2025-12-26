@@ -1159,8 +1159,8 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       <FindrNavigation />
       <main className="min-h-screen bg-base-200 pb-16">
 
-        {/* Content container - tighter spacing on mobile */}
-        <div className="sm:mx-auto pt-1 sm:pt-4 lg:max-w-6xl px-0">
+        {/* Content container - minimal spacing on mobile */}
+        <div className="sm:mx-auto pt-0 sm:pt-2 lg:max-w-6xl px-0">
           {/* Success message */}
           {showSuccessMessage && (
             <div className="alert alert-success mb-2 mx-2 sm:mx-4">
@@ -1172,7 +1172,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
             </div>
           )}
 
-          <section className="space-y-1 sm:space-y-4 px-0 sm:px-4" aria-labelledby="main-heading">
+          <section className="space-y-0 sm:space-y-2 px-0 sm:px-4" aria-labelledby="main-heading">
             {/* Compact header - hidden on mobile when rectangle selected, visible otherwise */}
             {(!activeRectangle || !isHydrated) && (
               <div className="px-3 sm:px-0 py-1">
@@ -1201,12 +1201,12 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
             )}
 
               {/* Card deck area - compact on mobile to ensure bottom nav is visible */}
-              <div className="space-y-2 sm:space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout' }}>
+              <div className="space-y-1 sm:space-y-2 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout' }}>
                 {(!isHydrated || loading || (!activeRectangle && !error)) ? (
                   /* Skeleton state - shown during hydration, loading, or no rectangle */
                   <>
                     {/* Card counter placeholder */}
-                    <div className="flex items-center justify-between px-2 h-[28px]">
+                    <div className="flex items-center justify-between px-2 h-[24px]">
                       <div className="skeleton h-3 w-14"></div>
                       <div className="flex gap-2">
                         <div className="skeleton h-7 w-7 rounded-full"></div>
@@ -1218,7 +1218,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                       <SkeletonCard />
                     </div>
                     {/* Action buttons placeholder - compact */}
-                    <div className="flex items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-4">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 pt-1 sm:pt-2">
                       <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
                       <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
                       <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
