@@ -27,6 +27,7 @@ interface SpeciesDetails {
   species_code: string;
   name_en: string;
   scientific_name?: string | null;
+  image_url?: string | null;
   fun_fact?: string | null;
   aliases?: string[] | null;
   name_es?: string | null;
@@ -100,9 +101,11 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
     'image': undefined
   } : null;
 
-  // Determine hero image from SPECIES_IMAGE_MAP using species_code or slug
+  // Determine hero image: prefer DB `image_url`, fall back to SPECIES_IMAGE_MAP using species_code or slug
   const resolveHeroImage = () => {
     if (!species) return null;
+    const dbImg = (species as any).image_url;
+    if (dbImg && typeof dbImg === 'string' && dbImg.trim()) return dbImg.trim();
     const code = (species as any).species_code;
     if (code && SPECIES_IMAGE_MAP[code]) return SPECIES_IMAGE_MAP[code].image;
     if (code && typeof code === 'string' && SPECIES_IMAGE_MAP[code.toUpperCase()]) return SPECIES_IMAGE_MAP[code.toUpperCase()].image;
@@ -114,7 +117,8 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
   const heroImage = resolveHeroImage();
   if (pageJsonLd && heroImage) {
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu';
-    (pageJsonLd as any).image = site.replace(/\/$/, '') + heroImage;
+    const isAbsolute = /^https?:\/\//i.test(heroImage);
+    (pageJsonLd as any).image = isAbsolute ? heroImage : site.replace(/\/$/, '') + heroImage;
   }
 
   return (
@@ -217,7 +221,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     const { data: speciesData, error: speciesError } = await supabase
       .from('species')
       .select(
-        `id, species_code, name_en, name_es, name_fr, name_de, name_it, name_pt, aliases, scientific_name, inaturalist_url, advice, eating_quality, conservation_status, fun_fact, min_depth, max_depth, guild, species_badges, recommended_baits, temp_opt_c, seasonality_profile, is_seasonal, peak_months, good_months, possible_months`
+        `id, species_code, name_en, name_es, name_fr, name_de, name_it, name_pt, aliases, scientific_name, image_url, inaturalist_url, advice, eating_quality, conservation_status, fun_fact, min_depth, max_depth, guild, species_badges, recommended_baits, temp_opt_c, seasonality_profile, is_seasonal, peak_months, good_months, possible_months`
       )
       .eq('slug', slug)
       .maybeSingle();
