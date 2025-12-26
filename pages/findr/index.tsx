@@ -1169,6 +1169,30 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       },
       {
         "@type": "Question",
+        "name": "What bait should I use for a species?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each species card lists recommended baits and presentation tips. Check the species card for targeted bait suggestions and local advice for your selected area."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "When are the best tide times to fish?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Findr highlights tide timing advice on each card. Good fishing often coincides with tide change windows; use the tide tips and local peak windows provided for best timing."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the confidence percentage mean?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Confidence expresses how strongly the model expects activity: roughly, 80%+ is high confidence, 60–79% moderate, below 60% lower likelihood. Use it together with the bite score and local conditions."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "Can I share a prediction with others?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -1186,10 +1210,55 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     ]
   };
 
+  // HowTo schema: guide users to plan a session using Findr
+  const findrHowTo = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to plan a fishing session with Findr",
+    "description": "Step-by-step guide to pick an area, view predictions, check bite scores and plan your session.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "position": 1,
+        "name": "Select your fishing area",
+        "text": "Choose a coastal rectangle or saved location in Findr to load local predictions."
+      },
+      {
+        "@type": "HowToStep",
+        "position": 2,
+        "name": "Check the Catch of the Day",
+        "text": "Open the top prediction card to see the species, bite score, confidence and quick bait tips."
+      },
+      {
+        "@type": "HowToStep",
+        "position": 3,
+        "name": "Review timing and tide advice",
+        "text": "Consult the tide tips, best times and environmental indicators to pick the best window."
+      },
+      {
+        "@type": "HowToStep",
+        "position": 4,
+        "name": "Plan or share",
+        "text": "Use the Plan action to save a session or Share to send a prediction link to friends."
+      }
+    ]
+  };
+
+  // Speakable schema: highlight content suitable for voice readouts
+  const findrSpeakable = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "url": "https://fishfindr.eu/findr",
+    "speakable": {
+      "@type": "SpeakableSpecification",
+      "cssSelector": ["#main-heading", ".card-title", ".species-quick-answer"]
+    }
+  };
+
   return (
     <>
       <SEO
-        title="Findr — Catch of the Day | Fishing Predictions UK & Europe"
+        title="Fish Findr — Catch of the Day | Fishing Predictions UK & Europe"
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
       />
@@ -1197,6 +1266,14 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(findrFaq) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(findrHowTo) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(findrSpeakable) }}
       />
       {/* Network status indicator - outside main to avoid CSS containment issues */}
       <NetworkStatusIndicator position="top" />
