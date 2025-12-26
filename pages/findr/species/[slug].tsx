@@ -25,6 +25,12 @@ interface SpeciesDetails {
   name_en: string;
   scientific_name?: string | null;
   fun_fact?: string | null;
+  aliases?: string[] | null;
+  name_es?: string | null;
+  name_fr?: string | null;
+  name_de?: string | null;
+  name_it?: string | null;
+  name_pt?: string | null;
   advice?: AdviceData | null;
   techniques?: TechniqueItem[];
   bait?: BaitItem[];
@@ -64,16 +70,46 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
       }
     : null;
 
+  // gather alternate names for SEO (aliases + foreign names)
+  const alternateNames: string[] = [];
+  if (species) {
+    if (Array.isArray(species.aliases)) {
+      species.aliases.forEach((a) => { if (a && a.trim()) alternateNames.push(a.trim()); });
+    }
+    ['name_es','name_fr','name_de','name_it','name_pt'].forEach((k) => {
+      const val = (species as any)[k];
+      if (val && typeof val === 'string' && val.trim() && val.trim().toLowerCase() !== species.name_en.toLowerCase()) {
+        alternateNames.push(val.trim());
+      }
+    });
+  }
+
+  const pageJsonLd = species ? {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    'name': species.name_en,
+    'alternateName': alternateNames.length ? alternateNames : undefined,
+    'mainEntity': {
+      '@type': 'Thing',
+      'name': species.name_en,
+      'description': species.fun_fact || undefined,
+    }
+  } : null;
+
   return (
     <>
       <SEO title={title} description={species ? `Quick fishing advice for ${species.name_en}. Where to fish, when, and what bait to use.` : 'Species information on Findr.'} url={`https://fishfindr.eu/findr/species/${slug}`} />
 
       {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
+      {pageJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />}
 
       <main className="min-h-screen p-6 bg-base-200">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold">{species ? species.name_en : 'Species'}</h1>
           {species?.scientific_name && <p className="italic text-sm">{species.scientific_name}</p>}
+          {alternateNames.length > 0 && (
+            <p className="mt-2 text-sm text-base-content/70">Also known as: {alternateNames.join(', ')}</p>
+          )}
 
           <section className="mt-4">
             <h2 className="text-xl font-semibold">Quick answer</h2>
@@ -140,7 +176,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
     const { data: speciesData, error: speciesError } = await supabase
       .from('species')
       .select(
-        `id, species_code, name_en, scientific_name, inaturalist_url, advice, eating_quality, conservation_status, fun_fact, min_depth, max_depth, guild, species_badges, recommended_baits, temp_opt_c, seasonality_profile, is_seasonal, peak_months, good_months, possible_months`
+        `id, species_code, name_en, name_es, name_fr, name_de, name_it, name_pt, aliases, scientific_name, inaturalist_url, advice, eating_quality, conservation_status, fun_fact, min_depth, max_depth, guild, species_badges, recommended_baits, temp_opt_c, seasonality_profile, is_seasonal, peak_months, good_months, possible_months`
       )
       .eq('slug', slug)
       .maybeSingle();
