@@ -1206,57 +1206,48 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
       <NetworkStatusIndicator position="top" />
       {/* Navigation component outside main to avoid CSS containment affecting fixed positioning */}
       <FindrNavigation />
-      <main className="min-h-screen bg-base-200 pb-16 safe-area-top">
+      <main className="min-h-screen bg-base-200 pb-16">
 
-        {/* Content container */}
-        <div className="sm:mx-auto pt-2 sm:pt-6 lg:max-w-6xl px-0">
-          {/* Success message - fixed height container to prevent CLS */}
-          <div className="min-h-0">
-            {showSuccessMessage && (
-              <div className="alert alert-success mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Password updated successfully!</span>
-                <button className="btn btn-sm btn-ghost" onClick={() => setShowSuccessMessage(false)}>
-                  <X size={16} />
-                </button>
+        {/* Content container - tighter spacing on mobile */}
+        <div className="sm:mx-auto pt-1 sm:pt-4 lg:max-w-6xl px-0">
+          {/* Success message */}
+          {showSuccessMessage && (
+            <div className="alert alert-success mb-2 mx-2 sm:mx-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span className="text-sm">Password updated!</span>
+              <button className="btn btn-xs btn-ghost" onClick={() => setShowSuccessMessage(false)}>
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          <section className="space-y-1 sm:space-y-4 px-0 sm:px-4" aria-labelledby="main-heading">
+            {/* Compact header - hidden on mobile when rectangle selected, visible otherwise */}
+            {(!activeRectangle || !isHydrated) && (
+              <div className="px-3 sm:px-0 py-1">
+                <h1 id="main-heading" className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                  <Sparkles size={18} aria-hidden="true" /> <TranslatedText text="findr" />
+                </h1>
               </div>
             )}
-          </div>
 
-          <section className="space-y-1 sm:space-y-6 px-0 sm:px-4" aria-labelledby="main-heading">
-            <div className="space-y-1 sm:space-y-4 px-4 sm:px-0">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <h1 id="main-heading" className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles size={20} aria-hidden="true" /> <TranslatedText text="findr - catch of the day" />
-                  </h1>
+            {/* Status alerts - only shown when there's an error */}
+            {rectangleOptionsError && (
+              <div className="alert alert-warning text-xs sm:text-sm mx-2 sm:mx-0 py-2">
+                <span>
+                  <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
+                </span>
+              </div>
+            )}
 
+            {/* Action prompt - only show when needed, no fixed height reservation */}
+            {isHydrated && !activeRectangle && (
+              <div className="px-2 sm:px-0">
+                <div className="alert alert-info py-2 text-sm">
+                  <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
                 </div>
               </div>
-              {/* Status alerts container - only shown when there's an error */}
-              {rectangleOptionsError && (
-                <div className="alert alert-warning max-w-3xl text-sm mx-auto md:mx-0">
-                  <span>
-                    <TranslatedText text="Couldn't reach the live fishing areas service, so we're showing a trusted offline list instead." />
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Action prompt container - always reserve space to prevent CLS */}
-            <div className="h-[52px]">
-              {/* Only show "pick area" prompt after hydration and when no rectangle selected */}
-              {isHydrated && !activeRectangle ? (
-                <div className="px-4 sm:px-0">
-                  <div className="alert alert-info">
-                    <span><TranslatedText text="Pick a fishing area to see today's activity." /></span>
-                  </div>
-                </div>
-              ) : (
-                /* Skeleton or empty placeholder to maintain height */
-                <div aria-hidden="true" className={!isHydrated ? 'skeleton h-[52px] rounded-lg mx-4 sm:mx-0' : ''} />
-              )}
-            </div>
+            )}
 
               {/* Card deck area - ALWAYS reserve space with fixed height to prevent CLS */}
               {/* Using a single container that shows either skeleton OR content to prevent shifts */}
