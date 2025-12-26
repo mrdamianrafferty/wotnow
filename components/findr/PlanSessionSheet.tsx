@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { MapPin, Fish, AlertTriangle, CheckCircle2, Clock, Waves, Moon, Sunrise, Sun } from 'lucide-react';
+import Link from 'next/link';
+import { MapPin, Fish, AlertTriangle, CheckCircle2, Clock, Waves, Moon, Sunrise, Sun, Share2, Wind, ExternalLink } from 'lucide-react';
 import { PlanItSheet, type PlannedActivity } from '../PlanItSheet';
 import type { TideExtreme } from '../../lib/findr/conditionHelpers';
 
@@ -9,13 +10,8 @@ interface SafetyCheckItem {
   id: string;
   label: string;
   checked: boolean;
+  action?: 'share' | 'conditions' | 'tides';
 }
-
-const DEFAULT_SAFETY_CHECKS: SafetyCheckItem[] = [
-  { id: 'tell_someone', label: 'Tell someone where I\'m going', checked: false },
-  { id: 'check_conditions', label: 'Check swell & wind gusts', checked: false },
-  { id: 'check_tides', label: 'Check tide times', checked: false },
-];
 
 export interface PlanSessionSheetProps {
   open: boolean;
@@ -45,6 +41,8 @@ export interface PlanSessionSheetProps {
   moonPhase?: string | null;
   /** Moon illumination percentage */
   moonIllumination?: number | null;
+  /** Callback to trigger share functionality */
+  onShare?: () => void;
 }
 
 // Helper to format time as HH:MM
@@ -85,7 +83,7 @@ const BEST_TIME_LABELS: Record<string, { label: string; icon: 'dawn' | 'sun' | '
  * - Optimal fishing times based on species preferences
  * - Quick bait reminder
  * - Moon phase info
- * - Safety checklist
+ * - Actionable safety checklist
  */
 export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
   open,
@@ -103,8 +101,13 @@ export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
   baitSuggestions,
   moonPhase,
   moonIllumination,
+  onShare,
 }) => {
-  const [safetyChecks, setSafetyChecks] = useState<SafetyCheckItem[]>(DEFAULT_SAFETY_CHECKS);
+  const [safetyChecks, setSafetyChecks] = useState<SafetyCheckItem[]>([
+    { id: 'tell_someone', label: 'Tell someone where I\'m going', checked: false, action: 'share' },
+    { id: 'check_conditions', label: 'Check swell & wind gusts', checked: false, action: 'conditions' },
+    { id: 'check_tides', label: 'Check tide times', checked: false, action: 'tides' },
+  ]);
 
   const toggleCheck = useCallback((id: string) => {
     setSafetyChecks(prev =>
@@ -114,10 +117,21 @@ export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
     );
   }, []);
 
+  const handleSafetyAction = useCallback((item: SafetyCheckItem) => {
+    // Mark as checked when action is taken
+    setSafetyChecks(prev =>
+      prev.map(i => i.id === item.id ? { ...i, checked: true } : i)
+    );
+
+    if (item.action === 'share' && onShare) {
+      onShare();
+    }
+    // For 'conditions' and 'tides', the Link component handles navigation
+  }, [onShare]);
+
   const allChecked = safetyChecks.every(item => item.checked);
 
   const handleSave = useCallback((plan: PlannedActivity) => {
-    // Add fishing-specific data to the plan
     const fishingPlan: PlannedActivity = {
       ...plan,
       activityData: {
@@ -136,7 +150,11 @@ export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
   // Reset safety checks when sheet opens
   React.useEffect(() => {
     if (open) {
-      setSafetyChecks(DEFAULT_SAFETY_CHECKS);
+      setSafetyChecks([
+        { id: 'tell_someone', label: 'Tell someone where I\'m going', checked: false, action: 'share' },
+        { id: 'check_conditions', label: 'Check swell & wind gusts', checked: false, action: 'conditions' },
+        { id: 'check_tides', label: 'Check tide times', checked: false, action: 'tides' },
+      ]);
     }
   }, [open]);
 
@@ -169,9 +187,7 @@ export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
     return [];
   }, [recommendedBaits, baitSuggestions]);
 
-  // Check if we have any trip insights to show
-  const hasTripInsights = todayTides.length > 0 || tomorrowTides.length > 0 ||
-    timePreferences.length > 0 || baitList.length > 0 || moonPhase;
+  const conditionsUrl = `/findr/conditions?rect=${encodeURIComponent(rectangleCode)}`;
 
   return (
     <PlanItSheet
@@ -214,141 +230,170 @@ export const PlanSessionSheet: React.FC<PlanSessionSheetProps> = ({
         )}
       </div>
 
-      {/* Trip Planning Insights */}
-      {hasTripInsights && (
-        <div className="space-y-3">
-          <span className="text-sm font-medium text-base-content/70">Trip insights</span>
+      {/* Trip Insights - Clean design without colored backgrounds */}
+      <div className="space-y-4">
+        <span className="text-sm font-medium">Trip insights</span>
 
-          {/* Tide times for today and tomorrow */}
-          {(todayTides.length > 0 || tomorrowTides.length > 0) && (
-            <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-cyan-700 dark:text-cyan-300">
-                <Waves className="h-4 w-4" aria-hidden="true" />
-                Tide times
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                {todayTides.length > 0 && (
-                  <div>
-                    <span className="font-medium text-base-content/70">Today</span>
-                    <div className="mt-1 space-y-0.5">
-                      {todayTides.map((tide, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="capitalize">{tide.type}</span>
-                          <span className="font-mono">{formatTime(tide.time)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {tomorrowTides.length > 0 && (
-                  <div>
-                    <span className="font-medium text-base-content/70">Tomorrow</span>
-                    <div className="mt-1 space-y-0.5">
-                      {tomorrowTides.map((tide, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="capitalize">{tide.type}</span>
-                          <span className="font-mono">{formatTime(tide.time)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Tide times */}
+        {(todayTides.length > 0 || tomorrowTides.length > 0) && (
+          <div className="border border-base-300 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm font-medium mb-2">
+              <Waves className="h-4 w-4 text-info" aria-hidden="true" />
+              Tide times
             </div>
-          )}
-
-          {/* Best times for this species */}
-          {timePreferences.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-amber-700 dark:text-amber-300 mb-2">
-                <Clock className="h-4 w-4" aria-hidden="true" />
-                Best times for {speciesName}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {timePreferences.map((pref, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded">
-                    {pref.icon === 'dawn' && <Sunrise className="h-3 w-3" />}
-                    {pref.icon === 'sun' && <Sun className="h-3 w-3" />}
-                    {pref.icon === 'moon' && <Moon className="h-3 w-3" />}
-                    {pref.icon === 'tide' && <Waves className="h-3 w-3" />}
-                    {pref.label}
-                  </span>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {todayTides.length > 0 && (
+                <div>
+                  <div className="text-xs text-base-content/60 mb-1">Today</div>
+                  {todayTides.map((tide, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span className="capitalize text-base-content/80">{tide.type}</span>
+                      <span className="font-mono">{formatTime(tide.time)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {tomorrowTides.length > 0 && (
+                <div>
+                  <div className="text-xs text-base-content/60 mb-1">Tomorrow</div>
+                  {tomorrowTides.map((tide, i) => (
+                    <div key={i} className="flex justify-between">
+                      <span className="capitalize text-base-content/80">{tide.type}</span>
+                      <span className="font-mono">{formatTime(tide.time)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Bait reminder and moon phase in a row */}
-          <div className="flex gap-3">
-            {/* Bait reminder */}
-            {baitList.length > 0 && (
-              <div className="flex-1 bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
-                <div className="text-xs font-medium text-green-700 dark:text-green-300 mb-1">
-                  🎣 Bring
-                </div>
-                <div className="text-xs text-base-content/80">
-                  {baitList.join(', ')}
-                </div>
-                <a
-                  href={`/findr/bait-shops?rect=${encodeURIComponent(rectangleCode)}&bait=${encodeURIComponent(baitList[0] || '')}`}
-                  className="text-xs text-green-600 dark:text-green-400 hover:underline mt-1.5 inline-block"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Find bait locally →
-                </a>
-              </div>
-            )}
-
-            {/* Moon phase */}
-            {moonPhase && (
-              <div className="flex-1 bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
-                <div className="flex items-center gap-1 text-xs font-medium text-purple-700 dark:text-purple-300 mb-1">
-                  <Moon className="h-3 w-3" aria-hidden="true" />
-                  Moon
-                </div>
-                <div className="text-xs text-base-content/80">
-                  {moonPhase}
-                  {moonIllumination != null && (
-                    <span className="text-base-content/50 ml-1">({Math.round(moonIllumination)}%)</span>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Safety checklist */}
+        {/* Best times for species */}
+        {timePreferences.length > 0 && (
+          <div className="border border-base-300 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm font-medium mb-2">
+              <Clock className="h-4 w-4 text-warning" aria-hidden="true" />
+              Best times for {speciesName}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {timePreferences.map((pref, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 text-sm bg-base-200 px-2.5 py-1 rounded">
+                  {pref.icon === 'dawn' && <Sunrise className="h-3.5 w-3.5 text-orange-500" />}
+                  {pref.icon === 'sun' && <Sun className="h-3.5 w-3.5 text-yellow-500" />}
+                  {pref.icon === 'moon' && <Moon className="h-3.5 w-3.5 text-blue-400" />}
+                  {pref.icon === 'tide' && <Waves className="h-3.5 w-3.5 text-cyan-500" />}
+                  {pref.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bait and Moon in a row */}
+        <div className="flex gap-3">
+          {/* Bait reminder */}
+          {baitList.length > 0 && (
+            <div className="flex-1 border border-base-300 rounded-lg p-3">
+              <div className="text-sm font-medium mb-1">🎣 Bring</div>
+              <div className="text-sm text-base-content/80">{baitList.join(', ')}</div>
+              <Link
+                href={`/findr/bait-shops?rect=${encodeURIComponent(rectangleCode)}&bait=${encodeURIComponent(baitList[0] || '')}`}
+                className="text-xs text-primary hover:underline mt-2 inline-flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Find bait locally <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+
+          {/* Moon phase */}
+          {moonPhase && (
+            <div className="flex-1 border border-base-300 rounded-lg p-3">
+              <div className="flex items-center gap-1.5 text-sm font-medium mb-1">
+                <Moon className="h-4 w-4 text-purple-500" aria-hidden="true" />
+                Moon
+              </div>
+              <div className="text-sm text-base-content/80">
+                {moonPhase}
+                {moonIllumination != null && (
+                  <span className="text-base-content/50 ml-1">({Math.round(moonIllumination)}%)</span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Safety checklist with actionable links */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />
-          <span className="text-sm font-medium">Safety checklist</span>
+          <span className="text-sm font-medium">Before you go</span>
           {allChecked && (
             <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
           )}
         </div>
         <div className="space-y-1">
           {safetyChecks.map(item => (
-            <label
+            <div
               key={item.id}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 transition-colors"
             >
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm checkbox-primary"
                 checked={item.checked}
                 onChange={() => toggleCheck(item.id)}
+                id={`safety-${item.id}`}
               />
-              <span className={`text-sm ${item.checked ? 'text-success' : ''}`}>
+              <label
+                htmlFor={`safety-${item.id}`}
+                className={`flex-1 text-sm cursor-pointer ${item.checked ? 'text-success line-through' : ''}`}
+              >
                 {item.label}
-              </span>
-            </label>
+              </label>
+              {/* Action buttons */}
+              {item.action === 'share' && onShare && (
+                <button
+                  type="button"
+                  onClick={() => handleSafetyAction(item)}
+                  className="btn btn-xs btn-ghost gap-1"
+                  aria-label="Share your plan"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  Share
+                </button>
+              )}
+              {item.action === 'conditions' && (
+                <Link
+                  href={conditionsUrl}
+                  onClick={() => handleSafetyAction(item)}
+                  className="btn btn-xs btn-ghost gap-1"
+                >
+                  <Wind className="h-3.5 w-3.5" />
+                  Check
+                </Link>
+              )}
+              {item.action === 'tides' && (todayTides.length > 0 || tomorrowTides.length > 0) && (
+                <span className="text-xs text-success">✓ Shown above</span>
+              )}
+              {item.action === 'tides' && todayTides.length === 0 && tomorrowTides.length === 0 && (
+                <Link
+                  href={conditionsUrl}
+                  onClick={() => handleSafetyAction(item)}
+                  className="btn btn-xs btn-ghost gap-1"
+                >
+                  <Waves className="h-3.5 w-3.5" />
+                  Check
+                </Link>
+              )}
+            </div>
           ))}
         </div>
         {!allChecked && (
-          <p className="text-xs text-warning flex items-center gap-1">
-            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-            Complete safety checks before heading out
+          <p className="text-xs text-base-content/60 flex items-center gap-1 mt-2">
+            <AlertTriangle className="h-3 w-3 text-warning" aria-hidden="true" />
+            Complete checks before heading out
           </p>
         )}
       </div>

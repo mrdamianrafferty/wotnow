@@ -1662,6 +1662,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           baitSuggestions={planCard.baitSuggestions}
           moonPhase={planCard.moonPhase}
           moonIllumination={planCard.moonIllumination}
+          onShare={handleShare}
         />
       )}
 
