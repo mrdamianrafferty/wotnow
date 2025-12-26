@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import Link from 'next/link';
 import AppCTA from '../../../components/AppCTA';
 import Image from 'next/image';
 import { GetStaticPaths, GetStaticProps } from 'next';
@@ -130,6 +131,9 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
 
       <main className="min-h-screen p-6 bg-base-200">
         <div className="max-w-3xl mx-auto">
+          <div className="mb-4">
+            <Link href="/findr"><a className="text-sm text-primary hover:underline">← Back to Findr</a></Link>
+          </div>
           {/* App CTA (client) */}
           <div>
             {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
