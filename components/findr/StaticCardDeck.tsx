@@ -32,6 +32,7 @@ import { GuildBadge } from './GuildBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
 import { SpeciesVerdictStrip } from './SpeciesVerdictStrip';
 import { GradientFish } from '../GradientFish';
+import type { TideExtreme } from '../../lib/findr/conditionHelpers';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import type { CardData } from '../../lib/findr/mapPrediction';
 import dynamic from 'next/dynamic';
@@ -103,6 +104,7 @@ const WeatherGuildMessage: React.FC<{
 interface StaticCardContentProps {
   card: CardData;
   isFavorite: boolean;
+  tideExtremes?: TideExtreme[] | null;
   onShowSpeciesInfo: (card: CardData) => void;
   onToggleFavorite: (card: CardData) => void;
 }
@@ -110,6 +112,7 @@ interface StaticCardContentProps {
 const StaticCardContent: React.FC<StaticCardContentProps> = ({
   card,
   isFavorite,
+  tideExtremes,
   onShowSpeciesInfo,
   onToggleFavorite,
 }) => {
@@ -255,6 +258,7 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
             tideScore={card.tide_score}
             lightScore={card.light_score}
             lunarScore={card.lunar_score}
+            tideExtremes={tideExtremes}
           />
 
           {card.summary && (
@@ -411,6 +415,7 @@ interface StaticCardDeckProps {
   cards: CardData[];
   favoritesSet: Set<string>;
   getFavouriteKey: (card: CardData) => string;
+  tideExtremes?: TideExtreme[] | null;
   onToggleFavorite: (card: CardData) => void;
   onShowSpeciesInfo: (card: CardData) => void;
 }
@@ -425,6 +430,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
   cards,
   favoritesSet,
   getFavouriteKey,
+  tideExtremes,
   onToggleFavorite,
   onShowSpeciesInfo,
 }) => {
@@ -500,6 +506,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
           <StaticCardContent
             card={currentCard}
             isFavorite={isFavorite}
+            tideExtremes={tideExtremes}
             onShowSpeciesInfo={onShowSpeciesInfo}
             onToggleFavorite={onToggleFavorite}
           />

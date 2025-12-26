@@ -33,8 +33,8 @@ import { useFishingPredictions } from '../../hooks/useFishingPredictions';
 import { useFavourites } from '../../hooks/useFavourites';
 import { useFindrOfflineInit } from '../../hooks/useFindrOfflineInit';
 import { useTideExtremes } from '../../hooks/useTideExtremes';
-import { DailyVerdictBar } from '../../components/findr/DailyVerdictBar';
 import { SpeciesVerdictStrip } from '../../components/findr/SpeciesVerdictStrip';
+import type { TideExtreme } from '../../lib/findr/conditionHelpers';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
@@ -185,6 +185,7 @@ interface PredictionCardContentProps {
   isFavorite: boolean;
   interactive: boolean;
   isFirstCard?: boolean;
+  tideExtremes?: TideExtreme[] | null;
   onShowSpeciesInfo?: (card: CardData) => void;
   onToggleFavorite?: (card: CardData) => void;
 }
@@ -196,6 +197,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
   isFavorite: _isFavorite,
   interactive,
   isFirstCard = false,
+  tideExtremes,
   onShowSpeciesInfo,
   onToggleFavorite,
 }) => {
@@ -358,6 +360,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
             tideScore={card.tide_score}
             lightScore={card.light_score}
             lunarScore={card.lunar_score}
+            tideExtremes={tideExtremes}
           />
 
           {card.summary && (
@@ -499,6 +502,7 @@ interface SwipeableCardProps {
   total: number;
   rectangleCode: string | null;
   regionName?: string;
+  tideExtremes?: TideExtreme[] | null;
   onSwipedLeft: () => void;
   onSwipedRight: (card: CardData) => void;
   isFavorite: boolean;
@@ -521,6 +525,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
       total,
       rectangleCode,
       regionName,
+      tideExtremes,
       onSwipedLeft,
       onSwipedRight,
       isFavorite,
@@ -653,6 +658,7 @@ const SwipeableCard = React.forwardRef<SwipeCardHandle, SwipeableCardProps>(
           isFavorite={isFavorite}
           interactive={isTop}
           isFirstCard={index === 0}
+          tideExtremes={tideExtremes}
           onShowSpeciesInfo={isTop ? onShowSpeciesInfo : undefined}
           onToggleFavorite={isTop ? onToggleFavorite : undefined}
         />
@@ -1248,15 +1254,6 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                 ) : activeRectangle && !error && currentCard ? (
                   /* Actual content */
                   <>
-                    {/* Daily Verdict Bar - shows overall day rating with peak window */}
-                    <div className="px-2 sm:px-0 mb-1 sm:mb-3">
-                      <DailyVerdictBar
-                        species={cards}
-                        tideExtremes={tideExtremes}
-                        onSpeciesClick={handleShowSpeciesInfo}
-                        loading={loading}
-                      />
-                    </div>
                     {/* Conditional deck: animated for native apps, static for web */}
                     {useAnimatedDeck ? (
                       <>
@@ -1272,6 +1269,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                                 total={visibleCards.length}
                                 rectangleCode={activeRectangle}
                                 regionName={activeOption?.region}
+                                tideExtremes={tideExtremes}
                                 onSwipedLeft={handleSkip}
                                 onSwipedRight={handleLike}
                                 isFavorite={favoritesSet.has(getFavouriteKeyFromCard(card))}
@@ -1297,6 +1295,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                         cards={cards}
                         favoritesSet={favoritesSet}
                         getFavouriteKey={getFavouriteKeyFromCard}
+                        tideExtremes={tideExtremes}
                         onToggleFavorite={handleToggleFavorite}
                         onShowSpeciesInfo={handleShowSpeciesInfo}
                       />

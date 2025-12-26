@@ -4,16 +4,17 @@
  * Shows species-specific verdict based on:
  * - Species confidence score
  * - Current time vs species' preferred times (best_times)
- * - Tide and light condition scores
- * - First tideTip for specific advice
+ * - Actual tide times and current tide stage
+ * - Light condition scores
  */
 
 'use client';
 
 import React, { useMemo } from 'react';
-import { Clock, Sun, Moon, Waves } from 'lucide-react';
+import { Clock, Sun, Moon, Waves, Sunrise } from 'lucide-react';
 import { TranslatedText } from '../translation/TranslatedFishCard';
 import { getConfidenceBand } from '../../types/favourites';
+import { getTideStage, type TideExtreme } from '../../lib/findr/conditionHelpers';
 
 interface SpeciesVerdictStripProps {
   confidence: number | null;
@@ -22,19 +23,20 @@ interface SpeciesVerdictStripProps {
   tideScore?: number | null;
   lightScore?: number | null;
   lunarScore?: number | null;
+  tideExtremes?: TideExtreme[] | null;
   compact?: boolean;
 }
 
 // Map best_times values to readable labels and icons
 const TIME_LABELS: Record<string, { label: string; icon: 'sun' | 'moon' | 'dawn' | 'tide' }> = {
-  dawn: { label: 'dawn feeder', icon: 'dawn' },
-  dusk: { label: 'dusk feeder', icon: 'dawn' },
-  day: { label: 'daytime active', icon: 'sun' },
-  night: { label: 'night feeder', icon: 'moon' },
-  mid_flood: { label: 'feeds on rising tide', icon: 'tide' },
-  early_ebb: { label: 'feeds on falling tide', icon: 'tide' },
-  high_slack: { label: 'active at high water', icon: 'tide' },
-  low_slack: { label: 'active at low water', icon: 'tide' },
+  dawn: { label: 'dawn', icon: 'dawn' },
+  dusk: { label: 'dusk', icon: 'dawn' },
+  day: { label: 'daytime', icon: 'sun' },
+  night: { label: 'night', icon: 'moon' },
+  mid_flood: { label: 'rising tide', icon: 'tide' },
+  early_ebb: { label: 'falling tide', icon: 'tide' },
+  high_slack: { label: 'high water', icon: 'tide' },
+  low_slack: { label: 'low water', icon: 'tide' },
 };
 
 // Get current time period
@@ -46,118 +48,215 @@ function getCurrentTimePeriod(): string {
   return 'night';
 }
 
-// Check if current time matches species preferences
-function getTimeMatch(bestTimes: string[] | null | undefined): {
-  isMatch: boolean;
-  currentPeriod: string;
-  matchedTime: string | null;
-} {
-  if (!bestTimes || bestTimes.length === 0) {
-    return { isMatch: false, currentPeriod: getCurrentTimePeriod(), matchedTime: null };
-  }
+// Format time as HH:MM
+function formatTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
 
-  const currentPeriod = getCurrentTimePeriod();
+// Get minutes until a time
+function getMinutesUntil(dateStr: string): number {
+  const target = new Date(dateStr).getTime();
+  const now = Date.now();
+  return Math.round((target - now) / (1000 * 60));
+}
 
-  // Check if current period matches any of species' best times
-  if (bestTimes.includes(currentPeriod)) {
-    return { isMatch: true, currentPeriod, matchedTime: currentPeriod };
-  }
+// Find next tide extreme
+function getNextTide(extremes: TideExtreme[] | null | undefined): TideExtreme | null {
+  if (!extremes || extremes.length === 0) return null;
 
-  return { isMatch: false, currentPeriod, matchedTime: null };
+  const now = Date.now();
+  const sorted = [...extremes].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+  return sorted.find(t => new Date(t.time).getTime() > now) || null;
+}
+
+// Find the tide extreme after next
+function getTideAfterNext(extremes: TideExtreme[] | null | undefined): TideExtreme | null {
+  if (!extremes || extremes.length < 2) return null;
+
+  const now = Date.now();
+  const sorted = [...extremes].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  const futureExtremes = sorted.filter(t => new Date(t.time).getTime() > now);
+
+  return futureExtremes.length >= 2 ? futureExtremes[1] : null;
 }
 
 // Get the icon component for a time type
-function TimeIcon({ type, size = 14 }: { type: 'sun' | 'moon' | 'dawn' | 'tide'; size?: number }) {
+function TimeIcon({ type, size = 14 }: { type: 'sun' | 'moon' | 'dawn' | 'tide' | 'clock'; size?: number }) {
   switch (type) {
     case 'sun':
       return <Sun size={size} className="text-yellow-500" />;
     case 'moon':
       return <Moon size={size} className="text-blue-300" />;
     case 'dawn':
-      return <Sun size={size} className="text-orange-400" />;
+      return <Sunrise size={size} className="text-orange-400" />;
     case 'tide':
       return <Waves size={size} className="text-cyan-400" />;
     default:
-      return <Clock size={size} />;
+      return <Clock size={size} className="text-base-content/60" />;
   }
 }
 
-// Extract timing insight from tideTips
-function extractTimingFromTips(tideTips: string[] | undefined): string | null {
-  if (!tideTips || tideTips.length === 0) return null;
-
-  // Return first tip that mentions timing
-  const timingKeywords = ['dawn', 'dusk', 'morning', 'evening', 'night', 'tide', 'flood', 'ebb', 'slack', 'hour'];
-
-  for (const tip of tideTips) {
-    const lowerTip = tip.toLowerCase();
-    if (timingKeywords.some(keyword => lowerTip.includes(keyword))) {
-      // Truncate if too long
-      return tip.length > 60 ? tip.substring(0, 57) + '...' : tip;
-    }
-  }
-
-  // Return first tip if no timing-specific one found
-  const firstTip = tideTips[0];
-  return firstTip.length > 60 ? firstTip.substring(0, 57) + '...' : firstTip;
-}
-
-// Generate timing message based on best_times and current conditions
+// Generate specific timing message with actual tide times
 function generateTimingMessage(
   bestTimes: string[] | null | undefined,
-  timeMatch: { isMatch: boolean; currentPeriod: string; matchedTime: string | null },
   tideScore: number | null | undefined,
-  lightScore: number | null | undefined
+  lightScore: number | null | undefined,
+  tideExtremes: TideExtreme[] | null | undefined
 ): { message: string; icon: 'sun' | 'moon' | 'dawn' | 'tide' | 'clock'; positive: boolean } {
-  // If current time matches species preference
-  if (timeMatch.isMatch && timeMatch.matchedTime) {
-    const timeInfo = TIME_LABELS[timeMatch.matchedTime];
-    if (timeInfo) {
+  const currentPeriod = getCurrentTimePeriod();
+  const tideStage = getTideStage(tideExtremes);
+  const nextTide = getNextTide(tideExtremes);
+  const tideAfterNext = getTideAfterNext(tideExtremes);
+
+  // Priority 1: Check if species prefers current tide stage and show actual time
+  if (bestTimes && tideStage && nextTide) {
+    const tidePrefs = bestTimes.filter(t => ['mid_flood', 'early_ebb', 'high_slack', 'low_slack'].includes(t));
+
+    // Check if current tide stage matches species preference
+    const stageMapping: Record<string, string> = {
+      'flooding': 'mid_flood',
+      'ebbing': 'early_ebb',
+      'high_slack': 'high_slack',
+      'low_slack': 'low_slack',
+    };
+
+    const currentPref = stageMapping[tideStage];
+    if (tidePrefs.includes(currentPref)) {
+      const minutesUntilChange = getMinutesUntil(nextTide.time);
+      if (minutesUntilChange <= 90) {
+        return {
+          message: `${tideStage === 'flooding' ? 'Rising' : tideStage === 'ebbing' ? 'Falling' : tideStage.replace('_', ' ')} - ${minutesUntilChange}m left`,
+          icon: 'tide',
+          positive: true,
+        };
+      }
       return {
-        message: `Prime time - ${timeInfo.label}`,
-        icon: timeInfo.icon,
+        message: `${nextTide.type === 'high' ? 'High' : 'Low'} tide at ${formatTime(nextTide.time)}`,
+        icon: 'tide',
         positive: true,
       };
     }
+
+    // Species prefers a different tide stage - show when it will be better
+    if (tidePrefs.length > 0) {
+      const preferredPref = tidePrefs[0];
+      // Figure out when their preferred stage will occur
+      if (preferredPref === 'high_slack' && nextTide.type === 'high') {
+        const mins = getMinutesUntil(nextTide.time);
+        return {
+          message: mins <= 60 ? `High water in ${mins}m` : `High water at ${formatTime(nextTide.time)}`,
+          icon: 'tide',
+          positive: mins <= 60,
+        };
+      }
+      if (preferredPref === 'low_slack' && nextTide.type === 'low') {
+        const mins = getMinutesUntil(nextTide.time);
+        return {
+          message: mins <= 60 ? `Low water in ${mins}m` : `Low water at ${formatTime(nextTide.time)}`,
+          icon: 'tide',
+          positive: mins <= 60,
+        };
+      }
+      if (preferredPref === 'mid_flood' && tideStage === 'ebbing' && tideAfterNext) {
+        // Currently ebbing, flooding will start after next low
+        return {
+          message: `Rising tide from ${formatTime(nextTide.time)}`,
+          icon: 'tide',
+          positive: false,
+        };
+      }
+      if (preferredPref === 'early_ebb' && tideStage === 'flooding' && tideAfterNext) {
+        return {
+          message: `Falling tide from ${formatTime(nextTide.time)}`,
+          icon: 'tide',
+          positive: false,
+        };
+      }
+    }
   }
 
-  // Check if tide conditions are good
-  if (tideScore != null && tideScore >= 70) {
+  // Priority 2: Check time-of-day preferences
+  if (bestTimes && bestTimes.length > 0) {
+    const timePrefs = bestTimes.filter(t => ['dawn', 'dusk', 'day', 'night'].includes(t));
+
+    if (timePrefs.includes(currentPeriod)) {
+      const timeInfo = TIME_LABELS[currentPeriod];
+      return {
+        message: `Prime ${timeInfo?.label || currentPeriod} feeding time`,
+        icon: timeInfo?.icon || 'sun',
+        positive: true,
+      };
+    }
+
+    // Suggest the next good time period
+    if (timePrefs.length > 0) {
+      const hour = new Date().getHours();
+
+      // Find next matching time period
+      if (timePrefs.includes('dusk') && hour < 17) {
+        return {
+          message: 'Better around dusk (5-8pm)',
+          icon: 'dawn',
+          positive: false,
+        };
+      }
+      if (timePrefs.includes('dawn') && hour >= 7) {
+        return {
+          message: 'Best at dawn (5-7am)',
+          icon: 'dawn',
+          positive: false,
+        };
+      }
+      if (timePrefs.includes('night') && hour < 20) {
+        return {
+          message: 'Feeds after dark (8pm+)',
+          icon: 'moon',
+          positive: false,
+        };
+      }
+    }
+  }
+
+  // Priority 3: Good conditions message
+  if (tideScore != null && tideScore >= 70 && nextTide) {
     return {
-      message: 'Tide conditions looking good',
+      message: `Good tide - ${nextTide.type} at ${formatTime(nextTide.time)}`,
       icon: 'tide',
       positive: true,
     };
   }
 
-  // Check if light conditions are good
   if (lightScore != null && lightScore >= 70) {
     return {
-      message: 'Light conditions are ideal',
-      icon: 'sun',
+      message: 'Light conditions ideal now',
+      icon: currentPeriod === 'night' ? 'moon' : 'sun',
       positive: true,
     };
   }
 
-  // Suggest best times if current isn't ideal
-  if (bestTimes && bestTimes.length > 0) {
-    const preferredTimes = bestTimes
-      .filter(t => TIME_LABELS[t])
-      .slice(0, 2)
-      .map(t => t.replace('_', ' '));
-
-    if (preferredTimes.length > 0) {
+  // Priority 4: Show next tide time as fallback
+  if (nextTide) {
+    const mins = getMinutesUntil(nextTide.time);
+    if (mins <= 120) {
       return {
-        message: `Best at ${preferredTimes.join(' or ')}`,
-        icon: TIME_LABELS[bestTimes[0]]?.icon || 'clock',
+        message: `${nextTide.type === 'high' ? 'High' : 'Low'} tide in ${mins}m`,
+        icon: 'tide',
         positive: false,
       };
     }
+    return {
+      message: `Next ${nextTide.type} at ${formatTime(nextTide.time)}`,
+      icon: 'tide',
+      positive: false,
+    };
   }
 
+  // Final fallback - show current conditions
   return {
-    message: 'Check tide tables for best times',
-    icon: 'clock',
+    message: currentPeriod === 'day' ? 'Daytime conditions' : `${currentPeriod.charAt(0).toUpperCase() + currentPeriod.slice(1)} conditions`,
+    icon: currentPeriod === 'night' ? 'moon' : currentPeriod === 'dawn' || currentPeriod === 'dusk' ? 'dawn' : 'sun',
     positive: false,
   };
 }
@@ -169,20 +268,31 @@ export const SpeciesVerdictStrip: React.FC<SpeciesVerdictStripProps> = ({
   tideScore,
   lightScore,
   lunarScore: _lunarScore, // Reserved for future lunar-based timing advice
+  tideExtremes,
   compact = false,
 }) => {
   const verdictData = useMemo(() => {
     const band = getConfidenceBand(confidence ?? 0);
-    const timeMatch = getTimeMatch(bestTimes);
 
-    // Try to get timing from tideTips first, then generate from best_times
-    const tipTiming = extractTimingFromTips(tideTips);
-    const generatedTiming = generateTimingMessage(bestTimes, timeMatch, tideScore, lightScore);
+    // Generate timing message with actual tide data
+    const timing = generateTimingMessage(bestTimes, tideScore, lightScore, tideExtremes);
 
-    // Use tip if available, otherwise use generated message
-    const timingMessage = tipTiming || generatedTiming.message;
-    const timingIcon = tipTiming ? 'clock' : generatedTiming.icon;
-    const isPositive = tipTiming ? true : generatedTiming.positive;
+    // Override with tideTip if it's very specific
+    let finalMessage = timing.message;
+    let finalIcon = timing.icon;
+    let isPositive = timing.positive;
+
+    // Only use tideTip if it contains actual times or very specific info
+    if (tideTips && tideTips.length > 0) {
+      const tip = tideTips[0];
+      // Check if tip has specific timing info we should show
+      const hasSpecificTime = /\d{1,2}[:.]\d{2}|hour|minute|pm|am/i.test(tip);
+      if (hasSpecificTime && tip.length <= 50) {
+        finalMessage = tip;
+        finalIcon = 'clock';
+        isPositive = true;
+      }
+    }
 
     const verdictConfig = {
       active: {
@@ -207,12 +317,11 @@ export const SpeciesVerdictStrip: React.FC<SpeciesVerdictStripProps> = ({
 
     return {
       config: verdictConfig[band],
-      timingMessage,
-      timingIcon,
+      timingMessage: finalMessage,
+      timingIcon: finalIcon,
       isPositive,
-      timeMatch,
     };
-  }, [confidence, bestTimes, tideTips, tideScore, lightScore]);
+  }, [confidence, bestTimes, tideTips, tideScore, lightScore, tideExtremes]);
 
   if (confidence == null) return null;
 
@@ -222,7 +331,7 @@ export const SpeciesVerdictStrip: React.FC<SpeciesVerdictStripProps> = ({
     // Compact version for tight spaces
     return (
       <div className={`flex items-center gap-2 px-2 py-1 rounded-lg ${config.bg} ${config.border} border`}>
-        <TimeIcon type={timingIcon as 'sun' | 'moon' | 'dawn' | 'tide'} size={12} />
+        <TimeIcon type={timingIcon} size={12} />
         <span className={`text-xs font-medium ${config.text}`}>
           <TranslatedText text={config.verdict} />
         </span>
@@ -233,7 +342,7 @@ export const SpeciesVerdictStrip: React.FC<SpeciesVerdictStripProps> = ({
   return (
     <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${config.bg} ${config.border} border`}>
       <div className="flex items-center gap-1.5">
-        <TimeIcon type={timingIcon as 'sun' | 'moon' | 'dawn' | 'tide'} size={16} />
+        <TimeIcon type={timingIcon} size={16} />
       </div>
       <div className="flex flex-col min-w-0 flex-1">
         <span className={`text-sm font-semibold ${config.text}`}>
