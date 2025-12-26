@@ -135,8 +135,8 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
 
   return (
     <div className="card h-full bg-base-100 shadow-xl">
-      <div className="card-body !p-3 sm:!p-4 flex h-full flex-col gap-3 sm:gap-4 justify-start">
-        <div className="space-y-3 sm:space-y-4">
+      <div className="card-body !p-3 sm:!p-4 flex h-full flex-col gap-2 sm:gap-3 justify-start">
+        <div className="space-y-2 sm:space-y-3">
           {card.image ? (
             <div
               className="relative w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[4/1] sm:aspect-[5/1.2] p-0 cursor-pointer hover:opacity-95 transition-opacity"
@@ -328,11 +328,11 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
         </div>
 
         {card.playfulBio && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary flex items-center gap-2">
-              <Heart size={14} /> <TranslatedText text="Findr bio" />
+          <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary flex items-center gap-1.5 mb-1">
+              <Heart size={12} /> <TranslatedText text="Findr bio" />
             </p>
-            <TranslatedFishBio bio={card.playfulBio} className="text-sm leading-relaxed text-base-content/80" />
+            <TranslatedFishBio bio={card.playfulBio} className="text-sm leading-snug text-base-content/80" />
           </div>
         )}
 
