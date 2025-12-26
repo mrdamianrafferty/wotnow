@@ -482,7 +482,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
 
       {/* Card display - fixed height container to prevent CLS */}
       <div
-        className="relative h-[460px] sm:h-[520px] w-full overflow-hidden"
+        className="relative h-[380px] sm:h-[480px] w-full overflow-hidden"
         style={{ contain: 'layout size' }}
       >
         <div className="absolute inset-0 flex h-full w-full items-stretch justify-center p-0 sm:p-2">
@@ -495,30 +495,30 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons - compact on mobile */}
       <div
-        className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]"
+        className="flex items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-4"
         role="group"
         aria-label="Card actions"
       >
         <button
           type="button"
-          className="btn btn-outline btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto transition-transform hover:scale-105"
+          className="btn btn-outline gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base transition-transform hover:scale-105"
           onClick={handleNext}
           aria-label="Skip this fish and see the next prediction"
         >
-          <X size={20} aria-hidden="true" />
-          <TranslatedText text="Next!" />
+          <X size={18} aria-hidden="true" />
+          <TranslatedText text="Later" />
         </button>
         <button
           type="button"
-          className={`btn btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto transition-transform hover:scale-105 ${
+          className={`btn gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base transition-transform hover:scale-105 ${
             isFavorite ? 'btn-error' : 'btn-primary'
           }`}
           onClick={handleLike}
           aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
-          <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
+          <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} aria-hidden="true" />
           <TranslatedText text={isFavorite ? 'Unfave' : 'Fave'} />
         </button>
       </div>

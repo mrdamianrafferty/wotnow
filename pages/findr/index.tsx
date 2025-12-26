@@ -708,45 +708,45 @@ interface DeckActionsProps {
 }
 
 const DeckActions: React.FC<DeckActionsProps> = ({ onSkip, onLike, onPlan, onShare, disabled }) => (
-  <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]" role="group" aria-label="Card actions">
+  <div className="flex items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-4" role="group" aria-label="Card actions">
     <button
       type="button"
-      className="btn btn-outline btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      className="btn btn-outline gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base"
       onClick={onSkip}
       disabled={disabled}
       aria-label="Skip this fish and see the next prediction"
     >
-      <X size={20} aria-hidden="true" />
+      <X size={18} aria-hidden="true" />
       <TranslatedText text="Later" />
     </button>
     <button
       type="button"
-      className="btn btn-success btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      className="btn btn-success gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base"
       onClick={onPlan}
       disabled={disabled}
       aria-label="Plan a fishing session for this species"
     >
-      <Calendar size={20} aria-hidden="true" />
+      <Calendar size={18} aria-hidden="true" />
       <TranslatedText text="Plan it" />
     </button>
     <button
       type="button"
-      className="btn btn-primary btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      className="btn btn-primary gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base"
       onClick={onLike}
       disabled={disabled}
       aria-label="Add this fish to my favorites"
     >
-      <Heart size={20} aria-hidden="true" />
+      <Heart size={18} aria-hidden="true" />
       <TranslatedText text="Fave" />
     </button>
     <button
       type="button"
-      className="btn btn-ghost btn-lg gap-2 min-h-[48px] px-4 sm:min-h-[56px] sm:px-6 w-full sm:w-auto"
+      className="btn btn-ghost gap-1 sm:gap-2 h-10 sm:h-12 px-3 sm:px-5 text-sm sm:text-base"
       onClick={onShare}
       disabled={disabled}
       aria-label="Share this prediction"
     >
-      <Share2 size={20} aria-hidden="true" />
+      <Share2 size={18} aria-hidden="true" />
       <TranslatedText text="Share" />
     </button>
   </div>
@@ -1249,42 +1249,43 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
               </div>
             )}
 
-              {/* Card deck area - ALWAYS reserve space with fixed height to prevent CLS */}
-              {/* Using a single container that shows either skeleton OR content to prevent shifts */}
-              <div className="space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout', minHeight: '640px' }}>
+              {/* Card deck area - compact on mobile to ensure bottom nav is visible */}
+              <div className="space-y-2 sm:space-y-4 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout' }}>
                 {(!isHydrated || loading || (!activeRectangle && !error)) ? (
                   /* Skeleton state - shown during hydration, loading, or no rectangle */
                   <>
-                    {/* Card counter placeholder - matches StaticCardDeck layout (h-[32px]) */}
-                    <div className="flex items-center justify-between px-2 h-[32px]">
-                      <div className="skeleton h-4 w-16"></div>
+                    {/* Card counter placeholder */}
+                    <div className="flex items-center justify-between px-2 h-[28px]">
+                      <div className="skeleton h-3 w-14"></div>
                       <div className="flex gap-2">
-                        <div className="skeleton h-8 w-8 rounded-full"></div>
-                        <div className="skeleton h-8 w-8 rounded-full"></div>
+                        <div className="skeleton h-7 w-7 rounded-full"></div>
+                        <div className="skeleton h-7 w-7 rounded-full"></div>
                       </div>
                     </div>
-                    {/* Fixed height container with layout containment to prevent CLS */}
-                    <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout size' }}>
+                    {/* Card skeleton - shorter on mobile */}
+                    <div className="relative h-[380px] sm:h-[480px] w-full" style={{ contain: 'layout size' }}>
                       <SkeletonCard />
                     </div>
-                    {/* Placeholder for DeckActions to prevent CLS */}
-                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-3 sm:pt-6 min-h-[64px]">
-                      <div className="skeleton h-12 w-32 rounded-btn"></div>
-                      <div className="skeleton h-12 w-32 rounded-btn"></div>
+                    {/* Action buttons placeholder - compact */}
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 pt-2 sm:pt-4">
+                      <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
+                      <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
+                      <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
+                      <div className="skeleton h-10 w-20 sm:w-24 rounded-btn"></div>
                     </div>
                   </>
                 ) : activeRectangle && !error && currentCard ? (
-                  /* Actual content - same container, mutually exclusive with skeleton */
+                  /* Actual content */
                   <>
-                    {/* Session Verdict Bar - go/no-go decision based on top card */}
-                    <div className="px-2 sm:px-0 mb-3">
+                    {/* Session Verdict Bar - compact on mobile */}
+                    <div className="px-2 sm:px-0 mb-1 sm:mb-3">
                       <SessionVerdictBar confidence={currentCard.confidence ?? 0} />
                     </div>
                     {/* Conditional deck: animated for native apps, static for web */}
                     {useAnimatedDeck ? (
                       <>
                         {/* Animated deck with swipe gestures (native apps only) */}
-                        <div className="relative h-[460px] sm:h-[520px] w-full" style={{ contain: 'layout' }}>
+                        <div className="relative h-[380px] sm:h-[480px] w-full" style={{ contain: 'layout' }}>
                           <AnimatePresence initial={false} mode="popLayout">
                             {visibleCards.map((card, index) => (
                               <SwipeableCard
