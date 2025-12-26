@@ -1149,7 +1149,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   return (
     <>
       <SEO
-        title="findr"
+        title="Findr — Catch of the Day | Fishing Predictions UK & Europe"
         description="AI-powered fishing predictions with live environmental data for UK and European coastal waters. Get bite scores, species recommendations, and optimal fishing conditions."
         url="https://fishfindr.eu"
       />
