@@ -2286,6 +2286,25 @@ img {
 
 /* --- END APPLE DESIGN LANGUAGE ENHANCEMENTS --- */
 
+/* --- FINDR CARD DECK RESPONSIVE HEIGHT --- */
+/* Uses svh (small viewport height) for reliable mobile viewport sizing */
+/* Accounts for: header (~64px) + bottom nav (~72px) + action buttons (~72px) + spacing (~24px) */
+
+.findr-deck-height {
+  height: calc(100svh - 64px - 72px - 72px - 24px);
+  min-height: 320px;
+  max-height: 480px;
+}
+
+@media (min-width: 640px) {
+  .findr-deck-height {
+    height: 480px;
+    max-height: 600px;
+  }
+}
+
+/* --- END FINDR CARD DECK --- */
+
 /* Compact DaisyUI overrides (mobile) — must load last to win the cascade */
 @import "./compact.css";
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
-import SEO from '../../../../components/SEO';
+import SEO from '../../../components/SEO';
 
 interface Props {
   region: string;

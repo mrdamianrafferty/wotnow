@@ -1,6 +1,21 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
-import SEO from '../../../../components/SEO';
+import SEO from '../../../components/SEO';
+
+interface BaitItem {
+  bait_name?: string;
+}
+
+interface TechniqueItem {
+  technique_name?: string;
+  technique_code?: string;
+  technique?: { name_en?: string };
+}
+
+interface AdviceData {
+  shore?: { regions?: string };
+  [key: string]: unknown;
+}
 
 interface SpeciesDetails {
   species_id: string;
@@ -8,9 +23,9 @@ interface SpeciesDetails {
   name_en: string;
   scientific_name?: string | null;
   fun_fact?: string | null;
-  advice?: Record<string, unknown> | null;
-  techniques?: Array<unknown>;
-  bait?: Array<unknown>;
+  advice?: AdviceData | null;
+  techniques?: TechniqueItem[];
+  bait?: BaitItem[];
   seasonalityCurve?: { peak_months?: number[]; good_months?: number[] } | null;
 }
 
