@@ -139,7 +139,8 @@ export function FindrNavigation() {
 
       {/* Mobile Language Selector & User Menu - Static at top of page content */}
       {/* Fixed height to prevent CLS when location text changes */}
-      <div className="md:hidden flex items-center justify-between gap-2 px-3 py-2 bg-base-200 h-12 min-h-[48px]">
+      {/* safe-area-top ensures content is below notch/status bar on native apps */}
+      <div className="md:hidden flex items-center justify-between gap-2 px-3 py-2 bg-base-200 min-h-[48px] safe-area-top">
         <LocationDisplay />
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Notification bell removed: now managed in settings page */}

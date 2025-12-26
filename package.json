@@ -126,6 +126,7 @@
     "axios": "^1.12.2",
     "browser-image-compression": "^2.0.2",
     "cally": "^0.8.0",
+    "capacitor-plugin-safe-area": "^4.0.3",
     "cheerio": "^1.1.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

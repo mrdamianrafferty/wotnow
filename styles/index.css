@@ -2037,30 +2037,32 @@ abbr[title] {
 }
 
 /* --- PWA Safe Area Insets (for devices with notches/home indicators) --- */
+/* Uses CSS custom properties from capacitor-plugin-safe-area with env() fallback */
+
 .safe-bottom,
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-area-top {
+  padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 }
 
 .safe-top {
-  /* Ensure the top spacer fills the iOS status/notch area.
-     Some WebViews won't honor padding on an empty element, so give
-     the spacer an explicit height and a min-height for legacy support.
-     Use background-color: inherit so the spacer matches the header. */
+  /* Block element spacer for iOS status/notch area */
   display: block;
   box-sizing: border-box;
-  height: env(safe-area-inset-top);
-  min-height: constant(safe-area-inset-top); /* legacy iOS */
-  padding-top: env(safe-area-inset-top);
+  height: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  min-height: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   background-color: inherit;
 }
 
 .safe-left {
-  padding-left: env(safe-area-inset-left);
+  padding-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
 }
 
 .safe-right {
-  padding-right: env(safe-area-inset-right);
+  padding-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
 }
 
 /* --- APPLE DESIGN LANGUAGE ENHANCEMENTS (Added: Jan 2025) --- */

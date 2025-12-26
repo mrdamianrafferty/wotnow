@@ -128,6 +128,23 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     void cleanupServiceWorkers();
   }, []);
 
+  // Initialize safe area insets for native apps (capacitor-plugin-safe-area)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initSafeArea = async () => {
+      try {
+        const { initSafeArea: init } = await import('../lib/capacitor/safeArea');
+        await init();
+      } catch (error) {
+        // Safe area init is optional - CSS env() fallback will be used
+        console.warn('[App] Safe area init failed:', error);
+      }
+    };
+
+    void initSafeArea();
+  }, []);
+
   // Note: Deep link handling removed - @capgo/capacitor-social-login handles OAuth internally
   // using ASWebAuthenticationSession on iOS, which doesn't require deep link callbacks
 
