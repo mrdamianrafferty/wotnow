@@ -2288,18 +2288,18 @@ img {
 
 /* --- FINDR CARD DECK RESPONSIVE HEIGHT --- */
 /* Uses svh (small viewport height) for reliable mobile viewport sizing */
-/* Accounts for: header (~64px) + bottom nav (~72px) + action buttons (~72px) + spacing (~24px) */
+/* Accounts for: header (~56px) + bottom nav (~64px) + action buttons (~56px) + spacing (~16px) */
 
 .findr-deck-height {
-  height: calc(100svh - 64px - 72px - 72px - 24px);
-  min-height: 320px;
-  max-height: 480px;
+  height: calc(100svh - 56px - 64px - 56px - 16px);
+  min-height: 280px;
+  max-height: 400px;
 }
 
 @media (min-width: 640px) {
   .findr-deck-height {
-    height: 480px;
-    max-height: 600px;
+    height: 420px;
+    max-height: 500px;
   }
 }
 

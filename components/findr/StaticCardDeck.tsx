@@ -196,7 +196,7 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
         {/* Get to know me link */}
         <button
           type="button"
-          className="link link-primary text-sm self-start flex items-center gap-1 mt-auto"
+          className="link link-primary text-sm self-start flex items-center gap-1 pt-1"
           onClick={() => onShowSpeciesInfo(card)}
         >
           <TranslatedText text="Get to know me" /> →
