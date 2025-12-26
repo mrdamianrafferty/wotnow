@@ -58,7 +58,8 @@ module.exports = {
 
     if (!supabaseUrl || !supabaseKey) {
       // Fallback to static rectangles list if env vars missing
-      const rectangles = require('./lib/findr/rectangles.js');
+      const rectModule = require('./lib/findr/rectangles.js');
+      const rectangles = Array.isArray(rectModule) ? rectModule : rectModule?.default || rectModule;
       const today = new Date();
       const dates = [];
       for (let i = 0; i < 7; i++) {
@@ -123,7 +124,8 @@ module.exports = {
 
     if (error || !rects) {
       console.warn('[next-sitemap] Supabase fetch failed, falling back to static rectangles list', error);
-      const rectangles = require('./lib/findr/rectangles.js');
+      const rectModule = require('./lib/findr/rectangles.js');
+      const rectangles = Array.isArray(rectModule) ? rectModule : rectModule?.default || rectModule;
       return rectangles.slice(0, 300).flatMap((code) => {
         const today = new Date();
         return Array.from({ length: 7 }).map((_, i) => {
