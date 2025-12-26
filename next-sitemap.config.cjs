@@ -49,4 +49,25 @@ module.exports = {
       lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
     };
   },
+  // Additional dynamic paths for Findr rectangles and dates
+  additionalPaths: async (config) => {
+    const rectangles = require('./lib/findr/rectangles.js');
+    const today = new Date();
+    const dates = [];
+    // Generate today + next 6 days (weekly coverage)
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+
+    const paths = [];
+    rectangles.forEach((code) => {
+      dates.forEach((date) => {
+        paths.push({ loc: `/findr/${code}/${date}`, changefreq: 'daily', priority: 0.6 });
+      });
+    });
+
+    return paths;
+  },
 };
