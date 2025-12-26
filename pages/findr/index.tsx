@@ -1173,14 +1173,13 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           )}
 
           <section className="space-y-0 sm:space-y-2 px-0 sm:px-4" aria-labelledby="main-heading">
-            {/* Compact header - hidden on mobile when rectangle selected, visible otherwise */}
-            {(!activeRectangle || !isHydrated) && (
-              <div className="px-3 sm:px-0 py-1">
-                <h1 id="main-heading" className="text-lg sm:text-xl font-semibold flex items-center gap-2">
-                  <Sparkles size={18} aria-hidden="true" /> <TranslatedText text="findr" />
-                </h1>
-              </div>
-            )}
+            {/* Compact header with subtitle - always rendered to keep consistent title */}
+            <div className="px-3 sm:px-0 py-1">
+              <h1 id="main-heading" className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <Sparkles size={18} aria-hidden="true" /> <TranslatedText text="findr" />
+                <span className="text-sm text-base-content/70 ml-2 hidden sm:inline">— <TranslatedText text="Catch of the day" /></span>
+              </h1>
+            </div>
 
             {/* Status alerts - only shown when there's an error */}
             {rectangleOptionsError && (
