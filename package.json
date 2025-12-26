@@ -11,6 +11,7 @@
     "dev:turbo": "node ./scripts/ensure-next-manifests.cjs && next dev",
     "dev:clean": "npm run clean:dev && npm run dev",
     "build": "next build --webpack",
+    "generate-species-sitemap": "node scripts/generate-species-sitemap.js",
     "postbuild": "",
     "start": "next start",
     "lint": "eslint .",

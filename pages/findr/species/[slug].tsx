@@ -2,6 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import AppCTA from '../../../components/AppCTA';
+import Head from 'next/head';
 import Image from 'next/image';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../../components/SEO';
@@ -102,6 +103,17 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
     'image': undefined
   } : null;
 
+  // BreadcrumbList JSON-LD
+  const breadcrumbJsonLd = species ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu' },
+      { '@type': 'ListItem', 'position': 2, 'name': 'Findr', 'item': (process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu').replace(/\/$/, '') + '/findr' },
+      { '@type': 'ListItem', 'position': 3, 'name': species.name_en, 'item': (process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu').replace(/\/$/, '') + `/findr/species/${slug}` }
+    ]
+  } : null;
+
   // Determine hero image: prefer DB `image_url`, fall back to SPECIES_IMAGE_MAP using species_code or slug
   const resolveHeroImage = () => {
     if (!species) return null;
@@ -122,12 +134,34 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
     (pageJsonLd as any).image = isAbsolute ? heroImage : site.replace(/\/$/, '') + heroImage;
   }
 
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu').replace(/\/$/, '');
+  const pageUrl = `${siteUrl}/findr/species/${slug}`;
+  const metaDescription = species?.fun_fact
+    ? `${species.fun_fact}`
+    : species
+    ? `Quick fishing advice for ${species.name_en}: where to fish, when, and what bait to use.`
+    : 'Species information on Findr.';
+
   return (
     <>
-      <SEO title={title} description={species ? `Quick fishing advice for ${species.name_en}. Where to fish, when, and what bait to use.` : 'Species information on Findr.'} url={`https://fishfindr.eu/findr/species/${slug}`} />
+      <SEO title={title} description={metaDescription} url={pageUrl} />
+
+      <Head>
+        <link rel="canonical" href={pageUrl} />
+        <meta name="description" content={metaDescription} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={metaDescription} />
+        {heroImage && <meta property="og:image" content={/^https?:\/\//i.test(heroImage) ? heroImage : siteUrl + heroImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={metaDescription} />
+        {heroImage && <meta name="twitter:image" content={/^https?:\/\//i.test(heroImage) ? heroImage : siteUrl + heroImage} />}
+      </Head>
 
       {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
       {pageJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pageJsonLd) }} />}
+      {breadcrumbJsonLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />}
 
       <main className="min-h-screen p-6 bg-base-200">
         <div className="max-w-3xl mx-auto">
