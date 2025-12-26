@@ -42,12 +42,34 @@ module.exports = {
       changefreq = 'weekly';
     }
 
-    return {
+    const siteUrl = process.env.SITE_URL || config.siteUrl || 'https://godaisy.io';
+
+    // Add image sitemap entries for species pages when we have a matching image in /public/webp/{slug}.webp
+    const images = [];
+    try {
+      if (path.startsWith('/findr/species/')) {
+        const parts = path.split('/');
+        const slug = parts[parts.length - 1];
+        const fs = require('fs');
+        const p = require('path');
+        const candidate = p.join(process.cwd(), 'public', 'webp', `${slug}.webp`);
+        if (fs.existsSync(candidate)) {
+          images.push({ url: siteUrl.replace(/\/$/, '') + `/webp/${slug}.webp`, caption: slug, title: slug });
+        }
+      }
+    } catch (imgErr) {
+      console.warn('[next-sitemap] image check failed for', path, imgErr);
+    }
+
+    const entry = {
       loc: path,
       changefreq,
       priority,
       lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
     };
+
+    if (images.length) entry.images = images;
+    return entry;
   },
   // Additional dynamic paths for Findr rectangles and dates (Supabase-backed)
   additionalPaths: async (config) => {
