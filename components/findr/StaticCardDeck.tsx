@@ -140,7 +140,7 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
         <div className="space-y-3 sm:space-y-4">
           {card.image ? (
             <div
-              className="relative w-full max-h-80 sm:max-h-96 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0 cursor-pointer hover:opacity-95 transition-opacity"
+              className="relative w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[4/1] sm:aspect-[5/1.2] p-0 cursor-pointer hover:opacity-95 transition-opacity"
               onClick={() => onShowSpeciesInfo(card)}
               role="button"
               tabIndex={0}
@@ -499,7 +499,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
 
       {/* Card display - fixed height container to prevent CLS */}
       <div
-        className="relative h-[380px] sm:h-[480px] w-full overflow-hidden"
+        className="relative h-[520px] sm:h-[600px] w-full overflow-hidden"
         style={{ contain: 'layout size' }}
       >
         <div className="absolute inset-0 flex h-full w-full items-stretch justify-center p-0 sm:p-2">

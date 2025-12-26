@@ -237,7 +237,7 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
         <div className="space-y-3 sm:space-y-4">
           {card.image ? (
             <div
-              className="relative w-full max-h-80 sm:max-h-96 overflow-hidden rounded-2xl bg-base-200 aspect-[3/1.2] sm:aspect-[4/1.5] p-0 cursor-pointer hover:opacity-95 transition-opacity"
+              className="relative w-full max-h-48 sm:max-h-64 overflow-hidden rounded-2xl bg-base-200 aspect-[4/1] sm:aspect-[5/1.2] p-0 cursor-pointer hover:opacity-95 transition-opacity"
               onClick={() => onShowSpeciesInfo?.(card)}
               role="button"
               tabIndex={0}
@@ -1240,7 +1240,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                       </div>
                     </div>
                     {/* Card skeleton - shorter on mobile */}
-                    <div className="relative h-[380px] sm:h-[480px] w-full" style={{ contain: 'layout size' }}>
+                    <div className="relative h-[520px] sm:h-[600px] w-full" style={{ contain: 'layout size' }}>
                       <SkeletonCard />
                     </div>
                     {/* Action buttons placeholder - compact */}
@@ -1258,7 +1258,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                     {useAnimatedDeck ? (
                       <>
                         {/* Animated deck with swipe gestures (native apps only) */}
-                        <div className="relative h-[380px] sm:h-[480px] w-full" style={{ contain: 'layout' }}>
+                        <div className="relative h-[520px] sm:h-[600px] w-full" style={{ contain: 'layout' }}>
                           <AnimatePresence initial={false} mode="popLayout">
                             {visibleCards.map((card, index) => (
                               <SwipeableCard
