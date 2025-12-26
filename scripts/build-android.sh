@@ -11,6 +11,14 @@ set -e
 
 FLAVOR=${1:-findr}
 BUILD_TYPE=${2:-debug}
+INSTALL_DEVICE=false
+
+# Check for --device flag in any position
+for arg in "$@"; do
+    if [ "$arg" = "--device" ]; then
+        INSTALL_DEVICE=true
+    fi
+done
 
 # Validate flavor
 if [[ ! "$FLAVOR" =~ ^(findr|godaisy|growdaisy)$ ]]; then
@@ -83,6 +91,13 @@ if [ -f "$APK_PATH" ]; then
     echo "Build successful!"
     echo "APK: android/$APK_PATH"
     echo "=========================================="
+
+    # Install on device if --device flag was passed
+    if [ "$INSTALL_DEVICE" = true ]; then
+        echo "Installing on device..."
+        adb install -r "$APK_PATH"
+        echo "Installed on device!"
+    fi
 else
     echo "APK built at: app/build/outputs/apk/${FLAVOR}/${BUILD_TYPE}/"
 fi
