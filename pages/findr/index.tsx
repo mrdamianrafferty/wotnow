@@ -1645,6 +1645,12 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
           speciesName={currentCard.commonName}
           speciesCode={currentCard.speciesCode || currentCard.id}
           confidence={currentCard.confidence ?? undefined}
+          tideExtremes={tideExtremes}
+          bestTimes={currentCard.bestTimes}
+          recommendedBaits={currentCard.recommendedBaits}
+          baitSuggestions={currentCard.baitSuggestions}
+          moonPhase={currentCard.moonPhase}
+          moonIllumination={currentCard.moonIllumination}
         />
       )}
 
