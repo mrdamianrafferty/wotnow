@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
+import Image from 'next/image';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../../components/SEO';
 import { getSupabaseServerClient } from '../../../lib/supabase/serverClient';
+import { SPECIES_IMAGE_MAP } from '../../../data/speciesImageMap';
 
 interface BaitItem {
   bait_name?: string;
@@ -93,8 +95,26 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
       '@type': 'Thing',
       'name': species.name_en,
       'description': species.fun_fact || undefined,
-    }
+    },
+    'image': undefined
   } : null;
+
+  // Determine hero image from SPECIES_IMAGE_MAP using species_code or slug
+  const resolveHeroImage = () => {
+    if (!species) return null;
+    const code = (species as any).species_code;
+    if (code && SPECIES_IMAGE_MAP[code]) return SPECIES_IMAGE_MAP[code].image;
+    if (code && typeof code === 'string' && SPECIES_IMAGE_MAP[code.toUpperCase()]) return SPECIES_IMAGE_MAP[code.toUpperCase()].image;
+    const bySlug = Object.values(SPECIES_IMAGE_MAP).find((e) => e.slug === slug);
+    if (bySlug) return bySlug.image;
+    return null;
+  };
+
+  const heroImage = resolveHeroImage();
+  if (pageJsonLd && heroImage) {
+    const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu';
+    pageJsonLd.image = site.replace(/\/$/, '') + heroImage;
+  }
 
   return (
     <>
@@ -105,6 +125,20 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
 
       <main className="min-h-screen p-6 bg-base-200">
         <div className="max-w-3xl mx-auto">
+          <div className="w-full h-56 md:h-72 lg:h-96 mb-6 rounded-lg overflow-hidden bg-gradient-to-r from-primary to-secondary">
+            {heroImage ? (
+              <Image
+                src={heroImage}
+                alt={species ? `${species.name_en} image` : 'Species image'}
+                width={1200}
+                height={600}
+                className="object-cover w-full h-full"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full" aria-hidden />
+            )}
+          </div>
           <h1 className="text-3xl font-bold">{species ? species.name_en : 'Species'}</h1>
           {species?.scientific_name && <p className="italic text-sm">{species.scientific_name}</p>}
           {alternateNames.length > 0 && (
