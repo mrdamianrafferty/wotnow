@@ -228,14 +228,14 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
   };
 
   return (
-    <div className={`modal modal-bottom sm:modal-middle ${open ? 'modal-open' : ''}`}>
+    <div className={`modal modal-bottom sm:modal-middle ${open ? 'modal-open' : ''}`} style={{ overscrollBehavior: 'contain' }}>
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="modal-box w-full max-w-lg space-y-4 rounded-t-2xl sm:rounded-2xl p-4 sm:p-6"
+        className="modal-box w-full max-w-lg space-y-4 rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 overscroll-contain"
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
