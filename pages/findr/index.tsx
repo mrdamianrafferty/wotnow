@@ -1196,7 +1196,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
             )}
 
               {/* Card deck area - compact on mobile to ensure bottom nav is visible */}
-              <div className="space-y-1 sm:space-y-2 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4" style={{ contain: 'layout' }}>
+              <div className="space-y-1 sm:space-y-2 max-w-full sm:max-w-4xl mx-0 sm:mx-auto px-0 sm:px-4">
                 {(!isHydrated || loading || (!activeRectangle && !error)) ? (
                   /* Skeleton state - shown during hydration, loading, or no rectangle */
                   <>
@@ -1209,7 +1209,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                       </div>
                     </div>
                     {/* Card skeleton - shorter on mobile */}
-                    <div className="relative findr-deck-height w-full" style={{ contain: 'layout size' }}>
+                    <div className="relative findr-deck-height w-full">
                       <SkeletonCard />
                     </div>
                     {/* Action buttons placeholder - compact */}
@@ -1227,7 +1227,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                     {useAnimatedDeck ? (
                       <>
                         {/* Animated deck with swipe gestures (native apps only) */}
-                        <div className="relative findr-deck-height w-full" style={{ contain: 'layout' }}>
+                        <div className="relative findr-deck-height w-full">
                           <AnimatePresence initial={false} mode="popLayout">
                             {visibleCards.map((card, index) => (
                               <SwipeableCard

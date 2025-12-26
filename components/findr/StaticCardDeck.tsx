@@ -302,10 +302,7 @@ export const StaticCardDeck: React.FC<StaticCardDeckProps> = ({
       </div>
 
       {/* Card display - responsive height container to prevent CLS */}
-      <div
-        className="relative findr-deck-height w-full overflow-hidden"
-        style={{ contain: 'layout' }}
-      >
+      <div className="relative findr-deck-height w-full overflow-hidden">
         <div className="absolute inset-0 flex h-full w-full items-stretch justify-center p-0 sm:p-2">
           <StaticCardContent
             card={currentCard}
