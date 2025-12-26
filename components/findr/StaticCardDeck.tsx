@@ -76,7 +76,7 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
         {/* Image with favorite heart */}
         {card.image ? (
           <div
-            className="relative w-full max-h-40 sm:max-h-56 overflow-hidden rounded-xl bg-base-200 aspect-[4/1] sm:aspect-[5/1.2] cursor-pointer hover:opacity-95 transition-opacity"
+            className="relative w-full max-h-56 sm:max-h-72 overflow-hidden rounded-xl bg-base-200 aspect-[5/2] sm:aspect-[5/2] cursor-pointer hover:opacity-95 transition-opacity"
             onClick={() => onShowSpeciesInfo(card)}
             role="button"
             tabIndex={0}
@@ -117,7 +117,7 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
           </div>
         ) : (
           <div
-            className="flex aspect-[4/1] sm:aspect-[5/1.2] w-full items-center justify-center rounded-xl bg-gradient-to-br from-info/10 to-primary/10 relative cursor-pointer"
+            className="flex aspect-[5/2] w-full items-center justify-center rounded-xl bg-gradient-to-br from-info/10 to-primary/10 relative cursor-pointer"
             onClick={() => onShowSpeciesInfo(card)}
             role="button"
             tabIndex={0}
