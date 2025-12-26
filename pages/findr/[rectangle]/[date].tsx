@@ -1,7 +1,6 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
 import SEO from '../../../components/SEO';
-import { useRouter } from 'next/router';
 
 interface Props {
   rectangle: string;
