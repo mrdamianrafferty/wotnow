@@ -9,15 +9,14 @@ export default function AppCTA({ deepLinkPath }: AppCTAProps) {
   const isBrowser = typeof window !== 'undefined';
 
   const detectPlatform = () => {
-    if (!isBrowser) return { isIos: false, isAndroid: false, isPWA: false };
+    if (!isBrowser) return { isAndroid: false, isPWA: false };
     const ua = navigator.userAgent || '';
     const isAndroid = /android/i.test(ua);
-    const isIos = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && 'ontouchend' in document);
-    const isPWA = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
-    return { isIos, isAndroid, isPWA };
+    const isPWA = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || ((navigator as unknown) && (navigator as unknown as { standalone?: boolean }).standalone === true);
+    return { isAndroid, isPWA };
   };
 
-  const { isIos, isAndroid } = detectPlatform();
+  const { isAndroid } = detectPlatform();
 
   const openDeepLink = () => {
     if (!isBrowser) return;
