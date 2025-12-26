@@ -8,7 +8,6 @@
 		"allowNavigation": ["grow.godaisy.io", "*.supabase.co"]
 	},
 	"ios": {
-		"contentInset": "automatic",
 		"allowsLinkPreview": false,
 		"scrollEnabled": true,
 		"backgroundColor": "#065f46",
@@ -62,6 +61,7 @@
 		"SplashScreenPlugin",
 		"StatusBarPlugin",
 		"ToastPlugin",
-		"SocialLoginPlugin"
+		"SocialLoginPlugin",
+		"SafeAreaPlugin"
 	]
 }
