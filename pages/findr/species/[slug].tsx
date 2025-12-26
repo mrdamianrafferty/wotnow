@@ -113,7 +113,7 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
   const heroImage = resolveHeroImage();
   if (pageJsonLd && heroImage) {
     const site = process.env.NEXT_PUBLIC_SITE_URL || 'https://fishfindr.eu';
-    pageJsonLd.image = site.replace(/\/$/, '') + heroImage;
+    (pageJsonLd as any).image = site.replace(/\/$/, '') + heroImage;
   }
 
   return (
