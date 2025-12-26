@@ -1514,7 +1514,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                     ))}
                   </div>
 
-                  {/* More fish... / Show less button */}
+                  {/* Plenty more fish... / Show less button */}
                   {cards.length > 6 && (
                     <div className="flex justify-center pt-4">
                       <button
@@ -1532,7 +1532,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                         ) : (
                           <>
                             <ChevronDown size={18} aria-hidden="true" />
-                            <TranslatedText text="More fish..." /> ({cards.length - 6})
+                            <TranslatedText text="Plenty more fish..." /> ({cards.length - 6})
                           </>
                         )}
                       </button>
