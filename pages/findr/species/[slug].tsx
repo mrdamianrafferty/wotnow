@@ -157,6 +157,19 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={metaDescription} />
         {heroImage && <meta name="twitter:image" content={/^https?:\/\//i.test(heroImage) ? heroImage : siteUrl + heroImage} />}
+
+        {/* Locale / hreflang hints */}
+        <meta property="og:locale" content="en_US" />
+        {species?.name_es && <meta property="og:locale:alternate" content="es_ES" />}
+        {species?.name_fr && <meta property="og:locale:alternate" content="fr_FR" />}
+        {species?.name_de && <meta property="og:locale:alternate" content="de_DE" />}
+        {species?.name_it && <meta property="og:locale:alternate" content="it_IT" />}
+        {species?.name_pt && <meta property="og:locale:alternate" content="pt_PT" />}
+
+        {/* Preload hero image for faster LCP (if available) */}
+        {heroImage && (
+          <link rel="preload" as="image" href={/^https?:\/\//i.test(heroImage) ? heroImage : siteUrl + heroImage} />
+        )}
       </Head>
 
       {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
@@ -181,6 +194,7 @@ const SpeciesPage: React.FC<Props> = ({ slug, species }) => {
                 alt={species ? `${species.name_en} image` : 'Species image'}
                 width={1200}
                 height={600}
+                sizes="(max-width: 768px) 100vw, 1200px"
                 className="object-cover w-full h-full"
                 priority
               />
