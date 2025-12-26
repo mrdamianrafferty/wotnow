@@ -80,6 +80,39 @@ module.exports = {
       auth: { persistSession: false },
     });
 
+    // Build-time file cache to avoid repeated Supabase calls during sitemap generation
+    const fs = require('fs');
+    const path = require('path');
+    const CACHE_FILE = path.join(process.cwd(), '.next', 'sitemap-cache.json');
+    const CACHE_TTL_MS = Number(process.env.FINDR_SITEMAP_CACHE_TTL_MS || 1000 * 60 * 60 * 6); // default 6 hours
+
+    // Try to read cached rectangles if available and not expired
+    try {
+      if (fs.existsSync(CACHE_FILE)) {
+        const raw = fs.readFileSync(CACHE_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        const age = Date.now() - (parsed.__fetched_at || 0);
+        if (age > 0 && age < CACHE_TTL_MS && Array.isArray(parsed.rects)) {
+          const rects = parsed.rects;
+          const today = new Date();
+          function isoDate(d) { return d.toISOString().slice(0,10); }
+          return rects.flatMap((r) => {
+            const priority = (r.priority_level ?? 0) >= 3 ? 0.85 : (r.priority_level ?? 0) >= 1 ? 0.7 : 0.45;
+            const days = (r.priority_level ?? 0) >= 3 ? 30 : 7;
+            const changefreq = (r.priority_level ?? 0) >= 3 ? 'daily' : 'weekly';
+            const lastmod = r.updated_at ? new Date(r.updated_at).toISOString() : new Date().toISOString();
+            return Array.from({ length: days }).map((_, i) => {
+              const d = new Date(today);
+              d.setDate(today.getDate() + i);
+              return { loc: `/findr/${r.rectangle_code}/${isoDate(d)}`, changefreq, priority, lastmod };
+            });
+          });
+        }
+      }
+    } catch (cacheReadErr) {
+      console.warn('[next-sitemap] Failed to read sitemap cache, continuing to fetch from Supabase', cacheReadErr);
+    }
+
     // Fetch coastal rectangles ordered by priority and proximity
     const { data: rects, error } = await supabase
       .from('ices_rectangles')
@@ -117,6 +150,18 @@ module.exports = {
         paths.push({ loc: `/findr/${r.rectangle_code}/${isoDate(d)}`, changefreq, priority, lastmod });
       }
     });
+
+    // Persist fetched rectangles to build cache for future runs
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const CACHE_FILE = path.join(process.cwd(), '.next', 'sitemap-cache.json');
+      const payload = { __fetched_at: Date.now(), rects };
+      fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
+      fs.writeFileSync(CACHE_FILE, JSON.stringify(payload), 'utf8');
+    } catch (cacheWriteErr) {
+      console.warn('[next-sitemap] Failed to write sitemap cache', cacheWriteErr);
+    }
 
     return paths;
   },
