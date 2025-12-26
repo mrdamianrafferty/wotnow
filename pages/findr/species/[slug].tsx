@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import SEO from '../../../components/SEO';
