@@ -19,6 +19,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineIndicator } from '../components/OfflineIndicator'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { PullToRefresh } from '../components/PullToRefresh';
 
 // Lazy-load non-critical initialization components
 const OfflineInit = dynamic(
@@ -215,7 +216,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                       },
                     }}
                   />
-                  <Component {...pageProps} />
+                  <PullToRefresh>
+                    <Component {...pageProps} />
+                  </PullToRefresh>
                   <Analytics />
                   <SpeedInsights />
                 </div>
