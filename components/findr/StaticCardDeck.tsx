@@ -30,6 +30,7 @@ import {
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../translation/TranslatedFishCard';
 import { GuildBadge } from './GuildBadge';
 import { EnvironmentalInfo } from './EnvironmentalInfo';
+import { SpeciesVerdictStrip } from './SpeciesVerdictStrip';
 import { GradientFish } from '../GradientFish';
 import { getWeatherMessage } from '../../lib/utils/weatherMessages';
 import type { CardData } from '../../lib/findr/mapPrediction';
@@ -245,6 +246,16 @@ const StaticCardContent: React.FC<StaticCardContentProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Species-specific verdict strip with timing advice */}
+          <SpeciesVerdictStrip
+            confidence={card.confidence}
+            bestTimes={card.bestTimes}
+            tideTips={card.tideTips}
+            tideScore={card.tide_score}
+            lightScore={card.light_score}
+            lunarScore={card.lunar_score}
+          />
 
           {card.summary && (
             <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>

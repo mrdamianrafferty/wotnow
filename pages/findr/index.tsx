@@ -34,6 +34,7 @@ import { useFavourites } from '../../hooks/useFavourites';
 import { useFindrOfflineInit } from '../../hooks/useFindrOfflineInit';
 import { useTideExtremes } from '../../hooks/useTideExtremes';
 import { DailyVerdictBar } from '../../components/findr/DailyVerdictBar';
+import { SpeciesVerdictStrip } from '../../components/findr/SpeciesVerdictStrip';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
 import { NetworkStatusIndicator } from '../../components/findr/NetworkStatusIndicator';
@@ -348,6 +349,17 @@ const PredictionCardContent: React.FC<PredictionCardContentProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Species-specific verdict strip with timing advice */}
+          <SpeciesVerdictStrip
+            confidence={card.confidence}
+            bestTimes={card.bestTimes}
+            tideTips={card.tideTips}
+            tideScore={card.tide_score}
+            lightScore={card.light_score}
+            lunarScore={card.lunar_score}
+          />
+
           {card.summary && (
             <p className="text-base-content/80 text-sm sm:text-base leading-relaxed">{card.summary}</p>
           )}
