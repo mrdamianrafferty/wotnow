@@ -2,8 +2,9 @@
 
 import React, { useEffect, useId, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { X, Calendar, Clock, Bell, BellOff, Check, Cloud, Smartphone } from 'lucide-react';
+import { X, Calendar, Clock, Bell, BellOff, Check, Cloud, Smartphone, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Plan data structure stored in localStorage
@@ -101,6 +102,8 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [reminderScheduled, setReminderScheduled] = useState<boolean | null>(null);
+  const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 
   // Get auth link based on app
   const getAuthLink = () => {
@@ -124,6 +127,7 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
       setShowTimePicker(false);
       setSaved(false);
       setShowAuthPrompt(false);
+      setReminderScheduled(null);
     }
   }, [open]);
 
@@ -182,16 +186,23 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
       localStorage.setItem('planned_activities', JSON.stringify(plans));
 
       // Schedule reminder notification if enabled (native apps only)
-      if (reminderEnabled) {
+      if (reminderEnabled && isNative) {
         try {
           const { scheduleReminder } = await import('@/lib/capacitor/pushNotifications');
-          await scheduleReminder(plan);
-        } catch {
-          // Non-fatal - notifications are optional
+          const notificationId = await scheduleReminder(plan);
+          setReminderScheduled(notificationId !== null);
           if (process.env.NODE_ENV === 'development') {
-            console.log('[PlanItSheet] Could not schedule reminder - continuing without');
+            console.log('[PlanItSheet] Reminder scheduled:', notificationId);
+          }
+        } catch (err) {
+          setReminderScheduled(false);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[PlanItSheet] Could not schedule reminder:', err);
           }
         }
+      } else if (reminderEnabled && !isNative) {
+        // Web users - reminder not available
+        setReminderScheduled(false);
       }
 
       onSave(plan);
@@ -217,7 +228,7 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [app, activityType, activityName, activityData, getPlannedDate, selectedTime, reminderEnabled, onSave, onClose, user]);
+  }, [app, activityType, activityName, activityData, getPlannedDate, selectedTime, reminderEnabled, isNative, onSave, onClose, user]);
 
   const formatDateDisplay = (option: WhenChip): string => {
     const date = option.getDate();
@@ -364,21 +375,32 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
             </div>
 
             {/* Reminder toggle */}
-            <div className="flex items-center justify-between py-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                {reminderEnabled ? (
-                  <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
-                ) : (
-                  <BellOff className="h-5 w-5 text-base-content/50" aria-hidden="true" />
-                )}
-                <span className="text-sm">Remind me</span>
-              </label>
-              <input
-                type="checkbox"
-                className="toggle toggle-primary"
-                checked={reminderEnabled}
-                onChange={(e) => setReminderEnabled(e.target.checked)}
-              />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between py-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  {reminderEnabled ? (
+                    <Bell className="h-5 w-5 text-primary" aria-hidden="true" />
+                  ) : (
+                    <BellOff className="h-5 w-5 text-base-content/50" aria-hidden="true" />
+                  )}
+                  <span className="text-sm">Remind me</span>
+                </label>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={reminderEnabled}
+                  onChange={(e) => setReminderEnabled(e.target.checked)}
+                />
+              </div>
+              {/* Web user notice */}
+              {reminderEnabled && !isNative && (
+                <div className="flex items-start gap-2 p-2 bg-info/10 rounded-lg text-xs text-info">
+                  <Info className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>
+                    Reminders work best in the mobile app. Download Fish Findr from the App Store for push notifications.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Custom children (e.g., safety checklist for Findr) */}
@@ -405,6 +427,19 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
                 'Save plan'
               )}
             </button>
+
+            {/* Reminder status feedback after save */}
+            {saved && reminderEnabled && reminderScheduled === true && (
+              <p className="text-xs text-success text-center flex items-center justify-center gap-1">
+                <Bell className="h-3 w-3" aria-hidden="true" />
+                Reminder set
+              </p>
+            )}
+            {saved && reminderEnabled && reminderScheduled === false && !isNative && (
+              <p className="text-xs text-base-content/60 text-center">
+                Plan saved. Open the app for reminder notifications.
+              </p>
+            )}
           </>
         )}
       </div>
