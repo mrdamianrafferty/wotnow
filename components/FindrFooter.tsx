@@ -14,7 +14,7 @@ export default function FindrFooter() {
           <div className="text-2xl font-bold">findr</div>
           <p className="text-sm text-base-content/80">
             <TranslatedText text="by" />{" "}
-            <a href="https://godaisy.io" target="_blank" rel="noopener noreferrer" className="link link-hover text-primary">
+            <a href="https://godaisy.io" target="_blank" rel="noopener noreferrer" className="hover:underline text-primary font-medium">
               Go Daisy
             </a>
           </p>
@@ -22,15 +22,15 @@ export default function FindrFooter() {
 
         <div className="grid grid-cols-2 gap-6">
           <nav className="grid grid-flow-row gap-2" aria-label="Support links">
-            <Link href="/findr/support" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="Support findr" /></Link>
-            <Link href="/findr/how-it-works" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="How it works" /></Link>
-            <Link href="/findr/about" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="About findr" /></Link>
+            <Link href="/findr/support" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Support findr" /></Link>
+            <Link href="/findr/how-it-works" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="How it works" /></Link>
+            <Link href="/findr/about" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="About findr" /></Link>
           </nav>
 
           <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
-            <Link href="/findr/terms" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="Terms of use" /></Link>
-            <Link href="/findr/privacy" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="Privacy policy" /></Link>
-            <Link href="/findr/cookies" className="link link-hover block text-base-content hover:text-primary"><TranslatedText text="Cookie policy" /></Link>
+            <Link href="/findr/terms" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Terms of use" /></Link>
+            <Link href="/findr/privacy" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Privacy policy" /></Link>
+            <Link href="/findr/cookies" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Cookie policy" /></Link>
           </nav>
         </div>
 
