@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import type { TideInfo } from '../components/findr/TideConditions';
 import type { FreshnessLevel } from '@/lib/offline/storage';
 import { Capacitor } from '@capacitor/core';
@@ -307,6 +308,39 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     retry: 1, // Retry once on failure
     retryDelay: 1000, // Wait 1 second before retry
   });
+
+  // Pre-load species images for offline access (runs once per new predictions)
+  const preloadedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const predictions = query.data?.predictions;
+    if (!predictions || predictions.length === 0) return;
+
+    // Create a key from first 5 species to detect new predictions
+    const predictionKey = predictions
+      .slice(0, 5)
+      .map(p => p.species_id || p.species_code)
+      .join('-');
+
+    // Skip if already preloaded these predictions
+    if (preloadedRef.current === predictionKey) return;
+    preloadedRef.current = predictionKey;
+
+    // Pre-load images in background (non-blocking)
+    void (async () => {
+      try {
+        const { preloadTopSpeciesImages } = await import('@/lib/findr/offlineImages');
+        const formattedPredictions = predictions.map(p => ({
+          speciesCode: (p.species_id || p.species_code) as string,
+        }));
+        await preloadTopSpeciesImages(formattedPredictions, 10);
+      } catch (e) {
+        // Silently ignore pre-loading errors
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[useFishingPredictions] Image preload failed:', e);
+        }
+      }
+    })();
+  }, [query.data?.predictions]);
 
   return {
     predictions: query.data?.predictions ?? null,
