@@ -4,6 +4,11 @@ import Image from 'next/image';
 import WeatherStatCard from './WeatherStatCard';
 import { formatDisplayTime } from '../../../lib/findr/weatherFormatting';
 import { TranslatedText } from '../../translation/TranslatedFishCard';
+import {
+  getOfflineMoonData,
+  preCacheMoonData,
+  type OfflineMoonData,
+} from '../../../lib/findr/offlineMoon';
 
 interface MoonSummaryCardCompactProps {
   lat?: number | null;
@@ -33,6 +38,45 @@ interface MoonApiResponse {
         days_ahead?: number;
       };
     };
+  };
+}
+
+/**
+ * Convert offline moon data to API-compatible format
+ */
+function offlineToApiFormat(offline: OfflineMoonData): MoonApiResponse {
+  const formatTime = (iso?: string): string | undefined => {
+    if (!iso) return undefined;
+    try {
+      return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return undefined;
+    }
+  };
+
+  return {
+    moon: {
+      phase: offline.phase,
+      phase_name: offline.phaseName,
+      stage: offline.stage,
+      illumination: `${offline.illumination}%`,
+      emoji: offline.phaseEmoji,
+      moonrise: formatTime(offline.moonrise),
+      moonset: formatTime(offline.moonset),
+    },
+    moon_phases: {
+      new_moon: {
+        next: {
+          days_ahead: offline.daysUntilNewMoon,
+        },
+      },
+      full_moon: {
+        next: {
+          name: 'Full Moon', // Offline doesn't have named full moons
+          days_ahead: offline.daysUntilFullMoon,
+        },
+      },
+    },
   };
 }
 
@@ -99,6 +143,14 @@ export function MoonSummaryCardCompact({ lat, lon, className }: MoonSummaryCardC
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<MoonApiResponse | null>(null);
 
+  // Pre-cache moon data for the next 7 days when component mounts
+  useEffect(() => {
+    if (lat != null && lon != null && !Number.isNaN(lat) && !Number.isNaN(lon)) {
+      // Pre-cache in background (doesn't block render)
+      setTimeout(() => preCacheMoonData(lat, lon, 7), 100);
+    }
+  }, [lat, lon]);
+
   useEffect(() => {
     if (lat == null || lon == null || Number.isNaN(lat) || Number.isNaN(lon)) {
       setPhase(null);
@@ -115,17 +167,32 @@ export function MoonSummaryCardCompact({ lat, lon, className }: MoonSummaryCardC
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await fetch(`/api/moon?lat=${latValue}&lon=${lonValue}`, {
-          signal: controller.signal,
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to load moon data: ${response.status}`);
+
+        // Step 1: Get offline data immediately (instant, no network)
+        // This uses suncalc for client-side calculation - works entirely offline
+        const offlineData = getOfflineMoonData(latValue, lonValue);
+        const offlinePhase = offlineToApiFormat(offlineData);
+        setPhase(offlinePhase);
+
+        // Step 2: Try to get API data for richer information (named full moons, etc.)
+        // But don't fail if offline - offline data is sufficient
+        try {
+          const response = await fetch(`/api/moon?lat=${latValue}&lon=${lonValue}`, {
+            signal: controller.signal,
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setPhase(data);
+          }
+          // If API fails, we already have offline data - no action needed
+        } catch (fetchErr) {
+          // Network error - we're offline, but we have data so no error
+          if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
+            throw fetchErr; // Re-throw abort errors
+          }
+          // Silently use offline data
         }
-        
-        const data = await response.json();
-        setPhase(data);
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Failed to load moon data');
