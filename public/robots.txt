@@ -12,7 +12,7 @@ Disallow: /demo/
 Disallow: /test/
 
 # Sitemap locations for all sites
+# Each domain serves a dynamic sitemap based on the requesting host
 Sitemap: https://godaisy.io/sitemap.xml
 Sitemap: https://fishfindr.eu/sitemap.xml
 Sitemap: https://grow.godaisy.io/sitemap.xml
-Sitemap: https://fishfindr.eu/sitemap-species.xml
