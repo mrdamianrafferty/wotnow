@@ -1309,8 +1309,9 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                 /* Skeleton header and grid during loading */
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="skeleton h-7 w-48"></div>
-                    <div className="skeleton h-5 w-32"></div>
+                    <h3 id="species-lineup-heading" className="sr-only">Full species lineup</h3>
+                    <div className="skeleton h-7 w-48" aria-hidden="true"></div>
+                    <div className="skeleton h-5 w-32" aria-hidden="true"></div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, i) => (
