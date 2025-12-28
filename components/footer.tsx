@@ -14,23 +14,23 @@ export default function Footer() {
         </aside>
 
         <div className="grid grid-cols-2 gap-6">
-          <nav className="grid grid-flow-row gap-2">
-            <Link href="/support" className="link link-hover block">Support Go Daisy</Link>
-            <Link href="/HowWeDoIt" className="link link-hover block">How we do it</Link>
-            <Link href="/whether-weather" className="link link-hover block">Sorry about the weather</Link>
-            <Link href="/AboutUs" className="link link-hover block">About us</Link>
+          <nav className="grid grid-flow-row gap-2" aria-label="Support links">
+            <Link href="/support" className="link link-hover block text-base-content hover:text-primary">Support Go Daisy</Link>
+            <Link href="/HowWeDoIt" className="link link-hover block text-base-content hover:text-primary">How we do it</Link>
+            <Link href="/whether-weather" className="link link-hover block text-base-content hover:text-primary">Sorry about the weather</Link>
+            <Link href="/AboutUs" className="link link-hover block text-base-content hover:text-primary">About us</Link>
           </nav>
 
-          <nav className="grid grid-flow-row gap-2">
-            <Link href="/TermsAndConditions" className="link link-hover block">Terms of use</Link>
-            <Link href="/PrivacyPolicy" className="link link-hover block">Privacy policy</Link>
-            <Link href="/CookiePolicy" className="link link-hover block">Cookie policy</Link>
+          <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
+            <Link href="/TermsAndConditions" className="link link-hover block text-base-content hover:text-primary">Terms of use</Link>
+            <Link href="/PrivacyPolicy" className="link link-hover block text-base-content hover:text-primary">Privacy policy</Link>
+            <Link href="/CookiePolicy" className="link link-hover block text-base-content hover:text-primary">Cookie policy</Link>
           </nav>
         </div>
 
         <nav className="md:text-right">
-          <p className="text-sm opacity-70">Get out there!</p>
-          <p className="text-xs opacity-60">© {year} Go Daisy. All rights reserved.</p>
+          <p className="text-sm text-base-content/80">Get out there!</p>
+          <p className="text-xs text-base-content/70">© {year} Go Daisy. All rights reserved.</p>
         </nav>
       </div>
     </footer>
