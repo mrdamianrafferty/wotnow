@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase/client';
 import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Cloud, Sun, Waves } from 'lucide-react';
+import { Cloud, Sun, Waves, Leaf, Droplets } from 'lucide-react';
 import { signInWithApple } from '../lib/auth/appleSignIn';
 import { signInWithGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
 
@@ -239,13 +239,23 @@ export default function GoDaisyLogin() {
     }
   };
 
+  // Determine app context for branding
+  const appName = isGrowContext ? 'Grow Daisy' : 'Go Daisy';
+  const appTagline = isGrowContext
+    ? (mode === 'signin' ? 'Welcome back, gardener!' : 'Start your garden journey')
+    : (mode === 'signin' ? 'Welcome back!' : 'Join the outdoor adventure');
+
   return (
     <>
       <Head>
-        <title>Sign In - Go Daisy</title>
+        <title>Sign In - {appName}</title>
       </Head>
       <div
-        className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50 flex items-center justify-center p-4"
+        className={`min-h-screen flex items-center justify-center p-4 ${
+          isGrowContext
+            ? 'bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50'
+            : 'bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50'
+        }`}
         style={{
           paddingTop: iosSafeAreaHeight > 0
             ? `calc(1rem + ${iosSafeAreaHeight}px)`
@@ -257,14 +267,22 @@ export default function GoDaisyLogin() {
             {/* Header */}
             <div className="text-center mb-6">
               <div className="flex justify-center gap-2 mb-4">
-                <Sun className="w-12 h-12 text-yellow-500" />
-                <Cloud className="w-12 h-12 text-blue-400" />
-                <Waves className="w-12 h-12 text-cyan-500" />
+                {isGrowContext ? (
+                  <>
+                    <Leaf className="w-12 h-12 text-green-500" />
+                    <Sun className="w-12 h-12 text-yellow-500" />
+                    <Droplets className="w-12 h-12 text-blue-400" />
+                  </>
+                ) : (
+                  <>
+                    <Sun className="w-12 h-12 text-yellow-500" />
+                    <Cloud className="w-12 h-12 text-blue-400" />
+                    <Waves className="w-12 h-12 text-cyan-500" />
+                  </>
+                )}
               </div>
-              <h1 className="text-3xl font-bold text-primary">Go Daisy</h1>
-              <p className="text-base-content/70 mt-2">
-                {mode === 'signin' ? 'Welcome back!' : 'Join the outdoor adventure'}
-              </p>
+              <h1 className="text-3xl font-bold text-primary">{appName}</h1>
+              <p className="text-base-content/70 mt-2">{appTagline}</p>
             </div>
 
             {/* Error/Success Messages */}

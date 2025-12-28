@@ -409,7 +409,7 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
                 <div className="flex items-start gap-2 p-2 bg-info/10 rounded-lg text-xs text-info">
                   <Info className="h-4 w-4 shrink-0 mt-0.5" aria-hidden="true" />
                   <span>
-                    Reminders work best in the mobile app. Download Fish Findr from the App Store for push notifications.
+                    Reminders work best in the mobile app. Download the app from the App Store for push notifications.
                   </span>
                 </div>
               )}
