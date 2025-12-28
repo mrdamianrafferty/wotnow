@@ -7,6 +7,7 @@ import { queryWithTiming, timedParallelQueries } from '../../../lib/supabase/que
 import { calculateTidePhase, type TideExtreme } from '../../../lib/tides/calculateTidePhase';
 import { rateLimiter, RateLimitError, addRateLimitHeaders } from '../../../lib/utils/rate-limiter';
 import { findNearestGridCellId } from '../../../lib/findr/gridCellLookup';
+import { applyCors } from '../../../lib/utils/cors';
 
 interface PredictionRequestBody {
   rectangleCode?: string;
@@ -750,21 +751,13 @@ function reRankPredictions(predictions: unknown): unknown {
 // The old grid-based seasonality system conflicted with v3's built-in seasonality.
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Basic CORS support to handle preflight (OPTIONS) requests and cross-origin dev setups.
-  // This keeps the API robust when the frontend is served from a different origin in dev/tests.
-  const requestOrigin = req.headers.origin || '*';
-  res.setHeader('Access-Control-Allow-Origin', requestOrigin);
-  res.setHeader('Vary', 'Origin');
-  // Allow GET for simple RPC via query string, POST for body-based calls, and
-  // OPTIONS for preflight. Also allow Authorization header for authenticated
-  // requests from the browser.
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Secure CORS with origin validation (no wildcard in production)
+  const isPreflightHandled = applyCors(req, res, {
+    methods: ['GET', 'POST', 'OPTIONS'],
+    headers: ['Content-Type', 'Authorization'],
+  });
+  if (isPreflightHandled) return;
 
-  if (req.method === 'OPTIONS') {
-    // Respond to preflight quickly
-    return res.status(204).end();
-  }
   if (req.method !== 'POST' && req.method !== 'GET') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method Not Allowed' });

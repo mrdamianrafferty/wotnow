@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getWeatherData } from '../../lib/services/weatherService';
+import { withRateLimit } from '../../lib/utils/apiMiddleware';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { lat, lon } = req.query;
 
@@ -23,3 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Failed to fetch weather data' });
   }
 }
+
+// Rate limit: 30 requests per minute (lenient for public weather data)
+export default withRateLimit(handler, 'lenient');

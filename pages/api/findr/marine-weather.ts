@@ -8,6 +8,7 @@ import {
 } from '../../../lib/services/weatherService';
 import { mapMetNoSymbolToIcon } from '../../../lib/utils/weatherIconMapping';
 import { monitoredFetch } from '../../../lib/monitoring/weatherMetrics';
+import { withRateLimit } from '../../../lib/utils/apiMiddleware';
 
 /**
  * API endpoint to fetch live marine weather with priority fallback:
@@ -201,7 +202,7 @@ function getDateLabel(dateStr: string): string {
   return `${day} ${month}`;
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<MarineWeatherResponse>
 ) {
@@ -605,3 +606,6 @@ export default async function handler(
     error: 'All marine weather sources failed',
   });
 }
+
+// Rate limit: 30 requests per minute (lenient for weather data)
+export default withRateLimit(handler, 'lenient');

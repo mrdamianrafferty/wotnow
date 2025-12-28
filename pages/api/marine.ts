@@ -14,6 +14,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { weatherMetrics } from '../../lib/monitoring/weatherMetrics';
 import { getSupabaseServerClient } from '../../lib/supabase/serverClient';
 import { round3dp, createCacheKey, COORDINATE_PRECISION } from '../../lib/utils/coordinates';
+import { withRateLimit } from '../../lib/utils/apiMiddleware';
 
 const coordKey3dp = (lat: number, lon: number) => createCacheKey(lat, lon, COORDINATE_PRECISION.STANDARD);
 
@@ -482,7 +483,7 @@ async function fetchFromStormglass(lat: number, lon: number, startISO: string, e
 
 // ---------------------------------------------------------------------------
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { lat, lon, start, end } = req.query;
 
   // Parse + snap to 3dp
@@ -573,8 +574,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader('Cache-Control', `s-maxage=${Math.round(ttlMs/1000)}, stale-while-revalidate=43200`);
   res.setHeader('X-Marine-Data-Source', result.source);
   
-  return res.status(200).json({ 
-    ...result, 
-    cached: false 
+  return res.status(200).json({
+    ...result,
+    cached: false
   });
 }
+
+// Rate limit: 30 requests per minute (lenient for public marine data)
+export default withRateLimit(handler, 'lenient');

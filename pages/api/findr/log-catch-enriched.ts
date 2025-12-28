@@ -7,6 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import { extractExifGPS, enrichCatchData } from '@/lib/findr/enrichCatchData';
 import { calculateDataQualityScore, calculateCatchPoints } from '@/lib/findr/dataQuality';
+import { applyCors } from '@/lib/utils/cors';
 import type {
   CatchLogRequest,
   CatchLogResponse,
@@ -86,14 +87,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CatchLogResponse | { error: string }>
 ) {
-  // Handle CORS preflight request
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.status(200).end();
-    return;
-  }
+  // Handle CORS with origin validation (no wildcard)
+  const isPreflightHandled = applyCors(req, res, {
+    methods: ['POST', 'OPTIONS'],
+    headers: ['Content-Type', 'Authorization'],
+  });
+  if (isPreflightHandled) return;
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });

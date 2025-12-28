@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
+import { withRateLimit } from '../../../lib/utils/apiMiddleware';
 
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -110,7 +111,7 @@ interface CatchResponse {
  * POST /api/findr/catch-log - Create new catch entry
  * GET /api/findr/catch-log - Retrieve user's catch history (paginated)
  */
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     // Extract and verify user authentication
     const authHeader = req.headers.authorization;
@@ -120,7 +121,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const token = authHeader.substring(7);
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+
     if (authError || !user) {
       console.warn('[Catch Log] Auth verification failed:', authError?.message);
       return res.status(401).json({ error: 'Invalid authentication token' });
@@ -139,6 +140,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+// Rate limit: 10 requests per minute (default for user actions)
+export default withRateLimit(handler, 'default');
 
 /**
  * GET /api/findr/catch-log
