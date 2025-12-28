@@ -15,22 +15,22 @@ export default function Footer() {
 
         <div className="grid grid-cols-2 gap-6">
           <nav className="grid grid-flow-row gap-2" aria-label="Support links">
-            <Link href="/support" className="block hover:underline text-base-content hover:text-primary">Support Go Daisy</Link>
-            <Link href="/HowWeDoIt" className="block hover:underline text-base-content hover:text-primary">How we do it</Link>
-            <Link href="/whether-weather" className="block hover:underline text-base-content hover:text-primary">Sorry about the weather</Link>
-            <Link href="/AboutUs" className="block hover:underline text-base-content hover:text-primary">About us</Link>
+            <Link href="/support" className="block hover:underline text-gray-700 hover:text-primary">Support Go Daisy</Link>
+            <Link href="/HowWeDoIt" className="block hover:underline text-gray-700 hover:text-primary">How we do it</Link>
+            <Link href="/whether-weather" className="block hover:underline text-gray-700 hover:text-primary">Sorry about the weather</Link>
+            <Link href="/AboutUs" className="block hover:underline text-gray-700 hover:text-primary">About us</Link>
           </nav>
 
           <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
-            <Link href="/TermsAndConditions" className="block hover:underline text-base-content hover:text-primary">Terms of use</Link>
-            <Link href="/PrivacyPolicy" className="block hover:underline text-base-content hover:text-primary">Privacy policy</Link>
-            <Link href="/CookiePolicy" className="block hover:underline text-base-content hover:text-primary">Cookie policy</Link>
+            <Link href="/TermsAndConditions" className="block hover:underline text-gray-700 hover:text-primary">Terms of use</Link>
+            <Link href="/PrivacyPolicy" className="block hover:underline text-gray-700 hover:text-primary">Privacy policy</Link>
+            <Link href="/CookiePolicy" className="block hover:underline text-gray-700 hover:text-primary">Cookie policy</Link>
           </nav>
         </div>
 
         <nav className="md:text-right">
-          <p className="text-sm text-base-content/80">Get out there!</p>
-          <p className="text-xs text-base-content/70">© {year} Go Daisy. All rights reserved.</p>
+          <p className="text-sm text-gray-600">Get out there!</p>
+          <p className="text-xs text-gray-500">© {year} Go Daisy. All rights reserved.</p>
         </nav>
       </div>
     </footer>

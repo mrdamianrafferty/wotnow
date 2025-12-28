@@ -12,7 +12,7 @@ export default function FindrFooter() {
         <aside className="space-y-2">
           <Image src="/little-daisy.png" alt="findr by Go Daisy" width={40} height={40} style={{ width: 40, height: 40 }} />
           <div className="text-2xl font-bold">findr</div>
-          <p className="text-sm text-base-content/80">
+          <p className="text-sm text-gray-600">
             <TranslatedText text="by" />{" "}
             <a href="https://godaisy.io" target="_blank" rel="noopener noreferrer" className="hover:underline text-primary font-medium">
               Go Daisy
@@ -22,21 +22,21 @@ export default function FindrFooter() {
 
         <div className="grid grid-cols-2 gap-6">
           <nav className="grid grid-flow-row gap-2" aria-label="Support links">
-            <Link href="/findr/support" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Support findr" /></Link>
-            <Link href="/findr/how-it-works" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="How it works" /></Link>
-            <Link href="/findr/about" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="About findr" /></Link>
+            <Link href="/findr/support" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="Support findr" /></Link>
+            <Link href="/findr/how-it-works" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="How it works" /></Link>
+            <Link href="/findr/about" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="About findr" /></Link>
           </nav>
 
           <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
-            <Link href="/findr/terms" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Terms of use" /></Link>
-            <Link href="/findr/privacy" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Privacy policy" /></Link>
-            <Link href="/findr/cookies" className="block hover:underline text-base-content hover:text-primary"><TranslatedText text="Cookie policy" /></Link>
+            <Link href="/findr/terms" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="Terms of use" /></Link>
+            <Link href="/findr/privacy" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="Privacy policy" /></Link>
+            <Link href="/findr/cookies" className="block hover:underline text-gray-700 hover:text-primary"><TranslatedText text="Cookie policy" /></Link>
           </nav>
         </div>
 
         <nav className="md:text-right">
-          <p className="text-sm text-base-content/80"><TranslatedText text="Find your sole, mate" /></p>
-          <p className="text-xs text-base-content/70">© {year} Go Daisy. <TranslatedText text="All rights reserved." /></p>
+          <p className="text-sm text-gray-600"><TranslatedText text="Find your sole, mate" /></p>
+          <p className="text-xs text-gray-500">© {year} Go Daisy. <TranslatedText text="All rights reserved." /></p>
         </nav>
       </div>
     </footer>
