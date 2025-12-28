@@ -4,7 +4,6 @@ import React, { useEffect, useId, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { X, Calendar, Clock, Bell, BellOff, Check, Cloud, Smartphone, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Capacitor } from '@capacitor/core';
 
 /**
  * Plan data structure stored in localStorage
@@ -103,7 +102,20 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
   const [saved, setSaved] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [reminderScheduled, setReminderScheduled] = useState<boolean | null>(null);
-  const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+  const [isNative, setIsNative] = useState(false);
+
+  // Detect native platform on mount (avoid SSR issues)
+  useEffect(() => {
+    const checkNative = async () => {
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        setIsNative(Capacitor.isNativePlatform());
+      } catch {
+        setIsNative(false);
+      }
+    };
+    checkNative();
+  }, []);
 
   // Get auth link based on app
   const getAuthLink = () => {
