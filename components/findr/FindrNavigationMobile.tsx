@@ -85,12 +85,12 @@ export function FindrNavigation() {
                     onMouseEnter={() => router.prefetch(link.href)}
                     className="px-3 py-2 font-medium transition-colors flex items-center gap-2"
                   >
-                    <Icon 
-                      size={16} 
-                      aria-hidden 
-                      className={`shrink-0 ${isActive ? 'text-cyan-400' : 'text-gray-500'}`}
+                    <Icon
+                      size={16}
+                      aria-hidden
+                      className={`shrink-0 ${isActive ? 'text-cyan-700' : 'text-gray-700'}`}
                     />
-                    <span style={{ color: isActive ? '#22d3ee' : '#6b7280' }}>
+                    <span style={{ color: isActive ? '#0e7490' : '#374151' }}>
                       <TranslatedText text={link.label} />
                     </span>
                   </Link>
@@ -122,12 +122,12 @@ export function FindrNavigation() {
               >
                 <Icon
                   size={24}
-                  className={`shrink-0 ${isActive ? 'stroke-[2.5] text-cyan-400' : 'stroke-2 text-gray-500'}`}
+                  className={`shrink-0 ${isActive ? 'stroke-[2.5] text-cyan-700' : 'stroke-2 text-gray-700'}`}
                   aria-hidden
                 />
-                <span 
+                <span
                   className="text-xs font-medium leading-tight text-center"
-                  style={{ color: isActive ? '#22d3ee' : '#6b7280' }}
+                  style={{ color: isActive ? '#0e7490' : '#374151' }}
                 >
                   <TranslatedText text={link.label} />
                 </span>
