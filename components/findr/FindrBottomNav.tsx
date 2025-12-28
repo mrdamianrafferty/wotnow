@@ -50,12 +50,12 @@ export function FindrBottomNav() {
             >
               <Icon
                 size={24}
-                className={`shrink-0 ${isActive ? 'stroke-[2.5] text-cyan-500' : 'stroke-2 text-gray-600'}`}
+                className={`shrink-0 ${isActive ? 'stroke-[2.5] text-cyan-500' : 'stroke-2 text-gray-700'}`}
                 aria-hidden
               />
               <span
                 className="text-xs font-medium leading-tight text-center"
-                style={{ color: isActive ? '#06b6d4' : '#4b5563' }}
+                style={{ color: isActive ? '#06b6d4' : '#374151' }}
               >
                 <TranslatedText text={link.label} />
               </span>

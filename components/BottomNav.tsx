@@ -67,7 +67,7 @@ export default function BottomNav() {
             key={item.href}
             onClick={() => router.push(item.href)}
             style={{
-              color: isActive ? '#0891b2' : '#6b7280',
+              color: isActive ? '#0891b2' : '#374151',
             }}
             className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors hover:opacity-80"
             aria-label={item.label}
