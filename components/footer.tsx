@@ -13,18 +13,18 @@ export default function Footer() {
           <Image src="/go-daisy-logo.png" alt="Go Daisy logo" width={112} height={28} style={{ width: 112, height: 28 }} />
         </aside>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-6 text-[#1a1a1a]">
           <nav className="grid grid-flow-row gap-2" aria-label="Support links">
-            <Link href="/support" className="block hover:underline text-neutral hover:text-primary">Support Go Daisy</Link>
-            <Link href="/HowWeDoIt" className="block hover:underline text-neutral hover:text-primary">How we do it</Link>
-            <Link href="/whether-weather" className="block hover:underline text-neutral hover:text-primary">Sorry about the weather</Link>
-            <Link href="/AboutUs" className="block hover:underline text-neutral hover:text-primary">About us</Link>
+            <Link href="/support" className="block hover:underline hover:text-primary">Support Go Daisy</Link>
+            <Link href="/HowWeDoIt" className="block hover:underline hover:text-primary">How we do it</Link>
+            <Link href="/whether-weather" className="block hover:underline hover:text-primary">Sorry about the weather</Link>
+            <Link href="/AboutUs" className="block hover:underline hover:text-primary">About us</Link>
           </nav>
 
           <nav className="grid grid-flow-row gap-2" aria-label="Legal links">
-            <Link href="/TermsAndConditions" className="block hover:underline text-neutral hover:text-primary">Terms of use</Link>
-            <Link href="/PrivacyPolicy" className="block hover:underline text-neutral hover:text-primary">Privacy policy</Link>
-            <Link href="/CookiePolicy" className="block hover:underline text-neutral hover:text-primary">Cookie policy</Link>
+            <Link href="/TermsAndConditions" className="block hover:underline hover:text-primary">Terms of use</Link>
+            <Link href="/PrivacyPolicy" className="block hover:underline hover:text-primary">Privacy policy</Link>
+            <Link href="/CookiePolicy" className="block hover:underline hover:text-primary">Cookie policy</Link>
           </nav>
         </div>
 
