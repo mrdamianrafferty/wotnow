@@ -521,12 +521,12 @@
   display: inline-block;
 }
 .activity-card-btn-primary {
-  background: #0284c7; /* sky-600 - more vibrant */
+  background: #0369a1; /* sky-700 - better contrast with white text */
   font-weight: 600;
-  box-shadow: 0 2px 12px rgba(2,132,199,0.25);
+  box-shadow: 0 2px 12px rgba(3,105,161,0.3);
 }
 .activity-card-btn-primary:hover {
-  background: #0369a1; /* sky-700 */
+  background: #075985; /* sky-800 */
 }
 .activity-card-btn + .activity-card-btn {
   background: rgba(255,255,255,0.25);
