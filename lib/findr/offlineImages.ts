@@ -368,7 +368,7 @@ export function getLastPreloadProgress(): PreloadProgress | null {
   return data ? JSON.parse(data) : null;
 }
 
-export default {
+const offlineImagesApi = {
   preloadTopSpeciesImages,
   preloadFavoriteImages,
   preloadRegionSpecies,
@@ -379,3 +379,5 @@ export default {
   getLastPreloadProgress,
   getSpeciesImageInfo,
 };
+
+export default offlineImagesApi;

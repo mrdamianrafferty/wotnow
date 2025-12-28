@@ -342,6 +342,40 @@ export function useFishingPredictions(options: UseFishingPredictionsOptions): Us
     })();
   }, [query.data?.predictions]);
 
+  // Pre-cache 7-day forecast for offline access (runs once per rectangle)
+  const preCacheRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Only trigger pre-caching when we have fresh predictions (not from cache)
+    if (!rectangleCode || query.data?.isFromCache || query.isLoading) return;
+    if (!query.data?.predictions || query.data.predictions.length === 0) return;
+
+    // Skip if already pre-cached for this rectangle
+    if (preCacheRef.current === rectangleCode) return;
+    preCacheRef.current = rectangleCode;
+
+    // Pre-cache in background with a delay to not compete with initial load
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const { preCachePredictions } = await import('@/lib/findr/preCachePredictions');
+          await preCachePredictions(
+            rectangleCode,
+            latitude ?? undefined,
+            longitude ?? undefined,
+            language
+          );
+        } catch (e) {
+          // Silently ignore pre-caching errors
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[useFishingPredictions] 7-day forecast pre-cache failed:', e);
+          }
+        }
+      })();
+    }, 2000); // Wait 2 seconds before starting pre-cache
+
+    return () => clearTimeout(timer);
+  }, [rectangleCode, query.data?.isFromCache, query.data?.predictions, query.isLoading, latitude, longitude, language]);
+
   return {
     predictions: query.data?.predictions ?? null,
     loading: query.isLoading || query.isFetching,

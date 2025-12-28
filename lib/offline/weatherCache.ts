@@ -88,7 +88,7 @@ function saveCache(cache: WeatherCache): void {
 
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch (e) {
+  } catch (_e) {
     // Storage full - clear old entries and retry
     console.warn('[weatherCache] Storage full, clearing old entries');
     cache.entries = cache.entries.slice(-2);
@@ -214,7 +214,7 @@ export async function prewarmWeatherCache(lat: number, lon: number): Promise<voi
   }
 }
 
-export default {
+const weatherCacheApi = {
   cacheWeather,
   getCachedWeather,
   isWeatherStale,
@@ -223,3 +223,5 @@ export default {
   getCachedLocations,
   prewarmWeatherCache,
 };
+
+export default weatherCacheApi;

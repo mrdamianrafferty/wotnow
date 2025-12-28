@@ -138,7 +138,7 @@ function calculateTransitTimes(moonriseDate?: Date, moonsetDate?: Date): { trans
 
   if (moonriseDate && moonsetDate) {
     // Normal case: calculate midpoint
-    let riseMs = moonriseDate.getTime();
+    const riseMs = moonriseDate.getTime();
     let setMs = moonsetDate.getTime();
 
     // Handle case where moonset is before moonrise (crosses midnight)
@@ -169,7 +169,7 @@ function calculateTransitTimes(moonriseDate?: Date, moonsetDate?: Date): { trans
 /**
  * Format date as HH:MM string
  */
-function formatTime(date?: Date): string | undefined {
+function _formatTime(date?: Date): string | undefined {
   if (!date || isNaN(date.getTime())) return undefined;
   return date.toISOString().substring(11, 16);
 }
@@ -395,7 +395,7 @@ export function clearMoonCache(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-export default {
+const offlineMoonApi = {
   getOfflineMoonData,
   calculateMoonData,
   getMoonPhaseForDate,
@@ -404,3 +404,5 @@ export default {
   hasCachedMoonData,
   clearMoonCache,
 };
+
+export default offlineMoonApi;
