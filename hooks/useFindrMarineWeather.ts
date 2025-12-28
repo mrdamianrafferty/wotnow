@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import {
+  cacheWeather,
+  getCachedWeather,
+  isWeatherStale,
+  getWeatherCacheAge,
+} from '@/lib/offline/weatherCache';
 
 /**
  * Hook to fetch live marine weather data from multiple sources with priority fallback:
@@ -73,6 +79,18 @@ export interface UseFindrMarineWeatherState {
   source: MarineWeatherSource;
   reload: () => void;
   updatedAt: string | null;
+  // Offline cache indicators
+  isFromCache?: boolean;
+  cacheAge?: string;
+}
+
+/** Cached marine weather data structure */
+interface CachedMarineWeather {
+  current: MarineCurrentConditions | null;
+  hourly: MarineHourlyForecast[];
+  daily: MarineDailyForecast[];
+  tides: TideForecast[];
+  source: MarineWeatherSource;
 }
 
 /**
@@ -94,6 +112,9 @@ export function useFindrMarineWeather(
   const [source, setSource] = useState<MarineWeatherSource>('fallback');
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [reloadCount, setReloadCount] = useState(0);
+  const [isFromCache, setIsFromCache] = useState(false);
+  const [cacheAge, setCacheAge] = useState<string | undefined>(undefined);
+  const initialLoadDone = useRef(false);
 
   const reload = useCallback(() => {
     setReloadCount((count) => count + 1);
@@ -115,6 +136,8 @@ export function useFindrMarineWeather(
       setTides([]);
       setSource('fallback');
       setUpdatedAt(null);
+      setIsFromCache(false);
+      setCacheAge(undefined);
       return;
     }
 
@@ -124,6 +147,38 @@ export function useFindrMarineWeather(
 
     async function run() {
       try {
+        // Step 1: Check cache for instant display (before setting loading=true)
+        if (!initialLoadDone.current) {
+          const cached = getCachedWeather<CachedMarineWeather>(latValue, lonValue);
+          if (cached) {
+            console.log('[useFindrMarineWeather] Loaded from cache:', {
+              source: cached.source,
+              isStale: isWeatherStale(cached),
+              age: getWeatherCacheAge(cached),
+            });
+
+            // Display cached data immediately
+            setCurrent(cached.data.current);
+            setHourly(cached.data.hourly);
+            setDaily(cached.data.daily);
+            setTides(cached.data.tides);
+            setSource(cached.data.source);
+            setUpdatedAt(cached.cachedAt);
+            setIsFromCache(true);
+            setCacheAge(getWeatherCacheAge(cached));
+
+            // If cache is fresh enough, skip network fetch
+            if (!isWeatherStale(cached)) {
+              console.log('[useFindrMarineWeather] Cache is fresh, skipping network fetch');
+              setLoading(false);
+              initialLoadDone.current = true;
+              return;
+            }
+            // Cache is stale - continue to fetch fresh data in background
+          }
+          initialLoadDone.current = true;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -176,6 +231,7 @@ export function useFindrMarineWeather(
           tidesCount: payload.tides?.length ?? 0,
         });
 
+        // Update state with fresh data
         setCurrent(payload.current ?? null);
         setHourly(payload.hourly ?? []);
         setDaily(payload.daily ?? []);
@@ -183,6 +239,19 @@ export function useFindrMarineWeather(
         setSource(payload.source ?? 'fallback');
         setUpdatedAt(new Date().toISOString());
         setError(null);
+        setIsFromCache(false);
+        setCacheAge(undefined);
+
+        // Step 2: Cache successful response for offline use
+        const dataToCache: CachedMarineWeather = {
+          current: payload.current ?? null,
+          hourly: payload.hourly ?? [],
+          daily: payload.daily ?? [],
+          tides: payload.tides ?? [],
+          source: payload.source ?? 'fallback',
+        };
+        cacheWeather(latValue, lonValue, dataToCache, payload.source);
+        console.log('[useFindrMarineWeather] Cached weather data for offline use');
       } catch (err) {
         if ((err as Error).name === 'AbortError') {
           console.warn('[useFindrMarineWeather] Request aborted (timeout or component unmount)');
@@ -196,13 +265,35 @@ export function useFindrMarineWeather(
           name: (err as Error).name,
           stack: (err as Error).stack,
         });
-        setError((err as Error).message ?? 'Failed to load marine weather');
-        setCurrent(null);
-        setHourly([]);
-        setDaily([]);
-        setTides([]);
-        setSource('fallback');
-        setUpdatedAt(null);
+
+        // Step 3: Fall back to cached data on network failure
+        const cached = getCachedWeather<CachedMarineWeather>(latValue, lonValue);
+        if (cached) {
+          console.log('[useFindrMarineWeather] Network failed, using cached data:', {
+            age: getWeatherCacheAge(cached),
+          });
+          setCurrent(cached.data.current);
+          setHourly(cached.data.hourly);
+          setDaily(cached.data.daily);
+          setTides(cached.data.tides);
+          setSource(cached.data.source);
+          setUpdatedAt(cached.cachedAt);
+          setIsFromCache(true);
+          setCacheAge(getWeatherCacheAge(cached));
+          // Clear error since we have fallback data
+          setError(null);
+        } else {
+          // No cached data available - show error
+          setError((err as Error).message ?? 'Failed to load marine weather');
+          setCurrent(null);
+          setHourly([]);
+          setDaily([]);
+          setTides([]);
+          setSource('fallback');
+          setUpdatedAt(null);
+          setIsFromCache(false);
+          setCacheAge(undefined);
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -228,6 +319,8 @@ export function useFindrMarineWeather(
     source,
     reload,
     updatedAt,
+    isFromCache,
+    cacheAge,
   };
 }
 
