@@ -28,7 +28,8 @@
     }
   },
   "rewrites": [
-    { "source": "/api/python/(.*)", "destination": "/api/python/$1" }
+    { "source": "/api/python/(.*)", "destination": "/api/python/$1" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap.xml" }
   ],
   "crons": [
     {

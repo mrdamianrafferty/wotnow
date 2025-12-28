@@ -20,6 +20,7 @@ import { OfflineIndicator } from '../components/OfflineIndicator'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { PullToRefresh } from '../components/PullToRefresh';
+import { OrganizationJsonLd, WebsiteJsonLd } from '../components/JsonLd';
 
 // Lazy-load non-critical initialization components
 const OfflineInit = dynamic(
@@ -184,6 +185,11 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
                 <link rel="icon" type="image/png" sizes="96x96" href={isFindr ? "/findr-favicon-v2/favicon-96x96.png" : "/godaisy-favicon/favicon-96x96.png"} />
                 <link rel="icon" type="image/x-icon" href={isFindr ? "/findr-favicon-v2/favicon.ico" : "/godaisy-favicon/favicon.ico"} />
                 </Head>
+
+                {/* JSON-LD Structured Data for SEO */}
+                <OrganizationJsonLd />
+                <WebsiteJsonLd />
+
                 {/* Apply DaisyUI theme globally. If you later store theme in context, bind it here. */}
                 <div data-theme={theme} className="min-h-screen bg-base-100 text-base-content" style={{ fontFamily: 'Roboto, system-ui, -apple-system, Segoe UI, sans-serif' }}>
                   {/* Initialize offline storage and sync service */}
