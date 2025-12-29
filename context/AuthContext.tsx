@@ -48,11 +48,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
               const { Capacitor } = await import('@capacitor/core');
               if (Capacitor.isNativePlatform()) {
-                const { syncPushTokenToServer } = await import('@/lib/capacitor/pushNotifications');
-                await syncPushTokenToServer(session.access_token);
+                console.log('[Auth] Native platform detected, syncing push token...');
+                const { syncPushTokenToServer, getPushToken } = await import('@/lib/capacitor/pushNotifications');
+                const storedToken = getPushToken();
+                if (storedToken) {
+                  console.log('[Auth] Found stored token, syncing...');
+                  const success = await syncPushTokenToServer(session.access_token);
+                  console.log('[Auth] Push token sync:', success ? 'SUCCESS' : 'FAILED');
+                } else {
+                  console.log('[Auth] No stored push token to sync');
+                }
               }
-            } catch {
-              // Push sync failed - non-blocking
+            } catch (e) {
+              console.error('[Auth] Push sync failed:', e);
             }
           } else {
             localStorage.removeItem('supabase.auth.session');

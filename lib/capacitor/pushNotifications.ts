@@ -21,26 +21,23 @@ const PUSH_TOKEN_KEY = 'push_notification_token';
  */
 export async function initPushNotifications(): Promise<void> {
   if (!Capacitor.isNativePlatform()) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Push] Skipping - not a native platform');
-    }
+    console.log('[Push] Skipping - not a native platform');
     return;
   }
 
   try {
+    // IMPORTANT: Set up listeners BEFORE registering to catch the registration event
+    setupPushListeners();
+    console.log('[Push] Listeners set up');
+
     // Request permission
     const permResult = await PushNotifications.requestPermissions();
+    console.log('[Push] Permission status:', permResult.receive);
 
     if (permResult.receive === 'granted') {
       // Register for push notifications
       await PushNotifications.register();
-
-      // Set up listeners
-      setupPushListeners();
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Push] Initialized successfully');
-      }
+      console.log('[Push] Registration requested');
     } else {
       console.log('[Push] Permission denied');
     }
@@ -63,27 +60,30 @@ export async function initPushNotifications(): Promise<void> {
 function setupPushListeners(): void {
   // Called when registration is successful
   PushNotifications.addListener('registration', async (token) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Push] Registration token:', token.value);
-    }
+    console.log('[Push] Got token:', token.value.substring(0, 20) + '...');
+
     // Store the token
     localStorage.setItem(PUSH_TOKEN_KEY, token.value);
 
-    // If user is authenticated, sync token to server
+    // If user is authenticated, sync token to server immediately
     try {
       const { supabase } = await import('@/lib/supabase/client');
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        await syncPushTokenToServer(session.access_token);
+        console.log('[Push] User authenticated, syncing token...');
+        const success = await syncPushTokenToServer(session.access_token);
+        console.log('[Push] Token sync result:', success ? 'SUCCESS' : 'FAILED');
+      } else {
+        console.log('[Push] No session, token stored locally for later sync');
       }
-    } catch {
-      // Not authenticated or failed to sync - non-blocking
+    } catch (e) {
+      console.error('[Push] Failed to sync token:', e);
     }
   });
 
   // Called when registration fails
   PushNotifications.addListener('registrationError', (error) => {
-    console.error('[Push] Registration error:', error);
+    console.error('[Push] Registration error:', JSON.stringify(error));
   });
 
   // Called when a push notification is received while app is in foreground

@@ -24,11 +24,10 @@ export function OfflineInit() {
           }
 
           // Initialize push notifications for native apps
+          console.log('[OfflineInit] Initializing push notifications...');
           const { initPushNotifications } = await import('@/lib/capacitor/pushNotifications');
           await initPushNotifications();
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[OfflineInit] Push notifications initialized');
-          }
+          console.log('[OfflineInit] Push notifications initialized');
         }
 
         // Initialize IndexedDB
