@@ -157,14 +157,15 @@ export async function syncPushTokenToServer(accessToken: string): Promise<boolea
     return false;
   }
 
-  // Determine platform
+  // Determine platform - use Capacitor.getPlatform() as primary method
   let platform: 'ios' | 'android' = 'android';
   try {
-    const { Device } = await import('@capacitor/device');
-    const info = await Device.getInfo();
-    platform = info.platform === 'ios' ? 'ios' : 'android';
-  } catch {
-    // Default to android if we can't determine
+    const { Capacitor } = await import('@capacitor/core');
+    const capPlatform = Capacitor.getPlatform();
+    platform = capPlatform === 'ios' ? 'ios' : 'android';
+    console.log('[Push] Detected platform:', platform);
+  } catch (e) {
+    console.warn('[Push] Platform detection failed, defaulting to android:', e);
   }
 
   try {
