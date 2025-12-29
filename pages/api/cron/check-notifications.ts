@@ -36,6 +36,7 @@ import {
 } from '../../../lib/findr/emailTemplates';
 import { generateUnsubscribeToken } from '../findr/unsubscribe';
 import { sendApnsPushNotification } from '../../../lib/findr/apnsClient';
+import { sendFcmPushNotification } from '../../../lib/notifications/fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -219,54 +220,73 @@ async function hasReceivedDailyDigestToday(userId: string): Promise<boolean> {
 }
 
 /**
- * Send push notification via APNS (iOS only)
+ * Send push notification to iOS (APNS) and Android (FCM) devices
  *
- * Queries user_push_tokens table for iOS device token and sends via APNS.
+ * Queries user_push_tokens table for all device tokens and sends via appropriate service.
  * Removes invalid tokens from database if delivery fails.
  */
 async function sendPushNotification(notification: NotificationToSend): Promise<boolean> {
   try {
-    // 1. Get user's iOS push token from database
-    const { data: tokenData, error: tokenError } = await supabase
+    // 1. Get ALL user's push tokens from database (iOS and Android)
+    const { data: tokens, error: tokenError } = await supabase
       .from('user_push_tokens')
       .select('token, platform')
-      .eq('user_id', notification.userId)
-      .eq('platform', 'ios')
-      .single();
+      .eq('user_id', notification.userId);
 
-    if (tokenError || !tokenData) {
-      console.log('[Push] No iOS token found for user:', notification.userId);
+    if (tokenError || !tokens || tokens.length === 0) {
+      console.log('[Push] No tokens found for user:', notification.userId);
       return false;
     }
 
-    console.log('[Push] Sending notification to iOS device for user:', notification.userId);
+    console.log('[Push] Sending notification to', tokens.length, 'device(s) for user:', notification.userId);
 
-    // 2. Send via APNS
-    const success = await sendApnsPushNotification(tokenData.token, {
-      title: '🎣 Hot Bite Alert!',
-      body: `${notification.speciesName} at ${notification.confidence}% confidence in ${notification.rectangleCode}`,
-      data: {
-        type: 'hot_bite',
-        speciesId: notification.speciesId,
-        rectangleCode: notification.rectangleCode,
-        confidence: notification.confidence.toString(),
-      },
-      badge: 1,
-      sound: 'default',
-    });
+    let anySent = false;
 
-    // 3. If sending failed (invalid token), remove it from database
-    if (!success) {
-      console.log('[Push] Removing invalid token for user:', notification.userId);
-      await supabase
-        .from('user_push_tokens')
-        .delete()
-        .eq('token', tokenData.token);
-      return false;
+    for (const { token, platform } of tokens) {
+      let success = false;
+
+      if (platform === 'ios') {
+        // Send via APNS
+        success = await sendApnsPushNotification(token, {
+          title: '🎣 Hot Bite Alert!',
+          body: `${notification.speciesName} at ${notification.confidence}% confidence in ${notification.rectangleCode}`,
+          data: {
+            type: 'hot_bite',
+            speciesId: notification.speciesId,
+            rectangleCode: notification.rectangleCode,
+            confidence: notification.confidence.toString(),
+          },
+          badge: 1,
+          sound: 'default',
+        });
+      } else if (platform === 'android') {
+        // Send via FCM
+        success = await sendFcmPushNotification(token, {
+          title: '🎣 Hot Bite Alert!',
+          body: `${notification.speciesName} at ${notification.confidence}% confidence in ${notification.rectangleCode}`,
+          data: {
+            type: 'hot_bite',
+            speciesId: notification.speciesId,
+            rectangleCode: notification.rectangleCode,
+            confidence: notification.confidence.toString(),
+          },
+        });
+      }
+
+      if (success) {
+        anySent = true;
+        console.log(`[Push] ${platform} notification sent to user:`, notification.userId);
+      } else {
+        // Remove invalid token
+        console.log(`[Push] Removing invalid ${platform} token for user:`, notification.userId);
+        await supabase
+          .from('user_push_tokens')
+          .delete()
+          .eq('token', token);
+      }
     }
 
-    console.log('[Push] Notification sent successfully to user:', notification.userId);
-    return true;
+    return anySent;
   } catch (error) {
     console.error('[Push] Error sending push notification:', error);
     return false;
