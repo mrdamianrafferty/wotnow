@@ -15,6 +15,15 @@
           "/auth/callback",
           "/auth/callback/*"
         ]
+      },
+      {
+        "appID": "T7754BV8QM.io.growdaisy.app",
+        "paths": [
+          "/auth/callback",
+          "/auth/callback/*",
+          "/grow",
+          "/grow/*"
+        ]
       }
     ]
   }
