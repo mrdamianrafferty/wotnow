@@ -168,10 +168,10 @@ async function getPredictions(rectangleCode: string, _speciesCodes: string[]): P
 }
 
 /**
- * Check if a notification was recently sent (within last 6 hours)
+ * Check if a notification was recently sent (within last 24 hours)
  */
 async function wasRecentlySent(userId: string, speciesId: string): Promise<boolean> {
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
     .from('notification_log')
@@ -179,7 +179,7 @@ async function wasRecentlySent(userId: string, speciesId: string): Promise<boole
     .eq('user_id', userId)
     .eq('species_id', speciesId)
     .eq('notification_type', 'threshold_crossed')
-    .gte('sent_at', sixHoursAgo)
+    .gte('sent_at', twentyFourHoursAgo)
     .limit(1);
 
   if (error) {
@@ -671,14 +671,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         // Use the favorite's custom notification threshold (per-species setting)
-        const threshold = fav.notification_threshold || 85; // Default to 85 if not set
+        const threshold = fav.notification_threshold || 90; // Default to 90 if not set
 
         // Check if confidence crossed the threshold
         if (confidence >= threshold) {
           // Check if we recently sent a notification for this species
           const recentlySent = await wasRecentlySent(userId, fav.species_id);
           if (recentlySent) {
-            console.log('[Cron] Already sent notification for user', userId, 'species', fav.species_id, 'in last 6 hours - skipping');
+            console.log('[Cron] Already sent notification for user', userId, 'species', fav.species_id, 'in last 24 hours - skipping');
             continue;
           }
 

@@ -386,13 +386,12 @@ export function useFavourites(options: UseFavouritesOptions = {}) {
     if (user && autoSync) {
       // Authenticated: Remove from Supabase
       try {
-        // Need to get the favourite ID if not provided
+        // Build query params - only use 'id' for actual favourite row IDs (UUIDs)
         const params = new URLSearchParams();
-        if (favouriteId) {
+        if (favouriteId && UUID_PATTERN.test(favouriteId)) {
           params.set('id', favouriteId);
-        } else if (normalizedId) {
-          params.set('id', normalizedId);
         }
+        // Always pass speciesId for lookup by species
         if (normalizedId) {
           params.set('speciesId', normalizedId);
         }
