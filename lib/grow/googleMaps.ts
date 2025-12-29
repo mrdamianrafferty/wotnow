@@ -1,5 +1,3 @@
-import { SUPABASE_ANON_KEY, buildEdgeFunctionUrl } from '../supabase/env';
-
 type PermissionAwareWindow = typeof window & {
   __googleMapsPermissionError?: boolean;
 };
@@ -19,9 +17,11 @@ Google Maps Utilities
 Lazy-loading helpers for Google Maps JavaScript API
  */
 
+// Get API key from environment variable (Next.js inlines at build time)
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+
 let googleMapsPromise: Promise<typeof google> | null = null;
 let isLoading = false;
-let cachedApiKey: string | null = null;
 let hasPermissionError = false;
 
 // Global error handler for Google Maps API errors
@@ -150,36 +150,12 @@ export async function loadGoogleMapsAPI(): Promise<typeof google> {
       return;
     }
 
-    // Get API key from cache or fetch from backend
-    let apiKey = cachedApiKey;
-    
-    // If no API key yet, try fetching from backend
-    if (!apiKey) {
-      try {
-        const response = await fetch(
-          buildEdgeFunctionUrl('config/google-maps-key'),
-          {
-            headers: {
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            },
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json() as { key?: string };
-          // ⚠️ FIX NEEDED: Add type assertion
-          if (data.key) {
-            apiKey = data.key;
-            cachedApiKey = data.key;
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to fetch Google Maps API key from backend:', err);
-      }
-    }
-    
-    if (!apiKey) {
+    // Use API key from environment variable
+    const apiKey = GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey || apiKey === 'your_google_maps_api_key') {
       isLoading = false;
+      console.warn('Google Maps API key not configured in NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
       reject(new Error('Google Maps API key not configured. Using fallback location methods.'));
       return;
     }
