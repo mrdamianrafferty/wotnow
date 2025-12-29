@@ -710,6 +710,22 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     }
   }, [router]);
 
+  // Apply date from query param (from share deep links)
+  useEffect(() => {
+    const dateFromQuery = router.query.date;
+    if (typeof dateFromQuery === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateFromQuery)) {
+      // Only apply if date is valid and within reasonable range (not too far in past)
+      const queryDate = new Date(dateFromQuery);
+      const today = new Date();
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      if (queryDate >= weekAgo) {
+        setPredictionDate(dateFromQuery);
+      }
+    }
+  }, [router.query.date]);
+
   // Rectangle selection priority:
   // 1. Rectangle from URL query parameter (explicit user navigation)
   // 2. Rectangle from findrLocation (Findr-specific saved location)
@@ -950,25 +966,63 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const handleShare = useCallback(async () => {
     if (!currentCard || !activeRectangle) return;
 
+    // Build location name with fallback chain
+    const locationName = activeOption?.region
+      || activeOption?.label
+      || coastalLocation?.name
+      || `ICES ${activeRectangle}`;
+
+    // Get confidence verdict
+    const confidence = currentCard.confidence ?? 0;
+    const verdict = confidence >= 80 ? 'Great chances'
+      : confidence >= 60 ? 'Good chances'
+      : confidence >= 40 ? 'Worth trying'
+      : 'Tricky conditions';
+
+    // Get best time from card
+    const bestTime = currentCard.bestTimes?.[0];
+    const timeHint = bestTime ? ` - best around ${bestTime}` : '';
+
+    // Format date for display
+    const formatShareDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      if (date.toDateString() === today.toDateString()) return 'today';
+      if (date.toDateString() === tomorrow.toDateString()) return 'tomorrow';
+      return date.toLocaleDateString('en-GB', { weekday: 'long' });
+    };
+    const dateLabel = formatShareDate(predictionDate);
+
+    // Build conditions summary for share page
+    const conditionsSummary = `${verdict} for ${currentCard.commonName} at ${locationName}${timeHint}`;
+
     const shareData: Omit<FindrShareData, 'createdAt' | 'expiresAt'> = {
       app: 'findr',
       speciesCode: currentCard.speciesCode || currentCard.id,
       speciesName: currentCard.commonName,
-      confidence: currentCard.confidence ?? 0,
+      confidence,
       rectangleCode: activeRectangle,
-      regionName: activeOption?.region || 'Unknown location',
+      regionName: locationName,
       date: predictionDate,
+      conditionsSummary,
     };
 
     const token = generateShareToken(shareData);
     const shareUrl = getShareUrl(token);
 
+    // Build share text
+    const shareTitle = `${currentCard.commonName} - ${confidence}% at ${locationName}`;
+    const shareText = `${verdict} for ${currentCard.commonName} at ${locationName} ${dateLabel}${timeHint}. Check it out on Fish Findr!`;
+
     // Try native share API first
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${currentCard.commonName} fishing - ${currentCard.confidence}% confidence`,
-          text: `Check out this fishing prediction for ${currentCard.commonName} at ${activeOption?.region}`,
+          title: shareTitle,
+          text: shareText,
           url: shareUrl,
         });
         return;
@@ -988,7 +1042,7 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
     } catch (err) {
       console.error('[Findr] Copy failed:', err);
     }
-  }, [currentCard, activeRectangle, activeOption?.region, predictionDate]);
+  }, [currentCard, activeRectangle, activeOption, coastalLocation, predictionDate]);
 
   const handleCloseSpeciesModal = useCallback(() => {
     setSpeciesModalCard(null);

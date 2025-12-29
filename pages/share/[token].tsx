@@ -70,8 +70,13 @@ function getDeepLinkPath(data: ShareData): string {
   switch (data.app) {
     case 'godaisy':
       return '/';
-    case 'findr':
-      return `/findr?rectangle=${data.rectangleCode}`;
+    case 'findr': {
+      // Include rectangle and date in deep link
+      const params = new URLSearchParams();
+      params.set('rectangle', data.rectangleCode);
+      if (data.date) params.set('date', data.date);
+      return `/findr?${params.toString()}`;
+    }
     case 'growdaisy':
       return '/grow';
     default:
