@@ -10,8 +10,8 @@
 	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:godaisy.io</string>
-		<string>applinks:www.godaisy.io</string>
+		<string>applinks:grow.godaisy.io</string>
+		<string>applinks:www.grow.godaisy.io</string>
 		<string>applinks:auth.godaisy.io</string>
 	</array>
 </dict>
