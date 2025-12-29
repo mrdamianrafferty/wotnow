@@ -17,6 +17,8 @@ export interface PlannedActivity {
   plannedFor: string; // ISO date string
   plannedTime?: string; // HH:MM format
   reminderEnabled: boolean;
+  completed?: boolean;
+  completedAt?: string;
   createdAt: string;
 }
 
@@ -190,12 +192,55 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
+    // Save to localStorage first (works for all users)
     try {
       const existing = localStorage.getItem('planned_activities');
       const plans: PlannedActivity[] = existing ? JSON.parse(existing) : [];
       plans.push(plan);
       localStorage.setItem('planned_activities', JSON.stringify(plans));
+
+      // Sync to database for authenticated users
+      if (user) {
+        try {
+          const { supabase } = await import('@/lib/supabase/client');
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (session?.access_token) {
+            const response = await fetch('/api/plans', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                app: plan.app,
+                activityType: plan.activityType,
+                activityName: plan.activityName,
+                activityData: plan.activityData,
+                plannedFor: plan.plannedFor,
+                plannedTime: plan.plannedTime,
+                reminderEnabled: plan.reminderEnabled,
+              }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              // Update local plan with server ID for consistency
+              plan.id = data.plan.id;
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[PlanItSheet] Plan synced to cloud:', data.plan.id);
+              }
+            } else if (process.env.NODE_ENV === 'development') {
+              console.warn('[PlanItSheet] Failed to sync plan to cloud:', response.status);
+            }
+          }
+        } catch (syncError) {
+          // Cloud sync failure is non-blocking - plan is still saved locally
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[PlanItSheet] Cloud sync failed (non-blocking):', syncError);
+          }
+        }
+      }
 
       // Schedule reminder notification if enabled (native apps only)
       if (reminderEnabled && isNative) {
@@ -461,46 +506,163 @@ export const PlanItSheet: React.FC<PlanItSheetProps> = ({
 };
 
 /**
- * Hook to manage planned activities in localStorage
+ * Hook to manage planned activities with localStorage + cloud sync
+ *
+ * For anonymous users: localStorage only
+ * For authenticated users: fetches from API, merges with localStorage
  */
-export function usePlannedActivities() {
+export function usePlannedActivities(app?: 'godaisy' | 'findr' | 'growdaisy') {
   const [plans, setPlans] = useState<PlannedActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
+  // Load plans from localStorage and optionally from API
   useEffect(() => {
-    const stored = localStorage.getItem('planned_activities');
-    if (stored) {
-      try {
-        setPlans(JSON.parse(stored));
-      } catch {
-        setPlans([]);
+    const loadPlans = async () => {
+      setIsLoading(true);
+
+      // Always load from localStorage first
+      let localPlans: PlannedActivity[] = [];
+      const stored = localStorage.getItem('planned_activities');
+      if (stored) {
+        try {
+          localPlans = JSON.parse(stored);
+          // Filter by app if specified
+          if (app) {
+            localPlans = localPlans.filter(p => p.app === app);
+          }
+        } catch {
+          localPlans = [];
+        }
       }
-    }
-  }, []);
+
+      // For authenticated users, also fetch from API
+      if (user) {
+        try {
+          const { supabase } = await import('@/lib/supabase/client');
+          const { data: { session } } = await supabase.auth.getSession();
+
+          if (session?.access_token) {
+            const url = app ? `/api/plans?app=${app}` : '/api/plans';
+            const response = await fetch(url, {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              const cloudPlans: PlannedActivity[] = data.plans || [];
+
+              // Merge local and cloud plans, preferring cloud for duplicates
+              const cloudIds = new Set(cloudPlans.map(p => p.id));
+              const uniqueLocalPlans = localPlans.filter(p => !cloudIds.has(p.id));
+              const mergedPlans = [...cloudPlans, ...uniqueLocalPlans];
+
+              setPlans(mergedPlans);
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[usePlannedActivities] Failed to fetch from API:', err);
+          }
+        }
+      }
+
+      // Fallback to local plans only
+      setPlans(localPlans);
+      setIsLoading(false);
+    };
+
+    loadPlans();
+  }, [user, app]);
 
   const addPlan = useCallback((plan: PlannedActivity) => {
     setPlans(prev => {
       const updated = [...prev, plan];
-      localStorage.setItem('planned_activities', JSON.stringify(updated));
+      // Also update localStorage
+      const allStored = localStorage.getItem('planned_activities');
+      const allPlans: PlannedActivity[] = allStored ? JSON.parse(allStored) : [];
+      allPlans.push(plan);
+      localStorage.setItem('planned_activities', JSON.stringify(allPlans));
       return updated;
     });
   }, []);
 
-  const removePlan = useCallback((planId: string) => {
+  const removePlan = useCallback(async (planId: string) => {
     setPlans(prev => {
       const updated = prev.filter(p => p.id !== planId);
-      localStorage.setItem('planned_activities', JSON.stringify(updated));
+      // Also update localStorage
+      const allStored = localStorage.getItem('planned_activities');
+      const allPlans: PlannedActivity[] = allStored ? JSON.parse(allStored) : [];
+      const updatedAll = allPlans.filter(p => p.id !== planId);
+      localStorage.setItem('planned_activities', JSON.stringify(updatedAll));
       return updated;
     });
-  }, []);
+
+    // Also delete from cloud for authenticated users
+    if (user) {
+      try {
+        const { supabase } = await import('@/lib/supabase/client');
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          await fetch('/api/plans', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ id: planId }),
+          });
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[usePlannedActivities] Failed to delete from cloud:', err);
+        }
+      }
+    }
+  }, [user]);
+
+  const markCompleted = useCallback(async (planId: string, completed: boolean = true) => {
+    setPlans(prev => prev.map(p =>
+      p.id === planId ? { ...p, completed } : p
+    ));
+
+    // Update in cloud for authenticated users
+    if (user) {
+      try {
+        const { supabase } = await import('@/lib/supabase/client');
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          await fetch('/api/plans', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ id: planId, completed }),
+          });
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[usePlannedActivities] Failed to update in cloud:', err);
+        }
+      }
+    }
+  }, [user]);
 
   const getUpcoming = useCallback(() => {
     const now = new Date();
     return plans
-      .filter(p => new Date(p.plannedFor) >= now)
+      .filter(p => new Date(p.plannedFor) >= now && !('completed' in p && p.completed))
       .sort((a, b) => new Date(a.plannedFor).getTime() - new Date(b.plannedFor).getTime());
   }, [plans]);
 
-  return { plans, addPlan, removePlan, getUpcoming };
+  return { plans, isLoading, addPlan, removePlan, markCompleted, getUpcoming };
 }
 
 export default PlanItSheet;

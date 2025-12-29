@@ -62,12 +62,23 @@ export async function initPushNotifications(): Promise<void> {
  */
 function setupPushListeners(): void {
   // Called when registration is successful
-  PushNotifications.addListener('registration', (token) => {
+  PushNotifications.addListener('registration', async (token) => {
     if (process.env.NODE_ENV === 'development') {
       console.log('[Push] Registration token:', token.value);
     }
     // Store the token
     localStorage.setItem(PUSH_TOKEN_KEY, token.value);
+
+    // If user is authenticated, sync token to server
+    try {
+      const { supabase } = await import('@/lib/supabase/client');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await syncPushTokenToServer(session.access_token);
+      }
+    } catch {
+      // Not authenticated or failed to sync - non-blocking
+    }
   });
 
   // Called when registration fails
@@ -131,6 +142,91 @@ function handleNotificationTap(data: Record<string, unknown>): void {
  */
 export function getPushToken(): string | null {
   return localStorage.getItem(PUSH_TOKEN_KEY);
+}
+
+/**
+ * Sync push token to server for authenticated users
+ * This enables server-sent push notifications for reminders
+ */
+export async function syncPushTokenToServer(accessToken: string): Promise<boolean> {
+  const token = getPushToken();
+  if (!token) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Push] No token to sync');
+    }
+    return false;
+  }
+
+  // Determine platform
+  let platform: 'ios' | 'android' = 'android';
+  try {
+    const { Device } = await import('@capacitor/device');
+    const info = await Device.getInfo();
+    platform = info.platform === 'ios' ? 'ios' : 'android';
+  } catch {
+    // Default to android if we can't determine
+  }
+
+  try {
+    const response = await fetch('/api/notifications/register-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ token, platform }),
+    });
+
+    if (response.ok) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Push] Token synced to server');
+      }
+      return true;
+    } else {
+      console.warn('[Push] Failed to sync token:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('[Push] Token sync error:', error);
+    return false;
+  }
+}
+
+/**
+ * Remove push token from server (e.g., on logout)
+ */
+export async function removePushTokenFromServer(accessToken: string): Promise<boolean> {
+  try {
+    // Determine platform
+    let platform: 'ios' | 'android' | undefined;
+    try {
+      const { Device } = await import('@capacitor/device');
+      const info = await Device.getInfo();
+      platform = info.platform === 'ios' ? 'ios' : 'android';
+    } catch {
+      // Remove all if we can't determine platform
+    }
+
+    const response = await fetch('/api/notifications/register-token', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ platform }),
+    });
+
+    if (response.ok) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Push] Token removed from server');
+      }
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('[Push] Failed to remove token:', error);
+    return false;
+  }
 }
 
 /**
