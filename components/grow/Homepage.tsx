@@ -74,10 +74,11 @@ interface StaticTaskCardProps {
   task: GardenTask;
   onAddTask: (taskId: string) => void;
   onDismiss: (taskId: string) => void;
+  onPlanIt: (taskId: string) => void;
   t: Translator;
 }
 
-const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDismiss, t }) => {
+const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDismiss, onPlanIt, t }) => {
   const getUrgencyColor = () => {
     switch (task.urgency) {
       case 'critical': return 'bg-white border-l-4 border-l-red-500 border-red-200';
@@ -179,7 +180,7 @@ const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDism
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 pt-4">
+        <div className="grid grid-cols-3 gap-2 pt-4">
           <Button
             variant="outline"
             size="lg"
@@ -187,8 +188,18 @@ const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDism
             className="border-2 hover:bg-red-50 hover:border-red-300 hover:text-red-700 transition-colors"
             aria-label={`${t('Dismiss')} ${task.title}`}
           >
-            <X className="h-5 w-5 mr-2" aria-hidden="true" />
+            <X className="h-5 w-5 mr-1" aria-hidden="true" />
             {t('Dismiss')}
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onPlanIt(task.id)}
+            className="border-2 border-green-500 text-green-700 hover:bg-green-50 transition-colors"
+            aria-label={`${t('Plan')}: ${task.title}`}
+          >
+            <Calendar className="h-5 w-5 mr-1" aria-hidden="true" />
+            {t('Plan it')}
           </Button>
           <Button
             size="lg"
@@ -196,8 +207,8 @@ const StaticTaskCard: React.FC<StaticTaskCardProps> = ({ task, onAddTask, onDism
             className="bg-green-600 hover:bg-green-700 transition-colors"
             aria-label={`${t('Add to List')}: ${task.title}`}
           >
-            <CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" />
-            {t('Add to List')}
+            <CheckCircle2 className="h-5 w-5 mr-1" aria-hidden="true" />
+            {t('Add')}
           </Button>
         </div>
       </CardContent>
@@ -911,6 +922,7 @@ export function Homepage() {
               task={activeCards[0]}
               onAddTask={handleSwipeRight}
               onDismiss={handleSwipeLeft}
+              onPlanIt={handleOpenPlanSheet}
               t={t}
             />
           </div>
