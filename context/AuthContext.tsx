@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event: AuthChangeEvent, session: Session | null) => {
+      async (_event: AuthChangeEvent, session: Session | null) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -43,6 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (typeof window !== 'undefined') {
           if (session) {
             localStorage.setItem('supabase.auth.session', JSON.stringify(session));
+
+            // Sync push token to server on sign in (native apps only)
+            try {
+              const { Capacitor } = await import('@capacitor/core');
+              if (Capacitor.isNativePlatform()) {
+                const { syncPushTokenToServer } = await import('@/lib/capacitor/pushNotifications');
+                await syncPushTokenToServer(session.access_token);
+              }
+            } catch {
+              // Push sync failed - non-blocking
+            }
           } else {
             localStorage.removeItem('supabase.auth.session');
           }
