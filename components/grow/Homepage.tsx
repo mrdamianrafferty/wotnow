@@ -33,6 +33,7 @@ import { useTranslationMap } from '../../lib/translation/useTranslationMap';
 import { TaskIcon } from './TaskIcon';
 import { SkeletonGrowHomepage } from './GrowSkeletons';
 import { PlanItSheet, type PlannedActivity } from '../PlanItSheet';
+import { PlannedActivitiesList } from '../PlannedActivitiesList';
 
 type Translator = (value: string) => string;
 
@@ -892,6 +893,19 @@ export function Homepage() {
       {(alertsLoading || gardenAlerts.length > 0) && (
         <GardenAlertBox alerts={gardenAlerts} isLoading={alertsLoading} />
       )}
+
+      {/* Planned Activities Section */}
+      <Card className="bg-white border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-green-600" />
+            {t('My Plans')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PlannedActivitiesList app="growdaisy" limit={3} showCompleted={false} />
+        </CardContent>
+      </Card>
 
       {/* Card Deck - animated for native, static for web */}
       {activeCards.length > 0 ? (

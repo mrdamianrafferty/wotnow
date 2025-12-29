@@ -627,9 +627,19 @@ export function usePlannedActivities(app?: 'godaisy' | 'findr' | 'growdaisy') {
   }, [user]);
 
   const markCompleted = useCallback(async (planId: string, completed: boolean = true) => {
-    setPlans(prev => prev.map(p =>
-      p.id === planId ? { ...p, completed } : p
-    ));
+    setPlans(prev => {
+      const updated = prev.map(p =>
+        p.id === planId ? { ...p, completed, completedAt: completed ? new Date().toISOString() : undefined } : p
+      );
+      // Also update localStorage
+      const allStored = localStorage.getItem('planned_activities');
+      const allPlans: PlannedActivity[] = allStored ? JSON.parse(allStored) : [];
+      const updatedAll = allPlans.map(p =>
+        p.id === planId ? { ...p, completed, completedAt: completed ? new Date().toISOString() : undefined } : p
+      );
+      localStorage.setItem('planned_activities', JSON.stringify(updatedAll));
+      return updated;
+    });
 
     // Update in cloud for authenticated users
     if (user) {
