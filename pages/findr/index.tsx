@@ -31,7 +31,6 @@ import { useFavourites } from '../../hooks/useFavourites';
 import { useFindrOfflineInit } from '../../hooks/useFindrOfflineInit';
 import { useTideExtremes } from '../../hooks/useTideExtremes';
 import { SpeciesVerdictStrip } from '../../components/findr/SpeciesVerdictStrip';
-import { SessionVerdictBar } from '../../components/findr/SessionVerdictBar';
 import type { TideExtreme } from '../../lib/findr/conditionHelpers';
 import { FindrNavigation } from '../../components/findr/FindrNavigationMobile';
 import { TranslatedFishName, TranslatedFishBio, TranslatedText } from '../../components/translation/TranslatedFishCard';
@@ -902,17 +901,6 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
   const totalPredictions = cards.length;
   const deckResetDisabled = loading || cardQueue.length === cards.length;
 
-  // Session verdict metrics
-  const goodSpeciesCount = useMemo(
-    () => cards.filter(card => (card.confidence ?? 0) >= 60).length,
-    [cards]
-  );
-  const isDataStale = useMemo(() => {
-    if (!lastUpdated) return false;
-    const hoursSinceUpdate = (Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60);
-    return hoursSinceUpdate > 6; // Consider stale after 6 hours
-  }, [lastUpdated]);
-
   const handleDateChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setPredictionDate(event.target.value);
@@ -1289,15 +1277,6 @@ const FindrPage: React.FC<FindrPageProps> = ({ initialRectangle: _initialRectang
                 ) : activeRectangle && !error && currentCard ? (
                   /* Actual content */
                   <>
-                    {/* Session verdict - go/no-go recommendation */}
-                    <SessionVerdictBar
-                      topConfidence={currentCard.confidence}
-                      bestTimes={currentCard.bestTimes}
-                      goodSpeciesCount={goodSpeciesCount}
-                      totalPredictions={totalPredictions}
-                      isStale={isDataStale}
-                    />
-
                     {/* Conditional deck: animated for native apps, static for web */}
                     {useAnimatedDeck ? (
                       <>

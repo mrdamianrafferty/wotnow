@@ -1314,16 +1314,6 @@ export default function FindrSettingsPage() {
             </div>
           </section>
 
-          {/* Debug Section */}
-          <section className="card bg-base-100 shadow-sm">
-            <div className="card-body">
-              <h2 className="card-title text-base-content text-sm">{t('Developer')}</h2>
-              <Link href="/findr/debug-push" className="btn btn-ghost btn-sm">
-                {t('Push Notification Debug')}
-              </Link>
-            </div>
-          </section>
-
           {/* Save Button */}
           <div className="card bg-base-100 shadow-sm border-2 border-primary">
             <div className="card-body">
