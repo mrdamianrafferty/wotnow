@@ -26,7 +26,6 @@ Hi Joe, welcome to the team! Your biology expertise and SQL knowledge are exactl
 
 ### What It Does
 
-Go Daisy takes weather data and recommends outdoor activities. If it's sunny, calm, and warm - it suggests cycling, hiking, picnics. If it's overcast with high waves - it suggests surfing or storm watching.
 
 ### Database Tables (Supabase)
 

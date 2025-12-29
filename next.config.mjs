@@ -197,10 +197,14 @@ const nextConfig = {
 // Wrap nextConfig with PWA configuration
 const pwaConfig = withPWA({
   dest: 'public',
-  // Temporarily disable the Workbox service worker until we deliberately re-enable it
-  disable: !enablePWA || process.env.NODE_ENV === 'development',
-  register: enablePWA,
+  // Enable PWA in production (set NEXT_PUBLIC_ENABLE_PWA=true), disable in dev
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
   skipWaiting: true,
+  // Fallback pages for offline scenarios
+  fallbacks: {
+    document: '/_offline',  // Offline fallback for navigation requests
+  },
   // Exclude images and auth pages from precaching - images are cached on-demand via runtimeCaching
   // This prevents the PWA from downloading ALL public images on first load
   publicExcludes: [

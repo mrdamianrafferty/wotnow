@@ -96,39 +96,9 @@ export default function App({ Component, pageProps }: AppProps<PagePropsWithThem
     }
   }, []);
 
-  // Clean up stale service workers and caches on app load
-  // This fixes 404 errors for build manifests when a new deployment uses different build IDs
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-
-    const cleanupServiceWorkers = async () => {
-      try {
-        // Unregister all service workers
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[SW Cleanup] Unregistered service worker:', registration.scope);
-          }
-        }
-
-        // Clear all caches
-        if ('caches' in window) {
-          const cacheNames = await caches.keys();
-          for (const cacheName of cacheNames) {
-            await caches.delete(cacheName);
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[SW Cleanup] Deleted cache:', cacheName);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[SW Cleanup] Error during cleanup:', error);
-      }
-    };
-
-    void cleanupServiceWorkers();
-  }, []);
+  // Note: Service worker cleanup removed to enable offline support
+  // The PWA service worker now handles cache management via next-pwa's cleanupOutdatedCaches option
+  // If you need to force-clear caches, users can do so via browser settings or app reinstall
 
   // Initialize safe area insets for native apps (capacitor-plugin-safe-area)
   useEffect(() => {
