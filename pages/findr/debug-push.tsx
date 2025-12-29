@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
 
 export default function DebugPushPage() {
   const [status, setStatus] = useState<string[]>(['Loading...']);
@@ -16,12 +15,37 @@ export default function DebugPushPage() {
 
   useEffect(() => {
     const init = async () => {
-      addStatus(`Platform: ${Capacitor.getPlatform()}`);
-      addStatus(`Native: ${Capacitor.isNativePlatform()}`);
+      // Check for native Capacitor bridge (injected by native app)
+      const windowCap = (window as unknown as { Capacitor?: { getPlatform?: () => string; isNativePlatform?: () => boolean } }).Capacitor;
 
-      if (!Capacitor.isNativePlatform()) {
-        addStatus('Not a native platform - push not available');
-        return;
+      addStatus(`window.Capacitor exists: ${!!windowCap}`);
+      addStatus(`User Agent: ${navigator.userAgent.substring(0, 50)}...`);
+
+      if (windowCap) {
+        addStatus(`Platform: ${windowCap.getPlatform?.() || 'unknown'}`);
+        addStatus(`Native: ${windowCap.isNativePlatform?.() || false}`);
+      }
+
+      // Also try the npm import
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        addStatus(`NPM Capacitor Platform: ${Capacitor.getPlatform()}`);
+        addStatus(`NPM Capacitor Native: ${Capacitor.isNativePlatform()}`);
+      } catch (e) {
+        addStatus(`NPM import error: ${e}`);
+      }
+
+      // Check if running in WKWebView (iOS native)
+      const isWKWebView = navigator.userAgent.includes('AppleWebKit') &&
+                          !navigator.userAgent.includes('Safari') ||
+                          navigator.userAgent.includes('Findr');
+      addStatus(`Likely WKWebView: ${isWKWebView}`);
+
+      // Check localStorage for any existing token
+      const storedToken = localStorage.getItem('push_notification_token');
+      if (storedToken) {
+        addStatus(`Stored token: ${storedToken.substring(0, 20)}...`);
+        setToken(storedToken);
       }
 
       try {
@@ -31,17 +55,8 @@ export default function DebugPushPage() {
         // Check current permission status
         const permStatus = await PushNotifications.checkPermissions();
         addStatus(`Current permission: ${permStatus.receive}`);
-
-        // Check localStorage for stored token
-        const storedToken = localStorage.getItem('push_notification_token');
-        if (storedToken) {
-          addStatus(`Stored token found: ${storedToken.substring(0, 20)}...`);
-          setToken(storedToken);
-        } else {
-          addStatus('No stored token found');
-        }
       } catch (e) {
-        addStatus(`Error: ${e}`);
+        addStatus(`PushNotifications error: ${e}`);
       }
     };
 
