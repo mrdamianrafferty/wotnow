@@ -536,7 +536,7 @@ export function WeatherPage() {
       <HeroWeatherCard data={currentWeather} marine={null} WeatherIcon={WeatherIcon} unitSystem={unitSystem} t={t} />
 
       {/* Soil Status - important for gardening, placed prominently */}
-      {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} unitSystem={unitSystem} t={t} /> : null}
+      {currentWeatherData.soil ? <SoilConditionsCard data={currentWeatherData.soil} hourly={currentWeatherData.hourly} unitSystem={unitSystem} t={t} /> : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -968,11 +968,43 @@ function PollenCard({ data, t }: { data: PollenData; t: Translator }) {
   );
 }
 
-function SoilConditionsCard({ data, unitSystem, t }: { data: SoilData; unitSystem: UnitSystem; t: Translator }) {
+function SoilConditionsCard({ data, hourly, unitSystem, t }: { data: SoilData; hourly?: HourlyForecastEntry[]; unitSystem: UnitSystem; t: Translator }) {
   const [depthIdx, setDepthIdx] = useState<0|1|2|3>(0);
   const depths = [0, 6, 18, 54] as const;
   const depthLabels = ['Surface', '6 cm', '18 cm', '54 cm'];
   const depth = depths[depthIdx];
+
+  // Calculate next rain from hourly forecast
+  const getNextRain = (): { time: string; hoursAway: number; chance: number } | null => {
+    if (!hourly || hourly.length === 0) return null;
+
+    const RAIN_THRESHOLD = 30; // Consider rain likely at 30%+ chance
+    for (let i = 0; i < hourly.length; i++) {
+      if (hourly[i].precipitation >= RAIN_THRESHOLD) {
+        return {
+          time: hourly[i].time,
+          hoursAway: i,
+          chance: hourly[i].precipitation,
+        };
+      }
+    }
+    return null; // No rain in forecast
+  };
+
+  // Calculate rain-free window
+  const getRainFreeHours = (): number => {
+    if (!hourly || hourly.length === 0) return 0;
+    const RAIN_THRESHOLD = 30;
+    for (let i = 0; i < hourly.length; i++) {
+      if (hourly[i].precipitation >= RAIN_THRESHOLD) {
+        return i;
+      }
+    }
+    return hourly.length; // All hours are rain-free
+  };
+
+  const nextRain = getNextRain();
+  const rainFreeHours = getRainFreeHours();
 
   // Get temperature at selected depth
   const getTempAtDepth = (): number | null => {
@@ -1105,6 +1137,50 @@ function SoilConditionsCard({ data, unitSystem, t }: { data: SoilData; unitSyste
                 <span>{tip}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Next Rain Indicator */}
+        {hourly && hourly.length > 0 && (
+          <div className={`rounded-lg p-3 flex items-center gap-3 ${
+            nextRain
+              ? 'bg-blue-50 border border-blue-200'
+              : 'bg-green-50 border border-green-200'
+          }`}>
+            <div className={`p-2 rounded-full ${nextRain ? 'bg-blue-100' : 'bg-green-100'}`}>
+              {nextRain ? (
+                <CloudRain className="h-5 w-5 text-blue-600" />
+              ) : (
+                <Sun className="h-5 w-5 text-green-600" />
+              )}
+            </div>
+            <div className="flex-1">
+              {nextRain ? (
+                <>
+                  <p className="text-sm font-medium text-blue-900">
+                    {t('Rain expected')}: {nextRain.time} ({nextRain.chance}%)
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    {nextRain.hoursAway === 0
+                      ? t('Rain starting now - hold off watering')
+                      : nextRain.hoursAway === 1
+                        ? t('Rain in 1 hour - skip watering')
+                        : t('Rain in') + ` ${nextRain.hoursAway} ` + t('hours') + ' - ' + t('save water')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium text-green-900">
+                    {t('No rain expected')} ({rainFreeHours}+ {t('hours')})
+                  </p>
+                  <p className="text-xs text-green-700">
+                    {moisture != null && moisture < 0.25
+                      ? t('Good time to water - soil is dry')
+                      : t('Check soil moisture before watering')}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         )}
 
