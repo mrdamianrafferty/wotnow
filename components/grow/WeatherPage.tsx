@@ -27,7 +27,6 @@ import {
   MapPin,
   RefreshCw,
   AlertTriangle,
-  Clock3,
   CalendarDays
 } from 'lucide-react';
 import { api } from '../../lib/grow/api';
@@ -332,8 +331,6 @@ export function WeatherPage() {
       'Low Tide',
       'Surf',
       'Gusts',
-      'Hourly Outlook',
-      'Rain',
       'Rain chance',
       '5-Day Forecast',
       'Sun & Moon',
@@ -589,10 +586,8 @@ export function WeatherPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <HourlyForecastCard data={currentWeatherData.hourly} unitSystem={unitSystem} t={t} />
-        <DailyForecastCard data={currentWeatherData.daily} unitSystem={unitSystem} t={t} />
-      </div>
+      {/* Daily forecast - hourly data now feeds into soil card rain indicator */}
+      <DailyForecastCard data={currentWeatherData.daily} unitSystem={unitSystem} t={t} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <SunCycleCard data={currentWeather} t={t} />
@@ -706,34 +701,6 @@ function HeroWeatherCard({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function HourlyForecastCard({ data, unitSystem, t }: { data: HourlyForecastEntry[]; unitSystem: UnitSystem; t: Translator }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock3 className="h-5 w-5" />
-          {t('Hourly Outlook')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {data.slice(0, 8).map((entry) => {
-          const Icon = getConditionIcon(entry.condition);
-          return (
-            <div key={entry.time} className="rounded-lg border bg-muted/30 p-3 text-center">
-              <p className="text-sm font-medium">{entry.time}</p>
-              <Icon className="mx-auto my-2 h-5 w-5 text-blue-500" />
-              <p className="text-lg font-semibold">{formatTemperature(entry.temperature, unitSystem, false)}</p>
-              <div className="mt-1 text-xs text-muted-foreground">
-                {t('Rain')} {entry.precipitation}% • {formatWindSpeed(entry.windSpeed, unitSystem, false)}
-              </div>
-            </div>
-          );
-        })}
       </CardContent>
     </Card>
   );
