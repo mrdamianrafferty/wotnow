@@ -109,11 +109,28 @@ interface PollenData {
   dominant: string;
 }
 
+interface SoilDetailedData {
+  temperature: {
+    surface: number | null;  // 0cm
+    shallow: number | null;  // 6cm
+    mid: number | null;      // 18cm
+    deep: number | null;     // 54cm
+  };
+  moisture: {
+    surface: number | null;  // 0-1cm (m³/m³)
+    shallow: number | null;  // 1-3cm
+    mid: number | null;      // 3-9cm
+    deep: number | null;     // 9-27cm
+  };
+  timestamp: string | null;
+}
+
 interface SoilData {
   temperature: number;
   moisture: number;
   compaction: string;
   recommendation: string;
+  detailed?: SoilDetailedData;
 }
 
 interface WeatherAlert {
@@ -241,7 +258,22 @@ const MOCK_WEATHER_DATA: WeatherApiResponse = {
     temperature: 16,
     moisture: 58,
     compaction: 'Loose',
-    recommendation: 'Maintain mulched beds to keep soil moisture steady ahead of weekend winds.'
+    recommendation: 'Maintain mulched beds to keep soil moisture steady ahead of weekend winds.',
+    detailed: {
+      temperature: {
+        surface: 16,
+        shallow: 14,
+        mid: 12,
+        deep: 10,
+      },
+      moisture: {
+        surface: 0.32,
+        shallow: 0.35,
+        mid: 0.38,
+        deep: 0.40,
+      },
+      timestamp: new Date().toISOString(),
+    },
   },
   alerts: [
     {
@@ -937,6 +969,72 @@ function PollenCard({ data, t }: { data: PollenData; t: Translator }) {
 }
 
 function SoilConditionsCard({ data, unitSystem, t }: { data: SoilData; unitSystem: UnitSystem; t: Translator }) {
+  const [depthIdx, setDepthIdx] = useState<0|1|2|3>(0);
+  const depths = [0, 6, 18, 54] as const;
+  const depthLabels = ['Surface', '6 cm', '18 cm', '54 cm'];
+  const depth = depths[depthIdx];
+
+  // Get temperature at selected depth
+  const getTempAtDepth = (): number | null => {
+    if (!data.detailed) return data.temperature;
+    const tempMap: Record<0|6|18|54, number | null> = {
+      0: data.detailed.temperature.surface,
+      6: data.detailed.temperature.shallow,
+      18: data.detailed.temperature.mid,
+      54: data.detailed.temperature.deep,
+    };
+    return tempMap[depth];
+  };
+
+  // Get moisture at selected depth (convert from m³/m³ to percentage)
+  const getMoistureAtDepth = (): { value: number | null; label: string; approx: boolean } => {
+    if (!data.detailed) return { value: data.moisture / 100, label: 'Surface', approx: false };
+    if (depth === 0) return { value: data.detailed.moisture.surface, label: '0-1 cm', approx: false };
+    if (depth === 6) return { value: data.detailed.moisture.mid, label: '3-9 cm', approx: true };
+    if (depth === 18) return { value: data.detailed.moisture.deep, label: '9-27 cm', approx: true };
+    return { value: null, label: '', approx: false }; // No data at 54cm
+  };
+
+  const temp = getTempAtDepth();
+  const moistureInfo = getMoistureAtDepth();
+  const moisture = moistureInfo.value;
+
+  // Gardening-specific advice based on depth, temperature and moisture
+  const getDepthAdvice = (): string[] => {
+    const tips: string[] = [];
+    if (temp == null) return tips;
+
+    // Depth-specific context
+    if (depth === 0) {
+      if (temp < 5) tips.push('Surface too cold for germination. Use cloches or wait.');
+      else if (temp < 10) tips.push('Cool surface - good for peas, broad beans, hardy greens.');
+      else if (temp <= 20) tips.push('Ideal surface temp for direct sowing most seeds.');
+      else tips.push('Warm surface - perfect for tomatoes, peppers, squash.');
+    } else if (depth === 6) {
+      if (temp < 8) tips.push('Shallow roots still cool - transplants may establish slowly.');
+      else if (temp <= 18) tips.push('Good root zone temp for seedling establishment.');
+      else tips.push('Warm root zone - rapid nutrient uptake possible.');
+    } else if (depth === 18) {
+      if (temp < 10) tips.push('Deep soil cold - perennials and trees may be dormant.');
+      else tips.push('Active root zone for established plants.');
+    } else {
+      tips.push('Deep soil temps affect fruit trees and perennial roots.');
+    }
+
+    // Moisture advice
+    if (moisture != null) {
+      if (moisture < 0.15) tips.push('Dry at this depth - deep watering recommended.');
+      else if (moisture < 0.30) tips.push('Moisture balanced - ideal for most plants.');
+      else if (moisture < 0.40) tips.push('Good moisture retention - reduce watering.');
+      else tips.push('Saturated - check drainage, avoid working soil.');
+    }
+
+    return tips;
+  };
+
+  const depthAdvice = getDepthAdvice();
+  const hasDetailedData = !!data.detailed;
+
   return (
     <Card>
       <CardHeader>
@@ -945,16 +1043,81 @@ function SoilConditionsCard({ data, unitSystem, t }: { data: SoilData; unitSyste
           {t('Soil Status')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm">
+      <CardContent className="space-y-4 text-sm">
+        {/* Depth selector with slider */}
+        {hasDetailedData && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{t('Depth')}</span>
+              <span className="text-sm font-medium bg-primary/10 text-primary px-3 py-1 rounded-full">
+                {depthLabels[depthIdx]}
+              </span>
+            </div>
+            <div className="relative pt-1">
+              <input
+                type="range"
+                min={0}
+                max={3}
+                value={depthIdx}
+                onChange={(e) => setDepthIdx(Number(e.target.value) as 0|1|2|3)}
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #a3815c 0%, #8b6b47 25%, #5d4037 50%, #3e2723 100%)`,
+                }}
+              />
+              <div
+                className="absolute pointer-events-none text-lg"
+                style={{
+                  top: '-0.5rem',
+                  left: `calc(${depthIdx / 3 * 100}% - ${depthIdx === 0 ? '0rem' : depthIdx === 3 ? '1.2rem' : '0.6rem'})`,
+                  transform: 'rotate(315deg)',
+                }}
+              >
+                🪏
+              </div>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0cm</span><span>6cm</span><span>18cm</span><span>54cm</span>
+            </div>
+          </div>
+        )}
+
+        {/* Temperature and Moisture at selected depth */}
         <div className="grid grid-cols-2 gap-3">
-          <StatBlock label={t('Soil Temp')} icon={<Thermometer className="h-4 w-4" />} value={formatTemperature(data.temperature, unitSystem, false)} />
-          <StatBlock label={t('Moisture')} icon={<Droplets className="h-4 w-4" />} value={`${data.moisture}%`} />
+          <StatBlock
+            label={t('Soil Temp')}
+            icon={<Thermometer className="h-4 w-4" />}
+            value={temp != null ? formatTemperature(temp, unitSystem, false) : '—'}
+          />
+          <StatBlock
+            label={moistureInfo.approx ? `${t('Moisture')} ~` : t('Moisture')}
+            icon={<Droplets className="h-4 w-4" />}
+            value={moisture != null ? `${Math.round(moisture * 100)}%` : '—'}
+          />
         </div>
+
+        {/* Depth-specific gardening advice */}
+        {depthAdvice.length > 0 && (
+          <div className="space-y-1.5">
+            {depthAdvice.map((tip, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                <span className="text-green-600 mt-0.5">•</span>
+                <span>{tip}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Recommendation */}
         <div className="rounded border border-dashed border-muted/60 bg-muted/20 p-3 text-muted-foreground">
           <p className="text-xs uppercase tracking-wide">{t('Recommendation')}</p>
           <p className="mt-1 text-sm">{data.recommendation}</p>
         </div>
-        <div className="rounded bg-muted/20 p-3 text-xs text-muted-foreground">{t('Soil structure')}: {data.compaction}</div>
+
+        {/* Soil structure */}
+        <div className="rounded bg-muted/20 p-3 text-xs text-muted-foreground">
+          {t('Soil structure')}: {data.compaction}
+        </div>
       </CardContent>
     </Card>
   );
