@@ -166,8 +166,8 @@ const nextConfig = {
       },
     ],
     formats: ['image/webp', 'image/avif'],
-    deviceSizes: [400, 500, 640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 100, 128, 200, 256, 300, 384],
+    deviceSizes: [400, 500, 600, 640, 750, 800, 828, 960, 1080, 1200, 1440, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 80, 96, 100, 112, 128, 160, 200, 256, 300, 320, 384],
     minimumCacheTTL: 60 * 60 * 24 * 365, // Cache for 1 year
   },
   // Enable compression
