@@ -123,7 +123,7 @@ export function generateDailyDigestHTML(data: DailyDigestData): string {
           <!-- CTA Button -->
           <tr>
             <td style="padding: 8px 24px 32px;" align="center">
-              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
+              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
                 View Full Forecast →
               </a>
             </td>
@@ -188,7 +188,7 @@ ${alerts.map(alert => `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View full forecast: https://fishfindr.eu/findr/predictions
+View full forecast: https://fishfindr.eu/findr/favourites
 
 ---
 You're receiving this email because you enabled email notifications for these species.
@@ -335,7 +335,7 @@ export function generateTieredDailyDigestHTML(data: TieredDailyDigestData): stri
           <!-- CTA Button -->
           <tr>
             <td style="padding: 24px 24px 32px;" align="center">
-              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
+              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
                 View Full Forecast →
               </a>
             </td>
@@ -424,7 +424,7 @@ Here's your fishing forecast for ${totalSpecies} species:
 
   text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View full forecast: https://fishfindr.eu/findr/predictions
+View full forecast: https://fishfindr.eu/findr/favourites
 
 ---
 You're receiving this daily digest because you enabled email notifications.
@@ -764,7 +764,7 @@ export function generateWeeklyForecastHTML(data: WeeklyForecastData): string {
           <!-- CTA Button -->
           <tr>
             <td style="padding: 24px 24px 32px;" align="center">
-              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
+              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);">
                 View Full Forecast →
               </a>
             </td>
@@ -837,7 +837,7 @@ ${s.forecast.map(day => {
   text += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View full forecast: https://fishfindr.eu/findr/predictions
+View full forecast: https://fishfindr.eu/findr/favourites
 
 ---
 You're receiving this weekly forecast because you enabled email notifications.
@@ -1013,7 +1013,7 @@ export function generateWeeklyForecastHTMLV2(data: WeeklyForecastDataEnhanced): 
       </td></tr>
     </table>
   </td></tr>` : ''}
-  <tr><td style="padding: 8px 24px 32px;" align="center"><a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">View Live Forecast →</a></td></tr>
+  <tr><td style="padding: 8px 24px 32px;" align="center"><a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">View Live Forecast →</a></td></tr>
   <tr><td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;"><p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-align: center;">You're receiving this weekly forecast because you enabled email notifications.</p><p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;"><a href="https://fishfindr.eu/findr/favourites" style="color: #0ea5e9; text-decoration: none;">Manage preferences</a>${unsubscribeUrl ? ` • <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>` : ''}</p></td></tr>
 </table>
 <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 16px;"><tr><td style="text-align: center; padding: 16px;"><p style="margin: 0; font-size: 12px; color: #9ca3af;">© 2025 Findr • <a href="https://fishfindr.eu" style="color: #0ea5e9; text-decoration: none;">fishfindr.eu</a></p></td></tr></table>
@@ -1115,7 +1115,7 @@ View all shops: https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectan
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View live forecast: https://fishfindr.eu/findr/predictions
+View live forecast: https://fishfindr.eu/findr/favourites
 
 ---
 You're receiving this weekly forecast because you enabled email notifications.
@@ -1411,7 +1411,7 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
           <!-- CTA BUTTON -->
           <tr>
             <td style="padding: 8px 24px 32px;" align="center">
-              <a href="https://fishfindr.eu/findr/predictions" style="display: inline-block; background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
+              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
                 View Full Forecast →
               </a>
             </td>
@@ -1547,7 +1547,7 @@ View shops: https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleC
   text += `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-View full forecast: https://fishfindr.eu/findr/predictions
+View full forecast: https://fishfindr.eu/findr/favourites
 
 ---
 You're receiving this daily digest because you enabled email notifications.
