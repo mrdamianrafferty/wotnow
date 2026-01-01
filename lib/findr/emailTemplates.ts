@@ -706,7 +706,7 @@ export function generateWeeklyForecastHTML(data: WeeklyForecastData): string {
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
                         <td width="80" valign="top">
-                          <img src="https://fishfindr.eu${s.imageUrl}" alt="${s.speciesName}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: block;" />
+                          <img src="https://fishfindr.eu${s.imageUrl}" alt="${s.speciesName}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: block; background-color: #ffffff;" />
                         </td>
                         <td style="padding-left: 16px;" valign="top">
                           <h3 style="margin: 0 0 4px; font-size: 18px; font-weight: 600; color: #111827;">
@@ -886,7 +886,7 @@ function renderStarSpeciesCard(species: WeeklyForecastSpeciesEnhanced): string {
       <tr><td style="padding: 20px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td width="100" valign="top"><img src="https://fishfindr.eu${species.imageUrl}" alt="${species.speciesName}" style="width: 100px; height: 70px; border-radius: 8px; object-fit: cover; border: 2px solid ${colors.primary};" /></td>
+            <td width="100" valign="top"><img src="https://fishfindr.eu${species.imageUrl}" alt="${species.speciesName}" style="width: 100px; height: 70px; border-radius: 8px; object-fit: cover; border: 2px solid ${colors.primary}; background-color: #ffffff;" /></td>
             <td style="padding-left: 16px;" valign="top">
               <h3 style="margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #111827;">${species.speciesName}</h3>
               ${species.scientificName ? `<p style="margin: 0 0 8px; font-size: 13px; font-style: italic; color: #6b7280;">${species.scientificName}</p>` : ''}
@@ -921,7 +921,7 @@ function renderCompactSpeciesRow(species: WeeklyForecastSpeciesEnhanced): string
       <tr><td style="padding: 12px 16px;">
         <table width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td width="50" valign="middle"><img src="https://fishfindr.eu${species.imageUrl}" alt="${species.speciesName}" style="width: 45px; height: 45px; border-radius: 6px; object-fit: cover;" /></td>
+            <td width="50" valign="middle"><img src="https://fishfindr.eu${species.imageUrl}" alt="${species.speciesName}" style="width: 45px; height: 45px; border-radius: 6px; object-fit: cover; background-color: #ffffff;" /></td>
             <td style="padding-left: 12px;" valign="middle"><h4 style="margin: 0 0 2px; font-size: 15px; font-weight: 600; color: #111827;">${species.speciesName}</h4><p style="margin: 0; font-size: 12px; color: #6b7280;">Peak: ${species.peakDay}</p></td>
             <td width="80" align="right" valign="middle"><div style="background-color: ${species.peakConfidence >= 75 ? '#22c55e' : species.peakConfidence >= 60 ? '#0ea5e9' : '#6b7280'}; color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600; display: inline-block;">${species.peakConfidence}%</div></td>
           </tr>
@@ -1242,7 +1242,7 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
                       <tr>
                         <td width="80" valign="top">
                           ${topSpecies.imageUrl
-                            ? `<img src="https://fishfindr.eu${topSpecies.imageUrl}" alt="${topSpecies.speciesName}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; border: 3px solid ${guildColors.primary};" />`
+                            ? `<img src="https://fishfindr.eu${topSpecies.imageUrl}" alt="${topSpecies.speciesName}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover; border: 3px solid ${guildColors.primary}; background-color: #ffffff;" />`
                             : `<div style="width: 80px; height: 80px; background: ${guildColors.primary}; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px;">🐟</div>`
                           }
                         </td>
