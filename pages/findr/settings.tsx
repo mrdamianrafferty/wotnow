@@ -116,12 +116,14 @@ const SETTINGS_TRANSLATABLE_STRINGS = [
   'Get notified when conditions are perfect for your favourite species',
   'Hot Bite Alerts',
   'Instant in-app notifications when favourite species reach 85%+ confidence. Perfect for last-minute fishing trips!',
-  'Daily Email Digest',
-  'Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (<70%). Maximum 1 email per day.',
-  'Sent daily at 8:00 AM',
+  'Daily Fishing Digest',
+  'Should you fish today? Get a clear GO or GOOD verdict with your best opportunity, optimal fishing window, and conditions at a glance.',
+  'Only sent on promising days to avoid email fatigue. No email = save your energy for a better day!',
+  'Checked hourly, sent when conditions are promising',
   'Weekly Forecast',
-  '7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!',
-  'Sent every Monday at 8:00 AM',
+  'Plan your week with a 7-day forecast for your favourites. Includes star species insights, environmental briefing, tactical advice, and nearby tackle shops.',
+  'Best days highlighted so you can plan ahead!',
+  'Sent every Wednesday at 8:00 AM',
   'Add species to your favourites to start receiving personalized fishing alerts and forecasts.',
   'Notification settings updated!',
   'Failed to update notification settings',
@@ -872,13 +874,16 @@ export default function FindrSettingsPage() {
                           <div className="w-10 h-10 rounded-full bg-info/10 flex items-center justify-center flex-shrink-0">
                             <Mail size={20} className="text-info" />
                           </div>
-                          <h4 className="font-semibold text-base-content">{t('Daily Email Digest')}</h4>
+                          <h4 className="font-semibold text-base-content">{t('Daily Fishing Digest')}</h4>
                         </div>
-                        <p className="text-xs text-base-content/60 ml-12 mb-3">
-                          {t('Daily summary of all favourites, organized by confidence tiers: Hot Bites (85%+), Good Conditions (70-84%), and Status Updates (<70%). Maximum 1 email per day.')}
+                        <p className="text-xs text-base-content/60 ml-12 mb-2">
+                          {t('Should you fish today? Get a clear GO or GOOD verdict with your best opportunity, optimal fishing window, and conditions at a glance.')}
+                        </p>
+                        <p className="text-xs text-base-content/50 ml-12 mb-3">
+                          {t('Only sent on promising days to avoid email fatigue. No email = save your energy for a better day!')}
                         </p>
                         <div className="ml-12 text-xs text-base-content/50">
-                          {t('Sent daily at 8:00 AM')}
+                          {t('Checked hourly, sent when conditions are promising')}
                         </div>
                       </div>
                       <input
@@ -901,11 +906,14 @@ export default function FindrSettingsPage() {
                           </div>
                           <h4 className="font-semibold text-base-content">{t('Weekly Forecast')}</h4>
                         </div>
-                        <p className="text-xs text-base-content/60 ml-12 mb-3">
-                          {t('7-day confidence forecast for each favourite species with best fishing days highlighted. Perfect for planning weekend trips!')}
+                        <p className="text-xs text-base-content/60 ml-12 mb-2">
+                          {t('Plan your week with a 7-day forecast for your favourites. Includes star species insights, environmental briefing, tactical advice, and nearby tackle shops.')}
+                        </p>
+                        <p className="text-xs text-base-content/50 ml-12 mb-3">
+                          {t('Best days highlighted so you can plan ahead!')}
                         </p>
                         <div className="ml-12 text-xs text-base-content/50">
-                          {t('Sent every Monday at 8:00 AM')}
+                          {t('Sent every Wednesday at 8:00 AM')}
                         </div>
                       </div>
                       <input
