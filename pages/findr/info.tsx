@@ -486,7 +486,7 @@ const FindrInfoPage = () => {
           </div>
 
           {/* Local Tackle Shops Tribute */}
-<div className="card bg-primary/5 shadow-xl mt-6">
+<div id="tackle-shops" className="card bg-primary/5 shadow-xl mt-6">
   <div className="card-body">
     <h2 className="card-title text-2xl mb-4">
       <Fish className="text-primary" size={24} />

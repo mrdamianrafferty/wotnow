@@ -1004,7 +1004,7 @@ export function generateWeeklyForecastHTMLV2(data: WeeklyForecastDataEnhanced): 
                   </tr></table>
                 </td>
                 <td style="padding: 10px 12px; width: 90px; text-align: right; vertical-align: middle;">
-                  <a href="${shop.mapsUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;">Directions</a>
+                  <a href="https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}` : ''}#tackle-shops" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 600;">View Shops</a>
                 </td>
               </tr>
             </table>
@@ -1104,9 +1104,11 @@ Tackle shops near your fishing area:
       text += `
 ${i + 1}. ${shop.name}
    ${shop.address}
-   📍 ${shop.distance}${shop.rating ? ` • ⭐ ${shop.rating.toFixed(1)}` : ''}
-   ${shop.mapsUrl}`;
+   📍 ${shop.distance}${shop.rating ? ` • ⭐ ${shop.rating.toFixed(1)}` : ''}`;
     });
+    text += `
+
+View all shops: https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}` : ''}#tackle-shops`;
   }
 
   text += `
@@ -1395,7 +1397,7 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
                           </table>
                         </td>
                         <td style="padding: 12px; width: 90px; text-align: right; vertical-align: middle;">
-                          <a href="${nearestShop.mapsUrl}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;">Directions</a>
+                          <a href="https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}` : ''}#tackle-shops" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;">View Shops</a>
                         </td>
                       </tr>
                     </table>
@@ -1537,7 +1539,8 @@ ${conditions.windSpeedKts ? `💨 Wind: ${conditions.windSpeedKts} kts` : ''}
 ${nearestShop.name}
 ${nearestShop.address}
 📍 ${nearestShop.distance}${nearestShop.rating ? ` • ⭐ ${nearestShop.rating.toFixed(1)}` : ''}
-${nearestShop.mapsUrl}
+
+View shops: https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}#tackle-shops` : '#tackle-shops'}
 `;
   }
 
