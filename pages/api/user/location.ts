@@ -264,9 +264,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       const existingRectangles = Array.isArray(existingRow?.preferred_rectangles)
         ? (existingRow?.preferred_rectangles as string[])
         : [];
-      const preferredSet = new Set(existingRectangles);
+
+      // Put the new rectangle FIRST so notifications use the most recent selection
+      // Remove it from existing list first (if present) to avoid duplicates
+      let preferredRectangles = existingRectangles;
       if (record.rectangleCode) {
-        preferredSet.add(record.rectangleCode);
+        preferredRectangles = [
+          record.rectangleCode,
+          ...existingRectangles.filter(r => r !== record.rectangleCode)
+        ];
       }
 
       const payload = {
@@ -274,7 +280,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         home_region: record.rectangleRegion ?? (existingRow?.home_region as string | null) ?? null,
         home_place_name: record.rectangleRegion ?? (existingRow?.home_place_name as string | null) ?? null,
         home_location_name: record.rectangleLabel ?? (existingRow?.home_location_name as string | null) ?? null,
-        preferred_rectangles: Array.from(preferredSet),
+        preferred_rectangles: preferredRectangles,
         location_source: ALLOWED_SOURCES.has(record.source) ? record.source : 'manual',
         updated_at: new Date().toISOString(),
       };
