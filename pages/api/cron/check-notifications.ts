@@ -55,6 +55,7 @@ import {
 } from '../../../lib/findr/conditionHelpers';
 import { generateUnsubscribeToken } from '../findr/unsubscribe';
 import { sendApnsPushNotification } from '../../../lib/findr/apnsClient';
+import { SPECIES_IMAGE_MAP } from '../../../data/speciesImageMap';
 import { sendFcmPushNotification } from '../../../lib/notifications/fcmClient';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -896,11 +897,14 @@ async function sendDailyDigestEmailV2(
     });
 
     // 10. Build top species data
+    const speciesImageInfo = SPECIES_IMAGE_MAP[topSpeciesData.speciesCode];
+    const imageUrl = speciesImageInfo?.mobile || speciesImageInfo?.image || '/webp/default-fish.webp';
+
     const topSpecies: DailyTopSpecies = {
       speciesName: topSpeciesData.speciesName,
       speciesCode: topSpeciesData.speciesCode,
       confidence: topSpeciesData.confidence,
-      imageUrl: `/PNGS/${topSpeciesData.speciesCode.toLowerCase()}.png`,
+      imageUrl,
       guild: topSpeciesData.guild,
       approach: speciesAdvice?.approach ?? 'General fishing approach',
       baits: speciesAdvice?.baits ?? ['Ragworm', 'Mackerel strips'],
