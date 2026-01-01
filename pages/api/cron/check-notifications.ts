@@ -30,10 +30,29 @@ import {
   generateDailyDigestText,
   generateTieredDailyDigestHTML,
   generateTieredDailyDigestText,
+  generateDailyDigestHTMLV2,
+  generateDailyDigestTextV2,
   type EmailSpeciesAlert,
   type TieredEmailSpeciesAlert,
-  type TieredDailyDigestData
+  type TieredDailyDigestData,
+  type DailyDigestDataV2,
+  type DailyTopSpecies,
+  type DailyAlternativeSpecies,
+  type DailyConditionsSnapshot,
+  type NearbyTackleShop,
+  type Guild,
 } from '../../../lib/findr/emailTemplates';
+import {
+  calculateVerdictScore,
+  getVerdict,
+  generateVerdictReason,
+  calculateOverallRating,
+  calculateWaterClarity,
+  calculatePressureTrend,
+  calculateOptimalWindow,
+  type EnvironmentalConditions,
+  type MoonData,
+} from '../../../lib/findr/conditionHelpers';
 import { generateUnsubscribeToken } from '../findr/unsubscribe';
 import { sendApnsPushNotification } from '../../../lib/findr/apnsClient';
 import { sendFcmPushNotification } from '../../../lib/notifications/fcmClient';
@@ -401,8 +420,11 @@ async function _sendDailyDigestEmail_DEPRECATED(
 /**
  * Send tiered daily digest email with species grouped by confidence bands
  * HOT BITES (85%+), GOOD CONDITIONS (60-84%), STATUS UPDATES (<60%)
+ *
+ * @deprecated Replaced by sendDailyDigestEmailV2 which uses verdict logic
+ * Kept as fallback in case V2 fails for a user (e.g., missing environmental data)
  */
-async function sendTieredDailyDigestEmail(
+async function _sendTieredDailyDigestEmail(
   userId: string,
   allSpecies: Map<string, { speciesCode: string; speciesName: string; confidence: number }>,
   locationName: string,
@@ -541,6 +563,468 @@ async function sendTieredDailyDigestEmail(
   } catch (error) {
     console.error('[Cron] Exception sending tiered daily digest email:', error);
     return false;
+  }
+}
+
+/**
+ * Fetch environmental conditions for a rectangle
+ */
+async function fetchEnvironmentalConditions(rectangleCode: string): Promise<EnvironmentalConditions | null> {
+  try {
+    const { data, error } = await supabase
+      .from('findr_conditions_latest')
+      .select('*')
+      .eq('rectangle_code', rectangleCode)
+      .single();
+
+    if (error || !data) {
+      console.log('[Cron] No environmental data for rectangle:', rectangleCode);
+      return null;
+    }
+
+    return {
+      sea_temp_c: data.sea_temp_c ?? data.water_temp_c ?? 12,
+      salinity_psu: data.salinity_psu ?? 35,
+      air_pressure_hpa: data.air_pressure_hpa ?? data.pressure_hpa ?? 1013,
+      wave_height_m: data.wave_height_m ?? 1.0,
+      kd490: data.kd490 ?? 0.1,
+      cloud_cover_pct: data.cloud_cover_pct ?? null,
+      chlorophyll_mg_m3: data.chlorophyll_mg_m3 ?? null,
+      current_speed_ms: data.current_speed_ms ?? null,
+      wind_speed_kts: data.wind_speed_kts ?? 10,
+      next_high_tide_iso: data.next_high_tide_iso ?? null,
+      next_low_tide_iso: data.next_low_tide_iso ?? null,
+      pressure_trend_category: data.pressure_trend_category ?? null,
+      captured_at: data.captured_at ?? null,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching environmental conditions:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch moon data for today
+ */
+async function fetchMoonData(lat: number, lon: number): Promise<MoonData | null> {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('moon_cache')
+      .select('*')
+      .eq('date', today)
+      .gte('lat', lat - 1)
+      .lte('lat', lat + 1)
+      .gte('lon', lon - 1)
+      .lte('lon', lon + 1)
+      .limit(1)
+      .single();
+
+    if (error || !data) {
+      console.log('[Cron] No moon data for date:', today);
+      // Return default moon data
+      return {
+        moon_phase_name: 'Waxing',
+        moon_illumination_pct: 50,
+        sunrise_iso: null,
+        sunset_iso: null,
+        moon_transit_iso: null,
+      };
+    }
+
+    return {
+      moon_phase_name: data.phase_name ?? 'Unknown',
+      moon_illumination_pct: data.illumination ?? 50,
+      sunrise_iso: data.sunrise_iso ?? null,
+      sunset_iso: data.sunset_iso ?? null,
+      moonrise_iso: data.moonrise_iso ?? null,
+      moonset_iso: data.moonset_iso ?? null,
+      moon_transit_iso: data.moon_transit_iso ?? null,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching moon data:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch tide times for a rectangle
+ */
+async function fetchTideTimes(rectangleCode: string): Promise<{ highTideIso: string | null; lowTideIso: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('findr_conditions_latest')
+      .select('next_high_tide_iso, next_low_tide_iso')
+      .eq('rectangle_code', rectangleCode)
+      .single();
+
+    if (error || !data) {
+      return { highTideIso: null, lowTideIso: null };
+    }
+
+    return {
+      highTideIso: data.next_high_tide_iso ?? null,
+      lowTideIso: data.next_low_tide_iso ?? null,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching tide times:', error);
+    return { highTideIso: null, lowTideIso: null };
+  }
+}
+
+/**
+ * Fetch nearest tackle shop using Google Places API
+ */
+async function fetchNearestTackleShop(lat: number, lon: number): Promise<NearbyTackleShop | null> {
+  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  if (!GOOGLE_MAPS_API_KEY) {
+    console.log('[Cron] Google Maps API key not configured');
+    return null;
+  }
+
+  try {
+    const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');
+    searchUrl.searchParams.set('location', `${lat},${lon}`);
+    searchUrl.searchParams.set('radius', '25000'); // 25km
+    searchUrl.searchParams.set('keyword', 'fishing tackle bait shop');
+    searchUrl.searchParams.set('key', GOOGLE_MAPS_API_KEY);
+
+    const response = await fetch(searchUrl.toString());
+    const data = await response.json();
+
+    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
+      return null;
+    }
+
+    const place = data.results[0];
+    const placeLat = place.geometry?.location?.lat;
+    const placeLon = place.geometry?.location?.lng;
+
+    // Calculate distance
+    const R = 6371; // Earth's radius in km
+    const dLat = ((placeLat - lat) * Math.PI) / 180;
+    const dLon = ((placeLon - lon) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos((lat * Math.PI) / 180) * Math.cos((placeLat * Math.PI) / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distanceKm = R * c;
+
+    return {
+      name: place.name,
+      address: place.vicinity || place.formatted_address || '',
+      distance: distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m` : `${distanceKm.toFixed(1)}km`,
+      rating: place.rating,
+      totalRatings: place.user_ratings_total,
+      mapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching tackle shop:', error);
+    return null;
+  }
+}
+
+/**
+ * Get rectangle center coordinates
+ */
+async function getRectangleCenter(rectangleCode: string): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('ices_rectangles')
+      .select('anchor_lat, anchor_lon')
+      .eq('rectangle_code', rectangleCode)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return {
+      lat: data.anchor_lat,
+      lon: data.anchor_lon,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching rectangle center:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch species advice for tactical recommendations
+ */
+async function fetchSpeciesAdvice(speciesCode: string): Promise<{
+  approach: string;
+  baits: string[];
+  technique: string;
+  tideAdvice: string;
+  timePreference: 'dawn' | 'dusk' | 'day' | 'night' | 'any';
+  tidePreference: 'flood' | 'ebb' | 'slack' | 'any';
+} | null> {
+  try {
+    // Try to get tactical advice from the API
+    const { data, error } = await supabase
+      .from('species')
+      .select('effective_techniques, guild')
+      .eq('species_code', speciesCode)
+      .single();
+
+    if (error || !data) {
+      return null;
+    }
+
+    // Default advice structure
+    return {
+      approach: data.effective_techniques || 'General fishing approach',
+      baits: ['Ragworm', 'Mackerel strips', 'Sandeel'],
+      technique: data.effective_techniques?.split(',')[0] || 'Bottom fishing',
+      tideAdvice: 'Fish around the tide change for best results',
+      timePreference: 'dawn' as const,
+      tidePreference: 'flood' as const,
+    };
+  } catch (error) {
+    console.error('[Cron] Error fetching species advice:', error);
+    return null;
+  }
+}
+
+/**
+ * Format time from ISO string to display format (e.g., "6:30 AM")
+ */
+function formatTimeDisplayLocal(isoString: string | null): string | undefined {
+  if (!isoString) return undefined;
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Send Daily Digest V2 - Decision-focused format with GO/GOOD/SKIP verdict
+ * Only sends email on GO or GOOD days (score >= 60)
+ */
+async function sendDailyDigestEmailV2(
+  userId: string,
+  allSpecies: Map<string, { speciesCode: string; speciesName: string; confidence: number; speciesId: string; guild?: Guild }>,
+  rectangleCode: string
+): Promise<{ sent: boolean; verdict: 'go' | 'good' | 'skip' }> {
+  if (!resend) {
+    console.log('[Cron V2] Resend not configured, skipping email for user:', userId);
+    return { sent: false, verdict: 'skip' };
+  }
+
+  if (allSpecies.size === 0) {
+    console.log('[Cron V2] No species to include in digest for user:', userId);
+    return { sent: false, verdict: 'skip' };
+  }
+
+  try {
+    // 1. Get user's email
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+    if (userError || !userData.user?.email) {
+      console.error('[Cron V2] Could not get user email:', userError);
+      return { sent: false, verdict: 'skip' };
+    }
+    const userEmail = userData.user.email;
+    const userName = userData.user.user_metadata?.name || undefined;
+
+    // 2. Get rectangle center for location queries
+    const rectangleCenter = await getRectangleCenter(rectangleCode);
+    const lat = rectangleCenter?.lat ?? 54;
+    const lon = rectangleCenter?.lon ?? -6;
+
+    // 3. Fetch environmental conditions and moon data
+    const envConditions = await fetchEnvironmentalConditions(rectangleCode);
+    if (!envConditions) {
+      console.log('[Cron V2] No environmental data - using tiered fallback');
+      return { sent: false, verdict: 'skip' };
+    }
+
+    const moonData = await fetchMoonData(lat, lon);
+
+    // 4. Calculate water clarity and overall rating
+    const waterClarity = calculateWaterClarity(envConditions.kd490);
+    const pressureTrend = calculatePressureTrend(envConditions.pressure_trend_category);
+    const overallRating = calculateOverallRating(envConditions, moonData);
+
+    // 5. Get best species (highest confidence)
+    const sortedSpecies = Array.from(allSpecies.values()).sort((a, b) => b.confidence - a.confidence);
+    const topSpeciesData = sortedSpecies[0];
+
+    if (!topSpeciesData || topSpeciesData.confidence < 60) {
+      console.log('[Cron V2] Best species confidence too low:', topSpeciesData?.confidence);
+      return { sent: false, verdict: 'skip' };
+    }
+
+    // 6. Calculate verdict score
+    const verdictScore = calculateVerdictScore(topSpeciesData.confidence, overallRating);
+    const verdict = getVerdict(verdictScore);
+
+    console.log('[Cron V2] Verdict calculation:', {
+      bestConfidence: topSpeciesData.confidence,
+      overallRating,
+      verdictScore,
+      verdict,
+    });
+
+    // 7. Only send on GO or GOOD days
+    if (verdict === 'skip') {
+      console.log('[Cron V2] SKIP day - no email sent for user:', userId);
+      return { sent: false, verdict };
+    }
+
+    // 8. Fetch additional data for V2 email
+    const tideTimes = await fetchTideTimes(rectangleCode);
+    const speciesAdvice = await fetchSpeciesAdvice(topSpeciesData.speciesCode);
+    const nearestShop = await fetchNearestTackleShop(lat, lon);
+
+    // 9. Build optimal window
+    // Map 'any' preference to null (no preference)
+    const timePreference = speciesAdvice?.timePreference;
+    const tidePreference = speciesAdvice?.tidePreference;
+    const optimalWindow = calculateOptimalWindow({
+      sunriseIso: moonData?.sunrise_iso ?? null,
+      sunsetIso: moonData?.sunset_iso ?? null,
+      moonTransitIso: moonData?.moon_transit_iso ?? null,
+      moonIllumination: moonData?.moon_illumination_pct ?? 50,
+      highTideIso: tideTimes.highTideIso,
+      lowTideIso: tideTimes.lowTideIso,
+      speciesTimePreference: timePreference && timePreference !== 'any' ? timePreference : 'dawn',
+      speciesTidePreference: tidePreference && tidePreference !== 'any' ? tidePreference : 'flood',
+    });
+
+    // 10. Build top species data
+    const topSpecies: DailyTopSpecies = {
+      speciesName: topSpeciesData.speciesName,
+      speciesCode: topSpeciesData.speciesCode,
+      confidence: topSpeciesData.confidence,
+      imageUrl: `/PNGS/${topSpeciesData.speciesCode.toLowerCase()}.png`,
+      guild: topSpeciesData.guild,
+      approach: speciesAdvice?.approach ?? 'General fishing approach',
+      baits: speciesAdvice?.baits ?? ['Ragworm', 'Mackerel strips'],
+      technique: speciesAdvice?.technique ?? 'Bottom fishing',
+      tideAdvice: speciesAdvice?.tideAdvice ?? 'Fish around tide changes',
+    };
+
+    // 11. Build alternatives (70%+ confidence, max 2)
+    const alternatives: DailyAlternativeSpecies[] = sortedSpecies
+      .slice(1)
+      .filter(s => s.confidence >= 70)
+      .slice(0, 2)
+      .map(s => ({
+        speciesName: s.speciesName,
+        confidence: s.confidence,
+        guild: s.guild,
+      }));
+
+    // 12. Build conditions snapshot
+    const conditions: DailyConditionsSnapshot = {
+      seaTempC: envConditions.sea_temp_c ?? 12,
+      waveHeightM: envConditions.wave_height_m ?? 1.0,
+      waterClarity,
+      pressureTrend,
+      moonPhase: moonData?.moon_phase_name ?? 'Unknown',
+      moonIllumination: moonData?.moon_illumination_pct ?? 50,
+      windSpeedKts: envConditions.wind_speed_kts ?? undefined,
+    };
+
+    // 13. Generate unsubscribe URL
+    const unsubscribeToken = await generateUnsubscribeToken(userId);
+    const unsubscribeUrl = `https://fishfindr.eu/findr/unsubscribe?token=${unsubscribeToken}`;
+
+    // 14. Get location name
+    const { data: rectangle } = await supabase
+      .from('ices_rectangles')
+      .select('region')
+      .eq('rectangle_code', rectangleCode)
+      .single();
+    const locationName = rectangle?.region || rectangleCode;
+
+    // 15. Build email data
+    const emailData: DailyDigestDataV2 = {
+      userName,
+      date: new Date().toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      locationName,
+      rectangleCode,
+      unsubscribeUrl,
+      verdict,
+      verdictScore,
+      verdictReason: generateVerdictReason(topSpeciesData.speciesName, topSpeciesData.confidence, pressureTrend, overallRating),
+      topSpecies,
+      alternatives: alternatives.length > 0 ? alternatives : undefined,
+      optimalWindow: {
+        ...optimalWindow,
+        highTide: optimalWindow.highTide || (tideTimes.highTideIso ? formatTimeDisplayLocal(tideTimes.highTideIso) : undefined),
+        lowTide: optimalWindow.lowTide || (tideTimes.lowTideIso ? formatTimeDisplayLocal(tideTimes.lowTideIso) : undefined),
+        sunrise: optimalWindow.sunrise || (moonData?.sunrise_iso ? formatTimeDisplayLocal(moonData.sunrise_iso) : undefined),
+        sunset: optimalWindow.sunset || (moonData?.sunset_iso ? formatTimeDisplayLocal(moonData.sunset_iso) : undefined),
+      },
+      conditions,
+      nearestShop: nearestShop ?? undefined,
+    };
+
+    // 16. Generate HTML and text
+    const htmlContent = generateDailyDigestHTMLV2(emailData);
+    const textContent = generateDailyDigestTextV2(emailData);
+
+    // 17. Create subject line based on verdict
+    const subject = verdict === 'go'
+      ? `🎯 GO FISH! ${topSpeciesData.speciesName} at ${topSpeciesData.confidence}% today`
+      : `👍 Good fishing day - ${topSpeciesData.speciesName} at ${topSpeciesData.confidence}%`;
+
+    // 18. Send via Resend
+    const { data, error } = await resend.emails.send({
+      from: 'Findr <notifications@fishfindr.eu>',
+      to: userEmail,
+      subject,
+      html: htmlContent,
+      text: textContent,
+    });
+
+    if (error) {
+      console.error('[Cron V2] Error sending email via Resend:', error);
+      return { sent: false, verdict };
+    }
+
+    console.log('[Cron V2] Daily digest V2 sent:', {
+      userId,
+      email: userEmail,
+      verdict,
+      verdictScore,
+      topSpecies: topSpeciesData.speciesName,
+      resendId: data?.id,
+    });
+
+    // 19. Log the send
+    await supabase.from('notification_log').insert({
+      user_id: userId,
+      species_id: null,
+      notification_type: 'daily_digest_v2',
+      channel: 'email',
+      confidence_at_send: topSpeciesData.confidence,
+      threshold_value: null,
+      notification_data: {
+        verdict,
+        verdict_score: verdictScore,
+        top_species: topSpeciesData.speciesCode,
+        alternatives_count: alternatives.length,
+        location: locationName,
+        environmental_rating: overallRating,
+      },
+      sent_at: new Date().toISOString(),
+    });
+
+    return { sent: true, verdict };
+  } catch (error) {
+    console.error('[Cron V2] Exception sending daily digest V2:', error);
+    return { sent: false, verdict: 'skip' };
   }
 }
 
@@ -714,10 +1198,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 5b. Send tiered daily digest emails (ALL favourites grouped by confidence)
+    // 5b. Send V2 daily digest emails (decision-focused with GO/GOOD/SKIP verdict)
     // Process ALL users with daily_email_enabled, not just those with hot bites
     const usersWithDailyEmail = preferences.filter(p => p.daily_email_enabled);
     console.log('[Cron] Found', usersWithDailyEmail.length, 'users with daily email enabled');
+
+    let skipCount = 0;
 
     for (const pref of usersWithDailyEmail) {
       const userId = pref.user_id;
@@ -747,8 +1233,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const speciesCodes = userFavs.map((f) => f.species.species_code.toUpperCase());
       const predictions = await getPredictions(rectangleCode, speciesCodes);
 
-      // Build map of all species with confidence scores
-      const allSpeciesData = new Map<string, { speciesCode: string; speciesName: string; confidence: number }>();
+      // Build map of all species with confidence scores (include speciesId for V2)
+      const allSpeciesData = new Map<string, { speciesCode: string; speciesName: string; confidence: number; speciesId: string; guild?: Guild }>();
 
       for (const fav of userFavs) {
         const speciesCode = fav.species.species_code.toUpperCase();
@@ -758,7 +1244,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           allSpeciesData.set(speciesCode, {
             speciesCode,
             speciesName: fav.species.name_en,
-            confidence
+            confidence,
+            speciesId: fav.species_id,
+            // Guild would need to be fetched from species table - using undefined for now
           });
         }
       }
@@ -769,26 +1257,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         continue;
       }
 
-      // Get location name for email context
-      const { data: rectangle } = await supabase
-        .from('ices_rectangles')
-        .select('code')
-        .eq('code', rectangleCode)
-        .single();
-      const locationName = rectangle?.code || rectangleCode;
-
-      // Send tiered digest with ALL species grouped by confidence
-      const digestSent = await sendTieredDailyDigestEmail(
+      // Send V2 digest with verdict logic (only sends on GO/GOOD days)
+      const { sent, verdict } = await sendDailyDigestEmailV2(
         userId,
         allSpeciesData,
-        locationName,
         rectangleCode
       );
 
-      if (digestSent) {
+      if (sent) {
         emailDigestCount++;
+      } else if (verdict === 'skip') {
+        skipCount++;
       }
     }
+
+    console.log('[Cron] Daily digest summary: sent', emailDigestCount, ', skipped (poor conditions)', skipCount);
 
     console.log('[Cron] Notification check complete.');
     console.log(`[Cron] - Sent ${pushCount} push notifications`);
