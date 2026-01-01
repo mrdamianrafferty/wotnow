@@ -220,6 +220,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         // Also update legacy columns for backward compatibility
         if (slot === 'home' || slot === 'coastal') {
           const legacyPayload = buildLegacyHomeCoordinatesPayload(result as SavedLocation);
+
+          // Get existing preferred_rectangles to update
+          const { data: existingRow } = await supabase
+            .from('user_location_preferences')
+            .select('preferred_rectangles')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          const existingRectangles = Array.isArray(existingRow?.preferred_rectangles)
+            ? (existingRow?.preferred_rectangles as string[])
+            : [];
+
+          // Put new rectangle FIRST so notifications use the most recent selection
+          let preferredRectangles = existingRectangles;
+          if (locationData.rectangleCode) {
+            preferredRectangles = [
+              locationData.rectangleCode,
+              ...existingRectangles.filter(r => r !== locationData.rectangleCode)
+            ];
+          }
+
           const { error: legacyError } = await supabase
             .from('user_location_preferences')
             .update({
@@ -228,6 +249,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
               home_place_name: locationData.rectangleRegion ?? null,
               home_location_name: locationData.name ?? locationData.rectangleRegion ?? null,
               location_source: locationObj.source,
+              preferred_rectangles: preferredRectangles,
             })
             .eq('user_id', userId);
 
