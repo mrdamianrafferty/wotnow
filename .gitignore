@@ -68,3 +68,7 @@ firebase-service-account*.json
 ios/App/Build/
 ios-godaisy/App/Build/
 ios-growdaisy/App/Build/
+
+# Android signing
+android/keystore.properties
+android/*.keystore

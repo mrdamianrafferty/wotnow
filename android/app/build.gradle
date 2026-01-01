@@ -4,6 +4,18 @@ apply plugin: 'com.android.application'
 def versionsFile = file("../../app-versions.json")
 def versions = new groovy.json.JsonSlurper().parse(versionsFile)
 
+// Load local keystore properties (for local builds)
+def keystorePropertiesFile = rootProject.file("app/keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+// Helper to get property from local file or environment
+def getSigningProp = { String propName ->
+    return keystoreProperties.getProperty(propName) ?: System.getenv(propName)
+}
+
 android {
     namespace "app.wotnow.base"  // Base namespace for shared code
     compileSdk rootProject.ext.compileSdkVersion
@@ -23,30 +35,30 @@ android {
 
     signingConfigs {
         findrRelease {
-            def keystorePath = System.getenv("FINDR_KEYSTORE_PATH")
+            def keystorePath = getSigningProp("FINDR_KEYSTORE_PATH")
             if (keystorePath != null) {
                 storeFile file(keystorePath)
-                storePassword System.getenv("FINDR_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("FINDR_KEY_ALIAS")
-                keyPassword System.getenv("FINDR_KEY_PASSWORD")
+                storePassword getSigningProp("FINDR_KEYSTORE_PASSWORD")
+                keyAlias getSigningProp("FINDR_KEY_ALIAS")
+                keyPassword getSigningProp("FINDR_KEY_PASSWORD")
             }
         }
         godaisyRelease {
-            def keystorePath = System.getenv("GODAISY_KEYSTORE_PATH")
+            def keystorePath = getSigningProp("GODAISY_KEYSTORE_PATH")
             if (keystorePath != null) {
                 storeFile file(keystorePath)
-                storePassword System.getenv("GODAISY_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("GODAISY_KEY_ALIAS")
-                keyPassword System.getenv("GODAISY_KEY_PASSWORD")
+                storePassword getSigningProp("GODAISY_KEYSTORE_PASSWORD")
+                keyAlias getSigningProp("GODAISY_KEY_ALIAS")
+                keyPassword getSigningProp("GODAISY_KEY_PASSWORD")
             }
         }
         growdaisyRelease {
-            def keystorePath = System.getenv("GROWDAISY_KEYSTORE_PATH")
+            def keystorePath = getSigningProp("GROWDAISY_KEYSTORE_PATH")
             if (keystorePath != null) {
                 storeFile file(keystorePath)
-                storePassword System.getenv("GROWDAISY_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("GROWDAISY_KEY_ALIAS")
-                keyPassword System.getenv("GROWDAISY_KEY_PASSWORD")
+                storePassword getSigningProp("GROWDAISY_KEYSTORE_PASSWORD")
+                keyAlias getSigningProp("GROWDAISY_KEY_ALIAS")
+                keyPassword getSigningProp("GROWDAISY_KEY_PASSWORD")
             }
         }
     }
@@ -59,6 +71,7 @@ android {
             applicationId "eu.fishfindr.app"
             versionCode versions.findr.versionCode
             versionName versions.findr.versionName
+            signingConfig signingConfigs.findrRelease
             resValue "string", "app_name", "Findr"
             resValue "string", "server_url", "https://fishfindr.eu"
             resValue "string", "deep_link_scheme", "fishfindr"
@@ -74,6 +87,7 @@ android {
             applicationId "io.godaisy.app"
             versionCode versions.godaisy.versionCode
             versionName versions.godaisy.versionName
+            signingConfig signingConfigs.godaisyRelease
             resValue "string", "app_name", "Go Daisy"
             resValue "string", "server_url", "https://godaisy.io"
             resValue "string", "deep_link_scheme", "godaisy"
@@ -89,6 +103,7 @@ android {
             applicationId "io.growdaisy.app"
             versionCode versions.growdaisy.versionCode
             versionName versions.growdaisy.versionName
+            signingConfig signingConfigs.growdaisyRelease
             resValue "string", "app_name", "Grow Daisy"
             resValue "string", "server_url", "https://grow.godaisy.io"
             resValue "string", "deep_link_scheme", "growdaisy"
@@ -105,18 +120,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-
-    // Apply signing configs to release builds per flavor
-    applicationVariants.all { variant ->
-        if (variant.buildType.name == "release") {
-            def flavorName = variant.productFlavors[0].name
-            def signingConfigName = "${flavorName}Release"
-            def signingConfig = signingConfigs.findByName(signingConfigName)
-            if (signingConfig?.storeFile != null) {
-                variant.signingConfig = signingConfig
-            }
         }
     }
 
