@@ -24,10 +24,10 @@ if (!RESEND_API_KEY) {
 
 const resend = new Resend(RESEND_API_KEY);
 
-// Helper to get species image URL
+// Helper to get species image URL - use thumb for email (smaller, square)
 const getSpeciesImage = (code: string): string => {
   const info = SPECIES_IMAGE_MAP[code];
-  return info?.mobile || info?.image || '/webp/default-fish.webp';
+  return info?.thumb || info?.mobile || info?.image || '/webp/default-fish.webp';
 };
 
 // Sample Weekly Forecast V2 Data

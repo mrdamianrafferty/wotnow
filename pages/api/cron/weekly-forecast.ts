@@ -691,9 +691,9 @@ async function sendWeeklyForecastEmail(userId: string): Promise<boolean> {
         const forecast = await fetch7DayPredictions(fav.species_code, rectangleCode);
 
         if (forecast.length > 0) {
-          // Get species image
+          // Get species image - use thumb for email (smaller, square, ~7KB)
           const speciesImageInfo = SPECIES_IMAGE_MAP[fav.species_code];
-          const imageUrl = speciesImageInfo?.mobile || speciesImageInfo?.image || '/webp/default-fish.webp';
+          const imageUrl = speciesImageInfo?.thumb || speciesImageInfo?.mobile || speciesImageInfo?.image || '/webp/default-fish.webp';
 
           // Find peak day
           const peakDay = findPeakDay(forecast);

@@ -896,9 +896,9 @@ async function sendDailyDigestEmailV2(
       speciesTidePreference: tidePreference && tidePreference !== 'any' ? tidePreference : 'flood',
     });
 
-    // 10. Build top species data
+    // 10. Build top species data - use thumb for email (smaller, square, ~7KB)
     const speciesImageInfo = SPECIES_IMAGE_MAP[topSpeciesData.speciesCode];
-    const imageUrl = speciesImageInfo?.mobile || speciesImageInfo?.image || '/webp/default-fish.webp';
+    const imageUrl = speciesImageInfo?.thumb || speciesImageInfo?.mobile || speciesImageInfo?.image || '/webp/default-fish.webp';
 
     const topSpecies: DailyTopSpecies = {
       speciesName: topSpeciesData.speciesName,
