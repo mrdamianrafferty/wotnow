@@ -1306,7 +1306,7 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
                 ${verdictStyle.emoji} ${verdictStyle.headline}
               </h1>
               <p style="margin: 0; font-size: 15px; color: rgba(255,255,255,0.9);">
-                ${verdictStyle.subheadline}
+                ${verdictReason}
               </p>
             </td>
           </tr>
@@ -1317,12 +1317,13 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
             </td>
           </tr>
 
-          <!-- LOCATION & DATE BAR -->
+          <!-- GREETING & LOCATION -->
           <tr>
             <td style="padding: 24px 32px 8px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
+                    <p style="margin: 0 0 4px; font-size: 15px; color: #334155;">Hey ${greeting} 👋</p>
                     <p style="margin: 0; font-size: 13px; color: #64748b;">
                       📍 ${locationName}${rectangleCode ? ` • ${rectangleCode}` : ''} &nbsp;·&nbsp; ${date}
                     </p>
