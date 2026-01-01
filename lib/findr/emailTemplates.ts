@@ -1133,41 +1133,135 @@ Manage preferences: https://fishfindr.eu/findr/settings${unsubscribeUrl ? `\nUns
 // ============================================================================
 
 /**
- * Get verdict banner colors and styling
+ * Get verdict banner colors and styling - V3 Modern Design
+ * Using teal/coral palette for premium feel
  */
 function getVerdictStyle(verdict: DailyVerdict): {
   bgGradient: string;
   emoji: string;
   headline: string;
+  subheadline: string;
   textColor: string;
+  accentColor: string;
 } {
   switch (verdict) {
     case 'go':
       return {
-        bgGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        emoji: '🎯',
-        headline: 'GO FISH!',
+        bgGradient: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #2dd4bf 100%)',
+        emoji: '🎣',
+        headline: 'Perfect Day to Fish',
+        subheadline: 'Conditions are ideal — get out there!',
         textColor: '#ffffff',
+        accentColor: '#f97316', // coral
       };
     case 'good':
       return {
-        bgGradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+        bgGradient: 'linear-gradient(135deg, #0369a1 0%, #0ea5e9 50%, #38bdf8 100%)',
         emoji: '👍',
-        headline: 'GOOD DAY',
+        headline: 'Good Fishing Ahead',
+        subheadline: 'Solid conditions for a trip',
         textColor: '#ffffff',
+        accentColor: '#14b8a6', // teal
       };
     case 'skip':
       return {
-        bgGradient: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-        emoji: '⏸️',
-        headline: 'SKIP TODAY',
+        bgGradient: 'linear-gradient(135deg, #475569 0%, #64748b 100%)',
+        emoji: '☕',
+        headline: 'Better Days Coming',
+        subheadline: 'Save your energy for tomorrow',
         textColor: '#ffffff',
+        accentColor: '#94a3b8',
       };
   }
 }
 
 /**
- * Generate HTML email for Daily Digest V2 - Decision-focused format
+ * Generate casual, fun copy based on species and confidence
+ */
+function getCasualCopy(speciesName: string, confidence: number): string {
+  if (confidence >= 90) {
+    return `${speciesName} is absolutely vibing today — this is as good as it gets!`;
+  } else if (confidence >= 80) {
+    return `${speciesName} is looking really promising. Great day for a session!`;
+  } else if (confidence >= 70) {
+    return `${speciesName} conditions are solid. Worth getting out there!`;
+  } else {
+    return `${speciesName} might show up. Patience could pay off.`;
+  }
+}
+
+/**
+ * Generate confidence bar HTML (visual progress bar)
+ */
+function renderConfidenceBar(confidence: number): string {
+  const barColor = confidence >= 85 ? '#10b981' : confidence >= 70 ? '#0d9488' : confidence >= 55 ? '#f59e0b' : '#94a3b8';
+  const barWidth = Math.min(100, Math.max(0, confidence));
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+      <tr>
+        <td>
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #e5e7eb; border-radius: 6px; overflow: hidden;">
+            <tr>
+              <td style="width: ${barWidth}%; background: linear-gradient(90deg, ${barColor} 0%, ${barColor}dd 100%); height: 8px;"></td>
+              <td style="width: ${100 - barWidth}%; height: 8px;"></td>
+            </tr>
+          </table>
+        </td>
+        <td style="width: 50px; text-align: right; padding-left: 12px;">
+          <span style="font-size: 18px; font-weight: 700; color: ${barColor};">${confidence}%</span>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * Generate bite score meter (horizontal battery-style gauge)
+ */
+function renderBiteScoreMeter(score: number): string {
+  // Convert score to 5 segments
+  const filledSegments = Math.round((score / 100) * 5);
+  const segmentColor = score >= 80 ? '#10b981' : score >= 60 ? '#0d9488' : score >= 40 ? '#f59e0b' : '#ef4444';
+
+  let segments = '';
+  for (let i = 0; i < 5; i++) {
+    const filled = i < filledSegments;
+    segments += `<td style="width: 18%; padding: 0 2px;">
+      <div style="height: 24px; background-color: ${filled ? segmentColor : '#e5e7eb'}; border-radius: 4px;"></div>
+    </td>`;
+  }
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="width: 80px; padding-right: 12px;">
+          <p style="margin: 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Bite Score</p>
+        </td>
+        <td>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>${segments}</tr>
+          </table>
+        </td>
+        <td style="width: 50px; text-align: right; padding-left: 8px;">
+          <span style="font-size: 16px; font-weight: 700; color: ${segmentColor};">${score}</span>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/**
+ * Wave SVG pattern for header (email-safe inline)
+ */
+function getWaveSvg(color1: string, color2: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" preserveAspectRatio="none" style="display: block; width: 100%; height: 50px;">
+    <path fill="${color1}" fill-opacity="0.3" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,58.7C672,53,768,43,864,42.7C960,43,1056,53,1152,53.3C1248,53,1344,43,1392,37.3L1440,32L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+    <path fill="${color2}" fill-opacity="0.5" d="M0,64L48,58.7C96,53,192,43,288,42.7C384,43,480,53,576,58.7C672,64,768,64,864,58.7C960,53,1056,43,1152,37.3C1248,32,1344,32,1392,32L1440,32L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path>
+  </svg>`;
+}
+
+/**
+ * Generate HTML email for Daily Digest V2 - Modern Premium Design
+ * Features: Wave header, species spotlight, confidence gauge, bite score meter
  * "Should I fish today?" with GO/GOOD verdict and optimal window
  */
 export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
@@ -1178,6 +1272,7 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
     rectangleCode,
     unsubscribeUrl,
     verdict,
+    verdictScore,
     verdictReason,
     topSpecies,
     alternatives,
@@ -1186,9 +1281,10 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
     nearestShop,
   } = data;
 
-  const greeting = userName ? `Hi ${userName}` : 'Hello';
+  const greeting = userName ? userName : 'friend';
   const verdictStyle = getVerdictStyle(verdict);
   const guildColors = getGuildColors(topSpecies.guild);
+  const casualCopy = getCasualCopy(topSpecies.speciesName, topSpecies.confidence);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -1197,108 +1293,98 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Findr - ${verdictStyle.headline}</title>
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 24px 0;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 32px 0;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);">
 
-          <!-- VERDICT BANNER -->
+          <!-- WAVE HEADER WITH VERDICT -->
           <tr>
-            <td style="background: ${verdictStyle.bgGradient}; padding: 32px 24px; text-align: center;">
-              <p style="margin: 0 0 8px; font-size: 40px;">${verdictStyle.emoji}</p>
-              <h1 style="margin: 0 0 8px; font-size: 32px; font-weight: 800; color: ${verdictStyle.textColor}; letter-spacing: 2px;">
-                ${verdictStyle.headline}
+            <td style="background: ${verdictStyle.bgGradient}; padding: 40px 32px 20px; text-align: center;">
+              <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 700; color: ${verdictStyle.textColor};">
+                ${verdictStyle.emoji} ${verdictStyle.headline}
               </h1>
-              <p style="margin: 0 0 16px; font-size: 16px; color: rgba(255,255,255,0.95); font-weight: 500;">
-                ${verdictReason}
+              <p style="margin: 0; font-size: 15px; color: rgba(255,255,255,0.9);">
+                ${verdictStyle.subheadline}
               </p>
-              <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
-                <tr>
-                  <td style="background-color: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px;">
-                    <span style="color: #ffffff; font-size: 14px;">📍 ${locationName}</span>
-                    ${rectangleCode ? `<span style="color: rgba(255,255,255,0.8); font-size: 14px; margin-left: 8px;">• ${rectangleCode}</span>` : ''}
-                  </td>
-                </tr>
-              </table>
-              <p style="margin: 12px 0 0; font-size: 13px; color: rgba(255,255,255,0.8);">${date}</p>
+            </td>
+          </tr>
+          <!-- Wave decoration -->
+          <tr>
+            <td style="background: ${verdictStyle.bgGradient}; padding: 0; line-height: 0;">
+              ${getWaveSvg('#ffffff', '#ffffff')}
             </td>
           </tr>
 
-          <!-- GREETING -->
+          <!-- LOCATION & DATE BAR -->
           <tr>
-            <td style="padding: 20px 24px 16px;">
-              <p style="margin: 0; font-size: 15px; color: #374151;">${greeting}, here's your fishing opportunity for today:</p>
-            </td>
-          </tr>
-
-          <!-- YOUR BEST OPPORTUNITY -->
-          <tr>
-            <td style="padding: 0 24px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${guildColors.light}; border-radius: 12px; overflow: hidden;">
-                <tr><td style="background: ${guildColors.primary}; height: 4px;"></td></tr>
+            <td style="padding: 24px 32px 8px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="padding: 20px;">
-                    <h2 style="margin: 0 0 16px; font-size: 14px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">🏆 Your Best Opportunity</h2>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="80" valign="top">
-                          ${topSpecies.imageUrl
-                            ? `<div style="width: 80px; height: 80px; background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 3px solid ${guildColors.primary};"><img src="https://fishfindr.eu${topSpecies.imageUrl}" alt="${topSpecies.speciesName}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover; display: block;" /></div>`
-                            : `<div style="width: 80px; height: 80px; background: ${guildColors.primary}; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 36px;">🐟</div>`
-                          }
-                        </td>
-                        <td style="padding-left: 16px;" valign="top">
-                          <h3 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #111827;">${topSpecies.speciesName}</h3>
-                          <div style="display: inline-block; background-color: ${topSpecies.confidence >= 85 ? '#10b981' : topSpecies.confidence >= 70 ? '#0ea5e9' : '#f59e0b'}; color: #ffffff; padding: 4px 12px; border-radius: 12px; font-size: 14px; font-weight: 700; margin-top: 4px;">
-                            ${topSpecies.confidence}% Confidence
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <!-- Tactical advice -->
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; background-color: #ffffff; border-radius: 8px; padding: 12px;">
-                      <tr>
-                        <td>
-                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>🎣 Approach:</strong> ${topSpecies.approach}</p>
-                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>🪱 Baits:</strong> ${topSpecies.baits.join(', ')}</p>
-                          <p style="margin: 0 0 8px; font-size: 14px; color: #374151;"><strong>🎯 Technique:</strong> ${topSpecies.technique}</p>
-                          <p style="margin: 0; font-size: 14px; color: #374151;"><strong>🌊 Tide:</strong> ${topSpecies.tideAdvice}</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <td>
+                    <p style="margin: 0; font-size: 13px; color: #64748b;">
+                      📍 ${locationName}${rectangleCode ? ` • ${rectangleCode}` : ''} &nbsp;·&nbsp; ${date}
+                    </p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- OPTIMAL WINDOW -->
+          <!-- BITE SCORE METER -->
           <tr>
-            <td style="padding: 0 24px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 1px solid #fbbf24;">
+            <td style="padding: 16px 32px 24px;">
+              ${renderBiteScoreMeter(verdictScore || topSpecies.confidence)}
+            </td>
+          </tr>
+
+          <!-- SPECIES SPOTLIGHT HERO -->
+          <tr>
+            <td style="padding: 0 32px 28px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, ${guildColors.light} 0%, #ffffff 100%); border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+                <!-- Large fish image hero -->
                 <tr>
-                  <td style="padding: 20px;">
-                    <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 1px;">⏰ Optimal Window</h2>
-                    <table width="100%" cellpadding="0" cellspacing="0">
+                  <td style="padding: 24px 24px 16px; text-align: center;">
+                    ${topSpecies.imageUrl
+                      ? `<div style="display: inline-block; background-color: #ffffff; border-radius: 16px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                          <img src="https://fishfindr.eu${topSpecies.imageUrl}" alt="${topSpecies.speciesName}" style="width: 160px; height: 160px; border-radius: 12px; object-fit: cover; display: block;" />
+                        </div>`
+                      : `<div style="display: inline-block; width: 160px; height: 160px; background: ${guildColors.primary}; border-radius: 16px; font-size: 72px; line-height: 160px;">🐟</div>`
+                    }
+                  </td>
+                </tr>
+                <!-- Species name and casual copy -->
+                <tr>
+                  <td style="padding: 0 24px; text-align: center;">
+                    <h2 style="margin: 0 0 8px; font-size: 26px; font-weight: 700; color: #0f172a;">${topSpecies.speciesName}</h2>
+                    <p style="margin: 0 0 16px; font-size: 15px; color: #475569; line-height: 1.5;">${casualCopy}</p>
+                  </td>
+                </tr>
+                <!-- Confidence bar -->
+                <tr>
+                  <td style="padding: 0 24px 20px;">
+                    ${renderConfidenceBar(topSpecies.confidence)}
+                  </td>
+                </tr>
+                <!-- Tactical tips grid -->
+                <tr>
+                  <td style="padding: 0 16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="8">
                       <tr>
-                        <td align="center" style="padding: 8px 0;">
-                          <p style="margin: 0; font-size: 36px; font-weight: 800; color: #78350f;">${optimalWindow.start} - ${optimalWindow.end}</p>
-                          <p style="margin: 4px 0 0; font-size: 14px; color: #92400e;">(${optimalWindow.duration})</p>
+                        <td style="width: 50%; background-color: #ffffff; border-radius: 10px; padding: 14px; vertical-align: top; border: 1px solid #e2e8f0;">
+                          <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Technique</p>
+                          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #334155;">${topSpecies.technique}</p>
+                        </td>
+                        <td style="width: 50%; background-color: #ffffff; border-radius: 10px; padding: 14px; vertical-align: top; border: 1px solid #e2e8f0;">
+                          <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Best Baits</p>
+                          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #334155;">${topSpecies.baits.slice(0, 2).join(', ')}</p>
                         </td>
                       </tr>
-                    </table>
-                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
                       <tr>
-                        <td style="text-align: center; padding: 8px; background-color: rgba(255,255,255,0.5); border-radius: 8px;">
-                          <p style="margin: 0; font-size: 13px; color: #78350f;">
-                            ${optimalWindow.sunrise ? `☀️ Sunrise ${optimalWindow.sunrise}` : ''}
-                            ${optimalWindow.highTide ? ` • 🌊 High ${optimalWindow.highTide}` : ''}
-                            ${optimalWindow.lowTide ? ` • 〰️ Low ${optimalWindow.lowTide}` : ''}
-                            ${optimalWindow.sunset ? ` • 🌅 Sunset ${optimalWindow.sunset}` : ''}
-                          </p>
-                          <p style="margin: 8px 0 0; font-size: 12px; font-style: italic; color: #92400e;">"${optimalWindow.reason}"</p>
+                        <td colspan="2" style="background-color: #ffffff; border-radius: 10px; padding: 14px; border: 1px solid #e2e8f0;">
+                          <p style="margin: 0 0 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Tide Advice</p>
+                          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #334155;">${topSpecies.tideAdvice}</p>
                         </td>
                       </tr>
                     </table>
@@ -1308,38 +1394,76 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
             </td>
           </tr>
 
-          <!-- CONDITIONS AT A GLANCE -->
+          <!-- OPTIMAL WINDOW - Clean modern card -->
           <tr>
-            <td style="padding: 0 24px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f9ff; border-radius: 12px; border: 1px solid #bae6fd;">
+            <td style="padding: 0 32px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0f172a; border-radius: 16px; overflow: hidden;">
                 <tr>
-                  <td style="padding: 16px;">
-                    <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #0369a1; text-transform: uppercase; letter-spacing: 1px;">🌊 Conditions</h2>
+                  <td style="padding: 24px;">
                     <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="width: 20%; text-align: center; padding: 8px;">
-                          <p style="margin: 0 0 2px; font-size: 10px; color: #6b7280; text-transform: uppercase;">Water</p>
-                          <p style="margin: 0; font-size: 18px; font-weight: 700; color: #0369a1;">${Math.round(conditions.seaTempC)}°C</p>
+                        <td style="width: 50px; vertical-align: top;">
+                          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #f97316 0%, #fb923c 100%); border-radius: 12px; text-align: center; line-height: 44px; font-size: 22px;">⏰</div>
                         </td>
-                        <td style="width: 20%; text-align: center; padding: 8px;">
-                          <p style="margin: 0 0 2px; font-size: 10px; color: #6b7280; text-transform: uppercase;">Waves</p>
-                          <p style="margin: 0; font-size: 18px; font-weight: 700; color: #0369a1;">${conditions.waveHeightM.toFixed(1)}m</p>
-                        </td>
-                        <td style="width: 20%; text-align: center; padding: 8px;">
-                          <p style="margin: 0 0 2px; font-size: 10px; color: #6b7280; text-transform: uppercase;">Clarity</p>
-                          <div style="display: inline-block; background-color: ${getClarityBadge(conditions.waterClarity).bg}; color: #ffffff; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">${conditions.waterClarity}</div>
-                        </td>
-                        <td style="width: 20%; text-align: center; padding: 8px;">
-                          <p style="margin: 0 0 2px; font-size: 10px; color: #6b7280; text-transform: uppercase;">Pressure</p>
-                          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #0369a1;">${conditions.pressureTrend === 'rising' ? '↑ rising' : conditions.pressureTrend === 'falling' ? '↓ falling' : '→ stable'}</p>
-                        </td>
-                        <td style="width: 20%; text-align: center; padding: 8px;">
-                          <p style="margin: 0 0 2px; font-size: 10px; color: #6b7280; text-transform: uppercase;">Moon</p>
-                          <p style="margin: 0; font-size: 12px; font-weight: 600; color: #0369a1;">${conditions.moonPhase}</p>
-                          <p style="margin: 0; font-size: 10px; color: #6b7280;">${Math.round(conditions.moonIllumination)}%</p>
+                        <td style="padding-left: 16px; vertical-align: top;">
+                          <p style="margin: 0 0 4px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Best Time to Fish</p>
+                          <p style="margin: 0; font-size: 28px; font-weight: 700; color: #ffffff;">${optimalWindow.start} – ${optimalWindow.end}</p>
+                          <p style="margin: 4px 0 0; font-size: 14px; color: #cbd5e1;">${optimalWindow.duration} window • ${optimalWindow.reason}</p>
                         </td>
                       </tr>
                     </table>
+                    <!-- Sun & Tide times -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 16px; background-color: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px;">
+                      <tr>
+                        ${optimalWindow.sunrise ? `<td style="text-align: center; padding: 8px;"><p style="margin: 0 0 2px; font-size: 18px;">☀️</p><p style="margin: 0; font-size: 12px; color: #94a3b8;">Sunrise</p><p style="margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #ffffff;">${optimalWindow.sunrise}</p></td>` : ''}
+                        ${optimalWindow.highTide ? `<td style="text-align: center; padding: 8px;"><p style="margin: 0 0 2px; font-size: 18px;">🌊</p><p style="margin: 0; font-size: 12px; color: #94a3b8;">High Tide</p><p style="margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #ffffff;">${optimalWindow.highTide}</p></td>` : ''}
+                        ${optimalWindow.lowTide ? `<td style="text-align: center; padding: 8px;"><p style="margin: 0 0 2px; font-size: 18px;">〰️</p><p style="margin: 0; font-size: 12px; color: #94a3b8;">Low Tide</p><p style="margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #ffffff;">${optimalWindow.lowTide}</p></td>` : ''}
+                        ${optimalWindow.sunset ? `<td style="text-align: center; padding: 8px;"><p style="margin: 0 0 2px; font-size: 18px;">🌅</p><p style="margin: 0; font-size: 12px; color: #94a3b8;">Sunset</p><p style="margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #ffffff;">${optimalWindow.sunset}</p></td>` : ''}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CONDITIONS DASHBOARD -->
+          <tr>
+            <td style="padding: 0 32px 24px;">
+              <p style="margin: 0 0 12px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Conditions at a Glance</p>
+              <table width="100%" cellpadding="0" cellspacing="8">
+                <tr>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">🌡️</p>
+                    <p style="margin: 0; font-size: 22px; font-weight: 700; color: #0f172a;">${Math.round(conditions.seaTempC)}°C</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">Water Temp</p>
+                  </td>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">🌊</p>
+                    <p style="margin: 0; font-size: 22px; font-weight: 700; color: #0f172a;">${conditions.waveHeightM.toFixed(1)}m</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">Wave Height</p>
+                  </td>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">💧</p>
+                    <div style="display: inline-block; background-color: ${getClarityBadge(conditions.waterClarity).bg}; color: #ffffff; padding: 4px 12px; border-radius: 8px; font-size: 14px; font-weight: 600;">${conditions.waterClarity}</div>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">Clarity</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">${conditions.pressureTrend === 'rising' ? '📈' : conditions.pressureTrend === 'falling' ? '📉' : '➡️'}</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">${conditions.pressureTrend === 'rising' ? 'Rising' : conditions.pressureTrend === 'falling' ? 'Falling' : 'Stable'}</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">Pressure</p>
+                  </td>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">🌙</p>
+                    <p style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">${conditions.moonPhase}</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">${Math.round(conditions.moonIllumination)}% illuminated</p>
+                  </td>
+                  <td style="width: 33%; background-color: #f1f5f9; border-radius: 12px; padding: 16px; text-align: center;">
+                    <p style="margin: 0 0 4px; font-size: 24px;">💨</p>
+                    <p style="margin: 0; font-size: 22px; font-weight: 700; color: #0f172a;">${conditions.windSpeedKts || '–'}</p>
+                    <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">Wind (kts)</p>
                   </td>
                 </tr>
               </table>
@@ -1347,31 +1471,31 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
           </tr>
 
           ${alternatives && alternatives.length > 0 ? `
-          <!-- ALSO LOOKING GOOD -->
+          <!-- OTHER SPECIES -->
           <tr>
-            <td style="padding: 0 24px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+            <td style="padding: 0 32px 24px;">
+              <p style="margin: 0 0 12px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px;">Also On the Radar</p>
+              <table width="100%" cellpadding="0" cellspacing="8">
                 <tr>
-                  <td style="padding: 16px;">
-                    <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #374151; text-transform: uppercase; letter-spacing: 1px;">📋 Also Looking Good</h2>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        ${alternatives.slice(0, 2).map(alt => {
-                          const altColors = getGuildColors(alt.guild);
-                          return `<td style="width: 50%; padding: 4px;">
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; border-left: 4px solid ${altColors.primary};">
+                  ${alternatives.slice(0, 2).map(alt => {
+                    const altColors = getGuildColors(alt.guild);
+                    return `<td style="width: 50%; background-color: #ffffff; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td>
+                            <p style="margin: 0 0 8px; font-size: 16px; font-weight: 600; color: #0f172a;">${alt.speciesName}</p>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #e5e7eb; border-radius: 4px; overflow: hidden;">
                               <tr>
-                                <td style="padding: 12px;">
-                                  <p style="margin: 0 0 4px; font-size: 15px; font-weight: 600; color: #111827;">${alt.speciesName}</p>
-                                  <div style="display: inline-block; background-color: ${alt.confidence >= 75 ? '#22c55e' : '#0ea5e9'}; color: #ffffff; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;">${alt.confidence}%</div>
-                                </td>
+                                <td style="width: ${alt.confidence}%; background-color: ${altColors.primary}; height: 6px;"></td>
+                                <td style="width: ${100 - alt.confidence}%; height: 6px;"></td>
                               </tr>
                             </table>
-                          </td>`;
-                        }).join('')}
-                      </tr>
-                    </table>
-                  </td>
+                            <p style="margin: 6px 0 0; font-size: 13px; font-weight: 600; color: ${altColors.primary};">${alt.confidence}% match</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>`;
+                  }).join('')}
                 </tr>
               </table>
             </td>
@@ -1379,27 +1503,23 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
           ` : ''}
 
           ${nearestShop ? `
-          <!-- STOCK UP -->
+          <!-- TACKLE SHOP -->
           <tr>
-            <td style="padding: 0 24px 20px;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border-radius: 12px; border: 1px solid #6ee7b7;">
+            <td style="padding: 0 32px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
                 <tr>
                   <td style="padding: 16px;">
-                    <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #065f46; text-transform: uppercase; letter-spacing: 1px;">🏪 Stock Up</h2>
-                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: rgba(255,255,255,0.7); border-radius: 8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding: 12px; vertical-align: top;">
-                          <p style="margin: 0 0 2px; font-size: 15px; font-weight: 600; color: #065f46;">${nearestShop.name}</p>
-                          <p style="margin: 0 0 6px; font-size: 13px; color: #047857;">${nearestShop.address}</p>
-                          <table cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td><span style="font-size: 12px; color: #6b7280;">📍 ${nearestShop.distance}</span></td>
-                              ${nearestShop.rating ? `<td style="padding-left: 12px;"><span style="font-size: 12px; color: #6b7280;">⭐ ${nearestShop.rating.toFixed(1)}</span></td>` : ''}
-                            </tr>
-                          </table>
+                        <td style="width: 40px; vertical-align: top;">
+                          <div style="width: 36px; height: 36px; background-color: #0d9488; border-radius: 10px; text-align: center; line-height: 36px; font-size: 18px;">🏪</div>
                         </td>
-                        <td style="padding: 12px; width: 90px; text-align: right; vertical-align: middle;">
-                          <a href="https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}` : ''}#tackle-shops" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;">View Shops</a>
+                        <td style="padding-left: 12px; vertical-align: top;">
+                          <p style="margin: 0 0 2px; font-size: 14px; font-weight: 600; color: #0f172a;">${nearestShop.name}</p>
+                          <p style="margin: 0; font-size: 12px; color: #64748b;">${nearestShop.distance} away${nearestShop.rating ? ` • ⭐ ${nearestShop.rating.toFixed(1)}` : ''}</p>
+                        </td>
+                        <td style="width: 80px; text-align: right; vertical-align: middle;">
+                          <a href="https://fishfindr.eu/findr/info${rectangleCode ? `?rect=${rectangleCode}` : ''}#tackle-shops" style="display: inline-block; background-color: #0d9488; color: #ffffff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;">View</a>
                         </td>
                       </tr>
                     </table>
@@ -1412,8 +1532,8 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
 
           <!-- CTA BUTTON -->
           <tr>
-            <td style="padding: 8px 24px 32px;" align="center">
-              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
+            <td style="padding: 8px 32px 32px;" align="center">
+              <a href="https://fishfindr.eu/findr/favourites" style="display: inline-block; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 12px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);">
                 View Full Forecast →
               </a>
             </td>
@@ -1421,25 +1541,25 @@ export function generateDailyDigestHTMLV2(data: DailyDigestDataV2): string {
 
           <!-- FOOTER -->
           <tr>
-            <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0 0 8px; font-size: 12px; color: #6b7280; text-align: center;">
-                You're receiving this daily digest because you enabled email notifications.
+            <td style="padding: 24px 32px; background-color: #f8fafc;">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #94a3b8; text-align: center;">
+                Sent with 🎣 by Findr • Only on good fishing days
               </p>
-              <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center;">
-                <a href="https://fishfindr.eu/findr/settings" style="color: #0ea5e9; text-decoration: none;">Manage preferences</a>
-                ${unsubscribeUrl ? ` • <a href="${unsubscribeUrl}" style="color: #6b7280; text-decoration: none;">Unsubscribe</a>` : ''}
+              <p style="margin: 0; font-size: 12px; color: #94a3b8; text-align: center;">
+                <a href="https://fishfindr.eu/findr/settings" style="color: #0d9488; text-decoration: none;">Manage preferences</a>
+                ${unsubscribeUrl ? ` · <a href="${unsubscribeUrl}" style="color: #94a3b8; text-decoration: none;">Unsubscribe</a>` : ''}
               </p>
             </td>
           </tr>
 
         </table>
 
-        <!-- FOOTER TEXT -->
-        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 16px;">
+        <!-- FOOTER BRANDING -->
+        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
           <tr>
             <td style="text-align: center; padding: 16px;">
-              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                © 2025 Findr • <a href="https://fishfindr.eu" style="color: #0ea5e9; text-decoration: none;">fishfindr.eu</a>
+              <p style="margin: 0; font-size: 11px; color: #cbd5e1;">
+                © 2025 Findr · <a href="https://fishfindr.eu" style="color: #0d9488; text-decoration: none;">fishfindr.eu</a>
               </p>
             </td>
           </tr>
