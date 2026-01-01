@@ -80,24 +80,44 @@ echo "Restored original capacitor.config.ts"
 # Build the specific flavor
 cd android
 
-echo "Building assemble${FLAVOR_CAP}${BUILD_TYPE_CAP}..."
-./gradlew "assemble${FLAVOR_CAP}${BUILD_TYPE_CAP}"
+if [ "$BUILD_TYPE" = "release" ]; then
+    # For release builds, create AAB (Android App Bundle) for Play Store
+    echo "Building bundle${FLAVOR_CAP}${BUILD_TYPE_CAP}..."
+    ./gradlew "bundle${FLAVOR_CAP}${BUILD_TYPE_CAP}"
 
-# Show output location
-APK_PATH="app/build/outputs/apk/${FLAVOR}/${BUILD_TYPE}/app-${FLAVOR}-${BUILD_TYPE}.apk"
-if [ -f "$APK_PATH" ]; then
-    echo ""
-    echo "=========================================="
-    echo "Build successful!"
-    echo "APK: android/$APK_PATH"
-    echo "=========================================="
-
-    # Install on device if --device flag was passed
-    if [ "$INSTALL_DEVICE" = true ]; then
-        echo "Installing on device..."
-        adb install -r "$APK_PATH"
-        echo "Installed on device!"
+    AAB_PATH="app/build/outputs/bundle/${FLAVOR}Release/app-${FLAVOR}-release.aab"
+    if [ -f "$AAB_PATH" ]; then
+        echo ""
+        echo "=========================================="
+        echo "Build successful!"
+        echo "AAB: android/$AAB_PATH"
+        echo "Size: $(du -h "$AAB_PATH" | cut -f1)"
+        echo "=========================================="
+        echo ""
+        echo "Upload this AAB to Google Play Console"
+    else
+        echo "AAB built at: app/build/outputs/bundle/${FLAVOR}Release/"
     fi
 else
-    echo "APK built at: app/build/outputs/apk/${FLAVOR}/${BUILD_TYPE}/"
+    # For debug builds, create APK
+    echo "Building assemble${FLAVOR_CAP}${BUILD_TYPE_CAP}..."
+    ./gradlew "assemble${FLAVOR_CAP}${BUILD_TYPE_CAP}"
+
+    APK_PATH="app/build/outputs/apk/${FLAVOR}/${BUILD_TYPE}/app-${FLAVOR}-${BUILD_TYPE}.apk"
+    if [ -f "$APK_PATH" ]; then
+        echo ""
+        echo "=========================================="
+        echo "Build successful!"
+        echo "APK: android/$APK_PATH"
+        echo "=========================================="
+
+        # Install on device if --device flag was passed
+        if [ "$INSTALL_DEVICE" = true ]; then
+            echo "Installing on device..."
+            adb install -r "$APK_PATH"
+            echo "Installed on device!"
+        fi
+    else
+        echo "APK built at: app/build/outputs/apk/${FLAVOR}/${BUILD_TYPE}/"
+    fi
 fi
