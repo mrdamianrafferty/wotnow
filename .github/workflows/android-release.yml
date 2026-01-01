@@ -1,0 +1,172 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'findr-v*'
+      - 'godaisy-v*'
+      - 'growdaisy-v*'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to build and release'
+        required: true
+        type: choice
+        options:
+          - findr
+          - godaisy
+          - growdaisy
+      track:
+        description: 'Play Store track'
+        required: true
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
+        default: internal
+
+env:
+  JAVA_VERSION: '17'
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine app from tag or input
+        id: app
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            APP="${{ github.event.inputs.app }}"
+            TRACK="${{ github.event.inputs.track }}"
+          else
+            # Extract app name from tag (e.g., findr-v1.0.0 -> findr)
+            TAG="${{ github.ref_name }}"
+            APP=$(echo "$TAG" | sed 's/-v.*//')
+            TRACK="internal"
+          fi
+
+          # Set package name based on app
+          case $APP in
+            findr)
+              PACKAGE_NAME="eu.fishfindr.app"
+              FLAVOR="findr"
+              ;;
+            godaisy)
+              PACKAGE_NAME="io.godaisy.app"
+              FLAVOR="godaisy"
+              ;;
+            growdaisy)
+              PACKAGE_NAME="io.growdaisy.app"
+              FLAVOR="growdaisy"
+              ;;
+          esac
+
+          echo "app=$APP" >> $GITHUB_OUTPUT
+          echo "track=$TRACK" >> $GITHUB_OUTPUT
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "flavor=$FLAVOR" >> $GITHUB_OUTPUT
+          echo "Building $APP ($PACKAGE_NAME) for $TRACK track"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Decode Findr keystore
+        if: steps.app.outputs.app == 'findr'
+        run: |
+          echo "${{ secrets.FINDR_KEYSTORE_BASE64 }}" | base64 -d > android/app/findr-upload.keystore
+        env:
+          FINDR_KEYSTORE_PATH: android/app/findr-upload.keystore
+
+      - name: Decode Go Daisy keystore
+        if: steps.app.outputs.app == 'godaisy'
+        run: |
+          echo "${{ secrets.GODAISY_KEYSTORE_BASE64 }}" | base64 -d > android/app/godaisy-upload.keystore
+        env:
+          GODAISY_KEYSTORE_PATH: android/app/godaisy-upload.keystore
+
+      - name: Decode Grow Daisy keystore
+        if: steps.app.outputs.app == 'growdaisy'
+        run: |
+          echo "${{ secrets.GROWDAISY_KEYSTORE_BASE64 }}" | base64 -d > android/app/growdaisy-upload.keystore
+        env:
+          GROWDAISY_KEYSTORE_PATH: android/app/growdaisy-upload.keystore
+
+      - name: Build Android App Bundle
+        working-directory: android
+        run: |
+          FLAVOR="${{ steps.app.outputs.flavor }}"
+          FLAVOR_CAPITALIZED="$(tr '[:lower:]' '[:upper:]' <<< ${FLAVOR:0:1})${FLAVOR:1}"
+          ./gradlew bundle${FLAVOR_CAPITALIZED}Release
+        env:
+          # Findr signing
+          FINDR_KEYSTORE_PATH: ${{ steps.app.outputs.app == 'findr' && 'findr-upload.keystore' || '' }}
+          FINDR_KEYSTORE_PASSWORD: ${{ secrets.FINDR_KEYSTORE_PASSWORD }}
+          FINDR_KEY_ALIAS: ${{ secrets.FINDR_KEY_ALIAS }}
+          FINDR_KEY_PASSWORD: ${{ secrets.FINDR_KEY_PASSWORD }}
+          # Go Daisy signing
+          GODAISY_KEYSTORE_PATH: ${{ steps.app.outputs.app == 'godaisy' && 'godaisy-upload.keystore' || '' }}
+          GODAISY_KEYSTORE_PASSWORD: ${{ secrets.GODAISY_KEYSTORE_PASSWORD }}
+          GODAISY_KEY_ALIAS: ${{ secrets.GODAISY_KEY_ALIAS }}
+          GODAISY_KEY_PASSWORD: ${{ secrets.GODAISY_KEY_PASSWORD }}
+          # Grow Daisy signing
+          GROWDAISY_KEYSTORE_PATH: ${{ steps.app.outputs.app == 'growdaisy' && 'growdaisy-upload.keystore' || '' }}
+          GROWDAISY_KEYSTORE_PASSWORD: ${{ secrets.GROWDAISY_KEYSTORE_PASSWORD }}
+          GROWDAISY_KEY_ALIAS: ${{ secrets.GROWDAISY_KEY_ALIAS }}
+          GROWDAISY_KEY_PASSWORD: ${{ secrets.GROWDAISY_KEY_PASSWORD }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.app.outputs.app }}-release-aab
+          path: android/app/build/outputs/bundle/${{ steps.app.outputs.flavor }}Release/*.aab
+
+      - name: Upload to Google Play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ steps.app.outputs.package_name }}
+          releaseFiles: android/app/build/outputs/bundle/${{ steps.app.outputs.flavor }}Release/*.aab
+          track: ${{ steps.app.outputs.track }}
+          status: completed
+          whatsNewDirectory: whatsnew/
+        continue-on-error: true
+
+      - name: Release summary
+        run: |
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App:** ${{ steps.app.outputs.app }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package:** ${{ steps.app.outputs.package_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Track:** ${{ steps.app.outputs.track }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **AAB:** Uploaded as artifact" >> $GITHUB_STEP_SUMMARY

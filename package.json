@@ -63,7 +63,10 @@
     "android:build:growdaisy": "./scripts/build-android.sh growdaisy debug",
     "android:release:findr": "./scripts/build-android.sh findr release",
     "android:release:godaisy": "./scripts/build-android.sh godaisy release",
-    "android:release:growdaisy": "./scripts/build-android.sh growdaisy release"
+    "android:release:growdaisy": "./scripts/build-android.sh growdaisy release",
+    "version:bump:findr": "./scripts/bump-version.sh findr",
+    "version:bump:godaisy": "./scripts/bump-version.sh godaisy",
+    "version:bump:growdaisy": "./scripts/bump-version.sh growdaisy"
   },
   "resolutions": {
     "next": {
