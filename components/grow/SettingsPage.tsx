@@ -492,10 +492,10 @@ export function SettingsPage() {
       {showDeleteDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/80"
             onClick={() => setShowDeleteDialog(false)}
           />
-          <Card className="relative z-10 w-full max-w-md mx-4">
+          <Card className="relative z-10 w-full max-w-md mx-4 bg-white dark:bg-slate-900 shadow-2xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="h-5 w-5" />

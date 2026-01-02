@@ -1396,10 +1396,10 @@ export default function FindrSettingsPage() {
           {showDeleteDialog && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div
-                className="absolute inset-0 bg-black/50"
+                className="absolute inset-0 bg-black/80"
                 onClick={() => setShowDeleteDialog(false)}
               />
-              <div className="relative z-10 card bg-base-100 w-full max-w-md mx-4 shadow-2xl">
+              <div className="relative z-10 card w-full max-w-md mx-4 shadow-2xl bg-white dark:bg-slate-900">
                 <div className="card-body space-y-4">
                   <div className="flex items-center gap-2 text-error">
                     <AlertTriangle size={24} />
