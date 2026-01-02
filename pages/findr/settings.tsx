@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Mail, TrendingUp, AlertCircle } from 'lucide-react';
+import { Mail, TrendingUp, AlertCircle, Trash2, AlertTriangle } from 'lucide-react';
 import CoastalLocationDialog, { BasicLocation } from '../../components/CoastalLocationDialog';
 import { supabase } from '../../lib/supabase/client';
 import { useFavourites } from '../../hooks/useFavourites';
@@ -254,6 +254,11 @@ export default function FindrSettingsPage() {
   const [pendingRemoveCode, setPendingRemoveCode] = useState<string | null>(null);
   const [pendingDismissCode, setPendingDismissCode] = useState<string | null>(null);
   const [dismissedSuggestionCodes, setDismissedSuggestionCodes] = useState<string[]>([]);
+
+  // Delete account state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const {
     suggestions: regionalSuggestions,
     loading: regionalSuggestionsLoading,
@@ -627,6 +632,43 @@ export default function FindrSettingsPage() {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/findr');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      setMessage({ type: 'error', text: 'Please type DELETE to confirm' });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      setMessage({ type: 'success', text: 'Account deleted successfully' });
+
+      // Clear local storage
+      localStorage.clear();
+
+      // Sign out and redirect
+      await supabase.auth.signOut();
+      router.push('/findr');
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to delete account' });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setDeleteConfirmText('');
+    }
   };
 
   const toggleTechnique = (technique: string) => {
@@ -1321,6 +1363,111 @@ export default function FindrSettingsPage() {
               )}
             </div>
           </section>
+
+          {/* Delete Account */}
+          <section className="card bg-base-100 shadow-sm border border-error/20">
+            <div className="card-body space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <h2 className="card-title text-error">Delete Account</h2>
+                  <p className="text-sm text-base-content/70 -mt-1">Permanently delete your account and all data</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-error/5 rounded-lg border border-error/20">
+                <div>
+                  <p className="font-medium text-base-content">Delete your account</p>
+                  <p className="text-sm text-base-content/70">This action cannot be undone. All your data will be permanently deleted.</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-error btn-outline"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 size={16} />
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Delete Account Confirmation Dialog */}
+          {showDeleteDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <div
+                className="absolute inset-0 bg-black/50"
+                onClick={() => setShowDeleteDialog(false)}
+              />
+              <div className="relative z-10 card bg-base-100 w-full max-w-md mx-4 shadow-2xl">
+                <div className="card-body space-y-4">
+                  <div className="flex items-center gap-2 text-error">
+                    <AlertTriangle size={24} />
+                    <h3 className="card-title">Delete Account</h3>
+                  </div>
+                  <p className="text-sm text-base-content/70">
+                    This action cannot be undone. All your data will be permanently deleted.
+                  </p>
+
+                  <div className="p-3 bg-error/10 border border-error/20 rounded-lg">
+                    <p className="text-sm text-error font-medium">This will permanently delete:</p>
+                    <ul className="text-sm text-error/80 mt-2 space-y-1 list-disc list-inside">
+                      <li>Your account and profile</li>
+                      <li>All favourite species</li>
+                      <li>All catch log entries</li>
+                      <li>All notification preferences</li>
+                    </ul>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">
+                        Type <span className="font-mono font-bold">DELETE</span> to confirm
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      placeholder="DELETE"
+                      className="input input-bordered w-full"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      className="btn btn-ghost flex-1"
+                      onClick={() => {
+                        setShowDeleteDialog(false);
+                        setDeleteConfirmText('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-error flex-1"
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <span className="loading loading-spinner loading-sm" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 size={16} />
+                          Delete Account
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Save Button */}
           <div className="card bg-base-100 shadow-sm border-2 border-primary">
