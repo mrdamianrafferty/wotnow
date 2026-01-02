@@ -1399,19 +1399,19 @@ export default function FindrSettingsPage() {
                 className="absolute inset-0 bg-black/80"
                 onClick={() => setShowDeleteDialog(false)}
               />
-              <div className="relative z-10 card w-full max-w-md mx-4 shadow-2xl bg-white dark:bg-slate-900">
+              <div className="relative z-10 card w-full max-w-md mx-4 shadow-2xl bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100">
                 <div className="card-body space-y-4">
-                  <div className="flex items-center gap-2 text-error">
+                  <div className="flex items-center gap-2 text-red-600">
                     <AlertTriangle size={24} />
-                    <h3 className="card-title">Delete Account</h3>
+                    <h3 className="card-title text-red-600">Delete Account</h3>
                   </div>
-                  <p className="text-sm text-base-content/70">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     This action cannot be undone. All your data will be permanently deleted.
                   </p>
 
-                  <div className="p-3 bg-error/10 border border-error/20 rounded-lg">
-                    <p className="text-sm text-error font-medium">This will permanently delete:</p>
-                    <ul className="text-sm text-error/80 mt-2 space-y-1 list-disc list-inside">
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-sm text-red-700 dark:text-red-400 font-medium">This will permanently delete:</p>
+                    <ul className="text-sm text-red-600 dark:text-red-400 mt-2 space-y-1 list-disc list-inside">
                       <li>Your account and profile</li>
                       <li>All favourite species</li>
                       <li>All catch log entries</li>
@@ -1419,25 +1419,23 @@ export default function FindrSettingsPage() {
                     </ul>
                   </div>
 
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">
-                        Type <span className="font-mono font-bold">DELETE</span> to confirm
-                      </span>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Type <span className="font-mono font-bold">DELETE</span> to confirm
                     </label>
                     <input
                       type="text"
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
                       placeholder="DELETE"
-                      className="input input-bordered w-full"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-red-500"
                     />
                   </div>
 
                   <div className="flex gap-3 pt-2">
                     <button
                       type="button"
-                      className="btn btn-ghost flex-1"
+                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                       onClick={() => {
                         setShowDeleteDialog(false);
                         setDeleteConfirmText('');
@@ -1447,20 +1445,20 @@ export default function FindrSettingsPage() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn-error flex-1"
+                      className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={handleDeleteAccount}
                       disabled={isDeleting || deleteConfirmText !== 'DELETE'}
                     >
                       {isDeleting ? (
                         <>
-                          <span className="loading loading-spinner loading-sm" />
+                          <span className="loading loading-spinner loading-sm mr-2" />
                           Deleting...
                         </>
                       ) : (
-                        <>
+                        <span className="flex items-center justify-center gap-2">
                           <Trash2 size={16} />
                           Delete Account
-                        </>
+                        </span>
                       )}
                     </button>
                   </div>
