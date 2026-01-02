@@ -71,4 +71,5 @@ ios-growdaisy/App/Build/
 
 # Android signing
 android/keystore.properties
+android/app/keystore.properties
 android/*.keystore

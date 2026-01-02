@@ -33,6 +33,8 @@ import {
   Sparkles,
   BookOpen,
   RefreshCw,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { auth, type AuthUser } from '../../lib/grow/auth';
 import { api } from '../../lib/grow/api';
@@ -121,6 +123,9 @@ export function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [isLookingUpElevation, setIsLookingUpElevation] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<OnboardingData>({
@@ -356,6 +361,43 @@ export function SettingsPage() {
     }
   };
 
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Please type DELETE to confirm');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete account');
+      }
+
+      toast.success('Account deleted successfully');
+
+      // Clear local storage
+      localStorage.clear();
+
+      // Sign out and redirect
+      await auth.signOut();
+      router.push('/grow');
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete account');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setDeleteConfirmText('');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -421,8 +463,107 @@ export function SettingsPage() {
               Sign Out
             </Button>
           </div>
+
+          <Separator />
+
+          {/* Delete Account */}
+          <div className="pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-red-600">Delete Account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all associated data
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Delete Account Confirmation Dialog */}
+      {showDeleteDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowDeleteDialog(false)}
+          />
+          <Card className="relative z-10 w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+                Delete Account
+              </CardTitle>
+              <CardDescription>
+                This action cannot be undone. All your data will be permanently deleted.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  This will permanently delete:
+                </p>
+                <ul className="text-sm text-red-700 mt-2 space-y-1 list-disc list-inside">
+                  <li>Your account and profile</li>
+                  <li>All garden preferences</li>
+                  <li>All saved plants and data</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="delete-confirm">
+                  Type <span className="font-mono font-bold">DELETE</span> to confirm
+                </Label>
+                <input
+                  id="delete-confirm"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteDialog(false);
+                    setDeleteConfirmText('');
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting || deleteConfirmText !== 'DELETE'}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Account
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Location Section */}
       <Card>
