@@ -30,6 +30,44 @@ function getErrorMessage(err: unknown): string {
 export function mapAuthError(err: unknown): string {
   const msg = getErrorMessage(err).toLowerCase();
 
+  // =========================================================================
+  // Native Google Auth Errors (from googleNative.ts)
+  // =========================================================================
+
+  // User cancelled the sign-in dialog
+  if (msg.includes('google_native_cancelled') || msg.includes('cancelled') || msg.includes('canceled')) {
+    return 'Sign-in was cancelled. Please try again when you\'re ready.';
+  }
+
+  // Missing ID token from Google
+  if (msg.includes('google_native_missing_id_token') || msg.includes('missing id token')) {
+    return 'Google sign-in failed to complete. Please try again or use email sign-in.';
+  }
+
+  // Session wasn't created after auth
+  if (msg.includes('google_native_session_creation_failed') || msg.includes('session creation failed')) {
+    return 'Sign-in succeeded but session wasn\'t saved. Please try again.';
+  }
+
+  // Auth timed out
+  if (msg.includes('google_native_timeout') || msg.includes('authentication timed out')) {
+    return 'Sign-in took too long. Please check your connection and try again.';
+  }
+
+  // Native auth not available (not on mobile)
+  if (msg.includes('google_native_not_available')) {
+    return 'Native sign-in is not available. Please use browser sign-in.';
+  }
+
+  // Native auth not configured
+  if (msg.includes('google_native_not_configured')) {
+    return 'Google sign-in is not configured. Please use email sign-in instead.';
+  }
+
+  // =========================================================================
+  // Supabase Auth Errors
+  // =========================================================================
+
   // Invalid credentials
   if (msg.includes('invalid login credentials') || msg.includes('invalid_credentials')) {
     return 'Invalid email or password. If you signed up with Google or Apple, use that option to sign in.';
@@ -55,8 +93,12 @@ export function mapAuthError(err: unknown): string {
     return 'An account with this email already exists. Please sign in instead.';
   }
 
+  // =========================================================================
+  // Network & General Errors
+  // =========================================================================
+
   // Network/connection issues
-  if (msg.includes('network') || msg.includes('fetch')) {
+  if (msg.includes('network') || msg.includes('fetch') || msg.includes('timeout')) {
     return 'Connection error. Please check your internet and try again.';
   }
 

@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase/client';
 import { normalizeEmail, mapAuthError } from '../lib/auth/utils';
 import Link from 'next/link';
 import Head from 'next/head';
-import { Cloud, Sun, Waves, Leaf, Droplets } from 'lucide-react';
+import { Cloud, Sun, Waves, Leaf, Droplets, AlertCircle, RefreshCw } from 'lucide-react';
 import { signInWithApple } from '../lib/auth/appleSignIn';
-import { signInWithGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
+import { signInWithGoogleNative, resetGoogleNative, GOOGLE_NATIVE_ERRORS } from '../lib/auth/googleNative';
 
 export default function GoDaisyLogin() {
   const router = useRouter();
@@ -19,6 +19,8 @@ export default function GoDaisyLogin() {
   const [isNativePlatform, setIsNativePlatform] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [iosSafeAreaHeight, setIosSafeAreaHeight] = useState(0);
+  const [showWebFallback, setShowWebFallback] = useState(false);
+  const [nativeAuthFailed, setNativeAuthFailed] = useState(false);
   const [authCallbackUrl, setAuthCallbackUrl] = useState<string>(() => {
     if (process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL) {
       return process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL;
@@ -157,7 +159,7 @@ export default function GoDaisyLogin() {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'apple') => {
+  const handleSocialLogin = async (provider: 'google' | 'apple', forceWebFlow = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -175,7 +177,7 @@ export default function GoDaisyLogin() {
         ));
       sessionStorage.setItem('oauth_app', isGrowDaisy ? 'growdaisy' : 'godaisy');
 
-      if (isNativePlatform) {
+      if (isNativePlatform && !forceWebFlow) {
         console.log('[Go Daisy Auth] Native platform detected for', provider);
 
         if (provider === 'apple') {
@@ -190,16 +192,22 @@ export default function GoDaisyLogin() {
             window.location.href = destination;
             return;
           } catch (nativeError) {
-            const message = (nativeError as Error)?.message;
-            if (message === GOOGLE_NATIVE_ERRORS.CANCELLED) {
+            const errorMessage = (nativeError as Error)?.message;
+            if (errorMessage === GOOGLE_NATIVE_ERRORS.CANCELLED) {
               console.info('[Go Daisy Auth] Google sign-in cancelled by user');
               setLoading(false);
               return;
             }
-            if (message === GOOGLE_NATIVE_ERRORS.NOT_AVAILABLE || message === GOOGLE_NATIVE_ERRORS.NOT_CONFIGURED) {
+            if (errorMessage === GOOGLE_NATIVE_ERRORS.NOT_AVAILABLE || errorMessage === GOOGLE_NATIVE_ERRORS.NOT_CONFIGURED) {
               console.warn('[Go Daisy Auth] Google native flow unavailable, falling back to web OAuth');
             } else {
-              throw nativeError;
+              // Native auth failed - show error and offer web fallback
+              console.error('[Go Daisy Auth] Native Google auth failed:', nativeError);
+              setNativeAuthFailed(true);
+              setShowWebFallback(true);
+              setError(mapAuthError(nativeError));
+              setLoading(false);
+              return;
             }
           }
         }
@@ -237,6 +245,19 @@ export default function GoDaisyLogin() {
       setError(mapAuthError(err));
       setLoading(false);
     }
+  };
+
+  const handleRetryNative = () => {
+    setError(null);
+    setNativeAuthFailed(false);
+    setShowWebFallback(false);
+    resetGoogleNative(); // Reset the plugin state
+    handleSocialLogin('google');
+  };
+
+  const handleTryWebAuth = () => {
+    setError(null);
+    handleSocialLogin('google', true); // Force web flow
   };
 
   // Determine app context for branding
@@ -288,12 +309,39 @@ export default function GoDaisyLogin() {
             {/* Error/Success Messages */}
             {error && (
               <div className="alert alert-error mb-4">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
             {message && (
               <div className="alert alert-success mb-4">
                 <span>{message}</span>
+              </div>
+            )}
+
+            {/* Native Auth Failed - Show Recovery Options */}
+            {nativeAuthFailed && showWebFallback && (
+              <div className="alert alert-warning mb-4">
+                <div className="flex flex-col gap-3 w-full">
+                  <p className="text-sm">Having trouble signing in? Try one of these options:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={handleRetryNative}
+                      disabled={loading}
+                      className="btn btn-sm btn-outline gap-1"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Try Again
+                    </button>
+                    <button
+                      onClick={handleTryWebAuth}
+                      disabled={loading}
+                      className="btn btn-sm btn-primary gap-1"
+                    >
+                      Use Browser Sign-In
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
