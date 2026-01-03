@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FALLBACK_CONDITIONS, type FallbackConditionPayload } from '../lib/findr/fallbackConditions';
+import {
+  getCachedConditions,
+  cacheConditions,
+  isConditionsCacheStale,
+  getConditionsCacheAge,
+} from '@/lib/offline/conditionsCache';
+import { useOnlineStatus } from './useOnlineStatus';
 
-export type ConditionsSource = 'supabase' | 'fallback';
+export type ConditionsSource = 'supabase' | 'fallback' | 'cache';
 
 interface ApiResponse extends FallbackConditionPayload {
   source?: ConditionsSource;
@@ -13,6 +20,9 @@ export interface UseFindrConditionsState {
   error: string | null;
   source: ConditionsSource;
   reload: () => void;
+  isFromCache?: boolean;
+  cacheAge?: string;
+  isOffline?: boolean;
 }
 
 interface UserCoordinates {
@@ -29,6 +39,9 @@ export function useFindrConditions(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadCount, setReloadCount] = useState(0);
+  const [isFromCache, setIsFromCache] = useState(false);
+  const [cacheAge, setCacheAge] = useState<string | undefined>(undefined);
+  const { isOnline } = useOnlineStatus();
 
   const reload = useCallback(() => {
     setReloadCount((count) => count + 1);
@@ -44,6 +57,8 @@ export function useFindrConditions(
       setSource('fallback');
       setError(null);
       setLoading(false);
+      setIsFromCache(false);
+      setCacheAge(undefined);
       return;
     }
 
@@ -56,6 +71,39 @@ export function useFindrConditions(
       setError(null);
 
       try {
+        // Step 1: Check cache first
+        if (rectangleCodeSafe) {
+          const cached = await getCachedConditions(rectangleCodeSafe);
+
+          if (cached) {
+            // Show cached data immediately
+            setData(cached.conditions);
+            setSource('cache');
+            setIsFromCache(true);
+            setCacheAge(getConditionsCacheAge(cached));
+
+            // If offline or cache is fresh, use cached data only
+            if (!isOnline || !isConditionsCacheStale(cached)) {
+              console.log('[useFindrConditions] Using cached conditions for', rectangleCodeSafe);
+              setLoading(false);
+              return;
+            }
+
+            // Cache is stale but we're online - continue to fetch fresh
+            console.log('[useFindrConditions] Cache stale, fetching fresh for', rectangleCodeSafe);
+          } else if (!isOnline) {
+            // No cache and offline - use fallback
+            console.log('[useFindrConditions] Offline with no cache, using fallback');
+            setData(FALLBACK_CONDITIONS);
+            setSource('fallback');
+            setIsFromCache(false);
+            setCacheAge(undefined);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Step 2: Fetch from API
         // Build URL - either with rectangleCode (European) or just coordinates (worldwide)
         let url = '/api/findr/conditions';
         const params = new URLSearchParams();
@@ -72,7 +120,7 @@ export function useFindrConditions(
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
-        
+
         const res = await fetch(url, {
           method: 'GET',
           signal: controller.signal,
@@ -89,6 +137,14 @@ export function useFindrConditions(
         setData(payload);
         setSource(payload.source ?? 'fallback');
         setError(null);
+        setIsFromCache(false);
+        setCacheAge(undefined);
+
+        // Step 3: Cache the result
+        if (rectangleCodeSafe) {
+          await cacheConditions(rectangleCodeSafe, payload);
+        }
+
         if (payload.source !== 'supabase') {
           console.info('[Findr Conditions] Using fallback payload from API response', {
             rectangleCode: rectangleCodeSafe,
@@ -99,12 +155,30 @@ export function useFindrConditions(
         if (!active || (err as Error).name === 'AbortError') {
           return;
         }
-        console.error('[Findr Conditions] Failed to load live conditions, falling back to static payload', {
+        console.error('[Findr Conditions] Failed to load live conditions', {
           rectangleCode: rectangleCodeSafe,
           message: (err as Error).message,
         });
+
+        // Try to fall back to cache on network error
+        if (rectangleCodeSafe) {
+          const cached = await getCachedConditions(rectangleCodeSafe);
+          if (cached) {
+            console.log('[useFindrConditions] Network error, using cached conditions');
+            setData(cached.conditions);
+            setSource('cache');
+            setIsFromCache(true);
+            setCacheAge(getConditionsCacheAge(cached));
+            setError(null);
+            return;
+          }
+        }
+
+        // No cache available - use static fallback
         setData(FALLBACK_CONDITIONS);
         setSource('fallback');
+        setIsFromCache(false);
+        setCacheAge(undefined);
         setError((err as Error).message || 'Unable to load live conditions');
       } finally {
         if (active) {
@@ -119,7 +193,7 @@ export function useFindrConditions(
       active = false;
       controller.abort();
     };
-  }, [rectangleCode, reloadCount, userCoordinates?.lat, userCoordinates?.lon]);
+  }, [rectangleCode, reloadCount, userCoordinates?.lat, userCoordinates?.lon, isOnline]);
 
   return useMemo(
     () => ({
@@ -128,7 +202,10 @@ export function useFindrConditions(
       error,
       source,
       reload,
+      isFromCache,
+      cacheAge,
+      isOffline: !isOnline,
     }),
-    [data, loading, error, source, reload]
+    [data, loading, error, source, reload, isFromCache, cacheAge, isOnline]
   );
 }

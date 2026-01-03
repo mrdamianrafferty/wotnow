@@ -95,6 +95,7 @@ function formatDateTime(value: string | null | undefined) {
 const _sourceBadgeStyles: Record<ConditionsSource, string> = {
   supabase: 'badge-success',
   fallback: 'badge-warning',
+  cache: 'badge-info',
 };
 
 const DEFAULT_MAP_LOCATION: MapLocation = {
